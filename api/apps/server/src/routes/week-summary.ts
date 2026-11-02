@@ -43,8 +43,9 @@ const Stat = z
 const Award = z
   .strictObject({
     kind: openKind(
-      'Today `planCompleted` (领奖台: trained at least as many days as planned, and at least one), ' +
-        '`crown` (皇冠: the most days on the podium, all of them on a tie) and `bestDisclaimer` ' +
+      'Today `planCompleted` (练够计划: trained at least as many days as planned, and at least ' +
+        'one), `crown` (皇冠: the most days trained, at least one, all of them on a tie, plan ' +
+        'finished or not) and `bestDisclaimer` ' +
         '(本周最佳请假条: the most reactions, at least one, the earliest on a tie).',
     ),
     title: words('Its name, in the language asked for.'),

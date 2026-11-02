@@ -302,6 +302,28 @@ describe('a squad’s week summary', () => {
     ]);
   });
 
+  it('crowns whoever trained the most days, plan finished or not', async () => {
+    const most = await newMember('America/Los_Angeles');
+    const done = await newMember('America/Los_Angeles');
+    const squad = await newSquad(most, done);
+    // Most keeps the default plan (5 days) and trains 3; Done plans 2 and trains both.
+    for (const day of ['2026-10-19', '2026-10-20', '2026-10-21']) {
+      await checkedIn(most, { kind: 'trained', day, audience: [squad] });
+    }
+    await planned(done, {
+      monday: '2026-10-19',
+      days: [train, train, rest, rest, rest, rest, rest],
+    });
+    await checkedIn(done, { kind: 'trained', day: '2026-10-19', audience: [squad] });
+    await checkedIn(done, { kind: 'trained', day: '2026-10-20', audience: [squad] });
+
+    const summary = await checkIns.weekSummary({ viewer: done, squad, weekStart: week });
+    expect(summary.awards).toStrictEqual([
+      { kind: 'planCompleted', winners: [{ member: done, value: 2 }] },
+      { kind: 'crown', winners: [{ member: most, value: 3 }] },
+    ]);
+  });
+
   it('is still being played until every member’s Sunday is over', async () => {
     const la = await newMember('America/Los_Angeles');
     const tokyo = await newMember('Asia/Tokyo');
@@ -398,7 +420,6 @@ describe('a squad’s week for its awards', () => {
         ...(kind === 'run' ? { kind: 'trained', sport: 'run' } : { kind }),
       }));
     expect(pages).toStrictEqual({
-      podium: { champion: ace, sides: [tokyo] },
       members: [
         {
           member: ace,

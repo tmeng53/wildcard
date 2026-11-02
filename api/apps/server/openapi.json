@@ -2805,7 +2805,7 @@
           "kind": {
             "type": "string",
             "minLength": 1,
-            "description": "Today `planCompleted` (领奖台: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days on the podium, all of them on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words."
+            "description": "Today `planCompleted` (练够计划: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days trained, at least one, all of them on a tie, plan finished or not) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words."
           },
           "title": {
             "type": "string",
@@ -3482,14 +3482,24 @@
               "format": "uuid"
             },
             "maxItems": 2
+          },
+          "planDone": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 3,
+            "description": "Those on the podium who trained at least as many days as they planned (练够计划), for a small mark on their step. Empty when none did."
           }
         },
         "required": [
           "champion",
-          "sides"
+          "sides",
+          "planDone"
         ],
         "additionalProperties": false,
-        "description": "领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either."
+        "description": "领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene; the earliest to join on a tie) in the middle, up to 2 next beside, left then right. Missing when nobody trained."
       },
       "StoryMyWeek": {
         "type": "object",

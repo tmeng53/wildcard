@@ -168,19 +168,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This week's awards are in. Come see what you won"
+            "value": "Your weekly recap is in. Come see this week's awards"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "本周颁奖出炉了，快来看看你拿了什么"
+            "value": "每周战报出炉了，快来看看这周的颁奖"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "本週頒獎出爐了，快來看看你拿了什麼"
+            "value": "每週戰報出爐了，快來看看這週的頒獎"
           }
         }
       }

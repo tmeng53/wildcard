@@ -89,7 +89,8 @@ private let lateStory = """
        {"member":"00000000-0000-0000-0000-000000000001",
         "character":{"nickname":"Coco","look":{"persona":"energetic","variants":{"body":"peach"},"colors":{}}}},
        {"member":"00000000-0000-0000-0000-000000000002"}],
-     "podium":{"champion":"00000000-0000-0000-0000-000000000001","sides":["00000000-0000-0000-0000-000000000002"]},
+     "podium":{"champion":"00000000-0000-0000-0000-000000000001","sides":["00000000-0000-0000-0000-000000000002"],
+       "planDone":["00000000-0000-0000-0000-000000000002"]},
      "myWeek":{"plannedDays":3,"trainedDays":2,"healthyMeals":1,"cheatMeals":0,"reactionsReceived":3,
        "days":[{"day":"2026-10-12","kind":"trained","sport":"run"},{"day":"2026-10-13","kind":"rest"},
          {"day":"2026-10-14","kind":"disclaimer"},{"day":"2026-10-15","kind":"trained","sport":"跳绳"},
@@ -126,7 +127,7 @@ private let lateStory = """
             Squadmate(member: bea, character: nil),
         ])
     let podium = try #require(story.podium)
-    #expect(podium == Podium(champion: coco, sides: [bea]))
+    #expect(podium == Podium(champion: coco, sides: [bea], planDone: [bea]))
     let hottest = try #require(story.hottest)
     #expect(hottest.sport == "run")
     #expect(hottest.words == "雨里 5 公里")

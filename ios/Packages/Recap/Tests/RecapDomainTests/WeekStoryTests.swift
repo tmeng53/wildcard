@@ -81,6 +81,11 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(story.firstTitle(of: id(2)) == nil)
 }
 
+@Test func onlyThoseOnThePodiumCarryThePlanDoneMark() {
+    let podium = Podium(champion: id(1), sides: [id(2), id(3), id(4)], planDone: [id(1), id(3), id(4)])
+    #expect(podium.planDone == [id(1), id(3)])
+}
+
 @Test func anUnknownMoveCheers() throws {
     #expect(AwardMove(wire: "pump") == .pump)
     #expect(AwardMove(wire: "moonwalk") == .cheer)
