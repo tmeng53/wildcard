@@ -26,6 +26,7 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 export interface Memes {
   approved_at: Timestamp;
   disabled_at: Timestamp | null;
+  expires_at: Timestamp | null;
   id: Generated<string>;
   payload: Json;
   phrase: string;

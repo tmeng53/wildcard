@@ -1,11 +1,38 @@
 import type { Kysely } from 'kysely';
 
-import { MemeId, StoredMeme, storedPayload, type MemeRecord } from '../domain/meme.js';
+import {
+  MemeId,
+  StoredMeme,
+  storedPayload,
+  type LibraryMeme,
+  type MemeRecord,
+} from '../domain/meme.js';
 import type { MemeStore } from '../ports.js';
 import type { DB } from './tables.js';
 
 /** The tables this store reads and writes, as generated from the migrations. */
 export type MemeTables = DB;
+
+/** A row as the library hands it out. */
+function toRecord(row: {
+  readonly id: string;
+  readonly phrase: string;
+  readonly payload: unknown;
+  readonly approved_at: Date;
+  readonly expires_at: Date | null;
+}): MemeRecord {
+  const { background, meaning, styles, source } = StoredMeme.parse(row.payload);
+  return {
+    id: MemeId.parse(row.id),
+    phrase: row.phrase,
+    background,
+    meaning,
+    styles,
+    source,
+    approvedAt: row.approved_at,
+    expiresAt: row.expires_at,
+  };
+}
 
 /** The meme store on Postgres (`supabase/migrations`). */
 export function createPostgresMemeStore(db: Kysely<MemeTables>): MemeStore {
@@ -19,6 +46,7 @@ export function createPostgresMemeStore(db: Kysely<MemeTables>): MemeStore {
             phrase: meme.phrase,
             payload: JSON.stringify(storedPayload(meme)),
             approved_at: approvedAt,
+            expires_at: meme.expiresAt ?? null,
           })),
         )
         .onConflict((conflict) => conflict.column('phrase').doNothing())
@@ -27,28 +55,46 @@ export function createPostgresMemeStore(db: Kysely<MemeTables>): MemeStore {
       return rows.map(({ phrase }) => phrase);
     },
 
-    async listApprovedBetween({ from, to }) {
+    async listInUseAt(now) {
       const rows = await db
         .selectFrom('memes')
-        .select(['id', 'phrase', 'payload', 'approved_at'])
-        .where('approved_at', '>=', from)
-        .where('approved_at', '<=', to)
+        .select(['id', 'phrase', 'payload', 'approved_at', 'expires_at'])
+        .where('approved_at', '<=', now)
+        .where((eb) => eb.or([eb('expires_at', 'is', null), eb('expires_at', '>', now)]))
         .where('disabled_at', 'is', null)
         .orderBy('approved_at', 'desc')
         .orderBy('phrase')
         .execute();
-      return rows.map((row): MemeRecord => {
-        const { background, meaning, styles, source } = StoredMeme.parse(row.payload);
-        return {
-          id: MemeId.parse(row.id),
-          phrase: row.phrase,
-          background,
-          meaning,
-          styles,
-          source,
-          approvedAt: row.approved_at,
-        };
-      });
+      return rows.map(toRecord);
+    },
+
+    async listAll() {
+      const rows = await db
+        .selectFrom('memes')
+        .select(['id', 'phrase', 'payload', 'approved_at', 'expires_at', 'disabled_at'])
+        .orderBy('approved_at', 'desc')
+        .orderBy('phrase')
+        .execute();
+      return rows.map((row): LibraryMeme => ({ ...toRecord(row), turnedOffAt: row.disabled_at }));
+    },
+
+    async approvedAt(phrase) {
+      const row = await db
+        .selectFrom('memes')
+        .select('approved_at')
+        .where('phrase', '=', phrase)
+        .executeTakeFirst();
+      return row?.approved_at;
+    },
+
+    async setExpiry(phrase, expiresAt) {
+      const row = await db
+        .updateTable('memes')
+        .set({ expires_at: expiresAt })
+        .where('phrase', '=', phrase)
+        .returning('id')
+        .executeTakeFirst();
+      return row !== undefined;
     },
 
     async turnOff(phrase, at) {
