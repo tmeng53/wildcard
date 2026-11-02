@@ -27,7 +27,8 @@ struct PatOverlay: View {
     let pat: (MemberID) -> Void
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: nil, paused: pats.pat == nil && pats.bubble == nil)) { timeline in
+        let isStill = pats.pat == nil && pats.bubble == nil && pats.myLine == nil
+        TimelineView(.animation(minimumInterval: nil, paused: isStill)) { timeline in
             let seconds = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             ZStack(alignment: .topLeading) {
                 if layer == .marks, let current = pats.pat, !reduceMotion {
@@ -43,9 +44,17 @@ struct PatOverlay: View {
                         .id(bubble.id)
                         .transition(.speech(reduceMotion: reduceMotion))
                 }
+                if layer == .bubble, let line = pats.myLine {
+                    HeadBubble(line: line.text, position: .mine, unit: unit)
+                        .id(line.id)
+                        .allowsHitTesting(false)
+                        .accessibilityIdentifier("today.myLine")
+                        .transition(.speech(reduceMotion: reduceMotion))
+                }
             }
             .frame(width: StageLayout.width * unit, height: Stage.height * unit, alignment: .topLeading)
             .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: pats.bubble)
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: pats.myLine)
         }
     }
 

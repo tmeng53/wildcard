@@ -1447,6 +1447,54 @@
           }
         }
       }
+    },
+    "新队友 %@ 上场": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New teammate %@ is in"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新隊友 %@ 上場"
+          }
+        }
+      }
+    },
+    "%@ 也上场了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is in too"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 也上場了"
+          }
+        }
+      }
+    },
+    "你现在是队长了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're the captain now"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你現在是隊長了"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
