@@ -15,6 +15,9 @@ import SwiftUI
 public struct SpeechBubble: View {
     public enum Kind {
         case line
+        /// A line said in `.line`'s type that must show whole (a coach's catchphrase, which can be
+        /// any length): it wraps at `.info`'s width instead of cutting off.
+        case quote
         case info(title: Text?)
         case status(detail: Text?, button: StatusButton)
     }
@@ -86,6 +89,14 @@ public struct SpeechBubble: View {
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .lineLimit(1)
+            }
+        case .quote:
+            HuggingWidth(max: Self.infoWidth - 2 * Self.horizontalPadding) {
+                text
+                    .typeStyle(TypeRamp.footnoteEmphasis)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         case .info(let title):
             HuggingWidth(max: Self.infoWidth - 2 * Self.horizontalPadding) {
