@@ -88,17 +88,25 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     _ = try await stack.squad(of: traveller)
     let losAngeles = try #require(TimeZone(identifier: "America/Los_Angeles"))
     let shanghai = try #require(TimeZone(identifier: "Asia/Shanghai"))
-    _ = try await traveller.api.save(
-        Profile(timeZone: losAngeles, catchphrase: try Catchphrase("冲就完了"), jerseyNumber: try JerseyNumber(7)))
+    let character = MemberCharacter(
+        nickname: try Nickname("小周"), look: CharacterLook(persona: "deadpan", variants: ["body": "tuxedo"], colors: [:])
+    )
+    let before = Profile(
+        timeZone: losAngeles, catchphrase: try Catchphrase("冲就完了"), character: character,
+        jerseyNumber: try JerseyNumber(7))
+    _ = try await traveller.api.save(before)
 
     let backend = APICheckInBackend(api: traveller.api, directory: scratch(), phoneZone: { shanghai })
-    let home = try #require(try await backend.home())
-    #expect(home.timeZone == shanghai)
-
-    let profile = try #require(try await traveller.api.me().profile)
-    #expect(profile.timeZone == shanghai)
-    #expect(profile.catchphrase == (try Catchphrase("冲就完了")))
-    #expect(profile.jerseyNumber == (try JerseyNumber(7)))
+    #expect(try await backend.home()?.timeZone == losAngeles)
+    #expect(try await backend.followPhoneZone())
+    #expect(try await backend.home()?.timeZone == shanghai)
+    #expect(
+        try await traveller.api.me().profile
+            == Profile(
+                timeZone: shanghai, catchphrase: before.catchphrase, character: character,
+                jerseyNumber: before.jerseyNumber))
+    // Already in the phone's zone: nothing to save.
+    #expect(try await backend.followPhoneZone() == false)
 }
 
 @MainActor @Test func aTrainingWithPhotosPostsCountsAndTheSquadSeesIt() async throws {

@@ -40,18 +40,7 @@ public struct APICheckInBackend: CheckInBackend {
         do {
             var signedIn = try await api.meWire()
             let zone = phoneZone()
-            if let profile = signedIn.profile {
-                if profile.timeZone != zone.identifier {
-                    // The member's day follows the phone's clock, so a member who has travelled
-                    // takes the new zone. The profile is saved whole, so the rest of it is kept.
-                    let kept = try Profile(profile)
-                    _ = try await api.save(
-                        Profile(
-                            timeZone: zone, catchphrase: kept.catchphrase, character: kept.character,
-                            jerseyNumber: kept.jerseyNumber))
-                    signedIn = try await api.meWire()
-                }
-            } else {
+            if signedIn.profile == nil {
                 // Saved right after the first sign-in; a member without one gets the phone's zone.
                 _ = try await api.save(Profile(timeZone: zone))
                 signedIn = try await api.meWire()
@@ -80,6 +69,23 @@ public struct APICheckInBackend: CheckInBackend {
             throw CheckInError(error)
         } catch {
             throw .notSent
+        }
+    }
+
+    public func followPhoneZone() async throws(CheckInError) -> Bool {
+        let zone = phoneZone()
+        do throws(APIError) {
+            guard let profile = try await api.me().profile, profile.timeZone.identifier != zone.identifier else {
+                return false
+            }
+            // The profile is saved whole, so the rest of it is kept.
+            _ = try await api.save(
+                Profile(
+                    timeZone: zone, catchphrase: profile.catchphrase, character: profile.character,
+                    jerseyNumber: profile.jerseyNumber))
+            return true
+        } catch {
+            throw CheckInError(error)
         }
     }
 

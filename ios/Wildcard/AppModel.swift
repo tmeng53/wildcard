@@ -314,12 +314,12 @@ final class AppModel {
             service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
 
-    /// 动态 on the member's squad, its days by the member's own clock.
+    /// 动态 on the member's squad, its days by the member's own clock: the phone's, which the
+    /// profile's zone follows (`TodayStore` saves it once the outbox is empty).
     private static func feed(api: WildcardAPI, home: Home) -> FeedModel {
-        let zone = home.timeZone
         let store = FeedStore(
             source: APIFeedSource(api: api), squad: home.squad.id, viewer: home.member,
-            today: { LocalDay(at: Date(), in: zone) }, now: { Timestamp(Date()) },
+            today: { LocalDay(at: Date(), in: .current) }, now: { Timestamp(Date()) },
             newCommentID: { CommentID(UUID()) })
         return FeedModel(store: store, viewer: home.member, now: { Date() })
     }

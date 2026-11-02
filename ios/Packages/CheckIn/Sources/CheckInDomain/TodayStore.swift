@@ -127,6 +127,9 @@ public final class TodayStore {
         await refresh()
         await loadPokes()
         await sendPending()
+        // A member who travelled takes the phone's zone once their waiting posts are out, as each
+        // one's day was made in the old zone. Best effort: the home stays as it is if it fails.
+        if pending.isEmpty, (try? await backend.followPhoneZone()) == true { await refresh() }
     }
 
     /// Loads the server's home; keeps the one shown when the server can't be reached. A post
