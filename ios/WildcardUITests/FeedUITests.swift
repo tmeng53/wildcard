@@ -118,6 +118,30 @@ final class FeedUITests: XCTestCase {
         assertClearOfTheTabBar(minutes, in: app)
     }
 
+    /// A post without photos shows the shared colour block, its words and a 练了's minutes on it:
+    /// the 请假条 near the top, and two days back the tennis serve with its 50 minutes.
+    func testPostsWithoutPhotos() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
+        let blocks = app.descendants(matching: .any).matching(identifier: "post.block")
+        XCTAssertTrue(blocks.firstMatch.waitForExistence(timeout: Self.wait), "a 请假条 has no colour block")
+        let serve = blocks.matching(NSPredicate(format: "label CONTAINS '发球终于过网了'")).firstMatch
+        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
+        let feed = app.scrollViews.firstMatch
+        var drags = 0
+        while drags < Self.maxSwipes, !(serve.exists && serve.frame.maxY <= tabBarTop) {
+            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            drags += 1
+        }
+        XCTAssertTrue(serve.exists, "the tennis serve without a photo has no colour block")
+        XCTAssertTrue(serve.label.contains("50′"), "the block has no minutes: \(serve.label)")
+        settle()
+        keepScreenshot(named: "47-feed-no-photo")
+        assertClearOfTheTabBar(serve, in: app)
+    }
+
     /// ＋ opens our own emoji grid, and holding a card then sliding along the bar picks.
     func testGridAndHoldToPick() {
         continueAfterFailure = false
