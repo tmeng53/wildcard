@@ -42,7 +42,7 @@ final class FeedUITests: XCTestCase {
         assertOnScreen(who, in: app)
         settle()
         keepScreenshot(named: "43-feed-who-reacted")
-        app.staticTexts["feed.title"].tap()
+        tapOutside(who, in: app)
         waitFor(who, "exists == false", "who reacted stayed open")
 
         // The oldest posts scroll up clear of the tab bar: swipe until the last post is on
@@ -229,6 +229,21 @@ final class FeedUITests: XCTestCase {
         assertOnScreen(element, in: app)
         let bar = tabButton("tab.feed", in: app)
         XCTAssertLessThanOrEqual(element.frame.maxY, bar.frame.minY, "\(element.identifier) is under the tab bar")
+    }
+
+    /// A tap anywhere but the panel closes it: in the larger gap above or below it, clear of the
+    /// tab bar. The panel opens over its row when there is no room under it, which can put it over
+    /// the title, so tapping the title isn't always a tap outside.
+    private func tapOutside(_ panel: XCUIElement, in app: XCUIApplication) {
+        let screen = app.windows.firstMatch.frame
+        let top = app.staticTexts["feed.title"].frame.minY
+        let bottom = tabButton("tab.feed", in: app).frame.minY
+        let above = panel.frame.minY - top
+        let below = bottom - panel.frame.maxY
+        let y = above > below ? top + above / 2 : panel.frame.maxY + below / 2
+        app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: screen.midX, dy: y))
+            .tap()
     }
 
     private func assertOnScreen(_ element: XCUIElement, in app: XCUIApplication) {

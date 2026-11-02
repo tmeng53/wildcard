@@ -207,6 +207,12 @@ public struct WildcardAPI: Sendable {
         }
     }
 
+    func myPostsWire(kind: Operations.ListMyPosts.Input.Query.KindPayload?, after: String?) async throws(APIError)
+        -> Components.Schemas.MyPostPage
+    {
+        try await call { try await client.listMyPosts(query: .init(kind: kind, after: after)).ok.body.json }
+    }
+
     func checkInsWire(of squad: SquadID, from: LocalDay, through last: LocalDay) async throws(APIError)
         -> Components.Schemas.SquadPostList
     {

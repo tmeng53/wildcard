@@ -69,7 +69,7 @@ private struct FeedPhoto: View {
                 }
             }
             .clipped()
-            .task(id: ref) {
+            .task(id: ref.loadID) {
                 guard let jpeg = await model.store.photo(ref) else { return }
                 image = await Self.decode(jpeg)
             }
@@ -80,5 +80,12 @@ private struct FeedPhoto: View {
         let options = [kCGImageSourceShouldCacheImmediately: true] as CFDictionary
         return CGImageSourceCreateImageAtIndex(source, 0, options)
     }
+}
+
+extension PhotoRef {
+    /// What a photo's loading task follows: its path and the URL it is fetched from, since a
+    /// refresh signs a new URL for the same path (`PhotoRef`'s equality is the path alone) and a
+    /// photo that failed to load should try again with it.
+    var loadID: [String?] { [path, viewURL?.absoluteString] }
 }
 #endif

@@ -156,6 +156,12 @@ public final class FeedModel {
         opened = post
     }
 
+    /// A post's own page outside the feed (a tile on 我的动态): one post, read and answered as
+    /// 动态 does, with the same recent emoji.
+    public func page(of post: CheckInID) -> FeedModel {
+        FeedModel(store: store.store(of: post), viewer: viewer, now: now, defaults: defaults)
+    }
+
     /// Sends the member's comment on a post, replying to whomever they picked. False when it
     /// couldn't go out; the words stay to try again.
     func comment(_ text: CommentText, on post: CheckInID) async -> Bool {

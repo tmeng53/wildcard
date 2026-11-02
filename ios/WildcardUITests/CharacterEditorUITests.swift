@@ -76,6 +76,8 @@ final class CharacterEditorUITests: XCTestCase {
         scrollUntilHittable(cap, in: app)
         cap.tap()
         waitUntilSelected(cap, "picking 棒球帽 didn't select it")
+        // Its colors stay pinned above the rack, though the rack has scrolled down to it.
+        XCTAssertTrue(app.buttons["editor.swatch.hat.0"].isHittable, "the hat's colors scrolled out of view")
         let waistbag = app.buttons["editor.tile.acc.warmup-waistbag"]
         scrollUntilHittable(waistbag, in: app)
         waistbag.tap()

@@ -34,6 +34,45 @@ final class MeUITests: XCTestCase {
         waitFor(card, "NOT (label CONTAINS '放纵餐')", "the card didn't turn back")
     }
 
+    /// 我的动态 from 我: the member's own posts as a wall under its month, the header's counts, a
+    /// kind with nothing in it, and back to 我.
+    func testMyPostsWall() {
+        let app = launch(language: "zh-Hans")
+        let entry = app.buttons["me.myPosts"]
+        XCTAssertTrue(entry.waitForExistence(timeout: 30), "我 has no 我的动态 button")
+        entry.tap()
+        let wall = app.descendants(matching: .any).matching(identifier: "wall.page").firstMatch
+        XCTAssertTrue(wall.waitForExistence(timeout: 30), "我的动态 never opened")
+        let tile = app.descendants(matching: .any).matching(identifier: "wall.tile").firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 30), "the wall has no tiles")
+        XCTAssertTrue(
+            app.staticTexts["wall.counts"].label.contains("发过 1 条"),
+            "the header has no counts: \(app.staticTexts["wall.counts"].label)")
+        XCTAssertTrue(tile.frame.maxX <= app.frame.maxX && tile.frame.minX >= 0, "a tile runs off the screen")
+        settle()
+        keepScreenshot(named: "92-my-posts")
+
+        // A tile opens 动态's own post page, without the tab bar, and 返回 comes back to the wall.
+        tile.tap()
+        let back = app.buttons["post.back"]
+        XCTAssertTrue(back.waitForExistence(timeout: 30), "a tile didn't open the post's page")
+        XCTAssertFalse(app.buttons["tab.feed"].exists, "the tab bar stayed over the post's page")
+        settle()
+        keepScreenshot(named: "94-my-posts-post")
+        back.tap()
+        XCTAssertTrue(
+            app.buttons["wall.filter.cheatMeal"].waitForExistence(timeout: 30), "返回 didn't go back to the wall")
+
+        app.buttons["wall.filter.cheatMeal"].tap()
+        let empty = app.descendants(matching: .any).matching(identifier: "wall.empty").firstMatch
+        XCTAssertTrue(empty.waitForExistence(timeout: 30), "an empty kind says nothing")
+        settle()
+        keepScreenshot(named: "93-my-posts-empty-kind")
+
+        app.buttons["wall.back"].tap()
+        XCTAssertTrue(entry.waitForExistence(timeout: 30), "返回 didn't go back to 我")
+    }
+
     func testSettingsAndDeleteAccount() {
         let app = launch(language: "zh-Hans")
         let settingsButton = app.buttons["me.settings"]
