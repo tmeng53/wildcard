@@ -44,10 +44,20 @@ const StoredMemeV1 = z.strictObject({ version: z.literal(1), ...memeFields });
 export const StoredMeme = z.discriminatedUnion('version', [StoredMemeV1]);
 export type StoredMeme = z.infer<typeof StoredMeme>;
 
+/**
+ * A meme Tracy approved, with the day it stops being used if it is tied to a moment (Tracy,
+ * 2026-11-02: 「多出来的一小时只用一周」). Without one it stays in use until it is turned off.
+ */
+export interface ApprovedMeme extends MemeDraft {
+  readonly expiresAt?: Date;
+}
+
 /** A meme in the library. */
 export interface MemeRecord extends MemeDraft {
   readonly id: MemeId;
   readonly approvedAt: Date;
+  /** When it stops being used; null while people keep saying it. */
+  readonly expiresAt: Date | null;
 }
 
 /** The stored JSON for a draft. */
@@ -56,10 +66,7 @@ export function storedPayload(meme: MemeDraft): StoredMeme {
   return { version: 1, background, meaning, styles, source };
 }
 
-/** A meme is used for 4 weeks after it is approved (Tracy, 2026-10-19), then left out. */
-const USED_FOR_MS = 28 * 86_400_000;
-
-/** The earliest approval still in use at `now`. */
-export function inUseSince(now: Date): Date {
-  return new Date(now.getTime() - USED_FOR_MS);
+/** Whether an expiry leaves the meme any time in use: it must come after the approval. */
+export function expiresAfterApproval(expiresAt: Date | null, approvedAt: Date): boolean {
+  return expiresAt === null || expiresAt.getTime() > approvedAt.getTime();
 }

@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 import { createPostgresMemeStore, type MemeTables } from '../adapters/postgres-meme-store.js';
 import { MemeDraft } from '../domain/meme.js';
-import { MemeNotFoundError } from '../errors.js';
+import { MemeExpiryBeforeApprovalError, MemeNotFoundError } from '../errors.js';
 import { createMemes } from './memes.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
@@ -51,7 +51,11 @@ describe('the meme library', () => {
     expect(rest).toStrictEqual([]);
     const { id, ...kept } = saved ?? { id: undefined };
     expect(z.uuid().safeParse(id).success).toBe(true);
-    expect(kept).toStrictEqual({ ...city, approvedAt: new Date('2026-10-19T16:00:00.000Z') });
+    expect(kept).toStrictEqual({
+      ...city,
+      approvedAt: new Date('2026-10-19T16:00:00.000Z'),
+      expiresAt: null,
+    });
   });
 
   it('adds a meme once, so approving the same batch again changes nothing', async () => {
@@ -79,20 +83,70 @@ describe('the meme library', () => {
     expect(await inUse(meme)).toHaveLength(1);
   });
 
-  it('uses a meme for 4 weeks after its approval, newest first', async () => {
+  it('keeps using a meme with no expiry, newest first', async () => {
     const old = draft('旧梗');
     const recent = draft('新梗');
     const approved = new Date('2026-10-19T16:00:00.000Z');
     await memes.addApproved({ memes: [old], approvedAt: approved });
     await memes.addApproved({ memes: [recent], approvedAt: new Date(approved.getTime() + DAY) });
 
-    now = new Date(approved.getTime() + 28 * DAY);
+    now = new Date(approved.getTime() + 365 * DAY);
     expect((await inUse(old, recent)).map(({ phrase }) => phrase)).toStrictEqual([
       recent.phrase,
       old.phrase,
     ]);
-    now = new Date(approved.getTime() + 28 * DAY + 1);
-    expect((await inUse(old, recent)).map(({ phrase }) => phrase)).toStrictEqual([recent.phrase]);
+  });
+
+  it('stops using a meme once it expires', async () => {
+    const meme = draft('多出来的一小时');
+    const approvedAt = new Date('2026-11-02T18:00:00.000Z');
+    const expiresAt = new Date('2026-11-09T17:00:00.000Z');
+    await memes.addApproved({ memes: [{ ...meme, expiresAt }], approvedAt });
+
+    now = new Date(expiresAt.getTime() - 1);
+    expect((await inUse(meme)).map((saved) => [saved.phrase, saved.expiresAt])).toStrictEqual([
+      [meme.phrase, expiresAt],
+    ]);
+    now = expiresAt;
+    expect(await inUse(meme)).toStrictEqual([]);
+  });
+
+  it('refuses an expiry at or before the approval, adding nothing', async () => {
+    const meme = draft('过期了');
+    const approvedAt = new Date('2026-11-02T18:00:00.000Z');
+    await expect(
+      memes.addApproved({ memes: [{ ...meme, expiresAt: approvedAt }], approvedAt }),
+    ).rejects.toBeInstanceOf(MemeExpiryBeforeApprovalError);
+    now = approvedAt;
+    await memes.addApproved({ memes: [meme], approvedAt });
+    expect((await inUse(meme)).map(({ expiresAt }) => expiresAt)).toStrictEqual([null]);
+  });
+
+  it('sets, moves and clears when a meme expires', async () => {
+    const meme = draft('应景梗');
+    const approvedAt = new Date('2026-11-02T18:00:00.000Z');
+    await memes.addApproved({ memes: [meme], approvedAt });
+    now = new Date(approvedAt.getTime() + 10 * DAY);
+
+    await memes.setExpiry({
+      phrase: meme.phrase,
+      expiresAt: new Date(approvedAt.getTime() + 7 * DAY),
+    });
+    expect(await inUse(meme)).toStrictEqual([]);
+    // Extending an expired meme uses it again.
+    const later = new Date(approvedAt.getTime() + 14 * DAY);
+    await memes.setExpiry({ phrase: meme.phrase, expiresAt: later });
+    expect((await inUse(meme)).map(({ expiresAt }) => expiresAt)).toStrictEqual([later]);
+    await memes.setExpiry({ phrase: meme.phrase, expiresAt: null });
+    now = new Date(approvedAt.getTime() + 365 * DAY);
+    expect((await inUse(meme)).map(({ expiresAt }) => expiresAt)).toStrictEqual([null]);
+
+    await expect(
+      memes.setExpiry({ phrase: meme.phrase, expiresAt: approvedAt }),
+    ).rejects.toBeInstanceOf(MemeExpiryBeforeApprovalError);
+    await expect(
+      memes.setExpiry({ phrase: `没有这个梗${randomUUID()}`, expiresAt: null }),
+    ).rejects.toBeInstanceOf(MemeNotFoundError);
   });
 
   it('waits for a meme dated ahead until its day comes', async () => {

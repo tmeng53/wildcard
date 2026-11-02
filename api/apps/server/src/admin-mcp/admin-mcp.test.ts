@@ -352,6 +352,7 @@ describe('the admin MCP server', () => {
       ['list_admin_log', true],
       ['list_memes', true],
       ['add_memes', false],
+      ['set_meme_expiry', false],
       ['turn_off_meme', false],
       ['turn_on_meme', false],
       ['get_disclaimer_draft_settings', true],
@@ -411,7 +412,7 @@ describe('the admin MCP server', () => {
     await client.close();
   });
 
-  it('adds memes, turns one off and back on, and logs each change', async () => {
+  it('adds memes, sets when one expires, turns one off and back on, and logs each change', async () => {
     const admin = await member({ admin: true });
     const client = await connect(clientSignedInAs(admin));
     const meme = (name: string) => ({
@@ -442,8 +443,33 @@ describe('the admin MCP server', () => {
       alreadyThere: [city.phrase],
     });
     expect(await inUse()).toStrictEqual([
-      { ...banwei, approvedAt: '2026-10-19T16:00:00.000Z' },
-      { ...city, approvedAt: '2026-10-18T17:00:00.000Z' },
+      { ...banwei, approvedAt: '2026-10-19T16:00:00.000Z', expiresAt: null },
+      { ...city, approvedAt: '2026-10-18T17:00:00.000Z', expiresAt: null },
+    ]);
+
+    // A meme tied to a moment gets an expiry; past it, the AI leaves it out until it is cleared.
+    expect(
+      await call('set_meme_expiry', { phrase: city.phrase, expiresAt: '2026-10-26T16:00:00Z' }),
+    ).toStrictEqual({ version: 1, phrase: city.phrase, expiresAt: '2026-10-26T16:00:00.000Z' });
+    expect(await inUse()).toStrictEqual([
+      { ...banwei, approvedAt: '2026-10-19T16:00:00.000Z', expiresAt: null },
+      { ...city, approvedAt: '2026-10-18T17:00:00.000Z', expiresAt: '2026-10-26T16:00:00.000Z' },
+    ]);
+    await call('set_meme_expiry', { phrase: city.phrase, expiresAt: '2026-10-19T15:00:00Z' });
+    expect((await inUse()).map(({ phrase }) => phrase)).toStrictEqual([banwei.phrase]);
+    expect(await call('set_meme_expiry', { phrase: city.phrase, expiresAt: null })).toStrictEqual({
+      version: 1,
+      phrase: city.phrase,
+      expiresAt: null,
+    });
+    expect((await inUse()).map(({ phrase }) => phrase)).toStrictEqual([banwei.phrase, city.phrase]);
+    const early = await client.callTool({
+      name: 'set_meme_expiry',
+      arguments: { phrase: city.phrase, expiresAt: '2026-10-18T17:00:00Z' },
+    });
+    expect([early.isError, textOf(early)]).toStrictEqual([
+      true,
+      `MEME_EXPIRY_BEFORE_APPROVAL: 「${city.phrase}」 must expire after it was approved.`,
     ]);
 
     expect(await call('turn_off_meme', { phrase: city.phrase })).toStrictEqual({
@@ -472,6 +498,9 @@ describe('the admin MCP server', () => {
     expect(rows.rows.map(({ action }) => action.tool)).toStrictEqual([
       'add_memes',
       'add_memes',
+      'set_meme_expiry',
+      'set_meme_expiry',
+      'set_meme_expiry',
       'turn_off_meme',
       'turn_on_meme',
     ]);

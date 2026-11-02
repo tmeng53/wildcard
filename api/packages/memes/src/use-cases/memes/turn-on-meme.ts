@@ -3,8 +3,8 @@ import { MemeNotFoundError } from '../../errors.js';
 import type { MemeStore } from '../../ports.js';
 
 /**
- * Lets a turned-off meme be used again, e.g. one turned off by mistake. It is still used only
- * in the 4 weeks after its approval.
+ * Lets a turned-off meme be used again, e.g. one turned off by mistake. It still stops being
+ * used once it expires.
  */
 export async function turnOnMeme(
   deps: { readonly store: MemeStore },

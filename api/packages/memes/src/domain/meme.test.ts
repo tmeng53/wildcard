@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { MemeDraft, inUseSince } from './meme.js';
+import { MemeDraft, expiresAfterApproval } from './meme.js';
 
 const city = {
   phrase: ' city不city ',
@@ -36,10 +36,23 @@ describe('a meme draft', () => {
   });
 });
 
-describe('memes in use', () => {
-  it('go back 28 days', () => {
-    expect(inUseSince(new Date('2026-11-16T16:00:00.000Z'))).toStrictEqual(
-      new Date('2026-10-19T16:00:00.000Z'),
-    );
+describe('a meme’s expiry', () => {
+  const approvedAt = new Date('2026-11-02T18:00:00.000Z');
+
+  it.each([
+    { case: 'none', expiresAt: null, allowed: true },
+    {
+      case: 'a moment after the approval',
+      expiresAt: new Date('2026-11-02T18:00:00.001Z'),
+      allowed: true,
+    },
+    { case: 'the approval itself', expiresAt: approvedAt, allowed: false },
+    {
+      case: 'before the approval',
+      expiresAt: new Date('2026-11-01T18:00:00.000Z'),
+      allowed: false,
+    },
+  ])('is allowed for $case: $allowed', ({ expiresAt, allowed }) => {
+    expect(expiresAfterApproval(expiresAt, approvedAt)).toBe(allowed);
   });
 });
