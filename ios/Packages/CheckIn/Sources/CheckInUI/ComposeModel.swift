@@ -55,21 +55,25 @@ public final class ComposeModel {
         self.loadPhoto = loadPhoto
         self.save = save
         self.close = close
+        // Locals first: an @Observable model can't read its own properties until all are set.
+        var start = Snapshot(photos: Array(photos.prefix(Photos.maxCount)), line: "", activity: nil, minutes: nil)
         switch purpose {
         case .new(let squads):
-            self.photos = Array(photos.prefix(Photos.maxCount))
-            line = ""
             shared = Set(squads.map(\.id))
         case .edit(let checkIn):
-            self.photos = ComposedPhoto.of(checkIn)
-            line = checkIn.entry.line ?? ""
+            start.photos = ComposedPhoto.of(checkIn)
+            start.line = checkIn.entry.line ?? ""
             shared = Set(checkIn.audience.squads)
             if case .trained(let training) = checkIn.entry {
-                activity = training.activity
-                minutes = training.minutes
+                start.activity = training.activity
+                start.minutes = training.minutes
             }
         }
-        initial = Snapshot(photos: self.photos, line: line, activity: activity, minutes: minutes)
+        self.photos = start.photos
+        line = start.line
+        activity = start.activity
+        minutes = start.minutes
+        initial = start
     }
 
     /// An edit of one of the member's own posts, saved through `editor`.
@@ -165,10 +169,10 @@ public final class ComposeModel {
     }
 
     private struct Snapshot: Equatable {
-        let photos: [ComposedPhoto]
-        let line: String
-        let activity: Activity?
-        let minutes: WorkoutMinutes?
+        var photos: [ComposedPhoto]
+        var line: String
+        var activity: Activity?
+        var minutes: WorkoutMinutes?
     }
 }
 
