@@ -40,6 +40,7 @@ import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
+import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
 import { createAwardSettings, createPostgresAwardSettings } from '@wildcard/weekly-awards';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -67,10 +68,12 @@ import { disclaimerDiceTools } from './tools/disclaimer-dice.js';
 import { memeTools } from './tools/memes.js';
 import { coachTools } from './tools/coach.js';
 import { sportTools } from './tools/sports.js';
+import { unlockTools } from './tools/unlocks.js';
 import { weekSummaryWordTools } from './tools/week-summary-words.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
+  unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
 } from '../test-kit/weekly-awards.js';
@@ -147,6 +150,7 @@ beforeAll(async () => {
           aiConsent: aiConsentOn(db),
           nudges: nudgesOn(db),
           weeklyAwards: unusedWeeklyAwards,
+          unlocks: unusedUnlocks,
           weekSummaryWords: unusedWeekSummaryWords,
           coachHiring: unusedCoachHiring,
           log: createLog(() => undefined),
@@ -191,6 +195,14 @@ beforeAll(async () => {
                 words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
               }),
               ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
+              ...unlockTools({
+                unlocks: createUnlocks({
+                  store: createPostgresUnlockStore(scope),
+                  trainedSince: () => Promise.reject(new Error('unused')),
+                  sportListed: (id) =>
+                    createSports({ store: createPostgresSportStore(scope) }).isListed(id),
+                }),
+              }),
               ...coachTools({
                 settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
                 coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),
@@ -368,6 +380,9 @@ describe('the admin MCP server', () => {
       ['put_sport', false],
       ['put_sport_category', false],
       ['set_sport_picks', false],
+      ['get_unlock_rules', true],
+      ['put_unlock_rule', false],
+      ['give_unlocks', false],
       ['get_coach_settings', true],
       ['change_coach_settings', false],
       ['list_coaches', true],
@@ -844,6 +859,85 @@ describe('the admin MCP server', () => {
     `.execute(db);
     expect(rows.rows.map(({ action }) => action)).toStrictEqual([
       { version: 1, tool: 'put_sport', arguments: { ...strength } },
+    ]);
+    await client.close();
+  });
+
+  it('reads the unlock rules and logs a change, refusing a sport the list lacks', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const before = await call('get_unlock_rules');
+    const Rules = z.object({
+      version: z.literal(1),
+      rules: z.array(
+        z
+          .object({ kind: z.string(), id: z.string(), sports: z.array(z.string()), after: z.int() })
+          .loose(),
+      ),
+    });
+    const deuce = Rules.parse(JSON.parse(before.text)).rules.find(({ id }) => id === 'deuce');
+    expect(deuce).toMatchObject({
+      kind: 'store',
+      sports: ['tennis', 'pickleball', 'squash'],
+      after: 3,
+    });
+    // Putting a rule back as it is changes nothing, but the call is still logged.
+    const same = await call('put_unlock_rule', {
+      kind: 'store',
+      id: 'deuce',
+      sports: ['tennis', 'pickleball', 'squash'],
+      after: 3,
+    });
+    expect(same.isError).toBe(false);
+    expect(JSON.parse(same.text)).toStrictEqual(JSON.parse(before.text));
+    const refused = await call('put_unlock_rule', {
+      kind: 'store',
+      id: 'deuce',
+      sports: ['quidditch'],
+      after: 3,
+    });
+    expect(refused).toStrictEqual({
+      isError: true,
+      text: 'UNLOCK_SPORT_NOT_LISTED: quidditch is not on the sports list.',
+    });
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      {
+        version: 1,
+        tool: 'put_unlock_rule',
+        arguments: {
+          kind: 'store',
+          id: 'deuce',
+          sports: ['tennis', 'pickleball', 'squash'],
+          after: 3,
+        },
+      },
+    ]);
+    await client.close();
+  });
+
+  it('gives a member stores and props and logs who gave them', async () => {
+    const admin = await member({ admin: true });
+    const friend = await member({ admin: false });
+    const client = await connect(clientSignedInAs(admin));
+    const gift = { member: friend.userId, items: [{ kind: 'store', id: 'deuce' }] };
+    const given = await client.callTool({ name: 'give_unlocks', arguments: gift });
+    expect(given.isError).not.toBe(true);
+    expect(JSON.parse(textOf(given))).toMatchObject({
+      version: 1,
+      unlocks: [{ kind: 'store', id: 'deuce', by: { admin: admin.userId } }],
+    });
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      { version: 1, tool: 'give_unlocks', arguments: gift },
     ]);
     await client.close();
   });

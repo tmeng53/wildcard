@@ -56,6 +56,15 @@ extension WildcardAPI {
         }
     }
 
+    /// The stores and props the member unlocked by training, the earliest first.
+    public func unlocks() async throws(APIError) -> [Unlock] {
+        try await call { try await client.getMyUnlocks().ok.body.json }.unlocks.map { unlock in
+            Unlock(
+                kind: unlock.kind == .store ? .store : .prop, id: unlock.id, unlockedAt: unlock.unlockedAt,
+                sports: unlock.reason.sports.compactMap(Sport.init(rawValue:)), checkIns: unlock.reason.checkIns)
+        }
+    }
+
     /// Whether the one daily push at 6pm is on; it is until the member turns it off.
     public func dailyPushOn() async throws(APIError) -> Bool {
         try await call { try await client.getMyPushSettings().ok.body.json }.settings.dailyProgress ?? true

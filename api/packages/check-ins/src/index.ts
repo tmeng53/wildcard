@@ -37,7 +37,7 @@ export {
   encodeCursor,
   type PostCursor,
 } from './domain/post-cursor.js';
-export type { CheckInTotals, TopSport } from './domain/totals.js';
+export type { CheckInTotals, TopSport, TrainedCheckIn } from './domain/totals.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
 export { CommentId, type Comment } from './domain/comment.js';
 export { CommentText } from './domain/text.js';

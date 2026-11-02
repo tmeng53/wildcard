@@ -52,11 +52,13 @@ public struct MeOverview: Hashable, Sendable {
     public var board: TitleBoard
     /// The training days in the member's 每周模板, for 设置's row; nil when it didn't load.
     public var templateDays: Int?
+    /// The stores and props the member unlocked by training, which the character editor opens.
+    public var unlocks: [Unlock]
 
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
         dailyPushOn: Bool, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil, board: TitleBoard = .empty,
-        templateDays: Int? = nil
+        templateDays: Int? = nil, unlocks: [Unlock] = []
     ) {
         self.character = character
         self.joinedAt = joinedAt
@@ -68,6 +70,7 @@ public struct MeOverview: Hashable, Sendable {
         self.squadPlace = squadPlace
         self.board = board
         self.templateDays = templateDays
+        self.unlocks = unlocks
     }
 
     /// The number on the member's card.

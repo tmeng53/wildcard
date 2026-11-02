@@ -30,3 +30,6 @@ export const unusedCoachHiring = {
   current: unused,
   offered: unused,
 };
+
+/** What members unlocked, for an app whose test never reads it. */
+export const unusedUnlocks = { of: unused };

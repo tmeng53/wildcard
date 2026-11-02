@@ -10,6 +10,7 @@ import type { Nudges } from '@wildcard/nudges';
 import type { Push } from '@wildcard/push';
 import type { Squads } from '@wildcard/squads';
 import type { WeeklyAwards } from '@wildcard/weekly-awards';
+import type { Unlocks } from '@wildcard/unlocks';
 import { HTTPException } from 'hono/http-exception';
 import { routePath } from 'hono/route';
 import { z } from 'zod';
@@ -32,6 +33,7 @@ import type {
 import { problemResponse } from './problem.js';
 import { requestTrace } from './request-trace.js';
 import { awardTotals } from './routes/award-totals.js';
+import { unlocks } from './routes/unlocks.js';
 import { aiConsent } from './routes/ai-consent.js';
 import { catalog, type CatalogSection } from './routes/catalog.js';
 import { checkIns } from './routes/check-ins.js';
@@ -81,6 +83,8 @@ export interface AppDependencies {
   readonly weekSummaryWords: () => Promise<WeekSummaryWords>;
   /** Each squad's weekly awards, and the clock that says when they are due. */
   readonly weeklyAwards: { readonly awards: WeeklyAwards; readonly clock: () => Date };
+  /** The stores and props members unlock by training. */
+  readonly unlocks: Unlocks;
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */
   readonly jobs: {
@@ -147,6 +151,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', weekStory({ ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) }));
   app.route('/', awardTotals({ ...deps, ...deps.weeklyAwards }));
   app.route('/', titles({ ...deps, awards: deps.weeklyAwards.awards }));
+  app.route('/', unlocks(deps));
   // Not part of the app's contract, so not in openapi.json: a scheduler calls it.
   app.route(
     '/',

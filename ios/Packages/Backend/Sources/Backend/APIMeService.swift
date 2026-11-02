@@ -30,6 +30,8 @@ public struct APIMeService: MeService {
             let board = (try? await api.titleBoard()) ?? .empty
             // And the 每周模板's row its count.
             let templateDays = try? await api.planTemplate().count { $0 != .rest }
+            // Unlocks must load: an empty list would lock away stores and props the member earned.
+            let unlocks = try await api.unlocks()
             let dailyPushOn = try await api.dailyPushOn()
             return MeOverview(
                 character: MeCharacter(
@@ -45,7 +47,7 @@ public struct APIMeService: MeService {
                 // Members are listed in the order they joined.
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
                 board: board,
-                templateDays: templateDays)
+                templateDays: templateDays, unlocks: unlocks)
         }
     }
 

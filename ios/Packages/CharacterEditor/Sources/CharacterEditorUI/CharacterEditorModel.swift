@@ -3,6 +3,7 @@ import AvatarArt
 import AvatarDomain
 import AvatarUI
 import CharacterEditorDomain
+import Contracts
 import Foundation
 import Observation
 
@@ -73,12 +74,14 @@ public final class CharacterEditorModel {
         self.tab = tab
     }
 
-    /// The placeholder character's catalog and a look to start from: the one given, or a random
-    /// one until sign-up hands over the last look its first screen showed.
+    /// The placeholder character's catalog, with the stores and props the member unlocked open,
+    /// and a look to start from: the one given, or a random one until sign-up hands over the last
+    /// look its first screen showed.
     public static func placeholder(
-        look: Outfit? = nil, persona: Persona = .energetic, nickname: String, tab: EditorTab = .look
+        look: Outfit? = nil, persona: Persona = .energetic, nickname: String, tab: EditorTab = .look,
+        unlocks: [Unlock] = []
     ) throws(AvatarError) -> CharacterEditorModel {
-        let catalog = try Catalog.placeholder()
+        let catalog = try Catalog.placeholder(unlocks: unlocks)
         var generator = SystemRandomNumberGenerator()
         let start = look ?? CharacterDraft.randomLook(from: catalog, using: &generator)
         return CharacterEditorModel(
