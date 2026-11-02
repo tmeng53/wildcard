@@ -1,5 +1,5 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
-import type { CheckInTotals } from './domain/totals.js';
+import type { CheckInTotals, TrainedCheckIn } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { CheckInKind, PostCursor } from './domain/post-cursor.js';
 import type { PhotoPath } from './domain/photos.js';
@@ -21,6 +21,11 @@ export interface CheckInStore {
   insert(checkIn: CheckInRecord): Promise<InsertOutcome>;
   /** Everything `member` ever checked in, counted by kind. */
   totals(member: MemberId): Promise<CheckInTotals>;
+  /** The member's 练了 check-ins made from `since` on, the earliest made first. */
+  trainedSince(query: {
+    readonly member: MemberId;
+    readonly since: Date;
+  }): Promise<TrainedCheckIn[]>;
   /** Check-ins sent to `squad` from these members, newest day first, with their whole audience. */
   listForSquad(
     query: DayRange & { readonly squad: SquadId; readonly members: readonly MemberId[] },

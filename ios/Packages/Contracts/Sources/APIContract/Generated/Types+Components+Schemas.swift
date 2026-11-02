@@ -5342,5 +5342,109 @@ extension Components {
                 case times
             }
         }
+        /// - Remark: Generated from `#/components/schemas/MyUnlocks`.
+        public struct MyUnlocks: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/version`.
+            public var version: Components.Schemas.MyUnlocks.VersionPayload
+            /// Every store and prop the member unlocked, the earliest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/unlocks`.
+            public var unlocks: [Components.Schemas.Unlock]
+            /// Creates a new `MyUnlocks`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - unlocks: Every store and prop the member unlocked, the earliest first.
+            public init(
+                version: Components.Schemas.MyUnlocks.VersionPayload,
+                unlocks: [Components.Schemas.Unlock]
+            ) {
+                self.version = version
+                self.unlocks = unlocks
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case unlocks
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Unlock`.
+        public struct Unlock: Codable, Hashable, Sendable {
+            /// `store` for a store on the character editor’s 商店街, `prop` for a prop.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Unlock/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case store = "store"
+                case prop = "prop"
+            }
+            /// `store` for a store on the character editor’s 商店街, `prop` for a prop.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Unlock/kind`.
+            public var kind: Components.Schemas.Unlock.KindPayload
+            /// The store’s or prop’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Unlock/id`.
+            public var id: Swift.String
+            /// When the member made the check-in that unlocked it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Unlock/unlockedAt`.
+            public var unlockedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Unlock/reason`.
+            public var reason: Components.Schemas.UnlockReason
+            /// Creates a new `Unlock`.
+            ///
+            /// - Parameters:
+            ///   - kind: `store` for a store on the character editor’s 商店街, `prop` for a prop.
+            ///   - id: The store’s or prop’s id in the app’s art.
+            ///   - unlockedAt: When the member made the check-in that unlocked it.
+            ///   - reason:
+            public init(
+                kind: Components.Schemas.Unlock.KindPayload,
+                id: Swift.String,
+                unlockedAt: Foundation.Date,
+                reason: Components.Schemas.UnlockReason
+            ) {
+                self.kind = kind
+                self.id = id
+                self.unlockedAt = unlockedAt
+                self.reason = reason
+            }
+            public enum CodingKeys: String, CodingKey {
+                case kind
+                case id
+                case unlockedAt
+                case reason
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/UnlockReason`.
+        public struct UnlockReason: Codable, Hashable, Sendable {
+            /// The sports whose 练了 counted; empty for any sport.
+            ///
+            /// - Remark: Generated from `#/components/schemas/UnlockReason/sports`.
+            public var sports: [Swift.String]
+            /// How many 练了 check-ins in them it took.
+            ///
+            /// - Remark: Generated from `#/components/schemas/UnlockReason/checkIns`.
+            public var checkIns: Swift.Int
+            /// Creates a new `UnlockReason`.
+            ///
+            /// - Parameters:
+            ///   - sports: The sports whose 练了 counted; empty for any sport.
+            ///   - checkIns: How many 练了 check-ins in them it took.
+            public init(
+                sports: [Swift.String],
+                checkIns: Swift.Int
+            ) {
+                self.sports = sports
+                self.checkIns = checkIns
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sports
+                case checkIns
+            }
+        }
     }
 }
