@@ -110,7 +110,7 @@ public struct PostBlock: View {
                 .fixedSize(horizontal: false, vertical: layout == .strip)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, padding)
-                .padding(.top, layout == .tile ? 0 : Space.xl + Space.xxs)
+                .padding(.top, wordsTop)
                 .padding(.bottom, minutes == nil ? padding : minutesHeight)
                 .accessibilityIdentifier("post.block.words")
         } else {
@@ -128,6 +128,15 @@ public struct PostBlock: View {
         case .healthyMeal: Text("健康餐", bundle: .module)
         case .cheatMeal: Text("放纵餐", bundle: .module)
         case .disclaimer: Text("请假条", bundle: .module)
+        }
+    }
+
+    /// Room above the words for the label, and on a card for the day's bigger number too.
+    private var wordsTop: Double {
+        switch layout {
+        case .tile: 0
+        case .strip: Space.xl + Space.xxs
+        case .card: Space.xxl + Space.xs
         }
     }
 
