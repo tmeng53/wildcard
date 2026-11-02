@@ -9,6 +9,12 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import {
+  DeviceToken,
+  MemberId as PushMember,
+  apnsPayload,
+  type PushNotification,
+} from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
@@ -44,6 +50,14 @@ const photos = createSupabasePhotoStorage({
   secretKey: config.supabaseSecretKey,
 });
 const members = createMembers({ store: createPostgresProfileStore(db) });
+/** Every push sent, to which phone. */
+const sent: { readonly token: string; readonly notification: PushNotification }[] = [];
+const push = pushOn(db, {
+  send: (device, notification) => {
+    sent.push({ token: device.token, notification });
+    return Promise.resolve('sent');
+  },
+});
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -82,7 +96,7 @@ const app = createApp({
     inviteCodes: randomInviteCodes,
     aiConsent: () => Promise.resolve(true),
   }),
-  push: pushOn(db),
+  push,
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
@@ -146,6 +160,38 @@ async function checkIn(token: string, ...audience: string[]) {
   expect(status).toBe(201);
   return id;
 }
+
+/** A signed-up member with a nickname and a phone; the phone's token. */
+async function withPhone(nickname: string) {
+  const signedUp = await signUp();
+  const { status } = await call('PUT', {
+    path: '/me/profile',
+    token: signedUp.token,
+    body: {
+      version: 1,
+      timeZone: 'Asia/Shanghai',
+      character: {
+        nickname,
+        look: { persona: 'deadpan', variants: { body: 'peach' }, colors: {} },
+      },
+    },
+  });
+  expect(status).toBe(200);
+  const phone = DeviceToken.parse(randomUUID().replaceAll('-', '').repeat(2));
+  await push.registerDevice({
+    member: PushMember.parse(signedUp.userId),
+    device: { token: phone, environment: 'sandbox' },
+  });
+  return { ...signedUp, phone };
+}
+
+/** What each of these phones was sent, as APNs gets it. */
+const sentTo = (...phones: readonly string[]) =>
+  phones.map((phone) =>
+    sent
+      .filter(({ token }) => token === phone)
+      .map(({ notification }) => apnsPayload(notification)),
+  );
 
 describe('/check-ins/{checkInId}/comments', () => {
   it('writes comments, which the author and teammates read back here and in the feed', async () => {
@@ -294,5 +340,75 @@ describe('/check-ins/{checkInId}/comments', () => {
     const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: stranger.token });
     expect(listed).toMatchObject({ status: 404, body: { reason: 'CHECK_IN_NOT_FOUND' } });
     expect((await call('GET', { path: `/check-ins/${run}/comments` })).status).toBe(401);
+  });
+
+  it('tells the author about a comment and the member replied to about a reply, never the writer', async () => {
+    const [tracy, ann, bo] = [
+      await withPhone('翠西'),
+      await withPhone('安安'),
+      await withPhone('波波'),
+    ];
+    const run = await checkIn(tracy.token, await squadOf(tracy, ann, bo));
+    const [first, reply, own] = [randomUUID(), randomUUID(), randomUUID()];
+    const comment = (
+      id: string,
+      { token, ...body }: { token: string; text: string; replyTo?: string },
+    ) =>
+      call('PUT', {
+        path: `/check-ins/${run}/comments/${id}`,
+        token,
+        body: { version: 1, ...body },
+      });
+
+    expect((await comment(first, { token: ann.token, text: '明天我也练腿' })).status).toBe(201);
+    // A retry is the same comment: nobody hears of it twice.
+    expect((await comment(first, { token: ann.token, text: '明天我也练腿' })).status).toBe(200);
+    expect(
+      (await comment(reply, { token: bo.token, text: '算我一个', replyTo: ann.userId })).status,
+    ).toBe(201);
+    // The author on their own post, replying: only the member replied to hears.
+    expect(
+      (await comment(own, { token: tracy.token, text: '电梯见', replyTo: ann.userId })).status,
+    ).toBe(201);
+
+    const told = (key: string, { args, id }: { args: readonly string[]; id: string }) => ({
+      version: 1,
+      aps: {
+        alert: { 'loc-key': key, 'loc-args': args },
+        category: 'comment',
+        'thread-id': `comments-${run}`,
+        'interruption-level': 'active',
+        sound: 'default',
+        'mutable-content': 1,
+      },
+      event: { kind: 'comment', checkIn: run, comment: id },
+    });
+    expect(sentTo(tracy.phone, ann.phone, bo.phone)).toStrictEqual([
+      [
+        told('push.comment', { args: ['安安', '明天我也练腿'], id: first }),
+        told('push.comment', { args: ['波波', '算我一个'], id: reply }),
+      ],
+      [
+        told('push.comment.reply', { args: ['波波', '算我一个'], id: reply }),
+        told('push.comment.reply', { args: ['翠西', '电梯见'], id: own }),
+      ],
+      [],
+    ]);
+  });
+
+  it('sends no comment push to a member who turned push off', async () => {
+    const [tracy, ann] = [await withPhone('翠西'), await withPhone('安安')];
+    const run = await checkIn(tracy.token, await squadOf(tracy, ann));
+    const off = { version: 1, settings: { dailyProgress: false } };
+    expect(
+      (await call('PUT', { path: '/me/push-settings', token: tracy.token, body: off })).status,
+    ).toBe(200);
+    const written = await call('PUT', {
+      path: `/check-ins/${run}/comments/${randomUUID()}`,
+      token: ann.token,
+      body: { version: 1, text: '加油' },
+    });
+    expect(written.status).toBe(201);
+    expect(sentTo(tracy.phone)).toStrictEqual([[]]);
   });
 });

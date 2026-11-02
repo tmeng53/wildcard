@@ -247,12 +247,15 @@ struct WildcardApp: App {
                 myPosts: myPosts, selection: $tab
             )
             .onAppear {
-                // As on the real backend: the awards push opens 动态, where the 战报 is, and any
-                // other push 今天, or where the 6pm push's view asked.
-                delegate.opened = { [delegate, today, $tab] opened in
+                // As on the real backend: the awards push opens 动态, where the 战报 is, a comment's
+                // push its post's page, and any other push 今天, or where the 6pm push's view asked.
+                delegate.opened = { [delegate, today, feed, $tab] opened in
                     switch opened {
                     case .weeklyAwards:
                         $tab.wrappedValue = .feed
+                    case .comment(let post):
+                        $tab.wrappedValue = .feed
+                        feed.openPage(post)
                     case .other:
                         Self.open(delegate.takeDestination(), today: today, tab: $tab)
                         Task { await today.load() }
@@ -271,6 +274,8 @@ private struct AppRoot: View {
     let app: AppModel
     @Binding var tab: MainTabs.Tab
     let delegate: AppDelegate
+    /// A post a comment's push asked to open before the tabs were up.
+    @State private var postToOpen: CheckInID?
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -306,6 +311,11 @@ private struct AppRoot: View {
                     if let destination = delegate.takeDestination() {
                         WildcardApp.open(destination, today: today, tab: $tab)
                     }
+                    if let post = postToOpen {
+                        postToOpen = nil
+                        tab = .feed
+                        feed.openPage(post)
+                    }
                 }
             }
         }
@@ -325,12 +335,21 @@ private struct AppRoot: View {
             }
         }
         .onAppear {
-            delegate.opened = { [app, delegate, $tab] opened in
+            delegate.opened = { [app, delegate, $tab, $postToOpen] opened in
                 switch opened {
                 // 动态, where the member sees the new 战报's tile and opens it themselves.
                 case .weeklyAwards:
                     $tab.wrappedValue = .feed
                     Task { await app.readRecapAgain() }
+                // The post's own page, over 动态, with the new comment.
+                case .comment(let post):
+                    if case .tabs(_, _, _, let feed, _, _) = app.screen {
+                        $tab.wrappedValue = .feed
+                        feed.openPage(post)
+                    } else {
+                        // A tap that launched the app comes before the tabs, which open it.
+                        $postToOpen.wrappedValue = post
+                    }
                 case .other:
                     // Before the tabs are up, they take the 6pm push's destination when they appear.
                     if case .tabs(let today, _, _, _, _, _) = app.screen {

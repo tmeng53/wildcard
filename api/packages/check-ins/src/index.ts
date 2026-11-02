@@ -40,7 +40,7 @@ export {
 export type { CheckInTotals, TopSport } from './domain/totals.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
 export { CommentId, type Comment } from './domain/comment.js';
-export { CommentText } from './domain/text.js';
+export { COMMENT_MAX_CHARACTERS, CommentText } from './domain/text.js';
 export {
   DEFAULT_PLAN_DAYS,
   PlanDay,
