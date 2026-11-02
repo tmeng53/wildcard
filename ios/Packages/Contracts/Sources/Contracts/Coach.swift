@@ -18,7 +18,7 @@ public struct CoachID: RawRepresentable, Hashable, Sendable, ExpressibleByString
     public init(stringLiteral id: String) { rawValue = id }
 }
 
-/// A coach as 教练市场 and its 简历 show it: the same coach for every squad. Its words come from
+/// A coach as 教练招聘会 and its 简历 show it: the same coach for every squad. Its words come from
 /// the API, so a new coach needs no app release.
 public struct Coach: Hashable, Sendable, Identifiable {
     public let id: CoachID

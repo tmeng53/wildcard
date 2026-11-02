@@ -5,7 +5,7 @@ import DesignSystemUI
 import SquadDomain
 import SwiftUI
 
-// The squad's coach (approved canvas 雇教练页面, 2026-11-01): the 教练 card on 小队设置, 教练市场,
+// The squad's coach (approved canvas 雇教练页面, 2026-11-01): the 教练 card on 小队设置, 教练招聘会,
 // a coach's 简历 and 解雇. Only the captain hires, changes and fires; everyone reads the 简历.
 // Coaches have no character of their own yet, so each stands as an ink silhouette.
 
@@ -114,7 +114,7 @@ struct CoachCard: View {
     }
 }
 
-/// 教练市场: an ink header, a card per coach with its catchphrase, tags and 期望待遇, and the
+/// 教练招聘会: an ink header, a card per coach with its catchphrase, tags and 期望待遇, and the
 /// coaches still to come.
 struct CoachMarketPage: View {
     let market: CoachMarketLoad
@@ -200,7 +200,7 @@ struct CoachMarketPage: View {
     }
 }
 
-/// A coach in 教练市场: its stage with the catchphrase, name and title, tags and 期望待遇.
+/// A coach in 教练招聘会: its stage with the catchphrase, name and title, tags and 期望待遇.
 private struct MarketCard: View {
     let coach: Coach
     let isCurrent: Bool
@@ -301,7 +301,7 @@ enum CoachMetrics {
     static let marketOverlap = 40.0
     static let marketCardStage = 250.0
     /// The coach's height on its stage, here and on the 简历 and 解雇 pages.
-    static let marketFigure = 205.0
+    static let marketFigure = 190.0
     static let marketFloor = 40.0
     static let moreThumbnail = CGSize(width: 48, height: 56)
     static let moreFigure = 22.0

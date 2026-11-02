@@ -1,7 +1,7 @@
 import XCTest
 
 /// Hiring the squad's coach the way a captain does, on the in-memory squad: 小队设置's empty 教练
-/// card, 教练市场, 毛头's 简历, 招聘, 解雇 and back; a mate reading the 简历 only; and the 简历's
+/// card, 教练招聘会, 毛头's 简历, 招聘, 解雇 and back; a mate reading the 简历 only; and the 简历's
 /// field names on one line each, in Chinese and English. Keeps screenshots for review against
 /// the approved 雇教练页面 canvas.
 @MainActor
@@ -15,7 +15,7 @@ final class CoachHireUITests: XCTestCase {
 
         hire.tap()
         let coach = app.buttons["coach.market.coach"].firstMatch
-        XCTAssertTrue(coach.waitForExistence(timeout: 30), "教练市场 shows no coach")
+        XCTAssertTrue(coach.waitForExistence(timeout: 30), "教练招聘会 shows no coach")
         assertInside(coach, app)
         settle()
         keepScreenshot(named: "83-coach-market")
@@ -66,7 +66,7 @@ final class CoachHireUITests: XCTestCase {
         keepScreenshot(named: "87-coach-resume-mate")
     }
 
-    /// English names are the longest; they still keep one line each. 教练市场 counts its one
+    /// English names are the longest; they still keep one line each. 教练招聘会 counts its one
     /// coach in the singular.
     func testTheResumeInEnglish() {
         let app = launch(language: "en", extra: ["-squad-seat", "coached"])
@@ -75,9 +75,9 @@ final class CoachHireUITests: XCTestCase {
         app.buttons["squad.coach.change"].tap()
         XCTAssertTrue(
             app.staticTexts["1 coach looking for a squad"].waitForExistence(timeout: 30),
-            "教练市场 doesn't count one coach in the singular")
+            "教练招聘会 doesn't count one coach in the singular")
         app.buttons["coach.market.back"].tap()
-        XCTAssertTrue(open.waitForExistence(timeout: 30), "教练市场 didn't go back to 小队设置")
+        XCTAssertTrue(open.waitForExistence(timeout: 30), "教练招聘会 didn't go back to 小队设置")
         open.tap()
         XCTAssertTrue(app.staticTexts["Expected pay"].waitForExistence(timeout: 30), "the 简历 isn't in English")
         assertLabelsKeepOneLine(app)
