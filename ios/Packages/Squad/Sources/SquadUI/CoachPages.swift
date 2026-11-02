@@ -154,11 +154,11 @@ struct CoachMarketPage: View {
             HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", on: .ink, action: back)
                 .accessibilityIdentifier("coach.market.back")
             VStack(alignment: .leading, spacing: Space.xxs) {
-                Text(verbatim: "COACH MARKET")
+                Text(verbatim: "JOB FAIR")
                     .typeStyle(TypeRamp.ticketDate)
                     .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                     .accessibilityHidden(true)
-                Text("教练市场", bundle: .module)
+                Text("教练招聘会", bundle: .module)
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgOnInk, in: theme))
                     .accessibilityAddTraits(.isHeader)
@@ -299,9 +299,9 @@ enum CoachMetrics {
     static let figureAspect = 0.5
     /// How far the market's cards ride up over its ink header.
     static let marketOverlap = 40.0
-    static let marketCardStage = 188.0
+    static let marketCardStage = 250.0
     /// The coach's height on its stage, here and on the 简历 and 解雇 pages.
-    static let marketFigure = 140.0
+    static let marketFigure = 205.0
     static let marketFloor = 40.0
     static let moreThumbnail = CGSize(width: 48, height: 56)
     static let moreFigure = 22.0

@@ -897,18 +897,18 @@
         }
       }
     },
-    "教练市场": {
+    "教练招聘会": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Coach market"
+            "value": "Coach job fair"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "教練市場"
+            "value": "教練招聘會"
           }
         }
       }

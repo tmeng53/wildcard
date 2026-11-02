@@ -79,15 +79,34 @@ struct CoachStage: View {
             Color(role: surface == .page ? .borderDefault : .fgSubtle, in: theme)
                 .opacity(surface == .page ? 1 : CoachMetrics.floorShade)
                 .frame(height: floor)
-            VStack(spacing: Space.s) {
-                SpeechBubble(Text(verbatim: catchphrase), kind: .quote, on: .scene)
-                    .frame(maxWidth: .infinity, alignment: bubble == .leading ? .leading : .center)
-                CoachFigure(coach: coach, mood: mood, greets: greets)
-                    .frame(height: figureHeight)
+            switch bubble {
+            case .leading:
+                // As on the approved card: the line pinned to the stage's top corner, the coach
+                // standing under it in the middle.
+                figure
+                    .padding(.bottom, floor * CoachMetrics.feet)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .overlay(alignment: .topLeading) {
+                        speech.padding(Space.s + 2)
+                    }
+            case .center:
+                VStack(spacing: Space.s) {
+                    speech
+                    figure
+                }
+                .padding(.horizontal, Space.s + 2)
+                .padding(.bottom, floor * CoachMetrics.feet)
             }
-            .padding(.horizontal, Space.s + 2)
-            .padding(.bottom, floor * CoachMetrics.feet)
         }
+    }
+
+    private var speech: some View {
+        SpeechBubble(Text(verbatim: catchphrase), kind: .quote, on: .scene)
+    }
+
+    private var figure: some View {
+        CoachFigure(coach: coach, mood: mood, greets: greets)
+            .frame(height: figureHeight)
     }
 }
 
