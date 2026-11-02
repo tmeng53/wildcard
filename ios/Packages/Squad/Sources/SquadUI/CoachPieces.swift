@@ -83,7 +83,6 @@ struct CoachStage: View {
             .padding(.horizontal, Space.s + 2)
             .padding(.bottom, floor * CoachMetrics.feet)
         }
-        .accessibilityHidden(true)
     }
 }
 

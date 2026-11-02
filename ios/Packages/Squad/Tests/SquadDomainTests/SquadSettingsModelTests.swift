@@ -263,6 +263,16 @@ private actor Squad3: SquadSettingsService {
         #expect(model.coach?.coach == maotou)
     }
 
+    /// Handing the captaincy on hands hiring on with it, at once.
+    @Test func aCaptainWhoHandsTheCaptaincyOnNoLongerHires() async throws {
+        let service = try Squad3(viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false))
+        let model = SquadSettingsModel(service: service)
+        await model.reload()
+        #expect(model.canHireCoach)
+        await model.handCaptaincy(to: coco)
+        #expect(!model.canHireCoach)
+    }
+
     /// A coach change that doesn't get through is the coach page's to say, never 小队设置's.
     @Test func aCoachChangeThatFailsLeavesTheSquadPageAlone() async throws {
         let service = try Squad3(viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false))

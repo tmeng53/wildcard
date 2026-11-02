@@ -171,7 +171,9 @@ public final class SquadSettingsModel {
 
     /// The member is the captain, who hires, changes and fires the coach (招聘, 换教练, 解雇);
     /// everyone else reads the 简历 only.
-    public var canHireCoach: Bool { settings?.coach.canHire ?? false }
+    /// Only the captain hires; a captain who just handed the captaincy on no longer can, before
+    /// the squad is read again.
+    public var canHireCoach: Bool { isCaptain && settings?.coach.canHire == true }
 
     /// 「执教第 N 周」: the week the squad hired it counts 1, weeks starting Monday on the
     /// member's clock.
