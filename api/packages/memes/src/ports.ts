@@ -1,4 +1,4 @@
-import type { ApprovedMeme, MemePhrase, MemeRecord } from './domain/meme.js';
+import type { ApprovedMeme, LibraryMeme, MemePhrase, MemeRecord } from './domain/meme.js';
 
 /** Where the meme library is kept. */
 export interface MemeStore {
@@ -13,6 +13,8 @@ export interface MemeStore {
    * off.
    */
   listInUseAt(now: Date): Promise<MemeRecord[]>;
+  /** Every meme in the library, expired and turned off included, newest first. */
+  listAll(): Promise<LibraryMeme[]>;
   /** When a meme was approved, or undefined if the library hasn't got that phrase. */
   approvedAt(phrase: MemePhrase): Promise<Date | undefined>;
   /** Sets or clears when a meme expires. Says whether the library has that phrase. */

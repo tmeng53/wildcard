@@ -432,6 +432,22 @@ describe('the admin MCP server', () => {
         .parse(await call('list_memes', {}));
       return memes.filter(({ phrase }) => [city.phrase, banwei.phrase].includes(phrase));
     };
+    const inLibrary = async () => {
+      const { memes } = z
+        .object({
+          memes: z.array(
+            z.object({
+              phrase: z.string(),
+              expiresAt: z.string().nullable(),
+              turnedOffAt: z.string().nullable(),
+            }),
+          ),
+        })
+        .parse(await call('list_memes', { all: true }));
+      return memes
+        .filter(({ phrase }) => [city.phrase, banwei.phrase].includes(phrase))
+        .map(({ phrase, expiresAt, turnedOffAt }) => [phrase, expiresAt, turnedOffAt]);
+    };
 
     // An approved.json batch, with its approval time; a meme approved now needs none.
     expect(
@@ -443,8 +459,8 @@ describe('the admin MCP server', () => {
       alreadyThere: [city.phrase],
     });
     expect(await inUse()).toStrictEqual([
-      { ...banwei, approvedAt: '2026-10-19T16:00:00.000Z', expiresAt: null },
-      { ...city, approvedAt: '2026-10-18T17:00:00.000Z', expiresAt: null },
+      { ...banwei, approvedAt: '2026-10-19T16:00:00.000Z', expiresAt: null, turnedOffAt: null },
+      { ...city, approvedAt: '2026-10-18T17:00:00.000Z', expiresAt: null, turnedOffAt: null },
     ]);
 
     // A meme tied to a moment gets an expiry; past it, the AI leaves it out until it is cleared.
@@ -452,11 +468,21 @@ describe('the admin MCP server', () => {
       await call('set_meme_expiry', { phrase: city.phrase, expiresAt: '2026-10-26T16:00:00Z' }),
     ).toStrictEqual({ version: 1, phrase: city.phrase, expiresAt: '2026-10-26T16:00:00.000Z' });
     expect(await inUse()).toStrictEqual([
-      { ...banwei, approvedAt: '2026-10-19T16:00:00.000Z', expiresAt: null },
-      { ...city, approvedAt: '2026-10-18T17:00:00.000Z', expiresAt: '2026-10-26T16:00:00.000Z' },
+      { ...banwei, approvedAt: '2026-10-19T16:00:00.000Z', expiresAt: null, turnedOffAt: null },
+      {
+        ...city,
+        approvedAt: '2026-10-18T17:00:00.000Z',
+        expiresAt: '2026-10-26T16:00:00.000Z',
+        turnedOffAt: null,
+      },
     ]);
     await call('set_meme_expiry', { phrase: city.phrase, expiresAt: '2026-10-19T15:00:00Z' });
     expect((await inUse()).map(({ phrase }) => phrase)).toStrictEqual([banwei.phrase]);
+    // The whole library still lists it, so it can be found and extended.
+    expect(await inLibrary()).toStrictEqual([
+      [banwei.phrase, null, null],
+      [city.phrase, '2026-10-19T15:00:00.000Z', null],
+    ]);
     expect(await call('set_meme_expiry', { phrase: city.phrase, expiresAt: null })).toStrictEqual({
       version: 1,
       phrase: city.phrase,
@@ -477,6 +503,10 @@ describe('the admin MCP server', () => {
       turnedOff: city.phrase,
     });
     expect((await inUse()).map(({ phrase }) => phrase)).toStrictEqual([banwei.phrase]);
+    expect(await inLibrary()).toStrictEqual([
+      [banwei.phrase, null, null],
+      [city.phrase, null, '2026-10-19T16:00:00.000Z'],
+    ]);
     expect(await call('turn_on_meme', { phrase: city.phrase })).toStrictEqual({
       version: 1,
       turnedOn: city.phrase,

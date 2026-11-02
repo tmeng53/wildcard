@@ -149,6 +149,22 @@ describe('the meme library', () => {
     ).rejects.toBeInstanceOf(MemeNotFoundError);
   });
 
+  it('lists every meme, expired and turned off included', async () => {
+    const expired = draft('过期梗');
+    const off = draft('关掉的梗');
+    const approvedAt = new Date('2026-11-02T18:00:00.000Z');
+    const expiresAt = new Date('2026-11-09T17:00:00.000Z');
+    await memes.addApproved({ memes: [{ ...expired, expiresAt }, off], approvedAt });
+    now = new Date('2026-11-10T00:00:00.000Z');
+    await memes.turnOff(off.phrase);
+    const phrases = new Set([expired.phrase, off.phrase]);
+    const listed = (await memes.listAll()).filter(({ phrase }) => phrases.has(phrase));
+    expect(
+      Object.fromEntries(listed.map((meme) => [meme.phrase, [meme.expiresAt, meme.turnedOffAt]])),
+    ).toStrictEqual({ [off.phrase]: [null, now], [expired.phrase]: [expiresAt, null] });
+    expect(await inUse(expired, off)).toStrictEqual([]);
+  });
+
   it('waits for a meme dated ahead until its day comes', async () => {
     const meme = draft('明天的梗');
     const approvedAt = new Date('2026-10-20T16:00:00.000Z');

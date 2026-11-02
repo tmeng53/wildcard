@@ -60,6 +60,12 @@ export interface MemeRecord extends MemeDraft {
   readonly expiresAt: Date | null;
 }
 
+/** A meme as the library keeps it, in use or not. */
+export interface LibraryMeme extends MemeRecord {
+  /** When it was turned off; null while it is on. */
+  readonly turnedOffAt: Date | null;
+}
+
 /** The stored JSON for a draft. */
 export function storedPayload(meme: MemeDraft): StoredMeme {
   const { background, meaning, styles, source } = meme;

@@ -15,20 +15,30 @@ const phrase = z.strictObject({ phrase: MemePhrase.describe('The meme, as listed
 
 const expiry = z.iso.datetime({ offset: true });
 
-/** `list_memes`: the memes in use now. */
+/** `list_memes`: the memes in use now, or with `all` every meme in the library. */
 export function listMemes({ memes }: MemeToolDependencies) {
   return adminTool({
     name: 'list_memes',
-    title: 'List memes in use',
+    title: 'List memes',
     description:
       'Lists the memes the AI may use now (approved, not expired and not turned off), newest ' +
-      'first, each with when it expires (null: it stays in use until turned off).',
+      'first, each with when it expires (null: it stays in use until turned off). With all, ' +
+      'lists every meme in the library, expired and turned off included, to find one to extend ' +
+      'or turn back on.',
     changes: false,
-    input: z.strictObject({}),
-    run: async () => ({
+    input: z.strictObject({
+      all: z
+        .boolean()
+        .optional()
+        .describe('List every meme, not only the ones in use. Leave it out for the ones in use.'),
+    }),
+    run: async (input) => ({
       version: 1,
-      memes: (await memes.listInUse()).map(
-        ({ phrase, background, meaning, styles, source, approvedAt, expiresAt }) => ({
+      memes: (input.all === true
+        ? await memes.listAll()
+        : (await memes.listInUse()).map((meme) => ({ ...meme, turnedOffAt: null }))
+      ).map(
+        ({ phrase, background, meaning, styles, source, approvedAt, expiresAt, turnedOffAt }) => ({
           phrase,
           background,
           meaning,
@@ -36,6 +46,7 @@ export function listMemes({ memes }: MemeToolDependencies) {
           source,
           approvedAt: approvedAt.toISOString(),
           expiresAt: expiresAt?.toISOString() ?? null,
+          turnedOffAt: turnedOffAt?.toISOString() ?? null,
         }),
       ),
     }),

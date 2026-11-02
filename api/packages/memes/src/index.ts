@@ -7,6 +7,7 @@ export {
   MemeId,
   MemePhrase,
   type ApprovedMeme,
+  type LibraryMeme,
   type MemeRecord,
 } from './domain/meme.js';
 export { MemeExpiryBeforeApprovalError, MemeNotFoundError } from './errors.js';

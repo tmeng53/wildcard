@@ -1,4 +1,4 @@
-import type { MemePhrase, MemeRecord } from '../domain/meme.js';
+import type { LibraryMeme, MemePhrase, MemeRecord } from '../domain/meme.js';
 import type { Clock, MemeStore } from '../ports.js';
 import {
   addApprovedMemes,
@@ -17,6 +17,8 @@ import { turnOnMeme } from './memes/turn-on-meme.js';
 export interface Memes {
   addApproved(input: AddApprovedMemesInput): Promise<AddedMemes>;
   listInUse(): Promise<MemeRecord[]>;
+  /** Every meme, expired and turned off included, so one can be found to extend or turn on. */
+  listAll(): Promise<LibraryMeme[]>;
   setExpiry(input: SetMemeExpiryInput): Promise<void>;
   turnOff(phrase: MemePhrase): Promise<void>;
   turnOn(phrase: MemePhrase): Promise<void>;
@@ -26,6 +28,7 @@ export function createMemes(deps: { readonly store: MemeStore; readonly clock: C
   return {
     addApproved: (input) => addApprovedMemes(deps, input),
     listInUse: () => listMemesInUse(deps),
+    listAll: () => deps.store.listAll(),
     setExpiry: (input) => setMemeExpiry(deps, input),
     turnOff: (phrase) => turnOffMeme(deps, phrase),
     turnOn: (phrase) => turnOnMeme(deps, phrase),
