@@ -13,14 +13,11 @@ struct Worn: Equatable {
 }
 
 extension TodayModel {
-    /// The sports' kits, read once.
-    private static let kits = try? PlaceholderCharacter.sportKits()
-
     /// What I wear and loop on the scene: once I 练了 a sport today, its kit and its move, from the
     /// same `kits.json` and `move(for:)` as sign-up's 平时练什么 and the week card; else my own
     /// look and my persona's idle.
     private var dress: (outfit: Outfit, idle: Clip)? {
-        if let home, let activity = home.todaysSport(of: home.member), let kits = Self.kits {
+        if let home, let activity = home.todaysSport(of: home.member), let kits = PlaceholderCharacter.shippedKits {
             let kit = kits.kit(for: activity, in: SportList.shared.catalog)
             if let move = try? PlaceholderCharacter.move(for: kit, persona: myPersona) {
                 return (kit.dress(myLook), move)

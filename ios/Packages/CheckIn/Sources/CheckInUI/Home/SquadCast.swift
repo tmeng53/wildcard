@@ -75,7 +75,9 @@ final class SquadCast {
             let look = Self.look(of: mate)
             let species = PlaceholderCharacter.species(of: look)
             let pose = stage.pose(of: member, at: phase)
-            guard let player = player(for: member.id, wearing: look, persona: persona, species: species, in: pose)
+            let trained: Activity? = if case .trained(let activity) = member.status { activity } else { nil }
+            guard let dressed = try? pose.dress(look, trained: trained, persona: persona, species: species),
+                let player = player(for: member.id, wearing: dressed.outfit, persona: persona, looping: dressed.loop)
             else { return nil }
             return Mate(
                 member: member, name: mate.character?.nickname.text, persona: persona, species: species, player: player,
@@ -156,12 +158,12 @@ final class SquadCast {
         }
     }
 
-    /// The member's character, made again when their look or persona changes; when only their
-    /// pose does, it carries on from the pose on screen into the new loop.
+    /// The member's character, made again when what they wear or their persona changes (a kit
+    /// once they trained); when only their pose does, it carries on from the pose on screen
+    /// into the new loop.
     private func player(
-        for member: MemberID, wearing look: Outfit, persona: Persona, species: String?, in pose: StagePose
+        for member: MemberID, wearing look: Outfit, persona: Persona, looping idle: Clip
     ) -> CharacterPlayer? {
-        guard let idle = try? pose.loop(persona: persona, species: species) else { return nil }
         if let existing = players[member], existing.look == look, existing.persona == persona {
             if existing.idle != idle.name, (try? existing.player.wear(existing.player.figure, idle: idle)) != nil {
                 players[member]?.idle = idle.name
