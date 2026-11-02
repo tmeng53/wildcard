@@ -1,0 +1,104 @@
+import Contracts
+import Foundation
+
+/// A photo on a post being written or edited: one already saved on it, or one just picked.
+public enum ComposedPhoto: Hashable, Sendable, Identifiable {
+    case saved(PhotoRef)
+    case new(PreparedPhoto)
+
+    public var id: String {
+        switch self {
+        case .saved(let photo): "saved:\(photo.path)"
+        case .new(let photo): "new:\(photo.id.uuidString)"
+        }
+    }
+
+    /// The photos of a saved post, the cover first.
+    public static func of(_ checkIn: CheckIn) -> [ComposedPhoto] {
+        (checkIn.entry.photos?.all ?? []).map(ComposedPhoto.saved)
+    }
+}
+
+extension CheckIn.Entry {
+    /// The entry's photos, the cover first; nil when it has none.
+    public var photos: Photos? {
+        switch self {
+        case .trained(let training): training.photos
+        case .healthyMeal(let meal), .cheatMeal(let meal): meal.photos
+        case .disclaimer(let disclaimer): disclaimer.photos
+        }
+    }
+
+    /// The line the member wrote: a caption, or a 请假条's text.
+    public var line: String? {
+        switch self {
+        case .trained(let training): training.caption?.text
+        case .healthyMeal(let meal), .cheatMeal(let meal): meal.caption?.text
+        case .disclaimer(let disclaimer): disclaimer.text
+        }
+    }
+}
+
+/// A saved post as the member edits it: its own fields and photos, all of them. The kind, the
+/// day, the time and the squads it went to stay as posted.
+public struct PostEdit: Hashable, Sendable {
+    public let original: CheckIn
+    /// The sport and minutes, for a 练了; ignored for the other kinds.
+    public let activity: Activity
+    public let minutes: WorkoutMinutes?
+    /// The caption, or a 请假条's text.
+    public let line: String
+    /// At most `Photos.maxCount`, the cover first.
+    public let photos: [ComposedPhoto]
+
+    public init(original: CheckIn, activity: Activity, minutes: WorkoutMinutes?, line: String, photos: [ComposedPhoto])
+    {
+        self.original = original
+        self.activity = activity
+        self.minutes = minutes
+        self.line = line
+        self.photos = Array(photos.prefix(Photos.maxCount))
+    }
+
+    /// The photos still to upload, in order.
+    public var newPhotos: [PreparedPhoto] {
+        photos.compactMap { if case .new(let photo) = $0 { photo } else { nil } }
+    }
+
+    /// Whether it can be saved: a 请假条 needs its text.
+    public var isSavable: Bool {
+        guard case .disclaimer = original.entry else { return true }
+        return (try? Disclaimer(line)) != nil
+    }
+
+    /// The check-in as edited, once each new photo is uploaded (`uploaded`, by
+    /// `PreparedPhoto.id`). Throws `.refused` for one that breaks a rule `Contracts` checks.
+    public func checkIn(uploaded: [UUID: PhotoRef]) throws(CheckInError) -> CheckIn {
+        do {
+            let refs = try photos.map { photo throws(ContractsError) -> PhotoRef in
+                switch photo {
+                case .saved(let saved): return saved
+                case .new(let new):
+                    guard let ref = uploaded[new.id] else { throw .photoCount(0) }
+                    return try PhotoRef(path: ref.path, size: new.size)
+                }
+            }
+            let photos = refs.isEmpty ? nil : try Photos(refs)
+            let fitted = PostBody(photos: [], caption: line).caption
+            let caption = try fitted.map(Caption.init)
+            let entry: CheckIn.Entry =
+                switch original.entry {
+                case .trained:
+                    .trained(Training(activity: activity, minutes: minutes, photos: photos, caption: caption))
+                case .healthyMeal: .healthyMeal(Meal(photos: photos, caption: caption))
+                case .cheatMeal: .cheatMeal(Meal(photos: photos, caption: caption))
+                case .disclaimer: .disclaimer(try Disclaimer(line, photos: photos))
+                }
+            return CheckIn(
+                id: original.id, member: original.member, day: original.day, createdAt: original.createdAt,
+                audience: original.audience, entry: entry)
+        } catch {
+            throw .refused
+        }
+    }
+}

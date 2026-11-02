@@ -111,6 +111,25 @@ actor ScriptedBackend: CheckInBackend {
         return checkIn
     }
 
+    private(set) var edits: [CheckIn] = []
+    private(set) var deletes: [CheckInID] = []
+
+    func edit(_ checkIn: CheckIn) async throws(CheckInError) -> CheckIn {
+        if let failure { throw failure }
+        edits.append(checkIn)
+        if var home = server, let index = home.checkIns.firstIndex(where: { $0.id == checkIn.id }) {
+            home.checkIns[index] = checkIn
+            server = home
+        }
+        return checkIn
+    }
+
+    func delete(_ checkIn: CheckInID) async throws(CheckInError) {
+        if let failure { throw failure }
+        deletes.append(checkIn)
+        server?.checkIns.removeAll { $0.id == checkIn }
+    }
+
     func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction] {
         if let failure { throw failure }
         return reactionList[checkIn] ?? []

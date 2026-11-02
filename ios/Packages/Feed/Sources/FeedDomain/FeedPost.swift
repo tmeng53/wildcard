@@ -26,6 +26,26 @@ public struct FeedPost: Hashable, Sendable, Identifiable {
     public func canRespond(_ viewer: MemberID) -> Bool { viewer != author }
 }
 
+/// The member changed one of their own posts: every screen holding it shows the change.
+public enum PostChange: Hashable, Sendable {
+    /// Edited: its fields and photos are these now; teammates' responses stay.
+    case edited(CheckIn)
+    /// Deleted, with everything left on it.
+    case deleted(CheckInID)
+}
+
+extension FeedPost {
+    /// The post after `change`; nil once it is deleted.
+    public func applying(_ change: PostChange) -> FeedPost? {
+        switch change {
+        case .edited(let checkIn) where checkIn.id == id:
+            FeedPost(checkIn: checkIn, reactions: reactions, comments: comments)
+        case .deleted(let deleted) where deleted == id: nil
+        default: self
+        }
+    }
+}
+
 /// A move from the character's move library, by id, which the author's character plays when a
 /// teammate reacts. A player that doesn't know an id plays the persona's cheer.
 public struct MoveID: Hashable, Sendable, CustomStringConvertible {

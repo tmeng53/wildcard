@@ -102,6 +102,7 @@ public struct FeedView: View {
             }
         }
         .feedSurface(model, isActive: model.opened == nil)
+        .managesPosts(model, isActive: model.opened == nil)
         // Opened before any post was read: the character jogs in place until the list arrives.
         .loadingCover(model.store.phase == .loading && model.store.sections.isEmpty) {
             LoadingCharacter()

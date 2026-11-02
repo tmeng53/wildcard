@@ -8,14 +8,7 @@ import {
   type CheckInRecord,
   type MemberId,
 } from '../../domain/check-in.js';
-import { isOwnPhoto } from '../../domain/photos.js';
-import {
-  CheckInIdConflictError,
-  PhotoInUseError,
-  PhotoNotUploadedError,
-  PhotoNotYoursError,
-  SquadNotJoinedError,
-} from '../../errors.js';
+import { CheckInIdConflictError, PhotoInUseError, SquadNotJoinedError } from '../../errors.js';
 import type {
   CheckInStore,
   Clock,
@@ -25,6 +18,7 @@ import type {
   SquadMembership,
   WeeklyPlanStore,
 } from '../../ports.js';
+import { checkPhotos } from '../check-photos.js';
 import { checkSport } from '../check-sport.js';
 import { planTrainedDay } from '../weekly-plans.js';
 
@@ -107,7 +101,10 @@ async function insertCheckIn(
   const joined = await membership.squadIdsOf(member);
   const notJoined = checkIn.audience.find((squad) => !joined.has(squad));
   if (notJoined !== undefined) throw new SquadNotJoinedError(notJoined);
-  await checkPhotos(photos, checkIn);
+  await checkPhotos(photos, {
+    member: checkIn.member,
+    paths: photosOf(checkIn).map(({ path }) => path),
+  });
   if (checkIn.kind === 'trained') await checkSport(sports, checkIn.training.sport);
 
   const outcome = await store.insert(checkIn);
@@ -117,16 +114,6 @@ async function insertCheckIn(
   if (overlapping !== undefined) return overlapping;
   if (outcome.taken === 'photo') throw new PhotoInUseError();
   throw new CheckInIdConflictError(id);
-}
-
-/** Each photo is the member's own and already uploaded. */
-async function checkPhotos(files: PhotoFiles, checkIn: CheckInRecord): Promise<void> {
-  const paths = photosOf(checkIn).map(({ path }) => path);
-  const notYours = paths.find((path) => !isOwnPhoto(path, checkIn.member));
-  if (notYours !== undefined) throw new PhotoNotYoursError(notYours);
-  const uploaded = await Promise.all(paths.map((path) => files.exists(path)));
-  const missing = paths.find((_path, index) => uploaded[index] !== true);
-  if (missing !== undefined) throw new PhotoNotUploadedError(missing);
 }
 
 /** The saved check-in when `checkIn` repeats it; undefined when its id is free. */

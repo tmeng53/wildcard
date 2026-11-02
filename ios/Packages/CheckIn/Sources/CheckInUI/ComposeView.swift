@@ -7,45 +7,42 @@ import SportsUI
 import SwiftUI
 
 /// One page like a social app's new post (spec rev 186, section 1): 取消 / title / 发布, the
-/// photos with their cover, the sport and minutes for a 练了, and a line up to 60 characters.
-/// Minutes are optional; no meal type.
-struct ComposeView: View {
+/// photos as tiles with their cover and 「+ 照片」, the sport and minutes for a 练了, and a line up
+/// to 60 characters (a 请假条's up to 80). Minutes are optional; no meal type. Editing a saved
+/// post opens the same page with 保存, and its squads stay as posted. Leaving with something
+/// added or changed asks first.
+public struct ComposeView: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    let model: TodayModel
-    let kind: CheckInKind
-    @State private var caption = ""
+    @Bindable var model: ComposeModel
     @FocusState private var isWriting: Bool
-    @State private var activity: Activity?
     @State private var isPickingSport = false
-    @State private var minutes: WorkoutMinutes?
     @State private var isRulingMinutes = false
-    /// Where the caption starts on the page, so it can fill the page below.
+    @State private var isDiscarding = false
+    /// Where the line starts on the page, so it can fill the page below.
     @State private var captionTop = 0.0
-    /// The squads it goes to: all of them until the member unticks one.
-    @State private var shared: Set<SquadID>
 
-    init(model: TodayModel, kind: CheckInKind) {
+    public init(model: ComposeModel) {
         self.model = model
-        self.kind = kind
-        _shared = State(initialValue: Set(model.shareSquads.map(\.id)))
     }
 
-    var body: some View {
+    public var body: some View {
         VStack(spacing: 0) {
             bar
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: Space.l) {
-                        MediaBlock(model: model)
-                        if kind == .trained {
-                            SportRow(selected: currentActivity, isPickingSport: $isPickingSport) { activity = $0 }
-                            MinutesRow(minutes: $minutes, isRuling: $isRulingMinutes)
+                        PhotoTiles(model: model)
+                        if model.kind == .trained {
+                            SportRow(
+                                selected: model.currentActivity, isPickingSport: $isPickingSport
+                            ) { model.activity = $0 }
+                            MinutesRow(minutes: $model.minutes, isRuling: $isRulingMinutes)
                                 .id(Self.minutesID)
                         }
                         captionField.id(Self.captionID)
                         if model.sendFailed {
-                            Text("没发出去，再点一次发布", bundle: .module)
+                            failedLine
                                 .typeStyle(TypeRamp.footnote)
                                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                                 .accessibilityIdentifier("compose.failed")
@@ -73,18 +70,35 @@ struct ComposeView: View {
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            ShareRow(squads: model.shareSquads, shared: $shared)
-                .padding(.horizontal, Space.pageMargin)
-                .background(Color(role: .bgCanvas, in: theme))
+            if !model.isEditing {
+                ShareRow(squads: model.shareSquads, shared: $model.shared)
+                    .padding(.horizontal, Space.pageMargin)
+                    .background(Color(role: .bgCanvas, in: theme))
+            }
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .sheet(isPresented: $isPickingSport) {
-            SportPicker(selected: currentActivity, recent: model.recentActivities) { picked in
-                activity = picked
+            SportPicker(selected: model.currentActivity, recent: model.recentActivities) { picked in
+                model.activity = picked
                 isPickingSport = false
             }
             .environment(\.sceneTheme, theme)
             .accentTone(.brand)
+        }
+        .confirmationDialog(
+            model.isEditing ? Text("放弃这些修改？", bundle: .module) : Text("放弃这条动态？", bundle: .module),
+            isPresented: $isDiscarding, titleVisibility: .visible
+        ) {
+            Button(role: .destructive) {
+                model.close()
+            } label: {
+                Text("放弃", bundle: .module)
+            }
+            .accessibilityIdentifier("compose.discard")
+            Button(role: .cancel) {
+            } label: {
+                Text("继续编辑", bundle: .module)
+            }
         }
     }
 
@@ -92,15 +106,14 @@ struct ComposeView: View {
     private static let minutesID = "minutes"
     private static let pageSpace = "compose.page"
 
-    /// The board's last sport until the member picks one; detection from the cover comes later.
-    private var currentActivity: Activity {
-        activity ?? model.suggestedActivity
+    private var failedLine: Text {
+        model.isEditing ? Text("没保存上，再点一次保存", bundle: .module) : Text("没发出去，再点一次发布", bundle: .module)
     }
 
     private var bar: some View {
         HStack {
             Button {
-                model.cancel()
+                if model.hasChanges { isDiscarding = true } else { model.close() }
             } label: {
                 Text("取消", bundle: .module)
                     .typeStyle(TypeRamp.body)
@@ -110,19 +123,22 @@ struct ComposeView: View {
             .accessibilityIdentifier("compose.cancel")
             Spacer()
             Button {
-                Task { await model.post(draft, sharedTo: shared) }
+                Task { await model.send() }
             } label: {
-                Text("发布", bundle: .module)
-                    .typeStyle(TypeRamp.headline)
-                    .loadingLabel(model.isSending)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                Group {
+                    if model.isEditing { Text("保存", bundle: .module) } else { Text("发布", bundle: .module) }
+                }
+                .typeStyle(TypeRamp.headline)
+                .loadingLabel(model.isSending)
+                .foregroundStyle(
+                    Color(role: model.canSave ? .fgDefault : .fgSubtle, in: theme))
             }
             .frame(minHeight: Sizing.minimumTapTarget)
-            .disabled(model.isSending)
+            .disabled(model.isSending || !model.canSave)
             .accessibilityIdentifier("compose.post")
         }
         .overlay {
-            kind.fullName
+            model.kind.fullName
                 .typeStyle(TypeRamp.headline)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .accessibilityAddTraits(.isHeader)
@@ -131,16 +147,16 @@ struct ComposeView: View {
         .padding(.vertical, Space.xxs)
     }
 
-    /// The caption fills the page below what's above it, so a tap anywhere on the white starts
+    /// The line fills the page below what's above it, so a tap anywhere on the white starts
     /// typing. A line has no breaks: return closes the keyboard, as 完成 did.
     private var captionField: some View {
         VStack(alignment: .trailing, spacing: Space.xxs) {
-            TextEditor(text: $caption)
+            TextEditor(text: $model.line)
                 .typeStyle(TypeRamp.field)
                 .scrollContentBackground(.hidden)
                 .focused($isWriting)
                 .overlay(alignment: .topLeading) {
-                    if caption.isEmpty {
+                    if model.line.isEmpty {
                         placeholder
                             .typeStyle(TypeRamp.field)
                             .foregroundStyle(Color(role: .fgSubtle, in: theme))
@@ -159,16 +175,16 @@ struct ComposeView: View {
                     captionTop = $0
                 }
                 .padding(.horizontal, -Self.editorInset.leading)
-                .onChange(of: caption) { _, typed in
+                .onChange(of: model.line) { _, typed in
                     if typed.contains(where: \.isNewline) { isWriting = false }
-                    let fitted = PostBody.fitCaption(typed)
-                    if fitted != typed { caption = fitted }
+                    let fitted = model.fit(typed)
+                    if fitted != typed { model.line = fitted }
                 }
                 .accessibilityLabel(placeholder)
                 .accessibilityIdentifier("compose.caption")
             // The count shows only near the limit, so the field stays quiet.
-            if caption.count >= Caption.maxLength - 10 {
-                Text(verbatim: "\(caption.count)/\(Caption.maxLength)")
+            if model.line.count >= model.lineLimit - 10 {
+                Text(verbatim: "\(model.line.count)/\(model.lineLimit)")
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgSubtle, in: theme))
                     .monospacedDigit()
@@ -180,115 +196,16 @@ struct ComposeView: View {
     /// placeholder matches; its leading inset hangs into the page margin so the text lines up
     /// with the rows above.
     private static let editorInset = (top: 8.0, leading: 5.0)
-    /// Room kept under the caption for its count near the limit.
+    /// Room kept under the line for its count near the limit.
     private static let countRoom = 20.0
 
     private var placeholder: Text {
-        switch kind {
+        switch model.kind {
         case .trained: Text("炫耀一下成果…", bundle: .module)
         case .healthyMeal: Text("这顿很自律…", bundle: .module)
-        case .cheatMeal, .disclaimer: Text("坦白从宽…", bundle: .module)
+        case .cheatMeal: Text("坦白从宽…", bundle: .module)
+        case .disclaimer: Text("今天为什么请假…", bundle: .module)
         }
-    }
-
-    private var draft: CheckInDraft {
-        let body = PostBody(photos: model.photos, caption: caption)
-        return switch kind {
-        case .trained: .trained(currentActivity, minutes, body)
-        case .healthyMeal: .healthyMeal(body)
-        case .cheatMeal, .disclaimer: .cheatMeal(body)
-        }
-    }
-}
-
-/// The cover large, and with more than one photo, a row to pick which is the cover. With no
-/// photo, the character stands in. Tapping the cover shows the photos whole, full screen.
-private struct MediaBlock: View {
-    @Environment(\.sceneTheme) private var theme
-    let model: TodayModel
-    @State private var page = 0
-    @State private var isViewing = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.s) {
-            if let cover = model.photos.first {
-                PhotoImage(photo: cover)
-                    // Wider than tall, so the sport row and the caption fit below it on one screen.
-                    .aspectRatio(4 / 3, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-                    .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
-                    .onTapGesture { view() }
-                    .photoViewer(isPresented: $isViewing, count: model.photos.count, page: $page, load: jpeg)
-                    .accessibilityElement()
-                    .accessibilityLabel(Text("封面", bundle: .module))
-                    .accessibilityHint(Text("全屏看", bundle: .module))
-                    .accessibilityAddTraits(.isButton)
-                    .accessibilityAction { view() }
-                    .accessibilityIdentifier("compose.cover")
-            }
-            if model.photos.count > 1 {
-                HStack(spacing: Space.xs) {
-                    ForEach(Array(model.photos.enumerated()), id: \.element.id) { index, photo in
-                        CoverChoice(photo: photo, number: index + 1, isCover: index == 0) {
-                            model.makeCover(photo)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /// Photo `index` as it will be posted, while it's still one of them.
-    private var jpeg: @Sendable (Int) async -> Data? {
-        let photos = model.photos
-        return { index in photos.indices.contains(index) ? photos[index].jpeg : nil }
-    }
-
-    /// Opens on the cover.
-    private func view() {
-        page = 0
-        isViewing = true
-    }
-}
-
-/// A thumbnail that becomes the cover when tapped. The cover is ringed and labelled 封面.
-private struct CoverChoice: View {
-    @Environment(\.sceneTheme) private var theme
-    let photo: PreparedPhoto
-    let number: Int
-    let isCover: Bool
-    let action: () -> Void
-
-    private let side: Double = 64
-
-    var body: some View {
-        Button(action: action) {
-            PhotoImage(photo: photo)
-                .frame(width: side, height: side)
-                .clipShape(RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
-                .overlay {
-                    if isCover {
-                        RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
-                            .strokeBorder(Color(role: .bgBrand, in: theme), lineWidth: Sizing.selectionStroke)
-                    }
-                }
-                .overlay(alignment: .bottom) {
-                    if isCover {
-                        Text("封面", bundle: .module)
-                            .typeStyle(TypeRamp.label)
-                            .foregroundStyle(Color(role: .fgOnBrand, in: theme))
-                            .padding(.horizontal, Space.xs)
-                            .background(Color(role: .bgBrand, in: theme), in: Capsule())
-                            .padding(.bottom, Space.xxs)
-                    }
-                }
-        }
-        .buttonStyle(PressableButtonStyle())
-        .haptic(.pick, trigger: isCover)
-        .accessibilityLabel(Text("第 \(number) 张照片", bundle: .module))
-        .accessibilityHint(isCover ? Text(verbatim: "") : Text("设为封面", bundle: .module))
-        .accessibilityAddTraits(isCover ? .isSelected : [])
-        .accessibilityIdentifier("compose.photo.\(number)")
     }
 }
 

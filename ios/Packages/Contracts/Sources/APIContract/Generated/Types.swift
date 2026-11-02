@@ -60,6 +60,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/get(getPost)`.
     func getPost(_ input: Operations.GetPost.Input) async throws -> Operations.GetPost.Output
+    /// Edit one of the member’s own check-ins
+    ///
+    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.
+    ///
+    /// - Remark: HTTP `PATCH /check-ins/{id}`.
+    /// - Remark: Generated from `#/paths//check-ins/{id}/patch(editCheckIn)`.
+    func editCheckIn(_ input: Operations.EditCheckIn.Input) async throws -> Operations.EditCheckIn.Output
     /// Save a check-in
     ///
     /// The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.
@@ -67,6 +74,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)`.
     func saveCheckIn(_ input: Operations.SaveCheckIn.Input) async throws -> Operations.SaveCheckIn.Output
+    /// Delete one of the member’s own check-ins
+    ///
+    /// Deletes it with its photos and the reactions and comments on it. One already gone answers 204 too, so a retry is safe.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{id}`.
+    /// - Remark: Generated from `#/paths//check-ins/{id}/delete(deleteCheckIn)`.
+    func deleteCheckIn(_ input: Operations.DeleteCheckIn.Input) async throws -> Operations.DeleteCheckIn.Output
     /// A squad’s check-ins for a range of days, with their reactions and comments
     ///
     /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.
@@ -460,6 +474,23 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// Edit one of the member’s own check-ins
+    ///
+    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.
+    ///
+    /// - Remark: HTTP `PATCH /check-ins/{id}`.
+    /// - Remark: Generated from `#/paths//check-ins/{id}/patch(editCheckIn)`.
+    public func editCheckIn(
+        path: Operations.EditCheckIn.Input.Path,
+        headers: Operations.EditCheckIn.Input.Headers = .init(),
+        body: Operations.EditCheckIn.Input.Body
+    ) async throws -> Operations.EditCheckIn.Output {
+        try await editCheckIn(Operations.EditCheckIn.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
     /// Save a check-in
     ///
     /// The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.
@@ -475,6 +506,21 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// Delete one of the member’s own check-ins
+    ///
+    /// Deletes it with its photos and the reactions and comments on it. One already gone answers 204 too, so a retry is safe.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{id}`.
+    /// - Remark: Generated from `#/paths//check-ins/{id}/delete(deleteCheckIn)`.
+    public func deleteCheckIn(
+        path: Operations.DeleteCheckIn.Input.Path,
+        headers: Operations.DeleteCheckIn.Input.Headers = .init()
+    ) async throws -> Operations.DeleteCheckIn.Output {
+        try await deleteCheckIn(Operations.DeleteCheckIn.Input(
+            path: path,
+            headers: headers
         ))
     }
     /// A squad’s check-ins for a range of days, with their reactions and comments

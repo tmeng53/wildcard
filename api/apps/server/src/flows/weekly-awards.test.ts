@@ -403,6 +403,15 @@ describe('weekly awards', () => {
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
     expect(prompts.filter((prompt) => prompt.includes(caption))).toHaveLength(1);
     expect(before.sent).toBe(2);
+
+    // Ana deletes her hottest post: her titles stay, the post leaves her story.
+    await checkIns.delete({
+      id: CheckInId.parse(top),
+      member: CheckInMember.parse(ana.userId),
+    });
+    const afterDelete = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(afterDelete.titles?.[0]?.titles).toStrictEqual(forCy.titles?.[0]?.titles);
+    expect(afterDelete.hottest).toBeUndefined();
   });
 
   it('counts every title a member won, in all their squads, for their player card', async () => {

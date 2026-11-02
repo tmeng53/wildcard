@@ -55,7 +55,7 @@ const checkIns = createCheckIns({
   reactions: createPostgresReactionStore(db),
   comments: createPostgresCommentStore(db),
   plans: createPostgresWeeklyPlanStore(db),
-  photos: { exists: () => Promise.resolve(true) },
+  photos: { exists: () => Promise.resolve(true), delete: () => Promise.resolve() },
   calendarOf: () => Promise.resolve(undefined),
   clock: () => now,
 });

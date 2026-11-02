@@ -51,8 +51,8 @@ public struct TodayView: View {
                     .transition(.opacity)
             }
 
-            if case .composing(let kind) = model.step {
-                ComposeView(model: model, kind: kind)
+            if case .composing = model.step, let compose = model.compose {
+                ComposeView(model: compose)
                     .accentTone(.brand)
                     .transition(reduceMotion ? .opacity : .move(edge: .trailing))
                     .zIndex(1)
@@ -66,11 +66,6 @@ public struct TodayView: View {
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.step)
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.home)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.payoff)
-        .sheet(isPresented: isPickingPhotos) {
-            PhotoStep(model: model)
-                .environment(\.sceneTheme, theme)
-                .accentTone(.brand)
-        }
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
         // 拍一拍 landing: mine on a teammate, or a teammate's on me.
@@ -307,15 +302,6 @@ public struct TodayView: View {
             return WeekDayDetail(
                 line: activity?.localizedName ?? String(localized: "训练日", bundle: .module.inAppLanguage), isPlan: true,
                 meals: meals)
-        }
-    }
-
-    private var isPickingPhotos: Binding<Bool> {
-        Binding {
-            if case .pickingPhotos = model.step { true } else { false }
-        } set: { isPresented in
-            // Swiped down: the same as 取消.
-            if !isPresented, case .pickingPhotos = model.step { model.cancel() }
         }
     }
 }

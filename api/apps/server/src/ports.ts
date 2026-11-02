@@ -196,6 +196,8 @@ export interface PhotoStorage {
    * repeat.
    */
   readonly deleteAllOf: (member: UserId) => Promise<void>;
+  /** Deletes these photos; one already gone is skipped. Safe to repeat. */
+  readonly delete: (paths: readonly PhotoPath[]) => Promise<void>;
 }
 
 /**

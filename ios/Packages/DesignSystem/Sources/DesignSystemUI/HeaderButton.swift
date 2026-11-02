@@ -55,6 +55,36 @@ public struct HeaderButton: View {
     }
 }
 
+/// `HeaderButton`'s look for a button that opens a menu (the 「…」 on the member's own post):
+/// the same 44-point Liquid Glass circle and glyph, the system's menu over it.
+public struct HeaderMenu<Items: View>: View {
+    @Environment(\.sceneTheme) private var theme
+    private let label: Text
+    private let systemImage: String
+    private let items: Items
+    private let glyph: Double = 17
+
+    public init(_ label: Text, systemImage: String = "ellipsis", @ViewBuilder items: () -> Items) {
+        self.label = label
+        self.systemImage = systemImage
+        self.items = items()
+    }
+
+    public var body: some View {
+        Menu {
+            items
+        } label: {
+            Image(systemName: systemImage)
+                .font(.system(size: glyph, weight: .semibold))
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .frame(width: Sizing.control, height: Sizing.control)
+                .contentShape(Circle())
+        }
+        .glassEffect(.regular.interactive(), in: Circle())
+        .accessibilityLabel(label)
+    }
+}
+
 /// The header of a task step in sign-up: a back button, then the step segments, centered.
 public struct StepHeader: View {
     private let step: Int?

@@ -1,0 +1,112 @@
+import XCTest
+
+/// The member's own posts in 动态 on the sample squad: the 「…」 on them, and its 编辑 and 删除.
+@MainActor
+final class PostManageUITests: XCTestCase {
+    private static let wait: TimeInterval = 30
+    /// More than the sample squad's posts need to reach mine.
+    private static let maxSwipes = 12
+
+    /// 编辑 opens the compose page as posted; 保存 shows the new line on the card.
+    func testEditMyPost() {
+        let app = launch(language: "zh-Hans")
+        let manage = openMenuOnMyPost(in: app)
+        app.buttons["post.edit"].tap()
+
+        let save = app.buttons["compose.post"]
+        XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "编辑 didn't open the compose page")
+        XCTAssertEqual(save.label, "保存")
+        XCTAssertTrue(
+            app.descendants(matching: .any).matching(identifier: "compose.cover").firstMatch.exists,
+            "the post's photo isn't on the compose page")
+        XCTAssertTrue(app.buttons["compose.sport.strength"].isSelected, "the post's sport isn't picked")
+        let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
+        // Below the one line, so the cursor goes to its end.
+        caption.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)).tap()
+        caption.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20) + "扶手是我的好朋友")
+        settle()
+        keepScreenshot(named: "54-compose-editing")
+        save.tap()
+        XCTAssertTrue(save.waitForNonExistence(timeout: Self.wait), "保存 didn't close the compose page")
+        let edited = app.staticTexts.containing(NSPredicate(format: "label CONTAINS '扶手是我的好朋友'")).firstMatch
+        XCTAssertTrue(edited.waitForExistence(timeout: Self.wait), "the card doesn't show the edited line")
+        XCTAssertTrue(manage.exists, "the edited post lost its 「…」")
+        settle()
+        keepScreenshot(named: "55-feed-after-edit")
+    }
+
+    /// 删除 asks first, then the post is gone from 动态.
+    func testDeleteMyPost() {
+        let app = launch(language: "zh-Hans")
+        let manage = openMenuOnMyPost(in: app)
+        app.buttons["post.delete"].tap()
+        let confirm = app.buttons["post.delete.confirm"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: Self.wait), "删除 didn't ask first")
+        XCTAssertTrue(app.staticTexts["删掉这条动态？"].exists, "the question isn't 删掉这条动态？")
+        XCTAssertTrue(app.staticTexts["队友的回应和评论也会一起删掉"].exists, "the question doesn't say what goes")
+        settle()
+        keepScreenshot(named: "56-feed-delete-confirm")
+        confirm.tap()
+        waitFor(manage, "exists == false", "my post is still in 动态 after deleting it")
+        XCTAssertFalse(
+            app.staticTexts.containing(NSPredicate(format: "label CONTAINS '练腿日'")).firstMatch.exists,
+            "the deleted post's line is still shown")
+    }
+
+    /// Scrolls to my post, the only one with a 「…」, and opens it on 编辑 and 删除.
+    private func openMenuOnMyPost(in app: XCUIApplication) -> XCUIElement {
+        continueAfterFailure = false
+        let manage = app.descendants(matching: .any).matching(identifier: "post.manage").firstMatch
+        let feed = app.scrollViews.firstMatch
+        XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "no 动态")
+        var swipes = 0
+        while swipes < Self.maxSwipes, !manage.exists || !manage.isHittable {
+            feed.swipeUp()
+            swipes += 1
+        }
+        XCTAssertTrue(manage.isHittable, "my post shows no 「…」")
+        assertClearOfTheTabBar(manage, in: app)
+        XCTAssertEqual(
+            app.descendants(matching: .any).matching(identifier: "post.manage").count, 1,
+            "a teammate's post shows 「…」")
+        settle()
+        keepScreenshot(named: "52-feed-my-post-manage")
+        manage.tap()
+        XCTAssertTrue(app.buttons["post.edit"].waitForExistence(timeout: Self.wait), "「…」 didn't open 编辑")
+        XCTAssertTrue(app.buttons["post.delete"].exists, "「…」 has no 删除")
+        settle()
+        keepScreenshot(named: "53-feed-manage-menu")
+        return manage
+    }
+
+    private func launch(language: String) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push", "-uitest-noon", "-tab",
+            "feed",
+        ]
+        app.launch()
+        addTeardownBlock { @MainActor in XCUIApplication().terminate() }
+        return app
+    }
+
+    /// Fully on screen and above the floating tab bar, so nothing covers it.
+    private func assertClearOfTheTabBar(_ element: XCUIElement, in app: XCUIApplication) {
+        let screen = app.windows.firstMatch.frame
+        XCTAssertTrue(screen.contains(element.frame), "\(element.identifier) is cut off: \(element.frame)")
+        let bar = tabButton("tab.feed", in: app)
+        XCTAssertLessThanOrEqual(element.frame.maxY, bar.frame.minY, "\(element.identifier) is under the tab bar")
+    }
+
+    /// Lets springs settle before a screenshot.
+    private func settle() {
+        Thread.sleep(forTimeInterval: 0.8)
+    }
+
+    private func keepScreenshot(named name: String) {
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+}

@@ -2,6 +2,8 @@
 import AvatarArt
 import AvatarDomain
 import AvatarUI
+import CheckInDomain
+import CheckInUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -79,6 +81,17 @@ public final class FeedModel {
     private(set) var arrivals = 0
     /// Bumps when the bar opens by holding a card, for its haptic.
     private(set) var lifts = 0
+    /// Edits and deletes the member's own posts; without one, posts show no 「…」.
+    let editor: (any PostEditing)?
+    /// Told each change the member makes to one of their posts here, for the other screens that
+    /// show it (我的动态 under a post opened from it).
+    public var changed: ((PostChange) -> Void)?
+    /// The compose page open on one of the member's posts, to edit it.
+    var editing: ComposeModel?
+    /// The member's post they asked to delete, waiting for them to confirm.
+    var confirmingDelete: CheckInID?
+    /// The last delete didn't go through.
+    var deleteFailed = false
 
     /// Each player with the outfit it wears, so a look that changed since builds a new one.
     @ObservationIgnored private var players: [CheckInID: (outfit: Outfit, player: CharacterPlayer)] = [:]
@@ -88,10 +101,12 @@ public final class FeedModel {
     @ObservationIgnored private let defaults: UserDefaults
 
     public init(
-        store: FeedStore, viewer: MemberID, now: @escaping () -> Date = { Date() }, defaults: UserDefaults = .standard
+        store: FeedStore, viewer: MemberID, editor: (any PostEditing)? = nil, now: @escaping () -> Date = { Date() },
+        defaults: UserDefaults = .standard
     ) {
         self.store = store
         self.viewer = viewer
+        self.editor = editor
         self.now = now
         self.defaults = defaults
         recent = (defaults.stringArray(forKey: Self.recentKey) ?? []).compactMap { try? Emoji($0) }
@@ -159,7 +174,12 @@ public final class FeedModel {
     /// A post's own page outside the feed (a tile on 我的动态): one post, read and answered as
     /// 动态 does, with the same recent emoji.
     public func page(of post: CheckInID) -> FeedModel {
-        FeedModel(store: store.store(of: post), viewer: viewer, now: now, defaults: defaults)
+        let page = FeedModel(store: store.store(of: post), viewer: viewer, editor: editor, now: now, defaults: defaults)
+        page.changed = { [weak self] change in
+            self?.store.apply(change)
+            self?.changed?(change)
+        }
+        return page
     }
 
     /// Sends the member's comment on a post, replying to whomever they picked. False when it

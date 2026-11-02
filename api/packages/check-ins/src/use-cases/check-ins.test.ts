@@ -21,12 +21,16 @@ import { createPostgresReactionStore } from '../adapters/postgres-reaction-store
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import {
   CheckInDraft,
+  CheckInEdit,
   CheckInId,
   MemberId,
   SquadId,
   photosOf,
   type CheckInRecord,
 } from '../domain/check-in.js';
+import { CommentId } from '../domain/comment.js';
+import { Emoji } from '../domain/reaction.js';
+import { CommentText } from '../domain/text.js';
 import { DEFAULT_PLAN_DAYS, WeekStart } from '../domain/weekly-plan.js';
 import { createCheckIns } from './check-ins.js';
 
@@ -47,7 +51,13 @@ const membership = createSquads({
 const now = new Date('2026-10-18T20:00:00.000Z');
 // Photo files: the paths uploaded so far. Storage itself is the server's adapter, tested there.
 const uploaded = new Set<string>();
-const photos = { exists: (path: string) => Promise.resolve(uploaded.has(path)) };
+const photos = {
+  exists: (path: string) => Promise.resolve(uploaded.has(path)),
+  delete: (paths: readonly string[]) => {
+    for (const path of paths) uploaded.delete(path);
+    return Promise.resolve();
+  },
+};
 // Nobody here has a time zone: these tests don't read members' days.
 const calendarOf = () => Promise.resolve(undefined);
 const checkIns = createCheckIns({
@@ -526,5 +536,159 @@ describe('listing check-ins', () => {
       { id: later, audience: [a], kind: 'disclaimer' },
       { id: both, audience: [b, a], kind: 'trained' },
     ]);
+  });
+});
+
+async function eventRows(id: CheckInId) {
+  return sql<{ kind: string; entry: unknown }>`
+    select kind::text, entry from check_in_events where check_in_id = ${id} order by id`
+    .execute(db)
+    .then((result) => result.rows);
+}
+
+const edit = (body: Record<string, unknown>) => CheckInEdit.parse({ version: 1, ...body });
+
+describe('editing a check-in', () => {
+  it('replaces its fields and photos, keeps the rest, logs each change once', async () => {
+    const member = await newMember();
+    const squad = await newSquad(member);
+    const [cover, second, added] = [photoOf(member), photoOf(member), photoOf(member)];
+    const id = CheckInId.parse(randomUUID());
+    const saved = await checkIns.save({
+      id,
+      member,
+      draft: draft({
+        audience: [squad],
+        kind: 'trained',
+        training: {
+          sport: 'run',
+          caption: '跑了',
+          photos: [{ ...cover, size: { width: 1080, height: 1350 } }, second],
+        },
+      }),
+    });
+    // The cover is sent back without its size: it keeps the saved one.
+    const change = edit({
+      kind: 'trained',
+      training: { sport: 'swim', minutes: 30, photos: [added, cover] },
+    });
+    const edited = await checkIns.edit({ id, member, edit: change });
+    expect(edited).toStrictEqual({
+      ...saved.checkIn,
+      training: {
+        sport: 'swim',
+        minutes: 30,
+        photos: [added, { ...cover, size: { width: 1080, height: 1350 } }],
+      },
+    });
+    expect(await checkIns.edit({ id, member, edit: change })).toStrictEqual(edited);
+    expect(await savedRows(id)).toStrictEqual([
+      {
+        kind: 'trained',
+        payload: { version: 1, sport: 'swim', minutes: 30 },
+        squads: [squad],
+        photos: [added.path, cover.path],
+      },
+    ]);
+    // The photo left out is deleted; the others stay.
+    expect([uploaded.has(second.path), uploaded.has(cover.path)]).toStrictEqual([false, true]);
+    expect(await eventRows(id)).toStrictEqual([
+      {
+        kind: 'posted',
+        entry: {
+          version: 1,
+          payload: { version: 1, sport: 'run', caption: '跑了' },
+          photos: [{ path: cover.path, width: 1080, height: 1350 }, { path: second.path }],
+        },
+      },
+      {
+        kind: 'edited',
+        entry: {
+          version: 1,
+          payload: { version: 1, sport: 'swim', minutes: 30 },
+          photos: [{ path: added.path }, { path: cover.path, width: 1080, height: 1350 }],
+        },
+      },
+    ]);
+    await expect(
+      db.deleteFrom('check_in_events').where('check_in_id', '=', id).execute(),
+    ).rejects.toMatchObject({
+      code: '42501',
+    });
+  });
+
+  it('refuses another kind, a teammate’s post, and photos that aren’t the member’s or uploaded', async () => {
+    const [member, mate, stranger] = [await newMember(), await newMember(), await newMember()];
+    const squad = await newSquad(member, mate);
+    const id = CheckInId.parse(randomUUID());
+    await checkIns.save({ id, member, draft: draft({ audience: [squad] }) });
+    const run = (photos?: readonly { readonly path: string }[]) =>
+      edit({
+        kind: 'trained',
+        training: { sport: 'run', ...(photos === undefined ? {} : { photos }) },
+      });
+    await expect(
+      checkIns.edit({ id, member, edit: edit({ kind: 'healthyMeal', meal: {} }) }),
+    ).rejects.toMatchObject({ reason: 'CHECK_IN_KIND_CHANGED' });
+    await expect(checkIns.edit({ id, member: mate, edit: run() })).rejects.toMatchObject({
+      reason: 'NOT_YOUR_CHECK_IN',
+    });
+    await expect(checkIns.edit({ id, member: stranger, edit: run() })).rejects.toMatchObject({
+      reason: 'CHECK_IN_NOT_FOUND',
+    });
+    await expect(checkIns.edit({ id, member, edit: run([photoOf(mate)]) })).rejects.toMatchObject({
+      reason: 'PHOTO_NOT_YOURS',
+    });
+    await expect(
+      checkIns.edit({ id, member, edit: run([photoOf(member, { upload: false })]) }),
+    ).rejects.toMatchObject({ reason: 'PHOTO_NOT_UPLOADED' });
+    const other = CheckInId.parse(randomUUID());
+    const used = photoOf(member);
+    await checkIns.save({
+      id: other,
+      member,
+      draft: draft({ audience: [], kind: 'cheatMeal', meal: { photos: [used] } }),
+    });
+    await expect(checkIns.edit({ id, member, edit: run([used]) })).rejects.toMatchObject({
+      reason: 'PHOTO_IN_USE',
+    });
+    await expect(
+      checkIns.edit({ id: CheckInId.parse(randomUUID()), member, edit: run() }),
+    ).rejects.toMatchObject({ reason: 'CHECK_IN_NOT_FOUND' });
+    expect(await eventRows(id)).toHaveLength(1);
+  });
+});
+
+describe('deleting a check-in', () => {
+  it('removes it with its photos, reactions, comments and log; again is a no-op', async () => {
+    const [member, mate] = [await newMember(), await newMember()];
+    const squad = await newSquad(member, mate);
+    const cover = photoOf(member);
+    const id = CheckInId.parse(randomUUID());
+    await checkIns.save({
+      id,
+      member,
+      draft: draft({ audience: [squad], kind: 'cheatMeal', meal: { photos: [cover] } }),
+    });
+    await checkIns.react({ checkIn: id, member: mate, emoji: Emoji.parse('😂') });
+    await checkIns.comment({
+      checkIn: id,
+      id: CommentId.parse(randomUUID()),
+      member: mate,
+      text: CommentText.parse('香'),
+    });
+    await expect(checkIns.delete({ id, member: mate })).rejects.toMatchObject({
+      reason: 'NOT_YOUR_CHECK_IN',
+    });
+    await checkIns.delete({ id, member });
+    await checkIns.delete({ id, member });
+    expect(uploaded.has(cover.path)).toBe(false);
+    expect(await savedRows(id)).toStrictEqual([]);
+    expect(await eventRows(id)).toStrictEqual([]);
+    const left = await sql<{ count: string }>`
+      select (select count(*) from check_in_reactions where check_in_id = ${id})
+        + (select count(*) from check_in_comments where check_in_id = ${id}) as count`.execute(db);
+    expect(left.rows).toStrictEqual([{ count: '0' }]);
+    expect(await checkIns.exists(id)).toBe(false);
   });
 });

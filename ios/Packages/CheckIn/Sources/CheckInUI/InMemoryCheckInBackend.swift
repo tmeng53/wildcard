@@ -168,6 +168,19 @@ public actor InMemoryCheckInBackend: CheckInBackend {
         return checkIn
     }
 
+    public func edit(_ checkIn: CheckIn) async throws(CheckInError) -> CheckIn {
+        guard var home = current, let index = home.checkIns.firstIndex(where: { $0.id == checkIn.id }) else {
+            throw .refused
+        }
+        home.checkIns[index] = checkIn
+        current = home
+        return checkIn
+    }
+
+    public func delete(_ checkIn: CheckInID) async throws(CheckInError) {
+        current?.checkIns.removeAll { $0.id == checkIn }
+    }
+
     public func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction] {
         reactionsByCheckIn[checkIn] ?? []
     }

@@ -125,6 +125,28 @@ export class CheckInNotFoundError extends AppError {
   }
 }
 
+/** Thrown when a member edits or deletes someone else's check-in: each changes only their own. */
+export class NotYourCheckInError extends AppError {
+  override readonly name = 'NotYourCheckInError';
+  readonly reason = 'NOT_YOUR_CHECK_IN';
+  readonly status = 'PERMISSION_DENIED';
+
+  constructor() {
+    super('You can only change your own check-ins.');
+  }
+}
+
+/** Thrown for an edit of another kind than the check-in saved: a post keeps its kind. */
+export class CheckInKindChangedError extends AppError {
+  override readonly name = 'CheckInKindChangedError';
+  readonly reason = 'CHECK_IN_KIND_CHANGED';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(readonly saved: string) {
+    super(`This check-in is a ${saved}; an edit can't change its kind.`);
+  }
+}
+
 /** Thrown when a member reacts to their own check-in: reactions are for teammates. */
 export class OwnCheckInReactionError extends AppError {
   override readonly name = 'OwnCheckInReactionError';

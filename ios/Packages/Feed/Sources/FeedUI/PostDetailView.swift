@@ -40,6 +40,8 @@ public struct PostDetailView: View {
             }
         }
         .feedSurface(model)
+        // Deleted from its own page, the page goes back.
+        .managesPosts(model) { if $0 == id { close() } }
         .haptic(.pick, trigger: model.commentsSent)
         .task {
             model.opened = id

@@ -13,12 +13,23 @@ import type { WeekSummaryWords } from './domain/week-summary-words.js';
 export type InsertOutcome =
   { readonly saved: true } | { readonly saved: false; readonly taken: 'id' | 'photo' };
 
+/** What saving an edit did: another check-in may hold one of its new photos. */
+export type UpdateOutcome =
+  { readonly saved: true } | { readonly saved: false; readonly taken: 'photo' };
+
 /** Where check-ins are kept. */
 export interface CheckInStore {
   /** The check-in saved under `id`, whoever made it. */
   find(id: CheckInId): Promise<CheckInRecord | undefined>;
   /** Saves a new check-in with its audience and photos, or says which uniqueness rule stopped it. */
   insert(checkIn: CheckInRecord): Promise<InsertOutcome>;
+  /**
+   * Replaces a saved check-in's entry, the kind's fields and its photos, and logs the new one.
+   * The kind, day, time and audience are never changed.
+   */
+  update(checkIn: CheckInRecord): Promise<UpdateOutcome>;
+  /** Deletes a check-in with its audience, photos, reactions, comments and log. */
+  remove(id: CheckInId): Promise<void>;
   /** Everything `member` ever checked in, counted by kind. */
   totals(member: MemberId): Promise<CheckInTotals>;
   /** Check-ins sent to `squad` from these members, newest day first, with their whole audience. */
@@ -119,6 +130,8 @@ export interface CommentStore {
 export interface PhotoFiles {
   /** Whether a photo has been uploaded to this path. */
   exists(path: PhotoPath): Promise<boolean>;
+  /** Deletes these photos' files; one already gone is skipped. */
+  delete(paths: readonly PhotoPath[]): Promise<void>;
 }
 
 /** The current time. */

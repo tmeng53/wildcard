@@ -1887,6 +1887,203 @@ extension Components {
                 case photos
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CheckInEdit`.
+        @frozen public enum CheckInEdit: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CheckInEdit/CheatMealCheckInEdit`.
+            case cheatMeal(Components.Schemas.CheatMealCheckInEdit)
+            /// - Remark: Generated from `#/components/schemas/CheckInEdit/DisclaimerCheckInEdit`.
+            case disclaimer(Components.Schemas.DisclaimerCheckInEdit)
+            /// - Remark: Generated from `#/components/schemas/CheckInEdit/HealthyMealCheckInEdit`.
+            case healthyMeal(Components.Schemas.HealthyMealCheckInEdit)
+            /// - Remark: Generated from `#/components/schemas/CheckInEdit/TrainedCheckInEdit`.
+            case trained(Components.Schemas.TrainedCheckInEdit)
+            public enum CodingKeys: String, CodingKey {
+                case kind
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                let discriminator = try container.decode(
+                    Swift.String.self,
+                    forKey: .kind
+                )
+                switch discriminator {
+                case "cheatMeal":
+                    self = .cheatMeal(try .init(from: decoder))
+                case "disclaimer":
+                    self = .disclaimer(try .init(from: decoder))
+                case "healthyMeal":
+                    self = .healthyMeal(try .init(from: decoder))
+                case "trained":
+                    self = .trained(try .init(from: decoder))
+                default:
+                    throw Swift.DecodingError.unknownOneOfDiscriminator(
+                        discriminatorKey: CodingKeys.kind,
+                        discriminatorValue: discriminator,
+                        codingPath: decoder.codingPath
+                    )
+                }
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                switch self {
+                case let .cheatMeal(value):
+                    try value.encode(to: encoder)
+                case let .disclaimer(value):
+                    try value.encode(to: encoder)
+                case let .healthyMeal(value):
+                    try value.encode(to: encoder)
+                case let .trained(value):
+                    try value.encode(to: encoder)
+                }
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/TrainedCheckInEdit`.
+        public struct TrainedCheckInEdit: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/TrainedCheckInEdit/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/TrainedCheckInEdit/version`.
+            public var version: Components.Schemas.TrainedCheckInEdit.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/TrainedCheckInEdit/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case trained = "trained"
+            }
+            /// - Remark: Generated from `#/components/schemas/TrainedCheckInEdit/kind`.
+            public var kind: Components.Schemas.TrainedCheckInEdit.KindPayload
+            /// - Remark: Generated from `#/components/schemas/TrainedCheckInEdit/training`.
+            public var training: Components.Schemas.Training
+            /// Creates a new `TrainedCheckInEdit`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - kind:
+            ///   - training:
+            public init(
+                version: Components.Schemas.TrainedCheckInEdit.VersionPayload,
+                kind: Components.Schemas.TrainedCheckInEdit.KindPayload,
+                training: Components.Schemas.Training
+            ) {
+                self.version = version
+                self.kind = kind
+                self.training = training
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case kind
+                case training
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInEdit`.
+        public struct HealthyMealCheckInEdit: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInEdit/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInEdit/version`.
+            public var version: Components.Schemas.HealthyMealCheckInEdit.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInEdit/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case healthyMeal = "healthyMeal"
+            }
+            /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInEdit/kind`.
+            public var kind: Components.Schemas.HealthyMealCheckInEdit.KindPayload
+            /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInEdit/meal`.
+            public var meal: Components.Schemas.Meal
+            /// Creates a new `HealthyMealCheckInEdit`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - kind:
+            ///   - meal:
+            public init(
+                version: Components.Schemas.HealthyMealCheckInEdit.VersionPayload,
+                kind: Components.Schemas.HealthyMealCheckInEdit.KindPayload,
+                meal: Components.Schemas.Meal
+            ) {
+                self.version = version
+                self.kind = kind
+                self.meal = meal
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case kind
+                case meal
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CheatMealCheckInEdit`.
+        public struct CheatMealCheckInEdit: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CheatMealCheckInEdit/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CheatMealCheckInEdit/version`.
+            public var version: Components.Schemas.CheatMealCheckInEdit.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CheatMealCheckInEdit/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case cheatMeal = "cheatMeal"
+            }
+            /// - Remark: Generated from `#/components/schemas/CheatMealCheckInEdit/kind`.
+            public var kind: Components.Schemas.CheatMealCheckInEdit.KindPayload
+            /// - Remark: Generated from `#/components/schemas/CheatMealCheckInEdit/meal`.
+            public var meal: Components.Schemas.Meal
+            /// Creates a new `CheatMealCheckInEdit`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - kind:
+            ///   - meal:
+            public init(
+                version: Components.Schemas.CheatMealCheckInEdit.VersionPayload,
+                kind: Components.Schemas.CheatMealCheckInEdit.KindPayload,
+                meal: Components.Schemas.Meal
+            ) {
+                self.version = version
+                self.kind = kind
+                self.meal = meal
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case kind
+                case meal
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DisclaimerCheckInEdit`.
+        public struct DisclaimerCheckInEdit: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DisclaimerCheckInEdit/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/DisclaimerCheckInEdit/version`.
+            public var version: Components.Schemas.DisclaimerCheckInEdit.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/DisclaimerCheckInEdit/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case disclaimer = "disclaimer"
+            }
+            /// - Remark: Generated from `#/components/schemas/DisclaimerCheckInEdit/kind`.
+            public var kind: Components.Schemas.DisclaimerCheckInEdit.KindPayload
+            /// - Remark: Generated from `#/components/schemas/DisclaimerCheckInEdit/disclaimer`.
+            public var disclaimer: Components.Schemas.Disclaimer
+            /// Creates a new `DisclaimerCheckInEdit`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - kind:
+            ///   - disclaimer:
+            public init(
+                version: Components.Schemas.DisclaimerCheckInEdit.VersionPayload,
+                kind: Components.Schemas.DisclaimerCheckInEdit.KindPayload,
+                disclaimer: Components.Schemas.Disclaimer
+            ) {
+                self.version = version
+                self.kind = kind
+                self.disclaimer = disclaimer
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case kind
+                case disclaimer
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadPostList`.
         public struct SquadPostList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadPostList/version`.

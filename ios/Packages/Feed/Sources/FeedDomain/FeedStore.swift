@@ -213,6 +213,17 @@ public final class FeedStore {
         ownNotYetListed[checkIn.id] = post
     }
 
+    /// Shows the member's change to one of their own posts at once: edited in place, or gone.
+    public func apply(_ change: PostChange) {
+        for (id, post) in loaded { loaded[id] = post.applying(change) }
+        for (id, post) in ownNotYetListed { ownNotYetListed[id] = post.applying(change) }
+        if case .deleted(let id) = change {
+            wishes[id] = nil
+            pendingComments[id] = nil
+            unsentComments[id] = nil
+        }
+    }
+
     /// Teammates' reactions on the member's own posts left after `moment`, the newest on each
     /// post, newest first: what their character answers when 动态 opens.
     public func arrivals(since moment: Timestamp) -> [Arrival] {

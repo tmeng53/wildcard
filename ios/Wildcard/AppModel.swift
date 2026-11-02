@@ -281,7 +281,7 @@ final class AppModel {
             Task { await readScene(of: home.squad.id, into: today) }
         }
         screen = .tabs(
-            today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
+            today: today, profile: profile, schedule: schedule, feed: Self.feed(api, home, store), squad: squad,
             recap: recap)
         homeSquad = home.squad.id
     }
@@ -314,14 +314,14 @@ final class AppModel {
             service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
 
-    /// 动态 on the member's squad, its days by the member's own clock.
-    private static func feed(api: WildcardAPI, home: Home) -> FeedModel {
+    /// 动态 on the member's squad by their clock; their posts change through 今天's store, which recounts.
+    private static func feed(_ api: WildcardAPI, _ home: Home, _ editor: TodayStore) -> FeedModel {
         let zone = home.timeZone
         let store = FeedStore(
             source: APIFeedSource(api: api), squad: home.squad.id, viewer: home.member,
             today: { LocalDay(at: Date(), in: zone) }, now: { Timestamp(Date()) },
             newCommentID: { CommentID(UUID()) })
-        return FeedModel(store: store, viewer: home.member, now: { Date() })
+        return FeedModel(store: store, viewer: home.member, editor: editor, now: { Date() })
     }
 
     /// 我的动态 over our API.

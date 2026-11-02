@@ -1,4 +1,5 @@
 import {
+  CheckInId,
   SquadId as CheckInSquad,
   WeekStart as CheckInWeek,
   photosOf,
@@ -211,7 +212,12 @@ export async function squadStory(
     // Members who left take their awards with them, as their check-ins leave the feed.
     const inSquad = new Set<string>(found.members.map(({ member }) => member));
     const members = state.awards.members.filter(({ member }) => inSquad.has(member));
-    const hottest = members.find(({ member }) => member === MemberId.parse(viewer))?.topCheckIn;
+    const top = members.find(({ member }) => member === MemberId.parse(viewer))?.topCheckIn;
+    // The titles stay as given, but a post its member deleted since is gone from the story too.
+    const hottest =
+      top !== undefined && (await deps.checkIns.exists(CheckInId.parse(top.checkIn)))
+        ? top
+        : undefined;
     return { ...header, status: 'ready', members, ...(hottest === undefined ? {} : { hottest }) };
   }
   // Not written yet: the hottest check-in as the awards will see it, from the week so far.

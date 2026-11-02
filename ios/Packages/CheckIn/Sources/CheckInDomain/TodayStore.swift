@@ -43,7 +43,7 @@ public final class TodayStore {
 
     public private(set) var phase = Phase.loading
     /// The home as the server last sent it, with the posts it saved since folded in.
-    public private(set) var savedHome: Home?
+    public internal(set) var savedHome: Home?
     /// Posts not yet saved, oldest first.
     public private(set) var pending: [PendingCheckIn] = []
     /// Posts dropped because the server refused them while they went out late.
@@ -58,7 +58,7 @@ public final class TodayStore {
     /// the captain removed them.
     public private(set) var lostSquad: Squad?
 
-    private let backend: any CheckInBackend
+    let backend: any CheckInBackend
     private let outbox: any Outbox
     private let now: @Sendable () -> Date
     private let newID: @Sendable () -> UUID
@@ -284,7 +284,7 @@ public final class TodayStore {
         await outbox.save(pending)
     }
 
-    private func drop(_ id: CheckInID) async {
+    func drop(_ id: CheckInID) async {
         pending.removeAll { $0.id == id }
         await outbox.save(pending)
     }
