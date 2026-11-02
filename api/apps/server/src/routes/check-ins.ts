@@ -347,6 +347,7 @@ export function checkIns(deps: {
       204: { description: 'Deleted, or gone already' },
       400: problem('Not a check-in id'),
       403: problem('A teammate’s check-in (`NOT_YOUR_CHECK_IN`)'),
+      404: problem('Another member’s check-in the caller can’t see (`CHECK_IN_NOT_FOUND`)'),
       ...signedInFailures,
     },
   });

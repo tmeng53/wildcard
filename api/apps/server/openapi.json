@@ -4378,6 +4378,16 @@
               }
             }
           },
+          "404": {
+            "description": "Another member’s check-in the caller can’t see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "503": {
             "description": "Sign-in or photo storage can’t be reached right now",
             "content": {

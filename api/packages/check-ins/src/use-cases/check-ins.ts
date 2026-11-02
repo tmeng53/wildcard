@@ -67,8 +67,8 @@ export interface CheckIns {
   }): Promise<CheckInRecord>;
   /** Deletes the member's own check-in with its photos and everything left on it. */
   delete(input: { readonly id: CheckInId; readonly member: MemberId }): Promise<void>;
-  /** Whether a check-in is still saved, whoever made it. */
-  exists(id: CheckInId): Promise<boolean>;
+  /** A check-in as it is saved now, whoever made it; undefined once it is deleted. */
+  current(id: CheckInId): Promise<CheckInRecord | undefined>;
   /** A squad's feed: its check-ins for a range of days, each with its reactions and comments. */
   listForSquad(input: ListSquadCheckInsInput): Promise<SquadPost[]>;
   /** One post, as the feed shows it, for its author or a teammate who can see it. */
@@ -147,7 +147,7 @@ export function createCheckIns(deps: {
     save: (input) => saveCheckIn(deps, input),
     edit: (input) => editCheckIn(deps, input),
     delete: (input) => deleteCheckIn(deps, input),
-    exists: async (id) => (await deps.store.find(id)) !== undefined,
+    current: (id) => deps.store.find(id),
     listForSquad: (input) => listSquadCheckIns(deps, input),
     post: (input) => findPost(deps, input),
     listMine: (input) => listMyCheckIns(deps, input),

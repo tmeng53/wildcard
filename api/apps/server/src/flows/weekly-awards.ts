@@ -213,11 +213,11 @@ export async function squadStory(
     const inSquad = new Set<string>(found.members.map(({ member }) => member));
     const members = state.awards.members.filter(({ member }) => inSquad.has(member));
     const top = members.find(({ member }) => member === MemberId.parse(viewer))?.topCheckIn;
-    // The titles stay as given, but a post its member deleted since is gone from the story too.
-    const hottest =
-      top !== undefined && (await deps.checkIns.exists(CheckInId.parse(top.checkIn)))
-        ? top
-        : undefined;
+    // The titles and the post's reactions stay as given, but the post shows as its member left
+    // it: as edited since (a photo taken off is gone from Storage too), or gone once deleted.
+    const now =
+      top === undefined ? undefined : await deps.checkIns.current(CheckInId.parse(top.checkIn));
+    const hottest = top === undefined || now === undefined ? undefined : asItIsNow(top, now);
     return { ...header, status: 'ready', members, ...(hottest === undefined ? {} : { hottest }) };
   }
   // Not written yet: the hottest check-in as the awards will see it, from the week so far.
@@ -337,6 +337,21 @@ async function memberWeeks(
       };
     }),
   );
+}
+
+/** The hottest check-in at the awards, with what it says and shows now. */
+function asItIsNow(top: TopCheckIn, record: CheckInRecord): TopCheckIn {
+  const now = weekCheckIn(record, { reactions: new Map(), comments: new Map() });
+  return {
+    checkIn: top.checkIn,
+    day: top.day,
+    kind: top.kind,
+    ...(now.sport === undefined ? {} : { sport: now.sport }),
+    ...(now.caption === undefined ? {} : { caption: now.caption }),
+    ...(now.text === undefined ? {} : { text: now.text }),
+    photos: [...now.photos],
+    reactions: top.reactions,
+  };
 }
 
 function weekCheckIn(

@@ -689,6 +689,6 @@ describe('deleting a check-in', () => {
       select (select count(*) from check_in_reactions where check_in_id = ${id})
         + (select count(*) from check_in_comments where check_in_id = ${id}) as count`.execute(db);
     expect(left.rows).toStrictEqual([{ count: '0' }]);
-    expect(await checkIns.exists(id)).toBe(false);
+    expect(await checkIns.current(id)).toBeUndefined();
   });
 });

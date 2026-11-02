@@ -404,6 +404,19 @@ describe('weekly awards', () => {
     expect(prompts.filter((prompt) => prompt.includes(caption))).toHaveLength(1);
     expect(before.sent).toBe(2);
 
+    // Ana edits her hottest post, taking its photo off: the story shows it as it is now, with
+    // the reactions it had at the awards, and never the photo gone from Storage.
+    const edited = `改了 ${randomUUID().slice(0, 8)}`;
+    await checkIns.edit({
+      id: CheckInId.parse(top),
+      member: CheckInMember.parse(ana.userId),
+      edit: { version: 1, kind: 'trained', training: { sport: 'run', caption: edited } },
+    });
+    const afterEdit = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(afterEdit.hottest?.caption).toBe(edited);
+    expect(afterEdit.hottest?.photos).toStrictEqual([]);
+    expect(afterEdit.hottest?.reactions).toStrictEqual([{ emoji: '❤️', count: 1 }]);
+
     // Ana deletes her hottest post: her titles stay, the post leaves her story.
     await checkIns.delete({
       id: CheckInId.parse(top),
