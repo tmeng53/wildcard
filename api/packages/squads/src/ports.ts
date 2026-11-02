@@ -63,6 +63,11 @@ export interface SquadStore {
   /** Everyone in any of these squads now, each once. */
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
   /**
+   * The members in `squad` at a moment, in the order they (last) joined, from its log of joins
+   * and leaves: someone who joined later isn't, someone who left later is.
+   */
+  membersAt(squad: SquadId, moment: Date): Promise<MemberId[]>;
+  /**
    * Saves a new squad with its creator as its first member, unless the id or invite code is
    * taken or the creator is already in `SQUADS_PER_MEMBER` squads.
    */

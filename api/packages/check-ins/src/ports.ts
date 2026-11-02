@@ -134,10 +134,22 @@ export type Clock = () => Date;
  * week the member changed, and a template row for each change to their typical week.
  */
 export interface WeeklyPlanStore {
-  /** The member's plan saved for `weekStart` itself. */
-  savedFor(member: MemberId, weekStart: WeekStart): Promise<PlanDays | undefined>;
-  /** The member's template for `weekStart`: the newest one applying from that week or before. */
-  templateFor(member: MemberId, weekStart: WeekStart): Promise<PlanDays | undefined>;
+  /**
+   * The member's plan saved for `weekStart` itself; with `asOf`, as it stood just before then,
+   * from its log.
+   */
+  savedFor(
+    member: MemberId,
+    week: { readonly weekStart: WeekStart; readonly asOf?: Date },
+  ): Promise<PlanDays | undefined>;
+  /**
+   * The member's template for `weekStart`: the newest one applying from that week or before;
+   * with `asOf`, the newest saved before then.
+   */
+  templateFor(
+    member: MemberId,
+    week: { readonly weekStart: WeekStart; readonly asOf?: Date },
+  ): Promise<PlanDays | undefined>;
   /** The member's latest template, the one the weeks to come follow, and the week it applies from. */
   latestTemplate(
     member: MemberId,

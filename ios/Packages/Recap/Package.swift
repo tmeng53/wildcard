@@ -1,8 +1,9 @@
 // swift-tools-version: 6.0
 import PackageDescription
 
-// The Sunday 战报: a squad's week told as a story of full-screen pages. The weekly AI run fills
-// one template per squad-week on the server; the app only plays it. `RecapDomain` holds the
+// The Sunday 战报 (每周战报): a squad's week told as a story of full-screen pages. The server
+// freezes each squad-week's story at its awards and the AI run adds the words; the app only
+// plays it. `RecapDomain` holds the
 // story as the app reads it, which pages play in which order, how long each lasts, what the
 // characters do on each, and the tap-to-advance player; it is pure Swift, so it tests on Linux.
 // `RecapUI` draws the pages, the covered entry tile in 动态 and the pending page, and puts

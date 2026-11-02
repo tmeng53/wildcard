@@ -6,8 +6,8 @@ import DesignSystem
 import Foundation
 import RecapDomain
 
-/// A filled-in week for the demo squad, as the weekly AI run would store it: what the app plays
-/// until the API's story route is wired, and what the UI tests screenshot. Its words stand in
+/// A filled-in week for the demo squad, as the API would freeze it and the weekly AI run fill
+/// it: what the app plays without a backend, and what the UI tests screenshot. Its words stand in
 /// for the API's, which arrive already in the reader's language.
 public enum RecapSample {
     /// - Parameters:
@@ -17,7 +17,7 @@ public enum RecapSample {
         let ready = !pending
         return WeekStory(
             status: pending ? .pending : .ready, squad: SquadID(uuid(9)), squadName: "晨跑五人组",
-            week: Week(monday: day(12), sunday: day(18)),
+            week: Week(monday: day(12), sunday: day(18)), scene: .pool, squadmates: squadmates,
             order: [.podium, .titles, .myWeek, .hottest, .meals, .bestDisclaimer, .ending],
             podium: Podium(
                 champion: coco, sides: [lin, mia], speech: ready ? "七天五天八点前打卡，闹钟都怕她" : nil,
@@ -65,36 +65,38 @@ public enum RecapSample {
     }
 
     /// The demo squad on the pool scene, read by 我.
-    public static let cast = StoryCast(
-        members: [
-            member(
-                coco, "Coco", .energetic, "person",
-                [
-                    "body": "peach", "hair": "curls", "eyes": "happy", "brows": "arched", "mouth": "grin",
-                    "cheeks": "flushed",
-                    "top": "nolook-jersey", "bottom": "warmup-shorts",
-                ]),
-            member(
-                lin, "小林", .showoff, "person",
-                [
-                    "body": "peach", "hair": "wolf", "eyes": "sharp", "brows": "bold", "mouth": "smirk",
-                    "top": "warmup-tank",
-                    "bottom": "warmup-shorts",
-                ]),
-            member(
-                mia, "Mia", .drama, "cat",
-                ["body": "tuxedo", "top": "warmup-tee", "bottom": "warmup-shorts", "hat": "warmup-headband"]),
-            member(
-                jay, "阿杰", .shy, "dog",
-                ["body": "shiba", "top": "warmup-tee", "bottom": "moss-cargo", "hat": "warmup-cap"]),
-            member(
-                reader, "我", .deadpan, "person",
-                [
-                    "body": "peach", "hair": "long", "eyes": "sleepy", "brows": "soft", "mouth": "smile",
-                    "cheeks": "rosy",
-                    "glasses": "square", "top": "warmup-hoodie", "bottom": "warmup-leggings",
-                ]),
-        ], viewer: reader, scene: .pool)
+    public static let cast = StoryCast(story: story(), viewer: reader)
+
+    /// The demo squad as the story keeps it.
+    private static let squadmates = [
+        member(
+            coco, "Coco", .energetic,
+            [
+                "body": "peach", "hair": "curls", "eyes": "happy", "brows": "arched", "mouth": "grin",
+                "cheeks": "flushed",
+                "top": "nolook-jersey", "bottom": "warmup-shorts",
+            ]),
+        member(
+            lin, "小林", .showoff,
+            [
+                "body": "peach", "hair": "wolf", "eyes": "sharp", "brows": "bold", "mouth": "smirk",
+                "top": "warmup-tank",
+                "bottom": "warmup-shorts",
+            ]),
+        member(
+            mia, "Mia", .drama,
+            ["body": "tuxedo", "top": "warmup-tee", "bottom": "warmup-shorts", "hat": "warmup-headband"]),
+        member(
+            jay, "阿杰", .shy,
+            ["body": "shiba", "top": "warmup-tee", "bottom": "moss-cargo", "hat": "warmup-cap"]),
+        member(
+            reader, "我", .deadpan,
+            [
+                "body": "peach", "hair": "long", "eyes": "sleepy", "brows": "soft", "mouth": "smile",
+                "cheeks": "rosy",
+                "glasses": "square", "top": "warmup-hoodie", "bottom": "warmup-leggings",
+            ]),
+    ]
 
     private static let coco = MemberID(uuid(1))
     private static let lin = MemberID(uuid(2))
@@ -102,10 +104,13 @@ public enum RecapSample {
     private static let jay = MemberID(uuid(4))
     private static let reader = MemberID(uuid(5))
 
-    private static func member(
-        _ id: MemberID, _ nickname: String, _ persona: Persona, _ species: String, _ look: [Slot: String]
-    ) -> StoryMember {
-        StoryMember(id: id, nickname: nickname, look: Outfit(look), persona: persona, species: species)
+    private static func member(_ id: MemberID, _ nickname: String, _ persona: Persona, _ look: [Slot: String])
+        -> Squadmate
+    {
+        guard let name = try? Nickname(nickname) else { fatalError("The sample squad's nicknames are valid") }
+        return Squadmate(
+            member: id,
+            character: MemberCharacter(nickname: name, look: CharacterLook(outfit: Outfit(look), persona: persona)))
     }
 
     private static func title(_ member: MemberID, _ title: String, _ speech: String, _ move: AwardMove) -> MemberTitles

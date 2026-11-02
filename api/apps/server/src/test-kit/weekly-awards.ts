@@ -8,6 +8,9 @@ export const unusedWeeklyAwards = {
     claimNudge: unused,
     claimWinners: unused,
     titlesWon: unused,
+    story: unused,
+    freezeStory: unused,
+    storiesWaiting: unused,
   },
   clock: () => new Date(),
 };

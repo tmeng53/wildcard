@@ -64,6 +64,7 @@ import {
   createAwardSettings,
   createPostgresAwardSettings,
   createPostgresAwardsStore,
+  createPostgresWeekStoryStore,
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
@@ -178,6 +179,7 @@ const awards = createWeeklyAwards({
   model: awardsModel,
   settings: createPostgresAwardSettings(db),
   store: createPostgresAwardsStore(db),
+  stories: createPostgresWeekStoryStore(db),
   aiConsented: (members) =>
     aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
   // Every meme in use, so the awards can draw on any that fits; only what the prompt needs.
@@ -249,7 +251,7 @@ const coachWakes =
         stores: createPostgresCoachStores(db),
         transaction: postgresCoachTransaction(db),
         agent: createOpenAICoachAgent({ apiKey: openaiKey }),
-        squadWeek: coachSquadWeek({ checkIns, members, sports, clock: () => new Date() }),
+        squadWeek: coachSquadWeek({ checkIns, members, squads, sports, clock: () => new Date() }),
         // Only the words of members who agreed to the current AI copy reach the model.
         aiConsented: (members) =>
           aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),

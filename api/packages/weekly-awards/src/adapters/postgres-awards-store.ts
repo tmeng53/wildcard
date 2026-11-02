@@ -40,14 +40,10 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
       return {
         status: 'given',
         awards: {
-          members: winners.map(({ member_id, award }) => {
-            const { titles, topCheckIn } = StoredAward.parse(award);
-            return {
-              member: MemberId.parse(member_id),
-              titles,
-              ...(topCheckIn === undefined ? {} : { topCheckIn }),
-            };
-          }),
+          members: winners.map(({ member_id, award }) => ({
+            member: MemberId.parse(member_id),
+            titles: StoredAward.parse(award).titles,
+          })),
         },
       };
     },
@@ -83,12 +79,8 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
           await trx
             .insertInto('weekly_award_winners')
             .values(
-              awards.members.map(({ member, titles, topCheckIn }, position) => {
-                const award: StoredAward = {
-                  version: 1,
-                  titles: [...titles],
-                  ...(topCheckIn === undefined ? {} : { topCheckIn }),
-                };
+              awards.members.map(({ member, titles }, position) => {
+                const award: StoredAward = { version: 1, titles: [...titles] };
                 return {
                   squad_id: squad,
                   week_start: weekStart,
