@@ -151,7 +151,7 @@ public enum StoryPage: Hashable, Sendable {
     case ending(Ending)
 }
 
-/// 领奖台: everyone who finished their plan, the crown winner in the middle. No ranks.
+/// 领奖台: the top 3 by days trained, the crown winner (who picks next week's scene) in the middle.
 public struct Podium: Hashable, Sendable {
     /// The most days trained, with the crown.
     public let champion: MemberID

@@ -4125,7 +4125,7 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/WeekAward`.
         public struct WeekAward: Codable, Hashable, Sendable {
-            /// Today `planCompleted` (练够计划: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days trained, at least one, all of them on a tie, plan finished or not) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words.
+            /// Today `planCompleted` (练够计划: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days trained, at least one, plan finished or not; the earliest to join on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekAward/kind`.
             public var kind: Swift.String
@@ -4189,7 +4189,7 @@ extension Components {
             /// Creates a new `WeekAward`.
             ///
             /// - Parameters:
-            ///   - kind: Today `planCompleted` (练够计划: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days trained, at least one, all of them on a tie, plan finished or not) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words.
+            ///   - kind: Today `planCompleted` (练够计划: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days trained, at least one, plan finished or not; the earliest to join on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words.
             ///   - title: Its name, in the language asked for.
             ///   - symbol: An SF Symbol name to show with it; fall back to a plain one if it is unknown.
             ///   - winners: Who won it, in the order members joined the squad.

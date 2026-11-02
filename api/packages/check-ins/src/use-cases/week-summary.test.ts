@@ -266,7 +266,7 @@ describe('a squad’s week summary', () => {
     });
   });
 
-  it('shares the crown on a tie, and gives no award nobody won', async () => {
+  it('crowns the earliest to join on a tie, and gives no award nobody won', async () => {
     const one = await newMember('America/Los_Angeles');
     const two = await newMember('America/Los_Angeles');
     const resting = await newMember('America/Los_Angeles');
@@ -292,13 +292,7 @@ describe('a squad’s week summary', () => {
           { member: two, value: 2 },
         ],
       },
-      {
-        kind: 'crown',
-        winners: [
-          { member: one, value: 2 },
-          { member: two, value: 2 },
-        ],
-      },
+      { kind: 'crown', winners: [{ member: one, value: 2 }] },
     ]);
   });
 
