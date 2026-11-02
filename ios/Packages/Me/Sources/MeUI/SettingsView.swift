@@ -7,18 +7,30 @@ import SwiftUI
 /// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
 /// small group labels (偏好, 关于, 账号), with no icons, a chevron on each row that opens a page,
 /// and an ink switch. Signing out and deleting the account come last. It holds only the app's
-/// own settings: what belongs to the squad, the card or the week lives with them (2026-11-02).
+/// own settings: what belongs to the squad or the week lives with them (2026-11-02). 球衣号码
+/// stays here until its place on the card is decided.
 struct SettingsView: View {
     @Bindable var model: MeModel
     let destinations: MeDestinations
     let close: () -> Void
     @State private var isSigningOut = false
+    @State private var isPickingNumber = false
     @State private var isPickingLanguage = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        menu.swipesBack(perform: close)
+        ZStack {
+            if isPickingNumber {
+                JerseyNumberView(model: model) { isPickingNumber = false }
+                    .swipesBack { isPickingNumber = false }
+                    .transition(.move(edge: .trailing))
+            } else {
+                menu.swipesBack(perform: close)
+            }
+        }
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isPickingNumber)
     }
 
     private var menu: some View {
@@ -58,6 +70,12 @@ struct SettingsView: View {
 
     private var preferencesGroup: some View {
         MenuGroup(Text("偏好", bundle: .module)) {
+            ListRow(
+                Text("球衣号码", bundle: .module), value: Text(verbatim: model.overview?.cardNumber?.text ?? "")
+            ) {
+                isPickingNumber = true
+            }
+            .accessibilityIdentifier("me.jerseyNumber")
             SwitchRow(
                 Text("通知", bundle: .module),
                 isOn: Binding(

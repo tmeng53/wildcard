@@ -85,8 +85,9 @@ final class SquadSettingsUITests: XCTestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 30), "home didn't take over")
         Thread.sleep(forTimeInterval: 2.5)
         keepScreenshot(named: "64-squad-picked-home")
-        // Back on 小队, the pick is locked for the week.
-        app.buttons["tab.squad"].tap()
+        // Back on 小队 through home's card (the tab bar steps aside for the drop, and the
+        // system's bar comes back without its items' identifiers), the pick is locked for the week.
+        app.descendants(matching: .any)["squadcard.squad"].tap()
         waitFor(app.staticTexts["squad.scene"], "label == '游泳池'", "the picked scene didn't show", timeout: 60)
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the winner can pick twice")
     }

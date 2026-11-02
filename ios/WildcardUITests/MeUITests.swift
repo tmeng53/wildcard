@@ -1,6 +1,6 @@
 import XCTest
 
-/// 我 the way a member uses it, on the in-memory member: the player card and its back, its number,
+/// 我 the way a member uses it, on the in-memory member: the player card and its back, 球衣号码,
 /// 出赛表 opened inside 我, 设置 with the notification switch, and the 注销账号 page. Keeps screenshots for review.
 @MainActor
 final class MeUITests: XCTestCase {
@@ -81,8 +81,8 @@ final class MeUITests: XCTestCase {
         let settings = app.descendants(matching: .any).matching(identifier: "settings.page").firstMatch
         XCTAssertTrue(settings.waitForExistence(timeout: 30), "设置 never opened")
         XCTAssertTrue(app.buttons["me.privacy"].exists, "no 隐私政策 row")
-        // 设置 holds only the app's own settings: the squad, the number and the week live elsewhere.
-        for moved in ["me.squad", "me.jerseyNumber", "me.weeklyTemplate"] {
+        // 设置 holds only the app's own settings: the squad and the week live elsewhere.
+        for moved in ["me.squad", "me.weeklyTemplate"] {
             XCTAssertFalse(app.buttons[moved].exists, "\(moved) is still in 设置")
         }
         let notifications = app.switches["me.notifications"]
@@ -129,13 +129,16 @@ final class MeUITests: XCTestCase {
         waitFor(confirm, "isEnabled == false", "the confirm button still takes taps after deleting")
     }
 
-    /// The member taps the number on their card to pick another, and the card wears it.
+    /// The member picks their card's number in 设置, and the card wears it.
     func testJerseyNumber() {
         let app = launch(language: "zh-Hans")
-        let card = app.buttons["me.card"]
-        XCTAssertTrue(card.waitForExistence(timeout: 30), "我 never showed")
-        // The number sits at the card's top left, over the character's window.
-        card.coordinate(withNormalizedOffset: CGVector(dx: 0.14, dy: 0.08)).tap()
+        let settingsButton = app.buttons["me.settings"]
+        XCTAssertTrue(settingsButton.waitForExistence(timeout: 30), "我 never showed")
+        settingsButton.tap()
+        let row = app.buttons["me.jerseyNumber"]
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 球衣号码 row")
+        XCTAssertTrue(row.label.contains("22"), "the row doesn't show the number: \(row.label)")
+        row.tap()
         let wheel = app.pickerWheels.firstMatch
         XCTAssertTrue(wheel.waitForExistence(timeout: 30), "the number page never opened")
         wheel.adjust(toPickerWheelValue: "07")
@@ -143,11 +146,12 @@ final class MeUITests: XCTestCase {
         settle()
         keepScreenshot(named: "49-jersey-number")
         app.buttons["number.save"].tap()
-        XCTAssertTrue(card.waitForExistence(timeout: 30), "saving didn't go back to 我")
-        waitFor(card, "label CONTAINS '07号'", "the card doesn't wear the new number")
-        // Anywhere else on the card still turns it over.
-        card.tap()
-        waitFor(card, "label CONTAINS '放纵餐'", "the card didn't turn over")
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "saving didn't go back to 设置")
+        waitFor(row, "label CONTAINS '07'", "the row doesn't show the new number")
+        app.buttons["settings.back"].tap()
+        let card = app.buttons["me.card"]
+        XCTAssertTrue(card.waitForExistence(timeout: 30))
+        XCTAssertTrue(card.label.contains("07号"), "the card doesn't wear the new number: \(card.label)")
     }
 
     /// 出赛表 opens inside 我 from the row under the card, with this week's count, and its

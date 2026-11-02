@@ -6,12 +6,10 @@ import SportsUI
 import SwiftUI
 
 /// 我's player card, like a baseball card: the front has the character, the name and squad and the
-/// headline numbers; a tap turns it over to the career numbers, as the line under it says, and a
-/// tap on the front's number opens 球衣号码 (`editNumber`). Ink card stock with white type, the
-/// character in a light grey window, standing on faint court lines.
+/// headline numbers; a tap turns it over to the career numbers, as the line under it says. Ink card stock with white type, the character in a light grey window,
+/// standing on faint court lines.
 struct PlayerCard: View {
     let overview: MeOverview
-    let editNumber: () -> Void
     @State private var showsBack = false
     /// How far the card has turned on its vertical axis, in degrees: it turns edge-on, swaps sides
     /// out of sight and turns back.
@@ -23,27 +21,22 @@ struct PlayerCard: View {
 
     var body: some View {
         VStack(spacing: Space.s) {
-            // The front's number is a button of its own, so the card is no button: a tap anywhere
-            // else on it turns it over.
-            Group {
-                if showsBack {
-                    CardBack(overview: overview)
-                } else {
-                    CardFront(overview: overview, editNumber: editNumber)
+            Button(action: flip) {
+                Group {
+                    if showsBack {
+                        CardBack(overview: overview)
+                    } else {
+                        CardFront(overview: overview)
+                    }
                 }
+                .padding(Space.xs)
+                .frame(width: Self.size.width, height: Self.size.height)
+                .background(Color(role: .bgInk, in: theme), in: Self.shape)
+                .contentShape(Self.shape)
+                .rotation3DEffect(.degrees(turn), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
             }
-            .padding(Space.xs)
-            .frame(width: Self.size.width, height: Self.size.height)
-            .background(Color(role: .bgInk, in: theme), in: Self.shape)
-            .contentShape(Self.shape)
-            .onTapGesture(perform: flip)
-            .rotation3DEffect(.degrees(turn), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
-            // One element that reads the whole side, as the card was when it was a button.
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isButton)
+            .buttonStyle(PressableButtonStyle())
             .accessibilityHint(Text("轻点翻面", bundle: .module))
-            .accessibilityAction(.default, flip)
-            .accessibilityAction(named: Text("球衣号码", bundle: .module), editNumber)
             .accessibilityIdentifier("me.card")
             // It turns over rather than swipes, so it says so.
             Text("轻点翻面", bundle: .module)
@@ -83,7 +76,6 @@ struct PlayerCard: View {
 /// squad and the year they joined, then 练了, 本周 and 拿过的奖.
 private struct CardFront: View {
     let overview: MeOverview
-    let editNumber: () -> Void
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -95,19 +87,15 @@ private struct CardFront: View {
                     // One row, so a long title gives way (truncating) before it can reach the number.
                     HStack(alignment: .top, spacing: Space.xs) {
                         if let number = overview.cardNumber {
-                            Button(action: editNumber) {
-                                Text(verbatim: number.text)
-                                    .typeStyle(TypeRamp.scoreHero)
-                                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                                    .monospacedDigit()
-                                    .fixedSize()
-                                    .padding(.leading, Space.s)
-                                    .padding(.top, Space.xs)
-                                    .contentShape(Rectangle())
-                            }
-                            .buttonStyle(PressableButtonStyle())
-                            .accessibilityLabel(Text("card.number \(number.text)", bundle: .module))
-                            .accessibilityIdentifier("me.cardNumber")
+                            Text(verbatim: number.text)
+                                .typeStyle(TypeRamp.scoreHero)
+                                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                                .monospacedDigit()
+                                .fixedSize()
+                                .padding(.leading, Space.s)
+                                .padding(.top, Space.xs)
+                                .accessibilityLabel(Text("card.number \(number.text)", bundle: .module))
+                                .accessibilityIdentifier("me.cardNumber")
                         }
                         Spacer(minLength: 0)
                         if let latest = overview.titles.latest {

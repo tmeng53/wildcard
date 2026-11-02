@@ -31,15 +31,13 @@ public struct MeDestinations {
     }
 }
 
-/// 我: the member's player card (tap it to turn it over, or its number to pick another), the
-/// 出赛表 row, 我的动态 and 编辑外卡运动员, with a small 设置 button that opens the settings menu,
+/// 我: the member's player card (tap it to turn it over), the 出赛表 row, 我的动态 and 编辑外卡运动员, with a small 设置 button that opens the settings menu,
 /// and from there 注销账号. Each page replaces the last in place. These pages keep out of the
 /// scene's colours: ink and white only.
 public struct MeView: View {
     @Bindable private var model: MeModel
     private let destinations: MeDestinations
     @State private var isSettingsOpen = false
-    @State private var isPickingNumber = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -55,11 +53,6 @@ public struct MeView: View {
                     .swipesBack(isEnabled: model.deletion != .deleting) { model.closeDeletion() }
                     .accentTone(.ink)
                     .transition(.move(edge: .trailing))
-            } else if isPickingNumber {
-                JerseyNumberView(model: model) { isPickingNumber = false }
-                    .swipesBack { isPickingNumber = false }
-                    .accentTone(.ink)
-                    .transition(.move(edge: .trailing))
             } else if isSettingsOpen {
                 SettingsView(model: model, destinations: destinations) { isSettingsOpen = false }
                     .accentTone(.ink)
@@ -71,7 +64,6 @@ public struct MeView: View {
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.isDeletionOpen)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isSettingsOpen)
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isPickingNumber)
         .task { await model.reload() }
     }
 
@@ -112,7 +104,7 @@ public struct MeView: View {
                         .buttonStyle(SecondaryButtonStyle())
                         .accessibilityIdentifier("me.settings")
                     }
-                    PlayerCard(overview: overview) { isPickingNumber = true }
+                    PlayerCard(overview: overview)
                     ScheduleRow(week: overview.week, open: destinations.schedule)
                     VStack(spacing: Space.xs) {
                         ViewThatFits(in: .horizontal) {
