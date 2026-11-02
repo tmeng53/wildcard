@@ -63,7 +63,7 @@ final class ComposePhotoUITests: XCTestCase {
             app.staticTexts["放弃这条动态？"].waitForExistence(timeout: Self.wait), "取消 didn't ask before discarding")
         settle()
         keepScreenshot(named: "15-compose-discard")
-        app.buttons["继续编辑"].tap()
+        app.buttons["compose.keepEditing"].tap()
         XCTAssertTrue(caption.waitForExistence(timeout: Self.wait), "继续编辑 left the compose page")
         app.buttons["compose.cancel"].tap()
         let discard = app.buttons["compose.discard"]

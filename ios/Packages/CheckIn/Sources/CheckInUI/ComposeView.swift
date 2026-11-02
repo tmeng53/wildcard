@@ -85,9 +85,11 @@ public struct ComposeView: View {
             .environment(\.sceneTheme, theme)
             .accentTone(.brand)
         }
-        .confirmationDialog(
+        // An alert, not a confirmation dialog: iOS 26 drops a dialog's cancel button, and the
+        // design shows 继续编辑 beside 放弃.
+        .alert(
             model.isEditing ? Text("放弃这些修改？", bundle: .module) : Text("放弃这条动态？", bundle: .module),
-            isPresented: $isDiscarding, titleVisibility: .visible
+            isPresented: $isDiscarding
         ) {
             Button(role: .destructive) {
                 model.close()
@@ -99,6 +101,7 @@ public struct ComposeView: View {
             } label: {
                 Text("继续编辑", bundle: .module)
             }
+            .accessibilityIdentifier("compose.keepEditing")
         }
     }
 

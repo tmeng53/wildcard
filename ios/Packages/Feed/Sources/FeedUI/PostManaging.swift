@@ -26,9 +26,9 @@ struct PostManaging: ViewModifier {
                         .accentTone(.brand)
                 }
             }
-            .confirmationDialog(
-                Text("删掉这条动态？", bundle: .module), isPresented: confirming, titleVisibility: .visible,
-                presenting: model.confirmingDelete
+            // An alert, not a confirmation dialog: iOS 26 drops a dialog's 取消.
+            .alert(
+                Text("删掉这条动态？", bundle: .module), isPresented: confirming, presenting: model.confirmingDelete
             ) { post in
                 Button(role: .destructive) {
                     Task {
