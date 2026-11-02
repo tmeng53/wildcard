@@ -3,6 +3,7 @@
 // tables.
 
 export { createPostgresAwardSettings } from './adapters/postgres-award-settings.js';
+export { createPostgresWeekStoryStore } from './adapters/postgres-week-story-store.js';
 export {
   createPostgresAwardsStore,
   type WeeklyAwardTables,
@@ -38,6 +39,7 @@ export {
   BadgeShape,
   DEFAULT_BADGE,
 } from './domain/badges.js';
+export type { StoryDay, StoryMember, WeekStory } from './domain/week-story.js';
 export { AwardMove } from './domain/moves.js';
 export {
   AWARDS_HOUR,
@@ -59,6 +61,7 @@ export type {
   AwardSettingsStore,
   AwardsStore,
   LanguageModel,
+  WeekStoryStore,
   MemesInUse,
 } from './ports.js';
 export { createAwardSettings, type AwardSettingsAdmin } from './use-cases/award-settings.js';

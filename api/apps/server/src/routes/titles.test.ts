@@ -19,6 +19,7 @@ import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import {
   createPostgresAwardSettings,
   createPostgresAwardsStore,
+  createPostgresWeekStoryStore,
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
 import { sql } from 'kysely';
@@ -102,6 +103,7 @@ const app = createApp({
       model: { answer: () => Promise.reject(new Error('unused')) },
       settings: createPostgresAwardSettings(db),
       store: createPostgresAwardsStore(db),
+      stories: createPostgresWeekStoryStore(db),
       aiConsented: (all) => Promise.resolve(all),
       memes: () => Promise.resolve([]),
     }),

@@ -116,14 +116,26 @@ final class StoryWardrobe {
 
     /// The reader leaning out from behind the cloth on the feed's tile: idle, tilted a little.
     static func peeking(_ member: StoryMember) -> (drawing: FigureDrawing, placements: [Placement])? {
+        idle(member, tilt: 8)
+    }
+
+    /// The reader standing on their step of the uncovered podium, on the tile of a story they
+    /// watched.
+    static func standing(_ member: StoryMember) -> (drawing: FigureDrawing, placements: [Placement])? {
+        idle(member, tilt: 0)
+    }
+
+    private static func idle(_ member: StoryMember, tilt: Double) -> (
+        drawing: FigureDrawing, placements: [Placement]
+    )? {
         guard let figure = try? PlaceholderCharacter.figure(wearing: member.look),
             let clip = try? PlaceholderCharacter.clip("idle", persona: member.persona, species: member.species),
             let idle = try? figure.bind(clip)
         else { return nil }
         var pose = figure.pose(idle, at: 0.5)
-        for part in ["torso", "head"] {
+        for part in ["torso", "head"] where tilt != 0 {
             if let index = figure.parts.firstIndex(where: { $0.id == PartID(part) }) {
-                pose.parts[index].rotation -= 8
+                pose.parts[index].rotation -= tilt
             }
         }
         return (FigureDrawing(figure), figure.layout(pose))

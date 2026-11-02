@@ -10,11 +10,13 @@ import {
   type TitlesWon,
 } from '../domain/awards.js';
 import type { WeekStart } from '../domain/schedule.js';
+import type { WeekStory } from '../domain/week-story.js';
 import type {
   AiConsented,
   AwardSettingsStore,
   AwardsStore,
   LanguageModel,
+  WeekStoryStore,
   MemesInUse,
 } from '../ports.js';
 import { giveAwards, type GiveAwardsInput } from './weekly-awards/give-awards.js';
@@ -52,6 +54,18 @@ export interface WeeklyAwards {
    * the latest first. A member who won nothing has an empty board.
    */
   boards(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, readonly BoardTitle[]>>;
+  /** A squad's frozen 战报 for the week, or `undefined` before it is frozen. */
+  story(input: {
+    readonly squad: SquadId;
+    readonly weekStart: WeekStart;
+  }): Promise<WeekStory | undefined>;
+  /**
+   * Freezes a squad's 战报 for the week, unless it is frozen already, and returns the one that
+   * stands.
+   */
+  freezeStory(story: WeekStory): Promise<WeekStory>;
+  /** The squads whose 战报 for the week is frozen and still waits for its awards. */
+  storiesWaiting(input: { readonly weekStart: WeekStart }): Promise<SquadId[]>;
 }
 
 export function createWeeklyAwards(deps: {
@@ -59,6 +73,7 @@ export function createWeeklyAwards(deps: {
   readonly settings: AwardSettingsStore;
   readonly store: AwardsStore;
   readonly aiConsented: AiConsented;
+  readonly stories: WeekStoryStore;
   readonly memes: MemesInUse;
 }): WeeklyAwards {
   return {
@@ -76,6 +91,14 @@ export function createWeeklyAwards(deps: {
     boards: async (members) => {
       const wins = await deps.store.wins(members);
       return new Map(members.map((member) => [member, boardOf(wins.get(member) ?? [])]));
+    },
+    story: ({ squad, weekStart }) => deps.stories.find(squad, weekStart),
+    storiesWaiting: ({ weekStart }) => deps.stories.waitingForAwards(weekStart),
+    freezeStory: async (story) => {
+      await deps.stories.freeze(story);
+      const frozen = await deps.stories.find(story.squad, story.weekStart);
+      if (frozen === undefined) throw new Error('A 战报 was frozen but can’t be read back');
+      return frozen;
     },
   };
 }

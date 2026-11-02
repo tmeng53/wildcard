@@ -3,11 +3,12 @@
  * Please do not edit it manually.
  */
 
-import type { ColumnType } from "kysely";
+import type { ColumnType } from 'kysely';
 
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-  ? ColumnType<S, I | undefined, U>
-  : ColumnType<T, T | undefined, T>;
+export type Generated<T> =
+  T extends ColumnType<infer S, infer I, infer U>
+    ? ColumnType<S, I | undefined, U>
+    : ColumnType<T, T | undefined, T>;
 
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
@@ -59,7 +60,34 @@ export interface WeeklyAwardWinners {
   week_start: string;
 }
 
+export interface WeekStories {
+  squad_id: string;
+  story: Json;
+  week_start: string;
+  written_at: Generated<Timestamp>;
+}
+
+export interface WeekStoryMembers {
+  member_id: string;
+  page: Json;
+  position: number;
+  squad_id: string;
+  week_start: string;
+}
+
+export interface WeekStoryPosts {
+  check_in_id: string;
+  member_id: string;
+  post: Json;
+  role: string;
+  squad_id: string;
+  week_start: string;
+}
+
 export interface DB {
+  week_stories: WeekStories;
+  week_story_members: WeekStoryMembers;
+  week_story_posts: WeekStoryPosts;
   weekly_award_setting_events: WeeklyAwardSettingEvents;
   weekly_award_settings: WeeklyAwardSettings;
   weekly_award_winners: WeeklyAwardWinners;

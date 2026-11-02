@@ -10,6 +10,9 @@ export const unusedWeeklyAwards = {
     claimNudge: unused,
     claimWinners: unused,
     titlesWon: unused,
+    story: unused,
+    freezeStory: unused,
+    storiesWaiting: unused,
     // The squad's today reads boards: nobody has won anything.
     boards: (members: readonly MemberId[]) =>
       Promise.resolve(
