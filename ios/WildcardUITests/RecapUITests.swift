@@ -35,7 +35,7 @@ final class RecapUITests: XCTestCase {
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "✕ didn't close the story")
         XCTAssertTrue(tile.label.contains("已看完"), "a story watched to the end still shows as new")
         Thread.sleep(forTimeInterval: 1)
-        keepScreenshot(named: "70b-recap-tile-seen")
+        keepScreenshot(named: "70-recap-tile-seen")
     }
 
     /// Only the titles wait while the AI run is late: the out-of-funds page and its nudge.
