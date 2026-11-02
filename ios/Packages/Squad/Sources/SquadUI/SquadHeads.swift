@@ -8,9 +8,9 @@ import SquadDomain
 import SwiftUI
 
 /// The 小队 tab's row of heads under the squad's name (approved 2026-11-02): every member's face,
-/// still, with their name, then the coach's circle (「招聘中」 until the squad hires one; once hired,
-/// ringed in ink with a whistle badge and named 「毛头教练」, so no teammate nicknamed 教练 passes
-/// for it, as Tracy asked on 2026-11-02) and, while
+/// still, with their name, then the coach's circle (「招聘」 until the squad hires one; once hired,
+/// an ink 「教练」 tag on its lower edge and named 「毛头教练」, so no teammate nicknamed 教练
+/// passes for it, as Tracy picked on 2026-11-02) and, while
 /// the squad has room, 「+ 邀请」, which shares the invite at once. Nothing here moves: the scene
 /// and its animations belong to 今天.
 struct SquadHeads: View {
@@ -58,7 +58,7 @@ struct SquadHeads: View {
             .accessibilityIdentifier("squad.head.coach")
         } else {
             let spot = HeadSpot(name: Text("教练", bundle: .module)) {
-                DashedCircle(Text("招聘中", bundle: .module).typeStyle(TypeRamp.label))
+                DashedCircle(Text("招聘", bundle: .module).typeStyle(TypeRamp.label))
             }
             if canHireCoach {
                 Button {
@@ -125,9 +125,8 @@ private struct DashedCircle<Mark: View>: View {
     }
 }
 
-/// The squad's coach in a circle ringed in ink, with a whistle badge at its lower right; until
-/// its still head, as 教练's thumbnail crops it (an ink silhouette for a coach this build has no
-/// character for).
+/// The squad's coach in a circle with an ink 「教练」 tag on its lower edge: its still head, as
+/// 教练's thumbnail crops it (an ink silhouette for a coach this build has no character for).
 private struct CoachHead: View {
     let coach: CoachID
     @State private var head: CharacterPlayer?
@@ -149,17 +148,18 @@ private struct CoachHead: View {
             }
         }
         .clipShape(Circle())
-        // A white gap, then the ink ring, as a sticker's edge.
-        .padding(SquadHeadsMetrics.ringGap)
-        .overlay(Circle().strokeBorder(Color(role: .bgInk, in: theme), lineWidth: Sizing.selectionStroke))
-        .overlay(alignment: .bottomTrailing) {
-            Image(systemName: "whistle.fill")
-                .font(.system(size: SquadHeadsMetrics.badge * 0.5, weight: .semibold))
+        // The 「教练」 tag pressed onto the head's lower edge (option B, 2026-11-02).
+        .overlay(alignment: .bottom) {
+            Text("教练", bundle: .module)
+                .font(.system(size: SquadHeadsMetrics.tag, weight: .bold))
                 .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                .frame(width: SquadHeadsMetrics.badge, height: SquadHeadsMetrics.badge)
-                .background(Color(role: .bgInk, in: theme), in: Circle())
-                .overlay(Circle().strokeBorder(Color(role: .bgCanvas, in: theme), lineWidth: 2))
-                .offset(x: SquadHeadsMetrics.ringGap, y: SquadHeadsMetrics.ringGap)
+                .lineLimit(1)
+                .fixedSize()
+                .padding(.horizontal, Space.xxs + 2)
+                .padding(.vertical, 2)
+                .background(Color(role: .bgInk, in: theme), in: Capsule())
+                .overlay(Capsule().strokeBorder(Color(role: .bgCanvas, in: theme), lineWidth: 1.5))
+                .offset(y: SquadHeadsMetrics.tagDrop)
         }
         .accessibilityHidden(true)
         .task(id: coach) {
@@ -176,9 +176,9 @@ enum SquadHeadsMetrics {
     static let circle = 52.0
     /// A head with its name: a little wider than the circle, for the name.
     static let spot = 56.0
-    /// The coach's whistle badge.
-    static let badge = 22.0
-    /// The white gap between the coach's face and its ink ring.
-    static let ringGap = 2.0
+    /// The 「教练」 tag's type size.
+    static let tag = 10.0
+    /// How far the 「教练」 tag hangs below the head's circle.
+    static let tagDrop = 7.0
 }
 #endif

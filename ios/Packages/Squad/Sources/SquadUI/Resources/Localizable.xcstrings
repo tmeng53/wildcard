@@ -1229,22 +1229,6 @@
         }
       }
     },
-    "招聘中": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hiring"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "招聘中"
-          }
-        }
-      }
-    },
     "%@教练": {
       "localizations": {
         "en": {

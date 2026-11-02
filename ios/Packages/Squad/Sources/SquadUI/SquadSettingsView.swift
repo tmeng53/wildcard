@@ -206,7 +206,7 @@ public struct SquadSettingsView: View {
             Text("退出小队", bundle: .module)
                 .loadingLabel(isSaving(.leave))
         }
-        .buttonStyle(TextButtonStyle(.plain))
+        .buttonStyle(TextButtonStyle(.danger))
         .frame(maxWidth: .infinity)
         .accessibilityIdentifier("squad.leave")
         .confirmationDialog(Text("退出小队？", bundle: .module), isPresented: $isLeaving, titleVisibility: .visible) {
