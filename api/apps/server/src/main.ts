@@ -9,6 +9,7 @@ import {
   createPostgresConsentStore,
 } from '@wildcard/ai-consent';
 import {
+  MemberId as CheckInMember,
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresCommentStore,
@@ -66,6 +67,7 @@ import {
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
+import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { byProvider } from './adapters/language-models.js';
@@ -91,6 +93,7 @@ import { coachSquadWeek } from './flows/coach.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
+import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
@@ -220,6 +223,15 @@ const checkIns = createCheckIns({
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
 });
+// What members unlock by training: the unlocks module keeps the rules and who earned what, and
+// asks check-ins for the 练了 that count and the sports module which sports exist.
+const unlocksOn = (scope: Database) =>
+  createUnlocks({
+    store: createPostgresUnlockStore(scope),
+    trainedSince: ({ member, since }) =>
+      checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
+    sportListed: (id) => sports.isListed(id),
+  });
 const nudges = createNudges({
   store: createPostgresNudgeStore(db),
   // Who is in which squad is the squads module's to keep: nudges ask it.
@@ -314,6 +326,7 @@ const app = createApp({
   }),
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
+  unlocks: unlocksOn(db),
   log,
   jobs: {
     isScheduler,
@@ -344,6 +357,7 @@ const app = createApp({
         words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
+      ...unlockTools({ unlocks: unlocksOn(scope) }),
       ...coachTools({
         settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
         coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),

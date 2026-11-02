@@ -31,6 +31,7 @@ import {
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
+  unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
 } from '../test-kit/weekly-awards.js';
@@ -82,6 +83,7 @@ const app = createApp({
     aiConsent: () => Promise.resolve(true),
   }),
   weeklyAwards: unusedWeeklyAwards,
+  unlocks: unusedUnlocks,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   aiConsent: aiConsentOn(db),

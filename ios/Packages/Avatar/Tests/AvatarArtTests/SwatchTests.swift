@@ -17,8 +17,10 @@ func everySwatchApplies(outfit: Outfit) throws {
             continue
         }
         if clothes.contains(slot) {
-            let onTheRacks = (try PlaceholderCharacter.editorChoices().wear[slot] ?? []).contains { $0.id == variant }
-            #expect(swatches.count == (onTheRacks ? 5 : 0), "\(slot) \(variant) has \(swatches.count) swatches")
+            // WARM-UP's pieces recolor; the other stores' keep their art's colors.
+            let piece = (try PlaceholderCharacter.editorChoices().wear[slot] ?? []).first { $0.id == variant }
+            let recolors = piece.map { !$0.swatches.isEmpty } ?? false
+            #expect(swatches.count == (recolors ? 5 : 0), "\(slot) \(variant) has \(swatches.count) swatches")
         } else {
             #expect((6...8).contains(swatches.count), "\(slot) \(variant) has \(swatches.count) swatches")
         }

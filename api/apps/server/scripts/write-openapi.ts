@@ -108,6 +108,7 @@ const app = createApp({
     },
     clock: unused,
   },
+  unlocks: { of: unused },
   log: createLog(unused),
   jobs: { isScheduler: undefined, interactions: [], clock: unused },
   admin: {
