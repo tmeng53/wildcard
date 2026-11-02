@@ -143,7 +143,7 @@ private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
         .ignoresSafeArea(edges: .top)
         // The capsule takes the status bar's place, as the Dynamic Island does; the system draws
         // the status bar over the app, so the time would sit on the title.
-        .statusBarHidden(item != nil)
+        .hidingStatusBar(item != nil)
         .animation(.wildcard(Motion.notice, reduceMotion: reduceMotion), value: item?.id)
     }
 
@@ -160,6 +160,17 @@ private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
         guard item?.id == shown.id else { return }
         drag = 0
         withAnimation(.wildcard(Motion.notice.exit, reduceMotion: reduceMotion)) { item = nil }
+    }
+}
+
+extension View {
+    /// The status bar is iOS's; the package also builds for macOS, which has none.
+    fileprivate func hidingStatusBar(_ hidden: Bool) -> some View {
+        #if os(iOS)
+        statusBarHidden(hidden)
+        #else
+        self
+        #endif
     }
 }
 #endif
