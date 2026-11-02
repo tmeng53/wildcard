@@ -156,7 +156,7 @@ private struct CoachHead: View {
                 .lineLimit(1)
                 .fixedSize()
                 .padding(.horizontal, Space.xxs + 2)
-                .padding(.vertical, 2)
+                .padding(.vertical, SquadHeadsMetrics.tagInset)
                 .background(Color(role: .bgInk, in: theme), in: Capsule())
                 .overlay(Capsule().strokeBorder(Color(role: .bgCanvas, in: theme), lineWidth: 1.5))
                 .offset(y: SquadHeadsMetrics.tagDrop)
@@ -180,5 +180,7 @@ enum SquadHeadsMetrics {
     static let tag = 10.0
     /// How far the 「教练」 tag hangs below the head's circle.
     static let tagDrop = 7.0
+    /// The 「教练」 tag's room above and below its word.
+    static let tagInset = 2.0
 }
 #endif
