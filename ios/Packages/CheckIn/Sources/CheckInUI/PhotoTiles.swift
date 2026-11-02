@@ -192,8 +192,9 @@ private struct PhotoTile: View {
                     .frame(width: Self.badge, height: Self.badge)
                     .background(Color(role: .bgInk, in: theme).opacity(0.7), in: Circle())
                     .padding(Space.xxs)
-                    // The tap reaches past the small badge, to a finger's width.
-                    .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget, alignment: .topTrailing)
+                    // The tap reaches past the small badge, but stays clear of the tile's middle,
+                    // which makes it the cover or opens it.
+                    .frame(width: Sizing.compactControl, height: Sizing.compactControl, alignment: .topTrailing)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

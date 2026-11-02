@@ -40,7 +40,8 @@ final class PostManageUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         let manage = openMenuOnMyPost(in: app)
         app.buttons["post.delete"].tap()
-        let confirm = app.buttons["post.delete.confirm"]
+        // The dialog's button shows up twice in the tree on iOS 26 (a Button inside a PopUpButton).
+        let confirm = app.buttons["post.delete.confirm"].firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: Self.wait), "删除 didn't ask first")
         XCTAssertTrue(app.staticTexts["删掉这条动态？"].exists, "the question isn't 删掉这条动态？")
         XCTAssertTrue(app.staticTexts["队友的回应和评论也会一起删掉"].exists, "the question doesn't say what goes")
