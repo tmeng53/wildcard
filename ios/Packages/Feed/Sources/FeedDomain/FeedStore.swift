@@ -213,6 +213,21 @@ public final class FeedStore {
         ownNotYetListed[checkIn.id] = post
     }
 
+    /// The latest news for the member among the posts loaded (`FeedPost.latestNews(for:)`).
+    public var latestNews: Timestamp? {
+        loaded.values.compactMap { $0.latestNews(for: viewer) }.max()
+    }
+
+    /// The latest news for the member in the squad's latest week, read without changing what is
+    /// loaded: for the 动态 tab's dot while 动态 isn't open. Nil when there is none, or it can't
+    /// be read.
+    public func latestNewsOnServer() async -> Timestamp? {
+        guard case .squad(let squad) = scope else { return nil }
+        let week = FeedRange.latest(today: today())
+        guard let posts = try? await source.posts(in: squad, from: week.first, through: week.last) else { return nil }
+        return posts.compactMap { $0.latestNews(for: viewer) }.max()
+    }
+
     /// Teammates' reactions on the member's own posts left after `moment`, the newest on each
     /// post, newest first: what their character answers when 动态 opens.
     public func arrivals(since moment: Timestamp) -> [Arrival] {
