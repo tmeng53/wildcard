@@ -49,6 +49,7 @@ import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadCoach } from './routes/squad-coach.js';
 import { squadScene } from './routes/squad-scene.js';
 import { squadToday } from './routes/squad-today.js';
+import { titles } from './routes/titles.js';
 import { weekStory } from './routes/week-story.js';
 import { weekSummary } from './routes/week-summary.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
@@ -136,7 +137,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', devices(deps));
   app.route('/', pushSettings(deps));
   app.route('/', squads(deps));
-  app.route('/', squadToday(deps));
+  app.route('/', squadToday({ ...deps, awards: deps.weeklyAwards.awards }));
   app.route('/', squadScene({ ...deps, clock: deps.weeklyAwards.clock }));
   app.route('/', squadCoach(deps));
   app.route('/', nudges(deps));
@@ -145,6 +146,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', weeklyPlans(deps));
   app.route('/', weekStory({ ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) }));
   app.route('/', awardTotals({ ...deps, ...deps.weeklyAwards }));
+  app.route('/', titles({ ...deps, awards: deps.weeklyAwards.awards }));
   // Not part of the app's contract, so not in openapi.json: a scheduler calls it.
   app.route(
     '/',

@@ -20,7 +20,24 @@ public struct SpeechBubble: View {
         /// any length): it wraps at `.info`'s width instead of cutting off.
         case quote
         case info(title: Text?)
-        case status(detail: Text?, button: StatusButton?)
+        case status(detail: Text?, button: StatusButton?, eyebrow: StatusEyebrow? = nil)
+    }
+
+    /// A small muted line over a `.status` bubble's words: who it is (name · the title they wear,
+    /// its badge before them), which opens their player card.
+    public struct StatusEyebrow {
+        let label: Text
+        /// The worn title's badge.
+        let badge: TitleBadgeLook?
+        let identifier: String?
+        let action: () -> Void
+
+        public init(_ label: Text, badge: TitleBadgeLook?, identifier: String? = nil, action: @escaping () -> Void) {
+            self.label = label
+            self.badge = badge
+            self.identifier = identifier
+            self.action = action
+        }
     }
 
     /// The capsule under a `.status` bubble's words.
@@ -114,9 +131,12 @@ public struct SpeechBubble: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-        case .status(let detail, let button):
+        case .status(let detail, let button, let eyebrow):
             HuggingWidth(min: Self.statusMinWidth - 2 * Space.s, max: Self.statusWidth - 2 * Space.s) {
                 VStack(spacing: Space.xxs / 2) {
+                    if let eyebrow {
+                        EyebrowLine(eyebrow: eyebrow)
+                    }
                     text
                         .typeStyle(TypeRamp.footnoteEmphasis)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -197,6 +217,40 @@ private struct StatusCapsule: View {
         .accessibilityAddTraits(button.isDone ? [.isStaticText] : [])
         .accessibilityRemoveTraits(button.isDone ? [.isButton] : [])
     }
+}
+
+/// The muted name line over a `.status` bubble, a button to their card: the worn title's badge
+/// small before the words.
+private struct EyebrowLine: View {
+    @Environment(\.sceneTheme) private var theme
+    let eyebrow: SpeechBubble.StatusEyebrow
+
+    var body: some View {
+        Button(action: eyebrow.action) {
+            HStack(spacing: Space.xxs) {
+                if let badge = eyebrow.badge {
+                    TitleBadgeView(badge, size: Self.badge)
+                }
+                eyebrow.label
+                    .typeStyle(TypeRamp.caption)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: Self.chevron, weight: .semibold))
+                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                    .accessibilityHidden(true)
+            }
+            // A taller target than the line, as a tap on a name should land.
+            .frame(minHeight: Sizing.compactControl / 2 + Space.xs)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityIdentifier(eyebrow.identifier ?? "")
+    }
+
+    private static let badge: Double = 16
+    private static let chevron: Double = 9
 }
 
 /// A triangle pointing down from the middle of the bubble's bottom edge.

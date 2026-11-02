@@ -133,7 +133,7 @@ public struct TodayView: View {
             GeometryReader { proxy in
                 PatOverlay(
                     layer: .bubble, cast: model.cast, pats: model.pats, unit: proxy.size.width / StageLayout.width,
-                    canPat: model.canPat, pat: model.patMate)
+                    canPat: model.canPat, pat: model.patMate, openCard: model.openTeammate)
             }
             .ignoresSafeArea()
             .opacity(model.step == .disclaimer ? 0 : 1)

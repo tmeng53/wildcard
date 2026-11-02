@@ -14,10 +14,14 @@ export {
   SquadId,
   TITLE_MAX,
   TITLES_MAX,
+  boardOf,
   titlesWonOf,
   topCheckInOf,
+  wornOf,
   type Awards,
   type AwardsState,
+  type BoardTitle,
+  type TitleWin,
   type Failures,
   type MemberAwards,
   type MemberWeek,
@@ -26,6 +30,14 @@ export {
   type TopCheckIn,
   type WeekCheckIn,
 } from './domain/awards.js';
+export {
+  Badge,
+  BadgeCatalog,
+  BadgeColour,
+  BadgeGlyph,
+  BadgeShape,
+  DEFAULT_BADGE,
+} from './domain/badges.js';
 export { AwardMove } from './domain/moves.js';
 export {
   AWARDS_HOUR,
@@ -38,6 +50,7 @@ export { AwardSettings, AwardSettingsChange, ModelName } from './domain/settings
 export {
   AwardsModelMissingError,
   AwardsWriterUnavailableError,
+  TitleNotWonError,
   WeekStoryNotReadyError,
 } from './errors.js';
 export type { PromptMeme } from './domain/prompt.js';

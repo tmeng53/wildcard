@@ -49,6 +49,12 @@ private actor FakeService: MeService {
         current.dailyPushOn = isOn
     }
 
+    func equip(_ title: String?) async throws(MeError) -> TitleBoard {
+        if let failing { throw failing }
+        current.board.worn = title ?? current.board.titles.first?.title
+        return current.board
+    }
+
     func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {
         if holdsDeletes { await withCheckedContinuation { heldDelete = $0 } }
         if let failing { throw failing }
@@ -67,6 +73,34 @@ private let sample = MeOverview(
     counts: LifetimeCounts(trainedDays: 128, healthyMeals: 46, cheatMeals: 12, disclaimers: 9),
     week: WeekCount(trainedDays: 3, plannedDays: 5), squadName: "周三不练腿俱乐部", dailyPushOn: true,
     squadPlace: 2)
+
+private let shield = TitleBadge(shape: "shield", colour: "track", glyph: "sun.max.fill")
+private let hexagon = TitleBadge(shape: "hexagon", colour: "gym", glyph: "snowflake")
+
+/// Two titles: 早八战神 won last week, 冷面杀手 twice before.
+private func board() throws -> TitleBoard {
+    TitleBoard(
+        titles: [
+            BoardTitle(
+                title: "早八战神", badge: shield,
+                weeks: [BoardTitle.Week(weekStart: try LocalDay("2026-10-26"), speech: "天天七点")]),
+            BoardTitle(
+                title: "冷面杀手", badge: hexagon,
+                weeks: [
+                    BoardTitle.Week(weekStart: try LocalDay("2026-10-19"), speech: nil),
+                    BoardTitle.Week(weekStart: try LocalDay("2026-10-12"), speech: "一句话不说"),
+                ]),
+        ], worn: "早八战神")
+}
+
+/// A squadmate's card, read through the port.
+private struct FakeCards: SquadmateCards {
+    let result: Result<PlayerCardFace, MeError>
+
+    func card(of member: MemberID, in squad: SquadID) async throws(MeError) -> PlayerCardFace {
+        try result.get()
+    }
+}
 
 @MainActor
 struct MeModelTests {
@@ -243,6 +277,73 @@ struct MeModelTests {
         await page.setDailyPush(false)
         #expect(page.dailyPushOn)
         #expect(page.overview?.character.nickname == "阿林")
+    }
+
+    // MARK: 头衔徽章
+
+    @Test func theBoardCountsEveryWinAndWearsItsWornTitle() throws {
+        let board = try board()
+        #expect(board.count == 3)
+        #expect(board.wornTitle == WornTitle(title: "早八战神", badge: shield))
+        #expect(board.titles[1].times == 2)
+        #expect(board.titles[1].latestSpeech == "一句话不说")
+        #expect(TitleBoard.empty.wornTitle == nil)
+    }
+
+    @Test func equippingWearsTheTitleAtOnce() async throws {
+        var overview = sample
+        overview.board = try board()
+        let service = FakeService(overview)
+        let page = model(service)
+        await page.reload()
+        await page.equip("冷面杀手")
+        #expect(page.overview?.board.worn == "冷面杀手")
+        #expect(page.overview?.card.board.wornTitle?.badge == hexagon)
+        #expect(await service.current.board.worn == "冷面杀手")
+        await page.equip(String?.none)
+        #expect(page.overview?.board.worn == "早八战神")
+        #expect(!page.saveFailed)
+    }
+
+    @Test func aFailedEquipPutsTheWornTitleBack() async throws {
+        var overview = sample
+        overview.board = try board()
+        let service = FakeService(overview)
+        let page = model(service)
+        await page.reload()
+        await service.fail(with: .unavailable)
+        await page.equip("冷面杀手")
+        #expect(page.overview?.board.worn == "早八战神")
+        #expect(page.saveFailed)
+    }
+
+    @Test func theCardCarriesTheOverview() throws {
+        var overview = sample
+        overview.board = try board()
+        let card = overview.card
+        #expect(card.number?.text == "02")
+        #expect(card.squadName == "周三不练腿俱乐部")
+        #expect(card.counts.trainedDays == 128)
+        #expect(card.board.count == 3)
+    }
+
+    @Test func aSquadmatesCardLoadsWithTheirSquadsName() async throws {
+        let face = PlayerCardFace(
+            character: sample.character, number: try JerseyNumber(7), squadName: nil, joinedAt: nil,
+            counts: .zero, week: nil, board: try board())
+        let member = MemberID(UUID())
+        let squad = SquadID(UUID())
+        let loaded = SquadmateCardModel(
+            member: member, squad: squad, squadName: "毛头教队", cards: FakeCards(result: .success(face)))
+        await loaded.reload()
+        var named = face
+        named.squadName = "毛头教队"
+        #expect(loaded.load == .loaded(named))
+
+        let failed = SquadmateCardModel(
+            member: member, squad: squad, squadName: nil, cards: FakeCards(result: .failure(.unavailable)))
+        await failed.reload()
+        #expect(failed.load == .failed(.unavailable))
     }
 }
 

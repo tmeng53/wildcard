@@ -269,7 +269,7 @@ private struct RefusedTokens: AuthProvider {
     let squad = try await stack.squad(of: member)
 
     #expect(try await member.api.checkInTotals().topSport == nil)
-    #expect(try await member.api.awardTotals() == AwardTotals(titles: 0, latest: nil))
+    #expect(try await member.api.titleBoard() == .empty)
 
     for activity in [Activity.sport("run"), .custom(try CustomSport("飞盘")), .sport("run")] {
         _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(Training(activity: activity))))

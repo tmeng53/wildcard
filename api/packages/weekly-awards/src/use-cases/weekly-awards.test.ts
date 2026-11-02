@@ -29,13 +29,19 @@ afterAll(() => db.destroy());
 
 const week = WeekStart.parse('2026-10-19');
 
+/** A badge from the catalog the migrations seed. */
+const badge = { shape: 'shield', colour: 'track', glyph: 'sun.max.fill' };
+
 const reply: ModelReply = {
   version: 1,
   awards: [
-    { member: 'A', titles: [{ title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump' }] },
+    {
+      member: 'A',
+      titles: [{ title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump', badge }],
+    },
     {
       member: 'B',
-      titles: [{ title: '请假条文豪', speech: '周四的请假条写成了连载。', move: 'flat' }],
+      titles: [{ title: '请假条文豪', speech: '周四的请假条写成了连载。', move: 'flat', badge }],
     },
   ],
 };
@@ -140,7 +146,7 @@ describe('createWeeklyAwards', () => {
       members: [
         {
           member: ana,
-          titles: [{ title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump' }],
+          titles: [{ title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump', badge }],
           topCheckIn: {
             checkIn: members[0]?.checkIns[0]?.id,
             day: '2026-10-21',
@@ -152,7 +158,9 @@ describe('createWeeklyAwards', () => {
         },
         {
           member: bo,
-          titles: [{ title: '请假条文豪', speech: '周四的请假条写成了连载。', move: 'flat' }],
+          titles: [
+            { title: '请假条文豪', speech: '周四的请假条写成了连载。', move: 'flat', badge },
+          ],
         },
       ],
     });
@@ -165,6 +173,45 @@ describe('createWeeklyAwards', () => {
       awards: given,
     });
     expect(asked).toHaveLength(1);
+  });
+
+  it('hands the model the badge catalog and keeps the badge it picks on each title', async () => {
+    const { awards, asked } = setup();
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
+    expect(asked[0]).toContain('{"id":"shield","meaning":"盾牌：守住了、扛住了、说到做到"}');
+    expect(asked[0]).toContain('{"id":"sun.max.fill","meaning":"太阳：早起、白天练"}');
+    const boards = await awards.boards([ana, cy]);
+    expect(boards.get(ana)).toStrictEqual([
+      {
+        title: '雨中狠人',
+        badge,
+        weeks: [{ squad, weekStart: week, speech: '周三下着雨还去跑了。' }],
+      },
+    ]);
+    expect(boards.get(cy)).toStrictEqual([]);
+    expect(await awards.titlesWon(ana)).toStrictEqual({
+      count: 1,
+      latest: { title: '雨中狠人', times: 1 },
+    });
+  });
+
+  it('refuses a badge the catalog doesn’t offer, asking once more', async () => {
+    const offCatalog = {
+      ...reply,
+      awards: reply.awards.map((award) => ({
+        ...award,
+        titles: award.titles.map((title) => ({ ...title, badge: { ...badge, glyph: 'gear' } })),
+      })),
+    };
+    const { awards, asked } = setup([
+      () => Promise.resolve(offCatalog),
+      () => Promise.resolve(reply),
+    ]);
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    const given = await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
+    expect(asked).toHaveLength(2);
+    expect(given.members[0]?.titles[0]?.badge).toStrictEqual(badge);
   });
 
   it('sends the model only the weeks of members who agreed to AI use, and awards only them', async () => {

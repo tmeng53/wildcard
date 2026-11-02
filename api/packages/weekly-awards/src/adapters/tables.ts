@@ -44,6 +44,7 @@ export interface WeeklyAwardSettingEvents {
 }
 
 export interface WeeklyAwardSettings {
+  badges: Json;
   instructions: string;
   model: string;
   moves: Json;

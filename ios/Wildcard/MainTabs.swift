@@ -1,4 +1,7 @@
+import AvatarArt
+import AvatarDomain
 import CharacterEditorUI
+import CheckInDomain
 import CheckInUI
 import Contracts
 import DesignSystem
@@ -29,6 +32,8 @@ struct MainTabs: View {
     let recap: RecapShelf
     /// The member's own posts, for 我的动态.
     let myPosts: any MyPostsSource
+    /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
+    var squadmateCards: (any SquadmateCards)?
     @Binding var selection: Tab
     /// The member left the squad on 小队设置.
     var leftSquad: () -> Void = {}
@@ -41,6 +46,8 @@ struct MainTabs: View {
     @State private var wall: PostWallStore?
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
+    /// A teammate's player card, opened from their name on the home's bubble.
+    @State private var teammate: SquadmateCardModel?
 
     var body: some View {
         AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: feed.hasNews ? [.feed] : []) { tab in
@@ -80,6 +87,11 @@ struct MainTabs: View {
                     })
             }
         }
+        .sheet(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
+            if let teammate {
+                TeammateCard(model: teammate).environment(\.sceneTheme, today.scene)
+            }
+        }
         .fullScreenCover(isPresented: $showsSquad) {
             SquadSettingsView(
                 model: squad, close: { showsSquad = false },
@@ -89,6 +101,10 @@ struct MainTabs: View {
                     instant.disablesAnimations = true
                     withTransaction(instant) { showsSquad = false }
                     land(on: scene, coveredAt: coveredAt)
+                },
+                // It is over everything, so it shows the card over itself.
+                teammateCard: { member in
+                    AnyView(cardModel(of: member).map { TeammateCard(model: $0) })
                 }
             )
             .environment(\.sceneTheme, squad.scene)
@@ -105,6 +121,30 @@ struct MainTabs: View {
     private func land(on scene: SceneTheme, coveredAt: Date) {
         selection = .today
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
+    }
+
+    /// A teammate's card in the member's squad, read from the API or, on the sample squad, made
+    /// from its home; nil before the home is read.
+    private func cardModel(of member: MemberID) -> SquadmateCardModel? {
+        guard let home = today.home else { return nil }
+        let cards = squadmateCards ?? InMemorySquadmateCards(characters: Self.characters(in: home))
+        return SquadmateCardModel(member: member, squad: home.squad.id, squadName: home.squad.name, cards: cards)
+    }
+
+    /// The sample squad's characters as the home shows them, for their cards.
+    private static func characters(in home: Home) -> @Sendable (MemberID) -> MeCharacter? {
+        let characters = Dictionary(
+            home.today.members.compactMap { mate in
+                mate.character.map { character in
+                    (
+                        mate.member,
+                        MeCharacter(
+                            nickname: character.nickname.text, outfit: Outfit(character.look),
+                            persona: Persona(character.look))
+                    )
+                }
+            }, uniquingKeysWith: { first, _ in first })
+        return { characters[$0] }
     }
 
     /// Opens the editor on the member's own character.
@@ -135,7 +175,9 @@ struct MainTabs: View {
                 openPost: { post in
                     feed.open(post)
                     selection = .feed
-                })
+                }
+            )
+            .onAppear { today.openTeammate = { teammate = cardModel(of: $0) } }
         case .feed:
             FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
                 .environment(\.sceneTheme, today.scene)
@@ -225,4 +267,17 @@ private struct RecapTile: View {
 private struct OpenedPost {
     let id: CheckInID
     let model: FeedModel
+}
+
+/// A teammate's card sheet, keeping the model it opened with however often its parent draws.
+private struct TeammateCard: View {
+    @State private var model: SquadmateCardModel
+
+    init(model: SquadmateCardModel) {
+        _model = State(initialValue: model)
+    }
+
+    var body: some View {
+        SquadmateCardSheet(model: model)
+    }
 }

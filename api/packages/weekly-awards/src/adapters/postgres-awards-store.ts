@@ -1,6 +1,7 @@
 import { sql, type Kysely } from 'kysely';
 
-import { MemberId, StoredAward, titlesWonOf } from '../domain/awards.js';
+import { MemberId, SquadId, StoredAward, type TitleWin } from '../domain/awards.js';
+import { WeekStart } from '../domain/schedule.js';
 import type { AwardsStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -52,15 +53,27 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
       };
     },
 
-    async titlesWon(member) {
+    async wins(members) {
+      if (members.length === 0) return new Map();
       const rows = await db
         .selectFrom('weekly_award_winners')
-        .select('award')
-        .where('member_id', '=', member)
+        .select(['member_id', 'squad_id', sql<string>`week_start::text`.as('week'), 'award'])
+        .where('member_id', 'in', members)
         .orderBy('week_start', 'desc')
         .orderBy('squad_id')
         .execute();
-      return titlesWonOf(rows.map(({ award }) => StoredAward.parse(award)));
+      const wins = new Map<MemberId, TitleWin[]>();
+      for (const row of rows) {
+        const member = MemberId.parse(row.member_id);
+        const squad = SquadId.parse(row.squad_id);
+        const weekStart = WeekStart.parse(row.week);
+        const list = wins.get(member) ?? [];
+        for (const title of StoredAward.parse(row.award).titles) {
+          list.push({ squad, weekStart, title });
+        }
+        wins.set(member, list);
+      }
+      return wins;
     },
 
     save: ({ squad, weekStart, awards }) =>

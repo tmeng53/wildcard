@@ -105,6 +105,7 @@ const app = createApp({
       claimNudge: unused,
       claimWinners: unused,
       titlesWon: unused,
+      boards: unused,
     },
     clock: unused,
   },

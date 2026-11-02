@@ -127,7 +127,7 @@ public struct Home: Hashable, Sendable {
             SquadmateToday(
                 member: member, catchphrase: old.catchphrase, character: old.character, day: day,
                 training: .notCheckedIn, latestMeal: nil,
-                plannedRest: plannedRest, firstCheckInAt: nil))
+                plannedRest: plannedRest, firstCheckInAt: nil, title: old.title))
         if day > today.myWeek.lastDay {
             home.today.myWeek = MyWeek(
                 firstDay: day.weekStart, lastDay: day.weekStart.adding(days: 6),

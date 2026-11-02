@@ -1,5 +1,5 @@
 import {
-  ModelReply,
+  modelReplyFor,
   type Awards,
   titlesOf,
   topCheckInOf,
@@ -149,18 +149,25 @@ async function writeTitles(
     readonly winners: readonly MemberWeek[];
   },
 ): Promise<Titles> {
-  const prompt = promptFor({ weekStart, members: winners, moves: settings.moves, memes });
+  const prompt = promptFor({
+    weekStart,
+    members: winners,
+    moves: settings.moves,
+    badges: settings.badges,
+    memes,
+  });
+  const reply = modelReplyFor(settings.badges);
   let cause: unknown;
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     try {
-      const reply = await model.answer({
+      const answer = await model.answer({
         model: settings.model,
         instructions: settings.instructions,
         prompt,
-        reply: ModelReply,
+        reply,
       });
       const titles = titlesOf(
-        reply,
+        answer,
         winners.map(({ member }) => member),
       );
       if (titles !== undefined) return titles;

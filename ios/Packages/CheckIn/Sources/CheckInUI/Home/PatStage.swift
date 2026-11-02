@@ -42,6 +42,18 @@ final class PatStage {
         case mine
     }
 
+    /// Who a status bubble is about, over its words.
+    struct Eyebrow: Equatable {
+        let name: String
+        let title: WornTitle?
+
+        /// 「阿杰 · 早八战神」, or the name alone before their first title.
+        var text: String {
+            guard let title else { return name }
+            return String(localized: "\(name) · \(title.title)", bundle: .module.inAppLanguage)
+        }
+    }
+
     /// A line over my own head: the squad's news for me, such as 「你现在是队长了」.
     struct MyLine: Equatable {
         let text: String
@@ -55,6 +67,9 @@ final class PatStage {
         let kind: BubbleKind
         let title: String
         let detail: String?
+        /// A tapped teammate's name and the title they wear, over their status: it opens their
+        /// card. Nil on the other bubbles.
+        var eyebrow: Eyebrow?
         /// Bumps each time a bubble opens, so a new one replaces an old one with its pop.
         let id: Int
     }
@@ -102,9 +117,12 @@ final class PatStage {
         }
         let pose = hop(mate, cast: cast, phase: phase, now: now)
         let line = Self.status(mate.member.status, disclaimer: mate.disclaimer, asleep: pose == .asleep)
+        // Their name and title go on the line over the status, which opens their card.
         show(
             Bubble(
-                mate: mate.id, kind: .status, title: Self.titled(mate.name, line.title), detail: line.detail,
+                mate: mate.id, kind: .status, title: line.title, detail: line.detail,
+                eyebrow: Eyebrow(
+                    name: mate.name ?? String(localized: "队友", bundle: .module.inAppLanguage), title: mate.title),
                 id: nextBubble()), for: hold)
     }
 

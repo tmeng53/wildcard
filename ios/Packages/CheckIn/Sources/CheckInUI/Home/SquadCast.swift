@@ -26,6 +26,8 @@ final class SquadCast {
         let line: String
         /// Their 请假条, held up on the scene.
         let disclaimer: String?
+        /// The title they wear, beside their name in their bubble.
+        let title: WornTitle?
         var id: MemberID { member.id }
     }
 
@@ -82,7 +84,7 @@ final class SquadCast {
             return Mate(
                 member: member, name: mate.character?.nickname.text, persona: persona, species: species, player: player,
                 line: mate.catchphrase?.text ?? Self.personaLine(persona),
-                disclaimer: home.todaysDisclaimer(of: member.id))
+                disclaimer: home.todaysDisclaimer(of: member.id), title: mate.title)
         }
     }
 

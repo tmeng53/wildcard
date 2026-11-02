@@ -362,6 +362,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/award-totals`.
     /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
     func getMyAwardTotals(_ input: Operations.GetMyAwardTotals.Input) async throws -> Operations.GetMyAwardTotals.Output
+    /// The signed-in member’s badge board
+    ///
+    /// Every weekly title they won, with its badge, the weeks and award lines (徽章板), and the one they wear.
+    ///
+    /// - Remark: HTTP `GET /me/titles`.
+    /// - Remark: Generated from `#/paths//me/titles/get(getMyTitles)`.
+    func getMyTitles(_ input: Operations.GetMyTitles.Input) async throws -> Operations.GetMyTitles.Output
+    /// Wear a title on the signed-in member’s card
+    ///
+    /// Wears one of the member’s titles on their player card and beside their name on the home, logged with their profile. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/equipped-title`.
+    /// - Remark: Generated from `#/paths//me/equipped-title/put(putMyEquippedTitle)`.
+    func putMyEquippedTitle(_ input: Operations.PutMyEquippedTitle.Input) async throws -> Operations.PutMyEquippedTitle.Output
+    /// A squadmate’s player card
+    ///
+    /// What a squadmate’s card shows, front and back: their character, number, lifetime counts and badge board, with award lines only from weeks won in this squad. Only for members of the squad, about a member of it.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/members/{memberId}/card`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/members/{memberId}/card/get(getSquadmateCard)`.
+    func getSquadmateCard(_ input: Operations.GetSquadmateCard.Input) async throws -> Operations.GetSquadmateCard.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -1097,6 +1118,45 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
     public func getMyAwardTotals(headers: Operations.GetMyAwardTotals.Input.Headers = .init()) async throws -> Operations.GetMyAwardTotals.Output {
         try await getMyAwardTotals(Operations.GetMyAwardTotals.Input(headers: headers))
+    }
+    /// The signed-in member’s badge board
+    ///
+    /// Every weekly title they won, with its badge, the weeks and award lines (徽章板), and the one they wear.
+    ///
+    /// - Remark: HTTP `GET /me/titles`.
+    /// - Remark: Generated from `#/paths//me/titles/get(getMyTitles)`.
+    public func getMyTitles(headers: Operations.GetMyTitles.Input.Headers = .init()) async throws -> Operations.GetMyTitles.Output {
+        try await getMyTitles(Operations.GetMyTitles.Input(headers: headers))
+    }
+    /// Wear a title on the signed-in member’s card
+    ///
+    /// Wears one of the member’s titles on their player card and beside their name on the home, logged with their profile. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/equipped-title`.
+    /// - Remark: Generated from `#/paths//me/equipped-title/put(putMyEquippedTitle)`.
+    public func putMyEquippedTitle(
+        headers: Operations.PutMyEquippedTitle.Input.Headers = .init(),
+        body: Operations.PutMyEquippedTitle.Input.Body
+    ) async throws -> Operations.PutMyEquippedTitle.Output {
+        try await putMyEquippedTitle(Operations.PutMyEquippedTitle.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// A squadmate’s player card
+    ///
+    /// What a squadmate’s card shows, front and back: their character, number, lifetime counts and badge board, with award lines only from weeks won in this squad. Only for members of the squad, about a member of it.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/members/{memberId}/card`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/members/{memberId}/card/get(getSquadmateCard)`.
+    public func getSquadmateCard(
+        path: Operations.GetSquadmateCard.Input.Path,
+        headers: Operations.GetSquadmateCard.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadmateCard.Output {
+        try await getSquadmateCard(Operations.GetSquadmateCard.Input(
+            path: path,
+            headers: headers
+        ))
     }
 }
 

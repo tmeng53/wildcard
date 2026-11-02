@@ -18,11 +18,42 @@ extension WildcardAPI {
             disclaimers: totals.disclaimers, topSport: topSport)
     }
 
-    /// Every weekly title (周奖) the member has won, in all their squads.
-    public func awardTotals() async throws(APIError) -> AwardTotals {
-        let totals = try await call { try await client.getMyAwardTotals().ok.body.json }
-        return AwardTotals(
-            titles: totals.titles, latest: totals.latest.map { AwardTotals.Latest(title: $0.title, times: $0.times) })
+    /// The member's badge board (徽章板): every weekly title they won, with its badge, and the one
+    /// they wear.
+    public func titleBoard() async throws(APIError) -> TitleBoard {
+        let board = try await call { try await client.getMyTitles().ok.body.json }
+        return try read { () throws(ContractsError) in try TitleBoard(board) }
+    }
+
+    /// Wears one of the member's titles on their card, or the latest won again for nil; answers
+    /// the board as it stands. Safe to repeat.
+    public func equip(title: String?) async throws(APIError) -> TitleBoard {
+        let board = try await call {
+            try await client.putMyEquippedTitle(body: .json(.init(version: ._1, title: title))).ok.body.json
+        }
+        return try read { () throws(ContractsError) in try TitleBoard(board) }
+    }
+
+    /// A squadmate's player card, front and back.
+    public func card(of member: MemberID, in squad: SquadID) async throws(APIError) -> SquadmateCard {
+        let card = try await call {
+            try await client.getSquadmateCard(
+                path: .init(squadId: squad.description, memberId: member.description)
+            ).ok.body.json
+        }
+        return try read { () throws(ContractsError) in
+            SquadmateCard(
+                character: try card.character.map(MemberCharacter.init),
+                jerseyNumber: try card.jerseyNumber.map { number throws(ContractsError) in try JerseyNumber(number) },
+                squadPlace: card.squadPlace, joinedAt: card.joinedAt,
+                totals: CheckInTotals(
+                    trainedDays: card.trainedDays, healthyMeals: card.healthyMeals, cheatMeals: card.cheatMeals,
+                    disclaimers: card.disclaimers,
+                    topSport: try card.topSport.map { top throws(ContractsError) in
+                        TopSport(activity: try Activity(top), checkIns: top.checkIns)
+                    }),
+                board: try TitleBoard(card))
+        }
     }
 
     /// Whether the one daily push at 6pm is on; it is until the member turns it off.
@@ -77,14 +108,16 @@ public struct TopSport: Hashable, Sendable {
     public let checkIns: Int
 }
 
-/// Every weekly title (周奖) a member has won, and the latest with how often they won it.
-public struct AwardTotals: Hashable, Sendable {
-    public struct Latest: Hashable, Sendable {
-        public let title: String
-        public let times: Int
-    }
-
-    public let titles: Int
-    /// Nil before the first title.
-    public let latest: Latest?
+/// A squadmate's player card as the API sends it.
+public struct SquadmateCard: Hashable, Sendable {
+    /// Nil until they make their character.
+    public let character: MemberCharacter?
+    /// The number they picked; nil until they pick one.
+    public let jerseyNumber: JerseyNumber?
+    /// Their place in the squad, the first to join being 1.
+    public let squadPlace: Int
+    /// When they signed up; nil before they saved a profile.
+    public let joinedAt: Date?
+    public let totals: CheckInTotals
+    public let board: TitleBoard
 }

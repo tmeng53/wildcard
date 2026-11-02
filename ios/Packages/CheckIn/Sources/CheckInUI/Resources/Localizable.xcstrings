@@ -1495,6 +1495,38 @@
           }
         }
       }
+    },
+    "早八战神": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Early Bird Champ"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "早八戰神"
+          }
+        }
+      }
+    },
+    "请假条艺术家": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day-off Note Artist"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "假單藝術家"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

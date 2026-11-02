@@ -136,7 +136,9 @@ public final class TodayModel {
     private static let scoreDelay = 1.7
 
     /// The squad's home, with the member's own posts counted.
-    var home: Home? { store.home }
+    public var home: Home? { store.home }
+    /// Opens a teammate's player card, from their name on their bubble; the app sets it.
+    @ObservationIgnored public var openTeammate: (MemberID) -> Void = { _ in }
 
     /// The squad dropping onto a newly picked scene, from `dropIn(on:)` until everyone has
     /// settled (`TodayModel+DropIn.swift`).

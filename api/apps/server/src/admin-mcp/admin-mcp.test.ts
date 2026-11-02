@@ -496,7 +496,7 @@ describe('the admin MCP server', () => {
       batchesPerDay: 6,
       memeChance: 0.3,
     });
-    expect(awards).toMatchObject({ version: 1, model: 'openai/gpt-6-luna' });
+    expect(awards).toMatchObject({ version: 2, model: 'openai/gpt-6-luna' });
     const events = async (
       table: 'disclaimer_draft_setting_events' | 'weekly_award_setting_events',
     ) =>
@@ -543,16 +543,31 @@ describe('the admin MCP server', () => {
         moves: { ...z.record(z.string(), z.string()).parse(awards.moves), pump: '握拳，跳起来' },
       });
 
-      // A provider the server doesn't know, a move the app doesn't have, or no change at all.
+      // A new glyph is a settings change: the catalog is replaced whole.
+      const catalog = z
+        .looseObject({ glyphs: z.array(z.object({ id: z.string(), meaning: z.string() })) })
+        .parse(awards.badges);
+      const glyphs = [...catalog.glyphs, { id: 'figure.yoga', meaning: '瑜伽的人：瑜伽' }];
+      const badged = await call('change_weekly_award_settings', {
+        badges: { ...catalog, glyphs },
+      });
+      expect(JSON.parse(badged.text)).toMatchObject({ badges: { glyphs } });
+
+      // A provider the server doesn't know, a move the app doesn't have, a shape the app can't
+      // draw, or no change at all.
       for (const [name, args] of [
         ['change_disclaimer_draft_settings', { model: 'gemini/flash' }],
         ['change_disclaimer_draft_settings', { memeChance: 2 }],
         ['change_disclaimer_draft_settings', {}],
         ['change_weekly_award_settings', { moves: { moonwalk: '太空步' } }],
+        [
+          'change_weekly_award_settings',
+          { badges: { ...catalog, shapes: [{ id: 'star', meaning: '星形' }] } },
+        ],
       ] as const) {
         expect((await call(name, args)).isError).toBe(true);
       }
-      expect(await events('weekly_award_setting_events')).toHaveLength(1);
+      expect(await events('weekly_award_setting_events')).toHaveLength(2);
     } finally {
       await call('change_disclaimer_draft_settings', {
         writing: drafts.writing,
@@ -560,7 +575,7 @@ describe('the admin MCP server', () => {
         batchesPerDay: drafts.batchesPerDay,
         memeChance: drafts.memeChance,
       });
-      await call('change_weekly_award_settings', { moves: awards.moves });
+      await call('change_weekly_award_settings', { moves: awards.moves, badges: awards.badges });
     }
     expect(await read('get_disclaimer_draft_settings')).toStrictEqual(drafts);
     expect(await read('get_weekly_award_settings')).toStrictEqual(awards);

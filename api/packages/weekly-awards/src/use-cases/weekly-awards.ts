@@ -1,10 +1,13 @@
-import type {
-  Awards,
-  AwardsState,
-  Failures,
-  MemberId,
-  SquadId,
-  TitlesWon,
+import {
+  boardOf,
+  titlesWonOf,
+  type Awards,
+  type AwardsState,
+  type BoardTitle,
+  type Failures,
+  type MemberId,
+  type SquadId,
+  type TitlesWon,
 } from '../domain/awards.js';
 import type { WeekStart } from '../domain/schedule.js';
 import type {
@@ -44,6 +47,11 @@ export interface WeeklyAwards {
   }): Promise<MemberId[]>;
   /** Every title the member has won, in all their squads (周奖 on their player card). */
   titlesWon(member: MemberId): Promise<TitlesWon>;
+  /**
+   * These members' badge boards (徽章板), by member: every title they won in all their squads,
+   * the latest first. A member who won nothing has an empty board.
+   */
+  boards(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, readonly BoardTitle[]>>;
 }
 
 export function createWeeklyAwards(deps: {
@@ -63,6 +71,11 @@ export function createWeeklyAwards(deps: {
       if (!(await deps.store.markNotified(squad, weekStart))) return [];
       return state.awards.members.map(({ member }) => member);
     },
-    titlesWon: (member) => deps.store.titlesWon(member),
+    titlesWon: async (member) =>
+      titlesWonOf(boardOf((await deps.store.wins([member])).get(member) ?? [])),
+    boards: async (members) => {
+      const wins = await deps.store.wins(members);
+      return new Map(members.map((member) => [member, boardOf(wins.get(member) ?? [])]));
+    },
   };
 }

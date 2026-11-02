@@ -34,17 +34,21 @@ public actor InMemoryCheckInBackend: CheckInBackend {
         let kept = Set([3, 0, 4, 1, 5, 2, 6].prefix(min(7, max(0, size - 1))).map { everyone[$0] })
         let mates = everyone.filter(kept.contains)
         func at(_ hoursAgo: Double) -> Timestamp { Timestamp(now.addingTimeInterval(-hoursAgo * 3600)) }
-        func mate(_ id: MemberID, _ training: TrainingStatus, rest: Bool = false, since first: Timestamp? = nil)
-            -> SquadmateToday
-        {
+        func mate(
+            _ id: MemberID, _ training: TrainingStatus, rest: Bool = false, since first: Timestamp? = nil,
+            title: WornTitle? = nil
+        ) -> SquadmateToday {
             SquadmateToday(
                 member: id, catchphrase: nil, character: character(of: id, everyone: everyone), day: day,
-                training: training, latestMeal: nil, plannedRest: rest, firstCheckInAt: first)
+                training: training, latestMeal: nil, plannedRest: rest, firstCheckInAt: first, title: title)
         }
+        // Two wear a weekly title beside their name, as the approved 头衔徽章 home shows.
         let members =
             [
-                mate(everyone[0], .trained, since: at(5)), mate(everyone[1], .trained, since: at(4)),
-                mate(everyone[2], .trained, since: at(3)), mate(everyone[3], .disclaimer, since: at(2)),
+                mate(everyone[0], .trained, since: at(5), title: worn("早八战神", "shield", "track", "sun.max.fill")),
+                mate(everyone[1], .trained, since: at(4)),
+                mate(everyone[2], .trained, since: at(3)),
+                mate(everyone[3], .disclaimer, since: at(2), title: worn("请假条艺术家", "circle", "pool", "doc.text.fill")),
                 mate(everyone[4], .notCheckedIn, rest: true), mate(everyone[5], .notCheckedIn),
                 mate(everyone[6], .notCheckedIn),
             ].filter { kept.contains($0.member) } + [mate(member, .notCheckedIn)]
@@ -74,6 +78,13 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     plan: plan, checkIns: checkIns)
             },
             pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none)
+    }
+
+    /// A sample title, its words from the catalog.
+    private static func worn(_ key: String, _ shape: String, _ colour: String, _ glyph: String) -> WornTitle {
+        WornTitle(
+            title: Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil),
+            badge: TitleBadge(shape: shape, colour: colour, glyph: glyph))
     }
 
     /// `patters` patted me, the first an hour ago and each next one ten minutes later.

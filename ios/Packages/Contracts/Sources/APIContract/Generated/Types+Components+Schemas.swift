@@ -2999,6 +2999,8 @@ extension Components {
                 public var catchphrase: Swift.String?
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/character`.
                 public var character: Components.Schemas.Character?
+                /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/title`.
+                public var title: Components.Schemas.WornTitle?
                 /// The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/day`.
@@ -3040,6 +3042,7 @@ extension Components {
                 ///   - member:
                 ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line.
                 ///   - character:
+                ///   - title:
                 ///   - day: The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
                 ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///   - latestMeal: Their latest meal today sent to this squad. Missing when none.
@@ -3049,6 +3052,7 @@ extension Components {
                     member: Swift.String,
                     catchphrase: Swift.String? = nil,
                     character: Components.Schemas.Character? = nil,
+                    title: Components.Schemas.WornTitle? = nil,
                     day: Swift.String,
                     training: Components.Schemas.SquadToday.MembersPayloadPayload.TrainingPayload,
                     latestMeal: Components.Schemas.SquadToday.MembersPayloadPayload.LatestMealPayload? = nil,
@@ -3058,6 +3062,7 @@ extension Components {
                     self.member = member
                     self.catchphrase = catchphrase
                     self.character = character
+                    self.title = title
                     self.day = day
                     self.training = training
                     self.latestMeal = latestMeal
@@ -3068,6 +3073,7 @@ extension Components {
                     case member
                     case catchphrase
                     case character
+                    case title
                     case day
                     case training
                     case latestMeal
@@ -3254,6 +3260,68 @@ extension Components {
                 case today
                 case me
                 case squadWeek
+            }
+        }
+        /// The weekly title they wear (头衔), shown beside their name: the one they equipped, else their latest. Missing before their first.
+        ///
+        /// - Remark: Generated from `#/components/schemas/WornTitle`.
+        public struct WornTitle: Codable, Hashable, Sendable {
+            /// The title’s words, at most 6 characters.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WornTitle/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WornTitle/badge`.
+            public var badge: Components.Schemas.TitleBadge
+            /// Creates a new `WornTitle`.
+            ///
+            /// - Parameters:
+            ///   - title: The title’s words, at most 6 characters.
+            ///   - badge:
+            public init(
+                title: Swift.String,
+                badge: Components.Schemas.TitleBadge
+            ) {
+                self.title = title
+                self.badge = badge
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case badge
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/TitleBadge`.
+        public struct TitleBadge: Codable, Hashable, Sendable {
+            /// The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today. An app that doesn’t know one draws a circle.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TitleBadge/shape`.
+            public var shape: Swift.String
+            /// Its colour, by the scene whose colour it takes: `pool`, `track`, `gym`, `tennis` or `climbing` today. An app that doesn’t know one draws `gym`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TitleBadge/colour`.
+            public var colour: Swift.String
+            /// The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TitleBadge/glyph`.
+            public var glyph: Swift.String
+            /// Creates a new `TitleBadge`.
+            ///
+            /// - Parameters:
+            ///   - shape: The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today. An app that doesn’t know one draws a circle.
+            ///   - colour: Its colour, by the scene whose colour it takes: `pool`, `track`, `gym`, `tennis` or `climbing` today. An app that doesn’t know one draws `gym`.
+            ///   - glyph: The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.
+            public init(
+                shape: Swift.String,
+                colour: Swift.String,
+                glyph: Swift.String
+            ) {
+                self.shape = shape
+                self.colour = colour
+                self.glyph = glyph
+            }
+            public enum CodingKeys: String, CodingKey {
+                case shape
+                case colour
+                case glyph
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadScene`.
@@ -5340,6 +5408,255 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case title
                 case times
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/TitleBoard`.
+        public struct TitleBoard: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/TitleBoard/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/TitleBoard/version`.
+            public var version: Components.Schemas.TitleBoard.VersionPayload
+            /// Every title won, in all the member’s squads, one per title by its words, the latest won first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TitleBoard/titles`.
+            public var titles: [Components.Schemas.BoardTitle]
+            /// The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TitleBoard/worn`.
+            public var worn: Swift.String?
+            /// The title the member chose to wear. Left out until they choose one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TitleBoard/equipped`.
+            public var equipped: Swift.String?
+            /// Creates a new `TitleBoard`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - titles: Every title won, in all the member’s squads, one per title by its words, the latest won first.
+            ///   - worn: The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
+            ///   - equipped: The title the member chose to wear. Left out until they choose one.
+            public init(
+                version: Components.Schemas.TitleBoard.VersionPayload,
+                titles: [Components.Schemas.BoardTitle],
+                worn: Swift.String? = nil,
+                equipped: Swift.String? = nil
+            ) {
+                self.version = version
+                self.titles = titles
+                self.worn = worn
+                self.equipped = equipped
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case titles
+                case worn
+                case equipped
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/BoardTitle`.
+        public struct BoardTitle: Codable, Hashable, Sendable {
+            /// The title’s words, at most 6 characters.
+            ///
+            /// - Remark: Generated from `#/components/schemas/BoardTitle/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/BoardTitle/badge`.
+            public var badge: Components.Schemas.TitleBadge
+            /// - Remark: Generated from `#/components/schemas/BoardTitle/WeeksPayload`.
+            public struct WeeksPayloadPayload: Codable, Hashable, Sendable {
+                /// The Monday of the week it was won.
+                ///
+                /// - Remark: Generated from `#/components/schemas/BoardTitle/WeeksPayload/weekStart`.
+                public var weekStart: Swift.String
+                /// Its award line (颁奖词) that week. On a squadmate’s card, left out for weeks won in another squad.
+                ///
+                /// - Remark: Generated from `#/components/schemas/BoardTitle/WeeksPayload/speech`.
+                public var speech: Swift.String?
+                /// Creates a new `WeeksPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - weekStart: The Monday of the week it was won.
+                ///   - speech: Its award line (颁奖词) that week. On a squadmate’s card, left out for weeks won in another squad.
+                public init(
+                    weekStart: Swift.String,
+                    speech: Swift.String? = nil
+                ) {
+                    self.weekStart = weekStart
+                    self.speech = speech
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case weekStart
+                    case speech
+                }
+            }
+            /// Every week it was won, the latest first: ×N on the board.
+            ///
+            /// - Remark: Generated from `#/components/schemas/BoardTitle/weeks`.
+            public typealias WeeksPayload = [Components.Schemas.BoardTitle.WeeksPayloadPayload]
+            /// Every week it was won, the latest first: ×N on the board.
+            ///
+            /// - Remark: Generated from `#/components/schemas/BoardTitle/weeks`.
+            public var weeks: Components.Schemas.BoardTitle.WeeksPayload
+            /// Creates a new `BoardTitle`.
+            ///
+            /// - Parameters:
+            ///   - title: The title’s words, at most 6 characters.
+            ///   - badge:
+            ///   - weeks: Every week it was won, the latest first: ×N on the board.
+            public init(
+                title: Swift.String,
+                badge: Components.Schemas.TitleBadge,
+                weeks: Components.Schemas.BoardTitle.WeeksPayload
+            ) {
+                self.title = title
+                self.badge = badge
+                self.weeks = weeks
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case badge
+                case weeks
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/EquipTitle`.
+        public struct EquipTitle: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/EquipTitle/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/EquipTitle/version`.
+            public var version: Components.Schemas.EquipTitle.VersionPayload
+            /// A title the member has won, by its words, to wear on their card; null to wear the latest won again.
+            ///
+            /// - Remark: Generated from `#/components/schemas/EquipTitle/title`.
+            public var title: Swift.String?
+            /// Creates a new `EquipTitle`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - title: A title the member has won, by its words, to wear on their card; null to wear the latest won again.
+            public init(
+                version: Components.Schemas.EquipTitle.VersionPayload,
+                title: Swift.String? = nil
+            ) {
+                self.version = version
+                self.title = title
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case title
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PlayerCard`.
+        public struct PlayerCard: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/version`.
+            public var version: Components.Schemas.PlayerCard.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/member`.
+            public var member: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/character`.
+            public var character: Components.Schemas.Character?
+            /// The number they picked for their card. Left out until they pick one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/jerseyNumber`.
+            public var jerseyNumber: Swift.Int?
+            /// Their place in this squad, the first to join being 1: the number shown without a pick.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/squadPlace`.
+            public var squadPlace: Swift.Int
+            /// When they signed up, in UTC. Left out before they saved a profile.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/joinedAt`.
+            public var joinedAt: Foundation.Date?
+            /// Days with a 练了; several 练了 on one day count once.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/trainedDays`.
+            public var trainedDays: Swift.Int
+            /// 健康餐 check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/healthyMeals`.
+            public var healthyMeals: Swift.Int
+            /// 坦白放纵餐 check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/cheatMeals`.
+            public var cheatMeals: Swift.Int
+            /// 今日请假条 check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/disclaimers`.
+            public var disclaimers: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/topSport`.
+            public var topSport: Components.Schemas.TopSport?
+            /// Every title won, in all the member’s squads, one per title by its words, the latest won first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/titles`.
+            public var titles: [Components.Schemas.BoardTitle]
+            /// The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/worn`.
+            public var worn: Swift.String?
+            /// Creates a new `PlayerCard`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - member:
+            ///   - character:
+            ///   - jerseyNumber: The number they picked for their card. Left out until they pick one.
+            ///   - squadPlace: Their place in this squad, the first to join being 1: the number shown without a pick.
+            ///   - joinedAt: When they signed up, in UTC. Left out before they saved a profile.
+            ///   - trainedDays: Days with a 练了; several 练了 on one day count once.
+            ///   - healthyMeals: 健康餐 check-ins.
+            ///   - cheatMeals: 坦白放纵餐 check-ins.
+            ///   - disclaimers: 今日请假条 check-ins.
+            ///   - topSport:
+            ///   - titles: Every title won, in all the member’s squads, one per title by its words, the latest won first.
+            ///   - worn: The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
+            public init(
+                version: Components.Schemas.PlayerCard.VersionPayload,
+                member: Swift.String,
+                character: Components.Schemas.Character? = nil,
+                jerseyNumber: Swift.Int? = nil,
+                squadPlace: Swift.Int,
+                joinedAt: Foundation.Date? = nil,
+                trainedDays: Swift.Int,
+                healthyMeals: Swift.Int,
+                cheatMeals: Swift.Int,
+                disclaimers: Swift.Int,
+                topSport: Components.Schemas.TopSport? = nil,
+                titles: [Components.Schemas.BoardTitle],
+                worn: Swift.String? = nil
+            ) {
+                self.version = version
+                self.member = member
+                self.character = character
+                self.jerseyNumber = jerseyNumber
+                self.squadPlace = squadPlace
+                self.joinedAt = joinedAt
+                self.trainedDays = trainedDays
+                self.healthyMeals = healthyMeals
+                self.cheatMeals = cheatMeals
+                self.disclaimers = disclaimers
+                self.topSport = topSport
+                self.titles = titles
+                self.worn = worn
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case member
+                case character
+                case jerseyNumber
+                case squadPlace
+                case joinedAt
+                case trainedDays
+                case healthyMeals
+                case cheatMeals
+                case disclaimers
+                case topSport
+                case titles
+                case worn
             }
         }
     }
