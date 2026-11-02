@@ -30,8 +30,8 @@ public struct APIMeService: MeService {
             let titles = try? await api.awardTotals()
             // And the 每周模板's row its count.
             let templateDays = try? await api.planTemplate().count { $0 != .rest }
-            // And the editor its starters only.
-            let unlocks = (try? await api.unlocks()) ?? []
+            // Unlocks must load: an empty list would lock away stores and props the member earned.
+            let unlocks = try await api.unlocks()
             let dailyPushOn = try await api.dailyPushOn()
             return MeOverview(
                 character: MeCharacter(

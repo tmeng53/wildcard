@@ -43,8 +43,8 @@ export function putUnlockRule({ unlocks }: UnlockToolDependencies) {
     description:
       'Adds a rule for a store or prop, or changes the sports or count of one. A new rule ' +
       'counts check-ins made from now; a changed one keeps its start. Members who already ' +
-      'unlocked it keep it. The id must be a store or prop the app’s art has. Returns every ' +
-      'rule now.',
+      'unlocked it keep it. Only the id’s shape is checked, and a rule is never deleted, so ' +
+      'use an id the app’s art has (one it doesn’t is ignored by the app). Returns every rule now.',
     changes: true,
     input: UnlockRuleEdit,
     run: async (edit) => shown(await unlocks.putRule(edit)),
