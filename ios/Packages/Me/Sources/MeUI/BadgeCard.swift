@@ -9,7 +9,6 @@ import SwiftUI
 /// it was won, the latest 颁奖词, and 装备 on the member's own card.
 struct BadgeCard: View {
     let title: BoardTitle
-    let squadName: String?
     let isWorn: Bool
     /// Wears it; nil on a squadmate's card, which shows no button.
     let equip: (() -> Void)?
@@ -68,23 +67,17 @@ struct BadgeCard: View {
         .accessibilityIdentifier("me.badgeCard")
     }
 
-    /// The top in the badge's colour, the squad and 每周战报 on its left, ×N on its right, and the
-    /// badge sitting over the seam.
+    /// The top in the badge's colour, 每周战报 on its left (it names no squad, since a title may
+    /// have been won in another), ×N on its right, and the badge sitting over the seam.
     private var top: some View {
         TitleBadgeView.enamel(title.badge.colour)
             .frame(height: Self.topHeight)
             .overlay(alignment: .topLeading) {
-                Group {
-                    if let squadName {
-                        Text("badge.from \(squadName)", bundle: .module)
-                    } else {
-                        Text("每周战报", bundle: .module)
-                    }
-                }
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                .lineLimit(1)
-                .padding(Space.m)
+                Text("每周战报", bundle: .module)
+                    .typeStyle(TypeRamp.label)
+                    .foregroundStyle(Color(role: .fgOnInk, in: theme))
+                    .lineLimit(1)
+                    .padding(Space.m)
             }
             .overlay(alignment: .topTrailing) {
                 if title.times > 1 {

@@ -749,28 +749,6 @@
         }
       }
     },
-    "badge.from %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ · WEEKLY RECAP"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ · 每周战报"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ · 每週戰報"
-          }
-        }
-      }
-    },
     "card.career %lld %lld": {
       "localizations": {
         "en": {

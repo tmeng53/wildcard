@@ -52,7 +52,7 @@ struct PlayerCard: View {
         }
         .sheet(item: $opened) { title in
             BadgeCard(
-                title: title, squadName: face.squadName, isWorn: face.board.worn == title.title,
+                title: title, isWorn: face.board.worn == title.title,
                 equip: equip.map { equip in
                     {
                         equip(title.title)
