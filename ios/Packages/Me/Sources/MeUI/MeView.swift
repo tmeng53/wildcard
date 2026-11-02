@@ -2,19 +2,17 @@
 import AvatarArt
 import AvatarDomain
 import AvatarUI
+import Contracts
 import DesignSystem
 import DesignSystemUI
 import MeDomain
 import SwiftUI
 
-/// Where 我's rows lead outside the tab. The app decides: the squad and past 战报 open their
-/// tabs until they have pages of their own.
+/// Where 我's buttons lead outside this package. The app decides.
 public struct MeDestinations {
-    public var squad: () -> Void
-    public var pastRecaps: () -> Void
     public var editCharacter: () -> Void
-    /// 出赛表 on the 每周模板.
-    public var weeklyTemplate: () -> Void
+    /// 出赛表, opened inside 我.
+    public var schedule: () -> Void
     /// 我的动态: everything the member posted.
     public var myPosts: () -> Void
     /// The published policy pages.
@@ -22,26 +20,26 @@ public struct MeDestinations {
     public var terms: URL
 
     public init(
-        squad: @escaping () -> Void, pastRecaps: @escaping () -> Void, editCharacter: @escaping () -> Void,
-        weeklyTemplate: @escaping () -> Void, myPosts: @escaping () -> Void, privacyPolicy: URL, terms: URL
+        editCharacter: @escaping () -> Void, schedule: @escaping () -> Void, myPosts: @escaping () -> Void,
+        privacyPolicy: URL, terms: URL
     ) {
-        self.squad = squad
-        self.pastRecaps = pastRecaps
         self.editCharacter = editCharacter
-        self.weeklyTemplate = weeklyTemplate
+        self.schedule = schedule
         self.myPosts = myPosts
         self.privacyPolicy = privacyPolicy
         self.terms = terms
     }
 }
 
-/// 我: the member's player card (tap it to turn it over), 我的动态 and 编辑外卡运动员, with a small 设置 button
-/// that opens the settings menu, and from there 注销账号. Each page replaces the last in place.
-/// These pages keep out of the scene's colours: ink and white only.
+/// 我: the member's player card (tap it to turn it over, or its number to pick another), the
+/// 出赛表 row, 我的动态 and 编辑外卡运动员, with a small 设置 button that opens the settings menu,
+/// and from there 注销账号. Each page replaces the last in place. These pages keep out of the
+/// scene's colours: ink and white only.
 public struct MeView: View {
     @Bindable private var model: MeModel
     private let destinations: MeDestinations
     @State private var isSettingsOpen = false
+    @State private var isPickingNumber = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -57,6 +55,11 @@ public struct MeView: View {
                     .swipesBack(isEnabled: model.deletion != .deleting) { model.closeDeletion() }
                     .accentTone(.ink)
                     .transition(.move(edge: .trailing))
+            } else if isPickingNumber {
+                JerseyNumberView(model: model) { isPickingNumber = false }
+                    .swipesBack { isPickingNumber = false }
+                    .accentTone(.ink)
+                    .transition(.move(edge: .trailing))
             } else if isSettingsOpen {
                 SettingsView(model: model, destinations: destinations) { isSettingsOpen = false }
                     .accentTone(.ink)
@@ -68,6 +71,7 @@ public struct MeView: View {
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.isDeletionOpen)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isSettingsOpen)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isPickingNumber)
         .task { await model.reload() }
     }
 
@@ -108,7 +112,8 @@ public struct MeView: View {
                         .buttonStyle(SecondaryButtonStyle())
                         .accessibilityIdentifier("me.settings")
                     }
-                    PlayerCard(overview: overview)
+                    PlayerCard(overview: overview) { isPickingNumber = true }
+                    ScheduleRow(week: overview.week, open: destinations.schedule)
                     VStack(spacing: Space.xs) {
                         ViewThatFits(in: .horizontal) {
                             HStack(spacing: Space.s) { actions }
@@ -129,6 +134,41 @@ public struct MeView: View {
             .refreshable { await model.reload() }
             .accessibilityIdentifier("me.page")
         }
+    }
+}
+
+/// 出赛表 under the card, with this week's count, opening it inside 我.
+struct ScheduleRow: View {
+    let week: WeekCount?
+    let open: () -> Void
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: Space.s) {
+                VStack(alignment: .leading, spacing: Space.xxs / 2) {
+                    Text("出赛表", bundle: .module)
+                        .typeStyle(TypeRamp.headline)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    if let week {
+                        Text("本周 \(week.trainedDays)/\(week.plannedDays)", bundle: .module)
+                            .typeStyle(TypeRamp.footnote)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    }
+                }
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: Sizing.smallIcon, weight: .semibold))
+                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                    .accessibilityHidden(true)
+            }
+            .card()
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("me.schedule")
     }
 }
 

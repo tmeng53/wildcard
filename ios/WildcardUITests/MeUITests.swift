@@ -1,7 +1,7 @@
 import XCTest
 
-/// 我 the way a member uses it, on the in-memory member: the player card and its back, 设置 with
-/// the notification switch, and the 注销账号 page. Keeps screenshots for review.
+/// 我 the way a member uses it, on the in-memory member: the player card and its back, its number,
+/// 出赛表 opened inside 我, 设置 with the notification switch, and the 注销账号 page. Keeps screenshots for review.
 @MainActor
 final class MeUITests: XCTestCase {
     func testPlayerCard() {
@@ -80,8 +80,11 @@ final class MeUITests: XCTestCase {
         settingsButton.tap()
         let settings = app.descendants(matching: .any).matching(identifier: "settings.page").firstMatch
         XCTAssertTrue(settings.waitForExistence(timeout: 30), "设置 never opened")
-        XCTAssertTrue(app.buttons["me.squad"].label.contains("周三不练腿俱乐部"), "no 我的小队 row with the squad")
         XCTAssertTrue(app.buttons["me.privacy"].exists, "no 隐私政策 row")
+        // 设置 holds only the app's own settings: the squad, the number and the week live elsewhere.
+        for moved in ["me.squad", "me.jerseyNumber", "me.weeklyTemplate"] {
+            XCTAssertFalse(app.buttons[moved].exists, "\(moved) is still in 设置")
+        }
         let notifications = app.switches["me.notifications"]
         XCTAssertEqual(notifications.value as? String, "1")
         notifications.tap()
@@ -126,16 +129,13 @@ final class MeUITests: XCTestCase {
         waitFor(confirm, "isEnabled == false", "the confirm button still takes taps after deleting")
     }
 
-    /// The member picks their card's number in 设置, and the card wears it.
+    /// The member taps the number on their card to pick another, and the card wears it.
     func testJerseyNumber() {
         let app = launch(language: "zh-Hans")
-        let settingsButton = app.buttons["me.settings"]
-        XCTAssertTrue(settingsButton.waitForExistence(timeout: 30), "我 never showed")
-        settingsButton.tap()
-        let row = app.buttons["me.jerseyNumber"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 球衣号码 row")
-        XCTAssertTrue(row.label.contains("22"), "the row doesn't show the number: \(row.label)")
-        row.tap()
+        let card = app.buttons["me.card"]
+        XCTAssertTrue(card.waitForExistence(timeout: 30), "我 never showed")
+        // The number sits at the card's top left, over the character's window.
+        card.coordinate(withNormalizedOffset: CGVector(dx: 0.14, dy: 0.08)).tap()
         let wheel = app.pickerWheels.firstMatch
         XCTAssertTrue(wheel.waitForExistence(timeout: 30), "the number page never opened")
         wheel.adjust(toPickerWheelValue: "07")
@@ -143,27 +143,31 @@ final class MeUITests: XCTestCase {
         settle()
         keepScreenshot(named: "49-jersey-number")
         app.buttons["number.save"].tap()
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "saving didn't go back to 设置")
-        waitFor(row, "label CONTAINS '07'", "the row doesn't show the new number")
-        app.buttons["settings.back"].tap()
-        let card = app.buttons["me.card"]
-        XCTAssertTrue(card.waitForExistence(timeout: 30))
-        XCTAssertTrue(card.label.contains("07号"), "the card doesn't wear the new number: \(card.label)")
+        XCTAssertTrue(card.waitForExistence(timeout: 30), "saving didn't go back to 我")
+        waitFor(card, "label CONTAINS '07号'", "the card doesn't wear the new number")
+        // Anywhere else on the card still turns it over.
+        card.tap()
+        waitFor(card, "label CONTAINS '放纵餐'", "the card didn't turn over")
     }
 
-    /// 设置's 每周模板 row says how many days it trains and opens 出赛表 on it.
-    func testWeeklyTemplateRowOpensTheTemplate() {
+    /// 出赛表 opens inside 我 from the row under the card, with this week's count, and its
+    /// 每周模板 is one of its own chips; 返回 goes back to 我 with the tab bar there all along.
+    func testScheduleOpensInsideMe() {
         let app = launch(language: "zh-Hans")
-        let settingsButton = app.buttons["me.settings"]
-        XCTAssertTrue(settingsButton.waitForExistence(timeout: 30), "我 never showed")
-        settingsButton.tap()
-        let row = app.buttons["me.weeklyTemplate"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 每周模板 row")
-        XCTAssertTrue(row.label.contains("每周 5 天"), "the row doesn't count the template's days: \(row.label)")
+        let row = app.buttons["me.schedule"]
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 出赛表 row on 我")
+        XCTAssertTrue(row.label.contains("3/5"), "the row doesn't count this week: \(row.label)")
+        assertClearOfTabBar(row, in: app)
         row.tap()
+        XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "出赛表 didn't open")
+        XCTAssertTrue(app.buttons["tab.me"].isSelected, "出赛表 left 我")
+        app.buttons["schedule.template"].tap()
         let note = app.descendants(matching: .any)["schedule.template.note"]
-        XCTAssertTrue(note.waitForExistence(timeout: 30), "出赛表 didn't open on the 每周模板")
-        XCTAssertTrue(app.buttons["schedule.template"].isSelected, "the 每周模板 chip isn't the one selected")
+        XCTAssertTrue(note.waitForExistence(timeout: 30), "the 每周模板 chip didn't open the template")
+        settle()
+        keepScreenshot(named: "48-me-schedule-template")
+        app.buttons["schedule.back"].tap()
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "返回 didn't go back to 我")
     }
 
     /// A change that can't be saved flips back and says so; a delete that fails can be tried again.

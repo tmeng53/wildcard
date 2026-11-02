@@ -121,10 +121,7 @@ struct InviteCard: View {
             .buttonStyle(.plain)
             .accessibilityLabel(Text("复制邀请码 \(squad.inviteCode)", bundle: .module))
             .accessibilityIdentifier("squad.copyInvite")
-            ShareLink(
-                item: String(
-                    localized: "来外卡和我一起练！小队「\(squad.name)」的邀请码：\(squad.inviteCode)", bundle: .module.inAppLanguage)
-            ) {
+            ShareLink(item: Self.message(for: squad)) {
                 Label {
                     Text("分享", bundle: .module)
                 } icon: {
@@ -136,6 +133,12 @@ struct InviteCard: View {
             .accessibilityIdentifier("squad.share")
         }
         .card()
+    }
+
+    /// What 分享 sends: the squad's name and its invite code.
+    static func message(for squad: Squad) -> String {
+        String(
+            localized: "来外卡和我一起练！小队「\(squad.name)」的邀请码：\(squad.inviteCode)", bundle: .module.inAppLanguage)
     }
 
     private func copy() {
@@ -160,7 +163,10 @@ struct MemberRow: View {
     let act: (MemberAction) -> Void
     @Environment(\.sceneTheme) private var theme
 
-    private var name: String {
+    private var name: String { Self.name(of: member) }
+
+    /// The member's nickname, or 新队友 until they make their character.
+    static func name(of member: SquadMemberRow) -> String {
         member.character?.nickname.text ?? String(localized: "新队友", bundle: .module.inAppLanguage)
     }
 
@@ -248,6 +254,7 @@ struct MemberRow: View {
 /// A member's face, still, in a circle; an empty circle until they make their character.
 struct MemberHead: View {
     let character: MemberCharacter?
+    var size = SquadSettingsMetrics.head
     @State private var drawing: (drawing: FigureDrawing, placements: [Placement])?
     @Environment(\.sceneTheme) private var theme
 
@@ -262,7 +269,7 @@ struct MemberHead: View {
                     .clipShape(Circle())
             }
         }
-        .frame(width: SquadSettingsMetrics.head, height: SquadSettingsMetrics.head)
+        .frame(width: size, height: size)
         .accessibilityHidden(true)
         .task(id: character) {
             guard let character else { return }

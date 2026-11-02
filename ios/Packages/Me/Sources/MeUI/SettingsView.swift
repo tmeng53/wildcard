@@ -5,30 +5,20 @@ import MeDomain
 import SwiftUI
 
 /// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
-/// small group labels (小队, 偏好 with the 每周模板, 关于, 账号), with no icons, a chevron on each row
-/// that opens a page, and an ink switch. Signing out and deleting the account come last.
+/// small group labels (偏好, 关于, 账号), with no icons, a chevron on each row that opens a page,
+/// and an ink switch. Signing out and deleting the account come last. It holds only the app's
+/// own settings: what belongs to the squad, the card or the week lives with them (2026-11-02).
 struct SettingsView: View {
     @Bindable var model: MeModel
     let destinations: MeDestinations
     let close: () -> Void
     @State private var isSigningOut = false
-    @State private var isPickingNumber = false
     @State private var isPickingLanguage = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        ZStack {
-            if isPickingNumber {
-                JerseyNumberView(model: model) { isPickingNumber = false }
-                    .swipesBack { isPickingNumber = false }
-                    .transition(.move(edge: .trailing))
-            } else {
-                menu.swipesBack(perform: close)
-            }
-        }
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isPickingNumber)
+        menu.swipesBack(perform: close)
     }
 
     private var menu: some View {
@@ -48,7 +38,6 @@ struct SettingsView: View {
                         .accessibilityHidden(true)
                 }
                 .padding(.top, Space.s)
-                squadGroup
                 preferencesGroup
                 aboutGroup
                 accountGroup
@@ -67,33 +56,8 @@ struct SettingsView: View {
         .accessibilityIdentifier("settings.page")
     }
 
-    private var squadGroup: some View {
-        MenuGroup(Text("小队", bundle: .module)) {
-            if let squad = model.overview?.squadName {
-                ListRow(
-                    Text("我的小队", bundle: .module), value: Text(squad), action: destinations.squad
-                )
-                .accessibilityIdentifier("me.squad")
-            }
-            ListRow(
-                Text("球衣号码", bundle: .module), value: Text(verbatim: model.overview?.cardNumber?.text ?? "")
-            ) {
-                isPickingNumber = true
-            }
-            .accessibilityIdentifier("me.jerseyNumber")
-            ListRow(
-                Text("往期战报", bundle: .module), showsDivider: false, action: destinations.pastRecaps
-            )
-        }
-    }
-
     private var preferencesGroup: some View {
         MenuGroup(Text("偏好", bundle: .module)) {
-            ListRow(Text("每周模板", bundle: .module), value: templateValue, showsChevron: false) {
-                close()
-                destinations.weeklyTemplate()
-            }
-            .accessibilityIdentifier("me.weeklyTemplate")
             SwitchRow(
                 Text("通知", bundle: .module),
                 isOn: Binding(
@@ -109,11 +73,6 @@ struct SettingsView: View {
             .accessibilityIdentifier("me.language")
             .languagePicker(isPresented: $isPickingLanguage)
         }
-    }
-
-    /// 每周 N 天, once the 每周模板 has loaded.
-    private var templateValue: Text? {
-        model.overview?.templateDays.map { Text("每周 \($0) 天", bundle: .module) }
     }
 
     private var aboutGroup: some View {
