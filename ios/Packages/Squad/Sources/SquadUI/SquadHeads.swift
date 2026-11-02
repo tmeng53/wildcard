@@ -1,4 +1,6 @@
 #if os(iOS)
+import AvatarArt
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -49,7 +51,7 @@ struct SquadHeads: View {
                 openCoach(.resume(coach.coach))
             } label: {
                 HeadSpot(name: Text("\(coach.coach.name)教练", bundle: .module), isCoach: true) {
-                    CoachHead()
+                    CoachHead(coach: coach.coach.id)
                 }
             }
             .buttonStyle(.plain)
@@ -124,16 +126,27 @@ private struct DashedCircle<Mark: View>: View {
 }
 
 /// The squad's coach in a circle ringed in ink, with a whistle badge at its lower right; until
-/// coaches have their own still heads, its ink silhouette.
+/// its still head, as 教练's thumbnail crops it (an ink silhouette for a coach this build has no
+/// character for).
 private struct CoachHead: View {
+    let coach: CoachID
+    @State private var head: CharacterPlayer?
     @Environment(\.sceneTheme) private var theme
+
+    /// The head and shoulders on the coaches' 240 × 320 canvas, as `CoachThumbnail` crops them.
+    private static let face = CGRect(x: 44, y: 44, width: 152, height: 152)
 
     var body: some View {
         ZStack(alignment: .bottom) {
             Circle().fill(Color(role: .bgSubtle, in: theme))
-            CoachSilhouette(fill: Color(role: .bgInk, in: theme))
-                .frame(width: SquadHeadsMetrics.circle * 0.5)
-                .offset(y: SquadHeadsMetrics.circle * 0.12)
+            if let head {
+                let frame = head.restFrame
+                CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.face)
+            } else if !CoachCharacter.exists(coach.rawValue) {
+                CoachSilhouette(fill: Color(role: .bgInk, in: theme))
+                    .frame(width: SquadHeadsMetrics.circle * 0.5)
+                    .offset(y: SquadHeadsMetrics.circle * 0.12)
+            }
         }
         .clipShape(Circle())
         // A white gap, then the ink ring, as a sticker's edge.
@@ -149,6 +162,12 @@ private struct CoachHead: View {
                 .offset(x: SquadHeadsMetrics.ringGap, y: SquadHeadsMetrics.ringGap)
         }
         .accessibilityHidden(true)
+        .task(id: coach) {
+            head = nil
+            let id = coach.rawValue
+            guard CoachCharacter.exists(id) else { return }
+            head = try? CharacterPlayer(figure: CoachCharacter.figure(id), idle: CoachCharacter.clip(.idle, coach: id))
+        }
     }
 }
 
