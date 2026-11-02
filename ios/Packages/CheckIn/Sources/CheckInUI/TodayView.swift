@@ -84,6 +84,14 @@ public struct TodayView: View {
             if model.showsTabBar { barRoom = room }
         }
         .task { await model.load() }
+        // Read again each minute while on screen, so teammates' check-ins show up.
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: TodayModel.rereadEvery)
+                guard !Task.isCancelled else { return }
+                await model.reread()
+            }
+        }
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }

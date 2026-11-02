@@ -52,6 +52,11 @@ public final class TodayStore {
     public private(set) var reactions: [CheckInID: [Reaction]] = [:]
     /// Whom the member patted today (拍一拍) and who patted them in the last day, as last loaded.
     public private(set) var pokes = SquadPokes.none
+    /// What changed in the squad since the home shown before, not yet told (`takeNews()`).
+    public private(set) var news = SquadNews()
+    /// The squad the member was in when the server last said they are in none: they left it, or
+    /// the captain removed them.
+    public private(set) var lostSquad: Squad?
 
     private let backend: any CheckInBackend
     private let outbox: any Outbox
@@ -131,11 +136,13 @@ public final class TodayStore {
             if let fresh = try await backend.home() {
                 let earlier = savedHome
                 savedHome = fresh
+                news = news.adding(SquadNews(from: earlier, to: fresh))
                 for saved in earlier?.checkIns ?? [] where saved.member == fresh.member && saved.day == day {
                     fold(saved)
                 }
                 phase = .current
             } else {
+                if let squad = savedHome?.squad { lostSquad = squad }
                 savedHome = nil
                 phase = .noSquad
             }
@@ -144,6 +151,13 @@ public final class TodayStore {
         } catch {
             phase = .offline
         }
+    }
+
+    /// The squad's news, once: the home tells it, and the next call has none until something else
+    /// changes.
+    public func takeNews() -> SquadNews {
+        defer { news = SquadNews() }
+        return news
     }
 
     // MARK: - Posting

@@ -313,6 +313,18 @@ private struct AppRoot: View {
         .animation(.easeOut(duration: TicketRock.fadeOut), value: app.isStarting)
         // Signing in on the open screen: the tickets rock over it until the next screen opens.
         .loadingCover(app.isSigningIn) { LaunchCover() }
+        .alert(
+            Text("你已不在 \(app.lostSquadName ?? "") 小队"),
+            isPresented: Binding(
+                get: { app.lostSquadName != nil },
+                set: { shown in if !shown { app.lostSquadName = nil } })
+        ) {
+            Button {
+                app.lostSquadName = nil
+            } label: {
+                Text("确认")
+            }
+        }
         .task { await app.run() }
         // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
         .onChange(of: app.showsTabs) { _, shows in

@@ -36,6 +36,15 @@ final class PatStage {
         case status
         /// They just patted me.
         case pattedMe
+        /// They joined the squad since the home was last shown.
+        case joined
+    }
+
+    /// A line over my own head: the squad's news for me, such as 「你现在是队长了」.
+    struct MyLine: Equatable {
+        let text: String
+        /// Bumps each time a line opens, as `Bubble.id` does.
+        let id: Int
     }
 
     /// The bubble over a teammate.
@@ -50,6 +59,7 @@ final class PatStage {
 
     private(set) var pat: Pat?
     private(set) var bubble: Bubble?
+    private(set) var myLine: MyLine?
     /// When each teammate last hopped at a tap.
     private(set) var hops: [MemberID: Date] = [:]
     /// Bumps when my pat lands on a teammate: the one haptic, `Haptic.poke`.
@@ -66,7 +76,7 @@ final class PatStage {
     nonisolated static let bubbleHold = 5.0
     /// How long this stage's bubbles stay up: `bubbleHold`, or longer for UI tests, whose slow
     /// simulators can spend 5 seconds on finding a bubble.
-    private let hold: Double
+    let hold: Double
 
     init(bubbleHold hold: Double = PatStage.bubbleHold) {
         self.hold = hold
@@ -88,6 +98,16 @@ final class PatStage {
             bubble = nil
             return
         }
+        let pose = hop(mate, cast: cast, phase: phase, now: now)
+        let line = Self.status(of: mate, pose: pose)
+        show(
+            Bubble(
+                mate: mate.id, kind: .status, title: Self.titled(mate.name, line.title), detail: line.detail,
+                id: nextBubble()), for: hold)
+    }
+
+    /// `mate` hops, and cheers if awake and not mid-sport; returns their pose.
+    private func hop(_ mate: SquadCast.Mate, cast: SquadCast, phase: DayPhase, now: Date) -> StagePose {
         hops[mate.id] = now
         let pose = cast.stage.pose(of: mate.member, at: phase)
         switch pose {
@@ -98,11 +118,35 @@ final class PatStage {
         case .station, .inPlace, .asleep:
             break
         }
-        let line = Self.status(of: mate, pose: pose)
+        return pose
+    }
+
+    // MARK: The squad's news
+
+    /// Teammates who joined since the home was last shown: the first hops in and their bubble
+    /// says 「新队友 X 上场」, naming the next one, with 「拍一拍」 like any teammate's.
+    func welcome(_ joined: [SquadCast.Mate], cast: SquadCast, phase: DayPhase, now: Date = .now) {
+        guard pat == nil, let first = joined.first else { return }
+        _ = hop(first, cast: cast, phase: phase, now: now)
+        let mate = String(localized: "队友", bundle: .module.inAppLanguage)
         show(
             Bubble(
-                mate: mate.id, kind: .status, title: Self.titled(mate.name, line.title), detail: line.detail,
+                mate: first.id, kind: .joined,
+                title: String(localized: "新队友 \(first.name ?? mate) 上场", bundle: .module.inAppLanguage),
+                detail: joined.dropFirst().first.map {
+                    String(localized: "\($0.name ?? mate) 也上场了", bundle: .module.inAppLanguage)
+                },
                 id: nextBubble()), for: hold)
+    }
+
+    /// A line over my own head for `hold`.
+    func say(_ text: String) {
+        let line = MyLine(text: text, id: nextBubble())
+        myLine = line
+        Task { @MainActor [weak self, hold] in
+            try? await Task.sleep(for: .seconds(hold))
+            if self?.myLine == line { self?.myLine = nil }
+        }
     }
 
     /// A tap anywhere else on the scene closes the bubble.
