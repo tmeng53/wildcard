@@ -7,6 +7,7 @@ import {
   SquadId as CheckInSquad,
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -50,6 +51,7 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
+import { unusedCoachHiring } from '../test-kit/weekly-awards.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
 // awards table are real; the model answers what each test sets, and the push sender records
@@ -69,11 +71,13 @@ const squads = createSquads({
 const aiConsent = aiConsentOn(db);
 const checkInStore = createPostgresCheckInStore(db);
 const reactions = createPostgresReactionStore(db);
+const comments = createPostgresCommentStore(db);
 const checkIns = createCheckIns({
   sports: createSports({ store: createPostgresSportStore(db) }),
   store: checkInStore,
   membership: squads,
   reactions,
+  comments,
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),
@@ -136,6 +140,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     stories: createPostgresWeekStoryStore(db),
     aiConsented: (members) =>
       aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
+    memes: () => Promise.resolve([]),
   });
   const clock = () => now;
   const app = createApp({
@@ -162,6 +167,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyAwards: { awards, clock },
     weekSummaryWords: () => Promise.reject(new Error('unused')),
+    coachHiring: unusedCoachHiring,
     aiConsent,
     nudges: nudgesOn(db),
     log: createLog(() => undefined),

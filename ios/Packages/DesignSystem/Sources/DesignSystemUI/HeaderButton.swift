@@ -2,14 +2,18 @@
 import DesignSystem
 import SwiftUI
 
-/// A 44-point round button in a header (返回, 设置, 撤销): light grey on a white page, system
-/// Liquid Glass over the scene. An icon only, so `label` names it for VoiceOver.
+/// A 44-point round button in a header (返回, 设置, 撤销, 关闭) in the system's interactive Liquid
+/// Glass, as iOS draws a navigation bar's buttons, on every surface: an ink glyph on a white page
+/// or over the scene, a white one over photos on ink (关闭 in the photo viewer). An icon only, so
+/// `label` names it for VoiceOver.
 public struct HeaderButton: View {
     public enum Surface: Sendable {
         /// On a white page.
         case page
         /// Over the scene or the character's stage.
         case scene
+        /// Over photos on ink, full screen.
+        case ink
     }
 
     @Environment(\.sceneTheme) private var theme
@@ -32,30 +36,21 @@ public struct HeaderButton: View {
         Button(action: action) {
             Image(systemName: systemImage)
                 .font(.system(size: glyph, weight: .semibold))
-                .foregroundStyle(Color(role: isEnabled ? .fgDefault : .fgSubtle, in: theme))
+                .foregroundStyle(Color(role: glyphRole, in: theme))
                 .frame(width: Sizing.control, height: Sizing.control)
-                .background {
-                    if surface == .page {
-                        Circle().fill(Color(role: .bgSubtle, in: theme))
-                    }
-                }
                 .contentShape(Circle())
         }
         .buttonStyle(PressableButtonStyle())
-        .modifier(SceneGlass(isOn: surface == .scene))
+        .glassEffect(.regular.interactive(), in: Circle())
         .accessibilityLabel(label)
     }
-}
 
-/// System glass, only where the button sits over the scene.
-private struct SceneGlass: ViewModifier {
-    let isOn: Bool
-
-    func body(content: Content) -> some View {
-        if isOn {
-            content.glassEffect(.regular.interactive(), in: Circle())
-        } else {
-            content
+    private var glyphRole: ColorRole {
+        switch (surface, isEnabled) {
+        case (.ink, true): .fgOnInk
+        case (.ink, false): .fgOnInkMuted
+        case (_, true): .fgDefault
+        case (_, false): .fgSubtle
         }
     }
 }

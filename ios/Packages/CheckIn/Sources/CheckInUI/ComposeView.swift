@@ -22,6 +22,14 @@ struct ComposeView: View {
     @State private var isRulingMinutes = false
     /// Where the caption starts on the page, so it can fill the page below.
     @State private var captionTop = 0.0
+    /// The squads it goes to: all of them until the member unticks one.
+    @State private var shared: Set<SquadID>
+
+    init(model: TodayModel, kind: CheckInKind) {
+        self.model = model
+        self.kind = kind
+        _shared = State(initialValue: Set(model.shareSquads.map(\.id)))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -64,6 +72,11 @@ struct ComposeView: View {
                 }
             }
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            ShareRow(squads: model.shareSquads, shared: $shared)
+                .padding(.horizontal, Space.pageMargin)
+                .background(Color(role: .bgCanvas, in: theme))
+        }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .sheet(isPresented: $isPickingSport) {
             SportPicker(selected: currentActivity, recent: model.recentActivities) { picked in
@@ -97,15 +110,12 @@ struct ComposeView: View {
             .accessibilityIdentifier("compose.cancel")
             Spacer()
             Button {
-                Task { await model.post(draft) }
+                Task { await model.post(draft, sharedTo: shared) }
             } label: {
-                if model.isSending {
-                    ProgressView()
-                } else {
-                    Text("发布", bundle: .module)
-                        .typeStyle(TypeRamp.headline)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                }
+                Text("发布", bundle: .module)
+                    .typeStyle(TypeRamp.headline)
+                    .loadingLabel(model.isSending)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
             }
             .frame(minHeight: Sizing.minimumTapTarget)
             .disabled(model.isSending)
@@ -192,10 +202,12 @@ struct ComposeView: View {
 }
 
 /// The cover large, and with more than one photo, a row to pick which is the cover. With no
-/// photo, the character stands in.
+/// photo, the character stands in. Tapping the cover shows the photos whole, full screen.
 private struct MediaBlock: View {
     @Environment(\.sceneTheme) private var theme
     let model: TodayModel
+    @State private var page = 0
+    @State private var isViewing = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s) {
@@ -204,8 +216,14 @@ private struct MediaBlock: View {
                     // Wider than tall, so the sport row and the caption fit below it on one screen.
                     .aspectRatio(4 / 3, contentMode: .fit)
                     .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                    .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                    .onTapGesture { view() }
+                    .photoViewer(isPresented: $isViewing, count: model.photos.count, page: $page, load: jpeg)
                     .accessibilityElement()
                     .accessibilityLabel(Text("封面", bundle: .module))
+                    .accessibilityHint(Text("全屏看", bundle: .module))
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction { view() }
                     .accessibilityIdentifier("compose.cover")
             }
             if model.photos.count > 1 {
@@ -218,6 +236,18 @@ private struct MediaBlock: View {
                 }
             }
         }
+    }
+
+    /// Photo `index` as it will be posted, while it's still one of them.
+    private var jpeg: @Sendable (Int) async -> Data? {
+        let photos = model.photos
+        return { index in photos.indices.contains(index) ? photos[index].jpeg : nil }
+    }
+
+    /// Opens on the cover.
+    private func view() {
+        page = 0
+        isViewing = true
     }
 }
 

@@ -3,8 +3,9 @@ import Contracts
 import FeedDomain
 import Foundation
 
-/// 动态 over our API: the squad's list with each check-in's reactions in one call, the
-/// characters from the squad's today, and each photo from the URL the list signed for it.
+/// 动态 over our API: the squad's list with each check-in's reactions and comments in one call,
+/// one post's own page, the characters from the squad's today, and each photo from the URL the
+/// list signed for it.
 public struct APIFeedSource: FeedSource {
     private let api: WildcardAPI
 
@@ -19,16 +20,38 @@ public struct APIFeedSource: FeedSource {
             let list = try await api.checkInsWire(of: squad, from: first, through: last)
             return try api.read { () throws(ContractsError) in
                 try list.posts.map { post throws(ContractsError) in
-                    FeedPost(
-                        checkIn: try CheckIn(post.checkIn),
-                        reactions: Responses(
-                            try post.reactions.map { entry throws(ContractsError) in
-                                let reaction = try Reaction(entry)
-                                return Responses<Emoji>.Response(
-                                    member: reaction.member, kind: reaction.emoji, moment: reaction.reactedAt)
-                            }))
+                    try FeedPost(checkIn: post.checkIn, reactions: post.reactions, comments: post.comments)
                 }
             }
+        } catch {
+            throw FeedError(error)
+        }
+    }
+
+    public func post(_ id: CheckInID) async throws(FeedError) -> FeedPost {
+        do throws(APIError) {
+            let post = try await api.postWire(id)
+            return try api.read { () throws(ContractsError) in
+                try FeedPost(checkIn: post.checkIn, reactions: post.reactions, comments: post.comments)
+            }
+        } catch {
+            throw FeedError(error)
+        }
+    }
+
+    public func comment(_ text: CommentText, id: CommentID, replyingTo member: MemberID?, on checkIn: CheckInID)
+        async throws(FeedError) -> Comment
+    {
+        do throws(APIError) {
+            return try await api.comment(text, id: id, replyingTo: member, on: checkIn)
+        } catch {
+            throw FeedError(error)
+        }
+    }
+
+    public func deleteComment(_ id: CommentID, on checkIn: CheckInID) async throws(FeedError) {
+        do throws(APIError) {
+            try await api.deleteComment(id, on: checkIn)
         } catch {
             throw FeedError(error)
         }
@@ -62,6 +85,24 @@ public struct APIFeedSource: FeedSource {
         } catch {
             throw FeedError(error)
         }
+    }
+}
+
+extension FeedPost {
+    /// A post as the API sends it, in the feed or on its own page.
+    init(
+        checkIn: Components.Schemas.CheckIn, reactions: [Components.Schemas.ReactionEntry],
+        comments: [Components.Schemas.CommentEntry]
+    ) throws(ContractsError) {
+        self.init(
+            checkIn: try CheckIn(checkIn),
+            reactions: Responses(
+                try reactions.map { entry throws(ContractsError) in
+                    let reaction = try Reaction(entry)
+                    return Responses<Emoji>.Response(
+                        member: reaction.member, kind: reaction.emoji, moment: reaction.reactedAt)
+                }),
+            comments: try comments.map(Comment.init))
     }
 }
 

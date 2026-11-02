@@ -5,24 +5,59 @@ import { StoredPlan, WeekStart } from '../domain/weekly-plan.js';
 import type { WeeklyPlanStore } from '../ports.js';
 import type { DB } from './tables.js';
 
-/** The weekly plan and 饮食小目标 store on Postgres (`supabase/migrations`). */
+/** The weekly plan, template and 饮食小目标 store on Postgres (`supabase/migrations`). */
 export function createPostgresWeeklyPlanStore(db: Kysely<DB>): WeeklyPlanStore {
   return {
-    async latestFrom(member, weekStart) {
+    async savedFor(member, weekStart) {
       const row = await db
         .selectFrom('weekly_plans')
-        // A `date` read as text: node-postgres would turn it into a Date at local midnight.
-        .select([sql<string>`week_start::text`.as('week_start'), 'payload'])
+        .select('payload')
         .where('member_id', '=', member)
-        .where('week_start', '<=', weekStart)
-        .orderBy('week_start', 'desc')
+        .where('week_start', '=', weekStart)
+        .executeTakeFirst();
+      return row === undefined ? undefined : StoredPlan.parse(row.payload).days;
+    },
+
+    async templateFor(member, weekStart) {
+      const row = await db
+        .selectFrom('plan_templates')
+        .select('payload')
+        .where('member_id', '=', member)
+        .where('from_week', '<=', weekStart)
+        // The newest change that applies, even over an older one applying from a later week.
+        .orderBy('id', 'desc')
+        .limit(1)
+        .executeTakeFirst();
+      return row === undefined ? undefined : StoredPlan.parse(row.payload).days;
+    },
+
+    async latestTemplate(member) {
+      const row = await db
+        .selectFrom('plan_templates')
+        // A `date` read as text: node-postgres would turn it into a Date at local midnight.
+        .select([sql<string>`from_week::text`.as('from_week'), 'payload'])
+        .where('member_id', '=', member)
+        .orderBy('id', 'desc')
         .limit(1)
         .executeTakeFirst();
       if (row === undefined) return undefined;
       return {
-        weekStart: WeekStart.parse(row.week_start),
+        fromWeek: WeekStart.parse(row.from_week),
         days: StoredPlan.parse(row.payload).days,
       };
+    },
+
+    async saveTemplate({ member, fromWeek, days }) {
+      const payload = JSON.stringify({ version: 1, days });
+      // A save equal to the latest writes nothing.
+      await sql`
+        insert into plan_templates (member_id, from_week, payload)
+        select ${member}, ${fromWeek}::date, ${payload}::jsonb
+        where (
+          select payload from plan_templates
+          where member_id = ${member} order by id desc limit 1
+        ) is distinct from ${payload}::jsonb
+      `.execute(db);
     },
 
     async save({ member, weekStart, days }) {

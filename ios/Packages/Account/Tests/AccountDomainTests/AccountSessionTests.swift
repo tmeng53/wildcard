@@ -88,6 +88,30 @@ private func account(
     #expect(await store.saved == session("renewed", expiresIn: 7200))
 }
 
+@Test func aSessionAnotherProcessRenewedIsTakenInsteadOfRenewingAgain() async throws {
+    let provider = FakeProvider(renewals: [.success(session("renewed-again"))])
+    let store = MemoryStore(session("stored", expiresIn: 0))
+    let account = account(provider, store)
+    _ = try await account.restore()
+
+    // The push's view renewed the shared session while the app held the old one.
+    try await store.save(session("renewed-elsewhere"))
+    #expect(try await account.accessToken() == "access-renewed-elsewhere")
+    #expect(await provider.refreshed.isEmpty)
+}
+
+@Test func anOlderStoredSessionIsNotTakenOverOurs() async throws {
+    let provider = FakeProvider(renewals: [.success(session("renewed"))])
+    let store = MemoryStore(session("stored", expiresIn: 0))
+    let account = account(provider, store)
+    _ = try await account.restore()
+
+    // A save that failed left an older session in the store: ours is renewed as usual.
+    try await store.save(session("older", expiresIn: -60))
+    #expect(try await account.accessToken() == "access-renewed")
+    #expect(await provider.refreshed == ["refresh-stored"])
+}
+
 @Test func callersAskingAtOnceShareOneRenewal() async throws {
     let provider = FakeProvider(renewals: [.success(session("renewed"))], gated: true)
     let account = account(provider, MemoryStore(session("stored", expiresIn: 0)))

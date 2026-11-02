@@ -113,12 +113,18 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     #expect(onLeave.week(on: tuesday).days[1] == .disclaimer)
 }
 
-@Test func aCheckInSentOnlyToAnotherSquadDoesntShowOnThisOne() throws {
-    let elsewhere = CheckIn(
-        id: CheckInID(id(60)), member: myID, day: tuesday,
-        createdAt: Timestamp(millisecondsSince1970: 1_792_512_000_000),
-        audience: try Audience([SquadID(id(11))]), entry: .trained(Training(activity: .sport("swim"))))
-    let home = sampleHome(checkIns: [elsewhere])
-    #expect(home.todaysCheckIns(of: myID).isEmpty)
-    #expect(home.todaysSport(of: myID) == nil)
+@Test func myOwnCheckInNotSharedHereStillShowsOnMyCharacter() throws {
+    for squads in [[SquadID(id(11))], []] {
+        let elsewhere = CheckIn(
+            id: CheckInID(id(60)), member: myID, day: tuesday,
+            createdAt: Timestamp(millisecondsSince1970: 1_792_512_000_000),
+            audience: try Audience(squads), entry: .trained(Training(activity: .sport("swim"))))
+        let home = sampleHome(checkIns: [elsewhere])
+        #expect(home.todaysCheckIns(of: myID).map(\.id) == [CheckInID(id(60))])
+        #expect(home.todaysSport(of: myID) == .sport("swim"))
+        #expect(home.mine?.training == .trained)
+        // The server already counted it in my week; the squad never sees it.
+        #expect(home.today.myWeek == sampleToday().myWeek)
+        #expect(home.today.today == sampleToday().today)
+    }
 }

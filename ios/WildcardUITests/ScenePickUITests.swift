@@ -1,7 +1,7 @@
 import XCTest
 
 /// The scene pick the way the crown winner meets it, on the 战报's last page: the sticker, a
-/// scene they know and a carton picked, 「就它了」 and the reveal, and the reveal held on the
+/// scene they know and a carton picked, 「确认」 and the reveal, and the reveal held on the
 /// approved design's key moments, so the screenshots sit next to the prototype's frames. CI
 /// uploads them (scripts/ios-test.sh).
 @MainActor
@@ -12,8 +12,8 @@ final class ScenePickUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         openEnding(in: app)
         let confirm = app.buttons["scenePick.confirm"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: Self.wait), "no 就它了")
-        XCTAssertFalse(confirm.isEnabled, "就它了 works before a scene is picked")
+        XCTAssertTrue(confirm.waitForExistence(timeout: Self.wait), "no 确认")
+        XCTAssertFalse(confirm.isEnabled, "确认 works before a scene is picked")
         keepScreenshot(named: "50-scenepick-sticker")
 
         let pool = app.buttons["scenePick.pool"]
@@ -35,7 +35,7 @@ final class ScenePickUITests: XCTestCase {
         let save = app.buttons["recap.save"]
         XCTAssertLessThan(confirm.frame.maxY, save.frame.minY, "the sticker runs into 存图")
 
-        XCTAssertTrue(confirm.isEnabled, "就它了 doesn't work with a scene picked")
+        XCTAssertTrue(confirm.isEnabled, "确认 doesn't work with a scene picked")
         confirm.tap()
         // The reveal hides the page from VoiceOver as it starts, and ends on the scene by 3 s.
         waitFor(confirm, "exists == false", "the reveal didn't start")

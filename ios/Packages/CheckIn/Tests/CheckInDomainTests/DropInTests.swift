@@ -25,8 +25,7 @@ import Testing
     #expect(drop.cardOffset(at: 1.85) == 0)
     #expect(abs(drop.buttonOffset(at: 1.8) - (160)) < 1e-9)
     #expect(drop.buttonOffset(at: 2.2) == 0)
-    #expect(abs(drop.tabBarOffset(at: 1.9) - (140)) < 1e-9)
-    #expect(drop.tabBarOffset(at: 2.3) == 0)
+    #expect(DropIn.tabBarReturns == 1.9)
     #expect(abs(drop.finished - 2.3) < 1e-9)
     #expect(abs(DropIn(count: 8).finished - 2.6625) < 1e-9)
 }

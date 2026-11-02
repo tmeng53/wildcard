@@ -9,13 +9,17 @@ import SwiftUI
 struct PosterBottomBar: View {
     let content: PosterContent
     let theme: SceneTheme
+    let colors: PosterColors
     let onTapFuel: () -> Void
 
-    private var ink: Color { Color(role: .bgCanvas, in: theme) }
+    private var ink: Color { Color(role: colors.ink, in: theme) }
 
     var body: some View {
         HStack(spacing: Space.xs) {
-            fuelButton
+            // The 每周模板 has no 饮食小目标: each week picks its own.
+            if !content.isTemplate {
+                fuelButton
+            }
             Spacer(minLength: 0)
             tally
         }
@@ -34,7 +38,7 @@ struct PosterBottomBar: View {
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .lineLimit(1)
             }
-            .foregroundStyle(open ? Color(role: .fgAccent, in: theme) : ink)
+            .foregroundStyle(open ? Color(role: colors.onInk, in: theme) : ink)
             .padding(.horizontal, Space.s)
             .frame(height: Sizing.compactControl - Space.xxs)
             .background(open ? ink : Color.clear, in: Capsule())
@@ -77,6 +81,14 @@ struct PosterBottomBar: View {
                 Text("\(train) 练 \(rest) 休", bundle: .module)
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .contentTransition(.numericText(value: Double(train)))
+            case .typical(let train):
+                Text("每周训练", bundle: .module)
+                    .typeStyle(TypeRamp.label)
+                Text(verbatim: "\(train)")
+                    .typeStyle(TypeRamp.scoreInline)
+                    .contentTransition(.numericText(value: Double(train)))
+                Text("天", bundle: .module)
+                    .typeStyle(TypeRamp.label)
             }
         }
         .lineLimit(1)

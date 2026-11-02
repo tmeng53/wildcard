@@ -1,7 +1,9 @@
 import CharacterEditorUI
 import CheckInUI
+import Contracts
 import DesignSystem
 import DesignSystemUI
+import FeedDomain
 import FeedUI
 import MeDomain
 import MeUI
@@ -11,9 +13,9 @@ import SquadDomain
 import SquadUI
 import SwiftUI
 
-/// The app once the member is signed in and in a squad: one tab bar over the four tabs. Each tab
-/// screen keeps to the safe area, which this raises above the floating bar, so none of them
-/// draws or measures the bar itself.
+/// The app once the member is signed in and in a squad: the four tabs in the system's Liquid Glass
+/// tab bar (`AppTabs`). Each tab screen keeps to the safe area, which the system raises above the
+/// bar, so none of them draws the bar itself.
 struct MainTabs: View {
     enum Tab: Hashable {
         case today, feed, schedule, profile
@@ -25,6 +27,8 @@ struct MainTabs: View {
     let feed: FeedModel
     let squad: SquadSettingsModel
     let recap: RecapShelf
+    /// The member's own posts, for 我的动态.
+    let myPosts: any MyPostsSource
     @Binding var selection: Tab
     /// The member left the squad on 小队设置.
     var leftSquad: () -> Void = {}
@@ -33,29 +37,18 @@ struct MainTabs: View {
     @State private var editor: CharacterEditorModel?
     /// 小队设置, open from 我 over everything.
     @State private var showsSquad = false
+    /// 我的动态, open from 我 in its place.
+    @State private var wall: PostWallStore?
+    /// A post opened from 我的动态: 动态's post page, over the wall.
+    @State private var post: OpenedPost?
 
     var body: some View {
-        GeometryReader { proxy in
-            // The bar floats `tabBarBottom` above the screen's edge, inside the home indicator's
-            // inset; screens leave room for it and a little air.
-            let room = Sizing.tabBarBottom + Sizing.tabBar + Space.xs - proxy.safeAreaInsets.bottom
-            screen
-                .safeAreaPadding(.bottom, showsTabBar ? max(room, 0) : 0)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .overlay(alignment: .bottom) {
-                    if showsTabBar {
-                        TimelineView(.animation(minimumInterval: nil, paused: !arriving)) { timeline in
-                            TabBar(Self.tabs, selection: $selection)
-                                .padding(.horizontal, Space.pageMargin)
-                                .offset(
-                                    y: proxy.safeAreaInsets.bottom - Sizing.tabBarBottom
-                                        + (arriving ? today.tabBarOffset(at: timeline.date) : 0))
-                        }
-                        .transition(.opacity)
-                    }
-                }
-                .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
+        AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar) { tab in
+            // Only the tab on screen has its screen, made anew on each visit, as every tab expects:
+            // a hidden tab kept alive would hold a scroll or a picked day nobody sees.
+            if tab == selection { screen(tab) }
         }
+        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
         // 今天 opens 动态 on doesn't move down under it.
         .task { await recap.refresh() }
@@ -100,9 +93,6 @@ struct MainTabs: View {
         }
     }
 
-    /// Whether the squad is dropping onto a newly picked scene, which brings the tab bar back.
-    private var arriving: Bool { today.isArriving && !reduceMotion }
-
     /// Every scene pick ends on home: the picked scene filled the screen at `coveredAt`, and the
     /// squad drops onto it.
     private func land(on scene: SceneTheme, coveredAt: Date) {
@@ -117,19 +107,21 @@ struct MainTabs: View {
             look: character.outfit, persona: character.persona, nickname: character.nickname)
     }
 
-    /// A tab's full-screen step (writing a check-in, the 注销账号 page) covers the bar.
+    /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page) hides the
+    /// bar.
     private var showsTabBar: Bool {
         switch selection {
         case .today: today.showsTabBar
-        case .profile: !profile.isDeletionOpen
-        case .feed, .schedule: true
+        case .profile: !profile.isDeletionOpen && post == nil
+        case .feed: feed.opened == nil
+        case .schedule: true
         }
     }
 
     /// Coming back to 今天 shows the home the store kept at once, then reads the server's again
     /// and sends any post still waiting.
-    @ViewBuilder private var screen: some View {
-        switch selection {
+    @ViewBuilder private func screen(_ tab: Tab) -> some View {
+        switch tab {
         case .today:
             TodayView(model: today) { post in
                 feed.open(post)
@@ -143,22 +135,51 @@ struct MainTabs: View {
             ScheduleView(model: schedule)
                 .environment(\.sceneTheme, today.scene)
         case .profile:
-            MeView(
-                model: profile,
-                destinations: MeDestinations(
-                    // Past 战报 live in 动态 until they have a page of their own.
-                    squad: { showsSquad = true },
-                    pastRecaps: { selection = .feed },
-                    editCharacter: editCharacter,
-                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
-            )
-            .accentTone(.brand)
+            profilePage
         }
     }
 
-    /// The bar as home opens with it, for the end of 上场, which hands over to home.
-    static var entranceTabBar: some View {
-        TabBar(tabs, selection: .constant(Tab.today))
+    /// 我, or 我的动态 in its place, with a post opened from it over the wall.
+    private var profilePage: some View {
+        ZStack {
+            if let wall {
+                PostWallView(
+                    store: wall, back: { self.wall = nil },
+                    open: { post = OpenedPost(id: $0.id, model: feed.page(of: $0.id)) },
+                    checkIn: { selection = .today }
+                )
+                .allowsHitTesting(post == nil)
+                .accessibilityHidden(post != nil)
+                .transition(.move(edge: .trailing))
+                if let post {
+                    PostDetailView(model: post.model, post: post.id) { self.post = nil }
+                        .environment(\.sceneTheme, today.scene)
+                        .transition(.move(edge: .trailing))
+                }
+            } else {
+                MeView(
+                    model: profile,
+                    destinations: MeDestinations(
+                        // Past 战报 live in 动态 until they have a page of their own.
+                        squad: { showsSquad = true },
+                        pastRecaps: { selection = .feed },
+                        editCharacter: editCharacter,
+                        myPosts: { wall = PostWallStore(source: myPosts) },
+                        privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+                )
+            }
+        }
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wall != nil)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: post?.id)
+        .accentTone(.brand)
+    }
+
+    /// The tabs as home opens with them, around `content` on 今天, for 上场, whose end hands over
+    /// to home: the bar rises once `showsBar`.
+    static func entranceTabs(showsBar: Bool, content: AnyView) -> some View {
+        AppTabs(tabs, selection: .constant(Tab.today), showsBar: showsBar) { tab in
+            if tab == .today { content }
+        }
     }
 
     private static let tabs: [TabBarItem<Tab>] = [
@@ -185,4 +206,10 @@ private struct RecapTile: View {
                 story: story, viewer: recap.cast?.reader, seen: recap.latestIsSeen, action: recap.openLatest)
         }
     }
+}
+
+/// A post opened from 我的动态, with the page's own model of it.
+private struct OpenedPost {
+    let id: CheckInID
+    let model: FeedModel
 }

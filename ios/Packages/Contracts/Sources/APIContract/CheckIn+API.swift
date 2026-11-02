@@ -126,13 +126,20 @@ extension Photos {
         var photos: [PhotoRef] = []
         for photo in wire {
             guard let url = URL(string: photo.url) else { throw .invalidPhotoURL(photo.url) }
-            photos.append(try PhotoRef(path: photo.path, viewURL: url))
+            let size = try photo.size.map { size throws(ContractsError) in
+                try PhotoSize(width: size.width, height: size.height)
+            }
+            photos.append(try PhotoRef(path: photo.path, size: size, viewURL: url))
         }
         try self.init(photos)
     }
 
     var wire: [Components.Schemas.PhotoRef] {
-        all.map { Components.Schemas.PhotoRef(path: $0.path) }
+        all.map { photo in
+            Components.Schemas.PhotoRef(
+                path: photo.path,
+                size: photo.size.map { Components.Schemas.PhotoSize(width: $0.width, height: $0.height) })
+        }
     }
 }
 

@@ -7,6 +7,26 @@ import DesignSystemUI
 import ScheduleDomain
 import SwiftUI
 
+/// The poster's colours: the scene's on a week, the brand's graphite on the 每周模板, which is
+/// the member's own and never follows the squad's scene.
+struct PosterColors: Equatable {
+    /// The card.
+    let fill: ColorRole
+    /// Type on the card, and the held lane's fill.
+    let ink: ColorRole
+    /// Type on the held lane, and the marks' glyphs.
+    let onInk: ColorRole
+    /// A mark's disc on the held lane.
+    let heldDisc: ColorRole
+    /// The lanes' stripes and today's shade.
+    let shade: ColorRole
+
+    static let scene = PosterColors(
+        fill: .bgAccent, ink: .bgCanvas, onInk: .fgAccent, heldDisc: .bgAccentSubtle, shade: .fgDefault)
+    static let brand = PosterColors(
+        fill: .bgBrand, ink: .fgOnBrand, onInk: .bgBrand, heldDisc: .bgBrandPage, shade: .fgOnBrand)
+}
+
 /// The week as the 出赛表's 3:4 poster (`WeekPoster`) in the scene's color: who and which dates,
 /// the week's number, a swim lane a day, the member's character in the corner doing the scene's
 /// sport, the titles the weekly awards gave them as stickers (their 颁奖词 sit under the poster),
@@ -35,12 +55,22 @@ struct SchedulePoster: View {
     private let stickerTilts: [Double] = [3, -2, 2]
     private let stickerHeight: Double = 28
 
+    private var colors: PosterColors { content.isTemplate ? .brand : .scene }
+
     var body: some View {
         WeekPoster(
-            title: "\(content.nickname) · \(ScheduleLabels.dates(content.weekStart, content.weekEnd))",
-            weekNumber: content.weekNumber, layout: Self.layout, fill: .bgAccent, ink: .bgCanvas
+            title: content.isTemplate
+                ? content.nickname
+                : "\(content.nickname) · \(ScheduleLabels.dates(content.weekStart, content.weekEnd))",
+            heading: content.isTemplate
+                ? .named(Text("每周模板", bundle: .module), systemImage: ScheduleLabels.templateSymbol)
+                : .week(content.weekNumber),
+            layout: Self.layout, fill: colors.fill, ink: colors.ink
         ) {
-            PosterArt(theme: theme)
+            // The scene's props stand on a week; the 每周模板 is the member's own.
+            if !content.isTemplate {
+                PosterArt(theme: theme)
+            }
         } rows: {
             lanes
         } character: {
@@ -48,13 +78,13 @@ struct SchedulePoster: View {
         } overlay: {
             stickers
         } strip: {
-            PosterBottomBar(content: content, theme: theme, onTapFuel: onTapFuel)
+            PosterBottomBar(content: content, theme: theme, colors: colors, onTapFuel: onTapFuel)
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: content)
     }
 
-    /// White on the scene's color: the poster's ink, in every scene.
-    private var ink: Color { Color(role: .bgCanvas, in: theme) }
+    /// White on the scene's color or the graphite: the poster's ink.
+    private var ink: Color { Color(role: colors.ink, in: theme) }
 
     // MARK: Lanes
 
@@ -64,7 +94,7 @@ struct SchedulePoster: View {
                 .fill(ink.opacity(numberOpacity))
                 .frame(height: lanesRule)
             ForEach(content.lanes) { lane in
-                PosterLane(lane: lane, theme: theme, onTap: onTapLane)
+                PosterLane(lane: lane, theme: theme, colors: colors, onTap: onTapLane)
             }
         }
     }

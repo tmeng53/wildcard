@@ -1,14 +1,23 @@
 import Contracts
 
-/// One check-in in the feed, with teammates' emoji.
+/// One check-in in the feed, with teammates' emoji and comments.
 public struct FeedPost: Hashable, Sendable, Identifiable {
+    /// How many of the latest comments a card shows under its emoji row.
+    public static let cardComments = 2
+
     public let checkIn: CheckIn
     public internal(set) var reactions: Responses<Emoji>
+    /// From the author and teammates, oldest first.
+    public internal(set) var comments: [Comment]
 
-    public init(checkIn: CheckIn, reactions: Responses<Emoji> = .init()) {
+    public init(checkIn: CheckIn, reactions: Responses<Emoji> = .init(), comments: [Comment] = []) {
         self.checkIn = checkIn
         self.reactions = reactions
+        self.comments = comments
     }
+
+    /// The latest comments the card shows, oldest of them first.
+    public var commentsOnCard: ArraySlice<Comment> { comments.suffix(Self.cardComments) }
 
     public var id: CheckInID { checkIn.id }
     public var author: MemberID { checkIn.member }
@@ -47,6 +56,33 @@ public struct MoveID: Hashable, Sendable, CustomStringConvertible {
     }
 
     public var description: String { id }
+}
+
+extension Emoji {
+    /// The emoji bar's six, in the approved order, wherever a member reacts (动态, the 6pm push);
+    /// ＋ offers any other.
+    public static let quick: [Emoji] = ["❤️", "💪", "😂", "🤤", "😮", "😡"].compactMap { try? Emoji($0) }
+
+    /// Every single emoji ＋ offers wherever a member reacts, faces first, each skin tone left to
+    /// the keyboard.
+    public static let all: [Emoji] = {
+        let ranges: [ClosedRange<UInt32>] = [
+            0x1F600...0x1F64F, 0x1F900...0x1F9FF, 0x1FA70...0x1FAFF, 0x1F300...0x1F5FF, 0x1F680...0x1F6FF,
+            0x2600...0x27BF,
+        ]
+        var emoji: [Emoji] = []
+        for range in ranges {
+            for value in range {
+                guard let scalar = Unicode.Scalar(value), scalar.properties.isEmojiPresentation,
+                    !(0x1F3FB...0x1F3FF).contains(value), let one = try? Emoji(String(scalar))
+                else { continue }
+                emoji.append(one)
+            }
+        }
+        // ❤️ draws as an emoji only with its variation selector.
+        if let heart = try? Emoji("❤️") { emoji.insert(heart, at: 0) }
+        return emoji
+    }()
 }
 
 /// How a member reacted.

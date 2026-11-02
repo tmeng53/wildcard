@@ -27,10 +27,21 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface CheckInComments {
+  check_in_id: string;
+  commented_at: Timestamp;
+  id: string;
+  member_id: string;
+  reply_to: string | null;
+  text: string;
+}
+
 export interface CheckInPhotos {
   check_in_id: string;
+  height: number | null;
   path: string;
   position: number;
+  width: number | null;
 }
 
 export interface CheckInReactions {
@@ -69,6 +80,14 @@ export interface FuelGoals {
   week_start: string;
 }
 
+export interface PlanTemplates {
+  at: Generated<Timestamp>;
+  from_week: string;
+  id: Generated<Int8>;
+  member_id: string;
+  payload: Json;
+}
+
 export interface WeeklyPlanEvents {
   at: Generated<Timestamp>;
   id: Generated<Int8>;
@@ -96,12 +115,14 @@ export interface WeekSummaryWords {
 }
 
 export interface DB {
+  check_in_comments: CheckInComments;
   check_in_photos: CheckInPhotos;
   check_in_reactions: CheckInReactions;
   check_in_squads: CheckInSquads;
   check_ins: CheckIns;
   fuel_goal_events: FuelGoalEvents;
   fuel_goals: FuelGoals;
+  plan_templates: PlanTemplates;
   week_summary_word_events: WeekSummaryWordEvents;
   week_summary_words: WeekSummaryWords;
   weekly_plan_events: WeeklyPlanEvents;

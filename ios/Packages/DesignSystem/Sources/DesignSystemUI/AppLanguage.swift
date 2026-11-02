@@ -8,6 +8,7 @@ import Foundation
 /// and iOS itself (notifications, the app's page in Settings) agree.
 public enum AppLanguage: String, CaseIterable, Sendable {
     case simplifiedChinese = "zh-Hans"
+    case traditionalChinese = "zh-Hant"
     case english = "en"
 
     private static let key = "AppleLanguages"
@@ -16,16 +17,19 @@ public enum AppLanguage: String, CaseIterable, Sendable {
     public var name: String {
         switch self {
         case .simplifiedChinese: "简体中文"
+        case .traditionalChinese: "繁體中文"
         case .english: "English"
         }
     }
 
     /// The language the app speaks now: the first of the app's languages (picked in the app or
-    /// iOS Settings, else the phone's) that it has. Any Chinese reads as Simplified until the
-    /// app has Traditional; a list with neither Chinese nor English, as Simplified.
+    /// iOS Settings, else the phone's) that it has. Traditional Chinese (`zh-Hant…`, or Taiwan's,
+    /// Hong Kong's and Macau's `zh-TW`, `zh-HK`, `zh-MO`) reads as Traditional, any other Chinese
+    /// as Simplified; a list with neither Chinese nor English, as Simplified.
     public static var current: AppLanguage {
         let preferred = UserDefaults.standard.stringArray(forKey: key) ?? Locale.preferredLanguages
         for tag in preferred {
+            if tag.hasPrefix("zh-Hant") || ["zh-TW", "zh-HK", "zh-MO"].contains(tag) { return .traditionalChinese }
             if tag == "zh" || tag.hasPrefix("zh-") { return .simplifiedChinese }
             if tag == "en" || tag.hasPrefix("en-") { return .english }
         }
@@ -37,6 +41,23 @@ public enum AppLanguage: String, CaseIterable, Sendable {
         UserDefaults.standard.set([rawValue], forKey: Self.key)
         NotificationCenter.default.post(name: Self.didChange, object: nil)
     }
+
+    /// Records this language for the app's extensions (the 6pm push's view), in the settings the
+    /// app shares with them: an extension is a process of its own, with its own `AppleLanguages`,
+    /// so it would otherwise speak the phone's language. Nil (no shared settings) records nothing.
+    public func share(in shared: UserDefaults?) {
+        shared?.set(rawValue, forKey: Self.sharedKey)
+    }
+
+    /// For an extension, before it draws or looks a string up: speaks the language the app last
+    /// shared from now on. With nothing shared (no shared settings, or the app hasn't recorded
+    /// one yet) it keeps its own.
+    public static func adopt(from shared: UserDefaults?) {
+        guard let tag = shared?.string(forKey: sharedKey), let language = AppLanguage(rawValue: tag) else { return }
+        UserDefaults.standard.set([language.rawValue], forKey: key)
+    }
+
+    private static let sharedKey = "appLanguage"
 
     /// Posted after a pick, for the app's root to draw everything again.
     public static let didChange = Notification.Name("AppLanguage.didChange")

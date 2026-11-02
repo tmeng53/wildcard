@@ -44,7 +44,7 @@ final class LightsUITests: XCTestCase {
         // Awake, Coco is on her rest day.
         mate("Coco", in: app).tap()
         XCTAssertTrue(
-            labeled("Coco · 今天是休息日", in: app).waitForExistence(timeout: Self.wait), "Coco didn't wake for the lights")
+            labeled("Coco · 休息日", in: app).waitForExistence(timeout: Self.wait), "Coco didn't wake for the lights")
         XCTAssertFalse(labeled("Coco · 睡着了", in: app).exists, "Coco still sleeps with the lights on")
 
         cord.tap()

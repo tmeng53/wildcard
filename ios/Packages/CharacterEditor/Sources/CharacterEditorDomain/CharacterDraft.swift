@@ -15,6 +15,9 @@ public struct CharacterDraft: Hashable, Sendable {
     /// As typed; `name` is what gets saved.
     public var nickname: String
     private var history: [Outfit] = []
+    /// The color each emptied slot showed when it was taken off, which the next piece put on
+    /// there wears, so taking clothes off and on again keeps their color.
+    private var takenOff: [Slot: RGBAColor] = [:]
 
     /// How many looks undo goes back.
     public static let historyLimit = 30
@@ -63,6 +66,7 @@ public struct CharacterDraft: Hashable, Sendable {
     /// variant can wear it too: hair keeps its color across styles and clothes across pieces,
     /// even when that color was the old piece's own, and skin across people. A body's own
     /// colors are what picking it means, and an animal's coat starts from its own colors.
+    /// A piece put on an empty slot wears the color the slot showed when it was emptied.
     /// Brows put on without a color take the hair's.
     @discardableResult
     public mutating func pick(_ variant: String?, for slot: Slot) -> Bool {
@@ -72,7 +76,10 @@ public struct CharacterDraft: Hashable, Sendable {
         next.variants[slot] = variant
         // What the slot showed: its color, or the art's own, except a body's, which comes with it.
         let shown =
-            picks.colors[slot] ?? (slot == "body" ? nil : worn.flatMap { catalog.originals[slot]?[$0] })
+            worn == nil
+            ? takenOff[slot]
+            : picks.colors[slot] ?? (slot == "body" ? nil : worn.flatMap { catalog.originals[slot]?[$0] })
+        if variant == nil { takenOff[slot] = shown }
         if let variant, let color = shown,
             slot != "body" || worn.flatMap(catalog.species(of:)) == catalog.species(of: variant)
         {

@@ -14,4 +14,13 @@ public protocol FeedSource: Sendable {
     /// Sets the member's one emoji on a teammate's check-in, or takes it back when nil. Safe
     /// to repeat.
     func setReaction(_ emoji: Emoji?, on checkIn: CheckInID) async throws(FeedError)
+    /// One post as the feed shows it, with its reactions and comments: a post's own page. The
+    /// member's own posts load even from a squad they left.
+    func post(_ id: CheckInID) async throws(FeedError) -> FeedPost
+    /// Writes the member's comment under a post, under the id given: the same again is a retry,
+    /// and answers the comment as the server keeps it.
+    func comment(_ text: CommentText, id: CommentID, replyingTo member: MemberID?, on checkIn: CheckInID)
+        async throws(FeedError) -> Comment
+    /// Deletes the member's own comment. Safe to repeat.
+    func deleteComment(_ id: CommentID, on checkIn: CheckInID) async throws(FeedError)
 }

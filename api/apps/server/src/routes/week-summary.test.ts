@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
@@ -30,7 +31,7 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import { unusedWeeklyAwards, unusedCoachHiring } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -59,6 +60,7 @@ const app = createApp({
       aiConsent: () => Promise.resolve(true),
     }),
     reactions: createPostgresReactionStore(db),
+    comments: createPostgresCommentStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: memberCalendar(members),
@@ -82,6 +84,7 @@ const app = createApp({
   nudges: nudgesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
+  coachHiring: unusedCoachHiring,
   log: createLog(() => undefined),
   admin: adminOn(),
   jobs: noJobs,

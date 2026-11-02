@@ -191,7 +191,7 @@ public final class SquadSettingsModel {
             service: SettingsScenePick(service: service, squad: settings.squad.id, week: settings.scene.week))
     }
 
-    /// The pick landed (就它了): the page shows the new scene, locked until next week.
+    /// The pick landed (确认): the page shows the new scene, locked until next week.
     public func picked() async {
         picker = nil
         await reload()

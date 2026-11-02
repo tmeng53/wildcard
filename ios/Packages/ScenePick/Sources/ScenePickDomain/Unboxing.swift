@@ -1,7 +1,7 @@
 import DesignSystem
 import Foundation
 
-/// The reveal after 「就它了」, frame by frame: the page dims, a kraft carton drops, squashes,
+/// The reveal after 「确认」, frame by frame: the page dims, a kraft carton drops, squashes,
 /// shakes the screen, rattles and hops, its flaps fly off in a ring of the scene's colour and
 /// confetti, and the scene's card rises and fills the screen. A scene the squad has trained
 /// at before skips the carton and rises at once. No text anywhere.
@@ -30,7 +30,7 @@ public struct Unboxing: Hashable, Sendable {
     /// How much earlier everything after the carton happens for a scene with no carton.
     private var lead: Double { boxed ? 0 : 1.75 }
 
-    // The prototype's moments, in seconds from 「就它了」.
+    // The prototype's moments, in seconds from 「确认」.
     static let land = 0.6
     /// When the flaps open and fly off: the moment for the reveal's one haptic.
     public static let flapsOpen = 1.65
@@ -39,7 +39,7 @@ public struct Unboxing: Hashable, Sendable {
     static let cardFull = 2.8
     static let confettiLife = 1.3
 
-    /// Everything on screen `time` seconds after 「就它了」.
+    /// Everything on screen `time` seconds after 「确认」.
     public func frame(at time: Double) -> UnboxFrame {
         UnboxFrame(
             dim: 0.86 * Tween.cubicOut(Tween.progress(time, from: 0, lasting: 0.25)),

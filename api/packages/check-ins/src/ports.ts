@@ -1,7 +1,9 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
 import type { CheckInTotals } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
+import type { CheckInKind, PostCursor } from './domain/post-cursor.js';
 import type { PhotoPath } from './domain/photos.js';
+import type { Comment, CommentId } from './domain/comment.js';
 import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
 import type { FuelGoals } from './domain/fuel-goal.js';
 import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
@@ -9,8 +11,7 @@ import type { WeekSummaryWords } from './domain/week-summary-words.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
 export type InsertOutcome =
-  | { readonly saved: true }
-  | { readonly saved: false; readonly taken: 'id' | 'dailyDisclaimer' | 'photo' };
+  { readonly saved: true } | { readonly saved: false; readonly taken: 'id' | 'photo' };
 
 /** Where check-ins are kept. */
 export interface CheckInStore {
@@ -31,6 +32,18 @@ export interface CheckInStore {
   squadsCheckedInto(query: DayRange & { readonly before: Date }): Promise<SquadId[]>;
   /** A member's own check-ins, newest day first. */
   listForMember(query: DayRange & { readonly member: MemberId }): Promise<CheckInRecord[]>;
+  /**
+   * Up to `limit` of a member's own check-ins, newest day first, then newest made, then by id
+   * from the end: those after `after` when given, of one kind when given.
+   */
+  pageForMember(query: {
+    readonly member: MemberId;
+    readonly kind?: CheckInKind | undefined;
+    readonly after?: PostCursor | undefined;
+    readonly limit: number;
+  }): Promise<CheckInRecord[]>;
+  /** How many check-ins `member` ever made, of every kind. */
+  countForMember(member: MemberId): Promise<number>;
 }
 
 /** Who is in which squad now. The squads module keeps that; check-ins only ask. */
@@ -73,6 +86,35 @@ export interface ReactionStore {
   }): Promise<(Reaction & { readonly audience: readonly SquadId[] })[]>;
 }
 
+/** What writing a comment did: saved it, found it saved already, or found its id holding another. */
+export type CommentWriteOutcome = 'created' | 'unchanged' | 'conflict';
+
+/** Where comments on check-ins are kept. A comment is never changed once written. */
+export interface CommentStore {
+  /**
+   * Saves a new comment on a check-in. Says `unchanged` when the id holds this very comment
+   * already and `conflict` when it holds another, saving nothing either way.
+   */
+  insert(checkIn: CheckInId, comment: Comment): Promise<CommentWriteOutcome>;
+  /** The comment saved under `id`, with the check-in it is on. */
+  find(id: CommentId): Promise<(Comment & { readonly checkIn: CheckInId }) | undefined>;
+  /** Deletes a comment, if it is there. */
+  remove(id: CommentId): Promise<void>;
+  /** A check-in's comments, oldest first. */
+  list(checkIn: CheckInId): Promise<Comment[]>;
+  /** The comments on each of these check-ins, oldest first; a check-in without any is left out. */
+  listForAll(checkIns: readonly CheckInId[]): Promise<Map<CheckInId, Comment[]>>;
+  /**
+   * Comments written in `[since, until)` on any of the member's check-ins by someone else,
+   * oldest first, each with the squads that check-in went to.
+   */
+  receivedBy(query: {
+    readonly member: MemberId;
+    readonly since: Date;
+    readonly until: Date;
+  }): Promise<(Comment & { readonly audience: readonly SquadId[] })[]>;
+}
+
 /** Where uploaded photo files are kept. */
 export interface PhotoFiles {
   /** Whether a photo has been uploaded to this path. */
@@ -83,15 +125,24 @@ export interface PhotoFiles {
 export type Clock = () => Date;
 
 /**
- * Where members' weekly plans and 饮食小目标 are kept: a row only for each week the member
- * changed.
+ * Where members' weekly plans, typical weeks and 饮食小目标 are kept: a plan row only for each
+ * week the member changed, and a template row for each change to their typical week.
  */
 export interface WeeklyPlanStore {
-  /** The member's plan saved for `weekStart` or, failing that, for the latest week before it. */
-  latestFrom(
+  /** The member's plan saved for `weekStart` itself. */
+  savedFor(member: MemberId, weekStart: WeekStart): Promise<PlanDays | undefined>;
+  /** The member's template for `weekStart`: the newest one applying from that week or before. */
+  templateFor(member: MemberId, weekStart: WeekStart): Promise<PlanDays | undefined>;
+  /** The member's latest template, the one the weeks to come follow, and the week it applies from. */
+  latestTemplate(
     member: MemberId,
-    weekStart: WeekStart,
-  ): Promise<{ readonly weekStart: WeekStart; readonly days: PlanDays } | undefined>;
+  ): Promise<{ readonly fromWeek: WeekStart; readonly days: PlanDays } | undefined>;
+  /** Adds a template applying from `fromWeek`; one equal to the latest adds nothing. */
+  saveTemplate(template: {
+    readonly member: MemberId;
+    readonly fromWeek: WeekStart;
+    readonly days: PlanDays;
+  }): Promise<void>;
   /** Saves the member's plan for a week, replacing any saved before. */
   save(plan: {
     readonly member: MemberId;

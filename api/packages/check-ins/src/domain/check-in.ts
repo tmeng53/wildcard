@@ -29,10 +29,12 @@ const Moment = z.iso
   .datetime({ offset: true })
   .transform((text) => new Date(Math.floor(Date.parse(text))));
 
-/** The squads a check-in goes to, in the order the member picked: 1 to 3, no repeats. */
+/**
+ * The squads a check-in is shared to, in the order the member picked: up to 3, no repeats.
+ * A post is the member's own; one shared to no squad only they see.
+ */
 export const Audience = z
   .array(SquadId)
-  .min(1)
   .max(3)
   .refine((squads) => new Set(squads).size === squads.length, {
     message: 'Must not list a squad twice',

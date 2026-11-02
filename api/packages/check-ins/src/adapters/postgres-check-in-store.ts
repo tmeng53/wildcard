@@ -21,9 +21,8 @@ import type { CheckIns, DB } from './tables.js';
 export type CheckInTables = DB;
 
 /** Which uniqueness rule a unique violation (23505) names. */
-const UNIQUE_RULES: Record<string, 'id' | 'dailyDisclaimer' | 'photo' | undefined> = {
+const UNIQUE_RULES: Record<string, 'id' | 'photo' | undefined> = {
   check_ins_pkey: 'id',
-  check_ins_one_disclaimer_a_day: 'dailyDisclaimer',
   // The path is the key, so a photo belongs to one check-in.
   check_in_photos_pkey: 'photo',
 };
@@ -60,7 +59,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .execute(),
       db
         .selectFrom('check_in_photos')
-        .select(['check_in_id', 'path'])
+        .select(['check_in_id', 'path', 'width', 'height'])
         .where('check_in_id', 'in', ids)
         .orderBy('check_in_id')
         .orderBy('position')
@@ -71,11 +70,13 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       audiences.set(check_in_id, [...(audiences.get(check_in_id) ?? []), SquadId.parse(squad_id)]);
     }
     const photos = new Map<string, PhotoRef[]>();
-    for (const { check_in_id, path } of photoRows) {
-      photos.set(check_in_id, [
-        ...(photos.get(check_in_id) ?? []),
-        { path: PhotoPath.parse(path) },
-      ]);
+    for (const { check_in_id, path, width, height } of photoRows) {
+      // The key is left out, never undefined, so a retry compares equal to the saved check-in.
+      const photo: PhotoRef =
+        width === null || height === null
+          ? { path: PhotoPath.parse(path) }
+          : { path: PhotoPath.parse(path), size: { width, height } };
+      photos.set(check_in_id, [...(photos.get(check_in_id) ?? []), photo]);
     }
     return rows.map((row) => ({
       id: CheckInId.parse(row.id),
@@ -112,25 +113,29 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
               payload: JSON.stringify(storedPayload(checkIn)),
             })
             .execute();
-          await trx
-            .insertInto('check_in_squads')
-            .values(
-              checkIn.audience.map((squad, index) => ({
-                check_in_id: checkIn.id,
-                squad_id: squad,
-                position: index + 1,
-              })),
-            )
-            .execute();
+          if (checkIn.audience.length > 0) {
+            await trx
+              .insertInto('check_in_squads')
+              .values(
+                checkIn.audience.map((squad, index) => ({
+                  check_in_id: checkIn.id,
+                  squad_id: squad,
+                  position: index + 1,
+                })),
+              )
+              .execute();
+          }
           const photos = photosOf(checkIn);
           if (photos.length > 0) {
             await trx
               .insertInto('check_in_photos')
               .values(
-                photos.map(({ path }, index) => ({
+                photos.map(({ path, size }, index) => ({
                   path,
                   check_in_id: checkIn.id,
                   position: index + 1,
+                  width: size?.width ?? null,
+                  height: size?.height ?? null,
                 })),
               )
               .execute();
@@ -233,6 +238,32 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .orderBy('id')
         .execute();
       return withAudiences(rows);
+    },
+
+    async pageForMember({ member, kind, after, limit }) {
+      let query = db.selectFrom('check_ins').select(checkInColumns).where('member_id', '=', member);
+      if (kind !== undefined) query = query.where('kind', '=', kind);
+      if (after !== undefined) {
+        query = query.where(
+          sql<boolean>`(check_ins.day, check_ins.created_at, check_ins.id) < (${after.day}::date, ${after.createdAt}, ${after.id}::uuid)`,
+        );
+      }
+      const rows = await query
+        .orderBy('day', 'desc')
+        .orderBy('created_at', 'desc')
+        .orderBy('id', 'desc')
+        .limit(limit)
+        .execute();
+      return withAudiences(rows);
+    },
+
+    async countForMember(member) {
+      const { count } = await db
+        .selectFrom('check_ins')
+        .select(sql<string>`count(*)`.as('count'))
+        .where('member_id', '=', member)
+        .executeTakeFirstOrThrow();
+      return Number(count);
     },
   };
 }

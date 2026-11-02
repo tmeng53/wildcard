@@ -5,6 +5,7 @@ import { writeFileSync } from 'node:fs';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -62,6 +63,7 @@ const app = createApp({
       aiConsent: unused,
     }),
     reactions: createPostgresReactionStore(db),
+    comments: createPostgresCommentStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: unused,
@@ -94,6 +96,7 @@ const app = createApp({
     hasCurrent: unused,
     currentAmong: unused,
   },
+  coachHiring: { hire: unused, fire: unused, change: unused, current: unused, offered: unused },
   weekSummaryWords: () => Promise.reject(new Error('unused')),
   weeklyAwards: {
     awards: {

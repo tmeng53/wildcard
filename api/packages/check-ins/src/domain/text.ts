@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+
 import { nameText, typedText } from '@wildcard/typed-text';
 
 /** The optional line under a 练了 or a meal: trimmed, 1 to 60 characters, one line. */
@@ -19,3 +21,11 @@ export const CustomSportName = nameText({
   max: 20,
   description: 'Trimmed, then 1 to 20 characters as people see them, on one line.',
 });
+
+/** A comment under a check-in: trimmed, 1 to 100 characters, and it may span lines. */
+export const CommentText = typedText({
+  max: 100,
+  oneLine: false,
+  description: 'Trimmed, then 1 to 100 characters as people see them; may span lines.',
+});
+export type CommentText = z.infer<typeof CommentText>;

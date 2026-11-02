@@ -1,5 +1,6 @@
 #if canImport(ImageIO)
 import CheckInDomain
+import Contracts
 import Foundation
 import ImageIO
 import UniformTypeIdentifiers
@@ -7,6 +8,8 @@ import UniformTypeIdentifiers
 /// Shrinks a picked photo before it goes anywhere: at most 1080 px on the long edge, JPEG at
 /// quality 0.7, so a check-in photo is a few hundred KB and the free storage tier lasts.
 /// Runs off the main actor: decoding a camera photo takes long enough to drop frames.
+/// The JPEG is written from the pixels alone, so it carries none of the original's metadata
+/// (EXIF, GPS, maker notes, XMP); the orientation is applied to the pixels instead.
 public enum PhotoPreparation {
     public static let maxPixelSize = 1080
     public static let jpegQuality = 0.7
@@ -34,8 +37,10 @@ public enum PhotoPreparation {
         else { throw .unreadablePhoto }
         CGImageDestinationAddImage(
             destination, image, [kCGImageDestinationLossyCompressionQuality: jpegQuality] as CFDictionary)
-        guard CGImageDestinationFinalize(destination) else { throw .unreadablePhoto }
-        return PreparedPhoto(id: UUID(), jpeg: output as Data)
+        guard CGImageDestinationFinalize(destination),
+            let size = try? PhotoSize(width: image.width, height: image.height)
+        else { throw .unreadablePhoto }
+        return PreparedPhoto(id: UUID(), jpeg: output as Data, size: size)
     }
 }
 #endif

@@ -1,10 +1,10 @@
 import Contracts
 
-/// 本周目标, drawn on the week's poster: what each day of this week is, a sport picked in
-/// the step before, a training day with no sport named, or 休息. Tapping a day selects it, and
-/// picking what it is moves on to the next day, so a whole week takes a few taps. Days of this
-/// week that are already over can't change, as on any weekly plan; the poster leaves them blank rather
-/// than calling them 休息, though the plan saves them as rest.
+/// The member's typical week, drawn on the week's poster: what each day is, a sport picked in
+/// the step before, a training day with no sport named, or 休息. Every week follows it until
+/// it is changed for itself. Tapping a day selects it, and picking what it is moves on to the
+/// next day, so a whole week takes a few taps. Days of this week that are already over can't
+/// change here; the poster leaves them blank, and the week doesn't count them.
 public struct WeekDraft: Hashable, Sendable {
     public private(set) var days: [PlanDay]
     /// The day the choices below the poster are for, from 0 (the week's first day).
@@ -15,19 +15,19 @@ public struct WeekDraft: Hashable, Sendable {
     /// picked, then 休息.
     public let choices: [PlanDay]
 
-    /// Training days start on every day but the third and the seventh, taking the picked
-    /// sports in turn: five days, two of rest, as the approved design shows.
-    static let restDays: Set<Int> = [2, 6]
+    /// The training days for each number of them, spread out over the week; five rest on
+    /// Wednesday and Sunday, as the approved design shows.
+    static let trainingDays: [[Int]] = [[2], [1, 3], [0, 2, 4], [0, 1, 3, 4], [0, 1, 3, 4, 5]]
 
-    /// `daysGone`: how far into the week sign-up happens, clamped to `0...6`.
+    /// One training day for each sport picked, at most five, in the order picked; a training
+    /// day with no sport named if none was. `daysGone`: how far into the week sign-up happens,
+    /// clamped to `0...6`.
     public init(sports: [Activity], daysGone: Int) {
         let gone = min(max(daysGone, 0), WeeklyPlan.dayCount - 1)
         let trainings: [PlanDay] = sports.isEmpty ? [.train(nil)] : sports.map { .train($0) }
-        var next = 0
+        let planned = Self.trainingDays[min(trainings.count, Self.trainingDays.count) - 1]
         days = (0..<WeeklyPlan.dayCount).map { index in
-            guard index >= gone, !Self.restDays.contains(index) else { return .rest }
-            defer { next += 1 }
-            return trainings[next % trainings.count]
+            planned.firstIndex(of: index).map { trainings[$0] } ?? .rest
         }
         self.daysGone = gone
         selected = gone

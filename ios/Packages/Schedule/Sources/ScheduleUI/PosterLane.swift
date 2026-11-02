@@ -12,6 +12,7 @@ struct PosterLane: View {
 
     let lane: PosterContent.Lane
     let theme: SceneTheme
+    let colors: PosterColors
     let onTap: (Int) -> Void
 
     // From the approved design, in poster points.
@@ -29,21 +30,21 @@ struct PosterLane: View {
 
     private var isHeld: Bool { lane.look == .held }
     private var isFaded: Bool { lane.shown == .rest && !isHeld }
-    private var ink: Color { Color(role: .bgCanvas, in: theme) }
-    private var shade: Color { Color(role: .fgDefault, in: theme) }
+    private var ink: Color { Color(role: colors.ink, in: theme) }
+    private var shade: Color { Color(role: colors.shade, in: theme) }
 
     var body: some View {
         Button {
             onTap(lane.index)
         } label: {
             row
-                .foregroundStyle(isHeld ? Color(role: .fgAccent, in: theme) : ink)
+                .foregroundStyle(isHeld ? Color(role: colors.onInk, in: theme) : ink)
                 .padding(.horizontal, Space.m)
                 .frame(maxWidth: .infinity)
                 .frame(height: Self.height)
                 .background { fill }
                 .overlay(alignment: .bottom) {
-                    LaneRope(theme: theme)
+                    LaneRope(isPool: theme == .pool && colors == .scene, color: ink)
                         .frame(height: 4)
                         .offset(y: 2)
                         .allowsHitTesting(false)
@@ -99,8 +100,8 @@ struct PosterLane: View {
     /// A tick for a day trained, 请假 for a 请假条.
     @ViewBuilder
     private var mark: some View {
-        let disc = isHeld ? Color(role: .bgAccentSubtle, in: theme) : ink
-        let glyph = Color(role: .fgAccent, in: theme)
+        let disc = isHeld ? Color(role: colors.heldDisc, in: theme) : ink
+        let glyph = Color(role: colors.onInk, in: theme)
         switch lane.mark {
         case .trained:
             Image(systemName: "checkmark")
@@ -136,14 +137,14 @@ struct PosterLane: View {
 /// The dotted lane rope along the bottom of each lane: pool floats, or a fine dotted line on
 /// the other scenes.
 private struct LaneRope: View {
-    let theme: SceneTheme
+    let isPool: Bool
+    let color: Color
 
     var body: some View {
         Canvas { context, size in
-            let isPool = theme == .pool
             let gap = isPool ? 9.0 : 4.0
             let radius = isPool ? 2.2 : 0.9
-            let color = Color(role: .bgCanvas, in: theme).opacity(isPool ? 0.75 : 0.6)
+            let color = color.opacity(isPool ? 0.75 : 0.6)
             var left = 4.0
             while left < size.width {
                 let dot = CGRect(

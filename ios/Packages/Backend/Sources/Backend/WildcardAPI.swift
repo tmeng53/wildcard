@@ -28,7 +28,7 @@ public struct WildcardAPI: Sendable {
     public init(
         url: URL, accessToken: @escaping AccessToken,
         refused: @escaping @Sendable (_ token: String) async -> Void = { _ in },
-        language: LanguageTag? = nil, http: URLSession = .shared
+        language: LanguageTag? = nil, http: URLSession = .wildcard
     ) {
         client = Client(
             serverURL: url, configuration: .api, transport: URLSessionTransport(configuration: .init(session: http)),
@@ -105,8 +105,8 @@ public struct WildcardAPI: Sendable {
         return try read { () throws(ContractsError) in try SquadToday(wire) }
     }
 
-    /// The member's plan for the week starting on `weekStart`, a Monday: the one saved, else
-    /// last week's carried over, else the default.
+    /// The member's plan for the week starting on `weekStart`, a Monday: the one saved for it,
+    /// else their typical week, else the default.
     public func weeklyPlan(weekStart: LocalDay) async throws(APIError) -> WeeklyPlan {
         let wire = try await weeklyPlanWire(weekStart: weekStart)
         return try read { () throws(ContractsError) in try WeeklyPlan(wire) }
@@ -200,8 +200,17 @@ public struct WildcardAPI: Sendable {
     func myCheckInsWire(from: LocalDay, through last: LocalDay) async throws(APIError) -> Components.Schemas.CheckInList
     {
         try await call {
-            try await client.listMyCheckIns(query: .init(from: from.description, to: last.description)).ok.body.json
+            // This build reads posts shared to no squad, so it asks for them.
+            try await client.listMyCheckIns(
+                query: .init(from: from.description, to: last.description, unshared: .include)
+            ).ok.body.json
         }
+    }
+
+    func myPostsWire(kind: Operations.ListMyPosts.Input.Query.KindPayload?, after: String?) async throws(APIError)
+        -> Components.Schemas.MyPostPage
+    {
+        try await call { try await client.listMyPosts(query: .init(kind: kind, after: after)).ok.body.json }
     }
 
     func checkInsWire(of squad: SquadID, from: LocalDay, through last: LocalDay) async throws(APIError)

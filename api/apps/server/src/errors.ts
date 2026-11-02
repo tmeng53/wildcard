@@ -251,3 +251,14 @@ export class RequestsTooFrequentError extends AppError {
     super('Too many requests. Try again shortly.');
   }
 }
+
+/** Thrown when an admin asks for a test push but is in no squad, which every push is about. Join one. */
+export class TestPushNoSquadError extends AppError {
+  override readonly name = 'TestPushNoSquadError';
+  readonly reason = 'TEST_PUSH_NO_SQUAD';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('A test push is about your squad, and you are in none. Join or create one in the app.');
+  }
+}

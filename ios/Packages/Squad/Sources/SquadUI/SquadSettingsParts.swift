@@ -35,7 +35,7 @@ struct SceneLineText: View {
     }
 }
 
-/// The five scenes as tiles, when the squad last trained at the one chosen, and 「就它了」.
+/// The five scenes as tiles, when the squad last trained at the one chosen, and 「确认」.
 struct ScenePickerGrid: View {
     let picker: ScenePicker
     let onPicked: (Unboxing, SceneTheme) -> Void
@@ -72,13 +72,13 @@ struct ScenePickerGrid: View {
                     }
                 }
             } label: {
-                Text("就它了", bundle: .module).frame(maxWidth: .infinity)
+                Text("确认", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.regular))
             .disabled(!picker.canConfirm)
             .accessibilityIdentifier("squad.scene.confirm")
             if case .failed(.unavailable) = picker.phase {
-                Text("网络开小差了，没选上", bundle: .module)
+                Text("网络开小差了，没存上", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
             }
         }
@@ -155,6 +155,8 @@ struct InviteCard: View {
 struct MemberRow: View {
     let member: SquadMemberRow
     let showsDivider: Bool
+    /// A change to this member is saving: the ··· menu waits as 三拍.
+    let isSaving: Bool
     let act: (MemberAction) -> Void
     @Environment(\.sceneTheme) private var theme
 
@@ -193,36 +195,40 @@ struct MemberRow: View {
                     .fixedSize()
             }
             if member.isManageable {
-                Menu {
-                    Button {
-                        act(.handCaptaincy(member.id, name: name))
-                    } label: {
-                        Label {
-                            Text("转让队长", bundle: .module)
-                        } icon: {
-                            Image(systemName: "crown")
+                LoadingSwap(isSaving) {
+                    Menu {
+                        Button {
+                            act(.handCaptaincy(member.id, name: name))
+                        } label: {
+                            Label {
+                                Text("转让队长", bundle: .module)
+                            } icon: {
+                                Image(systemName: "crown")
+                            }
                         }
-                    }
-                    .accessibilityIdentifier("squad.member.handCaptaincy")
-                    Button(role: .destructive) {
-                        act(.remove(member.id, name: name))
-                    } label: {
-                        Label {
-                            Text("移出小队", bundle: .module)
-                        } icon: {
-                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .accessibilityIdentifier("squad.member.handCaptaincy")
+                        Button(role: .destructive) {
+                            act(.remove(member.id, name: name))
+                        } label: {
+                            Label {
+                                Text("移出小队", bundle: .module)
+                            } icon: {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                            }
                         }
+                        .accessibilityIdentifier("squad.member.remove")
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: Sizing.icon - 3, weight: .semibold))
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
+                            .contentShape(Rectangle())
                     }
-                    .accessibilityIdentifier("squad.member.remove")
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: Sizing.icon - 3, weight: .semibold))
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
-                        .contentShape(Rectangle())
+                    .accessibilityLabel(Text("管理 \(name)", bundle: .module))
+                    .accessibilityIdentifier("squad.member.more")
                 }
-                .accessibilityLabel(Text("管理 \(name)", bundle: .module))
-                .accessibilityIdentifier("squad.member.more")
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
             }
         }
         .frame(minHeight: SquadSettingsMetrics.row)

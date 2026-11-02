@@ -77,7 +77,7 @@ export const StoredPlan = z.discriminatedUnion('version', [
   z.strictObject({ version: z.literal(1), days: PlanDays }),
 ]);
 
-/** The plan a member has before they first save one: rest on Wednesday and Sunday. */
+/** The plan a week has before the member makes their template: rest on Wednesday and Sunday. */
 export const DEFAULT_PLAN_DAYS: PlanDays = [
   { kind: 'train' },
   { kind: 'train' },
@@ -89,10 +89,10 @@ export const DEFAULT_PLAN_DAYS: PlanDays = [
 ];
 
 /**
- * Where a week's plan comes from: saved for this week, carried over from the member's latest
- * earlier plan (they haven't changed it since), or the default before their first save.
+ * Where a week's plan comes from: saved for this week, the member's template (their typical
+ * week, when they haven't changed this one), or the default before they make a template.
  */
-export type PlanSource = 'saved' | 'carriedOver' | 'default';
+export type PlanSource = 'saved' | 'template' | 'default';
 
 export interface WeeklyPlan {
   readonly weekStart: WeekStart;
@@ -140,11 +140,10 @@ export function localDayAt(moment: Date, timeZone: string): LocalDay {
  * `today`, and throws the matching error otherwise. Past weeks are read-only and a member plans
  * at most `WEEKS_AHEAD` weeks ahead; later weeks change freely. In the current week, from the
  * day the member joined (`joinedOn`, the week's Monday for anyone who joined before it):
- * days before today stay as they were; a training today stays a training day (its sport may
- * change) and a rest today may become a training day; the days after today change freely, rest
- * days included. Days before the member joined weren't
+ * days before today stay as they were; today and the days after it change freely, rest days
+ * included (a rest today is a 休息日, no 请假条 needed). Days before the member joined weren't
  * theirs, so they change freely, and so does the whole week on the day a member joins, while it
- * is still on the default plan: that is where they first make their plan.
+ * hasn't been changed for itself: that is where they first make their plan.
  */
 export function checkPlanChange({
   current,
@@ -163,20 +162,14 @@ export function checkPlanChange({
     throw new WeekTooFarAheadError(current.weekStart);
   }
   if (current.weekStart > thisWeek) return;
-  if (current.source === 'default' && joinedOn >= today) return;
+  if (current.source !== 'saved' && joinedOn >= today) return;
 
   const from = joinedOn > thisWeek ? joinedOn : thisWeek;
   const first = Math.round((Date.parse(from) - Date.parse(thisWeek)) / DAY);
   for (let index = first; index < 7; index += 1) {
     const date = addDays(thisWeek, index);
-    if (date > today) break;
-    const before = current.days[index];
-    const after = next[index];
-    const unchanged =
-      date < today ? isDeepStrictEqual(before, after) : before?.kind === after?.kind;
-    if (!unchanged && !(date === today && before?.kind === 'rest')) {
-      throw new PlanDayStartedError(date);
-    }
+    if (date >= today) break;
+    if (!isDeepStrictEqual(current.days[index], next[index])) throw new PlanDayStartedError(date);
   }
 }
 

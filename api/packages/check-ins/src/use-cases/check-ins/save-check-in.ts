@@ -11,7 +11,6 @@ import {
 import { isOwnPhoto } from '../../domain/photos.js';
 import {
   CheckInIdConflictError,
-  DisclaimerAlreadyPostedError,
   PhotoInUseError,
   PhotoNotUploadedError,
   PhotoNotYoursError,
@@ -116,7 +115,6 @@ async function insertCheckIn(
   // A save of the same id may have finished while this one ran.
   const overlapping = await asRetry(store, checkIn);
   if (overlapping !== undefined) return overlapping;
-  if (outcome.taken === 'dailyDisclaimer') throw new DisclaimerAlreadyPostedError(checkIn.day);
   if (outcome.taken === 'photo') throw new PhotoInUseError();
   throw new CheckInIdConflictError(id);
 }

@@ -5,21 +5,16 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// While 我 reads the overview: nothing for the first half second, then a character moving in
-/// place, with no words (character states, 加载).
+/// While 我 reads the overview: the character jogging in place, with no words, on the page's
+/// own white (character states, 加载; loader design A). `MeView` covers the page with it once the
+/// wait has lasted.
 struct MeLoading: View {
-    @State private var isShown = false
-    /// A wait shorter than this shows nothing, so a quick load doesn't flash.
-    static let delay: Duration = .milliseconds(500)
+    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        StateCharacter()
-            .opacity(isShown ? 1 : 0)
+        LoadingCharacter()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .task {
-                try? await Task.sleep(for: Self.delay)
-                withAnimation(.wildcard(Motion.change)) { isShown = true }
-            }
+            .background(Color(role: .bgCanvas, in: theme))
             .accessibilityIdentifier("me.loading")
     }
 }

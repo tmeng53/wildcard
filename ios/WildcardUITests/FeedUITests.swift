@@ -42,13 +42,13 @@ final class FeedUITests: XCTestCase {
         assertOnScreen(who, in: app)
         settle()
         keepScreenshot(named: "43-feed-who-reacted")
-        app.staticTexts["feed.title"].tap()
+        tapOutside(who, in: app)
         waitFor(who, "exists == false", "who reacted stayed open")
 
         // The oldest posts scroll up clear of the tab bar: swipe until the last post is on
         // screen, as the list builds its cards as they come.
         let posts = app.descendants(matching: .any).matching(identifier: "feed.post")
-        let tabBarTop = app.buttons["tab.feed"].frame.minY
+        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         var swipes = 0
         let feed = app.scrollViews.firstMatch
         while swipes < Self.maxSwipes, posts.element(boundBy: posts.count - 1).frame.maxY > tabBarTop {
@@ -61,6 +61,41 @@ final class FeedUITests: XCTestCase {
         assertClearOfTheTabBar(posts.element(boundBy: posts.count - 1), in: app)
     }
 
+    /// The newest post is a portrait salad, shown taller than wide; a tap opens it full screen,
+    /// a pinch zooms in, and swiping down puts it back. 关闭 closes it too.
+    func testPhotoViewer() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        let photos = app.descendants(matching: .any).matching(identifier: "feed.photos").firstMatch
+        XCTAssertTrue(photos.waitForExistence(timeout: Self.wait), "no photos in 动态")
+        XCTAssertGreaterThan(photos.frame.height, photos.frame.width, "the portrait salad isn't shown portrait")
+        settle()
+        keepScreenshot(named: "48-feed-portrait")
+
+        photos.tap()
+        let viewer = app.descendants(matching: .any).matching(identifier: "photoViewer").firstMatch
+        XCTAssertTrue(viewer.waitForExistence(timeout: Self.wait), "tapping the photo didn't open it full screen")
+        let close = app.buttons["photoViewer.close"]
+        XCTAssertTrue(close.waitForExistence(timeout: Self.wait), "no 关闭")
+        assertOnScreen(close, in: app)
+        settle()
+        keepScreenshot(named: "48-feed-photo-viewer")
+        viewer.pinch(withScale: 2.5, velocity: 2)
+        settle()
+        keepScreenshot(named: "48-feed-photo-viewer-zoomed")
+        viewer.doubleTap()
+        settle()
+
+        viewer.swipeDown(velocity: .fast)
+        XCTAssertTrue(viewer.waitForNonExistence(timeout: Self.wait), "swiping down didn't close the photo")
+        XCTAssertTrue(photos.waitForExistence(timeout: Self.wait), "动态 didn't come back")
+
+        photos.tap()
+        XCTAssertTrue(close.waitForExistence(timeout: Self.wait), "the photo didn't open again")
+        close.tap()
+        XCTAssertTrue(viewer.waitForNonExistence(timeout: Self.wait), "关闭 didn't close the photo")
+    }
+
     /// A 练了 with its minutes shows them as the card's big number. The newest posts on top are a
     /// salad and a 请假条, so the run's card is scrolled to, a little at a time.
     func testMinutes() {
@@ -68,7 +103,7 @@ final class FeedUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
         let minutes = app.descendants(matching: .any).matching(identifier: "feed.minutes").firstMatch
-        let tabBarTop = app.buttons["tab.feed"].frame.minY
+        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         let feed = app.scrollViews.firstMatch
         var drags = 0
         while drags < Self.maxSwipes, !(minutes.exists && minutes.frame.maxY <= tabBarTop) {
@@ -117,6 +152,44 @@ final class FeedUITests: XCTestCase {
         waitFor(react, "label == '我的回应：😂'", "holding and sliding didn't pick 😂")
     }
 
+    /// A card's comments open its own page over the feed, with the tab bar gone: every comment,
+    /// tapping a teammate's one replies to them, a sent comment shows at once, and 返回 comes
+    /// back to the feed, whose card shows it.
+    func testComments() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        let comments = app.buttons.matching(identifier: "feed.comments").firstMatch
+        XCTAssertTrue(comments.waitForExistence(timeout: Self.wait), "no card shows comments")
+        settle()
+        keepScreenshot(named: "48-feed-card-comments")
+        comments.tap()
+
+        let rows = app.descendants(matching: .any).matching(identifier: "post.comment")
+        XCTAssertTrue(app.buttons["post.back"].waitForExistence(timeout: Self.wait), "the post's page didn't open")
+        waitFor(rows.element(boundBy: 2), "exists == true", "the page doesn't list every comment")
+        XCTAssertFalse(app.buttons["tab.feed"].exists, "the tab bar shows over the post's page")
+        settle()
+        keepScreenshot(named: "49-post-page")
+
+        rows.firstMatch.tap()
+        XCTAssertTrue(app.buttons["post.cancelReply"].waitForExistence(timeout: Self.wait), "tapping didn't reply")
+        let box = app.descendants(matching: .any).matching(identifier: "post.field").firstMatch
+        box.typeText("加油")
+        let send = app.buttons["post.send"]
+        assertOnScreen(send, in: app)
+        settle()
+        keepScreenshot(named: "50-post-replying")
+        send.tap()
+        waitFor(rows.element(boundBy: 3), "exists == true", "the sent comment didn't show")
+        XCTAssertFalse(app.buttons["post.cancelReply"].exists, "still replying after sending")
+
+        app.buttons["post.back"].tap()
+        XCTAssertTrue(app.buttons["tab.feed"].waitForExistence(timeout: Self.wait), "the tab bar didn't come back")
+        waitFor(comments, "label CONTAINS '全部 4 条评论'", "the card doesn't count the new comment")
+        settle()
+        keepScreenshot(named: "51-feed-after-comment")
+    }
+
     func testFeedInEnglish() {
         continueAfterFailure = false
         let app = launch(language: "en")
@@ -154,9 +227,23 @@ final class FeedUITests: XCTestCase {
     /// Fully on screen and above the floating tab bar, so nothing covers it.
     private func assertClearOfTheTabBar(_ element: XCUIElement, in app: XCUIApplication) {
         assertOnScreen(element, in: app)
-        let bar = app.buttons["tab.feed"]
-        XCTAssertTrue(bar.exists, "no tab bar")
+        let bar = tabButton("tab.feed", in: app)
         XCTAssertLessThanOrEqual(element.frame.maxY, bar.frame.minY, "\(element.identifier) is under the tab bar")
+    }
+
+    /// A tap anywhere but the panel closes it: in the larger gap above or below it, clear of the
+    /// tab bar. The panel opens over its row when there is no room under it, which can put it over
+    /// the title, so tapping the title isn't always a tap outside.
+    private func tapOutside(_ panel: XCUIElement, in app: XCUIApplication) {
+        let screen = app.windows.firstMatch.frame
+        let top = app.staticTexts["feed.title"].frame.minY
+        let bottom = tabButton("tab.feed", in: app).frame.minY
+        let above = panel.frame.minY - top
+        let below = bottom - panel.frame.maxY
+        let y = above > below ? top + above / 2 : panel.frame.maxY + below / 2
+        app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: screen.midX, dy: y))
+            .tap()
     }
 
     private func assertOnScreen(_ element: XCUIElement, in app: XCUIApplication) {

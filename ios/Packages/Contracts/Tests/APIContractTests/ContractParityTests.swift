@@ -21,20 +21,25 @@ private final class Schema: Decodable, Sendable {
     let maxCharacters: Int?
     let minimum: Int?
     let maximum: Int?
+    let ref: String?
 
     enum CodingKeys: String, CodingKey {
         case properties, minItems, maxItems, minimum, maximum
+        case ref = "$ref"
         case maxCharacters = "x-max-characters"
     }
 }
 
 /// `field` of the schema `name` in the committed `api/apps/server/openapi.json`, which
-/// scripts/swift-openapi.sh generates from.
+/// scripts/swift-openapi.sh generates from; a field that refers to a shared schema is that schema.
 private func property(_ field: String, of name: String) throws -> Schema? {
     let url = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().appending(path: "../../../../../api/apps/server/openapi.json")
     let document = try JSONDecoder().decode(Document.self, from: Data(contentsOf: url.standardizedFileURL))
-    return document.components.schemas[name]?.properties?[field]
+    let schemas = document.components.schemas
+    let found = schemas[name]?.properties?[field]
+    guard let ref = found?.ref else { return found }
+    return schemas[String(ref.split(separator: "/").last ?? "")]
 }
 
 @Test(arguments: ["Training", "Meal", "TrainingView", "MealView"])
@@ -52,6 +57,11 @@ func workoutMinutesRangeIsTheAPIs(schema: String) throws {
     let minutes = try property("minutes", of: schema)
     #expect(minutes?.minimum == WorkoutMinutes.range.lowerBound)
     #expect(minutes?.maximum == WorkoutMinutes.range.upperBound)
+}
+
+@Test(arguments: ["CommentDraft", "CommentEntry"])
+func commentLimitIsTheAPIs(schema: String) throws {
+    #expect(try property("text", of: schema)?.maxCharacters == CommentText.maxLength)
 }
 
 @Test func disclaimerLimitIsTheAPIs() throws {
@@ -81,12 +91,21 @@ func photoCountIsTheAPIs(schema: String) throws {
     #expect(try property("photos", of: schema)?.maxItems == Photos.maxCount)
 }
 
-@Test(arguments: ["TrainedCheckInDraft", "HealthyMealCheckInDraft", "CheatMealCheckInDraft", "DisclaimerCheckInDraft"])
-func audienceSizeIsTheAPIs(schema: String) throws {
-    #expect(try property("audience", of: schema)?.maxItems == Audience.maxSquads)
+@Test(arguments: ["width", "height"])
+func photoSideRangeIsTheAPIs(side: String) throws {
+    let range = try property(side, of: "PhotoSize")
+    #expect(range?.minimum == PhotoSize.sideRange.lowerBound)
+    #expect(range?.maximum == PhotoSize.sideRange.upperBound)
 }
 
-@Test(arguments: ["WeeklyPlan", "WeeklyPlanDraft"])
+@Test(arguments: ["TrainedCheckInDraft", "HealthyMealCheckInDraft", "CheatMealCheckInDraft", "DisclaimerCheckInDraft"])
+func audienceSizeIsTheAPIs(schema: String) throws {
+    let audience = try property("audience", of: schema)
+    #expect(audience?.minItems == nil)
+    #expect(audience?.maxItems == Audience.maxSquads)
+}
+
+@Test(arguments: ["WeeklyPlan", "WeeklyPlanDraft", "PlanTemplate", "PlanTemplateDraft"])
 func planLengthIsTheAPIs(schema: String) throws {
     let days = try property("days", of: schema)
     #expect(days?.minItems == WeeklyPlan.dayCount)

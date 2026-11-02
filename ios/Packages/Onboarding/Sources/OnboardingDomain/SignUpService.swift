@@ -17,7 +17,7 @@ public protocol SignUpService: Sendable {
     func create(named name: SquadName) async throws(SignUpError) -> JoinedSquad
     /// Saves the character made in 角色和昵称.
     func save(_ character: NewCharacter) async throws(SignUpError)
-    /// Saves this week's plan, from 本周目标.
+    /// Saves the member's typical week, which this week and every later one follow.
     func savePlan(_ days: [PlanDay]) async throws(SignUpError)
     /// Picks where the squad the member made trains, from 这周在哪练？: its first scene, from now
     /// on. Safe to repeat with the same scene.

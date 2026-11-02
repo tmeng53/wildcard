@@ -40,24 +40,25 @@ struct PhotoStep: View {
                     .accessibilityIdentifier("photos.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    if isPreparing {
-                        ProgressView()
-                    } else if items.isEmpty {
-                        Button {
-                            model.photosPicked([])
-                        } label: {
-                            Text("不加照片", bundle: .module)
+                    LoadingSwap(isPreparing) {
+                        if items.isEmpty {
+                            Button {
+                                model.photosPicked([])
+                            } label: {
+                                Text("不加照片", bundle: .module)
+                            }
+                            .accessibilityIdentifier("photos.skip")
+                        } else {
+                            Button {
+                                Task { await prepareAndContinue() }
+                            } label: {
+                                Text("下一步", bundle: .module)
+                            }
+                            .fontWeight(.semibold)
+                            .accessibilityIdentifier("photos.next")
                         }
-                        .accessibilityIdentifier("photos.skip")
-                    } else {
-                        Button {
-                            Task { await prepareAndContinue() }
-                        } label: {
-                            Text("下一步", bundle: .module)
-                        }
-                        .fontWeight(.semibold)
-                        .accessibilityIdentifier("photos.next")
                     }
+                    .disabled(isPreparing)
                 }
             }
         }

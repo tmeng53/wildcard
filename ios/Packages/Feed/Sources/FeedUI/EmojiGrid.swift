@@ -53,37 +53,18 @@ struct EmojiGrid: View {
     }
 }
 
-/// Every single emoji the grid offers, faces first, each skin tone left to the keyboard.
+/// Finding emoji by name for the grid's search.
 enum EmojiCatalog {
-    static let all: [Emoji] = {
-        let ranges: [ClosedRange<UInt32>] = [
-            0x1F600...0x1F64F, 0x1F900...0x1F9FF, 0x1FA70...0x1FAFF, 0x1F300...0x1F5FF, 0x1F680...0x1F6FF,
-            0x2600...0x27BF,
-        ]
-        var emoji: [Emoji] = []
-        for range in ranges {
-            for value in range {
-                guard let scalar = Unicode.Scalar(value), scalar.properties.isEmojiPresentation,
-                    !(0x1F3FB...0x1F3FF).contains(value), let one = try? Emoji(String(scalar))
-                else { continue }
-                emoji.append(one)
-            }
-        }
-        // ❤️ draws as an emoji only with its variation selector.
-        if let heart = try? Emoji("❤️") { emoji.insert(heart, at: 0) }
-        return emoji
-    }()
-
     /// The emoji whose Unicode name has `query` in it, all of them for no query.
     static func matching(_ query: String) -> [Emoji] {
         let words = query.trimmingCharacters(in: .whitespaces).lowercased()
-        guard !words.isEmpty else { return all }
+        guard !words.isEmpty else { return Emoji.all }
         return named.filter { $0.name.contains(words) }.map(\.emoji)
     }
 
     /// Each emoji with its Unicode name, worked out once: the transform writes `\N{GRINNING FACE}`,
     /// and only the words inside count.
-    private static let named: [(emoji: Emoji, name: String)] = all.map { emoji in
+    private static let named: [(emoji: Emoji, name: String)] = Emoji.all.map { emoji in
         let name = (emoji.text.applyingTransform(.toUnicodeName, reverse: false) ?? "")
             .replacingOccurrences(of: "\\N{", with: " ").replacingOccurrences(of: "}", with: " ").lowercased()
         return (emoji, name)

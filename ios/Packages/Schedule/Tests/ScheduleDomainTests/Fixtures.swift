@@ -37,6 +37,10 @@ actor FakeBackend: ScheduleBackend {
     var savesBeforeError: Int?
     private(set) var savedPlans: [[PlanDay]] = []
     private(set) var savedFuel: [[FuelGoal]] = []
+    private(set) var savedTemplates: [[PlanDay]] = []
+    /// The member's typical week; the plan every week not set for itself follows here.
+    var templateDays: [PlanDay] = Fixtures.plan
+    var templateError: ScheduleError?
     /// While set, a save waits until `finishSave()`.
     private var holdsSaves = false
     private var held: [CheckedContinuation<Void, Never>] = []
@@ -58,6 +62,7 @@ actor FakeBackend: ScheduleBackend {
         savesBeforeError = count
     }
     func failProfile(with error: ScheduleError) { profileResult = .failure(error) }
+    func failTemplate(with error: ScheduleError?) { templateError = error }
     func holdSaves() { holdsSaves = true }
     func holdLoads() { holdsLoads = true }
     func keepPlans(_ keeps: @escaping @Sendable ([PlanDay]) -> [PlanDay]) { self.keeps = keeps }
@@ -110,4 +115,16 @@ actor FakeBackend: ScheduleBackend {
     }
 
     func trainedDays() async throws(ScheduleError) -> Int { 46 }
+
+    func template() async throws(ScheduleError) -> [PlanDay] {
+        if let templateError { throw templateError }
+        return templateDays
+    }
+
+    func saveTemplate(_ days: [PlanDay]) async throws(ScheduleError) {
+        savedTemplates.append(days)
+        if holdsSaves { await withCheckedContinuation { held.append($0) } }
+        if let templateError { throw templateError }
+        templateDays = days
+    }
 }

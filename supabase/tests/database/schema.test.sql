@@ -1,7 +1,7 @@
 -- What the database keeps true however the API writes: keys, references, uniqueness.
 -- Runs as postgres; the API's server role writes the same way.
 begin;
-select plan(27);
+select plan(29);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'ann@example.com'),
@@ -42,13 +42,12 @@ select throws_ok(
   '23503', null, 'a check-in belongs to a real member'
 );
 
--- One disclaimer a day.
+-- Any number of disclaimers a day.
 select pg_temp.check_in('22222222-2222-2222-2222-222222222222', 'a0000000-0000-0000-0000-000000000001',
   'disclaimer', '{"version":1,"text":"下雨了"}');
-select throws_ok(
+select lives_ok(
   $$select pg_temp.check_in(gen_random_uuid(), 'a0000000-0000-0000-0000-000000000001', 'disclaimer', '{"version":1,"text":"还在下"}')$$,
-  '23505', 'duplicate key value violates unique constraint "check_ins_one_disclaimer_a_day"',
-  'a second disclaimer on the same day is refused'
+  'a second disclaimer on the same day is saved too'
 );
 select lives_ok(
   $$insert into public.check_ins (id, member_id, day, created_at, kind, payload)
@@ -96,6 +95,16 @@ select throws_ok(
   $$insert into public.check_in_photos (path, check_in_id, position) values
     ('a0000000-0000-0000-0000-000000000001/4.jpg', '11111111-1111-1111-1111-111111111111', 4)$$,
   '23514', null, 'at most 3 photos'
+);
+select throws_ok(
+  $$insert into public.check_in_photos (path, check_in_id, position, width) values
+    ('a0000000-0000-0000-0000-000000000001/5.jpg', '11111111-1111-1111-1111-111111111111', 3, 1080)$$,
+  '23514', null, 'a photo has both sides of its size or neither'
+);
+select throws_ok(
+  $$insert into public.check_in_photos (path, check_in_id, position, width, height) values
+    ('a0000000-0000-0000-0000-000000000001/6.jpg', '11111111-1111-1111-1111-111111111111', 3, 0, 1350)$$,
+  '23514', null, 'a photo is at least a pixel wide'
 );
 select throws_ok(
   $$insert into public.check_in_squads (check_in_id, squad_id, position) values

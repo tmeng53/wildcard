@@ -124,7 +124,8 @@ jobs:
     runs-on: >-
       ${{ (needs.changes.outputs.mac == 'true' && needs.changes.outputs.app == 'true')
       && 'macos-26' || 'ubuntu-24.04' }}
-    timeout-minutes: 30
+    # `swift test` for every package takes about 25 minutes on Linux, so 30 cut runs off.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
         with:
@@ -177,6 +178,10 @@ jobs:
       # The runner image ships Swift, for the app's Backend adapters.
       - run: swift --version
       - run: scripts/verify.sh supabase api backend
+        env:
+          # What scripts/api-compat.sh compares openapi.json with: the PR's base, or main before
+          # the push.
+          API_COMPAT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
       # The verify-wildcard API journeys, over HTTP against the built server.
       - run: scripts/api-journeys.sh
       # The image the deploy workflow ships builds, starts and reaches the database.
@@ -196,7 +201,8 @@ jobs:
     if: >-
       !cancelled() && needs.changes.outputs.mac == 'true' && needs.changes.outputs.ios == 'true'
     runs-on: macos-26
-    timeout-minutes: 60
+    # The UI tests alone take about 46 minutes (71 tests), plus the build and a retry.
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v5
         with:

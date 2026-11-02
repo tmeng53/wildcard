@@ -43,7 +43,9 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
                 look: CharacterLook(
                     persona: "shy", variants: ["body": "calico", "top": "warmup-tee"], colors: ["top": "#3A7BD5"])))
     let thisWeek = LocalDay(at: Date(), in: profile.timeZone).weekStart
+    #expect(try await member.api.planTemplate() == week)
     #expect(try await member.api.weeklyPlan(weekStart: thisWeek).days == week)
+    #expect(try await member.api.weeklyPlan(weekStart: thisWeek.adding(days: 21)).days == week)
 
     // 这周在哪练？: the squad trains on its pick at once, and a retry of it is fine.
     try await signUp.pickScene(.pool, for: squad.id)

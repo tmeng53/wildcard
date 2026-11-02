@@ -3,7 +3,7 @@
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
 #   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
-#     [squad-today] [week-summary] [reactions] [devices] [daily-push] [weekly-awards] [account] [admin-mcp]   (no arguments: all)
+#     [squad-today] [week-summary] [reactions] [comments] [devices] [daily-push] [weekly-awards] [coach] [account] [admin-mcp]   (no arguments: all)
 # Needs `supabase start`, pnpm, node, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -11,11 +11,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions devices daily-push weekly-awards account admin-mcp}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions comments devices daily-push weekly-awards coach account admin-mcp}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | devices | daily-push | weekly-awards | account | admin-mcp) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, devices, daily-push, weekly-awards, account, admin-mcp)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | comments | devices | daily-push | weekly-awards | coach | account | admin-mcp) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, comments, devices, daily-push, weekly-awards, coach, account, admin-mcp)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -148,9 +148,10 @@ if want check-in; then
   call PUT "/check-ins/$first" "$mate_token" "$(disclaimer 腿还在酸)"
   expect 201
   echo "check-in: mate posted today's disclaimer $first (201)"
-  call PUT "/check-ins/$(new_id)" "$mate_token" "$(disclaimer 再来一条)"
-  expect 409 DISCLAIMER_ALREADY_POSTED
-  echo "check-in: a second disclaimer today refused (409 DISCLAIMER_ALREADY_POSTED)"
+  second="$(new_id)"
+  call PUT "/check-ins/$second" "$mate_token" "$(disclaimer 再来一条)"
+  expect 201
+  echo "check-in: mate posted a second disclaimer today $second (201)"
 
   call PUT "/check-ins/$(new_id)" "$outsider_token" "$trained"
   expect 403 SQUAD_NOT_JOINED
@@ -158,11 +159,11 @@ if want check-in; then
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$mate_token"
   expect 200
-  [ "$(jq -c '[.posts[].checkIn.id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" '[$a,$b] | sort')" ] ||
-    fail "squad list should hold exactly $id and $first: $body"
+  [ "$(jq -c '[.posts[].checkIn.id] | sort' <<<"$body")" = "$(jq -cn --arg a "$id" --arg b "$first" --arg c "$second" '[$a,$b,$c] | sort')" ] ||
+    fail "squad list should hold exactly $id, $first and $second: $body"
   [ "$(jq -r --arg id "$id" '.posts[].checkIn | select(.id == $id) | .training.minutes' <<<"$body")" = "40" ] ||
     fail "mate should see the 练了's 40 minutes: $body"
-  echo "check-in: mate sees both in the squad list ($(jq '.posts | length' <<<"$body") check-ins), minutes included"
+  echo "check-in: mate sees all three in the squad list ($(jq '.posts | length' <<<"$body") check-ins), minutes included"
 
   call GET "/squads/$squad/check-ins?from=$day&to=$day" "$outsider_token"
   expect 403 SQUAD_NOT_JOINED
@@ -372,8 +373,28 @@ if want weekly-plan; then
   later="$(days_after "$monday" 14)"
   call GET "/me/weekly-plans/$later" "$planner_token"
   expect 200
-  [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"carriedOver\",$saved]" ] || fail "the week after should carry next week's plan over: $body"
-  echo "weekly-plan: the week after ($later) carries it over"
+  [ "$(jq -c .source <<<"$body")" = '"default"' ] || fail "next week's own plan shouldn't reach the week after: $body"
+  typical='{"version":1,"days":[{"kind":"train","sport":"swim"},{"kind":"rest"},{"kind":"train"},{"kind":"rest"},{"kind":"train","sport":"run"},{"kind":"rest"},{"kind":"rest"}]}'
+  call PUT /me/plan-template "$planner_token" "$typical"
+  expect 200
+  template="$(jq -c .days <<<"$body")"
+  call GET /me/plan-template "$planner_token"
+  expect 200
+  [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"saved\",$template]" ] || fail "the typical week should read back: $body"
+  call GET "/me/weekly-plans/$later" "$planner_token"
+  expect 200
+  [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"carriedOver\",$template]" ] || fail "the week after should follow the typical week: $body"
+  call GET "/me/weekly-plans/$monday" "$planner_token"
+  expect 200
+  [ "$(jq -c .source <<<"$body")" = '"carriedOver"' ] || fail "the first typical week should be this week's plan too: $body"
+  call GET "/me/weekly-plans/$next" "$planner_token"
+  expect 200
+  [ "$(jq -c '[.source, .days]' <<<"$body")" = "[\"saved\",$saved]" ] || fail "next week should keep its own plan: $body"
+  call PUT /me/plan-template "$planner_token" "$typical"
+  expect 200
+  templates="$(psql "$DB_URL" -tAc "select count(*) from public.plan_templates where member_id = '$planner'")"
+  [ "$templates" = 1 ] || fail "saving the same typical week twice should log once: $templates rows"
+  echo "weekly-plan: the typical week saved and logged once; this week and the week after ($later) follow it, next week keeps its own"
 
   call PUT "/me/weekly-plans/$(days_after "$monday" -7)" "$planner_token" "$plan"
   expect 400 WEEK_OVER
@@ -584,6 +605,50 @@ if want reactions; then
   echo "reactions: mate took it off (204, again 204), no row left"
 fi
 
+if want comments; then
+  post="$(new_id)"
+  call PUT "/check-ins/$post" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"
+  expect 201
+  said="$(new_id)"
+  call PUT "/check-ins/$post/comments/$said" "$mate_token" '{"version":1,"text":"冲！"}'
+  expect 201
+  call PUT "/check-ins/$post/comments/$said" "$mate_token" '{"version":1,"text":"冲！"}'
+  expect 200
+  call PUT "/check-ins/$post/comments/$said" "$mate_token" '{"version":1,"text":"换一句"}'
+  expect 409 COMMENT_ID_CONFLICT
+  echo "comments: mate wrote one (201), the retry saved nothing new (200), another text under its id refused (409)"
+
+  reply="$(new_id)"
+  call PUT "/check-ins/$post/comments/$reply" "$me_token" "{\"version\":1,\"text\":\"谢谢\",\"replyTo\":\"$mate\"}"
+  expect 201
+  call GET "/check-ins/$post/comments" "$mate_token"
+  expect 200
+  [ "$(jq -c '[.comments[] | [.member, .text, .replyTo]]' <<<"$body")" = "$(jq -cn --arg m "$mate" --arg a "$me" '[[$m,"冲！",null],[$a,"谢谢",$m]]')" ] ||
+    fail "mate should read both, oldest first, the author's a reply to mate: $body"
+  call GET "/check-ins/$post" "$me_token"
+  expect 200
+  [ "$(jq '.comments | length' <<<"$body")" = 2 ] || fail "the post's page should carry both comments: $body"
+  echo "comments: the author replied to mate (201); both read them oldest first, here and on the post's page"
+
+  call PUT "/check-ins/$post/comments/$(new_id)" "$outsider_token" '{"version":1,"text":"嗨"}'
+  expect 404 CHECK_IN_NOT_FOUND
+  call PUT "/check-ins/$post/comments/$(new_id)" "$me_token" "{\"version\":1,\"text\":\"嗨\",\"replyTo\":\"$outsider\"}"
+  expect 400 REPLY_TO_NOT_IN_SQUAD
+  call PUT "/check-ins/$post/comments/$(new_id)" "$mate_token" "{\"version\":1,\"text\":\"$(printf '加%.0s' $(seq 101))\"}"
+  expect 400 REQUEST_INVALID
+  call DELETE "/check-ins/$post/comments/$said" "$me_token"
+  expect 403 NOT_YOUR_COMMENT
+  echo "comments: outsider sees nothing (404), a reply to an outsider (400), 101 characters (400) and deleting mate's (403) refused"
+
+  call DELETE "/check-ins/$post/comments/$said" "$mate_token"
+  expect 204
+  call DELETE "/check-ins/$post/comments/$said" "$mate_token"
+  expect 204
+  rows="$(psql "$DB_URL" -tAc "select count(*) from public.check_in_comments where check_in_id = '$post'")"
+  [ "$rows" = 1 ] || fail "only the author's reply should be left: $rows rows"
+  echo "comments: mate deleted theirs (204, again 204), one row left"
+fi
+
 if want devices; then
   phone="$(node -p 'crypto.randomBytes(32).toString("hex")')"
   owner_of() { psql "$DB_URL" -tAc "select member_id || ' ' || environment from public.push_devices where token = '$phone'"; }
@@ -689,6 +754,18 @@ if want weekly-awards; then
   echo "weekly-awards: a member's token refused (401); the scheduler's run answered for the last two awarded weeks"
 fi
 
+if want coach; then
+  read -r _ coach_member_token <<<"$(sign_up)"
+  call POST /jobs/coach "$coach_member_token"
+  expect 401 JOB_TOKEN_INVALID
+  # The journeys' server has no OpenAI key, so the coach never wakes, whatever the settings say.
+  call POST /jobs/coach "$jobs_token"
+  expect 200
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"coaching":false,"squads":0,"queued":0,"done":0,"failed":0}' ] ||
+    fail "without an OpenAI key the coach run does nothing: $body"
+  echo "coach: a member's token refused (401); without an OpenAI key the scheduler's run woke no coach"
+fi
+
 if want account; then
   read -r leaver leaver_token <<<"$(sign_up)"
   call GET /me "$leaver_token"
@@ -710,8 +787,9 @@ if want account; then
   path="$(jq -r .path <<<"$body")"
   curl -sf -X PUT "$(jq -r .uploadUrl <<<"$body")" -H 'content-type: image/jpeg' --data-binary 'not really a jpeg' >/dev/null ||
     fail "upload to storage failed"
-  # The leaver's own day in Toronto when the check-in was made, which lasts until 3am there.
-  toronto_day="$(node -p "new Date(Date.parse('$now') - 3 * 3_600_000).toLocaleDateString('en-CA', { timeZone: 'America/Toronto' })")"
+  # The leaver's own day in Toronto when the check-in was made, which lasts until 3am there:
+  # three hours back on Toronto's clock, so the night the clocks go back still counts right.
+  toronto_day="$(node -p "new Date(Date.parse(new Date('$now').toLocaleString('sv-SE', { timeZone: 'America/Toronto' }) + 'Z') - 3 * 3_600_000).toISOString().slice(0, 10)")"
   call PUT "/check-ins/$(new_id)" "$leaver_token" "$(check_in_of "$squad" "$toronto_day" healthyMeal "\"meal\":{\"photos\":[{\"path\":\"$path\"}]}")"
   expect 201
   echo "account: leaver made a squad with mate and posted a meal with a photo"
@@ -842,7 +920,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,send_test_push" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
@@ -933,6 +1011,21 @@ if want admin-mcp; then
   sport_calls="$(psql "$DB_URL" -tAc "select string_agg(action->>'tool', ',' order by at) from public.admin_actions where admin_id = '$admin' and action->>'tool' like '%sport%'")"
   [ "$sport_calls" = put_sport ] || fail "admin_actions should hold the put, not the refusal: $sport_calls"
   echo "admin-mcp: read the sports list (Strength), put a sport back as it was, logged once; an unlisted sport refused (SPORT_NOT_OFFERED)"
+
+  # A test push: refused while the admin is in no squad; then, in one with a phone, it reaches
+  # that phone, which this server (no APNs key) reports as off.
+  tool send_test_push '{"kind":"poke"}'
+  [[ "$is_error" = true && "$result" == TEST_PUSH_NO_SQUAD:* ]] || fail "a test push with no squad: $result"
+  psql "$DB_URL" -qc "with squad as (insert into public.squads (id, name, invite_code)
+    values (gen_random_uuid(), 'test push', '$(node -p '[...crypto.randomBytes(8)].map((b) => "23456789ABCDEFGHJKMNPQRSTUVWXYZ"[b % 31]).join("")')') returning id)
+    insert into public.squad_members (squad_id, member_id) select id, '$admin' from squad"
+  call PUT /me/devices "$admin_token" "{\"version\":1,\"token\":\"$(node -p 'crypto.randomBytes(32).toString("hex")')\",\"environment\":\"production\"}"
+  expect 200
+  tool send_test_push '{"kind":"poke"}'
+  [ "$(jq -c '[.phones, .sent, .off]' <<<"$result")" = "[1,0,1]" ] || fail "send_test_push: $result"
+  pushes="$(psql "$DB_URL" -tAc "select count(*) from public.admin_actions where admin_id = '$admin' and action->>'tool' = 'send_test_push'")"
+  [ "$pushes" = 1 ] || fail "admin_actions should hold the one test push, not the refusal: $pushes"
+  echo "admin-mcp: a test push refused with no squad (TEST_PUSH_NO_SQUAD); in a squad it reached the admin's phone (off here, no APNs key), logged once"
 
   call GET /me "$mcp_token"
   expect 401 APP_SIGN_IN_REQUIRED

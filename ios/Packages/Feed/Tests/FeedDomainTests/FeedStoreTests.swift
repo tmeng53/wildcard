@@ -5,7 +5,9 @@ import Testing
 
 @MainActor
 func store(_ source: FakeSource, viewer: MemberID = coco, today: LocalDay = thursday) -> FeedStore {
-    FeedStore(source: source, squad: squad, viewer: viewer, today: { today }, now: { at(500) })
+    FeedStore(
+        source: source, squad: squad, viewer: viewer, today: { today }, now: { at(500) },
+        newCommentID: { commentID(1) })
 }
 
 let jaysRun = FeedPost(checkIn: checkIn(1, by: jay, on: "2026-10-22", at: 100), reactions: reactions([(mia, "❤️", 10)]))
@@ -113,6 +115,27 @@ let miasSlip = FeedPost(checkIn: checkIn(2, by: mia, on: "2026-10-21", at: 50, d
     let loads = await source.calls.count
     await feed.loadEarlier()
     #expect(await source.calls.count == loads)
+}
+
+@MainActor @Test func scrollingToTheEndAgainWhileAWeekLoadsReadsItOnce() async {
+    let old = FeedPost(checkIn: checkIn(3, by: jay, on: "2026-10-10"))
+    let source = FakeSource([jaysRun, old])
+    let feed = store(source)
+    await feed.load()
+    await source.hold()
+    let first = Task { await feed.loadEarlier() }
+    while await source.waiting == 0 { await Task.yield() }
+    #expect(feed.isLoadingEarlier)
+    let again = Task { await feed.loadEarlier() }
+    for _ in 0..<100 { await Task.yield() }
+    #expect(await source.calls.count == 2)
+    #expect(feed.isLoadingEarlier)
+    await source.release()
+    await first.value
+    await again.value
+    #expect(!feed.isLoadingEarlier)
+    #expect(feed.post(old.id) != nil)
+    #expect(await source.calls.count == 2)
 }
 
 @MainActor @Test func aQuietWeekStillShowsTheSquadsLastPosts() async throws {

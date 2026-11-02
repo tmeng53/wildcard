@@ -19,6 +19,9 @@ public struct TodayView: View {
     /// The day picked on the card's second page; nil shows today. Leaving home forgets it: this
     /// view is made anew on coming back to the tab, and going to the background clears it.
     @State private var pickedDay: Int?
+    /// How far above the screen's bottom edge the app's tab bar reaches, which 打卡 stands on:
+    /// measured while the bar shows and kept while it hides, so 打卡 stays put when the burst opens.
+    @State private var barRoom = Self.barRoomBeforeMeasured
     /// The day whose 今日赛况 was last opened on this phone (`LocalDay`'s description): its tag
     /// shows a dot until then.
     @AppStorage("today.recapSeen") private var recapSeen = ""
@@ -75,6 +78,11 @@ public struct TodayView: View {
         .haptic(.reaction, trigger: model.pats.landedOnMe)
         // The cord clicking the lights on; switching them off is quiet.
         .haptic(.lights, trigger: model.lightsPull) { _, pull in pull?.isOn == true }
+        .onGeometryChange(for: Double.self) {
+            $0.safeAreaInsets.bottom
+        } action: { room in
+            if model.showsTabBar { barRoom = room }
+        }
         .task { await model.load() }
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
@@ -145,10 +153,10 @@ public struct TodayView: View {
                     }
                     .padding(.bottom, Space.l)
                     .modifier(Arriving(arrival: model.arrival) { $0.buttonOffset(at: $1) })
-                    // Room for the app's tab bar, which sits above this screen, measured from the
-                    // screen's bottom edge as the design does.
+                    // Room for the app's tab bar, which floats over this screen, measured from the
+                    // screen's bottom edge.
                     Color.clear
-                        .frame(height: Sizing.tabBar + Sizing.tabBarBottom)
+                        .frame(height: barRoom)
                         .accessibilityHidden(true)
                 }
                 .ignoresSafeArea(edges: .bottom)
@@ -200,6 +208,10 @@ public struct TodayView: View {
             .transition(.opacity)
         }
     }
+
+    /// The tab bar's room until it is first measured (home opening while the squad drops in): the
+    /// system bar's height and its gap to the screen's edge.
+    private static let barRoomBeforeMeasured: Double = 88
 
     /// The pull cord hanging under the card at night (the approved 开灯), its centre 40 points
     /// from the screen's right edge; it follows the card as 今日赛况 makes it taller and fades out

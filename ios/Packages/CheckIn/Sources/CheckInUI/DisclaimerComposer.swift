@@ -28,7 +28,14 @@ struct DisclaimerComposer: View {
     @State private var isWriting = false
     /// Counts lines that landed in the hero, for their haptic.
     @State private var landed = 0
+    /// The squads it goes to: all of them until the member unticks one.
+    @State private var shared: Set<SquadID>
     @FocusState private var isEditing: Bool
+
+    init(model: TodayModel) {
+        self.model = model
+        _shared = State(initialValue: Set(model.shareSquads.map(\.id)))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -50,7 +57,9 @@ struct DisclaimerComposer: View {
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .padding(.bottom, Space.xs)
             }
-            PostButton(model: model, disclaimer: entry.disclaimer)
+            ShareRow(squads: model.shareSquads, shared: $shared)
+                .padding(.bottom, Space.xs)
+            PostButton(model: model, disclaimer: entry.disclaimer, shared: shared)
         }
         .padding(.horizontal, Space.l)
         .padding(.top, Space.xs)
@@ -108,7 +117,8 @@ struct DisclaimerComposer: View {
             .lineLimit(1...4)
             .focused($isEditing)
             .submitLabel(.done)
-            .opacity(isWriting ? 0.4 : 1)
+            .opacity(isWriting ? Loading.waitingOpacity : 1)
+            .animation(.wildcard(Motion.fadeIn), value: isWriting)
             .accessibilityIdentifier("disclaimer.field")
             .onChange(of: text) { _, typed in
                 // Return finishes editing; the excuse is one line of at most `Disclaimer.maxLength` characters.
@@ -168,6 +178,9 @@ struct DisclaimerComposer: View {
             if !isEditing {
                 ForEach(Array(drafts.enumerated()), id: \.element) { index, draft in
                     DraftRow(line: draft, isPicked: draft == entry.text) { take(draft) }
+                        .opacity(isWriting ? Loading.waitingOpacity : 1)
+                        .animation(.wildcard(Motion.fadeIn), value: isWriting)
+                        .transition(.arrival(index, reduceMotion: reduceMotion))
                         .accessibilityIdentifier("disclaimer.draft.\(index + 1)")
                 }
                 WriteButton(isAgain: draftsAnswer, isWriting: isWriting) {
@@ -178,13 +191,13 @@ struct DisclaimerComposer: View {
         .padding(.bottom, Space.s)
     }
 
-    /// 「灵感：deadline」, or 「灵感：随机」 before the member typed anything.
+    /// 「照着「deadline」编」, or 「随便编几句」 before the member typed anything.
     private var source: some View {
         Group {
             if entry.mine.isEmpty {
-                Text("灵感：随机", bundle: .module)
+                Text("随便编几句", bundle: .module)
             } else {
-                Text("灵感：\(entry.mine)", bundle: .module)
+                Text("照着「\(entry.mine)」编", bundle: .module)
             }
         }
         .typeStyle(TypeRamp.footnote)
@@ -323,16 +336,22 @@ private struct WriteButton: View {
     var body: some View {
         Button(action: action) {
             Label {
-                if isAgain {
-                    Text("换一组", bundle: .module)
-                } else {
-                    Text("编几句", bundle: .module)
+                Group {
+                    if isAgain {
+                        Text("换一组", bundle: .module)
+                    } else {
+                        Text("编几句", bundle: .module)
+                    }
                 }
+                .foregroundStyle(Color(role: isWriting ? .fgSubtle : .fgDefault, in: theme))
             } icon: {
-                Image(systemName: isAgain ? "arrow.clockwise" : "pencil.line")
+                // While the writer works, 三拍 in the icon's place (loader design A).
+                LoadingSwap(isWriting) {
+                    Image(systemName: isAgain ? "arrow.clockwise" : "pencil.line")
+                }
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
             }
             .typeStyle(TypeRamp.footnote)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
             .frame(minHeight: Sizing.minimumTapTarget)
         }
         .disabled(isWriting)
@@ -342,25 +361,22 @@ private struct WriteButton: View {
 
 /// The page's one primary button.
 private struct PostButton: View {
-    @Environment(\.sceneTheme) private var theme
     let model: TodayModel
     /// The excuse to post, or nil while it can't be.
     let disclaimer: Disclaimer?
+    let shared: Set<SquadID>
 
     var body: some View {
         Button {
             guard let disclaimer, !model.isSending else { return }
-            Task { await model.post(.disclaimer(disclaimer)) }
+            Task { await model.post(.disclaimer(disclaimer), sharedTo: shared) }
         } label: {
-            ZStack {
-                Text("发布请假条", bundle: .module)
-                    .opacity(model.isSending ? 0 : 1)
-                if model.isSending { ProgressView().tint(Color(role: .fgOnBrand, in: theme)) }
-            }
-            .frame(maxWidth: .infinity)
+            Text("发布请假条", bundle: .module)
+                .loadingLabel(model.isSending)
+                .frame(maxWidth: .infinity)
         }
         .buttonStyle(PrimaryButtonStyle())
-        // Still enabled while sending, so it stays the brand color under its spinner; the action
+        // Still enabled while sending, so it stays the brand color under its dots; the action
         // ignores taps until the post is done.
         .disabled(disclaimer == nil)
         .accessibilityIdentifier("disclaimer.post")

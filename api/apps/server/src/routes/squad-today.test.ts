@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -29,7 +30,11 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
+import {
+  unusedWeeklyAwards,
+  unusedWeekSummaryWords,
+  unusedCoachHiring,
+} from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -58,6 +63,7 @@ const app = createApp({
       aiConsent: () => Promise.resolve(true),
     }),
     reactions: createPostgresReactionStore(db),
+    comments: createPostgresCommentStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: memberCalendar(members),
@@ -81,6 +87,7 @@ const app = createApp({
   nudges: nudgesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   weekSummaryWords: unusedWeekSummaryWords,
+  coachHiring: unusedCoachHiring,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -151,6 +158,10 @@ async function joinedWeeksAgo(...members: readonly { readonly userId: string }[]
   }
 }
 
+/** Whether `day` is a rest day in the plan members have before they save one (Wednesday, Sunday). */
+const defaultRestDay = (day: string) =>
+  [0, 3].includes(new Date(`${day}T00:00:00.000Z`).getUTCDay());
+
 /** The Monday of the week `day` is in. */
 function mondayOf(day: string) {
   const date = new Date(`${day}T00:00:00.000Z`);
@@ -220,8 +231,9 @@ describe('GET /squads/{squadId}/today', () => {
       ],
       today: { trained: 1, disclaimer: 0, everyoneTrained: false },
       me: { week: { trainedDays: 0, plannedDays: 5 }, lifetimeTrainedDays: 0 },
-      // Planned: 5 + 5 + 7 + 0.
-      squadWeek: { trainedDays: 1, plannedDays: 17 },
+      // Planned: 5 + 5 + 7 + 0. Me trained today, which on one of the default plan's rest days
+      // (Wednesday or Sunday) makes it a training day too: 6 for me.
+      squadWeek: { trainedDays: 1, plannedDays: defaultRestDay(today()) ? 18 : 17 },
     });
     expect(body).not.toHaveProperty('members.0.latestMeal');
     expect(body).not.toHaveProperty('members.2.firstCheckInAt');

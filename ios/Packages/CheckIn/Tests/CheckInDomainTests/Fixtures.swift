@@ -104,7 +104,7 @@ actor ScriptedBackend: CheckInBackend {
         if let failure { throw failure }
         saves.append(checkIn)
         if var home = server, !home.checkIns.contains(where: { $0.id == checkIn.id }) {
-            home.today = home.today.countingMine(checkIn)
+            home.today = home.today.countingMine(checkIn, squadSaw: home.squadSees(on: checkIn.day))
             home.checkIns.append(checkIn)
             server = home
         }
@@ -166,5 +166,5 @@ func store(_ backend: ScriptedBackend, outbox: MemoryOutbox = MemoryOutbox(), no
 }
 
 func photo(_ number: Int) -> PreparedPhoto {
-    PreparedPhoto(id: id(number), jpeg: Data([UInt8(number)]))
+    PreparedPhoto(id: id(number), jpeg: Data([UInt8(number)]), size: try? PhotoSize(width: 1080, height: 1350))
 }

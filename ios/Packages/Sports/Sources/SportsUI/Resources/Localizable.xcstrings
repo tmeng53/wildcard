@@ -5,16 +5,22 @@
       "comment": "A sport the app's list doesn't have yet, before it reads the newer list.",
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workout"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "运动"
           }
         },
-        "en": {
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "Workout"
+            "value": "運動"
           }
         }
       }
@@ -26,6 +32,12 @@
             "state": "translated",
             "value": "Usual sports"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "常用運動"
+          }
         }
       }
     },
@@ -35,6 +47,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Search sports"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜尋運動"
           }
         }
       }

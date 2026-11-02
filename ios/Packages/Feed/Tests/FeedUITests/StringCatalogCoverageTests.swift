@@ -29,7 +29,7 @@ struct StringCatalogCoverageTests {
         let keys = pattern.matches(in: source, range: NSRange(source.startIndex..., in: source)).compactMap {
             Range($0.range(at: 1), in: source).map { String(source[$0]) }
         }
-        #expect(keys.count == 7)
+        #expect(keys.count == 11)
         for key in keys {
             let english = try #require(try Self.english(for: key), "\(key) has no English")
             #expect(english.count <= 80, "\(english)")

@@ -23,7 +23,7 @@ final class MeUITests: XCTestCase {
 
         // A tap turns the card over to the career numbers, and another turns it back.
         card.tap()
-        waitFor(card, "label CONTAINS '坦白放纵餐'", "the card didn't turn over to the other kinds")
+        waitFor(card, "label CONTAINS '放纵餐'", "the card didn't turn over to the other kinds")
         XCTAssertTrue(card.label.contains("46"), "the back has no 健康餐 count: \(card.label)")
         XCTAssertTrue(card.label.contains("最常练"), "the back has no 最常练: \(card.label)")
         XCTAssertTrue(card.label.contains("跑步"), "the back has no top sport: \(card.label)")
@@ -31,7 +31,46 @@ final class MeUITests: XCTestCase {
         settle()
         keepScreenshot(named: "41-me-card-back")
         card.tap()
-        waitFor(card, "NOT (label CONTAINS '坦白放纵餐')", "the card didn't turn back")
+        waitFor(card, "NOT (label CONTAINS '放纵餐')", "the card didn't turn back")
+    }
+
+    /// 我的动态 from 我: the member's own posts as a wall under its month, the header's counts, a
+    /// kind with nothing in it, and back to 我.
+    func testMyPostsWall() {
+        let app = launch(language: "zh-Hans")
+        let entry = app.buttons["me.myPosts"]
+        XCTAssertTrue(entry.waitForExistence(timeout: 30), "我 has no 我的动态 button")
+        entry.tap()
+        let wall = app.descendants(matching: .any).matching(identifier: "wall.page").firstMatch
+        XCTAssertTrue(wall.waitForExistence(timeout: 30), "我的动态 never opened")
+        let tile = app.descendants(matching: .any).matching(identifier: "wall.tile").firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 30), "the wall has no tiles")
+        XCTAssertTrue(
+            app.staticTexts["wall.counts"].label.contains("发过 1 条"),
+            "the header has no counts: \(app.staticTexts["wall.counts"].label)")
+        XCTAssertTrue(tile.frame.maxX <= app.frame.maxX && tile.frame.minX >= 0, "a tile runs off the screen")
+        settle()
+        keepScreenshot(named: "92-my-posts")
+
+        // A tile opens 动态's own post page, without the tab bar, and 返回 comes back to the wall.
+        tile.tap()
+        let back = app.buttons["post.back"]
+        XCTAssertTrue(back.waitForExistence(timeout: 30), "a tile didn't open the post's page")
+        XCTAssertFalse(app.buttons["tab.feed"].exists, "the tab bar stayed over the post's page")
+        settle()
+        keepScreenshot(named: "94-my-posts-post")
+        back.tap()
+        XCTAssertTrue(
+            app.buttons["wall.filter.cheatMeal"].waitForExistence(timeout: 30), "返回 didn't go back to the wall")
+
+        app.buttons["wall.filter.cheatMeal"].tap()
+        let empty = app.descendants(matching: .any).matching(identifier: "wall.empty").firstMatch
+        XCTAssertTrue(empty.waitForExistence(timeout: 30), "an empty kind says nothing")
+        settle()
+        keepScreenshot(named: "93-my-posts-empty-kind")
+
+        app.buttons["wall.back"].tap()
+        XCTAssertTrue(entry.waitForExistence(timeout: 30), "返回 didn't go back to 我")
     }
 
     func testSettingsAndDeleteAccount() {
@@ -157,8 +196,29 @@ final class MeUITests: XCTestCase {
     /// What must stay tappable sits above the floating tab bar.
     private func assertClearOfTabBar(_ element: XCUIElement, in app: XCUIApplication) {
         XCTAssertTrue(element.waitForExistence(timeout: 30), "\(element) never showed")
-        let bar = app.buttons["tab.today"].frame
+        let bar = tabButton("tab.today", in: app).frame
         XCTAssertLessThanOrEqual(element.frame.maxY, bar.minY, "\(element) sits under the tab bar")
+    }
+
+    /// 我 in Traditional Chinese reads in Taiwan's words, not converted ones.
+    func testMePageInTraditionalChinese() {
+        let app = launch(language: "zh-Hant")
+        let card = app.buttons["me.card"]
+        XCTAssertTrue(card.waitForExistence(timeout: 30))
+        XCTAssertTrue(card.label.contains("練了"), "the card isn't in Traditional Chinese: \(card.label)")
+        XCTAssertTrue(app.buttons["編輯外卡運動員"].exists)
+        settle()
+        keepScreenshot(named: "49-me-zh-hant")
+        app.buttons["me.settings"].tap()
+        let language = app.buttons["me.language"]
+        XCTAssertTrue(language.waitForExistence(timeout: 30), "設定 has no 語言 row")
+        XCTAssertTrue(language.label.contains("繁體中文"), "the row doesn't name the language: \(language.label)")
+        app.swipeUp()
+        let deleteAccount = app.buttons["me.deleteAccount"]
+        XCTAssertTrue(deleteAccount.waitForExistence(timeout: 30), "no delete-account row in 設定")
+        XCTAssertTrue(deleteAccount.label.contains("刪除帳號"), "the row reads \(deleteAccount.label)")
+        settle()
+        keepScreenshot(named: "50-settings-zh-hant")
     }
 
     private func launch(language: String, extra: [String] = []) -> XCUIApplication {

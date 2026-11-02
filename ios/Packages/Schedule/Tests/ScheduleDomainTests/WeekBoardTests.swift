@@ -41,22 +41,22 @@ struct WeekBoardTests {
         #expect(board.focus == .selected(4))
     }
 
-    @Test func todaysTrainingDayPicksAnotherSportButStaysATrainingDay() {
+    @Test func todaysTrainingDayPicksAnotherSportOrRests() {
         var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-22"))
         #expect(board.isEditable(3))
         #expect(board.tap(3) == .selected)
-        board.rest()
-        #expect(board.days[3] == .train(.sport("strength")))
         board.pick(.sport("swim"))
         #expect(board.days[3] == .train(.sport("swim")))
         #expect(board.plannedDays == 5)
+        board.rest()
+        #expect(board.days[3] == .rest, "a rest today is a 休息日, no 请假条 needed")
+        #expect(board.plannedDays == 4)
     }
 
     @Test func aRestTodayBecomesATrainingDay() {
         var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-21"))
         #expect(board.isEditable(2))
         #expect(board.tap(2) == .selected)
-        #expect(!board.offersRest, "today never rests")
         board.pick(.sport("swim"))
         #expect(board.days[2] == .train(.sport("swim")))
         #expect(board.plannedDays == 6, "one rest day fewer")
@@ -65,7 +65,6 @@ struct WeekBoardTests {
     @Test func thisWeekTurnsADayStillToComeIntoASportOrRest() {
         var board = WeekBoard(weekStart: monday, days: plan, today: Fixtures.day("2026-10-22"))
         #expect(board.tap(4) == .selected)
-        #expect(board.offersRest)
         board.rest()
         #expect(board.days[4] == .rest)
         #expect(board.plannedDays == 4, "a rest day more")

@@ -3,6 +3,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -35,11 +36,15 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeekSummaryWords, unusedWeeklyAwards } from '../test-kit/weekly-awards.js';
+import {
+  unusedWeekSummaryWords,
+  unusedWeeklyAwards,
+  unusedCoachHiring,
+} from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
   nudgeInteractions,
-  reactionInteractions,
+  checkInInteractions,
   sendDailyProgress,
 } from './daily-progress-push.js';
 
@@ -62,6 +67,7 @@ const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   membership: squads,
   reactions: createPostgresReactionStore(db),
+  comments: createPostgresCommentStore(db),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),
@@ -80,7 +86,7 @@ const push = pushOn(db, recorder);
 const log = createLog(() => undefined);
 const JOBS_TOKEN = randomBytes(32).toString('hex');
 const nudges = nudgesOn(db);
-const interactions = [reactionInteractions(checkIns), nudgeInteractions(nudges)];
+const interactions = [checkInInteractions(checkIns), nudgeInteractions(nudges)];
 
 const deps = {
   db,
@@ -104,6 +110,7 @@ const deps = {
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   weeklyAwards: unusedWeeklyAwards,
   weekSummaryWords: unusedWeekSummaryWords,
+  coachHiring: unusedCoachHiring,
   log,
   jobs: { isScheduler: jobsTokenScheduler(JOBS_TOKEN), interactions, clock: () => new Date() },
   admin: adminOn(),
@@ -168,6 +175,13 @@ const evening = zoneAt(19, 21);
 const morning = zoneAt(8, 11);
 /** The day on a clock `offset` hours ahead of UTC (never within 3 hours of midnight here). */
 const dayAt = (offset: number) => new Date(Date.now() + offset * HOUR).toISOString().slice(0, 10);
+
+/**
+ * The days Eve's squad plans when Eve trained today: a 练了 on one of the default plan's rest days
+ * (Wednesday, Sunday) makes that day a training day too, one more than `planned`.
+ */
+const plannedAfterTraining = (planned: number, day: string) =>
+  String([0, 3].includes(new Date(`${day}T00:00:00.000Z`).getUTCDay()) ? planned + 1 : planned);
 
 /** A member with a profile in `at`'s zone (and a character called `nickname`) and a phone. */
 async function member(at: { readonly zone: string; readonly offset: number }, nickname?: string) {
@@ -259,6 +273,15 @@ async function react({
   expect(reacted.status).toBe(201);
 }
 
+async function comment({ token, checkIn }: { readonly token: string; readonly checkIn: string }) {
+  const written = await call('PUT', {
+    path: `/check-ins/${checkIn}/comments/${randomUUID()}`,
+    token,
+    body: { version: 1, text: '加油' },
+  });
+  expect(written.status).toBe(201);
+}
+
 async function nudge(
   from: { readonly token: string },
   { squad, to, kind }: { readonly squad: string; readonly to: { userId: string }; kind: string },
@@ -285,19 +308,21 @@ describe('the daily progress push', () => {
     await run();
     expect(sentTo.get(eve.phone)).toStrictEqual([
       {
-        alert: { key: 'push.dailyProgress.received', args: ['1', '15', '2'] },
+        alert: {
+          key: 'push.dailyProgress.received',
+          args: ['1', plannedAfterTraining(15, dayAt(eve.offset)), '2'],
+        },
         category: 'dailyProgress',
         thread: 'dailyProgress',
         collapseId: `dailyProgress-${dayAt(eve.offset)}`,
         interruption: 'passive',
-        mutableContent: true,
         event: {
           kind: 'dailyProgress',
           day: dayAt(eve.offset),
           squad,
           // One day trained, of each member's default 5 planned.
           squadTrainedDays: 1,
-          squadPlannedDays: 15,
+          squadPlannedDays: Number(plannedAfterTraining(15, dayAt(eve.offset))),
           received: { reaction: 2 },
           // Eve's own posts aren't in her push.
           today: { members: [{ id: eve.userId }], posts: [], more: 0 },
@@ -310,6 +335,28 @@ describe('the daily progress push', () => {
     await run();
     expect(sentTo.get(eve.phone)).toHaveLength(1);
     expect(await handled(eve.userId)).toStrictEqual([{ day: dayAt(eve.offset), quiet: false }]);
+  });
+
+  it('counts teammates who commented on the member’s posts, never the member’s own comments', async () => {
+    const eve = await member(evening);
+    const [early, other] = [await member(morning), await member(morning)];
+    const squad = await squadOf(eve, early, other);
+    const run1 = await trained(eve, squad);
+    await comment({ token: early.token, checkIn: run1 });
+    await comment({ token: early.token, checkIn: run1 });
+    await comment({ token: eve.token, checkIn: run1 });
+    await react({ token: other.token, checkIn: run1, emoji: '😂' });
+
+    await run();
+    expect(sentTo.get(eve.phone)).toMatchObject([
+      {
+        alert: {
+          key: 'push.dailyProgress.received',
+          args: ['1', plannedAfterTraining(15, dayAt(eve.offset)), '2'],
+        },
+        event: { received: { reaction: 1, comment: 1 } },
+      },
+    ]);
   });
 
   it('follows the push settings: off for everyone, or at another hour', async () => {
@@ -382,7 +429,10 @@ describe('the daily progress push', () => {
     expect(sentTo.get(eve.phone)).toMatchObject([
       {
         // The fan's reaction is in `event`, not the count: 「小美和另外 1 人拍了拍你」.
-        alert: { key: 'push.dailyProgress.poke.more', args: ['1', '20', '小美', '1'] },
+        alert: {
+          key: 'push.dailyProgress.poke.more',
+          args: ['1', plannedAfterTraining(20, dayAt(eve.offset)), '小美', '1'],
+        },
         event: { received: { reaction: 1, poke: 2 } },
       },
     ]);
@@ -410,7 +460,13 @@ describe('the daily progress push', () => {
       values (${eve.userId}, ${yesterday}, false, now())`.execute(db);
     await run();
     expect(sentTo.get(eve.phone)).toMatchObject([
-      { alert: { key: 'push.dailyProgress', args: ['1', '10'] }, event: { received: {} } },
+      {
+        alert: {
+          key: 'push.dailyProgress',
+          args: ['1', plannedAfterTraining(10, dayAt(eve.offset))],
+        },
+        event: { received: {} },
+      },
     ]);
   });
 
@@ -430,7 +486,10 @@ describe('the daily progress push', () => {
     await at(after.userId, sixPm + 60_000);
     await run();
     expect(sentTo.get(eve.phone)).toMatchObject([
-      { alert: { args: ['1', '15', '1'] }, event: { received: { reaction: 1 } } },
+      {
+        alert: { args: ['1', plannedAfterTraining(15, dayAt(eve.offset)), '1'] },
+        event: { received: { reaction: 1 } },
+      },
     ]);
   });
 

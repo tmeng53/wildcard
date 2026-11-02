@@ -152,7 +152,7 @@ struct EmojiBar: View {
     private static let slotStagger: Double = 0.015
 
     /// The bar's emoji, in the approved order.
-    static let common: [Emoji] = ["❤️", "💪", "😂", "🤤", "😮", "😡"].compactMap { try? Emoji($0) }
+    static let common = Emoji.quick
 
     var body: some View {
         HStack(spacing: 0) {

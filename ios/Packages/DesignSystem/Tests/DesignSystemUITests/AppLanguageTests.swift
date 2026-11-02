@@ -12,6 +12,9 @@ struct AppLanguageTests {
         AppLanguage.english.pick()
         #expect(AppLanguage.current == .english)
         #expect(UserDefaults.standard.stringArray(forKey: "AppleLanguages") == ["en"])
+        AppLanguage.traditionalChinese.pick()
+        #expect(AppLanguage.current == .traditionalChinese)
+        #expect(UserDefaults.standard.stringArray(forKey: "AppleLanguages") == ["zh-Hant"])
         AppLanguage.simplifiedChinese.pick()
         #expect(AppLanguage.current == .simplifiedChinese)
     }
@@ -23,10 +26,36 @@ struct AppLanguageTests {
         #expect(AppLanguage.current == .english)
         UserDefaults.standard.set(["zh-Hans-CN"], forKey: "AppleLanguages")
         #expect(AppLanguage.current == .simplifiedChinese)
+        UserDefaults.standard.set(["zh-Hant-TW"], forKey: "AppleLanguages")
+        #expect(AppLanguage.current == .traditionalChinese)
+        UserDefaults.standard.set(["zh-HK", "en"], forKey: "AppleLanguages")
+        #expect(AppLanguage.current == .traditionalChinese)
+        UserDefaults.standard.set(["zh-CN"], forKey: "AppleLanguages")
+        #expect(AppLanguage.current == .simplifiedChinese)
+    }
+
+    @Test func anExtensionSpeaksTheLanguageTheAppShared() throws {
+        let before = UserDefaults.standard.object(forKey: "AppleLanguages")
+        defer { UserDefaults.standard.set(before, forKey: "AppleLanguages") }
+        let suite = "AppLanguageTests.\(UUID().uuidString)"
+        let shared = try #require(UserDefaults(suiteName: suite))
+        defer { shared.removePersistentDomain(forName: suite) }
+        UserDefaults.standard.set(["zh-Hans"], forKey: "AppleLanguages")
+
+        // Nothing shared yet, or no shared settings: the extension keeps its own.
+        AppLanguage.adopt(from: shared)
+        AppLanguage.adopt(from: nil)
+        #expect(AppLanguage.current == .simplifiedChinese)
+
+        AppLanguage.english.share(in: shared)
+        AppLanguage.adopt(from: shared)
+        #expect(AppLanguage.current == .english)
+        #expect(UserDefaults.standard.stringArray(forKey: "AppleLanguages") == ["en"])
     }
 
     @Test func eachLanguageIsNamedInItself() {
-        #expect(AppLanguage.allCases.map(\.name) == ["简体中文", "English"])
+        #expect(AppLanguage.allCases.map(\.name) == ["简体中文", "繁體中文", "English"])
+        #expect(AppLanguage.traditionalChinese.locale.language.script == .hanTraditional)
         #expect(AppLanguage.english.locale.language.languageCode == .english)
     }
 }

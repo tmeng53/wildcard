@@ -12,7 +12,8 @@ public enum AccountState: Hashable, Sendable {
 ///
 /// An access token lives about an hour. `accessToken()` renews it shortly before it expires,
 /// and when many callers ask at once they share one renewal: the provider's refresh tokens are
-/// single-use, so two renewals with the same one would sign the member out.
+/// single-use, so two renewals with the same one would sign the member out. Before renewing it
+/// reads the store again, since another process on the device may share it and have renewed.
 public actor AccountSession {
     private let provider: any AuthProvider
     private let store: any SessionStore
@@ -210,6 +211,16 @@ public actor AccountSession {
     }
 
     private func refreshAndKeep(_ current: Session) async -> Result<Void, AccountError> {
+        // Another process sharing the store (the 6pm push's view) may have renewed it already,
+        // using up this refresh token: take what it saved rather than renew with a used one. A
+        // stored one no newer than ours is a save that failed, so it is left alone. Both renewing
+        // at the same moment can still happen; this narrows it to that moment.
+        if let stored = try? await store.load(), stored.member == current.member,
+            stored.refreshToken != current.refreshToken, stored.expiresAt > current.expiresAt, session == current
+        {
+            session = stored
+            return .success(())
+        }
         let result: Result<Session, AccountError>
         do throws(AccountError) {
             result = .success(try await provider.refresh(current.refreshToken))

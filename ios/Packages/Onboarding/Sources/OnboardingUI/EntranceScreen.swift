@@ -18,10 +18,11 @@ import SwiftUI
 /// welcome line. Then home's card drops in, the new member's head pops into its last ring, the
 /// week count turns over to include the new plan, the 打卡 button and the tab bar rise, and home
 /// takes over where the entrance left off. A tap once the card is in goes home at once.
-struct EntranceScreen<Bar: View>: View {
+struct EntranceScreen<Tabs: View>: View {
     let model: SignUpModel
-    /// The app's tab bar, which rises with the 打卡 button as on home.
-    let tabBar: Bar
+    /// The app's tabs around the screen, their bar hidden (false) until it rises with the 打卡
+    /// button as on home.
+    let tabs: (Bool, AnyView) -> Tabs
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var stage = EntranceStage()
     @State private var bubbleSizes: [Int: CGSize] = [:]
@@ -34,6 +35,11 @@ struct EntranceScreen<Bar: View>: View {
     private let scene = SceneTheme.gym
 
     var body: some View {
+        tabs(stage.showsChrome, AnyView(screen))
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: stage.showsChrome)
+    }
+
+    private var screen: some View {
         ZStack {
             GeometryReader { proxy in
                 let unit = proxy.size.width / StageLayout.width
@@ -144,18 +150,13 @@ struct EntranceScreen<Bar: View>: View {
         }
     }
 
-    /// The 打卡 button and the tab bar where home has them; for show until home takes over.
+    /// The 打卡 button where home has it, on the tab bar; for show until home takes over.
     private var chrome: some View {
         VStack(spacing: 0) {
             Spacer()
             CheckInBurst(isOpen: .constant(false), identifierPrefix: "entrance") { _ in }
                 .padding(.bottom, Space.l)
-            // Measured from the screen's bottom edge, as home and its tab bar are.
-            tabBar
-                .padding(.horizontal, Space.pageMargin)
-                .padding(.bottom, Sizing.tabBarBottom)
         }
-        .ignoresSafeArea(edges: .bottom)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }

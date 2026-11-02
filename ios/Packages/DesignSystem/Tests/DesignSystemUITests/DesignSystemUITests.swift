@@ -33,7 +33,7 @@ struct StringCatalogTests {
         #expect(catalog.sourceLanguage == "zh-Hans")
         #expect(catalog.strings["下一步"]?.localizations["en"]?.stringUnit.value == "Next")
         #expect(catalog.strings["打卡"]?.localizations["en"]?.stringUnit.value == "Check in")
-        #expect(catalog.strings["坦白放纵餐"]?.localizations["en"]?.stringUnit.value == "Cheat meal confession")
+        #expect(catalog.strings["坦白放纵餐"]?.localizations["en"]?.stringUnit.value == "Cheat meal")
         let missing = catalog.strings.filter { $0.value.localizations["en"]?.stringUnit.value.isEmpty ?? true }
         #expect(missing.isEmpty, "no English for \(missing.keys.sorted())")
     }

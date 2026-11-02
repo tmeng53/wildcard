@@ -152,13 +152,15 @@
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<!-- @AppStorage (UserDefaults) remembers small UI choices, such as the squad card's page,
-		     read and written only by this app. -->
+		     read and written only by this app (CA92.1); the app group's defaults pass where the
+		     6pm push's view asked to open the app, between the app and that view (1C8F.1). -->
 		<dict>
 			<key>NSPrivacyAccessedAPIType</key>
 			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
 				<string>CA92.1</string>
+				<string>1C8F.1</string>
 			</array>
 		</dict>
 	</array>

@@ -1165,21 +1165,52 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PhotoView/url`.
             public var url: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PhotoView/size`.
+            public var size: Components.Schemas.PhotoSize?
             /// Creates a new `PhotoView`.
             ///
             /// - Parameters:
             ///   - path: The photo’s name, as the check-in was saved with.
             ///   - url: `GET` the photo here. It works for an hour.
+            ///   - size:
             public init(
                 path: Swift.String,
-                url: Swift.String
+                url: Swift.String,
+                size: Components.Schemas.PhotoSize? = nil
             ) {
                 self.path = path
                 self.url = url
+                self.size = size
             }
             public enum CodingKeys: String, CodingKey {
                 case path
                 case url
+                case size
+            }
+        }
+        /// Its width and height in pixels. Missing on photos saved without one.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PhotoSize`.
+        public struct PhotoSize: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PhotoSize/width`.
+            public var width: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PhotoSize/height`.
+            public var height: Swift.Int
+            /// Creates a new `PhotoSize`.
+            ///
+            /// - Parameters:
+            ///   - width:
+            ///   - height:
+            public init(
+                width: Swift.Int,
+                height: Swift.Int
+            ) {
+                self.width = width
+                self.height = height
+            }
+            public enum CodingKeys: String, CodingKey {
+                case width
+                case height
             }
         }
         /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn`.
@@ -1618,15 +1649,23 @@ extension Components {
         public struct PhotoRef: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PhotoRef/path`.
             public var path: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PhotoRef/size`.
+            public var size: Components.Schemas.PhotoSize?
             /// Creates a new `PhotoRef`.
             ///
             /// - Parameters:
             ///   - path:
-            public init(path: Swift.String) {
+            ///   - size:
+            public init(
+                path: Swift.String,
+                size: Components.Schemas.PhotoSize? = nil
+            ) {
                 self.path = path
+                self.size = size
             }
             public enum CodingKeys: String, CodingKey {
                 case path
+                case size
             }
         }
         /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInDraft`.
@@ -1883,21 +1922,29 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadPost/reactions`.
             public var reactions: [Components.Schemas.ReactionEntry]
+            /// Comments from the author and the teammates the viewer shares a squad with, oldest first. Builds from before comments read the feed without it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPost/comments`.
+            public var comments: [Components.Schemas.CommentEntry]
             /// Creates a new `SquadPost`.
             ///
             /// - Parameters:
             ///   - checkIn:
             ///   - reactions: Teammates’ emoji, oldest first.
+            ///   - comments: Comments from the author and the teammates the viewer shares a squad with, oldest first. Builds from before comments read the feed without it.
             public init(
                 checkIn: Components.Schemas.CheckIn,
-                reactions: [Components.Schemas.ReactionEntry]
+                reactions: [Components.Schemas.ReactionEntry],
+                comments: [Components.Schemas.CommentEntry]
             ) {
                 self.checkIn = checkIn
                 self.reactions = reactions
+                self.comments = comments
             }
             public enum CodingKeys: String, CodingKey {
                 case checkIn
                 case reactions
+                case comments
             }
         }
         /// - Remark: Generated from `#/components/schemas/ReactionEntry`.
@@ -1935,6 +1982,100 @@ extension Components {
                 case reactedAt
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CommentEntry`.
+        public struct CommentEntry: Codable, Hashable, Sendable {
+            /// The comment’s id, which the app picks.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/id`.
+            public var id: Swift.String
+            /// Who wrote it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/member`.
+            public var member: Swift.String
+            /// Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/text`.
+            public var text: Swift.String
+            /// Whom it replies to, when it does. Gone once their account is deleted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/replyTo`.
+            public var replyTo: Swift.String?
+            /// When it was written, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/commentedAt`.
+            public var commentedAt: Foundation.Date
+            /// Creates a new `CommentEntry`.
+            ///
+            /// - Parameters:
+            ///   - id: The comment’s id, which the app picks.
+            ///   - member: Who wrote it.
+            ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///   - replyTo: Whom it replies to, when it does. Gone once their account is deleted.
+            ///   - commentedAt: When it was written, in UTC with milliseconds.
+            public init(
+                id: Swift.String,
+                member: Swift.String,
+                text: Swift.String,
+                replyTo: Swift.String? = nil,
+                commentedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.member = member
+                self.text = text
+                self.replyTo = replyTo
+                self.commentedAt = commentedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case member
+                case text
+                case replyTo
+                case commentedAt
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Post`.
+        public struct Post: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Post/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/version`.
+            public var version: Components.Schemas.Post.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/Post/checkIn`.
+            public var checkIn: Components.Schemas.CheckIn
+            /// Teammates’ emoji, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Post/reactions`.
+            public var reactions: [Components.Schemas.ReactionEntry]
+            /// Comments from the author and the teammates the viewer shares a squad with, oldest first. Builds from before comments read the feed without it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Post/comments`.
+            public var comments: [Components.Schemas.CommentEntry]
+            /// Creates a new `Post`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - checkIn:
+            ///   - reactions: Teammates’ emoji, oldest first.
+            ///   - comments: Comments from the author and the teammates the viewer shares a squad with, oldest first. Builds from before comments read the feed without it.
+            public init(
+                version: Components.Schemas.Post.VersionPayload,
+                checkIn: Components.Schemas.CheckIn,
+                reactions: [Components.Schemas.ReactionEntry],
+                comments: [Components.Schemas.CommentEntry]
+            ) {
+                self.version = version
+                self.checkIn = checkIn
+                self.reactions = reactions
+                self.comments = comments
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case checkIn
+                case reactions
+                case comments
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CheckInList`.
         public struct CheckInList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CheckInList/version`.
@@ -1962,6 +2103,78 @@ extension Components {
                 case checkIns
             }
         }
+        /// - Remark: Generated from `#/components/schemas/MyPostPage`.
+        public struct MyPostPage: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/version`.
+            public var version: Components.Schemas.MyPostPage.VersionPayload
+            /// Newest day first, then newest made. Each shows its whole audience, and the reactions and comments of the member and of members of the squads it went to that the member still shares with them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/posts`.
+            public var posts: [Components.Schemas.SquadPost]
+            /// Pass as `after` for the next page. Left out on the page that reaches the member’s first check-in.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/MyPostPage/counts`.
+            public var counts: Components.Schemas.MyPostCounts?
+            /// Creates a new `MyPostPage`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - posts: Newest day first, then newest made. Each shows its whole audience, and the reactions and comments of the member and of members of the squads it went to that the member still shares with them.
+            ///   - next: Pass as `after` for the next page. Left out on the page that reaches the member’s first check-in.
+            ///   - counts:
+            public init(
+                version: Components.Schemas.MyPostPage.VersionPayload,
+                posts: [Components.Schemas.SquadPost],
+                next: Swift.String? = nil,
+                counts: Components.Schemas.MyPostCounts? = nil
+            ) {
+                self.version = version
+                self.posts = posts
+                self.next = next
+                self.counts = counts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case posts
+                case next
+                case counts
+            }
+        }
+        /// On the first page only (no `after`); never narrowed to `kind`.
+        ///
+        /// - Remark: Generated from `#/components/schemas/MyPostCounts`.
+        public struct MyPostCounts: Codable, Hashable, Sendable {
+            /// Every check-in the member made.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostCounts/posts`.
+            public var posts: Swift.Int
+            /// The reactions on them the member can see, as on each post.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyPostCounts/reactions`.
+            public var reactions: Swift.Int
+            /// Creates a new `MyPostCounts`.
+            ///
+            /// - Parameters:
+            ///   - posts: Every check-in the member made.
+            ///   - reactions: The reactions on them the member can see, as on each post.
+            public init(
+                posts: Swift.Int,
+                reactions: Swift.Int
+            ) {
+                self.posts = posts
+                self.reactions = reactions
+            }
+            public enum CodingKeys: String, CodingKey {
+                case posts
+                case reactions
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CheckInTotals`.
         public struct CheckInTotals: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
@@ -1982,7 +2195,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/cheatMeals`.
             public var cheatMeals: Swift.Int
-            /// 今日请假条 check-ins, at most one a day.
+            /// 今日请假条 check-ins.
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/disclaimers`.
             public var disclaimers: Swift.Int
@@ -1995,7 +2208,7 @@ extension Components {
             ///   - trainedDays: Days with a 练了; several 练了 on one day count once.
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
-            ///   - disclaimers: 今日请假条 check-ins, at most one a day.
+            ///   - disclaimers: 今日请假条 check-ins.
             ///   - topSport:
             public init(
                 version: Components.Schemas.CheckInTotals.VersionPayload,
@@ -2192,6 +2405,131 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case reactions
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Comment`.
+        public struct Comment: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Comment/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Comment/version`.
+            public var version: Components.Schemas.Comment.VersionPayload
+            /// The comment’s id, which the app picks.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/id`.
+            public var id: Swift.String
+            /// Who wrote it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/member`.
+            public var member: Swift.String
+            /// Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/text`.
+            public var text: Swift.String
+            /// Whom it replies to, when it does. Gone once their account is deleted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/replyTo`.
+            public var replyTo: Swift.String?
+            /// When it was written, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/commentedAt`.
+            public var commentedAt: Foundation.Date
+            /// Creates a new `Comment`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id: The comment’s id, which the app picks.
+            ///   - member: Who wrote it.
+            ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///   - replyTo: Whom it replies to, when it does. Gone once their account is deleted.
+            ///   - commentedAt: When it was written, in UTC with milliseconds.
+            public init(
+                version: Components.Schemas.Comment.VersionPayload,
+                id: Swift.String,
+                member: Swift.String,
+                text: Swift.String,
+                replyTo: Swift.String? = nil,
+                commentedAt: Foundation.Date
+            ) {
+                self.version = version
+                self.id = id
+                self.member = member
+                self.text = text
+                self.replyTo = replyTo
+                self.commentedAt = commentedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case member
+                case text
+                case replyTo
+                case commentedAt
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CommentDraft`.
+        public struct CommentDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/version`.
+            public var version: Components.Schemas.CommentDraft.VersionPayload
+            /// Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/text`.
+            public var text: Swift.String
+            /// Whom the comment replies to (回复 Mia：…): the check-in’s author, or a teammate who can see it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/replyTo`.
+            public var replyTo: Swift.String?
+            /// Creates a new `CommentDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
+            ///   - replyTo: Whom the comment replies to (回复 Mia：…): the check-in’s author, or a teammate who can see it.
+            public init(
+                version: Components.Schemas.CommentDraft.VersionPayload,
+                text: Swift.String,
+                replyTo: Swift.String? = nil
+            ) {
+                self.version = version
+                self.text = text
+                self.replyTo = replyTo
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case text
+                case replyTo
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CommentList`.
+        public struct CommentList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CommentList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CommentList/version`.
+            public var version: Components.Schemas.CommentList.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CommentList/comments`.
+            public var comments: [Components.Schemas.CommentEntry]
+            /// Creates a new `CommentList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - comments:
+            public init(
+                version: Components.Schemas.CommentList.VersionPayload,
+                comments: [Components.Schemas.CommentEntry]
+            ) {
+                self.version = version
+                self.comments = comments
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case comments
             }
         }
         /// - Remark: Generated from `#/components/schemas/Device`.
@@ -3158,6 +3496,249 @@ extension Components {
                 case scene
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CoachMarket`.
+        public struct CoachMarket: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachMarket/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachMarket/version`.
+            public var version: Components.Schemas.CoachMarket.VersionPayload
+            /// The coaches a squad can hire now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMarket/coaches`.
+            public var coaches: [Components.Schemas.CoachCard]
+            /// Creates a new `CoachMarket`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - coaches: The coaches a squad can hire now.
+            public init(
+                version: Components.Schemas.CoachMarket.VersionPayload,
+                coaches: [Components.Schemas.CoachCard]
+            ) {
+                self.version = version
+                self.coaches = coaches
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case coaches
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachCard`.
+        public struct CoachCard: Codable, Hashable, Sendable {
+            /// The coach’s id. Never changes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/id`.
+            public var id: Swift.String
+            /// 入门, 进阶 or 专业: a style a squad picks, never a better coach.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/tier`.
+            @frozen public enum TierPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case entry = "entry"
+                case advanced = "advanced"
+                case pro = "pro"
+            }
+            /// 入门, 进阶 or 专业: a style a squad picks, never a better coach.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/tier`.
+            public var tier: Components.Schemas.CoachCard.TierPayload
+            /// - Remark: Generated from `#/components/schemas/CoachCard/name`.
+            public var name: Swift.String
+            /// Its 头衔, next to its name.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/title`.
+            public var title: Swift.String
+            /// Its 口头禅.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/catchphrase`.
+            public var catchphrase: Swift.String
+            /// Its fictional 履历.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/background`.
+            public var background: Swift.String
+            /// The number in 执教: its fictional years.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/yearsCoaching`.
+            public var yearsCoaching: Swift.Int
+            /// What 执教 says after the years.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/experience`.
+            public var experience: Swift.String
+            /// Its 风格.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/style`.
+            public var style: Swift.String
+            /// The tags on its card in 教练市场.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/tags`.
+            public var tags: [Swift.String]
+            /// Its 期望待遇.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/pay`.
+            public var pay: Swift.String
+            /// The character the app draws, by the art’s id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCard/look`.
+            public var look: Swift.String
+            /// Creates a new `CoachCard`.
+            ///
+            /// - Parameters:
+            ///   - id: The coach’s id. Never changes.
+            ///   - tier: 入门, 进阶 or 专业: a style a squad picks, never a better coach.
+            ///   - name:
+            ///   - title: Its 头衔, next to its name.
+            ///   - catchphrase: Its 口头禅.
+            ///   - background: Its fictional 履历.
+            ///   - yearsCoaching: The number in 执教: its fictional years.
+            ///   - experience: What 执教 says after the years.
+            ///   - style: Its 风格.
+            ///   - tags: The tags on its card in 教练市场.
+            ///   - pay: Its 期望待遇.
+            ///   - look: The character the app draws, by the art’s id.
+            public init(
+                id: Swift.String,
+                tier: Components.Schemas.CoachCard.TierPayload,
+                name: Swift.String,
+                title: Swift.String,
+                catchphrase: Swift.String,
+                background: Swift.String,
+                yearsCoaching: Swift.Int,
+                experience: Swift.String,
+                style: Swift.String,
+                tags: [Swift.String],
+                pay: Swift.String,
+                look: Swift.String
+            ) {
+                self.id = id
+                self.tier = tier
+                self.name = name
+                self.title = title
+                self.catchphrase = catchphrase
+                self.background = background
+                self.yearsCoaching = yearsCoaching
+                self.experience = experience
+                self.style = style
+                self.tags = tags
+                self.pay = pay
+                self.look = look
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case tier
+                case name
+                case title
+                case catchphrase
+                case background
+                case yearsCoaching
+                case experience
+                case style
+                case tags
+                case pay
+                case look
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadCoach`.
+        public struct SquadCoach: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/version`.
+            public var version: Components.Schemas.SquadCoach.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/coach`.
+            public struct CoachPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/SquadCoach/coach/value1`.
+                public var value1: Components.Schemas.CoachCard
+                /// The squad’s coach, or null for none.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadCoach/coach/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIObjectContainer
+                /// Creates a new `CoachPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: The squad’s coach, or null for none.
+                public init(
+                    value1: Components.Schemas.CoachCard,
+                    value2: OpenAPIRuntime.OpenAPIObjectContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/coach`.
+            public var coach: Components.Schemas.SquadCoach.CoachPayload?
+            /// When the squad hired it (执教第 N 周 counts from here), or null.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/since`.
+            public var since: Foundation.Date?
+            /// True for the captain, the only member who hires, changes and fires the coach.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadCoach/canHire`.
+            public var canHire: Swift.Bool
+            /// Creates a new `SquadCoach`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - coach:
+            ///   - since: When the squad hired it (执教第 N 周 counts from here), or null.
+            ///   - canHire: True for the captain, the only member who hires, changes and fires the coach.
+            public init(
+                version: Components.Schemas.SquadCoach.VersionPayload,
+                coach: Components.Schemas.SquadCoach.CoachPayload? = nil,
+                since: Foundation.Date? = nil,
+                canHire: Swift.Bool
+            ) {
+                self.version = version
+                self.coach = coach
+                self.since = since
+                self.canHire = canHire
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case coach
+                case since
+                case canHire
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachHire`.
+        public struct CoachHire: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachHire/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachHire/version`.
+            public var version: Components.Schemas.CoachHire.VersionPayload
+            /// The coach’s id. Never changes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachHire/coach`.
+            public var coach: Swift.String
+            /// Creates a new `CoachHire`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - coach: The coach’s id. Never changes.
+            public init(
+                version: Components.Schemas.CoachHire.VersionPayload,
+                coach: Swift.String
+            ) {
+                self.version = version
+                self.coach = coach
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case coach
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadNudges`.
         public struct SquadNudges: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadNudges/version`.
@@ -3869,6 +4450,168 @@ extension Components {
                 case style
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PlanTemplate`.
+        public struct PlanTemplate: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlanTemplate/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PlanTemplate/version`.
+            public var version: Components.Schemas.PlanTemplate.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/PlanTemplate/days`.
+            public var days: Components.Schemas.PlanDays
+            /// `saved` for the member’s own; `default` (rest on Wednesday and Sunday) before they make one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlanTemplate/source`.
+            @frozen public enum SourcePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case saved = "saved"
+                case _default = "default"
+            }
+            /// `saved` for the member’s own; `default` (rest on Wednesday and Sunday) before they make one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlanTemplate/source`.
+            public var source: Components.Schemas.PlanTemplate.SourcePayload
+            /// Creates a new `PlanTemplate`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - days:
+            ///   - source: `saved` for the member’s own; `default` (rest on Wednesday and Sunday) before they make one.
+            public init(
+                version: Components.Schemas.PlanTemplate.VersionPayload,
+                days: Components.Schemas.PlanDays,
+                source: Components.Schemas.PlanTemplate.SourcePayload
+            ) {
+                self.version = version
+                self.days = days
+                self.source = source
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case days
+                case source
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PlanDays`.
+        @frozen public enum PlanDaysPayload: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlanDays/case1`.
+            public struct Case1Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case1/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case train = "train"
+                }
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case1/kind`.
+                public var kind: Components.Schemas.PlanDaysPayload.Case1Payload.KindPayload
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case1/sport`.
+                public var sport: Components.Schemas.Sport?
+                /// Trimmed, then 1 to 20 characters as people see them, on one line.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case1/customSport`.
+                public var customSport: Swift.String?
+                /// Creates a new `Case1Payload`.
+                ///
+                /// - Parameters:
+                ///   - kind:
+                ///   - sport:
+                ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
+                public init(
+                    kind: Components.Schemas.PlanDaysPayload.Case1Payload.KindPayload,
+                    sport: Components.Schemas.Sport? = nil,
+                    customSport: Swift.String? = nil
+                ) {
+                    self.kind = kind
+                    self.sport = sport
+                    self.customSport = customSport
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case kind
+                    case sport
+                    case customSport
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlanDays/case1`.
+            case case1(Components.Schemas.PlanDaysPayload.Case1Payload)
+            /// - Remark: Generated from `#/components/schemas/PlanDays/case2`.
+            public struct Case2Payload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case2/kind`.
+                @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case rest = "rest"
+                }
+                /// - Remark: Generated from `#/components/schemas/PlanDays/case2/kind`.
+                public var kind: Components.Schemas.PlanDaysPayload.Case2Payload.KindPayload
+                /// Creates a new `Case2Payload`.
+                ///
+                /// - Parameters:
+                ///   - kind:
+                public init(kind: Components.Schemas.PlanDaysPayload.Case2Payload.KindPayload) {
+                    self.kind = kind
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case kind
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlanDays/case2`.
+            case case2(Components.Schemas.PlanDaysPayload.Case2Payload)
+            public init(from decoder: any Swift.Decoder) throws {
+                var errors: [any Swift.Error] = []
+                do {
+                    self = .case1(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                do {
+                    self = .case2(try .init(from: decoder))
+                    return
+                } catch {
+                    errors.append(error)
+                }
+                throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                    type: Self.self,
+                    codingPath: decoder.codingPath,
+                    errors: errors
+                )
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                switch self {
+                case let .case1(value):
+                    try value.encode(to: encoder)
+                case let .case2(value):
+                    try value.encode(to: encoder)
+                }
+            }
+        }
+        /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PlanDays`.
+        public typealias PlanDays = [Components.Schemas.PlanDaysPayload]
+        /// - Remark: Generated from `#/components/schemas/PlanTemplateDraft`.
+        public struct PlanTemplateDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlanTemplateDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PlanTemplateDraft/version`.
+            public var version: Components.Schemas.PlanTemplateDraft.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/PlanTemplateDraft/days`.
+            public var days: Components.Schemas.PlanDays
+            /// Creates a new `PlanTemplateDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - days:
+            public init(
+                version: Components.Schemas.PlanTemplateDraft.VersionPayload,
+                days: Components.Schemas.PlanDays
+            ) {
+                self.version = version
+                self.days = days
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case days
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/WeeklyPlan`.
         public struct WeeklyPlan: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/version`.
@@ -3885,104 +4628,9 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/weekStart`.
             public var weekStart: Swift.String
-            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload`.
-            @frozen public enum DaysPayloadPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1`.
-                public struct Case1Payload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/kind`.
-                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                        case train = "train"
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/kind`.
-                    public var kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload.KindPayload
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/sport`.
-                    public var sport: Components.Schemas.Sport?
-                    /// Trimmed, then 1 to 20 characters as people see them, on one line.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1/customSport`.
-                    public var customSport: Swift.String?
-                    /// Creates a new `Case1Payload`.
-                    ///
-                    /// - Parameters:
-                    ///   - kind:
-                    ///   - sport:
-                    ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
-                    public init(
-                        kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload.KindPayload,
-                        sport: Components.Schemas.Sport? = nil,
-                        customSport: Swift.String? = nil
-                    ) {
-                        self.kind = kind
-                        self.sport = sport
-                        self.customSport = customSport
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case kind
-                        case sport
-                        case customSport
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case1`.
-                case case1(Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case1Payload)
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2`.
-                public struct Case2Payload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2/kind`.
-                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                        case rest = "rest"
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2/kind`.
-                    public var kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case2Payload.KindPayload
-                    /// Creates a new `Case2Payload`.
-                    ///
-                    /// - Parameters:
-                    ///   - kind:
-                    public init(kind: Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case2Payload.KindPayload) {
-                        self.kind = kind
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case kind
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlan/DaysPayload/case2`.
-                case case2(Components.Schemas.WeeklyPlan.DaysPayloadPayload.Case2Payload)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .case1(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .case2(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .case1(value):
-                        try value.encode(to: encoder)
-                    case let .case2(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
-            ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/days`.
-            public typealias DaysPayload = [Components.Schemas.WeeklyPlan.DaysPayloadPayload]
-            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/days`.
-            public var days: Components.Schemas.WeeklyPlan.DaysPayload
-            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save.
+            public var days: Components.Schemas.PlanDays
+            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/source`.
             @frozen public enum SourcePayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -3990,7 +4638,7 @@ extension Components {
                 case carriedOver = "carriedOver"
                 case _default = "default"
             }
-            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save.
+            /// `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/source`.
             public var source: Components.Schemas.WeeklyPlan.SourcePayload
@@ -4006,15 +4654,15 @@ extension Components {
             ///   - version:
             ///   - member: The member whose plan it is.
             ///   - weekStart: The week’s Monday.
-            ///   - days: Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
-            ///   - source: `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s latest earlier plan; `default` (rest on Wednesday and Sunday) before their first save.
+            ///   - days:
+            ///   - source: `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
             ///   - fuelGoals:
             ///   - firstWeek: The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.
             public init(
                 version: Components.Schemas.WeeklyPlan.VersionPayload,
                 member: Swift.String,
                 weekStart: Swift.String,
-                days: Components.Schemas.WeeklyPlan.DaysPayload,
+                days: Components.Schemas.PlanDays,
                 source: Components.Schemas.WeeklyPlan.SourcePayload,
                 fuelGoals: Components.Schemas.FuelGoals,
                 firstWeek: Swift.String? = nil
@@ -4149,111 +4797,16 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/version`.
             public var version: Components.Schemas.WeeklyPlanDraft.VersionPayload
-            /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload`.
-            @frozen public enum DaysPayloadPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1`.
-                public struct Case1Payload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/kind`.
-                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                        case train = "train"
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/kind`.
-                    public var kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload.KindPayload
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/sport`.
-                    public var sport: Components.Schemas.Sport?
-                    /// Trimmed, then 1 to 20 characters as people see them, on one line.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1/customSport`.
-                    public var customSport: Swift.String?
-                    /// Creates a new `Case1Payload`.
-                    ///
-                    /// - Parameters:
-                    ///   - kind:
-                    ///   - sport:
-                    ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
-                    public init(
-                        kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload.KindPayload,
-                        sport: Components.Schemas.Sport? = nil,
-                        customSport: Swift.String? = nil
-                    ) {
-                        self.kind = kind
-                        self.sport = sport
-                        self.customSport = customSport
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case kind
-                        case sport
-                        case customSport
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case1`.
-                case case1(Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case1Payload)
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2`.
-                public struct Case2Payload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2/kind`.
-                    @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                        case rest = "rest"
-                    }
-                    /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2/kind`.
-                    public var kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case2Payload.KindPayload
-                    /// Creates a new `Case2Payload`.
-                    ///
-                    /// - Parameters:
-                    ///   - kind:
-                    public init(kind: Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case2Payload.KindPayload) {
-                        self.kind = kind
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case kind
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/DaysPayload/case2`.
-                case case2(Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload.Case2Payload)
-                public init(from decoder: any Swift.Decoder) throws {
-                    var errors: [any Swift.Error] = []
-                    do {
-                        self = .case1(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    do {
-                        self = .case2(try .init(from: decoder))
-                        return
-                    } catch {
-                        errors.append(error)
-                    }
-                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
-                        type: Self.self,
-                        codingPath: decoder.codingPath,
-                        errors: errors
-                    )
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    switch self {
-                    case let .case1(value):
-                        try value.encode(to: encoder)
-                    case let .case2(value):
-                        try value.encode(to: encoder)
-                    }
-                }
-            }
-            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
-            ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/days`.
-            public typealias DaysPayload = [Components.Schemas.WeeklyPlanDraft.DaysPayloadPayload]
-            /// Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/WeeklyPlanDraft/days`.
-            public var days: Components.Schemas.WeeklyPlanDraft.DaysPayload
+            public var days: Components.Schemas.PlanDays
             /// Creates a new `WeeklyPlanDraft`.
             ///
             /// - Parameters:
             ///   - version:
-            ///   - days: Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and `customSport` for `"custom"`), or `{"kind": "rest"}`.
+            ///   - days:
             public init(
                 version: Components.Schemas.WeeklyPlanDraft.VersionPayload,
-                days: Components.Schemas.WeeklyPlanDraft.DaysPayload
+                days: Components.Schemas.PlanDays
             ) {
                 self.version = version
                 self.days = days

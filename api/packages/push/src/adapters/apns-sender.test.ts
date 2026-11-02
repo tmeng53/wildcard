@@ -103,6 +103,7 @@ describe('the APNs sender', () => {
         'thread-id': 'check-in:1',
         'interruption-level': 'active',
         sound: 'default',
+        'mutable-content': 1,
       },
       event: { checkIn: '1' },
     });
@@ -173,6 +174,7 @@ describe('the APNs sender', () => {
       category: 'reaction',
       'thread-id': 'check-in:1',
       'interruption-level': 'passive',
+      'mutable-content': 1,
     });
   });
 

@@ -34,6 +34,7 @@ import {
 } from '@wildcard/weekly-awards';
 
 import type { Log } from '../log.js';
+import { pushAlert } from '../push-copy.js';
 
 // The weekly awards and the frozen 战报 across modules: who was in the squad and its scene from
 // squads, the week's check-ins and pages from check-ins, members' clocks and characters from
@@ -71,7 +72,7 @@ export interface WeeklyAwardsRun {
  */
 export function awardsReadyNotification(squad: SquadId, week: WeekStart): PushNotification {
   return {
-    alert: { key: 'push.weeklyAwards.ready' },
+    alert: pushAlert('push.weeklyAwards.ready', []),
     category: 'weeklyAwards',
     thread: 'weekly-awards',
     collapseId: `weekly-awards-${week}`,
@@ -95,10 +96,11 @@ export function awardsStuckNotification({
   readonly failures: Failures;
 }): PushNotification {
   return {
-    alert: {
-      key: 'push.weeklyAwards.stuck',
-      args: [squad.name, String(failures.count), failures.lastError ?? '-'],
-    },
+    alert: pushAlert('push.weeklyAwards.stuck', [
+      squad.name,
+      String(failures.count),
+      failures.lastError ?? '-',
+    ]),
     category: 'weeklyAwardsStuck',
     thread: 'weekly-awards-stuck',
     collapseId: `weekly-awards-stuck-${squad.id}-${week}`,
@@ -359,7 +361,7 @@ async function frozenStory(
     members: week.members.map(({ member, checkIns }, index): StoryMember => {
       const page = pages.members[index];
       if (page?.member !== member) throw new Error('The 战报’s pages don’t match its members');
-      const hottest = topCheckInOf(checkIns.map((record) => weekCheckIn(record, week.reactions)));
+      const hottest = topCheckInOf(checkIns.map((record) => weekCheckIn(record, week)));
       const best = pages.bestDisclaimer;
       return {
         member: MemberId.parse(member),
@@ -435,14 +437,14 @@ async function memberWeeks(
         member: MemberId.parse(member),
         // A member who checked in has saved a time zone; UTC only for one who never did.
         timeZone: profile?.timeZone ?? 'UTC',
-        checkIns: checkIns.map((record) => weekCheckIn(record, squadWeek.reactions)),
+        checkIns: checkIns.map((record) => weekCheckIn(record, squadWeek)),
       };
     }),
   );
 }
 function weekCheckIn(
   record: CheckInRecord,
-  reactions: SquadWeekCheckIns['reactions'],
+  { reactions, comments }: Pick<SquadWeekCheckIns, 'reactions' | 'comments'>,
 ): WeekCheckIn {
   const counts: Record<string, number> = {};
   for (const { emoji } of reactions.get(record.id) ?? []) counts[emoji] = (counts[emoji] ?? 0) + 1;
@@ -453,6 +455,11 @@ function weekCheckIn(
     kind: record.kind,
     photos: photosOf(record).map(({ path }) => path),
     reactions: counts,
+    comments: (comments.get(record.id) ?? []).map(({ member, text, replyTo }) => ({
+      member: MemberId.parse(member),
+      text,
+      ...(replyTo === undefined ? {} : { replyTo: MemberId.parse(replyTo) }),
+    })),
   };
   switch (record.kind) {
     case 'trained':

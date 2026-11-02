@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -33,7 +34,11 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
+import {
+  unusedWeeklyAwards,
+  unusedWeekSummaryWords,
+  unusedCoachHiring,
+} from '../test-kit/weekly-awards.js';
 
 // DELETE /me against local Supabase's Auth, Storage and database. Only Apple is stood in for:
 // its servers can't be called without a real key and a real sign-in.
@@ -67,6 +72,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
         aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
+      comments: createPostgresCommentStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: memberCalendar(members),
@@ -90,6 +96,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     nudges: nudgesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     weekSummaryWords: unusedWeekSummaryWords,
+    coachHiring: unusedCoachHiring,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,
     admin: adminOn(),
@@ -156,9 +163,10 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
   const now = new Date(Date.now() - 60_000);
   // Each author's own day: mine in Toronto, which lasts until 3am there; the friend has no time
   // zone yet, so theirs is the UTC day.
-  const torontoDay = new Date(now.getTime() - 3 * 3_600_000).toLocaleDateString('en-CA', {
-    timeZone: 'America/Toronto',
-  });
+  // Three hours back on Toronto's clock, not in absolute time, so the night clocks go back still
+  // gives the day the server counts.
+  const torontoClock = new Date(now.toLocaleString('sv-SE', { timeZone: 'America/Toronto' }) + 'Z');
+  const torontoDay = new Date(torontoClock.getTime() - 3 * 3_600_000).toISOString().slice(0, 10);
   const checkIn = (author: { token: string; day: string }, training: Record<string, unknown>) =>
     call('PUT', `/check-ins/${randomUUID()}`, author.token, {
       version: 1,
@@ -194,7 +202,10 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
     await sql`insert into public.weekly_award_winners (squad_id, week_start, member_id, position, award)
       values (${squad}, '2026-10-12', ${userId}, ${position}, ${award}::jsonb)`.execute(db);
   }
-  return { me, friend, squad };
+  // A 练了 on one of the default plan's rest days (Wednesday, Sunday) makes that day a training
+  // day, which saves this week's plan too.
+  const restDay = [0, 3].includes(new Date(`${torontoDay}T00:00:00.000Z`).getUTCDay());
+  return { me, friend, squad, everything: { ...everything, weeklyPlans: restDay ? 2 : 1 } };
 }
 
 /**
@@ -273,7 +284,7 @@ const aRequestId: unknown = expect.stringMatching(/^[0-9a-f]{32}$/);
 describe('DELETE /me', () => {
   it('deletes the account and all that is the member’s, and leaves the squad to the others', async () => {
     const { call } = appWith(undefined);
-    const { me, friend, squad } = await memberWithEverything(call);
+    const { me, friend, squad, everything } = await memberWithEverything(call);
     expect(await whatIsLeftOf(me.userId)).toStrictEqual(everything);
 
     expect(await call('DELETE', '/me', me.token, { version: 1 })).toStrictEqual({
@@ -362,7 +373,7 @@ describe('DELETE /me', () => {
       codes.push(code);
       return Promise.resolve();
     });
-    const { me } = await memberWithEverything(call);
+    const { me, everything } = await memberWithEverything(call);
     await linkAppleIdentity(me.userId);
     const refused = await call('DELETE', '/me', me.token, { version: 1 });
     expect([refused.status, reasonOf(refused.body), codes]).toStrictEqual([
@@ -391,7 +402,7 @@ describe('DELETE /me', () => {
 
   it('deletes nothing when Apple refuses the code, so the app can retry with a new one', async () => {
     const { call } = appWith(() => Promise.reject(new AppleAuthorizationCodeInvalidError()));
-    const { me } = await memberWithEverything(call);
+    const { me, everything } = await memberWithEverything(call);
     const response = await call('DELETE', '/me', me.token, {
       version: 1,
       appleAuthorizationCode: 'expired',

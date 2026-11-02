@@ -7,6 +7,6 @@ public enum TrainingStatus: Hashable, Sendable {
     case disclaimer
     case notCheckedIn
 
-    /// Whether a 今日请假条 may still be posted today: not after a 练了, and one a day.
-    public var allowsDisclaimer: Bool { self == .notCheckedIn }
+    /// Whether a 今日请假条 may still be posted today: any number, but not after a 练了.
+    public var allowsDisclaimer: Bool { self != .trained }
 }

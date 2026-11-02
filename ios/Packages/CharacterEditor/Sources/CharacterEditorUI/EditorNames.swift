@@ -9,7 +9,7 @@ import SwiftUI
 enum EditorNames {
     static func tab(_ tab: EditorTab) -> Text {
         switch tab {
-        case .look: Text("样子", bundle: .module)
+        case .look: Text("长相", bundle: .module)
         case .hair: Text("发型", bundle: .module)
         case .face: Text("脸", bundle: .module)
         case .outfit: Text("穿搭", bundle: .module)
@@ -45,7 +45,7 @@ enum EditorNames {
         case "prop": Text("不拿", bundle: .module)
         case "glasses": Text("不戴眼镜", bundle: .module)
         case "brows": Text("没有眉毛", bundle: .module)
-        case "cheeks": Text("脸蛋什么都不加", bundle: .module)
+        case "cheeks": Text("不加", bundle: .module)
         default: Text("不戴", bundle: .module)
         }
     }

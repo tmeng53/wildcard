@@ -39,7 +39,9 @@ struct StageSection: View {
             }
             .frame(height: 300)
             GuideGroup(Text("一周海报：一天一行，角色站在角落", bundle: .module)) {
-                WeekPoster(title: "小林 · 10.20–10.26", weekNumber: 43, layout: .card, fill: .bgBrand, ink: .fgOnBrand) {
+                WeekPoster(
+                    title: "小林 · 10.20–10.26", heading: .week(43), layout: .card, fill: .bgBrand, ink: .fgOnBrand
+                ) {
                     VStack(alignment: .leading, spacing: Space.s) {
                         Text("周一 跑步", bundle: .module)
                         Text("周二 力量", bundle: .module)

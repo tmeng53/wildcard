@@ -121,10 +121,10 @@ describe('CheckInDraft', () => {
     expect(issues({ ...base, kind: 'healthyMeal', meal: { minutes: 30 } })).toStrictEqual(['meal']);
   });
 
-  it('takes 1 to 3 different squads', () => {
+  it('takes up to 3 different squads, or none', () => {
     const audience = (squads: unknown) => issues({ ...trained, audience: squads });
     expect(audience([squad, otherSquad])).toBe('ok');
-    expect(audience([])).toStrictEqual(['audience']);
+    expect(audience([])).toBe('ok');
     expect(audience([squad, squad])).toStrictEqual(['audience']);
     expect(audience(['not-a-uuid'])).toStrictEqual(['audience.0']);
     expect(

@@ -61,6 +61,13 @@ public final class FeedModel {
     var listing: CheckInID?
     /// The post to scroll to next: one opened from the home.
     var focus: CheckInID?
+    /// The post whose own page is open over the feed, with its comments. The app hides its tab
+    /// bar while one is.
+    public var opened: CheckInID?
+    /// Whom the member's next comment replies to (回复 Mia：…), on the open page.
+    var replyingTo: MemberID?
+    /// Bumps on each comment the member sends, for its haptic.
+    private(set) var commentsSent = 0
     private(set) var played: [CheckInID: Played] = [:]
     private(set) var flights: [Flight] = []
     private(set) var bubbles: [CheckInID: Bubble] = [:]
@@ -137,6 +144,33 @@ public final class FeedModel {
         guard let checkIn else { return }
         store.show(checkIn)
         focus = checkIn.id
+    }
+
+    // MARK: - A post's own page
+
+    /// Opens a post's own page, where its comments are.
+    func openPage(_ post: CheckInID) {
+        closeBar()
+        listing = nil
+        replyingTo = nil
+        opened = post
+    }
+
+    /// A post's own page outside the feed (a tile on 我的动态): one post, read and answered as
+    /// 动态 does, with the same recent emoji.
+    public func page(of post: CheckInID) -> FeedModel {
+        FeedModel(store: store.store(of: post), viewer: viewer, now: now, defaults: defaults)
+    }
+
+    /// Sends the member's comment on a post, replying to whomever they picked. False when it
+    /// couldn't go out; the words stay to try again.
+    func comment(_ text: CommentText, on post: CheckInID) async -> Bool {
+        let sent = await store.comment(text, replyingTo: replyingTo, on: post)
+        if sent {
+            replyingTo = nil
+            commentsSent += 1
+        }
+        return sent
     }
 
     // MARK: - Reacting
@@ -251,6 +285,12 @@ public final class FeedModel {
     /// What `member` is called: their nickname, else a stand-in until they make a character.
     func name(of member: MemberID) -> String? {
         store.characters[member]?.nickname.text
+    }
+
+    /// How a comment names someone: 我, their nickname, or 队友 when it isn't known.
+    func displayName(of member: MemberID) -> String {
+        if member == viewer { return String(localized: "我", bundle: .module.inAppLanguage) }
+        return name(of: member) ?? String(localized: "队友", bundle: .module.inAppLanguage)
     }
 
     /// The move has finished: the character holds still again.

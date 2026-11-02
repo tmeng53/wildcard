@@ -1,9 +1,16 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../../domain/check-in.js';
+import type { Comment } from '../../domain/comment.js';
 import { weekOf } from '../../domain/days.js';
 import type { Reaction } from '../../domain/reaction.js';
 import { weekPagesOf, type WeekPages } from '../../domain/week-pages.js';
 import { plannedTrainingDays, type WeekStart } from '../../domain/weekly-plan.js';
-import type { CheckInStore, MemberCalendar, ReactionStore, WeeklyPlanStore } from '../../ports.js';
+import type {
+  CheckInStore,
+  CommentStore,
+  MemberCalendar,
+  ReactionStore,
+  WeeklyPlanStore,
+} from '../../ports.js';
 import { findWeeklyPlan } from '../weekly-plans.js';
 import { zonesOf } from './member-zones.js';
 
@@ -16,6 +23,11 @@ export interface SquadWeekCheckIns {
   }[];
   /** Reactions on those check-ins from those members; one without any is left out. */
   readonly reactions: ReadonlyMap<CheckInId, readonly Reaction[]>;
+  /**
+   * Comments on those check-ins written before the awards by those members, oldest first; one
+   * without any is left out.
+   */
+  readonly comments: ReadonlyMap<CheckInId, readonly Comment[]>;
   /** The 战报's pages without AI, from these check-ins and the members' plans. */
   readonly pages: WeekPages;
 }
@@ -31,7 +43,7 @@ export function squadsCheckedInto(
 
 /**
  * A squad's week as it stood at `before`, for these members (who was in the squad then, in the
- * order they joined): their check-ins and the reactions on them made before it, and the 战报's
+ * order they joined): their check-ins and the reactions and comments on them made before it, and the 战报's
  * pages from those and the members' plans. What the week's awards and its frozen 战报 are made
  * from; a check-in or reaction made later still counts for the week's summary, only not here.
  */
@@ -41,6 +53,7 @@ export async function squadWeekCheckIns(
     readonly reactions: ReactionStore;
     readonly plans: WeeklyPlanStore;
     readonly calendarOf: MemberCalendar;
+    readonly comments: CommentStore;
   },
   {
     squad,
@@ -70,13 +83,24 @@ export async function squadWeekCheckIns(
     .filter(({ createdAt }) => createdAt < before)
     .toSorted((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   const inSquad = new Set(memberIds);
-  const all = await deps.reactions.listForAll(checkIns.map(({ id }) => id));
+  const ids = checkIns.map(({ id }) => id);
+  const [allReactions, allComments] = await Promise.all([
+    deps.reactions.listForAll(ids),
+    deps.comments.listForAll(ids),
+  ]);
   const reactions = new Map<CheckInId, Reaction[]>();
-  for (const [checkIn, each] of all) {
+  for (const [checkIn, each] of allReactions) {
     const counted = each.filter(
       ({ member, reactedAt }) => inSquad.has(member) && reactedAt < before,
     );
     if (counted.length > 0) reactions.set(checkIn, counted);
+  }
+  const comments = new Map<CheckInId, Comment[]>();
+  for (const [checkIn, each] of allComments) {
+    const fromSquad = each.filter(
+      ({ member, commentedAt }) => inSquad.has(member) && commentedAt < before,
+    );
+    if (fromSquad.length > 0) comments.set(checkIn, fromSquad);
   }
   const members = memberIds.map((member, index) => ({
     member,
@@ -93,6 +117,7 @@ export async function squadWeekCheckIns(
   return {
     members: members.map(({ member, checkIns: theirs }) => ({ member, checkIns: theirs })),
     reactions,
+    comments,
     pages,
   };
 }

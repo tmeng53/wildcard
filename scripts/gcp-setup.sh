@@ -120,6 +120,8 @@ schedule() {
 schedule daily-progress-push '*/15 * * * *'
 # A squad's awards that couldn't be written are tried again on the next run.
 schedule weekly-awards '5 * * * *'
+# The AI coach wakes for each check-in and once a day; while coaching is off a run does nothing.
+schedule coach '*/10 * * * *'
 
 # Alerts, by email to whoever runs this in Cloud Shell, unless ALERT_EMAIL names someone else.
 alert_email="${ALERT_EMAIL:-$(gcloud config get account 2>/dev/null)}"
@@ -205,7 +207,7 @@ alert "Wildcard scheduled job failed" <<JSON
 {
   "displayName": "Wildcard scheduled job failed",
   "documentation": { "mimeType": "text/markdown",
-    "content": "Cloud Scheduler's call to a job (daily-progress-push or weekly-awards) failed or timed out. Logs: $logs" },
+    "content": "Cloud Scheduler's call to a job (daily-progress-push, weekly-awards or coach) failed or timed out. Logs: $logs" },
   "combiner": "OR",
   "conditions": [{
     "displayName": "A Cloud Scheduler attempt failed",
@@ -223,12 +225,12 @@ alert "Wildcard job logged an error" <<JSON
 {
   "displayName": "Wildcard job logged an error",
   "documentation": { "mimeType": "text/markdown",
-    "content": "The daily push or the weekly awards logged an ERROR (the job label says which). Logs: $logs" },
+    "content": "The daily push, the weekly awards or the coach logged an ERROR (the job label says which). Logs: $logs" },
   "combiner": "OR",
   "conditions": [{
-    "displayName": "An ERROR from the daily push or weekly awards",
+    "displayName": "An ERROR from the daily push, weekly awards or coach",
     "conditionMatchedLog": {
-      "filter": "$api_logs AND severity>=ERROR AND jsonPayload.job=(\"daily-progress-push\" OR \"weekly-awards\")",
+      "filter": "$api_logs AND severity>=ERROR AND jsonPayload.job=(\"daily-progress-push\" OR \"weekly-awards\" OR \"coach\")",
       "labelExtractors": { "job": "EXTRACT(jsonPayload.job)" }
     }
   }],

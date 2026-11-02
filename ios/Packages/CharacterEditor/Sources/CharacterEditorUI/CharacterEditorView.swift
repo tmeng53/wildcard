@@ -51,7 +51,7 @@ public struct CharacterEditorView: View {
             .accessibilityIdentifier("editor.stage")
             .padding(.horizontal, Space.pageMargin)
             // The title, tabs and choices make room while the nickname is typed, so the page fits
-            // above the keyboard and 就这样 stays in reach.
+            // above the keyboard and 确认 stays in reach.
             if !isNaming {
                 CategoryBar(
                     model.tabs.map {
@@ -118,7 +118,7 @@ private struct EditorHeader: View {
     }
 }
 
-/// The finishing button, full width on the page: 就这样 in sign-up, 保存 from 我. It waits
+/// The finishing button, full width on the page: 确认 in sign-up, 保存 from 我. It waits
 /// for a nickname. While the nickname is typed it is 好了 and only puts the keyboard away, so
 /// the button under the name never finishes the character by surprise.
 private struct DoneBar: View {
@@ -143,7 +143,7 @@ private struct DoneBar: View {
                 } else if context == .profile {
                     Text("保存", bundle: .module)
                 } else {
-                    Text("就这样", bundle: .module)
+                    Text("确认", bundle: .module)
                 }
             }
             .frame(maxWidth: .infinity)

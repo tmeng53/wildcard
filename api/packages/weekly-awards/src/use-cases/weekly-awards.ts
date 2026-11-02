@@ -14,6 +14,7 @@ import type {
   AwardsStore,
   LanguageModel,
   WeekStoryStore,
+  MemesInUse,
 } from '../ports.js';
 import { giveAwards, type GiveAwardsInput } from './weekly-awards/give-awards.js';
 
@@ -63,6 +64,7 @@ export function createWeeklyAwards(deps: {
   readonly store: AwardsStore;
   readonly aiConsented: AiConsented;
   readonly stories: WeekStoryStore;
+  readonly memes: MemesInUse;
 }): WeeklyAwards {
   return {
     give: (input) => giveAwards(deps, input),

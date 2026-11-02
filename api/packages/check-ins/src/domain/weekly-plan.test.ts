@@ -119,9 +119,9 @@ describe('checkPlanChange', () => {
   it('lets today’s sport change, and the days after it change freely', () => {
     const today = '2026-10-19';
     expect(
-      changeOn(today)(plan('carriedOver'), [{ kind: 'train', sport: 'swim' }, ...days.slice(1)]),
+      changeOn(today)(plan('template'), [{ kind: 'train', sport: 'swim' }, ...days.slice(1)]),
     ).toBe('allowed');
-    expect(changeOn(today)(plan('carriedOver'), [run, rest, rest, train, train, train, rest])).toBe(
+    expect(changeOn(today)(plan('template'), [run, rest, rest, train, train, train, rest])).toBe(
       'allowed',
     );
   });
@@ -148,11 +148,11 @@ describe('checkPlanChange', () => {
     expect(change(plan('saved'), [run, train, swim, train, train, train, train])).toBe('allowed');
   });
 
-  it('keeps a training today a training day', () => {
+  it('lets a training today become a rest day', () => {
     // Today is Thursday, a training day.
     expect(
       changeOn('2026-10-22')(plan('saved'), [run, train, rest, rest, train, train, train]),
-    ).toStrictEqual(new PlanDayStartedError('2026-10-22'));
+    ).toBe('allowed');
   });
 
   it('holds a default plan to the same rules once the member has been here a day', () => {
@@ -182,7 +182,7 @@ describe('checkPlanChange', () => {
 
   it('lets a later week change freely, up to 4 weeks ahead', () => {
     const allRest: Days = [rest, rest, rest, rest, rest, rest, rest];
-    expect(change(plan('carriedOver', '2026-10-26'), allRest)).toBe('allowed');
+    expect(change(plan('template', '2026-10-26'), allRest)).toBe('allowed');
     expect(change(plan('saved', '2026-11-16'), allRest)).toBe('allowed');
     expect(change(plan('saved', '2026-11-23'), allRest)).toStrictEqual(
       new WeekTooFarAheadError('2026-11-23'),

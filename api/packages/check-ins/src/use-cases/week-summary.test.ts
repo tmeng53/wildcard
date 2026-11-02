@@ -16,6 +16,7 @@ import {
   createPostgresCheckInStore,
   type CheckInTables,
 } from '../adapters/postgres-check-in-store.js';
+import { createPostgresCommentStore } from '../adapters/postgres-comment-store.js';
 import { createPostgresReactionStore } from '../adapters/postgres-reaction-store.js';
 import { createPostgresWeeklyPlanStore } from '../adapters/postgres-weekly-plan-store.js';
 import { CheckInId, MemberId, SquadId, type CheckInRecord } from '../domain/check-in.js';
@@ -51,6 +52,7 @@ const checkInsAt = (moment: Date, joinedAt = JOINED) =>
     store: createPostgresCheckInStore(db),
     membership,
     reactions: createPostgresReactionStore(db),
+    comments: createPostgresCommentStore(db),
     plans,
     photos: { exists: () => Promise.reject(new Error('unused')) },
     calendarOf: (member) => {

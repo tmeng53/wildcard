@@ -147,7 +147,7 @@ func photoBytes() -> Data {
     await #expect(throws: APIError.refused(.photoRejected)) { try await author.api.upload(tooBig, as: .jpeg) }
 }
 
-@Test func aDisclaimerWithAPhotoPostsOnceADay() async throws {
+@Test func aDisclaimerWithAPhotoPostsAndSoDoesASecond() async throws {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
     let mate = try await stack.signedInMember()
@@ -160,7 +160,8 @@ func photoBytes() -> Data {
     #expect(try await mate.api.checkIns(of: squad, from: disclaimer.day, through: disclaimer.day) == [disclaimer])
 
     let second = try checkIn(by: author, to: squad, .disclaimer(try Disclaimer("再来一条")))
-    await #expect(throws: APIError.refused(.disclaimerAlreadyPosted)) { try await author.api.save(second) }
+    #expect(try await author.api.save(second) == second)
+    #expect(try await mate.api.checkIns(of: squad, from: disclaimer.day, through: disclaimer.day).count == 2)
 }
 
 @Test func someoneOutsideTheSquadCantPostToItOrReadIt() async throws {

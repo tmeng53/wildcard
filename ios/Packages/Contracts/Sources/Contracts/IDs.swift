@@ -22,7 +22,9 @@ public struct ID<Tag>: Hashable, Sendable, Codable, CustomStringConvertible {
 public enum MemberTag {}
 public enum SquadTag {}
 public enum CheckInTag {}
+public enum CommentTag {}
 
 public typealias MemberID = ID<MemberTag>
 public typealias SquadID = ID<SquadTag>
 public typealias CheckInID = ID<CheckInTag>
+public typealias CommentID = ID<CommentTag>

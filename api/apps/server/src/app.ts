@@ -2,6 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Admins } from '@wildcard/admins';
 import type { AiConsent } from '@wildcard/ai-consent';
 import type { CheckIns, WeekSummaryWords, WeeklyPlans } from '@wildcard/check-ins';
+import type { CoachHiring, CoachWakes } from '@wildcard/coach';
 import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
@@ -42,8 +43,10 @@ import { me } from './routes/me.js';
 import { nudges } from './routes/nudges.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
+import { comments } from './routes/comments.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
+import { squadCoach } from './routes/squad-coach.js';
 import { squadScene } from './routes/squad-scene.js';
 import { squadToday } from './routes/squad-today.js';
 import { weekStory } from './routes/week-story.js';
@@ -60,6 +63,8 @@ export interface AppDependencies {
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
   readonly squads: Squads;
+  /** Each squad's coach, and the coaches it can hire (教练市场). */
+  readonly coachHiring: CoachHiring;
   /** Squadmates' pokes, which the daily push counts. */
   readonly nudges: Nudges;
   /** Members' consent to the AI copy, which squads and drafts ask for themselves. */
@@ -83,6 +88,8 @@ export interface AppDependencies {
     /** Where the daily push finds what teammates did for a member. */
     readonly interactions: readonly InteractionSource[];
     readonly clock: () => Date;
+    /** The AI coach's wakes; left out without an OpenAI key, and then the coach never wakes. */
+    readonly coach?: CoachWakes;
   };
   /** The admin MCP server at `/mcp`. */
   readonly admin: {
@@ -125,11 +132,13 @@ export function createApp(deps: AppDependencies) {
   app.route('/', checkIns(deps));
   app.route('/', photoUploads(deps));
   app.route('/', reactions(deps));
+  app.route('/', comments(deps));
   app.route('/', devices(deps));
   app.route('/', pushSettings(deps));
   app.route('/', squads(deps));
   app.route('/', squadToday(deps));
   app.route('/', squadScene({ ...deps, clock: deps.weeklyAwards.clock }));
+  app.route('/', squadCoach(deps));
   app.route('/', nudges(deps));
   app.route('/', weekSummary({ ...deps, words: deps.weekSummaryWords }));
   app.route('/', disclaimerDrafts(deps));
@@ -143,6 +152,7 @@ export function createApp(deps: AppDependencies) {
       isScheduler: deps.jobs.isScheduler,
       dailyProgress: { ...deps, interactions: deps.jobs.interactions, clock: deps.jobs.clock },
       weeklyAwards: { ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) },
+      ...(deps.jobs.coach === undefined ? {} : { coach: deps.jobs.coach }),
     }),
   );
   // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.

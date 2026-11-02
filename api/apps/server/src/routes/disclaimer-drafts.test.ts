@@ -1,6 +1,7 @@
 import {
   createCheckIns,
   createPostgresCheckInStore,
+  createPostgresCommentStore,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
@@ -38,7 +39,11 @@ import {
 } from '../test-kit/local-supabase.js';
 import { recordedModel, type Fixture, type Provider } from '../test-kit/recorded-model.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
+import {
+  unusedWeeklyAwards,
+  unusedWeekSummaryWords,
+  unusedCoachHiring,
+} from '../test-kit/weekly-awards.js';
 
 // The whole server as main.ts wires it: local Supabase's Auth and database (the draft settings
 // included), and each provider's adapter answering from recorded responses instead of the
@@ -89,6 +94,7 @@ function appWith(model: LanguageModel, modelName?: string) {
         aiConsent: () => Promise.resolve(true),
       }),
       reactions: createPostgresReactionStore(db),
+      comments: createPostgresCommentStore(db),
       plans: createPostgresWeeklyPlanStore(db),
       photos,
       calendarOf: () => Promise.resolve(undefined),
@@ -130,6 +136,7 @@ function appWith(model: LanguageModel, modelName?: string) {
     nudges: nudgesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     weekSummaryWords: unusedWeekSummaryWords,
+    coachHiring: unusedCoachHiring,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,
     admin: adminOn(),

@@ -61,7 +61,7 @@ struct JerseyNumberView: View {
                     if !model.saveFailed { close() }
                 }
             } label: {
-                Text("保存", bundle: .module).frame(maxWidth: .infinity)
+                Text("保存", bundle: .module).loadingLabel(saving).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(saving)

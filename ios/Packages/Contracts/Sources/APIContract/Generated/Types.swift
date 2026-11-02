@@ -53,6 +53,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/ai-consent`.
     /// - Remark: Generated from `#/paths//me/ai-consent/put(putMyAiConsent)`.
     func putMyAiConsent(_ input: Operations.PutMyAiConsent.Input) async throws -> Operations.PutMyAiConsent.Output
+    /// One check-in, with its reactions and comments
+    ///
+    /// A post’s own page, as the feed shows it: for its author, even from a squad they left, or a teammate who shares a squad it went to.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{id}`.
+    /// - Remark: Generated from `#/paths//check-ins/{id}/get(getPost)`.
+    func getPost(_ input: Operations.GetPost.Input) async throws -> Operations.GetPost.Output
     /// Save a check-in
     ///
     /// The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.
@@ -60,20 +67,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)`.
     func saveCheckIn(_ input: Operations.SaveCheckIn.Input) async throws -> Operations.SaveCheckIn.Output
-    /// A squad’s check-ins for a range of days, with their reactions
+    /// A squad’s check-ins for a range of days, with their reactions and comments
     ///
-    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions of the teammates the viewer shares a squad with. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
     func listSquadCheckIns(_ input: Operations.ListSquadCheckIns.Input) async throws -> Operations.ListSquadCheckIns.Output
     /// The signed-in member’s check-ins for a range of days
     ///
-    /// Newest day first, each with its whole audience.
+    /// Newest day first, each with its whole audience. Posts shared to no squad only with `unshared=include`.
     ///
     /// - Remark: HTTP `GET /me/check-ins`.
     /// - Remark: Generated from `#/paths//me/check-ins/get(listMyCheckIns)`.
     func listMyCheckIns(_ input: Operations.ListMyCheckIns.Input) async throws -> Operations.ListMyCheckIns.Output
+    /// The signed-in member’s own check-ins, a page at a time, with their reactions
+    ///
+    /// 历史动态: everything the member posted, wherever it went, including squads they left. Pages follow from `next`, so posts made meanwhile never shift them.
+    ///
+    /// - Remark: HTTP `GET /me/posts`.
+    /// - Remark: Generated from `#/paths//me/posts/get(listMyPosts)`.
+    func listMyPosts(_ input: Operations.ListMyPosts.Input) async throws -> Operations.ListMyPosts.Output
     /// Everything the signed-in member ever checked in, counted by kind
     ///
     /// All of their check-ins, wherever they went; 我 shows them. Counts only go up.
@@ -107,6 +121,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /check-ins/{checkInId}/reactions`.
     /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/get(listCheckInReactions)`.
     func listCheckInReactions(_ input: Operations.ListCheckInReactions.Input) async throws -> Operations.ListCheckInReactions.Output
+    /// Comment on a check-in
+    ///
+    /// Writes the caller’s comment under a check-in they can see, their own included. Comments are never edited; the same comment under the same id again changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/comments/{commentId}`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/{commentId}/put(commentOnCheckIn)`.
+    func commentOnCheckIn(_ input: Operations.CommentOnCheckIn.Input) async throws -> Operations.CommentOnCheckIn.Output
+    /// Delete your comment
+    ///
+    /// It is gone for everyone, and works even after you left the squad. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/comments/{commentId}`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/{commentId}/delete(deleteComment)`.
+    func deleteComment(_ input: Operations.DeleteComment.Input) async throws -> Operations.DeleteComment.Output
+    /// A check-in’s comments
+    ///
+    /// Oldest first, for its author and the teammates who can see it.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/comments`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/get(listCheckInComments)`.
+    func listCheckInComments(_ input: Operations.ListCheckInComments.Input) async throws -> Operations.ListCheckInComments.Output
     /// Get push notifications on this phone
     ///
     /// The app calls this whenever iOS hands it a device token (every launch, once notifications are allowed). Safe to repeat. A token names one install, so a phone someone else signed in on before moves to the caller.
@@ -215,6 +250,34 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/weeks/{weekStart}/scene`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/scene/put(pickSquadScene)`.
     func pickSquadScene(_ input: Operations.PickSquadScene.Input) async throws -> Operations.PickSquadScene.Output
+    /// The coaches a squad can hire (教练市场)
+    ///
+    /// Every coach offered now, with its 简历. The same coaches for every squad.
+    ///
+    /// - Remark: HTTP `GET /coaches`.
+    /// - Remark: Generated from `#/paths//coaches/get(listCoaches)`.
+    func listCoaches(_ input: Operations.ListCoaches.Input) async throws -> Operations.ListCoaches.Output
+    /// A squad’s coach
+    ///
+    /// The coach the squad has hired, if any. Only for its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/get(getSquadCoach)`.
+    func getSquadCoach(_ input: Operations.GetSquadCoach.Input) async throws -> Operations.GetSquadCoach.Output
+    /// Hire the squad’s coach (招聘, 换教练)
+    ///
+    /// For the captain: hires an offered coach, firing the squad’s coach first when it has another (one step, both logged). The squad’s memory stays with the squad. Safe to repeat: the coach it has already answers 200.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/put(hireSquadCoach)`.
+    func hireSquadCoach(_ input: Operations.HireSquadCoach.Input) async throws -> Operations.HireSquadCoach.Output
+    /// Fire the squad’s coach (解雇)
+    ///
+    /// For the captain. The squad’s memory stays with the squad for the next coach. Safe to repeat: a squad with no coach answers the same.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/delete(fireSquadCoach)`.
+    func fireSquadCoach(_ input: Operations.FireSquadCoach.Input) async throws -> Operations.FireSquadCoach.Output
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -243,16 +306,30 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /disclaimer-drafts`.
     /// - Remark: Generated from `#/paths//disclaimer-drafts/post(writeDisclaimerDrafts)`.
     func writeDisclaimerDrafts(_ input: Operations.WriteDisclaimerDrafts.Input) async throws -> Operations.WriteDisclaimerDrafts.Output
+    /// The signed-in member’s typical week
+    ///
+    /// The plan the weeks to come follow until one is changed for itself.
+    ///
+    /// - Remark: HTTP `GET /me/plan-template`.
+    /// - Remark: Generated from `#/paths//me/plan-template/get(getMyPlanTemplate)`.
+    func getMyPlanTemplate(_ input: Operations.GetMyPlanTemplate.Input) async throws -> Operations.GetMyPlanTemplate.Output
+    /// Save the signed-in member’s typical week
+    ///
+    /// Replaces the typical week; repeating a save gives the same result. Saved on the day the member joined, it is that week’s plan too; a change on a later day applies from next week, so this week keeps its plan. Weeks saved for themselves keep theirs.
+    ///
+    /// - Remark: HTTP `PUT /me/plan-template`.
+    /// - Remark: Generated from `#/paths//me/plan-template/put(saveMyPlanTemplate)`.
+    func saveMyPlanTemplate(_ input: Operations.SaveMyPlanTemplate.Input) async throws -> Operations.SaveMyPlanTemplate.Output
     /// The signed-in member’s plan for a week
     ///
-    /// Every week has a plan: the one saved for it, else the member’s latest earlier one, else the default.
+    /// Every week has a plan: the one saved for it, else the member’s typical week as it stood when the week began, else the default.
     ///
     /// - Remark: HTTP `GET /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/get(getMyWeeklyPlan)`.
     func getMyWeeklyPlan(_ input: Operations.GetMyWeeklyPlan.Input) async throws -> Operations.GetMyWeeklyPlan.Output
     /// Save the signed-in member’s plan for a week
     ///
-    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, a training today stays a training day (its sport may change), a rest today may become one, and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
+    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, and today and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
     ///
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.
@@ -368,6 +445,21 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// One check-in, with its reactions and comments
+    ///
+    /// A post’s own page, as the feed shows it: for its author, even from a squad they left, or a teammate who shares a squad it went to.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{id}`.
+    /// - Remark: Generated from `#/paths//check-ins/{id}/get(getPost)`.
+    public func getPost(
+        path: Operations.GetPost.Input.Path,
+        headers: Operations.GetPost.Input.Headers = .init()
+    ) async throws -> Operations.GetPost.Output {
+        try await getPost(Operations.GetPost.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// Save a check-in
     ///
     /// The app makes the id, so a save can be retried: the same check-in again answers 200 with the saved one, different contents under a saved id answer 409. Photos are uploaded first, through `POST /photo-uploads`, and listed by path.
@@ -385,9 +477,9 @@ extension APIProtocol {
             body: body
         ))
     }
-    /// A squad’s check-ins for a range of days, with their reactions
+    /// A squad’s check-ins for a range of days, with their reactions and comments
     ///
-    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions of the teammates the viewer shares a squad with. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
@@ -404,7 +496,7 @@ extension APIProtocol {
     }
     /// The signed-in member’s check-ins for a range of days
     ///
-    /// Newest day first, each with its whole audience.
+    /// Newest day first, each with its whole audience. Posts shared to no squad only with `unshared=include`.
     ///
     /// - Remark: HTTP `GET /me/check-ins`.
     /// - Remark: Generated from `#/paths//me/check-ins/get(listMyCheckIns)`.
@@ -413,6 +505,21 @@ extension APIProtocol {
         headers: Operations.ListMyCheckIns.Input.Headers = .init()
     ) async throws -> Operations.ListMyCheckIns.Output {
         try await listMyCheckIns(Operations.ListMyCheckIns.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// The signed-in member’s own check-ins, a page at a time, with their reactions
+    ///
+    /// 历史动态: everything the member posted, wherever it went, including squads they left. Pages follow from `next`, so posts made meanwhile never shift them.
+    ///
+    /// - Remark: HTTP `GET /me/posts`.
+    /// - Remark: Generated from `#/paths//me/posts/get(listMyPosts)`.
+    public func listMyPosts(
+        query: Operations.ListMyPosts.Input.Query = .init(),
+        headers: Operations.ListMyPosts.Input.Headers = .init()
+    ) async throws -> Operations.ListMyPosts.Output {
+        try await listMyPosts(Operations.ListMyPosts.Input(
             query: query,
             headers: headers
         ))
@@ -476,6 +583,53 @@ extension APIProtocol {
         headers: Operations.ListCheckInReactions.Input.Headers = .init()
     ) async throws -> Operations.ListCheckInReactions.Output {
         try await listCheckInReactions(Operations.ListCheckInReactions.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Comment on a check-in
+    ///
+    /// Writes the caller’s comment under a check-in they can see, their own included. Comments are never edited; the same comment under the same id again changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /check-ins/{checkInId}/comments/{commentId}`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/{commentId}/put(commentOnCheckIn)`.
+    public func commentOnCheckIn(
+        path: Operations.CommentOnCheckIn.Input.Path,
+        headers: Operations.CommentOnCheckIn.Input.Headers = .init(),
+        body: Operations.CommentOnCheckIn.Input.Body
+    ) async throws -> Operations.CommentOnCheckIn.Output {
+        try await commentOnCheckIn(Operations.CommentOnCheckIn.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Delete your comment
+    ///
+    /// It is gone for everyone, and works even after you left the squad. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /check-ins/{checkInId}/comments/{commentId}`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/{commentId}/delete(deleteComment)`.
+    public func deleteComment(
+        path: Operations.DeleteComment.Input.Path,
+        headers: Operations.DeleteComment.Input.Headers = .init()
+    ) async throws -> Operations.DeleteComment.Output {
+        try await deleteComment(Operations.DeleteComment.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// A check-in’s comments
+    ///
+    /// Oldest first, for its author and the teammates who can see it.
+    ///
+    /// - Remark: HTTP `GET /check-ins/{checkInId}/comments`.
+    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/get(listCheckInComments)`.
+    public func listCheckInComments(
+        path: Operations.ListCheckInComments.Input.Path,
+        headers: Operations.ListCheckInComments.Input.Headers = .init()
+    ) async throws -> Operations.ListCheckInComments.Output {
+        try await listCheckInComments(Operations.ListCheckInComments.Input(
             path: path,
             headers: headers
         ))
@@ -712,6 +866,62 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// The coaches a squad can hire (教练市场)
+    ///
+    /// Every coach offered now, with its 简历. The same coaches for every squad.
+    ///
+    /// - Remark: HTTP `GET /coaches`.
+    /// - Remark: Generated from `#/paths//coaches/get(listCoaches)`.
+    public func listCoaches(headers: Operations.ListCoaches.Input.Headers = .init()) async throws -> Operations.ListCoaches.Output {
+        try await listCoaches(Operations.ListCoaches.Input(headers: headers))
+    }
+    /// A squad’s coach
+    ///
+    /// The coach the squad has hired, if any. Only for its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/get(getSquadCoach)`.
+    public func getSquadCoach(
+        path: Operations.GetSquadCoach.Input.Path,
+        headers: Operations.GetSquadCoach.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadCoach.Output {
+        try await getSquadCoach(Operations.GetSquadCoach.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Hire the squad’s coach (招聘, 换教练)
+    ///
+    /// For the captain: hires an offered coach, firing the squad’s coach first when it has another (one step, both logged). The squad’s memory stays with the squad. Safe to repeat: the coach it has already answers 200.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/put(hireSquadCoach)`.
+    public func hireSquadCoach(
+        path: Operations.HireSquadCoach.Input.Path,
+        headers: Operations.HireSquadCoach.Input.Headers = .init(),
+        body: Operations.HireSquadCoach.Input.Body
+    ) async throws -> Operations.HireSquadCoach.Output {
+        try await hireSquadCoach(Operations.HireSquadCoach.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Fire the squad’s coach (解雇)
+    ///
+    /// For the captain. The squad’s memory stays with the squad for the next coach. Safe to repeat: a squad with no coach answers the same.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/coach`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/delete(fireSquadCoach)`.
+    public func fireSquadCoach(
+        path: Operations.FireSquadCoach.Input.Path,
+        headers: Operations.FireSquadCoach.Input.Headers = .init()
+    ) async throws -> Operations.FireSquadCoach.Output {
+        try await fireSquadCoach(Operations.FireSquadCoach.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -776,9 +986,33 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// The signed-in member’s typical week
+    ///
+    /// The plan the weeks to come follow until one is changed for itself.
+    ///
+    /// - Remark: HTTP `GET /me/plan-template`.
+    /// - Remark: Generated from `#/paths//me/plan-template/get(getMyPlanTemplate)`.
+    public func getMyPlanTemplate(headers: Operations.GetMyPlanTemplate.Input.Headers = .init()) async throws -> Operations.GetMyPlanTemplate.Output {
+        try await getMyPlanTemplate(Operations.GetMyPlanTemplate.Input(headers: headers))
+    }
+    /// Save the signed-in member’s typical week
+    ///
+    /// Replaces the typical week; repeating a save gives the same result. Saved on the day the member joined, it is that week’s plan too; a change on a later day applies from next week, so this week keeps its plan. Weeks saved for themselves keep theirs.
+    ///
+    /// - Remark: HTTP `PUT /me/plan-template`.
+    /// - Remark: Generated from `#/paths//me/plan-template/put(saveMyPlanTemplate)`.
+    public func saveMyPlanTemplate(
+        headers: Operations.SaveMyPlanTemplate.Input.Headers = .init(),
+        body: Operations.SaveMyPlanTemplate.Input.Body
+    ) async throws -> Operations.SaveMyPlanTemplate.Output {
+        try await saveMyPlanTemplate(Operations.SaveMyPlanTemplate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
     /// The signed-in member’s plan for a week
     ///
-    /// Every week has a plan: the one saved for it, else the member’s latest earlier one, else the default.
+    /// Every week has a plan: the one saved for it, else the member’s typical week as it stood when the week began, else the default.
     ///
     /// - Remark: HTTP `GET /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/get(getMyWeeklyPlan)`.
@@ -793,7 +1027,7 @@ extension APIProtocol {
     }
     /// Save the signed-in member’s plan for a week
     ///
-    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, a training today stays a training day (its sport may change), a rest today may become one, and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
+    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, and today and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
     ///
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.

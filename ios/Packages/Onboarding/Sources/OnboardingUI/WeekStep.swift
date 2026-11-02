@@ -31,7 +31,7 @@ struct WeekStep: View {
             )
             .accessibilityIdentifier("week.done")
             Button(action: model.skipWeek) {
-                Text("跳过", bundle: .module)
+                Text("以后再说", bundle: .module)
             }
             .buttonStyle(TextButtonStyle())
             .accessibilityIdentifier("week.skip")
@@ -60,7 +60,7 @@ private struct PlanPoster: View {
 
     var body: some View {
         WeekPoster(
-            title: "\(model.nickname) · \(dates)", weekNumber: model.weekNumber, layout: .card, fill: tone.fill,
+            title: "\(model.nickname) · \(dates)", heading: .week(model.weekNumber), layout: .card, fill: tone.fill,
             ink: tone.onFill
         ) {
             VStack(spacing: 0) {

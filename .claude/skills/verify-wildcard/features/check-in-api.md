@@ -2,7 +2,7 @@
 
 **Status: Ready** since the check-in API (#25), driven over HTTP by `scripts/api-journeys.sh check-in`; CI's `supabase` job runs it. The app's screen for it is in #26 and isn't covered here.
 
-A member saves a 练了 check-in to their squad, a squad-mate posts today's 请假条, and both read the squad back. The app makes each check-in's id, so a retry answers with the saved one. Stand-in: members sign up with email and password (the app uses Sign in with Apple). The squad is made through the squad routes (`squad-api.md`).
+A member saves a 练了 check-in to their squad, a squad-mate posts two 请假条 today, and both read the squad back. The app makes each check-in's id, so a retry answers with the saved one. Stand-in: members sign up with email and password (the app uses Sign in with Apple). The squad is made through the squad routes (`squad-api.md`).
 
 Code: `api/apps/server/src/routes/check-ins.ts`, `api/packages/check-ins`.
 
@@ -26,9 +26,9 @@ check-in: 601 minutes refused (400 REQUEST_INVALID)
 check-in: retry answered with the saved one (200)
 check-in: different contents under the same id refused (409 CHECK_IN_ID_CONFLICT)
 check-in: mate posted today's disclaimer <id> (201)
-check-in: a second disclaimer today refused (409 DISCLAIMER_ALREADY_POSTED)
+check-in: mate posted a second disclaimer today <id> (201)
 check-in: outsider posting to the squad refused (403 SQUAD_NOT_JOINED)
-check-in: mate sees both in the squad list (2 check-ins), minutes included
+check-in: mate sees all three in the squad list (3 check-ins), minutes included
 check-in: outsider reading the squad refused (403 SQUAD_NOT_JOINED)
 check-in: signed-out read refused (401)
 check-in: my list holds only my own (<id>)
@@ -41,7 +41,7 @@ A `FAIL:` line (it prints the answer and the server's log), a missing line or a 
 
 Check at the source, with the ids from the log:
 
-- `psql "$DB_URL" -c "select id, member_id, day, kind, payload from public.check_ins where member_id in ('<me>', '<mate>')"`: exactly two rows, the 练了 (payload `{"version": 1, "sport": "custom", "customSport": "飞盘", "minutes": 40, "caption": "累但爽"}`) and the 请假条; the refused calls left nothing.
+- `psql "$DB_URL" -c "select id, member_id, day, kind, payload from public.check_ins where member_id in ('<me>', '<mate>')"`: exactly three rows, the 练了 (payload `{"version": 1, "sport": "custom", "customSport": "飞盘", "minutes": 40, "caption": "累但爽"}`) and the two 请假条; the refused calls left nothing.
 - `select * from public.check_in_squads where check_in_id in ('<id>', '<id>')`: each lists the squad at position 1.
 
 ## Worth probing

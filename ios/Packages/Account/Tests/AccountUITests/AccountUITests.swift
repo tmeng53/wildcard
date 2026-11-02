@@ -35,4 +35,23 @@ import Testing
     #expect(try await store.load() == nil)
     try await store.clear()
 }
+
+@Test func theKeychainKeepsTheSessionInASharedGroupOrWithoutOne() async throws {
+    // Unsigned test runs aren't in the group: the store keeps working without it.
+    let store = KeychainSessionStore(
+        service: "com.wildcardsquad.wildcard.tests.\(UUID())", accessGroup: "group.com.wildcardsquad.wildcard")
+    let member = MemberID(UUID())
+    let first = Session(
+        member: member, accessToken: "a1", refreshToken: "r1", expiresAt: Date(timeIntervalSince1970: 1_792_371_600))
+    let second = Session(
+        member: member, accessToken: "a2", refreshToken: "r2", expiresAt: Date(timeIntervalSince1970: 1_792_375_200))
+
+    #expect(try await store.load() == nil)
+    try await store.save(first)
+    #expect(try await store.load() == first)
+    try await store.save(second)
+    #expect(try await store.load() == second)
+    try await store.clear()
+    #expect(try await store.load() == nil)
+}
 #endif
