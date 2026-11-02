@@ -24,6 +24,12 @@
             "state": "translated",
             "value": "Loading"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "載入中"
+          }
         }
       }
     },
@@ -609,22 +615,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "重訓"
-          }
-        }
-      }
-    },
-    "加载中": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loading"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "載入中"
           }
         }
       }
@@ -2849,6 +2839,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "第 %1$lld 張，共 %2$lld 張"
+          }
+        }
+      }
+    },
+    "保存到相册": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save to Photos"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存到相簿"
+          }
+        }
+      }
+    },
+    "已存到相册": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved to Photos"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已存到相簿"
+          }
+        }
+      }
+    },
+    "没存上，再试一次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not saved, try again"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒存上，再試一次"
+          }
+        }
+      }
+    },
+    "分享": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分享"
           }
         }
       }

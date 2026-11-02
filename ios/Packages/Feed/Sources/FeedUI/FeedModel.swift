@@ -100,10 +100,37 @@ public final class FeedModel {
     // MARK: - Loading
 
     public func load() async {
+        hasNews = false
         await store.load()
         answerArrivals()
+        if store.phase == .current, let latest = store.latestNews { keepNewsSeen(until: latest) }
         await store.sendResponses()
     }
+
+    // MARK: - The tab's dot
+
+    /// Whether 动态 has news since the member last opened it (`FeedPost.latestNews(for:)`): the
+    /// tab's dot. Opening 动态 clears it.
+    public private(set) var hasNews = false
+
+    /// Looks for news while 动态 isn't open. What was seen is kept by the news's own time, never
+    /// the phone's clock; the first look on this phone takes what is there as seen.
+    public func checkNews() async {
+        guard let latest = await store.latestNewsOnServer() else { return }
+        guard let seen = defaults.object(forKey: Self.newsSeenKey(viewer)) as? Double else {
+            keepNewsSeen(until: latest)
+            return
+        }
+        hasNews = Double(latest.millisecondsSince1970) > seen
+    }
+
+    private func keepNewsSeen(until latest: Timestamp) {
+        let key = Self.newsSeenKey(viewer)
+        let seen = defaults.object(forKey: key) as? Double ?? -.infinity
+        defaults.set(max(seen, Double(latest.millisecondsSince1970)), forKey: key)
+    }
+
+    private static func newsSeenKey(_ viewer: MemberID) -> String { "feed.newsSeen.\(viewer)" }
 
     /// Teammates' reactions on my posts since 动态 last showed them: my character answers each
     /// with its move, under a bubble with their head and emoji. What was shown is kept by the
