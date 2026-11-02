@@ -12,16 +12,20 @@ public struct APICheckInBackend: CheckInBackend {
     private let saved: URL
     private let shared: SharedSquad?
     private let now: @Sendable () -> Date
+    private let phoneZone: @Sendable () -> TimeZone
 
     /// - Parameters:
     ///   - directory: where the copy is kept, such as Application Support.
     ///   - shared: where the squad's looks are kept for the 6pm push view.
+    ///   - phoneZone: the phone's time zone, which the member's day follows.
     public init(
-        api: WildcardAPI, directory: URL, shared: SharedSquad? = nil, now: @escaping @Sendable () -> Date = { Date() }
+        api: WildcardAPI, directory: URL, shared: SharedSquad? = nil, now: @escaping @Sendable () -> Date = { Date() },
+        phoneZone: @escaping @Sendable () -> TimeZone = { .current }
     ) {
         self.api = api
         saved = directory.appending(path: "home.json")
         self.shared = shared
+        self.phoneZone = phoneZone
         self.now = now
     }
 
@@ -35,9 +39,21 @@ public struct APICheckInBackend: CheckInBackend {
     public func home() async throws(CheckInError) -> Home? {
         do {
             var signedIn = try await api.meWire()
-            if signedIn.profile == nil {
+            let zone = phoneZone()
+            if let profile = signedIn.profile {
+                if profile.timeZone != zone.identifier {
+                    // The member's day follows the phone's clock, so a member who has travelled
+                    // takes the new zone. The profile is saved whole, so the rest of it is kept.
+                    let kept = try Profile(profile)
+                    _ = try await api.save(
+                        Profile(
+                            timeZone: zone, catchphrase: kept.catchphrase, character: kept.character,
+                            jerseyNumber: kept.jerseyNumber))
+                    signedIn = try await api.meWire()
+                }
+            } else {
                 // Saved right after the first sign-in; a member without one gets the phone's zone.
-                _ = try await api.save(Profile(timeZone: .current))
+                _ = try await api.save(Profile(timeZone: zone))
                 signedIn = try await api.meWire()
             }
             let squads = try await api.mySquadsWire().squads
@@ -46,8 +62,7 @@ public struct APICheckInBackend: CheckInBackend {
                 shared?.forget()
                 return nil
             }
-            let zone = signedIn.profile.flatMap { TimeZone(identifier: $0.timeZone) } ?? .current
-            let day = LocalDay(at: now(), in: zone)
+            let day = LocalDay(at: now(), in: signedIn.profile.flatMap { TimeZone(identifier: $0.timeZone) } ?? zone)
             let squadID = try api.read { () throws(ContractsError) in try Squad(squad).id }
             async let today = api.todayWire(of: squadID)
             async let plan = api.weeklyPlanWire(weekStart: day.weekStart)

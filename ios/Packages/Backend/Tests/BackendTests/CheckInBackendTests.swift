@@ -82,6 +82,25 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     #expect(today.phase == .noSquad)
 }
 
+@Test func aMemberWhoTravelledTakesThePhonesZoneAndKeepsTheRestOfTheirProfile() async throws {
+    let stack = try LocalStack()
+    let traveller = try await stack.signedInMember()
+    _ = try await stack.squad(of: traveller)
+    let losAngeles = try #require(TimeZone(identifier: "America/Los_Angeles"))
+    let shanghai = try #require(TimeZone(identifier: "Asia/Shanghai"))
+    _ = try await traveller.api.save(
+        Profile(timeZone: losAngeles, catchphrase: try Catchphrase("冲就完了"), jerseyNumber: try JerseyNumber(7)))
+
+    let backend = APICheckInBackend(api: traveller.api, directory: scratch(), phoneZone: { shanghai })
+    let home = try #require(try await backend.home())
+    #expect(home.timeZone == shanghai)
+
+    let profile = try #require(try await traveller.api.me().profile)
+    #expect(profile.timeZone == shanghai)
+    #expect(profile.catchphrase == (try Catchphrase("冲就完了")))
+    #expect(profile.jerseyNumber == (try JerseyNumber(7)))
+}
+
 @MainActor @Test func aTrainingWithPhotosPostsCountsAndTheSquadSeesIt() async throws {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
