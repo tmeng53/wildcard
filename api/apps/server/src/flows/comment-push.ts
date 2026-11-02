@@ -1,12 +1,17 @@
 import { MemberId as ProfileMember, type Members } from '@wildcard/members';
 import { MemberId as PushMember, type Push, type PushNotification } from '@wildcard/push';
 
+import { setTimeout as wait } from 'node:timers/promises';
+
 import type { Log } from '../log.js';
 import { pushAlert } from '../push-copy.js';
 
+/** How long a comment's answer waits for its push; a slower one goes on, and the comment answers. */
+const PUSH_WAIT_MS = 3000;
+
 export interface CommentPushDependencies {
-  readonly members: Members;
-  readonly push: Push;
+  readonly members: Pick<Members, 'squadmates'>;
+  readonly push: Pick<Push, 'settingsOf' | 'notifyMembers'>;
   readonly log: Log;
 }
 
@@ -26,13 +31,21 @@ export interface NewComment {
 /**
  * Tells the check-in's author about a new comment on it, and the member it replies to about the
  * reply, never the commenter. Each gets one push per comment, unless they turned off push (the
- * app's one 通知 switch, `dailyProgress`). Never throws: a comment is saved whether or not a
- * phone hears of it.
+ * app's one 通知 switch, `dailyProgress`). Never throws, and waits at most `PUSH_WAIT_MS`: a
+ * comment is saved whether or not a phone hears of it.
  */
 export async function notifyComment(
   deps: CommentPushDependencies,
   comment: NewComment,
 ): Promise<void> {
+  const stop = new AbortController();
+  const late = wait(PUSH_WAIT_MS, 'late' as const, { signal: stop.signal }).catch(() => undefined);
+  const outcome = await Promise.race([send(deps, comment), late]);
+  stop.abort();
+  if (outcome === 'late') deps.log.warn('comment push still sending', { checkIn: comment.checkIn });
+}
+
+async function send(deps: CommentPushDependencies, comment: NewComment): Promise<void> {
   try {
     const told = recipients(comment);
     if (told.length === 0) return;
@@ -81,7 +94,8 @@ export function recipients({
 }
 
 /**
- * The push about a comment, without its words: 「小美评论了你：加油」, or 「小美回复了你：加油」
+ * The push about a comment: a String Catalog key filled with the commenter's nickname and the
+ * comment's own words, 「小美评论了你：加油」, or 「小美回复了你：加油」
  * for a reply to them. A tap opens the post's page.
  */
 export function commentNotification({

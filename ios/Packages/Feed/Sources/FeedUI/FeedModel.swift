@@ -150,6 +150,8 @@ public final class FeedModel {
 
     /// Opens a post's own page, where its comments are: from its card, or from a comment's push.
     public func openPage(_ post: CheckInID) {
+        // Already open (a comment's push while reading it): read it again for the new comment.
+        if opened == post { Task { await store.loadPost(post) } }
         closeBar()
         listing = nil
         replyingTo = nil
