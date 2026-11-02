@@ -40,8 +40,8 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "21-editor-hair")
     }
 
-    /// 穿搭 opens on the shopping street: a closed store says how it opens and WARM-UP lets the
-    /// person in, to a hoodie in the third color, a cap and the belt bag, then the cap off again.
+    /// 穿搭 opens on the shopping street: a closed store's card says how it unlocks and a tap
+    /// keeps it shut, and WARM-UP lets the person in, to a hoodie in the third color, a cap and the belt bag, then the cap off again.
     func testShoppingForClothes() {
         let app = launch(language: "zh-Hans")
         XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: Self.wait), "the editor never appeared")
@@ -52,10 +52,8 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "22-editor-street")
         let lap = app.buttons["editor.store.lap"]
         scrollUntilHittable(lap, in: app)
+        XCTAssertTrue(lap.label.contains("跑步 3 次解锁"), lap.label)
         lap.tap()
-        let closed = app.descendants(matching: .any).matching(identifier: "editor.store.closed").firstMatch
-        XCTAssertTrue(closed.waitForExistence(timeout: Self.wait), "a closed store didn't say how it opens")
-        XCTAssertTrue(closed.label.contains("跑步打卡 3 次开门"), closed.label)
         XCTAssertFalse(app.buttons["editor.store.back"].exists, "a closed store let the person in")
         settle()
         keepScreenshot(named: "22-editor-store-closed")

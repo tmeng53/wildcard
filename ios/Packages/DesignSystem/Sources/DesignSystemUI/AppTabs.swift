@@ -2,6 +2,10 @@
 import DesignSystem
 import SwiftUI
 
+#if os(iOS)
+import UIKit
+#endif
+
 /// One tab: its name and SF Symbol.
 public struct TabBarItem<ID: Hashable>: Identifiable {
     public let id: ID
@@ -21,22 +25,33 @@ public struct TabBarItem<ID: Hashable>: Identifiable {
 /// the screens, the selected tab on its glass lens, morphing as it moves. The selected tab is
 /// ink, never the scene's color; the screens inside keep the system's tint. Each screen keeps to
 /// its safe area, which the system raises above the bar, so none of them measures the bar.
-/// `showsBar` false hides the bar (a tab's full-screen step).
+/// `showsBar` false hides the bar (a tab's full-screen step). A tab in `dotted` carries a small
+/// brand dot, no number: something new there since the member last looked.
 public struct AppTabs<ID: Hashable, Content: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let items: [TabBarItem<ID>]
     @Binding private var selection: ID
     private let showsBar: Bool
+    private let dotted: Set<ID>
     private let content: (ID) -> Content
 
     public init(
-        _ items: [TabBarItem<ID>], selection: Binding<ID>, showsBar: Bool = true,
+        _ items: [TabBarItem<ID>], selection: Binding<ID>, showsBar: Bool = true, dotted: Set<ID> = [],
         @ViewBuilder content: @escaping (ID) -> Content
     ) {
         self.items = items
         _selection = selection
         self.showsBar = showsBar
+        self.dotted = dotted
         self.content = content
+        Self.paintDots()
+    }
+
+    /// The system draws a badge red; ours is the brand's graphite, never an alarm.
+    private static func paintDots() {
+        #if os(iOS)
+        UITabBarItem.appearance().badgeColor = UIColor(Color(role: .bgBrand, in: .gym))
+        #endif
     }
 
     public var body: some View {
@@ -54,6 +69,8 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
                         Image(systemName: item.systemImage)
                     }
                 }
+                // An empty badge is the system's dot, without a number.
+                .badge(dotted.contains(item.id) ? Text(verbatim: "") : nil)
                 .accessibilityIdentifier(item.accessibilityIdentifier ?? "")
             }
         }

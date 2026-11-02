@@ -34,22 +34,6 @@
         }
       }
     },
-    "DEUCE CLUB 还没开门：网球、匹克球或壁球打卡 3 次开门。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DEUCE CLUB isn't open yet: check in 3 tennis, pickleball or squash sessions to open it."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DEUCE CLUB 還沒開門：網球、匹克球或壁球打卡 3 次就開門。"
-          }
-        }
-      }
-    },
     "HALF MOON": {
       "localizations": {
         "en": {
@@ -62,22 +46,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "HALF MOON"
-          }
-        }
-      }
-    },
-    "HALF MOON 还没开门：随便练什么，打卡 3 次就开门。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HALF MOON isn't open yet: check in any 3 workouts to open it."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HALF MOON 還沒開門：練什麼都行，打卡 3 次就開門。"
           }
         }
       }
@@ -98,22 +66,6 @@
         }
       }
     },
-    "LAP NINE 还没开门：跑步打卡 3 次开门。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LAP NINE isn't open yet: check in 3 runs to open it."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LAP NINE 還沒開門：跑步打卡 3 次就開門。"
-          }
-        }
-      }
-    },
     "MOSSWAY": {
       "localizations": {
         "en": {
@@ -130,22 +82,6 @@
         }
       }
     },
-    "MOSSWAY 还没开门：徒步或攀岩打卡 3 次开门。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MOSSWAY isn't open yet: check in 3 hikes or climbs to open it."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MOSSWAY 還沒開門：健行或攀岩打卡 3 次就開門。"
-          }
-        }
-      }
-    },
     "NO LOOK": {
       "localizations": {
         "en": {
@@ -158,22 +94,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "NO LOOK"
-          }
-        }
-      }
-    },
-    "NO LOOK 还没开门：篮球打卡 3 次开门。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NO LOOK isn't open yet: check in 3 basketball sessions to open it."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NO LOOK 還沒開門：籃球打卡 3 次就開門。"
           }
         }
       }
@@ -2034,22 +1954,6 @@
         }
       }
     },
-    "进店挑衣服。灰色的店还没开门，点一下看怎么开。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Walk into a store to pick clothes. Grey stores aren't open yet: tap one to see how it opens."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "進店挑衣服。灰色的店還沒開門，點一下看看怎麼開。"
-          }
-        }
-      }
-    },
     "连帽卫衣": {
       "localizations": {
         "en": {
@@ -2222,6 +2126,102 @@
           "stringUnit": {
             "state": "translated",
             "value": "高能量"
+          }
+        }
+      }
+    },
+    "进店挑衣服。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick clothes in a store."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "進店挑衣服。"
+          }
+        }
+      }
+    },
+    "跑步 3 次解锁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock: 3 runs"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跑步 3 次解鎖"
+          }
+        }
+      }
+    },
+    "篮球 3 次解锁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock: 3 basketball"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "籃球 3 次解鎖"
+          }
+        }
+      }
+    },
+    "攀岩或徒步 3 次解锁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock: 3 climbs or hikes"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "攀岩或徒步 3 次解鎖"
+          }
+        }
+      }
+    },
+    "随便练 3 次解锁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock: 3 workouts"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隨便練 3 次解鎖"
+          }
+        }
+      }
+    },
+    "网球类 3 次解锁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock: 3 racket sports"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網球類 3 次解鎖"
           }
         }
       }

@@ -22,7 +22,7 @@ public struct ScheduleView: View {
     @FocusState private var typingFuel: Bool
     /// Bumps as 存图 takes its picture: the poster flashes white, like a screenshot.
     @State private var flashes = 0
-    /// The picture the share sheet is open on, once the flash has played.
+    /// The picture 存图's sheet is open on, once the flash has played.
     @State private var sharing: ScheduleModel.SharedPoster?
 
     private static let panelID = "schedule.panel"
@@ -119,9 +119,9 @@ public struct ScheduleView: View {
         .task(id: model.saving) {
             switch model.saving {
             case .sharing(let poster):
-                // The poster flashes, then the share sheet opens on its picture.
+                // The poster flashes, then 存图's sheet opens on its picture.
                 flashes += 1
-                // Left mid-flash (another tab), the share sheet doesn't open later on its own.
+                // Left mid-flash (another tab), the sheet doesn't open later on its own.
                 guard (try? await Task.sleep(for: .seconds(Motion.fadeIn.duration))) != nil else {
                     model.clearSaving()
                     return
@@ -137,9 +137,8 @@ public struct ScheduleView: View {
         .sheet(
             item: $sharing, onDismiss: { model.clearSaving() },
             content: { poster in
-                PosterShareSheet(image: poster.image)
-                    .presentationDetents([.medium, .large])
-                    .ignoresSafeArea()
+                SavePictureSheet(image: poster.image) { sharing = nil }
+                    .environment(\.sceneTheme, theme)
             })
     }
 

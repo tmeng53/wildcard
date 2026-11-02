@@ -32,9 +32,14 @@ public struct TodayView: View {
     /// Opens the post my caption's bubble is from in 动态; nil while it is still waiting to go
     /// out, which opens 动态 at the top.
     private let openPost: (CheckIn?) -> Void
+    /// Opens 我的小队, from the squad's name on the card.
+    private let openSquad: () -> Void
 
-    public init(model: TodayModel, openPost: @escaping (CheckIn?) -> Void = { _ in }) {
+    public init(
+        model: TodayModel, openSquad: @escaping () -> Void = {}, openPost: @escaping (CheckIn?) -> Void = { _ in }
+    ) {
         _model = State(initialValue: model)
+        self.openSquad = openSquad
         self.openPost = openPost
     }
 
@@ -79,14 +84,7 @@ public struct TodayView: View {
             if model.showsTabBar { barRoom = room }
         }
         .task { await model.load() }
-        // Read again each minute while on screen, so teammates' check-ins show up.
-        .task {
-            while !Task.isCancelled {
-                try? await Task.sleep(for: TodayModel.rereadEvery)
-                guard !Task.isCancelled else { return }
-                await model.reread()
-            }
-        }
+        .rereadsEachMinute(model)
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }
@@ -202,9 +200,12 @@ public struct TodayView: View {
                                     openRecapDay = day
                                 }
                             }
-                        })
+                        }
+                    )
+                    .opensSquad(openSquad)
                 } else {
                     SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
+                        .opensSquad(openSquad)
                 }
             }
             .accessibilityIdentifier("today.card")

@@ -129,6 +129,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     @Binding private var pickedDay: Int?
     private let avatar: (SquadMember) -> Avatar
     private let footer: Footer?
+    private var openSquad: (() -> Void)?
 
     public init(
         squad: SquadWeek, mine: MyWeek, page: Binding<SquadCardPage>, pickedDay: Binding<Int?> = .constant(nil),
@@ -146,7 +147,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
         VStack(spacing: 0) {
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
-                    SquadPage(squad: squad, avatar: avatar, footer: footer)
+                    SquadPage(squad: squad, avatar: avatar, footer: footer, openSquad: openSquad)
                         .pageFrame()
                         .id(SquadCardPage.squad)
                     MyWeekPage(mine: mine, pickedDay: $pickedDay)
@@ -167,6 +168,13 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .padding(.horizontal, Space.pageMargin)
         .accessibilityElement(children: .contain)
+    }
+
+    /// The squad's name gets a chevron and opens `action` (我的小队) when tapped.
+    public func opensSquad(_ action: @escaping () -> Void) -> Self {
+        var card = self
+        card.openSquad = action
+        return card
     }
 
     /// The scroll position as a page; nil while between pages, which leaves `page` as it was.
@@ -228,26 +236,47 @@ enum SquadCardMetrics {
     static let dot: Double = 6
 }
 
-/// A big number with its label and title on the left, as both pages open.
+/// A big number with its label and title on the left, as both pages open. Given `open`, the
+/// title is a button with a chevron after it.
 private struct PageHeader: View {
     @Environment(\.sceneTheme) private var theme
     let label: Text
     let title: String
     let count: Int
     let goal: Int
+    var open: (() -> Void)?
 
     var body: some View {
         HStack(alignment: .bottom, spacing: Space.s) {
             VStack(alignment: .leading, spacing: Space.xxs) {
                 SectionLabel(label)
-                Text(verbatim: title)
-                    .typeStyle(TypeRamp.headline)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .lineLimit(1)
+                if let open {
+                    Button(action: open) {
+                        HStack(spacing: Space.xxs) {
+                            titleText
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
+                                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                                .accessibilityHidden(true)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .accessibilityIdentifier("squadcard.squad")
+                } else {
+                    titleText
+                }
             }
             Spacer(minLength: 0)
             Score(count: count, goal: goal, size: .hero)
         }
+    }
+
+    private var titleText: some View {
+        Text(verbatim: title)
+            .typeStyle(TypeRamp.headline)
+            .foregroundStyle(Color(role: .fgDefault, in: theme))
+            .lineLimit(1)
     }
 }
 
@@ -255,13 +284,15 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     let squad: SquadWeek
     let avatar: (SquadMember) -> Avatar
     let footer: Footer?
+    let openSquad: (() -> Void)?
 
     var body: some View {
         // With a footer the rows sit 8 apart instead of 12, so the page stays 186 tall.
         let gap = footer == nil ? Space.s : Space.xs
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
-                label: Text("本周小队训练", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal)
+                label: Text("本周小队训练", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal,
+                open: openSquad)
             Spacer(minLength: gap)
             ProgressBar(fraction: squad.goal > 0 ? Double(squad.done) / Double(squad.goal) : 0)
             Spacer(minLength: gap)

@@ -45,7 +45,7 @@ struct ShoppingStreet: View {
             .typeStyle(TypeRamp.headline)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .accessibilityAddTraits(.isHeader)
-        Text("进店挑衣服。灰色的店还没开门，点一下看怎么开。", bundle: .module)
+        Text("进店挑衣服。", bundle: .module)
             .typeStyle(TypeRamp.footnote)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
         // The open stores across the top, the rest two a row.
@@ -59,21 +59,12 @@ struct ShoppingStreet: View {
             }
         }
         .padding(.top, Space.xxs)
-        if let knocked = model.knocked {
-            StoreCopy.opens(knocked)
-                .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, Space.s)
-                .padding(.vertical, Space.xs)
-                .background(Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.pick))
-                .accessibilityIdentifier("editor.store.closed")
-        }
     }
 }
 
-/// A store on the street: its badge, name, Chinese name and sports. An open one is white with a
-/// hairline and says 营业中; a closed one is grey with a faded badge and name.
+/// A store on the street. An open one is white with a hairline, its badge, name, Chinese name and
+/// sports, and says 营业中; a closed one is grey, a lock in place of its badge, its name faded,
+/// and says how it unlocks.
 private struct StoreCard: View {
     let model: CharacterEditorModel
     let store: EditorChoices.Store
@@ -86,18 +77,33 @@ private struct StoreCard: View {
             model.visit(store)
         } label: {
             VStack(alignment: .leading, spacing: Space.xxs) {
-                StoreBadge(store: store.id)
-                    .frame(width: badge, height: badge)
-                    .opacity(store.isOpen ? 1 : 0.45)
+                Group {
+                    if store.isOpen {
+                        StoreBadge(store: store.id)
+                    } else {
+                        Image(systemName: "lock")
+                            .font(.system(size: badge / 2))
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .accessibilityHidden(true)
+                    }
+                }
+                .frame(width: badge, height: badge)
                 StoreCopy.name(store.id)
                     .typeStyle(TypeRamp.scoreSmall)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .opacity(store.isOpen ? 1 : 0.45)
                     .lineLimit(1)
-                Text("\(StoreCopy.local(store.id)) · \(StoreCopy.sports(store.id))", bundle: .module)
-                    .typeStyle(TypeRamp.caption)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .fixedSize(horizontal: false, vertical: true)
+                if store.isOpen {
+                    Text("\(StoreCopy.local(store.id)) · \(StoreCopy.sports(store.id))", bundle: .module)
+                        .typeStyle(TypeRamp.caption)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    StoreCopy.unlock(store.id)
+                        .typeStyle(TypeRamp.label)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(Space.s)
@@ -219,13 +225,13 @@ private struct RackPiece: View {
 }
 
 /// A store's copy, from the String Catalog: its name (a wordmark, the same in every language),
-/// its Chinese name, its sports, its line, and how it opens.
+/// its Chinese name, its sports, its line, and how a closed one unlocks.
 enum StoreCopy {
     static func name(_ store: String) -> Text { text(names[store], or: store) }
     static func local(_ store: String) -> Text { text(locals[store], or: store) }
     static func sports(_ store: String) -> Text { text(sportLines[store], or: "") }
     static func tagline(_ store: String) -> Text { text(taglines[store], or: "") }
-    static func opens(_ store: String) -> Text { text(openings[store], or: "") }
+    static func unlock(_ store: String) -> Text { text(unlocks[store], or: "") }
 
     private static func text(_ key: String?, or fallback: String) -> Text {
         guard let key else { return Text(verbatim: fallback) }
@@ -247,10 +253,9 @@ enum StoreCopy {
         "warmup": "先热身，再上场。", "lap": "操场第九圈，才是今天真正开始的地方。", "nolook": "眼睛看左边，球已经到右边了。",
         "moss": "路不在地图上，在苔藓上。", "halfmoon": "做完半月式，再去喝一杯燕麦拿铁。", "deuce": "平分之后，才是真的比赛。",
     ]
-    private static let openings = [
-        "lap": "LAP NINE 还没开门：跑步打卡 3 次开门。", "nolook": "NO LOOK 还没开门：篮球打卡 3 次开门。",
-        "moss": "MOSSWAY 还没开门：徒步或攀岩打卡 3 次开门。", "halfmoon": "HALF MOON 还没开门：随便练什么，打卡 3 次就开门。",
-        "deuce": "DEUCE CLUB 还没开门：网球、匹克球或壁球打卡 3 次开门。",
+    private static let unlocks = [
+        "lap": "跑步 3 次解锁", "nolook": "篮球 3 次解锁", "moss": "攀岩或徒步 3 次解锁", "halfmoon": "随便练 3 次解锁",
+        "deuce": "网球类 3 次解锁",
     ]
 }
 #endif

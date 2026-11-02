@@ -7,17 +7,6 @@ import UIKit
 /// The poster as a picture: 1080 × 1440, 3:4, the size Xiaohongshu shows a post at.
 public typealias PosterImage = UIImage
 
-/// The system share sheet on the poster's picture: 存储图像, Messages, Xiaohongshu and the rest.
-struct PosterShareSheet: UIViewControllerRepresentable {
-    let image: PosterImage
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: [image], applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
-}
-
 extension SchedulePoster {
     /// How many pixels a poster point is in the saved picture: 360 × 480 points make 1080 × 1440.
     static let savedScale: Double = 3
