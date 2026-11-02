@@ -83,7 +83,8 @@ extension View {
     /// Drops `content(item)` in from the top while `item` is set, over everything under it, and
     /// puts it away after `Motion.noticeHold`, on a swipe up, or on a tap (which also calls
     /// `onTap`). The caller keeps the queue: setting the next item shows it once this one is
-    /// gone. With Reduce Motion on, it fades instead of dropping.
+    /// gone. The status bar hides while it shows. With Reduce Motion on, it fades instead of
+    /// dropping.
     public func noticeBanner<Item: Identifiable, Banner: View>(
         item: Binding<Item?>, onTap: @escaping (Item) -> Void = { _ in },
         @ViewBuilder content: @escaping (Item) -> Banner
@@ -140,6 +141,9 @@ private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
             }
         }
         .ignoresSafeArea(edges: .top)
+        // The capsule takes the status bar's place, as the Dynamic Island does; the system draws
+        // the status bar over the app, so the time would sit on the title.
+        .statusBarHidden(item != nil)
         .animation(.wildcard(Motion.notice, reduceMotion: reduceMotion), value: item?.id)
     }
 
