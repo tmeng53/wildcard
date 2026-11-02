@@ -1,6 +1,6 @@
 import { earned, type MemberId, type Unlock, type UnlockRule } from '../domain/unlocks.js';
-import type { UnlockRuleEdit } from '../domain/unlocks.js';
-import { UnlockSportNotListedError } from '../errors.js';
+import type { UnlockGift, UnlockRuleEdit } from '../domain/unlocks.js';
+import { UnlockItemMissingError, UnlockSportNotListedError } from '../errors.js';
 import type { SportListed, TrainedSince, UnlockStore } from '../ports.js';
 
 /** What members unlock by training. */
@@ -17,6 +17,11 @@ export interface UnlocksAdmin {
   rules(): Promise<UnlockRule[]>;
   /** Adds or changes a rule and answers with every rule now. */
   putRule(edit: UnlockRuleEdit): Promise<UnlockRule[]>;
+  /**
+   * Gives `gift.member` the stores and props it names (every one with a rule when it names none)
+   * from `admin`, now; what they already hold stays as it was. Answers with all they hold.
+   */
+  give(gift: UnlockGift, admin: MemberId): Promise<Unlock[]>;
 }
 
 export function createUnlocks(deps: {
@@ -46,6 +51,31 @@ export function createUnlocks(deps: {
       }
       await deps.store.putRule(edit);
       return deps.store.rules();
+    },
+
+    async give({ member, items }, admin) {
+      const rules = await deps.store.rules();
+      const named = new Set(items?.map(({ kind, id }) => `${kind}:${id}`));
+      for (const item of named) {
+        if (!rules.some(({ kind, id }) => `${kind}:${id}` === item)) {
+          throw new UnlockItemMissingError(item);
+        }
+      }
+      const given =
+        items === undefined ? rules : rules.filter(({ kind, id }) => named.has(`${kind}:${id}`));
+      const unlockedAt = new Date();
+      await deps.store.grant(
+        member,
+        given.map(({ kind, id, sports, after }) => ({
+          kind,
+          id,
+          sports,
+          after,
+          by: { admin },
+          unlockedAt,
+        })),
+      );
+      return deps.store.unlocksOf(member);
     },
   };
 }

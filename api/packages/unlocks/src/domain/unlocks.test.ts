@@ -40,16 +40,23 @@ describe('earned', () => {
         id: 'deuce',
         sports: ['tennis', 'pickleball', 'squash'],
         after: 3,
-        checkIn: 'd',
+        by: { checkIn: 'd' },
         unlockedAt: at(4),
       },
-      { kind: 'store', id: 'halfmoon', sports: [], after: 3, checkIn: 'c', unlockedAt: at(3) },
+      {
+        kind: 'store',
+        id: 'halfmoon',
+        sports: [],
+        after: 3,
+        by: { checkIn: 'c' },
+        unlockedAt: at(3),
+      },
       {
         kind: 'prop',
         id: 'racket',
         sports: ['tennis', 'squash'],
         after: 1,
-        checkIn: 'a',
+        by: { checkIn: 'a' },
         unlockedAt: at(1),
       },
     ]);
@@ -67,7 +74,7 @@ describe('earned', () => {
       id: 'racket',
       sports: ['tennis'],
       after: 1,
-      checkIn: 'x',
+      by: { checkIn: 'x' },
       unlockedAt: at(-100),
     };
     expect(earned({ rules: [deuce, racket], trained, has: [held] })).toStrictEqual([]);
@@ -77,7 +84,7 @@ describe('earned', () => {
         trained: [...trained, { id: 'e', sport: 'tennis', madeAt: at(6) }],
         has: [],
       }),
-    ).toMatchObject([{ id: 'deuce', checkIn: 'e', unlockedAt: at(6) }]);
+    ).toMatchObject([{ id: 'deuce', by: { checkIn: 'e' }, unlockedAt: at(6) }]);
   });
 
   it('never counts a custom sport toward a rule with sports, but does toward any sport', () => {
@@ -87,7 +94,7 @@ describe('earned', () => {
       madeAt: at(index + 1),
     }));
     expect(earned({ rules: [deuce, halfmoon], trained, has: [] })).toMatchObject([
-      { id: 'halfmoon', checkIn: 'c' },
+      { id: 'halfmoon', by: { checkIn: 'c' } },
     ]);
   });
 });

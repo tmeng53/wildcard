@@ -86,20 +86,24 @@ create trigger unlock_rule_events_no_truncate
   for each statement execute function public.unlock_rules_append_only();
 
 -- What each member unlocked: one row per store or prop, never changed or removed, so it is its
--- own log. It keeps the rule as it was when earned and the check-in that earned it (which its
--- author may later delete; the unlock stays).
+-- own log. It keeps the rule as it was when earned and either the check-in that earned it (which
+-- its author may later delete; the unlock stays) or the admin who gave it.
 create table public.member_unlocks (
   member_id uuid not null references auth.users (id) on delete cascade,
   kind text not null,
   item_id text not null,
   sports text[] not null,
   after int not null,
-  -- The check-in that reached `after`, and when it was made.
-  check_in_id uuid not null,
+  -- The check-in that reached `after`, and when it was made (or when it was given).
+  check_in_id uuid,
+  -- The admin who gave it through the admin tools, when no check-in earned it. Not a foreign
+  -- key: the row is never changed, even when that admin's account goes.
+  given_by uuid,
   unlocked_at timestamptz not null,
   -- When the API saw it was earned.
   granted_at timestamptz not null default now(),
   primary key (member_id, kind, item_id),
+  check ((check_in_id is null) <> (given_by is null)),
   foreign key (kind, item_id) references public.unlock_rules (kind, item_id)
 );
 

@@ -1,4 +1,10 @@
-import { UnlockRuleEdit, type UnlocksAdmin, type UnlockRule } from '@wildcard/unlocks';
+import {
+  MemberId,
+  UnlockGift,
+  UnlockRuleEdit,
+  type UnlocksAdmin,
+  type UnlockRule,
+} from '@wildcard/unlocks';
 import { z } from 'zod';
 
 import { adminTool } from '../admin-tool.js';
@@ -51,7 +57,29 @@ export function putUnlockRule({ unlocks }: UnlockToolDependencies) {
   });
 }
 
+/** `give_unlocks`: opens stores and props for one member, whatever they trained. */
+export function giveUnlocks({ unlocks }: UnlockToolDependencies) {
+  return adminTool({
+    name: 'give_unlocks',
+    title: 'Give a member stores and props',
+    description:
+      'Opens the named stores and props (each one with an unlock rule) for one member now, as ' +
+      'if they had earned them, or every one when items is left out; for testing, or to make ' +
+      'up for check-ins that could not count. What they already hold stays. An unlock is never ' +
+      'taken back. Returns everything the member holds.',
+    changes: true,
+    input: UnlockGift,
+    run: async (gift, { admin }) => ({
+      version: 1,
+      unlocks: (await unlocks.give(gift, MemberId.parse(admin))).map(
+        ({ unlockedAt, ...unlock }) => ({ ...unlock, unlockedAt: unlockedAt.toISOString() }),
+      ),
+    }),
+  });
+}
+
 export const unlockTools = (deps: UnlockToolDependencies) => [
   getUnlockRules(deps),
   putUnlockRule(deps),
+  giveUnlocks(deps),
 ];

@@ -382,6 +382,7 @@ describe('the admin MCP server', () => {
       ['set_sport_picks', false],
       ['get_unlock_rules', true],
       ['put_unlock_rule', false],
+      ['give_unlocks', false],
       ['get_coach_settings', true],
       ['change_coach_settings', false],
       ['list_coaches', true],
@@ -902,6 +903,26 @@ describe('the admin MCP server', () => {
           after: 3,
         },
       },
+    ]);
+    await client.close();
+  });
+
+  it('gives a member stores and props and logs who gave them', async () => {
+    const admin = await member({ admin: true });
+    const friend = await member({ admin: false });
+    const client = await connect(clientSignedInAs(admin));
+    const gift = { member: friend.userId, items: [{ kind: 'store', id: 'deuce' }] };
+    const given = await client.callTool({ name: 'give_unlocks', arguments: gift });
+    expect(given.isError).not.toBe(true);
+    expect(JSON.parse(textOf(given))).toMatchObject({
+      version: 1,
+      unlocks: [{ kind: 'store', id: 'deuce', by: { admin: admin.userId } }],
+    });
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      { version: 1, tool: 'give_unlocks', arguments: gift },
     ]);
     await client.close();
   });

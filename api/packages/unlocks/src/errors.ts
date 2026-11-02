@@ -10,3 +10,14 @@ export class UnlockSportNotListedError extends AppError {
     super(`${sport} is not on the sports list.`);
   }
 }
+
+/** Thrown when an admin gives a store or prop that has no unlock rule. */
+export class UnlockItemMissingError extends AppError {
+  override readonly name = 'UnlockItemMissingError';
+  readonly reason = 'UNLOCK_ITEM_MISSING';
+  readonly status = 'NOT_FOUND';
+
+  constructor(readonly item: string) {
+    super(`${item} has no unlock rule.`);
+  }
+}

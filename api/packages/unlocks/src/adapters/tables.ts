@@ -13,7 +13,8 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface MemberUnlocks {
   after: number;
-  check_in_id: string;
+  check_in_id: string | null;
+  given_by: string | null;
   granted_at: Generated<Timestamp>;
   item_id: string;
   kind: string;

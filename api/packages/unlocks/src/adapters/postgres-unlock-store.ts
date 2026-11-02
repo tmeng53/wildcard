@@ -1,7 +1,7 @@
 import { SportId } from '@wildcard/sport-ids';
 import type { Kysely } from 'kysely';
 
-import { ItemId, UnlockKind, type UnlockRule } from '../domain/unlocks.js';
+import { ItemId, MemberId, UnlockKind, type Unlock, type UnlockRule } from '../domain/unlocks.js';
 import type { UnlockStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -54,7 +54,7 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
         id: ItemId.parse(row.item_id),
         sports: row.sports.map((sport) => SportId.parse(sport)),
         after: row.after,
-        checkIn: row.check_in_id,
+        by: unlockedBy(row),
         unlockedAt: new Date(row.unlocked_at),
       }));
     },
@@ -70,7 +70,8 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
             item_id: unlock.id,
             sports: [...unlock.sports],
             after: unlock.after,
-            check_in_id: unlock.checkIn,
+            check_in_id: 'checkIn' in unlock.by ? unlock.by.checkIn : null,
+            given_by: 'admin' in unlock.by ? unlock.by.admin : null,
             unlocked_at: unlock.unlockedAt.toISOString(),
           })),
         )
@@ -78,4 +79,10 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
         .execute();
     },
   };
+}
+
+/** A row's check-in, or else its giver: the table holds exactly one of them. */
+function unlockedBy(row: { check_in_id: string | null; given_by: string | null }): Unlock['by'] {
+  if (row.check_in_id !== null) return { checkIn: row.check_in_id };
+  return { admin: MemberId.parse(row.given_by) };
 }

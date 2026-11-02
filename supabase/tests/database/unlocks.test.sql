@@ -1,7 +1,7 @@
 -- What members unlock: the rules are logged and never deleted, and a member's unlocks are
 -- append-only until their account goes.
 begin;
-select plan(9);
+select plan(10);
 
 insert into auth.users (id, email) values ('e0000000-0000-0000-0000-000000000001', 'una@example.com');
 
@@ -36,6 +36,11 @@ select throws_ok(
     values ('e0000000-0000-0000-0000-000000000001', 'store', 'nowhere', '{}', 1,
       'e1000000-0000-0000-0000-000000000002', now())$$,
   '23503', null, 'an unlock names a rule'
+);
+select throws_ok(
+  $$insert into public.member_unlocks (member_id, kind, item_id, sports, after, unlocked_at)
+    values ('e0000000-0000-0000-0000-000000000001', 'prop', 'racket', '{}', 1, now())$$,
+  '23514', null, 'an unlock was earned by a check-in or given by an admin'
 );
 
 delete from auth.users where id = 'e0000000-0000-0000-0000-000000000001';

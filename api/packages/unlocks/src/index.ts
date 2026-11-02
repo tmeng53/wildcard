@@ -7,6 +7,7 @@ export {
   ItemId,
   MemberId,
   UNLOCK_KINDS,
+  UnlockGift,
   UnlockKind,
   UnlockRuleEdit,
   earned,
@@ -14,6 +15,6 @@ export {
   type Unlock,
   type UnlockRule,
 } from './domain/unlocks.js';
-export { UnlockSportNotListedError } from './errors.js';
+export { UnlockItemMissingError, UnlockSportNotListedError } from './errors.js';
 export type { SportListed, TrainedSince, UnlockStore } from './ports.js';
 export { createUnlocks, type Unlocks, type UnlocksAdmin } from './use-cases/unlocks.js';

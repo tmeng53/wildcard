@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 import { createPostgresUnlockStore, type UnlockTables } from '../adapters/postgres-unlock-store.js';
 import { MemberId, type Trained } from '../domain/unlocks.js';
-import { UnlockSportNotListedError } from '../errors.js';
+import { UnlockItemMissingError, UnlockSportNotListedError } from '../errors.js';
 import { createUnlocks } from './unlocks.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
@@ -73,11 +73,11 @@ describe('unlocks', () => {
     ]);
     trained.set(me, tennis);
     const all = await unlocks.of(me);
-    expect(all.map(({ kind, id, checkIn }) => [kind, id, checkIn])).toStrictEqual([
-      ['prop', 'racket', tennis[0]?.id],
-      ['store', 'deuce', tennis[2]?.id],
+    expect(all.map(({ kind, id, by }) => [kind, id, by])).toStrictEqual([
+      ['prop', 'racket', { checkIn: tennis[0]?.id }],
+      ['store', 'deuce', { checkIn: tennis[2]?.id }],
       // HALF MOON opens after 3 of any sport.
-      ['store', 'halfmoon', tennis[2]?.id],
+      ['store', 'halfmoon', { checkIn: tennis[2]?.id }],
     ]);
     expect(all[1]?.unlockedAt).toStrictEqual(tennis[2]?.madeAt);
 
@@ -119,5 +119,37 @@ describe('unlocks', () => {
       sql`delete from public.unlock_rules where item_id = ${id}`.execute(db),
     ).rejects.toThrow('never deleted');
     expect(before.length + 1).toBe(changed.length);
+  });
+
+  it('gives the picks an admin makes, or every store and prop, keeping what was already earned', async () => {
+    const me = await newMember();
+    const admin = await newMember();
+    const trained = new Map<MemberId, Trained[]>();
+    const unlocks = unlocksWith(trained);
+    const racket = { id: randomUUID(), sport: 'tennis', madeAt: new Date(Date.now() + 60_000) };
+    trained.set(me, [racket]);
+    expect(await unlocks.of(me)).toHaveLength(1);
+
+    const picked = await unlocks.give(
+      {
+        member: me,
+        items: [
+          { kind: 'store', id: 'deuce' },
+          { kind: 'prop', id: 'racket' },
+        ],
+      },
+      admin,
+    );
+    expect(picked.map(({ kind, id, by }) => [kind, id, by])).toStrictEqual([
+      ['store', 'deuce', { admin }],
+      ['prop', 'racket', { checkIn: racket.id }],
+    ]);
+    await expect(
+      unlocks.give({ member: me, items: [{ kind: 'store', id: 'nowhere' }] }, admin),
+    ).rejects.toBeInstanceOf(UnlockItemMissingError);
+
+    const everything = await unlocks.give({ member: me }, admin);
+    expect(everything).toHaveLength((await unlocks.rules()).length);
+    expect(await unlocks.of(me)).toStrictEqual(everything);
   });
 });

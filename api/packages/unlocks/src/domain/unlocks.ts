@@ -34,9 +34,9 @@ export interface Unlock {
   readonly id: ItemId;
   readonly sports: readonly SportId[];
   readonly after: number;
-  /** The check-in that reached `after`. */
-  readonly checkIn: string;
-  /** When that check-in was made. */
+  /** How it opened: the check-in that reached `after`, or an admin who gave it. */
+  readonly by: { readonly checkIn: string } | { readonly admin: MemberId };
+  /** When that check-in was made, or when it was given. */
   readonly unlockedAt: Date;
 }
 
@@ -76,12 +76,23 @@ export function earned({
         id: rule.id,
         sports: rule.sports,
         after: rule.after,
-        checkIn: reached.id,
+        by: { checkIn: reached.id },
         unlockedAt: reached.madeAt,
       },
     ];
   });
 }
+
+/** Stores and props an admin gives a member, whatever they trained. */
+export const UnlockGift = z.strictObject({
+  member: MemberId.describe('The member’s id.'),
+  items: z
+    .array(z.strictObject({ kind: UnlockKind, id: ItemId }))
+    .max(50)
+    .optional()
+    .describe('The stores and props to give, each by kind and id; leave out for every one.'),
+});
+export type UnlockGift = z.infer<typeof UnlockGift>;
 
 /** A rule as an admin adds or changes it. Its start is kept from when it was added. */
 export const UnlockRuleEdit = z.strictObject({
