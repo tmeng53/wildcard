@@ -6,7 +6,8 @@ import SquadDomain
 import SwiftUI
 
 // The squad's coach (approved canvas 雇教练页面, 2026-11-01): the 教练 card on 小队设置, 教练招聘会,
-// a coach's 简历 and 解雇. Only the captain hires, changes and fires; everyone reads the 简历.
+// a coach's 简历 and 解雇. Only the captain hires, changes and fires; every mate browses 教练招聘会
+// and reads the 简历, with nothing to do there (Tracy, 2026-11-03).
 // Coaches have no character of their own yet, so each stands as an ink silhouette.
 
 /// A page the 教练 card opens, over 小队设置.
@@ -16,7 +17,8 @@ enum CoachRoute: Hashable {
     case fire(Coach)
 }
 
-/// 小队设置's 教练 card: an empty spot and 招聘, or the coach, its week, 换教练 and 解雇.
+/// 小队设置's 教练 card: an empty spot and 招聘, or the coach, its week, 换教练 and 解雇; for a mate,
+/// 逛逛招聘会 instead.
 struct CoachCard: View {
     let hire: SquadCoach.Hire?
     let week: Int?
@@ -61,8 +63,21 @@ struct CoachCard: View {
                 .accentTone(.ink)
                 .fixedSize()
                 .accessibilityIdentifier("squad.coach.hire")
+            } else {
+                browse.fixedSize()
             }
         }
+    }
+
+    /// For a mate: 教练招聘会 to read, with nothing to do there; only the captain hires.
+    private var browse: some View {
+        Button {
+            open(.market)
+        } label: {
+            Text("逛逛招聘会", bundle: .module).frame(maxWidth: .infinity)
+        }
+        .buttonStyle(SecondaryButtonStyle(.inCard))
+        .accessibilityIdentifier("squad.coach.browse")
     }
 
     private func hired(_ coach: Coach) -> some View {
@@ -109,6 +124,8 @@ struct CoachCard: View {
                     .buttonStyle(SecondaryButtonStyle(.inCard, tone: .danger))
                     .accessibilityIdentifier("squad.coach.fire")
                 }
+            } else {
+                browse
             }
         }
     }
