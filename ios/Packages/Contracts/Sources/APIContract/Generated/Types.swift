@@ -299,6 +299,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /squads/{squadId}/nudges`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/post(nudgeSquadmate)`.
     func nudgeSquadmate(_ input: Operations.NudgeSquadmate.Input) async throws -> Operations.NudgeSquadmate.Output
+    /// The caller’s notices (通知)
+    ///
+    /// Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.
+    ///
+    /// - Remark: HTTP `GET /me/notices`.
+    /// - Remark: Generated from `#/paths//me/notices/get(listMyNotices)`.
+    func listMyNotices(_ input: Operations.ListMyNotices.Input) async throws -> Operations.ListMyNotices.Output
+    /// Mark the caller’s notices read (通知)
+    ///
+    /// Opening 通知 marks every notice up to the newest read. Never goes back: an older one, or the same again, changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/notices/seen`.
+    /// - Remark: Generated from `#/paths//me/notices/seen/put(markMyNoticesSeen)`.
+    func markMyNoticesSeen(_ input: Operations.MarkMyNoticesSeen.Input) async throws -> Operations.MarkMyNoticesSeen.Output
     /// A squad’s week: its awards and counts (周日战报)
     ///
     /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.
@@ -983,6 +997,36 @@ extension APIProtocol {
     ) async throws -> Operations.NudgeSquadmate.Output {
         try await nudgeSquadmate(Operations.NudgeSquadmate.Input(
             path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The caller’s notices (通知)
+    ///
+    /// Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.
+    ///
+    /// - Remark: HTTP `GET /me/notices`.
+    /// - Remark: Generated from `#/paths//me/notices/get(listMyNotices)`.
+    public func listMyNotices(
+        query: Operations.ListMyNotices.Input.Query = .init(),
+        headers: Operations.ListMyNotices.Input.Headers = .init()
+    ) async throws -> Operations.ListMyNotices.Output {
+        try await listMyNotices(Operations.ListMyNotices.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Mark the caller’s notices read (通知)
+    ///
+    /// Opening 通知 marks every notice up to the newest read. Never goes back: an older one, or the same again, changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/notices/seen`.
+    /// - Remark: Generated from `#/paths//me/notices/seen/put(markMyNoticesSeen)`.
+    public func markMyNoticesSeen(
+        headers: Operations.MarkMyNoticesSeen.Input.Headers = .init(),
+        body: Operations.MarkMyNoticesSeen.Input.Body
+    ) async throws -> Operations.MarkMyNoticesSeen.Output {
+        try await markMyNoticesSeen(Operations.MarkMyNoticesSeen.Input(
             headers: headers,
             body: body
         ))

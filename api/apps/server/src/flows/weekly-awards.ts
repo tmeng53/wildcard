@@ -9,6 +9,7 @@ import {
 } from '@wildcard/check-ins';
 import type { Admins } from '@wildcard/admins';
 import type { Members } from '@wildcard/members';
+import { MemberId as NoticeMember, SquadId as NoticeSquad, type Notices } from '@wildcard/notices';
 import { MemberId as PushMember, type Push, type PushNotification } from '@wildcard/push';
 import {
   MemberId as SquadsMember,
@@ -35,6 +36,7 @@ import {
 
 import type { Log } from '../log.js';
 import { pushAlert } from '../push-copy.js';
+import { noticeAlert } from './daily-progress-push.js';
 
 // The weekly awards and the frozen 战报 across modules: who was in the squad and its scene from
 // squads, the week's check-ins and pages from check-ins, members' clocks and characters from
@@ -47,6 +49,8 @@ export interface WeeklyAwardsDependencies {
   readonly squads: Squads;
   readonly awards: WeeklyAwards;
   readonly push: Push;
+  /** Where each push sent is kept for the member's 通知. */
+  readonly notices: Notices;
   readonly admins: Pick<Admins, 'list'>;
   readonly clock: () => Date;
   readonly log: Log;
@@ -169,9 +173,27 @@ async function giveWeek(
           }
           const winners = await deps.awards.claimWinners({ squad, weekStart: week });
           if (winners.length > 0) {
+            const notification = awardsReadyNotification(squad, week);
+            // Kept in each one's 通知 too, whether or not it reaches a phone. Never fails the run.
+            await deps.notices
+              .tell(
+                winners.map((member) => ({
+                  member: NoticeMember.parse(member),
+                  squad: NoticeSquad.parse(squad),
+                  kind: 'weeklyAwards' as const,
+                  subject: {
+                    version: 1 as const,
+                    alert: noticeAlert(notification),
+                    weekStart: week,
+                  },
+                })),
+              )
+              .catch((error: unknown) => {
+                deps.log.warn('awards push not kept in notices', { squad, error });
+              });
             const outcome = await deps.push.notifyMembers({
               members: winners.map((member) => PushMember.parse(member)),
-              notification: awardsReadyNotification(squad, week),
+              notification,
             });
             told += winners.length;
             if (outcome.failures.length > 0) {

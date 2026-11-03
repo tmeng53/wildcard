@@ -70,6 +70,8 @@ const app = createApp({
     clock: unused,
   }),
   nudges: { send: unused, received: unused, inSquad: unused },
+  notices: { tell: unused, page: unused, markSeen: unused },
+  coachNames: unused,
   disclaimerDrafts: { write: unused },
   weeklyPlans: createWeeklyPlans({
     sports: createSports({ store: createPostgresSportStore(db) }),
