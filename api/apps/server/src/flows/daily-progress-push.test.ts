@@ -41,6 +41,7 @@ import {
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedCoachHiring,
+  unusedCoachActivity,
 } from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
@@ -113,6 +114,7 @@ const deps = {
   unlocks: unusedUnlocks,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
+  coachActivity: unusedCoachActivity,
   log,
   jobs: { isScheduler: jobsTokenScheduler(JOBS_TOKEN), interactions, clock: () => new Date() },
   admin: adminOn(),

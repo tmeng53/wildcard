@@ -36,6 +36,7 @@ import {
   unusedWeeklyAwards,
   unusedWeekSummaryWords,
   unusedCoachHiring,
+  unusedCoachActivity,
 } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -95,6 +96,7 @@ const app = createApp({
   }),
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
+  coachActivity: unusedCoachActivity,
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
   log: createLog(() => undefined),

@@ -1,12 +1,13 @@
 // @wildcard/coach: the AI coach. The coaches a squad can hire (their identity and soul) and the
 // settings every coach runs with, both kept in the database and changed through the admin
 // tools; each squad hiring and firing its coach; and the coach at work: woken for each check-in and once a day, it reads the squad's
-// week, keeps the squad's memory files, posts the 战术板 line, and counts its tokens per squad.
+// week, keeps the squad's memory files, posts the 战术板 line, replies and reacts to check-ins, and counts its tokens per squad.
 // Coaching is off until it is switched on.
 
 export { createPostgresCoachCatalog } from './adapters/postgres-coach-catalog.js';
 export { createPostgresCoachHiring } from './adapters/postgres-coach-hiring.js';
 export {
+  createPostgresCoachActivity,
   createPostgresCoachReport,
   createPostgresCoachStores,
   postgresCoachTransaction,
@@ -23,13 +24,16 @@ export {
   MemberId,
   SquadId,
 } from './domain/settings.js';
+export { CoachEmoji, REPLY_LIMIT, type CoachReply } from './domain/reply.js';
 export type { CheckInKind, SquadWeek, WeekCheckIn } from './domain/squad-week.js';
 export type { TokenUsage } from './domain/wake.js';
 export type {
   AgentRun,
+  CoachActivityStore,
   CoachAgent,
   CoachCatalogStore,
   CoachHiringStore,
+  CoachNoteShown,
   CoachReportStore,
   CoachSettingsStore,
   CoachStores,
@@ -45,6 +49,12 @@ export {
   CoachSquadNotFoundError,
   NoCoachHiredError,
 } from './errors.js';
+export {
+  createCoachActivity,
+  MAX_CHECK_INS,
+  type CoachActivity,
+  type SquadCoachActivity,
+} from './use-cases/coach-activity.js';
 export { createCoachCatalog, type CoachCatalogAdmin } from './use-cases/coach-catalog.js';
 export { createCoachHiring, type CoachHiring } from './use-cases/coach-hiring.js';
 export { createCoachSettings, type CoachSettingsAdmin } from './use-cases/coach-settings.js';

@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import type { Coach, CoachId } from './domain/coach.js';
 import type { StoredPath } from './domain/memory.js';
 import type { CoachModel, CoachSettings, MemberId, SquadId } from './domain/settings.js';
+import type { CoachEmoji, CoachReply } from './domain/reply.js';
 import type { SquadWeek } from './domain/squad-week.js';
 import type { NewWake, TokenUsage, Wake } from './domain/wake.js';
 
@@ -115,6 +116,35 @@ export interface CoachNoteStore {
   ): Promise<readonly { readonly day: string; readonly text: string }[]>;
 }
 
+/** What coaches said to check-ins: a line, an emoji or both, one a squad a check-in. */
+export interface CoachReplyStore {
+  /** Saves the reply unless the check-in has one in the squad; says whether this one was saved. */
+  save(reply: {
+    readonly squad: SquadId;
+    readonly checkIn: string;
+    readonly coach: CoachId;
+    readonly text: string | undefined;
+    readonly emoji: CoachEmoji | undefined;
+    readonly wake: number;
+  }): Promise<boolean>;
+}
+
+/** A 战术板 line as members read it, with the coach who wrote it. */
+export interface CoachNoteShown {
+  readonly day: string;
+  readonly text: string;
+  readonly coach: CoachReply['coach'];
+  readonly at: Date;
+}
+
+/** What a squad's coaches have said, as its members read it. */
+export interface CoachActivityStore {
+  /** The squad's newest 战术板 line, if it has one. */
+  latestNote(squad: SquadId): Promise<CoachNoteShown | undefined>;
+  /** The squad's replies to these check-ins, in no order; a check-in with none is left out. */
+  replies(squad: SquadId, checkIns: readonly string[]): Promise<readonly CoachReply[]>;
+}
+
 /**
  * The tokens each wake used, per squad, for usage-based billing later. Recorded even when the
  * wake has gone meanwhile (its check-in was deleted): then without it.
@@ -135,6 +165,7 @@ export interface CoachStores {
   readonly wakes: CoachWakeStore;
   readonly memory: CoachMemoryStore;
   readonly notes: CoachNoteStore;
+  readonly replies: CoachReplyStore;
   readonly usage: CoachUsageStore;
 }
 
