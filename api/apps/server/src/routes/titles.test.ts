@@ -42,7 +42,11 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unusedUnlocks, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
+import {
+  unusedCoachActivity,
+  unusedUnlocks,
+  unusedWeekSummaryWords,
+} from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -111,6 +115,7 @@ const app = createApp({
   },
   weekSummaryWords: unusedWeekSummaryWords,
   unlocks: unusedUnlocks,
+  coachActivity: unusedCoachActivity,
   coachHiring: createCoachHiring({
     hiring: createPostgresCoachHiring(db),
     catalog: createPostgresCoachCatalog(db),
