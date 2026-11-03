@@ -66,10 +66,7 @@ export const TITLES_MAX = 3;
  * offers (the settings') and its badges from `catalog` only. Members are named by key. The
  * limits go to the model in the schema, so the titles fit the screen.
  */
-export function modelReplyFor(
-  catalog: BadgeCatalog,
-  moves: readonly [AwardMove, ...AwardMove[]],
-) {
+export function modelReplyFor(catalog: BadgeCatalog, moves: readonly [AwardMove, ...AwardMove[]]) {
   return z.strictObject({
     version: z.literal(1),
     awards: z.array(
