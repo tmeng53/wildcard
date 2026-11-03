@@ -274,13 +274,7 @@ public final class TodayModel {
             return
         }
         placeSquad()
-        Task {
-            await showNextNotice()
-            await tellNews()
-            await playPatsOnMe()
-            await sayCoachLine()
-            await celebrateTogether()
-        }
+        Task { await playOpening() }
     }
 
     /// Opens the check-in kinds, as the 打卡 button does: the 6pm push's 我去发一个 lands here.

@@ -26,6 +26,16 @@ extension TodayModel {
     /// How long after the home settles the stretch, then the celebration, start.
     static let togetherDelay = 0.6
 
+    /// What the home plays once it has loaded, one after another: a notice, the news, pats on
+    /// me, the coach's line, then the squad celebrating together.
+    func playOpening() async {
+        await showNextNotice()
+        await tellNews()
+        await playPatsOnMe()
+        await sayCoachLine()
+        await celebrateTogether()
+    }
+
     /// Plays what the squad celebrates on this open, after the news and the pats on me.
     func celebrateTogether() async {
         guard together.isOn, let home = store.home, let day = home.mine?.day,
