@@ -22,9 +22,12 @@ export const CustomSportName = nameText({
   description: 'Trimmed, then 1 to 20 characters as people see them, on one line.',
 });
 
+/** The most characters a comment holds. */
+export const COMMENT_MAX_CHARACTERS = 100;
+
 /** A comment under a check-in: trimmed, 1 to 100 characters, and it may span lines. */
 export const CommentText = typedText({
-  max: 100,
+  max: COMMENT_MAX_CHARACTERS,
   oneLine: false,
   description: 'Trimmed, then 1 to 100 characters as people see them; may span lines.',
 });

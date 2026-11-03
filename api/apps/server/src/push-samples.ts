@@ -1,7 +1,9 @@
+import { COMMENT_MAX_CHARACTERS } from '@wildcard/check-ins';
 import { NICKNAME_MAX_CHARACTERS } from '@wildcard/members';
 import { apnsPayload } from '@wildcard/push';
 import { SquadId, WeekStart } from '@wildcard/weekly-awards';
 
+import { commentNotification } from './flows/comment-push.js';
 import { dailyProgressNotification } from './flows/daily-progress-push.js';
 import { awardsReadyNotification, awardsStuckNotification } from './flows/weekly-awards.js';
 import type { PushCopyKey } from './push-copy.js';
@@ -35,6 +37,14 @@ export function pushSamples(): Record<PushCopyKey, unknown> {
       ]),
       named: named === undefined ? undefined : { kind: 'poke', nickname: longestNickname },
     });
+  const comment = ({ reply }: { readonly reply: boolean }) =>
+    commentNotification({
+      checkIn: '3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59',
+      comment: '9b2c4d6e-1f3a-4c5b-8d7e-0a1b2c3d4e5f',
+      nickname: longestNickname,
+      text: '冲'.repeat(COMMENT_MAX_CHARACTERS),
+      reply,
+    });
   return {
     'push.dailyProgress': apnsPayload(
       dailyProgressNotification({
@@ -47,6 +57,8 @@ export function pushSamples(): Record<PushCopyKey, unknown> {
     'push.dailyProgress.received': apnsPayload(daily()),
     'push.dailyProgress.poke': apnsPayload(daily({ others: 0 })),
     'push.dailyProgress.poke.more': apnsPayload(daily({ others: 7 })),
+    'push.comment': apnsPayload(comment({ reply: false })),
+    'push.comment.reply': apnsPayload(comment({ reply: true })),
     'push.weeklyAwards.ready': apnsPayload(awardsReadyNotification(squad, week)),
     'push.weeklyAwards.stuck': apnsPayload(
       awardsStuckNotification({

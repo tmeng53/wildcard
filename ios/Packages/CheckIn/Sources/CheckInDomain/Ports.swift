@@ -30,6 +30,9 @@ public protocol CheckInBackend: Sendable {
     func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes
     /// Pats a teammate. Once a day each: patting them again the same day changes nothing.
     func pat(_ member: MemberID, in squad: SquadID) async throws(CheckInError)
+    /// The coach the squad hired, standing on the home's sideline, with its newest 战术板 line;
+    /// nil while the squad has none.
+    func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach?
 }
 
 /// Check-ins waiting to go out, kept on the device so a post made offline survives the app
@@ -38,4 +41,15 @@ public protocol Outbox: Sendable {
     func load() async -> [PendingCheckIn]
     /// Replaces what is kept with `pending`, oldest first.
     func save(_ pending: [PendingCheckIn]) async
+}
+
+/// The stores and props the member unlocked by training, and which of them this phone has
+/// already told the member about, so each one is told once. The app passes one over our API that
+/// keeps what was told in the member's folder (`Backend`).
+public protocol UnlockLedger: Sendable {
+    /// Every unlock the member has, the earliest first.
+    func unlocks() async throws(CheckInError) -> [Unlock]
+    /// What this phone has told, by `UnlockNews.key`; nil when it never looked.
+    func told() async -> Set<String>?
+    func keep(told: Set<String>) async
 }

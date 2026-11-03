@@ -26,8 +26,9 @@ import Testing
 }
 
 /// A teammate who trained holds their sport's kit and loops its move, as my own character does:
-/// a swimmer in the pool swims, a tennis player away from the court still serves, and a swimmer
-/// or climber away from water and wall warms up. Anyone else keeps their look and pose loop.
+/// a swimmer in the pool swims, and a tennis player away from the court still serves, as a
+/// swimmer or climber away from water and wall still swims or climbs. Anyone else keeps their
+/// look and pose loop.
 @Test func aTeammateWhoTrainedLoopsTheirSportsMove() throws {
     let look = PlaceholderCharacter.lifter
     let names = CatalogNames(simplifiedChinese: "", english: "", traditionalChinese: "")
@@ -52,11 +53,11 @@ import Testing
     #expect(serving.outfit.variants["prop"] == "racket")
     #expect(serving.loop.name == "racket")
 
-    for sport: Sport in ["swim", "climb"] {
-        let warming = try StagePose.inPlace(.sport(sport)).dress(
+    for (sport, prop): (Sport, String) in [("swim", "goggles"), ("climb", "chalkbag")] {
+        let away = try StagePose.inPlace(.sport(sport)).dress(
             look, trained: .sport(sport), persona: .drama, species: nil, catalog: sports)
-        #expect(warming.outfit == look)
-        #expect(warming.loop.name == "warmup")
+        #expect(away.outfit.variants["prop"] == prop)
+        #expect(away.loop.name == prop)
     }
 
     let standing = try StagePose.standing.dress(look, trained: nil, persona: .drama, species: nil, catalog: sports)

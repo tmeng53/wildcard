@@ -93,6 +93,13 @@ public final class ScheduleStore {
         return sheet
     }
 
+    /// Today's sport for the poster's character (`WeekSheet.activity`); nil until it loads.
+    public var todaysActivity: Activity? {
+        guard let today, let sheet = drafts[today.weekStart] ?? sheets[today.weekStart] else { return nil }
+        let board = !showsTemplate && shownWeek == today.weekStart ? board?.days : nil
+        return sheet.activity(on: today.weekday - 1, plan: board ?? sheet.plan)
+    }
+
     /// The sports the picks under the poster offer: the shown week's, then this week's, then
     /// `common` (the sports list's quick picks), without repeats.
     public func suggestedActivities(common: [Sport]) -> [Activity] {

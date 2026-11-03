@@ -36,18 +36,13 @@ extension StagePose {
         return (look, try loop(persona: persona, species: species))
     }
 
-    /// The kit a teammate trains `activity` in here: their sport's on its station; in place,
-    /// the same, except that swimmers and climbers away from water and wall warm up.
+    /// The kit a teammate trains `activity` in here, on its station or in place on any scene:
+    /// each kit's move brings what it needs (the goggles' swim its own water).
     private func kit(for activity: Activity, in catalog: SportCatalog) -> SportKit? {
         guard let kits = PlaceholderCharacter.shippedKits else { return nil }
-        let kit = kits.kit(for: activity, in: catalog)
         switch self {
-        case .station: return kit
-        case .inPlace: return Self.needsVenue.contains(kit.id) ? kits.fallback : kit
+        case .station, .inPlace: return kits.kit(for: activity, in: catalog)
         case .sitting, .holdingSign, .asleep, .standing: return nil
         }
     }
-
-    /// Kits whose move needs the scene's water or wall.
-    private static let needsVenue: Set<String> = ["swim", "climb"]
 }

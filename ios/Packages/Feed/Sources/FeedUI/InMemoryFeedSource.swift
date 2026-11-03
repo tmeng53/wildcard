@@ -5,19 +5,27 @@ import Foundation
 /// A squad's feed kept in memory, for previews, UI tests and builds that don't talk to the API
 /// yet. Reactions and comments are kept as the API keeps them: one emoji per member, comments
 /// deleted only by their writer.
-public actor InMemoryFeedSource: FeedSource, MyPostsSource {
+public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
     private let viewer: MemberID
     private var posts: [FeedPost]
     private let characters: [MemberID: MemberCharacter]
     private var photos: [String: Data]
+    /// What the squad's coach said; nil for a squad without one.
+    private let coach: CoachActivity?
 
     public init(
-        viewer: MemberID, posts: [FeedPost], characters: [MemberID: MemberCharacter], photos: [String: Data] = [:]
+        viewer: MemberID, posts: [FeedPost], characters: [MemberID: MemberCharacter], photos: [String: Data] = [:],
+        coach: CoachActivity? = nil
     ) {
         self.viewer = viewer
         self.posts = posts
         self.characters = characters
         self.photos = photos
+        self.coach = coach
+    }
+
+    public func activity(in squad: SquadID, about checkIns: [CheckInID]) async throws(FeedError) -> CoachActivity {
+        CoachActivity(note: coach?.note, replies: coach?.replies.filter { checkIns.contains($0.checkIn) } ?? [])
     }
 
     public func posts(in squad: SquadID, from first: LocalDay, through last: LocalDay) async throws(FeedError)

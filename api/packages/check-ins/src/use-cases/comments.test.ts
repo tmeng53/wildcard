@@ -122,6 +122,7 @@ describe('commenting on a check-in', () => {
         commentedAt: new Date('2026-10-18T20:05:00.000Z'),
       },
       created: true,
+      author: tracy,
     });
     now = new Date('2026-10-18T20:06:00.000Z');
     await checkIns.comment({

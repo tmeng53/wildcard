@@ -21,7 +21,7 @@ private func story(
 ) throws -> WeekStory {
     WeekStory(
         status: status, squad: SquadID(UUID()), squadName: "晨跑五人组",
-        week: Week(monday: try day(13), sunday: try day(19)),
+        week: Week(monday: try day(13), sunday: try day(19)), scene: .gym, squadmates: [],
         order: order,
         podium: podium ? Podium(champion: id(1), sides: [id(2), id(3), id(4)]) : nil,
         titles: titles ? [MemberTitles(member: id(1), titles: [.init(title: "早八战神")])] : [],
@@ -81,11 +81,25 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(story.firstTitle(of: id(2)) == nil)
 }
 
-@Test func anUnknownMoveCheers() throws {
+/// Any move id the API sends is kept as it is, so new moves need no app change; the art plays
+/// the cheer for one it doesn't have (StoryArtTests).
+@Test func aMoveKeepsItsId() throws {
     #expect(AwardMove(wire: "pump") == .pump)
-    #expect(AwardMove(wire: "moonwalk") == .cheer)
+    #expect(AwardMove(wire: "chin-up").rawValue == "chin-up")
+    #expect(AwardMove(wire: "swim").solo.rawValue == "swim")
     #expect(AwardMove.stack.solo == .cheer)
     #expect(AwardMove.wave.solo == .wave)
+}
+
+/// Beside the hottest post: the AI's move, else a 练了's own sport move, else the cheer.
+@Test func theHottestPostPlaysItsSportUnlessTheAIPicked() throws {
+    let swum = Hottest(checkIn: checkIn, day: try day(16), kind: .trained, sport: "swim", reactions: [])
+    #expect(swum.clip == .sport("swim"))
+    let picked = Hottest(
+        checkIn: checkIn, day: try day(16), kind: .trained, sport: "swim", reactions: [], move: .pose)
+    #expect(picked.clip == .award(.pose))
+    let meal = Hottest(checkIn: checkIn, day: try day(16), kind: .healthyMeal, reactions: [])
+    #expect(meal.clip == .award(.cheer))
 }
 
 @Test func eachDayPlaysItsSportRestOrDisclaimerMove() throws {
@@ -130,7 +144,8 @@ private func ids(_ pages: [StoryPage]) -> [String] {
 @Test func aWeekNobodyCheckedInHasNoRecap() throws {
     let empty = WeekStory(
         status: .ready, squad: SquadID(UUID()), squadName: "晨跑五人组",
-        week: Week(monday: try day(13), sunday: try day(19)), ending: Ending(done: 0, plan: 0))
+        week: Week(monday: try day(13), sunday: try day(19)), scene: .gym, squadmates: [],
+        ending: Ending(done: 0, plan: 0))
     #expect(empty.isPublished == false)
 }
 
@@ -139,7 +154,7 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     // opens only stories that came out.
     let blank = WeekStory(
         status: .ready, squad: SquadID(UUID()), squadName: "晨跑五人组",
-        week: Week(monday: try day(13), sunday: try day(19)))
+        week: Week(monday: try day(13), sunday: try day(19)), scene: .gym, squadmates: [])
     #expect(blank.pages.isEmpty)
     #expect(blank.isPublished == false)
 }

@@ -19,11 +19,13 @@ import {
   createMembers,
   createPostgresProfileStore,
 } from '@wildcard/members';
+import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
 import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import {
   createPostgresAwardSettings,
   createPostgresAwardsStore,
+  createPostgresWeekStoryStore,
   createWeeklyAwards,
   type LanguageModel,
 } from '@wildcard/weekly-awards';
@@ -50,7 +52,11 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedCoachHiring } from '../test-kit/weekly-awards.js';
+import {
+  unusedCoachHiring,
+  unusedCoachActivity,
+  unusedUnlocks,
+} from '../test-kit/weekly-awards.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
 // awards table are real; the model answers what each test sets, and the push sender records
@@ -136,6 +142,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     model,
     settings: createPostgresAwardSettings(db),
     store: createPostgresAwardsStore(db),
+    stories: createPostgresWeekStoryStore(db),
     aiConsented: (members) =>
       aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
     memes: () => Promise.resolve([]),
@@ -164,8 +171,12 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     push,
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     weeklyAwards: { awards, clock },
+    unlocks: unusedUnlocks,
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
+    coachActivity: unusedCoachActivity,
+    notices: createNotices({ store: createPostgresNoticeStore(db) }),
+    coachNames: () => Promise.reject(new Error('unused')),
     aiConsent,
     nudges: nudgesOn(db),
     log: createLog(() => undefined),
@@ -245,12 +256,30 @@ async function squadOf(...joined: readonly { readonly userId: string }[]) {
     db,
   );
   for (const [index, each] of joined.entries()) {
-    const joinedAt = new Date(Date.UTC(2026, 9, 1, 0, index)).toISOString();
-    await sql`insert into public.squad_members (squad_id, member_id, joined_at)
-      values (${id}, ${each.userId}, ${joinedAt})`.execute(db);
+    await joinAt({ squad: id, who: each, moment: new Date(Date.UTC(2026, 9, 1, 0, index)) });
   }
   return id;
 }
+
+/** `who` joins the squad at `moment`, logged as the squads module logs a join. */
+async function joinAt({
+  squad,
+  who,
+  moment,
+}: {
+  readonly squad: string;
+  readonly who: { readonly userId: string };
+  readonly moment: Date;
+}) {
+  const at = moment.toISOString();
+  await sql`insert into public.squad_members (squad_id, member_id, joined_at)
+    values (${squad}, ${who.userId}, ${at})`.execute(db);
+  await sql`insert into public.squad_membership_events (squad_id, member_id, kind, at)
+    values (${squad}, ${who.userId}, 'joined', ${at})`.execute(db);
+}
+
+/** A reaction left before the awards, so they count it. */
+const BEFORE_AWARDS = new Date(AWARDS_AT.getTime() - HOUR);
 
 /** A 练了 sent to the squad, saved as the app would have synced it. */
 async function trained(
@@ -297,6 +326,20 @@ const Story = z.object({
   status: z.string(),
   squad: z.object({ id: z.string(), name: z.string() }),
   week: z.object({ from: z.string(), to: z.string() }),
+  scene: z.string(),
+  members: z.array(z.object({ member: z.string() })),
+  podium: z.object({ champion: z.string(), sides: z.array(z.string()) }).optional(),
+  myWeek: z
+    .object({
+      plannedDays: z.int(),
+      trainedDays: z.int(),
+      days: z.array(z.object({ day: z.string(), kind: z.string(), sport: z.string().optional() })),
+      reactionsReceived: z.int(),
+    })
+    .optional(),
+  meals: z.unknown().optional(),
+  bestDisclaimer: z.unknown().optional(),
+  ending: z.object({ done: z.int(), plan: z.int() }).optional(),
   titles: z
     .array(
       z.object({
@@ -332,7 +375,7 @@ describe('weekly awards', () => {
   });
 
   it('awards members who checked in before Sunday 8pm Eastern, and tells each once', async () => {
-    const { run, read, sent, prompts } = setup();
+    const { run, read, sent, prompts, app } = setup();
     const [ana, bo, cy] = [await member(), await member('America/New_York'), await member()];
     const squad = await squadOf(ana, bo, cy);
     const photo = await uploadedPhoto(ana);
@@ -353,7 +396,7 @@ describe('weekly awards', () => {
     await reactions.save(top, {
       member: CheckInMember.parse(bo.userId),
       emoji: Emoji.parse('❤️'),
-      reactedAt: new Date(),
+      reactedAt: BEFORE_AWARDS,
     });
 
     const result = await run();
@@ -373,6 +416,30 @@ describe('weekly awards', () => {
       interruption: 'active',
       event: { squad, weekStart: WEEK },
     });
+    // Each winner finds it in 通知 too, once; Cy, who won nothing, doesn't.
+    const noticesOf = async (token: string) =>
+      z
+        .object({ notices: z.array(z.record(z.string(), z.unknown())) })
+        .parse(
+          await (
+            await app.request('/me/notices', { headers: { authorization: `Bearer ${token}` } })
+          ).json(),
+        )
+        .notices.map(({ kind, squadId, alert, weekStart }) => ({
+          kind,
+          squadId,
+          alert,
+          weekStart,
+        }));
+    expect(await noticesOf(ana.token)).toStrictEqual([
+      {
+        kind: 'weeklyAwards',
+        squadId: squad,
+        alert: { key: 'push.weeklyAwards.ready', args: [] },
+        weekStart: WEEK,
+      },
+    ]);
+    expect(await noticesOf(cy.token)).toStrictEqual([]);
 
     const { status, body } = await read({ token: cy.token, squad });
     expect(status).toBe(200);
@@ -404,8 +471,8 @@ describe('weekly awards', () => {
     expect(prompts.filter((prompt) => prompt.includes(caption))).toHaveLength(1);
     expect(before.sent).toBe(2);
 
-    // Ana edits her hottest post, taking its photo off: the story shows it as it is now, with
-    // the reactions it had at the awards, and never the photo gone from Storage.
+    // Ana edits her hottest post, taking its photo off: the story keeps its words and reactions
+    // as frozen at the awards, but never shows the photo gone from Storage.
     const edited = `改了 ${randomUUID().slice(0, 8)}`;
     await checkIns.edit({
       id: CheckInId.parse(top),
@@ -413,7 +480,7 @@ describe('weekly awards', () => {
       edit: { version: 1, kind: 'trained', training: { sport: 'run', caption: edited } },
     });
     const afterEdit = Story.parse((await read({ token: ana.token, squad })).body);
-    expect(afterEdit.hottest?.caption).toBe(edited);
+    expect(afterEdit.hottest?.caption).toBe(caption);
     expect(afterEdit.hottest?.photos).toStrictEqual([]);
     expect(afterEdit.hottest?.reactions).toStrictEqual([{ emoji: '❤️', count: 1 }]);
 
@@ -488,7 +555,7 @@ describe('weekly awards', () => {
     await reactions.save(top, {
       member: CheckInMember.parse(bo.userId),
       emoji: Emoji.parse('😂'),
-      reactedAt: new Date(),
+      reactedAt: BEFORE_AWARDS,
     });
 
     at(new Date(AWARDS_AT.getTime() - 60_000));
@@ -570,21 +637,129 @@ describe('weekly awards', () => {
         where squad_id = ${squad}`.execute(db)
       ).rows[0]?.n,
     ).toBe(0);
+    // A week with nothing to tell keeps no story, so asking for any past week stores nothing.
+    expect(
+      (
+        await sql<{ n: number }>`select count(*)::int as n from public.week_stories
+        where squad_id = ${squad}`.execute(db)
+      ).rows[0]?.n,
+    ).toBe(0);
   });
 
-  it('leaves out a member who left the squad', async () => {
-    const { run, read } = setup();
-    const [ana, bo] = [await member(), await member()];
+  it('is frozen at the awards: later joins, leaves, check-ins and scenes don’t change it', async () => {
+    const { run, read, at } = setup();
+    const [ana, bo, cy] = [await member(), await member(), await member()];
     const squad = await squadOf(ana, bo);
-    await trained(ana, { squad });
+    const top = await trained(ana, { squad, day: '2026-10-20' });
+    await trained(ana, { squad, day: '2026-10-21' });
     await trained(bo, { squad });
+    await reactions.save(top, {
+      member: CheckInMember.parse(bo.userId),
+      emoji: Emoji.parse('💪'),
+      reactedAt: BEFORE_AWARDS,
+    });
     await run();
-    expect(Story.parse((await read({ token: ana.token, squad })).body).titles).toHaveLength(2);
+    const first = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(first.scene).toBe('gym');
+    expect(first.members.map(({ member: id }) => id)).toStrictEqual([ana.userId, bo.userId]);
+    expect(first.titles).toHaveLength(2);
+    expect(first.ending?.done).toBe(3);
+    expect(first.podium?.champion).toBe(ana.userId);
+    expect(first.myWeek?.days.map(({ kind }) => kind).slice(0, 3)).toStrictEqual([
+      'none',
+      'trained',
+      'trained',
+    ]);
+    expect(first.hottest?.reactions).toStrictEqual([{ emoji: '💪', count: 1 }]);
+
+    // After the awards: Cy joins, Bo leaves, Ana posts late, a reaction comes and the scene changes.
+    at(new Date(AWARDS_AT.getTime() + 3 * HOUR));
+    await joinAt({ squad, who: cy, moment: new Date() });
     await sql`delete from public.squad_members where squad_id = ${squad} and member_id = ${bo.userId}`.execute(
       db,
     );
-    const left = Story.parse((await read({ token: ana.token, squad })).body);
-    expect(left.titles?.map((each) => each.member)).toStrictEqual([ana.userId]);
+    await sql`insert into public.squad_membership_events (squad_id, member_id, kind)
+      values (${squad}, ${bo.userId}, 'left')`.execute(db);
+    await trained(ana, { squad, day: '2026-10-25', createdAt: new Date() });
+    await reactions.save(top, {
+      member: CheckInMember.parse(cy.userId),
+      emoji: Emoji.parse('🔥'),
+      reactedAt: new Date(),
+    });
+    await sql`insert into public.squad_scene_picks (squad_id, week_start, scene)
+      values (${squad}, ${WEEK}, 'pool')`.execute(db);
+    await sql`update public.squads set name = 'renamed' where id = ${squad}`.execute(db);
+
+    const later = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(later).toStrictEqual(first);
+    // Cy can read the squad's story now, but isn't in it: they first show up next week.
+    const forCy = Story.parse((await read({ token: cy.token, squad })).body);
+    expect(forCy.members.map(({ member: id }) => id)).toStrictEqual([ana.userId, bo.userId]);
+    expect(forCy.myWeek).toBeUndefined();
+    expect(
+      (
+        await sql<{ n: number }>`select count(*)::int as n from public.week_story_members
+        where squad_id = ${squad}`.execute(db)
+      ).rows[0]?.n,
+    ).toBe(2);
+    await expect(
+      sql`update public.week_stories set story = story where squad_id = ${squad}`.execute(db),
+    ).rejects.toThrow(/frozen/u);
+  });
+
+  it('freezes on the first read when no run has, and drops a post deleted since', async () => {
+    const { read, run } = setup();
+    const [ana, bo] = [await member(), await member()];
+    const squad = await squadOf(ana, bo);
+    const top = await trained(ana, { squad });
+    await reactions.save(top, {
+      member: CheckInMember.parse(bo.userId),
+      emoji: Emoji.parse('❤️'),
+      reactedAt: BEFORE_AWARDS,
+    });
+    const first = Story.parse((await read({ token: ana.token, squad })).body);
+    expect([first.status, first.hottest?.checkIn]).toStrictEqual(['pending', top]);
+    await sql`delete from public.check_ins where id = ${top}`.execute(db);
+    const after = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(after.hottest).toBeUndefined();
+    // Its words and photos go with it, not only out of sight.
+    expect(
+      (
+        await sql<{ n: number }>`select count(*)::int as n from public.week_story_posts
+        where check_in_id = ${top}`.execute(db)
+      ).rows[0]?.n,
+    ).toBe(0);
+    expect(after.myWeek?.trainedDays).toBe(1);
+    // The next run finishes it, though no check-in of the week is left to find the squad by.
+    await run();
+    expect(Story.parse((await read({ token: ana.token, squad })).body).status).toBe('ready');
+  });
+
+  it('counts the plans as they stood at the awards, whenever it freezes', async () => {
+    const { read } = setup();
+    const ana = await member();
+    const squad = await squadOf(ana);
+    await sql`update public.profiles set created_at = '2026-10-01T00:00:00Z'
+      where member_id = ${ana.userId}`.execute(db);
+    await trained(ana, { squad });
+    const train = JSON.stringify({
+      version: 1,
+      days: Array.from({ length: 7 }, () => ({ kind: 'train' })),
+    });
+    const restMost = JSON.stringify({
+      version: 1,
+      days: [{ kind: 'train' }, ...Array.from({ length: 6 }, () => ({ kind: 'rest' }))],
+    });
+    await sql`insert into public.plan_templates (member_id, from_week, payload, at)
+      values (${ana.userId}, ${WEEK}, ${train}::jsonb, ${BEFORE_AWARDS})`.execute(db);
+    // Changed after 8pm, before anyone read the 战报.
+    await sql`insert into public.weekly_plans (member_id, week_start, payload)
+      values (${ana.userId}, ${WEEK}, ${restMost}::jsonb)`.execute(db);
+    await sql`insert into public.weekly_plan_events (member_id, week_start, payload, at)
+      values (${ana.userId}, ${WEEK}, ${restMost}::jsonb,
+        ${new Date(AWARDS_AT.getTime() + HOUR / 2)})`.execute(db);
+    const story = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(story.myWeek?.plannedDays).toBe(7);
   });
 
   it('keeps trying a squad still failing into the next week', async () => {

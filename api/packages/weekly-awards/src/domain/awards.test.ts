@@ -3,13 +3,13 @@ import { z } from 'zod';
 
 import {
   MemberId,
-  ModelReply,
+  modelReply,
+  type ModelReply,
   titlesOf,
   titlesWonOf,
   topCheckInOf,
   type WeekCheckIn,
 } from './awards.js';
-import { AwardMove } from './moves.js';
 import { PROMPT_COMMENTS, promptFor } from './prompt.js';
 import { WeekStart } from './schedule.js';
 
@@ -33,7 +33,9 @@ const good: ModelReply = {
   ],
 };
 
-describe('ModelReply', () => {
+describe('modelReply', () => {
+  const ModelReply = modelReply(['cheer', 'pump', 'chin-up']);
+
   it('tells the model the limits and refuses an answer over them', () => {
     const schema = JSON.stringify(z.toJSONSchema(ModelReply));
     expect(schema).toContain('"maxLength":6');
@@ -46,6 +48,17 @@ describe('ModelReply', () => {
     expect(ModelReply.safeParse(titled('雨中狠人')).success).toBe(true);
     expect(ModelReply.safeParse(titled('雨中最狠的人啊')).success).toBe(false);
     expect(ModelReply.safeParse(titled('雨中狠人', '周'.repeat(25))).success).toBe(false);
+  });
+
+  it('offers only the moves it is given', () => {
+    const schema = JSON.stringify(z.toJSONSchema(ModelReply));
+    expect(schema).toContain('"enum":["cheer","pump","chin-up"]');
+    const moved = (move: string) => ({
+      version: 1,
+      awards: [{ member: 'A', titles: [{ title: '雨中狠人', speech: '下雨也跑。', move }] }],
+    });
+    expect(ModelReply.safeParse(moved('chin-up')).success).toBe(true);
+    expect(ModelReply.safeParse(moved('moonwalk')).success).toBe(false);
   });
 });
 
@@ -162,9 +175,8 @@ const Prompt = z.object({
   memes: z.array(z.unknown()).optional(),
 });
 
-const moves = z
-  .record(AwardMove, z.string())
-  .parse(Object.fromEntries(AwardMove.options.map((move) => [move, `${move} 的样子`])));
+const MOVE_IDS = ['cheer', 'pump', 'flat', 'chin-up', 'swim'];
+const moves = Object.fromEntries(MOVE_IDS.map((move) => [move, `${move} 的样子`]));
 
 describe('promptFor', () => {
   it('lists members by letter with their days, times on their own clock, and the moves', () => {
@@ -220,7 +232,7 @@ describe('promptFor', () => {
       },
     ]);
     expect(prompt.moves).toContainEqual({ id: 'flat', description: 'flat 的样子' });
-    expect(prompt.moves).toHaveLength(AwardMove.options.length);
+    expect(prompt.moves).toHaveLength(MOVE_IDS.length);
     expect(JSON.stringify(prompt)).not.toContain(ana);
     expect(prompt.memes).toBeUndefined();
   });
@@ -320,10 +332,8 @@ describe('promptFor', () => {
     });
   });
 
-  it('lists the moves in their own order, whatever order the settings keep them in', () => {
-    const reversed = z
-      .record(AwardMove, z.string())
-      .parse(Object.fromEntries(Object.entries(moves).reverse()));
+  it('lists cheer, then the moves by id, whatever order the settings keep them in', () => {
+    const reversed = Object.fromEntries(Object.entries(moves).reverse());
     const prompt = Prompt.parse(
       JSON.parse(
         promptFor({
@@ -336,15 +346,10 @@ describe('promptFor', () => {
     );
     expect(prompt.moves.map(({ id }) => id)).toStrictEqual([
       'cheer',
-      'pump',
-      'pose',
-      'warmup',
-      'stretch',
-      'doze',
+      'chin-up',
       'flat',
-      'laugh',
-      'wave',
-      'fullbelly',
+      'pump',
+      'swim',
     ]);
   });
 });

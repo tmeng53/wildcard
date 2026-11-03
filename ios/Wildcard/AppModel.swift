@@ -273,25 +273,27 @@ final class AppModel {
             await today.dropIn(on: scene, coveredAt: .now)
         } else if let read = await withLaunchCover({ await openingScene(of: home.squad.id) }) {
             // The loading screen stays up until the squad's scene is known, so 今天 never shows
-            // the gym first and then switches.
-            today.scene = read
+            // the gym first and then switches; a teammate's move drops the squad onto it.
+            let kept = ReadScene.keep(read, of: home.squad.id, member: home.member)
+            await today.land(on: kept.scene, move: kept.move)
         } else {
             // Slow or offline: the scene this phone kept, read again once the tabs are up.
             today.scene = KeptScene.scene(of: home.squad.id) ?? .gym
             Task { await readScene(of: home.squad.id, into: today) }
         }
         screen = .tabs(
-            today: today, profile: profile, schedule: schedule, feed: Self.feed(api, home, store), squad: squad,
+            today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home, editor: store),
+            squad: squad,
             recap: recap)
         homeSquad = home.squad.id
     }
 
     /// The member's home, from what the phone kept for them alone.
     private func todayStore(of member: MemberID) -> TodayStore {
-        let directory = folders.folder(for: member)
+        let (directory, api) = (folders.folder(for: member), memberAPI(member))
         return TodayStore(
-            backend: APICheckInBackend(api: memberAPI(member), directory: directory, shared: shared),
-            outbox: DeviceOutbox(directory: directory),
+            backend: APICheckInBackend(api: api, directory: directory, shared: shared),
+            outbox: DeviceOutbox(directory: directory), unlocks: APIUnlockLedger(api: api, directory: directory),
             now: { Date() }, newID: { UUID() })
     }
 
@@ -312,16 +314,6 @@ final class AppModel {
         return ScenePicker(
             options: SceneOption.options(from: scene.history),
             service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
-    }
-
-    /// 动态 on the member's squad by their clock; their posts change through 今天's store, which recounts.
-    private static func feed(_ api: WildcardAPI, _ home: Home, _ editor: TodayStore) -> FeedModel {
-        let zone = home.timeZone
-        let store = FeedStore(
-            source: APIFeedSource(api: api), squad: home.squad.id, viewer: home.member,
-            today: { LocalDay(at: Date(), in: zone) }, now: { Timestamp(Date()) },
-            newCommentID: { CommentID(UUID()) })
-        return FeedModel(store: store, viewer: home.member, editor: editor, now: { Date() })
     }
 
     /// 我的动态 over our API.
@@ -355,17 +347,19 @@ final class AppModel {
 
 /// The squad's scene, which 今天 must open on rather than switch to.
 extension AppModel {
-    /// Puts 今天 on the squad's scene this week. Offline, it stays where it is.
+    /// Puts 今天 on the squad's scene this week, dropping the squad onto it when a teammate moved
+    /// it. Offline, it stays where it is.
     private func readScene(of squad: SquadID?, into today: TodayModel) async {
-        guard let squad, let scene = await serverScene(of: squad) else { return }
-        today.scene = scene
+        guard let squad, let read = try? await api.scene(of: squad) else { return }
+        let kept = ReadScene.keep(read, of: squad, member: today.home?.member)
+        await today.land(on: kept.scene, move: kept.move)
     }
 
     /// The squad's scene this week from the server, unless it takes longer than `Self.sceneWait`.
-    private func openingScene(of squad: SquadID) async -> SceneTheme? {
+    private func openingScene(of squad: SquadID) async -> SquadScene? {
         let wait = Self.sceneWait
-        return await withTaskGroup(of: SceneTheme?.self) { group in
-            group.addTask { await self.serverScene(of: squad) }
+        return await withTaskGroup(of: SquadScene?.self) { group in
+            group.addTask { try? await self.api.scene(of: squad) }
             group.addTask {
                 try? await Task.sleep(for: wait)
                 return nil
@@ -385,14 +379,6 @@ extension AppModel {
         openingUnderCover = true
         defer { openingUnderCover = false }
         return await work()
-    }
-
-    /// The squad's scene this week from the server, kept on this phone for the next launch.
-    private func serverScene(of squad: SquadID) async -> SceneTheme? {
-        guard let read = try? await api.scene(of: squad) else { return nil }
-        let scene = SceneTheme(rawValue: read.scene.rawValue) ?? .gym
-        KeptScene.save(scene, of: squad)
-        return scene
     }
 
     /// How long the loading screen waits for the squad's scene before opening on the kept one.

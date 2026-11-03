@@ -3,6 +3,7 @@ import AvatarArt
 import AvatarDomain
 import AvatarUI
 import CharacterEditorDomain
+import Contracts
 import Foundation
 import Observation
 
@@ -73,12 +74,14 @@ public final class CharacterEditorModel {
         self.tab = tab
     }
 
-    /// The placeholder character's catalog and a look to start from: the one given, or a random
-    /// one until sign-up hands over the last look its first screen showed.
+    /// The placeholder character's catalog, with the stores and props the member unlocked open,
+    /// and a look to start from: the one given, or a random one until sign-up hands over the last
+    /// look its first screen showed.
     public static func placeholder(
-        look: Outfit? = nil, persona: Persona = .energetic, nickname: String, tab: EditorTab = .look
+        look: Outfit? = nil, persona: Persona = .energetic, nickname: String, tab: EditorTab = .look,
+        unlocks: [Unlock] = []
     ) throws(AvatarError) -> CharacterEditorModel {
-        let catalog = try Catalog.placeholder()
+        let catalog = try Catalog.placeholder(unlocks: unlocks)
         var generator = SystemRandomNumberGenerator()
         let start = look ?? CharacterDraft.randomLook(from: catalog, using: &generator)
         return CharacterEditorModel(
@@ -121,6 +124,19 @@ public final class CharacterEditorModel {
     func visit(_ store: EditorChoices.Store) {
         guard store.isOpen else { return }
         (self.store, picked) = (store.id, nil)
+    }
+
+    /// Opens on what a 练了 just unlocked, from its notice on the home: inside the store on the
+    /// 穿搭 tab, or on the 道具 tab for a prop.
+    public func show(_ unlock: Unlock) {
+        switch unlock.kind {
+        case .store:
+            guard let store = draft.catalog.stores.first(where: { $0.id == unlock.id && $0.isOpen }) else { return }
+            tab = .outfit
+            visit(store)
+        case .prop:
+            tab = .prop
+        }
     }
 
     /// Back out to the shopping street.

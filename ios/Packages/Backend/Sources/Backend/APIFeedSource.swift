@@ -120,3 +120,13 @@ extension FeedError {
             }
     }
 }
+
+extension APIFeedSource: CoachSource {
+    public func activity(in squad: SquadID, about checkIns: [CheckInID]) async throws(FeedError) -> CoachActivity {
+        do throws(APIError) {
+            return try await api.coachActivity(of: squad, about: checkIns)
+        } catch {
+            throw FeedError(error)
+        }
+    }
+}

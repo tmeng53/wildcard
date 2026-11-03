@@ -159,6 +159,14 @@ actor ScriptedBackend: CheckInBackend {
         pats.append(member)
         serverPokes.sent.insert(member)
     }
+
+    var serverCoach: SidelineCoach?
+    func set(coach: SidelineCoach?) { serverCoach = coach }
+
+    func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? {
+        if let failure { throw failure }
+        return serverCoach
+    }
 }
 
 actor MemoryOutbox: Outbox {
@@ -178,10 +186,12 @@ final class Counter: @unchecked Sendable {  // Only the main actor's store calls
 }
 
 @MainActor
-func store(_ backend: ScriptedBackend, outbox: MemoryOutbox = MemoryOutbox(), now: Date = tuesdayMorning) -> TodayStore
-{
+func store(
+    _ backend: ScriptedBackend, outbox: MemoryOutbox = MemoryOutbox(), unlocks: ScriptedLedger? = nil,
+    now: Date = tuesdayMorning
+) -> TodayStore {
     let counter = Counter()
-    return TodayStore(backend: backend, outbox: outbox, now: { now }, newID: { counter() })
+    return TodayStore(backend: backend, outbox: outbox, unlocks: unlocks, now: { now }, newID: { counter() })
 }
 
 func photo(_ number: Int) -> PreparedPhoto {

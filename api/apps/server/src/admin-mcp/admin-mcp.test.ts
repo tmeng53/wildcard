@@ -40,6 +40,7 @@ import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
+import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
 import { createAwardSettings, createPostgresAwardSettings } from '@wildcard/weekly-awards';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -67,12 +68,16 @@ import { disclaimerDiceTools } from './tools/disclaimer-dice.js';
 import { memeTools } from './tools/memes.js';
 import { coachTools } from './tools/coach.js';
 import { sportTools } from './tools/sports.js';
+import { unlockTools } from './tools/unlocks.js';
 import { weekSummaryWordTools } from './tools/week-summary-words.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
+  unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
+  unusedCoachActivity,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
@@ -148,8 +153,11 @@ beforeAll(async () => {
           aiConsent: aiConsentOn(db),
           nudges: nudgesOn(db),
           weeklyAwards: unusedWeeklyAwards,
+          unlocks: unusedUnlocks,
           weekSummaryWords: unusedWeekSummaryWords,
           coachHiring: unusedCoachHiring,
+          coachActivity: unusedCoachActivity,
+          ...ignoredNotices,
           log: createLog(() => undefined),
           jobs: noJobs,
           admin: {
@@ -192,6 +200,14 @@ beforeAll(async () => {
                 words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
               }),
               ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
+              ...unlockTools({
+                unlocks: createUnlocks({
+                  store: createPostgresUnlockStore(scope),
+                  trainedSince: () => Promise.reject(new Error('unused')),
+                  sportListed: (id) =>
+                    createSports({ store: createPostgresSportStore(scope) }).isListed(id),
+                }),
+              }),
               ...coachTools({
                 settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
                 coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),
@@ -353,6 +369,7 @@ describe('the admin MCP server', () => {
       ['list_admin_log', true],
       ['list_memes', true],
       ['add_memes', false],
+      ['set_meme_expiry', false],
       ['turn_off_meme', false],
       ['turn_on_meme', false],
       ['get_disclaimer_draft_settings', true],
@@ -369,6 +386,9 @@ describe('the admin MCP server', () => {
       ['put_sport', false],
       ['put_sport_category', false],
       ['set_sport_picks', false],
+      ['get_unlock_rules', true],
+      ['put_unlock_rule', false],
+      ['give_unlocks', false],
       ['get_coach_settings', true],
       ['change_coach_settings', false],
       ['list_coaches', true],
@@ -412,7 +432,7 @@ describe('the admin MCP server', () => {
     await client.close();
   });
 
-  it('adds memes, turns one off and back on, and logs each change', async () => {
+  it('adds memes, sets when one expires, turns one off and back on, and logs each change', async () => {
     const admin = await member({ admin: true });
     const client = await connect(clientSignedInAs(admin));
     const meme = (name: string) => ({
@@ -432,6 +452,22 @@ describe('the admin MCP server', () => {
         .parse(await call('list_memes', {}));
       return memes.filter(({ phrase }) => [city.phrase, banwei.phrase].includes(phrase));
     };
+    const inLibrary = async () => {
+      const { memes } = z
+        .object({
+          memes: z.array(
+            z.object({
+              phrase: z.string(),
+              expiresAt: z.string().nullable(),
+              turnedOffAt: z.string().nullable(),
+            }),
+          ),
+        })
+        .parse(await call('list_memes', { all: true }));
+      return memes
+        .filter(({ phrase }) => [city.phrase, banwei.phrase].includes(phrase))
+        .map(({ phrase, expiresAt, turnedOffAt }) => [phrase, expiresAt, turnedOffAt]);
+    };
 
     // An approved.json batch, with its approval time; a meme approved now needs none.
     expect(
@@ -443,8 +479,43 @@ describe('the admin MCP server', () => {
       alreadyThere: [city.phrase],
     });
     expect(await inUse()).toStrictEqual([
-      { ...banwei, approvedAt: '2026-10-19T16:00:00.000Z' },
-      { ...city, approvedAt: '2026-10-18T17:00:00.000Z' },
+      { ...banwei, approvedAt: '2026-10-19T16:00:00.000Z', expiresAt: null, turnedOffAt: null },
+      { ...city, approvedAt: '2026-10-18T17:00:00.000Z', expiresAt: null, turnedOffAt: null },
+    ]);
+
+    // A meme tied to a moment gets an expiry; past it, the AI leaves it out until it is cleared.
+    expect(
+      await call('set_meme_expiry', { phrase: city.phrase, expiresAt: '2026-10-26T16:00:00Z' }),
+    ).toStrictEqual({ version: 1, phrase: city.phrase, expiresAt: '2026-10-26T16:00:00.000Z' });
+    expect(await inUse()).toStrictEqual([
+      { ...banwei, approvedAt: '2026-10-19T16:00:00.000Z', expiresAt: null, turnedOffAt: null },
+      {
+        ...city,
+        approvedAt: '2026-10-18T17:00:00.000Z',
+        expiresAt: '2026-10-26T16:00:00.000Z',
+        turnedOffAt: null,
+      },
+    ]);
+    await call('set_meme_expiry', { phrase: city.phrase, expiresAt: '2026-10-19T15:00:00Z' });
+    expect((await inUse()).map(({ phrase }) => phrase)).toStrictEqual([banwei.phrase]);
+    // The whole library still lists it, so it can be found and extended.
+    expect(await inLibrary()).toStrictEqual([
+      [banwei.phrase, null, null],
+      [city.phrase, '2026-10-19T15:00:00.000Z', null],
+    ]);
+    expect(await call('set_meme_expiry', { phrase: city.phrase, expiresAt: null })).toStrictEqual({
+      version: 1,
+      phrase: city.phrase,
+      expiresAt: null,
+    });
+    expect((await inUse()).map(({ phrase }) => phrase)).toStrictEqual([banwei.phrase, city.phrase]);
+    const early = await client.callTool({
+      name: 'set_meme_expiry',
+      arguments: { phrase: city.phrase, expiresAt: '2026-10-18T17:00:00Z' },
+    });
+    expect([early.isError, textOf(early)]).toStrictEqual([
+      true,
+      `MEME_EXPIRY_BEFORE_APPROVAL: 「${city.phrase}」 must expire after it was approved.`,
     ]);
 
     expect(await call('turn_off_meme', { phrase: city.phrase })).toStrictEqual({
@@ -452,6 +523,10 @@ describe('the admin MCP server', () => {
       turnedOff: city.phrase,
     });
     expect((await inUse()).map(({ phrase }) => phrase)).toStrictEqual([banwei.phrase]);
+    expect(await inLibrary()).toStrictEqual([
+      [banwei.phrase, null, null],
+      [city.phrase, null, '2026-10-19T16:00:00.000Z'],
+    ]);
     expect(await call('turn_on_meme', { phrase: city.phrase })).toStrictEqual({
       version: 1,
       turnedOn: city.phrase,
@@ -473,6 +548,9 @@ describe('the admin MCP server', () => {
     expect(rows.rows.map(({ action }) => action.tool)).toStrictEqual([
       'add_memes',
       'add_memes',
+      'set_meme_expiry',
+      'set_meme_expiry',
+      'set_meme_expiry',
       'turn_off_meme',
       'turn_on_meme',
     ]);
@@ -544,12 +622,12 @@ describe('the admin MCP server', () => {
         moves: { ...z.record(z.string(), z.string()).parse(awards.moves), pump: '握拳，跳起来' },
       });
 
-      // A provider the server doesn't know, a move the app doesn't have, or no change at all.
+      // A provider the server doesn't know, a move id that isn't one, or no change at all.
       for (const [name, args] of [
         ['change_disclaimer_draft_settings', { model: 'gemini/flash' }],
         ['change_disclaimer_draft_settings', { memeChance: 2 }],
         ['change_disclaimer_draft_settings', {}],
-        ['change_weekly_award_settings', { moves: { moonwalk: '太空步' } }],
+        ['change_weekly_award_settings', { moves: { 'Moon Walk': '太空步' } }],
       ] as const) {
         expect((await call(name, args)).isError).toBe(true);
       }
@@ -830,6 +908,85 @@ describe('the admin MCP server', () => {
     `.execute(db);
     expect(rows.rows.map(({ action }) => action)).toStrictEqual([
       { version: 1, tool: 'put_sport', arguments: { ...strength } },
+    ]);
+    await client.close();
+  });
+
+  it('reads the unlock rules and logs a change, refusing a sport the list lacks', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const before = await call('get_unlock_rules');
+    const Rules = z.object({
+      version: z.literal(1),
+      rules: z.array(
+        z
+          .object({ kind: z.string(), id: z.string(), sports: z.array(z.string()), after: z.int() })
+          .loose(),
+      ),
+    });
+    const deuce = Rules.parse(JSON.parse(before.text)).rules.find(({ id }) => id === 'deuce');
+    expect(deuce).toMatchObject({
+      kind: 'store',
+      sports: ['tennis', 'pickleball', 'squash'],
+      after: 3,
+    });
+    // Putting a rule back as it is changes nothing, but the call is still logged.
+    const same = await call('put_unlock_rule', {
+      kind: 'store',
+      id: 'deuce',
+      sports: ['tennis', 'pickleball', 'squash'],
+      after: 3,
+    });
+    expect(same.isError).toBe(false);
+    expect(JSON.parse(same.text)).toStrictEqual(JSON.parse(before.text));
+    const refused = await call('put_unlock_rule', {
+      kind: 'store',
+      id: 'deuce',
+      sports: ['quidditch'],
+      after: 3,
+    });
+    expect(refused).toStrictEqual({
+      isError: true,
+      text: 'UNLOCK_SPORT_NOT_LISTED: quidditch is not on the sports list.',
+    });
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      {
+        version: 1,
+        tool: 'put_unlock_rule',
+        arguments: {
+          kind: 'store',
+          id: 'deuce',
+          sports: ['tennis', 'pickleball', 'squash'],
+          after: 3,
+        },
+      },
+    ]);
+    await client.close();
+  });
+
+  it('gives a member stores and props and logs who gave them', async () => {
+    const admin = await member({ admin: true });
+    const friend = await member({ admin: false });
+    const client = await connect(clientSignedInAs(admin));
+    const gift = { member: friend.userId, items: [{ kind: 'store', id: 'deuce' }] };
+    const given = await client.callTool({ name: 'give_unlocks', arguments: gift });
+    expect(given.isError).not.toBe(true);
+    expect(JSON.parse(textOf(given))).toMatchObject({
+      version: 1,
+      unlocks: [{ kind: 'store', id: 'deuce', by: { admin: admin.userId } }],
+    });
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      { version: 1, tool: 'give_unlocks', arguments: gift },
     ]);
     await client.close();
   });

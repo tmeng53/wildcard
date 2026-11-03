@@ -38,10 +38,10 @@ export {
   encodeCursor,
   type PostCursor,
 } from './domain/post-cursor.js';
-export type { CheckInTotals, TopSport } from './domain/totals.js';
+export type { CheckInTotals, TopSport, TrainedCheckIn } from './domain/totals.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
 export { CommentId, type Comment } from './domain/comment.js';
-export { CommentText } from './domain/text.js';
+export { COMMENT_MAX_CHARACTERS, CommentText } from './domain/text.js';
 export {
   DEFAULT_PLAN_DAYS,
   PlanDay,
@@ -129,3 +129,4 @@ export {
 } from './domain/week-summary.js';
 export type { SquadWeekSummary } from './use-cases/check-ins/week-summary.js';
 export type { SquadWeekCheckIns } from './use-cases/check-ins/week-for-awards.js';
+export type { MemberPage, StoryDay, WeekPages } from './domain/week-pages.js';

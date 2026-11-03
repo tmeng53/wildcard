@@ -23,7 +23,7 @@ extension CharacterPreviewTests {
     /// Each prop the editor offers, held by the lifter and the cat, playing its move once every
     /// 2.5 s from a still stand, as the editor plays it on every change.
     func writePropMoves(to url: URL) throws {
-        let props = try PlaceholderCharacter.editorChoices().props
+        let props = try PlaceholderCharacter.editorChoices().props.map(\.id)
         let stages = try props.flatMap { prop in
             try [PlaceholderCharacter.lifter, Looks.cat].map { outfit in
                 var held = outfit

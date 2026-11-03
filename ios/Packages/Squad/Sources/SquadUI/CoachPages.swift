@@ -5,7 +5,7 @@ import DesignSystemUI
 import SquadDomain
 import SwiftUI
 
-// The squad's coach (approved canvas 雇教练页面, 2026-11-01): the 教练 card on 小队设置, 教练市场,
+// The squad's coach (approved canvas 雇教练页面, 2026-11-01): the 教练 card on 小队设置, 教练招聘会,
 // a coach's 简历 and 解雇. Only the captain hires, changes and fires; everyone reads the 简历.
 // Coaches have no character of their own yet, so each stands as an ink silhouette.
 
@@ -39,7 +39,7 @@ struct CoachCard: View {
 
     private var empty: some View {
         HStack(spacing: Space.s) {
-            CoachThumbnail(isEmpty: true)
+            CoachThumbnail(coach: nil)
             VStack(alignment: .leading, spacing: Space.xxs) {
                 Text("还没有教练", bundle: .module)
                     .typeStyle(TypeRamp.headline)
@@ -71,7 +71,7 @@ struct CoachCard: View {
                 open(.resume(coach))
             } label: {
                 HStack(spacing: Space.s) {
-                    CoachThumbnail(isEmpty: false)
+                    CoachThumbnail(coach: coach.id)
                     VStack(alignment: .leading, spacing: Space.xxs) {
                         CoachName(coach: coach, name: TypeRamp.headline, title: TypeRamp.footnote)
                         if let week {
@@ -114,7 +114,7 @@ struct CoachCard: View {
     }
 }
 
-/// 教练市场: an ink header, a card per coach with its catchphrase, tags and 期望待遇, and the
+/// 教练招聘会: an ink header, a card per coach with its catchphrase, tags and 期望待遇, and the
 /// coaches still to come.
 struct CoachMarketPage: View {
     let market: CoachMarketLoad
@@ -154,11 +154,11 @@ struct CoachMarketPage: View {
             HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", on: .ink, action: back)
                 .accessibilityIdentifier("coach.market.back")
             VStack(alignment: .leading, spacing: Space.xxs) {
-                Text(verbatim: "COACH MARKET")
+                Text(verbatim: "JOB FAIR")
                     .typeStyle(TypeRamp.ticketDate)
                     .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                     .accessibilityHidden(true)
-                Text("教练市场", bundle: .module)
+                Text("教练招聘会", bundle: .module)
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgOnInk, in: theme))
                     .accessibilityAddTraits(.isHeader)
@@ -200,7 +200,7 @@ struct CoachMarketPage: View {
     }
 }
 
-/// A coach in 教练市场: its stage with the catchphrase, name and title, tags and 期望待遇.
+/// A coach in 教练招聘会: its stage with the catchphrase, name and title, tags and 期望待遇.
 private struct MarketCard: View {
     let coach: Coach
     let isCurrent: Bool
@@ -211,7 +211,8 @@ private struct MarketCard: View {
         Button(action: open) {
             VStack(alignment: .leading, spacing: 0) {
                 CoachStage(
-                    catchphrase: coach.catchphrase, bubble: .leading, figureWidth: CoachMetrics.marketFigure,
+                    coach: coach.id, catchphrase: coach.catchphrase, bubble: .leading,
+                    figureHeight: CoachMetrics.marketFigure,
                     floor: CoachMetrics.marketFloor
                 )
                 .frame(height: CoachMetrics.marketCardStage)
@@ -292,18 +293,20 @@ enum CoachMetrics {
     static let spinner = 64.0
     /// The 教练 card's square.
     static let thumbnail = 56.0
+    /// The silhouette's width in the square, for a coach without a character.
     static let thumbnailFigure = 26.0
     /// A silhouette is twice as tall as it is wide.
     static let figureAspect = 0.5
     /// How far the market's cards ride up over its ink header.
     static let marketOverlap = 40.0
-    static let marketCardStage = 188.0
-    static let marketFigure = 70.0
+    static let marketCardStage = 250.0
+    /// The coach's height on its stage, here and on the 简历 and 解雇 pages.
+    static let marketFigure = 190.0
     static let marketFloor = 40.0
     static let moreThumbnail = CGSize(width: 48, height: 56)
     static let moreFigure = 22.0
     static let resumeStage = 380.0
-    static let resumeFigure = 92.0
+    static let resumeFigure = 184.0
     static let resumeFloor = 72.0
     /// How far the 简历's sheet rides up over the stage, and its corners.
     static let sheetOverlap = 20.0

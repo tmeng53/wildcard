@@ -5,14 +5,14 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// While 我 reads the overview: the character jogging in place, with no words, on the page's
-/// own white (character states, 加载; loader design A). `MeView` covers the page with it once the
+/// While 我 reads the overview: the two tickets rocking, with no words, on the page's own white
+/// (whole-page loads, 两张票). `MeView` covers the page with it once the
 /// wait has lasted.
 struct MeLoading: View {
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        LoadingCharacter()
+        TicketSpinner(on: .light(.bgCanvas))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(role: .bgCanvas, in: theme))
             .accessibilityIdentifier("me.loading")

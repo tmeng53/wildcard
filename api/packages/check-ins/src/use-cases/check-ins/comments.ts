@@ -26,6 +26,8 @@ export interface CommentInput {
 export interface Commented {
   readonly comment: Comment;
   readonly created: boolean;
+  /** Who posted the check-in, to tell them about a new comment. */
+  readonly author: MemberId;
 }
 
 /**
@@ -53,10 +55,10 @@ export async function commentOnCheckIn(
   };
   const outcome = await deps.comments.insert(id, asked);
   if (outcome === 'conflict') throw new CommentIdConflictError(commentId);
-  if (outcome === 'created') return { comment: asked, created: true };
+  if (outcome === 'created') return { comment: asked, created: true, author: checkIn.member };
   // Saved before: answer with it as it was first written.
   const saved = await deps.comments.find(commentId);
-  return { comment: saved ?? asked, created: false };
+  return { comment: saved ?? asked, created: false, author: checkIn.member };
 }
 
 /**

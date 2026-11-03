@@ -1,11 +1,13 @@
 #if os(iOS)
+import AvatarArt
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
 import SquadDomain
 import SwiftUI
 
-// The pieces of the coach's pages: its name and title, its tag, its stage and silhouette.
+// The pieces of the coach's pages: its name and title, its tag, its stage and character.
 
 /// A coach's name with its title beside it, such as 毛头 混混教练.
 struct CoachName: View {
@@ -59,13 +61,16 @@ struct CoachStage: View {
         case center
     }
 
+    let coach: CoachID
     let catchphrase: String
     let bubble: Bubble
-    let figureWidth: Double
+    let figureHeight: Double
     let floor: Double
     var mood: CoachSilhouette.Mood = .calm
     /// On a grey page block (解雇) the stage is the block's grey; elsewhere a deeper grey.
     var surface: CardSurface = .scene
+    /// Cheers once when the stage appears, as on the coach's 简历.
+    var greets = false
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -74,20 +79,73 @@ struct CoachStage: View {
             Color(role: surface == .page ? .borderDefault : .fgSubtle, in: theme)
                 .opacity(surface == .page ? 1 : CoachMetrics.floorShade)
                 .frame(height: floor)
-            VStack(spacing: Space.s) {
-                SpeechBubble(Text(verbatim: catchphrase), kind: .quote, on: .scene)
-                    .frame(maxWidth: .infinity, alignment: bubble == .leading ? .leading : .center)
-                CoachSilhouette(fill: Color(role: .bgInk, in: theme), mood: mood)
-                    .frame(width: figureWidth)
+            switch bubble {
+            case .leading:
+                // As on the approved card: the line pinned to the stage's top corner, the coach
+                // standing under it in the middle.
+                figure
+                    .padding(.bottom, floor * CoachMetrics.feet)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .overlay(alignment: .topLeading) {
+                        speech.padding(Space.s + 2)
+                    }
+            case .center:
+                VStack(spacing: Space.s) {
+                    speech
+                    figure
+                }
+                .padding(.horizontal, Space.s + 2)
+                .padding(.bottom, floor * CoachMetrics.feet)
             }
-            .padding(.horizontal, Space.s + 2)
-            .padding(.bottom, floor * CoachMetrics.feet)
+        }
+    }
+
+    private var speech: some View {
+        SpeechBubble(Text(verbatim: catchphrase), kind: .quote, on: .scene)
+    }
+
+    private var figure: some View {
+        CoachFigure(coach: coach, mood: mood, greets: greets)
+            .frame(height: figureHeight)
+    }
+}
+
+/// The coach on its stage: its character from `AvatarArt`, idling (or crying, being fired), or
+/// for a coach this build has no character for, a silhouette in its place.
+struct CoachFigure: View {
+    let coach: CoachID
+    var mood: CoachSilhouette.Mood = .calm
+    var greets = false
+    @State private var player: CharacterPlayer?
+    @Environment(\.sceneTheme) private var theme
+
+    /// The figure with room above for its hop and swaying head, on the coaches' 240 × 320 canvas.
+    static let crop = CGRect(x: 36, y: 24, width: 168, height: 296)
+
+    var body: some View {
+        Group {
+            if let player {
+                CharacterView(player: player, crop: Self.crop)
+            } else if !CoachCharacter.exists(coach.rawValue) {
+                CoachSilhouette(fill: Color(role: .bgInk, in: theme), mood: mood)
+            } else {
+                Color.clear.aspectRatio(Self.crop.width / Self.crop.height, contentMode: .fit)
+            }
+        }
+        .accessibilityHidden(true)
+        .task(id: mood) {
+            let id = coach.rawValue
+            guard CoachCharacter.exists(id) else { return }
+            player = try? CharacterPlayer(
+                figure: CoachCharacter.figure(id),
+                idle: CoachCharacter.clip(mood == .crying ? .crying : .idle, coach: id))
+            if greets, mood == .calm { try? player?.play(CoachCharacter.clip(.cheer, coach: id)) }
         }
     }
 }
 
-/// The coach until it has a character: an ink silhouette, round on top. Crying, it has two
-/// eyes squeezed shut, tears and a frown.
+/// A coach this build has no character for, and 更多教练在路上: an ink silhouette, round on
+/// top. Crying, it has two eyes squeezed shut, tears and a frown.
 struct CoachSilhouette: View {
     enum Mood {
         case calm
@@ -131,15 +189,21 @@ struct CoachSilhouette: View {
     }
 }
 
-/// The coach's square on 小队设置: its silhouette, or a dashed outline while there is none.
+/// The coach's square on 小队设置: its character's head and shoulders (a silhouette for a coach
+/// this build can't draw), or a dashed outline while there is none.
 struct CoachThumbnail: View {
-    let isEmpty: Bool
+    /// Nil while the squad has no coach.
+    let coach: CoachID?
+    @State private var head: CharacterPlayer?
     @Environment(\.sceneTheme) private var theme
+
+    /// The head and shoulders on the coaches' 240 × 320 canvas.
+    private static let face = CGRect(x: 44, y: 44, width: 152, height: 152)
 
     var body: some View {
         ZStack(alignment: .bottom) {
             Color(role: .bgCanvas, in: theme)
-            if isEmpty {
+            if coach == nil {
                 UnevenRoundedRectangle(
                     topLeadingRadius: CoachMetrics.thumbnailFigure / 2,
                     topTrailingRadius: CoachMetrics.thumbnailFigure / 2,
@@ -148,7 +212,10 @@ struct CoachThumbnail: View {
                 .stroke(Color(role: .fgSubtle, in: theme), style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
                 .frame(width: CoachMetrics.thumbnailFigure, height: CoachMetrics.thumbnailFigure * 1.7)
                 .offset(y: 2)
-            } else {
+            } else if let head {
+                let frame = head.restFrame
+                CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.face)
+            } else if let coach, !CoachCharacter.exists(coach.rawValue) {
                 CoachSilhouette(fill: Color(role: .bgInk, in: theme))
                     .frame(width: CoachMetrics.thumbnailFigure)
             }
@@ -156,6 +223,11 @@ struct CoachThumbnail: View {
         .frame(width: CoachMetrics.thumbnail, height: CoachMetrics.thumbnail)
         .clipShape(RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
         .accessibilityHidden(true)
+        .task(id: coach) {
+            head = nil
+            guard let id = coach?.rawValue, CoachCharacter.exists(id) else { return }
+            head = try? CharacterPlayer(figure: CoachCharacter.figure(id), idle: CoachCharacter.clip(.idle, coach: id))
+        }
     }
 }
 

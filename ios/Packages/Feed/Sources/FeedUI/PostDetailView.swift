@@ -6,11 +6,11 @@ import FeedDomain
 import SwiftUI
 import UIKit
 
-/// A post's own page: its card, every comment oldest first, and the box to write one at the
-/// bottom. Tapping a teammate's comment replies to them (回复 Mia); holding one copies it, or
-/// deletes it when it is the member's own. 返回 or a swipe right goes back. 动态 opens it from a
-/// card, and any screen with a `FeedModel` over a store of one post (the member's past posts)
-/// shows the same page.
+/// A post's own page: its card, the coach's line first (nobody replies to it), every comment
+/// oldest first, and the box to write one at the bottom. Tapping a teammate's comment replies to
+/// them (回复 Mia); holding one copies it, or deletes it when it is the member's own. 返回 or a
+/// swipe right goes back. 动态 opens it from a card, and any screen with a `FeedModel` over a
+/// store of one post (the member's past posts) shows the same page.
 public struct PostDetailView: View {
     @Environment(\.sceneTheme) private var theme
     private let model: FeedModel
@@ -43,9 +43,11 @@ public struct PostDetailView: View {
         // Deleted from its own page, the page goes back.
         .managesPosts(model) { if $0 == id { close() } }
         .haptic(.pick, trigger: model.commentsSent)
-        .task {
+        // Keyed by the post, so a comment's push that switches the open page to another post
+        // loads that one.
+        .task(id: id) {
             model.opened = id
-            await model.store.loadPost(id)
+            await model.loadPage(id)
         }
         // However the page goes, the feed and tab bar stop treating the post as open.
         .onDisappear { if model.opened == id { model.opened = nil } }
@@ -72,7 +74,8 @@ public struct PostDetailView: View {
     }
 
     @ViewBuilder private func comments(_ post: FeedPost) -> some View {
-        if post.comments.isEmpty {
+        let coach = model.coachReply(on: post.id).flatMap { $0.text == nil ? nil : $0 }
+        if post.comments.isEmpty && coach == nil {
             VStack(spacing: Space.xxs) {
                 Text("还没有人说话", bundle: .module)
                     .typeStyle(TypeRamp.callout)
@@ -90,7 +93,11 @@ public struct PostDetailView: View {
             .accessibilityIdentifier("post.noComments")
         } else {
             VStack(alignment: .leading, spacing: Space.m) {
-                SectionLabel(Text("评论 \(post.comments.count)", bundle: .module))
+                let count = post.comments.count + (coach == nil ? 0 : 1)
+                SectionLabel(Text("评论 \(count)", bundle: .module))
+                if let coach, let text = coach.text {
+                    CoachCommentRow(model: model, reply: coach, text: text)
+                }
                 ForEach(post.comments) { comment in
                     row(comment, on: post)
                 }

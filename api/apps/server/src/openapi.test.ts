@@ -23,7 +23,10 @@ import { catalogOn, unlimitedPublicRoutes } from './test-kit/public-routes.js';
 import {
   unusedWeekSummaryWords,
   unusedWeeklyAwards,
+  unusedUnlocks,
   unusedCoachHiring,
+  unusedCoachActivity,
+  ignoredNotices,
 } from './test-kit/weekly-awards.js';
 
 describe('openapi.json', () => {
@@ -80,8 +83,11 @@ describe('openapi.json', () => {
         aiConsent: () => Promise.resolve(true),
       }),
       weeklyAwards: unusedWeeklyAwards,
+      unlocks: unusedUnlocks,
       weekSummaryWords: unusedWeekSummaryWords,
       coachHiring: unusedCoachHiring,
+      coachActivity: unusedCoachActivity,
+      ...ignoredNotices,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),
       log: createLog(() => undefined),

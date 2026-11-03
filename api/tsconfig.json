@@ -11,6 +11,9 @@
       "path": "packages/ai-consent"
     },
     {
+      "path": "packages/notices"
+    },
+    {
       "path": "packages/nudges"
     },
     {
@@ -24,6 +27,9 @@
     },
     {
       "path": "packages/sports"
+    },
+    {
+      "path": "packages/unlocks"
     },
     {
       "path": "packages/check-ins"

@@ -32,7 +32,7 @@ public struct CharacterEditorView: View {
     public var body: some View {
         VStack(spacing: 0) {
             EditorHeader(model: model, context: context, onBack: onBack)
-            if case .signUp = context, !isNaming {
+            if showsTitle {
                 Text("创建你的外卡运动员", bundle: .module)
                     .typeStyle(TypeRamp.taskTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -50,6 +50,8 @@ public struct CharacterEditorView: View {
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("editor.stage")
             .padding(.horizontal, Space.pageMargin)
+            // Without the title, the ticket keeps clear of the header's round buttons.
+            .padding(.top, showsTitle ? 0 : Space.s)
             // The title, tabs and choices make room while the nickname is typed, so the page fits
             // above the keyboard and 确认 stays in reach.
             if !isNaming {
@@ -77,6 +79,12 @@ public struct CharacterEditorView: View {
         // A brand screen wherever it opens: sign-up, or a cover over 我 that doesn't inherit
         // 我's tone. Its button, tabs, picks and swatches never wear the squad's scene.
         .accentTone(.brand)
+    }
+
+    /// 创建你的外卡运动员 shows in sign-up, out of the way while the nickname is typed.
+    private var showsTitle: Bool {
+        guard case .signUp = context else { return false }
+        return !isNaming
     }
 }
 

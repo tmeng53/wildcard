@@ -11,10 +11,12 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private var reactionsByCheckIn: [CheckInID: [Reaction]] = [:]
     private var photoCount = 0
     private var squadPokes: SquadPokes
+    private let sidelineCoach: SidelineCoach?
 
-    public init(home: Home?, pokes: SquadPokes = .none) {
+    public init(home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil) {
         current = home
         squadPokes = pokes
+        sidelineCoach = coach
     }
 
     /// The squad the screens are reviewed against: 本周小队 14/22, eight members on the scene in
@@ -23,10 +25,11 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// `size` (1 to 8, me included) keeps the 请假条, then the runner, the rest day and so on. Pass
     /// `member` and `squad` to share them with another screen's sample, such as 动态's.
     /// Everyone goes by the approved home's names (小米, 阿杰, 豆豆, …). With `patted`, the
-    /// runner (小米) and the 请假条 (阿杰) patted me an hour ago, so the home plays it.
+    /// runner (小米) and the 请假条 (阿杰) patted me an hour ago, so the home plays it. With `coach`,
+    /// the squad has hired 毛头, who wrote today's 战术板 line.
     public static func sampleSquad(
         now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID()),
-        patted: Bool = false
+        patted: Bool = false, coach: Bool = false
     ) -> InMemoryCheckInBackend {
         let zone = TimeZone.current
         let day = LocalDay(at: now, in: zone)
@@ -73,7 +76,19 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                         squadWeek: WeekCount(trainedDays: 14, plannedDays: 22)),
                     plan: plan, checkIns: checkIns)
             },
-            pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none)
+            pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none,
+            coach: coach ? sampleCoach(now: now) : nil)
+    }
+
+    /// 毛头 with today's line, as the approved home shows it.
+    private static func sampleCoach(now: Date) -> SidelineCoach {
+        let words = Bundle.module.inAppLanguage
+        let coach = CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil))
+        let line = words.localizedString(forKey: "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。", value: nil, table: nil)
+        let note = CoachNote(
+            day: LocalDay(at: now, in: CoachNote.timeZone), text: line, coach: coach,
+            writtenAt: now.addingTimeInterval(-3600))
+        return SidelineCoach(coach: coach, note: note)
     }
 
     /// `patters` patted me, the first an hour ago and each next one ten minutes later.
@@ -205,6 +220,8 @@ public actor InMemoryCheckInBackend: CheckInBackend {
         guard current?.squad.members.contains(member) ?? false else { throw .notInSquad }
         squadPokes.sent.insert(member)
     }
+
+    public func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? { sidelineCoach }
 }
 
 /// Posts waiting to go out, kept in memory: for previews, UI tests and tests.

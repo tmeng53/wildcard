@@ -50,11 +50,15 @@ final class StoryWardrobe {
         ribbon = RGBAColor(red: accent.red, green: accent.green, blue: accent.blue)
     }
 
-    /// What a trained day's sport puts on, as the editor and 上场 dress it; none for a sport the
-    /// member named themselves.
+    /// What a clip puts on, from `kits.json` as every screen reads it: a trained day's sport
+    /// kit, as the editor and 上场 dress it (none for a sport the member named themselves), or
+    /// the kit of an award move that is a sport's move.
     func kit(for clip: StoryClip?) -> SportKit? {
-        guard case .sport(let sport?) = clip else { return nil }
-        return kits?.kit(for: .sport(sport), in: SportList.shared.catalog)
+        switch clip {
+        case .sport(let sport?)?: kits?.kit(for: .sport(sport), in: SportList.shared.catalog)
+        case .award(let move)?: NamedMove(move.rawValue)?.kit
+        default: nil
+        }
     }
 
     /// Where every part of `member` lands at `time` on the page, wearing `regalia`, and the
@@ -62,7 +66,8 @@ final class StoryWardrobe {
     func frame(
         of member: MemberID, act: Act, regalia: Regalia, kit: SportKit?, at time: Double
     ) -> (drawing: FigureDrawing, placements: [Placement])? {
-        guard let look = cast[member], let dressed = dress(look, for: act.clip, kit: kit) else { return nil }
+        guard let look = cast[member], let dressed = dress(look, for: act.clip, kit: kit ?? self.kit(for: act.clip))
+        else { return nil }
         var posed = pose(of: look, dressed, act: act, at: time)
         regalia.dress(&posed, on: dressed.figure)
         return (dressed.drawing, dressed.figure.layout(posed))
@@ -116,14 +121,26 @@ final class StoryWardrobe {
 
     /// The reader leaning out from behind the cloth on the feed's tile: idle, tilted a little.
     static func peeking(_ member: StoryMember) -> (drawing: FigureDrawing, placements: [Placement])? {
+        idle(member, tilt: 8)
+    }
+
+    /// The reader standing on their step of the uncovered podium, on the tile of a story they
+    /// watched.
+    static func standing(_ member: StoryMember) -> (drawing: FigureDrawing, placements: [Placement])? {
+        idle(member, tilt: 0)
+    }
+
+    private static func idle(_ member: StoryMember, tilt: Double) -> (
+        drawing: FigureDrawing, placements: [Placement]
+    )? {
         guard let figure = try? PlaceholderCharacter.figure(wearing: member.look),
             let clip = try? PlaceholderCharacter.clip("idle", persona: member.persona, species: member.species),
             let idle = try? figure.bind(clip)
         else { return nil }
         var pose = figure.pose(idle, at: 0.5)
-        for part in ["torso", "head"] {
+        for part in ["torso", "head"] where tilt != 0 {
             if let index = figure.parts.firstIndex(where: { $0.id == PartID(part) }) {
-                pose.parts[index].rotation -= 8
+                pose.parts[index].rotation -= tilt
             }
         }
         return (FigureDrawing(figure), figure.layout(pose))

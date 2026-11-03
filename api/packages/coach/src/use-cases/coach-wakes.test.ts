@@ -12,6 +12,7 @@ import {
   type CoachTables,
 } from '../adapters/postgres-coach-settings.js';
 import {
+  createPostgresCoachActivity,
   createPostgresCoachReport,
   createPostgresCoachStores,
 } from '../adapters/postgres-coach-stores.js';
@@ -25,9 +26,10 @@ import {
 } from '../errors.js';
 import type { SquadWeek } from '../domain/squad-week.js';
 import type { AgentRun, CoachAgent, CoachTool } from '../ports.js';
+import { createCoachActivity } from './coach-activity.js';
 import { createCoachHiring } from './coach-hiring.js';
 import { createCoachSettings } from './coach-settings.js';
-import { createCoachWakes } from './coach-wakes.js';
+import { createCoachWakes, type CoachReplied } from './coach-wakes.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Each test works inside a
 // transaction it rolls back, so the seeded settings stay as they are for the other tests.
@@ -143,11 +145,13 @@ function wakes(
     at = now,
     weeks,
     consented,
+    replied,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
     readonly weeks?: Readonly<Record<string, SquadWeek>>;
     readonly consented?: readonly string[];
+    readonly replied?: CoachReplied;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -170,6 +174,7 @@ function wakes(
       ),
     hiring: createPostgresCoachHiring(trx),
     clock: () => at,
+    ...(replied === undefined ? {} : { replied }),
   });
 }
 
@@ -199,7 +204,8 @@ describe('the coach', () => {
           ? [
               { tool: 'squad_week', input: {} },
               { tool: 'read_file', input: { path: 'memory.md' } },
-              { tool: 'post_note', input: { text: '  周日也跑了，队员1 是认真的  ' } },
+              { tool: 'post_note', input: { text: '队员1 周日也跑了' } },
+              { tool: 'post_note', input: { text: '  周日也跑了，米亚是认真的  ' } },
             ]
           : [
               {
@@ -215,20 +221,43 @@ describe('the coach', () => {
                 input: { path: 'people/队员3.md', find: '', replace: '没这个人' },
               },
               { tool: 'post_note', input: { text: '不该有这个工具' } },
+              { tool: 'reply', input: { text: '队员1 周日还跑' } },
+              { tool: 'reply', input: { text: '跑'.repeat(101) } },
+              { tool: 'reply', input: { text: '周日也跑？' } },
+              { tool: 'reply', input: { text: '  周日也跑，腿还在吗  ' } },
+              { tool: 'react', input: { emoji: '💩' } },
+              { tool: 'react', input: { emoji: '🔥' } },
             ],
       );
+      const told: Parameters<CoachReplied>[0][] = [];
+      const replied: CoachReplied = (reply) => {
+        told.push(reply);
+        return Promise.resolve();
+      };
 
-      expect(await wakes(fixture, { agent }).run()).toStrictEqual({
+      expect(await wakes(fixture, { agent, replied }).run()).toStrictEqual({
         coaching: true,
         squads: 1,
         queued: 2,
         done: 2,
         failed: 0,
       });
+      // Told once, after the reply was saved, for the server to tell its author.
+      expect(told).toStrictEqual([
+        {
+          squad,
+          checkIn: fixture.checkIn,
+          author: fixture.mia,
+          coach: 'xiaohun',
+          text: '周日也跑，腿还在吗',
+          emoji: '🔥',
+        },
+      ]);
 
-      // The check-in's wake ran first: it may edit files but not post.
+      // The check-in's wake ran first: it may edit files and reply and react to the check-in, but
+      // not post on the 战术板; the daily wake posts but replies to nothing.
       expect(runs.map(({ tools }) => tools)).toStrictEqual([
-        ['squad_week', 'read_file', 'edit_file'],
+        ['squad_week', 'read_file', 'edit_file', 'reply', 'react'],
         ['squad_week', 'read_file', 'edit_file', 'post_note'],
       ]);
       expect(runs[0]?.task).toContain('队员1 练了 跑步');
@@ -237,6 +266,16 @@ describe('the coach', () => {
         '已改好，people/队员2.md 现在 5 字。',
         '没有 people/队员3.md 这个文件；能用的文件见任务里的列表。',
         'no tool post_note',
+        '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
+        '太长了：101 字，最多 100 字。',
+        '已回复。',
+        '已换成这句。',
+        expect.stringContaining('参数不对'),
+        '已点 🔥。',
+      ]);
+      expect(runs[1]?.answers.slice(2)).toStrictEqual([
+        '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
+        '已写上战术板。',
       ]);
       // The daily wake read what the first one wrote, and the instructions are 小混's.
       expect(runs[1]?.answers[1]).toBe('- 队员1 周日跑步');
@@ -264,8 +303,57 @@ describe('the coach', () => {
         trx,
       );
       expect(notes.rows).toStrictEqual([
-        { day: '2026-11-01', text: '周日也跑了，队员1 是认真的', coach_id: 'xiaohun' },
+        { day: '2026-11-01', text: '周日也跑了，米亚是认真的', coach_id: 'xiaohun' },
       ]);
+      // The check-in's reply, its last line and emoji, never pushed.
+      const replies = await sql<{
+        check_in_id: string;
+        text: string;
+        emoji: string;
+        coach_id: string;
+      }>`
+        select check_in_id, text, emoji, coach_id from public.coach_replies where squad_id = ${squad}`.execute(
+        trx,
+      );
+      expect(replies.rows).toStrictEqual([
+        {
+          check_in_id: fixture.checkIn,
+          text: '周日也跑，腿还在吗',
+          emoji: '🔥',
+          coach_id: 'xiaohun',
+        },
+      ]);
+      // What members read: the newest line and the replies to the check-ins they ask about.
+      const activity = createCoachActivity({ store: createPostgresCoachActivity(trx) });
+      const xiaohun = { id: 'xiaohun', name: '小混', look: 'xiaohun' };
+      const said = await activity.squad({
+        squad,
+        checkIns: [fixture.checkIn.toUpperCase(), randomUUID()],
+      });
+      expect(
+        [said.note?.at, ...said.replies.map(({ at }) => at)].every((at) => at instanceof Date),
+      ).toBe(true);
+      expect({
+        note: said.note === undefined ? undefined : { ...said.note, at: 'at' },
+        replies: said.replies.map((reply) => ({ ...reply, at: 'at' })),
+      }).toStrictEqual({
+        note: {
+          day: '2026-11-01',
+          text: '周日也跑了，米亚是认真的',
+          coach: xiaohun,
+          at: 'at',
+        },
+        replies: [
+          {
+            checkIn: fixture.checkIn,
+            coach: xiaohun,
+            text: '周日也跑，腿还在吗',
+            emoji: '🔥',
+            at: 'at',
+          },
+        ],
+      });
+      expect(await activity.squad({ squad, checkIns: [] })).toMatchObject({ replies: [] });
       // 12,000 in at $0.25 and 800 out at $2 per million tokens: 4,600 millionths a wake.
       const usage = await sql<{ requests: number; input_tokens: string; cost_micros: string }>`
         select requests, input_tokens, cost_micros from public.coach_usage where squad_id = ${squad} order by id`.execute(
@@ -490,12 +578,16 @@ describe('the coach', () => {
     });
   });
 
-  it('counts the tokens of a wake whose check-in was deleted while it ran', async () => {
+  it('counts the tokens of a wake whose check-in was deleted while it ran, and drops its reply', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, checkIn } = fixture;
       const agent: CoachAgent = {
-        async run({ task }) {
+        async run({ task, tools }) {
           if (!task.includes('新的一天')) {
+            const use = (name: string, input: unknown) =>
+              tools.find((tool) => tool.name === name)?.run(input);
+            await use('reply', { text: '腿还在吗' });
+            await use('react', { emoji: '💪' });
             await sql`delete from public.check_ins where id = ${checkIn}`.execute(trx);
           }
           return {
@@ -504,10 +596,20 @@ describe('the coach', () => {
           };
         },
       };
-      expect(await wakes(fixture, { agent }).run()).toMatchObject({ queued: 2, done: 2 });
+      const told: unknown[] = [];
+      const replied: CoachReplied = (reply) => {
+        told.push(reply);
+        return Promise.resolve();
+      };
+      expect(await wakes(fixture, { agent, replied }).run()).toMatchObject({ queued: 2, done: 2 });
+      expect(told).toStrictEqual([]);
       const usage = await sql<{ wake_id: string | null }>`
         select wake_id from public.coach_usage where squad_id = ${squad} order by id`.execute(trx);
       expect(usage.rows.map(({ wake_id }) => wake_id === null)).toStrictEqual([true, false]);
+      // The reply to a check-in that went is dropped, and the wake still ends.
+      const replies =
+        await sql`select 1 from public.coach_replies where squad_id = ${squad}`.execute(trx);
+      expect(replies.rows).toHaveLength(0);
     });
   });
 
