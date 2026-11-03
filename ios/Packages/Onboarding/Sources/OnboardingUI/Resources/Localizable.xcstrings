@@ -1403,6 +1403,38 @@
         }
       }
     },
+    "每周模板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly template"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每週模板"
+          }
+        }
+      }
+    },
+    "这就是你的每周模板，以后可以在出赛表里改": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is your weekly template. You can change it later in Lineup."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這就是你的每週模板，以後可以在出賽表裡改"
+          }
+        }
+      }
+    },
     "上场": {
       "localizations": {
         "en": {

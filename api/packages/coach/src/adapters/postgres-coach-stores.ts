@@ -5,7 +5,13 @@ import { CoachId } from '../domain/coach.js';
 import { memberOfPath } from '../domain/memory.js';
 import { SquadId } from '../domain/settings.js';
 import type { Wake } from '../domain/wake.js';
-import type { CoachReportStore, CoachStores, CoachTransaction, UsageTotal } from '../ports.js';
+import type {
+  CoachActivityStore,
+  CoachReportStore,
+  CoachStores,
+  CoachTransaction,
+  UsageTotal,
+} from '../ports.js';
 import type { DB } from './tables.js';
 
 /** How long a claimed wake may run before another run takes it back. */
@@ -216,6 +222,20 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
       },
     },
 
+    replies: {
+      async save({ squad, checkIn, coach, text, emoji, wake }) {
+        // Nothing when the check-in went while the run was thinking: a failed insert would undo
+        // the rest of the wake's save with it.
+        const saved = await sql<{ id: string }>`
+          insert into public.coach_replies (squad_id, check_in_id, coach_id, text, emoji, wake_id)
+          select ${squad}, id, ${coach}, ${text ?? null}, ${emoji ?? null}, ${String(wake)}
+          from public.check_ins where id = ${checkIn}
+          on conflict (squad_id, check_in_id) do nothing
+          returning id`.execute(db);
+        return saved.rows.length > 0;
+      },
+    },
+
     usage: {
       async record({ squad, wake, coach, model, usage, costMicros }) {
         await db
@@ -235,6 +255,62 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           })
           .execute();
       },
+    },
+  };
+}
+
+/** What a squad's coaches have said, read from Postgres for its members. */
+export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore {
+  return {
+    async latestNote(squad) {
+      const row = await db
+        .selectFrom('coach_notes')
+        .innerJoin('coaches', 'coaches.id', 'coach_notes.coach_id')
+        .select([
+          sql<string>`to_char(coach_notes.day, 'YYYY-MM-DD')`.as('day'),
+          'coach_notes.text',
+          'coach_notes.at',
+          'coaches.id as coach_id',
+          'coaches.name',
+          'coaches.look',
+        ])
+        .where('coach_notes.squad_id', '=', squad)
+        .orderBy('coach_notes.day', 'desc')
+        .limit(1)
+        .executeTakeFirst();
+      if (row === undefined) return undefined;
+      return {
+        day: row.day,
+        text: row.text,
+        coach: { id: row.coach_id, name: row.name, look: row.look },
+        at: new Date(row.at),
+      };
+    },
+
+    async replies(squad, checkIns) {
+      if (checkIns.length === 0) return [];
+      const rows = await db
+        .selectFrom('coach_replies')
+        .innerJoin('coaches', 'coaches.id', 'coach_replies.coach_id')
+        .select([
+          'coach_replies.check_in_id',
+          'coach_replies.text',
+          'coach_replies.emoji',
+          'coach_replies.at',
+          'coaches.id as coach_id',
+          'coaches.name',
+          'coaches.look',
+        ])
+        .where('coach_replies.squad_id', '=', squad)
+        .where('coach_replies.check_in_id', 'in', checkIns)
+        .execute();
+      return rows.map((row) => ({
+        checkIn: row.check_in_id,
+        coach: { id: row.coach_id, name: row.name, look: row.look },
+        text: row.text ?? undefined,
+        emoji: row.emoji ?? undefined,
+        at: new Date(row.at),
+      }));
     },
   };
 }

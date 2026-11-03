@@ -112,7 +112,7 @@ struct TemplateNote: View {
         Label {
             Text("改了从下周开始生效，本周不变", bundle: .module)
         } icon: {
-            Image(systemName: ScheduleLabels.templateSymbol)
+            Image(systemName: WeekPosterHeading.templateSymbol)
                 .accessibilityHidden(true)
         }
         .noteStyle(theme)
@@ -253,12 +253,12 @@ enum SchedulePage: Hashable {
     case template
 }
 
-/// The character jogging in place on the poster's grey card while the weeks are read.
+/// The two tickets rocking on the poster's grey card while the weeks are read.
 struct PosterLoader: View {
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        LoadingCharacter()
+        TicketSpinner(on: .light(.bgSubtle))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(role: .bgSubtle, in: theme))
             .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))

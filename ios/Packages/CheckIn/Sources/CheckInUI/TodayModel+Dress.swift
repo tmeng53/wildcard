@@ -13,14 +13,11 @@ struct Worn: Equatable {
 }
 
 extension TodayModel {
-    /// The sports' kits, read once.
-    private static let kits = try? PlaceholderCharacter.sportKits()
-
     /// What I wear and loop on the scene: once I 练了 a sport today, its kit and its move, from the
     /// same `kits.json` and `move(for:)` as sign-up's 平时练什么 and the week card; else my own
     /// look and my persona's idle.
     private var dress: (outfit: Outfit, idle: Clip)? {
-        if let home, let activity = home.todaysSport(of: home.member), let kits = Self.kits {
+        if let home, let activity = home.todaysSport(of: home.member), let kits = PlaceholderCharacter.shippedKits {
             let kit = kits.kit(for: activity, in: SportList.shared.catalog)
             if let move = try? PlaceholderCharacter.move(for: kit, persona: myPersona) {
                 return (kit.dress(myLook), move)
@@ -63,10 +60,19 @@ extension TodayModel {
         hopEnds.map { Date.now < $0 } ?? false
     }
 
-    /// I tapped my own character: it plays its signature move once, the move of the prop it
-    /// holds (the kit's, once I trained today), or its cheer. Not while a pat, a 练了's cheer, a
-    /// hop into the kit or the squad's drop plays.
+    /// I tapped my own character: my status shows over my head, as a teammate's does, and it
+    /// plays its signature move once, the move of the prop it holds (the kit's, once I trained
+    /// today), or its cheer. The move waits out a pat, a 练了's cheer, a hop into the kit or the
+    /// squad's drop.
     func tapMe() {
+        if let home, arrival == nil {
+            pats.tapMe(
+                home.member,
+                status: StageStatus(
+                    training: store.myStatus, activity: home.todaysSport(of: home.member),
+                    plannedRest: home.mine?.plannedRest ?? false),
+                disclaimer: home.todaysDisclaimer(of: home.member))
+        }
         guard pats.pat == nil, arrival == nil, !holdsDress, !isChanging, let player else { return }
         guard
             let move = try? PlaceholderCharacter.signatureMove(

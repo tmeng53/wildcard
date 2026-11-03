@@ -1,8 +1,7 @@
 import {
-  ModelReply,
+  modelReply,
   type Awards,
   titlesOf,
-  topCheckInOf,
   type MemberId,
   type MemberWeek,
   type SquadId,
@@ -10,7 +9,7 @@ import {
 } from '../../domain/awards.js';
 import { promptFor, type PromptMeme } from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
-import type { AwardSettings } from '../../domain/settings.js';
+import { offeredMoves, type AwardSettings } from '../../domain/settings.js';
 import { AwardsWriterUnavailableError } from '../../errors.js';
 import type {
   AiConsented,
@@ -26,7 +25,10 @@ const ATTEMPTS = 2;
 export interface GiveAwardsInput {
   readonly squad: SquadId;
   readonly weekStart: WeekStart;
-  /** Everyone in the squad, in the order they joined, with their check-ins before the awards. */
+  /**
+   * Everyone in the squad at the awards, in the order they joined, with their check-ins before
+   * them.
+   */
   readonly members: readonly MemberWeek[];
 }
 
@@ -83,14 +85,7 @@ export async function giveAwards(
     }
   }
   const awards: Awards = {
-    members: winners.map(({ member, checkIns }) => {
-      const topCheckIn = topCheckInOf(checkIns);
-      return {
-        member,
-        titles: titles.get(member) ?? [],
-        ...(topCheckIn === undefined ? {} : { topCheckIn }),
-      };
-    }),
+    members: winners.map(({ member }) => ({ member, titles: titles.get(member) ?? [] })),
   };
   if (await deps.store.save({ squad, weekStart, awards })) return awards;
   // Another run saved first: theirs stand.
@@ -157,7 +152,7 @@ async function writeTitles(
         model: settings.model,
         instructions: settings.instructions,
         prompt,
-        reply: ModelReply,
+        reply: modelReply(offeredMoves(settings.moves)),
       });
       const titles = titlesOf(
         reply,

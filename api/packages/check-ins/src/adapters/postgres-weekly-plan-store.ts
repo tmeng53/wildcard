@@ -8,7 +8,20 @@ import type { DB } from './tables.js';
 /** The weekly plan, template and 饮食小目标 store on Postgres (`supabase/migrations`). */
 export function createPostgresWeeklyPlanStore(db: Kysely<DB>): WeeklyPlanStore {
   return {
-    async savedFor(member, weekStart) {
+    async savedFor(member, { weekStart, asOf }) {
+      if (asOf !== undefined) {
+        // The log holds every save with the whole plan, so its newest before `asOf` is the plan then.
+        const logged = await db
+          .selectFrom('weekly_plan_events')
+          .select('payload')
+          .where('member_id', '=', member)
+          .where('week_start', '=', weekStart)
+          .where('at', '<', asOf)
+          .orderBy('id', 'desc')
+          .limit(1)
+          .executeTakeFirst();
+        return logged === undefined ? undefined : StoredPlan.parse(logged.payload).days;
+      }
       const row = await db
         .selectFrom('weekly_plans')
         .select('payload')
@@ -18,12 +31,15 @@ export function createPostgresWeeklyPlanStore(db: Kysely<DB>): WeeklyPlanStore {
       return row === undefined ? undefined : StoredPlan.parse(row.payload).days;
     },
 
-    async templateFor(member, weekStart) {
-      const row = await db
+    async templateFor(member, { weekStart, asOf }) {
+      let query = db
         .selectFrom('plan_templates')
         .select('payload')
         .where('member_id', '=', member)
-        .where('from_week', '<=', weekStart)
+        .where('from_week', '<=', weekStart);
+      // The table is its own log: the newest row saved before `asOf` is the template then.
+      if (asOf !== undefined) query = query.where('at', '<', asOf);
+      const row = await query
         // The newest change that applies, even over an older one applying from a later week.
         .orderBy('id', 'desc')
         .limit(1)

@@ -24,6 +24,9 @@ public protocol CheckInBackend: Sendable {
     func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes
     /// Pats a teammate. Once a day each: patting them again the same day changes nothing.
     func pat(_ member: MemberID, in squad: SquadID) async throws(CheckInError)
+    /// The coach the squad hired, standing on the home's sideline, with its newest 战术板 line;
+    /// nil while the squad has none.
+    func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach?
 }
 
 /// Check-ins waiting to go out, kept on the device so a post made offline survives the app

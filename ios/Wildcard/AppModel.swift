@@ -42,6 +42,8 @@ final class AppModel {
     }
     /// Signing in on the open screen, until the screen after it opens.
     private(set) var isSigningIn = false
+    /// The squad the member is no longer in (removed, or left on another phone), said once.
+    var lostSquadName: String?
     /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
     /// squad) puts the next tabs back on 今天.
     var showsTabs: Bool {
@@ -163,7 +165,12 @@ final class AppModel {
 
     /// The member left their squad on 小队设置: sign-up's squad step, as for a member in none.
     func leftSquad() async {
-        await openHome()
+        await openHome(saysLost: false)
+    }
+
+    /// 今天 found the member in no squad any more: sign-up's squad step, saying which squad.
+    private func removedFromSquad(_ squad: Squad?) async {
+        if showsTabs { await openHome(lost: squad) }
     }
 
     /// Reads the catalog again, as the app comes back to the front: a sport or dice line added on
@@ -191,9 +198,10 @@ final class AppModel {
         try? await account.signOut()
     }
 
-    /// Loads the member's home and opens 今天 on it, or sign-up when they are in no squad.
+    /// Opens 今天 on the member's home, or sign-up in no squad, saying which squad was lost.
     private func openHome(
-        continuing signUp: SignUpModel? = nil, name: String? = nil, landingOn scene: SceneTheme? = nil
+        continuing signUp: SignUpModel? = nil, name: String? = nil, landingOn scene: SceneTheme? = nil,
+        lost: Squad? = nil, saysLost: Bool = true
     ) async {
         // Only called once the account says who is signed in, so it is read from memory.
         guard case .signedIn(let member)? = try? await account.restore() else {
@@ -212,6 +220,7 @@ final class AppModel {
             let agreed = (try? await api.hasAgreedToAI()) ?? false
             let model = (agreed ? nil : signUp) ?? newSignUp(hasAgreedToAI: agreed)
             model.signedIn(name: name)
+            if saysLost, let squad = lost ?? store.lostSquad { lostSquadName = squad.name }
             screen = .signUp(model)
         case .signedOut:
             await signedOut()
@@ -244,7 +253,8 @@ final class AppModel {
     /// onto it.
     private func openTabs(on home: Home, store: TodayStore, landingOn scene: SceneTheme?) async {
         let today = TodayModel(
-            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted)
+            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted,
+            noSquad: { [weak self] squad in Task { await self?.removedFromSquad(squad) } })
         let profile = MeModel(
             service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
             confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() })
@@ -263,8 +273,9 @@ final class AppModel {
             await today.dropIn(on: scene, coveredAt: .now)
         } else if let read = await withLaunchCover({ await openingScene(of: home.squad.id) }) {
             // The loading screen stays up until the squad's scene is known, so 今天 never shows
-            // the gym first and then switches.
-            today.scene = read
+            // the gym first and then switches; a teammate's move drops the squad onto it.
+            let kept = ReadScene.keep(read, of: home.squad.id, member: home.member)
+            await today.land(on: kept.scene, move: kept.move)
         } else {
             // Slow or offline: the scene this phone kept, read again once the tabs are up.
             today.scene = KeptScene.scene(of: home.squad.id) ?? .gym
@@ -304,16 +315,6 @@ final class AppModel {
             service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
 
-    /// 动态 on the member's squad, its days by the member's own clock.
-    private static func feed(api: WildcardAPI, home: Home) -> FeedModel {
-        let zone = home.timeZone
-        let store = FeedStore(
-            source: APIFeedSource(api: api), squad: home.squad.id, viewer: home.member,
-            today: { LocalDay(at: Date(), in: zone) }, now: { Timestamp(Date()) },
-            newCommentID: { CommentID(UUID()) })
-        return FeedModel(store: store, viewer: home.member, now: { Date() })
-    }
-
     /// 我的动态 over our API.
     var myPosts: any MyPostsSource { APIMyPostsSource(api: api) }
 
@@ -345,17 +346,19 @@ final class AppModel {
 
 /// The squad's scene, which 今天 must open on rather than switch to.
 extension AppModel {
-    /// Puts 今天 on the squad's scene this week. Offline, it stays where it is.
+    /// Puts 今天 on the squad's scene this week, dropping the squad onto it when a teammate moved
+    /// it. Offline, it stays where it is.
     private func readScene(of squad: SquadID?, into today: TodayModel) async {
-        guard let squad, let scene = await serverScene(of: squad) else { return }
-        today.scene = scene
+        guard let squad, let read = try? await api.scene(of: squad) else { return }
+        let kept = ReadScene.keep(read, of: squad, member: today.home?.member)
+        await today.land(on: kept.scene, move: kept.move)
     }
 
     /// The squad's scene this week from the server, unless it takes longer than `Self.sceneWait`.
-    private func openingScene(of squad: SquadID) async -> SceneTheme? {
+    private func openingScene(of squad: SquadID) async -> SquadScene? {
         let wait = Self.sceneWait
-        return await withTaskGroup(of: SceneTheme?.self) { group in
-            group.addTask { await self.serverScene(of: squad) }
+        return await withTaskGroup(of: SquadScene?.self) { group in
+            group.addTask { try? await self.api.scene(of: squad) }
             group.addTask {
                 try? await Task.sleep(for: wait)
                 return nil
@@ -375,14 +378,6 @@ extension AppModel {
         openingUnderCover = true
         defer { openingUnderCover = false }
         return await work()
-    }
-
-    /// The squad's scene this week from the server, kept on this phone for the next launch.
-    private func serverScene(of squad: SquadID) async -> SceneTheme? {
-        guard let read = try? await api.scene(of: squad) else { return nil }
-        let scene = SceneTheme(rawValue: read.scene.rawValue) ?? .gym
-        KeptScene.save(scene, of: squad)
-        return scene
     }
 
     /// How long the loading screen waits for the squad's scene before opening on the kept one.

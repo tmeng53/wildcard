@@ -763,7 +763,16 @@ if want coach; then
   expect 200
   [ "$(jq -c . <<<"$body")" = '{"version":1,"coaching":false,"squads":0,"queued":0,"done":0,"failed":0}' ] ||
     fail "without an OpenAI key the coach run does nothing: $body"
-  echo "coach: a member's token refused (401); without an OpenAI key the scheduler's run woke no coach"
+  # What the coach said, as 今天 and 动态 read it: nothing yet, for a squad's member only.
+  squad_of "$coach_member_token"
+  call GET "/squads/$squad/coach/activity?checkIns=$(new_id)" "$coach_member_token"
+  expect 200
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"note":null,"replies":[]}' ] ||
+    fail "a squad whose coach said nothing reads as empty: $body"
+  read -r _ outsider_token <<<"$(sign_up)"
+  call GET "/squads/$squad/coach/activity" "$outsider_token"
+  expect 403 SQUAD_NOT_JOINED
+  echo "coach: a member's token refused (401); without an OpenAI key the scheduler's run woke no coach; the squad's coach activity reads empty for its member and 403 for anyone else"
 fi
 
 if want account; then
@@ -920,7 +929,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,send_test_push" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_unlock_rules,put_unlock_rule,give_unlocks,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,send_test_push" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 

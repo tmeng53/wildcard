@@ -47,8 +47,15 @@ public struct SportKits: Hashable, Sendable {
             id = sports[sport.rawValue] ?? catalog.entry(for: sport).flatMap { categories[$0.category] } ?? otherwise
         case .custom: id = otherwise
         }
+        return kit(id)
+    }
+
+    /// The kit for sports no entry covers: the warm-up, which keeps the prop in hand.
+    public var fallback: SportKit { kit(otherwise) }
+
+    private func kit(_ id: String) -> SportKit {
         // `decode` checked that every id names a kit.
-        return kits.first { $0.id == id } ?? SportKit(id: otherwise, prop: nil)
+        kits.first { $0.id == id } ?? SportKit(id: otherwise, prop: nil)
     }
 
     /// `{"version": 1, "kits": [{"id": "swim", "prop": "goggles"}],

@@ -32,9 +32,14 @@ public struct TodayView: View {
     /// Opens the post my caption's bubble is from in 动态; nil while it is still waiting to go
     /// out, which opens 动态 at the top.
     private let openPost: (CheckIn?) -> Void
+    /// Opens 我的小队, from the squad's name on the card.
+    private let openSquad: () -> Void
 
-    public init(model: TodayModel, openPost: @escaping (CheckIn?) -> Void = { _ in }) {
+    public init(
+        model: TodayModel, openSquad: @escaping () -> Void = {}, openPost: @escaping (CheckIn?) -> Void = { _ in }
+    ) {
         _model = State(initialValue: model)
+        self.openSquad = openSquad
         self.openPost = openPost
     }
 
@@ -71,6 +76,7 @@ public struct TodayView: View {
                 .environment(\.sceneTheme, theme)
                 .accentTone(.brand)
         }
+        .modifier(HomeNotices(model: model))
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
         // 拍一拍 landing: mine on a teammate, or a teammate's on me.
@@ -84,6 +90,7 @@ public struct TodayView: View {
             if model.showsTabBar { barRoom = room }
         }
         .task { await model.load() }
+        .rereadsEachMinute(model)
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }
@@ -98,7 +105,7 @@ public struct TodayView: View {
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
                 pats: model.pats, canPat: model.canPat, tapMate: model.tapMate, tapMe: model.tapMe,
-                patMate: model.patMate, arrival: model.arrival
+                patMate: model.patMate, arrival: model.arrival, coachSays: model.coachSays, tapCoach: model.tapCoach
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -199,9 +206,12 @@ public struct TodayView: View {
                                     openRecapDay = day
                                 }
                             }
-                        })
+                        }
+                    )
+                    .opensSquad(openSquad)
                 } else {
                     SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
+                        .opensSquad(openSquad)
                 }
             }
             .accessibilityIdentifier("today.card")
@@ -321,8 +331,7 @@ private struct Arriving: ViewModifier {
     let offset: (DropIn, Double) -> Double
 
     func body(content: Content) -> some View {
-        // One TimelineView either way, so the card and 打卡 keep their state as the drop
-        // starts and ends.
+        // One TimelineView either way, so the card and 打卡 keep their state as the drop starts and ends.
         let moving = arrival != nil && !reduceMotion
         TimelineView(.animation(minimumInterval: nil, paused: !moving)) { timeline in
             content.offset(y: moving ? arrival.map { offset($0.drop, $0.elapsed(at: timeline.date)) } ?? 0 : 0)

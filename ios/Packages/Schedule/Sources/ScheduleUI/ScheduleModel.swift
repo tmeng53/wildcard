@@ -24,7 +24,8 @@ public final class ScheduleModel {
     }
 
     /// Where 存图 stands: drawing the poster, then sharing the picture (the poster flashes as a
-    /// screenshot does and the share sheet opens on it), or a picture that couldn't be drawn.
+    /// screenshot does and 存图's sheet opens on it, to save or share), or a picture that couldn't
+    /// be drawn.
     public enum Saving: Equatable {
         case idle
         case working
@@ -32,7 +33,7 @@ public final class ScheduleModel {
         case failed
     }
 
-    /// A drawn poster on its way to the share sheet; each 存图 is a new one.
+    /// A drawn poster on its way to 存图's sheet; each 存图 is a new one.
     public struct SharedPoster: Identifiable, Equatable {
         public let id: Int
         public let image: PosterImage
@@ -41,13 +42,15 @@ public final class ScheduleModel {
     }
 
     public let store: ScheduleStore
-    /// The member's character in the poster's corner, in the kit of the squad's scene, looping
-    /// its sport.
+    /// The member's character in the poster's corner, training at today's sport (today's 练了,
+    /// else today's plan) in its kit, or at the squad's scene's sport on a day with neither.
     private(set) var player: CharacterPlayer?
     /// The look `player` wears: the stand-in until the profile brings the member's own.
     private var look: CharacterLook?
-    /// The squad's scene, whose sport `player` trains at.
+    /// The squad's scene, whose sport `player` trains at when today has none.
     private var scene = SceneTheme.gym
+    /// Today's sport `player` trains at, as last made.
+    private var training: Activity?
     /// What `player` was made from, for drawing its key pose when the poster is saved.
     private var loop: (figure: Figure, clip: Clip)?
     private(set) var fuelOpen = false
@@ -56,21 +59,29 @@ public final class ScheduleModel {
     private(set) var saving = Saving.idle
     private var shares = 0
 
-    public init(store: ScheduleStore) {
+    /// How long 只改了这一周 · 也改到模板 stays after a week's change before it goes by itself.
+    let templateOfferHold: Duration
+
+    /// `templateOfferHold`: longer only where UI tests need time to find the offer.
+    public init(store: ScheduleStore, templateOfferHold: Duration = .seconds(5)) {
         self.store = store
+        self.templateOfferHold = templateOfferHold
         makePlayer()
     }
 
-    /// The look in the scene's kit, looping its sport; cheering as worn if the kit can't be read.
+    /// The look in today's sport's kit (else the scene's), looping its move; cheering as worn if
+    /// the kit can't be read.
     private func makePlayer() {
         let outfit = look.map { Outfit($0) } ?? PlaceholderCharacter.lifter
         let persona = look.map { Persona($0) } ?? .energetic
-        if let training = try? PlaceholderCharacter.sceneLoop(
-            for: scene, look: outfit, persona: persona, in: SportList.shared.catalog),
-            let figure = try? PlaceholderCharacter.figure(wearing: training.outfit),
-            let player = try? CharacterPlayer(figure: figure, idle: training.clip)
+        training = store.todaysActivity
+        let activity = training ?? .sport(scene.sport)
+        if let kitLoop = try? PlaceholderCharacter.trainingLoop(
+            for: activity, look: outfit, persona: persona, in: SportList.shared.catalog),
+            let figure = try? PlaceholderCharacter.figure(wearing: kitLoop.outfit),
+            let player = try? CharacterPlayer(figure: figure, idle: kitLoop.clip)
         {
-            (self.player, loop) = (player, (figure, training.clip))
+            (self.player, loop) = (player, (figure, kitLoop.clip))
             return
         }
         loop = nil
@@ -80,11 +91,18 @@ public final class ScheduleModel {
                 "cheer", persona: persona, species: PlaceholderCharacter.species(of: outfit)))
     }
 
-    /// Dresses the poster's character in the member's own look once the profile has one.
+    /// Dresses the poster's character in the member's own look once the profile has one, and
+    /// puts it to today's sport when that changed.
     private func dressPlayer() {
-        guard let mine = store.profile?.look, mine != look else { return }
-        look = mine
+        let mine = store.profile?.look
+        guard (mine != nil && mine != look) || store.todaysActivity != training else { return }
+        if let mine { look = mine }
         makePlayer()
+    }
+
+    /// Puts the character to today's sport, when it changed.
+    func followToday() {
+        dressPlayer()
     }
 
     /// Puts the character to the squad's scene's sport, once the screen knows the scene.
@@ -177,7 +195,7 @@ public final class ScheduleModel {
 
     // MARK: Saving the poster
 
-    /// Draws the poster with `render` and hands the picture to the share sheet.
+    /// Draws the poster with `render` and hands the picture to 存图's sheet.
     func sharePoster(_ render: () -> PosterImage?) {
         guard saving == .idle || saving == .failed else { return }
         saving = .working
@@ -189,7 +207,7 @@ public final class ScheduleModel {
         saving = .sharing(SharedPoster(id: shares, image: image))
     }
 
-    /// The share sheet closed, or the failed note has been read.
+    /// 存图's sheet closed, or the failed note has been read.
     func clearSaving() {
         if saving != .working { saving = .idle }
     }

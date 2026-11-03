@@ -83,7 +83,7 @@ struct WildcardApp: App {
             store: TodayStore(
                 backend: InMemoryCheckInBackend.sampleSquad(
                     now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
-                    patted: LaunchOptions.pattedMe),
+                    patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach),
                 outbox: InMemoryOutbox(),
                 now: LaunchOptions.now, newID: { UUID() }),
             writer: LaunchOptions.disclaimerWriter,
@@ -126,7 +126,8 @@ struct WildcardApp: App {
         ScheduleModel(
             store: ScheduleStore(
                 backend: InMemoryScheduleBackend.sample(now: LaunchOptions.scheduleNow()),
-                now: LaunchOptions.scheduleNow))
+                now: LaunchOptions.scheduleNow),
+            templateOfferHold: LaunchOptions.templateOfferHold)
     }
 
     /// The sample member for 我. The in-memory member has no Apple account to confirm with and
@@ -143,6 +144,7 @@ struct WildcardApp: App {
         RecapShelf(
             service: RecapSample.Service(),
             squad: { RecapSample.squad(today: LocalDay(at: LaunchOptions.now(), in: .current)) },
+            seen: .onlyThisLaunch(),
             scenePicker: { _ in LaunchOptions.recapPicker ? RecapSample.scenePicker() : nil },
             scenePicked: { scene in today.scene = scene })
     }
@@ -153,7 +155,7 @@ struct WildcardApp: App {
             ? InMemoryFeedSource(viewer: viewer, posts: [], characters: [:])
             : InMemoryFeedSource.sample(
                 viewer: viewer, squad: squad, now: LaunchOptions.now(), zone: .current,
-                photos: InMemoryFeedSource.renderSamplePhotos())
+                photos: InMemoryFeedSource.renderSamplePhotos(), coach: LaunchOptions.sidelineCoach)
     }
 
     /// 动态 on the sample squad.
@@ -162,7 +164,8 @@ struct WildcardApp: App {
         let store = FeedStore(
             source: source, squad: squad, viewer: viewer, today: { LocalDay(at: LaunchOptions.now(), in: zone) },
             now: { Timestamp(LaunchOptions.now()) }, newCommentID: { CommentID(UUID()) })
-        return FeedModel(store: store, viewer: viewer, now: LaunchOptions.now)
+        let coach = FeedCoach(source: source, squad: squad, now: { LaunchOptions.now() })
+        return FeedModel(store: store, viewer: viewer, coach: coach, now: LaunchOptions.now)
     }
 
     /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with
@@ -265,7 +268,17 @@ struct WildcardApp: App {
                     Self.open(destination, today: today, tab: $tab)
                 }
             }
+            .task { await Self.moveSampleSquad(today: today) }
         }
+    }
+
+    /// `-uitest-scene-moved track`: once the sample home is up, its first teammate moves the
+    /// squad there, as a real move is told: the drop, then the notice.
+    private static func moveSampleSquad(today: TodayModel) async {
+        guard let scene = LaunchOptions.sceneMoved else { return }
+        await today.load()
+        let picker = today.home.flatMap { home in home.squad.members.first { $0 != home.member } }
+        await today.land(on: scene, move: SceneMove(scene: scene, picker: picker))
     }
 }
 
@@ -323,6 +336,18 @@ private struct AppRoot: View {
         .animation(.easeOut(duration: TicketRock.fadeOut), value: app.isStarting)
         // Signing in on the open screen: the tickets rock over it until the next screen opens.
         .loadingCover(app.isSigningIn) { LaunchCover() }
+        .alert(
+            Text("你已不在 \(app.lostSquadName ?? "") 小队"),
+            isPresented: Binding(
+                get: { app.lostSquadName != nil },
+                set: { shown in if !shown { app.lostSquadName = nil } })
+        ) {
+            Button {
+                app.lostSquadName = nil
+            } label: {
+                Text("确认")
+            }
+        }
         .task { await app.run() }
         // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
         .onChange(of: app.showsTabs) { _, shows in

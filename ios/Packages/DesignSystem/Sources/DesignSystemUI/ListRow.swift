@@ -3,7 +3,7 @@ import DesignSystem
 import SwiftUI
 
 /// A 52-point row that opens something (性格 · 淡人 ›): an icon, the title, its current value in
-/// muted ink and a chevron. A plain menu (设置) leaves out the icon and the chevron. Rows in a
+/// muted ink and a chevron. A plain menu (设置) leaves out the icon. Rows in a
 /// list are separated by a hairline under the text, so pass `showsDivider: false` on the last one.
 public struct ListRow: View {
     @Environment(\.sceneTheme) private var theme

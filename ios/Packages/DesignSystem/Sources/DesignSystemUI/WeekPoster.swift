@@ -50,6 +50,10 @@ public enum WeekPosterHeading {
     /// A name with its symbol over the rows instead of a number: the 每周模板, which is no one
     /// week.
     case named(Text, systemImage: String)
+
+    /// The 每周模板's symbol, wherever it is shown (出赛表, sign-up's poster): it comes round every
+    /// week.
+    public static let templateSymbol = "repeat"
 }
 
 /// The week as a poster, wherever a member plans or shares one (sign-up's 本周目标, the 出赛表):

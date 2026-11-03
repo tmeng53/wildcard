@@ -1447,6 +1447,118 @@
           }
         }
       }
+    },
+    "新队友 %@ 上场": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New teammate %@ is in"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新隊友 %@ 上場"
+          }
+        }
+      }
+    },
+    "%@ 也上场了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is in too"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 也上場了"
+          }
+        }
+      }
+    },
+    "你现在是队长了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're the captain now"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你現在是隊長了"
+          }
+        }
+      }
+    },
+    "毛头": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mop"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毛頭"
+          }
+        }
+      }
+    },
+    "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Three of you showed up yesterday and I got tired just taking notes. Today, whatever happens happens."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "昨天三個人上場，我光在場邊記筆記就累了。今天隨緣，來了就算。"
+          }
+        }
+      }
+    },
+    "%@ 把小队搬到了%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ moved the squad to %2$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 把小隊搬到了%2$@"
+          }
+        }
+      }
+    },
+    "小队搬到了%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The squad moved to %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊搬到了%@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -36,8 +36,11 @@ import {
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
+  unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
+  unusedCoachActivity,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
 // DELETE /me against local Supabase's Auth, Storage and database. Only Apple is stood in for:
@@ -95,8 +98,11 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     weeklyAwards: unusedWeeklyAwards,
+    unlocks: unusedUnlocks,
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
+    coachActivity: unusedCoachActivity,
+    ...ignoredNotices,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,
     admin: adminOn(),

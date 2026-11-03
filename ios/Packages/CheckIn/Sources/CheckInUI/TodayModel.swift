@@ -58,6 +58,12 @@ public final class TodayModel {
     let pats: PatStage
     /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
     private(set) var celebrations = 0
+    /// The coach's 战术板 line while its bubble is up on the sideline.
+    var coachSays: CoachNote?
+    /// Takes the coach's bubble down after its hold; the next one cancels it.
+    var coachHold: Task<Void, Never>?
+    /// How long the coach's bubble stays up.
+    let coachLineHold: Double
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
@@ -95,9 +101,10 @@ public final class TodayModel {
     var holdsDress: Bool { dressHeldBy != nil }
     /// When the hop into my kit is over: a tap before it would stop the change halfway.
     var hopEnds: Date?
-    private let store: TodayStore
+    let store: TodayStore
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
+    private let noSquad: @MainActor (Squad?) -> Void
 
     let now: () -> Date
     /// Keeps when the latest pat I was shown arrived, so each pat on me plays once, and the night
@@ -109,12 +116,16 @@ public final class TodayModel {
     ///     the app has read it.
     ///   - posted: called each time a check-in lands, after the payoff starts; the app asks for
     ///     notifications after the first.
+    ///   - noSquad: called when a load finds the member in no squad any more, with the squad
+    ///     they were in: the captain removed them, or they left on another phone.
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
         scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, defaults: UserDefaults = .standard,
-        bubbleHold: Double? = nil, posted: @escaping @MainActor () -> Void
+        bubbleHold: Double? = nil, posted: @escaping @MainActor () -> Void,
+        noSquad: @escaping @MainActor (Squad?) -> Void = { _ in }
     ) {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
+        coachLineHold = bubbleHold ?? Self.coachLineHold
         self.scene = scene
         self.defaults = defaults
         self.store = store
@@ -122,6 +133,7 @@ public final class TodayModel {
         self.writer = writer
         self.photoSource = photoSource
         self.posted = posted
+        self.noSquad = noSquad
         litNight = defaults.string(forKey: Self.lightsKey)
         dressMe(hop: false)
     }
@@ -131,13 +143,15 @@ public final class TodayModel {
     private static let scoreDelay = 1.7
 
     /// The squad's home, with the member's own posts counted.
-    var home: Home? { store.home }
+    public var home: Home? { store.home }
 
-    /// The squad dropping onto a newly picked scene, from `dropIn(on:)` until everyone has
-    /// settled (`TodayModel+DropIn.swift`).
+    /// The squad dropping onto a newly picked scene, until everyone settles (`TodayModel+DropIn.swift`).
     var arrival: Arrival?
     /// Keeps the tab bar hidden while the squad drops in, until 打卡 is back.
     var holdsTabBar = false
+    /// The `NoticeBanner` showing at the top, and those waiting for it (`TodayModel+Notices.swift`).
+    var notice: Notice?
+    var pendingNotices: [Notice] = []
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.
@@ -220,7 +234,7 @@ public final class TodayModel {
             }
         }
         if !holdsDress || player == nil { dressMe(hop: false) }
-        cast.update(home: home, scene: scene, phase: stagePhase)
+        cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach)
     }
 
     var unavailable: Set<CheckInKind> {
@@ -235,49 +249,35 @@ public final class TodayModel {
     /// notification brings the member back to it.
     public func load() async {
         await store.load()
+        showLoaded()
+    }
+
+    /// How often the home is read again while 今天 is on screen, so teammates' check-ins show
+    /// without leaving the app.
+    static let rereadEvery = Duration.seconds(60)
+
+    /// Reads the home again while the scene shows nothing in hand: not while a check-in is being
+    /// made, the burst is open or the squad is dropping in.
+    func reread() async {
+        guard step == .scene, !isBurstOpen, arrival == nil else { return }
+        await store.refresh()
+        showLoaded()
+    }
+
+    /// Puts what was loaded on the scene, tells the squad's news, then plays pats on me; or, in
+    /// no squad any more, says so.
+    private func showLoaded() {
+        if store.phase == .noSquad {
+            noSquad(store.lostSquad)
+            return
+        }
         placeSquad()
-        Task { await playPatsOnMe() }
-    }
-
-    // MARK: 拍一拍
-
-    /// A teammate on the scene was tapped: their status and 「拍一拍」.
-    func tapMate(_ id: MemberID) {
-        guard let mate = cast.mates.first(where: { $0.id == id }) else { return }
-        pats.tap(mate, cast: cast, phase: stagePhase)
-    }
-
-    /// Whether I can still pat `id` today.
-    func canPat(_ id: MemberID) -> Bool {
-        store.canPat(id)
-    }
-
-    /// I pat a teammate from their bubble: it plays at once and goes to the server, once a day.
-    func patMate(_ id: MemberID) {
-        guard store.canPat(id), !isChanging, let mate = cast.mates.first(where: { $0.id == id }) else { return }
-        guard pats.pat(mate, mine: player) else { return }
-        Task { try? await store.pat(id) }
-    }
-
-    /// The key under which the latest pat already shown to `member` is kept, apart for each
-    /// account signed in on this phone.
-    private static func patsShownKey(for member: MemberID) -> String {
-        "today.patsShownUntil.\(member)"
-    }
-
-    /// Whoever patted me since the last pat shown pats me now, from where they stand: the
-    /// earliest, with the next one named on their bubble. Each pat plays once on this phone.
-    private func playPatsOnMe() async {
-        guard let member = store.home?.member else { return }
-        let shown = defaults.double(forKey: Self.patsShownKey(for: member))
-        let fresh = store.pokes.received.filter { Double($0.patAt.millisecondsSince1970) > shown }
-        let patters = fresh.compactMap { pat in cast.mates.first { $0.id == pat.from } }
-        guard let latest = fresh.last, let first = patters.first else { return }
-        try? await Task.sleep(for: .seconds(PatStage.patMeDelay))
-        await untilArrived()
-        guard pats.patMe(by: first, others: Array(patters.dropFirst()), mine: player, myPersona: myPersona)
-        else { return }
-        defaults.set(Double(latest.patAt.millisecondsSince1970), forKey: Self.patsShownKey(for: member))
+        Task {
+            await showNextNotice()
+            await tellNews()
+            await playPatsOnMe()
+            await sayCoachLine()
+        }
     }
 
     /// Opens the check-in kinds, as the 打卡 button does: the 6pm push's 我去发一个 lands here.

@@ -243,7 +243,7 @@ struct HottestPage: View {
                 page.character(
                     page.cast.viewer,
                     act: Act(
-                        clip: .award((hottest.move ?? .cheer).solo), start: 0.6, hold: hottest.move == .pose ? 1.3 : nil
+                        clip: hottest.clip, start: 0.6, hold: hottest.move == .pose ? 1.3 : nil
                     )
                 )
                 .standing(feetAt: CGPoint(x: width - 72, y: floor), scale: 0.5)
@@ -268,7 +268,7 @@ struct HottestPage: View {
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgOnScene, in: theme))
             }
-            if let words = hottest.words {
+            if !hottest.photos.isEmpty, let words = hottest.words {
                 Text(verbatim: words)
                     .typeStyle(TypeRamp.headline)
                     .foregroundStyle(Color(role: .fgOnScene, in: theme))
@@ -297,13 +297,9 @@ struct HottestPage: View {
             }
             .accessibilityLabel(Text("照片", bundle: .module))
         } else {
-            ZStack {
-                Color(role: .bgCanvas, in: theme)
-                Image(systemName: hottest.kind.symbol)
-                    .font(.system(size: Sizing.kindButton))
-                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
-                    .accessibilityHidden(true)
-            }
+            PostBlock(
+                kind: hottest.kind, activity: hottest.sport.map(Activity.sport), words: hottest.words,
+                day: hottest.day.day, layout: .card)
         }
     }
 

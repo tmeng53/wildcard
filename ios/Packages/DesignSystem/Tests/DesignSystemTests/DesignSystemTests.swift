@@ -57,6 +57,7 @@ struct NeutralTests {
         (.fgDefault, .bgSubtle),
         (.fgMuted, .bgCanvas),
         (.fgMuted, .bgSubtle), (.fgPositive, .bgCanvas),
+        (.fgDanger, .bgCanvas), (.fgDanger, .bgSubtle),
     ])
     func neutralTextIsReadable(text: ColorRole, background: ColorRole) {
         #expect(text.color(in: .pool).contrastRatio(with: background.color(in: .pool)) >= 4.5)
@@ -332,9 +333,9 @@ struct HapticTests {
 
 struct MotionTests {
     @Test func springsMatchTheSpec() {
-        #expect(Motion.all.map(\.name) == ["press", "change", "sheet", "page", "celebrate"])
-        #expect(Motion.all.map(\.spring.response) == [0.17, 0.10, 0.24, 0.36, 0.5])
-        #expect(Motion.all.map(\.spring.dampingFraction) == [0.9, 1, 0.9, 0.9, 0.6])
+        #expect(Motion.all.map(\.name) == ["press", "change", "sheet", "page", "celebrate", "notice"])
+        #expect(Motion.all.map(\.spring.response) == [0.17, 0.10, 0.24, 0.36, 0.5, 0.4])
+        #expect(Motion.all.map(\.spring.dampingFraction) == [0.9, 1, 0.9, 0.9, 0.6, 0.8])
         #expect([Motion.ringFill, Motion.ringPopScale] == [0.5, 1.08])
         #expect([Motion.collapseDuration, Motion.collapseStagger, Motion.burstStagger] == [0.19, 0.016, 0.028])
     }

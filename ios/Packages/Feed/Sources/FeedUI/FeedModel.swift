@@ -48,6 +48,9 @@ public final class FeedModel {
 
     let store: FeedStore
     let viewer: MemberID
+    /// What the squad's coach said: its 战术板 line and its replies. Nil where nobody asks it
+    /// (the sample squad without a coach).
+    let coach: FeedCoach?
     /// The post whose emoji bar is open.
     var picking: CheckInID?
     /// The bar was opened by pressing and holding the card: the card lifts over the blurred feed,
@@ -81,17 +84,22 @@ public final class FeedModel {
     private(set) var lifts = 0
 
     /// Each player with the outfit it wears, so a look that changed since builds a new one.
-    @ObservationIgnored private var players: [CheckInID: (outfit: Outfit, player: CharacterPlayer)] = [:]
+    @ObservationIgnored private var players: [CheckInID: (outfit: Outfit, persona: Persona, player: CharacterPlayer)] =
+        [:]
     @ObservationIgnored private var heads: [MemberID: (outfit: Outfit, player: CharacterPlayer)] = [:]
+    /// The coaches' characters, by coach, for their heads and the 战术板.
+    @ObservationIgnored var coachPlayers: [CoachID: CharacterPlayer] = [:]
     @ObservationIgnored private var flightCount = 0
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private let defaults: UserDefaults
 
     public init(
-        store: FeedStore, viewer: MemberID, now: @escaping () -> Date = { Date() }, defaults: UserDefaults = .standard
+        store: FeedStore, viewer: MemberID, coach: FeedCoach? = nil, now: @escaping () -> Date = { Date() },
+        defaults: UserDefaults = .standard
     ) {
         self.store = store
         self.viewer = viewer
+        self.coach = coach
         self.now = now
         self.defaults = defaults
         recent = (defaults.stringArray(forKey: Self.recentKey) ?? []).compactMap { try? Emoji($0) }
@@ -100,10 +108,39 @@ public final class FeedModel {
     // MARK: - Loading
 
     public func load() async {
+        hasNews = false
         await store.load()
         answerArrivals()
+        if store.phase == .current, let latest = store.latestNews { keepNewsSeen(until: latest) }
         await store.sendResponses()
+        // Last, so a slow coach never holds up the member's own reactions or the news dot.
+        await coach?.load(about: store.sections.flatMap { $0.posts.map(\.id) })
     }
+
+    // MARK: - The tab's dot
+
+    /// Whether 动态 has news since the member last opened it (`FeedPost.latestNews(for:)`): the
+    /// tab's dot. Opening 动态 clears it.
+    public private(set) var hasNews = false
+
+    /// Looks for news while 动态 isn't open. What was seen is kept by the news's own time, never
+    /// the phone's clock; the first look on this phone takes what is there as seen.
+    public func checkNews() async {
+        guard let latest = await store.latestNewsOnServer() else { return }
+        guard let seen = defaults.object(forKey: Self.newsSeenKey(viewer)) as? Double else {
+            keepNewsSeen(until: latest)
+            return
+        }
+        hasNews = Double(latest.millisecondsSince1970) > seen
+    }
+
+    private func keepNewsSeen(until latest: Timestamp) {
+        let key = Self.newsSeenKey(viewer)
+        let seen = defaults.object(forKey: key) as? Double ?? -.infinity
+        defaults.set(max(seen, Double(latest.millisecondsSince1970)), forKey: key)
+    }
+
+    private static func newsSeenKey(_ viewer: MemberID) -> String { "feed.newsSeen.\(viewer)" }
 
     /// Teammates' reactions on my posts since 动态 last showed them: my character answers each
     /// with its move, under a bubble with their head and emoji. What was shown is kept by the
@@ -161,7 +198,7 @@ public final class FeedModel {
     /// A post's own page outside the feed (a tile on 我的动态): one post, read and answered as
     /// 动态 does, with the same recent emoji.
     public func page(of post: CheckInID) -> FeedModel {
-        FeedModel(store: store.store(of: post), viewer: viewer, now: now, defaults: defaults)
+        FeedModel(store: store.store(of: post), viewer: viewer, coach: coach, now: now, defaults: defaults)
     }
 
     /// Sends the member's comment on a post, replying to whomever they picked. False when it
@@ -257,21 +294,36 @@ public final class FeedModel {
 
     // MARK: - Characters
 
-    /// The author's character on a post: their look, in that day's kit on a 练了, holding still
-    /// until someone reacts.
+    /// The author's character on a post: their look, and on a 练了 that day's sport, in its kit
+    /// and looping its move (`kits.json`, as every screen plays a sport), at the persona's tempo;
+    /// holding still on the other kinds. A reaction's move plays over either.
     func player(for post: FeedPost) -> CharacterPlayer? {
         let character = store.characters[post.author]
-        var outfit = character?.look.outfit ?? PlaceholderCharacter.lifter
-        if case .trained(let training) = post.checkIn.entry, let kits = try? PlaceholderCharacter.sportKits() {
-            outfit = kits.kit(for: training.activity, in: SportList.shared.catalog).dress(outfit)
-        }
-        if let cached = players[post.id], cached.outfit == outfit { return cached.player }
+        let persona = character?.look.moves ?? .energetic
+        let look = character?.look.outfit ?? PlaceholderCharacter.lifter
+        let kit = trainingKit(of: post)
+        let outfit = kit?.dress(look) ?? look
+        if let cached = players[post.id], cached.outfit == outfit, cached.persona == persona { return cached.player }
+        let idle = kit.flatMap { try? PlaceholderCharacter.move(for: $0, persona: persona) } ?? .still
         guard let figure = try? PlaceholderCharacter.figure(wearing: outfit),
-            let player = try? CharacterPlayer(figure: figure, idle: .still, now: now())
+            let player = try? CharacterPlayer(figure: figure, idle: idle, now: now())
         else { return nil }
-        players[post.id] = (outfit, player)
+        players[post.id] = (outfit, persona, player)
         return player
     }
+
+    /// Whether the post's character trains at rest (a 练了), so its card keeps drawing it.
+    func trains(_ post: FeedPost) -> Bool {
+        trainingKit(of: post) != nil
+    }
+
+    /// A 练了's sport kit, read once from `kits.json`.
+    private func trainingKit(of post: FeedPost) -> SportKit? {
+        guard case .trained(let training) = post.checkIn.entry else { return nil }
+        return Self.kits?.kit(for: training.activity, in: SportList.shared.catalog)
+    }
+
+    private static let kits = try? PlaceholderCharacter.sportKits()
 
     /// The character's head, for the faces in a reaction row.
     func head(of member: MemberID) -> CharacterPlayer? {
@@ -295,7 +347,7 @@ public final class FeedModel {
         return name(of: member) ?? String(localized: "队友", bundle: .module.inAppLanguage)
     }
 
-    /// The move has finished: the character holds still again.
+    /// The move has finished: the character goes back to its idle.
     func finished(_ post: CheckInID, count: Int) {
         if played[post]?.count == count { played[post] = nil }
     }

@@ -9,6 +9,7 @@ import {
   createPostgresConsentStore,
 } from '@wildcard/ai-consent';
 import {
+  MemberId as CheckInMember,
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresCommentStore,
@@ -21,8 +22,10 @@ import {
 import {
   createCoachCatalog,
   createCoachHiring,
+  createCoachActivity,
   createCoachSettings,
   createCoachWakes,
+  createPostgresCoachActivity,
   createPostgresCoachCatalog,
   createPostgresCoachHiring,
   createPostgresCoachReport,
@@ -45,6 +48,13 @@ import {
   MemberId as ProfileMember,
 } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
+import {
+  MemberId as NoticeMember,
+  SquadId as NoticeSquad,
+  createNotices,
+  createPostgresNoticeStore,
+  type NewNotice,
+} from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
 import {
   createApnsSender,
@@ -63,16 +73,18 @@ import {
   createAwardSettings,
   createPostgresAwardSettings,
   createPostgresAwardsStore,
+  createPostgresWeekStoryStore,
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
+import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { byProvider } from './adapters/language-models.js';
 import { createOpenAICoachAgent } from './adapters/openai-coach-agent.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
 import { createMemoryRateLimit } from './adapters/memory-rate-limit.js';
-import { createDatabase } from './adapters/postgres.js';
+import { createDatabase, onItsOwn } from './adapters/postgres.js';
 import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
 import {
   createSupabaseAccounts,
@@ -91,6 +103,7 @@ import { coachSquadWeek } from './flows/coach.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
+import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
@@ -175,6 +188,7 @@ const awards = createWeeklyAwards({
   model: awardsModel,
   settings: createPostgresAwardSettings(db),
   store: createPostgresAwardsStore(db),
+  stories: createPostgresWeekStoryStore(db),
   aiConsented: (members) =>
     aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
   // Every meme in use, so the awards can draw on any that fits; only what the prompt needs.
@@ -220,6 +234,41 @@ const checkIns = createCheckIns({
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
 });
+// What each member was told (通知, the bell on 动态): pushes and in-app notices, kept forever.
+const noticesOn = (scope: Database) => createNotices({ store: createPostgresNoticeStore(scope) });
+const notices = noticesOn(db);
+/**
+ * Keeps notices after what they tell of happened: a failure is logged, never the event's, even
+ * inside an admin tool's transaction.
+ */
+const tellAfter = async (
+  scope: Database,
+  { told, what }: { told: readonly NewNotice[]; what: string },
+) => {
+  try {
+    await onItsOwn(scope, () => noticesOn(scope).tell(told));
+  } catch (error) {
+    log.warn(`${what} not kept in notices`, { error });
+  }
+};
+// What members unlock by training: the unlocks module keeps the rules and who earned what, and
+// asks check-ins for the 练了 that count and the sports module which sports exist.
+const unlocksOn = (scope: Database) =>
+  createUnlocks({
+    store: createPostgresUnlockStore(scope),
+    trainedSince: ({ member, since }) =>
+      checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
+    sportListed: (id) => sports.isListed(id),
+    unlocked: (member, unlocks) =>
+      tellAfter(scope, {
+        told: unlocks.map(({ kind, id }) => ({
+          member: NoticeMember.parse(member),
+          kind: 'unlocked',
+          subject: { version: 1, kind, item: id },
+        })),
+        what: 'an unlock',
+      }),
+  });
 const nudges = createNudges({
   store: createPostgresNudgeStore(db),
   // Who is in which squad is the squads module's to keep: nudges ask it.
@@ -237,13 +286,33 @@ const coachWakes =
         stores: createPostgresCoachStores(db),
         transaction: postgresCoachTransaction(db),
         agent: createOpenAICoachAgent({ apiKey: openaiKey }),
-        squadWeek: coachSquadWeek({ checkIns, members, sports, clock: () => new Date() }),
+        squadWeek: coachSquadWeek({ checkIns, members, squads, sports, clock: () => new Date() }),
         // Only the words of members who agreed to the current AI copy reach the model.
         aiConsented: (members) =>
           aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
         hiring: createPostgresCoachHiring(db),
         clock: () => new Date(),
+        // The check-in's author finds the reply in 通知; it is never pushed (Tracy, 2026-11-03).
+        replied: ({ squad, checkIn, author, coach, text, emoji }) =>
+          tellAfter(db, {
+            told: [
+              {
+                member: NoticeMember.parse(author),
+                squad: NoticeSquad.parse(squad),
+                kind: 'coachReply',
+                subject: {
+                  version: 1,
+                  checkIn,
+                  coach,
+                  replied: text !== undefined,
+                  emoji: emoji ?? null,
+                },
+              },
+            ],
+            what: 'a coach reply',
+          }),
       });
+const coachCatalog = createPostgresCoachCatalog(db);
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -265,6 +334,8 @@ const app = createApp({
   members,
   squads,
   nudges,
+  notices,
+  coachNames: async () => new Map((await coachCatalog.list()).map(({ id, name }) => [id, name])),
   aiConsent,
   // Data the app shows that lives in the database. Each module keeps its own section.
   catalog: {
@@ -312,8 +383,10 @@ const app = createApp({
     hiring: createPostgresCoachHiring(db),
     catalog: createPostgresCoachCatalog(db),
   }),
+  coachActivity: createCoachActivity({ store: createPostgresCoachActivity(db) }),
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
+  unlocks: unlocksOn(db),
   log,
   jobs: {
     isScheduler,
@@ -344,6 +417,7 @@ const app = createApp({
         words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
+      ...unlockTools({ unlocks: unlocksOn(scope) }),
       ...coachTools({
         settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
         coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),
