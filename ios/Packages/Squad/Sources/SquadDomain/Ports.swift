@@ -39,7 +39,7 @@ public protocol SquadSettingsService: Sendable {
     func remove(_ member: MemberID, from squad: SquadID) async throws(SquadError)
     /// Picks the scene for the week open now, once.
     func pick(_ scene: SceneID, for squad: SquadID, week: LocalDay) async throws(SquadError) -> SquadScene
-    /// The coaches a squad can hire now (教练市场).
+    /// The coaches a squad can hire now (教练招聘会).
     func coaches() async throws(SquadError) -> [Coach]
     /// Hires `coach` for the squad, firing its other coach first in the same step (换教练).
     /// Only the captain may; asking again for the coach it has answers as before.
