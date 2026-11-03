@@ -1,3 +1,5 @@
+import Contracts
+
 /// A push's words as the server sends them: a key in the app's String Catalog (`aps.alert`'s
 /// `loc-key`) and the values for its placeholders (`loc-args`). iOS looks the key up in the
 /// phone's language, so the app's notification service extension looks it up again in the
@@ -63,4 +65,22 @@ public struct PushAlertWords: Hashable, Sendable {
 
 extension Character {
     fileprivate var isASCIIDigit: Bool { isASCII && isNumber }
+}
+
+extension PushAlertWords {
+    /// What a notice kept of a push it was sent as.
+    public init(_ alert: PushAlert) {
+        self.init(key: alert.key, args: alert.args)
+    }
+
+    /// The push's line filled, split where it joins its parts with ` · `: 通知 shows the first
+    /// as the row's title and the rest under it.
+    public func parts(_ line: String) -> (title: String, detail: String?) {
+        let pieces = fill(line).components(separatedBy: Self.joiner)
+        let rest = pieces.dropFirst().joined(separator: Self.joiner)
+        return (pieces.first ?? "", rest.isEmpty ? nil : rest)
+    }
+
+    /// How the push copy joins its parts, in every language.
+    static let joiner = " · "
 }
