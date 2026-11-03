@@ -58,6 +58,12 @@ public final class TodayModel {
     let pats: PatStage
     /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
     private(set) var celebrations = 0
+    /// The coach's 战术板 line while its bubble is up on the sideline.
+    var coachSays: CoachNote?
+    /// Takes the coach's bubble down after its hold; the next one cancels it.
+    var coachHold: Task<Void, Never>?
+    /// How long the coach's bubble stays up.
+    let coachLineHold: Double
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
@@ -119,6 +125,7 @@ public final class TodayModel {
         noSquad: @escaping @MainActor (Squad?) -> Void = { _ in }
     ) {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
+        coachLineHold = bubbleHold ?? Self.coachLineHold
         self.scene = scene
         self.defaults = defaults
         self.store = store
@@ -225,7 +232,7 @@ public final class TodayModel {
             }
         }
         if !holdsDress || player == nil { dressMe(hop: false) }
-        cast.update(home: home, scene: scene, phase: stagePhase)
+        cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach)
     }
 
     var unavailable: Set<CheckInKind> {
@@ -266,6 +273,7 @@ public final class TodayModel {
         Task {
             await tellNews()
             await playPatsOnMe()
+            await sayCoachLine()
         }
     }
 

@@ -28,3 +28,16 @@ extension CoachID {
     /// The body of `PUT /squads/{squadId}/coach`.
     public var hire: Components.Schemas.CoachHire { .init(version: ._1, coach: rawValue) }
 }
+
+extension CoachSpeaker {
+    public init(_ wire: Components.Schemas.CoachSpeaker) throws(ContractsError) {
+        guard let id = CoachID(rawValue: wire.id) else { throw .invalidCoachID(wire.id) }
+        self.init(id: id, name: wire.name)
+    }
+}
+
+extension CoachNote {
+    public init(_ wire: Components.Schemas.CoachNote) throws(ContractsError) {
+        self.init(day: try LocalDay(wire.day), text: wire.text, coach: try CoachSpeaker(wire.coach), writtenAt: wire.at)
+    }
+}
