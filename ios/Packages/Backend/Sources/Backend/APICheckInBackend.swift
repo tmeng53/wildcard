@@ -100,7 +100,8 @@ public struct APICheckInBackend: CheckInBackend {
         do {
             guard let hire = try await api.coach(of: squad).hire else { return nil }
             return SidelineCoach(
-                coach: CoachSpeaker(id: hire.coach.id, name: hire.coach.name), note: try await api.coachNote(of: squad))
+                coach: CoachSpeaker(id: hire.coach.id, name: hire.coach.name),
+                note: try await api.coachActivity(of: squad).note)
         } catch { throw CheckInError(error) }
     }
 }

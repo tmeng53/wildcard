@@ -122,8 +122,20 @@ public struct FeedView: View {
                 EmptyFeed(model: model, checkIn: checkIn)
             }
         } else {
+            // 战术板 tops today, even before anyone posted today (a squad that never posted
+            // shows its empty scene instead). Its day is New York's, as on the home's sideline.
+            if let note = model.coachNote, sections.first?.heading != .today {
+                SectionLabel(DayHeading.today.title)
+                    .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                CoachBoard(model: model, note: note)
+                    .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+            }
             ForEach(sections) { section in
                 Section {
+                    if section.heading == .today, let note = model.coachNote {
+                        CoachBoard(model: model, note: note)
+                            .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                    }
                     ForEach(section.posts) { post in
                         PostCard(model: model, post: post)
                             .id(post.id)
@@ -143,7 +155,7 @@ public struct FeedView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: Space.xxl)
-                .task(id: sections.last?.id) { await model.store.loadEarlier() }
+                .task(id: sections.last?.id) { await model.loadEarlier() }
             }
         }
     }

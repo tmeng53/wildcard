@@ -41,3 +41,20 @@ extension CoachNote {
         self.init(day: try LocalDay(wire.day), text: wire.text, coach: try CoachSpeaker(wire.coach), writtenAt: wire.at)
     }
 }
+
+extension CoachReply {
+    /// An emoji the app can't read drops the emoji, not the line.
+    public init(_ wire: Components.Schemas.CoachReply) throws(ContractsError) {
+        self.init(
+            checkIn: try CheckInID(wire: wire.checkInId), coach: try CoachSpeaker(wire.coach.value1),
+            text: wire.text, emoji: wire.emoji.flatMap { try? Emoji($0) }, writtenAt: wire.at)
+    }
+}
+
+extension CoachActivity {
+    public init(_ wire: Components.Schemas.CoachActivity) throws(ContractsError) {
+        self.init(
+            note: try wire.note.map { note throws(ContractsError) in try CoachNote(note) },
+            replies: try wire.replies.map { reply throws(ContractsError) in try CoachReply(reply) })
+    }
+}
