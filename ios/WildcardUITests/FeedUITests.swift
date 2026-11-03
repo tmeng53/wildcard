@@ -166,12 +166,14 @@ final class FeedUITests: XCTestCase {
         waitFor(react, "label == '我的回应：😀'", "picking from the grid didn't react")
 
         // Holding the card and sliding to 😂 swaps it: the bar's slots sit left of my button's
-        // right edge, 44 points each.
-        let slot = react.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 0)).withOffset(
-            CGVector(dx: -(7 - 2.5) * 44 - 4, dy: -8 - 26))
+        // right edge, 44 points each. The points are measured once and given from the screen's
+        // corner: points relative to the button make XCUITest look it up again mid-gesture, which
+        // stalls the touch while a 练了 card's character trains on screen.
+        let button = react.frame
+        let screen = app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+        let slot = screen.withOffset(CGVector(dx: button.maxX - (7 - 2.5) * 44 - 4, dy: button.minY - 8 - 26))
         // Pressed on the card's words, above its row.
-        let words = react.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0)).withOffset(
-            CGVector(dx: -120, dy: -50))
+        let words = screen.withOffset(CGVector(dx: button.minX - 120, dy: button.minY - 50))
         words.press(forDuration: 0.8, thenDragTo: slot)
         waitFor(react, "label == '我的回应：😂'", "holding and sliding didn't pick 😂")
     }
