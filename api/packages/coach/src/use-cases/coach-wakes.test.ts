@@ -29,7 +29,7 @@ import type { AgentRun, CoachAgent, CoachTool } from '../ports.js';
 import { createCoachActivity } from './coach-activity.js';
 import { createCoachHiring } from './coach-hiring.js';
 import { createCoachSettings } from './coach-settings.js';
-import { createCoachWakes } from './coach-wakes.js';
+import { createCoachWakes, type CoachReplied } from './coach-wakes.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Each test works inside a
 // transaction it rolls back, so the seeded settings stay as they are for the other tests.
@@ -145,11 +145,13 @@ function wakes(
     at = now,
     weeks,
     consented,
+    replied,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
     readonly weeks?: Readonly<Record<string, SquadWeek>>;
     readonly consented?: readonly string[];
+    readonly replied?: CoachReplied;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -172,6 +174,7 @@ function wakes(
       ),
     hiring: createPostgresCoachHiring(trx),
     clock: () => at,
+    ...(replied === undefined ? {} : { replied }),
   });
 }
 
@@ -226,14 +229,30 @@ describe('the coach', () => {
               { tool: 'react', input: { emoji: '🔥' } },
             ],
       );
+      const told: Parameters<CoachReplied>[0][] = [];
+      const replied: CoachReplied = (reply) => {
+        told.push(reply);
+        return Promise.resolve();
+      };
 
-      expect(await wakes(fixture, { agent }).run()).toStrictEqual({
+      expect(await wakes(fixture, { agent, replied }).run()).toStrictEqual({
         coaching: true,
         squads: 1,
         queued: 2,
         done: 2,
         failed: 0,
       });
+      // Told once, after the reply was saved, for the server to tell its author.
+      expect(told).toStrictEqual([
+        {
+          squad,
+          checkIn: fixture.checkIn,
+          author: fixture.mia,
+          coach: 'xiaohun',
+          text: '周日也跑，腿还在吗',
+          emoji: '🔥',
+        },
+      ]);
 
       // The check-in's wake ran first: it may edit files and reply and react to the check-in, but
       // not post on the 战术板; the daily wake posts but replies to nothing.
@@ -577,7 +596,13 @@ describe('the coach', () => {
           };
         },
       };
-      expect(await wakes(fixture, { agent }).run()).toMatchObject({ queued: 2, done: 2 });
+      const told: unknown[] = [];
+      const replied: CoachReplied = (reply) => {
+        told.push(reply);
+        return Promise.resolve();
+      };
+      expect(await wakes(fixture, { agent, replied }).run()).toMatchObject({ queued: 2, done: 2 });
+      expect(told).toStrictEqual([]);
       const usage = await sql<{ wake_id: string | null }>`
         select wake_id from public.coach_usage where squad_id = ${squad} order by id`.execute(trx);
       expect(usage.rows.map(({ wake_id }) => wake_id === null)).toStrictEqual([true, false]);
