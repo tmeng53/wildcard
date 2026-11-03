@@ -152,3 +152,52 @@ export function commentNotification({
     event: { kind: 'comment', checkIn, comment },
   };
 }
+
+/** A line the coach just said to a member: a reply to their check-in, or an answer to them. */
+export interface CoachLine {
+  readonly checkIn: string;
+  /** Whom it is to. */
+  readonly member: string;
+  /** The coach's name now. */
+  readonly coachName: string;
+  readonly text: string;
+  /** Whether it answers the member's reply to the coach; else it replies to their check-in. */
+  readonly answer: boolean;
+  /** Names the push, so a retry shows once: the reply it answers, or the check-in. */
+  readonly about: string;
+}
+
+/**
+ * Pushes a coach's line to the member it is to, as a teammate's comment or reply is pushed
+ * (「毛头评论了你：…」, 「毛头回复了你：…」), unless they turned off push. Its 通知 is the coach
+ * notice the caller keeps. Never throws.
+ */
+export async function pushCoachLine(
+  deps: Pick<CommentPushDependencies, 'push' | 'log'>,
+  line: CoachLine,
+): Promise<void> {
+  try {
+    const to = PushMember.parse(line.member);
+    if (!(await deps.push.settingsOf(to)).dailyProgress) return;
+    const notification: PushNotification = {
+      alert: pushAlert(line.answer ? 'push.comment.reply' : 'push.comment', [
+        line.coachName,
+        line.text,
+      ]),
+      category: 'comment',
+      thread: `comments-${line.checkIn}`,
+      collapseId: `coach-${line.about}`,
+      interruption: 'active',
+      event: { kind: 'comment', checkIn: line.checkIn },
+    };
+    const outcome = await deps.push.notifyMembers({ members: [to], notification });
+    if (outcome.failures.length > 0) {
+      deps.log.warn('coach push not sent to every phone', {
+        member: line.member,
+        failures: outcome.failures,
+      });
+    }
+  } catch (error) {
+    deps.log.error('coach push not sent', { checkIn: line.checkIn, error });
+  }
+}

@@ -6,7 +6,7 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// The squad's coach standing on the sideline, member-size, idling; it has no ring, since it
+/// The squad's coach standing on the sideline, as big as me, idling; it has no ring, since it
 /// doesn't check in.
 struct SidelineCoachFigure: View {
     let coach: SquadCast.Coach

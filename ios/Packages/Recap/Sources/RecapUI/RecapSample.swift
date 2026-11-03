@@ -20,7 +20,7 @@ public enum RecapSample {
             week: Week(monday: day(12), sunday: day(18)), scene: .pool, squadmates: squadmates,
             order: [.podium, .titles, .myWeek, .hottest, .meals, .bestDisclaimer, .ending],
             podium: Podium(
-                champion: coco, sides: [lin, mia], speech: ready ? "七天五天八点前打卡，闹钟都怕她" : nil,
+                champion: coco, sides: [lin, mia], planDone: [coco, mia], speech: ready ? "七天五天八点前打卡，闹钟都怕她" : nil,
                 championMove: ready ? .pose : nil, sideMove: ready ? .pump : nil),
             titles: ready
                 ? [

@@ -1,8 +1,9 @@
 import { Character, MemberId } from '@wildcard/members';
+import type { PushNotification } from '@wildcard/push';
 import { describe, expect, it } from 'vitest';
 
 import { createLog } from '../log.js';
-import { notifyComment, recipients } from './comment-push.js';
+import { notifyComment, pushCoachLine, recipients } from './comment-push.js';
 
 const [writer, author, other] = [
   '00000000-0000-4000-8000-00000000000a',
@@ -59,5 +60,68 @@ describe('a comment push', () => {
 
     expect(Date.now() - started).toBeLessThan(4000);
     expect(lines.some((line) => line.includes('comment push still sending'))).toBe(true);
+  });
+});
+
+describe('a coach’s line pushed', () => {
+  it('reads as a teammate’s comment or reply, and never reaches a member who turned push off', async () => {
+    const sent: { members: readonly string[]; notification: PushNotification }[] = [];
+    const on = new Set([author]);
+    const push = {
+      settingsOf: (member: string) => Promise.resolve({ dailyProgress: on.has(member) }),
+      notifyMembers: (input: { members: readonly string[]; notification: PushNotification }) => {
+        sent.push(input);
+        return Promise.resolve({ sent: 1, gone: 0, off: 0, failures: [] });
+      },
+    };
+    const deps = { push, log: createLog(() => undefined) };
+    await pushCoachLine(deps, {
+      checkIn: other,
+      member: author,
+      coachName: '毛头',
+      text: '腿还在吗',
+      answer: false,
+      about: other,
+    });
+    await pushCoachLine(deps, {
+      checkIn: other,
+      member: author,
+      coachName: '毛头',
+      text: '那就再跑一圈',
+      answer: true,
+      about: writer,
+    });
+    await pushCoachLine(deps, {
+      checkIn: other,
+      member: writer,
+      coachName: '毛头',
+      text: '你也来',
+      answer: true,
+      about: writer,
+    });
+    expect(sent).toStrictEqual([
+      {
+        members: [author],
+        notification: {
+          alert: { key: 'push.comment', args: ['毛头', '腿还在吗'] },
+          category: 'comment',
+          thread: `comments-${other}`,
+          collapseId: `coach-${other}`,
+          interruption: 'active',
+          event: { kind: 'comment', checkIn: other },
+        },
+      },
+      {
+        members: [author],
+        notification: {
+          alert: { key: 'push.comment.reply', args: ['毛头', '那就再跑一圈'] },
+          category: 'comment',
+          thread: `comments-${other}`,
+          collapseId: `coach-${writer}`,
+          interruption: 'active',
+          event: { kind: 'comment', checkIn: other },
+        },
+      },
+    ]);
   });
 });

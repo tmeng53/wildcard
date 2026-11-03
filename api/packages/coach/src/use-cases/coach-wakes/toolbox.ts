@@ -4,6 +4,7 @@ import { editBody, storedPathOf, type StoredPath } from '../../domain/memory.js'
 import { NOTE_LIMIT } from '../../domain/prompt.js';
 import { CoachEmoji, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
 import { weekText, type SquadWeek } from '../../domain/squad-week.js';
+import type { WakeReason } from '../../domain/wake.js';
 import type { CoachTool } from '../../ports.js';
 
 /** What a wake's tools change, kept in memory until the run ends and saved together then. */
@@ -18,6 +19,8 @@ export interface WakeDraft {
   reply: string | undefined;
   /** The emoji the run reacted to the check-in with, on its wake. */
   reaction: CoachEmoji | undefined;
+  /** What the run answered a member's reply to it, on that reply's wake. */
+  answer: string | undefined;
 }
 
 /** A tool whose arguments are checked against its own shape before it runs. */
@@ -42,19 +45,19 @@ function defineTool<Shape extends z.ZodObject>(tool: {
 
 /**
  * The tools a coach has on a wake: reading the squad's week and its files, editing the files,
- * on a daily wake posting the 战术板 line, and on a check-in's wake replying and reacting to it.
- * Nothing is saved until the run ends.
+ * on a daily wake posting the 战术板 line, on a check-in's wake replying and reacting to it, and
+ * on a reply's wake answering it. Nothing is saved until the run ends.
  */
 export function toolbox({
   week,
   roster,
   draft,
-  daily,
+  kind,
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
   readonly draft: WakeDraft;
-  readonly daily: boolean;
+  readonly kind: WakeReason['kind'];
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
   const tools = [
@@ -97,7 +100,7 @@ export function toolbox({
       },
     }),
   ];
-  if (daily) {
+  if (kind === 'daily') {
     tools.push(
       defineTool({
         name: 'post_note',
@@ -114,7 +117,7 @@ export function toolbox({
       }),
     );
   }
-  if (!daily) {
+  if (kind === 'checkIn') {
     tools.push(
       defineTool({
         name: 'reply',
@@ -137,6 +140,23 @@ export function toolbox({
           const replaced = draft.reaction !== undefined;
           draft.reaction = emoji;
           return replaced ? `已换成 ${emoji}。` : `已点 ${emoji}。`;
+        },
+      }),
+    );
+  }
+  if (kind === 'comment') {
+    tools.push(
+      defineTool({
+        name: 'answer',
+        description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
+        parameters: z.object({ text: z.string().describe('回的这一句') }),
+        run: ({ text }) => {
+          const line = text.trim();
+          const problem = lineProblem(line, REPLY_LIMIT);
+          if (problem !== undefined) return problem;
+          const replaced = draft.answer !== undefined;
+          draft.answer = line;
+          return replaced ? '已换成这句。' : '已回复。';
         },
       }),
     );

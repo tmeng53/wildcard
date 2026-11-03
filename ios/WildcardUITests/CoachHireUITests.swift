@@ -66,6 +66,23 @@ final class CoachHireUITests: XCTestCase {
         keepScreenshot(named: "87-coach-resume-mate")
     }
 
+    /// A mate browses 教练招聘会 and reads each 简历, but can't hire from it (Tracy, 2026-11-03).
+    func testAMateBrowsesTheMarketOnly() {
+        let app = launch(extra: ["-squad-seat", "member"])
+        let browse = app.buttons["squad.coach.browse"]
+        XCTAssertTrue(browse.waitForExistence(timeout: 30), "a mate can't browse 教练招聘会")
+        XCTAssertFalse(app.buttons["squad.coach.hire"].exists, "a mate can hire")
+        browse.tap()
+        let coach = app.buttons["coach.market.coach"].firstMatch
+        XCTAssertTrue(coach.waitForExistence(timeout: 30), "逛逛招聘会 doesn't list the coaches")
+        settle()
+        keepScreenshot(named: "89-coach-market-mate")
+        coach.tap()
+        let captainOnly = app.staticTexts["coach.resume.captainOnly"]
+        XCTAssertTrue(captainOnly.waitForExistence(timeout: 30), "the 简历 doesn't say only the captain hires")
+        XCTAssertFalse(app.buttons["coach.resume.hire"].exists, "a mate can hire from 教练招聘会")
+    }
+
     /// English names are the longest; they still keep one line each. 教练招聘会 counts its one
     /// coach in the singular.
     func testTheResumeInEnglish() {

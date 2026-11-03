@@ -8,7 +8,10 @@ import {
   type Comment as CommentRecord,
 } from '@wildcard/check-ins';
 
+import { CoachId } from '@wildcard/coach';
+
 import { bodyVersion } from '../body-version.js';
+import { answerCoachReply, type CoachAnswerer } from '../flows/coach-answer.js';
 import { notifyComment, type CommentPushDependencies } from '../flows/comment-push.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
@@ -19,12 +22,23 @@ const replyTo = MemberId.meta({
     'Whom the comment replies to (回复 Mia：…): the check-in’s author, or a teammate who can see it.',
 });
 
+const replyToCoach = CoachId.meta({
+  description:
+    'The coach it replies to (回复 毛头：…), by the coach’s id: one that said something under ' +
+    'the check-in for a squad the caller sees it through. Never with `replyTo`. The coach ' +
+    'answers it soon after.',
+  example: 'xiaohun',
+});
+
 const commentFields = {
   id: CommentId.meta({ description: 'The comment’s id, which the app picks.' }),
   member: z.uuid().meta({ description: 'Who wrote it.' }),
   text: CommentText,
   replyTo: z.uuid().optional().meta({
     description: 'Whom it replies to, when it does. Gone once their account is deleted.',
+  }),
+  replyToCoach: z.string().optional().meta({
+    description: 'The coach it replies to, by id, when it does (回复 毛头：…).',
   }),
   commentedAt: z.iso.datetime().meta({
     description: 'When it was written, in UTC with milliseconds.',
@@ -33,7 +47,12 @@ const commentFields = {
 };
 
 export const CommentDraft = z
-  .strictObject({ version: bodyVersion(1), text: CommentText, replyTo: replyTo.optional() })
+  .strictObject({
+    version: bodyVersion(1),
+    text: CommentText,
+    replyTo: replyTo.optional(),
+    replyToCoach: replyToCoach.optional(),
+  })
   .openapi('CommentDraft');
 export const Comment = z
   .strictObject({ version: bodyVersion(1), ...commentFields })
@@ -44,11 +63,19 @@ const CommentList = z
   .strictObject({ version: bodyVersion(1), comments: z.array(CommentEntry) })
   .openapi('CommentList');
 
-export const wireComment = ({ id, member, text, replyTo: to, commentedAt }: CommentRecord) => ({
+export const wireComment = ({
+  id,
+  member,
+  text,
+  replyTo: to,
+  replyToCoach: toCoach,
+  commentedAt,
+}: CommentRecord) => ({
   id,
   member,
   text,
   ...(to === undefined ? {} : { replyTo: to }),
+  ...(toCoach === undefined ? {} : { replyToCoach: toCoach }),
   commentedAt: commentedAt.toISOString(),
 });
 
@@ -70,6 +97,8 @@ export function comments(
   deps: CommentPushDependencies & {
     readonly verifyToken: VerifyToken;
     readonly checkIns: CheckIns;
+    /** Has the coach answer a reply to it; left out, nobody answers until the coach job runs. */
+    readonly coachAnswer?: CoachAnswerer | undefined;
   },
 ) {
   const write = createRoute({
@@ -94,8 +123,9 @@ export function comments(
       },
       201: { description: 'Written', content: { 'application/json': { schema: Comment } } },
       400: problem(
-        'Not a valid comment, or a reply to someone who can’t see the check-in ' +
-          '(`REPLY_TO_NOT_IN_SQUAD`)',
+        'Not a valid comment, a reply to someone who can’t see the check-in ' +
+          '(`REPLY_TO_NOT_IN_SQUAD`), or to a coach that said nothing under it, or with ' +
+          '`replyTo` too (`REPLY_TO_COACH_NOT_FOUND`)',
       ),
       409: problem('The id holds a different comment (`COMMENT_ID_CONFLICT`)'),
       ...jsonBodyFailures,
@@ -148,6 +178,7 @@ export function comments(
         member: MemberId.parse(c.var.caller.userId),
         text: draft.text,
         replyTo: draft.replyTo,
+        replyToCoach: draft.replyToCoach,
       });
       const body = { version: 1 as const, ...wireComment(written.comment) };
       // Sent before answering: Cloud Run gives the server CPU only while a request runs.
@@ -160,6 +191,15 @@ export function comments(
           author: written.author,
           replyTo: written.comment.replyTo,
         });
+        // The coach answers while the request runs, for the same reason; a slow answer is the
+        // coach job's to finish.
+        const toCoach = written.comment.replyToCoach;
+        if (toCoach !== undefined && deps.coachAnswer !== undefined) {
+          await answerCoachReply(
+            { answer: deps.coachAnswer, log: deps.log },
+            { checkIn: checkInId, comment: commentId, coach: toCoach },
+          );
+        }
       }
       return written.created ? c.json(body, 201) : c.json(body, 200);
     })

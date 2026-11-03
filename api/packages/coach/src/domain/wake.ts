@@ -1,12 +1,14 @@
 import type { CoachSettings, SquadId } from './settings.js';
 import type { SquadWeek } from './squad-week.js';
 
-// When a coach wakes: for each check-in shared to its squad, to learn from it, and once a day
-// for the squad's 战术板 line. Days are New York's, as the weekly awards' are.
+// When a coach wakes: for each check-in shared to its squad, to learn from it, for each reply a
+// member writes to it under a check-in, to answer, and once a day for the squad's 战术板 line.
+// Days are New York's, as the weekly awards' are.
 
 /** Why a coach woke. */
 export type WakeReason =
   | { readonly kind: 'checkIn'; readonly checkIn: string }
+  | { readonly kind: 'comment'; readonly checkIn: string; readonly comment: string }
   | { readonly kind: 'daily'; readonly day: string };
 
 export interface NewWake {
@@ -60,8 +62,9 @@ export function weekStartOf(day: string): string {
 
 /**
  * The wakes due for a squad at `now`: one for each check-in made in the last
- * `CHECK_IN_WINDOW_MS`, and the day's own from `DAILY_HOUR`. Saving them again is harmless,
- * since a squad has one wake per check-in and one a day.
+ * `CHECK_IN_WINDOW_MS`, one for each reply to the coach written in it (each is queued as it is
+ * written, too; this catches one that wasn't), and the day's own from `DAILY_HOUR`. Saving them
+ * again is harmless, since a squad has one wake per check-in, one per reply and one a day.
  */
 export function wakesDue({
   squad,
@@ -76,6 +79,13 @@ export function wakesDue({
   const wakes: NewWake[] = week.checkIns
     .filter(({ createdAt }) => createdAt.getTime() > since && createdAt <= now)
     .map(({ id }) => ({ squad, reason: { kind: 'checkIn', checkIn: id } }));
+  for (const checkIn of week.checkIns) {
+    for (const comment of checkIn.comments) {
+      if (comment.toCoach === undefined) continue;
+      if (comment.at.getTime() <= since || comment.at > now) continue;
+      wakes.push({ squad, reason: { kind: 'comment', checkIn: checkIn.id, comment: comment.id } });
+    }
+  }
   const { day, hour } = newYorkTime(now);
   if (hour >= DAILY_HOUR) wakes.push({ squad, reason: { kind: 'daily', day } });
   return wakes;
