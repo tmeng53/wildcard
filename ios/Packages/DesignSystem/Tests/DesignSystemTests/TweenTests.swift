@@ -39,6 +39,7 @@ struct TweenTests {
 struct SpeechTimingTests {
     @Test func bubblesHoldThenFade() {
         #expect([Motion.speechHold, Motion.speechFade, Motion.speechStagger] == [1.6, 0.2, 0.06])
+        #expect(Motion.noticeHold == 4)
     }
 }
 

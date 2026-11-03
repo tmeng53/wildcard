@@ -62,11 +62,14 @@ export const SPEECH_MAX = 24;
 export const TITLES_MAX = 3;
 
 /**
- * The model's reply, held to this shape by structured output, with badges from `catalog` only.
- * Members are named by key. The limits go to the model in the schema, so the titles fit the
- * screen.
+ * The model's reply, held to this shape by structured output, its moves only those `moves`
+ * offers (the settings') and its badges from `catalog` only. Members are named by key. The
+ * limits go to the model in the schema, so the titles fit the screen.
  */
-export function modelReplyFor(catalog: BadgeCatalog) {
+export function modelReplyFor(
+  catalog: BadgeCatalog,
+  moves: readonly [AwardMove, ...AwardMove[]],
+) {
   return z.strictObject({
     version: z.literal(1),
     awards: z.array(
@@ -77,7 +80,7 @@ export function modelReplyFor(catalog: BadgeCatalog) {
             z.strictObject({
               title: z.string().min(1).max(TITLE_MAX),
               speech: z.string().min(1).max(SPEECH_MAX),
-              move: AwardMove,
+              move: z.enum(moves),
               badge: badgeReplyFor(catalog),
             }),
           )

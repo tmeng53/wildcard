@@ -9,7 +9,7 @@ import {
 } from '../../domain/awards.js';
 import { promptFor, type PromptMeme } from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
-import type { AwardSettings } from '../../domain/settings.js';
+import { offeredMoves, type AwardSettings } from '../../domain/settings.js';
 import { AwardsWriterUnavailableError } from '../../errors.js';
 import type {
   AiConsented,
@@ -151,7 +151,7 @@ async function writeTitles(
     badges: settings.badges,
     memes,
   });
-  const reply = modelReplyFor(settings.badges);
+  const reply = modelReplyFor(settings.badges, offeredMoves(settings.moves));
   let cause: unknown;
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     try {

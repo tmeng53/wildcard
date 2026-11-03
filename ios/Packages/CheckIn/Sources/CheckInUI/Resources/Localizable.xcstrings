@@ -1528,6 +1528,38 @@
         }
       }
     },
+    "%@ 把小队搬到了%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ moved the squad to %2$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 把小隊搬到了%2$@"
+          }
+        }
+      }
+    },
+    "小队搬到了%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The squad moved to %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊搬到了%@"
+          }
+        }
+      }
+    },
     "早八战神": {
       "localizations": {
         "en": {

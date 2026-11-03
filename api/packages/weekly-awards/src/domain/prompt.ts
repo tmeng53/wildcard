@@ -1,7 +1,6 @@
 import type { BadgeCatalog } from './badges.js';
 import { promptKey, type MemberId, type MemberWeek, type WeekCheckIn } from './awards.js';
-import { AwardMove } from './moves.js';
-import type { AwardSettings } from './settings.js';
+import { offeredMoves, type AwardSettings } from './settings.js';
 import type { WeekStart } from './schedule.js';
 
 // The user message for a squad's weekly awards. The standing instructions and the moves'
@@ -86,8 +85,8 @@ export function promptFor(week: {
             }),
       })),
     })),
-    // In the moves' own order, whatever order the database keeps them in.
-    moves: AwardMove.options.map((id) => ({ id, description: week.moves[id] })),
+    // By id, whatever order the database keeps them in, so the same settings make the same prompt.
+    moves: offeredMoves(week.moves).map((id) => ({ id, description: week.moves[id] })),
     badges: week.badges,
     ...(week.memes.length === 0
       ? {}

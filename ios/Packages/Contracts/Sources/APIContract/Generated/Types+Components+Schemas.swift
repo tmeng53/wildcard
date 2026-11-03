@@ -5838,7 +5838,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/StoryTitle/speech`.
             public var speech: Swift.String
-            /// The move the character plays collecting it. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            /// The move the character plays collecting it. A move id as the app names its art (`cheer` is the persona’s own cheer); which moves the awards pick from is a setting, so new ones come without an app release: play `cheer` for one the app doesn’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/StoryTitle/move`.
             public var move: Swift.String
@@ -5847,7 +5847,7 @@ extension Components {
             /// - Parameters:
             ///   - title: The title (头衔), at most 6 characters.
             ///   - speech: Its award line (颁奖词), at most 24 characters, citing something real from the week.
-            ///   - move: The move the character plays collecting it. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            ///   - move: The move the character plays collecting it. A move id as the app names its art (`cheer` is the persona’s own cheer); which moves the awards pick from is a setting, so new ones come without an app release: play `cheer` for one the app doesn’t know.
             public init(
                 title: Swift.String,
                 speech: Swift.String,

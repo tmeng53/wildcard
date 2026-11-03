@@ -629,13 +629,13 @@ describe('the admin MCP server', () => {
       });
       expect(JSON.parse(badged.text)).toMatchObject({ badges: { glyphs } });
 
-      // A provider the server doesn't know, a move the app doesn't have, a shape the app can't
-      // draw, or no change at all.
+      // A provider the server doesn't know, a move id that isn't one, a shape the app can't draw,
+      // or no change at all.
       for (const [name, args] of [
         ['change_disclaimer_draft_settings', { model: 'gemini/flash' }],
         ['change_disclaimer_draft_settings', { memeChance: 2 }],
         ['change_disclaimer_draft_settings', {}],
-        ['change_weekly_award_settings', { moves: { moonwalk: '太空步' } }],
+        ['change_weekly_award_settings', { moves: { 'Moon Walk': '太空步' } }],
         [
           'change_weekly_award_settings',
           { badges: { ...catalog, shapes: [{ id: 'star', meaning: '星形' }] } },

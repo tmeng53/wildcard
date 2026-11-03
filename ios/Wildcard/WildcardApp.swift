@@ -265,7 +265,17 @@ struct WildcardApp: App {
                     Self.open(destination, today: today, tab: $tab)
                 }
             }
+            .task { await Self.moveSampleSquad(today: today) }
         }
+    }
+
+    /// `-uitest-scene-moved track`: once the sample home is up, its first teammate moves the
+    /// squad there, as a real move is told: the drop, then the notice.
+    private static func moveSampleSquad(today: TodayModel) async {
+        guard let scene = LaunchOptions.sceneMoved else { return }
+        await today.load()
+        let picker = today.home.flatMap { home in home.squad.members.first { $0 != home.member } }
+        await today.land(on: scene, move: SceneMove(scene: scene, picker: picker))
     }
 }
 

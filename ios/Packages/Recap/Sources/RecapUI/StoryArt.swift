@@ -3,16 +3,16 @@ import AvatarDomain
 import RecapDomain
 
 extension StoryClip {
-    /// The character's clip for this, at `persona`'s tempo: the award moves from `Move`, 躺平
-    /// lying flat, a meal as the check-in eats it, the toss's and the stack's own parts. A sport
-    /// plays its kit's move, which the caller picks; here, and for the cheer, it is the persona's
-    /// cheer.
+    /// The character's clip for this, at `persona`'s tempo: an award move by its id
+    /// (`NamedMove`: a shared move, 躺平, a reaction move, a sport kit's move), a meal as the
+    /// check-in eats it, the toss's and the stack's own parts. A trained day plays its sport's
+    /// kit move, which the caller picks; here, and for a move the art doesn't have, it is the
+    /// persona's cheer.
     func art(persona: Persona, species: String?) throws(AvatarError) -> Clip {
         switch self {
-        case .award(.flat): return try PlaceholderCharacter.lyingFlat(persona: persona)
         case .award(let move):
-            guard let shared = Move(rawValue: move.rawValue) else { break }
-            return try PlaceholderCharacter.clip(for: shared, persona: persona)
+            guard let named = NamedMove(move.rawValue) else { break }
+            return try PlaceholderCharacter.clip(for: named, persona: persona, species: species)
         case .eat(let meal): return try PlaceholderCharacter.clip(for: Self.checkIn(meal), persona: persona)
         case .tossThrower: return try PlaceholderCharacter.toss().roles[0].clip
         case .tossFlyer: return try PlaceholderCharacter.toss().roles[1].clip
@@ -24,10 +24,14 @@ extension StoryClip {
     }
 
     /// `look` holding what this needs: the bowl or the boba for a meal, as the check-in holds
-    /// it; the look as it is for the rest.
+    /// it; a sport's prop for its award move; the look as it is for the rest. (A trained day's
+    /// kit is the caller's, as for the clip.)
     func dressing(_ look: Outfit) -> Outfit {
-        guard case .eat(let meal) = self else { return look }
-        return PlaceholderCharacter.dressed(look, for: Self.checkIn(meal))
+        switch self {
+        case .eat(let meal): PlaceholderCharacter.dressed(look, for: Self.checkIn(meal))
+        case .award(let move): NamedMove(move.rawValue)?.kit?.dress(look) ?? look
+        default: look
+        }
     }
 
     private static func checkIn(_ meal: Meals.Meal) -> CheckInMove {
