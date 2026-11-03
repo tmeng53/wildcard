@@ -9,6 +9,7 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
 import {
   DeviceToken,
   MemberId as PushMember,
@@ -19,6 +20,7 @@ import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wild
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
@@ -108,7 +110,9 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
-  ...ignoredNotices,
+  // Real, so a comment's notices are read back from 通知.
+  notices: createNotices({ store: createPostgresNoticeStore(db) }),
+  coachNames: ignoredNotices.coachNames,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -189,6 +193,13 @@ async function withPhone(nickname: string) {
     device: { token: phone, environment: 'sandbox' },
   });
   return { ...signedUp, phone };
+}
+
+/** The member's 通知, newest first. */
+async function noticesOf(token: string): Promise<unknown> {
+  const { status, body } = await call('GET', { path: '/me/notices', token });
+  expect(status).toBe(200);
+  return z.object({ notices: z.array(z.unknown()) }).parse(body).notices;
 }
 
 /** What each of these phones was sent, as APNs gets it. */
@@ -400,6 +411,20 @@ describe('/check-ins/{checkInId}/comments', () => {
       ],
       [],
     ]);
+    // The same words are kept in each member's 通知, newest first, with the post to open.
+    expect(await noticesOf(tracy.token)).toMatchObject([
+      { kind: 'comment', alert: { key: 'push.comment', args: ['波波', '算我一个'] }, checkIn: run },
+      {
+        kind: 'comment',
+        alert: { key: 'push.comment', args: ['安安', '明天我也练腿'] },
+        checkIn: run,
+      },
+    ]);
+    expect(await noticesOf(ann.token)).toMatchObject([
+      { kind: 'comment', alert: { key: 'push.comment.reply', args: ['翠西', '电梯见'] } },
+      { kind: 'comment', alert: { key: 'push.comment.reply', args: ['波波', '算我一个'] } },
+    ]);
+    expect(await noticesOf(bo.token)).toStrictEqual([]);
   });
 
   it('sends no comment push to a member who turned push off', async () => {
@@ -416,5 +441,9 @@ describe('/check-ins/{checkInId}/comments', () => {
     });
     expect(written.status).toBe(201);
     expect(sentTo(tracy.phone)).toStrictEqual([[]]);
+    // The switch stops the phone, not 通知.
+    expect(await noticesOf(tracy.token)).toMatchObject([
+      { kind: 'comment', alert: { key: 'push.comment', args: ['安安', '加油'] } },
+    ]);
   });
 });

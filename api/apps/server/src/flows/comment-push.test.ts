@@ -48,8 +48,13 @@ describe('a comment push', () => {
     const started = Date.now();
 
     await notifyComment(
-      { members, push, log: createLog((line) => lines.push(line)) },
-      { checkIn: 'c', comment: 'm', commenter: writer, text: '加油', author },
+      {
+        members,
+        push,
+        notices: { tell: () => Promise.resolve() },
+        log: createLog((line) => lines.push(line)),
+      },
+      { checkIn: other, comment: other, commenter: writer, text: '加油', author },
     );
 
     expect(Date.now() - started).toBeLessThan(4000);
