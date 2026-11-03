@@ -216,6 +216,13 @@ enum LaunchOptions {
         return SceneTheme(rawValue: arguments[flag + 1])
     }
 
+    /// `-uitest-unlocked`: the sample member's training has just opened DEUCE CLUB, which 今天
+    /// tells once it is up and 我's editor has open, so UI tests see the notice and its tap.
+    static var unlocked: [Unlock] {
+        guard ProcessInfo.processInfo.arguments.contains("-uitest-unlocked") else { return [] }
+        return [Unlock(kind: .store, id: "deuce", unlockedAt: now(), sports: ["tennis"], checkIns: 3)]
+    }
+
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the
     /// care line before the AI writer exists.
     static var disclaimerWriter: any DisclaimerWriter {
