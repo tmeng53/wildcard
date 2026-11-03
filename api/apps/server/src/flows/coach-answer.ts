@@ -2,8 +2,11 @@ import { setTimeout as wait } from 'node:timers/promises';
 
 import type { Log } from '../log.js';
 
-/** How long a comment's answer waits for the coach; a slower answer is the coach job's to finish. */
-const ANSWER_WAIT_MS = 25_000;
+/**
+ * How long a comment's answer waits for the coach, inside the app's 15-second request timeout with
+ * the comment push before it; a slower answer is the coach job's to finish.
+ */
+const ANSWER_WAIT_MS = 10_000;
 
 /** Has the coach answer a member's reply to it now (the coach module's `answer`). */
 export type CoachAnswerer = (input: {
