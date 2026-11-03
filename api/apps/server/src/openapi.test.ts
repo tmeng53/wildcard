@@ -25,6 +25,7 @@ import {
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedCoachHiring,
+  unusedCoachActivity,
 } from './test-kit/weekly-awards.js';
 
 describe('openapi.json', () => {
@@ -83,6 +84,7 @@ describe('openapi.json', () => {
       unlocks: unusedUnlocks,
       weekSummaryWords: unusedWeekSummaryWords,
       coachHiring: unusedCoachHiring,
+      coachActivity: unusedCoachActivity,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),
       log: createLog(() => undefined),
