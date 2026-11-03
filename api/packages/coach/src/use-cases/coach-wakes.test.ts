@@ -582,6 +582,26 @@ describe('the coach', () => {
         comment: first.id,
         coach: 'maotou',
       });
+      // Nor one in a squad the writer isn't in, which shares the check-in with theirs.
+      const ran = runs.length;
+      const outside = await commentOn(fixture, {
+        member: leo,
+        text: '我在别的队',
+        at: new Date(now.getTime() + 150_000),
+        toCoach: 'xiaohun',
+      });
+      const withoutLeo: SquadWeek = {
+        ...withFirst,
+        members: withFirst.members.filter(({ member }) => member !== leo),
+        checkIns: withFirst.checkIns.map((each) => ({ ...each, comments: [first, outside] })),
+      };
+      await wakes({ ...fixture, week: withoutLeo }, { agent, answered, at: later }).answer({
+        checkIn,
+        comment: outside.id,
+        coach: 'xiaohun',
+      });
+      expect(runs).toHaveLength(ran);
+      await sql`delete from public.check_in_comments where id = ${outside.id}`.execute(trx);
       const second = await commentOn(fixture, {
         member: mia,
         text: '那你喊大声点',
@@ -765,6 +785,28 @@ describe('the coach', () => {
       const replies =
         await sql`select 1 from public.coach_replies where squad_id = ${squad}`.execute(trx);
       expect(replies.rows).toHaveLength(0);
+    });
+  });
+
+  it('runs a reply’s wake before the squad’s older ones, so its answer doesn’t wait', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, leo, checkIn } = fixture;
+      const stores = createPostgresCoachStores(trx);
+      await stores.wakes.enqueue([{ squad, reason: { kind: 'daily', day: '2026-11-01' } }], now);
+      const reply = await commentOn(fixture, {
+        member: leo,
+        text: '教练',
+        at: now,
+        toCoach: 'xiaohun',
+      });
+      const later = new Date(now.getTime() + 60_000);
+      await stores.wakes.enqueue(
+        [{ squad, reason: { kind: 'comment', checkIn, comment: reply.id } }],
+        later,
+      );
+      expect(await stores.wakes.claim({ squads: [squad], limit: 1, now: later })).toMatchObject([
+        { reason: { kind: 'comment', comment: reply.id } },
+      ]);
     });
   });
 

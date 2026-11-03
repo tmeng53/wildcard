@@ -124,8 +124,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
             (${sql.ref(`${prefix}state`)} = 'running' and ${sql.ref(`${prefix}claimed_at`)} < ${stale})
             or (${sql.ref(`${prefix}state`)} = 'waiting' and ${sql.ref(`${prefix}created_at`)} > ${fresh}
               and (${sql.ref(`${prefix}claimed_at`)} is null or ${sql.ref(`${prefix}claimed_at`)} < ${retry})))`;
-        // Each squad's next wake: one a run dropped first, else its oldest waiting one; never
-        // a squad whose wake is running.
+        // Each squad's next wake: one a run dropped first, then a reply's, else its oldest
+        // waiting one; never a squad whose wake is running.
         const next = await db
           .selectFrom('coach_wakes as wake')
           .distinctOn('wake.squad_id')
@@ -146,6 +146,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           )
           .orderBy('wake.squad_id')
           .orderBy(sql`wake.state = 'running'`, 'desc')
+          // A member's reply waits on its answer, so it goes before older wakes.
+          .orderBy(sql`wake.reason = 'comment'`, 'desc')
           .orderBy('wake.created_at')
           .orderBy('wake.id')
           .execute();

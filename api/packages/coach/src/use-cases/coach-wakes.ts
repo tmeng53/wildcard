@@ -418,8 +418,8 @@ async function saveDraft(
  * On a reply's wake, what was said under its check-in for the coach to go on: its own reply,
  * then members' replies to it and its answers, up to the one to answer; with who wrote that.
  * `undefined` on another wake, or when there is nothing to answer: the reply went (or its writer
- * withdrew their AI consent), was answered already, or isn't to this coach, or the coach said
- * nothing to the check-in in this squad.
+ * withdrew their AI consent), was answered already, isn't to this coach or from this squad, or
+ * the coach said nothing to the check-in in this squad.
  */
 async function threadOf(
   deps: CoachWakesDependencies,
@@ -430,6 +430,8 @@ async function threadOf(
   const comments = week.checkIns.find(({ id }) => id === reason.checkIn)?.comments ?? [];
   const answering = comments.find(({ id }) => id === reason.comment);
   if (answering?.toCoach !== coach.id) return undefined;
+  // A check-in shared to several squads is answered only in the writer's own.
+  if (!week.members.some(({ member }) => member === answering.member)) return undefined;
   const reply = await deps.stores.replies.find(wake.squad, reason.checkIn);
   if (reply?.coach !== coach.id || reply.text === undefined) return undefined;
   const answers = await deps.stores.answers.ofCheckIn(wake.squad, reason.checkIn);
