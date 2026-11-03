@@ -81,16 +81,16 @@ public struct SceneBadge: View {
 
 extension View {
     /// Drops `content(item)` in from the top while `item` is set, over everything under it, and
-    /// puts it away after `Motion.noticeHold`, on a swipe up, or on a tap (which also calls
+    /// puts it away after `hold` seconds, on a swipe up, or on a tap (which also calls
     /// `onTap`). The caller keeps the queue: setting the next item shows it once this one is
     /// gone. It sits just under the status bar, clear of the Dynamic Island, which would hide
     /// its middle on a phone that has one. With Reduce Motion on, it fades instead of dropping.
     public func noticeBanner<Item: Identifiable, Banner: View>(
-        item: Binding<Item?>, onTap: @escaping (Item) -> Void = { _ in },
+        item: Binding<Item?>, hold: Double = Motion.noticeHold, onTap: @escaping (Item) -> Void = { _ in },
         @ViewBuilder content: @escaping (Item) -> Banner
     ) -> some View {
         overlay(alignment: .top) {
-            NoticePresenter(item: item, onTap: onTap, content: content)
+            NoticePresenter(item: item, hold: hold, onTap: onTap, content: content)
         }
     }
 }
@@ -98,6 +98,7 @@ extension View {
 private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var item: Item?
+    let hold: Double
     let onTap: (Item) -> Void
     let content: (Item) -> Banner
     @State private var drag: Double = 0
@@ -131,7 +132,7 @@ private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
                             }
                     )
                     .task(id: shown.id) {
-                        try? await Task.sleep(for: .seconds(Motion.noticeHold))
+                        try? await Task.sleep(for: .seconds(hold))
                         guard !Task.isCancelled else { return }
                         put(away: shown)
                     }

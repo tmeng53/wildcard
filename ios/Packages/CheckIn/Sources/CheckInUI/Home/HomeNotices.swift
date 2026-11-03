@@ -12,7 +12,7 @@ struct HomeNotices: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .noticeBanner(item: $model.notice, onTap: tap) { notice in banner(for: notice) }
+            .noticeBanner(item: $model.notice, hold: model.noticeHold, onTap: tap) { notice in banner(for: notice) }
             // Only an unlock: something the member earned arrives.
             .haptic(.appear, trigger: model.notice?.id) { _, id in id != nil && isUnlock(model.notice) }
             .onChange(of: model.notice == nil && model.step == .scene && !model.isBurstOpen) { _, free in

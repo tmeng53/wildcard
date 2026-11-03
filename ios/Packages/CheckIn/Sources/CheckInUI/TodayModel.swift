@@ -64,6 +64,8 @@ public final class TodayModel {
     var coachHold: Task<Void, Never>?
     /// How long the coach's bubble stays up.
     let coachLineHold: Double
+    /// How long a notice at the top stays up.
+    let noticeHold: Double
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
@@ -126,6 +128,7 @@ public final class TodayModel {
     ) {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
         coachLineHold = bubbleHold ?? Self.coachLineHold
+        noticeHold = bubbleHold ?? Motion.noticeHold
         self.scene = scene
         self.defaults = defaults
         self.store = store

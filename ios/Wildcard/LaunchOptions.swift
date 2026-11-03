@@ -178,8 +178,8 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-patted")
     }
 
-    /// `-uitest-bubble-hold`: a teammate's bubble on 今天 stays up for a minute instead of 5
-    /// seconds, so a UI test checks it without racing its timer.
+    /// `-uitest-bubble-hold`: a teammate's bubble, the coach's line and a notice on 今天 stay up
+    /// for a minute instead of a few seconds, so a UI test checks them without racing their timers.
     static var bubbleHold: Double? {
         ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
     }
