@@ -1,3 +1,4 @@
+import type { CheckInId } from './check-in.js';
 import type { SportKey } from './sports.js';
 
 /** The sport a member logged the most 练了 for, with how many. */
@@ -22,4 +23,12 @@ export interface CheckInTotals {
    * none before the first 练了.
    */
   readonly topSport?: TopSport;
+}
+
+/** A 练了 check-in's sport and when it was made, for what members unlock by training. */
+export interface TrainedCheckIn {
+  readonly id: CheckInId;
+  /** The listed sport, or `custom` for one the member named. */
+  readonly sport: SportKey;
+  readonly madeAt: Date;
 }

@@ -11,7 +11,7 @@ public enum SquadLoad: Hashable, Sendable {
     case failed(SquadError)
 }
 
-/// 教练市场 while it reads the coaches.
+/// 教练招聘会 while it reads the coaches.
 public enum CoachMarketLoad: Hashable, Sendable {
     case loading
     case loaded([Coach])
@@ -74,7 +74,7 @@ public final class SquadSettingsModel {
     public private(set) var hasLeft = false
     /// The scene picker, while the member may pick and has opened it (换场地).
     public private(set) var picker: ScenePicker?
-    /// 教练市场, read each time it opens.
+    /// 教练招聘会, read each time it opens.
     public private(set) var market: CoachMarketLoad = .loading
 
     @ObservationIgnored private let service: any SquadSettingsService
@@ -182,7 +182,7 @@ public final class SquadSettingsModel {
         return settings.today.weekNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
     }
 
-    /// Reads 教练市场's coaches, each time it opens.
+    /// Reads 教练招聘会's coaches, each time it opens.
     public func loadMarket() async {
         market = .loading
         do {

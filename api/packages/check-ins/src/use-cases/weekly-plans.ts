@@ -80,11 +80,20 @@ export interface WeeklyPlans {
 /** The member's plan for a week: saved for it, else their template, else the default. */
 export async function findWeeklyPlan(
   { store }: { readonly store: WeeklyPlanStore },
-  { member, weekStart }: { readonly member: MemberId; readonly weekStart: WeekStart },
+  {
+    member,
+    weekStart,
+    asOf,
+  }: {
+    readonly member: MemberId;
+    readonly weekStart: WeekStart;
+    /** The plan as it stood just before then, from the logs; now when left out. */
+    readonly asOf?: Date;
+  },
 ): Promise<WeeklyPlan> {
   const [saved, template] = await Promise.all([
-    store.savedFor(member, weekStart),
-    store.templateFor(member, weekStart),
+    store.savedFor(member, { weekStart, asOf }),
+    store.templateFor(member, { weekStart, asOf }),
   ]);
   if (saved !== undefined) return { weekStart, days: saved, source: 'saved' };
   if (template !== undefined) return { weekStart, days: template, source: 'template' };

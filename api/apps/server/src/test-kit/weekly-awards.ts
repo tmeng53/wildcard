@@ -8,6 +8,9 @@ export const unusedWeeklyAwards = {
     claimNudge: unused,
     claimWinners: unused,
     titlesWon: unused,
+    story: unused,
+    freezeStory: unused,
+    storiesWaiting: unused,
   },
   clock: () => new Date(),
 };
@@ -23,3 +26,6 @@ export const unusedCoachHiring = {
   current: unused,
   offered: unused,
 };
+
+/** What members unlocked, for an app whose test never reads it. */
+export const unusedUnlocks = { of: unused };

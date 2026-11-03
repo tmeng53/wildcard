@@ -111,7 +111,8 @@ struct MainTabs: View {
     private func editCharacter() {
         guard let character = profile.overview?.character else { return }
         editor = try? CharacterEditorModel.placeholder(
-            look: character.outfit, persona: character.persona, nickname: character.nickname)
+            look: character.outfit, persona: character.persona, nickname: character.nickname,
+            unlocks: profile.overview?.unlocks ?? [])
     }
 
     /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page) hides the
@@ -216,7 +217,7 @@ private struct RecapTile: View {
     var body: some View {
         if let story = recap.latest {
             RecapEntryTile(
-                week: story.week, pages: story.pages.count, viewer: recap.cast?.reader, action: recap.openLatest)
+                story: story, viewer: recap.cast?.reader, seen: recap.latestIsSeen, action: recap.openLatest)
         }
     }
 }

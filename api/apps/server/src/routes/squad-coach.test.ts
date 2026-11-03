@@ -35,7 +35,11 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
-import { unusedWeeklyAwards, unusedWeekSummaryWords } from '../test-kit/weekly-awards.js';
+import {
+  unusedWeeklyAwards,
+  unusedWeekSummaryWords,
+  unusedUnlocks,
+} from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -92,6 +96,7 @@ const app = createApp({
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
   weeklyAwards: unusedWeeklyAwards,
+  unlocks: unusedUnlocks,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: createCoachHiring({
     hiring: createPostgresCoachHiring(db),

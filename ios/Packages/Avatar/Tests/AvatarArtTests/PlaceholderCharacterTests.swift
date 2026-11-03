@@ -288,8 +288,8 @@ func outline(_ path: [PathElement]) -> [Point] {
 }
 
 /// Every body the editor groups is bundled, and every bundled body is in a group; every piece of
-/// clothing and prop it offers is bundled, and its first color is its art's own. The racks start
-/// with WARM-UP's twelve pieces.
+/// clothing and prop it offers is bundled, and WARM-UP's twelve pieces recolor, their first color
+/// their art's own; every member starts with the tumbler and the dumbbell.
 @Test func theEditorOffersBundledArt() throws {
     let choices = try PlaceholderCharacter.editorChoices()
     #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
@@ -297,19 +297,25 @@ func outline(_ path: [PathElement]) -> [Point] {
     let grouped = choices.species.flatMap(\.bodies)
     #expect(Set(grouped).count == grouped.count)
     #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
-    #expect(choices.props == ["bottle", "dumbbell"])
-    #expect(Set(choices.props).isSubset(of: PlaceholderCharacter.variants(for: "prop")))
+    #expect(choices.props.filter(\.isOpen).map(\.id) == ["bottle", "dumbbell"])
+    #expect(Set(choices.props.map(\.id)) == Set(PlaceholderCharacter.variants(for: "prop")))
     #expect(
-        choices.wear.mapValues { $0.map(\.id) } == [
+        choices.wear.mapValues { $0.filter { $0.store == "warmup" }.map(\.id) } == [
             "top": ["warmup-tee", "warmup-tank", "warmup-hoodie"],
             "bottom": ["warmup-shorts", "warmup-joggers", "warmup-leggings"],
             "shoes": ["warmup-canvas", "warmup-runner"],
             "hat": ["warmup-cap", "warmup-headband"],
             "acc": ["warmup-towel", "warmup-waistbag"],
         ])
+    #expect(
+        choices.wear.values.joined().filter { $0.store == "deuce" }.map(\.id).sorted() == [
+            "deuce-court", "deuce-polo", "deuce-shorts", "deuce-skirt", "deuce-visor",
+        ])
     for (slot, pieces) in choices.wear {
         #expect(Set(pieces.map(\.id)).isSubset(of: PlaceholderCharacter.variants(for: slot)))
-        for piece in pieces {
+        // Every piece of every store is on a rack, each piece once.
+        #expect(Set(pieces.map(\.id)) == Set(PlaceholderCharacter.variants(for: slot).filter { $0.contains("-") }))
+        for piece in pieces where piece.store == "warmup" {
             #expect(piece.swatches.count == 6, "\(piece.id)")
             #expect(
                 piece.swatches.first == PlaceholderCharacter.tones(for: slot, wearing: piece.id)?.base, "\(piece.id)")
@@ -339,7 +345,7 @@ func outline(_ path: [PathElement]) -> [Point] {
     #expect(throws: AvatarError.malformedJSON("editor.json: warmup-tee hangs in no store")) {
         try EditorChoices.decode(
             Data(
-                #"{"version": 3, "species": [], "stores": [{"id": "lap"}], "wear": {"top": [{"id": "warmup-tee", "store": "warmup"}]}, "props": []}"#
+                #"{"version": 4, "species": [], "stores": [{"id": "lap"}], "wear": {"top": [{"id": "warmup-tee", "store": "warmup"}]}, "props": []}"#
                     .utf8))
     }
 }
@@ -350,6 +356,8 @@ func outline(_ path: [PathElement]) -> [Point] {
     let stores = try PlaceholderCharacter.editorChoices().stores
     #expect(stores.map(\.id) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce"])
     #expect(stores.filter(\.isOpen).map(\.id) == ["warmup"])
+    let starters = try PlaceholderCharacter.editorChoices().starterWear.values.joined()
+    #expect(starters.count == 12 && starters.allSatisfy { $0.store == "warmup" })
     for store in stores {
         #expect(try !PlaceholderCharacter.storeBadge(store.id).shapes.isEmpty)
     }
@@ -360,7 +368,7 @@ func outline(_ path: [PathElement]) -> [Point] {
     #expect(throws: AvatarError.malformedJSON(#".species[0]: unknown key "hiar""#)) {
         try EditorChoices.decode(
             Data(
-                #"{"version": 3, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "stores": [], "wear": {}, "props": []}"#
+                #"{"version": 4, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "stores": [], "wear": {}, "props": []}"#
                     .utf8))
     }
 }

@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "species": [
     { "id": "person", "bodies": ["peach"], "hair": true },
     { "id": "cat", "bodies": ["cat", "tuxedo", "calico", "tortie", "orangewhite", "lihua", "siamese", "ragdoll"] },
@@ -19,25 +19,57 @@
     "top": [
       { "id": "warmup-tee", "store": "warmup", "swatches": ["#F4F6FA", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
       { "id": "warmup-tank", "store": "warmup", "swatches": ["#2D5BA0", "#1F2128", "#F4F6FA", "#278C5E", "#9062DE", "#E65345"] },
-      { "id": "warmup-hoodie", "store": "warmup", "swatches": ["#6B7080", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+      { "id": "warmup-hoodie", "store": "warmup", "swatches": ["#6B7080", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "lap-jacket", "store": "lap" },
+      { "id": "nolook-jersey", "store": "nolook" },
+      { "id": "moss-anorak", "store": "moss" },
+      { "id": "halfmoon-tank", "store": "halfmoon" },
+      { "id": "deuce-polo", "store": "deuce" }
     ],
     "bottom": [
       { "id": "warmup-shorts", "store": "warmup", "swatches": ["#1F2128", "#6B7080", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
       { "id": "warmup-joggers", "store": "warmup", "swatches": ["#6B7080", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
-      { "id": "warmup-leggings", "store": "warmup", "swatches": ["#1F2128", "#6B7080", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+      { "id": "warmup-leggings", "store": "warmup", "swatches": ["#1F2128", "#6B7080", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "lap-pants", "store": "lap" },
+      { "id": "nolook-shorts", "store": "nolook" },
+      { "id": "moss-cargo", "store": "moss" },
+      { "id": "halfmoon-flare", "store": "halfmoon" },
+      { "id": "deuce-shorts", "store": "deuce" },
+      { "id": "deuce-skirt", "store": "deuce" }
     ],
     "shoes": [
       { "id": "warmup-canvas", "store": "warmup", "swatches": ["#F4F6FA", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
-      { "id": "warmup-runner", "store": "warmup", "swatches": ["#3A3F4B", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+      { "id": "warmup-runner", "store": "warmup", "swatches": ["#3A3F4B", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "lap-runner", "store": "lap" },
+      { "id": "nolook-hightop", "store": "nolook" },
+      { "id": "moss-trail", "store": "moss" },
+      { "id": "halfmoon-studio", "store": "halfmoon" },
+      { "id": "deuce-court", "store": "deuce" }
     ],
     "hat": [
       { "id": "warmup-cap", "store": "warmup", "swatches": ["#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
-      { "id": "warmup-headband", "store": "warmup", "swatches": ["#E65345", "#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE"] }
+      { "id": "warmup-headband", "store": "warmup", "swatches": ["#E65345", "#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE"] },
+      { "id": "nolook-backcap", "store": "nolook" },
+      { "id": "moss-bucket", "store": "moss" },
+      { "id": "deuce-visor", "store": "deuce" }
     ],
     "acc": [
       { "id": "warmup-towel", "store": "warmup", "swatches": ["#9062DE", "#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#E65345"] },
-      { "id": "warmup-waistbag", "store": "warmup", "swatches": ["#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] }
+      { "id": "warmup-waistbag", "store": "warmup", "swatches": ["#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
+      { "id": "moss-sling", "store": "moss" },
+      { "id": "halfmoon-tied", "store": "halfmoon" }
     ]
   },
-  "props": ["bottle", "dumbbell"]
+  "props": [
+    { "id": "bottle", "open": true },
+    { "id": "dumbbell", "open": true },
+    { "id": "racket" },
+    { "id": "badminton" },
+    { "id": "pickleball" },
+    { "id": "pingpong" },
+    { "id": "kettlebell" },
+    { "id": "yogamat" },
+    { "id": "chalkbag" },
+    { "id": "goggles" }
+  ]
 }

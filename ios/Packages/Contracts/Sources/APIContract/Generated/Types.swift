@@ -348,9 +348,9 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /squads/{squadId}/weeks/{weekStart}/story/nudge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/nudge/post(nudgeSquadWeekStory)`.
     func nudgeSquadWeekStory(_ input: Operations.NudgeSquadWeekStory.Input) async throws -> Operations.NudgeSquadWeekStory.Output
-    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    /// A squad’s weekly 战报 (每周战报), frozen at the week’s awards
     ///
-    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad.
+    /// Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
@@ -362,6 +362,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/award-totals`.
     /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
     func getMyAwardTotals(_ input: Operations.GetMyAwardTotals.Input) async throws -> Operations.GetMyAwardTotals.Output
+    /// The stores and props the signed-in member unlocked
+    ///
+    /// Stores on the character editor’s 商店街 and props open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler and the dumbbell) are everyone’s and never listed. An unlock is never taken back.
+    ///
+    /// - Remark: HTTP `GET /me/unlocks`.
+    /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.
+    func getMyUnlocks(_ input: Operations.GetMyUnlocks.Input) async throws -> Operations.GetMyUnlocks.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -1074,9 +1081,9 @@ extension APIProtocol {
             headers: headers
         ))
     }
-    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    /// A squad’s weekly 战报 (每周战报), frozen at the week’s awards
     ///
-    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad.
+    /// Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
@@ -1097,6 +1104,15 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
     public func getMyAwardTotals(headers: Operations.GetMyAwardTotals.Input.Headers = .init()) async throws -> Operations.GetMyAwardTotals.Output {
         try await getMyAwardTotals(Operations.GetMyAwardTotals.Input(headers: headers))
+    }
+    /// The stores and props the signed-in member unlocked
+    ///
+    /// Stores on the character editor’s 商店街 and props open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler and the dumbbell) are everyone’s and never listed. An unlock is never taken back.
+    ///
+    /// - Remark: HTTP `GET /me/unlocks`.
+    /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.
+    public func getMyUnlocks(headers: Operations.GetMyUnlocks.Input.Headers = .init()) async throws -> Operations.GetMyUnlocks.Output {
+        try await getMyUnlocks(Operations.GetMyUnlocks.Input(headers: headers))
     }
 }
 

@@ -105,9 +105,13 @@ const app = createApp({
       claimNudge: unused,
       claimWinners: unused,
       titlesWon: unused,
+      story: unused,
+      freezeStory: unused,
+      storiesWaiting: unused,
     },
     clock: unused,
   },
+  unlocks: { of: unused },
   log: createLog(unused),
   jobs: { isScheduler: undefined, interactions: [], clock: unused },
   admin: {

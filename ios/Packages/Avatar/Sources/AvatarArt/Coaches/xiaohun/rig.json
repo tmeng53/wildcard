@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "canvas": { "width": 240, "height": 320 },
+  "parts": [
+    { "id": "shadow", "pivot": [120, 314], "layers": [{ "art": "shadow" }] },
+    { "id": "root", "pivot": [120, 312] },
+    { "id": "tail", "parent": "torso", "pivot": [150, 276], "layers": [{ "art": "tail" }] },
+    { "id": "legL", "parent": "root", "pivot": [105, 264], "layers": [{ "art": "legL" }] },
+    { "id": "legR", "parent": "root", "pivot": [135, 264], "layers": [{ "art": "legR" }] },
+    { "id": "armL", "parent": "torso", "pivot": [80, 164], "layers": [{ "art": "armL" }] },
+    { "id": "torso", "parent": "root", "pivot": [120, 272], "layers": [{ "art": "torso" }] },
+    { "id": "armR", "parent": "torso", "pivot": [162, 166], "layers": [{ "art": "armR" }] },
+    { "id": "head", "parent": "torso", "pivot": [120, 152], "layers": [{ "art": "head" }] },
+    { "id": "blink", "parent": "head", "pivot": [120, 112], "opacity": 0, "layers": [{ "art": "blink" }] },
+    { "id": "cry", "parent": "head", "pivot": [120, 112], "opacity": 0, "layers": [{ "art": "cry" }] }
+  ]
+}

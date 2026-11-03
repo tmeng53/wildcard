@@ -30,6 +30,7 @@ import {
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
+  unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
 } from '../test-kit/weekly-awards.js';
@@ -85,6 +86,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       aiConsent: () => Promise.resolve(true),
     }),
     weeklyAwards: unusedWeeklyAwards,
+    unlocks: unusedUnlocks,
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     aiConsent: aiConsentOn(db),
