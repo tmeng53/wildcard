@@ -1,4 +1,6 @@
 #if os(iOS)
+import Contracts
+import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
@@ -6,21 +8,57 @@ import SwiftUI
 /// scene is in view (`TodayModel+Notices.swift`).
 struct HomeNotices: ViewModifier {
     @Bindable var model: TodayModel
+    private var unlocks: UnlockNotices? { model.unlockNotices }
 
     func body(content: Content) -> some View {
         content
-            .noticeBanner(item: $model.notice) { notice in banner(for: notice) }
+            .noticeBanner(item: $model.notice, hold: model.noticeHold, onTap: tap) { notice in banner(for: notice) }
+            // Only an unlock: something the member earned arrives.
+            .haptic(.appear, trigger: model.notice?.id) { _, id in id != nil && isUnlock(model.notice) }
             .onChange(of: model.notice == nil && model.step == .scene && !model.isBurstOpen) { _, free in
                 if free { Task { await model.showNextNotice() } }
             }
+            // A 练了 that opened something, or one the last load found: told once each.
+            .onChange(of: model.store.unlocked.count, initial: true) { _, count in
+                if count > 0 { model.tellUnlocks() }
+            }
     }
 
-    /// Who moved the squad, over the new scene's badge.
+    @ViewBuilder
     private func banner(for notice: TodayModel.Notice) -> some View {
-        NoticeBanner(
-            notice.picker.map { Text("\($0) 把小队搬到了\(notice.scene.name)", bundle: .module) }
-                ?? Text("小队搬到了\(notice.scene.name)", bundle: .module)
-        ) { SceneBadge(notice.scene) }
+        switch notice.news {
+        case .moved(let scene, let picker):
+            // Who moved the squad, over the new scene's badge.
+            NoticeBanner(
+                picker.map { Text("\($0) 把小队搬到了\(scene.name)", bundle: .module) }
+                    ?? Text("小队搬到了\(scene.name)", bundle: .module)
+            ) { SceneBadge(scene) }
+        case .unlocked(let unlock):
+            if let unlocks { unlocks.banner(unlock) }
+        }
+    }
+
+    private func tap(_ notice: TodayModel.Notice) {
+        if case .unlocked(let unlock) = notice.news { unlocks?.open(unlock) }
+    }
+
+    private func isUnlock(_ notice: TodayModel.Notice?) -> Bool {
+        if case .unlocked = notice?.news { true } else { false }
+    }
+}
+
+/// How the home tells a store or prop the member unlocked, from the app, which knows the
+/// character editor's words for them and opens it on a tap (`TodayModel.tellUnlocks(with:)`).
+public struct UnlockNotices {
+    let banner: (Unlock) -> AnyView
+    let open: (Unlock) -> Void
+
+    /// - Parameters:
+    ///   - banner: the `NoticeBanner` that says what opened.
+    ///   - open: a tap on it: the editor, at that store or prop.
+    public init<Banner: View>(banner: @escaping (Unlock) -> Banner, open: @escaping (Unlock) -> Void) {
+        self.banner = { AnyView(banner($0)) }
+        self.open = open
     }
 }
 #endif

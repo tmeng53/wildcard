@@ -64,6 +64,8 @@ public final class TodayModel {
     var coachHold: Task<Void, Never>?
     /// How long the coach's bubble stays up.
     let coachLineHold: Double
+    /// How long a notice at the top stays up.
+    let noticeHold: Double
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
@@ -126,6 +128,7 @@ public final class TodayModel {
     ) {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
         coachLineHold = bubbleHold ?? Self.coachLineHold
+        noticeHold = bubbleHold ?? Motion.noticeHold
         self.scene = scene
         self.defaults = defaults
         self.store = store
@@ -152,6 +155,8 @@ public final class TodayModel {
     /// The `NoticeBanner` showing at the top, and those waiting for it (`TodayModel+Notices.swift`).
     var notice: Notice?
     var pendingNotices: [Notice] = []
+    /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
+    @ObservationIgnored var unlockNotices: UnlockNotices?
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.
@@ -173,28 +178,6 @@ public final class TodayModel {
     }
 
     var timeZone: TimeZone { store.home?.timeZone ?? .current }
-
-    /// 今日赛况, from 21:00 on the member's own clock until their day ends; nil before.
-    var recap: DayRecap? {
-        guard let home, home.showsRecap(at: now()) else { return nil }
-        return home.recap(pending: store.pending)
-    }
-
-    /// Noon of the member's today in their time zone: the day the recap's title names.
-    var dayDate: Date? {
-        guard let home, let day = home.mine?.day else { return nil }
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = home.timeZone
-        return calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day, hour: 12))
-    }
-
-    /// A member's head and name on 今日赛况: 我 for me, else their nickname, or 队友 before they
-    /// made their character.
-    func recapMember(_ member: MemberID) -> (head: CharacterPlayer?, name: String) {
-        if member == home?.member { return (player, String(localized: "我", bundle: .module.inAppLanguage)) }
-        let nickname = home?.today.members.first { $0.member == member }?.character?.nickname.text
-        return (head(of: member.description), nickname ?? String(localized: "队友", bundle: .module.inAppLanguage))
-    }
 
     /// The ring under my feet.
     var myRing: RingStatus {
