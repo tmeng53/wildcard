@@ -47,8 +47,7 @@ final class CoachSidelineUITests: XCTestCase {
         XCTAssertLessThanOrEqual(frame.maxX, window.maxX, "the bubble runs off the right: \(frame)")
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
         XCTAssertGreaterThanOrEqual(frame.minY, card.frame.maxY, "the squad card covers the bubble: \(frame)")
-        let tab = app.buttons["tab.today"]
-        XCTAssertTrue(tab.exists, "no tab bar under 今天")
+        let tab = tabButton("tab.today", in: app)
         XCTAssertLessThanOrEqual(frame.maxY, tab.frame.minY, "the tab bar covers the bubble: \(frame)")
     }
 
