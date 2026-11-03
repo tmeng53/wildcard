@@ -209,18 +209,18 @@
         }
       }
     },
-    "冠军选的，下周冠军再换": {
+    "场地已选好，下周冠军再换": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Champ's pick. Next week's champ gets the next one."
+            "value": "Scene's picked. Next week's champ gets the next one."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "冠軍選的，下週冠軍再換"
+            "value": "場地已選好，下週冠軍再換"
           }
         }
       }
@@ -749,22 +749,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "隊長會交給最早加入的隊友"
-          }
-        }
-      }
-    },
-    "队长选的，下周冠军再换": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Captain's pick. Next week's champ gets the next one."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隊長選的，下週冠軍再換"
           }
         }
       }

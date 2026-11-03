@@ -28,9 +28,8 @@ struct SceneLineText: View {
             Text("上周冠军 \(winners) 来选", bundle: .module)
         case .youPickAsCaptain, .captainPicks: Text("上周没有冠军，队长选一次", bundle: .module)
         case .youPicked: Text("你选的，下周冠军再换", bundle: .module)
-        case .captainPicked: Text("队长选的，下周冠军再换", bundle: .module)
-        case .winnerPicked(let name?): Text("\(name) 选的，下周冠军再换", bundle: .module)
-        case .winnerPicked(nil): Text("冠军选的，下周冠军再换", bundle: .module)
+        case .pickedBy(let name?): Text("\(name) 选的，下周冠军再换", bundle: .module)
+        case .pickedBy(nil): Text("场地已选好，下周冠军再换", bundle: .module)
         }
     }
 }

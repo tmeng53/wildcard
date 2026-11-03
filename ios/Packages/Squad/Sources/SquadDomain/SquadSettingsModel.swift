@@ -54,10 +54,9 @@ public enum SceneLine: Hashable, Sendable {
     case captainPicks
     /// Picked this week by the member: it stays until next week's winner.
     case youPicked
-    /// Picked this week by the captain, with nobody holding the crown.
-    case captainPicked
-    /// Picked this week by a crown winner, by nickname (nil once they deleted their account).
-    case winnerPicked(String?)
+    /// Picked this week by someone else (a crown winner, or the captain when nobody won), by
+    /// nickname, since the captaincy can change hands; nil once they deleted their account.
+    case pickedBy(String?)
 }
 
 /// 小队设置 on screen: the squad, its members and this week's scene. The captain renames the
@@ -150,8 +149,7 @@ public final class SquadSettingsModel {
         let isMe = scene.pickers.members.contains(settings.viewer)
         if let picked = scene.picked {
             if picked.picker == settings.viewer { return .youPicked }
-            if case .captain = scene.pickers { return .captainPicked }
-            return .winnerPicked(picked.picker.flatMap { settings.characters[$0]?.nickname.text })
+            return .pickedBy(picked.picker.flatMap { settings.characters[$0]?.nickname.text })
         }
         switch scene.pickers {
         case .crown(let winners):

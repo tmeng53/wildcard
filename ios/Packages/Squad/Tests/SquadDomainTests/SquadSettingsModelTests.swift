@@ -140,6 +140,15 @@ private actor Squad3: SquadSettingsService {
         #expect(model.sceneLine == .captainPicks)
     }
 
+    @Test func aSceneTheCaptainPickedNamesThemNotTheirSeat() async throws {
+        let model = SquadSettingsModel(
+            service: try Squad3(
+                viewer: mia,
+                scene: try scene(pickers: .captain(lin), picked: .init(scene: .track, picker: lin), canPick: false)))
+        await model.reload()
+        #expect(model.sceneLine == .pickedBy("小林"))
+    }
+
     @Test func renamingSavesTrimmedAndRefusesWhatTheRulesDo() async throws {
         var changes = 0
         let model = SquadSettingsModel(
