@@ -1,7 +1,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { Emoji, LocalDay, SquadId, WeekStart } from '@wildcard/check-ins';
 import {
-  AwardMove,
   CheckInKind,
   SPEECH_MAX,
   TITLE_MAX,
@@ -35,9 +34,8 @@ const move = (description: string) =>
     .min(1)
     .meta({
       description:
-        `${description} Today one of ${AwardMove.options
-          .map((each) => `\`${each}\``)
-          .join(', ')} (\`cheer\` is the persona’s own cheer). New moves come without an app ` +
+        `${description} A move id as the app names its art (\`cheer\` is the persona’s own ` +
+        'cheer); which moves the awards pick from is a setting, so new ones come without an app ' +
         'release: play `cheer` for one the app doesn’t know.',
       example: 'pump',
     });

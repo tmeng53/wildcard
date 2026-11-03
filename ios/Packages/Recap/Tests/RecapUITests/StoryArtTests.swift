@@ -5,20 +5,23 @@ import Testing
 
 @testable import RecapUI
 
-/// Every clip the story plays has its own art now: only the cheer, the pair-only stack and a
-/// sport without a kit fall back to the persona's cheer.
+/// Every clip the story plays has its own art, every move the art has among the award moves:
+/// only the cheer, the pair-only stack, a move the art doesn't have and a sport without a kit
+/// fall back to the persona's cheer.
 @Test(arguments: Persona.allCases)
 func everyStoryClipPlaysItsOwnArt(persona: Persona) throws {
     let cheer = try PlaceholderCharacter.clip("cheer", persona: persona, species: nil)
     let clips: [StoryClip] =
-        AwardMove.allCases.map(StoryClip.award) + [
+        NamedMove.all.map { StoryClip.award(AwardMove(rawValue: $0)) } + [
+            .award(.stack), .award(AwardMove(rawValue: "moonwalk")),
             .eat(.healthy), .eat(.cheat), .tossFlyer, .tossThrower, .stackTop, .stackBottom, .sport(nil),
         ]
-    let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.lifter)
     for clip in clips {
+        let figure = try PlaceholderCharacter.figure(wearing: clip.dressing(PlaceholderCharacter.lifter))
         let art = try clip.art(persona: persona, species: nil)
         _ = try figure.bind(art)
-        let fallsBack = [StoryClip.award(.cheer), .award(.stack), .sport(nil)].contains(clip)
+        let fallsBack = [StoryClip.award(.cheer), .award(.stack), .award(AwardMove(rawValue: "moonwalk")), .sport(nil)]
+            .contains(clip)
         #expect((art == cheer) == fallsBack, "\(clip)")
     }
     #expect(try StoryClip.award(.flat).art(persona: persona, species: nil).name == "flat")
@@ -32,6 +35,9 @@ func everyStoryClipPlaysItsOwnArt(persona: Persona) throws {
     #expect(StoryClip.eat(.healthy).dressing(look).variants["food"] == "bowl")
     #expect(StoryClip.eat(.cheat).dressing(look).variants["food"] == "boba")
     #expect(StoryClip.award(.pump).dressing(look) == look)
+    // A sport's award move holds its kit's prop, from kits.json.
+    #expect(StoryClip.award(AwardMove(rawValue: "swim")).dressing(look).variants["prop"] == "goggles")
+    #expect(StoryClip.award(AwardMove(rawValue: "tennis")).dressing(look).variants["prop"] == "racket")
 }
 
 /// The medal and the crown are the rig's own parts: hidden until worn, the medal on, the crown
@@ -63,7 +69,8 @@ func everyStoryClipPlaysItsOwnArt(persona: Persona) throws {
 @Test(arguments: Persona.allCases)
 func everyStoryClipStaysInItsRoom(persona: Persona) throws {
     let clips: [StoryClip] =
-        AwardMove.allCases.map(StoryClip.award) + [
+        NamedMove.all.map { StoryClip.award(AwardMove(rawValue: $0)) } + [
+            .award(.stack), .award(AwardMove(rawValue: "moonwalk")),
             .eat(.healthy), .eat(.cheat), .tossFlyer, .tossThrower, .stackTop, .stackBottom,
         ]
     // The widest bodies: a bear's ears, a lop's ears, a cat's tail.

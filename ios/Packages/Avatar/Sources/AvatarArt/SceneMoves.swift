@@ -21,7 +21,15 @@ extension PlaceholderCharacter {
     public static func sceneLoop(
         for scene: SceneTheme, look: Outfit, persona: Persona, in catalog: SportCatalog
     ) throws(AvatarError) -> (outfit: Outfit, clip: Clip) {
-        let kit = try sportKits().kit(for: .sport(scene.sport), in: catalog)
+        try trainingLoop(for: .sport(scene.sport), look: look, persona: persona, in: catalog)
+    }
+
+    /// `look` in the kit of `activity` (`kits.json`, the one source of what each sport plays)
+    /// and its move, looping: a character training at that sport.
+    public static func trainingLoop(
+        for activity: Activity, look: Outfit, persona: Persona, in catalog: SportCatalog
+    ) throws(AvatarError) -> (outfit: Outfit, clip: Clip) {
+        let kit = try sportKits().kit(for: activity, in: catalog)
         return (kit.dress(look), try move(for: kit, persona: persona))
     }
 
