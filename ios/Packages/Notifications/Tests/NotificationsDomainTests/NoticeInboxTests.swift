@@ -146,8 +146,14 @@ private var utc: Calendar {
 @Test func aPushLineSplitsIntoATitleAndWhatFollows() {
     let poke = PushAlertWords(PushAlert(key: "push.dailyProgress.poke", args: ["3", "12", "小林"]))
     let parts = poke.parts("%3$@拍了拍你 · 本周小队已练 %1$@/%2$@ 次")
-    #expect(parts.title == "小林拍了拍你")
-    #expect(parts.detail == "本周小队已练 3/12 次")
+    // The week comes first, as the approved bell design shows it, whatever order the push says it in.
+    #expect(parts.title == "本周小队已练 3/12 次")
+    #expect(parts.detail == "小林拍了拍你")
+
+    let received = PushAlertWords(key: "push.dailyProgress.received", args: ["3", "12", "2"])
+        .parts("本周小队已练 %1$@/%2$@ 次 · 今天 %3$@ 位队友给你打了气")
+    #expect(received.title == "本周小队已练 3/12 次")
+    #expect(received.detail == "今天 2 位队友给你打了气")
 
     let plain = PushAlertWords(key: "push.dailyProgress", args: ["3", "12"]).parts("本周小队已练 %1$@/%2$@ 次")
     #expect(plain.title == "本周小队已练 3/12 次")

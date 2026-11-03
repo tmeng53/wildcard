@@ -24,7 +24,10 @@ final class NoticeBellUITests: XCTestCase {
         XCTAssertTrue(moved.waitForExistence(timeout: Self.wait), "通知 didn't open on its newest row")
         XCTAssertTrue(moved.label.contains("阿杰 把小队搬到了跑道"), "the scene row says \(moved.label)")
         XCTAssertTrue(app.buttons["notices.row.6"].label.contains("教练 毛头 回复了你的打卡"))
-        XCTAssertTrue(app.buttons["notices.row.5"].label.contains("Coco和另外 2 人拍了拍你"))
+        // The 6pm push: the squad's week on top, who patted under it, as the approved design shows.
+        let daily = app.buttons["notices.row.5"].label
+        XCTAssertTrue(daily.hasPrefix("本周小队已练 9/16 次"), "the 6pm row says \(daily)")
+        XCTAssertTrue(daily.contains("Coco和另外 2 人拍了拍你"), "the 6pm row says \(daily)")
         let feedTab = app.buttons["tab.feed"]
         waitFor(feedTab, "exists == false OR hittable == false", "the tab bar stayed over 通知")
         for id in 1...7 {

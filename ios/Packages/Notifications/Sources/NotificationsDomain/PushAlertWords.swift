@@ -73,12 +73,17 @@ extension PushAlertWords {
         self.init(key: alert.key, args: alert.args)
     }
 
-    /// The push's line filled, split where it joins its parts with ` · `: 通知 shows the first
-    /// as the row's title and the rest under it.
+    /// The push's line split where it joins its parts with ` · `, each part filled: 通知 shows
+    /// the part with the first value (the 6pm push's week, 本周小队已练 9/16 次) as the row's
+    /// title, as the approved bell design does, and the rest under it.
     public func parts(_ line: String) -> (title: String, detail: String?) {
-        let pieces = fill(line).components(separatedBy: Self.joiner)
-        let rest = pieces.dropFirst().joined(separator: Self.joiner)
-        return (pieces.first ?? "", rest.isEmpty ? nil : rest)
+        var pieces = line.components(separatedBy: Self.joiner)
+        if let lead = pieces.firstIndex(where: { $0.contains("%1$@") }), lead > 0 {
+            pieces.insert(pieces.remove(at: lead), at: 0)
+        }
+        let filled = pieces.map(fill)
+        let rest = filled.dropFirst().joined(separator: Self.joiner)
+        return (filled.first ?? "", rest.isEmpty ? nil : rest)
     }
 
     /// How the push copy joins its parts, in every language.
