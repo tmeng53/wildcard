@@ -191,11 +191,15 @@ struct MainTabs: View {
             .allowsHitTesting(!showsNotices)
             .accessibilityHidden(showsNotices)
             .task { await recap.refresh() }
-            // The bell's dot, read each time 动态 opens.
-            .task { await inbox.load() }
+            // The bell's dot, read each time 动态 opens, and the member 通知 shows: their character
+            // when it is empty and their unlocks for how a store opened.
+            .task {
+                await inbox.load()
+                if profile.overview == nil { await profile.reload() }
+            }
             if showsNotices {
                 NoticesView(
-                    inbox: inbox, viewer: noticeViewer, unlocked: Self.unlockWords, now: LaunchOptions.now,
+                    inbox: inbox, viewer: noticeViewer, unlocked: unlockWords, now: LaunchOptions.now,
                     open: open, close: { showsNotices = false }
                 )
                 .allowsHitTesting(noticePost == nil)
@@ -236,10 +240,13 @@ struct MainTabs: View {
         profile.overview.map { NoticeViewer(outfit: $0.character.outfit, persona: $0.character.persona) }
     }
 
-    /// A store's or prop's words and badge on its 通知 row, as the wardrobe names them.
-    private static func unlockWords(_ kind: Unlock.Kind, item: String) -> UnlockWords {
-        UnlockWords(
-            title: WardrobeNews.title(kind, item: item), detail: WardrobeNews.detail(kind, item: item),
+    /// A store's or prop's words and badge on its 通知 row, as the home's banner says them. How a
+    /// store opened comes from the member's unlock; a prop's title says it all (the bell design).
+    private func unlockWords(_ kind: Unlock.Kind, item: String) -> UnlockWords {
+        let unlock = profile.overview?.unlocks.first { $0.kind == kind && $0.id == item }
+        return UnlockWords(
+            title: UnlockNames.title(kind, item: item),
+            detail: kind == .store ? unlock.map(UnlockNames.detail) : nil,
             icon: AnyView(WardrobeBadge(kind, item: item)))
     }
 

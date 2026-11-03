@@ -2258,82 +2258,66 @@
         }
       }
     },
-    "跑步练满 3 次": {
+    "随便练满 %lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "3 runs done"
+            "value": "Any %lld workouts"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "跑步練滿 3 次"
+            "value": "隨便練滿 %lld 次"
           }
         }
       }
     },
-    "篮球练满 3 次": {
+    "%@练满 %lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "3 basketball sessions done"
+            "value": "%@ × %lld"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "籃球練滿 3 次"
+            "value": "%@練滿 %lld 次"
           }
         }
       }
     },
-    "攀岩或徒步练满 3 次": {
+    "第一次打%@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "3 climbs or hikes done"
+            "value": "First time playing %@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "攀岩或徒步練滿 3 次"
+            "value": "第一次打%@"
           }
         }
       }
     },
-    "随便练满 3 次": {
+    "第一次练%@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "3 workouts done"
+            "value": "First %@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "隨便練滿 3 次"
-          }
-        }
-      }
-    },
-    "网球练满 3 次": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "3 tennis sessions done"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網球練滿 3 次"
+            "value": "第一次練%@"
           }
         }
       }

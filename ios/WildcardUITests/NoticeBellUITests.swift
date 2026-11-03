@@ -17,7 +17,7 @@ final class NoticeBellUITests: XCTestCase {
         XCTAssertLessThan(
             bell.frame.maxY, app.staticTexts["feed.title"].frame.maxY + 8, "the bell isn't beside the title")
         settle()
-        keepScreenshot(named: "96-notices-bell")
+        keepScreenshot(named: "100-notices-bell")
 
         bell.tap()
         let moved = app.buttons["notices.row.7"]
@@ -37,7 +37,15 @@ final class NoticeBellUITests: XCTestCase {
             }
         }
         settle()
-        keepScreenshot(named: "97-notices")
+        keepScreenshot(named: "101-notices")
+
+        // A store's row says how it opened, in the home banner's words, from the member's unlock.
+        let store = app.buttons["notices.row.3"]
+        if !store.exists { app.swipeUp() }
+        XCTAssertTrue(store.waitForExistence(timeout: Self.wait), "no store row")
+        XCTAssertTrue(store.label.contains("DEUCE CLUB 开门了"), "the store row says \(store.label)")
+        XCTAssertTrue(store.label.contains("网球练满 3 次"), "the store row says \(store.label)")
+        app.swipeDown()
 
         // Back on 动态, everything is read: the dot is gone.
         app.buttons["notices.back"].tap()
@@ -64,7 +72,7 @@ final class NoticeBellUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["还没有通知"].exists)
         assertOnScreen(empty, in: app)
         settle()
-        keepScreenshot(named: "98-notices-empty")
+        keepScreenshot(named: "102-notices-empty")
     }
 
     func testEnglishRowsStayOnScreen() {
@@ -83,7 +91,7 @@ final class NoticeBellUITests: XCTestCase {
             }
         }
         settle()
-        keepScreenshot(named: "99-notices-en")
+        keepScreenshot(named: "103-notices-en")
     }
 
     private func launch(language: String, extra: [String] = []) -> XCUIApplication {
@@ -91,7 +99,8 @@ final class NoticeBellUITests: XCTestCase {
         app.launchArguments +=
             [
                 "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push", "-uitest-noon",
-                "-tab", "feed",
+                // The sample member has opened DEUCE CLUB, as the sample's store notice says.
+                "-uitest-unlocked", "-tab", "feed",
             ] + extra
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }

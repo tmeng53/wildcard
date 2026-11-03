@@ -19,7 +19,7 @@ public struct NoticeViewer: Hashable, Sendable {
 }
 
 /// What a store or prop that opened says on its row: the editor's own names and badge
-/// (`CharacterEditorUI`'s `WardrobeNews`), which the app passes in.
+/// (`CharacterEditorUI`'s `UnlockNames`), which the app passes in.
 public struct UnlockWords {
     public let title: Text
     public let detail: Text?
