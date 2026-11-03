@@ -31,6 +31,11 @@ final class NoticeUITests: XCTestCase {
         XCTAssertGreaterThanOrEqual(frame.minY, window.minY, "the notice runs off the top: \(frame)")
         // One line of 15-point type in a 36-point icon's capsule: a second line would make it taller.
         XCTAssertLessThan(frame.height, 70, "the notice wrapped: \(frame)")
+        // Phones with a notch or the Dynamic Island (all taller than 800 points) keep 44 points or
+        // more at the top; the island would hide the notice's title there. Screenshots never draw it.
+        if window.height > 800 {
+            XCTAssertGreaterThanOrEqual(frame.minY, 44, "the notice sits under the Dynamic Island: \(frame)")
+        }
 
         banner.swipeUp()
         waitFor(banner, "exists == false", "a swipe up didn't put the notice away", timeout: Self.wait)

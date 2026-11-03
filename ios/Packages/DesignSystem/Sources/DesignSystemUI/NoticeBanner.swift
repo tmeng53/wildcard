@@ -83,8 +83,8 @@ extension View {
     /// Drops `content(item)` in from the top while `item` is set, over everything under it, and
     /// puts it away after `Motion.noticeHold`, on a swipe up, or on a tap (which also calls
     /// `onTap`). The caller keeps the queue: setting the next item shows it once this one is
-    /// gone. The status bar hides while it shows. With Reduce Motion on, it fades instead of
-    /// dropping.
+    /// gone. It sits just under the status bar, clear of the Dynamic Island, which would hide
+    /// its middle on a phone that has one. With Reduce Motion on, it fades instead of dropping.
     public func noticeBanner<Item: Identifiable, Banner: View>(
         item: Binding<Item?>, onTap: @escaping (Item) -> Void = { _ in },
         @ViewBuilder content: @escaping (Item) -> Banner
@@ -102,8 +102,8 @@ private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
     let content: (Item) -> Banner
     @State private var drag: Double = 0
 
-    /// From the top of the screen, so it opens where the Dynamic Island is.
-    private static var top: Double { 8 }
+    /// From the top of the safe area, just under the status bar and the Dynamic Island.
+    private static var top: Double { 4 }
     /// How far up a swipe puts it away.
     private static var dismissDrag: Double { 16 }
 
@@ -140,14 +140,10 @@ private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
                     .accessibilityIdentifier("notice.banner")
             }
         }
-        .ignoresSafeArea(edges: .top)
-        // The capsule takes the status bar's place, as the Dynamic Island does; the system draws
-        // the status bar over the app, so the time would sit on the title.
-        .hidingStatusBar(item != nil)
         .animation(.wildcard(Motion.notice, reduceMotion: reduceMotion), value: item?.id)
     }
 
-    /// Out of the top of the screen, shrinking into where the Dynamic Island is; a fade with
+    /// Out of the top of the screen, shrinking up towards the Dynamic Island; a fade with
     /// Reduce Motion on.
     private var transition: AnyTransition {
         guard !reduceMotion else { return AnyTransition.opacity }
@@ -160,17 +156,6 @@ private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
         guard item?.id == shown.id else { return }
         drag = 0
         withAnimation(.wildcard(Motion.notice.exit, reduceMotion: reduceMotion)) { item = nil }
-    }
-}
-
-extension View {
-    /// The status bar is iOS's; the package also builds for macOS, which has none.
-    fileprivate func hidingStatusBar(_ hidden: Bool) -> some View {
-        #if os(iOS)
-        statusBarHidden(hidden)
-        #else
-        self
-        #endif
     }
 }
 #endif
