@@ -40,7 +40,7 @@ final class TogetherUITests: XCTestCase {
             let after = Int(Date().timeIntervalSince(opened) * 1000)
             keepScreenshot(named: String(format: "\(name)-%02d-%05dms", frame, after))
             if walks, frame < 8 {
-                let frames = figures.allElementsBoundBySnapshot.map { "\(Int($0.frame.midX)),\(Int($0.frame.maxY))" }
+                let frames = figures.allElementsBoundByIndex.map { "\(Int($0.frame.midX)),\(Int($0.frame.maxY))" }
                 places.insert(frames.sorted().joined(separator: " "))
             }
             Thread.sleep(forTimeInterval: 0.35)
