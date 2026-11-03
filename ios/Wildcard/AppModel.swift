@@ -290,10 +290,10 @@ final class AppModel {
 
     /// The member's home, from what the phone kept for them alone.
     private func todayStore(of member: MemberID) -> TodayStore {
-        let directory = folders.folder(for: member)
+        let (directory, api) = (folders.folder(for: member), memberAPI(member))
         return TodayStore(
-            backend: APICheckInBackend(api: memberAPI(member), directory: directory, shared: shared),
-            outbox: DeviceOutbox(directory: directory),
+            backend: APICheckInBackend(api: api, directory: directory, shared: shared),
+            outbox: DeviceOutbox(directory: directory), unlocks: APIUnlockLedger(api: api, directory: directory),
             now: { Date() }, newID: { UUID() })
     }
 

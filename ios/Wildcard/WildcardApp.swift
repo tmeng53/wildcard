@@ -85,7 +85,7 @@ struct WildcardApp: App {
                 backend: InMemoryCheckInBackend.sampleSquad(
                     now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
                     patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach),
-                outbox: InMemoryOutbox(),
+                outbox: InMemoryOutbox(), unlocks: SampleUnlockLedger(unlocks: LaunchOptions.unlocked),
                 now: LaunchOptions.now, newID: { UUID() }),
             writer: LaunchOptions.disclaimerWriter,
             photoSource: LaunchOptions.photoSource,
@@ -135,7 +135,8 @@ struct WildcardApp: App {
     /// nothing to sign out of.
     private static func sampleProfile() -> MeModel {
         MeModel(
-            service: InMemoryMeService.sample(failsSaving: LaunchOptions.meFailsSaving),
+            service: InMemoryMeService.sample(
+                failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.unlocked),
             confirm: { .signedInSession }, signOut: {})
     }
 

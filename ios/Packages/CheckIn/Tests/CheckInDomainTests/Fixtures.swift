@@ -167,10 +167,12 @@ final class Counter: @unchecked Sendable {  // Only the main actor's store calls
 }
 
 @MainActor
-func store(_ backend: ScriptedBackend, outbox: MemoryOutbox = MemoryOutbox(), now: Date = tuesdayMorning) -> TodayStore
-{
+func store(
+    _ backend: ScriptedBackend, outbox: MemoryOutbox = MemoryOutbox(), unlocks: ScriptedLedger? = nil,
+    now: Date = tuesdayMorning
+) -> TodayStore {
     let counter = Counter()
-    return TodayStore(backend: backend, outbox: outbox, now: { now }, newID: { counter() })
+    return TodayStore(backend: backend, outbox: outbox, unlocks: unlocks, now: { now }, newID: { counter() })
 }
 
 func photo(_ number: Int) -> PreparedPhoto {
