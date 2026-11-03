@@ -3,12 +3,15 @@ import {
   SquadId as CheckInSquad,
   WeekStart as CheckInWeek,
   photosOf,
+  podiumOf,
+  type Podium,
   type CheckInRecord,
   type CheckIns,
   type SquadWeekCheckIns,
 } from '@wildcard/check-ins';
 import type { Admins } from '@wildcard/admins';
 import type { Members } from '@wildcard/members';
+import { MemberId as NoticeMember, SquadId as NoticeSquad, type Notices } from '@wildcard/notices';
 import { MemberId as PushMember, type Push, type PushNotification } from '@wildcard/push';
 import {
   MemberId as SquadsMember,
@@ -35,10 +38,11 @@ import {
 
 import type { Log } from '../log.js';
 import { pushAlert } from '../push-copy.js';
+import { noticeAlert } from './daily-progress-push.js';
 
 // The weekly awards and the frozen 战报 across modules: who was in the squad and its scene from
 // squads, the week's check-ins and pages from check-ins, members' clocks and characters from
-// members, the awards and the stored 战报 from weekly-awards, the winners' push from push, and
+// members, the awards and the stored 战报 from weekly-awards, the squad's push from push, and
 // the admins a nudge tells from admins.
 
 export interface WeeklyAwardsDependencies {
@@ -47,6 +51,8 @@ export interface WeeklyAwardsDependencies {
   readonly squads: Squads;
   readonly awards: WeeklyAwards;
   readonly push: Push;
+  /** Where each push sent is kept for the member's 通知. */
+  readonly notices: Notices;
   readonly admins: Pick<Admins, 'list'>;
   readonly clock: () => Date;
   readonly log: Log;
@@ -62,13 +68,13 @@ export interface WeeklyAwardsRun {
   readonly given: number;
   /** Squads whose awards couldn't be written; the next run tries again. */
   readonly failed: number;
-  /** Winners this run told, each once a squad. */
+  /** Members this run told their squad's 战报 is ready, each once a squad. */
   readonly told: number;
 }
 
 /**
- * The winners' push. It says only that the awards are in, never what anyone won, so opening the
- * story is the surprise. A later one for the same week (a member in two squads) replaces it.
+ * The squad's push when its 战报 is ready, to everyone in it. It says only that the awards are
+ * in, never who won what, so opening the story is the surprise. A later one for the same week (a member in two squads) replaces it.
  */
 export function awardsReadyNotification(squad: SquadId, week: WeekStart): PushNotification {
   return {
@@ -114,7 +120,7 @@ const AT_ONCE = 4;
 
 /**
  * Gives the latest week's awards (Sunday 8pm Eastern) to every squad that checked in before
- * then, and tells each winner once. Meant to run every hour: a squad whose awards couldn't be
+ * then, and tells everyone in the squad once. Meant to run every hour: a squad whose awards couldn't be
  * written is tried again on the next run, through the following week too, and a squad already
  * done is only checked. Check-ins made after the awards' moment still count for the week, only
  * not for its awards.
@@ -167,15 +173,37 @@ async function giveWeek(
             await deps.awards.give({ squad, weekStart: week, members });
             given += 1;
           }
-          const winners = await deps.awards.claimWinners({ squad, weekStart: week });
-          if (winners.length > 0) {
+          if (await deps.awards.claimReadyPush({ squad, weekStart: week })) {
+            // The whole squad as the 战报 froze it, less anyone who has left since.
+            const now = new Set<string>(await deps.squads.membersOf(SquadsSquad.parse(squad)));
+            const members = story.members
+              .map(({ member }) => member)
+              .filter((member) => now.has(member));
+            const notification = awardsReadyNotification(squad, week);
+            // Kept in each one's 通知 too, whether or not it reaches a phone. Never fails the run.
+            await deps.notices
+              .tell(
+                members.map((member) => ({
+                  member: NoticeMember.parse(member),
+                  squad: NoticeSquad.parse(squad),
+                  kind: 'weeklyAwards' as const,
+                  subject: {
+                    version: 1 as const,
+                    alert: noticeAlert(notification),
+                    weekStart: week,
+                  },
+                })),
+              )
+              .catch((error: unknown) => {
+                deps.log.warn('awards push not kept in notices', { squad, error });
+              });
             const outcome = await deps.push.notifyMembers({
-              members: winners.map((member) => PushMember.parse(member)),
-              notification: awardsReadyNotification(squad, week),
+              members: members.map((member) => PushMember.parse(member)),
+              notification,
             });
-            told += winners.length;
+            told += members.length;
             if (outcome.failures.length > 0) {
-              deps.log.warn('some winners’ phones refused the awards push', {
+              deps.log.warn('some members’ phones refused the awards push', {
                 squad,
                 failures: outcome.failures.length,
               });
@@ -210,8 +238,8 @@ export interface SquadStory {
   readonly members: readonly StoryMember[];
   /** The titles, in the members' order: empty until ready, or when nobody checked in. */
   readonly titles: readonly MemberAwards[];
-  /** The crown winner in the middle, up to 2 others who finished their plan beside. */
-  readonly podium?: { readonly champion: string; readonly sides: readonly string[] };
+  /** The top 3 by days trained, the crown winner in the middle, and who finished their plan. */
+  readonly podium?: Podium<string>;
   /** The squad's meals; who ate more of what is in each member's part. */
   readonly meals?: { readonly healthy: number; readonly cheat: number };
   /** The squad's days trained against its plans; only when someone trained. */
@@ -252,10 +280,8 @@ export async function squadStory(
   const best = members.flatMap(({ member, bestDisclaimer }) =>
     bestDisclaimer === undefined ? [] : [{ author: member, ...bestDisclaimer }],
   )[0];
-  // Someone on the podium whose account was deleted since leaves it; a side steps up.
-  const podium =
-    story.podium && [story.podium.champion, ...story.podium.sides].filter((id) => ids.has(id));
-  const [champion, ...sides] = podium ?? [];
+  // From the members' frozen days, less accounts deleted since: someone else steps up.
+  const podium = podiumOf(members);
   const titles =
     state?.status === 'given' ? state.awards.members.filter(({ member }) => ids.has(member)) : [];
   const anyone = members.some(({ checkedIn }) => checkedIn);
@@ -265,7 +291,7 @@ export async function squadStory(
     status: state?.status === 'given' || !anyone ? 'ready' : 'pending',
     members,
     titles,
-    ...(champion === undefined ? {} : { podium: { champion, sides } }),
+    ...(podium === undefined ? {} : { podium }),
     ...(story.meals === undefined ? {} : { meals: story.meals }),
     ...(story.ending === undefined ? {} : { ending: story.ending }),
     ...(best === undefined ? {} : { bestDisclaimer: best }),
@@ -352,9 +378,6 @@ async function frozenStory(
       version: 1,
       name: then.name,
       scene: then.scene,
-      ...(pages.podium === undefined
-        ? {}
-        : { podium: { champion: pages.podium.champion, sides: [...pages.podium.sides] } }),
       ...(pages.meals === undefined
         ? {}
         : { meals: { healthy: pages.meals.healthy, cheat: pages.meals.cheat } }),

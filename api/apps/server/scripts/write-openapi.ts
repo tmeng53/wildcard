@@ -70,6 +70,8 @@ const app = createApp({
     clock: unused,
   }),
   nudges: { send: unused, received: unused, inSquad: unused },
+  notices: { tell: unused, page: unused, markSeen: unused },
+  coachNames: unused,
   disclaimerDrafts: { write: unused },
   weeklyPlans: createWeeklyPlans({
     sports: createSports({ store: createPostgresSportStore(db) }),
@@ -97,14 +99,14 @@ const app = createApp({
     currentAmong: unused,
   },
   coachHiring: { hire: unused, fire: unused, change: unused, current: unused, offered: unused },
-  coachActivity: { squad: unused },
+  coachActivity: { squad: unused, spoke: unused },
   weekSummaryWords: () => Promise.reject(new Error('unused')),
   weeklyAwards: {
     awards: {
       give: unused,
       find: unused,
       claimNudge: unused,
-      claimWinners: unused,
+      claimReadyPush: unused,
       titlesWon: unused,
       story: unused,
       freezeStory: unused,

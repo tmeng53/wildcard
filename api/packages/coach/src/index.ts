@@ -24,8 +24,8 @@ export {
   MemberId,
   SquadId,
 } from './domain/settings.js';
-export { CoachEmoji, REPLY_LIMIT, type CoachReply } from './domain/reply.js';
-export type { CheckInKind, SquadWeek, WeekCheckIn } from './domain/squad-week.js';
+export { CoachEmoji, REPLY_LIMIT, type CoachAnswer, type CoachReply } from './domain/reply.js';
+export type { CheckInKind, SquadWeek, WeekCheckIn, WeekComment } from './domain/squad-week.js';
 export type { TokenUsage } from './domain/wake.js';
 export type {
   AgentRun,
@@ -60,6 +60,8 @@ export { createCoachHiring, type CoachHiring } from './use-cases/coach-hiring.js
 export { createCoachSettings, type CoachSettingsAdmin } from './use-cases/coach-settings.js';
 export {
   createCoachWakes,
+  type CoachAnswered,
+  type CoachReplied,
   type CoachRun,
   type CoachWakes,
   type CoachWakesDependencies,

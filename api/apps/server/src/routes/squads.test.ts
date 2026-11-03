@@ -9,6 +9,7 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -104,6 +105,8 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  notices: createNotices({ store: createPostgresNoticeStore(db) }),
+  coachNames: () => Promise.reject(new Error('unused')),
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -509,6 +512,21 @@ describe('the squad’s scene', () => {
       body: { version: 1, scene: 'gym' },
     });
     expect([again.status, reason(again)]).toStrictEqual([409, 'SCENE_ALREADY_PICKED']);
+    // Bo finds the move in 通知, once however often it was sent; Ann, who made it, doesn't.
+    const noticesOf = async (token: string) =>
+      z
+        .object({ notices: z.array(z.record(z.string(), z.unknown())) })
+        .parse((await call({ method: 'GET', path: '/me/notices', token })).body)
+        .notices.map(({ kind, squadId, scene: moved, by }) => ({
+          kind,
+          squadId,
+          scene: moved,
+          by,
+        }));
+    expect(await noticesOf(bo.token)).toStrictEqual([
+      { kind: 'sceneMoved', squadId: squad.id, scene: 'pool', by: ann.userId },
+    ]);
+    expect(await noticesOf(ann.token)).toStrictEqual([]);
 
     const nextWeek = new Date(Date.parse(scene.week) + 7 * 86_400_000).toISOString().slice(0, 10);
     const closed = await call({

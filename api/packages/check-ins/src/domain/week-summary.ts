@@ -36,9 +36,11 @@ export interface Winner {
 }
 
 /**
- * The awards of a week. `planCompleted` (领奖台): everyone who trained at least as many days as
- * they planned, and at least one, by their trained days. `crown` (皇冠): those on the podium
- * with the most trained days, all of them on a tie. `bestDisclaimer` (本周最佳请假条): the
+ * The awards of a week. `planCompleted` (练够计划): everyone who trained at least as many days
+ * as they planned, and at least one, by their trained days. `crown` (皇冠): whoever trained the
+ * most days, at least one, whether or not they finished their plan; the earliest to join on a
+ * tie, so it is the podium's champion (`podiumOf`) and the one who picks next week's scene.
+ * `bestDisclaimer` (本周最佳请假条): the
  * 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions.
  */
 export const AwardKind = z.enum(['planCompleted', 'crown', 'bestDisclaimer']);
@@ -68,18 +70,22 @@ const ofKind = (kind: CheckInRecord['kind']) => (member: MemberWeek) =>
 const reactionsOn = (facts: WeekFacts, checkIn: CheckInId) =>
   facts.reactions.get(checkIn)?.length ?? 0;
 
-const podium: AwardRule = (facts) =>
+/** Everyone who trained at least one day, by their trained days, in the members' order. */
+const trainers = (facts: WeekFacts) =>
   facts.members
     .map((member) => ({ member, value: trainedDaysOf(member, facts) }))
-    .filter(({ member, value }) => value > 0 && value >= member.plannedDays)
-    .map(({ member, value }) => ({ member: member.member, value }));
+    .filter(({ value }) => value > 0);
 
 const AWARDS: Record<AwardKind, AwardRule> = {
-  planCompleted: podium,
+  planCompleted: (facts) =>
+    trainers(facts)
+      .filter(({ member, value }) => value >= member.plannedDays)
+      .map(({ member, value }) => ({ member: member.member, value })),
   crown: (facts) => {
-    const onPodium = podium(facts);
-    const most = Math.max(0, ...onPodium.map(({ value }) => value));
-    return onPodium.filter(({ value }) => value === most);
+    const trained = trainers(facts);
+    const most = Math.max(0, ...trained.map(({ value }) => value));
+    const first = trained.find(({ value }) => value === most);
+    return first === undefined ? [] : [{ member: first.member.member, value: first.value }];
   },
   bestDisclaimer: (facts) => {
     let best: Required<Winner> | undefined;

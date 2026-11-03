@@ -32,6 +32,7 @@ import {
   createPostgresCoachSettings,
   createPostgresCoachStores,
   postgresCoachTransaction,
+  SquadId as CoachSquadId,
 } from '@wildcard/coach';
 import {
   DisclaimerWriterOffError,
@@ -48,6 +49,13 @@ import {
   MemberId as ProfileMember,
 } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
+import {
+  MemberId as NoticeMember,
+  SquadId as NoticeSquad,
+  createNotices,
+  createPostgresNoticeStore,
+  type NewNotice,
+} from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
 import {
   createApnsSender,
@@ -77,7 +85,7 @@ import { byProvider } from './adapters/language-models.js';
 import { createOpenAICoachAgent } from './adapters/openai-coach-agent.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
 import { createMemoryRateLimit } from './adapters/memory-rate-limit.js';
-import { createDatabase } from './adapters/postgres.js';
+import { createDatabase, onItsOwn } from './adapters/postgres.js';
 import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
 import {
   createSupabaseAccounts,
@@ -93,6 +101,7 @@ import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { coachSquadWeek } from './flows/coach.js';
+import { pushCoachLine } from './flows/comment-push.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
@@ -214,6 +223,8 @@ const squads = createSquads({
 });
 // The sports list every picker shows, kept in the database.
 const sports = createSports({ store: createPostgresSportStore(db) });
+// What each squad's coach said; check-ins ask it whether a member may reply to the coach.
+const coachActivity = createCoachActivity({ store: createPostgresCoachActivity(db) });
 const checkIns = createCheckIns({
   store: createPostgresCheckInStore(db),
   // Who is in which squad is the squads module's to keep: check-ins ask it.
@@ -222,11 +233,34 @@ const checkIns = createCheckIns({
   sports,
   reactions: createPostgresReactionStore(db),
   comments: createPostgresCommentStore(db),
+  coachSpoke: ({ checkIn, squads: through, coach }) =>
+    coachActivity.spoke({
+      squads: through.map((squad) => CoachSquadId.parse(squad)),
+      checkIn,
+      coach,
+    }),
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
 });
+// What each member was told (通知, the bell on 动态): pushes and in-app notices, kept forever.
+const noticesOn = (scope: Database) => createNotices({ store: createPostgresNoticeStore(scope) });
+const notices = noticesOn(db);
+/**
+ * Keeps notices after what they tell of happened: a failure is logged, never the event's, even
+ * inside an admin tool's transaction.
+ */
+const tellAfter = async (
+  scope: Database,
+  { told, what }: { told: readonly NewNotice[]; what: string },
+) => {
+  try {
+    await onItsOwn(scope, () => noticesOn(scope).tell(told));
+  } catch (error) {
+    log.warn(`${what} not kept in notices`, { error });
+  }
+};
 // What members unlock by training: the unlocks module keeps the rules and who earned what, and
 // asks check-ins for the 练了 that count and the sports module which sports exist.
 const unlocksOn = (scope: Database) =>
@@ -235,6 +269,15 @@ const unlocksOn = (scope: Database) =>
     trainedSince: ({ member, since }) =>
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
+    unlocked: (member, unlocks) =>
+      tellAfter(scope, {
+        told: unlocks.map(({ kind, id }) => ({
+          member: NoticeMember.parse(member),
+          kind: 'unlocked',
+          subject: { version: 1, kind, item: id },
+        })),
+        what: 'an unlock',
+      }),
   });
 const nudges = createNudges({
   store: createPostgresNudgeStore(db),
@@ -243,6 +286,9 @@ const nudges = createNudges({
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
+/** A coach's name now, as its pushes put it. */
+const coachNameOf = async (coach: string): Promise<string> =>
+  (await createPostgresCoachCatalog(db).list()).find(({ id }) => id === coach)?.name ?? coach;
 // The AI coach runs on OpenAI: without its key the coach never wakes, whatever the settings say.
 const coachWakes =
   openaiKey === undefined
@@ -259,7 +305,66 @@ const coachWakes =
           aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
         hiring: createPostgresCoachHiring(db),
         clock: () => new Date(),
+        // The check-in's author finds the reply in 通知, and a line is pushed to them like a
+        // teammate's comment (Tracy, 2026-11-03).
+        replied: async ({ squad, checkIn, author, coach, text, emoji }) => {
+          await tellAfter(db, {
+            told: [
+              {
+                member: NoticeMember.parse(author),
+                squad: NoticeSquad.parse(squad),
+                kind: 'coachReply',
+                subject: {
+                  version: 1,
+                  checkIn,
+                  coach,
+                  replied: text !== undefined,
+                  emoji: emoji ?? null,
+                },
+              },
+            ],
+            what: 'a coach reply',
+          });
+          if (text === undefined) return;
+          await pushCoachLine(
+            { push, log },
+            {
+              checkIn,
+              member: author,
+              coachName: await coachNameOf(coach),
+              text,
+              answer: false,
+              about: checkIn,
+            },
+          );
+        },
+        // So does the member whose reply to the coach it answered.
+        answered: async ({ squad, checkIn, comment, commenter, coach, text }) => {
+          await tellAfter(db, {
+            told: [
+              {
+                member: NoticeMember.parse(commenter),
+                squad: NoticeSquad.parse(squad),
+                kind: 'coachReply',
+                subject: { version: 1, checkIn, coach, replied: true, emoji: null },
+              },
+            ],
+            what: 'a coach answer',
+          });
+          await pushCoachLine(
+            { push, log },
+            {
+              checkIn,
+              member: commenter,
+              coachName: await coachNameOf(coach),
+              text,
+              answer: true,
+              about: comment,
+            },
+          );
+        },
       });
+const coachCatalog = createPostgresCoachCatalog(db);
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -281,6 +386,8 @@ const app = createApp({
   members,
   squads,
   nudges,
+  notices,
+  coachNames: async () => new Map((await coachCatalog.list()).map(({ id, name }) => [id, name])),
   aiConsent,
   // Data the app shows that lives in the database. Each module keeps its own section.
   catalog: {
@@ -328,7 +435,7 @@ const app = createApp({
     hiring: createPostgresCoachHiring(db),
     catalog: createPostgresCoachCatalog(db),
   }),
-  coachActivity: createCoachActivity({ store: createPostgresCoachActivity(db) }),
+  coachActivity,
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
   unlocks: unlocksOn(db),

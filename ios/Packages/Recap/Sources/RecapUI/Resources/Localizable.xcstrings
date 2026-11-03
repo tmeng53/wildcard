@@ -639,6 +639,23 @@
         }
       }
     },
+    "练够计划": {
+      "comment": "A small mark on a podium step: this member trained every day they planned this week.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan done"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "練夠計劃"
+          }
+        }
+      }
+    },
     "领奖台": {
       "localizations": {
         "en": {

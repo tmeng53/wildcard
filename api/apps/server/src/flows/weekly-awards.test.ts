@@ -19,6 +19,7 @@ import {
   createMembers,
   createPostgresProfileStore,
 } from '@wildcard/members';
+import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
 import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import {
@@ -174,6 +175,8 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    notices: createNotices({ store: createPostgresNoticeStore(db) }),
+    coachNames: () => Promise.reject(new Error('unused')),
     aiConsent,
     nudges: nudgesOn(db),
     log: createLog(() => undefined),
@@ -325,7 +328,9 @@ const Story = z.object({
   week: z.object({ from: z.string(), to: z.string() }),
   scene: z.string(),
   members: z.array(z.object({ member: z.string() })),
-  podium: z.object({ champion: z.string(), sides: z.array(z.string()) }).optional(),
+  podium: z
+    .object({ champion: z.string(), sides: z.array(z.string()), planDone: z.array(z.string()) })
+    .optional(),
   myWeek: z
     .object({
       plannedDays: z.int(),
@@ -371,8 +376,8 @@ describe('weekly awards', () => {
     expect((await start()).status).toBe(401);
   });
 
-  it('awards members who checked in before Sunday 8pm Eastern, and tells each once', async () => {
-    const { run, read, sent, prompts } = setup();
+  it('awards members who checked in before Sunday 8pm Eastern, and tells the whole squad once', async () => {
+    const { run, read, sent, prompts, app } = setup();
     const [ana, bo, cy] = [await member(), await member('America/New_York'), await member()];
     const squad = await squadOf(ana, bo, cy);
     const photo = await uploadedPhoto(ana);
@@ -402,8 +407,9 @@ describe('weekly awards', () => {
     const mine = sent.filter(({ token }) =>
       [ana.device, bo.device, cy.device].includes(DeviceToken.parse(token)),
     );
+    // Everyone in the squad hears the 战报 is ready, Cy too, who won nothing.
     expect(mine.map(({ token }) => token).toSorted()).toStrictEqual(
-      [ana.device, bo.device].toSorted(),
+      [ana.device, bo.device, cy.device].toSorted(),
     );
     expect(mine[0]?.notification).toStrictEqual({
       alert: { key: 'push.weeklyAwards.ready' },
@@ -413,6 +419,29 @@ describe('weekly awards', () => {
       interruption: 'active',
       event: { squad, weekStart: WEEK },
     });
+    // Everyone in the squad finds it in 通知 too, once, Cy included.
+    const noticesOf = async (token: string) =>
+      z
+        .object({ notices: z.array(z.record(z.string(), z.unknown())) })
+        .parse(
+          await (
+            await app.request('/me/notices', { headers: { authorization: `Bearer ${token}` } })
+          ).json(),
+        )
+        .notices.map(({ kind, squadId, alert, weekStart }) => ({
+          kind,
+          squadId,
+          alert,
+          weekStart,
+        }));
+    const readyNotice = {
+      kind: 'weeklyAwards',
+      squadId: squad,
+      alert: { key: 'push.weeklyAwards.ready', args: [] },
+      weekStart: WEEK,
+    };
+    expect(await noticesOf(ana.token)).toStrictEqual([readyNotice]);
+    expect(await noticesOf(cy.token)).toStrictEqual([readyNotice]);
 
     const { status, body } = await read({ token: cy.token, squad });
     expect(status).toBe(200);
@@ -442,7 +471,7 @@ describe('weekly awards', () => {
     await run();
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
     expect(prompts.filter((prompt) => prompt.includes(caption))).toHaveLength(1);
-    expect(before.sent).toBe(2);
+    expect(before.sent).toBe(3);
   });
 
   it('counts every title a member won, in all their squads, for their player card', async () => {
@@ -489,7 +518,8 @@ describe('weekly awards', () => {
     expect(prompts.some((prompt) => prompt.includes(boCaption))).toBe(false);
     const story = Story.parse((await read({ token: bo.token, squad })).body);
     expect(story.titles?.map((each) => each.member)).toStrictEqual([ana.userId]);
-    expect(sent.filter(({ token }) => token === bo.device)).toHaveLength(0);
+    // Bo still hears the squad's 战报 is ready, though they won no titles.
+    expect(sent.filter(({ token }) => token === bo.device)).toHaveLength(1);
   });
 
   it('is not there before Sunday 8pm Eastern, waits only for its titles while the model fails, then is ready', async () => {
@@ -615,7 +645,14 @@ describe('weekly awards', () => {
     expect(first.members.map(({ member: id }) => id)).toStrictEqual([ana.userId, bo.userId]);
     expect(first.titles).toHaveLength(2);
     expect(first.ending?.done).toBe(3);
-    expect(first.podium?.champion).toBe(ana.userId);
+    // Ana trained the most days, so she stands in the middle; neither planned a day this week,
+    // so both carry the plan-done mark.
+    expect(first.podium).toStrictEqual({
+      champion: ana.userId,
+      sides: [bo.userId],
+      planDone: [ana.userId, bo.userId],
+    });
+    expect(first.myWeek?.plannedDays).toBe(0);
     expect(first.myWeek?.days.map(({ kind }) => kind).slice(0, 3)).toStrictEqual([
       'none',
       'trained',

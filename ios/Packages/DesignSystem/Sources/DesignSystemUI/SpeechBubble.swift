@@ -61,6 +61,8 @@ public struct SpeechBubble: View {
 
     private static let lineWidth: Double = 160
     private static let infoWidth: Double = 200
+    /// The coach's bubble, narrower than `.info`'s so it leaves room on the home's floor.
+    public static let coachWidth: Double = 170
     private static let tailSize = CGSize(width: 12, height: 6)
     private static let verticalPadding: Double = 6
     private static let horizontalPadding: Double = 10
@@ -135,7 +137,7 @@ public struct SpeechBubble: View {
                 }
             }
         case .coach(let name):
-            HuggingWidth(max: Self.infoWidth - 2 * Self.horizontalPadding) {
+            HuggingWidth(max: Self.coachWidth - 2 * Self.horizontalPadding) {
                 VStack(alignment: .leading, spacing: Space.xxs) {
                     HStack(spacing: Space.xxs + Space.xxs / 2) {
                         CoachTag()

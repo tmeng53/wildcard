@@ -42,6 +42,7 @@ import {
   unusedWeeklyAwards,
   unusedWeekSummaryWords,
   unusedUnlocks,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -106,6 +107,7 @@ const app = createApp({
     catalog: createPostgresCoachCatalog(db),
   }),
   coachActivity: createCoachActivity({ store: createPostgresCoachActivity(db) }),
+  ...ignoredNotices,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -298,7 +300,7 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     const path = `/squads/${squad}/coach/activity`;
     expect(await call({ method: 'GET', path, token: mate.token })).toMatchObject({
       status: 200,
-      body: { version: 1, note: null, replies: [] },
+      body: { version: 1, note: null, replies: [], answers: [] },
     });
 
     const [run, swim, quiet] = [
@@ -310,6 +312,12 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     await coachSaid(squad, { day: '2026-11-03', text: '今天谁先动，谁就是队长' });
     await coachSaid(squad, { checkIn: run, text: '腿还在吗', emoji: '💪' });
     await coachSaid(squad, { checkIn: swim, text: null, emoji: '🔥' });
+    // The mate replied to the coach under the run, and it answered.
+    const asked = randomUUID();
+    await sql`insert into public.check_in_comments (id, check_in_id, member_id, text, reply_to_coach, commented_at)
+      values (${asked}, ${run}, ${mate.userId}, '在呢', 'xiaohun', now())`.execute(db);
+    await sql`insert into public.coach_answers (squad_id, check_in_id, comment_id, coach_id, text)
+      values (${squad}, ${run}, ${asked}, 'xiaohun', '那就再跑一圈')`.execute(db);
 
     const read = await call({
       method: 'GET',
@@ -321,6 +329,7 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       .object({
         note: z.object({ at: z.iso.datetime() }).loose(),
         replies: z.array(z.object({ checkInId: z.string(), at: z.iso.datetime() }).loose()),
+        answers: z.array(z.object({ at: z.iso.datetime() }).loose()),
       })
       .loose()
       .parse(read.body);
@@ -330,12 +339,16 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       replies: body.replies
         .map((reply) => ({ ...reply, at: 'at' }))
         .toSorted((a, b) => (a.checkInId === run ? -1 : b.checkInId === run ? 1 : 0)),
+      answers: body.answers.map((answer) => ({ ...answer, at: 'at' })),
     }).toStrictEqual({
       version: 1,
       note: { day: '2026-11-03', text: '今天谁先动，谁就是队长', coach: speaker, at: 'at' },
       replies: [
         { checkInId: run, coach: speaker, text: '腿还在吗', emoji: '💪', at: 'at' },
         { checkInId: swim, coach: speaker, text: null, emoji: '🔥', at: 'at' },
+      ],
+      answers: [
+        { checkInId: run, commentId: asked, coach: speaker, text: '那就再跑一圈', at: 'at' },
       ],
     });
 
@@ -361,7 +374,7 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       path: `${path}?checkIns=${run}`,
       token: captain.token,
     });
-    expect(afterDelete.body).toMatchObject({ replies: [] });
+    expect(afterDelete.body).toMatchObject({ replies: [], answers: [] });
   });
 
   it('refuses anyone outside the squad, and check-in ids that aren’t', async () => {
