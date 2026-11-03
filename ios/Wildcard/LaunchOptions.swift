@@ -184,11 +184,17 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
     }
 
-    /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted` a
-    /// suite emptied at launch.
+    /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, said on the
+    /// home on every launch.
+    static var sidelineCoach: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-coach")
+    }
+
+    /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted` or
+    /// `-uitest-coach` a suite emptied at launch.
     static var todayDefaults: UserDefaults {
         let suite = "uitest-today"
-        guard pattedMe, let defaults = UserDefaults(suiteName: suite) else { return .standard }
+        guard pattedMe || sidelineCoach, let defaults = UserDefaults(suiteName: suite) else { return .standard }
         defaults.removePersistentDomain(forName: suite)
         return defaults
     }

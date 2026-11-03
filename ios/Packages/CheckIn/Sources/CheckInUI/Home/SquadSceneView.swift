@@ -34,6 +34,10 @@ struct SquadSceneView: View {
     let patMate: (MemberID) -> Void
     /// The squad dropping onto a newly picked scene: nobody is on it until their turn.
     var arrival: TodayModel.Arrival?
+    /// The coach's 战术板 line while its bubble is up.
+    var coachSays: CoachNote?
+    /// I tapped the coach on the sideline.
+    var tapCoach: () -> Void = {}
 
     /// The pull whose wake-up (or doze) has played out, after which the scene stops redrawing
     /// for it under Reduce Motion.
@@ -74,6 +78,9 @@ struct SquadSceneView: View {
                         .allowsHitTesting(false)
                 }
                 CheerBubbles(cast: cast, unit: unit)
+                if let coach = cast.coach, arrival == nil {
+                    CoachBubble(coach: coach, line: coachSays, unit: unit)
+                }
                 if phase == .night { WokenLine(cast: cast, pull: playingPull, unit: unit) }
                 PatOverlay(layer: .marks, cast: cast, pats: pats, unit: unit, canPat: canPat, pat: patMate)
                 Streamers(trigger: celebration)
@@ -129,6 +136,15 @@ struct SquadSceneView: View {
                         .accessibilityAddTraits(.isButton)
                         .accessibilityHidden(nickname(of: figure.id) == nil)
                         .zIndex(figure.depth)
+                }
+                if let coach = cast.coach, arrival == nil {
+                    SidelineCoachFigure(coach: coach, unit: unit, date: timeline.date, reduceMotion: reduceMotion)
+                        .onTapGesture(perform: tapCoach)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(Text(verbatim: coach.speaker.name))
+                        .accessibilityIdentifier("today.coach")
+                        .accessibilityAddTraits(.isButton)
+                        .zIndex(coach.spot.y)
                 }
                 ForEach(Array(Stage.fronts(of: theme).enumerated()), id: \.offset) { index, depth in
                     SceneArt(scene: theme, layer: .front(index))

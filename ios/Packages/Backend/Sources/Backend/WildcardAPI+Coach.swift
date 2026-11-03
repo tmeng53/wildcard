@@ -41,3 +41,17 @@ extension WildcardAPI {
         return try read { () throws(ContractsError) in try SquadCoach(wire) }
     }
 }
+
+// What the squad's coach said (its 战术板 line).
+extension WildcardAPI {
+    /// The squad's newest 战术板 line, or nil before its coach wrote one. Members only.
+    public func coachNote(of squad: SquadID) async throws(APIError) -> CoachNote? {
+        let wire = try await call {
+            try await client.getSquadCoachActivity(path: .init(squadId: squad.description), query: .init()).ok.body
+                .json
+        }
+        return try read { () throws(ContractsError) in
+            try wire.note.map { note throws(ContractsError) in try CoachNote(note) }
+        }
+    }
+}

@@ -35,6 +35,7 @@ import {
   unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
+  unusedCoachActivity,
 } from '../test-kit/weekly-awards.js';
 
 // Reactions and push devices, through the routes the app calls, on local Supabase.
@@ -91,6 +92,7 @@ const app = createApp({
   unlocks: unusedUnlocks,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
+  coachActivity: unusedCoachActivity,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),

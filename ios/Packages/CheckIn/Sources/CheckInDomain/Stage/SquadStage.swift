@@ -44,11 +44,16 @@ public struct SquadStage: Hashable, Sendable {
     ///    the court included but off any lane someone is running: on their old spot if it is
     ///    still free, else (earliest check-ins first, those not checked in after) on the free
     ///    spot that keeps everyone well apart; 社恐 take the free spot furthest back.
-    public mutating func arrange(_ teammates: [StageMember]) {
+    ///
+    /// With `coach`, the sideline is the coach's, so nobody stands on it.
+    public mutating func arrange(_ teammates: [StageMember], coach: Bool = false) {
         let ordered = Self.byCheckIn(teammates)
         var next = stations(for: ordered)
         let running = runningLanes(next)
-        let open = layout.floor.filter { spot in !running.contains { $0.blocks(spot) } }
+        let sideline = coach ? layout.sideline : nil
+        let open = layout.floor.filter { spot in
+            !running.contains { $0.blocks(spot) } && sideline.map { !StageLayout.crowds($0, spot) } != false
+        }
         var taken: [StagePoint] = []
         // A spot is free while nobody stands on it or close enough to be drawn over them.
         func isFree(_ spot: StagePoint) -> Bool { !taken.contains { StageLayout.crowds($0, spot) } }

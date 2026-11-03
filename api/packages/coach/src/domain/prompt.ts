@@ -1,4 +1,5 @@
 import type { Coach } from './coach.js';
+import { REPLY_LIMIT } from './reply.js';
 import type { CoachSettings } from './settings.js';
 import { checkInLine, rosterOf, type SquadWeek } from './squad-week.js';
 import type { WakeReason } from './wake.js';
@@ -25,8 +26,9 @@ export function instructionsOf(settings: Pick<CoachSettings, 'rules'>, coach: Co
 /** How each kind of wake goes: the same for every squad, so it is part of the instructions. */
 const WAKES = [
   '你会在两种时候醒来，每次的任务会告诉你是哪一种：',
-  '- 有人打卡：这一次你不发言，只整理记忆。需要的话先用 squad_week 看这周的情况，有值得记住的（新的梗、习惯、重要的事）就用 edit_file 写进文件，没有就什么都不做。',
+  `- 有人打卡：看看这条打卡（需要的话先用 squad_week 看这周的情况），像队友在动态下面留言那样，用 reply 回一句（不超过 ${String(REPLY_LIMIT)} 字），用 react 点一个表情，或者两个都做。大多数打卡都值得回应；说得具体，接住对方说的话或练的东西，别说教、别催、别空喊加油。有值得记住的（新的梗、习惯、重要的事）就用 edit_file 写进文件。`,
   `- 新的一天：先用 squad_week 看看小队这周，用 read_file 读读你的文件，然后用 post_note 在小队的战术板上写今天的一句（不超过 ${String(NOTE_LIMIT)} 字），全队都会看到。别重复你最近写过的。没什么值得说的，就不写。学到值得记的，顺手改文件。`,
+  '队员看得到的话（战术板、回复）里称呼人用「你」或昵称，不要写队员N，那是只有你看得到的叫法。',
   '文件只能用任务里列出的那些；用 read_file 读，用 edit_file 改。',
 ].join('\n');
 
