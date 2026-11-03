@@ -9,9 +9,18 @@ export interface UnlockStore {
   putRule(edit: UnlockRuleEdit): Promise<void>;
   /** What `member` unlocked, the earliest first. */
   unlocksOf(member: MemberId): Promise<Unlock[]>;
-  /** Keeps `unlocks` for `member`; one already kept stays as it was. */
-  grant(member: MemberId, unlocks: readonly Unlock[]): Promise<void>;
+  /**
+   * Keeps `unlocks` for `member`; one already kept stays as it was. Answers with the ones this
+   * call kept, so two at once never both count the same unlock as new.
+   */
+  grant(member: MemberId, unlocks: readonly Unlock[]): Promise<Unlock[]>;
 }
+
+/**
+ * Told the unlocks a member just got (by training or as a gift), each once, after they are kept;
+ * the server tells the member (通知).
+ */
+export type Unlocked = (member: MemberId, unlocks: readonly Unlock[]) => Promise<void>;
 
 /** The member's 练了 check-ins made from `since` on, the earliest made first. */
 export type TrainedSince = (query: {

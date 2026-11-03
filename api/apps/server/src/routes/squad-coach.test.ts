@@ -9,13 +9,16 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import {
+  createCoachActivity,
   createCoachHiring,
+  createPostgresCoachActivity,
   createPostgresCoachCatalog,
   createPostgresCoachHiring,
 } from '@wildcard/coach';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
+import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -39,6 +42,7 @@ import {
   unusedWeeklyAwards,
   unusedWeekSummaryWords,
   unusedUnlocks,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -102,6 +106,8 @@ const app = createApp({
     hiring: createPostgresCoachHiring(db),
     catalog: createPostgresCoachCatalog(db),
   }),
+  coachActivity: createCoachActivity({ store: createPostgresCoachActivity(db) }),
+  ...ignoredNotices,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -246,5 +252,135 @@ describe('/squads/{squadId}/coach', () => {
         'SQUAD_NOT_JOINED',
       ]);
     }
+  });
+});
+
+/** A 练了 the member posts to this squad a minute ago; its id. */
+async function checkIn(token: string, squad: string) {
+  const at = new Date(Date.now() - 60_000);
+  const id = randomUUID();
+  const posted = await call({
+    method: 'PUT',
+    path: `/check-ins/${id}`,
+    token,
+    body: {
+      version: 1,
+      day: at.toISOString().slice(0, 10),
+      createdAt: at.toISOString(),
+      audience: [squad],
+      kind: 'trained',
+      training: { sport: 'run' },
+    },
+  });
+  expect(posted.status).toBe(201);
+  return id;
+}
+
+/** What the coach's wake for this check-in saves: its reply, or its line for a day. */
+async function coachSaid(
+  squad: string,
+  said:
+    { checkIn: string; text: string | null; emoji: string | null } | { day: string; text: string },
+) {
+  if ('day' in said) {
+    await sql`insert into public.coach_notes (squad_id, coach_id, day, text)
+      values (${squad}, 'xiaohun', ${said.day}, ${said.text})`.execute(db);
+    return;
+  }
+  await sql`insert into public.coach_replies (squad_id, check_in_id, coach_id, text, emoji)
+    values (${squad}, ${said.checkIn}, 'xiaohun', ${said.text}, ${said.emoji})`.execute(db);
+}
+
+describe('GET /squads/{squadId}/coach/activity', () => {
+  const speaker = { id: 'xiaohun', name: '小混', look: 'xiaohun' };
+
+  it('gives members the newest 战术板 line and the replies to the posts they ask about', async () => {
+    const [captain, mate] = [await signUp(), await signUp()];
+    const squad = await squadOf(captain, mate);
+    const path = `/squads/${squad}/coach/activity`;
+    expect(await call({ method: 'GET', path, token: mate.token })).toMatchObject({
+      status: 200,
+      body: { version: 1, note: null, replies: [] },
+    });
+
+    const [run, swim, quiet] = [
+      await checkIn(captain.token, squad),
+      await checkIn(mate.token, squad),
+      await checkIn(mate.token, squad),
+    ];
+    await coachSaid(squad, { day: '2026-11-02', text: '先动起来' });
+    await coachSaid(squad, { day: '2026-11-03', text: '今天谁先动，谁就是队长' });
+    await coachSaid(squad, { checkIn: run, text: '腿还在吗', emoji: '💪' });
+    await coachSaid(squad, { checkIn: swim, text: null, emoji: '🔥' });
+
+    const read = await call({
+      method: 'GET',
+      path: `${path}?checkIns=${run},${swim},${quiet}`,
+      token: mate.token,
+    });
+    expect(read.status).toBe(200);
+    const body = z
+      .object({
+        note: z.object({ at: z.iso.datetime() }).loose(),
+        replies: z.array(z.object({ checkInId: z.string(), at: z.iso.datetime() }).loose()),
+      })
+      .loose()
+      .parse(read.body);
+    expect({
+      ...body,
+      note: { ...body.note, at: 'at' },
+      replies: body.replies
+        .map((reply) => ({ ...reply, at: 'at' }))
+        .toSorted((a, b) => (a.checkInId === run ? -1 : b.checkInId === run ? 1 : 0)),
+    }).toStrictEqual({
+      version: 1,
+      note: { day: '2026-11-03', text: '今天谁先动，谁就是队长', coach: speaker, at: 'at' },
+      replies: [
+        { checkInId: run, coach: speaker, text: '腿还在吗', emoji: '💪', at: 'at' },
+        { checkInId: swim, coach: speaker, text: null, emoji: '🔥', at: 'at' },
+      ],
+    });
+
+    // The coach's word stays after the squad fires it.
+    await call({
+      method: 'PUT',
+      path: `/squads/${squad}/coach`,
+      token: captain.token,
+      body: { version: 1, coach: 'xiaohun' },
+    });
+    await call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
+    const afterFiring = await call({
+      method: 'GET',
+      path: `${path}?checkIns=${run}`,
+      token: captain.token,
+    });
+    expect(afterFiring.body).toMatchObject({ replies: [{ checkInId: run, text: '腿还在吗' }] });
+
+    // A deleted post takes its reply.
+    await sql`delete from public.check_ins where id = ${run}`.execute(db);
+    const afterDelete = await call({
+      method: 'GET',
+      path: `${path}?checkIns=${run}`,
+      token: captain.token,
+    });
+    expect(afterDelete.body).toMatchObject({ replies: [] });
+  });
+
+  it('refuses anyone outside the squad, and check-in ids that aren’t', async () => {
+    const [captain, stranger] = [await signUp(), await signUp()];
+    const squad = await squadOf(captain);
+    const path = `/squads/${squad}/coach/activity`;
+    const outside = await call({ method: 'GET', path, token: stranger.token });
+    expect([outside.status, reason(outside)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
+    expect((await call({ method: 'GET', path })).status).toBe(401);
+    const bad = await call({ method: 'GET', path: `${path}?checkIns=nope`, token: captain.token });
+    expect(bad.status).toBe(400);
+    const many = Array.from({ length: 101 }, () => randomUUID()).join(',');
+    const tooMany = await call({
+      method: 'GET',
+      path: `${path}?checkIns=${many}`,
+      token: captain.token,
+    });
+    expect(tooMany.status).toBe(400);
   });
 });

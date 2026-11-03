@@ -187,17 +187,23 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-patted")
     }
 
-    /// `-uitest-bubble-hold`: a teammate's bubble on 今天 stays up for a minute instead of 5
-    /// seconds, so a UI test checks it without racing its timer.
+    /// `-uitest-bubble-hold`: a teammate's bubble, the coach's line and a notice on 今天 stay up
+    /// for a minute instead of a few seconds, so a UI test checks them without racing their timers.
     static var bubbleHold: Double? {
         ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
     }
 
-    /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted` a
-    /// suite emptied at launch.
+    /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, said on the
+    /// home on every launch and pinned on 动态, and replied to three of its posts.
+    static var sidelineCoach: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-coach")
+    }
+
+    /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted` or
+    /// `-uitest-coach` a suite emptied at launch.
     static var todayDefaults: UserDefaults {
         let suite = "uitest-today"
-        guard pattedMe, let defaults = UserDefaults(suiteName: suite) else { return .standard }
+        guard pattedMe || sidelineCoach, let defaults = UserDefaults(suiteName: suite) else { return .standard }
         defaults.removePersistentDomain(forName: suite)
         return defaults
     }
@@ -209,6 +215,21 @@ enum LaunchOptions {
             let scene = SceneTheme(rawValue: arguments[flag + 1])
         else { return .gym }
         return scene
+    }
+
+    /// `-uitest-scene-moved track`: a teammate moves the sample squad to that scene once 今天
+    /// is up, so UI tests see the drop and its notice.
+    static var sceneMoved: SceneTheme? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-uitest-scene-moved"), flag + 1 < arguments.count else { return nil }
+        return SceneTheme(rawValue: arguments[flag + 1])
+    }
+
+    /// `-uitest-unlocked`: the sample member's training has just opened DEUCE CLUB, which 今天
+    /// tells once it is up and 我's editor has open, so UI tests see the notice and its tap.
+    static var unlocked: [Unlock] {
+        guard ProcessInfo.processInfo.arguments.contains("-uitest-unlocked") else { return [] }
+        return [Unlock(kind: .store, id: "deuce", unlockedAt: now(), sports: ["tennis"], checkIns: 3)]
     }
 
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the

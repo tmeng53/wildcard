@@ -6,8 +6,9 @@ import DesignSystemUI
 import FeedDomain
 import SwiftUI
 
-/// The emoji row at the bottom of a card: up to four heads, newest first, each wearing that
-/// person's emoji, then +n for the rest; tapping them opens who reacted. At the right, the comment
+/// The emoji row at the bottom of a card: the coach's head first when it left an emoji, in its
+/// graphite ring, then up to four heads (three beside the coach's), newest first, each wearing
+/// that person's emoji, then +n for the rest; tapping them opens who reacted. At the right, the comment
 /// button, then my button: a smiley that opens the emoji bar, or my emoji, outlined, once I
 /// reacted. My own posts have the comment button only.
 struct ReactionRow: View {
@@ -28,9 +29,10 @@ struct ReactionRow: View {
 
     var body: some View {
         let reactions = post.reactions
+        let coach = model.coachReply(on: post.id).flatMap { $0.emoji == nil ? nil : $0 }
         HStack(spacing: Space.xs) {
-            if !reactions.isEmpty {
-                summary(reactions, open: model.listing == post.id)
+            if !reactions.isEmpty || coach != nil {
+                summary(reactions, coach: coach, open: model.listing == post.id)
             }
             Spacer(minLength: 0)
             commentButton
@@ -68,7 +70,7 @@ struct ReactionRow: View {
 
     // `open` is read in the body, so opening a panel redraws the row: SwiftUI calls an anchor's
     // transform outside the body, where reading the model isn't observed.
-    private func summary(_ reactions: Responses<Emoji>, open: Bool) -> some View {
+    private func summary(_ reactions: Responses<Emoji>, coach: CoachReply?, open: Bool) -> some View {
         Button {
             withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
                 model.closeBar()
@@ -76,11 +78,14 @@ struct ReactionRow: View {
             }
         } label: {
             HStack(spacing: Space.xxs) {
-                ForEach(reactions.newest(Self.heads), id: \.member) { response in
+                if let coach {
+                    CoachFace(player: model.coachPlayer(coach.coach.id), emoji: coach.emoji, size: Self.headSize)
+                }
+                ForEach(reactions.newest(Self.teammateHeads(beside: coach)), id: \.member) { response in
                     WearingHead(model: model, member: response.member, emoji: response.kind, size: Self.headSize)
                         .transition(.move(edge: .leading).combined(with: .opacity))
                 }
-                let more = reactions.more(than: Self.heads)
+                let more = reactions.more(than: Self.teammateHeads(beside: coach))
                 if more > 0 {
                     Text(verbatim: "+\(more)")
                         .typeStyle(TypeRamp.footnote)
@@ -97,15 +102,21 @@ struct ReactionRow: View {
         .anchorPreference(key: FeedAnchors.self, value: .bounds) { bounds in
             FeedAnchors.Value(who: open ? FeedAnchor(post: post.id, bounds: bounds) : nil)
         }
-        .accessibilityLabel(Self.summaryLabel(reactions))
+        .accessibilityLabel(Self.summaryLabel(reactions, coach: coach))
         .accessibilityHint(Text("看谁回应了", bundle: .module))
         .accessibilityIdentifier("feed.reactions")
     }
 
-    /// 「3 人回应：💪 2，😂 1」.
-    static func summaryLabel(_ reactions: Responses<Emoji>) -> Text {
+    /// Teammates' heads in the row: one fewer beside the coach's.
+    private static func teammateHeads(beside coach: CoachReply?) -> Int { coach == nil ? heads : heads - 1 }
+
+    /// 「3 人回应：💪 2，😂 1」, after 「教练 毛头：🔥」 when the coach left one.
+    static func summaryLabel(_ reactions: Responses<Emoji>, coach: CoachReply? = nil) -> Text {
         let counts = reactions.groups.map { "\($0.kind.text) \($0.members.count)" }.joined(separator: "，")
-        return Text("\(reactions.all.count) 人回应：\(counts)", bundle: .module)
+        let members = Text("\(reactions.all.count) 人回应：\(counts)", bundle: .module)
+        guard let coach, let emoji = coach.emoji else { return members }
+        let coachSaid = Text("教练 \(coach.coach.name)：\(emoji.text)", bundle: .module)
+        return reactions.isEmpty ? coachSaid : Text("\(coachSaid)，\(members)", bundle: .module)
     }
 
     private func myButton(_ mine: Emoji?, open: Bool) -> some View {

@@ -1,4 +1,4 @@
-import type { Coach } from '../domain/coach.js';
+import type { Coach, CoachId } from '../domain/coach.js';
 import {
   shownBody,
   shownPaths,
@@ -7,6 +7,7 @@ import {
   type StoredPath,
 } from '../domain/memory.js';
 import { instructionsOf, taskOf } from '../domain/prompt.js';
+import type { CoachEmoji } from '../domain/reply.js';
 import type { CoachSettings, SquadId } from '../domain/settings.js';
 import { consentedOnly, rosterOf, type SquadWeek } from '../domain/squad-week.js';
 import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
@@ -66,7 +67,20 @@ export interface CoachWakesDependencies {
   readonly aiConsented: AiConsented;
   readonly hiring: CoachHiringStore;
   readonly clock: () => Date;
+  /** Told each reply to a check-in once it is saved; the server tells its author (通知). */
+  readonly replied?: CoachReplied;
 }
+
+/** A reply the coach just saved to a check-in: its line, its emoji or both. */
+export type CoachReplied = (reply: {
+  readonly squad: SquadId;
+  readonly checkIn: string;
+  /** Who made the check-in. */
+  readonly author: string;
+  readonly coach: CoachId;
+  readonly text: string | undefined;
+  readonly emoji: CoachEmoji | undefined;
+}) => Promise<void>;
 
 export function createCoachWakes(deps: CoachWakesDependencies): CoachWakes {
   return {
@@ -182,7 +196,13 @@ async function runWake(
         shownBody(body, roster),
       ]),
     );
-    const draft: WakeDraft = { files: new Map(stored), changed: new Set(), note: undefined };
+    const draft: WakeDraft = {
+      files: new Map(stored),
+      changed: new Set(),
+      note: undefined,
+      reply: undefined,
+      reaction: undefined,
+    };
     const daily = wake.reason.kind === 'daily';
     const files = new Map(
       shownPaths(roster).map((path) => {
@@ -205,8 +225,8 @@ async function runWake(
       instructions: instructionsOf(settings, coach),
       task,
       tools: toolbox({ week, roster, draft, daily }),
-      // Every wake of a coach begins with its same instructions, then its tools (the daily wake's
-      // post_note last, so both kinds share the rest).
+      // Every wake of a coach begins with its same instructions, then its tools (each kind's own
+      // last: the daily wake's post_note, a check-in's reply and react), so both kinds share the rest.
       cacheKey: `coach:${coach.id}`,
     });
     // The tokens were spent whatever comes next, so they are counted first, on their own.
@@ -222,10 +242,23 @@ async function runWake(
       await deps.stores.wakes.fail(wake.id, run.error);
       return false;
     }
-    await deps.transaction(async (stores) => {
-      await saveDraft(stores, { squad: wake.squad, wake, draft, stored, roster, coach });
+    const reply = await deps.transaction(async (stores) => {
+      const saved = await saveDraft(stores, {
+        squad: wake.squad,
+        wake,
+        draft,
+        stored,
+        roster,
+        coach,
+      });
       await stores.wakes.finish(wake.id);
+      return saved;
     });
+    // After the save, and never undoing it: telling the author is the caller's to log if it fails.
+    const author = week.checkIns.find(({ id }) => id === reply?.checkIn)?.member;
+    if (reply !== undefined && author !== undefined) {
+      await deps.replied?.({ ...reply, author }).catch(() => undefined);
+    }
     return true;
   } catch (error) {
     await deps.stores.wakes.fail(wake.id, error instanceof Error ? error.message : String(error));
@@ -235,7 +268,8 @@ async function runWake(
 
 /**
  * Saves what a wake's run changed: a new version of each file whose text it changed (none for
- * an edit it undid), and on a daily wake, its 战术板 line.
+ * an edit it undid), on a daily wake its 战术板 line, and on a check-in's wake its reply, which
+ * it answers with when it was saved.
  */
 async function saveDraft(
   stores: CoachStores,
@@ -255,7 +289,7 @@ async function saveDraft(
     readonly roster: ReadonlyMap<string, string>;
     readonly coach: Coach;
   },
-): Promise<void> {
+): Promise<Omit<Parameters<CoachReplied>[0], 'author'> | undefined> {
   const files = [...draft.changed]
     .map((path) => ({ path, body: draft.files.get(path) ?? '' }))
     .filter(({ path, body }) => body !== (stored.get(path) ?? ''))
@@ -270,4 +304,18 @@ async function saveDraft(
       wake: wake.id,
     });
   }
+  if (
+    wake.reason.kind === 'checkIn' &&
+    (draft.reply !== undefined || draft.reaction !== undefined)
+  ) {
+    const reply = {
+      squad,
+      checkIn: wake.reason.checkIn,
+      coach: coach.id,
+      text: draft.reply,
+      emoji: draft.reaction,
+    };
+    if (await stores.replies.save({ ...reply, wake: wake.id })) return reply;
+  }
+  return undefined;
 }

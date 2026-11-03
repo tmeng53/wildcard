@@ -1,5 +1,11 @@
 import { MemberId as CheckInMember, SquadId, type CheckIns } from '@wildcard/check-ins';
 import { MemberId as ProfileMember, type Members } from '@wildcard/members';
+import {
+  MemberId as NoticeMember,
+  SquadId as NoticeSquad,
+  type Notices,
+  type PushAlert,
+} from '@wildcard/notices';
 import { MemberId as NudgeMember, type Nudges } from '@wildcard/nudges';
 import {
   LocalDay,
@@ -72,17 +78,19 @@ export interface DailyProgressDependencies {
   readonly checkIns: CheckIns;
   readonly push: Push;
   readonly interactions: readonly InteractionSource[];
+  /** Where each push sent is kept for the member's 通知. */
+  readonly notices: Notices;
   readonly clock: () => Date;
   readonly log: Log;
 }
 
 /** What a run did, member by member. */
 export interface DailyProgressRun {
-  /** Members whose push was due: past the hour, a phone, not turned off, not handled today. */
+  /** Members whose push was due: past the hour, not turned off, not handled today. */
   readonly due: number;
   /** Reached at least one of the member's phones. */
   readonly sent: number;
-  /** Had something to say but reached no phone: sending is off, or every phone failed. */
+  /** Had something to say but reached no phone: none, sending is off, or every phone failed. */
   readonly unsent: number;
   /** Handled with nothing to say: no squad, or no one in it checked in and nothing came in. */
   readonly quiet: number;
@@ -165,6 +173,7 @@ async function handle(deps: DailyProgressDependencies, due: Due): Promise<Outcom
     deps.log.error('daily push not put together', { member, day, error });
     return 'failed';
   }
+  await tellNotice(deps, { member, notification });
   try {
     const outcome = await deps.push.notifyMembers({ members: [member], notification });
     if (outcome.failures.length > 0) {
@@ -176,6 +185,34 @@ async function handle(deps: DailyProgressDependencies, due: Due): Promise<Outcom
     deps.log.error('daily push not sent', { member, day, error });
     return 'unsent';
   }
+}
+
+/**
+ * Keeps the day's push in the member's 通知 before it is sent, whether or not it then reaches a
+ * phone. Never fails the push.
+ */
+async function tellNotice(
+  deps: DailyProgressDependencies,
+  { member, notification }: { readonly member: string; readonly notification: PushNotification },
+): Promise<void> {
+  try {
+    const { squad } = notification.event;
+    await deps.notices.tell([
+      {
+        member: NoticeMember.parse(member),
+        ...(typeof squad === 'string' ? { squad: NoticeSquad.parse(squad) } : {}),
+        kind: 'dailyProgress',
+        subject: { version: 1, alert: noticeAlert(notification) },
+      },
+    ]);
+  } catch (error) {
+    deps.log.warn('daily push not kept in notices', { member, error });
+  }
+}
+
+/** A push's words as its notice keeps them. */
+export function noticeAlert({ alert }: PushNotification): PushAlert {
+  return { key: alert.key, args: [...(alert.args ?? [])] };
 }
 
 /** The member's push for today, or `undefined` when there is nothing to tell them. */

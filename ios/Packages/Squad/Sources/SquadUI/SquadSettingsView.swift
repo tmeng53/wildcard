@@ -66,7 +66,7 @@ public struct SquadSettingsView: View {
                 }
             }
             .loadingCover(model.load == .loading) {
-                LoadingCharacter()
+                TicketSpinner(on: .light(.bgCanvas))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
             }

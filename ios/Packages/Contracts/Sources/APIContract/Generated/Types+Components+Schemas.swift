@@ -3739,6 +3739,191 @@ extension Components {
                 case coach
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CoachActivity`.
+        public struct CoachActivity: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/version`.
+            public var version: Components.Schemas.CoachActivity.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/note`.
+            public var note: Components.Schemas.CoachNote?
+            /// The coach’s replies to the check-ins asked about; one with none is left out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/replies`.
+            public var replies: [Components.Schemas.CoachReply]
+            /// Creates a new `CoachActivity`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - note:
+            ///   - replies: The coach’s replies to the check-ins asked about; one with none is left out.
+            public init(
+                version: Components.Schemas.CoachActivity.VersionPayload,
+                note: Components.Schemas.CoachNote? = nil,
+                replies: [Components.Schemas.CoachReply]
+            ) {
+                self.version = version
+                self.note = note
+                self.replies = replies
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case note
+                case replies
+            }
+        }
+        /// The squad’s newest 战术板 line (the app shows it while its day is today), or null.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CoachNote`.
+        public struct CoachNote: Codable, Hashable, Sendable {
+            /// The day (New York) the line is for.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachNote/day`.
+            public var day: Swift.String
+            /// The 战术板 line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachNote/text`.
+            public var text: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachNote/coach`.
+            public var coach: Components.Schemas.CoachSpeaker
+            /// - Remark: Generated from `#/components/schemas/CoachNote/at`.
+            public var at: Foundation.Date
+            /// Creates a new `CoachNote`.
+            ///
+            /// - Parameters:
+            ///   - day: The day (New York) the line is for.
+            ///   - text: The 战术板 line.
+            ///   - coach:
+            ///   - at:
+            public init(
+                day: Swift.String,
+                text: Swift.String,
+                coach: Components.Schemas.CoachSpeaker,
+                at: Foundation.Date
+            ) {
+                self.day = day
+                self.text = text
+                self.coach = coach
+                self.at = at
+            }
+            public enum CodingKeys: String, CodingKey {
+                case day
+                case text
+                case coach
+                case at
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachSpeaker`.
+        public struct CoachSpeaker: Codable, Hashable, Sendable {
+            /// The coach’s id. Never changes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/id`.
+            public var id: Swift.String
+            /// Its name, shown with the 教练 tag.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/name`.
+            public var name: Swift.String
+            /// The character the app draws, by the art’s id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/look`.
+            public var look: Swift.String
+            /// Creates a new `CoachSpeaker`.
+            ///
+            /// - Parameters:
+            ///   - id: The coach’s id. Never changes.
+            ///   - name: Its name, shown with the 教练 tag.
+            ///   - look: The character the app draws, by the art’s id.
+            public init(
+                id: Swift.String,
+                name: Swift.String,
+                look: Swift.String
+            ) {
+                self.id = id
+                self.name = name
+                self.look = look
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case look
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachReply`.
+        public struct CoachReply: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachReply/checkInId`.
+            public var checkInId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachReply/coach`.
+            public struct CoachPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachReply/coach/value1`.
+                public var value1: Components.Schemas.CoachSpeaker
+                /// The coach who replied, even if the squad has fired it since.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachReply/coach/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `CoachPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: The coach who replied, even if the squad has fired it since.
+                public init(
+                    value1: Components.Schemas.CoachSpeaker,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachReply/coach`.
+            public var coach: Components.Schemas.CoachReply.CoachPayload
+            /// Its line, shown among the post’s comments with the 教练 tag (no 回复 under it), or null when it only reacted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachReply/text`.
+            public var text: Swift.String?
+            /// Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachReply/emoji`.
+            public var emoji: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CoachReply/at`.
+            public var at: Foundation.Date
+            /// Creates a new `CoachReply`.
+            ///
+            /// - Parameters:
+            ///   - checkInId:
+            ///   - coach:
+            ///   - text: Its line, shown among the post’s comments with the 教练 tag (no 回复 under it), or null when it only reacted.
+            ///   - emoji: Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions.
+            ///   - at:
+            public init(
+                checkInId: Swift.String,
+                coach: Components.Schemas.CoachReply.CoachPayload,
+                text: Swift.String? = nil,
+                emoji: Swift.String? = nil,
+                at: Foundation.Date
+            ) {
+                self.checkInId = checkInId
+                self.coach = coach
+                self.text = text
+                self.emoji = emoji
+                self.at = at
+            }
+            public enum CodingKeys: String, CodingKey {
+                case checkInId
+                case coach
+                case text
+                case emoji
+                case at
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadNudges`.
         public struct SquadNudges: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadNudges/version`.
@@ -3905,6 +4090,248 @@ extension Components {
                 case version
                 case to
                 case kind
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/NoticePage`.
+        public struct NoticePage: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/NoticePage/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/NoticePage/version`.
+            public var version: Components.Schemas.NoticePage.VersionPayload
+            /// Newest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticePage/notices`.
+            public var notices: [Components.Schemas.NoticeEntry]
+            /// The newest notice the caller has seen: every one up to it is read. Left out before they first opened 通知.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticePage/seenThrough`.
+            public var seenThrough: Swift.Int?
+            /// Pass as `before` for the next, older page; left out on the last.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticePage/next`.
+            public var next: Swift.Int?
+            /// Creates a new `NoticePage`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - notices: Newest first.
+            ///   - seenThrough: The newest notice the caller has seen: every one up to it is read. Left out before they first opened 通知.
+            ///   - next: Pass as `before` for the next, older page; left out on the last.
+            public init(
+                version: Components.Schemas.NoticePage.VersionPayload,
+                notices: [Components.Schemas.NoticeEntry],
+                seenThrough: Swift.Int? = nil,
+                next: Swift.Int? = nil
+            ) {
+                self.version = version
+                self.notices = notices
+                self.seenThrough = seenThrough
+                self.next = next
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case notices
+                case seenThrough
+                case next
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/NoticeEntry`.
+        public struct NoticeEntry: Codable, Hashable, Sendable {
+            /// The order notices were told in: a later one is larger.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
+            public var id: Swift.Int
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
+            public var kind: Swift.String
+            /// When it was told, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/at`.
+            public var at: Foundation.Date
+            /// The squad it is about, if any.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/squadId`.
+            public var squadId: Swift.String?
+            /// A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert`.
+            public struct AlertPayload: Codable, Hashable, Sendable {
+                /// The String Catalog key the push used.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert/key`.
+                public var key: Swift.String
+                /// Its placeholders’ values, in order.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert/args`.
+                public var args: [Swift.String]
+                /// Creates a new `AlertPayload`.
+                ///
+                /// - Parameters:
+                ///   - key: The String Catalog key the push used.
+                ///   - args: Its placeholders’ values, in order.
+                public init(
+                    key: Swift.String,
+                    args: [Swift.String]
+                ) {
+                    self.key = key
+                    self.args = args
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case key
+                    case args
+                }
+            }
+            /// A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert`.
+            public var alert: Components.Schemas.NoticeEntry.AlertPayload?
+            /// The Monday of the week whose 战报 is in (`weeklyAwards`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/weekStart`.
+            public var weekStart: Swift.String?
+            /// The scene moved to (`sceneMoved`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/scene`.
+            public var scene: Swift.String?
+            /// Who moved it (`sceneMoved`); left out once they deleted their account.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/by`.
+            public var by: Swift.String?
+            /// Their nickname now (`sceneMoved`), when they have one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/byName`.
+            public var byName: Swift.String?
+            /// The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/checkIn`.
+            public var checkIn: Swift.String?
+            /// The coach who answered (`coachReply`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/coach`.
+            public var coach: Swift.String?
+            /// Its name now (`coachReply`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/coachName`.
+            public var coachName: Swift.String?
+            /// Whether the coach wrote a line (`coachReply`); else only its emoji.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/replied`.
+            public var replied: Swift.Bool?
+            /// The coach’s emoji (`coachReply`), if any.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/emoji`.
+            public var emoji: Swift.String?
+            /// What opened (`unlocked`): `store` or `prop`. Skip another.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/unlockKind`.
+            public var unlockKind: Swift.String?
+            /// The store’s or prop’s id (`unlocked`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/item`.
+            public var item: Swift.String?
+            /// Creates a new `NoticeEntry`.
+            ///
+            /// - Parameters:
+            ///   - id: The order notices were told in: a later one is larger.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
+            ///   - at: When it was told, in UTC.
+            ///   - squadId: The squad it is about, if any.
+            ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
+            ///   - weekStart: The Monday of the week whose 战报 is in (`weeklyAwards`).
+            ///   - scene: The scene moved to (`sceneMoved`).
+            ///   - by: Who moved it (`sceneMoved`); left out once they deleted their account.
+            ///   - byName: Their nickname now (`sceneMoved`), when they have one.
+            ///   - checkIn: The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`).
+            ///   - coach: The coach who answered (`coachReply`).
+            ///   - coachName: Its name now (`coachReply`).
+            ///   - replied: Whether the coach wrote a line (`coachReply`); else only its emoji.
+            ///   - emoji: The coach’s emoji (`coachReply`), if any.
+            ///   - unlockKind: What opened (`unlocked`): `store` or `prop`. Skip another.
+            ///   - item: The store’s or prop’s id (`unlocked`).
+            public init(
+                id: Swift.Int,
+                kind: Swift.String,
+                at: Foundation.Date,
+                squadId: Swift.String? = nil,
+                alert: Components.Schemas.NoticeEntry.AlertPayload? = nil,
+                weekStart: Swift.String? = nil,
+                scene: Swift.String? = nil,
+                by: Swift.String? = nil,
+                byName: Swift.String? = nil,
+                checkIn: Swift.String? = nil,
+                coach: Swift.String? = nil,
+                coachName: Swift.String? = nil,
+                replied: Swift.Bool? = nil,
+                emoji: Swift.String? = nil,
+                unlockKind: Swift.String? = nil,
+                item: Swift.String? = nil
+            ) {
+                self.id = id
+                self.kind = kind
+                self.at = at
+                self.squadId = squadId
+                self.alert = alert
+                self.weekStart = weekStart
+                self.scene = scene
+                self.by = by
+                self.byName = byName
+                self.checkIn = checkIn
+                self.coach = coach
+                self.coachName = coachName
+                self.replied = replied
+                self.emoji = emoji
+                self.unlockKind = unlockKind
+                self.item = item
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case kind
+                case at
+                case squadId
+                case alert
+                case weekStart
+                case scene
+                case by
+                case byName
+                case checkIn
+                case coach
+                case coachName
+                case replied
+                case emoji
+                case unlockKind
+                case item
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/NoticesSeen`.
+        public struct NoticesSeen: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/NoticesSeen/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/NoticesSeen/version`.
+            public var version: Components.Schemas.NoticesSeen.VersionPayload
+            /// The newest notice the caller saw, usually the first on the newest page.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticesSeen/through`.
+            public var through: Swift.Int
+            /// Creates a new `NoticesSeen`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - through: The newest notice the caller saw, usually the first on the newest page.
+            public init(
+                version: Components.Schemas.NoticesSeen.VersionPayload,
+                through: Swift.Int
+            ) {
+                self.version = version
+                self.through = through
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case through
             }
         }
         /// - Remark: Generated from `#/components/schemas/WeekSummary`.
@@ -4856,57 +5283,39 @@ extension Components {
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/version`.
                 public var version: Components.Schemas.WeekStory.Case1Payload.VersionPayload
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad`.
-                public struct SquadPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad/id`.
-                    public var id: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad/name`.
-                    public var name: Swift.String
-                    /// Creates a new `SquadPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - id:
-                    ///   - name:
-                    public init(
-                        id: Swift.String,
-                        name: Swift.String
-                    ) {
-                        self.id = id
-                        self.name = name
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case id
-                        case name
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squad`.
-                public var squad: Components.Schemas.WeekStory.Case1Payload.SquadPayload
+                public var squad: Components.Schemas.StorySquad
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week`.
-                public struct WeekPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week/from`.
-                    public var from: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week/to`.
-                    public var to: Swift.String
-                    /// Creates a new `WeekPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - from:
-                    ///   - to:
-                    public init(
-                        from: Swift.String,
-                        to: Swift.String
-                    ) {
-                        self.from = from
-                        self.to = to
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case from
-                        case to
-                    }
+                public var week: Components.Schemas.StoryWeek
+                /// The scene the squad trained on that week: the story takes its colours.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/scene`.
+                @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case track = "track"
+                    case pool = "pool"
+                    case gym = "gym"
+                    case tennis = "tennis"
+                    case climbing = "climbing"
                 }
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week`.
-                public var week: Components.Schemas.WeekStory.Case1Payload.WeekPayload
+                /// The scene the squad trained on that week: the story takes its colours.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/scene`.
+                public var scene: Components.Schemas.WeekStory.Case1Payload.ScenePayload
+                /// Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/members`.
+                public var members: [Components.Schemas.StoryMember]
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/podium`.
+                public var podium: Components.Schemas.StoryPodium?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek`.
+                public var myWeek: Components.Schemas.StoryMyWeek?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/hottest`.
                 public var hottest: Components.Schemas.StoryHottest?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals`.
+                public var meals: Components.Schemas.StoryMeals?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/bestDisclaimer`.
+                public var bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/ending`.
+                public var ending: Components.Schemas.StoryEnding?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/status`.
                 @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
                     case ready = "ready"
@@ -4938,11 +5347,11 @@ extension Components {
                         case titles
                     }
                 }
-                /// Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
+                /// Every member in the squad at the awards who checked in before them and agreed to AI use, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/titles`.
                 public typealias TitlesPayload = [Components.Schemas.WeekStory.Case1Payload.TitlesPayloadPayload]
-                /// Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
+                /// Every member in the squad at the awards who checked in before them and agreed to AI use, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/titles`.
                 public var titles: Components.Schemas.WeekStory.Case1Payload.TitlesPayload
@@ -4952,21 +5361,42 @@ extension Components {
                 ///   - version:
                 ///   - squad:
                 ///   - week:
+                ///   - scene: The scene the squad trained on that week: the story takes its colours.
+                ///   - members: Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
+                ///   - podium:
+                ///   - myWeek:
                 ///   - hottest:
+                ///   - meals:
+                ///   - bestDisclaimer:
+                ///   - ending:
                 ///   - status:
-                ///   - titles: Every member still in the squad who checked in before the awards, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
+                ///   - titles: Every member in the squad at the awards who checked in before them and agreed to AI use, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
                 public init(
                     version: Components.Schemas.WeekStory.Case1Payload.VersionPayload,
-                    squad: Components.Schemas.WeekStory.Case1Payload.SquadPayload,
-                    week: Components.Schemas.WeekStory.Case1Payload.WeekPayload,
+                    squad: Components.Schemas.StorySquad,
+                    week: Components.Schemas.StoryWeek,
+                    scene: Components.Schemas.WeekStory.Case1Payload.ScenePayload,
+                    members: [Components.Schemas.StoryMember],
+                    podium: Components.Schemas.StoryPodium? = nil,
+                    myWeek: Components.Schemas.StoryMyWeek? = nil,
                     hottest: Components.Schemas.StoryHottest? = nil,
+                    meals: Components.Schemas.StoryMeals? = nil,
+                    bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
+                    ending: Components.Schemas.StoryEnding? = nil,
                     status: Components.Schemas.WeekStory.Case1Payload.StatusPayload,
                     titles: Components.Schemas.WeekStory.Case1Payload.TitlesPayload
                 ) {
                     self.version = version
                     self.squad = squad
                     self.week = week
+                    self.scene = scene
+                    self.members = members
+                    self.podium = podium
+                    self.myWeek = myWeek
                     self.hottest = hottest
+                    self.meals = meals
+                    self.bestDisclaimer = bestDisclaimer
+                    self.ending = ending
                     self.status = status
                     self.titles = titles
                 }
@@ -4974,7 +5404,14 @@ extension Components {
                     case version
                     case squad
                     case week
+                    case scene
+                    case members
+                    case podium
+                    case myWeek
                     case hottest
+                    case meals
+                    case bestDisclaimer
+                    case ending
                     case status
                     case titles
                 }
@@ -4983,7 +5420,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case1`.
             case case1(Components.Schemas.WeekStory.Case1Payload)
-            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later.
+            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page is frozen and shows as usual. Read again later.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case2`.
             public struct Case2Payload: Codable, Hashable, Sendable {
@@ -4994,57 +5431,39 @@ extension Components {
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/version`.
                 public var version: Components.Schemas.WeekStory.Case2Payload.VersionPayload
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad`.
-                public struct SquadPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad/id`.
-                    public var id: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad/name`.
-                    public var name: Swift.String
-                    /// Creates a new `SquadPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - id:
-                    ///   - name:
-                    public init(
-                        id: Swift.String,
-                        name: Swift.String
-                    ) {
-                        self.id = id
-                        self.name = name
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case id
-                        case name
-                    }
-                }
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squad`.
-                public var squad: Components.Schemas.WeekStory.Case2Payload.SquadPayload
+                public var squad: Components.Schemas.StorySquad
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week`.
-                public struct WeekPayload: Codable, Hashable, Sendable {
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week/from`.
-                    public var from: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week/to`.
-                    public var to: Swift.String
-                    /// Creates a new `WeekPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - from:
-                    ///   - to:
-                    public init(
-                        from: Swift.String,
-                        to: Swift.String
-                    ) {
-                        self.from = from
-                        self.to = to
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case from
-                        case to
-                    }
+                public var week: Components.Schemas.StoryWeek
+                /// The scene the squad trained on that week: the story takes its colours.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/scene`.
+                @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case track = "track"
+                    case pool = "pool"
+                    case gym = "gym"
+                    case tennis = "tennis"
+                    case climbing = "climbing"
                 }
-                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week`.
-                public var week: Components.Schemas.WeekStory.Case2Payload.WeekPayload
+                /// The scene the squad trained on that week: the story takes its colours.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/scene`.
+                public var scene: Components.Schemas.WeekStory.Case2Payload.ScenePayload
+                /// Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/members`.
+                public var members: [Components.Schemas.StoryMember]
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/podium`.
+                public var podium: Components.Schemas.StoryPodium?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek`.
+                public var myWeek: Components.Schemas.StoryMyWeek?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/hottest`.
                 public var hottest: Components.Schemas.StoryHottest?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals`.
+                public var meals: Components.Schemas.StoryMeals?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/bestDisclaimer`.
+                public var bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/ending`.
+                public var ending: Components.Schemas.StoryEnding?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/status`.
                 @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
                     case pending = "pending"
@@ -5057,30 +5476,58 @@ extension Components {
                 ///   - version:
                 ///   - squad:
                 ///   - week:
+                ///   - scene: The scene the squad trained on that week: the story takes its colours.
+                ///   - members: Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
+                ///   - podium:
+                ///   - myWeek:
                 ///   - hottest:
+                ///   - meals:
+                ///   - bestDisclaimer:
+                ///   - ending:
                 ///   - status:
                 public init(
                     version: Components.Schemas.WeekStory.Case2Payload.VersionPayload,
-                    squad: Components.Schemas.WeekStory.Case2Payload.SquadPayload,
-                    week: Components.Schemas.WeekStory.Case2Payload.WeekPayload,
+                    squad: Components.Schemas.StorySquad,
+                    week: Components.Schemas.StoryWeek,
+                    scene: Components.Schemas.WeekStory.Case2Payload.ScenePayload,
+                    members: [Components.Schemas.StoryMember],
+                    podium: Components.Schemas.StoryPodium? = nil,
+                    myWeek: Components.Schemas.StoryMyWeek? = nil,
                     hottest: Components.Schemas.StoryHottest? = nil,
+                    meals: Components.Schemas.StoryMeals? = nil,
+                    bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
+                    ending: Components.Schemas.StoryEnding? = nil,
                     status: Components.Schemas.WeekStory.Case2Payload.StatusPayload
                 ) {
                     self.version = version
                     self.squad = squad
                     self.week = week
+                    self.scene = scene
+                    self.members = members
+                    self.podium = podium
+                    self.myWeek = myWeek
                     self.hottest = hottest
+                    self.meals = meals
+                    self.bestDisclaimer = bestDisclaimer
+                    self.ending = ending
                     self.status = status
                 }
                 public enum CodingKeys: String, CodingKey {
                     case version
                     case squad
                     case week
+                    case scene
+                    case members
+                    case podium
+                    case myWeek
                     case hottest
+                    case meals
+                    case bestDisclaimer
+                    case ending
                     case status
                 }
             }
-            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page shows as usual. Read again later.
+            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page is frozen and shows as usual. Read again later.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case2`.
             case case2(Components.Schemas.WeekStory.Case2Payload)
@@ -5113,7 +5560,196 @@ extension Components {
                 }
             }
         }
-        /// The signed-in member’s check-in with the most reactions at the awards, the latest on a tie; while `pending`, as it stands now. No AI writes it. Missing when none of theirs had any.
+        /// - Remark: Generated from `#/components/schemas/StorySquad`.
+        public struct StorySquad: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StorySquad/id`.
+            public var id: Swift.String
+            /// The squad’s name that week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StorySquad/name`.
+            public var name: Swift.String
+            /// Creates a new `StorySquad`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - name: The squad’s name that week.
+            public init(
+                id: Swift.String,
+                name: Swift.String
+            ) {
+                self.id = id
+                self.name = name
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StoryWeek`.
+        public struct StoryWeek: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryWeek/from`.
+            public var from: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryWeek/to`.
+            public var to: Swift.String
+            /// Creates a new `StoryWeek`.
+            ///
+            /// - Parameters:
+            ///   - from:
+            ///   - to:
+            public init(
+                from: Swift.String,
+                to: Swift.String
+            ) {
+                self.from = from
+                self.to = to
+            }
+            public enum CodingKeys: String, CodingKey {
+                case from
+                case to
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StoryMember`.
+        public struct StoryMember: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryMember/member`.
+            public var member: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryMember/character`.
+            public var character: Components.Schemas.Character?
+            /// Creates a new `StoryMember`.
+            ///
+            /// - Parameters:
+            ///   - member:
+            ///   - character:
+            public init(
+                member: Swift.String,
+                character: Components.Schemas.Character? = nil
+            ) {
+                self.member = member
+                self.character = character
+            }
+            public enum CodingKeys: String, CodingKey {
+                case member
+                case character
+            }
+        }
+        /// 领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryPodium`.
+        public struct StoryPodium: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/champion`.
+            public var champion: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/sides`.
+            public var sides: [Swift.String]
+            /// Creates a new `StoryPodium`.
+            ///
+            /// - Parameters:
+            ///   - champion:
+            ///   - sides:
+            public init(
+                champion: Swift.String,
+                sides: [Swift.String]
+            ) {
+                self.champion = champion
+                self.sides = sides
+            }
+            public enum CodingKeys: String, CodingKey {
+                case champion
+                case sides
+            }
+        }
+        /// 你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryMyWeek`.
+        public struct StoryMyWeek: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/plannedDays`.
+            public var plannedDays: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/trainedDays`.
+            public var trainedDays: Swift.Int
+            /// Monday first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/days`.
+            public var days: [Components.Schemas.StoryDay]
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/healthyMeals`.
+            public var healthyMeals: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/cheatMeals`.
+            public var cheatMeals: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryMyWeek/reactionsReceived`.
+            public var reactionsReceived: Swift.Int
+            /// Creates a new `StoryMyWeek`.
+            ///
+            /// - Parameters:
+            ///   - plannedDays:
+            ///   - trainedDays:
+            ///   - days: Monday first.
+            ///   - healthyMeals:
+            ///   - cheatMeals:
+            ///   - reactionsReceived:
+            public init(
+                plannedDays: Swift.Int,
+                trainedDays: Swift.Int,
+                days: [Components.Schemas.StoryDay],
+                healthyMeals: Swift.Int,
+                cheatMeals: Swift.Int,
+                reactionsReceived: Swift.Int
+            ) {
+                self.plannedDays = plannedDays
+                self.trainedDays = trainedDays
+                self.days = days
+                self.healthyMeals = healthyMeals
+                self.cheatMeals = cheatMeals
+                self.reactionsReceived = reactionsReceived
+            }
+            public enum CodingKeys: String, CodingKey {
+                case plannedDays
+                case trainedDays
+                case days
+                case healthyMeals
+                case cheatMeals
+                case reactionsReceived
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StoryDay`.
+        public struct StoryDay: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryDay/day`.
+            public var day: Swift.String
+            /// A 练了 wins over a 请假条, which wins over a planned rest day.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryDay/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case trained = "trained"
+                case rest = "rest"
+                case disclaimer = "disclaimer"
+                case none = "none"
+            }
+            /// A 练了 wins over a 请假条, which wins over a planned rest day.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryDay/kind`.
+            public var kind: Components.Schemas.StoryDay.KindPayload
+            /// For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryDay/sport`.
+            public var sport: Swift.String?
+            /// Creates a new `StoryDay`.
+            ///
+            /// - Parameters:
+            ///   - day:
+            ///   - kind: A 练了 wins over a 请假条, which wins over a planned rest day.
+            ///   - sport: For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own.
+            public init(
+                day: Swift.String,
+                kind: Components.Schemas.StoryDay.KindPayload,
+                sport: Swift.String? = nil
+            ) {
+                self.day = day
+                self.kind = kind
+                self.sport = sport
+            }
+            public enum CodingKeys: String, CodingKey {
+                case day
+                case kind
+                case sport
+            }
+        }
+        /// The signed-in member’s check-in with the most reactions at the awards, the latest on a tie. No AI writes it. Missing when none of theirs had any, or it was deleted since.
         ///
         /// - Remark: Generated from `#/components/schemas/StoryHottest`.
         public struct StoryHottest: Codable, Hashable, Sendable {
@@ -5243,6 +5879,129 @@ extension Components {
                 case url
             }
         }
+        /// 吃了: the squad’s meals, and each member who logged one eating what they logged more of (健康餐 on a tie). Missing when nobody logged a meal.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryMeals`.
+        public struct StoryMeals: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/healthy`.
+            public var healthy: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/cheat`.
+            public var cheat: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload`.
+            public struct EatersPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload/member`.
+                public var member: Swift.String
+                /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload/more`.
+                @frozen public enum MorePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case healthy = "healthy"
+                    case cheat = "cheat"
+                }
+                /// - Remark: Generated from `#/components/schemas/StoryMeals/EatersPayload/more`.
+                public var more: Components.Schemas.StoryMeals.EatersPayloadPayload.MorePayload
+                /// Creates a new `EatersPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - member:
+                ///   - more:
+                public init(
+                    member: Swift.String,
+                    more: Components.Schemas.StoryMeals.EatersPayloadPayload.MorePayload
+                ) {
+                    self.member = member
+                    self.more = more
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case member
+                    case more
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/eaters`.
+            public typealias EatersPayload = [Components.Schemas.StoryMeals.EatersPayloadPayload]
+            /// - Remark: Generated from `#/components/schemas/StoryMeals/eaters`.
+            public var eaters: Components.Schemas.StoryMeals.EatersPayload
+            /// Creates a new `StoryMeals`.
+            ///
+            /// - Parameters:
+            ///   - healthy:
+            ///   - cheat:
+            ///   - eaters:
+            public init(
+                healthy: Swift.Int,
+                cheat: Swift.Int,
+                eaters: Components.Schemas.StoryMeals.EatersPayload
+            ) {
+                self.healthy = healthy
+                self.cheat = cheat
+                self.eaters = eaters
+            }
+            public enum CodingKeys: String, CodingKey {
+                case healthy
+                case cheat
+                case eaters
+            }
+        }
+        /// 最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer`.
+        public struct StoryBestDisclaimer: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/checkIn`.
+            public var checkIn: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/author`.
+            public var author: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/text`.
+            public var text: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryBestDisclaimer/reactions`.
+            public var reactions: Swift.Int
+            /// Creates a new `StoryBestDisclaimer`.
+            ///
+            /// - Parameters:
+            ///   - checkIn:
+            ///   - author:
+            ///   - text:
+            ///   - reactions:
+            public init(
+                checkIn: Swift.String,
+                author: Swift.String,
+                text: Swift.String,
+                reactions: Swift.Int
+            ) {
+                self.checkIn = checkIn
+                self.author = author
+                self.text = text
+                self.reactions = reactions
+            }
+            public enum CodingKeys: String, CodingKey {
+                case checkIn
+                case author
+                case text
+                case reactions
+            }
+        }
+        /// 这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StoryEnding`.
+        public struct StoryEnding: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/done`.
+            public var done: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/plan`.
+            public var plan: Swift.Int
+            /// Creates a new `StoryEnding`.
+            ///
+            /// - Parameters:
+            ///   - done:
+            ///   - plan:
+            public init(
+                done: Swift.Int,
+                plan: Swift.Int
+            ) {
+                self.done = done
+                self.plan = plan
+            }
+            public enum CodingKeys: String, CodingKey {
+                case done
+                case plan
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/StoryTitle`.
         public struct StoryTitle: Codable, Hashable, Sendable {
             /// The title (头衔), at most 6 characters.
@@ -5253,7 +6012,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/StoryTitle/speech`.
             public var speech: Swift.String
-            /// The move the character plays collecting it. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            /// The move the character plays collecting it. A move id as the app names its art (`cheer` is the persona’s own cheer); which moves the awards pick from is a setting, so new ones come without an app release: play `cheer` for one the app doesn’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/StoryTitle/move`.
             public var move: Swift.String
@@ -5262,7 +6021,7 @@ extension Components {
             /// - Parameters:
             ///   - title: The title (头衔), at most 6 characters.
             ///   - speech: Its award line (颁奖词), at most 24 characters, citing something real from the week.
-            ///   - move: The move the character plays collecting it. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.
+            ///   - move: The move the character plays collecting it. A move id as the app names its art (`cheer` is the persona’s own cheer); which moves the awards pick from is a setting, so new ones come without an app release: play `cheer` for one the app doesn’t know.
             public init(
                 title: Swift.String,
                 speech: Swift.String,

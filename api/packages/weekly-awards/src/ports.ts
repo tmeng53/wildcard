@@ -10,6 +10,7 @@ import type {
 } from './domain/awards.js';
 import type { PromptMeme } from './domain/prompt.js';
 import type { WeekStart } from './domain/schedule.js';
+import type { WeekStory } from './domain/week-story.js';
 import type { AwardSettings, ModelName } from './domain/settings.js';
 
 /**
@@ -74,6 +75,19 @@ export interface AwardsStore {
   claimNudge(squad: SquadId, weekStart: WeekStart): Promise<Failures | undefined>;
   /** Every title the member has won, in all their squads. */
   titlesWon(member: MemberId): Promise<TitlesWon>;
+}
+
+/** Where each squad's frozen 战报 is kept: written once a week, never changed. */
+export interface WeekStoryStore {
+  /** A squad's 战报 for a week; `undefined` before it is frozen. */
+  find(squad: SquadId, weekStart: WeekStart): Promise<WeekStory | undefined>;
+  /** Saves a squad's 战报 for a week unless it has one already: two runs at once keep one. */
+  freeze(story: WeekStory): Promise<void>;
+  /**
+   * The squads with a 战报 frozen for the week and no awards given yet, so the job finishes them
+   * even after the check-ins that started them were deleted.
+   */
+  waitingForAwards(weekStart: WeekStart): Promise<SquadId[]>;
 }
 
 /**

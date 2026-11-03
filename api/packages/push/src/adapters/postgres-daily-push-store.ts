@@ -14,34 +14,28 @@ export function createPostgresDailyPushStore(db: Kysely<DB>): DailyPushStore {
     async due(candidates) {
       if (candidates.length === 0) return [];
       const dayOf = new Map(candidates.map(({ member, day }) => [member, day]));
-      const rows = await db
-        .selectFrom('push_devices')
-        .select('push_devices.member_id')
-        .distinct()
-        .where('push_devices.member_id', 'in', [...dayOf.keys()])
-        .where((eb) =>
-          eb.not(
-            eb.exists(
-              eb
-                .selectFrom('push_settings')
-                .select('push_settings.member_id')
-                .whereRef('push_settings.member_id', '=', 'push_devices.member_id')
-                .where('push_settings.topic', '=', TOPIC)
-                .where('push_settings.enabled', '=', false),
-            ),
-          ),
-        )
+      // Members without a phone are due too: their push reaches no phone, but it is still kept
+      // in their 通知, so turning notifications off in iOS loses no history.
+      const off = await db
+        .selectFrom('push_settings')
+        .select('member_id')
+        .where('member_id', 'in', [...dayOf.keys()])
+        .where('topic', '=', TOPIC)
+        .where('enabled', '=', false)
         .execute();
-      const withPhone = rows.map((row) => MemberId.parse(row.member_id));
-      if (withPhone.length === 0) return [];
+      const switchedOff = new Set(off.map(({ member_id }) => member_id));
+      const on = [...dayOf.keys()]
+        .filter((member) => !switchedOff.has(member))
+        .map((member) => MemberId.parse(member));
+      if (on.length === 0) return [];
       const handled = await db
         .selectFrom('daily_pushes')
         .select(['member_id', sql<string>`day::text`.as('day')])
-        .where('member_id', 'in', withPhone)
-        .where('day', 'in', [...new Set(withPhone.flatMap((member) => dayOf.get(member) ?? []))])
+        .where('member_id', 'in', on)
+        .where('day', 'in', [...new Set(on.flatMap((member) => dayOf.get(member) ?? []))])
         .execute();
       const done = new Set(handled.map(({ member_id, day }) => `${member_id} ${day}`));
-      const due = withPhone.filter((member) => !done.has(`${member} ${dayOf.get(member) ?? ''}`));
+      const due = on.filter((member) => !done.has(`${member} ${dayOf.get(member) ?? ''}`));
       if (due.length === 0) return [];
       const last = await db
         .selectFrom('daily_pushes')

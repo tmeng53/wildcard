@@ -111,6 +111,8 @@ public struct ScheduleView: View {
         }
         .swipesBack(perform: back)
         .task { await model.load() }
+        // Today's sport changed (a 练了 read in, today's plan saved): the character follows it.
+        .onChange(of: store.todaysActivity) { model.followToday() }
         .onChange(of: theme, initial: true) { _, scene in model.train(on: scene) }
         .sheet(isPresented: $picksAll) {
             SportPicker(selected: selectedActivity, recent: recentActivities) { activity in
@@ -225,22 +227,6 @@ public struct ScheduleView: View {
         }
     }
 
-    /// 常用运动: the sports in the week on the poster, in the order planned.
-    private var recentActivities: [Activity] {
-        var seen: [Activity] = []
-        for case .train(let activity?) in store.board?.days ?? [] where !seen.contains(activity) {
-            seen.append(activity)
-        }
-        return seen
-    }
-
-    private var selectedActivity: Activity {
-        guard let board = store.board, case .selected(let index) = board.focus,
-            case .train(let activity?) = board.days[index]
-        else { return .sport("run") }
-        return activity
-    }
-
     private func fuelPicks(_ sheet: WeekSheet) -> some View {
         let full = sheet.fuel.count >= FuelGoal.maxCount
         let own = sheet.fuel.filter { if case .own = $0 { true } else { false } }
@@ -308,6 +294,22 @@ public struct ScheduleView: View {
 }
 
 extension ScheduleView {
+    /// 常用运动: the sports in the week on the poster, in the order planned.
+    private var recentActivities: [Activity] {
+        var seen: [Activity] = []
+        for case .train(let activity?) in store.board?.days ?? [] where !seen.contains(activity) {
+            seen.append(activity)
+        }
+        return seen
+    }
+
+    private var selectedActivity: Activity {
+        guard let board = store.board, case .selected(let index) = board.focus,
+            case .train(let activity?) = board.days[index]
+        else { return .sport("run") }
+        return activity
+    }
+
     @ViewBuilder
     private var loading: some View {
         switch store.phase {

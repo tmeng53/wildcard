@@ -31,7 +31,13 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedWeeklyAwards, unusedCoachHiring, unusedUnlocks } from '../test-kit/weekly-awards.js';
+import {
+  unusedWeeklyAwards,
+  unusedCoachHiring,
+  unusedCoachActivity,
+  ignoredNotices,
+  unusedUnlocks,
+} from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
@@ -86,6 +92,8 @@ const app = createApp({
   unlocks: unusedUnlocks,
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   coachHiring: unusedCoachHiring,
+  coachActivity: unusedCoachActivity,
+  ...ignoredNotices,
   log: createLog(() => undefined),
   admin: adminOn(),
   jobs: noJobs,

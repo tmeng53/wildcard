@@ -78,7 +78,7 @@ function card(coach: Coach) {
 }
 
 /**
- * `GET /coaches` (教练市场) and `GET`, `PUT` and `DELETE /squads/{squadId}/coach` (the 教练 card in
+ * `GET /coaches` (教练招聘会) and `GET`, `PUT` and `DELETE /squads/{squadId}/coach` (the 教练 card in
  * 小队设置). It spans modules: the squads say who is in the squad and who its captain is, the
  * coach module keeps the coaches and each squad's hire.
  */

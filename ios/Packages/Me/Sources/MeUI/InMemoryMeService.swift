@@ -17,7 +17,7 @@ public actor InMemoryMeService: MeService {
 
     /// The member the screens are reviewed against: 小林 of 周三不练腿俱乐部, number 22 since 2026,
     /// 128 days trained (most of them runs), 3 of 5 this week and 3 weekly titles.
-    public static func sample(failsSaving: Bool = false) -> InMemoryMeService {
+    public static func sample(failsSaving: Bool = false, unlocks: [Unlock] = []) -> InMemoryMeService {
         InMemoryMeService(
             overview: MeOverview(
                 character: MeCharacter(
@@ -34,7 +34,8 @@ public actor InMemoryMeService: MeService {
                     count: 3,
                     latest: TitlesWon.Latest(
                         title: Bundle.module.inAppLanguage.localizedString(forKey: "早八战神", value: nil, table: nil),
-                        times: 2))),
+                        times: 2)),
+                unlocks: unlocks),
             failsSaving: failsSaving)
     }
 

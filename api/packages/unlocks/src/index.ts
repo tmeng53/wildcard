@@ -16,5 +16,5 @@ export {
   type UnlockRule,
 } from './domain/unlocks.js';
 export { UnlockItemMissingError, UnlockSportNotListedError } from './errors.js';
-export type { SportListed, TrainedSince, UnlockStore } from './ports.js';
+export type { SportListed, TrainedSince, UnlockStore, Unlocked } from './ports.js';
 export { createUnlocks, type Unlocks, type UnlocksAdmin } from './use-cases/unlocks.js';
