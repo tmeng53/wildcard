@@ -104,7 +104,11 @@ struct MainTabs: View {
                 },
                 // It is over everything, so it shows the card over itself.
                 teammateCard: { member in
-                    AnyView(cardModel(of: member).map { TeammateCard(model: $0) })
+                    AnyView(
+                        squad.settings.map { settings in
+                            TeammateCard(
+                                model: cardModel(of: member, in: settings.squad, characters: settings.characters))
+                        })
                 }
             )
             .environment(\.sceneTheme, squad.scene)
@@ -123,28 +127,26 @@ struct MainTabs: View {
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
     }
 
-    /// A teammate's card in the member's squad, read from the API or, on the sample squad, made
-    /// from its home; nil before the home is read.
-    private func cardModel(of member: MemberID) -> SquadmateCardModel? {
-        guard let home = today.home else { return nil }
-        let cards = squadmateCards ?? InMemorySquadmateCards(characters: Self.characters(in: home))
-        return SquadmateCardModel(member: member, squad: home.squad.id, squadName: home.squad.name, cards: cards)
+    /// A teammate's card in `squad`, read from the API or, on the sample squad, made from the
+    /// `characters` the page that opens it already shows.
+    private func cardModel(
+        of member: MemberID, in squad: Squad, characters: [MemberID: MemberCharacter]
+    ) -> SquadmateCardModel {
+        let looks = characters.mapValues { character in
+            MeCharacter(
+                nickname: character.nickname.text, outfit: Outfit(character.look), persona: Persona(character.look))
+        }
+        let cards = squadmateCards ?? InMemorySquadmateCards(characters: { looks[$0] })
+        return SquadmateCardModel(member: member, squad: squad.id, squadName: squad.name, cards: cards)
     }
 
-    /// The sample squad's characters as the home shows them, for their cards.
-    private static func characters(in home: Home) -> @Sendable (MemberID) -> MeCharacter? {
+    /// A teammate's card from the home, which knows the squad once it is read.
+    private func homeCard(of member: MemberID) -> SquadmateCardModel? {
+        guard let home = today.home else { return nil }
         let characters = Dictionary(
-            home.today.members.compactMap { mate in
-                mate.character.map { character in
-                    (
-                        mate.member,
-                        MeCharacter(
-                            nickname: character.nickname.text, outfit: Outfit(character.look),
-                            persona: Persona(character.look))
-                    )
-                }
-            }, uniquingKeysWith: { first, _ in first })
-        return { characters[$0] }
+            home.today.members.compactMap { mate in mate.character.map { (mate.member, $0) } },
+            uniquingKeysWith: { first, _ in first })
+        return cardModel(of: member, in: home.squad, characters: characters)
     }
 
     /// Opens the editor on the member's own character.
@@ -178,7 +180,7 @@ struct MainTabs: View {
                     selection = .feed
                 }
             )
-            .onAppear { today.openTeammate = { teammate = cardModel(of: $0) } }
+            .onAppear { today.openTeammate = { teammate = homeCard(of: $0) } }
         case .feed:
             FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
                 .environment(\.sceneTheme, today.scene)
