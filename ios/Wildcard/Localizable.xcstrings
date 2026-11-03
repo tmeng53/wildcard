@@ -400,6 +400,22 @@
           }
         }
       }
+    },
+    "%@ 到新货了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New in at %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 到新貨了"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

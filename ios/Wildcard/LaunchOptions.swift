@@ -218,9 +218,30 @@ enum LaunchOptions {
 
     /// `-uitest-unlocked`: the sample member's training has just opened DEUCE CLUB, which 今天
     /// tells once it is up and 我's editor has open, so UI tests see the notice and its tap.
+    /// `-uitest-unlocked-piece`: WARM-UP's headphones have just come in instead, which 今天 tells as
+    /// 「热身社 到新货了」 and whose box opens in the store on a tap.
     static var unlocked: [Unlock] {
-        guard ProcessInfo.processInfo.arguments.contains("-uitest-unlocked") else { return [] }
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-uitest-unlocked-piece") {
+            return [Unlock(kind: .piece, id: "warmup-headphones", unlockedAt: now(), sports: [], checkIns: 2)]
+        }
+        guard arguments.contains("-uitest-unlocked") else { return [] }
         return [Unlock(kind: .store, id: "deuce", unlockedAt: now(), sports: ["tennis"], checkIns: 3)]
+    }
+
+    /// The sample member's pieces still locked: WARM-UP's and DEUCE CLUB's newer ones, as the
+    /// server's first rules have them for someone who just started (WARM-UP takes any 练了).
+    static var lockedPieces: [LockedPiece] {
+        let warmUp = [
+            ("warmup-headphones", 2), ("warmup-stripe", 4), ("warmup-beanie", 6), ("warmup-overalls", 9),
+            ("warmup-hightop", 12), ("warmup-raglan", 15), ("warmup-long", 20),
+        ]
+        let deuce = [
+            ("deuce-sweater", 5), ("deuce-dress", 7), ("deuce-socks", 10), ("deuce-cable", 13),
+            ("deuce-terry", 16), ("deuce-pants", 20),
+        ]
+        let held = Set(unlocked.map(\.id))
+        return (warmUp + deuce).filter { !held.contains($0.0) }.map { LockedPiece(id: $0.0, checkInsToGo: $0.1) }
     }
 
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the

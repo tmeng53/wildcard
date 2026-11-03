@@ -2888,7 +2888,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -2963,11 +2963,11 @@
           },
           "unlockKind": {
             "type": "string",
-            "description": "What opened (`unlocked`): `store` or `prop`. Skip another."
+            "description": "What opened (`unlocked`): `store`, `prop` or `piece`. Skip another."
           },
           "item": {
             "type": "string",
-            "description": "The store’s or prop’s id (`unlocked`)."
+            "description": "The store’s, prop’s or piece’s id (`unlocked`)."
           }
         },
         "required": [
@@ -4191,11 +4191,27 @@
               "$ref": "#/components/schemas/Unlock"
             },
             "description": "Every store and prop the member unlocked, the earliest first."
+          },
+          "pieces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PieceUnlock"
+            },
+            "description": "Every clothing piece the member unlocked, the earliest first. A piece with a rule stays locked in its store, even an open one, until then."
+          },
+          "lockedPieces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LockedPiece"
+            },
+            "description": "Every piece with a rule the member hasn’t unlocked yet, and how far it is."
           }
         },
         "required": [
           "version",
-          "unlocks"
+          "unlocks",
+          "pieces",
+          "lockedPieces"
         ],
         "additionalProperties": false
       },
@@ -4261,6 +4277,57 @@
         "required": [
           "sports",
           "checkIns"
+        ],
+        "additionalProperties": false
+      },
+      "PieceUnlock": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "lap-bib"
+          },
+          "unlockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the member made the check-in that unlocked it.",
+            "example": "2026-11-03T18:30:00.000Z"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/UnlockReason"
+          }
+        },
+        "required": [
+          "id",
+          "unlockedAt",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "LockedPiece": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "lap-singlet"
+          },
+          "checkInsToGo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "How many more 练了 check-ins in its sports open it.",
+            "example": 2
+          }
+        },
+        "required": [
+          "id",
+          "checkInsToGo"
         ],
         "additionalProperties": false
       }
@@ -8496,8 +8563,8 @@
     "/me/unlocks": {
       "get": {
         "operationId": "getMyUnlocks",
-        "summary": "The stores and props the signed-in member unlocked",
-        "description": "Stores on the character editor’s 商店街 and props open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler and the dumbbell) are everyone’s and never listed. An unlock is never taken back.",
+        "summary": "The stores, props and pieces the signed-in member unlocked",
+        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.",
         "security": [
           {
             "bearer": []

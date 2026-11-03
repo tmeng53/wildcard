@@ -79,9 +79,9 @@ public final class CharacterEditorModel {
     /// look its first screen showed.
     public static func placeholder(
         look: Outfit? = nil, persona: Persona = .energetic, nickname: String, tab: EditorTab = .look,
-        unlocks: [Unlock] = []
+        unlocks: [Unlock] = [], locked: [LockedPiece] = []
     ) throws(AvatarError) -> CharacterEditorModel {
-        let catalog = try Catalog.placeholder(unlocks: unlocks)
+        let catalog = try Catalog.placeholder(unlocks: unlocks, locked: locked)
         var generator = SystemRandomNumberGenerator()
         let start = look ?? CharacterDraft.randomLook(from: catalog, using: &generator)
         return CharacterEditorModel(
@@ -127,7 +127,7 @@ public final class CharacterEditorModel {
     }
 
     /// Opens on what a 练了 just unlocked, from its notice on the home: inside the store on the
-    /// 穿搭 tab, or on the 道具 tab for a prop.
+    /// 穿搭 tab, or on the 道具 tab for a prop. A piece opens its store with its box opening.
     public func show(_ unlock: Unlock) {
         switch unlock.kind {
         case .store:
@@ -136,12 +136,30 @@ public final class CharacterEditorModel {
             visit(store)
         case .prop:
             tab = .prop
+        case .piece:
+            guard let id = draft.catalog.storeOf[unlock.id],
+                let store = draft.catalog.stores.first(where: { $0.id == id && $0.isOpen }),
+                draft.catalog.rack(of: id).contains(where: { $0.variant == unlock.id })
+            else { return }
+            tab = .outfit
+            visit(store)
+            unboxing = unlock.id
         }
+    }
+
+    /// The piece whose 「？」 box opens on its rack, once, when the editor opens on it.
+    private(set) var unboxing: String?
+
+    /// The box finished opening: the piece inside is put on.
+    func unboxed(revealing variant: String, in slot: Slot) {
+        guard unboxing == variant else { return }
+        unboxing = nil
+        pickFromRack(variant, for: slot)
     }
 
     /// Back out to the shopping street.
     func leaveStore() {
-        (store, picked) = (nil, nil)
+        (store, picked, unboxing) = (nil, nil, nil)
     }
 
     /// Puts on a piece from the open store's rack; a second tap takes off a hat or an accessory,
