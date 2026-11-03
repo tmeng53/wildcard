@@ -314,16 +314,6 @@ final class AppModel {
             service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
 
-    /// 动态 on the member's squad, its days by the member's own clock.
-    private static func feed(api: WildcardAPI, home: Home) -> FeedModel {
-        let zone = home.timeZone
-        let store = FeedStore(
-            source: APIFeedSource(api: api), squad: home.squad.id, viewer: home.member,
-            today: { LocalDay(at: Date(), in: zone) }, now: { Timestamp(Date()) },
-            newCommentID: { CommentID(UUID()) })
-        return FeedModel(store: store, viewer: home.member, now: { Date() })
-    }
-
     /// 我的动态 over our API.
     var myPosts: any MyPostsSource { APIMyPostsSource(api: api) }
 

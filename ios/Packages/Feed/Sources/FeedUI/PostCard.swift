@@ -35,6 +35,8 @@ struct PostCard: View {
     /// On its own page the post lists every comment under the card instead.
     private var showsAllComments: Bool { model.opened == post.id }
     private var isLifted: Bool { model.lifted && model.picking == post.id }
+    /// Teammates' comments, or the coach's line.
+    private var hasComments: Bool { !post.comments.isEmpty || model.coachReply(on: post.id)?.text != nil }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -46,8 +48,8 @@ struct PostCard: View {
             details
             ReactionRow(model: model, post: post)
                 .padding(.horizontal, Space.m)
-                .padding(.bottom, post.comments.isEmpty || showsAllComments ? Space.xs : 0)
-            if !post.comments.isEmpty && !showsAllComments {
+                .padding(.bottom, !hasComments || showsAllComments ? Space.xs : 0)
+            if hasComments && !showsAllComments {
                 CardComments(model: model, post: post)
                     .padding(.horizontal, Space.m)
                     .padding(.bottom, Space.s)

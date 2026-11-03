@@ -5,9 +5,10 @@ import DesignSystemUI
 import FeedDomain
 import SwiftUI
 
-/// Under a card's emoji row: the latest two comments, each its writer's name then the words (回复
-/// Mia first when it replies), two lines at most, then 全部 N 条评论 when there are more. A tap
-/// opens the post's own page, where all of them are.
+/// Under a card's emoji row: the coach's line first, with the 教练 tag, then the latest two
+/// comments, each its writer's name then the words (回复 Mia first when it replies), two lines at
+/// most, then 全部 N 条评论 when there are more. A tap opens the post's own page, where all of
+/// them are.
 struct CardComments: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -19,6 +20,10 @@ struct CardComments: View {
             withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { model.openPage(post.id) }
         } label: {
             VStack(alignment: .leading, spacing: Space.xxs) {
+                if let reply = model.coachReply(on: post.id), let text = reply.text {
+                    CoachCommentLine(coach: reply.coach, text: text)
+                        .lineLimit(2)
+                }
                 ForEach(post.commentsOnCard) { comment in
                     CommentLine(model: model, comment: comment)
                         .lineLimit(2)

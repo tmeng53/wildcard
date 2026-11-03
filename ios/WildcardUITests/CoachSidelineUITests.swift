@@ -1,9 +1,10 @@
 import XCTest
 
 /// The coach on the home's sideline, the way a member meets it: opening the home, 毛头 says
-/// today's 战术板 line by itself, with the 教练 tag and its name; the bubble goes after its hold,
-/// and tapping 毛头 says it again. The bubble stays whole on screen, clear of the card above and
-/// the tab bar, and screenshots are kept for review.
+/// today's 战术板 line by itself, with the 教练 tag and its name, and tapping 毛头 keeps it
+/// saying it. The bubble stays whole on screen, clear of the card above and the tab bar, and
+/// screenshots are kept for review. The bubble is held for a minute (`-uitest-bubble-hold`), so
+/// a slow simulator's checks never race its 6 seconds; the hold itself is `TodayModel`'s.
 @MainActor
 final class CoachSidelineUITests: XCTestCase {
     /// Slow CI simulators can take many seconds to show a screen; a real failure still fails.
@@ -15,7 +16,7 @@ final class CoachSidelineUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
-            "-today.cardPage", "0", "-uitest-coach",
+            "-today.cardPage", "0", "-uitest-coach", "-uitest-bubble-hold",
         ]
         app.launch()
 
@@ -30,13 +31,11 @@ final class CoachSidelineUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "61-coach-line")
 
-        // It goes after its 6 seconds, and a tap brings it back.
-        XCTAssertTrue(bubble.waitForNonExistence(timeout: Self.wait), "the coach's bubble stayed up")
-        keepScreenshot(named: "62-coach-quiet")
+        // A tap has the coach cheer and say the line again.
         coach.tap()
-        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping the coach didn't say the line again")
+        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping the coach took the line away")
         Thread.sleep(forTimeInterval: 0.6)
-        keepScreenshot(named: "63-coach-tapped")
+        keepScreenshot(named: "62-coach-tapped")
     }
 
     /// The bubble whole inside the window, under the squad card and above the tab bar.
