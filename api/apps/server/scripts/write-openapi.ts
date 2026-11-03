@@ -106,7 +106,7 @@ const app = createApp({
       give: unused,
       find: unused,
       claimNudge: unused,
-      claimWinners: unused,
+      claimReadyPush: unused,
       titlesWon: unused,
       story: unused,
       freezeStory: unused,

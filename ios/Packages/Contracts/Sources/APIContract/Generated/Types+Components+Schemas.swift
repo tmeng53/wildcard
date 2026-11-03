@@ -4552,7 +4552,7 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/WeekAward`.
         public struct WeekAward: Codable, Hashable, Sendable {
-            /// Today `planCompleted` (领奖台: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days on the podium, all of them on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words.
+            /// Today `planCompleted` (练够计划: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days trained, at least one, plan finished or not; the earliest to join on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekAward/kind`.
             public var kind: Swift.String
@@ -4616,7 +4616,7 @@ extension Components {
             /// Creates a new `WeekAward`.
             ///
             /// - Parameters:
-            ///   - kind: Today `planCompleted` (领奖台: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days on the podium, all of them on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words.
+            ///   - kind: Today `planCompleted` (练够计划: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days trained, at least one, plan finished or not; the earliest to join on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words.
             ///   - title: Its name, in the language asked for.
             ///   - symbol: An SF Symbol name to show with it; fall back to a plain one if it is unknown.
             ///   - winners: Who won it, in the order members joined the squad.
@@ -5631,7 +5631,7 @@ extension Components {
                 case character
             }
         }
-        /// 领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either.
+        /// 领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene; the earliest to join on a tie) in the middle, up to 2 next beside, left then right. Missing when nobody trained.
         ///
         /// - Remark: Generated from `#/components/schemas/StoryPodium`.
         public struct StoryPodium: Codable, Hashable, Sendable {
@@ -5639,21 +5639,29 @@ extension Components {
             public var champion: Swift.String
             /// - Remark: Generated from `#/components/schemas/StoryPodium/sides`.
             public var sides: [Swift.String]
+            /// Those on the podium who trained at least as many days as they planned (练够计划), for a small mark on their step. Empty when none did.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/planDone`.
+            public var planDone: [Swift.String]
             /// Creates a new `StoryPodium`.
             ///
             /// - Parameters:
             ///   - champion:
             ///   - sides:
+            ///   - planDone: Those on the podium who trained at least as many days as they planned (练够计划), for a small mark on their step. Empty when none did.
             public init(
                 champion: Swift.String,
-                sides: [Swift.String]
+                sides: [Swift.String],
+                planDone: [Swift.String]
             ) {
                 self.champion = champion
                 self.sides = sides
+                self.planDone = planDone
             }
             public enum CodingKeys: String, CodingKey {
                 case champion
                 case sides
+                case planDone
             }
         }
         /// 你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards.

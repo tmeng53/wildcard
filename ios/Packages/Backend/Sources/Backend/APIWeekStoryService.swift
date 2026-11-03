@@ -112,9 +112,12 @@ extension WeekStory {
         var podium: Podium?
         if let wire = frozen.podium {
             let sides = wire.sides.compactMap(Self.member)
-            guard let champion = Self.member(wire.champion), sides.count == wire.sides.count else { return nil }
+            let planDone = wire.planDone.compactMap(Self.member)
+            guard let champion = Self.member(wire.champion), sides.count == wire.sides.count,
+                planDone.count == wire.planDone.count
+            else { return nil }
             podium = Podium(
-                champion: champion, sides: sides, speech: first(champion)?.speech,
+                champion: champion, sides: sides, planDone: Set(planDone), speech: first(champion)?.speech,
                 championMove: first(champion)?.move, sideMove: sides.first.flatMap(first)?.move)
         }
         var bestDisclaimer: BestDisclaimer?
