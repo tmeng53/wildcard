@@ -294,8 +294,8 @@ describe('saving a check-in', () => {
     const member = await newMember();
     const squad = await newSquad(member);
     for (const body of [
-      draft({ audience: [squad] }),
       draft({ audience: [squad], ...disclaimer('加班') }),
+      draft({ audience: [squad] }),
     ]) {
       const id = CheckInId.parse(randomUUID());
       await checkIns.save({ id, member, draft: body });
@@ -429,6 +429,68 @@ describe('saving a check-in', () => {
   });
 });
 
+describe('补打卡: a check-in for an earlier day', () => {
+  it('counts for one of the 7 days before the day posted on, and keeps that day', async () => {
+    const member = await newMember();
+    const squad = await newSquad(member);
+    const save = (day: string) =>
+      checkIns.save({
+        id: CheckInId.parse(randomUUID()),
+        member,
+        draft: draft({ audience: [squad], day }),
+      });
+    const { checkIn } = await save('2026-10-11');
+    expect({ day: checkIn.day, postedDay: checkIn.postedDay }).toStrictEqual({
+      day: '2026-10-11',
+      postedDay: '2026-10-18',
+    });
+    const [read] = await checkIns.listMine({
+      member,
+      days: { from: '2026-10-11', to: '2026-10-11' },
+    });
+    expect(read?.postedDay).toBe('2026-10-18');
+    await expect(save('2026-10-10')).rejects.toMatchObject({ reason: 'CHECK_IN_DAY_MISMATCH' });
+  });
+
+  it('refuses a 请假条 for a day the member trained on, and takes a 练了 after one', async () => {
+    const member = await newMember();
+    const squad = await newSquad(member);
+    const save = (body: Record<string, unknown>) =>
+      checkIns.save({
+        id: CheckInId.parse(randomUUID()),
+        member,
+        draft: draft({ audience: [squad], ...body }),
+      });
+    await save({ day: '2026-10-15' });
+    await expect(save({ day: '2026-10-15', ...disclaimer('补个假') })).rejects.toMatchObject({
+      reason: 'ALREADY_TRAINED',
+    });
+    expect((await save({ day: '2026-10-14', ...disclaimer('补个假') })).created).toBe(true);
+    expect((await save({ day: '2026-10-14' })).created).toBe(true);
+  });
+
+  it('shows in the squad’s feed on the day it was posted, newest posted first', async () => {
+    const me = await newMember();
+    const squad = await newSquad(me);
+    const save = async (day: string, createdAt: string) =>
+      (
+        await checkIns.save({
+          id: CheckInId.parse(randomUUID()),
+          member: me,
+          draft: draft({ audience: [squad], day, createdAt, kind: 'cheatMeal', meal: {} }),
+        })
+      ).checkIn.id;
+    const today = await save('2026-10-18', '2026-10-18T10:00:00.000Z');
+    const backfill = await save('2026-10-13', '2026-10-18T11:00:00.000Z');
+    const feed = async (from: string, to: string) =>
+      (await checkIns.listForSquad({ viewer: me, squad, days: { from, to } })).map(
+        ({ checkIn }) => checkIn.id,
+      );
+    expect(await feed('2026-10-18', '2026-10-18')).toStrictEqual([backfill, today]);
+    expect(await feed('2026-10-12', '2026-10-17')).toStrictEqual([]);
+  });
+});
+
 describe('listing check-ins', () => {
   async function save(member: MemberId, body: Parameters<typeof draft>[0]) {
     const { checkIn } = await checkIns.save({
@@ -515,7 +577,7 @@ describe('listing check-ins', () => {
     const me = await newMember();
     const [a, b] = [await newSquad(me), await newSquad(me)];
     const both = await save(me, { audience: [b, a], createdAt: '2026-10-18T19:00:00.000Z' });
-    const later = await save(me, { audience: [a], ...disclaimer('今天休息') });
+    const later = await save(me, { audience: [a], kind: 'cheatMeal', meal: {} });
     const other = await newMember();
     await save(other, { audience: [await newSquad(other)] });
     const listed = await checkIns.listMine({
@@ -523,7 +585,7 @@ describe('listing check-ins', () => {
       days: { from: '2026-10-12', to: '2026-10-18' },
     });
     expect(listed.map(({ id, audience, kind }) => ({ id, audience, kind }))).toStrictEqual([
-      { id: later, audience: [a], kind: 'disclaimer' },
+      { id: later, audience: [a], kind: 'cheatMeal' },
       { id: both, audience: [b, a], kind: 'trained' },
     ]);
   });
