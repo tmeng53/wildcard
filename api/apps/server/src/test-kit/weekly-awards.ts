@@ -34,5 +34,8 @@ export const unusedCoachHiring = {
   offered: unused,
 };
 
+/** What coaches said, for an app whose test never reads it. */
+export const unusedCoachActivity = { squad: unused };
+
 /** What members unlocked, for an app whose test never reads it. */
 export const unusedUnlocks = { of: unused };

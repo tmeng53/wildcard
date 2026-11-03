@@ -3807,6 +3807,191 @@ extension Components {
                 case coach
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CoachActivity`.
+        public struct CoachActivity: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/version`.
+            public var version: Components.Schemas.CoachActivity.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/note`.
+            public var note: Components.Schemas.CoachNote?
+            /// The coach’s replies to the check-ins asked about; one with none is left out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/replies`.
+            public var replies: [Components.Schemas.CoachReply]
+            /// Creates a new `CoachActivity`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - note:
+            ///   - replies: The coach’s replies to the check-ins asked about; one with none is left out.
+            public init(
+                version: Components.Schemas.CoachActivity.VersionPayload,
+                note: Components.Schemas.CoachNote? = nil,
+                replies: [Components.Schemas.CoachReply]
+            ) {
+                self.version = version
+                self.note = note
+                self.replies = replies
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case note
+                case replies
+            }
+        }
+        /// The squad’s newest 战术板 line (the app shows it while its day is today), or null.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CoachNote`.
+        public struct CoachNote: Codable, Hashable, Sendable {
+            /// The day (New York) the line is for.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachNote/day`.
+            public var day: Swift.String
+            /// The 战术板 line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachNote/text`.
+            public var text: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachNote/coach`.
+            public var coach: Components.Schemas.CoachSpeaker
+            /// - Remark: Generated from `#/components/schemas/CoachNote/at`.
+            public var at: Foundation.Date
+            /// Creates a new `CoachNote`.
+            ///
+            /// - Parameters:
+            ///   - day: The day (New York) the line is for.
+            ///   - text: The 战术板 line.
+            ///   - coach:
+            ///   - at:
+            public init(
+                day: Swift.String,
+                text: Swift.String,
+                coach: Components.Schemas.CoachSpeaker,
+                at: Foundation.Date
+            ) {
+                self.day = day
+                self.text = text
+                self.coach = coach
+                self.at = at
+            }
+            public enum CodingKeys: String, CodingKey {
+                case day
+                case text
+                case coach
+                case at
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachSpeaker`.
+        public struct CoachSpeaker: Codable, Hashable, Sendable {
+            /// The coach’s id. Never changes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/id`.
+            public var id: Swift.String
+            /// Its name, shown with the 教练 tag.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/name`.
+            public var name: Swift.String
+            /// The character the app draws, by the art’s id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/look`.
+            public var look: Swift.String
+            /// Creates a new `CoachSpeaker`.
+            ///
+            /// - Parameters:
+            ///   - id: The coach’s id. Never changes.
+            ///   - name: Its name, shown with the 教练 tag.
+            ///   - look: The character the app draws, by the art’s id.
+            public init(
+                id: Swift.String,
+                name: Swift.String,
+                look: Swift.String
+            ) {
+                self.id = id
+                self.name = name
+                self.look = look
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case look
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachReply`.
+        public struct CoachReply: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachReply/checkInId`.
+            public var checkInId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachReply/coach`.
+            public struct CoachPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachReply/coach/value1`.
+                public var value1: Components.Schemas.CoachSpeaker
+                /// The coach who replied, even if the squad has fired it since.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachReply/coach/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `CoachPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: The coach who replied, even if the squad has fired it since.
+                public init(
+                    value1: Components.Schemas.CoachSpeaker,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachReply/coach`.
+            public var coach: Components.Schemas.CoachReply.CoachPayload
+            /// Its line, shown among the post’s comments with the 教练 tag (no 回复 under it), or null when it only reacted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachReply/text`.
+            public var text: Swift.String?
+            /// Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachReply/emoji`.
+            public var emoji: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CoachReply/at`.
+            public var at: Foundation.Date
+            /// Creates a new `CoachReply`.
+            ///
+            /// - Parameters:
+            ///   - checkInId:
+            ///   - coach:
+            ///   - text: Its line, shown among the post’s comments with the 教练 tag (no 回复 under it), or null when it only reacted.
+            ///   - emoji: Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions.
+            ///   - at:
+            public init(
+                checkInId: Swift.String,
+                coach: Components.Schemas.CoachReply.CoachPayload,
+                text: Swift.String? = nil,
+                emoji: Swift.String? = nil,
+                at: Foundation.Date
+            ) {
+                self.checkInId = checkInId
+                self.coach = coach
+                self.text = text
+                self.emoji = emoji
+                self.at = at
+            }
+            public enum CodingKeys: String, CodingKey {
+                case checkInId
+                case coach
+                case text
+                case emoji
+                case at
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadNudges`.
         public struct SquadNudges: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadNudges/version`.

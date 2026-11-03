@@ -48,6 +48,9 @@ public final class FeedModel {
 
     let store: FeedStore
     let viewer: MemberID
+    /// What the squad's coach said: its 战术板 line and its replies. Nil where nobody asks it
+    /// (the sample squad without a coach).
+    let coach: FeedCoach?
     /// The post whose emoji bar is open.
     var picking: CheckInID?
     /// The bar was opened by pressing and holding the card: the card lifts over the blurred feed,
@@ -83,15 +86,19 @@ public final class FeedModel {
     /// Each player with the outfit it wears, so a look that changed since builds a new one.
     @ObservationIgnored private var players: [CheckInID: (outfit: Outfit, player: CharacterPlayer)] = [:]
     @ObservationIgnored private var heads: [MemberID: (outfit: Outfit, player: CharacterPlayer)] = [:]
+    /// The coaches' characters, by coach, for their heads and the 战术板.
+    @ObservationIgnored var coachPlayers: [CoachID: CharacterPlayer] = [:]
     @ObservationIgnored private var flightCount = 0
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private let defaults: UserDefaults
 
     public init(
-        store: FeedStore, viewer: MemberID, now: @escaping () -> Date = { Date() }, defaults: UserDefaults = .standard
+        store: FeedStore, viewer: MemberID, coach: FeedCoach? = nil, now: @escaping () -> Date = { Date() },
+        defaults: UserDefaults = .standard
     ) {
         self.store = store
         self.viewer = viewer
+        self.coach = coach
         self.now = now
         self.defaults = defaults
         recent = (defaults.stringArray(forKey: Self.recentKey) ?? []).compactMap { try? Emoji($0) }
@@ -105,6 +112,8 @@ public final class FeedModel {
         answerArrivals()
         if store.phase == .current, let latest = store.latestNews { keepNewsSeen(until: latest) }
         await store.sendResponses()
+        // Last, so a slow coach never holds up the member's own reactions or the news dot.
+        await coach?.load(about: store.sections.flatMap { $0.posts.map(\.id) })
     }
 
     // MARK: - The tab's dot
@@ -186,7 +195,7 @@ public final class FeedModel {
     /// A post's own page outside the feed (a tile on 我的动态): one post, read and answered as
     /// 动态 does, with the same recent emoji.
     public func page(of post: CheckInID) -> FeedModel {
-        FeedModel(store: store.store(of: post), viewer: viewer, now: now, defaults: defaults)
+        FeedModel(store: store.store(of: post), viewer: viewer, coach: coach, now: now, defaults: defaults)
     }
 
     /// Sends the member's comment on a post, replying to whomever they picked. False when it

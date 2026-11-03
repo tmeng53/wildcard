@@ -31,8 +31,20 @@ final class SquadCast {
         var id: MemberID { member.id }
     }
 
+    /// The squad's coach on the sideline (场边).
+    struct Coach {
+        let speaker: CoachSpeaker
+        let player: CharacterPlayer
+        /// Where its feet are, and its size there.
+        let spot: StagePoint
+        var scale: Double { StageLayout.scale(atDepth: spot.y) }
+    }
+
     private(set) var stage = SquadStage(layout: .of(.gym))
     private(set) var mates: [Mate] = []
+    /// The coach the squad hired; nil without one, or for a coach this build has no character for,
+    /// who stays off the scene.
+    private(set) var coach: Coach?
     /// Bumps each time the squad cheers me, with who joins in, nearest first.
     private(set) var cheer = Cheer(count: 0, order: [])
 
@@ -58,9 +70,10 @@ final class SquadCast {
     /// a quick second pull never lets the first one's move play after it.
     private var lightsMoves: [MemberID: Task<Void, Never>] = [:]
 
-    /// Places the squad from the store's home: everyone but `me`.
-    func update(home: Home, scene: SceneTheme, phase: DayPhase) {
+    /// Places the squad from the store's home: everyone but `me`, and `coach` on the sideline.
+    func update(home: Home, scene: SceneTheme, phase: DayPhase, coach speaker: CoachSpeaker? = nil) {
         if stage.layout != .of(scene) { stage = SquadStage(layout: .of(scene)) }
+        coach = sideline(speaker)
         let teammates = home.today.members.filter { $0.member != home.member }
         let members = teammates.map { mate in
             StageMember(
@@ -71,7 +84,7 @@ final class SquadCast {
                 firstCheckInAt: mate.firstCheckInAt,
                 keepsToTheBack: Self.persona(of: mate) == .shy)
         }
-        stage.arrange(members)
+        stage.arrange(members, coach: coach != nil)
         mates = zip(teammates, members).compactMap { mate, member in
             let persona = Self.persona(of: mate)
             let look = Self.look(of: mate)
@@ -158,6 +171,26 @@ final class SquadCast {
         case .shy: 0.55
         case .deadpan: 0.9
         }
+    }
+
+    /// The coach on this scene's sideline, its character made once per coach.
+    private func sideline(_ speaker: CoachSpeaker?) -> Coach? {
+        guard let speaker, let spot = stage.layout.sideline else { return nil }
+        if let coach, coach.speaker.id == speaker.id {
+            return Coach(speaker: speaker, player: coach.player, spot: spot)
+        }
+        let id = speaker.id.rawValue
+        guard CoachCharacter.exists(id),
+            let player = try? CharacterPlayer(
+                figure: CoachCharacter.figure(id), idle: CoachCharacter.clip(.idle, coach: id))
+        else { return nil }
+        return Coach(speaker: speaker, player: player, spot: spot)
+    }
+
+    /// The coach cheers once, when tapped.
+    func cheerCoach() {
+        guard let coach else { return }
+        try? coach.player.play(CoachCharacter.clip(.cheer, coach: coach.speaker.id.rawValue))
     }
 
     /// The member's character, made again when what they wear or their persona changes (a kit

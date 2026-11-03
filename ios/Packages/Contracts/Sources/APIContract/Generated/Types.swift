@@ -278,6 +278,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /squads/{squadId}/coach`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/delete(fireSquadCoach)`.
     func fireSquadCoach(_ input: Operations.FireSquadCoach.Input) async throws -> Operations.FireSquadCoach.Output
+    /// What the squad’s coach said (战术板, replies and reactions)
+    ///
+    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one. Only for the squad’s members. Replies stay after the squad fires its coach.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.
+    func getSquadCoachActivity(_ input: Operations.GetSquadCoachActivity.Input) async throws -> Operations.GetSquadCoachActivity.Output
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -947,6 +954,23 @@ extension APIProtocol {
     ) async throws -> Operations.FireSquadCoach.Output {
         try await fireSquadCoach(Operations.FireSquadCoach.Input(
             path: path,
+            headers: headers
+        ))
+    }
+    /// What the squad’s coach said (战术板, replies and reactions)
+    ///
+    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one. Only for the squad’s members. Replies stay after the squad fires its coach.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.
+    public func getSquadCoachActivity(
+        path: Operations.GetSquadCoachActivity.Input.Path,
+        query: Operations.GetSquadCoachActivity.Input.Query = .init(),
+        headers: Operations.GetSquadCoachActivity.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadCoachActivity.Output {
+        try await getSquadCoachActivity(Operations.GetSquadCoachActivity.Input(
+            path: path,
+            query: query,
             headers: headers
         ))
     }

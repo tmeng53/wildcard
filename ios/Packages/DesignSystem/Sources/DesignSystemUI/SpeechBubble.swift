@@ -12,8 +12,18 @@ import SwiftUI
 /// shrinks while held like every other control. `.status` is a teammate's status with one thing
 /// to do about it (拍一拍): the status in 13/600 over a muted detail, centred, and a compact
 /// accent capsule under them; once done, the capsule turns grey and does nothing. My own status
-/// has nothing to do: no capsule.
+/// has nothing to do: no capsule. `.coach` is what the AI coach says: `CoachTag` and its name over
+/// its words in `.info`'s type, wrapped whole.
+///
+/// The tail points down from the middle, or, with `tail: .leading`, from near the bubble's
+/// leading corner, for a speaker by the screen's edge.
 public struct SpeechBubble: View {
+    /// Where the tail leaves the bubble's bottom edge.
+    public enum TailSpot {
+        case center
+        case leading
+    }
+
     public enum Kind {
         case line
         /// A line said in `.line`'s type that must show whole (a coach's catchphrase, which can be
@@ -21,6 +31,7 @@ public struct SpeechBubble: View {
         case quote
         case info(title: Text?)
         case status(detail: Text?, button: StatusButton?, eyebrow: StatusEyebrow? = nil)
+        case coach(name: Text)
     }
 
     /// A small muted line over a `.status` bubble's words: who it is (name · the title they wear,
@@ -63,17 +74,25 @@ public struct SpeechBubble: View {
     private let kind: Kind
     private let surface: CardSurface
     private let action: (() -> Void)?
+    private let tail: TailSpot
 
     private static let lineWidth: Double = 160
     private static let infoWidth: Double = 200
-    private static let tail = CGSize(width: 12, height: 6)
+    private static let tailSize = CGSize(width: 12, height: 6)
     private static let verticalPadding: Double = 6
     private static let horizontalPadding: Double = 10
 
-    public init(_ text: Text, kind: Kind = .line, on surface: CardSurface = .scene, action: (() -> Void)? = nil) {
+    /// The tail's middle from the bubble's leading edge, with `tail: .leading`.
+    public static let leadingTail: Double = 32
+
+    public init(
+        _ text: Text, kind: Kind = .line, on surface: CardSurface = .scene, tail: TailSpot = .center,
+        action: (() -> Void)? = nil
+    ) {
         self.text = text
         self.kind = kind
         self.surface = surface
+        self.tail = tail
         self.action = action
     }
 
@@ -91,11 +110,12 @@ public struct SpeechBubble: View {
             .padding(.vertical, isStatus ? Space.s - Space.xxs / 2 : Self.verticalPadding)
             .padding(.horizontal, isStatus ? Space.s : Self.horizontalPadding)
             .background(fill, in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
-            .padding(.bottom, Self.tail.height)
-            .background(alignment: .bottom) {
+            .padding(.bottom, Self.tailSize.height)
+            .background(alignment: tail == .leading ? .bottomLeading : .bottom) {
                 Tail()
                     .fill(fill)
-                    .frame(width: Self.tail.width, height: Self.tail.height)
+                    .frame(width: Self.tailSize.width, height: Self.tailSize.height)
+                    .padding(.leading, tail == .leading ? Self.leadingTail - Self.tailSize.width / 2 : 0)
             }
     }
 
@@ -121,6 +141,22 @@ public struct SpeechBubble: View {
                 VStack(alignment: .leading, spacing: Space.xxs / 2) {
                     if let title {
                         title
+                            .typeStyle(TypeRamp.label)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .lineLimit(1)
+                    }
+                    text
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        case .coach(let name):
+            HuggingWidth(max: Self.infoWidth - 2 * Self.horizontalPadding) {
+                VStack(alignment: .leading, spacing: Space.xxs) {
+                    HStack(spacing: Space.xxs + Space.xxs / 2) {
+                        CoachTag()
+                        name
                             .typeStyle(TypeRamp.label)
                             .foregroundStyle(Color(role: .fgMuted, in: theme))
                             .lineLimit(1)

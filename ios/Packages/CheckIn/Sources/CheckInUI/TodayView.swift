@@ -104,7 +104,7 @@ public struct TodayView: View {
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
                 pats: model.pats, canPat: model.canPat, tapMate: model.tapMate, tapMe: model.tapMe,
-                patMate: model.patMate, arrival: model.arrival
+                patMate: model.patMate, arrival: model.arrival, coachSays: model.coachSays, tapCoach: model.tapCoach
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)

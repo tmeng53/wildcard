@@ -70,6 +70,17 @@ export interface CoachNotes {
   wake_id: Int8 | null;
 }
 
+export interface CoachReplies {
+  at: Generated<Timestamp>;
+  check_in_id: string;
+  coach_id: string;
+  emoji: string | null;
+  id: Generated<Int8>;
+  squad_id: string;
+  text: string | null;
+  wake_id: Int8 | null;
+}
+
 export interface CoachSettingEvents {
   at: Generated<Timestamp>;
   changed_by: string | null;
@@ -134,6 +145,7 @@ export interface DB {
   coach_catalog_events: CoachCatalogEvents;
   coach_files: CoachFiles;
   coach_notes: CoachNotes;
+  coach_replies: CoachReplies;
   coach_setting_events: CoachSettingEvents;
   coach_settings: CoachSettings;
   coach_usage: CoachUsage;

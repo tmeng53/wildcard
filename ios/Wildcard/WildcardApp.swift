@@ -83,7 +83,7 @@ struct WildcardApp: App {
             store: TodayStore(
                 backend: InMemoryCheckInBackend.sampleSquad(
                     now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
-                    patted: LaunchOptions.pattedMe),
+                    patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach),
                 outbox: InMemoryOutbox(),
                 now: LaunchOptions.now, newID: { UUID() }),
             writer: LaunchOptions.disclaimerWriter,
@@ -155,7 +155,7 @@ struct WildcardApp: App {
             ? InMemoryFeedSource(viewer: viewer, posts: [], characters: [:])
             : InMemoryFeedSource.sample(
                 viewer: viewer, squad: squad, now: LaunchOptions.now(), zone: .current,
-                photos: InMemoryFeedSource.renderSamplePhotos())
+                photos: InMemoryFeedSource.renderSamplePhotos(), coach: LaunchOptions.sidelineCoach)
     }
 
     /// 动态 on the sample squad.
@@ -164,7 +164,8 @@ struct WildcardApp: App {
         let store = FeedStore(
             source: source, squad: squad, viewer: viewer, today: { LocalDay(at: LaunchOptions.now(), in: zone) },
             now: { Timestamp(LaunchOptions.now()) }, newCommentID: { CommentID(UUID()) })
-        return FeedModel(store: store, viewer: viewer, now: LaunchOptions.now)
+        let coach = FeedCoach(source: source, squad: squad, now: { LaunchOptions.now() })
+        return FeedModel(store: store, viewer: viewer, coach: coach, now: LaunchOptions.now)
     }
 
     /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with
