@@ -52,15 +52,18 @@ public final class TodayStore {
     public private(set) var reactions: [CheckInID: [Reaction]] = [:]
     /// Whom the member patted today (拍一拍) and who patted them in the last day, as last loaded.
     public private(set) var pokes = SquadPokes.none
+    /// The squad's coach on the sideline as last loaded, and the squad it was loaded for.
+    /// Set only by `loadCoach()`.
+    var loadedCoach: (squad: SquadID, coach: SidelineCoach?)?
     /// What changed in the squad since the home shown before, not yet told (`takeNews()`).
     public private(set) var news = SquadNews()
     /// The squad the member was in when the server last said they are in none: they left it, or
     /// the captain removed them.
     public private(set) var lostSquad: Squad?
 
-    private let backend: any CheckInBackend
+    let backend: any CheckInBackend
     private let outbox: any Outbox
-    private let now: @Sendable () -> Date
+    let now: @Sendable () -> Date
     private let newID: @Sendable () -> UUID
     /// Whether the outbox is being sent, so two sends never run at once.
     private var isDraining = false
@@ -126,6 +129,7 @@ public final class TodayStore {
         }
         await refresh()
         await loadPokes()
+        await loadCoach()
         await sendPending()
     }
 
@@ -344,13 +348,6 @@ public final class TodayStore {
         } catch {}
     }
 
-    /// Whether the member can pat `member` now: a teammate on the home not patted yet today.
-    public func canPat(_ member: MemberID) -> Bool {
-        guard let home, member != home.member, home.today.members.contains(where: { $0.member == member })
-        else { return false }
-        return !pokes.sent.contains(member)
-    }
-
     /// The pats sent from this phone today, so a load that read the server before one landed
     /// doesn't show it as not sent.
     private var patsSent: (day: LocalDay, members: Set<MemberID>)?
@@ -370,5 +367,14 @@ public final class TodayStore {
             patsSent?.members.remove(member)
             throw error
         }
+    }
+}
+
+extension TodayStore {
+    /// Whether the member can pat `member` now: a teammate on the home not patted yet today.
+    public func canPat(_ member: MemberID) -> Bool {
+        guard let home, member != home.member, home.today.members.contains(where: { $0.member == member })
+        else { return false }
+        return !pokes.sent.contains(member)
     }
 }

@@ -71,3 +71,35 @@ public struct SquadCoach: Hashable, Sendable {
         self.canHire = canHire
     }
 }
+
+/// The coach as members see it speak: its name, beside the 教练 tag, and its character.
+public struct CoachSpeaker: Hashable, Sendable {
+    public let id: CoachID
+    public let name: String
+
+    public init(id: CoachID, name: String) {
+        self.id = id
+        self.name = name
+    }
+}
+
+/// The squad's 战术板 line: what its coach says to everyone once a day.
+public struct CoachNote: Hashable, Sendable {
+    /// The day it is for, New York's, as every coach's day is.
+    public let day: LocalDay
+    public let text: String
+    public let coach: CoachSpeaker
+    public let writtenAt: Date
+
+    public init(day: LocalDay, text: String, coach: CoachSpeaker, writtenAt: Date) {
+        (self.day, self.text, self.coach, self.writtenAt) = (day, text, coach, writtenAt)
+    }
+
+    /// Coaches keep New York's day.
+    public static let timeZone = TimeZone(identifier: "America/New_York") ?? .gmt
+
+    /// Whether it is still the line's day at `moment`, so the home shows it.
+    public func isCurrent(at moment: Date) -> Bool {
+        LocalDay(at: moment, in: Self.timeZone) == day
+    }
+}
