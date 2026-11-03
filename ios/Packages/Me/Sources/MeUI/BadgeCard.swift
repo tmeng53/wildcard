@@ -64,6 +64,8 @@ struct BadgeCard: View {
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(Radius.card * 2)
+        // Contain, so the identifier names the card and not every control inside it.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("me.badgeCard")
     }
 

@@ -36,6 +36,8 @@ public struct SquadmateCardSheet: View {
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .task { await model.reload() }
+        // Contain, so the identifier names the card and not every control inside it.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("squadmateCard")
     }
 }
