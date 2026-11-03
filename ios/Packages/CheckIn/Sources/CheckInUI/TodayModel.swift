@@ -143,13 +143,15 @@ public final class TodayModel {
     private static let scoreDelay = 1.7
 
     /// The squad's home, with the member's own posts counted.
-    var home: Home? { store.home }
+    public var home: Home? { store.home }
 
-    /// The squad dropping onto a newly picked scene, from `dropIn(on:)` until everyone has
-    /// settled (`TodayModel+DropIn.swift`).
+    /// The squad dropping onto a newly picked scene, until everyone settles (`TodayModel+DropIn.swift`).
     var arrival: Arrival?
     /// Keeps the tab bar hidden while the squad drops in, until 打卡 is back.
     var holdsTabBar = false
+    /// The `NoticeBanner` showing at the top, and those waiting for it (`TodayModel+Notices.swift`).
+    var notice: Notice?
+    var pendingNotices: [Notice] = []
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.
@@ -271,6 +273,7 @@ public final class TodayModel {
         }
         placeSquad()
         Task {
+            await showNextNotice()
             await tellNews()
             await playPatsOnMe()
             await sayCoachLine()
