@@ -9,7 +9,7 @@ import {
 } from './week-summary.js';
 import type { PlanDay } from './weekly-plan.js';
 
-// The Sunday 战报's pages without AI: who stands on the podium, each member's days, the
+// The Sunday 战报's pages without AI: each member's days (the podium is read from them), the
 // squad's meals, the best 请假条 and the squad's days against its plans. The same rules as the
 // week summary's awards and counts, read from the week as the awards saw it. A page with
 // nothing to show is left out, so a quiet week isn't told how short it fell.
@@ -38,8 +38,6 @@ export interface MemberPage {
 }
 
 export interface WeekPages {
-  /** 领奖台: the crown winner in the middle, up to 2 others who finished their plan beside. */
-  readonly podium?: { readonly champion: MemberId; readonly sides: readonly MemberId[] };
   /** Every member, in the order they joined. */
   readonly members: readonly MemberPage[];
   /** 吃了: the squad's meals, each member eating what they logged more of (健康餐 on a tie). */
@@ -59,8 +57,45 @@ export interface WeekPages {
   readonly ending?: { readonly done: number; readonly plan: number };
 }
 
-/** The most podium sides the page has room for. */
-const SIDES_MAX = 2;
+/** The most members the podium has room for: the champion and two sides. */
+const PODIUM_MAX = 3;
+
+/** 领奖台: who stands on it, and which of them trained every day they planned. */
+export interface Podium<Member> {
+  /** The most days trained, in the middle with the crown; the earliest to join on a tie. */
+  readonly champion: Member;
+  /** Up to 2 next by days trained (the earliest to join on a tie), left then right. */
+  readonly sides: readonly Member[];
+  /** Those on it who trained at least as many days as they planned (练够计划). */
+  readonly planDone: readonly Member[];
+}
+
+/**
+ * The podium of a week: the top 3 by days trained, at least one, every week, whether or not
+ * they finished their plan. The champion holds the week's crown (`weekAwards`), so they pick
+ * next week's scene. `undefined` when nobody trained. Members come in the order they joined.
+ */
+export function podiumOf<Member>(
+  members: readonly {
+    readonly member: Member;
+    readonly trainedDays: number;
+    readonly plannedDays: number;
+  }[],
+): Podium<Member> | undefined {
+  const top = members
+    .filter(({ trainedDays }) => trainedDays > 0)
+    .toSorted((a, b) => b.trainedDays - a.trainedDays)
+    .slice(0, PODIUM_MAX);
+  const [champion, ...sides] = top;
+  if (champion === undefined) return undefined;
+  return {
+    champion: champion.member,
+    sides: sides.map(({ member }) => member),
+    planDone: top
+      .filter(({ trainedDays, plannedDays }) => trainedDays >= plannedDays)
+      .map(({ member }) => member),
+  };
+}
 
 /** The story's pages for a squad's week, from its facts and each member's plan (Monday first). */
 export function weekPagesOf(
@@ -90,14 +125,6 @@ export function weekPagesOf(
     };
   });
 
-  const crown = winners('crown').map(({ member }) => member);
-  const champion = crown[0] ?? winners('planCompleted')[0]?.member;
-  const sides = [
-    ...new Set([...crown.slice(1), ...winners('planCompleted').map(({ member }) => member)]),
-  ]
-    .filter((member) => member !== champion)
-    .slice(0, SIDES_MAX);
-
   const eaters = members
     .filter(({ healthyMeals, cheatMeals }) => healthyMeals + cheatMeals > 0)
     .map(({ member, healthyMeals, cheatMeals }) => ({
@@ -112,7 +139,6 @@ export function weekPagesOf(
 
   const done = count(squad, 'trainedDays');
   return {
-    ...(champion === undefined ? {} : { podium: { champion, sides } }),
     members,
     ...(eaters.length === 0
       ? {}

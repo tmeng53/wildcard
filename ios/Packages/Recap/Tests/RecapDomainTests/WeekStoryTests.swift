@@ -81,6 +81,11 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(story.firstTitle(of: id(2)) == nil)
 }
 
+@Test func onlyThoseOnThePodiumCarryThePlanDoneMark() {
+    let podium = Podium(champion: id(1), sides: [id(2), id(3), id(4)], planDone: [id(1), id(3), id(4)])
+    #expect(podium.planDone == [id(1), id(3)])
+}
+
 /// Any move id the API sends is kept as it is, so new moves need no app change; the art plays
 /// the cheer for one it doesn't have (StoryArtTests).
 @Test func aMoveKeepsItsId() throws {

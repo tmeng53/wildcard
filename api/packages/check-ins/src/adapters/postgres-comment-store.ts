@@ -11,6 +11,7 @@ interface Row {
   readonly member_id: string;
   readonly text: string;
   readonly reply_to: string | null;
+  readonly reply_to_coach: string | null;
   readonly commented_at: Date;
 }
 
@@ -19,15 +20,16 @@ const fromRow = (row: Row): Comment => ({
   member: MemberId.parse(row.member_id),
   text: CommentText.parse(row.text),
   ...(row.reply_to === null ? {} : { replyTo: MemberId.parse(row.reply_to) }),
+  ...(row.reply_to_coach === null ? {} : { replyToCoach: row.reply_to_coach }),
   commentedAt: row.commented_at,
 });
 
-const COLUMNS = ['id', 'member_id', 'text', 'reply_to', 'commented_at'] as const;
+const COLUMNS = ['id', 'member_id', 'text', 'reply_to', 'reply_to_coach', 'commented_at'] as const;
 
 /** The comment store on Postgres (`supabase/migrations`). */
 export function createPostgresCommentStore(db: Kysely<DB>): CommentStore {
   const store: CommentStore = {
-    async insert(checkIn, { id, member, text, replyTo, commentedAt }) {
+    async insert(checkIn, { id, member, text, replyTo, replyToCoach, commentedAt }) {
       // One statement, so two saves of one id at once can't both count as new.
       const row = await db
         .insertInto('check_in_comments')
@@ -37,6 +39,7 @@ export function createPostgresCommentStore(db: Kysely<DB>): CommentStore {
           member_id: member,
           text,
           reply_to: replyTo ?? null,
+          reply_to_coach: replyToCoach ?? null,
           commented_at: commentedAt,
         })
         .onConflict((conflict) => conflict.column('id').doNothing())
@@ -44,7 +47,8 @@ export function createPostgresCommentStore(db: Kysely<DB>): CommentStore {
         .executeTakeFirst();
       if (row !== undefined) return 'created';
       const saved = await store.find(id);
-      return saved?.checkIn === checkIn && sameComment(saved, { member, text, replyTo })
+      return saved?.checkIn === checkIn &&
+        sameComment(saved, { member, text, replyTo, replyToCoach })
         ? 'unchanged'
         : 'conflict';
     },
@@ -103,6 +107,7 @@ export function createPostgresCommentStore(db: Kysely<DB>): CommentStore {
           'check_in_comments.member_id',
           'check_in_comments.text',
           'check_in_comments.reply_to',
+          'check_in_comments.reply_to_coach',
           'check_in_comments.commented_at',
           (eb) =>
             eb

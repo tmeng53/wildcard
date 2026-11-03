@@ -29,8 +29,11 @@ export const StoredStory = z.discriminatedUnion('version', [
     name: z.string().min(1),
     /** The scene the squad trained on that week, as the squads module names it. */
     scene: z.string().min(1),
-    /** 领奖台: the crown winner in the middle, up to 2 others who finished their plan beside. */
-    podium: z.strictObject({ champion: z.uuid(), sides: z.array(z.uuid()) }).optional(),
+    /**
+     * Only in the first stories frozen, never read: the podium is read from the members' frozen
+     * days, so the first weeks stand on it too.
+     */
+    podium: z.unknown().optional(),
     /** 吃了: the squad's meals; who ate more of what is each member's own. */
     meals: z.strictObject({ healthy: Count, cheat: Count }).optional(),
     /** 这一周: the squad's days trained against its plans; only when someone trained. */

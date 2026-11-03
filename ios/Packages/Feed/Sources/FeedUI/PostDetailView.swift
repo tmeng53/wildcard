@@ -41,7 +41,9 @@ public struct PostDetailView: View {
         }
         .feedSurface(model)
         .haptic(.pick, trigger: model.commentsSent)
-        .task {
+        // Keyed by the post, so a comment's push that switches the open page to another post
+        // loads that one.
+        .task(id: id) {
             model.opened = id
             await model.loadPage(id)
         }

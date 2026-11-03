@@ -20,7 +20,17 @@ export interface WeekCheckIn {
   /** How many teammates reacted to it. */
   readonly reactions: number;
   /** Teammates' comments, oldest first. */
-  readonly comments: readonly { readonly member: string; readonly text: string }[];
+  readonly comments: readonly WeekComment[];
+}
+
+/** A comment on a check-in. */
+export interface WeekComment {
+  readonly id: string;
+  readonly member: string;
+  readonly text: string;
+  readonly at: Date;
+  /** The coach it replies to (回复 毛头：…), when it does. */
+  readonly toCoach?: string;
 }
 
 export interface SquadWeek {
@@ -62,7 +72,8 @@ export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, st
   if (checkIn.reactions > 0) line.push(`${String(checkIn.reactions)} 个表情`);
   if (checkIn.comments.length > 0) {
     const comments = checkIn.comments.map(
-      ({ member, text }) => `${roster.get(member) ?? '队员'}「${text}」`,
+      ({ member, text, toCoach }) =>
+        `${roster.get(member) ?? '队员'}${toCoach === undefined ? '' : '回复教练'}「${text}」`,
     );
     line.push(`评论：${comments.join('；')}`);
   }

@@ -49,6 +49,16 @@ export const NoticeSubjects = {
     replied: z.boolean(),
     emoji: z.string().min(1).nullable(),
   }),
+  /**
+   * A teammate commented on the member's check-in, or replied to them: the push's words as it was
+   * put (sent or not, by the member's switch), and the post to open.
+   */
+  comment: z.strictObject({
+    version: z.literal(1),
+    alert: PushAlert,
+    checkIn: z.uuid(),
+    comment: z.uuid(),
+  }),
   /** A store opened or a prop unlocked for the member, by training or as a gift. */
   unlocked: z.strictObject({
     version: z.literal(1),
@@ -64,6 +74,7 @@ const KindAndSubject = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('sceneMoved'), subject: NoticeSubjects.sceneMoved }),
   z.object({ kind: z.literal('coachReply'), subject: NoticeSubjects.coachReply }),
   z.object({ kind: z.literal('unlocked'), subject: NoticeSubjects.unlocked }),
+  z.object({ kind: z.literal('comment'), subject: NoticeSubjects.comment }),
 ]);
 type KindAndSubject = z.infer<typeof KindAndSubject>;
 

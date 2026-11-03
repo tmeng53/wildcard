@@ -5,8 +5,9 @@ import DesignSystemUI
 import RecapDomain
 import SwiftUI
 
-/// 领奖台: the side-step winners toss the champion up, the crown lands on the way up, then the
-/// medals and each one's move. Each step carries the member's first title.
+/// 领奖台: the top 3 by days trained. The side-step winners toss the champion up, the crown lands
+/// on the way up, then the medals and each one's move. Each step carries the member's first title,
+/// and 练够计划 for whoever trained every day they planned.
 struct PodiumPage: View {
     let podium: Podium
     let page: PageContext
@@ -82,6 +83,17 @@ struct PodiumPage: View {
             Text(verbatim: page.cast.nickname(of: step.member))
                 .typeStyle(TypeRamp.callout)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
+            if podium.planDone.contains(step.member) {
+                Label {
+                    Text("练够计划", bundle: .module)
+                } icon: {
+                    Image(systemName: "checkmark.seal.fill")
+                }
+                .labelStyle(.titleAndIcon)
+                .typeStyle(TypeRamp.caption)
+                .foregroundStyle(Color(role: .fgAccent, in: theme))
+                .padding(.top, Space.xxs)
+            }
         }
         .lineLimit(1)
         .minimumScaleFactor(0.7)

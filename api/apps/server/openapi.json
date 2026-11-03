@@ -1302,6 +1302,10 @@
             "format": "uuid",
             "description": "Whom it replies to, when it does. Gone once their account is deleted."
           },
+          "replyToCoach": {
+            "type": "string",
+            "description": "The coach it replies to, by id, when it does (回复 毛头：…)."
+          },
           "commentedAt": {
             "type": "string",
             "format": "date-time",
@@ -1624,6 +1628,10 @@
             "format": "uuid",
             "description": "Whom it replies to, when it does. Gone once their account is deleted."
           },
+          "replyToCoach": {
+            "type": "string",
+            "description": "The coach it replies to, by id, when it does (回复 毛头：…)."
+          },
           "commentedAt": {
             "type": "string",
             "format": "date-time",
@@ -1659,6 +1667,12 @@
             "type": "string",
             "format": "uuid",
             "description": "Whom the comment replies to (回复 Mia：…): the check-in’s author, or a teammate who can see it."
+          },
+          "replyToCoach": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$",
+            "description": "The coach it replies to (回复 毛头：…), by the coach’s id: one that said something under the check-in for a squad the caller sees it through. Never with `replyTo`. The coach answers it soon after.",
+            "example": "xiaohun"
           }
         },
         "required": [
@@ -2554,12 +2568,20 @@
               "$ref": "#/components/schemas/CoachReply"
             },
             "description": "The coach’s replies to the check-ins asked about; one with none is left out."
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachAnswer"
+            },
+            "description": "The coach’s answers to members’ replies to it under the check-ins asked about, oldest first."
           }
         },
         "required": [
           "version",
           "note",
-          "replies"
+          "replies",
+          "answers"
         ],
         "additionalProperties": false
       },
@@ -2644,7 +2666,7 @@
               "null"
             ],
             "maxLength": 100,
-            "description": "Its line, shown among the post’s comments with the 教练 tag (no 回复 under it), or null when it only reacted."
+            "description": "Its line, shown first among the post’s comments with the 教练 tag, which members may reply to (a comment with `replyToCoach`), or null when it only reacted."
           },
           "emoji": {
             "type": [
@@ -2663,6 +2685,47 @@
           "coach",
           "text",
           "emoji",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "CoachAnswer": {
+        "type": "object",
+        "properties": {
+          "checkInId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "commentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The member’s reply to the coach (`replyToCoach`) this answers."
+          },
+          "coach": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CoachSpeaker"
+              },
+              {
+                "description": "The coach who answered, even if the squad has fired it since."
+              }
+            ]
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag."
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "checkInId",
+          "commentId",
+          "coach",
+          "text",
           "at"
         ],
         "additionalProperties": false
@@ -2825,7 +2888,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in) or `unlocked` (a store or prop opened). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -2857,7 +2920,7 @@
               "args"
             ],
             "additionalProperties": false,
-            "description": "A push’s words as it was sent (`dailyProgress`, `weeklyAwards`)."
+            "description": "A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`)."
           },
           "weekStart": {
             "type": "string",
@@ -2880,7 +2943,7 @@
           "checkIn": {
             "type": "string",
             "format": "uuid",
-            "description": "The caller’s check-in the coach answered (`coachReply`)."
+            "description": "The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`)."
           },
           "coach": {
             "type": "string",
@@ -3089,7 +3152,7 @@
           "kind": {
             "type": "string",
             "minLength": 1,
-            "description": "Today `planCompleted` (领奖台: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days on the podium, all of them on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words."
+            "description": "Today `planCompleted` (练够计划: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days trained, at least one, plan finished or not; the earliest to join on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words."
           },
           "title": {
             "type": "string",
@@ -3766,14 +3829,24 @@
               "format": "uuid"
             },
             "maxItems": 2
+          },
+          "planDone": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 3,
+            "description": "Those on the podium who trained at least as many days as they planned (练够计划), for a small mark on their step. Empty when none did."
           }
         },
         "required": [
           "champion",
-          "sides"
+          "sides",
+          "planDone"
         ],
         "additionalProperties": false,
-        "description": "领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished their plan beside. Missing when nobody did either."
+        "description": "领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene; the earliest to join on a tie) in the middle, up to 2 next beside, left then right. Missing when nobody trained."
       },
       "StoryMyWeek": {
         "type": "object",
@@ -5446,7 +5519,7 @@
             }
           },
           "400": {
-            "description": "Not a valid comment, or a reply to someone who can’t see the check-in (`REPLY_TO_NOT_IN_SQUAD`)",
+            "description": "Not a valid comment, a reply to someone who can’t see the check-in (`REPLY_TO_NOT_IN_SQUAD`), or to a coach that said nothing under it, or with `replyTo` too (`REPLY_TO_COACH_NOT_FOUND`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7214,7 +7287,7 @@
       "get": {
         "operationId": "getSquadCoachActivity",
         "summary": "What the squad’s coach said (战术板, replies and reactions)",
-        "description": "The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one. Only for the squad’s members. Replies stay after the squad fires its coach.",
+        "description": "The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, and its answers to members’ replies to it there. Only for the squad’s members. They stay after the squad fires its coach.",
         "security": [
           {
             "bearer": []
