@@ -93,7 +93,9 @@ public struct MeView: View {
             MeFailed { Task { await model.reload() } }
         case .loaded(let overview):
             ScrollView {
-                VStack(spacing: Space.l) {
+                // Space.m between pieces, so the card, 出赛表 and the buttons all clear the tab bar
+                // on the smallest phone without scrolling.
+                VStack(spacing: Space.m) {
                     HStack {
                         Spacer()
                         Button {
