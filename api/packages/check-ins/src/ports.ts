@@ -61,6 +61,16 @@ export interface SquadMembership {
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
 }
 
+/**
+ * Whether `coach` (a coach's id) said something under a check-in for one of these squads, the
+ * squads its commenter sees it through, so they may reply to it. The coach module keeps that.
+ */
+export type CoachSpoke = (input: {
+  readonly checkIn: CheckInId;
+  readonly squads: readonly SquadId[];
+  readonly coach: string;
+}) => Promise<boolean>;
+
 /** The sports list. The sports module keeps it; check-ins only ask whether a sport is in it. */
 export interface SportList {
   /** Whether `id` names a listed sport (`custom` never does). */

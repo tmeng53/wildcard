@@ -29,7 +29,7 @@ import type { AgentRun, CoachAgent, CoachTool } from '../ports.js';
 import { createCoachActivity } from './coach-activity.js';
 import { createCoachHiring } from './coach-hiring.js';
 import { createCoachSettings } from './coach-settings.js';
-import { createCoachWakes, type CoachReplied } from './coach-wakes.js';
+import { createCoachWakes, type CoachAnswered, type CoachReplied } from './coach-wakes.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Each test works inside a
 // transaction it rolls back, so the seeded settings stay as they are for the other tests.
@@ -146,12 +146,14 @@ function wakes(
     weeks,
     consented,
     replied,
+    answered,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
     readonly weeks?: Readonly<Record<string, SquadWeek>>;
     readonly consented?: readonly string[];
     readonly replied?: CoachReplied;
+    readonly answered?: CoachAnswered;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -175,7 +177,29 @@ function wakes(
     hiring: createPostgresCoachHiring(trx),
     clock: () => at,
     ...(replied === undefined ? {} : { replied }),
+    ...(answered === undefined ? {} : { answered }),
   });
+}
+
+/** A comment under the fixture's check-in, as the check-ins module saves it. */
+async function commentOn(
+  { trx, checkIn }: Fixture,
+  {
+    member,
+    text,
+    at,
+    toCoach,
+  }: {
+    readonly member: string;
+    readonly text: string;
+    readonly at: Date;
+    readonly toCoach?: string;
+  },
+) {
+  const id = randomUUID();
+  await sql`insert into public.check_in_comments (id, check_in_id, member_id, text, reply_to_coach, commented_at)
+    values (${id}, ${checkIn}, ${member}, ${text}, ${toCoach ?? null}, ${at})`.execute(trx);
+  return { id, member, text, at, ...(toCoach === undefined ? {} : { toCoach }) };
 }
 
 describe('the coach', () => {
@@ -283,7 +307,7 @@ describe('the coach', () => {
       expect(runs[1]?.instructions).toContain('你是小混');
       expect(runs[1]?.instructions).toContain('不提谁没打卡');
       // How each wake goes is in the instructions, the same every time, so it can be cached.
-      expect(runs[1]?.instructions).toContain('你会在两种时候醒来');
+      expect(runs[1]?.instructions).toContain('你会在三种时候醒来');
       // The 简历 is for the app only: the model never reads the coach's missing license.
       expect(runs[1]?.instructions).not.toContain('证还没考下来');
       expect(runs[0]?.instructions).toBe(runs[1]?.instructions);
@@ -494,6 +518,137 @@ describe('the coach', () => {
 
       await hiring.fire({ squad, by });
       expect(await hiring.current(squad)).toBeUndefined();
+    });
+  });
+
+  it('answers each reply to it at once, with the talk so far, and tells who wrote it', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia, leo, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent((task) => {
+        if (task.includes('有人打卡')) return [{ tool: 'reply', input: { text: '周日也跑？' } }];
+        if (task.includes('要回的这句')) {
+          return [
+            { tool: 'react', input: { emoji: '🔥' } },
+            { tool: 'answer', input: { text: '队员2 你也来' } },
+            { tool: 'answer', input: { text: task.includes('你喊') ? '喊破嗓子' : '你也来跑' } },
+          ];
+        }
+        return [];
+      });
+      const told: Parameters<CoachAnswered>[0][] = [];
+      const answered: CoachAnswered = (answer) => {
+        told.push(answer);
+        return Promise.resolve();
+      };
+      // Nothing to reply to before the coach says anything.
+      const early = await commentOn(fixture, {
+        member: leo,
+        text: '教练在吗',
+        at: new Date(now.getTime() - 5 * 60_000),
+        toCoach: 'xiaohun',
+      });
+      const before: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, comments: [early] })),
+      };
+      await wakes({ ...fixture, week: before }, { agent, answered }).answer({
+        checkIn,
+        comment: early.id,
+        coach: 'xiaohun',
+      });
+      expect(runs).toHaveLength(0);
+      await sql`delete from public.check_in_comments where id = ${early.id}`.execute(trx);
+
+      await wakes(fixture, { agent }).run();
+      const first = await commentOn(fixture, {
+        member: leo,
+        text: '你也跑吗',
+        at: new Date(now.getTime() + 60_000),
+        toCoach: 'xiaohun',
+      });
+      const later = new Date(now.getTime() + 2 * 60_000);
+      const withFirst: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, comments: [first] })),
+      };
+      await wakes({ ...fixture, week: withFirst }, { agent, answered, at: later }).answer({
+        checkIn,
+        comment: first.id,
+        coach: 'xiaohun',
+      });
+      // Another coach, or one the squad didn't hire, has nothing to answer.
+      await wakes({ ...fixture, week: withFirst }, { agent, answered, at: later }).answer({
+        checkIn,
+        comment: first.id,
+        coach: 'maotou',
+      });
+      const second = await commentOn(fixture, {
+        member: mia,
+        text: '那你喊大声点',
+        at: new Date(now.getTime() + 3 * 60_000),
+        toCoach: 'xiaohun',
+      });
+      const withBoth: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, comments: [first, second] })),
+      };
+      const coach = wakes(
+        { ...fixture, week: withBoth },
+        { agent, answered, at: new Date(now.getTime() + 4 * 60_000) },
+      );
+      await coach.answer({ checkIn, comment: second.id, coach: 'xiaohun' });
+      // Answered once: the next run, or the same reply again, finds it answered.
+      await coach.answer({ checkIn, comment: second.id, coach: 'xiaohun' });
+      await coach.run();
+
+      // The check-in's wake, the day's, then one for each reply.
+      expect(runs.map(({ tools }) => tools.at(-1))).toStrictEqual([
+        'react',
+        'post_note',
+        'answer',
+        'answer',
+      ]);
+      expect(runs[2]?.task).toContain('- 你：「周日也跑？」\n- 队员2：「你也跑吗」（要回的这句）');
+      expect(runs[3]?.task).toContain(
+        '- 你：「周日也跑？」\n- 队员2：「你也跑吗」\n- 你：「你也来跑」\n- 队员1：「那你喊大声点」（要回的这句）',
+      );
+      // Only `answer` on a reply's wake; it may not name 队员N, as any line members read.
+      expect(runs[2]?.answers).toStrictEqual([
+        'no tool react',
+        '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
+        '已回复。',
+      ]);
+      expect(told).toStrictEqual([
+        { squad, checkIn, comment: first.id, commenter: leo, coach: 'xiaohun', text: '你也来跑' },
+        { squad, checkIn, comment: second.id, commenter: mia, coach: 'xiaohun', text: '喊破嗓子' },
+      ]);
+      const activity = await createCoachActivity({
+        store: createPostgresCoachActivity(trx),
+      }).squad({ squad, checkIns: [checkIn] });
+      expect(
+        activity.answers.map(({ comment, text, coach: { id } }) => ({ comment, text, id })),
+      ).toStrictEqual([
+        { comment: first.id, text: '你也来跑', id: 'xiaohun' },
+        { comment: second.id, text: '喊破嗓子', id: 'xiaohun' },
+      ]);
+      // Members may reply only to a coach that wrote a line here.
+      const spoke = createCoachActivity({ store: createPostgresCoachActivity(trx) });
+      expect(await spoke.spoke({ squads: [squad], checkIn, coach: 'xiaohun' })).toBe(true);
+      expect(await spoke.spoke({ squads: [squad], checkIn, coach: 'maotou' })).toBe(false);
+      expect(await spoke.spoke({ squads: [], checkIn, coach: 'xiaohun' })).toBe(false);
+
+      // An answer goes with the reply it answers, and is never changed.
+      await sql`savepoint attempt`.execute(trx);
+      await expect(
+        sql`update public.coach_answers set text = '改了' where comment_id = ${first.id}`.execute(
+          trx,
+        ),
+      ).rejects.toThrow('coach_answers is append-only');
+      await sql`rollback to savepoint attempt`.execute(trx);
+      await sql`delete from public.check_in_comments where id = ${first.id}`.execute(trx);
+      const left = await sql<{ comment_id: string }>`
+        select comment_id from public.coach_answers where squad_id = ${squad}`.execute(trx);
+      expect(left.rows).toStrictEqual([{ comment_id: second.id }]);
     });
   });
 

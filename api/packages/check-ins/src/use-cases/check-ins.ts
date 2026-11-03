@@ -7,6 +7,7 @@ import type { Reaction } from '../domain/reaction.js';
 import type {
   CheckInStore,
   Clock,
+  CoachSpoke,
   CommentStore,
   MemberCalendar,
   PhotoFiles,
@@ -128,6 +129,8 @@ export function createCheckIns(deps: {
   readonly membership: SquadMembership;
   readonly reactions: ReactionStore;
   readonly comments: CommentStore;
+  /** Whether a coach spoke under a check-in, so members may reply to it. */
+  readonly coachSpoke?: CoachSpoke;
   readonly photos: PhotoFiles;
   /** Which sports a 练了 may name. */
   readonly sports: SportList;
