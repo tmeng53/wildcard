@@ -6,9 +6,11 @@ import FeedDomain
 import SwiftUI
 import UIKit
 
-/// A post's own page: its card, the coach's line first (nobody replies to it), every comment
-/// oldest first, and the box to write one at the bottom. Tapping a teammate's comment replies to
-/// them (回复 Mia); holding one copies it, or deletes it when it is the member's own. 返回 or a
+/// A post's own page: its card, the coach's line first, every comment oldest first with the
+/// coach's answers among them, and the box to write one at the bottom. Tapping a teammate's
+/// comment replies to them (回复 Mia), and tapping the coach's line or answer replies to the
+/// coach (回复 毛头), which answers; holding a comment copies it, or deletes it when it is the
+/// member's own. 返回 or a
 /// swipe right goes back. 动态 opens it from a card, and any screen with a `FeedModel` over a
 /// store of one post (the member's past posts) shows the same page.
 public struct PostDetailView: View {
@@ -73,7 +75,8 @@ public struct PostDetailView: View {
 
     @ViewBuilder private func comments(_ post: FeedPost) -> some View {
         let coach = model.coachReply(on: post.id).flatMap { $0.text == nil ? nil : $0 }
-        if post.comments.isEmpty && coach == nil {
+        let thread = model.thread(of: post)
+        if thread.isEmpty && coach == nil {
             VStack(spacing: Space.xxs) {
                 Text("还没有人说话", bundle: .module)
                     .typeStyle(TypeRamp.callout)
@@ -91,16 +94,41 @@ public struct PostDetailView: View {
             .accessibilityIdentifier("post.noComments")
         } else {
             VStack(alignment: .leading, spacing: Space.m) {
-                let count = post.comments.count + (coach == nil ? 0 : 1)
+                let count = thread.count + (coach == nil ? 0 : 1)
                 SectionLabel(Text("评论 \(count)", bundle: .module))
                 if let coach, let text = coach.text {
-                    CoachCommentRow(model: model, reply: coach, text: text)
+                    replyToCoach(coach.coach) {
+                        CoachCommentRow(model: model, coach: coach.coach, text: text, writtenAt: coach.writtenAt)
+                    }
+                    .accessibilityIdentifier("post.coachComment")
                 }
-                ForEach(post.comments) { comment in
-                    row(comment, on: post)
+                ForEach(thread) { entry in
+                    switch entry {
+                    case .comment(let comment):
+                        row(comment, on: post)
+                    case .answer(let answer, let member):
+                        replyToCoach(answer.coach) {
+                            CoachCommentRow(
+                                model: model, coach: answer.coach, text: answer.text, writtenAt: answer.writtenAt,
+                                recipient: model.displayName(of: member))
+                        }
+                        .accessibilityIdentifier("post.coachAnswer")
+                    }
                 }
             }
         }
+    }
+
+    /// The coach's line or answer, which a tap replies to (回复 毛头), as a teammate's comment.
+    private func replyToCoach(_ coach: CoachSpeaker, @ViewBuilder label: () -> some View) -> some View {
+        Button {
+            model.replyingTo = .coach(coach.id)
+            isTyping = true
+        } label: {
+            label().contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(Text("回复", bundle: .module))
     }
 
     /// A comment: the writer's head, name and time, then 回复 and whom, then the words.
@@ -108,7 +136,7 @@ public struct PostDetailView: View {
         let isMine = comment.member == model.viewer
         return Button {
             guard !isMine else { return }
-            model.replyingTo = comment.member
+            model.replyingTo = .member(comment.member)
             isTyping = true
         } label: {
             HStack(alignment: .top, spacing: Space.s) {
@@ -166,7 +194,9 @@ public struct PostDetailView: View {
 
     /// 回复 Mia：the words, with 回复 and the name in grey.
     private func words(of comment: Comment) -> Text {
-        guard let recipient = comment.replyTo.map(model.displayName) else { return Text(verbatim: comment.text.text) }
+        guard let recipient = comment.replyTo.map({ model.displayName(of: $0) }) else {
+            return Text(verbatim: comment.text.text)
+        }
         let reply = Text("回复 \(recipient)：", bundle: .module)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
         return Text("\(reply)\(comment.text.text)", bundle: .module)

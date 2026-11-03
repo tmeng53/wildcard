@@ -23,7 +23,7 @@ struct CommentComposer: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xs) {
-            if let recipient = model.replyingTo.map(model.displayName) {
+            if let recipient = model.replyingTo.map({ model.displayName(of: $0) }) {
                 HStack(spacing: Space.xs) {
                     Text("回复 \(recipient)", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
@@ -66,7 +66,7 @@ struct CommentComposer: View {
     private var field: some View {
         HStack(alignment: .bottom, spacing: Space.xs) {
             TextField(text: $draft, axis: .vertical) {
-                if let recipient = model.replyingTo.map(model.displayName) {
+                if let recipient = model.replyingTo.map({ model.displayName(of: $0) }) {
                     Text("回复 \(recipient)…", bundle: .module)
                 } else if post.author == model.viewer {
                     Text("说点什么…", bundle: .module)

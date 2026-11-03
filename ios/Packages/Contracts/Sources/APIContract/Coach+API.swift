@@ -51,10 +51,19 @@ extension CoachReply {
     }
 }
 
+extension CoachAnswer {
+    public init(_ wire: Components.Schemas.CoachAnswer) throws(ContractsError) {
+        self.init(
+            checkIn: try CheckInID(wire: wire.checkInId), comment: try CommentID(wire: wire.commentId),
+            coach: try CoachSpeaker(wire.coach.value1), text: wire.text, writtenAt: wire.at)
+    }
+}
+
 extension CoachActivity {
     public init(_ wire: Components.Schemas.CoachActivity) throws(ContractsError) {
         self.init(
             note: try wire.note.map { note throws(ContractsError) in try CoachNote(note) },
-            replies: try wire.replies.map { reply throws(ContractsError) in try CoachReply(reply) })
+            replies: try wire.replies.map { reply throws(ContractsError) in try CoachReply(reply) },
+            answers: try wire.answers.map { answer throws(ContractsError) in try CoachAnswer(answer) })
     }
 }

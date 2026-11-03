@@ -68,7 +68,7 @@ public final class FeedModel {
     /// bar while one is.
     public var opened: CheckInID?
     /// Whom the member's next comment replies to (回复 Mia：…), on the open page.
-    var replyingTo: MemberID?
+    var replyingTo: ReplyTarget?
     /// Bumps on each comment the member sends, for its haptic.
     private(set) var commentsSent = 0
     private(set) var played: [CheckInID: Played] = [:]
@@ -204,10 +204,13 @@ public final class FeedModel {
     /// Sends the member's comment on a post, replying to whomever they picked. False when it
     /// couldn't go out; the words stay to try again.
     func comment(_ text: CommentText, on post: CheckInID) async -> Bool {
-        let sent = await store.comment(text, replyingTo: replyingTo, on: post)
+        let target = replyingTo
+        let sent = await store.comment(text, replyingTo: target, on: post)
         if sent {
-            replyingTo = nil
+            if replyingTo == target { replyingTo = nil }
             commentsSent += 1
+            // The server has the coach answer before it answers us, so its answer is there now.
+            if case .coach = target { await coach?.load(about: [post]) }
         }
         return sent
     }
