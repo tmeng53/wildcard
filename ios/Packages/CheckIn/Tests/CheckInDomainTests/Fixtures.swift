@@ -140,6 +140,14 @@ actor ScriptedBackend: CheckInBackend {
         pats.append(member)
         serverPokes.sent.insert(member)
     }
+
+    var serverCoach: SidelineCoach?
+    func set(coach: SidelineCoach?) { serverCoach = coach }
+
+    func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? {
+        if let failure { throw failure }
+        return serverCoach
+    }
 }
 
 actor MemoryOutbox: Outbox {

@@ -83,7 +83,7 @@ struct WildcardApp: App {
             store: TodayStore(
                 backend: InMemoryCheckInBackend.sampleSquad(
                     now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
-                    patted: LaunchOptions.pattedMe),
+                    patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach),
                 outbox: InMemoryOutbox(),
                 now: LaunchOptions.now, newID: { UUID() }),
             writer: LaunchOptions.disclaimerWriter,

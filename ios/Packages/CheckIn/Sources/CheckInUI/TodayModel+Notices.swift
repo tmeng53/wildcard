@@ -12,8 +12,8 @@ extension TodayModel {
         let scene: SceneTheme
         /// Who moved it, by nickname; nil when the home doesn't know them.
         let picker: String?
-        /// Bumps for each notice, so the same news told twice drops in again.
-        let id: Int
+        /// New for each notice, so the same news told twice drops in again.
+        let id = UUID()
     }
 
     /// Puts the home on the squad's `scene` as read from the server, telling `move` if a
@@ -36,8 +36,7 @@ extension TodayModel {
             scene = move.scene
         }
         let name = move.picker.flatMap { picker in cast.mates.first { $0.id == picker }?.name }
-        noticeCount += 1
-        pendingNotices.append(Notice(scene: move.scene, picker: name, id: noticeCount))
+        pendingNotices.append(Notice(scene: move.scene, picker: name))
         Task { await showNextNotice() }
     }
 
