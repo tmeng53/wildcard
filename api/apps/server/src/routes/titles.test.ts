@@ -22,6 +22,7 @@ import {
   createPostgresWeekStoryStore,
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
+import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -116,6 +117,8 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   unlocks: unusedUnlocks,
   coachActivity: unusedCoachActivity,
+  notices: createNotices({ store: createPostgresNoticeStore(db) }),
+  coachNames: () => Promise.reject(new Error('unused')),
   coachHiring: createCoachHiring({
     hiring: createPostgresCoachHiring(db),
     catalog: createPostgresCoachCatalog(db),
