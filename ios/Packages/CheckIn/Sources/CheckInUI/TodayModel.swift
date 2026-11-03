@@ -138,9 +138,7 @@ public final class TodayModel {
         dressMe(hop: false)
     }
 
-    /// How long after posting a 练了 the week's count flips up: after the ring closes and the
-    /// squad starts cheering (the approved check-in moment's 1.7 seconds).
-    private static let scoreDelay = 1.7
+    private static let scoreDelay = 1.7  // When a 练了's week count flips up: the ring closed, the squad cheers.
 
     /// The squad's home, with the member's own posts counted.
     public var home: Home? { store.home }
@@ -152,6 +150,8 @@ public final class TodayModel {
     /// The `NoticeBanner` showing at the top, and those waiting for it (`TodayModel+Notices.swift`).
     var notice: Notice?
     var pendingNotices: [Notice] = []
+    /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
+    @ObservationIgnored var unlockNotices: UnlockNotices?
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.

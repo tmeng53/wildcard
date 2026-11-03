@@ -4,14 +4,21 @@ import Contracts
 import DesignSystem
 import Foundation
 
-/// News nobody on the scene can tell, in a `NoticeBanner` at the top of 今天: so far, a teammate
-/// moving the squad to another scene.
+/// News nobody on the scene can tell, in a `NoticeBanner` at the top of 今天: a teammate moving
+/// the squad to another scene, and a store or prop the member's training unlocked.
 extension TodayModel {
-    /// One notice on the home: so far, the squad moved to `scene`.
+    /// What a notice tells.
+    enum NoticeNews: Equatable {
+        /// The squad moved to the scene, by the picker's nickname (nil when the home doesn't know
+        /// them).
+        case moved(SceneTheme, picker: String?)
+        /// A 练了 opened a store or a prop.
+        case unlocked(Unlock)
+    }
+
+    /// One notice on the home.
     struct Notice: Identifiable, Equatable {
-        let scene: SceneTheme
-        /// Who moved it, by nickname; nil when the home doesn't know them.
-        let picker: String?
+        let news: NoticeNews
         /// New for each notice, so the same news told twice drops in again.
         let id = UUID()
     }
@@ -36,7 +43,24 @@ extension TodayModel {
             scene = move.scene
         }
         let name = move.picker.flatMap { picker in cast.mates.first { $0.id == picker }?.name }
-        pendingNotices.append(Notice(scene: move.scene, picker: name))
+        pendingNotices.append(Notice(news: .moved(move.scene, picker: name)))
+        Task { await showNextNotice() }
+    }
+
+    /// From now on, tells each store and prop the member's training opens with `notices`,
+    /// starting with any already waiting.
+    public func tellUnlocks(with notices: UnlockNotices) {
+        unlockNotices = notices
+        tellUnlocks()
+    }
+
+    /// The stores and props the member's training opened that the home hasn't told, one banner
+    /// each, the earliest first. Without `unlockNotices` they wait.
+    func tellUnlocks() {
+        guard unlockNotices != nil else { return }
+        let unlocks = store.takeUnlocks()
+        guard !unlocks.isEmpty else { return }
+        pendingNotices += unlocks.map { Notice(news: .unlocked($0)) }
         Task { await showNextNotice() }
     }
 
