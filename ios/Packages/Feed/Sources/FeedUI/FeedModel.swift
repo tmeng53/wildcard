@@ -81,7 +81,8 @@ public final class FeedModel {
     private(set) var lifts = 0
 
     /// Each player with the outfit it wears, so a look that changed since builds a new one.
-    @ObservationIgnored private var players: [CheckInID: (outfit: Outfit, player: CharacterPlayer)] = [:]
+    @ObservationIgnored private var players: [CheckInID: (outfit: Outfit, persona: Persona, player: CharacterPlayer)] =
+        [:]
     @ObservationIgnored private var heads: [MemberID: (outfit: Outfit, player: CharacterPlayer)] = [:]
     @ObservationIgnored private var flightCount = 0
     @ObservationIgnored private let now: () -> Date
@@ -282,19 +283,25 @@ public final class FeedModel {
 
     // MARK: - Characters
 
-    /// The author's character on a post: their look, in that day's kit on a 练了, holding still
-    /// until someone reacts.
+    /// The author's character on a post: their look, and on a 练了 that day's sport, in its kit
+    /// and looping its move (`kits.json`, as every screen plays a sport), at the persona's tempo;
+    /// holding still on the other kinds. A reaction's move plays over either.
     func player(for post: FeedPost) -> CharacterPlayer? {
         let character = store.characters[post.author]
+        let persona = character?.look.moves ?? .energetic
         var outfit = character?.look.outfit ?? PlaceholderCharacter.lifter
-        if case .trained(let training) = post.checkIn.entry, let kits = try? PlaceholderCharacter.sportKits() {
-            outfit = kits.kit(for: training.activity, in: SportList.shared.catalog).dress(outfit)
+        var idle = Clip.still
+        if case .trained(let training) = post.checkIn.entry,
+            let loop = try? PlaceholderCharacter.trainingLoop(
+                for: training.activity, look: outfit, persona: persona, in: SportList.shared.catalog)
+        {
+            (outfit, idle) = (loop.outfit, loop.clip)
         }
-        if let cached = players[post.id], cached.outfit == outfit { return cached.player }
+        if let cached = players[post.id], cached.outfit == outfit, cached.persona == persona { return cached.player }
         guard let figure = try? PlaceholderCharacter.figure(wearing: outfit),
-            let player = try? CharacterPlayer(figure: figure, idle: .still, now: now())
+            let player = try? CharacterPlayer(figure: figure, idle: idle, now: now())
         else { return nil }
-        players[post.id] = (outfit, player)
+        players[post.id] = (outfit, persona, player)
         return player
     }
 
@@ -320,7 +327,7 @@ public final class FeedModel {
         return name(of: member) ?? String(localized: "队友", bundle: .module.inAppLanguage)
     }
 
-    /// The move has finished: the character holds still again.
+    /// The move has finished: the character goes back to its idle.
     func finished(_ post: CheckInID, count: Int) {
         if played[post]?.count == count { played[post] = nil }
     }

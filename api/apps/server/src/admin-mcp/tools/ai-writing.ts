@@ -84,8 +84,10 @@ export function changeWeeklyAwardSettings({ awards }: AiWritingToolDependencies)
     title: 'Change the weekly award settings',
     description:
       'Changes any of the weekly award settings; the rest stay as they are. `moves` changes ' +
-      'only the moves it names; the moves themselves are the app’s character clips, so no move ' +
-      'can be added here. Applies to the next try at a squad’s awards. A model whose provider ' +
+      'only the moves it names, and a move id not described yet is added to what the model picks ' +
+      'from: use only ids the app has character art for (its move files, reaction moves and ' +
+      'sport kits; the app plays the persona’s cheer for any other). Applies to the next try at ' +
+      'a squad’s awards. A model whose provider ' +
       'has no API key on the server writes nothing, and the awards stay pending. Returns the ' +
       'settings now.',
     changes: true,

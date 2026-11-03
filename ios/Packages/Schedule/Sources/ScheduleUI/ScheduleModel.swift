@@ -42,13 +42,15 @@ public final class ScheduleModel {
     }
 
     public let store: ScheduleStore
-    /// The member's character in the poster's corner, in the kit of the squad's scene, looping
-    /// its sport.
+    /// The member's character in the poster's corner, training at today's sport (today's 练了,
+    /// else today's plan) in its kit, or at the squad's scene's sport on a day with neither.
     private(set) var player: CharacterPlayer?
     /// The look `player` wears: the stand-in until the profile brings the member's own.
     private var look: CharacterLook?
-    /// The squad's scene, whose sport `player` trains at.
+    /// The squad's scene, whose sport `player` trains at when today has none.
     private var scene = SceneTheme.gym
+    /// Today's sport `player` trains at, as last made.
+    private var training: Activity?
     /// What `player` was made from, for drawing its key pose when the poster is saved.
     private var loop: (figure: Figure, clip: Clip)?
     private(set) var fuelOpen = false
@@ -67,16 +69,19 @@ public final class ScheduleModel {
         makePlayer()
     }
 
-    /// The look in the scene's kit, looping its sport; cheering as worn if the kit can't be read.
+    /// The look in today's sport's kit (else the scene's), looping its move; cheering as worn if
+    /// the kit can't be read.
     private func makePlayer() {
         let outfit = look.map { Outfit($0) } ?? PlaceholderCharacter.lifter
         let persona = look.map { Persona($0) } ?? .energetic
-        if let training = try? PlaceholderCharacter.sceneLoop(
-            for: scene, look: outfit, persona: persona, in: SportList.shared.catalog),
-            let figure = try? PlaceholderCharacter.figure(wearing: training.outfit),
-            let player = try? CharacterPlayer(figure: figure, idle: training.clip)
+        training = store.todaysActivity
+        let activity = training ?? .sport(scene.sport)
+        if let kitLoop = try? PlaceholderCharacter.trainingLoop(
+            for: activity, look: outfit, persona: persona, in: SportList.shared.catalog),
+            let figure = try? PlaceholderCharacter.figure(wearing: kitLoop.outfit),
+            let player = try? CharacterPlayer(figure: figure, idle: kitLoop.clip)
         {
-            (self.player, loop) = (player, (figure, training.clip))
+            (self.player, loop) = (player, (figure, kitLoop.clip))
             return
         }
         loop = nil
@@ -86,10 +91,12 @@ public final class ScheduleModel {
                 "cheer", persona: persona, species: PlaceholderCharacter.species(of: outfit)))
     }
 
-    /// Dresses the poster's character in the member's own look once the profile has one.
+    /// Dresses the poster's character in the member's own look once the profile has one, and
+    /// puts it to today's sport when that changed.
     private func dressPlayer() {
-        guard let mine = store.profile?.look, mine != look else { return }
-        look = mine
+        let mine = store.profile?.look
+        guard (mine != nil && mine != look) || store.todaysActivity != training else { return }
+        if let mine { look = mine }
         makePlayer()
     }
 
@@ -150,11 +157,17 @@ public final class ScheduleModel {
     }
 
     func pick(_ activity: Activity) {
-        Task { await store.pick(activity) }
+        Task {
+            await store.pick(activity)
+            dressPlayer()
+        }
     }
 
     func rest() {
-        Task { await store.rest() }
+        Task {
+            await store.rest()
+            dressPlayer()
+        }
     }
 
     // MARK: 饮食小目标
