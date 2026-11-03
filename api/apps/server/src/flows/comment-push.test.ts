@@ -71,7 +71,7 @@ describe('a coach’s line pushed', () => {
       settingsOf: (member: string) => Promise.resolve({ dailyProgress: on.has(member) }),
       notifyMembers: (input: { members: readonly string[]; notification: PushNotification }) => {
         sent.push(input);
-        return Promise.resolve({ sent: 1, failures: [] });
+        return Promise.resolve({ sent: 1, gone: 0, off: 0, failures: [] });
       },
     };
     const deps = { push, log: createLog(() => undefined) };
