@@ -108,6 +108,8 @@ public struct ScheduleView: View {
             store.dismissTemplateOffer()
         }
         .task { await model.load() }
+        // Today's sport changed (a 练了 read in, today's plan saved): the character follows it.
+        .onChange(of: store.todaysActivity) { model.followToday() }
         .onChange(of: theme, initial: true) { _, scene in model.train(on: scene) }
         .sheet(isPresented: $picksAll) {
             SportPicker(selected: selectedActivity, recent: recentActivities) { activity in

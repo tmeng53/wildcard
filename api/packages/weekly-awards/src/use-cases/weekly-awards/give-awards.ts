@@ -1,5 +1,5 @@
 import {
-  ModelReply,
+  modelReply,
   type Awards,
   titlesOf,
   type MemberId,
@@ -9,7 +9,7 @@ import {
 } from '../../domain/awards.js';
 import { promptFor, type PromptMeme } from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
-import type { AwardSettings } from '../../domain/settings.js';
+import { offeredMoves, type AwardSettings } from '../../domain/settings.js';
 import { AwardsWriterUnavailableError } from '../../errors.js';
 import type {
   AiConsented,
@@ -152,7 +152,7 @@ async function writeTitles(
         model: settings.model,
         instructions: settings.instructions,
         prompt,
-        reply: ModelReply,
+        reply: modelReply(offeredMoves(settings.moves)),
       });
       const titles = titlesOf(
         reply,

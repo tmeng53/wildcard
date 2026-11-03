@@ -619,12 +619,12 @@ describe('the admin MCP server', () => {
         moves: { ...z.record(z.string(), z.string()).parse(awards.moves), pump: '握拳，跳起来' },
       });
 
-      // A provider the server doesn't know, a move the app doesn't have, or no change at all.
+      // A provider the server doesn't know, a move id that isn't one, or no change at all.
       for (const [name, args] of [
         ['change_disclaimer_draft_settings', { model: 'gemini/flash' }],
         ['change_disclaimer_draft_settings', { memeChance: 2 }],
         ['change_disclaimer_draft_settings', {}],
-        ['change_weekly_award_settings', { moves: { moonwalk: '太空步' } }],
+        ['change_weekly_award_settings', { moves: { 'Moon Walk': '太空步' } }],
       ] as const) {
         expect((await call(name, args)).isError).toBe(true);
       }
