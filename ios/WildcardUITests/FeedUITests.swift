@@ -166,15 +166,16 @@ final class FeedUITests: XCTestCase {
         waitFor(react, "label == '我的回应：😀'", "picking from the grid didn't react")
 
         // Holding the card and sliding to 😂 swaps it: the bar's slots sit left of my button's
-        // right edge, 44 points each. The points are measured once and given from the screen's
-        // corner: points relative to the button make XCUITest look it up again mid-gesture, which
-        // stalls the touch while a 练了 card's character trains on screen.
+        // right edge, 44 points each. A 练了 card's character trains on screen, so the simulator
+        // is never idle and touches arrive late: the press holds well past the long press's 0.45s,
+        // slides slowly and rests on the slot, so the hold and the slot both register.
         let button = react.frame
         let screen = app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
         let slot = screen.withOffset(CGVector(dx: button.maxX - (7 - 2.5) * 44 - 4, dy: button.minY - 8 - 26))
         // Pressed on the card's words, above its row.
         let words = screen.withOffset(CGVector(dx: button.minX - 120, dy: button.minY - 50))
-        words.press(forDuration: 0.8, thenDragTo: slot)
+        words.press(forDuration: 2, thenDragTo: slot, withVelocity: 150, thenHoldForDuration: 0.5)
+        keepScreenshot(named: "41-feed-hold-slide")
         waitFor(react, "label == '我的回应：😂'", "holding and sliding didn't pick 😂")
     }
 
