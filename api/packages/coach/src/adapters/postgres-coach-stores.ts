@@ -224,20 +224,15 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
 
     replies: {
       async save({ squad, checkIn, coach, text, emoji, wake }) {
-        const saved = await db
-          .insertInto('coach_replies')
-          .values({
-            squad_id: squad,
-            check_in_id: checkIn,
-            coach_id: coach,
-            text: text ?? null,
-            emoji: emoji ?? null,
-            wake_id: String(wake),
-          })
-          .onConflict((conflict) => conflict.columns(['squad_id', 'check_in_id']).doNothing())
-          .returning('id')
-          .execute();
-        return saved.length > 0;
+        // Nothing when the check-in went while the run was thinking: a failed insert would undo
+        // the rest of the wake's save with it.
+        const saved = await sql<{ id: string }>`
+          insert into public.coach_replies (squad_id, check_in_id, coach_id, text, emoji, wake_id)
+          select ${squad}, id, ${coach}, ${text ?? null}, ${emoji ?? null}, ${String(wake)}
+          from public.check_ins where id = ${checkIn}
+          on conflict (squad_id, check_in_id) do nothing
+          returning id`.execute(db);
+        return saved.rows.length > 0;
       },
     },
 

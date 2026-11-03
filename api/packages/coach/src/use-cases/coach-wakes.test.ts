@@ -559,12 +559,16 @@ describe('the coach', () => {
     });
   });
 
-  it('counts the tokens of a wake whose check-in was deleted while it ran', async () => {
+  it('counts the tokens of a wake whose check-in was deleted while it ran, and drops its reply', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, checkIn } = fixture;
       const agent: CoachAgent = {
-        async run({ task }) {
+        async run({ task, tools }) {
           if (!task.includes('新的一天')) {
+            const use = (name: string, input: unknown) =>
+              tools.find((tool) => tool.name === name)?.run(input);
+            await use('reply', { text: '腿还在吗' });
+            await use('react', { emoji: '💪' });
             await sql`delete from public.check_ins where id = ${checkIn}`.execute(trx);
           }
           return {
@@ -577,6 +581,10 @@ describe('the coach', () => {
       const usage = await sql<{ wake_id: string | null }>`
         select wake_id from public.coach_usage where squad_id = ${squad} order by id`.execute(trx);
       expect(usage.rows.map(({ wake_id }) => wake_id === null)).toStrictEqual([true, false]);
+      // The reply to a check-in that went is dropped, and the wake still ends.
+      const replies =
+        await sql`select 1 from public.coach_replies where squad_id = ${squad}`.execute(trx);
+      expect(replies.rows).toHaveLength(0);
     });
   });
 
