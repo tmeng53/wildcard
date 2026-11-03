@@ -22,8 +22,7 @@ public struct TodayView: View {
     /// How far above the screen's bottom edge the app's tab bar reaches, which 打卡 stands on:
     /// measured while the bar shows and kept while it hides, so 打卡 stays put when the burst opens.
     @State private var barRoom = Self.barRoomBeforeMeasured
-    /// The day whose 今日赛况 was last opened on this phone (`LocalDay`'s description): its tag
-    /// shows a dot until then.
+    /// The day whose 今日赛况 was last opened on this phone (`LocalDay`'s description): its tag shows a dot until then.
     @AppStorage("today.recapSeen") private var recapSeen = ""
     /// The day whose 今日赛况 box score is open in the card's place: left open past the day's
     /// end, it doesn't reopen by itself the next evening.
@@ -103,8 +102,9 @@ public struct TodayView: View {
             SquadSceneView(
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
-                pats: model.pats, canPat: model.canPat, tapMate: model.tapMate, tapMe: model.tapMe,
-                patMate: model.patMate, arrival: model.arrival, coachSays: model.coachSays, tapCoach: model.tapCoach
+                pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
+                tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, coachSays: model.coachSays,
+                tapCoach: model.tapCoach
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -339,8 +339,7 @@ private struct Arriving: ViewModifier {
     }
 }
 
-/// My payoff over my character, front and centre: the 「+1」 of a 练了 and the line in the bubble
-/// on my head.
+/// My payoff over my character, front and centre: the 「+1」 of a 练了 and the line in the bubble on my head.
 private struct MyPayoff: View {
     let model: TodayModel
     let openPost: (CheckIn?) -> Void

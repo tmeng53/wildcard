@@ -40,8 +40,7 @@ public final class TodayModel {
         case disclaimer
     }
 
-    /// What lands on the scene after a post: the line in the bubble, and the post it opens once
-    /// the server saved it.
+    /// What lands on the scene after a post: the bubble's line, and the post it opens once saved.
     struct Payoff: Equatable {
         let kind: CheckInKind
         let line: String?
@@ -56,6 +55,8 @@ public final class TodayModel {
     let cast = SquadCast()
     /// 拍一拍 on the scene.
     let pats: PatStage
+    /// The squad celebrating together on the scene (撞头, 叠罗汉, 人浪); off in UI tests that don't ask.
+    let together: TogetherStage
     /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
     private(set) var celebrations = 0
     /// The coach's 战术板 line while its bubble is up on the sideline.
@@ -121,11 +122,12 @@ public final class TodayModel {
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
         scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, defaults: UserDefaults = .standard,
-        bubbleHold: Double? = nil, posted: @escaping @MainActor () -> Void,
+        bubbleHold: Double? = nil, celebratesTogether: Bool = true, posted: @escaping @MainActor () -> Void,
         noSquad: @escaping @MainActor (Squad?) -> Void = { _ in }
     ) {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
         coachLineHold = bubbleHold ?? Self.coachLineHold
+        together = TogetherStage(isOn: celebratesTogether)
         self.scene = scene
         self.defaults = defaults
         self.store = store
@@ -274,6 +276,7 @@ public final class TodayModel {
             await tellNews()
             await playPatsOnMe()
             await sayCoachLine()
+            await celebrateTogether()
         }
     }
 

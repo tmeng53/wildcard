@@ -83,7 +83,8 @@ struct WildcardApp: App {
             store: TodayStore(
                 backend: InMemoryCheckInBackend.sampleSquad(
                     now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
-                    patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach),
+                    patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach,
+                    together: LaunchOptions.together),
                 outbox: InMemoryOutbox(),
                 now: LaunchOptions.now, newID: { UUID() }),
             writer: LaunchOptions.disclaimerWriter,
@@ -92,6 +93,7 @@ struct WildcardApp: App {
             now: LaunchOptions.now,
             defaults: LaunchOptions.todayDefaults,
             bubbleHold: LaunchOptions.bubbleHold,
+            celebratesTogether: LaunchOptions.together != nil,
             posted: Self.askForNotifications)
         _today = State(initialValue: today)
         _profile = State(initialValue: Self.sampleProfile())
