@@ -82,8 +82,23 @@ actor ScriptedBackend: CheckInBackend {
 
     func savedHome() async -> Home? { saved }
 
+    /// Whether the phone is in another zone than the profile; `followPhoneZone` clears it.
+    var phoneZoneMoved = false
+    /// How many posts had reached the server each time the zone was followed.
+    private(set) var savesWhenZoneFollowed: [Int] = []
+    private(set) var homeLoads = 0
+    func set(phoneZoneMoved moved: Bool) { phoneZoneMoved = moved }
+
+    func followPhoneZone() async throws(CheckInError) -> Bool {
+        if let failure { throw failure }
+        savesWhenZoneFollowed.append(saves.count)
+        defer { phoneZoneMoved = false }
+        return phoneZoneMoved
+    }
+
     func home() async throws(CheckInError) -> Home? {
         if let failure { throw failure }
+        homeLoads += 1
         saved = server
         return server
     }

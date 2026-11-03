@@ -199,6 +199,9 @@ public actor InMemoryCheckInBackend: CheckInBackend {
         reactionsByCheckIn[checkIn]?.removeAll { $0.member == member }
     }
 
+    /// The sample squad's member has no profile to keep a zone on.
+    public func followPhoneZone() async throws(CheckInError) -> Bool { false }
+
     public func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes {
         squadPokes
     }
