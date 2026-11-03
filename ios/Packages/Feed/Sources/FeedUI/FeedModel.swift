@@ -109,10 +109,11 @@ public final class FeedModel {
     public func load() async {
         hasNews = false
         await store.load()
-        await coach?.load(about: store.sections.flatMap { $0.posts.map(\.id) })
         answerArrivals()
         if store.phase == .current, let latest = store.latestNews { keepNewsSeen(until: latest) }
         await store.sendResponses()
+        // Last, so a slow coach never holds up the member's own reactions or the news dot.
+        await coach?.load(about: store.sections.flatMap { $0.posts.map(\.id) })
     }
 
     // MARK: - The tab's dot

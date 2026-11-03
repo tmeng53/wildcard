@@ -29,7 +29,9 @@ struct CardComments: View {
                         .lineLimit(2)
                 }
                 if post.comments.count > FeedPost.cardComments {
-                    Text("全部 \(post.comments.count) 条评论", bundle: .module)
+                    // The coach's line counts, as on the post's own page.
+                    let count = post.comments.count + (model.coachReply(on: post.id)?.text == nil ? 0 : 1)
+                    Text("全部 \(count) 条评论", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .padding(.top, Space.xxs / 2)
