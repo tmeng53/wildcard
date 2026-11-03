@@ -182,7 +182,13 @@ async function runWake(
         shownBody(body, roster),
       ]),
     );
-    const draft: WakeDraft = { files: new Map(stored), changed: new Set(), note: undefined };
+    const draft: WakeDraft = {
+      files: new Map(stored),
+      changed: new Set(),
+      note: undefined,
+      reply: undefined,
+      reaction: undefined,
+    };
     const daily = wake.reason.kind === 'daily';
     const files = new Map(
       shownPaths(roster).map((path) => {
@@ -205,8 +211,8 @@ async function runWake(
       instructions: instructionsOf(settings, coach),
       task,
       tools: toolbox({ week, roster, draft, daily }),
-      // Every wake of a coach begins with its same instructions, then its tools (the daily wake's
-      // post_note last, so both kinds share the rest).
+      // Every wake of a coach begins with its same instructions, then its tools (each kind's own
+      // last: the daily wake's post_note, a check-in's reply and react), so both kinds share the rest.
       cacheKey: `coach:${coach.id}`,
     });
     // The tokens were spent whatever comes next, so they are counted first, on their own.
@@ -235,7 +241,7 @@ async function runWake(
 
 /**
  * Saves what a wake's run changed: a new version of each file whose text it changed (none for
- * an edit it undid), and on a daily wake, its 战术板 line.
+ * an edit it undid), on a daily wake its 战术板 line, and on a check-in's wake its reply.
  */
 async function saveDraft(
   stores: CoachStores,
@@ -267,6 +273,19 @@ async function saveDraft(
       coach: coach.id,
       day: wake.reason.day,
       text: draft.note,
+      wake: wake.id,
+    });
+  }
+  if (
+    wake.reason.kind === 'checkIn' &&
+    (draft.reply !== undefined || draft.reaction !== undefined)
+  ) {
+    await stores.replies.save({
+      squad,
+      checkIn: wake.reason.checkIn,
+      coach: coach.id,
+      text: draft.reply,
+      emoji: draft.reaction,
       wake: wake.id,
     });
   }

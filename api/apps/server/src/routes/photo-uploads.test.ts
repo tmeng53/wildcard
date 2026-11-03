@@ -33,6 +33,7 @@ import {
   unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
+  unusedCoachActivity,
 } from '../test-kit/weekly-awards.js';
 
 // The whole journey against local Supabase: sign in, ask for an upload URL, upload to it.
@@ -89,6 +90,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
     unlocks: unusedUnlocks,
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
+    coachActivity: unusedCoachActivity,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     log: createLog(() => undefined),
