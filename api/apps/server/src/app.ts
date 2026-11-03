@@ -66,7 +66,7 @@ export interface AppDependencies {
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
   readonly squads: Squads;
-  /** Each squad's coach, and the coaches it can hire (教练市场). */
+  /** Each squad's coach, and the coaches it can hire (教练招聘会). */
   readonly coachHiring: CoachHiring;
   /** Squadmates' pokes, which the daily push counts. */
   readonly nudges: Nudges;

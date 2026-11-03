@@ -38,7 +38,7 @@ export interface CoachHiring {
   }): Promise<{ readonly coach: Coach; readonly changed: boolean }>;
   /** The squad's coach now and since when, retired or not, or `undefined` when it has none. */
   current(squad: SquadId): Promise<{ readonly coach: Coach; readonly since: Date } | undefined>;
-  /** The coaches a squad can hire now (教练市场), by id. */
+  /** The coaches a squad can hire now (教练招聘会), by id. */
   offered(): Promise<readonly Coach[]>;
 }
 
