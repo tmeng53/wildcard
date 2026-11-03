@@ -14,8 +14,6 @@ final class NoticeUITests: XCTestCase {
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
             "-today.cardPage", "0", "-uitest-scene-moved", "track",
-            // A busy simulator can take longer than the banner's 4 seconds to reach the swipe.
-            "-uitest-notice-hold", "60",
         ]
         app.launch()
 

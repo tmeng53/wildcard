@@ -84,15 +84,6 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-me-fails")
     }
 
-    /// `-uitest-notice-hold 30`: a notice banner stays that many seconds before it goes by itself,
-    /// so a busy simulator reaches it before it is gone; `Motion.noticeHold` otherwise.
-    static var noticeHold: Double {
-        guard let index = ProcessInfo.processInfo.arguments.firstIndex(of: "-uitest-notice-hold"),
-            let seconds = ProcessInfo.processInfo.arguments.dropFirst(index + 1).first.flatMap(Double.init)
-        else { return Motion.noticeHold }
-        return seconds
-    }
-
     /// The sample member's 通知: the sample squad's last two weeks, or none with
     /// `-uitest-no-notices`, to see the page empty.
     static var notices: any NoticeSource {

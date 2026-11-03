@@ -196,7 +196,6 @@ struct WildcardApp: App {
         WindowGroup {
             root
                 .environment(\.locale, language.locale)
-                .environment(\.noticeHold, LaunchOptions.noticeHold)
                 .id(language)
                 .onReceive(NotificationCenter.default.publisher(for: AppLanguage.didChange)) { _ in
                     language = AppLanguage.current

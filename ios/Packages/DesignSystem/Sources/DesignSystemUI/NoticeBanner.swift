@@ -79,15 +79,9 @@ public struct SceneBadge: View {
     }
 }
 
-extension EnvironmentValues {
-    /// How long a `NoticeBanner` stays before it goes by itself: `Motion.noticeHold`, longer only
-    /// in UI tests, whose busy simulators can take longer than that to reach it.
-    @Entry public var noticeHold: Double = Motion.noticeHold
-}
-
 extension View {
     /// Drops `content(item)` in from the top while `item` is set, over everything under it, and
-    /// puts it away after `noticeHold` (the environment's, `Motion.noticeHold` unless a UI test asks), on a swipe up, or on a tap (which also calls
+    /// puts it away after `Motion.noticeHold`, on a swipe up, or on a tap (which also calls
     /// `onTap`). The caller keeps the queue: setting the next item shows it once this one is
     /// gone. It sits just under the status bar, clear of the Dynamic Island, which would hide
     /// its middle on a phone that has one. With Reduce Motion on, it fades instead of dropping.
@@ -103,7 +97,6 @@ extension View {
 
 private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.noticeHold) private var hold
     @Binding var item: Item?
     let onTap: (Item) -> Void
     let content: (Item) -> Banner
@@ -138,7 +131,7 @@ private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
                             }
                     )
                     .task(id: shown.id) {
-                        try? await Task.sleep(for: .seconds(hold))
+                        try? await Task.sleep(for: .seconds(Motion.noticeHold))
                         guard !Task.isCancelled else { return }
                         put(away: shown)
                     }
