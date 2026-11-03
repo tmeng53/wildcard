@@ -44,6 +44,11 @@ public enum Motion {
     public static let page = MotionSpring(response: 0.36, dampingFraction: 0.9)
     /// The check-in landing: the only spring that visibly bounces.
     public static let celebrate = MotionSpring(response: 0.5, dampingFraction: 0.6)
+    /// A `NoticeBanner` dropping from the top like the Dynamic Island opening: a touch of give
+    /// as it lands, short of a bounce.
+    public static let notice = MotionSpring(response: 0.4, dampingFraction: 0.8)
+    /// How long a `NoticeBanner` stays before it goes back up, in seconds.
+    public static let noticeHold: Double = 4
 
     /// Exits run this fraction of their entrance's time.
     public static let exitFactor: Double = 0.8
@@ -81,6 +86,7 @@ public enum Motion {
 
     public static let all: [(name: String, spring: MotionSpring)] = [
         ("press", press), ("change", change), ("sheet", sheet), ("page", page), ("celebrate", celebrate),
+        ("notice", notice),
     ]
 }
 

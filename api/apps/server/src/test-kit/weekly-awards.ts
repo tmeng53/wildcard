@@ -8,6 +8,9 @@ export const unusedWeeklyAwards = {
     claimNudge: unused,
     claimWinners: unused,
     titlesWon: unused,
+    story: unused,
+    freezeStory: unused,
+    storiesWaiting: unused,
   },
   clock: () => new Date(),
 };
@@ -22,4 +25,19 @@ export const unusedCoachHiring = {
   change: unused,
   current: unused,
   offered: unused,
+};
+
+/** What coaches said, for an app whose test never reads it. */
+export const unusedCoachActivity = { squad: unused };
+
+/** What members unlocked, for an app whose test never reads it. */
+export const unusedUnlocks = { of: unused };
+
+/**
+ * What members were told, for an app whose test never reads it: notices told are dropped, since
+ * keeping them never decides what a request answers.
+ */
+export const ignoredNotices = {
+  notices: { tell: () => Promise.resolve(), page: unused, markSeen: unused },
+  coachNames: unused,
 };

@@ -47,29 +47,39 @@ public final class TodayStore {
     /// Posts not yet saved, oldest first.
     public private(set) var pending: [PendingCheckIn] = []
     /// Posts dropped because the server refused them while they went out late.
-    public private(set) var refused: [Refused] = []
+    public internal(set) var refused: [Refused] = []
     /// Reactions on check-ins loaded with `loadReactions(to:)`, by check-in.
     public private(set) var reactions: [CheckInID: [Reaction]] = [:]
     /// Whom the member patted today (拍一拍) and who patted them in the last day, as last loaded.
     public private(set) var pokes = SquadPokes.none
+    /// The squad's coach on the sideline as last loaded, and the squad it was loaded for.
+    /// Set only by `loadCoach()`.
+    var loadedCoach: (squad: SquadID, coach: SidelineCoach?)?
     /// What changed in the squad since the home shown before, not yet told (`takeNews()`).
-    public private(set) var news = SquadNews()
+    public internal(set) var news = SquadNews()
     /// The squad the member was in when the server last said they are in none: they left it, or
     /// the captain removed them.
     public private(set) var lostSquad: Squad?
+    /// Stores and props the member unlocked that the home hasn't told yet, the earliest first
+    /// (`takeUnlocks()`).
+    public internal(set) var unlocked: [Unlock] = []
 
-    private let backend: any CheckInBackend
+    let backend: any CheckInBackend
+    let ledger: (any UnlockLedger)?
+    /// The last unlock check, so the next waits for it and none tells an unlock twice.
+    var unlockCheck: Task<Void, Never>?
     private let outbox: any Outbox
-    private let now: @Sendable () -> Date
+    let now: @Sendable () -> Date
     private let newID: @Sendable () -> UUID
     /// Whether the outbox is being sent, so two sends never run at once.
     private var isDraining = false
 
     public init(
-        backend: any CheckInBackend, outbox: any Outbox, now: @escaping @Sendable () -> Date,
-        newID: @escaping @Sendable () -> UUID
+        backend: any CheckInBackend, outbox: any Outbox, unlocks ledger: (any UnlockLedger)? = nil,
+        now: @escaping @Sendable () -> Date, newID: @escaping @Sendable () -> UUID
     ) {
         self.backend = backend
+        self.ledger = ledger
         self.outbox = outbox
         self.now = now
         self.newID = newID
@@ -126,10 +136,12 @@ public final class TodayStore {
         }
         await refresh()
         await loadPokes()
+        await loadCoach()
         await sendPending()
         // A member who travelled takes the phone's zone once their waiting posts are out, as each
         // one's day was made in the old zone. Best effort: the home stays as it is if it fails.
         if pending.isEmpty, (try? await backend.followPhoneZone()) == true { await refresh() }
+        await checkUnlocks()
     }
 
     /// Loads the server's home; keeps the one shown when the server can't be reached. A post
@@ -157,13 +169,6 @@ public final class TodayStore {
         }
     }
 
-    /// The squad's news, once: the home tells it, and the next call has none until something else
-    /// changes.
-    public func takeNews() -> SquadNews {
-        defer { news = SquadNews() }
-        return news
-    }
-
     // MARK: - Posting
 
     /// Posts a check-in, shared to `squads` (every squad the member is in when left out; none
@@ -184,7 +189,10 @@ public final class TodayStore {
         pending.append(post)
         await outbox.save(pending)
         switch await drain(watching: post.id) {
-        case .saved(let saved): return .posted(saved)
+        case .saved(let saved):
+            // A 练了 is what opens a store or a prop; the payoff doesn't wait for the answer.
+            if case .trained = saved.entry { Task { await checkUnlocks() } }
+            return .posted(saved)
         case .refused(let reason): throw reason
         case .waiting: return .queued
         }
@@ -240,11 +248,6 @@ public final class TodayStore {
             }
         }
         return fate
-    }
-
-    /// The member has seen why these posts were dropped.
-    public func dismissRefused() {
-        refused = []
     }
 
     /// Uploads the post's photos still to upload, then saves it. A refusal drops it from the
@@ -347,13 +350,6 @@ public final class TodayStore {
         } catch {}
     }
 
-    /// Whether the member can pat `member` now: a teammate on the home not patted yet today.
-    public func canPat(_ member: MemberID) -> Bool {
-        guard let home, member != home.member, home.today.members.contains(where: { $0.member == member })
-        else { return false }
-        return !pokes.sent.contains(member)
-    }
-
     /// The pats sent from this phone today, so a load that read the server before one landed
     /// doesn't show it as not sent.
     private var patsSent: (day: LocalDay, members: Set<MemberID>)?
@@ -373,5 +369,14 @@ public final class TodayStore {
             patsSent?.members.remove(member)
             throw error
         }
+    }
+}
+
+extension TodayStore {
+    /// Whether the member can pat `member` now: a teammate on the home not patted yet today.
+    public func canPat(_ member: MemberID) -> Bool {
+        guard let home, member != home.member, home.today.members.contains(where: { $0.member == member })
+        else { return false }
+        return !pokes.sent.contains(member)
     }
 }

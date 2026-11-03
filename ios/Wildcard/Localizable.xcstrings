@@ -65,6 +65,54 @@
         }
       }
     },
+    "push.comment": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ commented: %2$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 评论了你：%2$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 評論了你：%2$@"
+          }
+        }
+      }
+    },
+    "push.comment.reply": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ replied to you: %2$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 回复了你：%2$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 回覆了你：%2$@"
+          }
+        }
+      }
+    },
     "push.dailyProgress": {
       "comment": "Push notification (APNs loc-key); the API sends the arguments.",
       "extractionState": "manual",
@@ -253,6 +301,102 @@
           "stringUnit": {
             "state": "translated",
             "value": "確認"
+          }
+        }
+      }
+    },
+    "%@ 开门了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is open"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 開門了"
+          }
+        }
+      }
+    },
+    "解锁了%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlocked: %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解鎖了%@"
+          }
+        }
+      }
+    },
+    "随便练满 %lld 次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Any %lld workouts"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隨便練滿 %lld 次"
+          }
+        }
+      }
+    },
+    "%@练满 %lld 次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ × %lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@練滿 %lld 次"
+          }
+        }
+      }
+    },
+    "第一次打%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First time playing %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第一次打%@"
+          }
+        }
+      }
+    },
+    "第一次练%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第一次練%@"
           }
         }
       }

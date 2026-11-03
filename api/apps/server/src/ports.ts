@@ -1,5 +1,6 @@
 import type { AdminTables } from '@wildcard/admins';
 import type { AiConsentTables } from '@wildcard/ai-consent';
+import type { NoticeTables } from '@wildcard/notices';
 import type { NudgeTables } from '@wildcard/nudges';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { CoachTables } from '@wildcard/coach';
@@ -9,6 +10,7 @@ import type { MemeTables } from '@wildcard/memes';
 import type { PushTables } from '@wildcard/push';
 import type { SquadTables } from '@wildcard/squads';
 import type { SportTables } from '@wildcard/sports';
+import type { UnlockTables } from '@wildcard/unlocks';
 import type { WeeklyAwardTables } from '@wildcard/weekly-awards';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
@@ -162,7 +164,9 @@ export type Tables = CheckInTables &
   NudgeTables &
   WeeklyAwardTables &
   SportTables &
-  CoachTables;
+  UnlockTables &
+  CoachTables &
+  NoticeTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;

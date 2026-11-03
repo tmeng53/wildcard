@@ -192,6 +192,23 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       };
     },
 
+    async trainedSince({ member, since }) {
+      const rows = await db
+        .selectFrom('check_ins')
+        .select(['id', sql<string>`payload ->> 'sport'`.as('sport'), 'created_at'])
+        .where('member_id', '=', member)
+        .where('kind', '=', 'trained')
+        .where('created_at', '>=', since)
+        .orderBy('created_at')
+        .orderBy('id')
+        .execute();
+      return rows.map((row) => ({
+        id: CheckInId.parse(row.id),
+        sport: SportKey.parse(row.sport),
+        madeAt: new Date(row.created_at),
+      }));
+    },
+
     async listForSquad({ squad, members, from, to }) {
       if (members.length === 0) return [];
       const rows = await db

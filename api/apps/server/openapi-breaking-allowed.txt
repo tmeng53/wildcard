@@ -1,0 +1,4 @@
+# oasdiff --err-ignore: each line below is a breaking change made on purpose (scripts/api-compat.sh).
+# #321: the story's two cases are the same shapes with fields added and their parts named; oasdiff
+# can't match renamed oneOf members, so it reports them as new. Compared case by case, nothing breaks.
+GET /squads/{squadId}/weeks/{weekStart}/story added `subschema #1, subschema #2` to the response body `oneOf` list for the response status `200`

@@ -4,7 +4,7 @@ import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { config } from '../test-kit/local-supabase.js';
-import { createDatabase } from './postgres.js';
+import { createDatabase, onItsOwn } from './postgres.js';
 
 const admin = createDatabase(config.databaseUrl);
 afterAll(async () => {
@@ -54,5 +54,30 @@ describe('createDatabase', () => {
     const db = createDatabase(config.databaseUrl, { ca });
     await expect(sql`select 1`.execute(db)).rejects.toThrow(/does not support SSL/);
     await db.destroy();
+  });
+});
+
+describe('onItsOwn', () => {
+  it('rolls back only its own work when it fails inside a transaction, which goes on', async () => {
+    const kept = await admin.transaction().execute(async (trx) => {
+      await sql`create temporary table on_its_own_test (n int) on commit drop`.execute(trx);
+      await sql`insert into on_its_own_test values (1)`.execute(trx);
+      await expect(
+        onItsOwn(trx, async () => {
+          await sql`insert into on_its_own_test values (2)`.execute(trx);
+          await sql`select 1 / 0`.execute(trx);
+        }),
+      ).rejects.toThrow('division by zero');
+      await onItsOwn(trx, () => sql`insert into on_its_own_test values (3)`.execute(trx));
+      const { rows } = await sql<{ n: number }>`select n from on_its_own_test order by n`.execute(
+        trx,
+      );
+      return rows.map(({ n }) => n);
+    });
+    expect(kept).toStrictEqual([1, 3]);
+  });
+
+  it('just runs outside a transaction', async () => {
+    expect(await onItsOwn(admin, () => Promise.resolve('ran'))).toBe('ran');
   });
 });

@@ -1,0 +1,3 @@
+# Coaches
+
+The AI coaches' characters, one folder per coach id as the API names it (`xiaohun` is 毛头, the flat-faced ginger cat in a red coach's jacket). Each folder has its own `rig.json`, its art in `art/base/<part>.svg` (the same SVG subset and 240×320 canvas as the members' art in `../Placeholder`) and its clips in `clips/`: `idle` (loops, with a blink), `cheer` (once) and `crying` (loops, for 解雇: the `cry` part, hidden at rest, shows shut eyes and tears). Coaches are drawn flat, with no outlines and one shade per material, so they never wear members' parts. A coach without a folder here has no character in this build, and the app shows a stand-in.

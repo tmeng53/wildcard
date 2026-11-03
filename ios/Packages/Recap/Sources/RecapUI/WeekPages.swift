@@ -243,7 +243,7 @@ struct HottestPage: View {
                 page.character(
                     page.cast.viewer,
                     act: Act(
-                        clip: .award((hottest.move ?? .cheer).solo), start: 0.6, hold: hottest.move == .pose ? 1.3 : nil
+                        clip: hottest.clip, start: 0.6, hold: hottest.move == .pose ? 1.3 : nil
                     )
                 )
                 .standing(feetAt: CGPoint(x: width - 72, y: floor), scale: 0.5)

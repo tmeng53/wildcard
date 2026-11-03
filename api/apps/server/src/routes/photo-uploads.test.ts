@@ -30,8 +30,11 @@ import {
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
+  unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
+  unusedCoachActivity,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
 // The whole journey against local Supabase: sign in, ask for an upload URL, upload to it.
@@ -85,8 +88,11 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       aiConsent: () => Promise.resolve(true),
     }),
     weeklyAwards: unusedWeeklyAwards,
+    unlocks: unusedUnlocks,
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
+    coachActivity: unusedCoachActivity,
+    ...ignoredNotices,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     log: createLog(() => undefined),

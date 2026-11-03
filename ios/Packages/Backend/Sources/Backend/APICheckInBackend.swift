@@ -20,7 +20,7 @@ public struct APICheckInBackend: CheckInBackend {
     ///   - phoneZone: the phone's time zone, which the member's day follows.
     public init(
         api: WildcardAPI, directory: URL, shared: SharedSquad? = nil, now: @escaping @Sendable () -> Date = { Date() },
-        phoneZone: @escaping @Sendable () -> TimeZone = { .current }
+        phoneZone: @escaping @Sendable () -> TimeZone = { .autoupdatingCurrent }
     ) {
         self.api = api
         saved = directory.appending(path: "home.json")
@@ -115,6 +115,15 @@ public struct APICheckInBackend: CheckInBackend {
 
     public func pat(_ member: MemberID, in squad: SquadID) async throws(CheckInError) {
         do { try await api.pat(member, in: squad) } catch { throw CheckInError(error) }
+    }
+
+    public func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? {
+        do {
+            guard let hire = try await api.coach(of: squad).hire else { return nil }
+            return SidelineCoach(
+                coach: CoachSpeaker(id: hire.coach.id, name: hire.coach.name),
+                note: try await api.coachActivity(of: squad).note)
+        } catch { throw CheckInError(error) }
     }
 }
 

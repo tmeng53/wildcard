@@ -76,6 +76,7 @@ public struct TodayView: View {
                 .environment(\.sceneTheme, theme)
                 .accentTone(.brand)
         }
+        .modifier(HomeNotices(model: model))
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
         // 拍一拍 landing: mine on a teammate, or a teammate's on me.
@@ -104,7 +105,7 @@ public struct TodayView: View {
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
                 pats: model.pats, canPat: model.canPat, tapMate: model.tapMate, tapMe: model.tapMe,
-                patMate: model.patMate, arrival: model.arrival
+                patMate: model.patMate, arrival: model.arrival, coachSays: model.coachSays, tapCoach: model.tapCoach
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -330,8 +331,7 @@ private struct Arriving: ViewModifier {
     let offset: (DropIn, Double) -> Double
 
     func body(content: Content) -> some View {
-        // One TimelineView either way, so the card and 打卡 keep their state as the drop
-        // starts and ends.
+        // One TimelineView either way, so the card and 打卡 keep their state as the drop starts and ends.
         let moving = arrival != nil && !reduceMotion
         TimelineView(.animation(minimumInterval: nil, paused: !moving)) { timeline in
             content.offset(y: moving ? arrival.map { offset($0.drop, $0.elapsed(at: timeline.date)) } ?? 0 : 0)

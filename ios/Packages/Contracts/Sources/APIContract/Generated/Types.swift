@@ -278,6 +278,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /squads/{squadId}/coach`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/delete(fireSquadCoach)`.
     func fireSquadCoach(_ input: Operations.FireSquadCoach.Input) async throws -> Operations.FireSquadCoach.Output
+    /// What the squad’s coach said (战术板, replies and reactions)
+    ///
+    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one. Only for the squad’s members. Replies stay after the squad fires its coach.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.
+    func getSquadCoachActivity(_ input: Operations.GetSquadCoachActivity.Input) async throws -> Operations.GetSquadCoachActivity.Output
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -292,6 +299,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /squads/{squadId}/nudges`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/post(nudgeSquadmate)`.
     func nudgeSquadmate(_ input: Operations.NudgeSquadmate.Input) async throws -> Operations.NudgeSquadmate.Output
+    /// The caller’s notices (通知)
+    ///
+    /// Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.
+    ///
+    /// - Remark: HTTP `GET /me/notices`.
+    /// - Remark: Generated from `#/paths//me/notices/get(listMyNotices)`.
+    func listMyNotices(_ input: Operations.ListMyNotices.Input) async throws -> Operations.ListMyNotices.Output
+    /// Mark the caller’s notices read (通知)
+    ///
+    /// Opening 通知 marks every notice up to the newest read. Never goes back: an older one, or the same again, changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/notices/seen`.
+    /// - Remark: Generated from `#/paths//me/notices/seen/put(markMyNoticesSeen)`.
+    func markMyNoticesSeen(_ input: Operations.MarkMyNoticesSeen.Input) async throws -> Operations.MarkMyNoticesSeen.Output
     /// A squad’s week: its awards and counts (周日战报)
     ///
     /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.
@@ -348,9 +369,9 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /squads/{squadId}/weeks/{weekStart}/story/nudge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/nudge/post(nudgeSquadWeekStory)`.
     func nudgeSquadWeekStory(_ input: Operations.NudgeSquadWeekStory.Input) async throws -> Operations.NudgeSquadWeekStory.Output
-    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    /// A squad’s weekly 战报 (每周战报), frozen at the week’s awards
     ///
-    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad.
+    /// Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
@@ -362,6 +383,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/award-totals`.
     /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
     func getMyAwardTotals(_ input: Operations.GetMyAwardTotals.Input) async throws -> Operations.GetMyAwardTotals.Output
+    /// The stores and props the signed-in member unlocked
+    ///
+    /// Stores on the character editor’s 商店街 and props open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler and the dumbbell) are everyone’s and never listed. An unlock is never taken back.
+    ///
+    /// - Remark: HTTP `GET /me/unlocks`.
+    /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.
+    func getMyUnlocks(_ input: Operations.GetMyUnlocks.Input) async throws -> Operations.GetMyUnlocks.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -922,6 +950,23 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// What the squad’s coach said (战术板, replies and reactions)
+    ///
+    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one. Only for the squad’s members. Replies stay after the squad fires its coach.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.
+    public func getSquadCoachActivity(
+        path: Operations.GetSquadCoachActivity.Input.Path,
+        query: Operations.GetSquadCoachActivity.Input.Query = .init(),
+        headers: Operations.GetSquadCoachActivity.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadCoachActivity.Output {
+        try await getSquadCoachActivity(Operations.GetSquadCoachActivity.Input(
+            path: path,
+            query: query,
+            headers: headers
+        ))
+    }
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -952,6 +997,36 @@ extension APIProtocol {
     ) async throws -> Operations.NudgeSquadmate.Output {
         try await nudgeSquadmate(Operations.NudgeSquadmate.Input(
             path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The caller’s notices (通知)
+    ///
+    /// Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.
+    ///
+    /// - Remark: HTTP `GET /me/notices`.
+    /// - Remark: Generated from `#/paths//me/notices/get(listMyNotices)`.
+    public func listMyNotices(
+        query: Operations.ListMyNotices.Input.Query = .init(),
+        headers: Operations.ListMyNotices.Input.Headers = .init()
+    ) async throws -> Operations.ListMyNotices.Output {
+        try await listMyNotices(Operations.ListMyNotices.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Mark the caller’s notices read (通知)
+    ///
+    /// Opening 通知 marks every notice up to the newest read. Never goes back: an older one, or the same again, changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/notices/seen`.
+    /// - Remark: Generated from `#/paths//me/notices/seen/put(markMyNoticesSeen)`.
+    public func markMyNoticesSeen(
+        headers: Operations.MarkMyNoticesSeen.Input.Headers = .init(),
+        body: Operations.MarkMyNoticesSeen.Input.Body
+    ) async throws -> Operations.MarkMyNoticesSeen.Output {
+        try await markMyNoticesSeen(Operations.MarkMyNoticesSeen.Input(
             headers: headers,
             body: body
         ))
@@ -1074,9 +1149,9 @@ extension APIProtocol {
             headers: headers
         ))
     }
-    /// A squad’s Sunday 战报 story: the week’s AI awards (本周颁奖)
+    /// A squad’s weekly 战报 (每周战报), frozen at the week’s awards
     ///
-    /// Written once for the whole squad on Sunday at 8pm Eastern, by an AI from the week’s check-ins made before then: 1 to 3 titles for each member who checked in, nothing for anyone who didn’t. Check-ins made later still count for the week, only not for its awards. Only for members of the squad.
+    /// Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
@@ -1097,6 +1172,15 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
     public func getMyAwardTotals(headers: Operations.GetMyAwardTotals.Input.Headers = .init()) async throws -> Operations.GetMyAwardTotals.Output {
         try await getMyAwardTotals(Operations.GetMyAwardTotals.Input(headers: headers))
+    }
+    /// The stores and props the signed-in member unlocked
+    ///
+    /// Stores on the character editor’s 商店街 and props open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler and the dumbbell) are everyone’s and never listed. An unlock is never taken back.
+    ///
+    /// - Remark: HTTP `GET /me/unlocks`.
+    /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.
+    public func getMyUnlocks(headers: Operations.GetMyUnlocks.Input.Headers = .init()) async throws -> Operations.GetMyUnlocks.Output {
+        try await getMyUnlocks(Operations.GetMyUnlocks.Input(headers: headers))
     }
 }
 

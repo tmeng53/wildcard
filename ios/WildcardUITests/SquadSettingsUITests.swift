@@ -84,6 +84,7 @@ final class SquadSettingsUITests: XCTestCase {
         openSquad(app)
         waitFor(app.staticTexts["squad.scene"], "label == '游泳池'", "the picked scene didn't show", timeout: 60)
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the winner can pick twice")
+        XCTAssertFalse(app.staticTexts["squad.sceneLine"].exists, "a picked scene still has a line under it")
     }
 
     /// The longest names the rules allow stay inside the screen on the smallest phone.

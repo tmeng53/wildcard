@@ -17,6 +17,9 @@
       "path": "../../packages/ai-consent"
     },
     {
+      "path": "../../packages/notices"
+    },
+    {
       "path": "../../packages/nudges"
     },
     {
@@ -51,6 +54,9 @@
     },
     {
       "path": "../../packages/coach"
+    },
+    {
+      "path": "../../packages/unlocks"
     }
   ]
 }

@@ -89,6 +89,36 @@ struct ScheduleStoreTests {
         #expect(saved.last?.first == .rest)
     }
 
+    /// The poster's character trains at today's 练了, else today's plan, as the board has it.
+    @Test func todaysActivityIsTodaysCheckInElseTodaysPlan() async throws {
+        let backend = FakeBackend()
+        let store = store(backend)
+        #expect(store.todaysActivity == nil)
+        await store.load()
+        // Thursday's plan is strength.
+        #expect(store.todaysActivity == .sport("strength"))
+        await store.tap(3)
+        await store.pick(.sport("swim"))
+        #expect(store.todaysActivity == .sport("swim"))
+        // Showing another week keeps today's.
+        await store.show(thisWeek.adding(days: 7))
+        #expect(store.todaysActivity == .sport("swim"))
+
+        let trained = FakeBackend()
+        await trained.set(
+            try WeekSheet(
+                weekStart: thisWeek, plan: Fixtures.plan,
+                marks: [.none, .none, .none, .trained(.sport("climb")), .none, .none, .none]))
+        let climbed = self.store(trained)
+        await climbed.load()
+        #expect(climbed.todaysActivity == .sport("climb"))
+
+        // Saturday is a rest day.
+        let resting = self.store(FakeBackend(), at: Fixtures.noon("2026-10-24"))
+        await resting.load()
+        #expect(resting.todaysActivity == nil)
+    }
+
     @Test func aPastWeekCantChange() async {
         let backend = FakeBackend()
         let store = store(backend)

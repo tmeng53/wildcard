@@ -94,6 +94,13 @@ public struct StageLayout: Hashable, Sendable {
     /// around me. `SquadStage` leaves out the ones on a lane someone is running.
     public let floor: [StagePoint]
 
+    /// Where the squad's coach stands, on the sideline (场边): the front row's leftmost spot, which
+    /// teammates leave to it while the squad has a coach. Nil on a scene with no floor.
+    public var sideline: StagePoint? {
+        guard let front = floor.map(\.y).max() else { return nil }
+        return floor.filter { $0.y == front }.min { $0.x < $1.x }
+    }
+
     /// The stage's width, the screen's in the design.
     public static let width = 390.0
 

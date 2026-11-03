@@ -11,7 +11,7 @@ public enum SquadLoad: Hashable, Sendable {
     case failed(SquadError)
 }
 
-/// 教练市场 while it reads the coaches.
+/// 教练招聘会 while it reads the coaches.
 public enum CoachMarketLoad: Hashable, Sendable {
     case loading
     case loaded([Coach])
@@ -42,7 +42,7 @@ public struct SquadMemberRow: Hashable, Sendable, Identifiable {
     public let isManageable: Bool
 }
 
-/// The line under this week's scene: who picks it, or who picked it.
+/// The line under this week's scene while it waits to be picked: who picks it.
 public enum SceneLine: Hashable, Sendable {
     /// The member won last week's crown and may pick once.
     case youWon
@@ -52,12 +52,6 @@ public enum SceneLine: Hashable, Sendable {
     case youPickAsCaptain
     /// Nobody won the crown: the captain picks.
     case captainPicks
-    /// Picked this week by the member: it stays until next week's winner.
-    case youPicked
-    /// Picked this week by the captain, with nobody holding the crown.
-    case captainPicked
-    /// Picked this week by a crown winner, by nickname (nil once they deleted their account).
-    case winnerPicked(String?)
 }
 
 /// 小队设置 on screen: the squad, its members and this week's scene. The captain renames the
@@ -74,7 +68,7 @@ public final class SquadSettingsModel {
     public private(set) var hasLeft = false
     /// The scene picker, while the member may pick and has opened it (换场地).
     public private(set) var picker: ScenePicker?
-    /// 教练市场, read each time it opens.
+    /// 教练招聘会, read each time it opens.
     public private(set) var market: CoachMarketLoad = .loading
 
     @ObservationIgnored private let service: any SquadSettingsService
@@ -148,11 +142,8 @@ public final class SquadSettingsModel {
         guard let settings else { return nil }
         let scene = settings.scene
         let isMe = scene.pickers.members.contains(settings.viewer)
-        if let picked = scene.picked {
-            if picked.picker == settings.viewer { return .youPicked }
-            if case .captain = scene.pickers { return .captainPicked }
-            return .winnerPicked(picked.picker.flatMap { settings.characters[$0]?.nickname.text })
-        }
+        // Once picked, the scene's name says enough: no line under it.
+        guard scene.picked == nil else { return nil }
         switch scene.pickers {
         case .crown(let winners):
             return isMe ? .youWon : .winnersPick(winners.compactMap { settings.characters[$0]?.nickname.text })
@@ -182,7 +173,7 @@ public final class SquadSettingsModel {
         return settings.today.weekNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
     }
 
-    /// Reads 教练市场's coaches, each time it opens.
+    /// Reads 教练招聘会's coaches, each time it opens.
     public func loadMarket() async {
         market = .loading
         do {
