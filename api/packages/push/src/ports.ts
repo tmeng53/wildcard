@@ -38,8 +38,8 @@ export interface SettingsStore {
 /** Which members' daily push has been handled, day by day. */
 export interface DailyPushStore {
   /**
-   * Of these candidates, those with a phone, the daily push switched on and their day not handled
-   * yet, each with when their last day was handled.
+   * Of these candidates, those with the daily push switched on (with a phone or not) and their
+   * day not handled yet, each with when their last day was handled.
    */
   due(candidates: readonly DailyCandidate[]): Promise<DuePush[]>;
   /**

@@ -18,7 +18,7 @@ public struct CoachID: RawRepresentable, Hashable, Sendable, ExpressibleByString
     public init(stringLiteral id: String) { rawValue = id }
 }
 
-/// A coach as 教练市场 and its 简历 show it: the same coach for every squad. Its words come from
+/// A coach as 教练招聘会 and its 简历 show it: the same coach for every squad. Its words come from
 /// the API, so a new coach needs no app release.
 public struct Coach: Hashable, Sendable, Identifiable {
     public let id: CoachID
@@ -69,5 +69,65 @@ public struct SquadCoach: Hashable, Sendable {
     public init(hire: Hire?, canHire: Bool) {
         self.hire = hire
         self.canHire = canHire
+    }
+}
+
+/// The coach as members see it speak: its name, beside the 教练 tag, and its character.
+public struct CoachSpeaker: Hashable, Sendable {
+    public let id: CoachID
+    public let name: String
+
+    public init(id: CoachID, name: String) {
+        self.id = id
+        self.name = name
+    }
+}
+
+/// The squad's 战术板 line: what its coach says to everyone once a day.
+public struct CoachNote: Hashable, Sendable {
+    /// The day it is for, New York's, as every coach's day is.
+    public let day: LocalDay
+    public let text: String
+    public let coach: CoachSpeaker
+    public let writtenAt: Date
+
+    public init(day: LocalDay, text: String, coach: CoachSpeaker, writtenAt: Date) {
+        (self.day, self.text, self.coach, self.writtenAt) = (day, text, coach, writtenAt)
+    }
+
+    /// Coaches keep New York's day.
+    public static let timeZone = TimeZone(identifier: "America/New_York") ?? .gmt
+
+    /// Whether it is still the line's day at `moment`, so the home shows it.
+    public func isCurrent(at moment: Date) -> Bool {
+        LocalDay(at: moment, in: Self.timeZone) == day
+    }
+}
+
+/// What the coach said under one check-in: a line among its comments, an emoji first among its
+/// reactions, or both, each with the 教练 tag. It stays after the squad fires the coach.
+public struct CoachReply: Hashable, Sendable {
+    public let checkIn: CheckInID
+    public let coach: CoachSpeaker
+    /// Nil when it only reacted.
+    public let text: String?
+    /// Nil when it only spoke. Not one of the post's reactions.
+    public let emoji: Emoji?
+    public let writtenAt: Date
+
+    public init(checkIn: CheckInID, coach: CoachSpeaker, text: String?, emoji: Emoji?, writtenAt: Date) {
+        (self.checkIn, self.coach, self.text, self.emoji, self.writtenAt) = (checkIn, coach, text, emoji, writtenAt)
+    }
+}
+
+/// What the squad's coach said: its newest 战术板 line, and its replies to the check-ins asked
+/// about.
+public struct CoachActivity: Hashable, Sendable {
+    public let note: CoachNote?
+    public let replies: [CoachReply]
+
+    public init(note: CoachNote?, replies: [CoachReply]) {
+        self.note = note
+        self.replies = replies
     }
 }

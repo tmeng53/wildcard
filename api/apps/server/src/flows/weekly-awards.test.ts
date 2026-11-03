@@ -19,6 +19,7 @@ import {
   createMembers,
   createPostgresProfileStore,
 } from '@wildcard/members';
+import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
 import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import {
@@ -51,7 +52,11 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedCoachHiring, unusedUnlocks } from '../test-kit/weekly-awards.js';
+import {
+  unusedCoachHiring,
+  unusedCoachActivity,
+  unusedUnlocks,
+} from '../test-kit/weekly-awards.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
 // awards table are real; the model answers what each test sets, and the push sender records
@@ -169,6 +174,9 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     unlocks: unusedUnlocks,
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
+    coachActivity: unusedCoachActivity,
+    notices: createNotices({ store: createPostgresNoticeStore(db) }),
+    coachNames: () => Promise.reject(new Error('unused')),
     aiConsent,
     nudges: nudgesOn(db),
     log: createLog(() => undefined),
@@ -369,7 +377,7 @@ describe('weekly awards', () => {
   });
 
   it('awards members who checked in before Sunday 8pm Eastern, and tells the whole squad once', async () => {
-    const { run, read, sent, prompts } = setup();
+    const { run, read, sent, prompts, app } = setup();
     const [ana, bo, cy] = [await member(), await member('America/New_York'), await member()];
     const squad = await squadOf(ana, bo, cy);
     const photo = await uploadedPhoto(ana);
@@ -411,6 +419,29 @@ describe('weekly awards', () => {
       interruption: 'active',
       event: { squad, weekStart: WEEK },
     });
+    // Everyone in the squad finds it in 通知 too, once, Cy included.
+    const noticesOf = async (token: string) =>
+      z
+        .object({ notices: z.array(z.record(z.string(), z.unknown())) })
+        .parse(
+          await (
+            await app.request('/me/notices', { headers: { authorization: `Bearer ${token}` } })
+          ).json(),
+        )
+        .notices.map(({ kind, squadId, alert, weekStart }) => ({
+          kind,
+          squadId,
+          alert,
+          weekStart,
+        }));
+    const readyNotice = {
+      kind: 'weeklyAwards',
+      squadId: squad,
+      alert: { key: 'push.weeklyAwards.ready', args: [] },
+      weekStart: WEEK,
+    };
+    expect(await noticesOf(ana.token)).toStrictEqual([readyNotice]);
+    expect(await noticesOf(cy.token)).toStrictEqual([readyNotice]);
 
     const { status, body } = await read({ token: cy.token, squad });
     expect(status).toBe(200);

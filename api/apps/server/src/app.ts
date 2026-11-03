@@ -2,10 +2,11 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Admins } from '@wildcard/admins';
 import type { AiConsent } from '@wildcard/ai-consent';
 import type { CheckIns, WeekSummaryWords, WeeklyPlans } from '@wildcard/check-ins';
-import type { CoachHiring, CoachWakes } from '@wildcard/coach';
+import type { CoachActivity, CoachHiring, CoachWakes } from '@wildcard/coach';
 import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
+import type { Notices } from '@wildcard/notices';
 import type { Nudges } from '@wildcard/nudges';
 import type { Push } from '@wildcard/push';
 import type { Squads } from '@wildcard/squads';
@@ -42,6 +43,7 @@ import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { jobs } from './routes/jobs.js';
 import { me } from './routes/me.js';
+import { notices, type CoachNames } from './routes/notices.js';
 import { nudges } from './routes/nudges.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
@@ -49,6 +51,7 @@ import { comments } from './routes/comments.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadCoach } from './routes/squad-coach.js';
+import { coachActivity } from './routes/coach-activity.js';
 import { squadScene } from './routes/squad-scene.js';
 import { squadToday } from './routes/squad-today.js';
 import { weekStory } from './routes/week-story.js';
@@ -65,10 +68,16 @@ export interface AppDependencies {
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
   readonly squads: Squads;
-  /** Each squad's coach, and the coaches it can hire (教练市场). */
+  /** Each squad's coach, and the coaches it can hire (教练招聘会). */
   readonly coachHiring: CoachHiring;
+  /** What each squad's coach said: its 战术板 line and its replies to check-ins. */
+  readonly coachActivity: CoachActivity;
   /** Squadmates' pokes, which the daily push counts. */
   readonly nudges: Nudges;
+  /** What each member was told (通知, the bell on 动态), and how far they read it. */
+  readonly notices: Notices;
+  /** The coaches' names now, which a coach's notice shows. */
+  readonly coachNames: CoachNames;
   /** Members' consent to the AI copy, which squads and drafts ask for themselves. */
   readonly aiConsent: AiConsent;
   /** What `GET /public/catalog` serves: each section, as `main.ts` lists them. */
@@ -143,7 +152,9 @@ export function createApp(deps: AppDependencies) {
   app.route('/', squadToday(deps));
   app.route('/', squadScene({ ...deps, clock: deps.weeklyAwards.clock }));
   app.route('/', squadCoach(deps));
+  app.route('/', coachActivity(deps));
   app.route('/', nudges(deps));
+  app.route('/', notices(deps));
   app.route('/', weekSummary({ ...deps, words: deps.weekSummaryWords }));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));

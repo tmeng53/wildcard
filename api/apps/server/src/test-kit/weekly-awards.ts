@@ -27,5 +27,17 @@ export const unusedCoachHiring = {
   offered: unused,
 };
 
+/** What coaches said, for an app whose test never reads it. */
+export const unusedCoachActivity = { squad: unused };
+
 /** What members unlocked, for an app whose test never reads it. */
 export const unusedUnlocks = { of: unused };
+
+/**
+ * What members were told, for an app whose test never reads it: notices told are dropped, since
+ * keeping them never decides what a request answers.
+ */
+export const ignoredNotices = {
+  notices: { tell: () => Promise.resolve(), page: unused, markSeen: unused },
+  coachNames: unused,
+};

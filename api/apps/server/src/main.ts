@@ -22,8 +22,10 @@ import {
 import {
   createCoachCatalog,
   createCoachHiring,
+  createCoachActivity,
   createCoachSettings,
   createCoachWakes,
+  createPostgresCoachActivity,
   createPostgresCoachCatalog,
   createPostgresCoachHiring,
   createPostgresCoachReport,
@@ -46,6 +48,13 @@ import {
   MemberId as ProfileMember,
 } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
+import {
+  MemberId as NoticeMember,
+  SquadId as NoticeSquad,
+  createNotices,
+  createPostgresNoticeStore,
+  type NewNotice,
+} from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
 import {
   createApnsSender,
@@ -75,7 +84,7 @@ import { byProvider } from './adapters/language-models.js';
 import { createOpenAICoachAgent } from './adapters/openai-coach-agent.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
 import { createMemoryRateLimit } from './adapters/memory-rate-limit.js';
-import { createDatabase } from './adapters/postgres.js';
+import { createDatabase, onItsOwn } from './adapters/postgres.js';
 import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
 import {
   createSupabaseAccounts,
@@ -225,6 +234,23 @@ const checkIns = createCheckIns({
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
 });
+// What each member was told (通知, the bell on 动态): pushes and in-app notices, kept forever.
+const noticesOn = (scope: Database) => createNotices({ store: createPostgresNoticeStore(scope) });
+const notices = noticesOn(db);
+/**
+ * Keeps notices after what they tell of happened: a failure is logged, never the event's, even
+ * inside an admin tool's transaction.
+ */
+const tellAfter = async (
+  scope: Database,
+  { told, what }: { told: readonly NewNotice[]; what: string },
+) => {
+  try {
+    await onItsOwn(scope, () => noticesOn(scope).tell(told));
+  } catch (error) {
+    log.warn(`${what} not kept in notices`, { error });
+  }
+};
 // What members unlock by training: the unlocks module keeps the rules and who earned what, and
 // asks check-ins for the 练了 that count and the sports module which sports exist.
 const unlocksOn = (scope: Database) =>
@@ -233,6 +259,15 @@ const unlocksOn = (scope: Database) =>
     trainedSince: ({ member, since }) =>
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
+    unlocked: (member, unlocks) =>
+      tellAfter(scope, {
+        told: unlocks.map(({ kind, id }) => ({
+          member: NoticeMember.parse(member),
+          kind: 'unlocked',
+          subject: { version: 1, kind, item: id },
+        })),
+        what: 'an unlock',
+      }),
   });
 const nudges = createNudges({
   store: createPostgresNudgeStore(db),
@@ -257,7 +292,27 @@ const coachWakes =
           aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
         hiring: createPostgresCoachHiring(db),
         clock: () => new Date(),
+        // The check-in's author finds the reply in 通知; it is never pushed (Tracy, 2026-11-03).
+        replied: ({ squad, checkIn, author, coach, text, emoji }) =>
+          tellAfter(db, {
+            told: [
+              {
+                member: NoticeMember.parse(author),
+                squad: NoticeSquad.parse(squad),
+                kind: 'coachReply',
+                subject: {
+                  version: 1,
+                  checkIn,
+                  coach,
+                  replied: text !== undefined,
+                  emoji: emoji ?? null,
+                },
+              },
+            ],
+            what: 'a coach reply',
+          }),
       });
+const coachCatalog = createPostgresCoachCatalog(db);
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -279,6 +334,8 @@ const app = createApp({
   members,
   squads,
   nudges,
+  notices,
+  coachNames: async () => new Map((await coachCatalog.list()).map(({ id, name }) => [id, name])),
   aiConsent,
   // Data the app shows that lives in the database. Each module keeps its own section.
   catalog: {
@@ -326,6 +383,7 @@ const app = createApp({
     hiring: createPostgresCoachHiring(db),
     catalog: createPostgresCoachCatalog(db),
   }),
+  coachActivity: createCoachActivity({ store: createPostgresCoachActivity(db) }),
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
   unlocks: unlocksOn(db),

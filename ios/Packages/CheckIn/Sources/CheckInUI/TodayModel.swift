@@ -58,6 +58,14 @@ public final class TodayModel {
     let pats: PatStage
     /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
     private(set) var celebrations = 0
+    /// The coach's 战术板 line while its bubble is up on the sideline.
+    var coachSays: CoachNote?
+    /// Takes the coach's bubble down after its hold; the next one cancels it.
+    var coachHold: Task<Void, Never>?
+    /// How long the coach's bubble stays up.
+    let coachLineHold: Double
+    /// How long a notice at the top stays up.
+    let noticeHold: Double
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
@@ -119,6 +127,8 @@ public final class TodayModel {
         noSquad: @escaping @MainActor (Squad?) -> Void = { _ in }
     ) {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
+        coachLineHold = bubbleHold ?? Self.coachLineHold
+        noticeHold = bubbleHold ?? Motion.noticeHold
         self.scene = scene
         self.defaults = defaults
         self.store = store
@@ -136,13 +146,17 @@ public final class TodayModel {
     private static let scoreDelay = 1.7
 
     /// The squad's home, with the member's own posts counted.
-    var home: Home? { store.home }
+    public var home: Home? { store.home }
 
-    /// The squad dropping onto a newly picked scene, from `dropIn(on:)` until everyone has
-    /// settled (`TodayModel+DropIn.swift`).
+    /// The squad dropping onto a newly picked scene, until everyone settles (`TodayModel+DropIn.swift`).
     var arrival: Arrival?
     /// Keeps the tab bar hidden while the squad drops in, until 打卡 is back.
     var holdsTabBar = false
+    /// The `NoticeBanner` showing at the top, and those waiting for it (`TodayModel+Notices.swift`).
+    var notice: Notice?
+    var pendingNotices: [Notice] = []
+    /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
+    @ObservationIgnored var unlockNotices: UnlockNotices?
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.
@@ -164,28 +178,6 @@ public final class TodayModel {
     }
 
     var timeZone: TimeZone { store.home?.timeZone ?? .current }
-
-    /// 今日赛况, from 21:00 on the member's own clock until their day ends; nil before.
-    var recap: DayRecap? {
-        guard let home, home.showsRecap(at: now()) else { return nil }
-        return home.recap(pending: store.pending)
-    }
-
-    /// Noon of the member's today in their time zone: the day the recap's title names.
-    var dayDate: Date? {
-        guard let home, let day = home.mine?.day else { return nil }
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = home.timeZone
-        return calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day, hour: 12))
-    }
-
-    /// A member's head and name on 今日赛况: 我 for me, else their nickname, or 队友 before they
-    /// made their character.
-    func recapMember(_ member: MemberID) -> (head: CharacterPlayer?, name: String) {
-        if member == home?.member { return (player, String(localized: "我", bundle: .module.inAppLanguage)) }
-        let nickname = home?.today.members.first { $0.member == member }?.character?.nickname.text
-        return (head(of: member.description), nickname ?? String(localized: "队友", bundle: .module.inAppLanguage))
-    }
 
     /// The ring under my feet.
     var myRing: RingStatus {
@@ -225,7 +217,7 @@ public final class TodayModel {
             }
         }
         if !holdsDress || player == nil { dressMe(hop: false) }
-        cast.update(home: home, scene: scene, phase: stagePhase)
+        cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach)
     }
 
     var unavailable: Set<CheckInKind> {
@@ -264,8 +256,10 @@ public final class TodayModel {
         }
         placeSquad()
         Task {
+            await showNextNotice()
             await tellNews()
             await playPatsOnMe()
+            await sayCoachLine()
         }
     }
 

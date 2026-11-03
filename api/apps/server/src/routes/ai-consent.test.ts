@@ -40,6 +40,8 @@ import {
   unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
+  unusedCoachActivity,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
 // Wired as main.ts wires it: squads and drafts ask the AI consent module itself.
@@ -108,6 +110,8 @@ const app = createApp({
   unlocks: unusedUnlocks,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
+  coachActivity: unusedCoachActivity,
+  ...ignoredNotices,
   jobs: noJobs,
   log: createLog(() => undefined),
   admin: adminOn(),

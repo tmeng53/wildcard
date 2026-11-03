@@ -6,6 +6,8 @@ import Foundation
 public enum OpenedNotification: Hashable, Sendable {
     /// The squad's Sunday 战报 for the week starting `week` is ready.
     case weeklyAwards(squad: SquadID, week: LocalDay)
+    /// Someone commented on the member's post, or replied to them: the app opens the post's page.
+    case comment(checkIn: CheckInID)
     /// Anything else: the app opens 今天.
     case other
 
@@ -22,6 +24,12 @@ public enum OpenedNotification: Hashable, Sendable {
                 return
             }
             self = .weeklyAwards(squad: SquadID(squad), week: week)
+        case "comment":
+            guard let checkIn = event["checkIn"].flatMap(UUID.init(uuidString:)) else {
+                self = .other
+                return
+            }
+            self = .comment(checkIn: CheckInID(checkIn))
         default:
             self = .other
         }

@@ -1,7 +1,7 @@
 import { earned, type MemberId, type Unlock, type UnlockRule } from '../domain/unlocks.js';
 import type { UnlockGift, UnlockRuleEdit } from '../domain/unlocks.js';
 import { UnlockItemMissingError, UnlockSportNotListedError } from '../errors.js';
-import type { SportListed, TrainedSince, UnlockStore } from '../ports.js';
+import type { SportListed, TrainedSince, UnlockStore, Unlocked } from '../ports.js';
 
 /** What members unlock by training. */
 export interface Unlocks {
@@ -28,7 +28,13 @@ export function createUnlocks(deps: {
   readonly store: UnlockStore;
   readonly trainedSince: TrainedSince;
   readonly sportListed: SportListed;
+  /** Told what each grant kept new; left out where nobody needs telling. */
+  readonly unlocked?: Unlocked;
 }): Unlocks & UnlocksAdmin {
+  const grant = async (member: MemberId, unlocks: readonly Unlock[]) => {
+    const kept = await deps.store.grant(member, unlocks);
+    if (kept.length > 0) await deps.unlocked?.(member, kept);
+  };
   return {
     async of(member) {
       const [rules, has] = await Promise.all([deps.store.rules(), deps.store.unlocksOf(member)]);
@@ -39,7 +45,7 @@ export function createUnlocks(deps: {
       const trained = await deps.trainedSince({ member, since });
       const fresh = earned({ rules: open, trained, has });
       if (fresh.length === 0) return has;
-      await deps.store.grant(member, fresh);
+      await grant(member, fresh);
       return deps.store.unlocksOf(member);
     },
 
@@ -64,7 +70,7 @@ export function createUnlocks(deps: {
       const given =
         items === undefined ? rules : rules.filter(({ kind, id }) => named.has(`${kind}:${id}`));
       const unlockedAt = new Date();
-      await deps.store.grant(
+      await grant(
         member,
         given.map(({ kind, id, sports, after }) => ({
           kind,

@@ -76,8 +76,9 @@ struct FeedLayer: View {
                 }
             }
             if let who, let post = model.store.post(who.post) {
-                WhoPanel(model: model, reactions: post.reactions)
-                    .position(panelCenter(at: proxy[who.bounds], for: post.reactions, in: proxy))
+                let coach = model.coachReply(on: post.id)
+                WhoPanel(model: model, reactions: post.reactions, coach: coach)
+                    .position(panelCenter(at: proxy[who.bounds], for: post.reactions, coach: coach, in: proxy))
                     .transition(.scale(scale: 0.8, anchor: .topLeading).combined(with: .opacity))
             }
             ForEach(model.flights) { flight in
@@ -120,9 +121,11 @@ struct FeedLayer: View {
     }
 
     /// Right there at the row: under it when there's room, else over it.
-    private func panelCenter(at row: CGRect, for reactions: Responses<Emoji>, in proxy: GeometryProxy) -> CGPoint {
+    private func panelCenter(
+        at row: CGRect, for reactions: Responses<Emoji>, coach: CoachReply?, in proxy: GeometryProxy
+    ) -> CGPoint {
         let width = WhoPanel.width
-        let height = WhoPanel.height(for: reactions)
+        let height = WhoPanel.height(for: reactions, coach: coach)
         let midX = max(min(row.minX, proxy.size.width - Space.pageMargin - width), Space.pageMargin) + width / 2
         let below = row.maxY + Space.xxs + height / 2
         let fitsBelow = below + height / 2 < proxy.size.height - proxy.safeAreaInsets.bottom

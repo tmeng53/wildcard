@@ -28,7 +28,7 @@ export {
   type WeekCheckIn,
 } from './domain/awards.js';
 export type { StoryDay, StoryMember, WeekStory } from './domain/week-story.js';
-export { AwardMove } from './domain/moves.js';
+export { AwardMove, CHEER } from './domain/moves.js';
 export {
   AWARDS_HOUR,
   AWARDS_TIME_ZONE,
@@ -36,7 +36,7 @@ export {
   awardsTimeOf,
   latestAwardedWeek,
 } from './domain/schedule.js';
-export { AwardSettings, AwardSettingsChange, ModelName } from './domain/settings.js';
+export { AwardSettings, AwardSettingsChange, ModelName, offeredMoves } from './domain/settings.js';
 export {
   AwardsModelMissingError,
   AwardsWriterUnavailableError,

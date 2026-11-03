@@ -2536,6 +2536,137 @@
         ],
         "additionalProperties": false
       },
+      "CoachActivity": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "note": {
+            "$ref": "#/components/schemas/CoachNote"
+          },
+          "replies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachReply"
+            },
+            "description": "The coach’s replies to the check-ins asked about; one with none is left out."
+          }
+        },
+        "required": [
+          "version",
+          "note",
+          "replies"
+        ],
+        "additionalProperties": false
+      },
+      "CoachNote": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "The day (New York) the line is for."
+          },
+          "text": {
+            "type": "string",
+            "description": "The 战术板 line.",
+            "example": "今天谁先动，谁就是队长"
+          },
+          "coach": {
+            "$ref": "#/components/schemas/CoachSpeaker"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "day",
+          "text",
+          "coach",
+          "at"
+        ],
+        "additionalProperties": false,
+        "description": "The squad’s newest 战术板 line (the app shows it while its day is today), or null."
+      },
+      "CoachSpeaker": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The coach’s id. Never changes.",
+            "example": "xiaohun"
+          },
+          "name": {
+            "type": "string",
+            "description": "Its name, shown with the 教练 tag.",
+            "example": "毛头"
+          },
+          "look": {
+            "type": "string",
+            "description": "The character the app draws, by the art’s id."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "look"
+        ],
+        "additionalProperties": false
+      },
+      "CoachReply": {
+        "type": "object",
+        "properties": {
+          "checkInId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "coach": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CoachSpeaker"
+              },
+              {
+                "description": "The coach who replied, even if the squad has fired it since."
+              }
+            ]
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 100,
+            "description": "Its line, shown among the post’s comments with the 教练 tag (no 回复 under it), or null when it only reacted."
+          },
+          "emoji": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions."
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "checkInId",
+          "coach",
+          "text",
+          "emoji",
+          "at"
+        ],
+        "additionalProperties": false
+      },
       "SquadNudges": {
         "type": "object",
         "properties": {
@@ -2648,6 +2779,159 @@
           "version",
           "to",
           "kind"
+        ],
+        "additionalProperties": false
+      },
+      "NoticePage": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "notices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeEntry"
+            },
+            "description": "Newest first."
+          },
+          "seenThrough": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The newest notice the caller has seen: every one up to it is read. Left out before they first opened 通知."
+          },
+          "next": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Pass as `before` for the next, older page; left out on the last."
+          }
+        },
+        "required": [
+          "version",
+          "notices"
+        ],
+        "additionalProperties": false
+      },
+      "NoticeEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The order notices were told in: a later one is larger."
+          },
+          "kind": {
+            "type": "string",
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know."
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was told, in UTC."
+          },
+          "squadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The squad it is about, if any."
+          },
+          "alert": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "The String Catalog key the push used."
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Its placeholders’ values, in order."
+              }
+            },
+            "required": [
+              "key",
+              "args"
+            ],
+            "additionalProperties": false,
+            "description": "A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`)."
+          },
+          "weekStart": {
+            "type": "string",
+            "format": "date",
+            "description": "The Monday of the week whose 战报 is in (`weeklyAwards`)."
+          },
+          "scene": {
+            "type": "string",
+            "description": "The scene moved to (`sceneMoved`)."
+          },
+          "by": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who moved it (`sceneMoved`); left out once they deleted their account."
+          },
+          "byName": {
+            "type": "string",
+            "description": "Their nickname now (`sceneMoved`), when they have one."
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`)."
+          },
+          "coach": {
+            "type": "string",
+            "description": "The coach who answered (`coachReply`)."
+          },
+          "coachName": {
+            "type": "string",
+            "description": "Its name now (`coachReply`)."
+          },
+          "replied": {
+            "type": "boolean",
+            "description": "Whether the coach wrote a line (`coachReply`); else only its emoji."
+          },
+          "emoji": {
+            "type": "string",
+            "description": "The coach’s emoji (`coachReply`), if any."
+          },
+          "unlockKind": {
+            "type": "string",
+            "description": "What opened (`unlocked`): `store` or `prop`. Skip another."
+          },
+          "item": {
+            "type": "string",
+            "description": "The store’s or prop’s id (`unlocked`)."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "NoticesSeen": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "through": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The newest notice the caller saw, usually the first on the newest page."
+          }
+        },
+        "required": [
+          "version",
+          "through"
         ],
         "additionalProperties": false
       },
@@ -3770,7 +4054,7 @@
           "move": {
             "type": "string",
             "minLength": 1,
-            "description": "The move the character plays collecting it. Today one of `cheer`, `pump`, `pose`, `warmup`, `stretch`, `doze`, `flat`, `laugh`, `wave`, `fullbelly` (`cheer` is the persona’s own cheer). New moves come without an app release: play `cheer` for one the app doesn’t know.",
+            "description": "The move the character plays collecting it. A move id as the app names its art (`cheer` is the persona’s own cheer); which moves the awards pick from is a setting, so new ones come without an app release: play `cheer` for one the app doesn’t know.",
             "example": "pump"
           }
         },
@@ -6936,6 +7220,92 @@
         }
       }
     },
+    "/squads/{squadId}/coach/activity": {
+      "get": {
+        "operationId": "getSquadCoachActivity",
+        "summary": "What the squad’s coach said (战术板, replies and reactions)",
+        "description": "The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one. Only for the squad’s members. Replies stay after the squad fires its coach.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Check-in ids, comma-separated, up to 100: the posts on screen.",
+              "example": "0a5c1f2e-3b4d-4e6f-8a9b-1c2d3e4f5a6b,1b6d2f3e-4c5d-4f6a-9b8c-2d3e4f5a6b7c"
+            },
+            "required": false,
+            "description": "Check-in ids, comma-separated, up to 100: the posts on screen.",
+            "name": "checkIns",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What the coach said",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachActivity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id, or not valid check-in ids, or more than 100",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/squads/{squadId}/nudges": {
       "get": {
         "operationId": "listSquadNudges",
@@ -7106,6 +7476,169 @@
           },
           "404": {
             "description": "The squadmate isn’t in this squad (`NOT_A_SQUADMATE`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/notices": {
+      "get": {
+        "operationId": "listMyNotices",
+        "summary": "The caller’s notices (通知)",
+        "description": "Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "The `next` of the page before; left out for the newest page."
+            },
+            "required": false,
+            "description": "The `next` of the page before; left out for the newest page.",
+            "name": "before",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Notices on the page: 1 to 50, 30 when left out."
+            },
+            "required": false,
+            "description": "Notices on the page: 1 to 50, 30 when left out.",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of notices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticePage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid `before` or `limit`",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/notices/seen": {
+      "put": {
+        "operationId": "markMyNoticesSeen",
+        "summary": "Mark the caller’s notices read (通知)",
+        "description": "Opening 通知 marks every notice up to the newest read. Never goes back: an older one, or the same again, changes nothing, so it is safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticesSeen"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Read up to there",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticesSeen"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid body",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not one of the caller’s notices (`NOTICE_NOT_FOUND`)",
             "content": {
               "application/problem+json": {
                 "schema": {

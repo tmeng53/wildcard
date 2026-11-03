@@ -1499,6 +1499,22 @@
         }
       }
     },
+    "教练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coach"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "教練"
+          }
+        }
+      }
+    },
     "放在场景底": {
       "localizations": {
         "en": {
@@ -1979,18 +1995,18 @@
         }
       }
     },
-    "等待：三拍，整页是小人原地跑": {
+    "等待：三拍，整页是两张票": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Waiting: three hopping dots; a whole page jogs"
+            "value": "Waiting: three hopping dots; a whole page, two tickets"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "等待：三拍，整頁是小人原地跑"
+            "value": "等待：三拍，整頁是兩張票"
           }
         }
       }
@@ -2903,6 +2919,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "分享"
+          }
+        }
+      }
+    },
+    "通知条：从顶上落下": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notice: drops from the top"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知條：從頂上落下"
+          }
+        }
+      }
+    },
+    "通知条：场上没人能说的事": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notices: news nobody on the scene can tell"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知條：場上沒人能說的事"
+          }
+        }
+      }
+    },
+    "DEUCE CLUB 开门了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DEUCE CLUB is open"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DEUCE CLUB 開門了"
+          }
+        }
+      }
+    },
+    "网球练满 3 次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3 tennis sessions"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網球練滿 3 次"
+          }
+        }
+      }
+    },
+    "小米把小队搬到了跑道": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi moved the squad to Track"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小米把小隊搬到了跑道"
           }
         }
       }

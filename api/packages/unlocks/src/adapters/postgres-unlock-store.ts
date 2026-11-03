@@ -60,8 +60,8 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
     },
 
     async grant(member, unlocks) {
-      if (unlocks.length === 0) return;
-      await db
+      if (unlocks.length === 0) return [];
+      const inserted = await db
         .insertInto('member_unlocks')
         .values(
           unlocks.map((unlock) => ({
@@ -76,7 +76,10 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
           })),
         )
         .onConflict((conflict) => conflict.columns(['member_id', 'kind', 'item_id']).doNothing())
+        .returning(['kind', 'item_id'])
         .execute();
+      const fresh = new Set(inserted.map(({ kind, item_id }) => `${kind}:${item_id}`));
+      return unlocks.filter(({ kind, id }) => fresh.has(`${kind}:${id}`));
     },
   };
 }

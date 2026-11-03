@@ -36,8 +36,9 @@ export interface Push {
     readonly settings: PushSettings;
   }): Promise<PushSettings>;
   /**
-   * Of these members, each on their own today, those whose daily push is due: they have a phone,
-   * haven't turned it off, and today's hasn't been handled.
+   * Of these members, each on their own today, those whose daily push is due: they haven't
+   * turned it off and today's hasn't been handled. A member without a phone is due too, so the
+   * push is kept in their 通知 though it reaches no phone.
    */
   dailyDue(candidates: readonly DailyCandidate[]): Promise<DuePush[]>;
   /** Whether the daily push goes out at all, and at which hour on members' clocks. */

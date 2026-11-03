@@ -82,6 +82,15 @@ struct StageSection: View {
                         on: .page)
                 }
             }
+            GuideGroup(Text("通知条：场上没人能说的事", bundle: .module)) {
+                VStack(spacing: Space.s) {
+                    NoticeBanner(Text("小米把小队搬到了跑道", bundle: .module)) { SceneBadge(.track) }
+                    NoticeBanner(
+                        Text("DEUCE CLUB 开门了", bundle: .module), detail: Text("网球练满 3 次", bundle: .module),
+                        showsChevron: true
+                    ) { SceneBadge(.tennis) }
+                }
+            }
             GuideGroup(Text("开灯的拉绳：关着是白的，开着是暖黄", bundle: .module)) {
                 HStack(alignment: .top, spacing: Space.xl) {
                     PullCord(isLit ? Text("关灯", bundle: .module) : Text("开灯", bundle: .module), isOn: isLit) {

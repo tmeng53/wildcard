@@ -54,3 +54,18 @@ import Testing
         try await APIFeedSource(api: outsider.api).posts(in: squad, from: day, through: day)
     }
 }
+
+@Test func aSquadWithoutACoachHasNothingFromOneAndOutsidersAreToldSo() async throws {
+    let stack = try LocalStack()
+    let author = try await stack.signedInMember()
+    let outsider = try await stack.signedInMember()
+    let squad = try await stack.squad(of: author)
+    let meal = try checkIn(by: author, to: squad, .healthyMeal(Meal()))
+    _ = try await author.api.save(meal)
+
+    let activity = try await APIFeedSource(api: author.api).activity(in: squad, about: [meal.id])
+    #expect(activity == CoachActivity(note: nil, replies: []))
+    await #expect(throws: FeedError.notInSquad) {
+        try await APIFeedSource(api: outsider.api).activity(in: squad, about: [meal.id])
+    }
+}
