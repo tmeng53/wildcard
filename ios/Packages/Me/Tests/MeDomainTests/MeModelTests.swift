@@ -88,7 +88,7 @@ private func board() throws -> TitleBoard {
                 title: "冷面杀手", badge: hexagon,
                 weeks: [
                     BoardTitle.Week(weekStart: try LocalDay("2026-10-19"), speech: nil),
-                    BoardTitle.Week(weekStart: try LocalDay("2026-10-12"), speech: "一句话不说"),
+                    BoardTitle.Week(weekStart: try LocalDay("2026-10-12"), speech: "一句话不说", squadName: "早八跑团"),
                 ]),
         ], worn: "早八战神")
 }
@@ -287,6 +287,9 @@ struct MeModelTests {
         #expect(board.wornTitle == WornTitle(title: "早八战神", badge: shield))
         #expect(board.titles[1].times == 2)
         #expect(board.titles[1].latestSpeech == "一句话不说")
+        // The squad named is the one the shown award line was won in, not another squad's week.
+        #expect(board.titles[1].latestSquadName == "早八跑团")
+        #expect(board.titles[0].latestSquadName == nil)
         #expect(TitleBoard.empty.wornTitle == nil)
     }
 

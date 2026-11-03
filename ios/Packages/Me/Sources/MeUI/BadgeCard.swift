@@ -74,30 +74,34 @@ struct BadgeCard: View {
     private var top: some View {
         TitleBadgeView.enamel(title.badge.colour)
             .frame(height: Self.topHeight)
-            .overlay(alignment: .topLeading) {
-                Group {
-                    if let squad = title.latestSquadName {
-                        Text("badge.from \(squad)", bundle: .module)
-                    } else {
-                        Text("每周战报", bundle: .module)
+            .overlay(alignment: .top) {
+                // One row, so a long squad name shrinks and stops before ×N instead of under it.
+                HStack(alignment: .firstTextBaseline, spacing: Space.s) {
+                    Group {
+                        if let squad = title.latestSquadName {
+                            Text("badge.from \(squad)", bundle: .module)
+                        } else {
+                            Text("每周战报", bundle: .module)
+                        }
+                    }
+                    .typeStyle(TypeRamp.label)
+                    .foregroundStyle(Color(role: .fgOnInk, in: theme))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .accessibilityIdentifier("me.badgeCard.from")
+                    Spacer(minLength: 0)
+                    if title.times > 1 {
+                        Text(verbatim: "×\(title.times)")
+                            .typeStyle(TypeRamp.scoreSmall)
+                            .foregroundStyle(Color(role: .fgDefault, in: theme))
+                            .padding(.horizontal, Space.xs)
+                            .padding(.vertical, Space.xxs / 2)
+                            .background(Color(role: .bgCanvas, in: theme), in: Capsule())
+                            .fixedSize()
+                            .accessibilityIdentifier("me.badgeCard.times")
                     }
                 }
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                .lineLimit(1)
                 .padding(Space.m)
-            }
-            .overlay(alignment: .topTrailing) {
-                if title.times > 1 {
-                    Text(verbatim: "×\(title.times)")
-                        .typeStyle(TypeRamp.scoreSmall)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .padding(.horizontal, Space.xs)
-                        .padding(.vertical, Space.xxs / 2)
-                        .background(Color(role: .bgCanvas, in: theme), in: Capsule())
-                        .padding(Space.m)
-                        .accessibilityIdentifier("me.badgeCard.times")
-                }
             }
             .overlay(alignment: .bottom) {
                 TitleBadgeView(

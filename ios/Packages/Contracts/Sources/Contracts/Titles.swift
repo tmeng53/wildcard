@@ -65,8 +65,9 @@ public struct BoardTitle: Hashable, Sendable, Identifiable {
     public var times: Int { weeks.count }
     /// The award line shown on its detail: the latest one there is.
     public var latestSpeech: String? { weeks.lazy.compactMap(\.speech).first }
-    /// The squad it was last won in, by its name that week; nil when the latest week names none.
-    public var latestSquadName: String? { weeks.first?.squadName }
+    /// The squad of the week `latestSpeech` comes from, by its name that week; nil when that week
+    /// names none.
+    public var latestSquadName: String? { weeks.first { $0.speech != nil }?.squadName }
 }
 
 /// Every title a member won, in all their squads, and the one they wear.
