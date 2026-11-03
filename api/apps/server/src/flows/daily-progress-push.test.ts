@@ -9,6 +9,7 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
 import {
   MemberId as PushMember,
   createPostgresDailyPushSettings,
@@ -19,6 +20,7 @@ import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wild
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
 import { jobsTokenScheduler } from '../adapters/scheduler.js';
@@ -90,6 +92,7 @@ const JOBS_TOKEN = randomBytes(32).toString('hex');
 const nudges = nudgesOn(db);
 const interactions = [checkInInteractions(checkIns), nudgeInteractions(nudges)];
 
+const notices = createNotices({ store: createPostgresNoticeStore(db) });
 const deps = {
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -115,6 +118,8 @@ const deps = {
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  notices,
+  coachNames: () => Promise.reject(new Error('unused')),
   log,
   jobs: { isScheduler: jobsTokenScheduler(JOBS_TOKEN), interactions, clock: () => new Date() },
   admin: adminOn(),
@@ -132,6 +137,7 @@ const run = () =>
     checkIns,
     push,
     interactions,
+    notices,
     clock: () => new Date(),
     log,
   });
@@ -339,6 +345,63 @@ describe('the daily progress push', () => {
     await run();
     expect(sentTo.get(eve.phone)).toHaveLength(1);
     expect(await handled(eve.userId)).toStrictEqual([{ day: dayAt(eve.offset), quiet: false }]);
+
+    // The push is kept in her 通知, once, unread until she opens it.
+    const told = await call('GET', { path: '/me/notices', token: eve.token });
+    expect(told.status).toBe(200);
+    const [notice] = z
+      .object({ notices: z.array(z.object({ id: z.number(), at: z.string() })) })
+      .parse(told.body).notices;
+    expect(told.body).toStrictEqual({
+      version: 1,
+      notices: [
+        {
+          id: notice?.id,
+          kind: 'dailyProgress',
+          at: notice?.at,
+          squadId: squad,
+          alert: {
+            key: 'push.dailyProgress.received',
+            args: ['1', plannedAfterTraining(15, dayAt(eve.offset)), '2'],
+          },
+        },
+      ],
+    });
+    const seen = { version: 1, through: notice?.id };
+    expect(
+      await call('PUT', { path: '/me/notices/seen', token: eve.token, body: seen }),
+    ).toStrictEqual({
+      status: 200,
+      body: seen,
+    });
+    expect((await call('GET', { path: '/me/notices', token: eve.token })).body).toMatchObject({
+      seenThrough: notice?.id,
+    });
+    // Nobody marks another member's notices read.
+    expect(
+      await call('PUT', { path: '/me/notices/seen', token: early.token, body: seen }),
+    ).toMatchObject({ status: 404, body: { reason: 'NOTICE_NOT_FOUND' } });
+    expect((await call('GET', { path: '/me/notices', token: early.token })).body).toStrictEqual({
+      version: 1,
+      notices: [],
+    });
+  });
+
+  it('keeps the push in 通知 for a member with no phone, though it reaches none', async () => {
+    const eve = await member(evening);
+    const mate = await member(morning);
+    const squad = await squadOf(eve, mate);
+    await trained(mate, squad);
+    // Eve turned notifications off in iOS, or signed out of her only phone: no device.
+    await sql`delete from push_devices where member_id = ${eve.userId}`.execute(db);
+
+    await run();
+    expect(sentTo.get(eve.phone)).toBeUndefined();
+    expect(await handled(eve.userId)).toStrictEqual([{ day: dayAt(eve.offset), quiet: false }]);
+    const told = await call('GET', { path: '/me/notices', token: eve.token });
+    expect(told.body).toMatchObject({
+      notices: [{ kind: 'dailyProgress', squadId: squad, alert: { key: 'push.dailyProgress' } }],
+    });
   });
 
   it('counts teammates who commented on the member’s posts, never the member’s own comments', async () => {

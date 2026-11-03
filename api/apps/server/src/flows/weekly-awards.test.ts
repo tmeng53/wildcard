@@ -19,6 +19,7 @@ import {
   createMembers,
   createPostgresProfileStore,
 } from '@wildcard/members';
+import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
 import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import {
@@ -181,6 +182,8 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    notices: createNotices({ store: createPostgresNoticeStore(db) }),
+    coachNames: () => Promise.reject(new Error('unused')),
     aiConsent,
     nudges: nudgesOn(db),
     log: createLog(() => undefined),
@@ -379,7 +382,7 @@ describe('weekly awards', () => {
   });
 
   it('awards members who checked in before Sunday 8pm Eastern, and tells each once', async () => {
-    const { run, read, sent, prompts } = setup();
+    const { run, read, sent, prompts, app } = setup();
     const [ana, bo, cy] = [await member(), await member('America/New_York'), await member()];
     const squad = await squadOf(ana, bo, cy);
     const photo = await uploadedPhoto(ana);
@@ -420,6 +423,30 @@ describe('weekly awards', () => {
       interruption: 'active',
       event: { squad, weekStart: WEEK },
     });
+    // Each winner finds it in 通知 too, once; Cy, who won nothing, doesn't.
+    const noticesOf = async (token: string) =>
+      z
+        .object({ notices: z.array(z.record(z.string(), z.unknown())) })
+        .parse(
+          await (
+            await app.request('/me/notices', { headers: { authorization: `Bearer ${token}` } })
+          ).json(),
+        )
+        .notices.map(({ kind, squadId, alert, weekStart }) => ({
+          kind,
+          squadId,
+          alert,
+          weekStart,
+        }));
+    expect(await noticesOf(ana.token)).toStrictEqual([
+      {
+        kind: 'weeklyAwards',
+        squadId: squad,
+        alert: { key: 'push.weeklyAwards.ready', args: [] },
+        weekStart: WEEK,
+      },
+    ]);
+    expect(await noticesOf(cy.token)).toStrictEqual([]);
 
     const { status, body } = await read({ token: cy.token, squad });
     expect(status).toBe(200);

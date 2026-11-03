@@ -2830,6 +2830,159 @@
         ],
         "additionalProperties": false
       },
+      "NoticePage": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "notices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeEntry"
+            },
+            "description": "Newest first."
+          },
+          "seenThrough": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The newest notice the caller has seen: every one up to it is read. Left out before they first opened 通知."
+          },
+          "next": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Pass as `before` for the next, older page; left out on the last."
+          }
+        },
+        "required": [
+          "version",
+          "notices"
+        ],
+        "additionalProperties": false
+      },
+      "NoticeEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The order notices were told in: a later one is larger."
+          },
+          "kind": {
+            "type": "string",
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in) or `unlocked` (a store or prop opened). More kinds may come: skip one you don’t know."
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was told, in UTC."
+          },
+          "squadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The squad it is about, if any."
+          },
+          "alert": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "The String Catalog key the push used."
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Its placeholders’ values, in order."
+              }
+            },
+            "required": [
+              "key",
+              "args"
+            ],
+            "additionalProperties": false,
+            "description": "A push’s words as it was sent (`dailyProgress`, `weeklyAwards`)."
+          },
+          "weekStart": {
+            "type": "string",
+            "format": "date",
+            "description": "The Monday of the week whose 战报 is in (`weeklyAwards`)."
+          },
+          "scene": {
+            "type": "string",
+            "description": "The scene moved to (`sceneMoved`)."
+          },
+          "by": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who moved it (`sceneMoved`); left out once they deleted their account."
+          },
+          "byName": {
+            "type": "string",
+            "description": "Their nickname now (`sceneMoved`), when they have one."
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The caller’s check-in the coach answered (`coachReply`)."
+          },
+          "coach": {
+            "type": "string",
+            "description": "The coach who answered (`coachReply`)."
+          },
+          "coachName": {
+            "type": "string",
+            "description": "Its name now (`coachReply`)."
+          },
+          "replied": {
+            "type": "boolean",
+            "description": "Whether the coach wrote a line (`coachReply`); else only its emoji."
+          },
+          "emoji": {
+            "type": "string",
+            "description": "The coach’s emoji (`coachReply`), if any."
+          },
+          "unlockKind": {
+            "type": "string",
+            "description": "What opened (`unlocked`): `store` or `prop`. Skip another."
+          },
+          "item": {
+            "type": "string",
+            "description": "The store’s or prop’s id (`unlocked`)."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "NoticesSeen": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "through": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The newest notice the caller saw, usually the first on the newest page."
+          }
+        },
+        "required": [
+          "version",
+          "through"
+        ],
+        "additionalProperties": false
+      },
       "WeekSummary": {
         "type": "object",
         "properties": {
@@ -7543,6 +7696,169 @@
           },
           "404": {
             "description": "The squadmate isn’t in this squad (`NOT_A_SQUADMATE`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/notices": {
+      "get": {
+        "operationId": "listMyNotices",
+        "summary": "The caller’s notices (通知)",
+        "description": "Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "The `next` of the page before; left out for the newest page."
+            },
+            "required": false,
+            "description": "The `next` of the page before; left out for the newest page.",
+            "name": "before",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Notices on the page: 1 to 50, 30 when left out."
+            },
+            "required": false,
+            "description": "Notices on the page: 1 to 50, 30 when left out.",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of notices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticePage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid `before` or `limit`",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/notices/seen": {
+      "put": {
+        "operationId": "markMyNoticesSeen",
+        "summary": "Mark the caller’s notices read (通知)",
+        "description": "Opening 通知 marks every notice up to the newest read. Never goes back: an older one, or the same again, changes nothing, so it is safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticesSeen"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Read up to there",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticesSeen"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid body",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not one of the caller’s notices (`NOTICE_NOT_FOUND`)",
             "content": {
               "application/problem+json": {
                 "schema": {

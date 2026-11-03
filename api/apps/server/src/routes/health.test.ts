@@ -24,6 +24,7 @@ import {
   unusedUnlocks,
   unusedCoachHiring,
   unusedCoachActivity,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
 const config = readConfig(process.env);
@@ -81,6 +82,7 @@ async function getHealth(db: Database) {
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    ...ignoredNotices,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     log: createLog((line) => lines.push(line)),
@@ -172,6 +174,7 @@ describe('an unknown route', () => {
       weekSummaryWords: unusedWeekSummaryWords,
       coachHiring: unusedCoachHiring,
       coachActivity: unusedCoachActivity,
+      ...ignoredNotices,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),
       log: createLog(() => undefined),

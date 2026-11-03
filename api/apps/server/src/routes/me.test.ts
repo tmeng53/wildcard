@@ -37,6 +37,7 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
 async function send(
@@ -87,6 +88,7 @@ async function send(
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    ...ignoredNotices,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     log: createLog(() => undefined),
