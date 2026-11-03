@@ -63,10 +63,11 @@ final class ComposePhotoUITests: XCTestCase {
             app.staticTexts["放弃这条动态？"].waitForExistence(timeout: Self.wait), "取消 didn't ask before discarding")
         settle()
         keepScreenshot(named: "15-compose-discard")
-        app.buttons["compose.keepEditing"].tap()
+        // iOS 26 lists an alert's button twice (a Button inside a PopUpButton).
+        app.buttons["compose.keepEditing"].firstMatch.tap()
         XCTAssertTrue(caption.waitForExistence(timeout: Self.wait), "继续编辑 left the compose page")
         app.buttons["compose.cancel"].tap()
-        let discard = app.buttons["compose.discard"]
+        let discard = app.buttons["compose.discard"].firstMatch
         XCTAssertTrue(discard.waitForExistence(timeout: Self.wait), "取消 didn't ask again")
         discard.tap()
         XCTAssertTrue(caption.waitForNonExistence(timeout: Self.wait), "放弃 didn't close the compose page")
