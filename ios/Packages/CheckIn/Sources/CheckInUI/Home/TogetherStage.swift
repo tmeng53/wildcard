@@ -51,6 +51,12 @@ final class TogetherStage {
     /// How far apart two heads bump, and how far the 叠罗汉's bottom one stands from the top
     /// one, in the rig's points (`Interaction`'s offsets for the moves that have them).
     nonisolated static let bumpApart = 200.0
+    /// Just below where the squad's card ends over the scene, in stage points (the design's 390 × 844 home):
+    /// the 叠罗汉 plays low enough that its top one's jump stays below it.
+    nonisolated static let cardBottom = 300.0
+    /// How far above the bottom one's feet the 叠罗汉's top one reaches, in the rig's points: its
+    /// jump (`stack-top`'s 300) and its own height on the 240-point canvas.
+    nonisolated static let stackReach = 540.0
     /// From one teammate's jump to the next in the wave, left to right.
     nonisolated static let waveStagger = 0.14
     /// How high each step of the walk bobs, in the rig's points.
@@ -152,19 +158,24 @@ final class TogetherStage {
             let roles = try PlaceholderCharacter.stack().roles
             return pair(
                 starter: (figure(top), roles[0].clip, starter.spot), other: (figure(bottom), roles[1].clip, other.spot),
-                apart: roles[1].offset, facingEachOther: false, landsAt: PlaceholderCharacter.stackTopLandsAt)
+                apart: roles[1].offset, facingEachOther: false, landsAt: PlaceholderCharacter.stackTopLandsAt,
+                below: cardBottom, reach: stackReach)
         }
     }
 
     /// Two figures: the starter walks to `apart` rig points from the other, on its own side,
     /// and both play their clips once it is there. They face each other, or both face the way
-    /// the starter walked (the moves are drawn facing right, the other one on the right).
+    /// the starter walked (the moves are drawn facing right, the other one on the right). With
+    /// `below`, a move reaching `reach` rig points above the other's feet stays below that depth:
+    /// an other standing too far back (on the treadmills, under the squad's card) steps forward
+    /// to the nearest depth where it does, as the starter walks over.
     private static func pair(
         starter: (figure: PatStage.Figure, clip: Clip, spot: StagePosition),
         other: (figure: PatStage.Figure, clip: Clip, spot: StagePosition),
-        apart: Double, facingEachOther: Bool, landsAt: Double? = nil
+        apart: Double, facingEachOther: Bool, landsAt: Double? = nil, below: Double? = nil, reach: Double = 0
     ) -> [Part] {
-        let (from, target) = (starter.spot, other.spot)
+        let from = starter.spot
+        let target = below.map { clearOf($0, reach: reach, from: other.spot) } ?? other.spot
         let direction: Double = from.point.x <= target.point.x ? 1 : -1
         let stand = StagePosition(
             point: StagePoint(x: target.point.x - direction * apart * target.scale, y: target.point.y),
@@ -183,11 +194,29 @@ final class TogetherStage {
         ]
     }
 
+    /// `spot`, or straight in front of it at the first depth where a figure there reaching
+    /// `reach` rig points up stays below `top`.
+    private static func clearOf(_ top: Double, reach: Double, from spot: StagePosition) -> StagePosition {
+        var depth = spot.point.y
+        while depth - reach * StageLayout.scale(atDepth: depth) < top { depth += 1 }
+        guard depth > spot.point.y else { return spot }
+        return StagePosition(
+            point: StagePoint(x: spot.point.x, y: depth), facing: spot.facing, scale: StageLayout.scale(atDepth: depth))
+    }
+
     private static func between(_ from: StagePosition, _ target: StagePosition, _ amount: Double) -> StagePosition {
         let point = StagePoint(
             x: from.point.x + (target.point.x - from.point.x) * amount,
             y: from.point.y + (target.point.y - from.point.y) * amount)
-        let facing: Double = amount >= 1 ? target.facing : (target.point.x >= from.point.x ? 1 : -1)
+        // Facing the way it walks; one that waits where it stands keeps its own way until it turns.
+        let facing: Double
+        if amount >= 1 {
+            facing = target.facing
+        } else if target.point.x == from.point.x {
+            facing = from.facing
+        } else {
+            facing = target.point.x > from.point.x ? 1 : -1
+        }
         return StagePosition(
             point: point, facing: facing, scale: from.scale + (target.scale - from.scale) * amount)
     }

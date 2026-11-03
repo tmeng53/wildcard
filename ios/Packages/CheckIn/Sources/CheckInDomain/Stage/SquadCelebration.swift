@@ -25,15 +25,6 @@ public enum SquadCelebration: Hashable, Sendable {
         }
     }
 
-    /// Who takes part, in the order they stand from the left; empty for the whole squad.
-    public var members: [MemberID] {
-        switch self {
-        case .stack(let top, let bottom): [top, bottom]
-        case .bump(let mine, let mate, _): [mine, mate]
-        case .wave: []
-        }
-    }
-
     /// What the squad celebrates on this open, if anything: the week's goal first, then two
     /// members on the same sport, then me and a teammate who both trained. `shown` are the kinds
     /// already played today on this phone. A member is in it only once their training arrived.
