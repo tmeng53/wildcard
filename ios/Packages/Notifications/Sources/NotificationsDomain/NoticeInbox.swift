@@ -195,6 +195,7 @@ extension Notice {
         case .sceneMoved: .home
         case .coachReply(let checkIn, _, _, _, _): .post(checkIn)
         case .unlocked(let kind, let item): .wardrobe(kind, item: item)
+        case .comment(_, let checkIn): .post(checkIn)
         }
     }
 }

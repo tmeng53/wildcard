@@ -28,8 +28,8 @@ public actor InMemoryNoticeSource: NoticeSource {
         seen = max(seen ?? through, through)
     }
 
-    /// The sample squad's last two weeks, told before `now`: a teammate's scene move and the
-    /// coach's reply today, the 6pm push yesterday, the 战报 and a store opening this week or
+    /// The sample squad's last two weeks, told before `now`: a teammate's comment, a scene move
+    /// and the coach's reply today, the 6pm push yesterday, the 战报 and a store opening this week or
     /// last, and older ones. The newest two are new.
     public static func sample(now: Date, calendar: Calendar = .current) -> InMemoryNoticeSource {
         let today = calendar.startOfDay(for: now)
@@ -68,6 +68,10 @@ public actor InMemoryNoticeSource: NoticeSource {
                 .coachReply(checkIn: CheckInID(UUID()), coach: "xiaohun", coachName: "毛头", replied: true, emoji: nil)
             ),
             (at(days: 0, hour: 10, minute: 12), .sceneMoved(scene: "track", mover: nil, moverName: "阿杰")),
+            (
+                at(days: 0, hour: 11, minute: 5),
+                .comment(PushAlert(key: "push.comment", args: ["Coco", "这组深蹲太稳了"]), checkIn: CheckInID(UUID()))
+            ),
         ]
         let notices = subjects.enumerated().map { index, told in
             Notice(id: NoticeID(rawValue: index + 1), toldAt: told.0, squad: nil, subject: told.1)

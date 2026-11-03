@@ -47,6 +47,9 @@ extension Notice {
                 return nil
             }
             return .unlocked(kind, item: item)
+        case "comment":
+            guard let alert, let checkIn = wire.checkIn.flatMap({ try? CheckInID(wire: $0) }) else { return nil }
+            return .comment(alert, checkIn: checkIn)
         default:
             return nil
         }

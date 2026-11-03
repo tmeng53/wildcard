@@ -173,3 +173,14 @@ private var utc: Calendar {
     #expect(plain.title == "本周小队已练 3/12 次")
     #expect(plain.detail == nil)
 }
+
+@Test func aCommentOpensThePostAndReadsAsItsPushPutIt() throws {
+    let checkIn = CheckInID(try #require(UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")))
+    let alert = PushAlert(key: "push.comment", args: ["Coco", "这组深蹲太稳了"])
+    let comment = Notice(
+        id: NoticeID(rawValue: 1), toldAt: monday, squad: nil, subject: .comment(alert, checkIn: checkIn))
+    #expect(comment.target == .post(checkIn))
+    let parts = PushAlertWords(alert).parts("%1$@ 评论了你：%2$@")
+    #expect(parts.title == "Coco 评论了你：这组深蹲太稳了")
+    #expect(parts.detail == nil)
+}

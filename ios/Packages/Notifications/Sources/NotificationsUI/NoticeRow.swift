@@ -111,6 +111,11 @@ struct NoticeRow: View {
         case .unlocked(let kind, let item):
             let unlock = unlocked(kind, item)
             return Words(title: unlock.title, detail: unlock.detail, icon: unlock.icon)
+        case .comment(let alert, _):
+            return Words(
+                title: Self.pushParts(alert).map { Text(verbatim: $0.title) }
+                    ?? Text("队友评论了你的打卡", bundle: .module),
+                detail: nil, icon: AnyView(BrandIcon(systemImage: "bubble.left.fill")))
         }
     }
 

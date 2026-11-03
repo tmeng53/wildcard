@@ -20,8 +20,10 @@ final class NoticeBellUITests: XCTestCase {
         keepScreenshot(named: "100-notices-bell")
 
         bell.tap()
+        let comment = app.buttons["notices.row.8"]
+        XCTAssertTrue(comment.waitForExistence(timeout: Self.wait), "通知 didn't open on its newest row")
+        XCTAssertTrue(comment.label.contains("Coco 评论了你：这组深蹲太稳了"), "the comment row says \(comment.label)")
         let moved = app.buttons["notices.row.7"]
-        XCTAssertTrue(moved.waitForExistence(timeout: Self.wait), "通知 didn't open on its newest row")
         XCTAssertTrue(moved.label.contains("阿杰 把小队搬到了跑道"), "the scene row says \(moved.label)")
         XCTAssertTrue(app.buttons["notices.row.6"].label.contains("教练 毛头 回复了你的打卡"))
         // The 6pm push: the squad's week on top, who patted under it, as the approved design shows.
@@ -30,7 +32,7 @@ final class NoticeBellUITests: XCTestCase {
         XCTAssertTrue(daily.contains("Coco和另外 2 人拍了拍你"), "the 6pm row says \(daily)")
         let feedTab = app.buttons["tab.feed"]
         waitFor(feedTab, "exists == false OR hittable == false", "the tab bar stayed over 通知")
-        for id in 1...7 {
+        for id in 1...8 {
             let row = app.buttons["notices.row.\(id)"]
             if row.exists, row.frame.maxY < app.windows.firstMatch.frame.maxY {
                 assertOnScreen(row, in: app)
@@ -84,7 +86,7 @@ final class NoticeBellUITests: XCTestCase {
         let moved = app.buttons["notices.row.7"]
         XCTAssertTrue(moved.waitForExistence(timeout: Self.wait), "通知 didn't open")
         XCTAssertTrue(moved.label.contains("moved the squad to"), "the scene row says \(moved.label)")
-        for id in 1...7 {
+        for id in 1...8 {
             let row = app.buttons["notices.row.\(id)"]
             if row.exists, row.frame.maxY < app.windows.firstMatch.frame.maxY {
                 assertOnScreen(row, in: app)

@@ -320,6 +320,22 @@
           }
         }
       }
+    },
+    "队友评论了你的打卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A teammate commented on your check-in"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隊友評論了你的打卡"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

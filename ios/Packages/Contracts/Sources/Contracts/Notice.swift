@@ -27,6 +27,9 @@ public struct Notice: Hashable, Sendable, Identifiable {
         case coachReply(checkIn: CheckInID, coach: CoachID, coachName: String?, replied: Bool, emoji: Emoji?)
         /// A store or prop opened by training: its id in the art.
         case unlocked(Unlock.Kind, item: String)
+        /// A teammate commented on the member's check-in or replied to them there, in the words
+        /// the push put it in (who, and what they wrote).
+        case comment(PushAlert, checkIn: CheckInID)
     }
 
     public let id: NoticeID
