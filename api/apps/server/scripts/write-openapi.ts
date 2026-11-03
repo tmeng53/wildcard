@@ -99,7 +99,7 @@ const app = createApp({
     currentAmong: unused,
   },
   coachHiring: { hire: unused, fire: unused, change: unused, current: unused, offered: unused },
-  coachActivity: { squad: unused },
+  coachActivity: { squad: unused, spoke: unused },
   weekSummaryWords: () => Promise.reject(new Error('unused')),
   weeklyAwards: {
     awards: {

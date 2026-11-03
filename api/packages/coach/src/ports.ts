@@ -3,7 +3,7 @@ import type { z } from 'zod';
 import type { Coach, CoachId } from './domain/coach.js';
 import type { StoredPath } from './domain/memory.js';
 import type { CoachModel, CoachSettings, MemberId, SquadId } from './domain/settings.js';
-import type { CoachEmoji, CoachReply } from './domain/reply.js';
+import type { CoachAnswer, CoachEmoji, CoachReply } from './domain/reply.js';
 import type { SquadWeek } from './domain/squad-week.js';
 import type { NewWake, TokenUsage, Wake } from './domain/wake.js';
 
@@ -127,6 +127,32 @@ export interface CoachReplyStore {
     readonly emoji: CoachEmoji | undefined;
     readonly wake: number;
   }): Promise<boolean>;
+  /** What the squad's coach said to a check-in, if it said anything: its coach and line. */
+  find(
+    squad: SquadId,
+    checkIn: string,
+  ): Promise<{ readonly coach: CoachId; readonly text: string | undefined } | undefined>;
+}
+
+/** What coaches answered members' replies to them, one a squad a reply. */
+export interface CoachAnswerStore {
+  /**
+   * Saves the answer unless the reply has one in the squad, or is gone; says whether this one
+   * was saved.
+   */
+  save(answer: {
+    readonly squad: SquadId;
+    readonly checkIn: string;
+    readonly comment: string;
+    readonly coach: CoachId;
+    readonly text: string;
+    readonly wake: number;
+  }): Promise<boolean>;
+  /** The squad's answers under a check-in, oldest first. */
+  ofCheckIn(
+    squad: SquadId,
+    checkIn: string,
+  ): Promise<readonly { readonly comment: string; readonly text: string; readonly at: Date }[]>;
 }
 
 /** A 战术板 line as members read it, with the coach who wrote it. */
@@ -143,6 +169,8 @@ export interface CoachActivityStore {
   latestNote(squad: SquadId): Promise<CoachNoteShown | undefined>;
   /** The squad's replies to these check-ins, in no order; a check-in with none is left out. */
   replies(squad: SquadId, checkIns: readonly string[]): Promise<readonly CoachReply[]>;
+  /** The squad's answers to replies under these check-ins, oldest first. */
+  answers(squad: SquadId, checkIns: readonly string[]): Promise<readonly CoachAnswer[]>;
 }
 
 /**
@@ -166,6 +194,7 @@ export interface CoachStores {
   readonly memory: CoachMemoryStore;
   readonly notes: CoachNoteStore;
   readonly replies: CoachReplyStore;
+  readonly answers: CoachAnswerStore;
   readonly usage: CoachUsageStore;
 }
 
@@ -224,7 +253,7 @@ export interface SquadCoaching {
   readonly notes: readonly { readonly day: string; readonly text: string }[];
   /** The last wakes, newest first, with why a failed one failed. */
   readonly wakes: readonly {
-    readonly reason: 'checkIn' | 'daily';
+    readonly reason: 'checkIn' | 'comment' | 'daily';
     readonly state: string;
     readonly tries: number;
     readonly lastError: string | null;

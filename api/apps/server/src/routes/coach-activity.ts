@@ -42,8 +42,8 @@ const CoachReplyBody = z
       .nullable()
       .meta({
         description:
-          'Its line, shown among the post’s comments with the 教练 tag (no 回复 under it), or ' +
-          'null when it only reacted.',
+          'Its line, shown first among the post’s comments with the 教练 tag, which members may ' +
+          'reply to (a comment with `replyToCoach`), or null when it only reacted.',
       }),
     emoji: z
       .string()
@@ -57,6 +57,27 @@ const CoachReplyBody = z
   })
   .openapi('CoachReply');
 
+const CoachAnswerBody = z
+  .strictObject({
+    checkInId: z.uuid(),
+    commentId: z.uuid().meta({
+      description: 'The member’s reply to the coach (`replyToCoach`) this answers.',
+    }),
+    coach: CoachSpeakerBody.meta({
+      description: 'The coach who answered, even if the squad has fired it since.',
+    }),
+    text: z
+      .string()
+      .max(REPLY_LIMIT)
+      .meta({
+        description:
+          'Its answer, shown among the post’s comments right after the reply it answers, as a ' +
+          'reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag.',
+      }),
+    at: z.iso.datetime(),
+  })
+  .openapi('CoachAnswer');
+
 const CoachActivityBody = z
   .strictObject({
     version: bodyVersion(1),
@@ -66,6 +87,11 @@ const CoachActivityBody = z
     }),
     replies: z.array(CoachReplyBody).meta({
       description: 'The coach’s replies to the check-ins asked about; one with none is left out.',
+    }),
+    answers: z.array(CoachAnswerBody).meta({
+      description:
+        'The coach’s answers to members’ replies to it under the check-ins asked about, oldest ' +
+        'first.',
     }),
   })
   .openapi('CoachActivity');
@@ -114,8 +140,8 @@ export function coachActivity(deps: {
     summary: 'What the squad’s coach said (战术板, replies and reactions)',
     description:
       'The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the ' +
-      'check-ins asked about that has one. Only for the squad’s members. Replies stay after ' +
-      'the squad fires its coach.',
+      'check-ins asked about that has one, and its answers to members’ replies to it there. ' +
+      'Only for the squad’s members. They stay after the squad fires its coach.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -138,7 +164,7 @@ export function coachActivity(deps: {
     const { squadId } = c.req.valid('param');
     // Throws `SquadNotJoinedError` for anyone not in the squad.
     await deps.squads.find({ squad: squadId, viewer: MemberId.parse(c.var.caller.userId) });
-    const { note, replies } = await deps.coachActivity.squad({
+    const { note, replies, answers } = await deps.coachActivity.squad({
       squad: CoachSquadId.parse(squadId),
       checkIns: c.req.valid('query').checkIns,
     });
@@ -160,6 +186,13 @@ export function coachActivity(deps: {
           text: reply.text ?? null,
           emoji: reply.emoji ?? null,
           at: reply.at.toISOString(),
+        })),
+        answers: answers.map((answer) => ({
+          checkInId: answer.checkIn,
+          commentId: answer.comment,
+          coach: speaker(answer.coach),
+          text: answer.text,
+          at: answer.at.toISOString(),
         })),
       },
       200,

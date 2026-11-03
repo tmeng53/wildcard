@@ -8,6 +8,11 @@ import {
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
+import {
+  createCoachActivity,
+  createPostgresCoachActivity,
+  SquadId as CoachSquadId,
+} from '@wildcard/coach';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
 import {
@@ -63,6 +68,13 @@ const push = pushOn(db, {
     return Promise.resolve('sent');
   },
 });
+/** Each reply to a coach the route asked the coach to answer. */
+const answersAsked: {
+  readonly checkIn: string;
+  readonly comment: string;
+  readonly coach: string;
+}[] = [];
+const coachActivity = createCoachActivity({ store: createPostgresCoachActivity(db) });
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -84,6 +96,12 @@ const app = createApp({
     }),
     reactions: createPostgresReactionStore(db),
     comments: createPostgresCommentStore(db),
+    coachSpoke: ({ checkIn, squads, coach }) =>
+      coachActivity.spoke({
+        squads: squads.map((squad) => CoachSquadId.parse(squad)),
+        checkIn,
+        coach,
+      }),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: memberCalendar(members),
@@ -114,7 +132,16 @@ const app = createApp({
   notices: createNotices({ store: createPostgresNoticeStore(db) }),
   coachNames: ignoredNotices.coachNames,
   log: createLog(() => undefined),
-  jobs: noJobs,
+  jobs: {
+    ...noJobs,
+    coach: {
+      run: () => Promise.reject(new Error('unused')),
+      answer: (asked) => {
+        answersAsked.push(asked);
+        return Promise.resolve();
+      },
+    },
+  },
   admin: adminOn(),
 });
 
@@ -281,6 +308,64 @@ describe('/check-ins/{checkInId}/comments', () => {
       body: { version: 1, text: '你看', replyTo: stranger.userId },
     });
     expect(reply).toMatchObject({ status: 400, body: { reason: 'REPLY_TO_NOT_IN_SQUAD' } });
+  });
+
+  it('lets members reply to a coach that spoke under the post, and has it answer', async () => {
+    const [tracy, ann, bo] = [await signUp(), await signUp(), await signUp()];
+    const squad = await squadOf(tracy, ann);
+    const run = await checkIn(tracy.token, squad);
+    const toCoach = ({
+      token,
+      id = randomUUID(),
+      ...body
+    }: { readonly token: string; readonly id?: string } & Record<string, unknown>) =>
+      call('PUT', {
+        path: `/check-ins/${run}/comments/${id}`,
+        token,
+        body: { version: 1, text: '教练你也跑', ...body },
+      });
+
+    // The coach hasn't said anything here yet.
+    expect(await toCoach({ token: ann.token, replyToCoach: 'xiaohun' })).toMatchObject({
+      status: 400,
+      body: { reason: 'REPLY_TO_COACH_NOT_FOUND' },
+    });
+    await sql`insert into public.coach_replies (squad_id, check_in_id, coach_id, text)
+      values (${squad}, ${run}, 'xiaohun', '周日也跑？')`.execute(db);
+    const id = randomUUID();
+    const written = await toCoach({ token: ann.token, replyToCoach: 'xiaohun', id });
+    expect(written).toMatchObject({
+      status: 201,
+      body: { id, member: ann.userId, replyToCoach: 'xiaohun' },
+    });
+    expect(written.body).not.toHaveProperty('replyTo');
+    // A retry saves nothing new and asks for no second answer.
+    expect(await toCoach({ token: ann.token, replyToCoach: 'xiaohun', id })).toMatchObject({
+      status: 200,
+    });
+    expect(answersAsked.filter(({ checkIn: at }) => at === run)).toStrictEqual([
+      { checkIn: run, comment: id, coach: 'xiaohun' },
+    ]);
+    const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: tracy.token });
+    expect(listed).toMatchObject({ body: { comments: [{ id, replyToCoach: 'xiaohun' }] } });
+
+    // Never to a coach that said nothing here, nor to a coach and a member at once, nor a
+    // coach id that isn't one; and someone outside the squad still can't see the post.
+    for (const body of [
+      { replyToCoach: 'maotou' },
+      { replyToCoach: 'xiaohun', replyTo: tracy.userId },
+    ]) {
+      expect(await toCoach({ token: ann.token, ...body })).toMatchObject({
+        status: 400,
+        body: { reason: 'REPLY_TO_COACH_NOT_FOUND' },
+      });
+    }
+    expect(await toCoach({ token: ann.token, replyToCoach: '毛头' })).toMatchObject({
+      status: 400,
+    });
+    expect(await toCoach({ token: bo.token, replyToCoach: 'xiaohun' })).toMatchObject({
+      status: 404,
+    });
   });
 
   it('deletes only the caller’s own comment, safely repeated', async () => {

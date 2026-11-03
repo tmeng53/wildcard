@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 // What a coach says to a check-in shared to its squad, on that check-in's wake: one line, shown
-// among the post's comments with the 教练 tag, an emoji reaction, or both. Never pushed.
+// among the post's comments with the 教练 tag, an emoji reaction, or both; and its answer to
+// each reply a member writes to it there, one line shown as a reply to them.
 
 /** The longest reply, in characters: as long as a member's comment; the database checks the same. */
 export const REPLY_LIMIT = 100;
@@ -34,5 +35,15 @@ export interface CoachReply {
   readonly text: string | undefined;
   /** Its emoji, or `undefined` when it only spoke. */
   readonly emoji: string | undefined;
+  readonly at: Date;
+}
+
+/** A coach's answer to a member's reply to it, as members read it. */
+export interface CoachAnswer {
+  readonly checkIn: string;
+  /** The member's reply it answers. */
+  readonly comment: string;
+  readonly coach: CoachReply['coach'];
+  readonly text: string;
   readonly at: Date;
 }
