@@ -16,7 +16,7 @@ import UIKit
 
 // The pieces of 小队设置: the scene line and picker, the invite card, a member's row and head.
 
-/// Who picks this week's scene, or who picked it.
+/// Who picks this week's scene.
 struct SceneLineText: View {
     let line: SceneLine
 
@@ -27,9 +27,6 @@ struct SceneLineText: View {
             let winners = names.formatted(.list(type: .and).locale(AppLanguage.current.locale))
             Text("上周冠军 \(winners) 来选", bundle: .module)
         case .youPickAsCaptain, .captainPicks: Text("上周没有冠军，队长选一次", bundle: .module)
-        case .youPicked: Text("你选的，下周冠军再换", bundle: .module)
-        case .pickedBy(let name?): Text("\(name) 选的，下周冠军再换", bundle: .module)
-        case .pickedBy(nil): Text("场地已选好，下周冠军再换", bundle: .module)
         }
     }
 }
