@@ -85,12 +85,15 @@ private let picked = PreparedPhoto(
     let backend = ScriptedBackend(server: sampleHome(checkIns: [saved]))
     let today = store(backend)
     await today.load()
-    let edit = PostEdit(original: saved, activity: .sport("run"), minutes: nil, line: "炸鸡", photos: [.new(picked)])
+    let second = PreparedPhoto(id: id(901), jpeg: Data([0xFF, 0xD8]), size: picked.size)
+    let edit = PostEdit(
+        original: saved, activity: .sport("run"), minutes: nil, line: "炸鸡", photos: [.new(picked), .new(second)])
 
-    await backend.set(failure: .notSent)
+    // The first photo goes up, then the second fails: the try fails with one photo already sent.
+    await backend.set(uploadsBeforeFailing: 1)
     await #expect(throws: CheckInError.notSent) { try await today.edit(edit) }
-    await backend.set(failure: nil)
+    await backend.set(uploadsBeforeFailing: .max)
     let edited = try await today.edit(edit)
-    #expect(await backend.uploads == [picked.id])
+    #expect(await backend.uploads == [picked.id, second.id])
     #expect(await backend.edits == [edited])
 }
