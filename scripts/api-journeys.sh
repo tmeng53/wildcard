@@ -767,7 +767,7 @@ if want coach; then
   squad_of "$coach_member_token"
   call GET "/squads/$squad/coach/activity?checkIns=$(new_id)" "$coach_member_token"
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"note":null,"replies":[]}' ] ||
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"note":null,"replies":[],"answers":[]}' ] ||
     fail "a squad whose coach said nothing reads as empty: $body"
   read -r _ outsider_token <<<"$(sign_up)"
   call GET "/squads/$squad/coach/activity" "$outsider_token"
