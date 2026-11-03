@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { editBody, FILE_LIMIT, shownBody, shownPaths, storedBody, storedPathOf } from './memory.js';
 import { taskOf } from './prompt.js';
+import { lineProblem } from './reply.js';
 import { SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
 import { costMicros, newYorkTime, wakesDue, weekStartOf, weeksAround } from './wake.js';
@@ -241,5 +242,17 @@ describe('when the coach wakes', () => {
         recentNotes: [{ day: '2026-10-31', text: '周末也要动一动' }],
       }),
     ).toContain('- 2026-10-31：周末也要动一动');
+  });
+});
+
+describe('a line members read', () => {
+  it('never names anyone as 队员N, however the number is written', () => {
+    const named = '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。';
+    expect(
+      ['队员1 加油', '队员 3 加油', '队员３加油'].map((line) => lineProblem(line, 100)),
+    ).toStrictEqual([named, named, named]);
+    expect(lineProblem('全体队员加油', 100)).toBeUndefined();
+    expect(lineProblem('跑跑跑', 2)).toBe('太长了：3 字，最多 2 字。');
+    expect(lineProblem('', 2)).toBe('这句是空的。');
   });
 });

@@ -22,8 +22,10 @@ import {
 import {
   createCoachCatalog,
   createCoachHiring,
+  createCoachActivity,
   createCoachSettings,
   createCoachWakes,
+  createPostgresCoachActivity,
   createPostgresCoachCatalog,
   createPostgresCoachHiring,
   createPostgresCoachReport,
@@ -326,6 +328,7 @@ const app = createApp({
     hiring: createPostgresCoachHiring(db),
     catalog: createPostgresCoachCatalog(db),
   }),
+  coachActivity: createCoachActivity({ store: createPostgresCoachActivity(db) }),
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
   unlocks: unlocksOn(db),

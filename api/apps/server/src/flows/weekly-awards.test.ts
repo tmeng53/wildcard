@@ -51,7 +51,11 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
-import { unusedCoachHiring, unusedUnlocks } from '../test-kit/weekly-awards.js';
+import {
+  unusedCoachHiring,
+  unusedCoachActivity,
+  unusedUnlocks,
+} from '../test-kit/weekly-awards.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
 // awards table are real; the model answers what each test sets, and the push sender records
@@ -169,6 +173,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     unlocks: unusedUnlocks,
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
+    coachActivity: unusedCoachActivity,
     aiConsent,
     nudges: nudgesOn(db),
     log: createLog(() => undefined),

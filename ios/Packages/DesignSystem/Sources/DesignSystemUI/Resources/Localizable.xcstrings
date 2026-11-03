@@ -1499,6 +1499,22 @@
         }
       }
     },
+    "教练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coach"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "教練"
+          }
+        }
+      }
+    },
     "放在场景底": {
       "localizations": {
         "en": {

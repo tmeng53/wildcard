@@ -264,3 +264,23 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     #expect(stage.cheerers(people, at: .day) == [id(2), id(3), id(5)])
     #expect(stage.cheerers(people, at: .night) == [])
 }
+
+@Test func theCoachStandsOnTheFrontRowsLeftmostSpot() {
+    #expect(StageLayout.of(.gym).sideline == StagePoint(x: 43, y: 626))
+    #expect(StageLayout.of(.pool).sideline == StagePoint(x: 43, y: 626))
+}
+
+@Test func teammatesLeaveTheSidelineToTheCoach() {
+    let squad = (1...7).map { member($0, .notYet) }
+    var stage = SquadStage(layout: .of(.gym))
+    stage.arrange(squad, coach: true)
+    let spots = stage.placements.values.compactMap { placement -> StagePoint? in
+        if case .floor(let spot) = placement { spot } else { nil }
+    }
+    #expect(spots.count == 7)
+    #expect(!spots.contains(StagePoint(x: 43, y: 626)))
+    // Without a coach, a squad this big uses it.
+    stage = SquadStage(layout: .of(.gym))
+    stage.arrange(squad)
+    #expect(stage.placements.values.contains(.floor(StagePoint(x: 43, y: 626))))
+}
