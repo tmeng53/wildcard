@@ -7,10 +7,11 @@ import FeedUI
 import Foundation
 
 extension AppModel {
-    /// 动态 on the member's squad, its days by the member's own clock, with what its coach said.
-    /// The member's own posts change through 今天's store (`editor`), which recounts.
+    /// 动态 on the member's squad, its days by the member's own clock (the phone's, which the
+    /// profile's zone follows once the outbox is empty), with what its coach said. The member's
+    /// own posts change through 今天's store (`editor`), which recounts.
     static func feed(api: WildcardAPI, home: Home, editor: TodayStore) -> FeedModel {
-        let zone = home.timeZone
+        let zone = TimeZone.autoupdatingCurrent
         let source = APIFeedSource(api: api)
         let store = FeedStore(
             source: source, squad: home.squad.id, viewer: home.member, today: { LocalDay(at: Date(), in: zone) },

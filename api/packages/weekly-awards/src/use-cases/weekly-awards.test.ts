@@ -232,7 +232,7 @@ describe('createWeeklyAwards', () => {
       status: 'failing',
       failures: { count: 1, lastError: 'Error' },
     });
-    expect(await down.awards.claimWinners({ squad, weekStart: week })).toStrictEqual([]);
+    expect(await down.awards.claimReadyPush({ squad, weekStart: week })).toBe(false);
     const { awards } = setup();
     expect((await awards.give({ squad, weekStart: week, members })).members).toHaveLength(2);
   });
@@ -245,7 +245,6 @@ describe('createWeeklyAwards', () => {
       members: [],
     });
     expect(asked).toStrictEqual([]);
-    expect(await awards.claimWinners({ squad, weekStart: week })).toStrictEqual([]);
   });
 
   it('keeps one set of awards when two runs write at once', async () => {
@@ -271,15 +270,15 @@ describe('createWeeklyAwards', () => {
     });
   });
 
-  it('hands out the winners to tell once', async () => {
+  it('hands out the squad’s ready push once, after the awards are written', async () => {
     const { awards } = setup();
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
-    expect(await awards.claimWinners({ squad, weekStart: week })).toStrictEqual([]);
+    expect(await awards.claimReadyPush({ squad, weekStart: week })).toBe(false);
     await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
     const claims = await Promise.all(
-      [1, 2, 3].map(() => awards.claimWinners({ squad, weekStart: week })),
+      [1, 2, 3].map(() => awards.claimReadyPush({ squad, weekStart: week })),
     );
-    expect(claims.filter((claim) => claim.length > 0)).toStrictEqual([[ana, bo]]);
+    expect(claims.filter(Boolean)).toHaveLength(1);
   });
 
   it('drops a deleted account’s awards everywhere, and only theirs', async () => {

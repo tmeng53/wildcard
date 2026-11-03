@@ -37,13 +37,13 @@ export interface WeeklyAwards {
     readonly weekStart: WeekStart;
   }): Promise<Failures | undefined>;
   /**
-   * The members to tell they won something: every member with an award, once. Empty for every
-   * later call, and before the awards are written.
+   * Whether to tell the squad its 战报 is ready: true once, after the awards are written; false
+   * for every later call, and before then.
    */
-  claimWinners(input: {
+  claimReadyPush(input: {
     readonly squad: SquadId;
     readonly weekStart: WeekStart;
-  }): Promise<MemberId[]>;
+  }): Promise<boolean>;
   /** Every title the member has won, in all their squads (周奖 on their player card). */
   titlesWon(member: MemberId): Promise<TitlesWon>;
   /** A squad's frozen 战报 for the week, or `undefined` before it is frozen. */
@@ -72,12 +72,7 @@ export function createWeeklyAwards(deps: {
     give: (input) => giveAwards(deps, input),
     find: ({ squad, weekStart }) => deps.store.find(squad, weekStart),
     claimNudge: ({ squad, weekStart }) => deps.store.claimNudge(squad, weekStart),
-    claimWinners: async ({ squad, weekStart }) => {
-      const state = await deps.store.find(squad, weekStart);
-      if (state?.status !== 'given' || state.awards.members.length === 0) return [];
-      if (!(await deps.store.markNotified(squad, weekStart))) return [];
-      return state.awards.members.map(({ member }) => member);
-    },
+    claimReadyPush: ({ squad, weekStart }) => deps.store.markNotified(squad, weekStart),
     titlesWon: (member) => deps.store.titlesWon(member),
     story: ({ squad, weekStart }) => deps.stories.find(squad, weekStart),
     storiesWaiting: ({ weekStart }) => deps.stories.waitingForAwards(weekStart),
