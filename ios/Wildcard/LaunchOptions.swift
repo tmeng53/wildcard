@@ -208,6 +208,14 @@ enum LaunchOptions {
         return scene
     }
 
+    /// `-uitest-scene-moved track`: a teammate moves the sample squad to that scene once 今天
+    /// is up, so UI tests see the drop and its notice.
+    static var sceneMoved: SceneTheme? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-uitest-scene-moved"), flag + 1 < arguments.count else { return nil }
+        return SceneTheme(rawValue: arguments[flag + 1])
+    }
+
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the
     /// care line before the AI writer exists.
     static var disclaimerWriter: any DisclaimerWriter {

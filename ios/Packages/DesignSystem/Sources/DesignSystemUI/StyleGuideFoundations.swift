@@ -235,6 +235,7 @@ struct MotionSection: View {
         "sheet": Text("半屏：展开、弹出", bundle: .module),
         "page": Text("全屏：换页", bundle: .module),
         "celebrate": Text("庆祝：只在打卡成功那一下回弹", bundle: .module),
+        "notice": Text("通知条：从顶上落下", bundle: .module),
     ]
 
     var body: some View {
