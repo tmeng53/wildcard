@@ -9,6 +9,7 @@ import {
 } from '@wildcard/check-ins';
 
 import { bodyVersion } from '../body-version.js';
+import { notifyComment, type CommentPushDependencies } from '../flows/comment-push.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
@@ -65,7 +66,12 @@ const failures = {
  * one level deep. `PUT` and `DELETE /check-ins/{checkInId}/comments/{commentId}`, and
  * `GET /check-ins/{checkInId}/comments`.
  */
-export function comments(deps: { readonly verifyToken: VerifyToken; readonly checkIns: CheckIns }) {
+export function comments(
+  deps: CommentPushDependencies & {
+    readonly verifyToken: VerifyToken;
+    readonly checkIns: CheckIns;
+  },
+) {
   const write = createRoute({
     method: 'put',
     path: '/check-ins/{checkInId}/comments/{commentId}',
@@ -144,6 +150,17 @@ export function comments(deps: { readonly verifyToken: VerifyToken; readonly che
         replyTo: draft.replyTo,
       });
       const body = { version: 1 as const, ...wireComment(written.comment) };
+      // Sent before answering: Cloud Run gives the server CPU only while a request runs.
+      if (written.created) {
+        await notifyComment(deps, {
+          checkIn: checkInId,
+          comment: commentId,
+          commenter: written.comment.member,
+          text: written.comment.text,
+          author: written.author,
+          replyTo: written.comment.replyTo,
+        });
+      }
       return written.created ? c.json(body, 201) : c.json(body, 200);
     })
     .openapi(remove, async (c) => {

@@ -14,7 +14,17 @@ import Testing
                 squad: SquadID(try #require(UUID(uuidString: squad))), week: try LocalDay("2026-10-19")))
 }
 
+@Test func theCommentPushOpensItsPost() throws {
+    let checkIn = "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59"
+
+    let opened = OpenedNotification(
+        category: "comment", event: ["kind": "comment", "checkIn": checkIn, "comment": "x"])
+
+    #expect(opened == .comment(checkIn: CheckInID(try #require(UUID(uuidString: checkIn)))))
+}
+
 @Test func anyOtherOrUnreadablePushOpensToday() {
+    #expect(OpenedNotification(category: "comment", event: ["checkIn": "nope"]) == .other)
     #expect(OpenedNotification(category: "dailyProgress", event: [:]) == .other)
     #expect(
         OpenedNotification(category: "weeklyAwards", event: ["squad": "nope", "weekStart": "2026-10-19"]) == .other)

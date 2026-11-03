@@ -251,12 +251,15 @@ struct WildcardApp: App {
                 myPosts: myPosts, selection: $tab
             )
             .onAppear {
-                // As on the real backend: the awards push opens 动态, where the 战报 is, and any
-                // other push 今天, or where the 6pm push's view asked.
-                delegate.opened = { [delegate, today, $tab] opened in
+                // As on the real backend: the awards push opens 动态, where the 战报 is, a comment's
+                // push its post's page, and any other push 今天, or where the 6pm push's view asked.
+                delegate.opened = { [delegate, today, feed, $tab] opened in
                     switch opened {
                     case .weeklyAwards:
                         $tab.wrappedValue = .feed
+                    case .comment(let post):
+                        $tab.wrappedValue = .feed
+                        feed.openPage(post)
                     case .other:
                         Self.open(delegate.takeDestination(), today: today, tab: $tab)
                         Task { await today.load() }
@@ -277,116 +280,5 @@ struct WildcardApp: App {
         await today.load()
         let picker = today.home.flatMap { home in home.squad.members.first { $0 != home.member } }
         await today.land(on: scene, move: SceneMove(scene: scene, picker: picker))
-    }
-}
-
-/// The app on the real backend: the screen its account is on.
-private struct AppRoot: View {
-    let app: AppModel
-    @Binding var tab: MainTabs.Tab
-    let delegate: AppDelegate
-    @Environment(\.scenePhase) private var scenePhase
-
-    var body: some View {
-        // A ZStack, not a Group, so the task below starts once and outlives screen changes.
-        ZStack {
-            switch app.screen {
-            case .starting:
-                LaunchCover()
-                    // Over the screen that replaces it while it fades.
-                    .zIndex(1)
-                    .transition(.opacity)
-            case .signUp(let signUp):
-                SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
-                    SignInButton(app: app, signUp: signUp)
-                } tabs: { showsBar, content in
-                    MainTabs.entranceTabs(showsBar: showsBar, content: content)
-                }
-                .onChange(of: signUp.finished) { _, finished in
-                    if finished != nil { Task { await app.finishSignUp(landingOn: signUp.landing) } }
-                }
-                .onChange(of: signUp.joinedSquad) { _, squad in
-                    if let squad { SignUpProgress.save(squad: squad, madeIt: signUp.madeTheSquad) }
-                }
-            case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
-                MainTabs(
-                    today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                    myPosts: app.myPosts, selection: $tab
-                ) {
-                    Task { await app.leftSquad() }
-                }
-                .onAppear {
-                    // A tap that launched the app came before the tabs.
-                    if let destination = delegate.takeDestination() {
-                        WildcardApp.open(destination, today: today, tab: $tab)
-                    }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .animation(.easeOut(duration: TicketRock.fadeOut), value: app.isStarting)
-        // Signing in on the open screen: the tickets rock over it until the next screen opens.
-        .loadingCover(app.isSigningIn) { LaunchCover() }
-        .alert(
-            Text("你已不在 \(app.lostSquadName ?? "") 小队"),
-            isPresented: Binding(
-                get: { app.lostSquadName != nil },
-                set: { shown in if !shown { app.lostSquadName = nil } })
-        ) {
-            Button {
-                app.lostSquadName = nil
-            } label: {
-                Text("确认")
-            }
-        }
-        .task { await app.run() }
-        // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
-        .onChange(of: app.showsTabs) { _, shows in
-            if !shows { tab = .today }
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                Task { await app.refreshCatalog() }
-                Task { await app.refreshScene() }
-            }
-        }
-        .onAppear {
-            delegate.opened = { [app, delegate, $tab] opened in
-                switch opened {
-                // 动态, where the member sees the new 战报's tile and opens it themselves.
-                case .weeklyAwards:
-                    $tab.wrappedValue = .feed
-                    Task { await app.readRecapAgain() }
-                case .other:
-                    // Before the tabs are up, they take the 6pm push's destination when they appear.
-                    if case .tabs(let today, _, _, _, _, _) = app.screen {
-                        WildcardApp.open(delegate.takeDestination(), today: today, tab: $tab)
-                    }
-                    Task { await app.reloadToday() }
-                }
-            }
-        }
-    }
-}
-
-/// The open screen's sign-in: Sign in with Apple, or in Debug with `-test-member` that member of
-/// local Supabase.
-private struct SignInButton: View {
-    let app: AppModel
-    let signUp: SignUpModel
-
-    var body: some View {
-        ContinueWithApple {
-            Task {
-                #if DEBUG
-                if let member = LaunchOptions.testMember {
-                    await app.signIn(
-                        with: .testMember(email: member.email, password: member.password), name: nil, from: signUp)
-                    return
-                }
-                #endif
-                await app.signIn(await AppleSignIn.authorize(), from: signUp)
-            }
-        }
     }
 }

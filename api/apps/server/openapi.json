@@ -2825,7 +2825,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in) or `unlocked` (a store or prop opened). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -2857,7 +2857,7 @@
               "args"
             ],
             "additionalProperties": false,
-            "description": "A push’s words as it was sent (`dailyProgress`, `weeklyAwards`)."
+            "description": "A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`)."
           },
           "weekStart": {
             "type": "string",
@@ -2880,7 +2880,7 @@
           "checkIn": {
             "type": "string",
             "format": "uuid",
-            "description": "The caller’s check-in the coach answered (`coachReply`)."
+            "description": "The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`)."
           },
           "coach": {
             "type": "string",

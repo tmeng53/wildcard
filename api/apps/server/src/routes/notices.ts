@@ -24,7 +24,8 @@ export const NoticeEntry = z
       description:
         'What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is ' +
         'in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the ' +
-        'squad’s coach answered the caller’s check-in) or `unlocked` (a store or prop opened). ' +
+        'squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or ' +
+        '`comment` (a teammate commented on the caller’s check-in or replied to them). ' +
         'More kinds may come: skip one you don’t know.',
     }),
     at: z.iso.datetime().meta({ description: 'When it was told, in UTC.' }),
@@ -35,7 +36,9 @@ export const NoticeEntry = z
         args: z.array(z.string()).meta({ description: 'Its placeholders’ values, in order.' }),
       })
       .optional()
-      .meta({ description: 'A push’s words as it was sent (`dailyProgress`, `weeklyAwards`).' }),
+      .meta({
+        description: 'A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).',
+      }),
     weekStart: z.iso
       .date()
       .optional()
@@ -51,7 +54,11 @@ export const NoticeEntry = z
     checkIn: z
       .uuid()
       .optional()
-      .meta({ description: 'The caller’s check-in the coach answered (`coachReply`).' }),
+      .meta({
+        description:
+          'The caller’s check-in the coach answered (`coachReply`), or the check-in commented ' +
+          'on (`comment`).',
+      }),
     coach: z.string().optional().meta({ description: 'The coach who answered (`coachReply`).' }),
     coachName: z.string().optional().meta({ description: 'Its name now (`coachReply`).' }),
     replied: z
@@ -251,5 +258,7 @@ function wireNotice(
     }
     case 'unlocked':
       return { ...common, unlockKind: notice.subject.kind, item: notice.subject.item };
+    case 'comment':
+      return { ...common, alert: notice.subject.alert, checkIn: notice.subject.checkIn };
   }
 }
