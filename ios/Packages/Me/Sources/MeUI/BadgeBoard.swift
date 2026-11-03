@@ -42,8 +42,10 @@ struct BadgeCell: View {
             Text(verbatim: title.title)
                 .typeStyle(isWorn ? TypeRamp.footnoteEmphasis : TypeRamp.caption)
                 .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                .lineLimit(1)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
                 .minimumScaleFactor(0.8)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)

@@ -39,7 +39,7 @@ final class BadgeBoardUITests: XCTestCase {
         XCTAssertEqual(equip.label, "装备")
         XCTAssertTrue(app.windows.firstMatch.frame.contains(equip.frame), "装备 runs off the screen: \(equip.frame)")
         Thread.sleep(forTimeInterval: 1)
-        keepScreenshot(named: "41a-me-badge-card")
+        keepScreenshot(named: "42-me-badge-card")
         equip.tap()
         XCTAssertTrue(detail.waitForNonExistence(timeout: 5), "the badge card stayed open after 装备")
         waitFor(badges.element(boundBy: 1), "value == '已装备'", "the tick didn't move to 冷面杀手")
@@ -49,7 +49,7 @@ final class BadgeBoardUITests: XCTestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 5), "the card didn't turn back")
         waitFor(card, "label CONTAINS '冷面杀手'", "the front doesn't wear the equipped title")
         Thread.sleep(forTimeInterval: 1)
-        keepScreenshot(named: "41b-me-card-equipped")
+        keepScreenshot(named: "43-me-card-equipped")
     }
 
     private func keepScreenshot(named name: String) {
