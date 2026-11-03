@@ -66,6 +66,8 @@ public struct HeaderMenu<Items: View>: View {
     private let surface: HeaderButton.Surface
     private let items: Items
     private let glyph: Double = 17
+    /// How dark the glass is on a dark or photo face.
+    private let inkTint: Double = 0.5
 
     public init(
         _ label: Text, systemImage: String = "ellipsis", on surface: HeaderButton.Surface = .page,
@@ -93,11 +95,9 @@ public struct HeaderMenu<Items: View>: View {
 
     private var glass: Glass {
         surface == .ink
-            ? .regular.tint(Color(role: .bgInk, in: theme).opacity(Self.inkTint)).interactive()
+            ? .regular.tint(Color(role: .bgInk, in: theme).opacity(inkTint)).interactive()
             : .regular.interactive()
     }
-
-    private static let inkTint: Double = 0.5
 }
 
 /// The header of a task step in sign-up: a back button, then the step segments, centered.
