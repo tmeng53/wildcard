@@ -271,10 +271,11 @@ final class AppModel {
         // from now rather than from when the scene covered the screen.
         if let scene {
             await today.dropIn(on: scene, coveredAt: .now)
-        } else if let read = await withLaunchCover({ await openingScene(of: home.squad.id, member: home.member) }) {
+        } else if let read = await withLaunchCover({ await openingScene(of: home.squad.id) }) {
             // The loading screen stays up until the squad's scene is known, so 今天 never shows
             // the gym first and then switches; a teammate's move drops the squad onto it.
-            await today.land(on: read.scene, move: read.move)
+            let kept = ReadScene.keep(read, of: home.squad.id, member: home.member)
+            await today.land(on: kept.scene, move: kept.move)
         } else {
             // Slow or offline: the scene this phone kept, read again once the tabs are up.
             today.scene = KeptScene.scene(of: home.squad.id) ?? .gym
@@ -358,17 +359,16 @@ extension AppModel {
     /// Puts 今天 on the squad's scene this week, dropping the squad onto it when a teammate moved
     /// it. Offline, it stays where it is.
     private func readScene(of squad: SquadID?, into today: TodayModel) async {
-        guard let squad, let read = await ReadScene.read(of: squad, member: today.home?.member, api: api) else {
-            return
-        }
-        await today.land(on: read.scene, move: read.move)
+        guard let squad, let read = try? await api.scene(of: squad) else { return }
+        let kept = ReadScene.keep(read, of: squad, member: today.home?.member)
+        await today.land(on: kept.scene, move: kept.move)
     }
 
     /// The squad's scene this week from the server, unless it takes longer than `Self.sceneWait`.
-    private func openingScene(of squad: SquadID, member: MemberID) async -> ReadScene? {
+    private func openingScene(of squad: SquadID) async -> SquadScene? {
         let wait = Self.sceneWait
-        return await withTaskGroup(of: ReadScene?.self) { group in
-            group.addTask { await ReadScene.read(of: squad, member: member, api: self.api) }
+        return await withTaskGroup(of: SquadScene?.self) { group in
+            group.addTask { try? await self.api.scene(of: squad) }
             group.addTask {
                 try? await Task.sleep(for: wait)
                 return nil
