@@ -66,6 +66,8 @@ public final class TodayStore {
 
     let backend: any CheckInBackend
     let ledger: (any UnlockLedger)?
+    /// The last unlock check, so the next waits for it and none tells an unlock twice.
+    var unlockCheck: Task<Void, Never>?
     private let outbox: any Outbox
     let now: @Sendable () -> Date
     private let newID: @Sendable () -> UUID
@@ -185,8 +187,8 @@ public final class TodayStore {
         await outbox.save(pending)
         switch await drain(watching: post.id) {
         case .saved(let saved):
-            // A 练了 is what opens a store or a prop.
-            if case .trained = saved.entry { await checkUnlocks() }
+            // A 练了 is what opens a store or a prop; the payoff doesn't wait for the answer.
+            if case .trained = saved.entry { Task { await checkUnlocks() } }
             return .posted(saved)
         case .refused(let reason): throw reason
         case .waiting: return .queued

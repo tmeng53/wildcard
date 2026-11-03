@@ -138,7 +138,9 @@ public final class TodayModel {
         dressMe(hop: false)
     }
 
-    private static let scoreDelay = 1.7  // When a 练了's week count flips up: the ring closed, the squad cheers.
+    /// How long after posting a 练了 the week's count flips up: after the ring closes and the
+    /// squad starts cheering (the approved check-in moment's 1.7 seconds).
+    private static let scoreDelay = 1.7
 
     /// The squad's home, with the member's own posts counted.
     public var home: Home? { store.home }
@@ -173,28 +175,6 @@ public final class TodayModel {
     }
 
     var timeZone: TimeZone { store.home?.timeZone ?? .current }
-
-    /// 今日赛况, from 21:00 on the member's own clock until their day ends; nil before.
-    var recap: DayRecap? {
-        guard let home, home.showsRecap(at: now()) else { return nil }
-        return home.recap(pending: store.pending)
-    }
-
-    /// Noon of the member's today in their time zone: the day the recap's title names.
-    var dayDate: Date? {
-        guard let home, let day = home.mine?.day else { return nil }
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = home.timeZone
-        return calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day, hour: 12))
-    }
-
-    /// A member's head and name on 今日赛况: 我 for me, else their nickname, or 队友 before they
-    /// made their character.
-    func recapMember(_ member: MemberID) -> (head: CharacterPlayer?, name: String) {
-        if member == home?.member { return (player, String(localized: "我", bundle: .module.inAppLanguage)) }
-        let nickname = home?.today.members.first { $0.member == member }?.character?.nickname.text
-        return (head(of: member.description), nickname ?? String(localized: "队友", bundle: .module.inAppLanguage))
-    }
 
     /// The ring under my feet.
     var myRing: RingStatus {

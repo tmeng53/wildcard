@@ -14,9 +14,21 @@ extension TodayStore {
         return news
     }
 
-    /// Reads the member's unlocks and queues the ones this phone hasn't told. Offline, it tries
-    /// again on the next load or 练了.
+    /// Reads the member's unlocks and queues the ones this phone hasn't told. One check at a time:
+    /// each waits for the last, so a load's and a 练了's never both tell the same unlock. What is
+    /// queued counts as told, so an app closed before its banner shows never shows it. Offline, it
+    /// tries again on the next load or 练了.
     public func checkUnlocks() async {
+        let previous = unlockCheck
+        let check = Task {
+            await previous?.value
+            await readUnlocks()
+        }
+        unlockCheck = check
+        await check.value
+    }
+
+    private func readUnlocks() async {
         guard let ledger, phase == .current else { return }
         let told = await ledger.told()
         guard let unlocks = try? await ledger.unlocks() else { return }
