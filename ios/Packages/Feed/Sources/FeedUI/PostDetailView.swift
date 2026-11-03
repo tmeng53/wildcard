@@ -19,6 +19,7 @@ public struct PostDetailView: View {
     private let id: CheckInID
     private let close: () -> Void
     @FocusState private var isTyping: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private static let faceSize: Double = 32
 
@@ -59,18 +60,27 @@ public struct PostDetailView: View {
     }
 
     private func page(_ post: FeedPost) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Space.m) {
-                backButton
-                PostCard(model: model, post: post)
-                comments(post)
+        ScrollViewReader { reader in
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.m) {
+                    backButton
+                    PostCard(model: model, post: post)
+                    comments(post)
+                }
+                .padding(.horizontal, Space.pageMargin)
+                .padding(.top, Space.xs)
+                .padding(.bottom, Space.l)
             }
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.top, Space.xs)
-            .padding(.bottom, Space.l)
+            .scrollDismissesKeyboard(.interactively)
+            .scrollDisabled(model.lifted)
+            // The coach's answer to a reply comes after it was sent: bring it into view.
+            .onChange(of: model.coachAnswers(on: post.id).count) { before, after in
+                guard after > before, let last = model.coachAnswers(on: post.id).last else { return }
+                withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
+                    reader.scrollTo(CommentThreadEntry.answerID(of: last), anchor: .bottom)
+                }
+            }
         }
-        .scrollDismissesKeyboard(.interactively)
-        .scrollDisabled(model.lifted)
     }
 
     @ViewBuilder private func comments(_ post: FeedPost) -> some View {
@@ -113,6 +123,7 @@ public struct PostDetailView: View {
                                 recipient: model.displayName(of: member))
                         }
                         .accessibilityIdentifier("post.coachAnswer")
+                        .id(entry.id)
                     }
                 }
             }

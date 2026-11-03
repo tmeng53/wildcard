@@ -86,8 +86,9 @@ final class CoachFeedUITests: XCTestCase {
         let reply = comments.matching(NSPredicate(format: "label CONTAINS '教练你也跑'")).firstMatch
         XCTAssertTrue(reply.exists, "the reply to the coach isn't on the page")
         XCTAssertLessThan(reply.frame.minY, answer.frame.minY, "the answer isn't under the reply")
-        XCTAssertTrue(window.contains(answer.frame), "the answer is cut off: \(answer.frame)")
+        // The page brings the answer into view.
         Thread.sleep(forTimeInterval: 0.8)
+        XCTAssertTrue(window.contains(answer.frame), "the answer is cut off: \(answer.frame)")
         keepScreenshot(named: "66-coach-post-answer")
     }
 

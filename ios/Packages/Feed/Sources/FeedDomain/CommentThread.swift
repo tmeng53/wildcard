@@ -10,9 +10,12 @@ public enum CommentThreadEntry: Hashable, Sendable, Identifiable {
     public var id: String {
         switch self {
         case .comment(let comment): "comment-\(comment.id)"
-        case .answer(let answer, _): "answer-\(answer.comment)"
+        case .answer(let answer, _): Self.answerID(of: answer)
         }
     }
+
+    /// The entry's `id` for the coach's answer.
+    public static func answerID(of answer: CoachAnswer) -> String { "answer-\(answer.comment)" }
 }
 
 extension FeedPost {
