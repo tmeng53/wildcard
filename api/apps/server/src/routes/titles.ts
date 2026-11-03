@@ -62,6 +62,16 @@ const BoardTitleBody = z
       .array(
         z.strictObject({
           weekStart: z.iso.date().meta({ description: 'The Monday of the week it was won.' }),
+          squadName: z
+            .string()
+            .optional()
+            .meta({
+              description:
+                'The name of the squad it was won in, as that week’s 战报 froze it. Left out for ' +
+                'a week won before 战报 froze, and, on a squadmate’s card, for weeks won in ' +
+                'another squad.',
+              example: '早八战队',
+            }),
           speech: z
             .string()
             .optional()
@@ -135,7 +145,7 @@ const PlayerCardBody = z
   })
   .openapi('PlayerCard');
 
-/** A board as the API sends it; `speechIn` says which weeks' award lines it may carry. */
+/** A board as the API sends it; `speechIn` says which weeks' award lines and squad names it may carry. */
 function wireBoard(
   {
     board,
@@ -148,9 +158,9 @@ function wireBoard(
     titles: board.map(({ title, badge, weeks }) => ({
       title,
       badge,
-      weeks: weeks.map(({ squad, weekStart, speech }) => ({
+      weeks: weeks.map(({ squad, squadName, weekStart, speech }) => ({
         weekStart,
-        ...(speechIn(squad) ? { speech } : {}),
+        ...(speechIn(squad) ? { speech, ...(squadName === undefined ? {} : { squadName }) } : {}),
       })),
     })),
     ...(worn === undefined ? {} : { worn: worn.title }),

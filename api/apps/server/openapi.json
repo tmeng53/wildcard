@@ -3919,6 +3919,11 @@
                   "format": "date",
                   "description": "The Monday of the week it was won."
                 },
+                "squadName": {
+                  "type": "string",
+                  "description": "The name of the squad it was won in, as that week’s 战报 froze it. Left out for a week won before 战报 froze, and, on a squadmate’s card, for weeks won in another squad.",
+                  "example": "早八战队"
+                },
                 "speech": {
                   "type": "string",
                   "description": "Its award line (颁奖词) that week. On a squadmate’s card, left out for weeks won in another squad."

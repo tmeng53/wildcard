@@ -5801,6 +5801,10 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/BoardTitle/WeeksPayload/weekStart`.
                 public var weekStart: Swift.String
+                /// The name of the squad it was won in, as that week’s 战报 froze it. Left out for a week won before 战报 froze, and, on a squadmate’s card, for weeks won in another squad.
+                ///
+                /// - Remark: Generated from `#/components/schemas/BoardTitle/WeeksPayload/squadName`.
+                public var squadName: Swift.String?
                 /// Its award line (颁奖词) that week. On a squadmate’s card, left out for weeks won in another squad.
                 ///
                 /// - Remark: Generated from `#/components/schemas/BoardTitle/WeeksPayload/speech`.
@@ -5809,16 +5813,20 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - weekStart: The Monday of the week it was won.
+                ///   - squadName: The name of the squad it was won in, as that week’s 战报 froze it. Left out for a week won before 战报 froze, and, on a squadmate’s card, for weeks won in another squad.
                 ///   - speech: Its award line (颁奖词) that week. On a squadmate’s card, left out for weeks won in another squad.
                 public init(
                     weekStart: Swift.String,
+                    squadName: Swift.String? = nil,
                     speech: Swift.String? = nil
                 ) {
                     self.weekStart = weekStart
+                    self.squadName = squadName
                     self.speech = speech
                 }
                 public enum CodingKeys: String, CodingKey {
                     case weekStart
+                    case squadName
                     case speech
                 }
             }

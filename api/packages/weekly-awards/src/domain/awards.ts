@@ -152,6 +152,8 @@ export type AwardsState =
 /** A title a member won: in which squad and week, as it was given. */
 export interface TitleWin {
   readonly squad: SquadId;
+  /** The squad's name that week, as its 战报 froze it; none for a week won before that. */
+  readonly squadName?: string;
   readonly weekStart: WeekStart;
   readonly title: Title;
 }
@@ -165,6 +167,7 @@ export interface BoardTitle {
   readonly badge: Badge;
   readonly weeks: readonly {
     readonly squad: SquadId;
+    readonly squadName?: string;
     readonly weekStart: WeekStart;
     readonly speech: string;
   }[];
@@ -176,9 +179,14 @@ export interface BoardTitle {
  */
 export function boardOf(wins: readonly TitleWin[]): BoardTitle[] {
   const board = new Map<string, { badge: Badge; weeks: BoardTitle['weeks'][number][] }>();
-  for (const { squad, weekStart, title } of wins) {
+  for (const { squad, squadName, weekStart, title } of wins) {
     const entry = board.get(title.title) ?? { badge: title.badge ?? DEFAULT_BADGE, weeks: [] };
-    entry.weeks.push({ squad, weekStart, speech: title.speech });
+    entry.weeks.push({
+      squad,
+      ...(squadName === undefined ? {} : { squadName }),
+      weekStart,
+      speech: title.speech,
+    });
     board.set(title.title, entry);
   }
   return [...board].map(([title, { badge, weeks }]) => ({ title, badge, weeks }));

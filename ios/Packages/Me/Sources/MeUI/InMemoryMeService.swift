@@ -116,7 +116,8 @@ extension TitleBoard {
             weeks: weeks.compactMap { day, speech in
                 (try? LocalDay(day)).map {
                     BoardTitle.Week(
-                        weekStart: $0, speech: bundle.localizedString(forKey: speech, value: nil, table: nil))
+                        weekStart: $0, speech: bundle.localizedString(forKey: speech, value: nil, table: nil),
+                        squadName: bundle.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil))
                 }
             })
     }

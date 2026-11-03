@@ -2,6 +2,7 @@ import { sql, type Kysely } from 'kysely';
 
 import { MemberId, SquadId, StoredAward, type TitleWin } from '../domain/awards.js';
 import { WeekStart } from '../domain/schedule.js';
+import { StoredStory } from '../domain/week-story.js';
 import type { AwardsStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -52,20 +53,33 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
     async wins(members) {
       if (members.length === 0) return new Map();
       const rows = await db
-        .selectFrom('weekly_award_winners')
-        .select(['member_id', 'squad_id', sql<string>`week_start::text`.as('week'), 'award'])
-        .where('member_id', 'in', members)
-        .orderBy('week_start', 'desc')
-        .orderBy('squad_id')
+        .selectFrom('weekly_award_winners as winner')
+        // The squad's name that week, from its frozen 战报; none for a week won before 战报 froze.
+        .leftJoin('week_stories as story', (join) =>
+          join
+            .onRef('story.squad_id', '=', 'winner.squad_id')
+            .onRef('story.week_start', '=', 'winner.week_start'),
+        )
+        .select([
+          'winner.member_id',
+          'winner.squad_id',
+          sql<string>`winner.week_start::text`.as('week'),
+          'winner.award',
+          'story.story',
+        ])
+        .where('winner.member_id', 'in', members)
+        .orderBy('winner.week_start', 'desc')
+        .orderBy('winner.squad_id')
         .execute();
       const wins = new Map<MemberId, TitleWin[]>();
       for (const row of rows) {
         const member = MemberId.parse(row.member_id);
         const squad = SquadId.parse(row.squad_id);
         const weekStart = WeekStart.parse(row.week);
+        const squadName = row.story === null ? undefined : StoredStory.parse(row.story).name;
         const list = wins.get(member) ?? [];
         for (const title of StoredAward.parse(row.award).titles) {
-          list.push({ squad, weekStart, title });
+          list.push({ squad, weekStart, title, ...(squadName === undefined ? {} : { squadName }) });
         }
         wins.set(member, list);
       }

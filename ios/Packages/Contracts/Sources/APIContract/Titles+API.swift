@@ -20,7 +20,7 @@ extension BoardTitle {
         self.init(
             title: wire.title, badge: TitleBadge(wire.badge),
             weeks: try wire.weeks.map { week throws(ContractsError) in
-                Week(weekStart: try LocalDay(week.weekStart), speech: week.speech)
+                Week(weekStart: try LocalDay(week.weekStart), speech: week.speech, squadName: week.squadName)
             })
     }
 }

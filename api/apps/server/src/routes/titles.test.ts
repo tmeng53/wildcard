@@ -197,6 +197,21 @@ async function profileOf(
 const shield = { shape: 'shield', colour: 'track', glyph: 'sun.max.fill' };
 const hexagon = { shape: 'hexagon', colour: 'pool', glyph: 'snowflake' };
 
+/** Freezes a squad's 战报 for a week under the name it had then, as Sunday 8pm does. */
+async function freeze({
+  squad,
+  weekStart,
+  name,
+}: {
+  squad: string;
+  weekStart: string;
+  name: string;
+}) {
+  const story = { version: 1, name, scene: 'gym' };
+  await sql`insert into public.week_stories (squad_id, week_start, story)
+    values (${squad}, ${weekStart}, ${JSON.stringify(story)}::jsonb)`.execute(db);
+}
+
 /** Awards a week's titles to a member, as the Sunday awards save them. */
 async function award(
   { squad, weekStart, member }: { squad: string; weekStart: string; member: string },
@@ -239,6 +254,8 @@ describe('/me/titles and /me/equipped-title', () => {
     await award({ squad: squad, weekStart: '2026-10-26', member: me.userId }, [
       { title: '早八战神', speech: '又是七点', badge: shield },
     ]);
+    // Each week carries its squad's name as its 战报 froze it, even after a rename.
+    await freeze({ squad, weekStart: '2026-10-26', name: '早八战队' });
     const board = {
       version: 1,
       titles: [
@@ -246,7 +263,7 @@ describe('/me/titles and /me/equipped-title', () => {
           title: '早八战神',
           badge: shield,
           weeks: [
-            { weekStart: '2026-10-26', speech: '又是七点' },
+            { weekStart: '2026-10-26', speech: '又是七点', squadName: '早八战队' },
             { weekStart: '2026-10-12', speech: '天天七点' },
           ],
         },
@@ -328,6 +345,8 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     await award({ squad: elsewhere, weekStart: '2026-10-26', member: mate.userId }, [
       { title: '冷面杀手', speech: '别的小队的事', badge: hexagon },
     ]);
+    await freeze({ squad, weekStart: '2026-10-19', name: '这个小队' });
+    await freeze({ squad: elsewhere, weekStart: '2026-10-26', name: '别的小队' });
     await call({
       method: 'PUT',
       path: '/me/equipped-title',
@@ -352,12 +371,15 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
         {
           title: '冷面杀手',
           badge: hexagon,
-          weeks: [{ weekStart: '2026-10-26' }, { weekStart: '2026-10-19', speech: '一句话不说' }],
+          weeks: [
+            { weekStart: '2026-10-26' },
+            { weekStart: '2026-10-19', speech: '一句话不说', squadName: '这个小队' },
+          ],
         },
       ],
       worn: '冷面杀手',
     });
-    expect(JSON.stringify(card.body)).not.toContain('别的小队的事');
+    expect(JSON.stringify(card.body)).not.toContain('别的小队');
     expect(z.object({ joinedAt: z.iso.datetime() }).safeParse(card.body).success).toBe(true);
 
     // The squad's today shows the title beside the name.

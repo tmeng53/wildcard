@@ -42,9 +42,12 @@ public struct BoardTitle: Hashable, Sendable, Identifiable {
         /// Its award line (颁奖词) that week; nil on a squadmate's card for a week won in another
         /// squad.
         public var speech: String?
+        /// The name of the squad it was won in, as that week's 战报 froze it; nil for a week won
+        /// before 战报 froze, and on a squadmate's card for a week won in another squad.
+        public var squadName: String?
 
-        public init(weekStart: LocalDay, speech: String?) {
-            (self.weekStart, self.speech) = (weekStart, speech)
+        public init(weekStart: LocalDay, speech: String?, squadName: String? = nil) {
+            (self.weekStart, self.speech, self.squadName) = (weekStart, speech, squadName)
         }
     }
 
@@ -62,6 +65,8 @@ public struct BoardTitle: Hashable, Sendable, Identifiable {
     public var times: Int { weeks.count }
     /// The award line shown on its detail: the latest one there is.
     public var latestSpeech: String? { weeks.lazy.compactMap(\.speech).first }
+    /// The squad it was last won in, by its name that week; nil when the latest week names none.
+    public var latestSquadName: String? { weeks.first?.squadName }
 }
 
 /// Every title a member won, in all their squads, and the one they wear.
