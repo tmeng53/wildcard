@@ -2883,7 +2883,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day, or with a photo that isn’t uploaded
+            /// Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), or with a photo that isn’t uploaded
             ///
             /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)/responses/400`.
             ///
@@ -3569,7 +3569,7 @@ public enum Operations {
     }
     /// A squad’s check-ins for a range of days, with their reactions and comments
     ///
-    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it and posted on a day in the range (`postedDay`), newest posted first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.
@@ -6296,7 +6296,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid comment, or a reply to someone who can’t see the check-in (`REPLY_TO_NOT_IN_SQUAD`)
+            /// Not a valid comment, a reply to someone who can’t see the check-in (`REPLY_TO_NOT_IN_SQUAD`), or to a coach that said nothing under it, or with `replyTo` too (`REPLY_TO_COACH_NOT_FOUND`)
             ///
             /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/{commentId}/put(commentOnCheckIn)/responses/400`.
             ///
@@ -14211,7 +14211,7 @@ public enum Operations {
     }
     /// What the squad’s coach said (战术板, replies and reactions)
     ///
-    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one. Only for the squad’s members. Replies stay after the squad fires its coach.
+    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, and its answers to members’ replies to it there. Only for the squad’s members. They stay after the squad fires its coach.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.

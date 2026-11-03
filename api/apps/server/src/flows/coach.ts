@@ -47,10 +47,15 @@ export function coachSquadWeek(deps: {
         kind: record.kind,
         ...entryOf(record, sportNames),
         reactions: week.reactions.get(record.id)?.length ?? 0,
-        comments: (week.comments.get(record.id) ?? []).map(({ member, text }) => ({
-          member,
-          text,
-        })),
+        comments: (week.comments.get(record.id) ?? []).map(
+          ({ id, member, text, commentedAt, replyToCoach }) => ({
+            id,
+            member,
+            text,
+            at: commentedAt,
+            ...(replyToCoach === undefined ? {} : { toCoach: replyToCoach }),
+          }),
+        ),
       }));
     return {
       weekStart,

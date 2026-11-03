@@ -555,7 +555,12 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+          },
+          "postedDay": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read."
           },
           "createdAt": {
             "type": "string",
@@ -699,7 +704,12 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+          },
+          "postedDay": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read."
           },
           "createdAt": {
             "type": "string",
@@ -777,7 +787,12 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+          },
+          "postedDay": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read."
           },
           "createdAt": {
             "type": "string",
@@ -836,7 +851,12 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+          },
+          "postedDay": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read."
           },
           "createdAt": {
             "type": "string",
@@ -1431,6 +1451,10 @@
             "format": "uuid",
             "description": "Whom it replies to, when it does. Gone once their account is deleted."
           },
+          "replyToCoach": {
+            "type": "string",
+            "description": "The coach it replies to, by id, when it does (回复 毛头：…)."
+          },
           "commentedAt": {
             "type": "string",
             "format": "date-time",
@@ -1753,6 +1777,10 @@
             "format": "uuid",
             "description": "Whom it replies to, when it does. Gone once their account is deleted."
           },
+          "replyToCoach": {
+            "type": "string",
+            "description": "The coach it replies to, by id, when it does (回复 毛头：…)."
+          },
           "commentedAt": {
             "type": "string",
             "format": "date-time",
@@ -1788,6 +1816,12 @@
             "type": "string",
             "format": "uuid",
             "description": "Whom the comment replies to (回复 Mia：…): the check-in’s author, or a teammate who can see it."
+          },
+          "replyToCoach": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$",
+            "description": "The coach it replies to (回复 毛头：…), by the coach’s id: one that said something under the check-in for a squad the caller sees it through. Never with `replyTo`. The coach answers it soon after.",
+            "example": "xiaohun"
           }
         },
         "required": [
@@ -2683,12 +2717,20 @@
               "$ref": "#/components/schemas/CoachReply"
             },
             "description": "The coach’s replies to the check-ins asked about; one with none is left out."
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachAnswer"
+            },
+            "description": "The coach’s answers to members’ replies to it under the check-ins asked about, oldest first."
           }
         },
         "required": [
           "version",
           "note",
-          "replies"
+          "replies",
+          "answers"
         ],
         "additionalProperties": false
       },
@@ -2773,7 +2815,7 @@
               "null"
             ],
             "maxLength": 100,
-            "description": "Its line, shown among the post’s comments with the 教练 tag (no 回复 under it), or null when it only reacted."
+            "description": "Its line, shown first among the post’s comments with the 教练 tag, which members may reply to (a comment with `replyToCoach`), or null when it only reacted."
           },
           "emoji": {
             "type": [
@@ -2792,6 +2834,47 @@
           "coach",
           "text",
           "emoji",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "CoachAnswer": {
+        "type": "object",
+        "properties": {
+          "checkInId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "commentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The member’s reply to the coach (`replyToCoach`) this answers."
+          },
+          "coach": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CoachSpeaker"
+              },
+              {
+                "description": "The coach who answered, even if the squad has fired it since."
+              }
+            ]
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag."
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "checkInId",
+          "commentId",
+          "coach",
+          "text",
           "at"
         ],
         "additionalProperties": false
@@ -4780,7 +4863,7 @@
             }
           },
           "400": {
-            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day, or with a photo that isn’t uploaded",
+            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), or with a photo that isn’t uploaded",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5108,7 +5191,7 @@
       "get": {
         "operationId": "listSquadCheckIns",
         "summary": "A squad’s check-ins for a range of days, with their reactions and comments",
-        "description": "The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.",
+        "description": "The squad’s feed: check-ins sent to the squad by members still in it and posted on a day in the range (`postedDay`), newest posted first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.",
         "security": [
           {
             "bearer": []
@@ -5774,7 +5857,7 @@
             }
           },
           "400": {
-            "description": "Not a valid comment, or a reply to someone who can’t see the check-in (`REPLY_TO_NOT_IN_SQUAD`)",
+            "description": "Not a valid comment, a reply to someone who can’t see the check-in (`REPLY_TO_NOT_IN_SQUAD`), or to a coach that said nothing under it, or with `replyTo` too (`REPLY_TO_COACH_NOT_FOUND`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7542,7 +7625,7 @@
       "get": {
         "operationId": "getSquadCoachActivity",
         "summary": "What the squad’s coach said (战术板, replies and reactions)",
-        "description": "The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one. Only for the squad’s members. Replies stay after the squad fires its coach.",
+        "description": "The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, and its answers to members’ replies to it there. Only for the squad’s members. They stay after the squad fires its coach.",
         "security": [
           {
             "bearer": []

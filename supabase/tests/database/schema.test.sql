@@ -1,7 +1,7 @@
 -- What the database keeps true however the API writes: keys, references, uniqueness.
 -- Runs as postgres; the API's server role writes the same way.
 begin;
-select plan(29);
+select plan(31);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'ann@example.com'),
@@ -16,6 +16,24 @@ create function pg_temp.check_in(id uuid, member uuid, kind text, payload text) 
   insert into public.check_ins (id, member_id, day, created_at, kind, payload)
   values (id, member, current_date, now(), kind::public.check_in_kind, payload::jsonb);
 $$;
+
+-- 补打卡: a row written without its posted day was posted on the day it counts for, and never
+-- counts for a day after the one it was posted on.
+insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+values ('7a000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001',
+  '2026-10-11', now(), 'healthyMeal', '{"version":1}');
+select is(
+  (select posted_day from public.check_ins where id = '7a000000-0000-0000-0000-000000000001'),
+  '2026-10-11'::date,
+  'posted_day defaults to the day it counts for'
+);
+select throws_ok(
+  $$insert into public.check_ins (id, member_id, day, posted_day, created_at, kind, payload)
+    values ('7a000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001',
+      '2026-10-12', '2026-10-11', now(), 'healthyMeal', '{"version":1}')$$,
+  '23514', null,
+  'a check-in never counts for a day after the one it was posted on'
+);
 
 -- Saving and retrying.
 select lives_ok(

@@ -185,6 +185,7 @@ describe('PUT /check-ins/{id}', () => {
       id,
       member: me.userId,
       day,
+      postedDay: day,
       createdAt,
       audience: [squad],
       kind: 'trained',
@@ -357,6 +358,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
       id,
       member: friend.userId,
       day,
+      postedDay: day,
       createdAt,
       kind: 'healthyMeal',
       meal: { caption: '番茄炒蛋' },
@@ -458,6 +460,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
             id,
             member: me.userId,
             day,
+            postedDay: day,
             createdAt,
             audience: [],
             kind: 'disclaimer',
@@ -535,7 +538,7 @@ describe('GET /me/posts', () => {
       expect(
         (await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body })).status,
       ).toBe(201);
-      return { ...body, id, member: me.userId };
+      return { ...body, id, member: me.userId, postedDay: body.day };
     };
     const run = await put(earlier, { kind: 'trained', training: { sport: 'run', minutes: 30 } });
     const meal = await put(later, { kind: 'cheatMeal', meal: { caption: '火锅' } });
@@ -614,6 +617,7 @@ describe('GET /me/check-in-totals', () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me);
     const yesterday = new Date(Date.now() - 24 * 60 * 60_000);
+    const twoDaysAgo = new Date(Date.now() - 47 * 60 * 60_000);
     const put = async (when: Date, fields: Record<string, unknown>): Promise<number> => {
       const body = {
         version: 1,
@@ -633,7 +637,8 @@ describe('GET /me/check-in-totals', () => {
       await put(now, { kind: 'healthyMeal', meal: { caption: '沙拉' } }),
       await put(yesterday, { kind: 'healthyMeal', meal: {} }),
       await put(now, { kind: 'cheatMeal', meal: {} }),
-      await put(yesterday, { kind: 'disclaimer', disclaimer: { text: '下雨了' } }),
+      // A 请假条 never goes on a day with a 练了.
+      await put(twoDaysAgo, { kind: 'disclaimer', disclaimer: { text: '下雨了' } }),
     ];
     expect(statuses).toStrictEqual([201, 201, 201, 201, 201, 201, 201]);
 

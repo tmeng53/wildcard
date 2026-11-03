@@ -63,6 +63,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
     'check_ins.id',
     'check_ins.member_id',
     sql<string>`check_ins.day::text`.as('day'),
+    sql<string>`check_ins.posted_day::text`.as('posted_day'),
     'check_ins.created_at',
     'check_ins.kind',
     'check_ins.payload',
@@ -70,6 +71,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
 
   type Row = Pick<Selectable<CheckIns>, 'id' | 'member_id' | 'created_at' | 'kind' | 'payload'> & {
     day: string;
+    posted_day: string;
   };
 
   /** Rows with their audiences and photos, in the rows' order. */
@@ -109,6 +111,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       id: CheckInId.parse(row.id),
       member: MemberId.parse(row.member_id),
       day: LocalDay.parse(row.day),
+      postedDay: LocalDay.parse(row.posted_day),
       createdAt: row.created_at,
       audience: audiences.get(row.id) ?? [],
       ...entryFromStored({ ...row, photos: photos.get(row.id) ?? [] }),
@@ -135,6 +138,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
               id: checkIn.id,
               member_id: checkIn.member,
               day: checkIn.day,
+              posted_day: checkIn.postedDay ?? checkIn.day,
               created_at: checkIn.createdAt,
               kind: checkIn.kind,
               payload: JSON.stringify(storedPayload(checkIn)),
@@ -265,8 +269,9 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       }));
     },
 
-    async listForSquad({ squad, members, from, to }) {
+    async listForSquad({ squad, members, from, to, by = 'day' }) {
       if (members.length === 0) return [];
+      const dayColumn = by === 'postedDay' ? 'check_ins.posted_day' : 'check_ins.day';
       const rows = await db
         .selectFrom('check_ins')
         .innerJoin('check_in_squads', (join) =>
@@ -276,9 +281,9 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         )
         .select(checkInColumns)
         .where('check_ins.member_id', 'in', members)
-        .where('check_ins.day', '>=', from)
-        .where('check_ins.day', '<=', to)
-        .orderBy('check_ins.day', 'desc')
+        .where(dayColumn, '>=', from)
+        .where(dayColumn, '<=', to)
+        .orderBy(dayColumn, 'desc')
         .orderBy('check_ins.created_at', 'desc')
         .orderBy('check_ins.id')
         .execute();

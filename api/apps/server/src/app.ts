@@ -145,7 +145,14 @@ export function createApp(deps: AppDependencies) {
   app.route('/', checkIns(deps));
   app.route('/', photoUploads(deps));
   app.route('/', reactions(deps));
-  app.route('/', comments(deps));
+  const { coach } = deps.jobs;
+  app.route(
+    '/',
+    comments({
+      ...deps,
+      coachAnswer: coach === undefined ? undefined : (reply) => coach.answer(reply),
+    }),
+  );
   app.route('/', devices(deps));
   app.route('/', pushSettings(deps));
   app.route('/', squads(deps));

@@ -4,15 +4,24 @@ import type { CommentText } from '../../domain/text.js';
 import {
   CommentIdConflictError,
   NotYourCommentError,
+  ReplyToCoachNotFoundError,
   ReplyToNotInSquadError,
 } from '../../errors.js';
-import type { CheckInStore, Clock, CommentStore, SquadMembership } from '../../ports.js';
+import type {
+  CheckInStore,
+  Clock,
+  CoachSpoke,
+  CommentStore,
+  SquadMembership,
+} from '../../ports.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
 
 interface Deps {
   readonly store: CheckInStore;
   readonly membership: SquadMembership;
   readonly comments: CommentStore;
+  /** Whether a coach spoke under a check-in; without it, no comment may reply to a coach. */
+  readonly coachSpoke?: CoachSpoke | undefined;
 }
 
 export interface CommentInput {
@@ -21,6 +30,8 @@ export interface CommentInput {
   readonly member: MemberId;
   readonly text: CommentText;
   readonly replyTo?: MemberId | undefined;
+  /** The coach it replies to, by id. Never with `replyTo`. */
+  readonly replyToCoach?: string | undefined;
 }
 
 export interface Commented {
@@ -33,24 +44,33 @@ export interface Commented {
 /**
  * Writes the member's comment under a check-in they can see, their own included. The same
  * comment under the same id again changes nothing, so a retry is safe. A reply names someone who
- * can see the check-in: its author, or a member of a squad the commenter sees it through. Throws
- * `CheckInNotFoundError` for a check-in they can't see, `ReplyToNotInSquadError` for a reply to
- * anyone else and `CommentIdConflictError` for an id that holds another comment.
+ * can see the check-in: its author, or a member of a squad the commenter sees it through; or the
+ * coach of such a squad that said something under it. Throws `CheckInNotFoundError` for a
+ * check-in they can't see, `ReplyToNotInSquadError` for a reply to anyone else,
+ * `ReplyToCoachNotFoundError` for one to any other coach and `CommentIdConflictError` for an id
+ * that holds another comment.
  */
 export async function commentOnCheckIn(
   deps: Deps & { readonly clock: Clock },
-  { checkIn: id, id: commentId, member, text, replyTo }: CommentInput,
+  { checkIn: id, id: commentId, member, text, replyTo, replyToCoach }: CommentInput,
 ): Promise<Commented> {
   const { checkIn, through } = await findVisibleCheckIn(deps, { id, viewer: member });
   if (replyTo !== undefined && replyTo !== checkIn.member) {
     const teammates = await deps.membership.membersOfAny(through);
     if (!teammates.has(replyTo)) throw new ReplyToNotInSquadError();
   }
+  if (replyToCoach !== undefined) {
+    const spoke =
+      replyTo === undefined &&
+      ((await deps.coachSpoke?.({ checkIn: id, squads: through, coach: replyToCoach })) ?? false);
+    if (!spoke) throw new ReplyToCoachNotFoundError();
+  }
   const asked: Comment = {
     id: commentId,
     member,
     text,
     ...(replyTo === undefined ? {} : { replyTo }),
+    ...(replyToCoach === undefined ? {} : { replyToCoach }),
     commentedAt: deps.clock(),
   };
   const outcome = await deps.comments.insert(id, asked);

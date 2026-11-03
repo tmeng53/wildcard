@@ -53,6 +53,7 @@ export {
 } from './domain/weekly-plan.js';
 export { SportKey } from './domain/sports.js';
 export {
+  AlreadyTrainedError,
   CheckInDayMismatchError,
   CheckInIdConflictError,
   CheckInInTheFutureError,
@@ -67,6 +68,7 @@ export {
   PhotoNotUploadedError,
   PhotoNotYoursError,
   PlanDayStartedError,
+  ReplyToCoachNotFoundError,
   ReplyToNotInSquadError,
   SportNotListedError,
   SquadNotJoinedError,
@@ -84,6 +86,7 @@ export type {
   MemberCalendar,
   PhotoFiles,
   ReactionStore,
+  CoachSpoke,
   SportList,
   SquadMembership,
   WeeklyPlanStore,

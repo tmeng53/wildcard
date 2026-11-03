@@ -35,6 +35,7 @@ export interface CheckInComments {
   id: string;
   member_id: string;
   reply_to: string | null;
+  reply_to_coach: string | null;
   text: string;
 }
 
@@ -69,6 +70,7 @@ export interface CheckIns {
   kind: CheckInKind;
   member_id: string;
   payload: Json;
+  posted_day: string;
 }
 
 export interface CheckInSquads {

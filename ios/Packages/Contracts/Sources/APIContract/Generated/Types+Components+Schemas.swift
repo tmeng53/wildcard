@@ -1041,10 +1041,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
+            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/day`.
             public var day: Swift.String
+            /// The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/postedDay`.
+            public var postedDay: Swift.String?
             /// When the member made it, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/createdAt`.
@@ -1067,7 +1071,8 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
+            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
             ///   - kind:
@@ -1077,6 +1082,7 @@ extension Components {
                 id: Swift.String,
                 member: Swift.String,
                 day: Swift.String,
+                postedDay: Swift.String? = nil,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
                 kind: Components.Schemas.TrainedCheckIn.KindPayload,
@@ -1086,6 +1092,7 @@ extension Components {
                 self.id = id
                 self.member = member
                 self.day = day
+                self.postedDay = postedDay
                 self.createdAt = createdAt
                 self.audience = audience
                 self.kind = kind
@@ -1096,6 +1103,7 @@ extension Components {
                 case id
                 case member
                 case day
+                case postedDay
                 case createdAt
                 case audience
                 case kind
@@ -1227,10 +1235,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
+            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/day`.
             public var day: Swift.String
+            /// The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
+            ///
+            /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/postedDay`.
+            public var postedDay: Swift.String?
             /// When the member made it, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/createdAt`.
@@ -1253,7 +1265,8 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
+            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
             ///   - kind:
@@ -1263,6 +1276,7 @@ extension Components {
                 id: Swift.String,
                 member: Swift.String,
                 day: Swift.String,
+                postedDay: Swift.String? = nil,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
                 kind: Components.Schemas.HealthyMealCheckIn.KindPayload,
@@ -1272,6 +1286,7 @@ extension Components {
                 self.id = id
                 self.member = member
                 self.day = day
+                self.postedDay = postedDay
                 self.createdAt = createdAt
                 self.audience = audience
                 self.kind = kind
@@ -1282,6 +1297,7 @@ extension Components {
                 case id
                 case member
                 case day
+                case postedDay
                 case createdAt
                 case audience
                 case kind
@@ -1329,10 +1345,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
+            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/day`.
             public var day: Swift.String
+            /// The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/postedDay`.
+            public var postedDay: Swift.String?
             /// When the member made it, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/createdAt`.
@@ -1355,7 +1375,8 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
+            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
             ///   - kind:
@@ -1365,6 +1386,7 @@ extension Components {
                 id: Swift.String,
                 member: Swift.String,
                 day: Swift.String,
+                postedDay: Swift.String? = nil,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
                 kind: Components.Schemas.CheatMealCheckIn.KindPayload,
@@ -1374,6 +1396,7 @@ extension Components {
                 self.id = id
                 self.member = member
                 self.day = day
+                self.postedDay = postedDay
                 self.createdAt = createdAt
                 self.audience = audience
                 self.kind = kind
@@ -1384,6 +1407,7 @@ extension Components {
                 case id
                 case member
                 case day
+                case postedDay
                 case createdAt
                 case audience
                 case kind
@@ -1404,10 +1428,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
+            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/day`.
             public var day: Swift.String
+            /// The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/postedDay`.
+            public var postedDay: Swift.String?
             /// When the member made it, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/createdAt`.
@@ -1430,7 +1458,8 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.
+            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
             ///   - kind:
@@ -1440,6 +1469,7 @@ extension Components {
                 id: Swift.String,
                 member: Swift.String,
                 day: Swift.String,
+                postedDay: Swift.String? = nil,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
                 kind: Components.Schemas.DisclaimerCheckIn.KindPayload,
@@ -1449,6 +1479,7 @@ extension Components {
                 self.id = id
                 self.member = member
                 self.day = day
+                self.postedDay = postedDay
                 self.createdAt = createdAt
                 self.audience = audience
                 self.kind = kind
@@ -1459,6 +1490,7 @@ extension Components {
                 case id
                 case member
                 case day
+                case postedDay
                 case createdAt
                 case audience
                 case kind
@@ -2197,6 +2229,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CommentEntry/replyTo`.
             public var replyTo: Swift.String?
+            /// The coach it replies to, by id, when it does (回复 毛头：…).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/replyToCoach`.
+            public var replyToCoach: Swift.String?
             /// When it was written, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/CommentEntry/commentedAt`.
@@ -2208,18 +2244,21 @@ extension Components {
             ///   - member: Who wrote it.
             ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
             ///   - replyTo: Whom it replies to, when it does. Gone once their account is deleted.
+            ///   - replyToCoach: The coach it replies to, by id, when it does (回复 毛头：…).
             ///   - commentedAt: When it was written, in UTC with milliseconds.
             public init(
                 id: Swift.String,
                 member: Swift.String,
                 text: Swift.String,
                 replyTo: Swift.String? = nil,
+                replyToCoach: Swift.String? = nil,
                 commentedAt: Foundation.Date
             ) {
                 self.id = id
                 self.member = member
                 self.text = text
                 self.replyTo = replyTo
+                self.replyToCoach = replyToCoach
                 self.commentedAt = commentedAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -2227,6 +2266,7 @@ extension Components {
                 case member
                 case text
                 case replyTo
+                case replyToCoach
                 case commentedAt
             }
         }
@@ -2628,6 +2668,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Comment/replyTo`.
             public var replyTo: Swift.String?
+            /// The coach it replies to, by id, when it does (回复 毛头：…).
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/replyToCoach`.
+            public var replyToCoach: Swift.String?
             /// When it was written, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/Comment/commentedAt`.
@@ -2640,6 +2684,7 @@ extension Components {
             ///   - member: Who wrote it.
             ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
             ///   - replyTo: Whom it replies to, when it does. Gone once their account is deleted.
+            ///   - replyToCoach: The coach it replies to, by id, when it does (回复 毛头：…).
             ///   - commentedAt: When it was written, in UTC with milliseconds.
             public init(
                 version: Components.Schemas.Comment.VersionPayload,
@@ -2647,6 +2692,7 @@ extension Components {
                 member: Swift.String,
                 text: Swift.String,
                 replyTo: Swift.String? = nil,
+                replyToCoach: Swift.String? = nil,
                 commentedAt: Foundation.Date
             ) {
                 self.version = version
@@ -2654,6 +2700,7 @@ extension Components {
                 self.member = member
                 self.text = text
                 self.replyTo = replyTo
+                self.replyToCoach = replyToCoach
                 self.commentedAt = commentedAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -2662,6 +2709,7 @@ extension Components {
                 case member
                 case text
                 case replyTo
+                case replyToCoach
                 case commentedAt
             }
         }
@@ -2681,25 +2729,33 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CommentDraft/replyTo`.
             public var replyTo: Swift.String?
+            /// The coach it replies to (回复 毛头：…), by the coach’s id: one that said something under the check-in for a squad the caller sees it through. Never with `replyTo`. The coach answers it soon after.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/replyToCoach`.
+            public var replyToCoach: Swift.String?
             /// Creates a new `CommentDraft`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
             ///   - replyTo: Whom the comment replies to (回复 Mia：…): the check-in’s author, or a teammate who can see it.
+            ///   - replyToCoach: The coach it replies to (回复 毛头：…), by the coach’s id: one that said something under the check-in for a squad the caller sees it through. Never with `replyTo`. The coach answers it soon after.
             public init(
                 version: Components.Schemas.CommentDraft.VersionPayload,
                 text: Swift.String,
-                replyTo: Swift.String? = nil
+                replyTo: Swift.String? = nil,
+                replyToCoach: Swift.String? = nil
             ) {
                 self.version = version
                 self.text = text
                 self.replyTo = replyTo
+                self.replyToCoach = replyToCoach
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case text
                 case replyTo
+                case replyToCoach
             }
         }
         /// - Remark: Generated from `#/components/schemas/CommentList`.
@@ -3950,25 +4006,33 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachActivity/replies`.
             public var replies: [Components.Schemas.CoachReply]
+            /// The coach’s answers to members’ replies to it under the check-ins asked about, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/answers`.
+            public var answers: [Components.Schemas.CoachAnswer]
             /// Creates a new `CoachActivity`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - note:
             ///   - replies: The coach’s replies to the check-ins asked about; one with none is left out.
+            ///   - answers: The coach’s answers to members’ replies to it under the check-ins asked about, oldest first.
             public init(
                 version: Components.Schemas.CoachActivity.VersionPayload,
                 note: Components.Schemas.CoachNote? = nil,
-                replies: [Components.Schemas.CoachReply]
+                replies: [Components.Schemas.CoachReply],
+                answers: [Components.Schemas.CoachAnswer]
             ) {
                 self.version = version
                 self.note = note
                 self.replies = replies
+                self.answers = answers
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case note
                 case replies
+                case answers
             }
         }
         /// The squad’s newest 战术板 line (the app shows it while its day is today), or null.
@@ -4082,7 +4146,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/CoachReply/coach`.
             public var coach: Components.Schemas.CoachReply.CoachPayload
-            /// Its line, shown among the post’s comments with the 教练 tag (no 回复 under it), or null when it only reacted.
+            /// Its line, shown first among the post’s comments with the 教练 tag, which members may reply to (a comment with `replyToCoach`), or null when it only reacted.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachReply/text`.
             public var text: Swift.String?
@@ -4097,7 +4161,7 @@ extension Components {
             /// - Parameters:
             ///   - checkInId:
             ///   - coach:
-            ///   - text: Its line, shown among the post’s comments with the 教练 tag (no 回复 under it), or null when it only reacted.
+            ///   - text: Its line, shown first among the post’s comments with the 教练 tag, which members may reply to (a comment with `replyToCoach`), or null when it only reacted.
             ///   - emoji: Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions.
             ///   - at:
             public init(
@@ -4118,6 +4182,80 @@ extension Components {
                 case coach
                 case text
                 case emoji
+                case at
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachAnswer`.
+        public struct CoachAnswer: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachAnswer/checkInId`.
+            public var checkInId: Swift.String
+            /// The member’s reply to the coach (`replyToCoach`) this answers.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachAnswer/commentId`.
+            public var commentId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachAnswer/coach`.
+            public struct CoachPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachAnswer/coach/value1`.
+                public var value1: Components.Schemas.CoachSpeaker
+                /// The coach who answered, even if the squad has fired it since.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachAnswer/coach/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `CoachPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: The coach who answered, even if the squad has fired it since.
+                public init(
+                    value1: Components.Schemas.CoachSpeaker,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachAnswer/coach`.
+            public var coach: Components.Schemas.CoachAnswer.CoachPayload
+            /// Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachAnswer/text`.
+            public var text: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachAnswer/at`.
+            public var at: Foundation.Date
+            /// Creates a new `CoachAnswer`.
+            ///
+            /// - Parameters:
+            ///   - checkInId:
+            ///   - commentId: The member’s reply to the coach (`replyToCoach`) this answers.
+            ///   - coach:
+            ///   - text: Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag.
+            ///   - at:
+            public init(
+                checkInId: Swift.String,
+                commentId: Swift.String,
+                coach: Components.Schemas.CoachAnswer.CoachPayload,
+                text: Swift.String,
+                at: Foundation.Date
+            ) {
+                self.checkInId = checkInId
+                self.commentId = commentId
+                self.coach = coach
+                self.text = text
+                self.at = at
+            }
+            public enum CodingKeys: String, CodingKey {
+                case checkInId
+                case commentId
+                case coach
+                case text
                 case at
             }
         }

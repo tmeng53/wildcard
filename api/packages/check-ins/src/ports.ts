@@ -39,9 +39,17 @@ export interface CheckInStore {
     readonly member: MemberId;
     readonly since: Date;
   }): Promise<TrainedCheckIn[]>;
-  /** Check-ins sent to `squad` from these members, newest day first, with their whole audience. */
+  /**
+   * Check-ins sent to `squad` from these members, newest day first, then newest made, with their
+   * whole audience: by the day each counts for, or with `by: 'postedDay'` the day each was
+   * posted on (the feed, where a 补打卡 shows when it was posted).
+   */
   listForSquad(
-    query: DayRange & { readonly squad: SquadId; readonly members: readonly MemberId[] },
+    query: DayRange & {
+      readonly squad: SquadId;
+      readonly members: readonly MemberId[];
+      readonly by?: 'day' | 'postedDay';
+    },
   ): Promise<CheckInRecord[]>;
   /**
    * Squads that got a check-in for a day from `from` to `to` made before `before`, from anyone,
@@ -73,6 +81,16 @@ export interface SquadMembership {
   /** Everyone in any of these squads now, each once. */
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
 }
+
+/**
+ * Whether `coach` (a coach's id) said something under a check-in for one of these squads, the
+ * squads its commenter sees it through, so they may reply to it. The coach module keeps that.
+ */
+export type CoachSpoke = (input: {
+  readonly checkIn: CheckInId;
+  readonly squads: readonly SquadId[];
+  readonly coach: string;
+}) => Promise<boolean>;
 
 /** The sports list. The sports module keeps it; check-ins only ask whether a sport is in it. */
 export interface SportList {
