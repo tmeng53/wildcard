@@ -21,8 +21,7 @@ public enum DayPhase: Hashable, Sendable {
 public enum StagePose: Hashable, Sendable {
     /// On the scene's equipment.
     case station(StationKind)
-    /// Training in place in their sport's kit. Swimmers and climbers away from water and wall
-    /// warm up instead. No activity when it didn't arrive.
+    /// Training in place in their sport's kit, on any scene. No activity when it didn't arrive.
     case inPlace(Activity?)
     /// Awake, holding their 请假条 up.
     case holdingSign
