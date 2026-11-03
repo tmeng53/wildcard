@@ -51,9 +51,12 @@ const membership = createSquads({
 const now = new Date('2026-10-18T20:00:00.000Z');
 // Photo files: the paths uploaded so far. Storage itself is the server's adapter, tested there.
 const uploaded = new Set<string>();
+// Set while a test needs Storage to refuse deleting.
+let storageDown = false;
 const photos = {
   exists: (path: string) => Promise.resolve(uploaded.has(path)),
   delete: (paths: readonly string[]) => {
+    if (storageDown) return Promise.reject(new Error('Storage is down'));
     for (const path of paths) uploaded.delete(path);
     return Promise.resolve();
   },
@@ -615,6 +618,29 @@ describe('editing a check-in', () => {
     ).rejects.toMatchObject({
       code: '42501',
     });
+  });
+
+  it('takes a dropped photo out of Storage on the retry when Storage failed the first time', async () => {
+    const [member, mate] = [await newMember(), await newMember()];
+    const squad = await newSquad(member, mate);
+    const [cover, second] = [photoOf(member), photoOf(member)];
+    const id = CheckInId.parse(randomUUID());
+    await checkIns.save({
+      id,
+      member,
+      draft: draft({ audience: [squad], kind: 'cheatMeal', meal: { photos: [cover, second] } }),
+    });
+    const change = edit({ kind: 'cheatMeal', meal: { photos: [cover] } });
+    storageDown = true;
+    try {
+      await expect(checkIns.edit({ id, member, edit: change })).rejects.toThrow('Storage is down');
+    } finally {
+      storageDown = false;
+    }
+    // The edit is saved, but the photo it dropped is still in Storage until the retry.
+    expect(uploaded.has(second.path)).toBe(true);
+    await checkIns.edit({ id, member, edit: change });
+    expect([uploaded.has(second.path), uploaded.has(cover.path)]).toStrictEqual([false, true]);
   });
 
   it('refuses another kind, a teammate’s post, and photos that aren’t the member’s or uploaded', async () => {

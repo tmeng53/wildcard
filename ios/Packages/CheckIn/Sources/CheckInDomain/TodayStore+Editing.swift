@@ -6,9 +6,11 @@ extension TodayStore {
     /// Saves an edit of one of the member's own posts: uploads its new photos, then the post as
     /// edited. Never queued: the member is looking at the post and waits for it.
     public func edit(_ edit: PostEdit) async throws(CheckInError) -> CheckIn {
-        var uploaded: [UUID: PhotoRef] = [:]
-        for photo in edit.newPhotos { uploaded[photo.id] = try await backend.upload(photo) }
-        let saved = try await backend.edit(try edit.checkIn(uploaded: uploaded))
+        for photo in edit.newPhotos where editUploads[photo.id] == nil {
+            editUploads[photo.id] = try await backend.upload(photo)
+        }
+        let saved = try await backend.edit(try edit.checkIn(uploaded: editUploads))
+        editUploads = [:]
         if var home = savedHome, let index = home.checkIns.firstIndex(where: { $0.id == saved.id }) {
             home.checkIns[index] = saved
             savedHome = home

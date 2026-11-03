@@ -197,6 +197,15 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       await db.deleteFrom('check_ins').where('id', '=', id).execute();
     },
 
+    async photoHistory(id) {
+      const rows = await db
+        .selectFrom('check_in_events')
+        .select(sql<string>`jsonb_array_elements(entry -> 'photos') ->> 'path'`.as('path'))
+        .where('check_in_id', '=', id)
+        .execute();
+      return [...new Set(rows.map(({ path }) => path))].map((path) => PhotoPath.parse(path));
+    },
+
     async totals(member) {
       const counts = await db
         .selectFrom('check_ins')

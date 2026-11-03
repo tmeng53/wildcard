@@ -93,7 +93,7 @@ struct PostCard: View {
 
     /// 「…」 on the member's own post: 编辑 opens the compose page on it, 删除 asks first.
     private var manageMenu: some View {
-        HeaderMenu(Text("编辑或删除", bundle: .module)) {
+        HeaderMenu(Text("编辑或删除", bundle: .module), on: .ink) {
             Button {
                 model.edit(post)
             } label: {

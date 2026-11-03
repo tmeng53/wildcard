@@ -30,6 +30,8 @@ export interface CheckInStore {
   update(checkIn: CheckInRecord): Promise<UpdateOutcome>;
   /** Deletes a check-in with its audience, photos, reactions, comments and log. */
   remove(id: CheckInId): Promise<void>;
+  /** Every photo the check-in has had, in any version its log keeps, each once. */
+  photoHistory(id: CheckInId): Promise<PhotoPath[]>;
   /** Everything `member` ever checked in, counted by kind. */
   totals(member: MemberId): Promise<CheckInTotals>;
   /** The member's 练了 check-ins made from `since` on, the earliest made first. */

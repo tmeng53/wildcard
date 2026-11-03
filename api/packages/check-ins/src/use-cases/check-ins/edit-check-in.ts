@@ -75,7 +75,11 @@ export async function editCheckIn(
     ),
     (photos) => photos.map((photo) => kept.get(photo.path) ?? photo),
   );
-  if (isSameCheckIn(saved, edited)) return saved;
+  if (isSameCheckIn(saved, edited)) {
+    // A retry after Storage failed: the edit is saved, so finish taking its photos off.
+    await deleteDroppedPhotos(deps, saved);
+    return saved;
+  }
 
   const added = photosOf(edited).filter(({ path }) => !kept.has(path));
   await checkPhotos(deps.photos, { member, paths: added.map(({ path }) => path) });
@@ -95,8 +99,7 @@ export async function editCheckIn(
       { member, day: edited.day, training: edited.training },
     );
   }
-  const left = new Set(photosOf(edited).map(({ path }) => path));
-  await deps.photos.delete([...kept.keys()].filter((path) => !left.has(path)));
+  await deleteDroppedPhotos(deps, edited);
   return edited;
 }
 
@@ -111,7 +114,8 @@ export async function deleteCheckIn(
 ): Promise<void> {
   const saved = await ownCheckIn(deps, { id, member });
   if (saved === undefined) return;
-  await deps.photos.delete(photosOf(saved).map(({ path }) => path));
+  // Every photo it ever had, in case an edit's Storage delete failed before.
+  await deps.photos.delete(await deps.store.photoHistory(saved.id));
   await deps.store.remove(id);
 }
 
@@ -131,4 +135,15 @@ function withPhotos(
     case 'disclaimer':
       return { ...record, disclaimer: fields(record.disclaimer) };
   }
+}
+
+/**
+ * Deletes from Storage every photo the check-in had in an earlier version and has no more, so
+ * an edit whose delete failed is finished by the next try. Deleting a file already gone is
+ * fine.
+ */
+async function deleteDroppedPhotos(deps: Deps, checkIn: CheckInRecord): Promise<void> {
+  const left = new Set<string>(photosOf(checkIn).map(({ path }) => path));
+  const dropped = (await deps.store.photoHistory(checkIn.id)).filter((path) => !left.has(path));
+  if (dropped.length > 0) await deps.photos.delete(dropped);
 }

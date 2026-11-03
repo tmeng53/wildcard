@@ -79,3 +79,18 @@ private let picked = PreparedPhoto(
     #expect(await backend.deletes == [saved.id])
     #expect(today.home?.checkIns.contains { $0.id == saved.id } == false)
 }
+
+@MainActor @Test func anEditTriedAgainSendsEachNewPhotoOnce() async throws {
+    let saved = try savedMeal(photos: [], caption: "炸鸡")
+    let backend = ScriptedBackend(server: sampleHome(checkIns: [saved]))
+    let today = store(backend)
+    await today.load()
+    let edit = PostEdit(original: saved, activity: .sport("run"), minutes: nil, line: "炸鸡", photos: [.new(picked)])
+
+    await backend.set(failure: .notSent)
+    await #expect(throws: CheckInError.notSent) { try await today.edit(edit) }
+    await backend.set(failure: nil)
+    let edited = try await today.edit(edit)
+    #expect(await backend.uploads == [picked.id])
+    #expect(await backend.edits == [edited])
+}

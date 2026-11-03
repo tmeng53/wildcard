@@ -56,17 +56,24 @@ public struct HeaderButton: View {
 }
 
 /// `HeaderButton`'s look for a button that opens a menu (the 「…」 on the member's own post):
-/// the same 44-point Liquid Glass circle and glyph, the system's menu over it.
+/// the same 44-point Liquid Glass circle and glyph, the system's menu over it. `.ink` is for a
+/// button over any photo or post face, light or dark: a white glyph on glass darkened as the
+/// photo tiles' × is, so it reads on both.
 public struct HeaderMenu<Items: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let label: Text
     private let systemImage: String
+    private let surface: HeaderButton.Surface
     private let items: Items
     private let glyph: Double = 17
 
-    public init(_ label: Text, systemImage: String = "ellipsis", @ViewBuilder items: () -> Items) {
+    public init(
+        _ label: Text, systemImage: String = "ellipsis", on surface: HeaderButton.Surface = .page,
+        @ViewBuilder items: () -> Items
+    ) {
         self.label = label
         self.systemImage = systemImage
+        self.surface = surface
         self.items = items()
     }
 
@@ -76,13 +83,21 @@ public struct HeaderMenu<Items: View>: View {
         } label: {
             Image(systemName: systemImage)
                 .font(.system(size: glyph, weight: .semibold))
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .foregroundStyle(Color(role: surface == .ink ? .fgOnInk : .fgDefault, in: theme))
                 .frame(width: Sizing.control, height: Sizing.control)
                 .contentShape(Circle())
         }
-        .glassEffect(.regular.interactive(), in: Circle())
+        .glassEffect(glass, in: Circle())
         .accessibilityLabel(label)
     }
+
+    private var glass: Glass {
+        surface == .ink
+            ? .regular.tint(Color(role: .bgInk, in: theme).opacity(Self.inkTint)).interactive()
+            : .regular.interactive()
+    }
+
+    private static let inkTint: Double = 0.5
 }
 
 /// The header of a task step in sign-up: a back button, then the step segments, centered.

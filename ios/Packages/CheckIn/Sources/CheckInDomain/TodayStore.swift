@@ -68,6 +68,8 @@ public final class TodayStore {
     let ledger: (any UnlockLedger)?
     /// The last unlock check, so the next waits for it and none tells an unlock twice.
     var unlockCheck: Task<Void, Never>?
+    /// Photos an edit already uploaded, by the picked photo, so its retry sends each once.
+    var editUploads: [UUID: PhotoRef] = [:]
     private let outbox: any Outbox
     let now: @Sendable () -> Date
     private let newID: @Sendable () -> UUID
