@@ -21,7 +21,8 @@ export type CoachEmoji = z.infer<typeof CoachEmoji>;
 export function lineProblem(text: string, limit: number): string | undefined {
   if (text === '') return '这句是空的。';
   if (text.length > limit) return `太长了：${String(text.length)} 字，最多 ${String(limit)} 字。`;
-  if (/队员\d+/.test(text)) return '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。';
+  if (/队员\s*[0-9０-９]+/.test(text))
+    return '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。';
   return undefined;
 }
 
