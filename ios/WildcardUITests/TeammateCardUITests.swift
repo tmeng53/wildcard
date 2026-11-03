@@ -24,12 +24,14 @@ final class TeammateCardUITests: XCTestCase {
 
         name.tap()
         let card = app.buttons["me.card"]
-        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "her card didn't open")
+        let opened = card.waitForExistence(timeout: Self.wait)
+        // Kept before the check, so a failure still shows what the screen held.
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "56-teammate-card")
+        XCTAssertTrue(opened, "her card didn't open:\n\(app.debugDescription)")
         XCTAssertTrue(card.label.contains("小米"), "the card isn't hers: \(card.label)")
         XCTAssertTrue(card.label.contains("早八战神"), "the card doesn't wear her title: \(card.label)")
         XCTAssertTrue(window.contains(card.frame), "the card runs off the sheet: \(card.frame)")
-        Thread.sleep(forTimeInterval: 1)
-        keepScreenshot(named: "56-teammate-card")
 
         card.tap()
         let badges = app.buttons.matching(identifier: "me.badge")
@@ -55,9 +57,10 @@ final class TeammateCardUITests: XCTestCase {
         let row = app.buttons.matching(identifier: "squad.member.card").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: Self.wait), "no teammate row opens a card")
         row.tap()
-        XCTAssertTrue(app.buttons["me.card"].waitForExistence(timeout: Self.wait), "the teammate's card didn't open")
+        let opened = app.buttons["me.card"].waitForExistence(timeout: Self.wait)
         Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "59-teammate-card-from-squad")
+        XCTAssertTrue(opened, "the teammate's card didn't open:\n\(app.debugDescription)")
     }
 
     private func launch(_ extra: [String]) -> XCUIApplication {

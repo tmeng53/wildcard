@@ -268,9 +268,9 @@ private struct CardBack: View {
                 Text("card.career \(face.counts.healthyMeals) \(face.counts.disclaimers)", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.8)
-                    .fixedSize(horizontal: false, vertical: true)
+                    // One line, shrunk to fit, so a word never breaks across lines.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
             }
             .padding(.top, Space.xs)
             .accessibilityElement(children: .combine)
