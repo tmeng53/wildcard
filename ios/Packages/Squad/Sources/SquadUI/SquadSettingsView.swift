@@ -18,16 +18,15 @@ import UIKit
 /// name and captain, a still row of everyone's heads with the coach and 「+ 邀请」, this week's
 /// scene and who picks it, the coach, the invite code, the members, 往期战报, and leaving. The
 /// captain renames the squad and manages members from each row's ··· menu; last week's crown
-/// winner, or the captain when nobody won, picks the scene once. As a tab it has no way back;
-/// given `close`, it shows 返回 and swipes back. The app follows `model.hasLeft`. A pick ends
+/// winner, or the captain when nobody won, picks the scene once. It is a tab, with no way back;
+/// the app follows `model.hasLeft` and opens 往期战报 (`pastRecaps`). A pick ends
 /// where every pick does, on home with the squad dropping in: once the reveal is over, `picked`
 /// hands the scene to the app, which takes over; while the reveal plays, `revealing` is true, so
 /// the app can put away its tab bar.
 public struct SquadSettingsView: View {
     @Bindable private var model: SquadSettingsModel
-    private let close: (() -> Void)?
     private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
-    private let pastRecaps: (() -> Void)?
+    private let pastRecaps: () -> Void
     @Binding private var revealing: Bool
     @State private var renaming: String?
     @State private var confirming: MemberAction?
@@ -41,12 +40,10 @@ public struct SquadSettingsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(
-        model: SquadSettingsModel, close: (() -> Void)? = nil,
-        picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void = { _, _ in },
-        pastRecaps: (() -> Void)? = nil, revealing: Binding<Bool> = .constant(false)
+        model: SquadSettingsModel, picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void,
+        pastRecaps: @escaping () -> Void, revealing: Binding<Bool>
     ) {
         self.model = model
-        self.close = close
         self.picked = picked
         self.pastRecaps = pastRecaps
         _revealing = revealing
@@ -62,7 +59,7 @@ public struct SquadSettingsView: View {
                 case .failed:
                     SquadFailed { Task { await model.reload() } }
                 case .loaded(let settings):
-                    page(settings).swipesBack(isEnabled: close != nil && coachPages.isEmpty) { close?() }
+                    page(settings)
                 }
             }
             .loadingCover(model.load == .loading) {
@@ -105,10 +102,6 @@ public struct SquadSettingsView: View {
 
     private func sections(_ settings: SquadSettings) -> some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            if let close {
-                HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
-                    .accessibilityIdentifier("squad.back")
-            }
             VStack(alignment: .leading, spacing: Space.m) {
                 header(settings)
                 SquadHeads(
@@ -127,11 +120,9 @@ public struct SquadSettingsView: View {
             section(Text("队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
                 memberRows
             }
-            if let pastRecaps {
-                section(Text("战报", bundle: .module)) {
-                    ListRow(Text("往期战报", bundle: .module), showsDivider: false, action: pastRecaps)
-                        .accessibilityIdentifier("squad.pastRecaps")
-                }
+            section(Text("战报", bundle: .module)) {
+                ListRow(Text("往期战报", bundle: .module), showsDivider: false, action: pastRecaps)
+                    .accessibilityIdentifier("squad.pastRecaps")
             }
             leaveButton(settings)
         }
