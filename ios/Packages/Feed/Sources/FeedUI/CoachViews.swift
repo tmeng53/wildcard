@@ -1,0 +1,178 @@
+#if os(iOS)
+import AvatarUI
+import Contracts
+import DesignSystem
+import DesignSystemUI
+import FeedDomain
+import SwiftUI
+
+/// 战术板: the coach's line for the day, pinned at the top of today like a sheet on a clipboard
+/// (the approved 教练发言 design): the coach standing at the left, 教练 and its name and time,
+/// then the line.
+struct CoachBoard: View {
+    @Environment(\.sceneTheme) private var theme
+    let model: FeedModel
+    let note: CoachNote
+
+    private static let figure = CGSize(width: 66, height: 88)
+    private static let clip = CGSize(width: 54, height: 12)
+    private static let border: Double = 1.5
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: Space.s) {
+            CoachFigure(player: model.coachPlayer(note.coach.id))
+                .frame(width: Self.figure.width, height: Self.figure.height)
+            VStack(alignment: .leading, spacing: Space.xs) {
+                HStack(spacing: Space.xxs) {
+                    CoachTag().padding(.trailing, Space.xxs)
+                    Text(verbatim: note.coach.name)
+                    Text(verbatim: "·")
+                    Text(note.writtenAt, format: .dateTime.hour().minute())
+                }
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .lineLimit(1)
+                Text(verbatim: note.text)
+                    .typeStyle(TypeRamp.callout)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, Space.s)
+        }
+        .padding(.top, Space.m)
+        .padding(.horizontal, Space.m)
+        .background(
+            Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .strokeBorder(Color(role: .fgDefault, in: theme), lineWidth: Self.border)
+        }
+        .overlay(alignment: .top) {
+            Capsule()
+                .fill(Color(role: .fgDefault, in: theme))
+                .frame(width: Self.clip.width, height: Self.clip.height)
+                .offset(y: -Self.clip.height / 2)
+        }
+        .padding(.top, Self.clip.height / 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("教练 \(note.coach.name)：\(note.text)", bundle: .module))
+        .accessibilityIdentifier("feed.coachBoard")
+    }
+}
+
+/// The coach standing still, its feet on the box's bottom edge; nothing for a coach this build
+/// has no character for.
+private struct CoachFigure: View {
+    let player: CharacterPlayer?
+
+    /// The coaches' canvas, as members'.
+    private static let canvas = CGRect(x: 0, y: 0, width: 240, height: 320)
+
+    var body: some View {
+        if let player {
+            let frame = player.restFrame
+            CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.canvas)
+                .aspectRatio(Self.canvas.width / Self.canvas.height, contentMode: .fit)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+                .accessibilityHidden(true)
+        }
+    }
+}
+
+/// The coach's head on a white disc with a graphite ring, so it never reads as a teammate's
+/// mist one, wearing its emoji at its lower right like a teammate's.
+struct CoachFace: View {
+    @Environment(\.sceneTheme) private var theme
+    let player: CharacterPlayer?
+    let emoji: Emoji?
+    let size: Double
+
+    /// The head on the coaches' 240 × 320 canvas.
+    private static let face = CGRect(x: 50, y: 46, width: 140, height: 140)
+    private static let ring: Double = 1.5
+
+    var body: some View {
+        Circle()
+            .fill(Color(role: .bgCanvas, in: theme))
+            .overlay {
+                if let player {
+                    let frame = player.restFrame
+                    CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.face)
+                        .aspectRatio(1, contentMode: .fit)
+                        .padding(Sizing.ringGap)
+                }
+            }
+            .clipShape(Circle())
+            .overlay { Circle().strokeBorder(Color(role: .bgInk, in: theme), lineWidth: Self.ring) }
+            .frame(width: size, height: size)
+            .overlay(alignment: .bottomTrailing) {
+                if let emoji {
+                    Text(verbatim: emoji.text)
+                        .font(.system(size: size * 12 / 26))
+                        .offset(x: size * 0.12, y: size * 0.08)
+                }
+            }
+            .accessibilityHidden(true)
+    }
+}
+
+/// The coach's line under a card: its name, the 教练 tag, then the words.
+struct CoachCommentLine: View {
+    @Environment(\.sceneTheme) private var theme
+    let coach: CoachSpeaker
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
+            Text(verbatim: coach.name).fontWeight(.semibold)
+            CoachTag(.small)
+            Text(verbatim: text)
+        }
+        .typeStyle(TypeRamp.callout)
+        .foregroundStyle(Color(role: .fgDefault, in: theme))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("教练 \(coach.name)：\(text)", bundle: .module))
+        .accessibilityIdentifier("feed.coachComment")
+    }
+}
+
+/// The coach's line on a post's own page, first among the comments: its head, name, tag and
+/// time, then the words. Nobody replies to it.
+struct CoachCommentRow: View {
+    @Environment(\.sceneTheme) private var theme
+    let model: FeedModel
+    let reply: CoachReply
+    let text: String
+
+    private static let faceSize: Double = 32
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Space.s) {
+            CoachFace(player: model.coachPlayer(reply.coach.id), emoji: nil, size: Self.faceSize)
+            VStack(alignment: .leading, spacing: Space.xxs / 2) {
+                HStack(spacing: Space.xs) {
+                    Text(verbatim: reply.coach.name)
+                        .typeStyle(TypeRamp.footnoteEmphasis)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    CoachTag(.small)
+                    Text(reply.writtenAt, format: .dateTime.hour().minute())
+                        .typeStyle(TypeRamp.caption)
+                        .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                }
+                .lineLimit(1)
+                Text(verbatim: text)
+                    .typeStyle(TypeRamp.body)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("教练 \(reply.coach.name)：\(text)", bundle: .module))
+        .accessibilityIdentifier("post.coachComment")
+    }
+}
+#endif

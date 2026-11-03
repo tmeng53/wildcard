@@ -7,9 +7,12 @@ extension InMemoryFeedSource {
     /// The squad the 动态 screen is reviewed against, on `now`'s day in `zone`: today a run with
     /// two photos, emoji and three comments, a 请假条 and a salad; yesterday a swim and my own leg day;
     /// two days ago a tennis serve without a photo and a confessed burger. `photos` are the sample photos by
-    /// their names in `samplePhotoSizes`; without them the photos' places stay grey.
+    /// their names in `samplePhotoSizes`; without them the photos' places stay grey. With `coach`,
+    /// 毛头 coaches the squad: today's 战术板 line, a word and 🔥 on the run, 🫡 on the 请假条 and
+    /// a word on the swim.
     public static func sample(
-        viewer: MemberID, squad: SquadID, now: Date, zone: TimeZone, photos: [String: Data] = [:]
+        viewer: MemberID, squad: SquadID, now: Date, zone: TimeZone, photos: [String: Data] = [:],
+        coach: Bool = false
     ) -> InMemoryFeedSource {
         let jay = MemberID(UUID()), coco = MemberID(UUID()), mia = MemberID(UUID()), doudou = MemberID(UUID())
         let fish = MemberID(UUID()), kiki = MemberID(UUID())
@@ -44,7 +47,30 @@ extension InMemoryFeedSource {
             "阿杰": jay, "Coco": coco, "Mia": mia, "豆豆": doudou, "小鱼": fish, "Kiki": kiki, "Momo": viewer,
         ])
         let byPath = Dictionary(uniqueKeysWithValues: photos.map { ("\(photoFolder)/\($0.key)", $0.value) })
-        return InMemoryFeedSource(viewer: viewer, posts: posts, characters: characters, photos: byPath)
+        return InMemoryFeedSource(
+            viewer: viewer, posts: posts, characters: characters, photos: byPath,
+            coach: coach ? sampleCoach(on: posts, now: now) : nil)
+    }
+
+    /// 毛头's line for today and its replies to the run (posts[0]),
+    /// the swim (posts[2]) and the 请假条 (the last).
+    private static func sampleCoach(on posts: [FeedPost], now: Date) -> CoachActivity {
+        let maotou = CoachSpeaker(id: "xiaohun", name: localized("毛头"))
+        let note = CoachNote(
+            day: LocalDay(at: now, in: CoachNote.timeZone), text: localized("今天谁先动，谁就是队长"),
+            coach: maotou, writtenAt: now.addingTimeInterval(-3600))
+        func reply(_ post: FeedPost?, _ text: String?, _ emoji: String?) -> CoachReply? {
+            guard let post else { return nil }
+            return CoachReply(
+                checkIn: post.id, coach: maotou, text: text, emoji: emoji.flatMap { try? Emoji($0) },
+                writtenAt: post.checkIn.createdAt.date.addingTimeInterval(120))
+        }
+        let replies = [
+            reply(posts.first, localized("下雨还跑，鞋的牺牲我记下了"), "🔥"),
+            reply(posts.count > 2 ? posts[2] : nil, localized("夜泳人，记一笔"), nil),
+            reply(posts.last, nil, "🫡"),
+        ]
+        return CoachActivity(note: note, replies: replies.compactMap(\.self))
     }
 
     /// The sample squad's characters, by nickname: who they are and how they look.

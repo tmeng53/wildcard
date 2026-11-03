@@ -103,3 +103,31 @@ public struct CoachNote: Hashable, Sendable {
         LocalDay(at: moment, in: Self.timeZone) == day
     }
 }
+
+/// What the coach said under one check-in: a line among its comments, an emoji first among its
+/// reactions, or both, each with the 教练 tag. It stays after the squad fires the coach.
+public struct CoachReply: Hashable, Sendable {
+    public let checkIn: CheckInID
+    public let coach: CoachSpeaker
+    /// Nil when it only reacted.
+    public let text: String?
+    /// Nil when it only spoke. Not one of the post's reactions.
+    public let emoji: Emoji?
+    public let writtenAt: Date
+
+    public init(checkIn: CheckInID, coach: CoachSpeaker, text: String?, emoji: Emoji?, writtenAt: Date) {
+        (self.checkIn, self.coach, self.text, self.emoji, self.writtenAt) = (checkIn, coach, text, emoji, writtenAt)
+    }
+}
+
+/// What the squad's coach said: its newest 战术板 line, and its replies to the check-ins asked
+/// about.
+public struct CoachActivity: Hashable, Sendable {
+    public let note: CoachNote?
+    public let replies: [CoachReply]
+
+    public init(note: CoachNote?, replies: [CoachReply]) {
+        self.note = note
+        self.replies = replies
+    }
+}

@@ -185,7 +185,7 @@ enum LaunchOptions {
     }
 
     /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, said on the
-    /// home on every launch.
+    /// home on every launch and pinned on 动态, and replied to three of its posts.
     static var sidelineCoach: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitest-coach")
     }
