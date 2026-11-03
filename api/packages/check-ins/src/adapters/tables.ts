@@ -58,6 +58,7 @@ export interface CheckIns {
   kind: CheckInKind;
   member_id: string;
   payload: Json;
+  posted_day: string;
 }
 
 export interface CheckInSquads {

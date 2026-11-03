@@ -10,6 +10,7 @@ import {
 } from '../../domain/check-in.js';
 import { isOwnPhoto } from '../../domain/photos.js';
 import {
+  AlreadyTrainedError,
   CheckInIdConflictError,
   PhotoInUseError,
   PhotoNotUploadedError,
@@ -103,20 +104,39 @@ async function insertCheckIn(
   const retry = await asRetry(store, checkIn);
   if (retry !== undefined) return retry;
 
-  checkCheckInTime(checkIn, { now: clock(), timeZone: (await calendarOf(member))?.timeZone });
+  const postedDay = checkCheckInTime(checkIn, {
+    now: clock(),
+    timeZone: (await calendarOf(member))?.timeZone,
+  });
   const joined = await membership.squadIdsOf(member);
   const notJoined = checkIn.audience.find((squad) => !joined.has(squad));
   if (notJoined !== undefined) throw new SquadNotJoinedError(notJoined);
   await checkPhotos(photos, checkIn);
   if (checkIn.kind === 'trained') await checkSport(sports, checkIn.training.sport);
 
-  const outcome = await store.insert(checkIn);
-  if (outcome.saved) return { checkIn, created: true };
+  if (checkIn.kind === 'disclaimer') await checkNotTrained(store, checkIn);
+
+  const saving: CheckInRecord = { ...checkIn, postedDay };
+  const outcome = await store.insert(saving);
+  if (outcome.saved) return { checkIn: saving, created: true };
   // A save of the same id may have finished while this one ran.
   const overlapping = await asRetry(store, checkIn);
   if (overlapping !== undefined) return overlapping;
   if (outcome.taken === 'photo') throw new PhotoInUseError();
   throw new CheckInIdConflictError(id);
+}
+
+/**
+ * A 请假条 is for a day the member hasn't trained on, the day it counts for, so a 补打卡 follows
+ * the same rule as today's. (A 练了 after a 请假条 is fine: the app stamps it 销假.)
+ */
+async function checkNotTrained(store: CheckInStore, checkIn: CheckInRecord): Promise<void> {
+  const sameDay = await store.listForMember({
+    member: checkIn.member,
+    from: checkIn.day,
+    to: checkIn.day,
+  });
+  if (sameDay.some(({ kind }) => kind === 'trained')) throw new AlreadyTrainedError(checkIn.day);
 }
 
 /** Each photo is the member's own and already uploaded. */

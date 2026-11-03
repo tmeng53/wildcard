@@ -52,6 +52,7 @@ export {
 } from './domain/weekly-plan.js';
 export { SportKey } from './domain/sports.js';
 export {
+  AlreadyTrainedError,
   CheckInDayMismatchError,
   CheckInIdConflictError,
   CheckInInTheFutureError,

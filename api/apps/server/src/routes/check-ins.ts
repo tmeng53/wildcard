@@ -35,7 +35,13 @@ const checkInFields = {
   member: z.uuid().meta({ description: 'The member who made it.' }),
   day: LocalDay.meta({
     description:
-      'The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.',
+      'The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).',
+  }),
+  postedDay: LocalDay.optional().meta({
+    description:
+      'The member’s local day when they posted it (their day at `createdAt`), which orders the ' +
+      'squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always ' +
+      'sent; optional only so copies saved before it existed still read.',
   }),
   createdAt: z.iso.datetime().meta({
     description: 'When the member made it, in UTC with milliseconds.',
@@ -233,6 +239,7 @@ function wire(record: CheckInRecord, urls: ViewUrls) {
     id: record.id,
     member: record.member,
     day: record.day,
+    postedDay: record.postedDay ?? record.day,
     createdAt: record.createdAt.toISOString(),
     audience: [...record.audience],
   };
@@ -289,7 +296,9 @@ export function checkIns(deps: {
       201: { description: 'Saved', content: { 'application/json': { schema: CheckIn } } },
       400: problem(
         'Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, ' +
-          'counted for the wrong day, or with a photo that isn’t uploaded',
+          'counted for the wrong day (after the day it was posted on or more than 7 before it), ' +
+          'a 请假条 for a day the member trained on (`ALREADY_TRAINED`), or with a photo that ' +
+          'isn’t uploaded',
       ),
       403: problem('Sent to a squad the member isn’t in, or with someone else’s photo'),
       409: problem('The id holds a different check-in, or another check-in uses one of the photos'),
@@ -304,7 +313,8 @@ export function checkIns(deps: {
     operationId: 'listSquadCheckIns',
     summary: 'A squad’s check-ins for a range of days, with their reactions and comments',
     description:
-      'The squad’s feed: check-ins sent to the squad by members still in it, newest day first, ' +
+      'The squad’s feed: check-ins sent to the squad by members still in it and posted on a day ' +
+      'in the range (`postedDay`), newest posted first, ' +
       'each with the reactions and comments of the teammates the viewer shares a squad with. ' +
       'Only for members of the squad.',
     security: [{ bearer: [] }],
