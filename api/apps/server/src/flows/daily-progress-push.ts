@@ -188,8 +188,8 @@ async function handle(deps: DailyProgressDependencies, due: Due): Promise<Outcom
 }
 
 /**
- * Keeps the day's push in the member's 通知, whether or not it reaches a phone, so a member who
- * turned pushes off (or has no phone that takes them) still finds it. Never fails the push.
+ * Keeps the day's push in the member's 通知 before it is sent, whether or not it then reaches a
+ * phone. Never fails the push.
  */
 async function tellNotice(
   deps: DailyProgressDependencies,

@@ -31,11 +31,14 @@ export function createPostgresNoticeStore(db: Kysely<NoticeTables>): NoticeStore
         .select(['id', 'member_id', 'squad_id', 'kind', 'subject', 'at'])
         .where('member_id', '=', member)
         .orderBy('id', 'desc')
-        .limit(limit);
+        // One more than the page, to know whether older rows remain.
+        .limit(limit + 1);
       if (before !== undefined) query = query.where('id', '<', String(before));
-      const rows = await query.execute();
+      const found = await query.execute();
+      const rows = found.slice(0, limit);
+      const oldest = rows.at(-1);
       // A kind this build no longer knows is left out, never an error.
-      return rows.flatMap((row) => {
+      const notices = rows.flatMap((row) => {
         const notice = parseNotice({
           id: Number(row.id),
           member: row.member_id,
@@ -46,6 +49,9 @@ export function createPostgresNoticeStore(db: Kysely<NoticeTables>): NoticeStore
         });
         return notice === undefined ? [] : [notice];
       }) satisfies Notice[];
+      return found.length > limit && oldest !== undefined
+        ? { notices, next: NoticeId.parse(Number(oldest.id)) }
+        : { notices };
     },
 
     async seenThrough(member) {

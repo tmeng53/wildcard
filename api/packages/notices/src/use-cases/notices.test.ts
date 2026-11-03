@@ -62,7 +62,7 @@ describe('notices', () => {
     expect(first.seenThrough).toBeUndefined();
     expect(first.next).toBe(first.notices[1]?.id);
 
-    const second = await notices.page({ member: me, before: first.next, limit: 2 });
+    const second = await notices.page({ member: me, before: first.next, limit: 1 });
     expect(second.notices.map(({ kind, squad: about }) => [kind, about])).toEqual([
       ['sceneMoved', squad],
     ]);
@@ -79,13 +79,24 @@ describe('notices', () => {
     expect(page.next).toBe(page.notices[49]?.id);
   });
 
-  it('skips a kind this build doesn’t know', async () => {
-    const me = await newMember();
-    await sql`insert into public.notices (member_id, kind, subject) values (${me}, 'future', '{"version":1}')`.execute(
+  it('skips a kind this build doesn’t know, and still reaches the notices before it', async () => {
+    const [me, squad] = [await newMember(), await newSquad()];
+    await notices.tell([scene(me, { squad, name: 'oldest' }), scene(me, { squad, name: 'older' })]);
+    await sql`insert into public.notices (member_id, kind, subject) values (${me}, 'future', '{"version":1}'), (${me}, 'future', '{"version":1}')`.execute(
       db,
     );
-    const page = await notices.page({ member: me, limit: 10 });
-    expect(page.notices).toEqual([]);
+    await notices.tell([scene(me, { squad, name: 'newest' })]);
+
+    const scenes = (page: Awaited<ReturnType<typeof notices.page>>) =>
+      page.notices.map((notice) => (notice.kind === 'sceneMoved' ? notice.subject.scene : ''));
+    const first = await notices.page({ member: me, limit: 2 });
+    expect(scenes(first)).toEqual(['newest']);
+    // The page ended on a skipped row: its `next` still leads on.
+    const second = await notices.page({ member: me, before: first.next, limit: 1 });
+    expect(scenes(second)).toEqual([]);
+    const third = await notices.page({ member: me, before: second.next, limit: 2 });
+    expect(scenes(third)).toEqual(['older', 'oldest']);
+    expect(third.next).toBeUndefined();
   });
 
   it('marks seen only forward, and only the member’s own notices', async () => {

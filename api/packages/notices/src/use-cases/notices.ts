@@ -7,7 +7,10 @@ export interface NoticePage {
   readonly notices: readonly Notice[];
   /** The newest notice the member has seen, or `undefined` before they open the page. */
   readonly seenThrough?: NoticeId;
-  /** Where the next, older page starts, or `undefined` on the last. */
+  /**
+   * Where the next, older page starts, or `undefined` on the last. A page may hold fewer notices
+   * than asked (or none) when it skipped some this build can't read; follow `next` regardless.
+   */
   readonly next?: NoticeId;
 }
 
@@ -45,17 +48,14 @@ export function createNotices(deps: { readonly store: NoticeStore }): Notices {
 
     async page({ member, before, limit }) {
       const size = Math.min(Math.max(limit, 1), PAGE_LIMIT);
-      // One more than the page, to know whether another follows.
-      const [rows, seenThrough] = await Promise.all([
-        deps.store.page({ member, ...(before === undefined ? {} : { before }), limit: size + 1 }),
+      const [{ notices, next }, seenThrough] = await Promise.all([
+        deps.store.page({ member, ...(before === undefined ? {} : { before }), limit: size }),
         deps.store.seenThrough(member),
       ]);
-      const notices = rows.slice(0, size);
-      const last = notices.at(-1);
       return {
         notices,
         ...(seenThrough === undefined ? {} : { seenThrough }),
-        ...(rows.length > size && last !== undefined ? { next: last.id } : {}),
+        ...(next === undefined ? {} : { next }),
       };
     },
 

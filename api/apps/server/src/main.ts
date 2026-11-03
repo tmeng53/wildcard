@@ -84,7 +84,7 @@ import { byProvider } from './adapters/language-models.js';
 import { createOpenAICoachAgent } from './adapters/openai-coach-agent.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
 import { createMemoryRateLimit } from './adapters/memory-rate-limit.js';
-import { createDatabase } from './adapters/postgres.js';
+import { createDatabase, onItsOwn } from './adapters/postgres.js';
 import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
 import {
   createSupabaseAccounts,
@@ -237,13 +237,16 @@ const checkIns = createCheckIns({
 // What each member was told (通知, the bell on 动态): pushes and in-app notices, kept forever.
 const noticesOn = (scope: Database) => createNotices({ store: createPostgresNoticeStore(scope) });
 const notices = noticesOn(db);
-/** Keeps notices after what they tell of happened: a failure is logged, never the event's. */
+/**
+ * Keeps notices after what they tell of happened: a failure is logged, never the event's, even
+ * inside an admin tool's transaction.
+ */
 const tellAfter = async (
   scope: Database,
   { told, what }: { told: readonly NewNotice[]; what: string },
 ) => {
   try {
-    await noticesOn(scope).tell(told);
+    await onItsOwn(scope, () => noticesOn(scope).tell(told));
   } catch (error) {
     log.warn(`${what} not kept in notices`, { error });
   }
