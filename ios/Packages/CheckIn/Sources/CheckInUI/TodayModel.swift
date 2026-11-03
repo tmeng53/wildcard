@@ -58,6 +58,12 @@ public final class TodayModel {
     let pats: PatStage
     /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
     private(set) var celebrations = 0
+    /// The coach's 战术板 line while its bubble is up on the sideline.
+    var coachSays: CoachNote?
+    /// Takes the coach's bubble down after its hold; the next one cancels it.
+    var coachHold: Task<Void, Never>?
+    /// How long the coach's bubble stays up.
+    let coachLineHold: Double
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
@@ -119,6 +125,7 @@ public final class TodayModel {
         noSquad: @escaping @MainActor (Squad?) -> Void = { _ in }
     ) {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
+        coachLineHold = bubbleHold ?? Self.coachLineHold
         self.scene = scene
         self.defaults = defaults
         self.store = store
@@ -136,13 +143,15 @@ public final class TodayModel {
     private static let scoreDelay = 1.7
 
     /// The squad's home, with the member's own posts counted.
-    var home: Home? { store.home }
+    public var home: Home? { store.home }
 
-    /// The squad dropping onto a newly picked scene, from `dropIn(on:)` until everyone has
-    /// settled (`TodayModel+DropIn.swift`).
+    /// The squad dropping onto a newly picked scene, until everyone settles (`TodayModel+DropIn.swift`).
     var arrival: Arrival?
     /// Keeps the tab bar hidden while the squad drops in, until 打卡 is back.
     var holdsTabBar = false
+    /// The `NoticeBanner` showing at the top, and those waiting for it (`TodayModel+Notices.swift`).
+    var notice: Notice?
+    var pendingNotices: [Notice] = []
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.
@@ -225,7 +234,7 @@ public final class TodayModel {
             }
         }
         if !holdsDress || player == nil { dressMe(hop: false) }
-        cast.update(home: home, scene: scene, phase: stagePhase)
+        cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach)
     }
 
     var unavailable: Set<CheckInKind> {
@@ -264,8 +273,10 @@ public final class TodayModel {
         }
         placeSquad()
         Task {
+            await showNextNotice()
             await tellNews()
             await playPatsOnMe()
+            await sayCoachLine()
         }
     }
 
