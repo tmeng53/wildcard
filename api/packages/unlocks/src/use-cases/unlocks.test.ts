@@ -24,13 +24,20 @@ async function newMember() {
   return id;
 }
 
-/** Unlocks over the real tables, with the member's 练了 kept here. */
-function unlocksWith(trained: Map<MemberId, Trained[]>) {
+/**
+ * Unlocks over the real tables, with the member's 练了 kept here and each new unlock it tells
+ * written to `told`.
+ */
+function unlocksWith(trained: Map<MemberId, Trained[]>, told: string[] = []) {
   return createUnlocks({
     store: createPostgresUnlockStore(db),
     trainedSince: ({ member, since }) =>
       Promise.resolve((trained.get(member) ?? []).filter(({ madeAt }) => madeAt >= since)),
     sportListed: (id) => Promise.resolve(id !== 'quidditch'),
+    unlocked: (_member, unlocks) => {
+      told.push(...unlocks.map(({ kind, id }) => `${kind}:${id}`));
+      return Promise.resolve();
+    },
   });
 }
 
@@ -58,7 +65,8 @@ describe('unlocks', () => {
   it('keeps what a member earned, even once the check-in that earned it is gone', async () => {
     const me = await newMember();
     const trained = new Map<MemberId, Trained[]>();
-    const unlocks = unlocksWith(trained);
+    const told: string[] = [];
+    const unlocks = unlocksWith(trained, told);
     expect(await unlocks.of(me)).toStrictEqual([]);
 
     const now = Date.now();
@@ -80,10 +88,13 @@ describe('unlocks', () => {
       ['store', 'halfmoon', { checkIn: tennis[2]?.id }],
     ]);
     expect(all[1]?.unlockedAt).toStrictEqual(tennis[2]?.madeAt);
+    // Each one told once, when it was new.
+    expect(told).toStrictEqual(['prop:racket', 'store:deuce', 'store:halfmoon']);
 
     // The posts are deleted: what they unlocked stays.
     trained.set(me, []);
     expect(await unlocks.of(me)).toStrictEqual(all);
+    expect(told).toHaveLength(3);
     await expect(
       sql`delete from public.member_unlocks where member_id = ${me}`.execute(db),
     ).rejects.toThrow('append-only');
@@ -125,7 +136,8 @@ describe('unlocks', () => {
     const me = await newMember();
     const admin = await newMember();
     const trained = new Map<MemberId, Trained[]>();
-    const unlocks = unlocksWith(trained);
+    const told: string[] = [];
+    const unlocks = unlocksWith(trained, told);
     const racket = { id: randomUUID(), sport: 'tennis', madeAt: new Date(Date.now() + 60_000) };
     trained.set(me, [racket]);
     expect(await unlocks.of(me)).toHaveLength(1);
@@ -144,6 +156,8 @@ describe('unlocks', () => {
       ['store', 'deuce', { admin }],
       ['prop', 'racket', { checkIn: racket.id }],
     ]);
+    // A gift is told too, but not what the member held already.
+    expect(told).toStrictEqual(['prop:racket', 'store:deuce']);
     await expect(
       unlocks.give({ member: me, items: [{ kind: 'store', id: 'nowhere' }] }, admin),
     ).rejects.toBeInstanceOf(UnlockItemMissingError);

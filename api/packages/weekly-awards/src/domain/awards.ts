@@ -60,28 +60,31 @@ export const SPEECH_MAX = 24;
 export const TITLES_MAX = 3;
 
 /**
- * The model's reply, held to this shape by structured output. Members are named by key. The
- * limits go to the model in the schema, so the titles fit the screen.
+ * The model's reply, held to this shape by structured output, its moves only those `moves`
+ * offers (the settings'). Members are named by key. The limits go to the model in the schema, so
+ * the titles fit the screen.
  */
-export const ModelReply = z.strictObject({
-  version: z.literal(1),
-  awards: z.array(
-    z.strictObject({
-      member: z.string(),
-      titles: z
-        .array(
-          z.strictObject({
-            title: z.string().min(1).max(TITLE_MAX),
-            speech: z.string().min(1).max(SPEECH_MAX),
-            move: AwardMove,
-          }),
-        )
-        .min(1)
-        .max(TITLES_MAX),
-    }),
-  ),
-});
-export type ModelReply = z.infer<typeof ModelReply>;
+export function modelReply(moves: readonly [AwardMove, ...AwardMove[]]) {
+  return z.strictObject({
+    version: z.literal(1),
+    awards: z.array(
+      z.strictObject({
+        member: z.string(),
+        titles: z
+          .array(
+            z.strictObject({
+              title: z.string().min(1).max(TITLE_MAX),
+              speech: z.string().min(1).max(SPEECH_MAX),
+              move: z.enum(moves),
+            }),
+          )
+          .min(1)
+          .max(TITLES_MAX),
+      }),
+    ),
+  });
+}
+export type ModelReply = z.infer<ReturnType<typeof modelReply>>;
 
 const Title = z.strictObject({
   title: z.string().min(1).meta({ description: 'The title (头衔), at most 6 characters.' }),

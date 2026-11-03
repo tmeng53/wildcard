@@ -42,6 +42,7 @@ import {
   unusedWeeklyAwards,
   unusedWeekSummaryWords,
   unusedUnlocks,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -106,6 +107,7 @@ const app = createApp({
     catalog: createPostgresCoachCatalog(db),
   }),
   coachActivity: createCoachActivity({ store: createPostgresCoachActivity(db) }),
+  ...ignoredNotices,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),

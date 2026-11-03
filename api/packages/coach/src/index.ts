@@ -60,6 +60,7 @@ export { createCoachHiring, type CoachHiring } from './use-cases/coach-hiring.js
 export { createCoachSettings, type CoachSettingsAdmin } from './use-cases/coach-settings.js';
 export {
   createCoachWakes,
+  type CoachReplied,
   type CoachRun,
   type CoachWakes,
   type CoachWakesDependencies,

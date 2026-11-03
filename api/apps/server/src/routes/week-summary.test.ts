@@ -35,6 +35,7 @@ import {
   unusedWeeklyAwards,
   unusedCoachHiring,
   unusedCoachActivity,
+  ignoredNotices,
   unusedUnlocks,
 } from '../test-kit/weekly-awards.js';
 
@@ -92,6 +93,7 @@ const app = createApp({
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  ...ignoredNotices,
   log: createLog(() => undefined),
   admin: adminOn(),
   jobs: noJobs,
