@@ -151,6 +151,16 @@ export class CommentIdConflictError extends AppError {
 }
 
 /** Thrown for a reply to someone who can't see the check-in: a reply names a teammate. */
+export class ReplyToCoachNotFoundError extends AppError {
+  override readonly name = 'ReplyToCoachNotFoundError';
+  readonly reason = 'REPLY_TO_COACH_NOT_FOUND';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor() {
+    super('You can only reply to a coach that said something on this post.');
+  }
+}
+
 export class ReplyToNotInSquadError extends AppError {
   override readonly name = 'ReplyToNotInSquadError';
   readonly reason = 'REPLY_TO_NOT_IN_SQUAD';

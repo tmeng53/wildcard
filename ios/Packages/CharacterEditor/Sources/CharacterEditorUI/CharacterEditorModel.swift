@@ -126,6 +126,19 @@ public final class CharacterEditorModel {
         (self.store, picked) = (store.id, nil)
     }
 
+    /// Opens on what a 练了 just unlocked, from its notice on the home: inside the store on the
+    /// 穿搭 tab, or on the 道具 tab for a prop.
+    public func show(_ unlock: Unlock) {
+        switch unlock.kind {
+        case .store:
+            guard let store = draft.catalog.stores.first(where: { $0.id == unlock.id && $0.isOpen }) else { return }
+            tab = .outfit
+            visit(store)
+        case .prop:
+            tab = .prop
+        }
+    }
+
     /// Back out to the shopping street.
     func leaveStore() {
         (store, picked) = (nil, nil)

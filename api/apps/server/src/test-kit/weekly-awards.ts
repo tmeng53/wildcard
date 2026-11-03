@@ -8,7 +8,7 @@ export const unusedWeeklyAwards = {
     give: unused,
     find: unused,
     claimNudge: unused,
-    claimWinners: unused,
+    claimReadyPush: unused,
     titlesWon: unused,
     story: unused,
     freezeStory: unused,
@@ -35,7 +35,7 @@ export const unusedCoachHiring = {
 };
 
 /** What coaches said, for an app whose test never reads it. */
-export const unusedCoachActivity = { squad: unused };
+export const unusedCoachActivity = { squad: unused, spoke: unused };
 
 /** What members unlocked, for an app whose test never reads it. */
 export const unusedUnlocks = { of: unused };

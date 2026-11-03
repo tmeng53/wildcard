@@ -280,7 +280,7 @@ public protocol APIProtocol: Sendable {
     func fireSquadCoach(_ input: Operations.FireSquadCoach.Input) async throws -> Operations.FireSquadCoach.Output
     /// What the squad’s coach said (战术板, replies and reactions)
     ///
-    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one. Only for the squad’s members. Replies stay after the squad fires its coach.
+    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, and its answers to members’ replies to it there. Only for the squad’s members. They stay after the squad fires its coach.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.
@@ -973,7 +973,7 @@ extension APIProtocol {
     }
     /// What the squad’s coach said (战术板, replies and reactions)
     ///
-    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one. Only for the squad’s members. Replies stay after the squad fires its coach.
+    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, and its answers to members’ replies to it there. Only for the squad’s members. They stay after the squad fires its coach.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.

@@ -8,11 +8,24 @@ import {
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
+import {
+  createCoachActivity,
+  createPostgresCoachActivity,
+  SquadId as CoachSquadId,
+} from '@wildcard/coach';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
+import {
+  DeviceToken,
+  MemberId as PushMember,
+  apnsPayload,
+  type PushNotification,
+} from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
@@ -47,6 +60,21 @@ const photos = createSupabasePhotoStorage({
   secretKey: config.supabaseSecretKey,
 });
 const members = createMembers({ store: createPostgresProfileStore(db) });
+/** Every push sent, to which phone. */
+const sent: { readonly token: string; readonly notification: PushNotification }[] = [];
+const push = pushOn(db, {
+  send: (device, notification) => {
+    sent.push({ token: device.token, notification });
+    return Promise.resolve('sent');
+  },
+});
+/** Each reply to a coach the route asked the coach to answer. */
+const answersAsked: {
+  readonly checkIn: string;
+  readonly comment: string;
+  readonly coach: string;
+}[] = [];
+const coachActivity = createCoachActivity({ store: createPostgresCoachActivity(db) });
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -68,6 +96,12 @@ const app = createApp({
     }),
     reactions: createPostgresReactionStore(db),
     comments: createPostgresCommentStore(db),
+    coachSpoke: ({ checkIn, squads, coach }) =>
+      coachActivity.spoke({
+        squads: squads.map((squad) => CoachSquadId.parse(squad)),
+        checkIn,
+        coach,
+      }),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: memberCalendar(members),
@@ -85,7 +119,7 @@ const app = createApp({
     inviteCodes: randomInviteCodes,
     aiConsent: () => Promise.resolve(true),
   }),
-  push: pushOn(db),
+  push,
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
@@ -94,9 +128,20 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
-  ...ignoredNotices,
+  // Real, so a comment's notices are read back from 通知.
+  notices: createNotices({ store: createPostgresNoticeStore(db) }),
+  coachNames: ignoredNotices.coachNames,
   log: createLog(() => undefined),
-  jobs: noJobs,
+  jobs: {
+    ...noJobs,
+    coach: {
+      run: () => Promise.reject(new Error('unused')),
+      answer: (asked) => {
+        answersAsked.push(asked);
+        return Promise.resolve();
+      },
+    },
+  },
   admin: adminOn(),
 });
 
@@ -152,6 +197,45 @@ async function checkIn(token: string, ...audience: string[]) {
   expect(status).toBe(201);
   return id;
 }
+
+/** A signed-up member with a nickname and a phone; the phone's token. */
+async function withPhone(nickname: string) {
+  const signedUp = await signUp();
+  const { status } = await call('PUT', {
+    path: '/me/profile',
+    token: signedUp.token,
+    body: {
+      version: 1,
+      timeZone: 'Asia/Shanghai',
+      character: {
+        nickname,
+        look: { persona: 'deadpan', variants: { body: 'peach' }, colors: {} },
+      },
+    },
+  });
+  expect(status).toBe(200);
+  const phone = DeviceToken.parse(randomUUID().replaceAll('-', '').repeat(2));
+  await push.registerDevice({
+    member: PushMember.parse(signedUp.userId),
+    device: { token: phone, environment: 'sandbox' },
+  });
+  return { ...signedUp, phone };
+}
+
+/** The member's 通知, newest first. */
+async function noticesOf(token: string): Promise<unknown> {
+  const { status, body } = await call('GET', { path: '/me/notices', token });
+  expect(status).toBe(200);
+  return z.object({ notices: z.array(z.unknown()) }).parse(body).notices;
+}
+
+/** What each of these phones was sent, as APNs gets it. */
+const sentTo = (...phones: readonly string[]) =>
+  phones.map((phone) =>
+    sent
+      .filter(({ token }) => token === phone)
+      .map(({ notification }) => apnsPayload(notification)),
+  );
 
 describe('/check-ins/{checkInId}/comments', () => {
   it('writes comments, which the author and teammates read back here and in the feed', async () => {
@@ -224,6 +308,64 @@ describe('/check-ins/{checkInId}/comments', () => {
       body: { version: 1, text: '你看', replyTo: stranger.userId },
     });
     expect(reply).toMatchObject({ status: 400, body: { reason: 'REPLY_TO_NOT_IN_SQUAD' } });
+  });
+
+  it('lets members reply to a coach that spoke under the post, and has it answer', async () => {
+    const [tracy, ann, bo] = [await signUp(), await signUp(), await signUp()];
+    const squad = await squadOf(tracy, ann);
+    const run = await checkIn(tracy.token, squad);
+    const toCoach = ({
+      token,
+      id = randomUUID(),
+      ...body
+    }: { readonly token: string; readonly id?: string } & Record<string, unknown>) =>
+      call('PUT', {
+        path: `/check-ins/${run}/comments/${id}`,
+        token,
+        body: { version: 1, text: '教练你也跑', ...body },
+      });
+
+    // The coach hasn't said anything here yet.
+    expect(await toCoach({ token: ann.token, replyToCoach: 'xiaohun' })).toMatchObject({
+      status: 400,
+      body: { reason: 'REPLY_TO_COACH_NOT_FOUND' },
+    });
+    await sql`insert into public.coach_replies (squad_id, check_in_id, coach_id, text)
+      values (${squad}, ${run}, 'xiaohun', '周日也跑？')`.execute(db);
+    const id = randomUUID();
+    const written = await toCoach({ token: ann.token, replyToCoach: 'xiaohun', id });
+    expect(written).toMatchObject({
+      status: 201,
+      body: { id, member: ann.userId, replyToCoach: 'xiaohun' },
+    });
+    expect(written.body).not.toHaveProperty('replyTo');
+    // A retry saves nothing new and asks for no second answer.
+    expect(await toCoach({ token: ann.token, replyToCoach: 'xiaohun', id })).toMatchObject({
+      status: 200,
+    });
+    expect(answersAsked.filter(({ checkIn: at }) => at === run)).toStrictEqual([
+      { checkIn: run, comment: id, coach: 'xiaohun' },
+    ]);
+    const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: tracy.token });
+    expect(listed).toMatchObject({ body: { comments: [{ id, replyToCoach: 'xiaohun' }] } });
+
+    // Never to a coach that said nothing here, nor to a coach and a member at once, nor a
+    // coach id that isn't one; and someone outside the squad still can't see the post.
+    for (const body of [
+      { replyToCoach: 'maotou' },
+      { replyToCoach: 'xiaohun', replyTo: tracy.userId },
+    ]) {
+      expect(await toCoach({ token: ann.token, ...body })).toMatchObject({
+        status: 400,
+        body: { reason: 'REPLY_TO_COACH_NOT_FOUND' },
+      });
+    }
+    expect(await toCoach({ token: ann.token, replyToCoach: '毛头' })).toMatchObject({
+      status: 400,
+    });
+    expect(await toCoach({ token: bo.token, replyToCoach: 'xiaohun' })).toMatchObject({
+      status: 404,
+    });
   });
 
   it('deletes only the caller’s own comment, safely repeated', async () => {
@@ -300,5 +442,93 @@ describe('/check-ins/{checkInId}/comments', () => {
     const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: stranger.token });
     expect(listed).toMatchObject({ status: 404, body: { reason: 'CHECK_IN_NOT_FOUND' } });
     expect((await call('GET', { path: `/check-ins/${run}/comments` })).status).toBe(401);
+  });
+
+  it('tells the author about a comment and the member replied to about a reply, never the writer', async () => {
+    const [tracy, ann, bo] = [
+      await withPhone('翠西'),
+      await withPhone('安安'),
+      await withPhone('波波'),
+    ];
+    const run = await checkIn(tracy.token, await squadOf(tracy, ann, bo));
+    const [first, reply, own] = [randomUUID(), randomUUID(), randomUUID()];
+    const comment = (
+      id: string,
+      { token, ...body }: { token: string; text: string; replyTo?: string },
+    ) =>
+      call('PUT', {
+        path: `/check-ins/${run}/comments/${id}`,
+        token,
+        body: { version: 1, ...body },
+      });
+
+    expect((await comment(first, { token: ann.token, text: '明天我也练腿' })).status).toBe(201);
+    // A retry is the same comment: nobody hears of it twice.
+    expect((await comment(first, { token: ann.token, text: '明天我也练腿' })).status).toBe(200);
+    expect(
+      (await comment(reply, { token: bo.token, text: '算我一个', replyTo: ann.userId })).status,
+    ).toBe(201);
+    // The author on their own post, replying: only the member replied to hears.
+    expect(
+      (await comment(own, { token: tracy.token, text: '电梯见', replyTo: ann.userId })).status,
+    ).toBe(201);
+
+    const told = (key: string, { args, id }: { args: readonly string[]; id: string }) => ({
+      version: 1,
+      aps: {
+        alert: { 'loc-key': key, 'loc-args': args },
+        category: 'comment',
+        'thread-id': `comments-${run}`,
+        'interruption-level': 'active',
+        sound: 'default',
+        'mutable-content': 1,
+      },
+      event: { kind: 'comment', checkIn: run, comment: id },
+    });
+    expect(sentTo(tracy.phone, ann.phone, bo.phone)).toStrictEqual([
+      [
+        told('push.comment', { args: ['安安', '明天我也练腿'], id: first }),
+        told('push.comment', { args: ['波波', '算我一个'], id: reply }),
+      ],
+      [
+        told('push.comment.reply', { args: ['波波', '算我一个'], id: reply }),
+        told('push.comment.reply', { args: ['翠西', '电梯见'], id: own }),
+      ],
+      [],
+    ]);
+    // The same words are kept in each member's 通知, newest first, with the post to open.
+    expect(await noticesOf(tracy.token)).toMatchObject([
+      { kind: 'comment', alert: { key: 'push.comment', args: ['波波', '算我一个'] }, checkIn: run },
+      {
+        kind: 'comment',
+        alert: { key: 'push.comment', args: ['安安', '明天我也练腿'] },
+        checkIn: run,
+      },
+    ]);
+    expect(await noticesOf(ann.token)).toMatchObject([
+      { kind: 'comment', alert: { key: 'push.comment.reply', args: ['翠西', '电梯见'] } },
+      { kind: 'comment', alert: { key: 'push.comment.reply', args: ['波波', '算我一个'] } },
+    ]);
+    expect(await noticesOf(bo.token)).toStrictEqual([]);
+  });
+
+  it('sends no comment push to a member who turned push off', async () => {
+    const [tracy, ann] = [await withPhone('翠西'), await withPhone('安安')];
+    const run = await checkIn(tracy.token, await squadOf(tracy, ann));
+    const off = { version: 1, settings: { dailyProgress: false } };
+    expect(
+      (await call('PUT', { path: '/me/push-settings', token: tracy.token, body: off })).status,
+    ).toBe(200);
+    const written = await call('PUT', {
+      path: `/check-ins/${run}/comments/${randomUUID()}`,
+      token: ann.token,
+      body: { version: 1, text: '加油' },
+    });
+    expect(written.status).toBe(201);
+    expect(sentTo(tracy.phone)).toStrictEqual([[]]);
+    // The switch stops the phone, not 通知.
+    expect(await noticesOf(tracy.token)).toMatchObject([
+      { kind: 'comment', alert: { key: 'push.comment', args: ['安安', '加油'] } },
+    ]);
   });
 });

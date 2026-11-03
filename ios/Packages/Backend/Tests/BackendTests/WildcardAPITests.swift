@@ -276,3 +276,23 @@ private struct RefusedTokens: AuthProvider {
     }
     #expect(try await member.api.checkInTotals().topSport == TopSport(activity: .sport("run"), checkIns: 2))
 }
+
+@Test func tennisCheckInsUnlockTheRacketThenDeuceClubAndHalfMoon() async throws {
+    let stack = try LocalStack()
+    let member = try await stack.signedInMember()
+    let squad = try await stack.squad(of: member)
+    #expect(try await member.api.unlocks().isEmpty)
+
+    let tennis = { () async throws in
+        let training = Training(activity: .sport("tennis"))
+        _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(training)))
+    }
+    try await tennis()
+    #expect(try await member.api.unlocks().map(\.id) == ["racket"])
+
+    try await tennis()
+    try await tennis()
+    let unlocked = try await member.api.unlocks()
+    #expect(Set(unlocked.map(\.id)) == ["racket", "deuce", "halfmoon"])
+    #expect(unlocked.first { $0.id == "deuce" }?.checkIns == 3)
+}

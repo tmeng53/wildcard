@@ -56,6 +56,8 @@ struct MainTabs: View {
             if tab == selection { screen(tab) }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
+        // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
+        .task { today.tellUnlocks(with: UnlockNotices(banner: { UnlockBanner(unlock: $0) }, open: openUnlock)) }
         // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
         // 今天 opens 动态 on doesn't move down under it.
         .task { await recap.refresh() }
@@ -155,6 +157,17 @@ struct MainTabs: View {
         editor = try? CharacterEditorModel.placeholder(
             look: character.outfit, persona: character.persona, nickname: character.nickname,
             unlocks: profile.overview?.unlocks ?? [])
+    }
+
+    /// A tap on the home's notice that a store or prop opened: 我's editor, inside that store or on
+    /// the props, read again first so what just opened is open in it.
+    private func openUnlock(_ unlock: Unlock) {
+        selection = .profile
+        Task {
+            await profile.reload()
+            editCharacter()
+            editor?.show(unlock)
+        }
     }
 
     /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page) hides the

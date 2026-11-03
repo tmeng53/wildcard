@@ -35,9 +35,10 @@ final class SquadCast {
     struct Coach {
         let speaker: CoachSpeaker
         let player: CharacterPlayer
-        /// Where its feet are, and its size there.
+        /// Where its feet are.
         let spot: StagePoint
-        var scale: Double { StageLayout.scale(atDepth: spot.y) }
+        /// As big as me, so it reads as the coach.
+        var scale: Double { StageLayout.coachScale }
     }
 
     private(set) var stage = SquadStage(layout: .of(.gym))

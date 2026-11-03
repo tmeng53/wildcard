@@ -11,6 +11,10 @@ public protocol CheckInBackend: Sendable {
     /// Loads the home from the server and keeps a copy on the device. Nil when the member is in
     /// no squad yet.
     func home() async throws(CheckInError) -> Home?
+    /// Saves the phone's time zone on the member's profile when it is another one, so their day
+    /// follows the phone's clock; true when it changed. The server checks a post's day against
+    /// the profile's zone, so call it only once nothing is waiting in the outbox.
+    func followPhoneZone() async throws(CheckInError) -> Bool
     /// Uploads a photo for a check-in to list. Each upload is for one check-in only.
     func upload(_ photo: PreparedPhoto) async throws(CheckInError) -> PhotoRef
     /// Saves a check-in under its own id. Safe to retry: the same check-in again answers with
@@ -35,4 +39,15 @@ public protocol Outbox: Sendable {
     func load() async -> [PendingCheckIn]
     /// Replaces what is kept with `pending`, oldest first.
     func save(_ pending: [PendingCheckIn]) async
+}
+
+/// The stores and props the member unlocked by training, and which of them this phone has
+/// already told the member about, so each one is told once. The app passes one over our API that
+/// keeps what was told in the member's folder (`Backend`).
+public protocol UnlockLedger: Sendable {
+    /// Every unlock the member has, the earliest first.
+    func unlocks() async throws(CheckInError) -> [Unlock]
+    /// What this phone has told, by `UnlockNews.key`; nil when it never looked.
+    func told() async -> Set<String>?
+    func keep(told: Set<String>) async
 }

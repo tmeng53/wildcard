@@ -13,6 +13,7 @@ final class NoticeUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
+            "-uitest-bubble-hold",
             "-today.cardPage", "0", "-uitest-scene-moved", "track",
         ]
         app.launch()

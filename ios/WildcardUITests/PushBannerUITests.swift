@@ -20,6 +20,8 @@ final class PushBannerUITests: XCTestCase {
         ("push.dailyProgress.poke.more", 85),
         ("push.weeklyAwards.ready", 86),
         ("push.weeklyAwards.stuck", 87),
+        ("push.comment", 88),
+        ("push.comment.reply", 89),
     ]
 
     func testEveryPushShowsItsWordsAndOpensTheApp() throws {

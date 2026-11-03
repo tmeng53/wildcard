@@ -58,8 +58,8 @@ export interface AwardsStore {
     readonly awards: Awards;
   }): Promise<boolean>;
   /**
-   * Marks a squad's awards for a week as told to its winners; true only for the one call that
-   * marks them, false when they were told already or there are none.
+   * Marks a squad's 战报 for a week as told to the squad; true only for the one call that marks
+   * it, false when it was told already or its awards aren't written yet.
    */
   markNotified(squad: SquadId, weekStart: WeekStart): Promise<boolean>;
   /** Counts a failed try at a squad's awards for a week, keeping why it failed. */

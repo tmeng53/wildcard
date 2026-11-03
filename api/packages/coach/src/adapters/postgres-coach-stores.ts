@@ -4,7 +4,7 @@ import { sql, type Kysely } from 'kysely';
 import { CoachId } from '../domain/coach.js';
 import { memberOfPath } from '../domain/memory.js';
 import { SquadId } from '../domain/settings.js';
-import type { Wake } from '../domain/wake.js';
+import type { NewWake, Wake } from '../domain/wake.js';
 import type {
   CoachActivityStore,
   CoachReportStore,
@@ -32,6 +32,7 @@ function wakeOf(row: {
   readonly squad_id: string;
   readonly reason: string;
   readonly check_in_id: string | null;
+  readonly comment_id: string | null;
   readonly day: string | null;
 }): Wake {
   const squad = SquadId.parse(row.squad_id);
@@ -39,8 +40,56 @@ function wakeOf(row: {
   if (row.reason === 'daily' && row.day !== null) {
     return { id, squad, reason: { kind: 'daily', day: row.day } };
   }
+  if (row.reason === 'comment' && row.comment_id !== null && row.check_in_id !== null) {
+    return {
+      id,
+      squad,
+      reason: { kind: 'comment', checkIn: row.check_in_id, comment: row.comment_id },
+    };
+  }
   // The database keeps a check-in wake's check-in.
   return { id, squad, reason: { kind: 'checkIn', checkIn: row.check_in_id ?? '' } };
+}
+
+/** Queues one wake unless the squad has it; answers the new row, if any. */
+function insertWake(
+  db: Kysely<DB>,
+  { squad, reason, now }: NewWake & { readonly now: Date },
+): Promise<readonly { readonly id: string }[]> {
+  const insert = db.insertInto('coach_wakes');
+  switch (reason.kind) {
+    case 'checkIn':
+      return insert
+        .values({
+          squad_id: squad,
+          reason: 'checkIn',
+          check_in_id: reason.checkIn,
+          created_at: now,
+        })
+        .onConflict((conflict) =>
+          conflict.columns(['squad_id', 'check_in_id']).where('reason', '=', 'checkIn').doNothing(),
+        )
+        .returning('id')
+        .execute();
+    case 'comment':
+      // Nothing when the reply is gone already.
+      return sql<{ id: string }>`
+        insert into public.coach_wakes (squad_id, reason, check_in_id, comment_id, created_at)
+        select ${squad}, 'comment', check_in_id, id, ${now}
+        from public.check_in_comments where id = ${reason.comment} and check_in_id = ${reason.checkIn}
+        on conflict (squad_id, comment_id) where reason = 'comment' do nothing
+        returning id`
+        .execute(db)
+        .then(({ rows }) => rows);
+    case 'daily':
+      return insert
+        .values({ squad_id: squad, reason: 'daily', day: reason.day, created_at: now })
+        .onConflict((conflict) =>
+          conflict.columns(['squad_id', 'day']).where('reason', '=', 'daily').doNothing(),
+        )
+        .returning('id')
+        .execute();
+  }
 }
 
 /** The coach's wakes, files, notes and usage on Postgres (`supabase/migrations`). */
@@ -50,28 +99,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
       async enqueue(wakes, now) {
         let added = 0;
         for (const { squad, reason } of wakes) {
-          const inserted = await db
-            .insertInto('coach_wakes')
-            .values(
-              reason.kind === 'checkIn'
-                ? {
-                    squad_id: squad,
-                    reason: 'checkIn',
-                    check_in_id: reason.checkIn,
-                    created_at: now,
-                  }
-                : { squad_id: squad, reason: 'daily', day: reason.day, created_at: now },
-            )
-            .onConflict((conflict) =>
-              reason.kind === 'checkIn'
-                ? conflict
-                    .columns(['squad_id', 'check_in_id'])
-                    .where('reason', '=', 'checkIn')
-                    .doNothing()
-                : conflict.columns(['squad_id', 'day']).where('reason', '=', 'daily').doNothing(),
-            )
-            .returning('id')
-            .execute();
+          const inserted = await insertWake(db, { squad, reason, now });
           added += inserted.length;
         }
         return added;
@@ -96,8 +124,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
             (${sql.ref(`${prefix}state`)} = 'running' and ${sql.ref(`${prefix}claimed_at`)} < ${stale})
             or (${sql.ref(`${prefix}state`)} = 'waiting' and ${sql.ref(`${prefix}created_at`)} > ${fresh}
               and (${sql.ref(`${prefix}claimed_at`)} is null or ${sql.ref(`${prefix}claimed_at`)} < ${retry})))`;
-        // Each squad's next wake: one a run dropped first, else its oldest waiting one; never
-        // a squad whose wake is running.
+        // Each squad's next wake: one a run dropped first, then a reply's, else its oldest
+        // waiting one; never a squad whose wake is running.
         const next = await db
           .selectFrom('coach_wakes as wake')
           .distinctOn('wake.squad_id')
@@ -118,6 +146,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           )
           .orderBy('wake.squad_id')
           .orderBy(sql`wake.state = 'running'`, 'desc')
+          // A member's reply waits on its answer, so it goes before older wakes.
+          .orderBy(sql`wake.reason = 'comment'`, 'desc')
           .orderBy('wake.created_at')
           .orderBy('wake.id')
           .execute();
@@ -138,6 +168,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
               'squad_id',
               'reason',
               'check_in_id',
+              'comment_id',
               sql<string | null>`to_char(day, 'YYYY-MM-DD')`.as('day'),
             ])
             .executeTakeFirst()
@@ -234,6 +265,47 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           returning id`.execute(db);
         return saved.rows.length > 0;
       },
+
+      async find(squad, checkIn) {
+        const row = await db
+          .selectFrom('coach_replies')
+          .select(['coach_id', 'text'])
+          .where('squad_id', '=', squad)
+          .where('check_in_id', '=', checkIn)
+          .executeTakeFirst();
+        return row === undefined
+          ? undefined
+          : { coach: CoachId.parse(row.coach_id), text: row.text ?? undefined };
+      },
+    },
+
+    answers: {
+      async save({ squad, checkIn, comment, coach, text, wake }) {
+        // Nothing when the reply went while the run was thinking, as for a reply to a check-in.
+        const saved = await sql<{ id: string }>`
+          insert into public.coach_answers (squad_id, check_in_id, comment_id, coach_id, text, wake_id)
+          select ${squad}, check_in_id, id, ${coach}, ${text}, ${String(wake)}
+          from public.check_in_comments where id = ${comment} and check_in_id = ${checkIn}
+          on conflict (squad_id, comment_id) do nothing
+          returning id`.execute(db);
+        return saved.rows.length > 0;
+      },
+
+      async ofCheckIn(squad, checkIn) {
+        const rows = await db
+          .selectFrom('coach_answers')
+          .select(['comment_id', 'text', 'at'])
+          .where('squad_id', '=', squad)
+          .where('check_in_id', '=', checkIn)
+          .orderBy('at')
+          .orderBy('id')
+          .execute();
+        return rows.map((row) => ({
+          comment: row.comment_id,
+          text: row.text,
+          at: new Date(row.at),
+        }));
+      },
     },
 
     usage: {
@@ -312,6 +384,34 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         at: new Date(row.at),
       }));
     },
+
+    async answers(squad, checkIns) {
+      if (checkIns.length === 0) return [];
+      const rows = await db
+        .selectFrom('coach_answers')
+        .innerJoin('coaches', 'coaches.id', 'coach_answers.coach_id')
+        .select([
+          'coach_answers.check_in_id',
+          'coach_answers.comment_id',
+          'coach_answers.text',
+          'coach_answers.at',
+          'coaches.id as coach_id',
+          'coaches.name',
+          'coaches.look',
+        ])
+        .where('coach_answers.squad_id', '=', squad)
+        .where('coach_answers.check_in_id', 'in', checkIns)
+        .orderBy('coach_answers.at')
+        .orderBy('coach_answers.id')
+        .execute();
+      return rows.map((row) => ({
+        checkIn: row.check_in_id,
+        comment: row.comment_id,
+        coach: { id: row.coach_id, name: row.name, look: row.look },
+        text: row.text,
+        at: new Date(row.at),
+      }));
+    },
   };
 }
 
@@ -381,7 +481,7 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
         files: files.map(({ path, body, at }) => ({ path, body, at: new Date(at) })),
         notes,
         wakes: wakes.map((wake) => ({
-          reason: wake.reason === 'daily' ? 'daily' : 'checkIn',
+          reason: wake.reason === 'daily' || wake.reason === 'comment' ? wake.reason : 'checkIn',
           state: wake.state,
           tries: wake.tries,
           lastError: wake.last_error,

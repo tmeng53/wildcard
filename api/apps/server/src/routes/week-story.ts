@@ -138,13 +138,25 @@ const storyFields = {
         'later isn’t here, someone who left since is. A deleted account is left out.',
     }),
   podium: z
-    .strictObject({ champion: z.uuid(), sides: z.array(z.uuid()).max(2) })
+    .strictObject({
+      champion: z.uuid(),
+      sides: z.array(z.uuid()).max(2),
+      planDone: z
+        .array(z.uuid())
+        .max(3)
+        .meta({
+          description:
+            'Those on the podium who trained at least as many days as they planned (练够计划), ' +
+            'for a small mark on their step. Empty when none did.',
+        }),
+    })
     .openapi('StoryPodium')
     .optional()
     .meta({
       description:
-        '领奖台: the crown winner (most days trained) in the middle, up to 2 others who finished ' +
-        'their plan beside. Missing when nobody did either.',
+        '领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who ' +
+        'picks next week’s scene; the earliest to join on a tie) in the middle, up to 2 next ' +
+        'beside, left then right. Missing when nobody trained.',
     }),
   myWeek: z
     .strictObject({
@@ -357,7 +369,13 @@ export function weekStory(
         }),
         ...(story.podium === undefined
           ? {}
-          : { podium: { champion: story.podium.champion, sides: [...story.podium.sides] } }),
+          : {
+              podium: {
+                champion: story.podium.champion,
+                sides: [...story.podium.sides],
+                planDone: [...story.podium.planDone],
+              },
+            }),
         ...(mine?.checkedIn !== true
           ? {}
           : {
