@@ -77,7 +77,7 @@ public struct NoticesView: View {
                 .padding(.top, Space.xs)
                 .padding(.bottom, Space.l)
             }
-            .refreshable { await inbox.open() }
+            .refreshable { await inbox.refresh() }
         }
         .loadingCover(inbox.phase == .loading && inbox.notices.isEmpty) {
             TicketSpinner()
@@ -91,7 +91,12 @@ public struct NoticesView: View {
 
     @ViewBuilder private var content: some View {
         if inbox.notices.isEmpty {
-            if inbox.phase == .current { EmptyNotices(viewer: viewer) }
+            // Pages of kinds this build can't show may hide older ones it can: read on to them.
+            if inbox.hasMore {
+                more
+            } else if inbox.phase == .current {
+                EmptyNotices(viewer: viewer)
+            }
         } else {
             let shownAt = now()
             ForEach(NoticeSection.sections(inbox.notices, now: shownAt, calendar: .current)) { section in
@@ -128,8 +133,9 @@ public struct NoticesView: View {
                         .foregroundStyle(Color(role: .fgMuted, in: .gym))
                 }
             } else {
+                // Again after each page, while the end is still in view.
                 LoadingDots()
-                    .task { await inbox.loadMore() }
+                    .task(id: inbox.notices.count) { await inbox.loadMore() }
             }
         }
         .frame(maxWidth: .infinity, minHeight: Sizing.control)

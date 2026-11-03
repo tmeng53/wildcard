@@ -34,6 +34,7 @@ private actor FakeNotices: NoticeSource {
 
     func set(unreachable: Bool) { self.unreachable = unreachable }
     func hide(_ ids: Set<NoticeID>) { unknown = ids }
+    func add(_ notice: Notice) { all.append(notice) }
 }
 
 private let monday = Date(timeIntervalSince1970: 1_793_577_600)  // 2026-11-02 00:00 UTC, a Monday
@@ -83,6 +84,19 @@ private var utc: Calendar {
     await inbox.open()
     #expect(await server.marked == [NoticeID(rawValue: 3)])
     #expect(inbox.notices.map { inbox.isUnread($0) } == [false, false, false])
+}
+
+@Test @MainActor func pullingTheOpenPageMarksNewOnesReadAndKeepsTheBold() async {
+    let server = FakeNotices([notice(1), notice(2)], seen: NoticeID(rawValue: 1))
+    let inbox = NoticeInbox(source: server)
+    await inbox.open()
+    await server.add(notice(3))
+
+    await inbox.refresh()
+    #expect(await server.marked == [NoticeID(rawValue: 2), NoticeID(rawValue: 3)])
+    #expect(!inbox.hasUnread)
+    // What was new when the page opened stays bold, and so does what came in while it was open.
+    #expect(inbox.notices.map { inbox.isUnread($0) } == [true, true, false])
 }
 
 @Test @MainActor func pagesGoOnPastNoticesThisBuildCantShow() async {

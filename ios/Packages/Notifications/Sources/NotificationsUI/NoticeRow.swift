@@ -65,7 +65,9 @@ struct NoticeRow: View {
         case .today:
             return Text(notice.toldAt, format: .dateTime.hour().minute().locale(locale))
         case .thisWeek:
-            if Calendar.current.isDate(notice.toldAt, inSameDayAs: now.addingTimeInterval(-86_400)) {
+            if let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now),
+                Calendar.current.isDate(notice.toldAt, inSameDayAs: yesterday)
+            {
                 return Text("昨天", bundle: .module)
             }
             return Text(notice.toldAt, format: .dateTime.weekday(.abbreviated).locale(locale))

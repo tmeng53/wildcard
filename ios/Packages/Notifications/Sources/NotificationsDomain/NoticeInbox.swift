@@ -129,6 +129,17 @@ public final class NoticeInbox {
     public func open() async {
         await load()
         seenWhenOpened = seenThrough
+        await markNewestSeen()
+    }
+
+    /// The open page pulled: loads the newest notices and marks them read, keeping the rows that
+    /// were new when it opened bold.
+    public func refresh() async {
+        await load()
+        await markNewestSeen()
+    }
+
+    private func markNewestSeen() async {
         guard let newest = notices.first?.id, hasUnread else { return }
         seenThrough = newest
         try? await source.markSeen(through: newest)
