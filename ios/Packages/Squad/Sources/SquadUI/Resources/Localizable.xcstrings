@@ -1,22 +1,6 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
-    "%@ 选的，下周冠军再换": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@'s pick. Next week's champ gets the next one."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ 選的，下週冠軍再換"
-          }
-        }
-      }
-    },
     "%lld 人": {
       "localizations": {
         "en": {
@@ -161,22 +145,6 @@
         }
       }
     },
-    "你选的，下周冠军再换": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your pick. Next week's champ gets the next one."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你選的，下週冠軍再換"
-          }
-        }
-      }
-    },
     "保存": {
       "localizations": {
         "en": {
@@ -205,22 +173,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "再試一次"
-          }
-        }
-      }
-    },
-    "冠军选的，下周冠军再换": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Champ's pick. Next week's champ gets the next one."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "冠軍選的，下週冠軍再換"
           }
         }
       }
@@ -749,22 +701,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "隊長會交給最早加入的隊友"
-          }
-        }
-      }
-    },
-    "队长选的，下周冠军再换": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Captain's pick. Next week's champ gets the next one."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隊長選的，下週冠軍再換"
           }
         }
       }
