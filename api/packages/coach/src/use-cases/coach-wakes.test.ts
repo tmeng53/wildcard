@@ -307,14 +307,22 @@ describe('the coach', () => {
       // What members read: the newest line and the replies to the check-ins they ask about.
       const activity = createCoachActivity({ store: createPostgresCoachActivity(trx) });
       const xiaohun = { id: 'xiaohun', name: '小混', look: 'xiaohun' };
+      const said = await activity.squad({
+        squad,
+        checkIns: [fixture.checkIn.toUpperCase(), randomUUID()],
+      });
       expect(
-        await activity.squad({ squad, checkIns: [fixture.checkIn.toUpperCase(), randomUUID()] }),
-      ).toStrictEqual({
+        [said.note?.at, ...said.replies.map(({ at }) => at)].every((at) => at instanceof Date),
+      ).toBe(true);
+      expect({
+        note: said.note === undefined ? undefined : { ...said.note, at: 'at' },
+        replies: said.replies.map((reply) => ({ ...reply, at: 'at' })),
+      }).toStrictEqual({
         note: {
           day: '2026-11-01',
           text: '周日也跑了，米亚是认真的',
           coach: xiaohun,
-          at: expect.any(Date),
+          at: 'at',
         },
         replies: [
           {
@@ -322,7 +330,7 @@ describe('the coach', () => {
             coach: xiaohun,
             text: '周日也跑，腿还在吗',
             emoji: '🔥',
-            at: expect.any(Date),
+            at: 'at',
           },
         ],
       });
