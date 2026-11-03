@@ -86,11 +86,11 @@ export interface DailyProgressDependencies {
 
 /** What a run did, member by member. */
 export interface DailyProgressRun {
-  /** Members whose push was due: past the hour, a phone, not turned off, not handled today. */
+  /** Members whose push was due: past the hour, not turned off, not handled today. */
   readonly due: number;
   /** Reached at least one of the member's phones. */
   readonly sent: number;
-  /** Had something to say but reached no phone: sending is off, or every phone failed. */
+  /** Had something to say but reached no phone: none, sending is off, or every phone failed. */
   readonly unsent: number;
   /** Handled with nothing to say: no squad, or no one in it checked in and nothing came in. */
   readonly quiet: number;
