@@ -2,7 +2,6 @@ import { sql, type Kysely } from 'kysely';
 
 import { MemberId, SquadId, StoredAward, type TitleWin } from '../domain/awards.js';
 import { WeekStart } from '../domain/schedule.js';
-import { StoredStory } from '../domain/week-story.js';
 import type { AwardsStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -65,7 +64,8 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
           'winner.squad_id',
           sql<string>`winner.week_start::text`.as('week'),
           'winner.award',
-          'story.story',
+          // Only the name, not the whole frozen story with its pages.
+          sql<string | null>`story.story ->> 'name'`.as('squad_name'),
         ])
         .where('winner.member_id', 'in', members)
         .orderBy('winner.week_start', 'desc')
@@ -76,7 +76,7 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
         const member = MemberId.parse(row.member_id);
         const squad = SquadId.parse(row.squad_id);
         const weekStart = WeekStart.parse(row.week);
-        const squadName = row.story === null ? undefined : StoredStory.parse(row.story).name;
+        const squadName = row.squad_name ?? undefined;
         const list = wins.get(member) ?? [];
         for (const title of StoredAward.parse(row.award).titles) {
           list.push({ squad, weekStart, title, ...(squadName === undefined ? {} : { squadName }) });
