@@ -289,21 +289,30 @@ public final class FeedModel {
     func player(for post: FeedPost) -> CharacterPlayer? {
         let character = store.characters[post.author]
         let persona = character?.look.moves ?? .energetic
-        var outfit = character?.look.outfit ?? PlaceholderCharacter.lifter
-        var idle = Clip.still
-        if case .trained(let training) = post.checkIn.entry,
-            let loop = try? PlaceholderCharacter.trainingLoop(
-                for: training.activity, look: outfit, persona: persona, in: SportList.shared.catalog)
-        {
-            (outfit, idle) = (loop.outfit, loop.clip)
-        }
+        let look = character?.look.outfit ?? PlaceholderCharacter.lifter
+        let kit = trainingKit(of: post)
+        let outfit = kit?.dress(look) ?? look
         if let cached = players[post.id], cached.outfit == outfit, cached.persona == persona { return cached.player }
+        let idle = kit.flatMap { try? PlaceholderCharacter.move(for: $0, persona: persona) } ?? .still
         guard let figure = try? PlaceholderCharacter.figure(wearing: outfit),
             let player = try? CharacterPlayer(figure: figure, idle: idle, now: now())
         else { return nil }
         players[post.id] = (outfit, persona, player)
         return player
     }
+
+    /// Whether the post's character trains at rest (a 练了), so its card keeps drawing it.
+    func trains(_ post: FeedPost) -> Bool {
+        trainingKit(of: post) != nil
+    }
+
+    /// A 练了's sport kit, read once from `kits.json`.
+    private func trainingKit(of post: FeedPost) -> SportKit? {
+        guard case .trained(let training) = post.checkIn.entry else { return nil }
+        return Self.kits?.kit(for: training.activity, in: SportList.shared.catalog)
+    }
+
+    private static let kits = try? PlaceholderCharacter.sportKits()
 
     /// The character's head, for the faces in a reaction row.
     func head(of member: MemberID) -> CharacterPlayer? {

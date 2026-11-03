@@ -100,6 +100,11 @@ public final class ScheduleModel {
         makePlayer()
     }
 
+    /// Puts the character to today's sport, when it changed.
+    func followToday() {
+        dressPlayer()
+    }
+
     /// Puts the character to the squad's scene's sport, once the screen knows the scene.
     func train(on scene: SceneTheme) {
         guard scene != self.scene else { return }
@@ -157,17 +162,11 @@ public final class ScheduleModel {
     }
 
     func pick(_ activity: Activity) {
-        Task {
-            await store.pick(activity)
-            dressPlayer()
-        }
+        Task { await store.pick(activity) }
     }
 
     func rest() {
-        Task {
-            await store.rest()
-            dressPlayer()
-        }
+        Task { await store.rest() }
     }
 
     // MARK: 饮食小目标

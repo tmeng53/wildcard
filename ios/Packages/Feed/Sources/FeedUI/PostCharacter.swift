@@ -5,9 +5,10 @@ import DesignSystemUI
 import FeedDomain
 import SwiftUI
 
-/// The author's character at the card's left, full height. It holds still, drawn once, so a
-/// feed of cards costs nothing to scroll; when someone reacts it plays the move, redrawing
-/// every frame only for as long as the move lasts. On my own post, a teammate's reaction that
+/// The author's character at the card's left, full height. On a 练了 it loops that sport's move
+/// while the card is on screen (the feed's cards are lazy, so only the visible ones draw); on the
+/// other kinds it holds still, drawn once, and redraws every frame only while a reaction's move
+/// plays. With Reduce Motion it always holds still. On my own post, a teammate's reaction that
 /// arrived shows in a small bubble over my character, with their head and emoji.
 struct PostCharacter: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -17,7 +18,7 @@ struct PostCharacter: View {
     var body: some View {
         if let player = model.player(for: post) {
             let played = model.played[post.id]
-            figure(player, moving: played != nil && !reduceMotion)
+            figure(player, moving: (played != nil || model.trains(post)) && !reduceMotion)
                 .frame(height: Sizing.characterFull)
                 .anchorPreference(key: FeedAnchors.self, value: .bounds) { FeedAnchors.Value(heads: [post.id: $0]) }
                 .overlay(alignment: .top) {
