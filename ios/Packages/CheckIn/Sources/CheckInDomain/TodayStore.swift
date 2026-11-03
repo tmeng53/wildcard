@@ -47,18 +47,22 @@ public final class TodayStore {
     /// Posts not yet saved, oldest first.
     public private(set) var pending: [PendingCheckIn] = []
     /// Posts dropped because the server refused them while they went out late.
-    public private(set) var refused: [Refused] = []
+    public internal(set) var refused: [Refused] = []
     /// Reactions on check-ins loaded with `loadReactions(to:)`, by check-in.
     public private(set) var reactions: [CheckInID: [Reaction]] = [:]
     /// Whom the member patted today (拍一拍) and who patted them in the last day, as last loaded.
     public private(set) var pokes = SquadPokes.none
     /// What changed in the squad since the home shown before, not yet told (`takeNews()`).
-    public private(set) var news = SquadNews()
+    public internal(set) var news = SquadNews()
     /// The squad the member was in when the server last said they are in none: they left it, or
     /// the captain removed them.
     public private(set) var lostSquad: Squad?
+    /// Stores and props the member unlocked that the home hasn't told yet, the earliest first
+    /// (`takeUnlocks()`).
+    public internal(set) var unlocked: [Unlock] = []
 
     private let backend: any CheckInBackend
+    let ledger: (any UnlockLedger)?
     private let outbox: any Outbox
     private let now: @Sendable () -> Date
     private let newID: @Sendable () -> UUID
@@ -66,10 +70,11 @@ public final class TodayStore {
     private var isDraining = false
 
     public init(
-        backend: any CheckInBackend, outbox: any Outbox, now: @escaping @Sendable () -> Date,
-        newID: @escaping @Sendable () -> UUID
+        backend: any CheckInBackend, outbox: any Outbox, unlocks ledger: (any UnlockLedger)? = nil,
+        now: @escaping @Sendable () -> Date, newID: @escaping @Sendable () -> UUID
     ) {
         self.backend = backend
+        self.ledger = ledger
         self.outbox = outbox
         self.now = now
         self.newID = newID
@@ -127,6 +132,7 @@ public final class TodayStore {
         await refresh()
         await loadPokes()
         await sendPending()
+        await checkUnlocks()
     }
 
     /// Loads the server's home; keeps the one shown when the server can't be reached. A post
@@ -154,13 +160,6 @@ public final class TodayStore {
         }
     }
 
-    /// The squad's news, once: the home tells it, and the next call has none until something else
-    /// changes.
-    public func takeNews() -> SquadNews {
-        defer { news = SquadNews() }
-        return news
-    }
-
     // MARK: - Posting
 
     /// Posts a check-in, shared to `squads` (every squad the member is in when left out; none
@@ -181,7 +180,10 @@ public final class TodayStore {
         pending.append(post)
         await outbox.save(pending)
         switch await drain(watching: post.id) {
-        case .saved(let saved): return .posted(saved)
+        case .saved(let saved):
+            // A 练了 is what opens a store or a prop.
+            if case .trained = saved.entry { await checkUnlocks() }
+            return .posted(saved)
         case .refused(let reason): throw reason
         case .waiting: return .queued
         }
@@ -237,11 +239,6 @@ public final class TodayStore {
             }
         }
         return fate
-    }
-
-    /// The member has seen why these posts were dropped.
-    public func dismissRefused() {
-        refused = []
     }
 
     /// Uploads the post's photos still to upload, then saves it. A refusal drops it from the
