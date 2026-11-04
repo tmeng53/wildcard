@@ -1,7 +1,7 @@
 import Contracts
 import DesignSystem
 
-// The five scenes' stations and floors, from the approved simple home design (2026-10-20).
+// The scenes' stations and floors, from the approved simple home design (2026-10-20).
 // Station coordinates are after each scene's art is lifted (track and pool 36, tennis 30, gym 24,
 // climbing 10) to make room for the 打卡 button; the floors are drawn in screen coordinates.
 extension StageLayout {
@@ -12,6 +12,7 @@ extension StageLayout {
         case .gym: gym
         case .tennis: tennis
         case .climbing: climbing
+        case .ski: ski
         }
     }
 
@@ -102,4 +103,18 @@ extension StageLayout {
         // From the foot of the wall.
         standing: [StageRect(x: 0...390, y: 470...650)],
         props: [])
+
+    // Skiers carve across the glacier's face, two runs down it; everyone else stands on the
+    // snowfield below. The art isn't lifted.
+    static let ski = StageLayout(
+        stations: [
+            Station(
+                kind: .carving, capacity: 4,
+                path: .lanes([390.0, 476].map { StationPath.Lane(from: 40, to: 350, y: $0) }, speed: 44),
+                scale: nil)
+        ],
+        stationsBySport: ["ski": [.carving], "snowboard": [.carving], "crossCountrySki": [.carving]],
+        standing: [StageRect(x: 0...390, y: 576...650)],
+        // The snowman.
+        props: [StageRect(x: 310...390, y: 576...650)])
 }

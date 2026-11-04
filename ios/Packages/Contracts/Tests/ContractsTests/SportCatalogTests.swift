@@ -57,3 +57,17 @@ private let catalog = SportCatalog(
     #expect(catalog.matching("竞走") == [])
     #expect(catalog.matching("  ") == [])
 }
+
+@Test func aSeasonRunsOverNewYear() throws {
+    let winter = SceneSeason(start: try #require(MonthDay("11-15")), end: try #require(MonthDay("03-31")))
+    #expect(winter.contains(try LocalDay("2026-11-15")))
+    #expect(winter.contains(try LocalDay("2027-01-01")))
+    #expect(winter.contains(try LocalDay("2027-03-31")))
+    #expect(!winter.contains(try LocalDay("2027-04-01")))
+    #expect(!winter.contains(try LocalDay("2026-11-14")))
+    let summer = SceneSeason(start: try #require(MonthDay("06-01")), end: try #require(MonthDay("08-31")))
+    #expect(summer.contains(try LocalDay("2026-07-04")))
+    #expect(!summer.contains(try LocalDay("2026-09-01")))
+    #expect(MonthDay("13-01") == nil)
+    #expect(MonthDay("1-1") == nil)
+}

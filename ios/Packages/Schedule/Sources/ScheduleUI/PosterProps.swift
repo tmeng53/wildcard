@@ -5,7 +5,7 @@ import SwiftUI
 /// Two or three of the scene's own things drawn flat in white behind the poster, so it isn't
 /// only lines: the gym's dumbbell, kettlebell and plate; the court's racket and balls; the pool's
 /// ring, duck and bubbles; the track's hurdle, cone and baton; the wall's carabiner, chalk bag
-/// and hold. One sits right of the week's number, the rest right of the first lanes, clear of
+/// and hold; the slope's snowflakes and pine. One sits right of the week's number, the rest right of the first lanes, clear of
 /// the lanes' words and the character. Their details are cut out, so the scene shows through.
 /// Positions from the approved design, in poster points.
 enum PosterProps {
@@ -37,6 +37,11 @@ enum PosterProps {
         case .pool: [ring, duck, bubbles]
         case .track: [hurdle, cone, baton]
         case .climbing: [carabiner, chalkBag, hold]
+        case .ski:
+            [
+                snowflake(at: CGPoint(x: 286, y: 84), scale: 1), pine,
+                snowflake(at: CGPoint(x: 250, y: 240), scale: 0.55),
+            ]
         }
     }
 

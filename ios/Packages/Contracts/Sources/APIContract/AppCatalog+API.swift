@@ -8,7 +8,19 @@ extension AppCatalog {
         let dice = wire.disclaimerDice?.lines.map(CatalogNames.init) ?? []
         self.init(
             sports: wire.sports.map(SportCatalog.init) ?? fallback.sports,
-            diceLines: dice.isEmpty ? fallback.diceLines : dice)
+            diceLines: dice.isEmpty ? fallback.diceLines : dice,
+            seasons: wire.scenes.map(Self.seasons) ?? fallback.seasons)
+    }
+
+    /// Each limited scene's season; a window that can't be read leaves its scene out.
+    static func seasons(_ wire: Components.Schemas.ScenesCatalog) -> [String: SceneSeason] {
+        var seasons: [String: SceneSeason] = [:]
+        for scene in wire.scenes {
+            guard let window = scene.window, let start = MonthDay(window.start), let end = MonthDay(window.end)
+            else { continue }
+            seasons[scene.id] = SceneSeason(start: start, end: end)
+        }
+        return seasons
     }
 }
 
