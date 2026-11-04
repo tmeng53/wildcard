@@ -6,7 +6,7 @@ import type { Log } from '../log.js';
  * How long a request waits for the coach, inside the app's 15-second request timeout with the
  * pushes before it; slower work is the coach job's to finish.
  */
-const COACH_WAIT_MS = 6_000;
+const COACH_WAIT_MS = 8_000;
 
 /** Has the coach answer a member's reply to it now (the coach module's `answer`). */
 export type CoachAnswerer = (input: {
