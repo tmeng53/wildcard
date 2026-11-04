@@ -28,8 +28,8 @@ final class SquadSettingsUITests: XCTestCase {
         waitFor(
             app.buttons.matching(identifier: "squad.member.more").element(boundBy: 3), "exists == false",
             "大卫 is still in the squad")
-        // SwiftUI drops an alert asked for while the removal's dialog is still going away.
-        waitFor(confirm, "exists == false", "removing's dialog didn't close")
+        // SwiftUI drops an alert asked for while the glass menu is still going away.
+        waitFor(confirm, "exists == false", "the glass menu didn't close")
         settle()
 
         // The page stays disabled while the removal saves, and a tap then does nothing.

@@ -209,9 +209,10 @@ struct GlassMenuRow: View {
                         .frame(width: Sizing.icon)
                         .accessibilityHidden(true)
                 }
+                // Wraps rather than cut off at large text sizes; the row grows from 48.
                 title
                     .typeStyle(isEmphasized ? TypeRamp.headline : TypeRamp.body)
-                    .lineLimit(1)
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: Space.m)
                 if isSelected {
                     Image(systemName: "checkmark")
