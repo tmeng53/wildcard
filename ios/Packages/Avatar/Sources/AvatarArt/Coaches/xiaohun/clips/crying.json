@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "name": "crying",
+  "duration": 1.6,
+  "loops": true,
+  "tracks": [
+    { "part": "cry", "channel": "opacity", "keys": [ { "t": 0, "v": 1 }, { "t": 1.6, "v": 1 } ] },
+    { "part": "root", "channel": "y", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.2, "v": 2, "ease": "easeOut" }, { "t": 0.4, "v": 0, "ease": "easeIn" },
+      { "t": 0.6, "v": 2, "ease": "easeOut" }, { "t": 0.8, "v": 0, "ease": "easeIn" }, { "t": 1.6, "v": 0 } ] },
+    { "part": "torso", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 1 }, { "t": 0.2, "v": 0.985, "ease": "easeOut" }, { "t": 0.4, "v": 1, "ease": "easeIn" },
+      { "t": 0.6, "v": 0.985, "ease": "easeOut" }, { "t": 0.8, "v": 1, "ease": "easeIn" }, { "t": 1.6, "v": 1 } ] },
+    { "part": "head", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.8, "v": -3, "ease": "easeInOut" }, { "t": 1.6, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "tail", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.8, "v": -10, "ease": "easeInOut" }, { "t": 1.6, "v": 0, "ease": "easeInOut" } ] }
+  ]
+}

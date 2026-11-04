@@ -138,13 +138,9 @@ public struct EmojiPicker<Item: Hashable>: View {
     public var body: some View {
         let showsRecent = !showsAll && !recent.isEmpty
         VStack(alignment: .leading, spacing: Space.xs) {
-            if recent.isEmpty {
-                SectionLabel(Text("全部", bundle: .module))
-            } else {
-                HStack(spacing: Space.xs) {
-                    PickPill(Text("最近", bundle: .module), isSelected: showsRecent) { showsAll = false }
-                    PickPill(Text("全部", bundle: .module), isSelected: !showsRecent) { showsAll = true }
-                }
+            HStack(spacing: Space.xs) {
+                PickPill(Text("最近", bundle: .module), isSelected: showsRecent) { showsAll = false }
+                PickPill(Text("全部", bundle: .module), isSelected: !showsRecent) { showsAll = true }
             }
             if !showsRecent, search != nil {
                 SearchField(text: $query, prompt: Text("搜索表情", bundle: .module))
