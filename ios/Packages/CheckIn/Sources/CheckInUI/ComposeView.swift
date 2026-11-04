@@ -72,10 +72,8 @@ struct ComposeView: View {
                 }
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        .actionBar {
             ShareRow(squads: model.shareSquads, shared: $shared)
-                .padding(.horizontal, Space.pageMargin)
-                .background(Color(role: .bgCanvas, in: theme))
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .sheet(isPresented: $isPickingSport) {
