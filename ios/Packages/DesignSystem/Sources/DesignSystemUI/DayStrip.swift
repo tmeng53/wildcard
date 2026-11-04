@@ -78,8 +78,9 @@ public struct DayStrip<ID: Hashable & Sendable>: View {
                 .frame(width: SquadCardMetrics.day, height: SquadCardMetrics.day)
                 .background { circle(day, isPicked: isPicked) }
         }
-        // Answers taps across the full target, not just the circle.
-        .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
+        // Answers taps across its share of the width and the full height, not just the circle;
+        // eight days fit a 320-point phone, so no minimum width.
+        .frame(maxWidth: .infinity, minHeight: Sizing.minimumTapTarget)
         .contentShape(Rectangle())
     }
 

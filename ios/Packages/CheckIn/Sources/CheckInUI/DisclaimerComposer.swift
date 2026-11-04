@@ -30,7 +30,8 @@ struct DisclaimerComposer: View {
     @State private var landed = 0
     /// The squads it goes to: all of them until the member unticks one.
     @State private var shared: Set<SquadID>
-    /// The day it counts for (补打卡): today, or the latest day before it without a 练了.
+    /// The past day it counts for (补打卡); nil is today, whatever day it is when it posts. It
+    /// opens on today, or on the latest day before it without a 练了 when today can't take one.
     @State private var day: LocalDay?
     @FocusState private var isEditing: Bool
 
@@ -38,7 +39,9 @@ struct DisclaimerComposer: View {
         self.model = model
         _shared = State(initialValue: Set(model.shareSquads.map(\.id)))
         let blocked = model.blockedForDisclaimer
-        _day = State(initialValue: model.disclaimerDays.last { !blocked.contains($0) })
+        let today = model.disclaimerDays.last
+        let latest = model.disclaimerDays.last { !blocked.contains($0) }
+        _day = State(initialValue: latest == today ? nil : latest)
     }
 
     var body: some View {

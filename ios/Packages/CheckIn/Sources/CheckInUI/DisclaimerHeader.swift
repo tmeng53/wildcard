@@ -10,18 +10,19 @@ import SwiftUI
 struct DisclaimerHeader: View {
     @Environment(\.sceneTheme) private var theme
     let model: TodayModel
+    /// The past day picked; nil is today.
     @Binding var day: LocalDay?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.m) {
             header
-            if let picked = day, model.disclaimerDays.count > 1 {
+            if let today = model.disclaimerDays.last, model.disclaimerDays.count > 1 {
                 DayPick(
                     days: model.disclaimerDays, blocked: model.blockedForDisclaimer,
                     picked: Binding {
-                        picked
+                        day ?? today
                     } set: {
-                        day = $0
+                        day = $0 == today ? nil : $0
                     })
             }
         }
@@ -34,7 +35,7 @@ struct DisclaimerHeader: View {
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Group {
-                    if day == model.disclaimerDays.last {
+                    if day == nil {
                         Text("今日请假条", bundle: .module)
                     } else {
                         Text("请假条", bundle: .module)
