@@ -6,24 +6,38 @@ import Foundation
 public struct CheckIn: Hashable, Sendable {
     public let id: CheckInID
     public let member: MemberID
-    /// The member's local day the check-in counts for.
+    /// The member's local day the check-in counts for: `postedDay` or one of the
+    /// `backfillDays` before it (补打卡).
     public let day: LocalDay
+    /// The member's local day when they posted it, which orders 动态. Later than `day` only for
+    /// a 补打卡.
+    public let postedDay: LocalDay
     /// When it was made, for ordering on the track. Not used to pick the day.
     public let createdAt: Timestamp
     /// The squads it was sent to. Squads not listed see the member as not checked in.
     public let audience: Audience
     public let entry: Entry
 
+    /// How many days before the day it is posted a check-in may count for (补打卡). The API's
+    /// limit; `APIContract`'s tests fail when the two differ.
+    public static let backfillDays = 7
+
+    /// `postedDay` left out is `day`: the check-in was posted the day it counts for.
     public init(
-        id: CheckInID, member: MemberID, day: LocalDay, createdAt: Timestamp, audience: Audience, entry: Entry
+        id: CheckInID, member: MemberID, day: LocalDay, postedDay: LocalDay? = nil, createdAt: Timestamp,
+        audience: Audience, entry: Entry
     ) {
         self.id = id
         self.member = member
         self.day = day
+        self.postedDay = postedDay ?? day
         self.createdAt = createdAt
         self.audience = audience
         self.entry = entry
     }
+
+    /// Posted on a later day than the one it counts for (补打卡).
+    public var isBackfill: Bool { postedDay != day }
 
     public enum Entry: Hashable, Sendable {
         /// 练了
