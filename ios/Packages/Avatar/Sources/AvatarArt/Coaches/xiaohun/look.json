@@ -4,7 +4,7 @@
   "species": "cat",
   "look": {
     "body": "maotou", "eyes": "sleepy", "brows": "worried", "mouth": "cat", "top": "coach-jacket",
-    "bottom": "nolook-shorts", "shoes": "warmup-runner", "acc": "coach-gear"
+    "bottom": "warmup-shorts", "shoes": "warmup-runner", "acc": "coach-gear"
   },
   "colors": { "bottom": "#2A2D36" }
 }
