@@ -17,7 +17,7 @@ import SwiftUI
 
 /// The app once the member is signed in and in a squad: the three tabs (今天, 动态, 我) in the
 /// system's Liquid Glass tab bar (`AppTabs`), with 小队 opened inside 今天 from the home's squad
-/// card (Tracy took 小队's own tab away on 2026-11-04; the place is kept for the squad's chat).
+/// card (Tracy took 小队's own tab away on 2026-11-04; the coach chat opens from home too).
 /// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
 /// them draws the bar itself.
 struct MainTabs: View {
