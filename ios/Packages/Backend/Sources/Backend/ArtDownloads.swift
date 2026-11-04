@@ -122,18 +122,21 @@ public actor ArtDownloads {
     }
 
     /// What stands or falls together: a character variant's folder (`avatar/art/<slot>/<variant>`),
-    /// a coach's (`coaches/<coach>`), else the file itself (a move, a scene picture).
+    /// a coach's (`coaches/<coach>`), an opening's (`openings/<opening>`), else the file itself (a move, a scene picture).
     static func unit(of path: String) -> String {
         let parts = path.split(separator: "/")
         if parts.count > 4, parts[0] == "avatar", parts[1] == "art" { return parts[0..<4].joined(separator: "/") }
-        if parts.count > 2, parts[0] == "coaches" { return parts[0..<2].joined(separator: "/") }
+        // Moves every coach shares (`coaches/moves/<move>.json`) stand alone, like a member's.
+        if parts.count > 2, parts[0] == "coaches" || parts[0] == "openings", parts[1] != "moves" {
+            return parts[0..<2].joined(separator: "/")
+        }
         return path
     }
 
     /// Whether `path` stays inside the art tree, whatever the server sent.
     static func isInTree(_ path: String) -> Bool {
         let parts = path.split(separator: "/", omittingEmptySubsequences: false)
-        return ["avatar", "coaches", "scenes"].contains(parts.first.map(String.init) ?? "")
+        return ["avatar", "coaches", "scenes", "openings"].contains(parts.first.map(String.init) ?? "")
             && parts.count > 1 && !parts.contains { $0.isEmpty || $0 == "." || $0 == ".." }
     }
 

@@ -17,7 +17,7 @@ values ('art', 'art', true, 2097152, array['image/svg+xml', 'application/json', 
 create table public.art_files (
   id bigint generated always as identity primary key,
   path text not null check (
-    path ~ '^(avatar|coaches|scenes)(/[A-Za-z0-9][A-Za-z0-9_@.-]{0,63}){1,6}\.(svg|json|png)$'
+    path ~ '^(avatar|coaches|scenes|openings)(/[A-Za-z0-9][A-Za-z0-9_@.-]{0,63}){1,6}\.(svg|json|png)$'
     and path !~ '\.\.'
   ),
   -- The file's SHA-256 in hex, its name in the bucket with the path's extension; null when the

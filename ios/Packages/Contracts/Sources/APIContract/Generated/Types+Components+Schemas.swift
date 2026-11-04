@@ -850,7 +850,7 @@ extension Components {
             public var baseUrl: Swift.String
             /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload`.
             public struct FilesPayloadPayload: Codable, Hashable, Sendable {
-                /// Where the file goes in the app’s art tree (`avatar/…` over the character’s bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home scene pictures), in place of the bundled file there.
+                /// Where the file goes in the app’s art tree (`avatar/…` over the character’s bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home scene pictures, `openings/…` the opening animations), in place of the bundled file there.
                 ///
                 /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload/path`.
                 public var path: Swift.String
@@ -871,7 +871,7 @@ extension Components {
                 /// Creates a new `FilesPayloadPayload`.
                 ///
                 /// - Parameters:
-                ///   - path: Where the file goes in the app’s art tree (`avatar/…` over the character’s bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home scene pictures), in place of the bundled file there.
+                ///   - path: Where the file goes in the app’s art tree (`avatar/…` over the character’s bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home scene pictures, `openings/…` the opening animations), in place of the bundled file there.
                 ///   - sha256: The file’s SHA-256, lowercase hex; also its name.
                 ///   - size: Its size in bytes.
                 ///   - rigVersion: The lowest rig version that draws it: a build with an older rig leaves it out.

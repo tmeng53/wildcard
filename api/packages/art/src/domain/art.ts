@@ -10,7 +10,9 @@ import { ArtRefusedError } from '../errors.js';
 /** A path in the app's art tree, as the app bundles it: `avatar/art/top/warmup-tee/torso.svg`. */
 export const ArtPath = z
   .string()
-  .regex(/^(avatar|coaches|scenes)(\/[A-Za-z0-9][A-Za-z0-9_@.-]{0,63}){1,6}\.(svg|json|png)$/)
+  .regex(
+    /^(avatar|coaches|scenes|openings)(\/[A-Za-z0-9][A-Za-z0-9_@.-]{0,63}){1,6}\.(svg|json|png)$/,
+  )
   .refine((path) => !path.includes('..'), 'A path never leaves the art tree.')
   .brand<'ArtPath'>()
   .meta({
@@ -18,7 +20,8 @@ export const ArtPath = z
       'Where the file sits in the app’s art tree, the path the app bundles it at: avatar/… ' +
       'mirrors the character’s Placeholder folder (art/<slot>/<variant>/<part>.svg, moves/…, ' +
       'editor.json, kits.json), coaches/… the coaches’ characters (<coach id>/…), scenes/… the ' +
-      'home scene pictures (<scene>-day@3x.png).',
+      'home scene pictures (<scene>-day@3x.png), openings/… the opening animations (<opening id>/…: SVG ' +
+      'layers and a timeline JSON).',
     example: 'avatar/art/top/warmup-tee/torso.svg',
   });
 export type ArtPath = z.infer<typeof ArtPath>;

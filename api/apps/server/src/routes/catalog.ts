@@ -141,7 +141,7 @@ export const ArtCatalog = z
             description:
               'Where the file goes in the app’s art tree (`avatar/…` over the character’s ' +
               'bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home ' +
-              'scene pictures), in place of the bundled ' +
+              'scene pictures, `openings/…` the opening animations), in place of the bundled ' +
               'file there.',
             example: 'avatar/art/top/warmup-tee/torso.svg',
           }),

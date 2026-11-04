@@ -41,7 +41,8 @@ public enum ArtTree {
         return Set(names).filter { !$0.hasPrefix(".") }.sorted()
     }
 
-    /// Whether `data` is art this build reads at `path` (`avatar/…`, `coaches/…`, `scenes/…`),
+    /// Whether `data` is art this build reads at `path` (`avatar/…`, `coaches/…`, `scenes/…`,
+    /// `openings/…`, whose JSON this build doesn't read yet),
     /// read the way the screens will: SVG through the parser, each JSON file through its own
     /// decoder (the rig, clips, tones, holds, `editor.json`, `kits.json`), a PNG by its signature.
     /// A downloaded file that fails is left out, so its path keeps the bundled file.
