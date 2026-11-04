@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { SportId } from '@wildcard/sport-ids';
-import { AFTER_MAX, ItemId, MemberId, UnlockKind, type Unlocks } from '@wildcard/unlocks';
+import { AFTER_MAX, ItemId, MemberId, PieceId, UnlockKind, type Unlocks } from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
@@ -9,7 +9,7 @@ import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const Unlock = z
   .strictObject({
-    kind: UnlockKind.meta({
+    kind: UnlockKind.exclude(['piece']).meta({
       description: '`store` for a store on the character editor’s 商店街, `prop` for a prop.',
     }),
     id: ItemId.meta({
@@ -36,26 +36,56 @@ const Unlock = z
   })
   .openapi('Unlock');
 
+const reason = Unlock.shape.reason;
+
+const PieceUnlock = z
+  .strictObject({
+    id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'lap-bib' }),
+    unlockedAt: Unlock.shape.unlockedAt,
+    reason,
+  })
+  .openapi('PieceUnlock');
+
+const LockedPiece = z
+  .strictObject({
+    id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'lap-singlet' }),
+    checkInsToGo: z
+      .int()
+      .min(1)
+      .max(AFTER_MAX)
+      .meta({ description: 'How many more 练了 check-ins in its sports open it.', example: 2 }),
+  })
+  .openapi('LockedPiece');
+
 const MyUnlocks = z
   .strictObject({
     version: bodyVersion(1),
     unlocks: z.array(Unlock).meta({
       description: 'Every store and prop the member unlocked, the earliest first.',
     }),
+    pieces: z.array(PieceUnlock).meta({
+      description:
+        'Every clothing piece the member unlocked, the earliest first. A piece with a rule ' +
+        'stays locked in its store, even an open one, until then.',
+    }),
+    lockedPieces: z.array(LockedPiece).meta({
+      description: 'Every piece with a rule the member hasn’t unlocked yet, and how far it is.',
+    }),
   })
   .openapi('MyUnlocks');
 
-/** `GET /me/unlocks`: the stores and props the signed-in member unlocked by training. */
+/** `GET /me/unlocks`: the stores, props and pieces the signed-in member unlocked by training. */
 export function unlocks(deps: { readonly verifyToken: VerifyToken; readonly unlocks: Unlocks }) {
   const route = createRoute({
     method: 'get',
     path: '/me/unlocks',
     operationId: 'getMyUnlocks',
-    summary: 'The stores and props the signed-in member unlocked',
+    summary: 'The stores, props and pieces the signed-in member unlocked',
     description:
-      'Stores on the character editor’s 商店街 and props open by 练了 check-ins in their ' +
-      'sports, counting only those made since the rule was added. Starters (WARM-UP, the ' +
-      'tumbler and the dumbbell) are everyone’s and never listed. An unlock is never taken back.',
+      'Stores on the character editor’s 商店街, props and clothing pieces open by 练了 ' +
+      'check-ins in their sports, counting only those made since the rule was added. Starters ' +
+      '(WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and ' +
+      'never listed. An unlock is never taken back.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     responses: {
@@ -66,16 +96,22 @@ export function unlocks(deps: { readonly verifyToken: VerifyToken; readonly unlo
   });
 
   return new OpenAPIHono<SignedIn>().openapi(route, async (c) => {
-    const unlocked = await deps.unlocks.of(MemberId.parse(c.var.caller.userId));
+    const { unlocks, locked } = await deps.unlocks.standing(MemberId.parse(c.var.caller.userId));
+    const shown = (unlock: (typeof unlocks)[number]) => ({
+      id: unlock.id,
+      unlockedAt: unlock.unlockedAt.toISOString(),
+      reason: { sports: [...unlock.sports], checkIns: unlock.after },
+    });
     return c.json(
       {
         version: 1 as const,
-        unlocks: unlocked.map((unlock) => ({
-          kind: unlock.kind,
-          id: unlock.id,
-          unlockedAt: unlock.unlockedAt.toISOString(),
-          reason: { sports: [...unlock.sports], checkIns: unlock.after },
-        })),
+        unlocks: unlocks.flatMap((unlock) =>
+          unlock.kind === 'piece' ? [] : [{ kind: unlock.kind, ...shown(unlock) }],
+        ),
+        pieces: unlocks.filter(({ kind }) => kind === 'piece').map(shown),
+        lockedPieces: locked
+          .filter(({ kind }) => kind === 'piece')
+          .map(({ id, toGo }) => ({ id, checkInsToGo: toGo })),
       },
       200,
     );

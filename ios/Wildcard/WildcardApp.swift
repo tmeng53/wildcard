@@ -138,7 +138,8 @@ struct WildcardApp: App {
     private static func sampleProfile() -> MeModel {
         MeModel(
             service: InMemoryMeService.sample(
-                failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.unlocked),
+                failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.unlocked,
+                lockedPieces: LaunchOptions.lockedPieces),
             confirm: { .signedInSession }, signOut: {})
     }
 

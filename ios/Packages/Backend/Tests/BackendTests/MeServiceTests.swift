@@ -26,8 +26,13 @@ import Testing
     #expect(week.trainedDays == 0)
     let joinedAt = try #require(try await member.api.me().joinedAt)
 
+    var overview = try await service.overview()
+    // Every piece with a rule starts locked, WARM-UP's headphones 2 练了 away.
+    #expect(overview.lockedPieces.count == 39)
+    #expect(overview.lockedPieces.first { $0.id == "warmup-headphones" }?.checkInsToGo == 2)
+    overview.lockedPieces = []
     #expect(
-        try await service.overview()
+        overview
             == MeOverview(
                 character: MeCharacter(nickname: "阿杰", outfit: Outfit(["body": "shiba"]), persona: .drama),
                 joinedAt: joinedAt.date,

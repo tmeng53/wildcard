@@ -29,7 +29,7 @@ public struct APIMeService: MeService {
             // So do the titles: the card shows none rather than no card.
             let titles = try? await api.awardTotals()
             // Unlocks must load: an empty list would lock away stores and props the member earned.
-            let unlocks = try await api.unlocks()
+            let standing = try await api.unlockStanding()
             let dailyPushOn = try await api.dailyPushOn()
             return MeOverview(
                 character: MeCharacter(
@@ -50,7 +50,8 @@ public struct APIMeService: MeService {
                         count: titles.titles,
                         latest: titles.latest.map { TitlesWon.Latest(title: $0.title, times: $0.times) })
                 } ?? .none,
-                unlocks: unlocks)
+                unlocks: standing.unlocks,
+                lockedPieces: standing.lockedPieces)
         }
     }
 

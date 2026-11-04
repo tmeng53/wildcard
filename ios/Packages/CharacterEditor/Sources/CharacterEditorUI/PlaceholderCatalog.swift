@@ -5,10 +5,10 @@ import Contracts
 
 extension Catalog {
     /// What the placeholder character's bundled art offers a member who unlocked `unlocks`: the
-    /// species and stores in its `editor.json`, the clothes of the stores open to them and the
-    /// props they hold (the starters, with nothing unlocked), every bundled hair and face part,
-    /// and their preset colors.
-    public static func placeholder(unlocks: [Unlock] = []) throws(AvatarError) -> Catalog {
+    /// species and stores in its `editor.json`, the clothes of the stores open to them but the
+    /// `locked` pieces, which hang there as 「？」 boxes, the props they hold (the starters, with
+    /// nothing unlocked), every bundled hair and face part, and their preset colors.
+    public static func placeholder(unlocks: [Unlock] = [], locked: [LockedPiece] = []) throws(AvatarError) -> Catalog {
         let choices = try PlaceholderCharacter.editorChoices()
         let unlocked = { (kind: Unlock.Kind) in Set(unlocks.filter { $0.kind == kind }.map(\.id)) }
         let (unlockedStores, unlockedProps) = (unlocked(.store), unlocked(.prop))
@@ -17,7 +17,17 @@ extension Catalog {
         }
         let open = Set(stores.filter(\.isOpen).map(\.id))
         let props = choices.props.filter { $0.isOpen || unlockedProps.contains($0.id) }.map(\.id)
-        var variants = choices.wear.mapValues { pieces in pieces.filter { open.contains($0.store) }.map(\.id) }
+        // A piece the member holds is never locked, whatever an older list says.
+        let unlockedPieces = unlocked(.piece)
+        let toGo = Dictionary(
+            locked.filter { !unlockedPieces.contains($0.id) }.map { ($0.id, $0.checkInsToGo) },
+            uniquingKeysWith: min)
+        var variants = choices.wear.mapValues { pieces in
+            pieces.filter { open.contains($0.store) && toGo[$0.id] == nil }.map(\.id)
+        }
+        let stillLocked = choices.wear.mapValues { pieces in
+            Dictionary(uniqueKeysWithValues: pieces.compactMap { piece in toGo[piece.id].map { (piece.id, $0) } })
+        }.filter { !$0.value.isEmpty }
         for slot in ["hair"] + PlaceholderCharacter.faceSlots {
             variants[slot] = PlaceholderCharacter.variants(for: slot)
         }
@@ -47,6 +57,6 @@ extension Catalog {
             species: choices.species, variants: variants, props: props, swatches: swatches,
             originals: originals,
             defaults: try PlaceholderCharacter.rig().defaults.filter { Catalog.dressSlots.contains($0.key) },
-            stores: stores, storeOf: storeOf)
+            stores: stores, storeOf: storeOf, locked: stillLocked)
     }
 }
