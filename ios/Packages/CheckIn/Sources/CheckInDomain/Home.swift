@@ -98,6 +98,26 @@ public struct Home: Hashable, Sendable {
             .flatMap { if case .trained(let training) = $0.entry { training.activity } else { nil } }
     }
 
+    /// The meal `member` is eating: their latest post today, when it is a 健康餐 or 坦白放纵餐.
+    /// Whatever they posted last is what their character does, a 练了 not first (Tracy, 2026-11-04).
+    public func todaysMeal(of member: MemberID) -> MealKind? {
+        switch todaysCheckIns(of: member).last?.entry {
+        case .healthyMeal?: .healthyMeal
+        case .cheatMeal?: .cheatMeal
+        case .trained?, .disclaimer?, nil: nil
+        }
+    }
+
+    /// The words of `member`'s latest post today, if it has any: the second line of their
+    /// bubble, under what that post says they are doing.
+    public func todaysCaption(of member: MemberID) -> String? {
+        switch todaysCheckIns(of: member).last?.entry {
+        case .trained(let training)?: training.caption?.text
+        case .healthyMeal(let meal)?, .cheatMeal(let meal)?: meal.caption?.text
+        case .disclaimer?, nil: nil
+        }
+    }
+
     /// The text of `member`'s 请假条 today, if they posted one: what their character holds up.
     public func todaysDisclaimer(of member: MemberID) -> String? {
         todaysCheckIns(of: member).lazy.compactMap {

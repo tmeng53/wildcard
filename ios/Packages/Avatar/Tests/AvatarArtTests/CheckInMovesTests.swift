@@ -44,3 +44,21 @@ func checkInMovesPlayOnceOnEveryLook(persona: Persona) throws {
         }
     }
 }
+
+/// A meal loops on the home with no jump: every part, food and fork included, ends each round
+/// where it started, and it stays on the canvas on every look.
+@Test(arguments: Persona.allCases)
+func mealsLoopWithoutAJump(persona: Persona) throws {
+    for move in [CheckInMove.healthyMeal, .treatMeal] {
+        let clip = try PlaceholderCharacter.mealLoop(move, persona: persona)
+        #expect(clip.loops, "\(move)")
+        #expect(clip.duration > (try PlaceholderCharacter.clip(for: move, persona: persona)).duration)
+        for track in clip.tracks {
+            #expect(track.value(at: 0) == track.value(at: clip.duration), "\(move) \(track.part) \(track.channel)")
+        }
+        for look in Looks.squad {
+            let figure = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.dressed(look, for: move))
+            expectOnCanvas(figure, try figure.bind(clip), for: clip.duration, "\(move) \(persona.rawValue)")
+        }
+    }
+}

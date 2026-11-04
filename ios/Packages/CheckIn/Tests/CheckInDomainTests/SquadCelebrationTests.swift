@@ -74,3 +74,13 @@ private let shortWeek = WeekCount(trainedDays: 3, plannedDays: 10)
             == .bump(mine: myID, mate: mate, dodged: false))
     #expect(SquadCelebration.pick(myself: myID, members: members, squadWeek: shortWeek, shown: [.stack, .bump]) == nil)
 }
+
+@Test func someoneEatingAfterTrainingKeepsEatingInsteadOfStacking() {
+    let eating = StageMember(
+        id: third, status: .trained(run), firstCheckInAt: Timestamp(millisecondsSince1970: 60_000),
+        keepsToTheBack: false, eating: .healthyMeal)
+    let members = [member(myID, .trained(yoga), at: 9), member(mate, .trained(run), at: 5), eating]
+    #expect(
+        SquadCelebration.pick(myself: myID, members: members, squadWeek: shortWeek, shown: [])
+            == .bump(mine: myID, mate: mate, dodged: false))
+}
