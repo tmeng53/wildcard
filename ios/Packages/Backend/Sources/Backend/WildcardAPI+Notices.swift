@@ -1,6 +1,7 @@
 import APIContract
 import Contracts
 import Foundation
+import OpenAPIRuntime
 
 // 通知, the bell on 动态: everything the member was told, and how far they have read.
 extension WildcardAPI {
@@ -16,5 +17,30 @@ extension WildcardAPI {
     /// Everything up to `through` is read. Safe to repeat; never goes back.
     public func markNoticesSeen(through: NoticeID) async throws(APIError) {
         _ = try await call { try await client.markMyNoticesSeen(body: .json(through.seen)).ok }
+    }
+
+    /// Hears the member's live events (`GET /me/events`) until the server ends the stream,
+    /// telling `heard` that it is listening and each notice as it is told.
+    public func listenForNotices(_ heard: @escaping @Sendable (LiveNotice) async -> Void) async throws(APIError) {
+        try await call {
+            let events = try await live.streamMyEvents().ok.body.textEventStream
+            try await Self.read(events, heard)
+        }
+    }
+
+    /// The stream's events, in order: `ready`, then `notice`s; any other event is skipped.
+    static func read(_ events: HTTPBody, _ heard: @Sendable (LiveNotice) async -> Void) async throws {
+        for try await event in events.asDecodedServerSentEvents() {
+            switch event.event {
+            case "ready":
+                await heard(.ready)
+            case "notice":
+                guard let data = event.data?.data(using: .utf8) else { continue }
+                let live = try DeviceJSON.decoder.decode(Components.Schemas.LiveNotice.self, from: data)
+                await heard(.told(Notice(live.notice)))
+            default:
+                continue
+            }
+        }
     }
 }

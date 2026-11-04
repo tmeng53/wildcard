@@ -181,9 +181,15 @@ func nearlyEqual(_ first: Pose, _ second: Pose) -> Bool {
     zip(first.parts, second.parts).allSatisfy { one, other in
         Channel.allCases.allSatisfy { channel in
             let gap = abs(one[channel] - other[channel])
-            return channel == .rotation
-                ? min(gap.truncatingRemainder(dividingBy: 360), 360 - gap.truncatingRemainder(dividingBy: 360)) < 1e-6
-                : gap < 1e-6
+            switch channel {
+            // An idle's forearm may still be trailing its last swing as it loops round, and what
+            // the hand holds turns back by as much: a fraction of a degree no one sees. A move
+            // handing over to it ends straight.
+            case .rotation, .bend:
+                return min(gap.truncatingRemainder(dividingBy: 360), 360 - gap.truncatingRemainder(dividingBy: 360))
+                    < 1
+            default: return gap < 1e-6
+            }
         }
     }
 }
@@ -235,7 +241,9 @@ func expectOnCanvas(
         where placement.opacity > 0 {
             for shape in part.art.flatMap(\.shapes) {
                 let margin = (shape.stroke?.width ?? 0) / 2
-                for point in outline(shape.path).map(placement.transform.apply(to:)) {
+                for point in outline(placement.bend?.apply(to: shape.path) ?? shape.path).map(
+                    placement.transform.apply(to:))
+                {
                     let bottom = part.id == "shadow" || point.y + margin <= figure.height + below
                     #expect(
                         point.x - margin >= -sideways && point.x + margin <= figure.width + sideways

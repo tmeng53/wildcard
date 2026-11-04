@@ -1,7 +1,7 @@
 import XCTest
 
-/// 小队设置 the way a member uses it, on the in-memory squad: opened from 我, the captain's page
-/// and menu, the crown winner picking the scene, and the longest names on the smallest phone.
+/// 小队 the way a member uses it, on the in-memory squad: its own tab, the row of heads, the
+/// captain's page and menu, the crown winner picking the scene, and the longest names on the smallest phone.
 /// Keeps screenshots for review.
 @MainActor
 final class SquadSettingsUITests: XCTestCase {
@@ -12,6 +12,11 @@ final class SquadSettingsUITests: XCTestCase {
         XCTAssertTrue(app.buttons["squad.rename"].exists, "the captain can't rename")
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the captain can pick though Coco won")
         XCTAssertEqual(app.buttons.matching(identifier: "squad.member.more").count, 4, "not one ··· per other member")
+        XCTAssertFalse(app.buttons["squad.back"].exists, "the tab has a way back")
+        XCTAssertEqual(
+            app.descendants(matching: .any).matching(identifier: "squad.head").count, 5, "not one head per member")
+        XCTAssertTrue(app.descendants(matching: .any)["squad.head.coach"].exists, "no coach in the row of heads")
+        XCTAssertTrue(app.buttons["squad.head.invite"].exists, "no 邀请 in the row of heads")
         assertOnScreen(app)
         settle()
         keepScreenshot(named: "60-squad-captain")
@@ -48,8 +53,9 @@ final class SquadSettingsUITests: XCTestCase {
         app.swipeUp()
         settle()
         keepScreenshot(named: "62-squad-bottom")
-        app.buttons["squad.back"].tap()
-        XCTAssertTrue(app.buttons["me.squad"].waitForExistence(timeout: 30), "返回 didn't go back to 设置")
+        // 往期战报 lives in 动态 for now.
+        app.buttons["squad.pastRecaps"].tap()
+        waitFor(app.buttons["tab.feed"], "isSelected == true", "往期战报 didn't open 动态")
     }
 
     func testTheWinnerPicksTheSceneOnce() {
@@ -79,9 +85,9 @@ final class SquadSettingsUITests: XCTestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 30), "home didn't take over")
         Thread.sleep(forTimeInterval: 2.5)
         keepScreenshot(named: "64-squad-picked-home")
-        // Back on 小队设置, the pick is locked for the week.
-        app.buttons["tab.me"].tap()
-        openSquad(app)
+        // Back on 小队 through home's card (the tab bar steps aside for the drop, and the
+        // system's bar comes back without its items' identifiers), the pick is locked for the week.
+        app.descendants(matching: .any)["squadcard.squad"].tap()
         waitFor(app.staticTexts["squad.scene"], "label == '游泳池'", "the picked scene didn't show", timeout: 60)
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the winner can pick twice")
         XCTAssertFalse(app.staticTexts["squad.sceneLine"].exists, "a picked scene still has a line under it")
@@ -106,29 +112,17 @@ final class SquadSettingsUITests: XCTestCase {
         keepScreenshot(named: "66-squad-en")
     }
 
-    /// Opens 我, then 设置, then 我的小队.
+    /// Opens on the 小队 tab.
     private func launch(language: String = "zh-Hans", extra: [String] = []) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments +=
-            ["-tab", "me", "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push"] + extra
+            ["-tab", "squad", "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push"] + extra
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
-        openSquad(app)
         let page = app.descendants(matching: .any).matching(identifier: "squad.page").firstMatch
-        XCTAssertTrue(page.waitForExistence(timeout: 30), "小队设置 never showed")
+        XCTAssertTrue(page.waitForExistence(timeout: 30), "小队 never showed")
         return app
-    }
-
-    /// Taps 我的小队 in 设置, opening 设置 from 我 first unless it is still open.
-    private func openSquad(_ app: XCUIApplication) {
-        let settings = app.buttons["me.settings"]
-        let row = app.buttons["me.squad"]
-        let either = app.buttons.matching(NSPredicate(format: "identifier IN %@", ["me.settings", "me.squad"]))
-        XCTAssertTrue(either.firstMatch.waitForExistence(timeout: 30), "我 never showed")
-        if !row.exists { settings.tap() }
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "设置 has no squad row")
-        row.tap()
     }
 
     /// The page's header and scene card sit inside the screen, clear of each other.
