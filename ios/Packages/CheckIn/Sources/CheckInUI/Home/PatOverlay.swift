@@ -6,7 +6,8 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// What 拍一拍 draws over the scene: the bubble over a tapped teammate, and while a pat plays,
+/// What 拍一拍 draws over the scene: the bubble over a teammate who patted me or just joined, and
+/// while a pat plays,
 /// the graphite (brand) dot flying from the hand, the 「!」 and the little flick lines where it lands, and
 /// the dot resting by their feet for a moment. Positions follow people who move, every frame.
 struct PatOverlay: View {
@@ -25,8 +26,6 @@ struct PatOverlay: View {
     let unit: Double
     let canPat: (MemberID) -> Bool
     let pat: (MemberID) -> Void
-    /// Opens a teammate's player card, from the name line on their bubble.
-    var openCard: (MemberID) -> Void = { _ in }
 
     var body: some View {
         let isStill = pats.pat == nil && pats.bubble == nil && pats.myLine == nil
@@ -39,8 +38,7 @@ struct PatOverlay: View {
                         .accessibilityHidden(true)
                 }
                 if layer == .bubble, let bubble = pats.bubble,
-                    let position = bubble.kind == .mine
-                        ? StagePosition.mine : cast.stage.position(of: bubble.mate, at: seconds)
+                    let position = cast.stage.position(of: bubble.mate, at: seconds)
                 {
                     bubbleView(bubble, over: position)
                         .id(bubble.id)
@@ -71,29 +69,16 @@ struct PatOverlay: View {
             patted ? Text("拍过了", bundle: .module) : Text("拍一拍", bundle: .module),
             isDone: patted, identifier: "today.pat"
         ) { pat(bubble.mate) }
-        let eyebrow = bubble.eyebrow.map { eyebrow in
-            SpeechBubble.StatusEyebrow(
-                Text(verbatim: eyebrow.text),
-                badge: eyebrow.title.map {
-                    TitleBadgeLook(shape: $0.badge.shape, colour: $0.badge.colour, glyph: $0.badge.glyph)
-                }, identifier: "today.mateCard"
-            ) {
-                pats.dismissBubble()
-                openCard(bubble.mate)
-            }
-        }
         return Color.clear
             .frame(width: 0, height: 0)
             .overlay(alignment: .bottom) {
                 SpeechBubble(
                     Text(verbatim: bubble.title),
-                    kind: .status(
-                        detail: bubble.detail.map { Text(verbatim: $0) },
-                        button: bubble.kind == .mine ? nil : button, eyebrow: eyebrow)
+                    kind: .status(detail: bubble.detail.map { Text(verbatim: $0) }, button: button)
                 )
                 .fixedSize()
                 .accessibilityElement(children: .contain)
-                .accessibilityIdentifier(bubble.kind == .mine ? "today.myBubble" : "today.patBubble")
+                .accessibilityIdentifier("today.patBubble")
                 .alignmentGuide(HorizontalAlignment.center) { size in
                     size.width / 2 + head - Self.centre(of: size.width, over: head, unit: unit)
                 }

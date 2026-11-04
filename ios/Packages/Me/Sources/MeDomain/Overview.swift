@@ -50,8 +50,6 @@ public struct MeOverview: Hashable, Sendable {
     public var squadPlace: Int?
     /// Every weekly title they won, and the one they wear (徽章板).
     public var board: TitleBoard
-    /// The training days in the member's 每周模板, for 设置's row; nil when it didn't load.
-    public var templateDays: Int?
     /// The stores, props and pieces the member unlocked by training, which the character editor
     /// opens.
     public var unlocks: [Unlock]
@@ -61,7 +59,7 @@ public struct MeOverview: Hashable, Sendable {
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
         dailyPushOn: Bool, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil, board: TitleBoard = .empty,
-        templateDays: Int? = nil, unlocks: [Unlock] = [], lockedPieces: [LockedPiece] = []
+        unlocks: [Unlock] = [], lockedPieces: [LockedPiece] = []
     ) {
         self.character = character
         self.joinedAt = joinedAt
@@ -72,7 +70,6 @@ public struct MeOverview: Hashable, Sendable {
         self.jerseyNumber = jerseyNumber
         self.squadPlace = squadPlace
         self.board = board
-        self.templateDays = templateDays
         self.unlocks = unlocks
         self.lockedPieces = lockedPieces
     }
@@ -97,7 +94,7 @@ public struct PlayerCardFace: Hashable, Sendable {
     /// When they signed up: the year on the card.
     public var joinedAt: Date?
     public var counts: LifetimeCounts
-    /// 本周 x/y; nil when it isn't known (a squadmate's, or no plan this week).
+    /// 本周 x/y, theirs for a squadmate; nil when it isn't known (an older server, or no plan this week).
     public var week: WeekCount?
     public var board: TitleBoard
 

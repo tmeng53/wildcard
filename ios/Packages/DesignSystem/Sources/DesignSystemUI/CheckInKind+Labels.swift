@@ -12,6 +12,7 @@ extension SceneTheme {
         case .gym: Text("健身房", bundle: .module)
         case .tennis: Text("网球场", bundle: .module)
         case .climbing: Text("攀岩馆", bundle: .module)
+        case .ski: Text("雪场", bundle: .module)
         }
     }
 }
@@ -93,41 +94,92 @@ public struct KindButton: View {
     }
 }
 
-/// A tag in the scene's wash with accent text, such as a check-in's kind in a list; a 请假条's is grey.
+/// A short label on a capsule: a post's kind in the scene's wash (`.accent`), a 请假条 or rest
+/// day in grey (`.rest`, usually with the moon), or a status in ink (`.ink`: 求职中, 你们的教练).
+/// `.small` is 20 tall in footnote-sized words, for a tag inside a row or beside a name; the
+/// regular one is 28. Every small label the app draws on a capsule is a `Tag`.
 public struct Tag: View {
-    /// The scene's colour, or grey like a rest day's ring (a 请假条).
     public enum Style: Sendable {
         case accent
         case rest
+        case ink
+    }
+
+    public enum Size: Sendable {
+        case regular
+        case small
     }
 
     @Environment(\.sceneTheme) private var theme
     private let title: Text
     private let systemImage: String?
     private let style: Style
+    private let size: Size
 
-    public init(_ title: Text, systemImage: String? = nil, style: Style = .accent) {
+    public init(_ title: Text, systemImage: String? = nil, style: Style = .accent, size: Size = .regular) {
         self.title = title
         self.systemImage = systemImage
         self.style = style
+        self.size = size
     }
 
     public var body: some View {
         HStack(spacing: Space.xxs) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .font(.system(size: Sizing.smallIcon - 3, weight: .semibold))
+                    .font(
+                        .system(size: size == .regular ? Sizing.smallIcon - 3 : Sizing.smallIcon - 6, weight: .semibold)
+                    )
                     .accessibilityHidden(true)
             }
             title
-                .typeStyle(TypeRamp.footnoteEmphasis)
+                .typeStyle(size == .regular ? TypeRamp.footnoteEmphasis : TypeRamp.label)
                 .lineLimit(1)
         }
-        .foregroundStyle(Color(role: style == .accent ? .fgAccent : .fgMuted, in: theme))
-        .padding(.horizontal, Space.s)
-        .frame(minHeight: Sizing.tag)
-        .background(Color(role: style == .accent ? .bgAccentSubtle : .borderDefault, in: theme), in: Capsule())
+        .foregroundStyle(Color(role: foreground, in: theme))
+        .padding(.horizontal, size == .regular ? Space.s : Space.xs)
+        .frame(minHeight: size == .regular ? Sizing.tag : Sizing.smallTag)
+        .background(Color(role: background, in: theme), in: Capsule())
         .accessibilityElement(children: .combine)
+    }
+
+    private var foreground: ColorRole {
+        switch style {
+        case .accent: .fgAccent
+        case .rest: .fgMuted
+        case .ink: .fgOnInk
+        }
+    }
+
+    private var background: ColorRole {
+        switch style {
+        case .accent: .bgAccentSubtle
+        case .rest: .borderDefault
+        case .ink: .bgInk
+        }
+    }
+}
+
+/// A line between rows or sections, edge to edge: the page's border grey, or a light line on
+/// ink (`.ink`, the player card).
+public struct Hairline: View {
+    public enum Surface: Sendable {
+        case page
+        case ink
+    }
+
+    @Environment(\.sceneTheme) private var theme
+    private let surface: Surface
+
+    public init(on surface: Surface = .page) {
+        self.surface = surface
+    }
+
+    public var body: some View {
+        Rectangle()
+            .fill(Color(role: surface == .page ? .borderDefault : .borderOnInk, in: theme))
+            .frame(height: Sizing.hairline)
+            .accessibilityHidden(true)
     }
 }
 

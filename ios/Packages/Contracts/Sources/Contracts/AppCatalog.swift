@@ -5,9 +5,11 @@ public struct AppCatalog: Hashable, Sendable {
     public let sports: SportCatalog
     /// The ready-made 请假条 lines rolled when the AI can't write.
     public let diceLines: [CatalogNames]
+    /// The global switches limited stores follow, by id.
+    public let switches: [String: CatalogSwitch]
 
-    public init(sports: SportCatalog, diceLines: [CatalogNames]) {
-        (self.sports, self.diceLines) = (sports, diceLines)
+    public init(sports: SportCatalog, diceLines: [CatalogNames], switches: [String: CatalogSwitch] = [:]) {
+        (self.sports, self.diceLines, self.switches) = (sports, diceLines, switches)
     }
 
     /// Nothing at all.

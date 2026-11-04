@@ -341,6 +341,10 @@ extension Components {
             public var sports: Components.Schemas.SportsCatalog?
             /// - Remark: Generated from `#/components/schemas/Catalog/disclaimerDice`.
             public var disclaimerDice: Components.Schemas.DisclaimerDiceCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/scenes`.
+            public var scenes: Components.Schemas.ScenesCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/switches`.
+            public var switches: Components.Schemas.SwitchesCatalog?
             /// A container of undocumented properties.
             public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
             /// Creates a new `Catalog`.
@@ -349,22 +353,30 @@ extension Components {
             ///   - version:
             ///   - sports:
             ///   - disclaimerDice:
+            ///   - scenes:
+            ///   - switches:
             ///   - additionalProperties: A container of undocumented properties.
             public init(
                 version: Components.Schemas.Catalog.VersionPayload,
                 sports: Components.Schemas.SportsCatalog? = nil,
                 disclaimerDice: Components.Schemas.DisclaimerDiceCatalog? = nil,
+                scenes: Components.Schemas.ScenesCatalog? = nil,
+                switches: Components.Schemas.SwitchesCatalog? = nil,
                 additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
             ) {
                 self.version = version
                 self.sports = sports
                 self.disclaimerDice = disclaimerDice
+                self.scenes = scenes
+                self.switches = switches
                 self.additionalProperties = additionalProperties
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case sports
                 case disclaimerDice
+                case scenes
+                case switches
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -380,10 +392,20 @@ extension Components {
                     Components.Schemas.DisclaimerDiceCatalog.self,
                     forKey: .disclaimerDice
                 )
+                self.scenes = try container.decodeIfPresent(
+                    Components.Schemas.ScenesCatalog.self,
+                    forKey: .scenes
+                )
+                self.switches = try container.decodeIfPresent(
+                    Components.Schemas.SwitchesCatalog.self,
+                    forKey: .switches
+                )
                 additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                     "version",
                     "sports",
-                    "disclaimerDice"
+                    "disclaimerDice",
+                    "scenes",
+                    "switches"
                 ])
             }
             public func encode(to encoder: any Swift.Encoder) throws {
@@ -399,6 +421,14 @@ extension Components {
                 try container.encodeIfPresent(
                     self.disclaimerDice,
                     forKey: .disclaimerDice
+                )
+                try container.encodeIfPresent(
+                    self.scenes,
+                    forKey: .scenes
+                )
+                try container.encodeIfPresent(
+                    self.switches,
+                    forKey: .switches
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
@@ -819,6 +849,447 @@ extension Components {
                 try container.encode(
                     self.lines,
                     forKey: .lines
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ScenesCatalog`.
+        public struct ScenesCatalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload`.
+            public struct ScenesPayloadPayload: Codable, Hashable, Sendable {
+                /// The id squads’ picks and 战报 name.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/id`.
+                public var id: Swift.String
+                /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/names`.
+                public var names: Components.Schemas.CatalogNames
+                /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/colors`.
+                public var colors: Components.Schemas.SceneColors
+                /// True for a scene open only part of the year (冬季限定). The picker offers it while `GET /squads/{squadId}/scene` lists it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/limited`.
+                public var limited: Swift.Bool
+                /// The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/switchId`.
+                public var switchId: Swift.String?
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `ScenesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - id: The id squads’ picks and 战报 name.
+                ///   - names:
+                ///   - colors:
+                ///   - limited: True for a scene open only part of the year (冬季限定). The picker offers it while `GET /squads/{squadId}/scene` lists it.
+                ///   - switchId: The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    id: Swift.String,
+                    names: Components.Schemas.CatalogNames,
+                    colors: Components.Schemas.SceneColors,
+                    limited: Swift.Bool,
+                    switchId: Swift.String? = nil,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.id = id
+                    self.names = names
+                    self.colors = colors
+                    self.limited = limited
+                    self.switchId = switchId
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case names
+                    case colors
+                    case limited
+                    case switchId
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.id = try container.decode(
+                        Swift.String.self,
+                        forKey: .id
+                    )
+                    self.names = try container.decode(
+                        Components.Schemas.CatalogNames.self,
+                        forKey: .names
+                    )
+                    self.colors = try container.decode(
+                        Components.Schemas.SceneColors.self,
+                        forKey: .colors
+                    )
+                    self.limited = try container.decode(
+                        Swift.Bool.self,
+                        forKey: .limited
+                    )
+                    self.switchId = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .switchId
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "id",
+                        "names",
+                        "colors",
+                        "limited",
+                        "switchId"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.id,
+                        forKey: .id
+                    )
+                    try container.encode(
+                        self.names,
+                        forKey: .names
+                    )
+                    try container.encode(
+                        self.colors,
+                        forKey: .colors
+                    )
+                    try container.encode(
+                        self.limited,
+                        forKey: .limited
+                    )
+                    try container.encodeIfPresent(
+                        self.switchId,
+                        forKey: .switchId
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Every scene the picker may offer, in its order; retired ones are left out. The app draws the gym for one it has no art for.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ScenesCatalog/scenes`.
+            public typealias ScenesPayload = [Components.Schemas.ScenesCatalog.ScenesPayloadPayload]
+            /// Every scene the picker may offer, in its order; retired ones are left out. The app draws the gym for one it has no art for.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ScenesCatalog/scenes`.
+            public var scenes: Components.Schemas.ScenesCatalog.ScenesPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `ScenesCatalog`.
+            ///
+            /// - Parameters:
+            ///   - scenes: Every scene the picker may offer, in its order; retired ones are left out. The app draws the gym for one it has no art for.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                scenes: Components.Schemas.ScenesCatalog.ScenesPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.scenes = scenes
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case scenes
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.scenes = try container.decode(
+                    Components.Schemas.ScenesCatalog.ScenesPayload.self,
+                    forKey: .scenes
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "scenes"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.scenes,
+                    forKey: .scenes
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SceneColors`.
+        public struct SceneColors: Codable, Hashable, Sendable {
+            /// The 打卡 button, the week’s icons, the poster.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SceneColors/signature`.
+            public var signature: Swift.String
+            /// Text drawn on the signature.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SceneColors/onSignature`.
+            public var onSignature: Swift.String
+            /// Its light ground.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SceneColors/wash`.
+            public var wash: Swift.String
+            /// Its text colour on light grounds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SceneColors/text`.
+            public var text: Swift.String
+            /// `#RRGGBB`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SceneColors/floor`.
+            public var floor: Swift.String
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `SceneColors`.
+            ///
+            /// - Parameters:
+            ///   - signature: The 打卡 button, the week’s icons, the poster.
+            ///   - onSignature: Text drawn on the signature.
+            ///   - wash: Its light ground.
+            ///   - text: Its text colour on light grounds.
+            ///   - floor: `#RRGGBB`.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                signature: Swift.String,
+                onSignature: Swift.String,
+                wash: Swift.String,
+                text: Swift.String,
+                floor: Swift.String,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.signature = signature
+                self.onSignature = onSignature
+                self.wash = wash
+                self.text = text
+                self.floor = floor
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case signature
+                case onSignature
+                case wash
+                case text
+                case floor
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.signature = try container.decode(
+                    Swift.String.self,
+                    forKey: .signature
+                )
+                self.onSignature = try container.decode(
+                    Swift.String.self,
+                    forKey: .onSignature
+                )
+                self.wash = try container.decode(
+                    Swift.String.self,
+                    forKey: .wash
+                )
+                self.text = try container.decode(
+                    Swift.String.self,
+                    forKey: .text
+                )
+                self.floor = try container.decode(
+                    Swift.String.self,
+                    forKey: .floor
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "signature",
+                    "onSignature",
+                    "wash",
+                    "text",
+                    "floor"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.signature,
+                    forKey: .signature
+                )
+                try container.encode(
+                    self.onSignature,
+                    forKey: .onSignature
+                )
+                try container.encode(
+                    self.wash,
+                    forKey: .wash
+                )
+                try container.encode(
+                    self.text,
+                    forKey: .text
+                )
+                try container.encode(
+                    self.floor,
+                    forKey: .floor
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SwitchesCatalog`.
+        public struct SwitchesCatalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/SwitchesPayload`.
+            public struct SwitchesPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/SwitchesPayload/id`.
+                public var id: Swift.String
+                /// `on`, `off` or `schedule` (on only in `window`); read any other as off.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/SwitchesPayload/mode`.
+                public var mode: Swift.String
+                /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/SwitchesPayload/window`.
+                public var window: Components.Schemas.SwitchWindow?
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `SwitchesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                ///   - mode: `on`, `off` or `schedule` (on only in `window`); read any other as off.
+                ///   - window:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    id: Swift.String,
+                    mode: Swift.String,
+                    window: Components.Schemas.SwitchWindow? = nil,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.id = id
+                    self.mode = mode
+                    self.window = window
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case mode
+                    case window
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.id = try container.decode(
+                        Swift.String.self,
+                        forKey: .id
+                    )
+                    self.mode = try container.decode(
+                        Swift.String.self,
+                        forKey: .mode
+                    )
+                    self.window = try container.decodeIfPresent(
+                        Components.Schemas.SwitchWindow.self,
+                        forKey: .window
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "id",
+                        "mode",
+                        "window"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.id,
+                        forKey: .id
+                    )
+                    try container.encode(
+                        self.mode,
+                        forKey: .mode
+                    )
+                    try container.encodeIfPresent(
+                        self.window,
+                        forKey: .window
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Every global switch scenes, stores and unlock rules follow.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/switches`.
+            public typealias SwitchesPayload = [Components.Schemas.SwitchesCatalog.SwitchesPayloadPayload]
+            /// Every global switch scenes, stores and unlock rules follow.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/switches`.
+            public var switches: Components.Schemas.SwitchesCatalog.SwitchesPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `SwitchesCatalog`.
+            ///
+            /// - Parameters:
+            ///   - switches: Every global switch scenes, stores and unlock rules follow.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                switches: Components.Schemas.SwitchesCatalog.SwitchesPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.switches = switches
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case switches
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.switches = try container.decode(
+                    Components.Schemas.SwitchesCatalog.SwitchesPayload.self,
+                    forKey: .switches
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "switches"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.switches,
+                    forKey: .switches
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// A scheduled switch’s days every year, New York time; it may run over New Year. The app never shows them.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SwitchWindow`.
+        public struct SwitchWindow: Codable, Hashable, Sendable {
+            /// `MM-DD`, included.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SwitchWindow/start`.
+            public var start: Swift.String
+            /// `MM-DD`, included.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SwitchWindow/end`.
+            public var end: Swift.String
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `SwitchWindow`.
+            ///
+            /// - Parameters:
+            ///   - start: `MM-DD`, included.
+            ///   - end: `MM-DD`, included.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                start: Swift.String,
+                end: Swift.String,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.start = start
+                self.end = end
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case start
+                case end
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.start = try container.decode(
+                    Swift.String.self,
+                    forKey: .start
+                )
+                self.end = try container.decode(
+                    Swift.String.self,
+                    forKey: .end
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "start",
+                    "end"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.start,
+                    forKey: .start
+                )
+                try container.encode(
+                    self.end,
+                    forKey: .end
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
@@ -3809,7 +4280,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/week`.
             public var week: Swift.String
-            /// The squad’s scene this week.
+            /// The squad’s scene this week (see `sceneId`).
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/scene`.
             @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -3819,10 +4290,14 @@ extension Components {
                 case tennis = "tennis"
                 case climbing = "climbing"
             }
-            /// The squad’s scene this week.
+            /// The squad’s scene this week (see `sceneId`).
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/scene`.
             public var scene: Components.Schemas.SquadScene.ScenePayload
+            /// The squad’s scene this week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/sceneId`.
+            public var sceneId: Swift.String
             /// Who picks this week’s scene, once.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/pickers`.
@@ -3867,7 +4342,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/picked`.
             public struct PickedPayload: Codable, Hashable, Sendable {
-                /// One of the scenes the app draws. More may come with an app release.
+                /// The scene, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadScene/picked/scene`.
                 @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -3877,10 +4352,14 @@ extension Components {
                     case tennis = "tennis"
                     case climbing = "climbing"
                 }
-                /// One of the scenes the app draws. More may come with an app release.
+                /// The scene, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadScene/picked/scene`.
                 public var scene: Components.Schemas.SquadScene.PickedPayload.ScenePayload
+                /// The scene’s id in the scenes list (`GET /public/catalog`, `scenes`). The app draws the gym for one it has no art for.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/picked/sceneId`.
+                public var sceneId: Swift.String
                 /// Null once the picker deleted their account.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadScene/picked/by`.
@@ -3890,20 +4369,24 @@ extension Components {
                 /// Creates a new `PickedPayload`.
                 ///
                 /// - Parameters:
-                ///   - scene: One of the scenes the app draws. More may come with an app release.
+                ///   - scene: The scene, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
+                ///   - sceneId: The scene’s id in the scenes list (`GET /public/catalog`, `scenes`). The app draws the gym for one it has no art for.
                 ///   - by: Null once the picker deleted their account.
                 ///   - at:
                 public init(
                     scene: Components.Schemas.SquadScene.PickedPayload.ScenePayload,
+                    sceneId: Swift.String,
                     by: Swift.String? = nil,
                     at: Foundation.Date
                 ) {
                     self.scene = scene
+                    self.sceneId = sceneId
                     self.by = by
                     self.at = at
                 }
                 public enum CodingKeys: String, CodingKey {
                     case scene
+                    case sceneId
                     case by
                     case at
                 }
@@ -3918,7 +4401,7 @@ extension Components {
             public var canPick: Swift.Bool
             /// - Remark: Generated from `#/components/schemas/SquadScene/ScenesPayload`.
             public struct ScenesPayloadPayload: Codable, Hashable, Sendable {
-                /// One of the scenes the app draws. More may come with an app release.
+                /// The scene, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadScene/ScenesPayload/scene`.
                 @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -3928,7 +4411,7 @@ extension Components {
                     case tennis = "tennis"
                     case climbing = "climbing"
                 }
-                /// One of the scenes the app draws. More may come with an app release.
+                /// The scene, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadScene/ScenesPayload/scene`.
                 public var scene: Components.Schemas.SquadScene.ScenesPayloadPayload.ScenePayload
@@ -3939,7 +4422,7 @@ extension Components {
                 /// Creates a new `ScenesPayloadPayload`.
                 ///
                 /// - Parameters:
-                ///   - scene: One of the scenes the app draws. More may come with an app release.
+                ///   - scene: The scene, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
                 ///   - weeksAgo: How many weeks ago the squad last trained on it: 0 for this week’s scene, null for one it never has (the app shows it in its carton).
                 public init(
                     scene: Components.Schemas.SquadScene.ScenesPayloadPayload.ScenePayload,
@@ -3953,49 +4436,92 @@ extension Components {
                     case weeksAgo
                 }
             }
-            /// Every scene, in the order the picker shows them.
+            /// The first five scenes, in the order the picker shows them, for builds that know only those. Newer builds read `options`.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/scenes`.
             public typealias ScenesPayload = [Components.Schemas.SquadScene.ScenesPayloadPayload]
-            /// Every scene, in the order the picker shows them.
+            /// The first five scenes, in the order the picker shows them, for builds that know only those. Newer builds read `options`.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/scenes`.
             public var scenes: Components.Schemas.SquadScene.ScenesPayload
+            /// - Remark: Generated from `#/components/schemas/SquadScene/OptionsPayload`.
+            public struct OptionsPayloadPayload: Codable, Hashable, Sendable {
+                /// The scene’s id in the scenes list (`GET /public/catalog`, `scenes`). The app draws the gym for one it has no art for.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/OptionsPayload/sceneId`.
+                public var sceneId: Swift.String
+                /// How many weeks ago the squad last trained on it: 0 for this week’s scene, null for one it never has (the app shows it in its carton).
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadScene/OptionsPayload/weeksAgo`.
+                public var weeksAgo: Swift.Int?
+                /// Creates a new `OptionsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - sceneId: The scene’s id in the scenes list (`GET /public/catalog`, `scenes`). The app draws the gym for one it has no art for.
+                ///   - weeksAgo: How many weeks ago the squad last trained on it: 0 for this week’s scene, null for one it never has (the app shows it in its carton).
+                public init(
+                    sceneId: Swift.String,
+                    weeksAgo: Swift.Int? = nil
+                ) {
+                    self.sceneId = sceneId
+                    self.weeksAgo = weeksAgo
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case sceneId
+                    case weeksAgo
+                }
+            }
+            /// The scenes a pick may name this week, in the picker’s order: a limited one (the winter 雪场) only while it is open.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/options`.
+            public typealias OptionsPayload = [Components.Schemas.SquadScene.OptionsPayloadPayload]
+            /// The scenes a pick may name this week, in the picker’s order: a limited one (the winter 雪场) only while it is open.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/options`.
+            public var options: Components.Schemas.SquadScene.OptionsPayload
             /// Creates a new `SquadScene`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - week: The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s awards are given, the week after it.
-            ///   - scene: The squad’s scene this week.
+            ///   - scene: The squad’s scene this week (see `sceneId`).
+            ///   - sceneId: The squad’s scene this week.
             ///   - pickers: Who picks this week’s scene, once.
             ///   - picked: This week’s pick, once made; it can’t be changed.
             ///   - canPick: True when the caller may pick now: one of the pickers, and nothing picked yet.
-            ///   - scenes: Every scene, in the order the picker shows them.
+            ///   - scenes: The first five scenes, in the order the picker shows them, for builds that know only those. Newer builds read `options`.
+            ///   - options: The scenes a pick may name this week, in the picker’s order: a limited one (the winter 雪场) only while it is open.
             public init(
                 version: Components.Schemas.SquadScene.VersionPayload,
                 week: Swift.String,
                 scene: Components.Schemas.SquadScene.ScenePayload,
+                sceneId: Swift.String,
                 pickers: Components.Schemas.SquadScene.PickersPayload,
                 picked: Components.Schemas.SquadScene.PickedPayload? = nil,
                 canPick: Swift.Bool,
-                scenes: Components.Schemas.SquadScene.ScenesPayload
+                scenes: Components.Schemas.SquadScene.ScenesPayload,
+                options: Components.Schemas.SquadScene.OptionsPayload
             ) {
                 self.version = version
                 self.week = week
                 self.scene = scene
+                self.sceneId = sceneId
                 self.pickers = pickers
                 self.picked = picked
                 self.canPick = canPick
                 self.scenes = scenes
+                self.options = options
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case week
                 case scene
+                case sceneId
                 case pickers
                 case picked
                 case canPick
                 case scenes
+                case options
             }
         }
         /// - Remark: Generated from `#/components/schemas/ScenePick`.
@@ -4006,28 +4532,18 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/ScenePick/version`.
             public var version: Components.Schemas.ScenePick.VersionPayload
-            /// One of the scenes the app draws. More may come with an app release.
+            /// The scene’s id: one of `options` in `GET /squads/{squadId}/scene`.
             ///
             /// - Remark: Generated from `#/components/schemas/ScenePick/scene`.
-            @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case track = "track"
-                case pool = "pool"
-                case gym = "gym"
-                case tennis = "tennis"
-                case climbing = "climbing"
-            }
-            /// One of the scenes the app draws. More may come with an app release.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ScenePick/scene`.
-            public var scene: Components.Schemas.ScenePick.ScenePayload
+            public var scene: Swift.String
             /// Creates a new `ScenePick`.
             ///
             /// - Parameters:
             ///   - version:
-            ///   - scene: One of the scenes the app draws. More may come with an app release.
+            ///   - scene: The scene’s id: one of `options` in `GET /squads/{squadId}/scene`.
             public init(
                 version: Components.Schemas.ScenePick.VersionPayload,
-                scene: Components.Schemas.ScenePick.ScenePayload
+                scene: Swift.String
             ) {
                 self.version = version
                 self.scene = scene
@@ -5741,7 +6257,7 @@ extension Components {
                 public var squad: Components.Schemas.StorySquad
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/week`.
                 public var week: Components.Schemas.StoryWeek
-                /// The scene the squad trained on that week: the story takes its colours.
+                /// The scene the squad trained on that week, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/scene`.
                 @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -5751,10 +6267,14 @@ extension Components {
                     case tennis = "tennis"
                     case climbing = "climbing"
                 }
-                /// The scene the squad trained on that week: the story takes its colours.
+                /// The scene the squad trained on that week, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/scene`.
                 public var scene: Components.Schemas.WeekStory.Case1Payload.ScenePayload
+                /// The scene the squad trained on that week, by its id in the scenes list: the story takes its colours.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/sceneId`.
+                public var sceneId: Swift.String
                 /// Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/members`.
@@ -5816,7 +6336,8 @@ extension Components {
                 ///   - version:
                 ///   - squad:
                 ///   - week:
-                ///   - scene: The scene the squad trained on that week: the story takes its colours.
+                ///   - scene: The scene the squad trained on that week, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
+                ///   - sceneId: The scene the squad trained on that week, by its id in the scenes list: the story takes its colours.
                 ///   - members: Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
                 ///   - podium:
                 ///   - myWeek:
@@ -5831,6 +6352,7 @@ extension Components {
                     squad: Components.Schemas.StorySquad,
                     week: Components.Schemas.StoryWeek,
                     scene: Components.Schemas.WeekStory.Case1Payload.ScenePayload,
+                    sceneId: Swift.String,
                     members: [Components.Schemas.StoryMember],
                     podium: Components.Schemas.StoryPodium? = nil,
                     myWeek: Components.Schemas.StoryMyWeek? = nil,
@@ -5845,6 +6367,7 @@ extension Components {
                     self.squad = squad
                     self.week = week
                     self.scene = scene
+                    self.sceneId = sceneId
                     self.members = members
                     self.podium = podium
                     self.myWeek = myWeek
@@ -5860,6 +6383,7 @@ extension Components {
                     case squad
                     case week
                     case scene
+                    case sceneId
                     case members
                     case podium
                     case myWeek
@@ -5889,7 +6413,7 @@ extension Components {
                 public var squad: Components.Schemas.StorySquad
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/week`.
                 public var week: Components.Schemas.StoryWeek
-                /// The scene the squad trained on that week: the story takes its colours.
+                /// The scene the squad trained on that week, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/scene`.
                 @frozen public enum ScenePayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -5899,10 +6423,14 @@ extension Components {
                     case tennis = "tennis"
                     case climbing = "climbing"
                 }
-                /// The scene the squad trained on that week: the story takes its colours.
+                /// The scene the squad trained on that week, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/scene`.
                 public var scene: Components.Schemas.WeekStory.Case2Payload.ScenePayload
+                /// The scene the squad trained on that week, by its id in the scenes list: the story takes its colours.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/sceneId`.
+                public var sceneId: Swift.String
                 /// Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
                 ///
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/members`.
@@ -5931,7 +6459,8 @@ extension Components {
                 ///   - version:
                 ///   - squad:
                 ///   - week:
-                ///   - scene: The scene the squad trained on that week: the story takes its colours.
+                ///   - scene: The scene the squad trained on that week, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.
+                ///   - sceneId: The scene the squad trained on that week, by its id in the scenes list: the story takes its colours.
                 ///   - members: Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
                 ///   - podium:
                 ///   - myWeek:
@@ -5945,6 +6474,7 @@ extension Components {
                     squad: Components.Schemas.StorySquad,
                     week: Components.Schemas.StoryWeek,
                     scene: Components.Schemas.WeekStory.Case2Payload.ScenePayload,
+                    sceneId: Swift.String,
                     members: [Components.Schemas.StoryMember],
                     podium: Components.Schemas.StoryPodium? = nil,
                     myWeek: Components.Schemas.StoryMyWeek? = nil,
@@ -5958,6 +6488,7 @@ extension Components {
                     self.squad = squad
                     self.week = week
                     self.scene = scene
+                    self.sceneId = sceneId
                     self.members = members
                     self.podium = podium
                     self.myWeek = myWeek
@@ -5972,6 +6503,7 @@ extension Components {
                     case squad
                     case week
                     case scene
+                    case sceneId
                     case members
                     case podium
                     case myWeek
@@ -6752,6 +7284,39 @@ extension Components {
             public var disclaimers: Swift.Int
             /// - Remark: Generated from `#/components/schemas/PlayerCard/topSport`.
             public var topSport: Components.Schemas.TopSport?
+            /// Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/week`.
+            public struct WeekPayload: Codable, Hashable, Sendable {
+                /// Days they trained this week, from all their check-ins wherever they went.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/trainedDays`.
+                public var trainedDays: Swift.Int
+                /// Days their plan trains this week, from the day they joined on.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/plannedDays`.
+                public var plannedDays: Swift.Int
+                /// Creates a new `WeekPayload`.
+                ///
+                /// - Parameters:
+                ///   - trainedDays: Days they trained this week, from all their check-ins wherever they went.
+                ///   - plannedDays: Days their plan trains this week, from the day they joined on.
+                public init(
+                    trainedDays: Swift.Int,
+                    plannedDays: Swift.Int
+                ) {
+                    self.trainedDays = trainedDays
+                    self.plannedDays = plannedDays
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case trainedDays
+                    case plannedDays
+                }
+            }
+            /// Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/week`.
+            public var week: Components.Schemas.PlayerCard.WeekPayload?
             /// Every title won, in all the member’s squads, one per title by its words, the latest won first.
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/titles`.
@@ -6774,6 +7339,7 @@ extension Components {
             ///   - cheatMeals: 坦白放纵餐 check-ins.
             ///   - disclaimers: 今日请假条 check-ins.
             ///   - topSport:
+            ///   - week: Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.
             ///   - titles: Every title won, in all the member’s squads, one per title by its words, the latest won first.
             ///   - worn: The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
             public init(
@@ -6788,6 +7354,7 @@ extension Components {
                 cheatMeals: Swift.Int,
                 disclaimers: Swift.Int,
                 topSport: Components.Schemas.TopSport? = nil,
+                week: Components.Schemas.PlayerCard.WeekPayload? = nil,
                 titles: [Components.Schemas.BoardTitle],
                 worn: Swift.String? = nil
             ) {
@@ -6802,6 +7369,7 @@ extension Components {
                 self.cheatMeals = cheatMeals
                 self.disclaimers = disclaimers
                 self.topSport = topSport
+                self.week = week
                 self.titles = titles
                 self.worn = worn
             }
@@ -6817,6 +7385,7 @@ extension Components {
                 case cheatMeals
                 case disclaimers
                 case topSport
+                case week
                 case titles
                 case worn
             }

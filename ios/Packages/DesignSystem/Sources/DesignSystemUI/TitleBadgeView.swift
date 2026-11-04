@@ -72,24 +72,6 @@ public struct TitleBadgeView: View {
     }
 }
 
-/// A badge's look by the names the API sends, for what draws one beside other words (the name
-/// line on a home bubble).
-public struct TitleBadgeLook: Hashable, Sendable {
-    public let shape: String
-    public let colour: String
-    public let glyph: String
-
-    public init(shape: String, colour: String, glyph: String) {
-        (self.shape, self.colour, self.glyph) = (shape, colour, glyph)
-    }
-}
-
-extension TitleBadgeView {
-    public init(_ look: TitleBadgeLook, size: Double) {
-        self.init(shape: look.shape, colour: look.colour, glyph: look.glyph, size: size)
-    }
-}
-
 /// A badge's outline in its square, from the approved board's 48-point drawings.
 private struct BadgeOutline: Shape {
     let shape: TitleBadgeView.Shape

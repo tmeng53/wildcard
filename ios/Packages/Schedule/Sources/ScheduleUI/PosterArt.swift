@@ -36,6 +36,7 @@ struct PosterArt: View {
         case .tennis: court(in: size)
         case .gym: floorGrid(in: size)
         case .climbing: panels(in: size)
+        case .ski: slope(in: size)
         }
     }
 
@@ -95,6 +96,21 @@ struct PosterArt: View {
         for row in stride(from: 0.0, through: size.height, by: 30) {
             path.move(to: CGPoint(x: 0, y: row))
             path.addLine(to: CGPoint(x: size.width, y: row))
+        }
+        return path
+    }
+
+    /// Ski tracks: pairs of lines curving down the slope.
+    private func slope(in size: CGSize) -> Path {
+        var path = Path()
+        for start in stride(from: -40.0, to: size.width, by: 110) {
+            for offset in [0.0, 7] {
+                path.move(to: CGPoint(x: start + offset, y: -10))
+                path.addCurve(
+                    to: CGPoint(x: start + 60 + offset, y: size.height + 10),
+                    control1: CGPoint(x: start + 120 + offset, y: size.height * 0.3),
+                    control2: CGPoint(x: start - 40 + offset, y: size.height * 0.7))
+            }
         }
         return path
     }

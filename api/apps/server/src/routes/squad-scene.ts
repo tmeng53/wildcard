@@ -9,10 +9,12 @@ import {
   type SquadScene,
   type Squads,
 } from '@wildcard/squads';
+import type { Scenes } from '@wildcard/scenes';
 import { MemberId as NoticeMember, SquadId as NoticeSquad, type Notices } from '@wildcard/notices';
 import { latestAwardedWeek } from '@wildcard/weekly-awards';
 
 import { bodyVersion } from '../body-version.js';
+import { LEGACY_SCENES, LegacyScene, legacyScene } from '../legacy-scene.js';
 import type { Log } from '../log.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
@@ -20,9 +22,18 @@ import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const WEEK = 7 * 86_400_000;
 
-const sceneField = Scene.meta({
-  description: 'One of the scenes the app draws. More may come with an app release.',
+const sceneField = LegacyScene.meta({
+  description:
+    'The scene, for builds that know only the first five: one added since is sent as `gym`. ' +
+    'Newer builds read `sceneId`.',
   example: 'pool',
+});
+
+const sceneIdField = Scene.meta({
+  description:
+    'The scene’s id in the scenes list (`GET /public/catalog`, `scenes`). The app draws the gym ' +
+    'for one it has no art for.',
+  example: 'ski',
 });
 
 const SquadSceneBody = z
@@ -34,7 +45,8 @@ const SquadSceneBody = z
         'awards are given, the week after it.',
       example: '2026-10-26',
     }),
-    scene: sceneField.meta({ description: 'The squad’s scene this week.' }),
+    scene: sceneField.meta({ description: 'The squad’s scene this week (see `sceneId`).' }),
+    sceneId: sceneIdField.meta({ description: 'The squad’s scene this week.' }),
     pickers: z
       .strictObject({
         by: z.enum(['crown', 'captain']).meta({
@@ -48,6 +60,7 @@ const SquadSceneBody = z
     picked: z
       .strictObject({
         scene: sceneField,
+        sceneId: sceneIdField,
         by: z
           .uuid()
           .nullable()
@@ -74,31 +87,67 @@ const SquadSceneBody = z
             }),
         }),
       )
-      .meta({ description: 'Every scene, in the order the picker shows them.' }),
+      .meta({
+        description:
+          'The first five scenes, in the order the picker shows them, for builds that know only ' +
+          'those. Newer builds read `options`.',
+      }),
+    options: z
+      .array(
+        z.strictObject({
+          sceneId: sceneIdField,
+          weeksAgo: z
+            .int()
+            .min(0)
+            .nullable()
+            .meta({
+              description:
+                'How many weeks ago the squad last trained on it: 0 for this week’s scene, null ' +
+                'for one it never has (the app shows it in its carton).',
+            }),
+        }),
+      )
+      .meta({
+        description:
+          'The scenes a pick may name this week, in the picker’s order: a limited one (the ' +
+          'winter 雪场) only while it is open.',
+      }),
   })
   .openapi('SquadScene');
 
 const ScenePickBody = z
-  .strictObject({ version: bodyVersion(1), scene: sceneField })
+  .strictObject({
+    version: bodyVersion(1),
+    scene: Scene.meta({
+      description: 'The scene’s id: one of `options` in `GET /squads/{squadId}/scene`.',
+      example: 'pool',
+    }),
+  })
   .openapi('ScenePick');
 
 function wire(scene: SquadScene) {
   return {
     version: 1 as const,
     week: scene.week,
-    scene: scene.scene,
+    scene: legacyScene(scene.scene),
+    sceneId: scene.scene,
     pickers: { by: scene.pickers.by, members: [...scene.pickers.members] },
     picked:
       scene.picked === undefined
         ? null
         : {
-            scene: scene.picked.scene,
+            scene: legacyScene(scene.picked.scene),
+            sceneId: scene.picked.scene,
             by: scene.picked.by,
             at: scene.picked.at.toISOString(),
           },
     canPick: scene.canPick,
-    scenes: Scene.options.map((each) => ({
+    scenes: LEGACY_SCENES.map((each) => ({
       scene: each,
+      weeksAgo: scene.lastTrained.get(each) ?? null,
+    })),
+    options: scene.open.map((each) => ({
+      sceneId: each,
       weeksAgo: scene.lastTrained.get(each) ?? null,
     })),
   };
@@ -122,6 +171,8 @@ export function squadScene(deps: {
   readonly verifyToken: VerifyToken;
   readonly squads: Squads;
   readonly checkIns: CheckIns;
+  /** Which scenes are open in a week. */
+  readonly scenes: Pick<Scenes, 'openOn'>;
   /** Where the move is kept for the squadmates' 通知. */
   readonly notices: Notices;
   readonly clock: () => Date;
@@ -131,6 +182,7 @@ export function squadScene(deps: {
     squads: deps.squads,
     clock: deps.clock,
     sceneWeekAt,
+    openScenes: (week) => deps.scenes.openOn(week),
     crownHolders: async ({ squad, week, viewer }) => {
       const summary = await deps.checkIns.weekSummary({
         squad,
@@ -193,8 +245,8 @@ export function squadScene(deps: {
       200: sceneResponse('Already picked: this was a retry'),
       201: sceneResponse('Picked'),
       400: problem(
-        'Not a valid squad id, week or scene, or a week that isn’t open for picking ' +
-          '(`SCENE_WEEK_CLOSED`)',
+        'Not a valid squad id, week or scene, a week that isn’t open for picking ' +
+          '(`SCENE_WEEK_CLOSED`), or a scene that isn’t open this week (`SCENE_NOT_OPEN`)',
       ),
       403: problem(
         'The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t one of this week’s ' +

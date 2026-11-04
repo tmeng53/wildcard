@@ -74,7 +74,7 @@ export function editBody(
     next = body === '' ? replace : `${body.replace(/\n*$/, '')}\n${replace}`;
   } else {
     const at = body.indexOf(find);
-    if (at === -1) return { ok: false, why: '没找到 find 的原文。先 read_file 看看现在的内容。' };
+    if (at === -1) return { ok: false, why: '没找到 find 的原文。照抄任务里「你的记性」的原文。' };
     if (body.slice(at + 1).includes(find)) {
       return { ok: false, why: 'find 的原文出现了不止一次，多带几个字让它只出现一次。' };
     }

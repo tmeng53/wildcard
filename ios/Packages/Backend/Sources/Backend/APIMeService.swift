@@ -28,8 +28,6 @@ public struct APIMeService: MeService {
             if let squad { week = try? await api.today(of: squad.id).myWeek.week }
             // So does the badge board: the card shows none rather than no card.
             let board = (try? await api.titleBoard()) ?? .empty
-            // And the 每周模板's row its count.
-            let templateDays = try? await api.planTemplate().count { $0 != .rest }
             // Unlocks must load: an empty list would lock away stores and props the member earned.
             let standing = try await api.unlockStanding()
             let dailyPushOn = try await api.dailyPushOn()
@@ -47,7 +45,7 @@ public struct APIMeService: MeService {
                 // Members are listed in the order they joined.
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
                 board: board,
-                templateDays: templateDays, unlocks: standing.unlocks,
+                unlocks: standing.unlocks,
                 lockedPieces: standing.lockedPieces)
         }
     }
@@ -129,8 +127,7 @@ public struct APISquadmateCards: SquadmateCards {
                 counts: LifetimeCounts(
                     trainedDays: card.totals.trainedDays, healthyMeals: card.totals.healthyMeals,
                     cheatMeals: card.totals.cheatMeals, disclaimers: card.totals.disclaimers),
-                // A squadmate's week isn't on their card.
-                week: nil, board: card.board)
+                week: card.week, board: card.board)
         }
     }
 }

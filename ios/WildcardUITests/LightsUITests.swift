@@ -1,7 +1,7 @@
 import XCTest
 
 /// 开灯 on the home at 23:30, on the sample squad: the cord hangs under the card, clear of it and
-/// of 打卡; tapping Coco says she's asleep; a tap on the cord switches the lights on, the
+/// of 打卡; tapping Coco opens her card, whose today says she's asleep; a tap on the cord switches the lights on, the
 /// sleepers wake and Coco's status is her rest day; another tap switches them off. Screenshots of
 /// each are kept for review.
 @MainActor
@@ -26,12 +26,13 @@ final class LightsUITests: XCTestCase {
         settle()
         keepScreenshot(named: "71-today-night")
 
-        // Asleep, Coco's bubble says so.
+        // Asleep, Coco's today says so.
         mate("Coco", in: app).tap()
-        let bubble = app.descendants(matching: .any).matching(identifier: "today.patBubble").firstMatch
-        XCTAssertTrue(labeled("睡着了", in: bubble).waitForExistence(timeout: Self.wait), "Coco isn't asleep")
-        XCTAssertTrue(app.buttons["today.mateCard"].exists, "Coco's bubble doesn't name her")
-        XCTAssertFalse(bubble.frame.intersects(cord.frame), "the bubble covers the cord: \(bubble.frame)")
+        let today = app.descendants(matching: .any).matching(identifier: "today.mateToday").firstMatch
+        XCTAssertTrue(labeled("睡着了", in: today).waitForExistence(timeout: Self.wait), "Coco isn't asleep")
+        Thread.sleep(forTimeInterval: 0.6)
+        keepScreenshot(named: "71b-today-night-asleep")
+        closePopup(today, in: app)
 
         cord.tap()
         // Mid-wake: the first sleepers glaring up at the lamps, the first one's line.
@@ -45,8 +46,9 @@ final class LightsUITests: XCTestCase {
         // Awake, Coco is on her rest day.
         mate("Coco", in: app).tap()
         XCTAssertTrue(
-            labeled("休息日", in: bubble).waitForExistence(timeout: Self.wait), "Coco didn't wake for the lights")
-        XCTAssertFalse(labeled("睡着了", in: bubble).exists, "Coco still sleeps with the lights on")
+            labeled("休息日", in: today).waitForExistence(timeout: Self.wait), "Coco didn't wake for the lights")
+        XCTAssertFalse(labeled("睡着了", in: today).exists, "Coco still sleeps with the lights on")
+        closePopup(today, in: app)
 
         cord.tap()
         XCTAssertEqual(cord.label, "开灯")
@@ -62,6 +64,12 @@ final class LightsUITests: XCTestCase {
         let checkIn = app.buttons["today.checkin"]
         XCTAssertTrue(checkIn.exists, "no 打卡 button")
         XCTAssertLessThan(cord.frame.maxY, checkIn.frame.minY, "the cord reaches 打卡: \(cord.frame)")
+    }
+
+    /// A tap off the card, above it, closes the card and its today.
+    private func closePopup(_ today: XCUIElement, in app: XCUIApplication) {
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap()
+        XCTAssertTrue(today.waitForNonExistence(timeout: Self.wait), "a tap off the card left it open")
     }
 
     private func mate(_ nickname: String, in app: XCUIApplication) -> XCUIElement {

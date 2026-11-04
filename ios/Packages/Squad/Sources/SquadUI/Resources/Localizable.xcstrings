@@ -177,22 +177,6 @@
         }
       }
     },
-    "再试一次": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Try again"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "再試一次"
-          }
-        }
-      }
-    },
     "分享": {
       "localizations": {
         "en": {
@@ -509,38 +493,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "管理 %@"
-          }
-        }
-      }
-    },
-    "网络开小差了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Can't connect right now"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網路怪怪的"
-          }
-        }
-      }
-    },
-    "网络开小差了，没存上": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't save. Check your connection"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網路開小差了，沒存上"
           }
         }
       }
@@ -1145,6 +1097,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "看球員卡"
+          }
+        }
+      }
+    },
+    "%@教练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coach %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@教練"
+          }
+        }
+      }
+    },
+    "邀请": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invite"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "邀請"
+          }
+        }
+      }
+    },
+    "今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天"
           }
         }
       }

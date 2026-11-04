@@ -1,4 +1,6 @@
 #if os(iOS)
+import AvatarArt
+import AvatarDomain
 import CheckInDomain
 import Foundation
 
@@ -39,7 +41,33 @@ extension TodayModel {
         }
         pats.dismissBubble()
         lightsPull = LightsPull(isOn: isOn, start: .now)
-        cast.switchLights(LightsFlip(isOn: isOn, reduceMotion: reduceMotion))
+        let flip = LightsFlip(isOn: isOn, reduceMotion: reduceMotion)
+        cast.switchLights(flip)
+        switchMyLights(flip)
+    }
+
+    /// I sleep and wake with the squad, after the last of them: switched on, I play `woken`
+    /// into my day pose; switched off, I doze off into sleep. Under Reduce Motion my pose just
+    /// swaps. If I trained or am eating, I keep at it.
+    private func switchMyLights(_ flip: LightsFlip) {
+        guard myPose(at: .night) == .asleep else { return }
+        let move: Clip?
+        if flip.reduceMotion {
+            move = nil
+        } else if flip.isOn {
+            move = try? PlaceholderCharacter.woken()
+        } else {
+            move = try? PlaceholderCharacter.clip(for: .doze, persona: myPersona)
+        }
+        if !flip.isOn { myDoze = move?.duration ?? 0 }
+        let delay = flip.start(ofSleeper: cast.sleepers.count)
+        myLightsMove?.cancel()
+        myLightsMove = Task { @MainActor in
+            if delay > 0 { try? await Task.sleep(for: .seconds(delay)) }
+            guard !Task.isCancelled else { return }
+            dressMe(hop: false)
+            if let move { try? player?.play(move) }
+        }
     }
 }
 #endif

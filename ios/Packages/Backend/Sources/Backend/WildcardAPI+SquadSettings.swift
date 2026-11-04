@@ -51,7 +51,7 @@ extension WildcardAPI {
 
     /// Picks the scene for the week open now, once. A retry of the same pick answers as before.
     public func pick(_ scene: SceneID, for squad: SquadID, week: LocalDay) async throws(APIError) -> SquadScene {
-        let body = try read { () throws(ContractsError) in try scene.pick() }
+        let body = scene.pick()
         let wire = try await call {
             switch try await client.pickSquadScene(
                 path: .init(squadId: squad.description, weekStart: week.description), body: .json(body))
