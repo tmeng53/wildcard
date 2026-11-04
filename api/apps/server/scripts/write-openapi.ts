@@ -73,6 +73,7 @@ const app = createApp({
   nudges: { send: unused, received: unused, inSquad: unused },
   notices: { tell: unused, page: unused, markSeen: unused },
   coachNames: unused,
+  liveEvents: { subscribe: unused, close: unused },
   disclaimerDrafts: { write: unused },
   weeklyPlans: createWeeklyPlans({
     sports: createSports({ store: createPostgresSportStore(db) }),
@@ -109,6 +110,7 @@ const app = createApp({
       claimNudge: unused,
       claimReadyPush: unused,
       titlesWon: unused,
+      boards: unused,
       story: unused,
       freezeStory: unused,
       storiesWaiting: unused,

@@ -15,6 +15,142 @@
       }
     },
     "schemas": {
+      "LiveReady": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false,
+        "description": "The `ready` event’s data."
+      },
+      "LiveNotice": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "notice": {
+            "$ref": "#/components/schemas/NoticeEntry"
+          }
+        },
+        "required": [
+          "version",
+          "notice"
+        ],
+        "additionalProperties": false,
+        "description": "The `notice` event’s data."
+      },
+      "NoticeEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The order notices were told in: a later one is larger."
+          },
+          "kind": {
+            "type": "string",
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know."
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was told, in UTC."
+          },
+          "squadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The squad it is about, if any."
+          },
+          "alert": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "The String Catalog key the push used."
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Its placeholders’ values, in order."
+              }
+            },
+            "required": [
+              "key",
+              "args"
+            ],
+            "additionalProperties": false,
+            "description": "A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`)."
+          },
+          "weekStart": {
+            "type": "string",
+            "format": "date",
+            "description": "The Monday of the week whose 战报 is in (`weeklyAwards`)."
+          },
+          "scene": {
+            "type": "string",
+            "description": "The scene moved to (`sceneMoved`)."
+          },
+          "by": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who moved it (`sceneMoved`); left out once they deleted their account."
+          },
+          "byName": {
+            "type": "string",
+            "description": "Their nickname now (`sceneMoved`), when they have one."
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`)."
+          },
+          "coach": {
+            "type": "string",
+            "description": "The coach who answered (`coachReply`)."
+          },
+          "coachName": {
+            "type": "string",
+            "description": "Its name now (`coachReply`)."
+          },
+          "replied": {
+            "type": "boolean",
+            "description": "Whether the coach wrote a line (`coachReply`); else only its emoji."
+          },
+          "emoji": {
+            "type": "string",
+            "description": "The coach’s emoji (`coachReply`), if any."
+          },
+          "unlockKind": {
+            "type": "string",
+            "description": "What opened (`unlocked`): `store`, `prop` or `piece`. Skip another."
+          },
+          "item": {
+            "type": "string",
+            "description": "The store’s, prop’s or piece’s id (`unlocked`)."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "at"
+        ],
+        "additionalProperties": false,
+        "description": "As `GET /me/notices` lists it."
+      },
       "Health": {
         "type": "object",
         "properties": {
@@ -2205,6 +2341,9 @@
                 "character": {
                   "$ref": "#/components/schemas/Character"
                 },
+                "title": {
+                  "$ref": "#/components/schemas/WornTitle"
+                },
                 "day": {
                   "type": "string",
                   "format": "date",
@@ -2352,6 +2491,51 @@
           "today",
           "me",
           "squadWeek"
+        ],
+        "additionalProperties": false
+      },
+      "WornTitle": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title’s words, at most 6 characters.",
+            "example": "早八战神"
+          },
+          "badge": {
+            "$ref": "#/components/schemas/TitleBadge"
+          }
+        },
+        "required": [
+          "title",
+          "badge"
+        ],
+        "additionalProperties": false,
+        "description": "The weekly title they wear (头衔), shown beside their name: the one they equipped, else their latest. Missing before their first."
+      },
+      "TitleBadge": {
+        "type": "object",
+        "properties": {
+          "shape": {
+            "type": "string",
+            "description": "The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today. An app that doesn’t know one draws a circle.",
+            "example": "shield"
+          },
+          "colour": {
+            "type": "string",
+            "description": "Its colour, by the scene whose colour it takes: `pool`, `track`, `gym`, `tennis` or `climbing` today. An app that doesn’t know one draws `gym`.",
+            "example": "track"
+          },
+          "glyph": {
+            "type": "string",
+            "description": "The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.",
+            "example": "sun.max.fill"
+          }
+        },
+        "required": [
+          "shape",
+          "colour",
+          "glyph"
         ],
         "additionalProperties": false
       },
@@ -3024,105 +3208,6 @@
         "required": [
           "version",
           "notices"
-        ],
-        "additionalProperties": false
-      },
-      "NoticeEntry": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "description": "The order notices were told in: a later one is larger."
-          },
-          "kind": {
-            "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know."
-          },
-          "at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When it was told, in UTC."
-          },
-          "squadId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The squad it is about, if any."
-          },
-          "alert": {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string",
-                "description": "The String Catalog key the push used."
-              },
-              "args": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "description": "Its placeholders’ values, in order."
-              }
-            },
-            "required": [
-              "key",
-              "args"
-            ],
-            "additionalProperties": false,
-            "description": "A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`)."
-          },
-          "weekStart": {
-            "type": "string",
-            "format": "date",
-            "description": "The Monday of the week whose 战报 is in (`weeklyAwards`)."
-          },
-          "scene": {
-            "type": "string",
-            "description": "The scene moved to (`sceneMoved`)."
-          },
-          "by": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Who moved it (`sceneMoved`); left out once they deleted their account."
-          },
-          "byName": {
-            "type": "string",
-            "description": "Their nickname now (`sceneMoved`), when they have one."
-          },
-          "checkIn": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`)."
-          },
-          "coach": {
-            "type": "string",
-            "description": "The coach who answered (`coachReply`)."
-          },
-          "coachName": {
-            "type": "string",
-            "description": "Its name now (`coachReply`)."
-          },
-          "replied": {
-            "type": "boolean",
-            "description": "Whether the coach wrote a line (`coachReply`); else only its emoji."
-          },
-          "emoji": {
-            "type": "string",
-            "description": "The coach’s emoji (`coachReply`), if any."
-          },
-          "unlockKind": {
-            "type": "string",
-            "description": "What opened (`unlocked`): `store`, `prop` or `piece`. Skip another."
-          },
-          "item": {
-            "type": "string",
-            "description": "The store’s, prop’s or piece’s id (`unlocked`)."
-          }
-        },
-        "required": [
-          "id",
-          "kind",
-          "at"
         ],
         "additionalProperties": false
       },
@@ -4324,6 +4409,188 @@
         ],
         "additionalProperties": false,
         "description": "The latest title they won. Left out before the first."
+      },
+      "TitleBoard": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "titles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardTitle"
+            },
+            "description": "Every title won, in all the member’s squads, one per title by its words, the latest won first."
+          },
+          "worn": {
+            "type": "string",
+            "description": "The title worn on the card’s front: the one equipped, else the latest won. Left out before the first."
+          },
+          "equipped": {
+            "type": "string",
+            "description": "The title the member chose to wear. Left out until they choose one."
+          }
+        },
+        "required": [
+          "version",
+          "titles"
+        ],
+        "additionalProperties": false
+      },
+      "BoardTitle": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title’s words, at most 6 characters.",
+            "example": "早八战神"
+          },
+          "badge": {
+            "$ref": "#/components/schemas/TitleBadge"
+          },
+          "weeks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "weekStart": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "The Monday of the week it was won."
+                },
+                "squadName": {
+                  "type": "string",
+                  "description": "The name of the squad it was won in, as that week’s 战报 froze it. Left out for a week won before 战报 froze, and, on a squadmate’s card, for weeks won in another squad.",
+                  "example": "早八战队"
+                },
+                "speech": {
+                  "type": "string",
+                  "description": "Its award line (颁奖词) that week. On a squadmate’s card, left out for weeks won in another squad."
+                }
+              },
+              "required": [
+                "weekStart"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "description": "Every week it was won, the latest first: ×N on the board."
+          }
+        },
+        "required": [
+          "title",
+          "badge",
+          "weeks"
+        ],
+        "additionalProperties": false
+      },
+      "EquipTitle": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 40,
+            "description": "A title the member has won, by its words, to wear on their card; null to wear the latest won again."
+          }
+        },
+        "required": [
+          "version",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "PlayerCard": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "character": {
+            "$ref": "#/components/schemas/Character"
+          },
+          "jerseyNumber": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99,
+            "description": "The number they picked for their card. Left out until they pick one."
+          },
+          "squadPlace": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Their place in this squad, the first to join being 1: the number shown without a pick."
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they signed up, in UTC. Left out before they saved a profile."
+          },
+          "trainedDays": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Days with a 练了; several 练了 on one day count once."
+          },
+          "healthyMeals": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "健康餐 check-ins."
+          },
+          "cheatMeals": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "坦白放纵餐 check-ins."
+          },
+          "disclaimers": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "今日请假条 check-ins."
+          },
+          "topSport": {
+            "$ref": "#/components/schemas/TopSport"
+          },
+          "titles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardTitle"
+            },
+            "description": "Every title won, in all the member’s squads, one per title by its words, the latest won first."
+          },
+          "worn": {
+            "type": "string",
+            "description": "The title worn on the card’s front: the one equipped, else the latest won. Left out before the first."
+          }
+        },
+        "required": [
+          "version",
+          "member",
+          "squadPlace",
+          "trainedDays",
+          "healthyMeals",
+          "cheatMeals",
+          "disclaimers",
+          "titles"
+        ],
+        "additionalProperties": false
       },
       "MyUnlocks": {
         "type": "object",
@@ -8138,6 +8405,51 @@
         }
       }
     },
+    "/me/events": {
+      "get": {
+        "operationId": "streamMyEvents",
+        "summary": "The caller’s live events (Server-Sent Events)",
+        "description": "A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The stream of events",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Server-Sent Events, as described above."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now, or live events can’t be heard (`LIVE_EVENTS_UNAVAILABLE`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/squads/{squadId}/weeks/{weekStart}/summary": {
       "get": {
         "operationId": "getSquadWeekSummary",
@@ -8877,6 +9189,218 @@
           },
           "401": {
             "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/titles": {
+      "get": {
+        "operationId": "getMyTitles",
+        "summary": "The signed-in member’s badge board",
+        "description": "Every weekly title they won, with its badge, the weeks and award lines (徽章板), and the one they wear.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The board",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TitleBoard"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/equipped-title": {
+      "put": {
+        "operationId": "putMyEquippedTitle",
+        "summary": "Wear a title on the signed-in member’s card",
+        "description": "Wears one of the member’s titles on their player card and beside their name on the home, logged with their profile. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipTitle"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Worn",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TitleBoard"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid body, a title the member hasn’t won (`TITLE_NOT_WON`), or no profile saved yet (`PROFILE_MISSING`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/members/{memberId}/card": {
+      "get": {
+        "operationId": "getSquadmateCard",
+        "summary": "A squadmate’s player card",
+        "description": "What a squadmate’s card shows, front and back: their character, number, lifetime counts and badge board, with award lines only from weeks won in this squad. Only for members of the squad, about a member of it.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "memberId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerCard"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad or member id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The signed-in member isn’t in this squad",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "That member isn’t in this squad (`SQUAD_MEMBER_UNKNOWN`)",
             "content": {
               "application/problem+json": {
                 "schema": {

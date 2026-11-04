@@ -56,6 +56,7 @@ import {
   unusedCoachHiring,
   unusedCoachActivity,
   unusedUnlocks,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
@@ -116,7 +117,14 @@ const titlesFor = (letters: readonly string[]) => ({
   version: 1,
   awards: letters.map((letter, index) => ({
     member: letter,
-    titles: [{ title: `狠人${String(index)}号`, speech: '周三下着雨还去跑了。', move: 'pump' }],
+    titles: [
+      {
+        title: `狠人${String(index)}号`,
+        speech: '周三下着雨还去跑了。',
+        move: 'pump',
+        badge: { shape: 'circle', colour: 'gym', glyph: 'flame.fill' },
+      },
+    ],
   })),
 });
 
@@ -177,6 +185,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     coachActivity: unusedCoachActivity,
     notices: createNotices({ store: createPostgresNoticeStore(db) }),
     coachNames: () => Promise.reject(new Error('unused')),
+    liveEvents: ignoredNotices.liveEvents,
     aiConsent,
     nudges: nudgesOn(db),
     log: createLog(() => undefined),

@@ -96,7 +96,9 @@ public struct TodayView: View {
     private var scene: some View {
         ZStack {
             SquadSceneView(
-                cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
+                cast: model.cast, myPlayer: model.player, myRing: model.myRing,
+                iSleep: model.myPose(at: .night) == .asleep, iHoldSign: model.myPose(at: .day) == .holdingSign,
+                myDoze: model.myDoze, phase: model.phase,
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
                 pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
                 tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, coachSays: model.coachSays,
@@ -129,7 +131,7 @@ public struct TodayView: View {
             GeometryReader { proxy in
                 PatOverlay(
                     layer: .bubble, cast: model.cast, pats: model.pats, unit: proxy.size.width / StageLayout.width,
-                    canPat: model.canPat, pat: model.patMate)
+                    canPat: model.canPat, pat: model.patMate, openCard: { model.openTeammate($0) })
             }
             .ignoresSafeArea()
             .opacity(model.step == .disclaimer ? 0 : 1)

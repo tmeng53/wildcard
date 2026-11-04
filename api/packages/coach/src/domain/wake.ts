@@ -117,3 +117,12 @@ export function costMicros(
       1_000_000,
   );
 }
+
+/** One tool call of a wake's run, as the admins read it back. */
+export interface WakeStep {
+  readonly tool: string;
+  /** The arguments the model called it with. */
+  readonly input: unknown;
+  /** What the tool answered: in full for a change, only its length for a read. */
+  readonly output: string;
+}

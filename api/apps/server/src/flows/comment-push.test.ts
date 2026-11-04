@@ -39,7 +39,20 @@ describe('a comment push', () => {
     });
     const members = {
       squadmates: () =>
-        Promise.resolve(new Map([[MemberId.parse(writer), { catchphrase: null, character }]])),
+        Promise.resolve(
+          new Map([
+            [
+              MemberId.parse(writer),
+              {
+                catchphrase: null,
+                character,
+                jerseyNumber: null,
+                joinedAt: new Date(0),
+                equippedTitle: null,
+              },
+            ],
+          ]),
+        ),
     };
     const push = {
       settingsOf: () => Promise.resolve({ dailyProgress: true }),

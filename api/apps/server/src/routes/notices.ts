@@ -185,27 +185,10 @@ export function notices(deps: {
         ...(before === undefined ? {} : { before: NoticeId.parse(before) }),
         limit: limit ?? DEFAULT_PAGE,
       });
-      const movers = [
-        ...new Set(
-          page.notices.flatMap((notice) =>
-            notice.kind === 'sceneMoved' && notice.subject.by !== null ? [notice.subject.by] : [],
-          ),
-        ),
-      ];
-      const [profiles, coaches] = await Promise.all([
-        movers.length === 0
-          ? undefined
-          : deps.members.squadmates(movers.map((each) => ProfileMember.parse(each))),
-        page.notices.some(({ kind }) => kind === 'coachReply') ? deps.coachNames() : undefined,
-      ]);
-      const names = {
-        member: (id: string) => profiles?.get(ProfileMember.parse(id))?.character?.nickname,
-        coach: (id: string) => coaches?.get(id),
-      };
       return c.json(
         {
           version: 1 as const,
-          notices: page.notices.map((notice) => wireNotice(notice, names)),
+          notices: await noticeEntries(deps, page.notices),
           ...(page.seenThrough === undefined ? {} : { seenThrough: page.seenThrough }),
           ...(page.next === undefined ? {} : { next: page.next }),
         },
@@ -217,6 +200,31 @@ export function notices(deps: {
       await deps.notices.markSeen(MemberId.parse(c.var.caller.userId), NoticeId.parse(through));
       return c.json({ version: 1 as const, through }, 200);
     });
+}
+
+/** The notices as the app reads them, with the names they show as they are now. */
+export async function noticeEntries(
+  deps: { readonly members: Members; readonly coachNames: CoachNames },
+  told: readonly Notice[],
+): Promise<z.infer<typeof NoticeEntry>[]> {
+  const movers = [
+    ...new Set(
+      told.flatMap((notice) =>
+        notice.kind === 'sceneMoved' && notice.subject.by !== null ? [notice.subject.by] : [],
+      ),
+    ),
+  ];
+  const [profiles, coaches] = await Promise.all([
+    movers.length === 0
+      ? undefined
+      : deps.members.squadmates(movers.map((each) => ProfileMember.parse(each))),
+    told.some(({ kind }) => kind === 'coachReply') ? deps.coachNames() : undefined,
+  ]);
+  const names = {
+    member: (id: string) => profiles?.get(ProfileMember.parse(id))?.character?.nickname,
+    coach: (id: string) => coaches?.get(id),
+  };
+  return told.map((notice) => wireNotice(notice, names));
 }
 
 function wireNotice(

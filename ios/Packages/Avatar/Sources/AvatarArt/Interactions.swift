@@ -19,21 +19,6 @@ public struct Interaction: Sendable {
 }
 
 extension PlaceholderCharacter {
-    /// 戳一戳: hops over, leans in and jabs twice; the jab lands `pokeLands` seconds in, and the
-    /// teammate poked, standing to the right, reacts in their persona's way
-    /// (`moves/interactions/poke.json`, `react-<persona>.json`): the 淡人 a beat late with a nod,
-    /// the 高能量 bouncing twice, the 显眼包 striking a pose, the 戏精 falling flat and popping
-    /// back up, the 社恐 hiding behind both hands and scooting away.
-    public static func poke(_ poked: Persona) throws(AvatarError) -> Interaction {
-        try Interaction(roles: [
-            .init(clip: interaction("poke"), offset: 0, delay: 0),
-            .init(clip: interaction("react-\(poked.rawValue)"), offset: 252, delay: pokeLands),
-        ])
-    }
-
-    /// When the poke's jab lands, in seconds; the reaction starts on it.
-    public static let pokeLands = 0.72
-
     /// 撞头 with a 社恐: the 社恐 ducks out of the way just in time, so the other bonks into thin
     /// air and stumbles; the 社恐 peeks and shuffles back (`bump-miss.json`, `dodge.json`).
     public static func bumpDodged() throws(AvatarError) -> Interaction {
