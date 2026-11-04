@@ -108,8 +108,8 @@ export const ArtRetirement = z.strictObject({
 });
 export type ArtRetirement = z.infer<typeof ArtRetirement>;
 
-// SVG: the elements and attributes the app's parser reads (AvatarDomain's SVGArtwork). It
-// refuses anything else too, so a file that passes here and fails there is a bug in one of them.
+// SVG: what the app's parser reads (AvatarDomain's SVGArtwork), value by value, since a file that
+// passes here and fails there would never reach a phone: the app leaves out what it can't read.
 const ELEMENTS = new Set([
   'svg',
   'g',
@@ -121,50 +121,88 @@ const ELEMENTS = new Set([
   'desc',
   'metadata',
 ]);
-const ATTRIBUTES = new Set([
-  'viewBox',
-  'd',
-  'cx',
-  'cy',
-  'r',
-  'rx',
-  'ry',
-  'x',
-  'y',
-  'width',
-  'height',
-  'opacity',
-  'fill',
-  'fill-opacity',
-  'stroke',
-  'stroke-opacity',
-  'stroke-width',
-  'stroke-linecap',
-  'stroke-linejoin',
-  'stroke-dasharray',
-  'style',
-  'id',
-  'class',
-  'xmlns',
-  'xmlns:xlink',
-  'version',
-]);
+const INERT = new Set(['id', 'class', 'xmlns', 'xmlns:xlink', 'version']);
+const NUMBER = String.raw`[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?`;
+const isNumber = (value: string) => new RegExp(`^\\s*${NUMBER}\\s*$`).test(value);
+const isColor = (value: string) =>
+  value === 'none' || /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value);
+const isNumbers = (value: string, count?: number) => {
+  const numbers = value.trim().split(/[\s,]+/);
+  return (count === undefined || numbers.length === count) && numbers.every(isNumber);
+};
+const VALUES: Record<string, (value: string) => boolean> = {
+  d: (value) => /^[MmLlHhVvCcSsQqTtZz0-9eE.,+\-\s]*$/.test(value),
+  cx: isNumber,
+  cy: isNumber,
+  r: isNumber,
+  rx: isNumber,
+  ry: isNumber,
+  x: isNumber,
+  y: isNumber,
+  width: isNumber,
+  height: isNumber,
+  opacity: isNumber,
+  'fill-opacity': isNumber,
+  'stroke-opacity': isNumber,
+  'stroke-width': isNumber,
+  fill: isColor,
+  stroke: isColor,
+  'stroke-linecap': (value) => ['butt', 'round', 'square'].includes(value),
+  'stroke-linejoin': (value) => ['miter', 'round', 'bevel'].includes(value),
+  'stroke-dasharray': (value) => value === 'none' || isNumbers(value),
+  viewBox: (value) => {
+    const [x, y] = value
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number);
+    return isNumbers(value, 4) && x === 0 && y === 0;
+  },
+};
+// A whole start or end tag, with every attribute quoted: anything else isn't read the same way.
+const TAG =
+  /^<(\/?)([A-Za-z][\w:.-]*)((?:\s+[A-Za-z_:][\w:.-]*\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>/;
+const ATTRIBUTE = /([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+
+const attributeProblem = (element: string, name: string, value: string): string | undefined => {
+  if (INERT.has(name)) return undefined;
+  if (name === 'opacity' && (element === 'svg' || element === 'g'))
+    return `opacity on <${element}> isn’t read`;
+  const valid = VALUES[name];
+  if (valid === undefined) return `${name} on <${element}> isn’t read`;
+  if (!valid(value)) return `${name}="${value}" on <${element}> isn’t read`;
+  return undefined;
+};
 
 const svgProblem = (text: string): string | undefined => {
   const body = text.replace(/^\s*<\?xml[^>]*\?>/, '').replace(/<!--[\s\S]*?-->/g, '');
   if (!/^\s*<svg[\s>]/.test(body)) return 'it must start with <svg>';
   if (/<!|<\?|&/.test(body)) return 'no DOCTYPE, processing instructions or entities';
-  for (const [, element, attributes = ''] of body.matchAll(/<\s*([A-Za-z][\w:.-]*)([^>]*)>/g)) {
-    if (element === undefined || !ELEMENTS.has(element)) return `<${element ?? '?'}> isn’t drawn`;
-    for (const [, name] of attributes.matchAll(/([A-Za-z_:][\w:.-]*)\s*=/g)) {
-      if (name === undefined || !ATTRIBUTES.has(name))
-        return `${name ?? '?'} on <${element}> isn’t read`;
+  let viewBox = false;
+  for (let at = body.indexOf('<'); at !== -1; at = body.indexOf('<', at + 1)) {
+    const tag = TAG.exec(body.slice(at));
+    if (tag === null) return 'every tag is whole, with its attributes quoted';
+    const [, closing = '', element = '', attributes = ''] = tag;
+    if (!ELEMENTS.has(element)) return `<${element}> isn’t drawn`;
+    if (closing !== '') continue;
+    for (const [, name = '', double, single] of attributes.matchAll(ATTRIBUTE)) {
+      const value = double ?? single ?? '';
+      if (name === 'd' && /[Aa]/.test(value)) return 'paths have no arcs (outline them)';
+      if (name === 'viewBox' && element === 'svg') viewBox = true;
+      if (name !== 'style') {
+        const problem = attributeProblem(element, name, value);
+        if (problem !== undefined) return problem;
+        continue;
+      }
+      for (const declaration of value.split(';')) {
+        if (declaration.trim() === '') continue;
+        const [key = '', ...rest] = declaration.split(':');
+        if (rest.length !== 1) return `style="${value}" on <${element}> isn’t read`;
+        const problem = attributeProblem(element, key.trim(), rest[0]?.trim() ?? '');
+        if (problem !== undefined) return problem;
+      }
     }
   }
-  for (const [, d = ''] of body.matchAll(/\sd\s*=\s*"([^"]*)"/g)) {
-    if (/[Aa]/.test(d)) return 'paths have no arcs (outline them)';
-  }
-  if (!/<svg[^>]*\sviewBox\s*=/.test(body)) return 'the <svg> needs a viewBox';
+  if (!viewBox) return 'the <svg> needs a viewBox at 0 0';
   return undefined;
 };
 

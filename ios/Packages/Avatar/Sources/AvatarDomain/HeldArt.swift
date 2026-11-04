@@ -29,6 +29,11 @@ extension Figure {
         return nil
     }
 
+    /// Whether `data` reads as a `hold.json`, as `level` would read it.
+    public static func readsHold(_ data: Data) -> Bool {
+        (try? decodeJSON(data, version: 1, shape: HoldFile.shape) as HoldFile) != nil
+    }
+
     /// The hand in a part's body art: its last shape, drawn over the arm.
     static func hand(_ art: Artwork?) -> Rig.Skin? {
         guard let shape = art?.shapes.last, let fill = shape.fill, let stroke = shape.stroke else { return nil }

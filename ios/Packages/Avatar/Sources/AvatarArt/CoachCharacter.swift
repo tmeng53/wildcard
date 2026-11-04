@@ -47,7 +47,7 @@ public enum CoachCharacter {
     private static let tree = "coaches"
 
     /// The copied `Coaches` folder inside this package's resource bundle.
-    private static var root: URL {
+    static var root: URL {
         (Bundle.module.resourceURL ?? Bundle.module.bundleURL).appendingPathComponent("Coaches")
     }
 }

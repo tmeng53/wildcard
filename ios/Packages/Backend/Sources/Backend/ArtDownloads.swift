@@ -33,16 +33,20 @@ public actor ArtDownloads {
     }
 
     /// Brings the art on this phone to `manifest`: downloads the files it lacks, checks them,
-    /// and swaps the tree. Leaves out files a newer rig draws. Answers whether the art changed;
-    /// false when it was current or anything failed, which the next call tries again.
+    /// and swaps the tree. Leaves out files a newer rig draws, and files this build can't read
+    /// (their paths keep the bundled art). Answers whether the art changed; false when it was
+    /// current or a file couldn't be downloaded whole, which the next call tries again.
     @discardableResult
     public func update(to manifest: ArtManifest) async -> Bool {
         guard manifest.generation != kept() else { return false }
         let files = manifest.files.filter { $0.rigVersion <= ArtTree.rigVersion && Self.isInTree($0.path) }
         var blobs: [(file: ArtManifest.File, at: URL)] = []
         for file in files {
-            guard let blob = await blob(file, from: manifest.baseURL) else { return false }
-            blobs.append((file, blob))
+            switch await blob(file, from: manifest.baseURL) {
+            case .here(let blob): blobs.append((file, blob))
+            case .unreadable: continue
+            case .unavailable: return false
+            }
         }
         let next = root.appending(path: "next-\(UUID().uuidString)")
         do {
@@ -80,25 +84,23 @@ public actor ArtDownloads {
         return kept.generation
     }
 
-    /// `file` on the phone, downloaded and checked if it wasn't; nil when it can't be had.
-    private func blob(_ file: ArtManifest.File, from base: URL?) async -> URL? {
+    /// `file` on the phone, downloaded if it wasn't, and read the way the screens will.
+    private func blob(_ file: ArtManifest.File, from base: URL?) async -> Blob {
         let blobs = root.appending(path: "blobs")
         let place = blobs.appending(path: file.name)
-        // Kept from an earlier generation: checked when it came, so only its size is looked at.
-        if let kept = try? FileManager.default.attributesOfItem(atPath: place.path(percentEncoded: false))[.size]
-            as? Int, kept == file.size
-        {
-            return place
+        if let data = try? Data(contentsOf: place), data.count == file.size {
+            return ArtTree.reads(data, at: file.path) ? .here(place) : .unreadable
         }
         guard let base, let data = try? await fetch(base.appending(path: file.name)),
-            data.count == file.size, digest(data) == file.sha256, Self.isArt(data, at: file.path)
-        else { return nil }
+            data.count == file.size, digest(data) == file.sha256
+        else { return .unavailable }
+        guard ArtTree.reads(data, at: file.path) else { return .unreadable }
         do {
             try FileManager.default.createDirectory(at: blobs, withIntermediateDirectories: true)
             try data.write(to: place, options: .atomic)
-            return place
+            return .here(place)
         } catch {
-            return nil
+            return .unavailable
         }
     }
 
@@ -122,17 +124,6 @@ public actor ArtDownloads {
             && parts.count > 1 && !parts.contains { $0.isEmpty || $0 == "." || $0 == ".." }
     }
 
-    /// Whether `data` reads as the art `path` holds: SVG this build's parser draws, JSON, or a PNG.
-    static func isArt(_ data: Data, at path: String) -> Bool {
-        if path.hasSuffix(".svg") {
-            guard let svg = String(data: data, encoding: .utf8) else { return false }
-            return (try? Artwork.read(svg: svg, path: path)) != nil
-        }
-        if path.hasSuffix(".json") { return (try? JSONSerialization.jsonObject(with: data)) is [String: Any] }
-        if path.hasSuffix(".png") { return data.starts(with: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) }
-        return false
-    }
-
     private static let sha256: @Sendable (Data) -> String = { data in
         #if canImport(CryptoKit)
         SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
@@ -141,6 +132,16 @@ public actor ArtDownloads {
         ""
         #endif
     }
+}
+
+/// A file of the art, as `blob` found it.
+private enum Blob {
+    /// Downloaded and readable, kept at this place.
+    case here(URL)
+    /// Downloaded whole, but this build can't read it: left out, so its path keeps the bundled art.
+    case unreadable
+    /// Not downloaded whole (no network, or not what the list says): the generation waits.
+    case unavailable
 }
 
 /// Which generation the downloaded tree holds. Stored JSON, so it carries a `version`.

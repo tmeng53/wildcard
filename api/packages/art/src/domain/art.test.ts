@@ -25,6 +25,8 @@ const bundled = trees.flatMap(({ root, prefix }) =>
 );
 
 const text = (svg: string) => new TextEncoder().encode(svg);
+const svg = (inner: string) =>
+  text(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">${inner}</svg>`);
 const refusal = (path: string, bytes: Uint8Array) => {
   try {
     checkArt(ArtPath.parse(path), bytes);
@@ -48,8 +50,6 @@ describe('checkArt', () => {
   });
 
   it('refuses what the app can’t draw', () => {
-    const svg = (inner: string) =>
-      text(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">${inner}</svg>`);
     const path = 'avatar/art/hat/beanie/crown.svg';
     expect(refusal(path, svg('<path d="M0 0L1 1" fill="#FFFFFF"/>'))).toBeUndefined();
     expect(refusal(path, svg('<script>alert(1)</script>'))).toBe('<script> isn’t drawn');
@@ -63,9 +63,33 @@ describe('checkArt', () => {
     expect(refusal(path, svg('<image href="https://example.com/x.png"/>'))).toBe(
       '<image> isn’t drawn',
     );
-    expect(refusal(path, text('<svg><path d="M0 0"/></svg>'))).toBe('the <svg> needs a viewBox');
+    expect(refusal(path, text('<svg><path d="M0 0"/></svg>'))).toBe(
+      'the <svg> needs a viewBox at 0 0',
+    );
     expect(refusal(path, text('<!DOCTYPE svg><svg viewBox="0 0 1 1"/>'))).toBe(
       'it must start with <svg>',
+    );
+  });
+
+  it('reads each value as the app’s parser does', () => {
+    const path = ArtPath.parse('avatar/art/hat/beanie/crown.svg');
+    expect(refusal(path, svg('<circle r="1" fill="red"/>'))).toBe(
+      'fill="red" on <circle> isn’t read',
+    );
+    expect(refusal(path, svg('<circle r="1" style="transform:rotate(9deg)"/>'))).toBe(
+      'transform on <circle> isn’t read',
+    );
+    expect(refusal(path, svg('<circle r="1" style="fill:#FFF;stroke-width:2"/>'))).toBeUndefined();
+    expect(refusal(path, svg('<circle r="1" fill=">" onload="x"/>'))).toBe(
+      'fill=">" on <circle> isn’t read',
+    );
+    expect(refusal(path, svg('<circle r="one"/>'))).toBe('r="one" on <circle> isn’t read');
+    expect(refusal(path, svg('<g opacity="0.5"/>'))).toBe('opacity on <g> isn’t read');
+    expect(refusal(path, svg('<circle r=1/>'))).toBe(
+      'every tag is whole, with its attributes quoted',
+    );
+    expect(refusal(path, text('<svg viewBox="5 5 10 10"><path d="M0 0"/></svg>'))).toBe(
+      'viewBox="5 5 10 10" on <svg> isn’t read',
     );
   });
 
