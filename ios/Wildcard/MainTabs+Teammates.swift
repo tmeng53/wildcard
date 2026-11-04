@@ -40,7 +40,7 @@ extension MainTabs {
     }
 }
 
-/// A teammate's card sheet, keeping the model it opened with however often its parent draws.
+/// A teammate's pop-up card, keeping the model it opened with however often its parent draws.
 struct TeammateCard: View {
     @State private var model: SquadmateCardModel
 
@@ -49,6 +49,6 @@ struct TeammateCard: View {
     }
 
     var body: some View {
-        SquadmateCardSheet(model: model)
+        SquadmateCardPopup(model: model)
     }
 }

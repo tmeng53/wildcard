@@ -85,6 +85,9 @@ public struct SquadSettingsView: View {
                     backdrop: { SceneBackdrop(scene: reveal.scene) })
             }
         }
+        .cardPopup(isPresented: Binding(get: { openedMate != nil }, set: { if !$0 { openedMate = nil } })) {
+            if let openedMate { teammateCard?(openedMate.id) }
+        }
         .task { await model.reload() }
     }
 
@@ -278,9 +281,6 @@ extension SquadSettingsView {
                     confirming = action
                 }
             }
-        }
-        .sheet(item: $openedMate) { mate in
-            teammateCard?(mate.id)
         }
         .confirmationDialog(
             confirming.map { $0.title } ?? Text(verbatim: ""), isPresented: isConfirming, titleVisibility: .visible,

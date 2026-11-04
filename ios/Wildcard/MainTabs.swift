@@ -107,7 +107,7 @@ struct MainTabs: View {
                     })
             }
         }
-        .sheet(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
+        .cardPopup(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
             if let teammate {
                 TeammateCard(model: teammate).environment(\.sceneTheme, today.scene)
             }
