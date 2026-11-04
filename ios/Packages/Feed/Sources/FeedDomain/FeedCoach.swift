@@ -19,6 +19,7 @@ public final class FeedCoach {
     /// The newest line the server sent, whatever its day.
     public private(set) var note: CoachNote?
     private var replies: [CheckInID: CoachReply] = [:]
+    private var answers: [CheckInID: [CoachAnswer]] = [:]
     /// The posts already asked about, so the week before asks only for its own.
     private var asked: Set<CheckInID> = []
 
@@ -44,6 +45,16 @@ public final class FeedCoach {
     /// The coach's reply to a post, if it said or left anything.
     public func reply(to post: CheckInID) -> CoachReply? { replies[post] }
 
+    /// The coach's answers to members' replies to it under a post, oldest first.
+    public func answers(on post: CheckInID) -> [CoachAnswer] { answers[post] ?? [] }
+
+    /// A coach that spoke on 动态, by id: its name for 回复 毛头.
+    public func speaker(_ coach: CoachID) -> CoachSpeaker? {
+        let all =
+            replies.values.map(\.coach) + answers.values.flatMap { $0.map(\.coach) } + [note?.coach].compactMap(\.self)
+        return all.first { $0.id == coach }
+    }
+
     /// Reads the line again and the replies to `posts`, newest first: the first `askLimit`.
     public func load(about posts: [CheckInID]) async {
         let asking = Array(posts.prefix(Self.askLimit))
@@ -51,6 +62,10 @@ public final class FeedCoach {
         note = activity.note
         for reply in activity.replies where asking.contains(reply.checkIn) {
             replies[reply.checkIn] = reply
+        }
+        // Each post asked about has exactly the answers it was sent: none when they went.
+        for post in asking {
+            answers[post] = activity.answers.filter { $0.checkIn == post }
         }
         asked.formUnion(asking)
     }

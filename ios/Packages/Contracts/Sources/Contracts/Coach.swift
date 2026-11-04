@@ -120,14 +120,34 @@ public struct CoachReply: Hashable, Sendable {
     }
 }
 
-/// What the squad's coach said: its newest 战术板 line, and its replies to the check-ins asked
-/// about.
+/// What the coach answered a member's reply to it (回复 毛头：…): a line shown right after that
+/// reply, as a reply to its writer.
+public struct CoachAnswer: Hashable, Sendable, Identifiable {
+    public let checkIn: CheckInID
+    /// The reply it answers.
+    public let comment: CommentID
+    public let coach: CoachSpeaker
+    public let text: String
+    public let writtenAt: Date
+
+    public var id: CommentID { comment }
+
+    public init(checkIn: CheckInID, comment: CommentID, coach: CoachSpeaker, text: String, writtenAt: Date) {
+        (self.checkIn, self.comment, self.coach, self.text, self.writtenAt) = (checkIn, comment, coach, text, writtenAt)
+    }
+}
+
+/// What the squad's coach said: its newest 战术板 line, its replies to the check-ins asked
+/// about, and its answers to members' replies to it there.
 public struct CoachActivity: Hashable, Sendable {
     public let note: CoachNote?
     public let replies: [CoachReply]
+    /// Oldest first.
+    public let answers: [CoachAnswer]
 
-    public init(note: CoachNote?, replies: [CoachReply]) {
+    public init(note: CoachNote?, replies: [CoachReply], answers: [CoachAnswer] = []) {
         self.note = note
         self.replies = replies
+        self.answers = answers
     }
 }

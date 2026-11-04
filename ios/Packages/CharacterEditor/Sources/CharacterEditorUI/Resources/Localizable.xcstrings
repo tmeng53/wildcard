@@ -2226,6 +2226,166 @@
         }
       }
     },
+    "%@ 开门了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is open"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 開門了"
+          }
+        }
+      }
+    },
+    "解锁了%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlocked: %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解鎖了%@"
+          }
+        }
+      }
+    },
+    "随便练满 %lld 次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Any %lld workouts"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隨便練滿 %lld 次"
+          }
+        }
+      }
+    },
+    "%@练满 %lld 次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ × %lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@練滿 %lld 次"
+          }
+        }
+      }
+    },
+    "第一次打%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First time playing %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第一次打%@"
+          }
+        }
+      }
+    },
+    "第一次练%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第一次練%@"
+          }
+        }
+      }
+    },
+    "%@ 到新货了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New in at %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 到新貨了"
+          }
+        }
+      }
+    },
+    "商店街到新货了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New in on the street"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "商店街到新貨了"
+          }
+        }
+      }
+    },
+    "再练 %lld 次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld more to go"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再練 %lld 次"
+          }
+        }
+      }
+    },
+    "神秘款，再练 %lld 次解锁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mystery piece, unlocks in %lld more workouts"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "神秘款，再練 %lld 次解鎖"
+          }
+        }
+      }
+    },
     "复古拉链外套": {
       "localizations": {
         "en": {
@@ -3182,38 +3342,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "頭戴耳機"
-          }
-        }
-      }
-    },
-    "再练 %lld 次": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld more to go"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "再練 %lld 次"
-          }
-        }
-      }
-    },
-    "神秘款，再练 %lld 次解锁": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mystery piece, unlocks in %lld more workouts"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "神秘款，再練 %lld 次解鎖"
           }
         }
       }

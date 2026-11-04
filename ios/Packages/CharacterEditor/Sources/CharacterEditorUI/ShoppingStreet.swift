@@ -131,7 +131,7 @@ private struct StoreCard: View {
 }
 
 /// A store's badge, from the bundled art.
-private struct StoreBadge: View {
+struct StoreBadge: View {
     let store: String
 
     var body: some View {

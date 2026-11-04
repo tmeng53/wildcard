@@ -6,18 +6,30 @@ import PackageDescription
 // the API once someone is signed in. It reaches iOS and the API only through its ports, so it
 // is pure Swift and tests on Linux. `NotificationsUI` is the Apple side: the permission prompt,
 // APNs registration, which APNs servers this build's tokens are for, and taps on a
-// notification, read into what they point at (`OpenedNotification`).
+// notification, read into what they point at (`OpenedNotification`). 通知, the bell on 动态,
+// is here too: `NoticeInbox` (the member's notices a page at a time and how far they have read,
+// through its `NoticeSource` port) and, in `NotificationsUI`, the bell and its page.
 let package = Package(
     name: "Notifications",
+    defaultLocalization: "zh-Hans",
     platforms: [.iOS("26.0"), .macOS("26.0")],
     products: [
         .library(name: "NotificationsDomain", targets: ["NotificationsDomain"]),
         .library(name: "NotificationsUI", targets: ["NotificationsUI"]),
     ],
-    dependencies: [.package(path: "../Contracts")],
+    dependencies: [.package(path: "../Contracts"), .package(path: "../DesignSystem"), .package(path: "../Avatar")],
     targets: [
         .target(name: "NotificationsDomain", dependencies: [.product(name: "Contracts", package: "Contracts")]),
-        .target(name: "NotificationsUI", dependencies: ["NotificationsDomain"]),
+        .target(
+            name: "NotificationsUI",
+            dependencies: [
+                "NotificationsDomain", .product(name: "Contracts", package: "Contracts"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+                .product(name: "DesignSystemUI", package: "DesignSystem"),
+                .product(name: "AvatarArt", package: "Avatar"), .product(name: "AvatarDomain", package: "Avatar"),
+                .product(name: "AvatarUI", package: "Avatar"),
+            ],
+            resources: [.process("Resources/Localizable.xcstrings")]),
         .testTarget(
             name: "NotificationsDomainTests",
             dependencies: ["NotificationsDomain", .product(name: "Contracts", package: "Contracts")]),

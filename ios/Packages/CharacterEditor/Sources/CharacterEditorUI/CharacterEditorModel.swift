@@ -154,11 +154,12 @@ public final class CharacterEditorModel {
         case .prop:
             tab = .prop
         case .piece:
+            tab = .outfit
+            // A piece given before its store opened waits on the street with it.
             guard let id = draft.catalog.storeOf[unlock.id],
                 let store = draft.catalog.stores.first(where: { $0.id == id && $0.isOpen }),
                 draft.catalog.rack(of: id).contains(where: { $0.variant == unlock.id })
             else { return }
-            tab = .outfit
             visit(store)
             unboxing = unlock.id
         }
