@@ -89,8 +89,9 @@ public final class TodayModel {
     private(set) var sendFailed = false
 
     let photoSource: PhotoSource
-    /// My character, as I made it once the home says so; the stand-in lifter until then. Once I
-    /// 练了 a sport today it wears that sport's kit and loops its move (`TodayModel+Dress.swift`).
+    /// My character, as I made it once the home says so; the stand-in lifter until then. It does
+    /// what a teammate's does in my pose (`TodayModel+Dress.swift`): my sport's kit and move once I
+    /// 练了, my latest meal, my 请假条, sitting on a rest day, asleep at night.
     var player: CharacterPlayer?
     private(set) var myLook = PlaceholderCharacter.lifter
     private(set) var myPersona = Persona.energetic

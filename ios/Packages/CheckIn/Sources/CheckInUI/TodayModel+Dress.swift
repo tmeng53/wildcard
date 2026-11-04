@@ -80,11 +80,13 @@ extension TodayModel {
         hopEnds.map { Date.now < $0 } ?? false
     }
 
-    /// I tapped my own character: my status shows over my head, as a teammate's does, and it
-    /// plays its signature move once, the move of the prop it holds (the kit's, once I trained
-    /// today), or its cheer. The move waits out a pat, a 练了's cheer, a hop into the kit or the
-    /// squad's drop.
+    /// I tapped my own character: my status shows over my head, as a teammate's does (睡着了
+    /// while asleep), and it plays its signature move once, the move of the prop it holds (the
+    /// kit's, once I trained today), or its cheer; asleep or eating, it keeps at it, as a
+    /// teammate does. The move waits out a pat, a 练了's cheer, a hop into the kit or the squad's
+    /// drop.
     func tapMe() {
+        let pose = myPose(at: stagePhase)
         if let home, arrival == nil {
             pats.tapMe(
                 home.member,
@@ -92,11 +94,13 @@ extension TodayModel {
                     training: store.myStatus, activity: home.todaysSport(of: home.member),
                     plannedRest: home.mine?.plannedRest ?? false),
                 eating: home.todaysMeal(of: home.member), caption: home.todaysCaption(of: home.member),
-                disclaimer: home.todaysDisclaimer(of: home.member))
+                disclaimer: home.todaysDisclaimer(of: home.member), asleep: pose == .asleep)
         }
-        guard pats.pat == nil, arrival == nil, !holdsDress, !isChanging, myPose(at: stagePhase) != .asleep,
-            let player
-        else { return }
+        switch pose {
+        case .asleep?, .eating?: return
+        case .standing?, .sitting?, .holdingSign?, .station?, .inPlace?, nil: break
+        }
+        guard pats.pat == nil, arrival == nil, !holdsDress, !isChanging, let player else { return }
         guard
             let move = try? PlaceholderCharacter.signatureMove(
                 wearing: worn?.outfit ?? myLook, persona: myPersona)
