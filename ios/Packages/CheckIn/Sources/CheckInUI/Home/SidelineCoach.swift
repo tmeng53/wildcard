@@ -14,7 +14,7 @@ struct SidelineCoachFigure: View {
     let date: Date
     let reduceMotion: Bool
 
-    /// The coaches' canvas, as members', and where its feet are on it.
+    /// Members' canvas, which coaches share, and where its feet are on it.
     static let canvas = CGSize(width: 240, height: 320)
     static let feet = CGPoint(x: 120, y: 316)
     /// The room above the canvas its cheer's hop reaches into, in rig points.

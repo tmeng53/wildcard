@@ -30,17 +30,24 @@ struct DisclaimerComposer: View {
     @State private var landed = 0
     /// The squads it goes to: all of them until the member unticks one.
     @State private var shared: Set<SquadID>
+    /// The past day it counts for (补打卡); nil is today, whatever day it is when it posts. It
+    /// opens on today, or on the latest day before it without a 练了 when today can't take one.
+    @State private var day: LocalDay?
     @FocusState private var isEditing: Bool
 
     init(model: TodayModel) {
         self.model = model
         _shared = State(initialValue: Set(model.shareSquads.map(\.id)))
+        let blocked = model.blockedForDisclaimer
+        let today = model.disclaimerDays.last
+        let latest = model.disclaimerDays.last { !blocked.contains($0) }
+        _day = State(initialValue: latest == today ? nil : latest)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
-                .padding(.bottom, Space.xl)
+            DisclaimerHeader(model: model, day: $day)
+                .padding(.bottom, Space.l)
             // The excuse sits in the middle of the room the choices leave.
             Spacer(minLength: 0)
             hero
@@ -59,7 +66,9 @@ struct DisclaimerComposer: View {
             }
             ShareRow(squads: model.shareSquads, shared: $shared)
                 .padding(.bottom, Space.xs)
-            PostButton(model: model, disclaimer: entry.disclaimer, shared: shared)
+            // The page's last line, over nothing else: it floats, in glass.
+            PostButton(model: model, disclaimer: entry.disclaimer, shared: shared, day: day)
+                .controlPlacement(.floating)
         }
         .padding(.horizontal, Space.l)
         .padding(.top, Space.xs)
@@ -74,32 +83,6 @@ struct DisclaimerComposer: View {
             drafts = DiceDisclaimerWriter.rollDefault(3)
             // Writing the reason comes first: the page opens with the keyboard up.
             isEditing = true
-        }
-    }
-
-    /// Today's date and the page's name, small; × on the right.
-    private var header: some View {
-        HStack(spacing: Space.s) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(Date.now, format: .dateTime.month(.defaultDigits).day().weekday(.abbreviated))
-                    .typeStyle(TypeRamp.label)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Text("今日请假条", bundle: .module)
-                    .typeStyle(TypeRamp.label)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .accessibilityAddTraits(.isHeader)
-            }
-            Spacer()
-            Button {
-                model.cancel()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: Sizing.smallIcon, weight: .medium))
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget, alignment: .trailing)
-            }
-            .accessibilityLabel(Text("关闭", bundle: .module))
-            .accessibilityIdentifier("disclaimer.close")
         }
     }
 
@@ -365,11 +348,12 @@ private struct PostButton: View {
     /// The excuse to post, or nil while it can't be.
     let disclaimer: Disclaimer?
     let shared: Set<SquadID>
+    let day: LocalDay?
 
     var body: some View {
         Button {
             guard let disclaimer, !model.isSending else { return }
-            Task { await model.post(.disclaimer(disclaimer), sharedTo: shared) }
+            Task { await model.post(.disclaimer(disclaimer), sharedTo: shared, on: day) }
         } label: {
             Text("发布请假条", bundle: .module)
                 .loadingLabel(model.isSending)

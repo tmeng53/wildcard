@@ -15,6 +15,7 @@ export {
   earned,
   idFits,
   toGo,
+  type SwitchOn,
   type Locked,
   type Trained,
   type Unlock,

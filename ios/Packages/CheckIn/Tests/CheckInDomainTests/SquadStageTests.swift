@@ -95,7 +95,7 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
 
 @Test func nobodyIsDrawnOverAnotherOrStandsOnALaneSomeoneIsRunning() {
     let sports: [SceneTheme: Sport] = [
-        .track: "run", .pool: "swim", .gym: "strength", .tennis: "tennis", .climbing: "climb",
+        .track: "run", .pool: "swim", .gym: "strength", .tennis: "tennis", .climbing: "climb", .ski: "ski",
     ]
     for scene in SceneTheme.allCases {
         for trainers in 0...4 {

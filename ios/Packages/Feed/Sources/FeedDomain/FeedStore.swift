@@ -186,7 +186,7 @@ public final class FeedStore {
         guard case .squad(let squad) = scope else { return false }
         do {
             let posts = try await source.posts(in: squad, from: days.first, through: days.last)
-            loaded = loaded.filter { !(days.first...days.last).contains($0.value.checkIn.day) }
+            loaded = loaded.filter { !(days.first...days.last).contains($0.value.checkIn.postedDay) }
             for post in posts {
                 loaded[post.id] = post
                 ownNotYetListed[post.id] = nil

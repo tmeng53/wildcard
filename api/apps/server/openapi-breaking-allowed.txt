@@ -2,3 +2,12 @@
 # #321: the story's two cases are the same shapes with fields added and their parts named; oasdiff
 # can't match renamed oneOf members, so it reports them as new. Compared case by case, nothing breaks.
 GET /squads/{squadId}/weeks/{weekStart}/story added `subschema #1, subschema #2` to the response body `oneOf` list for the response status `200`
+# The scenes list: a pick's `scene` went from the five ids to any scene id. Every value an
+# installed build sends (the five) still matches the pattern and is still accepted, so nothing
+# breaks; oasdiff reports a widened enum as values removed and a pattern added.
+PUT /squads/{squadId}/weeks/{weekStart}/scene removed the enum value `climbing` of the request property `scene`
+PUT /squads/{squadId}/weeks/{weekStart}/scene removed the enum value `gym` of the request property `scene`
+PUT /squads/{squadId}/weeks/{weekStart}/scene removed the enum value `pool` of the request property `scene`
+PUT /squads/{squadId}/weeks/{weekStart}/scene removed the enum value `tennis` of the request property `scene`
+PUT /squads/{squadId}/weeks/{weekStart}/scene removed the enum value `track` of the request property `scene`
+PUT /squads/{squadId}/weeks/{weekStart}/scene added the pattern `^[a-z][A-Za-z0-9]{0,39}$` to the request property `scene`

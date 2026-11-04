@@ -141,9 +141,7 @@ public struct SquadSettingsView: View {
                     squad: settings.squad, openSpots: model.openSpots, openCoach: openCoachPage)
             }
             if model.changeFailed {
-                Text("网络开小差了，没存上", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                InlineFailure()
                     .accessibilityIdentifier("squad.changeFailed")
             }
             section(Text("本周场地", bundle: .module)) { sceneCard }

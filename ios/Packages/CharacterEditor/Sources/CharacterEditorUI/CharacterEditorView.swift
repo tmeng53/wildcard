@@ -72,7 +72,7 @@ public struct CharacterEditorView: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .background(Color(role: .bgCanvas, in: theme))
         .scrollDismissesKeyboard(.interactively)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        .actionBar {
             DoneBar(
                 context: context, result: model.result, isNaming: isNaming, onNamed: { isNaming = false },
                 onDone: onDone)
@@ -118,11 +118,8 @@ private struct EditorHeader: View {
                 HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: onBack)
                     .accessibilityIdentifier("editor.back")
             case .profile:
-                Button(action: onBack) {
-                    Text("取消", bundle: .module)
-                }
-                .buttonStyle(TextButtonStyle(.plain))
-                .accessibilityIdentifier("editor.cancel")
+                HeaderTextButton(Text("取消", bundle: .module), action: onBack)
+                    .accessibilityIdentifier("editor.cancel")
             }
             if case .signUp(let step, let total) = context {
                 StepSegments(step: step, of: total)
@@ -183,10 +180,6 @@ private struct DoneBar: View {
         .buttonStyle(PrimaryButtonStyle())
         .disabled(!isNaming && result == nil)
         .accessibilityIdentifier(isNaming ? "editor.named" : "editor.done")
-        .padding(.horizontal, Space.pageMargin)
-        .padding(.top, Space.s)
-        .padding(.bottom, Space.xs)
-        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea(edges: .bottom))
     }
 }
 #endif

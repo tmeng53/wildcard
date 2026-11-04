@@ -74,8 +74,7 @@ struct ScenePickerGrid: View {
             .disabled(!picker.canConfirm)
             .accessibilityIdentifier("squad.scene.confirm")
             if case .failed(.unavailable) = picker.phase {
-                Text("网络开小差了，没存上", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
+                InlineFailure()
             }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: picker.selection)
@@ -234,9 +233,7 @@ struct MemberRow: View {
         .frame(minHeight: SquadSettingsMetrics.row)
         .overlay(alignment: .top) {
             if showsDivider {
-                Rectangle()
-                    .fill(Color(role: .borderDefault, in: theme))
-                    .frame(height: Sizing.hairline)
+                Hairline()
             }
         }
         // Contain, so the row's identifier doesn't replace its ··· button's.
@@ -247,7 +244,7 @@ struct MemberRow: View {
     /// Their face, nickname and 我.
     private var who: some View {
         HStack(spacing: Space.s) {
-            MemberHead(character: member.character)
+            LookHead(character: member.character)
             HStack(spacing: Space.xs) {
                 Text(verbatim: name)
                     .typeStyle(TypeRamp.body)
@@ -266,53 +263,32 @@ struct MemberRow: View {
     }
 }
 
-/// A member's face, still, in a circle; an empty circle until they make their character.
-struct MemberHead: View {
+/// A member's face, still, in a `MemberHead`; an empty circle until they make their character.
+struct LookHead: View {
     let character: MemberCharacter?
     var size = SquadSettingsMetrics.head
-    @State private var drawing: (drawing: FigureDrawing, placements: [Placement])?
-    @Environment(\.sceneTheme) private var theme
-
-    /// The face on the rig's 240 by 320 canvas.
-    private static let face = CGRect(x: 40, y: 74, width: 160, height: 160)
+    @State private var player: CharacterPlayer?
 
     var body: some View {
-        ZStack {
-            Circle().fill(Color(role: .bgSubtle, in: theme))
-            if let drawing {
-                CharacterCanvas(drawing: drawing.drawing, placements: drawing.placements, crop: Self.face)
-                    .clipShape(Circle())
+        MemberHead(player: player, size: size)
+            .task(id: character) {
+                guard let character else { return }
+                let outfit = Outfit(character.look)
+                player = try? CharacterPlayer(
+                    figure: PlaceholderCharacter.figure(wearing: outfit),
+                    idle: PlaceholderCharacter.clip(
+                        "idle", persona: Persona(character.look), species: PlaceholderCharacter.species(of: outfit)))
             }
-        }
-        .frame(width: size, height: size)
-        .accessibilityHidden(true)
-        .task(id: character) {
-            guard let character else { return }
-            let outfit = Outfit(character.look)
-            drawing = try? CharacterPlayer(
-                figure: PlaceholderCharacter.figure(wearing: outfit),
-                idle: PlaceholderCharacter.clip(
-                    "idle", persona: Persona(character.look), species: PlaceholderCharacter.species(of: outfit))
-            ).restFrame
-        }
     }
 }
 
 /// 小队设置 couldn't be read: one line and a way to try again.
 struct SquadFailed: View {
     let retry: () -> Void
-    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        VStack(spacing: Space.m) {
-            Text("网络开小差了", bundle: .module)
-                .typeStyle(TypeRamp.headline)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-            Button(action: retry) { Text("再试一次", bundle: .module) }
-                .buttonStyle(PrimaryButtonStyle(.regular))
-                .accessibilityIdentifier("squad.retry")
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        StateView.offline(retryIdentifier: "squad.retry", retry: retry)
+            .frame(maxHeight: .infinity)
     }
 }
 

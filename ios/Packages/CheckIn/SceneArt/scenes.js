@@ -244,3 +244,67 @@ function liftScene(r) {
   return r;
 }
 
+
+// Draft: the 雪场 scene, in the same plan and helpers as ios/Packages/CheckIn/SceneArt/scenes.js
+// (this file is appended after that one's helpers). A glacier peak fills the view: skiers carve
+// across its face; everyone else stands on the smooth snow below, as on the other scenes.
+THEMES.ski = { name: '雪场', sig: '#16384D', shade: '#0E2636', wash: '#EAF7FD', text: '#16384D', on: '#D6F1FB' };
+SCENES.ski = function () {
+  const SKY = '#DCEAF6', FAR = '#C3D9EC', SNOW = '#FFFFFF', SHADE = '#E3EDF6', ICE1 = '#C9DFF0', ICE2 = '#A9CAE6', ICE3 = '#8DB6DB', BASE = '#F6F9FC', DRIFT = '#EAF1F8';
+  let s = `<rect width="390" height="844" fill="${SKY}"/>`;
+  // a pale sun and two clouds high up, seen full screen when the scene is unboxed
+  s += `<circle cx="318" cy="70" r="22" fill="#FFF7E0"/>` + cloud(80, 66, .8) + cloud(250, 120, .6);
+  // far range, faint, then a nearer range, each topped with snow
+  s += `<path d="M-10 300 L30 214 L66 250 L104 196 L140 238 L170 214 L210 300 Z M200 300 L262 210 L296 244 L330 190 L372 236 L400 222 L400 300 Z" fill="#CFE0EF"/>`;
+  s += `<path d="M30 214 L22 230 L32 226 L40 232 L46 224 Z M104 196 L92 216 L104 211 L114 218 L122 210 Z M330 190 L316 212 L330 206 L340 213 L350 204 Z M262 210 L252 226 L262 222 L270 228 Z" fill="${SNOW}"/>`;
+  s += `<path d="M-10 330 L34 262 L58 284 L84 254 L120 330 Z M290 330 L328 258 L352 280 L372 262 L400 290 L400 330 Z" fill="#B7CFE5"/>`;
+  s += `<path d="M34 262 L26 276 L36 272 L44 278 Z M84 254 L74 270 L86 266 L94 272 Z M328 258 L318 274 L330 269 L338 275 Z" fill="${SNOW}"/>`;
+  // the glacier peak, cut in planes: sunlit planes on the left, shaded and ice planes on the right
+  const AX = 200, AY = 96;
+  s += `<path d="M${AX} ${AY} L-60 560 L262 560 L278 450 L236 372 L252 300 L214 232 L232 170 Z" fill="${SNOW}"/>`;
+  s += `<path d="M${AX} ${AY} L150 230 L176 300 L120 380 L150 470 L90 560 L-60 560 Z" fill="#F3F7FB"/>`;
+  s += `<path d="M${AX} ${AY} L232 170 L214 232 L252 300 L236 372 L278 450 L262 560 L460 560 Z" fill="${SHADE}"/>`;
+  s += `<path d="M232 170 L300 250 L252 300 L214 232 Z M278 450 L350 430 L420 560 L262 560 Z" fill="#D2E2F0"/>`;
+  // blue ice where the snow has blown off, with a white edge where light catches it
+  s += `<path d="M232 170 L268 206 L244 238 Z M252 300 L304 326 L282 364 L262 350 Z M330 360 L376 400 L350 414 Z M278 450 L330 470 L304 506 Z" fill="${ICE1}"/>`;
+  s += `<path d="M268 206 L294 246 L244 238 Z M304 326 L326 372 L282 364 Z M330 470 L352 514 L304 506 Z M376 400 L398 440 L350 414 Z" fill="${ICE2}"/>`;
+  s += `<path d="M232 170 L268 206 M252 300 L304 326 M278 450 L330 470 M330 360 L376 400" stroke="${SNOW}" stroke-width="2" stroke-linecap="round"/>`;
+  s += `<path d="M300 268 l14 -4 M318 296 l12 -5 M356 446 l14 -5 M294 414 l12 -3 M340 330 l10 -3" stroke="${ICE3}" stroke-width="2.4" stroke-linecap="round"/>`;
+  // snow on the ridge and a cornice along it
+  s += `<path d="M${AX} ${AY} L214 120 L206 128 L222 146 L210 150 Z" fill="${SNOW}"/><path d="M${AX} ${AY} L232 170 L214 232 L252 300 L236 372 L278 450 L262 560" fill="none" stroke="${SNOW}" stroke-width="3" stroke-linejoin="round"/>`;
+  // ski tracks curving down the sunlit face
+  s += `<path d="M150 300 Q 90 330 140 360 T 120 430 T 170 500 T 140 556" fill="none" stroke="#E2ECF5" stroke-width="2" stroke-linecap="round"/><path d="M158 300 Q 98 330 148 360 T 128 430 T 178 500 T 148 556" fill="none" stroke="#E2ECF5" stroke-width="2" stroke-linecap="round"/>`;
+  s += `<path d="M60 330 Q 20 380 70 420 T 40 520" fill="none" stroke="#E2ECF5" stroke-width="2" stroke-linecap="round"/>`;
+  // slalom gates down the run
+  const gate = (x, y, c) => `<rect x="${x - 1.6}" y="${y - 28}" width="3.2" height="30" rx="1.6" fill="${c}"/><path d="M${x + 1.6} ${y - 27} L${x + 14} ${y - 22.5} L${x + 1.6} ${y - 17} Z" fill="${c}"/>`;
+  s += gate(34, 352, '#E65345') + gate(352, 404, '#2F6FB0') + gate(30, 470, '#E65345') + gate(356, 520, '#2F6FB0');
+  // the glacier's foot: a band of blue ice blocks where the run meets the snowfield
+  s += `<path d="M-10 548 L30 536 L58 548 L96 532 L132 546 L170 534 L204 548 L246 532 L282 546 L322 534 L356 548 L400 536 L400 572 L-10 572 Z" fill="${ICE1}"/>`;
+  s += `<path d="M30 536 L44 572 L-10 572 L-10 548 Z M96 532 L114 572 L76 572 Z M170 534 L190 572 L150 572 Z M246 532 L266 572 L226 572 Z M322 534 L340 572 L302 572 Z" fill="${ICE2}"/>`;
+  s += `<path d="M-10 548 L30 536 L58 548 L96 532 L132 546 L170 534 L204 548 L246 532 L282 546 L322 534 L356 548 L400 536 L400 544 L356 556 L322 542 L282 554 L246 540 L204 556 L170 542 L132 554 L96 540 L58 556 L30 544 L-10 556 Z" fill="${SNOW}"/>`;
+  // the snowfield: smooth snow and soft drifts, no floor tiles
+  s += `<path d="M-10 566 Q 100 554 200 566 Q 300 578 400 562 L400 852 L-10 852 Z" fill="${BASE}"/>`;
+  s += `<path d="M-10 660 Q 70 626 170 650 Q 210 660 230 652 L230 668 Q 120 676 -10 690 Z" fill="${DRIFT}"/>`;
+  s += `<path d="M400 720 Q 330 690 250 712 Q 220 720 196 716 L196 732 Q 300 740 400 752 Z" fill="${DRIFT}"/>`;
+  s += `<path d="M-10 772 Q 120 736 260 760 Q 330 772 400 756 L400 852 L-10 852 Z" fill="#E6EFF8"/><path d="M-10 790 Q 140 760 400 784" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>`;
+  const glint = (x, y, r) => `<path d="M${x} ${y - r} L${x + r * .3} ${y - r * .3} L${x + r} ${y} L${x + r * .3} ${y + r * .3} L${x} ${y + r} L${x - r * .3} ${y + r * .3} L${x - r} ${y} L${x - r * .3} ${y - r * .3} Z" fill="${ICE2}"/>`;
+  s += glint(34, 600, 4) + glint(240, 590, 3) + glint(150, 700, 3.5) + glint(330, 660, 4) + glint(60, 760, 3);
+  const pine = (x, y, k) => `<g transform="translate(${x} ${y}) scale(${k})"><rect x="-2.5" y="-4" width="5" height="10" fill="#7A6656"/><path d="M0 -50 L18 -18 L9 -18 L22 0 L-22 0 L-9 -18 L-18 -18 Z" fill="#3F6A62"/><path d="M0 -50 L18 -18 L9 -18 L22 0 L0 0 Z" fill="#335A53"/><path d="M0 -50 L8 -36 L2 -34 L-3 -37 L-8 -35 Z M-9 -18 L-2 -21 L4 -18 L9 -20 L12 -16 L-14 -16 Z" fill="${SNOW}"/></g>`;
+  s += pine(18, 590, .8) + pine(40, 600, .6) + pine(376, 640, .7);
+  const snowman = `<g transform="translate(340 612)"><ellipse cx="0" cy="2" rx="22" ry="5" fill="${ICE1}" fill-opacity=".7"/><circle cx="0" cy="-14" r="17" fill="${SNOW}" stroke="${ICE1}" stroke-width="2"/><circle cx="0" cy="-40" r="12" fill="${SNOW}" stroke="${ICE1}" stroke-width="2"/><path d="M-12 -30 Q0 -26 12 -30 L12 -25 Q0 -21 -12 -25 Z" fill="#E65345"/><circle cx="-4" cy="-43" r="1.6" fill="#1F2128"/><circle cx="4" cy="-43" r="1.6" fill="#1F2128"/><path d="M0 -39 L9 -37.5 L0 -36.4 Z" fill="#E8A23A"/><circle cx="0" cy="-16" r="1.8" fill="#1F2128"/><circle cx="0" cy="-8" r="1.8" fill="#1F2128"/></g>`;
+  s += snowman;
+  s += benchBack(Z.leave, '#FFFFFF', '#D5DBE4');
+  return { avoid: [{ x0: 310, x1: 390, y0: 576, y1: 650 }], open: [{ x0: 0, x1: 390, y0: 576, y1: 650 }], lift: 0, floor: BASE,
+    bg: s, fronts: [],
+    // night: the peak under moonlight, stars over it, a soft glow on the run and the snowfield
+    // night: a pool of light on each gate, the gates lit, stars over the peak
+    // night: warm light washed over the run and its gates and over the snowfield, as on the other scenes; the gates stay lit
+    lamps: `<g fill="#FFE9A8" fill-opacity=".13"><ellipse cx="110" cy="420" rx="170" ry="90"/><ellipse cx="300" cy="470" rx="170" ry="90"/></g><g fill="#FFE9A8" fill-opacity=".1"><ellipse cx="195" cy="640" rx="240" ry="70"/></g>`,
+    lampsTop: `<rect x="32.4" y="324" width="3.2" height="30" rx="1.6" fill="#E65345"/><path d="M35.6 325 L48 329.5 L35.6 335 Z" fill="#E65345"/><rect x="350.4" y="376" width="3.2" height="30" rx="1.6" fill="#2F6FB0"/><path d="M353.6 377 L366 381.5 L353.6 387 Z" fill="#2F6FB0"/><rect x="28.4" y="442" width="3.2" height="30" rx="1.6" fill="#E65345"/><path d="M31.6 443 L44 447.5 L31.6 453 Z" fill="#E65345"/><rect x="354.4" y="492" width="3.2" height="30" rx="1.6" fill="#2F6FB0"/><path d="M357.6 493 L370 497.5 L357.6 503 Z" fill="#2F6FB0"/>`,
+    stations: [
+      { kind: 'carve', label: '滑雪', kit: 'ski', clip: 'skis', n: 2, path: 'carve', lane: lane(-30, 420, 390), speed: 46 },
+      { kind: 'carve', label: '滑雪', kit: 'ski', clip: 'skis', n: 2, path: 'carve', lane: lane(-30, 420, 476), speed: 40, dir: -1 },
+    ],
+    sports: { ski: ['carve'] },
+  };
+};

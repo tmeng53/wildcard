@@ -27,9 +27,13 @@ public struct EditorChoices: Hashable, Sendable {
         /// Whether every member can shop there from the start: WARM-UP. The others open once
         /// the member unlocks them by training.
         public let isOpen: Bool
+        /// The catalog's global switch the store follows (POWDER DAY follows `winter`, as the 雪场
+        /// does): its pieces unlock only while it is on, and are worn all year. Nil for a store
+        /// open all year.
+        public let switchId: String?
 
-        public init(id: String, isOpen: Bool = false) {
-            (self.id, self.isOpen) = (id, isOpen)
+        public init(id: String, isOpen: Bool = false, switchId: String? = nil) {
+            (self.id, self.isOpen, self.switchId) = (id, isOpen, switchId)
         }
     }
 
@@ -71,9 +75,10 @@ public struct EditorChoices: Hashable, Sendable {
         (self.species, self.stores, self.wear, self.props) = (species, stores, wear, props)
     }
 
-    /// The pieces of the stores every member can shop at from the start (WARM-UP), by slot.
+    /// The pieces of the store every member can shop at all year from the start (WARM-UP), by
+    /// slot: a store on a switch (POWDER DAY) is open only while it is on, so it is left out.
     public var starterWear: [Slot: [Wearable]] {
-        let open = Set(stores.filter(\.isOpen).map(\.id))
+        let open = Set(stores.filter { $0.isOpen && $0.switchId == nil }.map(\.id))
         return wear.mapValues { pieces in pieces.filter { open.contains($0.store) } }
     }
 
@@ -81,13 +86,13 @@ public struct EditorChoices: Hashable, Sendable {
     public static let currentVersion = 4
 
     /// `{"version": 4, "species": [{"id": "person", "bodies": ["peach"], "hair": true}],
-    /// "stores": [{"id": "warmup", "open": true}, {"id": "lap"}],
+    /// "stores": [{"id": "warmup", "open": true}, {"id": "lap"}, {"id": "powder", "open": true, "switch": "winter"}],
     /// "wear": {"top": [{"id": "warmup-tee", "store": "warmup", "swatches": ["#F4F6FA", "#1F2128"]}]},
     /// "props": [{"id": "dumbbell", "open": true}, {"id": "racket"}]}`. Every piece hangs in a
     /// store the list has.
     public static func decode(_ data: Data) throws(AvatarError) -> EditorChoices {
         let file: File = try decodeJSON(data, version: currentVersion, shape: File.shape)
-        let stores = file.stores.map { Store(id: $0.id, isOpen: $0.open ?? false) }
+        let stores = file.stores.map { Store(id: $0.id, isOpen: $0.open ?? false, switchId: $0.switch) }
         var wear: [Slot: [Wearable]] = [:]
         for (slot, pieces) in file.wear {
             wear[Slot(slot)] = try pieces.map { piece throws(AvatarError) in
@@ -109,19 +114,25 @@ public struct EditorChoices: Hashable, Sendable {
     private struct File: Decodable {
         static let shape = JSONShape.object([
             "version": .value, "props": .array(.object(["id": .value, "open": .value])),
-            "stores": .array(.object(["id": .value, "open": .value])),
+            "stores": .array(.object(["id": .value, "open": .value, "switch": .value])),
             // Keyed by slot, so any key goes.
             "wear": .value,
             "species": .array(.object(["id": .value, "bodies": .value, "hair": .value])),
         ])
 
         let species: [SpeciesFile]
-        let stores: [ItemFile]
+        let stores: [StoreFile]
         let wear: [String: [WearableFile]]
         let props: [ItemFile]
     }
 
-    /// A store or a prop: its id, and whether it is open from the start.
+    private struct StoreFile: Decodable {
+        let id: String
+        let open: Bool?
+        let `switch`: String?
+    }
+
+    /// A prop: its id, and whether it is open from the start.
     private struct ItemFile: Decodable {
         let id: String
         let open: Bool?

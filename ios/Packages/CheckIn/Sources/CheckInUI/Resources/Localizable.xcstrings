@@ -1288,6 +1288,22 @@
         }
       }
     },
+    "日期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日期"
+          }
+        }
+      }
+    },
     "时长 · 分钟": {
       "localizations": {
         "en": {

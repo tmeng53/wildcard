@@ -23,7 +23,9 @@ const svg = body => `<svg xmlns="http://www.w3.org/2000/svg" width="390" height=
 // The night tint from the design.
 const night = '<rect width="390" height="844" fill="#0E1424" opacity=".58"/>';
 
-const names = { track: 'track', pool: 'pool', gym: 'gym', tennis: 'tennis', climb: 'climbing' };
+const names = { track: 'track', pool: 'pool', gym: 'gym', tennis: 'tennis', climb: 'climbing', ski: 'ski' };
+// ONLY=ski renders just that scene, leaving the others' PNGs as they are.
+const only = process.env.ONLY;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 });
 async function shoot(name, body, transparent) {
@@ -32,6 +34,7 @@ async function shoot(name, body, transparent) {
   writeFileSync(join(out, `${name}@3x.png`), await page.screenshot({ omitBackground: transparent, clip: { x: 0, y: 0, width: 390, height: 844 } }));
 }
 for (const [key, name] of Object.entries(names)) {
+  if (only && only !== name) continue;
   const scene = scenes.liftScene(scenes.SCENES[key]());
   await shoot(`${name}-day`, scene.bg, false);
   await shoot(`${name}-night`, night + scene.lamps + scene.lampsTop, true);
