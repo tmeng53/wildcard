@@ -201,8 +201,10 @@ jobs:
     if: >-
       !cancelled() && needs.changes.outputs.mac == 'true' && needs.changes.outputs.ios == 'true'
     runs-on: macos-26
-    # The UI tests alone take about 46 minutes (71 tests), plus the build and a retry.
-    timeout-minutes: 75
+    # The UI tests grew past 75 minutes with the build and a retry (main's scheduled runs and PR
+    # runs were cut off before any screenshots uploaded, 2026-11-04); 120 leaves room until the
+    # suite is split across jobs.
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v5
         with:
