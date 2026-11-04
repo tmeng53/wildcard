@@ -131,8 +131,7 @@ public struct APISquadmateCards: SquadmateCards {
                 counts: LifetimeCounts(
                     trainedDays: card.totals.trainedDays, healthyMeals: card.totals.healthyMeals,
                     cheatMeals: card.totals.cheatMeals, disclaimers: card.totals.disclaimers),
-                // A squadmate's week isn't on their card.
-                week: nil, board: card.board)
+                week: card.week, board: card.board)
         }
     }
 }

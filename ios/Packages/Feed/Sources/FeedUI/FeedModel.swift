@@ -221,15 +221,14 @@ public final class FeedModel {
     /// above and below the bar counts, as a finger covers what it's on.
     func slot(at point: CGPoint) -> Int? {
         guard let bar = barFrame, bar.insetBy(dx: 0, dy: -Space.l).contains(point) else { return nil }
-        let index = Int((point.x - bar.minX - EmojiBar.inset) / Sizing.minimumTapTarget)
+        let index = Int((point.x - bar.minX - ReactionBarMetrics.inset) / Sizing.minimumTapTarget)
         return EmojiBar.common.indices.contains(index) ? index : nil
     }
 
     /// Where a slot's emoji sits, to fly from.
     func slotCenter(_ index: Int) -> CGPoint? {
         guard let bar = barFrame else { return nil }
-        return CGPoint(
-            x: bar.minX + EmojiBar.inset + (Double(index) + 0.5) * Sizing.minimumTapTarget, y: bar.midY)
+        return ReactionBarMetrics.slotCenter(index, in: bar)
     }
 
     /// Leaves or swaps the member's emoji on a post: it flies from `from` to the author's head,

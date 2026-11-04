@@ -35,16 +35,21 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
         sports: row.sports.map((sport) => SportId.parse(sport)),
         after: row.after,
         countsFrom: new Date(row.counts_from),
+        ...(row.switch_id === null ? {} : { switchId: row.switch_id }),
       }));
     },
 
-    async putRule({ kind, id, sports, after }) {
+    async putRule({ kind, id, sports, after, switchId }) {
+      // Left out, the switch stays as the rule has it; null clears it.
+      const changed = {
+        sports: [...sports],
+        after,
+        ...(switchId === undefined ? {} : { switch_id: switchId }),
+      };
       await db
         .insertInto('unlock_rules')
-        .values({ kind, item_id: id, sports: [...sports], after })
-        .onConflict((conflict) =>
-          conflict.columns(['kind', 'item_id']).doUpdateSet({ sports: [...sports], after }),
-        )
+        .values({ kind, item_id: id, ...changed })
+        .onConflict((conflict) => conflict.columns(['kind', 'item_id']).doUpdateSet(changed))
         .execute();
     },
 

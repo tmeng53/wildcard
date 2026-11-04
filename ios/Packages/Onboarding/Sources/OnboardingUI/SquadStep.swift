@@ -160,7 +160,7 @@ private struct SquadFound: View {
                     .lineLimit(1)
                 HStack(spacing: Space.xs) {
                     if !heads.isEmpty {
-                        HeadRow(heads: heads)
+                        HeadStack(heads.map(\.player), size: Sizing.characterHead, on: .bgSubtle)
                     }
                     Group {
                         if squad.isFull {
@@ -181,30 +181,6 @@ private struct SquadFound: View {
             FailureLine(failure: failure)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-    }
-}
-
-/// The squad's members as heads in a row, each a little over the one before, like the squad
-/// card's avatars: the face on a canvas circle, with a rim in the card's grey between them.
-private struct HeadRow: View {
-    let heads: [CastMember]
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        HStack(spacing: -Space.xxs) {
-            ForEach(heads.indices, id: \.self) { index in
-                ZStack {
-                    if let player = heads[index].player {
-                        CharacterHead(player: player)
-                    }
-                }
-                .frame(width: Sizing.characterHead, height: Sizing.characterHead)
-                .background(Color(role: .bgCanvas, in: theme))
-                .clipShape(Circle())
-                .overlay(Circle().strokeBorder(Color(role: .bgSubtle, in: theme), lineWidth: Sizing.selectionStroke))
-            }
-        }
-        .accessibilityHidden(true)
     }
 }
 

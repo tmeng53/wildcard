@@ -50,6 +50,7 @@ export interface UnlockRules {
   item_id: string;
   kind: string;
   sports: Generated<string[]>;
+  switch_id: string | null;
 }
 
 export interface DB {

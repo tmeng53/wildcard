@@ -24,6 +24,7 @@ import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import type { RevokeAppleSignIn } from '../ports.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -98,6 +99,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
+    scenes: scenesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     unlocks: unusedUnlocks,
     gifts: unusedGifts,

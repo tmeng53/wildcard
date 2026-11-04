@@ -31,6 +31,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -97,12 +98,14 @@ const app = createApp({
     inviteCodes: randomInviteCodes,
     aiConsent: () => Promise.resolve(true),
   }),
+  scenes: scenesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: createUnlocks({
     store: createPostgresUnlockStore(db),
     trainedSince: ({ member, since }) =>
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
+    switches: () => Promise.resolve(() => true),
   }),
   gifts,
   weekSummaryWords: unusedWeekSummaryWords,
@@ -207,7 +210,8 @@ describe('GET /me/unlocks', () => {
     const locked = z
       .object({ lockedPieces: z.array(z.object({ id: z.string(), checkInsToGo: z.int() })) })
       .parse(fresh.body).lockedPieces;
-    expect(locked).toHaveLength(44);
+    expect(locked).toHaveLength(52);
+    expect(locked.find(({ id }) => id === 'powder-salmonhelmet')?.checkInsToGo).toBe(13);
     expect(locked.find(({ id }) => id === 'warmup-headphones')?.checkInsToGo).toBe(2);
     expect(locked.find(({ id }) => id === 'deuce-sweater')?.checkInsToGo).toBe(5);
     const first = await train({ member: me, squad, sport: 'tennis' });

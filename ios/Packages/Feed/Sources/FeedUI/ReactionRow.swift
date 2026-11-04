@@ -79,10 +79,12 @@ struct ReactionRow: View {
         } label: {
             HStack(spacing: Space.xxs) {
                 if let coach {
-                    CoachFace(player: model.coachPlayer(coach.coach.id), emoji: coach.emoji, size: Self.headSize)
+                    MemberHead(
+                        player: model.coachPlayer(coach.coach.id), size: Self.headSize, rim: .coach,
+                        emoji: coach.emoji?.text)
                 }
                 ForEach(reactions.newest(Self.teammateHeads(beside: coach)), id: \.member) { response in
-                    WearingHead(model: model, member: response.member, emoji: response.kind, size: Self.headSize)
+                    MemberHead(player: model.head(of: response.member), size: Self.headSize, emoji: response.kind.text)
                         .transition(.move(edge: .leading).combined(with: .opacity))
                 }
                 let more = reactions.more(than: Self.teammateHeads(beside: coach))
@@ -168,44 +170,4 @@ struct ReactionRow: View {
     }
 }
 
-/// A teammate's head on a white disc with a mist ring, wearing their emoji at its lower right.
-struct WearingHead: View {
-    let model: FeedModel
-    let member: MemberID
-    let emoji: Emoji?
-    let size: Double
-
-    var body: some View {
-        Face(player: model.head(of: member), size: size)
-            .overlay(alignment: .bottomTrailing) {
-                if let emoji {
-                    Text(verbatim: emoji.text)
-                        .font(.system(size: size * 12 / 26))
-                        .offset(x: size * 0.12, y: size * 0.08)
-                }
-            }
-            .accessibilityHidden(true)
-    }
-}
-
-/// A teammate's head in a small white circle with a mist ring, as on the home's squad card.
-struct Face: View {
-    @Environment(\.sceneTheme) private var theme
-    let player: CharacterPlayer?
-    let size: Double
-
-    var body: some View {
-        Circle()
-            .fill(Color(role: .bgCanvas, in: theme))
-            .overlay {
-                if let player {
-                    CharacterHead(player: player).padding(Sizing.ringGap)
-                }
-            }
-            .clipShape(Circle())
-            .overlay { Circle().stroke(Color(role: .bgSubtle, in: theme), lineWidth: Sizing.ringGap) }
-            .frame(width: size, height: size)
-            .accessibilityHidden(true)
-    }
-}
 #endif

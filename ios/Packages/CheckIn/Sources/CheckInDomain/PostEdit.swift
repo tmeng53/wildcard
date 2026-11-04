@@ -95,7 +95,8 @@ public struct PostEdit: Hashable, Sendable {
                 case .disclaimer: .disclaimer(try Disclaimer(line, photos: photos))
                 }
             return CheckIn(
-                id: original.id, member: original.member, day: original.day, createdAt: original.createdAt,
+                id: original.id, member: original.member, day: original.day, postedDay: original.postedDay,
+                createdAt: original.createdAt,
                 audience: original.audience, entry: entry)
         } catch {
             throw .refused

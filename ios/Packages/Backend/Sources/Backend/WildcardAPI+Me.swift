@@ -52,6 +52,7 @@ extension WildcardAPI {
                     topSport: try card.topSport.map { top throws(ContractsError) in
                         TopSport(activity: try Activity(top), checkIns: top.checkIns)
                     }),
+                week: card.week.map { WeekCount(trainedDays: $0.trainedDays, plannedDays: $0.plannedDays) },
                 board: try TitleBoard(card))
         }
     }
@@ -157,5 +158,7 @@ public struct SquadmateCard: Hashable, Sendable {
     /// When they signed up; nil before they saved a profile.
     public let joinedAt: Date?
     public let totals: CheckInTotals
+    /// Their own 本周 x/y; nil from a server that doesn't send it.
+    public let week: WeekCount?
     public let board: TitleBoard
 }

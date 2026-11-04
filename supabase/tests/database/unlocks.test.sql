@@ -10,8 +10,8 @@ select is(
   'a rule for each store and prop that is not a starter'
 );
 select is(
-  (select count(*)::int from public.unlock_rules where kind = 'piece'), 44,
-  'a rule for each piece the second wardrobe and the store specials added'
+  (select count(*)::int from public.unlock_rules where kind = 'piece'), 57,
+  'a rule for each piece the second wardrobe, the store specials and POWDER DAY added'
 );
 select throws_ok(
   $$insert into public.unlock_rules (kind, item_id, after) values ('piece', 'Lap Bib', 3)$$,

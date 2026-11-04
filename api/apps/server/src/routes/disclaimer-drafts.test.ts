@@ -29,6 +29,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -138,6 +139,7 @@ function appWith(model: LanguageModel, modelName?: string) {
     push: pushOn(db),
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
+    scenes: scenesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     unlocks: unusedUnlocks,
     gifts: unusedGifts,

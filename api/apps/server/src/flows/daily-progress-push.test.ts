@@ -30,6 +30,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -115,6 +116,7 @@ const deps = {
   squads,
   push,
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+  scenes: scenesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,

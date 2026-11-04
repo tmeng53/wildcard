@@ -7,7 +7,7 @@ import DesignSystemUI
 import SquadDomain
 import SwiftUI
 
-/// The 小队 tab's row of heads under the squad's name (approved 2026-11-02): every member's face,
+/// 小队's row of heads under the squad's name (approved 2026-11-02): every member's face,
 /// still, with their name, then the coach's circle (「招聘」 until the squad hires one; once hired,
 /// an ink 「教练」 tag on its lower edge and named 「毛头教练」, so no teammate nicknamed 教练
 /// passes for it, as Tracy picked on 2026-11-02) and, while
@@ -25,7 +25,7 @@ struct SquadHeads: View {
         FlowRow {
             ForEach(members) { member in
                 HeadSpot(name: Text(verbatim: MemberRow.name(of: member))) {
-                    MemberHead(character: member.character, size: SquadHeadsMetrics.circle)
+                    LookHead(character: member.character, size: SquadHeadsMetrics.circle)
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("squad.head")

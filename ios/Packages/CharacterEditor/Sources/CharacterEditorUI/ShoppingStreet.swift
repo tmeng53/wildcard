@@ -152,7 +152,13 @@ private struct StoreCard: View {
                 }
             }
             .overlay(alignment: .topTrailing) {
-                if store.isOpen {
+                // A limited store says so, never its dates.
+                if store.isOpen, let limited = StoreCopy.limited(store.id) {
+                    limited
+                        .typeStyle(TypeRamp.label)
+                        .foregroundStyle(Color(role: .fgAccent, in: theme))
+                        .padding(Space.s)
+                } else if store.isOpen {
                     Text("营业中", bundle: .module)
                         .typeStyle(TypeRamp.label)
                         .foregroundStyle(Color(role: .fgPositive, in: theme))
@@ -175,7 +181,7 @@ private struct StoreCard: View {
     }
 }
 
-/// The open store's name, its Chinese name and ⓘ, which opens 「练这些运动解锁」 where its pieces
+/// The open store's name, its Chinese name, its 冬季限定 tag if it is limited, and ⓘ, which opens 「练这些运动解锁」 where its pieces
 /// have rules.
 private struct RackHeader: View {
     let model: StreetModel
@@ -192,6 +198,12 @@ private struct RackHeader: View {
             .typeStyle(TypeRamp.footnote)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
             .lineLimit(1)
+        if let limited = StoreCopy.limited(store.id) {
+            limited
+                .typeStyle(TypeRamp.label)
+                .foregroundStyle(Color(role: .fgAccent, in: theme))
+                .lineLimit(1)
+        }
         Spacer(minLength: 0)
         if let sports = model.sports(of: store.id) {
             Button {
@@ -237,6 +249,8 @@ enum StoreCopy {
     static func sports(_ store: String) -> Text { text(sportLines[store], or: "") }
     static func tagline(_ store: String) -> Text { text(taglines[store], or: "") }
     static func unlock(_ store: String) -> Text { text(unlocks[store], or: "") }
+    /// The tag a limited store wears, such as 冬季限定; nil for one without.
+    static func limited(_ store: String) -> Text? { limits[store].map { text($0, or: "") } }
 
     private static func text(_ key: String?, or fallback: String) -> Text {
         guard let key else { return Text(verbatim: fallback) }
@@ -245,22 +259,25 @@ enum StoreCopy {
 
     private static let names = [
         "warmup": "WARM-UP", "lap": "LAP NINE", "nolook": "NO LOOK", "moss": "MOSSWAY", "halfmoon": "HALF MOON",
-        "deuce": "DEUCE CLUB",
+        "deuce": "DEUCE CLUB", "powder": "POWDER DAY",
     ]
     private static let locals = [
         "warmup": "热身社", "lap": "第九圈", "nolook": "不看传球", "moss": "苔径", "halfmoon": "半月", "deuce": "平分俱乐部",
+        "powder": "粉雪日",
     ]
     private static let sportLines = [
         "warmup": "走路 跑步 力量训练", "lap": "跑步 走路", "nolook": "篮球 排球", "moss": "徒步 越野跑 攀岩",
-        "halfmoon": "练什么都算", "deuce": "网球 匹克球 壁球",
+        "halfmoon": "练什么都算", "deuce": "网球 匹克球 壁球", "powder": "冬季运动",
     ]
     private static let taglines = [
         "warmup": "先热身，再上场。", "lap": "操场第九圈，才是今天真正开始的地方。", "nolook": "眼睛看左边，球已经到右边了。",
         "moss": "路不在地图上，在苔藓上。", "halfmoon": "做完半月式，再去喝一杯燕麦拿铁。", "deuce": "平分之后，才是真的比赛。",
+        "powder": "雪道见，压个弯。",
     ]
     private static let unlocks = [
         "lap": "跑步 3 次解锁", "nolook": "篮球 3 次解锁", "moss": "攀岩或徒步 3 次解锁", "halfmoon": "随便练 3 次解锁",
         "deuce": "网球类 3 次解锁",
     ]
+    private static let limits = ["powder": "冬季限定"]
 }
 #endif

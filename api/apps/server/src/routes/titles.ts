@@ -141,6 +141,21 @@ const PlayerCardBody = z
       description: 'When they signed up, in UTC. Left out before they saved a profile.',
     }),
     ...checkInTotalsFields,
+    week: z
+      .strictObject({
+        trainedDays: z.int().nonnegative().meta({
+          description: 'Days they trained this week, from all their check-ins wherever they went.',
+        }),
+        plannedDays: z.int().nonnegative().meta({
+          description: 'Days their plan trains this week, from the day they joined on.',
+        }),
+      })
+      .optional()
+      .meta({
+        description:
+          'Their own 本周 x/y, in their time zone. Left out by older servers; the app then ' +
+          'shows no week.',
+      }),
     ...boardFields,
   })
   .openapi('PlayerCard');
@@ -284,10 +299,11 @@ export function titles(deps: {
       });
       const place = squad.members.findIndex(({ member }) => member === memberId);
       if (place < 0) throw new SquadMemberUnknownError(memberId);
-      const [boards, profiles, totals] = await Promise.all([
+      const [boards, profiles, totals, week] = await Promise.all([
         deps.awards.boards([memberId]),
         deps.members.squadmates([memberId]),
         deps.checkIns.totals(memberId),
+        deps.checkIns.memberWeek({ member: memberId, viewer: MemberId.parse(c.var.caller.userId) }),
       ]);
       const profile = profiles.get(memberId);
       return c.json(
@@ -299,6 +315,7 @@ export function titles(deps: {
           squadPlace: place + 1,
           ...(profile === undefined ? {} : { joinedAt: profile.joinedAt.toISOString() }),
           ...totals,
+          week,
           ...wireBoard(
             { board: boards.get(memberId) ?? [], equipped: profile?.equippedTitle },
             (squad) => squad === squadId,

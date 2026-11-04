@@ -17,6 +17,7 @@ export {
   idFits,
   toGo,
   type Claim,
+  type SwitchOn,
   type Locked,
   type Trained,
   type Unlock,
