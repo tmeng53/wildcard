@@ -3114,6 +3114,68 @@
           }
         }
       }
+    },
+    "更多表情": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More emoji"
+          }
+        }
+      }
+    },
+    "选一个回应": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a reaction"
+          }
+        }
+      }
+    },
+    "全部表情": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All emoji"
+          }
+        }
+      }
+    },
+    "最近": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近"
+          }
+        }
+      }
+    },
+    "搜索表情": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search emoji"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜尋表情符號"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
