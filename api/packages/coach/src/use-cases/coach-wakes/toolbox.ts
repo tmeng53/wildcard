@@ -5,7 +5,7 @@ import { NOTE_LIMIT } from '../../domain/prompt.js';
 import { CoachEmoji, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
 import { weekText, type SquadWeek } from '../../domain/squad-week.js';
 import type { WakeReason, WakeStep } from '../../domain/wake.js';
-import type { CoachTool } from '../../ports.js';
+import type { CoachTool, ToolAnswer } from '../../ports.js';
 
 /** What a wake's tools change, kept in memory until the run ends and saved together then. */
 export interface WakeDraft {
@@ -40,24 +40,24 @@ function defineTool<Shape extends z.ZodObject>(
     readonly reads?: boolean;
     /** What of its arguments is kept, when not all of them: they may hold members' words. */
     readonly kept?: (input: z.infer<Shape>) => unknown;
-    run(input: z.infer<Shape>): string;
+    run(input: z.infer<Shape>): string | Promise<string>;
   },
 ): CoachTool {
   return {
     name: tool.name,
     description: tool.description,
     parameters: tool.parameters,
-    run: (input) => {
+    run: async (input) => {
       const parsed = tool.parameters.safeParse(input);
       const output = parsed.success
-        ? tool.run(parsed.data)
+        ? await tool.run(parsed.data)
         : `参数不对：${z.prettifyError(parsed.error)}`;
       steps.push({
         tool: tool.name,
         input: parsed.success && tool.kept !== undefined ? tool.kept(parsed.data) : input,
         output: tool.reads === true && parsed.success ? `（${String(output.length)} 字）` : output,
       });
-      return Promise.resolve(output);
+      return output;
     },
   };
 }
@@ -72,20 +72,33 @@ export function toolbox({
   roster,
   draft,
   kind,
+  photos,
+  facts,
+  pastWeek,
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
   readonly draft: WakeDraft;
   readonly kind: WakeReason['kind'];
+  /** The URLs of the photos of the check-in this wake is about, when it has any to look at. */
+  readonly photos?: () => Promise<readonly string[]>;
+  /** The members' stats and this week's plans, as the model reads them. */
+  readonly facts?: () => Promise<string>;
+  /** A week before this one, as the model reads it. */
+  readonly pastWeek?: (weeksAgo: number) => Promise<string>;
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
   const tools = [
     defineTool(draft.steps, {
       name: 'squad_week',
       reads: true,
-      description: '这周小队的情况：队员和外号，每个人的打卡、表情和评论。',
-      parameters: z.object({}),
-      run: () => weekText(week),
+      description:
+        '小队一周的情况：队员和外号，每个人的打卡、表情和评论。默认这周；weeks_ago 填 1 到 4 看前几周，想知道以前的事（比如上次跑步是什么时候）才用。',
+      parameters: z.object({
+        weeks_ago: z.number().int().min(0).max(4).optional().describe('看几周前，0 或不填是这周'),
+      }),
+      run: async ({ weeks_ago: weeksAgo = 0 }) =>
+        weeksAgo === 0 || pastWeek === undefined ? weekText(week) : await pastWeek(weeksAgo),
     }),
     defineTool(draft.steps, {
       name: 'read_file',
@@ -127,6 +140,24 @@ export function toolbox({
       },
     }),
   ];
+  if (facts !== undefined) {
+    tools.push(
+      defineTool(draft.steps, {
+        name: 'member_stats',
+        reads: true,
+        description:
+          '每个队员的数据：从加入到现在一共练了几天、健康餐、放纵餐、请假条各几次，最常练的运动，拿过几个周奖，还有这周的出赛表（每天计划练什么）。想说「这是你第几次」「你最爱的运动」或者对照计划时才用。',
+        parameters: z.object({}),
+        run: async () => {
+          try {
+            return await facts();
+          } catch {
+            return '数据现在查不到，先不提。';
+          }
+        },
+      }),
+    );
+  }
   if (kind === 'daily') {
     tools.push(
       defineTool(draft.steps, {
@@ -188,5 +219,43 @@ export function toolbox({
       }),
     );
   }
+  if (photos !== undefined && (kind === 'checkIn' || kind === 'comment')) {
+    tools.push(lookAtPhotos(draft.steps, photos));
+  }
   return tools;
+}
+
+/**
+ * Looks at the photos of the check-in this wake is about. Only on demand: pictures cost far
+ * more than words, so the model is told to call it only when someone asks about a photo or the
+ * talk is clearly about one. The step keeps how many it looked at, never the pictures.
+ */
+function lookAtPhotos(steps: WakeStep[], photos: () => Promise<readonly string[]>): CoachTool {
+  const name = 'look_at_photos';
+  return {
+    name,
+    description:
+      '看这条打卡的照片。看照片很贵：只在队员问到照片、或者话里明显在说照片时才用，平时不用，不看照片也能照常回。一次wake最多用一次。',
+    parameters: z.object({}),
+    run: async (): Promise<ToolAnswer> => {
+      const looked = steps.some(({ tool }) => tool === name);
+      if (looked) {
+        steps.push({ tool: name, input: {}, output: '已经看过了。' });
+        return '照片你已经看过了，不用再看。';
+      }
+      let urls: readonly string[];
+      try {
+        urls = await photos();
+      } catch {
+        steps.push({ tool: name, input: {}, output: '照片打不开。' });
+        return '照片现在打不开，就当没看见，照常回。';
+      }
+      if (urls.length === 0) {
+        steps.push({ tool: name, input: {}, output: '没有照片。' });
+        return '这条打卡没有照片。';
+      }
+      steps.push({ tool: name, input: {}, output: `（${String(urls.length)} 张照片）` });
+      return { text: `这条打卡的 ${String(urls.length)} 张照片，第一张是封面：`, images: urls };
+    },
+  };
 }
