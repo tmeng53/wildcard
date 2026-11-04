@@ -19,7 +19,7 @@ public protocol FeedSource: Sendable {
     func post(_ id: CheckInID) async throws(FeedError) -> FeedPost
     /// Writes the member's comment under a post, under the id given: the same again is a retry,
     /// and answers the comment as the server keeps it.
-    func comment(_ text: CommentText, id: CommentID, replyingTo member: MemberID?, on checkIn: CheckInID)
+    func comment(_ text: CommentText, id: CommentID, replyingTo target: ReplyTarget?, on checkIn: CheckInID)
         async throws(FeedError) -> Comment
     /// Deletes the member's own comment. Safe to repeat.
     func deleteComment(_ id: CommentID, on checkIn: CheckInID) async throws(FeedError)

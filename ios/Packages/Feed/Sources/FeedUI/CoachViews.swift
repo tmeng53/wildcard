@@ -118,52 +118,72 @@ struct CoachFace: View {
     }
 }
 
-/// The coach's line under a card: its name, the 教练 tag, then the words.
+/// The coach's line under a card: its name, the 教练 tag, 回复 and whom when it answers a reply,
+/// then the words.
 struct CoachCommentLine: View {
     @Environment(\.sceneTheme) private var theme
     let coach: CoachSpeaker
     let text: String
+    /// Whom it answers, when it answers a member's reply to it.
+    var recipient: String?
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
             Text(verbatim: coach.name).fontWeight(.semibold)
             CoachTag(.small)
-            Text(verbatim: text)
+            words
         }
         .typeStyle(TypeRamp.callout)
         .foregroundStyle(Color(role: .fgDefault, in: theme))
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("教练 \(coach.name)：\(text)", bundle: .module))
-        .accessibilityIdentifier("feed.coachComment")
+        .accessibilityLabel(coachSaid(coach, text, to: recipient))
+        .accessibilityIdentifier(recipient == nil ? "feed.coachComment" : "feed.coachAnswer")
+    }
+
+    private var words: Text {
+        guard let recipient else { return Text(verbatim: text) }
+        let reply = Text("回复 \(recipient)", bundle: .module)
+            .foregroundStyle(Color(role: .fgMuted, in: theme))
+        return Text("\(reply)  \(text)", bundle: .module)
     }
 }
 
-/// The coach's line on a post's own page, first among the comments: its head, name, tag and
-/// time, then the words. Nobody replies to it.
+/// What VoiceOver reads for the coach's line or answer: 「教练 毛头：…」, 「教练 毛头 回复 小美：…」.
+private func coachSaid(_ coach: CoachSpeaker, _ text: String, to recipient: String?) -> Text {
+    guard let recipient else { return Text("教练 \(coach.name)：\(text)", bundle: .module) }
+    return Text("教练 \(coach.name) 回复 \(recipient)：\(text)", bundle: .module)
+}
+
+/// The coach's line on a post's own page, first among the comments, or its answer to a member's
+/// reply, right after it: its head, name, tag and time, then 回复 and whom when it answers, then
+/// the words. A tap replies to the coach; the page makes it a button.
 struct CoachCommentRow: View {
     @Environment(\.sceneTheme) private var theme
     let model: FeedModel
-    let reply: CoachReply
+    let coach: CoachSpeaker
     let text: String
+    let writtenAt: Date
+    /// Whom it answers, when it answers a member's reply to it.
+    var recipient: String?
 
     private static let faceSize: Double = 32
 
     var body: some View {
         HStack(alignment: .top, spacing: Space.s) {
-            CoachFace(player: model.coachPlayer(reply.coach.id), emoji: nil, size: Self.faceSize)
+            CoachFace(player: model.coachPlayer(coach.id), emoji: nil, size: Self.faceSize)
             VStack(alignment: .leading, spacing: Space.xxs / 2) {
                 HStack(spacing: Space.xs) {
-                    Text(verbatim: reply.coach.name)
+                    Text(verbatim: coach.name)
                         .typeStyle(TypeRamp.footnoteEmphasis)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                     CoachTag(.small)
-                    Text(reply.writtenAt, format: .dateTime.hour().minute())
+                    Text(writtenAt, format: .dateTime.hour().minute())
                         .typeStyle(TypeRamp.caption)
                         .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 }
                 .lineLimit(1)
-                Text(verbatim: text)
+                words
                     .typeStyle(TypeRamp.body)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .fixedSize(horizontal: false, vertical: true)
@@ -171,8 +191,15 @@ struct CoachCommentRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("教练 \(reply.coach.name)：\(text)", bundle: .module))
-        .accessibilityIdentifier("post.coachComment")
+        .accessibilityLabel(coachSaid(coach, text, to: recipient))
+    }
+
+    /// 回复 小美：the words, with 回复 and the name in grey, as a teammate's reply.
+    private var words: Text {
+        guard let recipient else { return Text(verbatim: text) }
+        let reply = Text("回复 \(recipient)：", bundle: .module)
+            .foregroundStyle(Color(role: .fgMuted, in: theme))
+        return Text("\(reply)\(text)", bundle: .module)
     }
 }
 #endif

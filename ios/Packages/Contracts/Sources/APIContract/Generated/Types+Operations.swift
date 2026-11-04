@@ -2381,7 +2381,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day, or with a photo that isn’t uploaded
+            /// Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), or with a photo that isn’t uploaded
             ///
             /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)/responses/400`.
             ///
@@ -2698,7 +2698,7 @@ public enum Operations {
     }
     /// A squad’s check-ins for a range of days, with their reactions and comments
     ///
-    /// The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.
+    /// The squad’s feed: check-ins sent to the squad by members still in it and posted on a day in the range (`postedDay`), newest posted first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/check-ins`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/check-ins/get(listSquadCheckIns)`.

@@ -1,4 +1,5 @@
 import Contracts
+import Foundation
 import Testing
 
 @testable import FeedDomain
@@ -8,13 +9,13 @@ import Testing
     let feed = store(source)
     await feed.load()
     await source.hold()
-    let sent = Task { await feed.comment(text("明天一起"), replyingTo: jay, on: jaysRun.id) }
+    let sent = Task { await feed.comment(text("明天一起"), replyingTo: .member(jay), on: jaysRun.id) }
     while await source.waiting == 0 { await Task.yield() }
     #expect(feed.post(jaysRun.id)?.comments.map(\.text.text) == ["明天一起"])
     await source.release()
     #expect(await sent.value)
     #expect(feed.post(jaysRun.id)?.comments == [comment(1, by: coco, "明天一起", replyTo: jay, at: 900)])
-    #expect(await source.calls.last == .comment(commentID(1), "明天一起", jay, jaysRun.id))
+    #expect(await source.calls.last == .comment(commentID(1), "明天一起", .member(jay), jaysRun.id))
 }
 
 @MainActor @Test func aCommentThatCantGoOutLeavesAndSaysWhy() async {
@@ -48,7 +49,29 @@ import Testing
     let post = FeedPost(
         checkIn: jaysRun.checkIn,
         comments: [comment(1, by: jay, "一"), comment(2, by: mia, "二"), comment(3, by: coco, "三")])
-    #expect(post.commentsOnCard.map(\.text.text) == ["二", "三"])
+    #expect(post.threadOnCard(answers: []).map(\.id) == ["comment-\(commentID(2))", "comment-\(commentID(3))"])
+}
+
+@MainActor @Test func theCoachsAnswerFollowsTheReplyItAnswersAsAReplyToItsWriter() {
+    let maotou = CoachSpeaker(id: "xiaohun", name: "毛头")
+    let toCoach = Comment(
+        id: commentID(2), member: mia, text: text("教练你也跑"), replyTo: .coach("xiaohun"), commentedAt: at(200))
+    let post = FeedPost(
+        checkIn: jaysRun.checkIn,
+        comments: [comment(1, by: jay, "一", at: 100), toCoach, comment(3, by: coco, "三", at: 300)])
+    let answer = CoachAnswer(
+        checkIn: jaysRun.id, comment: commentID(2), coach: maotou, text: "我负责喊",
+        writtenAt: Date(timeIntervalSince1970: 250))
+    // An answer to a reply that is gone goes with it.
+    let orphan = CoachAnswer(
+        checkIn: jaysRun.id, comment: commentID(9), coach: maotou, text: "嗯",
+        writtenAt: Date(timeIntervalSince1970: 260))
+    #expect(
+        post.thread(answers: [orphan, answer]) == [
+            .comment(comment(1, by: jay, "一", at: 100)), .comment(toCoach), .answer(answer, answering: mia),
+            .comment(comment(3, by: coco, "三", at: 300)),
+        ])
+    #expect(post.threadOnCard(answers: [answer]).map(\.id) == ["answer-\(commentID(2))", "comment-\(commentID(3))"])
 }
 
 @MainActor @Test func aStoreOfOnePostLoadsJustThatPostAndItsSquad() async {
@@ -103,15 +126,15 @@ private final class CommentIDs: @unchecked Sendable {  // Only the main-actor st
         newCommentID: { ids() })
     await feed.load()
     await source.fail(with: .notSent)
-    #expect(await feed.comment(text("加油"), replyingTo: jay, on: jaysRun.id) == false)
+    #expect(await feed.comment(text("加油"), replyingTo: .member(jay), on: jaysRun.id) == false)
     await source.fail(with: nil)
-    #expect(await feed.comment(text("加油"), replyingTo: jay, on: jaysRun.id))
-    #expect(await feed.comment(text("再来"), replyingTo: jay, on: jaysRun.id))
+    #expect(await feed.comment(text("加油"), replyingTo: .member(jay), on: jaysRun.id))
+    #expect(await feed.comment(text("再来"), replyingTo: .member(jay), on: jaysRun.id))
     #expect(
         await source.calls.suffix(3) == [
-            .comment(commentID(1), "加油", jay, jaysRun.id),
-            .comment(commentID(1), "加油", jay, jaysRun.id),
-            .comment(commentID(2), "再来", jay, jaysRun.id),
+            .comment(commentID(1), "加油", .member(jay), jaysRun.id),
+            .comment(commentID(1), "加油", .member(jay), jaysRun.id),
+            .comment(commentID(2), "再来", .member(jay), jaysRun.id),
         ])
 }
 
@@ -125,8 +148,8 @@ private final class CommentIDs: @unchecked Sendable {  // Only the main-actor st
     await source.fail(with: .notSent)
     _ = await feed.comment(text("加油"), replyingTo: nil, on: jaysRun.id)
     await source.fail(with: nil)
-    _ = await feed.comment(text("加油"), replyingTo: jay, on: jaysRun.id)
-    #expect(await source.calls.last == .comment(commentID(2), "加油", jay, jaysRun.id))
+    _ = await feed.comment(text("加油"), replyingTo: .member(jay), on: jaysRun.id)
+    #expect(await source.calls.last == .comment(commentID(2), "加油", .member(jay), jaysRun.id))
 }
 
 @MainActor @Test func aCommentInFlightThatAReloadAlreadyListsShowsOnce() async {

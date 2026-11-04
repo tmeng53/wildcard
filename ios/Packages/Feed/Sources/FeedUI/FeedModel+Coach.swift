@@ -26,6 +26,20 @@ extension FeedModel {
     /// What the coach said or left on a post.
     func coachReply(on post: CheckInID) -> CoachReply? { coach?.reply(to: post) }
 
+    /// The coach's answers to replies to it under a post, oldest first.
+    func coachAnswers(on post: CheckInID) -> [CoachAnswer] { coach?.answers(on: post) ?? [] }
+
+    /// A post's comments with the coach's answers among them, as its page lists them.
+    func thread(of post: FeedPost) -> [CommentThreadEntry] { post.thread(answers: coachAnswers(on: post.id)) }
+
+    /// Whom a reply goes to, by name: a member's, or the coach's.
+    func displayName(of target: ReplyTarget) -> String {
+        switch target {
+        case .member(let member): displayName(of: member)
+        case .coach(let id): coach?.speaker(id)?.name ?? String(localized: "教练", bundle: .module.inAppLanguage)
+        }
+    }
+
     /// A coach's character, standing still: nil for a coach this build has no art for, which
     /// shows its name and tag without a face.
     func coachPlayer(_ coach: CoachID) -> CharacterPlayer? {
