@@ -27,8 +27,12 @@ import Testing
     let joinedAt = try #require(try await member.api.me().joinedAt)
 
     var overview = try await service.overview()
-    // Every piece with a rule starts locked, WARM-UP's headphones 2 练了 away.
-    #expect(overview.lockedPieces.count == 39)
+    // Every piece with a rule starts locked, however many the rules hold today, WARM-UP's
+    // headphones 2 练了 away.
+    let standing = try await member.api.unlockStanding()
+    #expect(standing.unlocks.isEmpty)
+    #expect(!overview.lockedPieces.isEmpty)
+    #expect(overview.lockedPieces.map(\.id) == standing.lockedPieces.map(\.id))
     #expect(overview.lockedPieces.first { $0.id == "warmup-headphones" }?.checkInsToGo == 2)
     overview.lockedPieces = []
     #expect(
