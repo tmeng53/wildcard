@@ -112,8 +112,9 @@ public struct SpeechBubble: View {
     @ViewBuilder private var bubble: some View {
         let padded =
             content
-            .padding(.vertical, isStatus ? Space.s - Space.xxs / 2 : Self.verticalPadding)
-            .padding(.horizontal, isStatus ? Space.s : Self.horizontalPadding)
+            .padding(.top, isStatus ? Space.s : Self.verticalPadding)
+            .padding(.bottom, isStatus ? Space.s + Space.xxs / 2 : Self.verticalPadding)
+            .padding(.horizontal, isStatus ? Space.m : Self.horizontalPadding)
             .padding(.bottom, Self.tailSize.height)
         switch surface {
         case .scene:
@@ -192,25 +193,30 @@ public struct SpeechBubble: View {
                 }
             }
         case .status(let detail, let button, let eyebrow):
-            HuggingWidth(min: Self.statusMinWidth - 2 * Space.s, max: Self.statusWidth - 2 * Space.s) {
-                VStack(spacing: Space.xxs / 2) {
+            HuggingWidth(min: Self.statusMinWidth - 2 * Space.m, max: Self.statusWidth - 2 * Space.m) {
+                // Three groups with room between them: who, what they're up to, the one thing to do.
+                VStack(spacing: 0) {
                     if let eyebrow {
                         EyebrowLine(eyebrow: eyebrow)
                     }
-                    text
-                        .typeStyle(TypeRamp.footnoteEmphasis)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .lineLimit(1)
-                    if let detail {
-                        detail
-                            .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(muted)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
+                    VStack(spacing: Space.xxs / 2) {
+                        text
+                            .typeStyle(TypeRamp.footnoteEmphasis)
+                            .foregroundStyle(Color(role: .fgDefault, in: theme))
+                            .lineLimit(1)
+                        if let detail {
+                            detail
+                                .typeStyle(TypeRamp.footnote)
+                                .foregroundStyle(muted)
+                                .lineSpacing(Space.xxs / 2)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
+                    .padding(.top, eyebrow == nil ? 0 : Space.xxs)
                     if let button {
                         StatusCapsule(button: button)
-                            .padding(.top, Space.xs - Space.xxs / 2)
+                            .padding(.top, Space.xs)
                     }
                 }
             }
@@ -248,31 +254,45 @@ private struct HuggingWidth: Layout {
     }
 }
 
-/// The accent capsule in a `.status` bubble, `compactControl` tall; grey once done.
+/// What to do in a `.status` bubble: a small accent capsule, and once done, only a muted
+/// 「✓ 拍过了」 line, which does nothing, so a done bubble sits lower and lighter.
 private struct StatusCapsule: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accentTone) private var tone
     let button: SpeechBubble.StatusButton
 
     var body: some View {
-        Button {
-            if !button.isDone { button.action() }
-        } label: {
-            button.label
-                .typeStyle(TypeRamp.calloutEmphasis)
-                .lineLimit(1)
-                .foregroundStyle(Color(role: button.isDone ? .fgSubtle : tone.onFill, in: theme))
-                .padding(.horizontal, Space.m)
-                .frame(height: Sizing.compactControl)
-                .background(Color(role: button.isDone ? .bgSubtle : tone.fill, in: theme), in: Capsule())
-                .contentShape(Capsule())
+        if button.isDone {
+            HStack(spacing: Space.xxs) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: Self.check, weight: .semibold))
+                    .accessibilityHidden(true)
+                button.label
+                    .typeStyle(TypeRamp.label)
+                    .lineLimit(1)
+            }
+            .foregroundStyle(Color(role: .fgSubtle, in: theme))
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier(button.identifier ?? "")
+            .accessibilityAddTraits(.isStaticText)
+        } else {
+            Button(action: button.action) {
+                button.label
+                    .typeStyle(TypeRamp.footnoteEmphasis)
+                    .lineLimit(1)
+                    .foregroundStyle(Color(role: tone.onFill, in: theme))
+                    .padding(.horizontal, Space.s + Space.xxs / 2)
+                    .padding(.vertical, Space.xxs + Space.xxs / 2)
+                    .background(Color(role: tone.fill, in: theme), in: Capsule())
+                    // The capsule is small; the tap lands on a taller target around it.
+                    .contentShape(Rectangle().inset(by: -(Space.xxs + Space.xxs / 2)))
+            }
+            .buttonStyle(PressableButtonStyle())
+            .accessibilityIdentifier(button.identifier ?? "")
         }
-        .buttonStyle(PressableButtonStyle())
-        .allowsHitTesting(!button.isDone)
-        .accessibilityIdentifier(button.identifier ?? "")
-        .accessibilityAddTraits(button.isDone ? [.isStaticText] : [])
-        .accessibilityRemoveTraits(button.isDone ? [.isButton] : [])
     }
+
+    private static let check: Double = 10
 }
 
 /// The muted name line over a `.status` bubble, a button to their card: the worn title's badge
