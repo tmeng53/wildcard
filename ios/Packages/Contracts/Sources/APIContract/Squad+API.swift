@@ -69,7 +69,8 @@ extension SquadmateToday {
             character: try wire.character.map(MemberCharacter.init),
             day: try LocalDay(wire.day),
             training: TrainingStatus(wire.training), latestMeal: wire.latestMeal.map(MealKind.init),
-            plannedRest: wire.plannedRest, firstCheckInAt: wire.firstCheckInAt.map(Timestamp.init(wire:)))
+            plannedRest: wire.plannedRest, firstCheckInAt: wire.firstCheckInAt.map(Timestamp.init(wire:)),
+            title: wire.title.map(WornTitle.init))
     }
 }
 

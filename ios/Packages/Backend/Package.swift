@@ -8,7 +8,8 @@ import PackageDescription
 //   knows Supabase Auth's HTTP API, so changing provider means replacing it.
 // - `WildcardAPI`, the client of our own API: the client scripts/swift-openapi.sh generates
 //   (`Generated/`, never edited by hand) behind calls that take and return `Contracts` types.
-// - `APIDeviceRegistry` puts it behind the `DeviceRegistry` that push registration talks to.
+// - `APIDeviceRegistry` puts it behind the `DeviceRegistry` that push registration talks to, and
+//   `APINoticeSource` behind `NoticeInbox`'s `NoticeSource`: 通知, the bell on 动态.
 // - `APIWeekStoryService`, the Sunday 战报 behind `RecapDomain`'s `WeekStoryService`.
 // - `APICheckInBackend`, `DeviceOutbox` and `APIDisclaimerWriter`, the adapters behind
 //   `CheckInDomain`'s ports: the home and 打卡 over the API, with a copy of the home and the

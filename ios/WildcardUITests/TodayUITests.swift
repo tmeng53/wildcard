@@ -241,7 +241,9 @@ final class TodayUITests: XCTestCase {
         // The caption is a text view whose placeholder is drawn over it and read as its label.
         XCTAssertEqual(caption.label, "这顿很自律…")
         XCTAssertFalse(app.buttons["compose.sport.run"].exists, "a meal shows the sport row")
-        XCTAssertFalse(app.buttons["compose.photo.1"].exists, "one photo shows a cover choice")
+        XCTAssertTrue(
+            app.descendants(matching: .any).matching(identifier: "compose.cover").firstMatch.exists,
+            "the one photo isn't the cover")
         settle()
         keepScreenshot(named: "22-compose-healthy-meal")
     }

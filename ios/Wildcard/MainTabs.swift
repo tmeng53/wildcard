@@ -7,6 +7,8 @@ import FeedDomain
 import FeedUI
 import MeDomain
 import MeUI
+import NotificationsDomain
+import NotificationsUI
 import RecapUI
 import ScheduleUI
 import SquadDomain
@@ -29,9 +31,17 @@ struct MainTabs: View {
     let recap: RecapShelf
     /// The member's own posts, for 我的动态.
     let myPosts: any MyPostsSource
+    /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
+    let squadmateCards: (any SquadmateCards)?
     @Binding var selection: Tab
     /// The member left the squad on 小队设置.
     var leftSquad: () -> Void = {}
+    /// 通知, behind the bell on 动态: one for as long as the tabs are up.
+    @State private var inbox: NoticeInbox
+    /// 通知's page, open over 动态.
+    @State private var showsNotices = false
+    /// A post opened from 通知 (the one the coach answered), over its page.
+    @State private var noticePost: OpenedPost?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
     @State private var editor: CharacterEditorModel?
@@ -41,6 +51,21 @@ struct MainTabs: View {
     @State private var wall: PostWallStore?
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
+    /// A teammate's player card, opened from their name on the home's bubble.
+    @State private var teammate: SquadmateCardModel?
+
+    init(
+        today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
+        recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
+        squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>, leftSquad: @escaping () -> Void = {}
+    ) {
+        (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
+        (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
+        self.squadmateCards = squadmateCards
+        _selection = selection
+        self.leftSquad = leftSquad
+        _inbox = State(initialValue: NoticeInbox(source: notices))
+    }
 
     var body: some View {
         AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: feed.hasNews ? [.feed] : []) { tab in
@@ -82,6 +107,11 @@ struct MainTabs: View {
                     })
             }
         }
+        .sheet(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
+            if let teammate {
+                TeammateCard(model: teammate).environment(\.sceneTheme, today.scene)
+            }
+        }
         .fullScreenCover(isPresented: $showsSquad) {
             SquadSettingsView(
                 model: squad, close: { showsSquad = false },
@@ -91,7 +121,9 @@ struct MainTabs: View {
                     instant.disablesAnimations = true
                     withTransaction(instant) { showsSquad = false }
                     land(on: scene, coveredAt: coveredAt)
-                }
+                },
+                // It is over everything, so it shows the card over itself.
+                teammateCard: { squadCard(of: $0) }
             )
             .environment(\.sceneTheme, squad.scene)
         }
@@ -114,7 +146,7 @@ struct MainTabs: View {
         guard let character = profile.overview?.character else { return }
         editor = try? CharacterEditorModel.placeholder(
             look: character.outfit, persona: character.persona, nickname: character.nickname,
-            unlocks: profile.overview?.unlocks ?? [])
+            unlocks: profile.overview?.unlocks ?? [], locked: profile.overview?.lockedPieces ?? [])
     }
 
     /// A tap on the home's notice that a store or prop opened: 我's editor, inside that store or on
@@ -134,7 +166,7 @@ struct MainTabs: View {
         switch selection {
         case .today: today.showsTabBar
         case .profile: !profile.isDeletionOpen && post == nil
-        case .feed: feed.opened == nil
+        case .feed: feed.opened == nil && !showsNotices && noticePost == nil
         case .schedule: true
         }
     }
@@ -149,11 +181,11 @@ struct MainTabs: View {
                 openPost: { post in
                     feed.open(post)
                     selection = .feed
-                })
+                }
+            )
+            .onAppear { today.openTeammate = { teammate = homeCard(of: $0) } }
         case .feed:
-            FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
-                .environment(\.sceneTheme, today.scene)
-                .task { await recap.refresh() }
+            feedPage
         case .schedule:
             ScheduleView(model: schedule)
                 .environment(\.sceneTheme, today.scene)
@@ -162,13 +194,83 @@ struct MainTabs: View {
         }
     }
 
+    /// 动态 with the bell at its title, and 通知 over it once the bell is tapped, with a post it
+    /// opens over that.
+    private var feedPage: some View {
+        ZStack {
+            FeedView(
+                model: feed, header: AnyView(RecapTile(recap: recap)),
+                accessory: AnyView(NoticeBell(inbox: inbox) { showsNotices = true })
+            ) { selection = .today }
+            .allowsHitTesting(!showsNotices)
+            .accessibilityHidden(showsNotices)
+            .task { await recap.refresh() }
+            // The bell's dot, read each time 动态 opens, and the member 通知 shows: their character
+            // when it is empty and their unlocks for how a store opened.
+            .task {
+                await inbox.load()
+                if profile.overview == nil { await profile.reload() }
+            }
+            if showsNotices {
+                NoticesView(
+                    inbox: inbox, viewer: noticeViewer, unlocked: unlockWords, now: LaunchOptions.now,
+                    open: open, close: { showsNotices = false }
+                )
+                .allowsHitTesting(noticePost == nil)
+                .accessibilityHidden(noticePost != nil)
+                .transition(.move(edge: .trailing))
+            }
+            if let noticePost {
+                PostDetailView(model: noticePost.model, post: noticePost.id) { self.noticePost = nil }
+                    .transition(.move(edge: .trailing))
+            }
+        }
+        .environment(\.sceneTheme, today.scene)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsNotices)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: noticePost?.id)
+    }
+
+    /// Where a tapped notice goes. 通知 stays under a post or the wardrobe it opens, so back
+    /// returns to it; elsewhere it closes.
+    private func open(_ target: NoticeTarget) {
+        switch target {
+        case .feed:
+            showsNotices = false
+        case .recap(_, let week):
+            showsNotices = false
+            if recap.latest?.week.monday == week { recap.openLatest() }
+        case .home:
+            showsNotices = false
+            selection = .today
+        case .post(let id):
+            noticePost = OpenedPost(id: id, model: feed.page(of: id))
+        case .wardrobe:
+            editCharacter()
+        }
+    }
+
+    /// The member's own character, on the empty 通知.
+    private var noticeViewer: NoticeViewer? {
+        profile.overview.map { NoticeViewer(outfit: $0.character.outfit, persona: $0.character.persona) }
+    }
+
+    /// A store's, prop's or piece's words and badge on its 通知 row, as the home's banner says them.
+    /// How a store or piece opened comes from the member's unlock; a prop's title says it all (the bell design).
+    private func unlockWords(_ kind: Unlock.Kind, item: String) -> UnlockWords {
+        let unlock = profile.overview?.unlocks.first { $0.kind == kind && $0.id == item }
+        return UnlockWords(
+            title: UnlockNames.title(kind, item: item),
+            detail: kind == .prop ? nil : unlock.map(UnlockNames.detail),
+            icon: AnyView(WardrobeBadge(kind, item: item)))
+    }
+
     /// 我, or 我的动态 in its place, with a post opened from it over the wall.
     private var profilePage: some View {
         ZStack {
             if let wall {
                 PostWallView(
                     store: wall, back: { self.wall = nil },
-                    open: { post = OpenedPost(id: $0.id, model: feed.page(of: $0.id)) },
+                    open: { post = OpenedPost(id: $0.id, model: postPage($0.id, over: wall)) },
                     checkIn: { selection = .today }
                 )
                 .allowsHitTesting(post == nil)
@@ -232,6 +334,19 @@ private struct RecapTile: View {
             RecapEntryTile(
                 story: story, viewer: recap.cast?.reader, seen: recap.latestIsSeen, action: recap.openLatest)
         }
+    }
+}
+
+extension MainTabs {
+    /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.
+    private func postPage(_ id: CheckInID, over wall: PostWallStore) -> FeedModel {
+        let page = feed.page(of: id)
+        let parent = page.changed
+        page.changed = { change in
+            parent?(change)
+            wall.apply(change)
+        }
+        return page
     }
 }
 

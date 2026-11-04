@@ -8,12 +8,18 @@ public struct StageMember: Hashable, Sendable {
     public let firstCheckInAt: Timestamp?
     /// 社恐 takes the free spot furthest back.
     public let keepsToTheBack: Bool
+    /// What they are eating, when their latest post today is a meal: they eat it on their spot,
+    /// off the equipment, even after a 练了.
+    public let eating: MealKind?
 
-    public init(id: MemberID, status: StageStatus, firstCheckInAt: Timestamp?, keepsToTheBack: Bool) {
+    public init(
+        id: MemberID, status: StageStatus, firstCheckInAt: Timestamp?, keepsToTheBack: Bool, eating: MealKind? = nil
+    ) {
         self.id = id
         self.status = status
         self.firstCheckInAt = firstCheckInAt
         self.keepsToTheBack = keepsToTheBack
+        self.eating = eating
     }
 }
 
@@ -134,7 +140,8 @@ public struct SquadStage: Hashable, Sendable {
     }
 
     private func sport(of member: StageMember) -> Sport? {
-        if case .trained(.sport(let sport)?) = member.status { sport } else { nil }
+        guard member.eating == nil else { return nil }
+        return if case .trained(.sport(let sport)?) = member.status { sport } else { nil }
     }
 
     private func uses(_ sport: Sport, _ kind: StationKind) -> Bool {

@@ -129,6 +129,30 @@ export const CheckInDraft = z.discriminatedUnion('kind', [
 ]);
 export type CheckInDraft = z.output<typeof CheckInDraft>;
 
+/**
+ * The body of `PATCH /check-ins/{id}`: a saved check-in's own fields, all of them, as they are
+ * to be. Its kind must be the one saved; the day, time and audience are never changed.
+ */
+export const CheckInEdit = z.discriminatedUnion('kind', [
+  z
+    .strictObject({ version: draftFields.version, kind: z.literal('trained'), training: Training })
+    .meta({ id: 'TrainedCheckInEdit' }),
+  z
+    .strictObject({ version: draftFields.version, kind: z.literal('healthyMeal'), meal: Meal })
+    .meta({ id: 'HealthyMealCheckInEdit' }),
+  z
+    .strictObject({ version: draftFields.version, kind: z.literal('cheatMeal'), meal: Meal })
+    .meta({ id: 'CheatMealCheckInEdit' }),
+  z
+    .strictObject({
+      version: draftFields.version,
+      kind: z.literal('disclaimer'),
+      disclaimer: Disclaimer,
+    })
+    .meta({ id: 'DisclaimerCheckInEdit' }),
+]);
+export type CheckInEdit = z.output<typeof CheckInEdit>;
+
 /** A check-in as the module holds it, saved or about to be. */
 export type CheckInRecord = Entry & {
   readonly id: CheckInId;

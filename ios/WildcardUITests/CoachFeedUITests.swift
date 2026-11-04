@@ -2,8 +2,8 @@ import XCTest
 
 /// The coach on 动态, the way a member meets it: today's 战术板 pinned at the top of today, 毛头's
 /// word under the run with the 教练 tag, its 🔥 first among the run's reactions and first in who
-/// reacted, and its word first on the run's own page, where nobody replies to it. Screenshots are
-/// kept for review.
+/// reacted, its word first on the run's own page, and replying to it there the way one replies to a
+/// teammate, with its answer showing under the reply. Screenshots are kept for review.
 @MainActor
 final class CoachFeedUITests: XCTestCase {
     /// Slow CI simulators can take many seconds to show a screen; a real failure still fails.
@@ -63,6 +63,33 @@ final class CoachFeedUITests: XCTestCase {
         XCTAssertLessThan(row.frame.minY, comments.element(boundBy: 0).frame.minY, "the coach's word isn't first")
         Thread.sleep(forTimeInterval: 0.8)
         keepScreenshot(named: "66-coach-post-page")
+        replyToTheCoach(row, under: comments, in: app)
+    }
+
+    /// Replying to 毛头 is replying to a teammate: tap his word, write, send, and he answers.
+    private func replyToTheCoach(_ row: XCUIElement, under comments: XCUIElementQuery, in app: XCUIApplication) {
+        let window = app.windows.firstMatch.frame
+        row.tap()
+        XCTAssertTrue(app.buttons["post.cancelReply"].waitForExistence(timeout: Self.wait), "tapping didn't reply")
+        XCTAssertTrue(app.staticTexts["回复 毛头"].exists, "the box doesn't say whom it replies to")
+        let box = element("post.field", in: app)
+        box.typeText("教练你也跑")
+        let send = app.buttons["post.send"]
+        XCTAssertTrue(window.contains(send.frame), "the send button is cut off: \(send.frame)")
+        Thread.sleep(forTimeInterval: 0.8)
+        keepScreenshot(named: "66-coach-post-replying")
+        send.tap()
+        let answer = element("post.coachAnswer", in: app)
+        XCTAssertTrue(answer.waitForExistence(timeout: Self.wait), "the coach didn't answer the reply")
+        XCTAssertTrue(answer.label.hasPrefix("教练 毛头 回复 "), "the answer has no 教练 tag: \(answer.label)")
+        XCTAssertFalse(app.buttons["post.cancelReply"].exists, "still replying after sending")
+        let reply = comments.matching(NSPredicate(format: "label CONTAINS '教练你也跑'")).firstMatch
+        XCTAssertTrue(reply.exists, "the reply to the coach isn't on the page")
+        XCTAssertLessThan(reply.frame.minY, answer.frame.minY, "the answer isn't under the reply")
+        // The page brings the answer into view.
+        Thread.sleep(forTimeInterval: 0.8)
+        XCTAssertTrue(window.contains(answer.frame), "the answer is cut off: \(answer.frame)")
+        keepScreenshot(named: "66-coach-post-answer")
     }
 
     private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {

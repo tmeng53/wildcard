@@ -6,7 +6,7 @@ import type {
   Failures,
   MemberId,
   SquadId,
-  TitlesWon,
+  TitleWin,
 } from './domain/awards.js';
 import type { PromptMeme } from './domain/prompt.js';
 import type { WeekStart } from './domain/schedule.js';
@@ -73,8 +73,11 @@ export interface AwardsStore {
    * when none was claimed since the last failed try, else `undefined`, as it is once given.
    */
   claimNudge(squad: SquadId, weekStart: WeekStart): Promise<Failures | undefined>;
-  /** Every title the member has won, in all their squads. */
-  titlesWon(member: MemberId): Promise<TitlesWon>;
+  /**
+   * Every title these members have won, in all their squads, by member: the latest week first,
+   * each week's titles in the order given. A member who won nothing is left out.
+   */
+  wins(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, readonly TitleWin[]>>;
 }
 
 /** Where each squad's frozen 战报 is kept: written once a week, never changed. */

@@ -23,7 +23,7 @@ extension CheckInDraft {
 
 /// Where photos for a 练了 or a meal come from.
 public enum PhotoSource: Sendable {
-    /// The system photo picker.
+    /// The member adds them on the compose page: the camera or the system photo picker.
     case library
     /// Photos handed over up front, so UI tests can post without the system picker.
     case provided([PreparedPhoto])
@@ -35,13 +35,11 @@ public enum PhotoSource: Sendable {
 public final class TodayModel {
     enum Step: Equatable {
         case scene
-        case pickingPhotos(CheckInKind)
         case composing(CheckInKind)
         case disclaimer
     }
 
-    /// What lands on the scene after a post: the line in the bubble, and the post it opens once
-    /// the server saved it.
+    /// What lands on the scene after a post: the bubble's line, and the post it opens once saved.
     struct Payoff: Equatable {
         let kind: CheckInKind
         let line: String?
@@ -56,6 +54,8 @@ public final class TodayModel {
     let cast = SquadCast()
     /// 拍一拍 on the scene.
     let pats: PatStage
+    /// The squad celebrating together on the scene (撞头, 叠罗汉, 人浪); off in UI tests that don't ask.
+    let together: TogetherStage
     /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
     private(set) var celebrations = 0
     /// The coach's 战术板 line while its bubble is up on the sideline.
@@ -74,13 +74,13 @@ public final class TodayModel {
     public var showsTabBar: Bool {
         guard !holdsTabBar else { return false }
         return switch step {
-        case .scene, .pickingPhotos: !isBurstOpen
+        case .scene: !isBurstOpen
         case .composing, .disclaimer: false
         }
     }
 
-    /// The photos picked for the open compose step, the cover first.
-    var photos: [PreparedPhoto] = []
+    /// The open compose page's state.
+    private(set) var compose: ComposeModel?
     private(set) var payoff: Payoff?
     /// Counts posts, so the one strong haptic fires on each.
     private(set) var posts = 0
@@ -107,7 +107,6 @@ public final class TodayModel {
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
     private let noSquad: @MainActor (Squad?) -> Void
-
     let now: () -> Date
     /// Keeps when the latest pat I was shown arrived, so each pat on me plays once, and the night
     /// the lights are on for.
@@ -123,11 +122,12 @@ public final class TodayModel {
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
         scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, defaults: UserDefaults = .standard,
-        bubbleHold: Double? = nil, posted: @escaping @MainActor () -> Void,
+        bubbleHold: Double? = nil, celebratesTogether: Bool = true, posted: @escaping @MainActor () -> Void,
         noSquad: @escaping @MainActor (Squad?) -> Void = { _ in }
     ) {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
         coachLineHold = bubbleHold ?? Self.coachLineHold
+        together = TogetherStage(isOn: celebratesTogether)
         noticeHold = bubbleHold ?? Motion.noticeHold
         self.scene = scene
         self.defaults = defaults
@@ -144,9 +144,10 @@ public final class TodayModel {
     /// How long after posting a 练了 the week's count flips up: after the ring closes and the
     /// squad starts cheering (the approved check-in moment's 1.7 seconds).
     private static let scoreDelay = 1.7
-
     /// The squad's home, with the member's own posts counted.
     public var home: Home? { store.home }
+    /// Opens a teammate's player card, from their name on their bubble; the app sets it.
+    @ObservationIgnored public var openTeammate: (MemberID) -> Void = { _ in }
 
     /// The squad dropping onto a newly picked scene, until everyone settles (`TodayModel+DropIn.swift`).
     var arrival: Arrival?
@@ -255,12 +256,7 @@ public final class TodayModel {
             return
         }
         placeSquad()
-        Task {
-            await showNextNotice()
-            await tellNews()
-            await playPatsOnMe()
-            await sayCoachLine()
-        }
+        Task { await playOpening() }
     }
 
     /// Opens the check-in kinds, as the 打卡 button does: the 6pm push's 我去发一个 lands here.
@@ -275,33 +271,20 @@ public final class TodayModel {
         case .disclaimer:
             step = .disclaimer
         case .trained, .healthyMeal, .cheatMeal:
-            switch photoSource {
-            case .library:
-                photos = []
-                step = .pickingPhotos(kind)
-            case .provided(let given):
-                photos = given
-                step = .composing(kind)
-            }
+            // Straight to the page: photos are added there, with its 「+ 照片」.
+            let given: [PreparedPhoto] = if case .provided(let photos) = photoSource { photos } else { [] }
+            compose = ComposeModel(
+                kind: kind, purpose: .new(shareSquads: shareSquads), photos: given.map(ComposedPhoto.new),
+                suggestedActivity: suggestedActivity, recentActivities: recentActivities,
+                save: { [weak self] model in await self?.post(model.draft, sharedTo: model.shared) ?? false },
+                close: { [weak self] in self?.cancel() })
+            step = .composing(kind)
         }
-    }
-
-    /// The photo step finished: with photos, or with none (不加照片).
-    func photosPicked(_ picked: [PreparedPhoto]) {
-        guard case .pickingPhotos(let kind) = step else { return }
-        photos = Array(picked.prefix(Photos.maxCount))
-        step = .composing(kind)
-    }
-
-    /// Moves `photo` to the front, as the cover.
-    func makeCover(_ photo: PreparedPhoto) {
-        guard let index = photos.firstIndex(of: photo) else { return }
-        photos.insert(photos.remove(at: index), at: 0)
     }
 
     func cancel() {
         step = .scene
-        photos = []
+        compose = nil
         sendFailed = false
     }
 
@@ -309,9 +292,11 @@ public final class TodayModel {
         await writer.suggestions(for: reason, style: style)
     }
 
-    /// Posts `draft` to the squads in `shared` (none keeps it to the member).
-    func post(_ draft: CheckInDraft, sharedTo shared: Set<SquadID>) async {
-        guard !isSending else { return }
+    /// Posts `draft` to the squads in `shared` (none keeps it to the member). False when it
+    /// can't be posted; the open page says so.
+    @discardableResult
+    func post(_ draft: CheckInDraft, sharedTo shared: Set<SquadID>) async -> Bool {
+        guard !isSending else { return false }
         isSending = true
         sendFailed = false
         defer { isSending = false }
@@ -327,11 +312,13 @@ public final class TodayModel {
             }
             placeSquad()
             step = .scene
-            photos = []
+            compose = nil
             land(draft, weekBefore: before, saved: outcome)
             posted()
+            return true
         } catch {
             sendFailed = true
+            return false
         }
     }
 

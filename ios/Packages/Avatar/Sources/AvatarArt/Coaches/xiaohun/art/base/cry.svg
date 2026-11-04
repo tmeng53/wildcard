@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
-  <ellipse cx="93.12" cy="107.92" rx="20.72" ry="20.72" fill="#F8D3AC"/>
-  <ellipse cx="146.88" cy="107.92" rx="20.72" ry="20.72" fill="#F8D3AC"/>
-  <path d="M 79.68 98.96 L 102.08 106.8 L 79.68 114.64 M 160.32 98.96 L 137.92 106.8 L 160.32 114.64" fill="none" stroke="#262A33" stroke-width="3.36" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M 86.4 116.88 Q 81.92 130.32 86.4 143.76 Q 90.88 148.24 93.12 141.52 Q 95.36 128.08 93.12 116.88 Z" fill="#8FD3E6"/>
-  <path d="M 153.6 116.88 Q 158.08 130.32 153.6 143.76 Q 149.12 148.24 146.88 141.52 Q 144.64 128.08 146.88 116.88 Z" fill="#8FD3E6"/>
-  <ellipse cx="120" cy="139.28" rx="7.84" ry="4.48" fill="#FFF3E6"/>
-  <path d="M 112.16 140.4 Q 116.08 135.92 120 140.4 Q 123.92 135.92 127.84 140.4" fill="none" stroke="#B0685A" stroke-width="2.69" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="87.78" cy="115.22" rx="24.84" ry="23" fill="#F8D3AC"/>
+  <ellipse cx="152.22" cy="115.22" rx="24.84" ry="23" fill="#F8D3AC"/>
+  <path d="M 71.66 105.28 L 98.52 113.98 L 71.66 122.68 M 168.34 105.28 L 141.48 113.98 L 168.34 122.68" fill="none" stroke="#262A33" stroke-width="3.88" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 79.72 125.17 Q 74.35 140.09 79.72 155 Q 85.09 159.98 87.78 152.52 Q 90.46 137.6 87.78 125.17 Z" fill="#8FD3E6"/>
+  <path d="M 160.28 125.17 Q 165.65 140.09 160.28 155 Q 154.91 159.98 152.22 152.52 Q 149.54 137.6 152.22 125.17 Z" fill="#8FD3E6"/>
+  <ellipse cx="120" cy="150.03" rx="9.4" ry="4.97" fill="#FFF3E6"/>
+  <path d="M 110.6 151.27 Q 115.3 146.3 120 151.27 Q 124.7 146.3 129.4 151.27" fill="none" stroke="#B0685A" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

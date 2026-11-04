@@ -402,7 +402,8 @@ export function weekStory(
               status: 'ready' as const,
               titles: story.titles.map(({ member, titles }) => ({
                 member,
-                titles: [...titles],
+                // The story shows no badges yet: just the words and the move.
+                titles: titles.map(({ title, speech, move }) => ({ title, speech, move })),
               })),
             }
           : { ...fields, status: 'pending' as const },

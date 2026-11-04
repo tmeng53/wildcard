@@ -17,7 +17,9 @@ private actor FakeCoach: CoachSource {
     func activity(in squad: SquadID, about checkIns: [CheckInID]) async throws(FeedError) -> CoachActivity {
         asked.append(checkIns)
         if let failure { throw failure }
-        return CoachActivity(note: activity.note, replies: activity.replies.filter { checkIns.contains($0.checkIn) })
+        return CoachActivity(
+            note: activity.note, replies: activity.replies.filter { checkIns.contains($0.checkIn) },
+            answers: activity.answers.filter { checkIns.contains($0.checkIn) })
     }
 }
 
@@ -94,4 +96,22 @@ private let note = CoachNote(day: day("2026-10-20"), text: "今天谁先动，�
     await coach.load(about: [checkInID(1)])
     #expect(coach.reply(to: checkInID(1))?.text == "可以")
     #expect(coach.todaysNote != nil)
+}
+
+@MainActor @Test func readsItsAnswersToRepliesAndForgetsOnesThatWent() async {
+    let answer = CoachAnswer(
+        checkIn: checkInID(1), comment: commentID(4), coach: maotou, text: "我负责喊", writtenAt: sevenAM)
+    let source = FakeCoach(CoachActivity(note: nil, replies: [reply(1, "稳", nil)], answers: [answer]))
+    let coach = FeedCoach(source: source, squad: squad) { sevenAM }
+    await coach.load(about: [checkInID(1), checkInID(2)])
+    #expect(coach.answers(on: checkInID(1)) == [answer])
+    #expect(coach.answers(on: checkInID(2)).isEmpty)
+    // 回复 毛头 names the coach as it spoke.
+    #expect(coach.speaker("xiaohun")?.name == "毛头")
+    #expect(coach.speaker("other") == nil)
+
+    // The reply was deleted, and its answer with it.
+    await source.set(CoachActivity(note: nil, replies: [reply(1, "稳", nil)]))
+    await coach.load(about: [checkInID(1)])
+    #expect(coach.answers(on: checkInID(1)).isEmpty)
 }

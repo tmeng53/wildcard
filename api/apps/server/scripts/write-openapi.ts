@@ -39,6 +39,7 @@ const photos = {
   exists: unused,
   createViewUrls: unused,
   deleteAllOf: unused,
+  delete: unused,
 };
 const app = createApp({
   db,
@@ -73,6 +74,7 @@ const app = createApp({
   nudges: { send: unused, received: unused, inSquad: unused },
   notices: { tell: unused, page: unused, markSeen: unused },
   coachNames: unused,
+  liveEvents: { subscribe: unused, close: unused },
   disclaimerDrafts: { write: unused },
   weeklyPlans: createWeeklyPlans({
     sports: createSports({ store: createPostgresSportStore(db) }),
@@ -109,13 +111,14 @@ const app = createApp({
       claimNudge: unused,
       claimReadyPush: unused,
       titlesWon: unused,
+      boards: unused,
       story: unused,
       freezeStory: unused,
       storiesWaiting: unused,
     },
     clock: unused,
   },
-  unlocks: { of: unused },
+  unlocks: { of: unused, standing: unused },
   log: createLog(unused),
   jobs: { isScheduler: undefined, interactions: [], clock: unused },
   admin: {

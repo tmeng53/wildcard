@@ -97,6 +97,14 @@ public struct APICheckInBackend: CheckInBackend {
         do { return try await api.save(checkIn) } catch { throw CheckInError(error) }
     }
 
+    public func edit(_ checkIn: CheckIn) async throws(CheckInError) -> CheckIn {
+        do { return try await api.edit(checkIn) } catch { throw CheckInError(error) }
+    }
+
+    public func delete(_ checkIn: CheckInID) async throws(CheckInError) {
+        do { try await api.delete(checkIn) } catch { throw CheckInError(error) }
+    }
+
     public func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction] {
         do { return try await api.reactions(to: checkIn) } catch { throw CheckInError(error) }
     }

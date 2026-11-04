@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
+import { Badge, DEFAULT_BADGE, badgeReplyFor, type BadgeCatalog } from './badges.js';
 import { AwardMove } from './moves.js';
+import type { WeekStart } from './schedule.js';
 
 // A squad's awards for a week: what the model writes for each member who checked in, and the
 // shape they are stored in. What the awards may say is the prompt's job, not a check's.
@@ -61,10 +63,10 @@ export const TITLES_MAX = 3;
 
 /**
  * The model's reply, held to this shape by structured output, its moves only those `moves`
- * offers (the settings'). Members are named by key. The limits go to the model in the schema, so
- * the titles fit the screen.
+ * offers (the settings') and its badges from `catalog` only. Members are named by key. The
+ * limits go to the model in the schema, so the titles fit the screen.
  */
-export function modelReply(moves: readonly [AwardMove, ...AwardMove[]]) {
+export function modelReplyFor(catalog: BadgeCatalog, moves: readonly [AwardMove, ...AwardMove[]]) {
   return z.strictObject({
     version: z.literal(1),
     awards: z.array(
@@ -76,6 +78,7 @@ export function modelReply(moves: readonly [AwardMove, ...AwardMove[]]) {
               title: z.string().min(1).max(TITLE_MAX),
               speech: z.string().min(1).max(SPEECH_MAX),
               move: z.enum(moves),
+              badge: badgeReplyFor(catalog),
             }),
           )
           .min(1)
@@ -84,7 +87,7 @@ export function modelReply(moves: readonly [AwardMove, ...AwardMove[]]) {
     ),
   });
 }
-export type ModelReply = z.infer<ReturnType<typeof modelReply>>;
+export type ModelReply = z.infer<ReturnType<typeof modelReplyFor>>;
 
 const Title = z.strictObject({
   title: z.string().min(1).meta({ description: 'The title (头衔), at most 6 characters.' }),
@@ -92,6 +95,9 @@ const Title = z.strictObject({
     description: 'Its award line (颁奖词), at most 24 characters, citing the week.',
   }),
   move: AwardMove,
+  badge: Badge.optional().meta({
+    description: 'Its badge (徽章). Left out for titles won before titles came with one.',
+  }),
 });
 export type Title = z.infer<typeof Title>;
 
@@ -143,6 +149,60 @@ export type AwardsState =
   | { readonly status: 'given'; readonly awards: Awards }
   | { readonly status: 'failing'; readonly failures: Failures };
 
+/** A title a member won: in which squad and week, as it was given. */
+export interface TitleWin {
+  readonly squad: SquadId;
+  /** The squad's name that week, as its 战报 froze it; none for a week won before that. */
+  readonly squadName?: string;
+  readonly weekStart: WeekStart;
+  readonly title: Title;
+}
+
+/**
+ * One title on a member's badge board (徽章板): the words, the badge it was last won with, and
+ * every week they won it, the latest first.
+ */
+export interface BoardTitle {
+  readonly title: string;
+  readonly badge: Badge;
+  readonly weeks: readonly {
+    readonly squad: SquadId;
+    readonly squadName?: string;
+    readonly weekStart: WeekStart;
+    readonly speech: string;
+  }[];
+}
+
+/**
+ * A member's badge board from their wins, the latest first: one entry per title by its words,
+ * the latest won first, each with the badge it was last won with.
+ */
+export function boardOf(wins: readonly TitleWin[]): BoardTitle[] {
+  const board = new Map<string, { badge: Badge; weeks: BoardTitle['weeks'][number][] }>();
+  for (const { squad, squadName, weekStart, title } of wins) {
+    const entry = board.get(title.title) ?? { badge: title.badge ?? DEFAULT_BADGE, weeks: [] };
+    entry.weeks.push({
+      squad,
+      ...(squadName === undefined ? {} : { squadName }),
+      weekStart,
+      speech: title.speech,
+    });
+    board.set(title.title, entry);
+  }
+  return [...board].map(([title, { badge, weeks }]) => ({ title, badge, weeks }));
+}
+
+/**
+ * The title a member wears: the one they equipped while it is on their board, else the latest
+ * they won; `undefined` before their first.
+ */
+export function wornOf(
+  board: readonly BoardTitle[],
+  equipped: string | null | undefined,
+): BoardTitle | undefined {
+  return board.find(({ title }) => title === equipped) ?? board[0];
+}
+
 /**
  * Every title a member has won, in all their squads and weeks (周奖 on the player card): how
  * many, and the latest with how often they have won that one.
@@ -152,15 +212,14 @@ export interface TitlesWon {
   readonly latest?: { readonly title: string; readonly times: number };
 }
 
-/** Counts a member's titles from their awards, the latest week first: its first title is the latest. */
-export function titlesWonOf(awards: readonly StoredAward[]): TitlesWon {
-  const titles = awards.flatMap((award) => award.titles.map(({ title }) => title));
-  const latest = titles[0];
+/** Counts a member's titles from their board. */
+export function titlesWonOf(board: readonly BoardTitle[]): TitlesWon {
+  const latest = board[0];
   return latest === undefined
     ? { count: 0 }
     : {
-        count: titles.length,
-        latest: { title: latest, times: titles.filter((title) => title === latest).length },
+        count: board.reduce((sum, { weeks }) => sum + weeks.length, 0),
+        latest: { title: latest.title, times: latest.weeks.length },
       };
 }
 
@@ -189,10 +248,11 @@ export function titlesOf(
   for (const award of reply.awards) {
     const member = byKey.get(award.member.trim());
     if (member === undefined || result.has(member)) return undefined;
-    const titles = award.titles.map(({ title, speech, move }) => ({
+    const titles = award.titles.map(({ title, speech, move, badge }) => ({
       title: oneLine(title),
       speech: oneLine(speech),
       move,
+      badge: Badge.parse(badge),
     }));
     if (titles.some(({ title, speech }) => title === '' || speech === '')) return undefined;
     result.set(member, titles);
