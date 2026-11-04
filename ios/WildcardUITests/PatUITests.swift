@@ -83,7 +83,7 @@ final class PatUITests: XCTestCase {
         let bubble = app.descendants(matching: .any).matching(identifier: "today.patBubble").firstMatch
         let pat = app.buttons["today.pat"]
         for (nickname, status, words, shot) in [
-            ("Leo", "Leo · 在吃放纵餐", "奶茶续命", "57-meals-boba"), ("小米", "小米 · 在吃健康餐", "练完来碗沙拉", "58-meals-salad"),
+            ("Leo", "在吃放纵餐", "奶茶续命", "57-meals-boba"), ("小米", "在吃健康餐", "练完来碗沙拉", "58-meals-salad"),
         ] {
             mate(nickname, in: app).tap()
             XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping \(nickname) showed no bubble")
