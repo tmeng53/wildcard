@@ -31,3 +31,11 @@ extension AppModel {
         if left > 0 { try? await Task.sleep(for: .seconds(left)) }
     }
 }
+
+extension AppModel.Screen {
+    /// Whether this is the launch cover's screen.
+    var isStarting: Bool {
+        if case .starting = self { return true }
+        return false
+    }
+}

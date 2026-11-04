@@ -34,11 +34,6 @@ final class AppModel {
         case tabs(
             today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
             recap: RecapShelf)
-
-        var isStarting: Bool {
-            if case .starting = self { return true }
-            return false
-        }
     }
 
     private(set) var screen = Screen.starting {
