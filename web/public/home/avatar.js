@@ -10,7 +10,14 @@
     easeInOut: [0.42, 0, 0.58, 1],
     backOut: [0.34, 1.56, 0.64, 1],
   };
-  const CHANNELS = ['rotation', 'x', 'y', 'scaleX', 'scaleY', 'opacity'];
+  const CHANNELS = ['rotation', 'x', 'y', 'scaleX', 'scaleY', 'opacity', 'bend'];
+  // An arm the clip swings without bending trails it a moment behind (Figure's FollowThrough).
+  const LAG = 0.09;
+  const GIVE = 0.9;
+  const MOST = 35;
+  const CARRIED = PARTS.map((_, i) =>
+    PARTS.flatMap((p, j) => (p.parent === PARTS[i].id ? [j] : [])),
+  );
 
   function bezier([x1, y1, x2, y2], f) {
     if (f <= 0) return 0;
@@ -48,7 +55,15 @@
   }
 
   const rest = () =>
-    PARTS.map((p) => ({ rotation: 0, x: 0, y: 0, scaleX: 1, scaleY: 1, opacity: p.opacity }));
+    PARTS.map((p) => ({
+      rotation: 0,
+      x: 0,
+      y: 0,
+      scaleX: 1,
+      scaleY: 1,
+      opacity: p.opacity,
+      bend: 0,
+    }));
 
   function pose(clip, time) {
     const t = clip.loops
@@ -57,6 +72,21 @@
     const poses = rest();
     for (const track of clip.tracks)
       if (track.part in INDEX) poses[INDEX[track.part]][track.channel] = value(track.keys, t);
+    PARTS.forEach((part, i) => {
+      if (!part.elbow) return;
+      const mine = clip.tracks.filter((track) => track.part === part.id);
+      const swing = mine.find((track) => track.channel === 'rotation');
+      if (!swing || mine.some((track) => track.channel === 'bend')) return;
+      const back = clip.loops
+        ? (((t - LAG) % clip.duration) + clip.duration) % clip.duration
+        : Math.max(0, t - LAG);
+      // A one-shot straightens over its last moment, so it ends at rest and hands back to idle.
+      const settle = clip.loops ? 1 : Math.max(0, Math.min(1, (clip.duration - t) / LAG));
+      const trail = GIVE * (value(swing.keys, back) - value(swing.keys, t)) * settle;
+      const bend = Math.max(-MOST, Math.min(MOST, trail));
+      poses[i].bend = bend;
+      for (const j of CARRIED[i]) poses[j].rotation -= bend;
+    });
     return poses;
   }
 
@@ -91,9 +121,18 @@
     b * E + d * F + f,
   ];
 
+  // Turns by `deg` around a point.
+  const turn = (deg, [cx, cy]) => {
+    const r = (deg * Math.PI) / 180;
+    const [c, s] = [Math.cos(r), Math.sin(r)];
+    return [c, s, -s, c, cx - c * cx + s * cy, cy - s * cx - c * cy];
+  };
+
   function layout(poses) {
     const matrices = new Array(PARTS.length);
     const opacities = new Array(PARTS.length);
+    // What each part's children move with: past the elbow for a bent arm.
+    const carriers = new Array(PARTS.length);
     const place = (i) => {
       if (matrices[i]) return;
       const part = PARTS[i];
@@ -107,12 +146,14 @@
       if (part.parent) {
         const j = INDEX[part.parent];
         place(j);
-        matrices[i] = multiply(matrices[j], m);
+        matrices[i] = multiply(carriers[j], m);
         opacities[i] = q.opacity * opacities[j];
       } else {
         matrices[i] = m;
         opacities[i] = q.opacity;
       }
+      carriers[i] =
+        part.elbow && q.bend ? multiply(matrices[i], turn(q.bend, part.elbow.at)) : matrices[i];
     };
     PARTS.forEach((_, i) => place(i));
     return { matrices, opacities };
@@ -126,18 +167,77 @@
     const out = poses.map((q) => ({ ...q }));
     for (const i of level) {
       let turned = 0;
-      for (let p = PARTS[i].parent; p; p = PARTS[INDEX[p]].parent) turned += out[INDEX[p]].rotation;
+      for (let p = PARTS[i].parent; p; p = PARTS[INDEX[p]].parent) {
+        const q = out[INDEX[p]];
+        turned += q.rotation + (PARTS[INDEX[p]].elbow ? q.bend : 0);
+      }
       out[i].rotation = -turned;
     }
     return out;
   }
 
+  // An arm's art bent at the elbow (AvatarDomain's Bend): each point turns around the elbow by
+  // more the nearer the hand, and a curve is refitted through its bent middle, so the arm curves.
+  function bent(art, part, deg) {
+    const [sx, sy] = part.pivot;
+    const [ex, ey] = part.elbow.at;
+    const [ax, ay] = [part.elbow.hand[0] - sx, part.elbow.hand[1] - sy];
+    const length = ax * ax + ay * ay;
+    const along = (x, y) => ((x - sx) * ax + (y - sy) * ay) / length;
+    const middle = along(ex, ey);
+    const move = (x, y) => {
+      const f = Math.max(0, Math.min(1, (along(x, y) - middle + 0.15) / 0.4));
+      const r = (deg * f * f * (3 - 2 * f) * Math.PI) / 180;
+      const [c, s] = [Math.cos(r), Math.sin(r)];
+      return [ex + c * (x - ex) - s * (y - ey), ey + s * (x - ex) + c * (y - ey)];
+    };
+    const n = (v) => +v.toFixed(2);
+    const path = (d) => {
+      const tokens = d.match(/[MLQZ]|-?[\d.]+(?:e-?\d+)?/g);
+      let out = '';
+      let [px, py] = [0, 0];
+      let [mx, my] = [0, 0];
+      for (let k = 0; k < tokens.length;) {
+        const command = tokens[k++];
+        const num = () => +tokens[k++];
+        if (command === 'Z') {
+          out += 'Z ';
+          [px, py] = [mx, my];
+        } else if (command === 'Q') {
+          const [cx, cy, x, y] = [num(), num(), num(), num()];
+          const [fx, fy] = move(px, py);
+          const [tx, ty] = move(x, y);
+          const [hx, hy] = move(0.25 * px + 0.5 * cx + 0.25 * x, 0.25 * py + 0.5 * cy + 0.25 * y);
+          out += `Q ${n(2 * hx - (fx + tx) / 2)} ${n(2 * hy - (fy + ty) / 2)} ${n(tx)} ${n(ty)} `;
+          [px, py] = [x, y];
+        } else {
+          const [x, y] = [num(), num()];
+          const [tx, ty] = move(x, y);
+          out += `${command} ${n(tx)} ${n(ty)} `;
+          [px, py] = [x, y];
+          if (command === 'M') [mx, my] = [x, y];
+        }
+      }
+      return out.trim();
+    };
+    return art
+      .replace(/ d="([^"]*)"/g, (_, d) => ` d="${path(d)}"`)
+      .replace(/cx="([^"]*)" cy="([^"]*)"/g, (_, x, y) => {
+        const [tx, ty] = move(+x, +y);
+        return `cx="${n(tx)}" cy="${n(ty)}"`;
+      });
+  }
+
   // SVG markup of one cast member in a pose.
   function figure(member, poses) {
-    const { matrices, opacities } = layout(leveled(poses, member.level));
+    const posed = leveled(poses, member.level);
+    const { matrices, opacities } = layout(posed);
     let svg = '';
     PARTS.forEach((part, i) => {
-      const art = member.art[i];
+      const art =
+        part.elbow && posed[i].bend && member.art[i]
+          ? bent(member.art[i], part, posed[i].bend)
+          : member.art[i];
       if (art && opacities[i] > 0)
         svg += `<g transform="matrix(${format(matrices[i])})" opacity="${opacities[i].toFixed(3)}">${art}</g>`;
     });

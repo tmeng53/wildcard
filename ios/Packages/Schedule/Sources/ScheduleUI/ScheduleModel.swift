@@ -141,9 +141,8 @@ public final class ScheduleModel {
         Task { await store.show(week) }
     }
 
-    /// Shows the 每周模板 instead of a week: from its chip, or from 设置 before the screen has
-    /// loaded.
-    public func showTemplate() {
+    /// Shows the 每周模板 instead of a week, from its chip.
+    func showTemplate() {
         fuelOpen = false
         writingFuel = false
         Task { await store.showTemplate() }

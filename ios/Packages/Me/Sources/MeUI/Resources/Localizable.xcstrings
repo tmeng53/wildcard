@@ -33,22 +33,6 @@
         }
       }
     },
-    "再试一次": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Try again"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "再試一次"
-          }
-        }
-      }
-    },
     "删了就找不回来了。": {
       "localizations": {
         "en": {
@@ -93,38 +77,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "小林"
-          }
-        }
-      }
-    },
-    "往期战报": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Past recaps"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "過往戰報"
-          }
-        }
-      }
-    },
-    "我的小队": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "My squad"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我的小隊"
           }
         }
       }
@@ -225,22 +177,6 @@
         }
       }
     },
-    "网络开小差了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The connection took a break"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網路怪怪的"
-          }
-        }
-      }
-    },
     "Apple 那边没确认上，再试一次": {
       "localizations": {
         "en": {
@@ -269,22 +205,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "網路怪怪的，再試一次"
-          }
-        }
-      }
-    },
-    "网络开小差了，没存上": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't save. Check your connection"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網路怪怪的，沒存到"
           }
         }
       }
@@ -433,22 +353,6 @@
         }
       }
     },
-    "小队": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Squad"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小隊"
-          }
-        }
-      }
-    },
     "本周": {
       "localizations": {
         "en": {
@@ -541,38 +445,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "球衣背號"
-          }
-        }
-      }
-    },
-    "每周模板": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Weekly template"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每週模板"
-          }
-        }
-      }
-    },
-    "每周 %lld 天": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld/7 days a week"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每週 %lld 天"
           }
         }
       }
@@ -1061,6 +933,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "晚上十一點還在臥推。"
+          }
+        }
+      }
+    },
+    "出赛表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lineup"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "出賽表"
+          }
+        }
+      }
+    },
+    "本周 %lld/%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This week %lld/%lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週 %lld/%lld"
           }
         }
       }

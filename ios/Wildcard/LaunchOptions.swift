@@ -58,16 +58,25 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-recap-manual")
     }
 
-    /// `-tab me`: open on another tab than 今天 (`feed`, `schedule`, `me`).
+    /// `-tab me`: open on another tab than 今天 (`feed`, `squad`, `me`, or `schedule` for 我 with
+    /// 出赛表 open).
     static var firstTab: MainTabs.Tab {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flag = arguments.firstIndex(of: "-tab"), flag + 1 < arguments.count else { return .today }
         switch arguments[flag + 1] {
         case "feed": return .feed
-        case "schedule": return .schedule
+        case "squad": return .squad
+        case "schedule": return .profile
         case "me": return .profile
         default: return .today
         }
+    }
+
+    /// `-tab schedule`: 我 opens on 出赛表.
+    static var opensSchedule: Bool {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-tab"), flag + 1 < arguments.count else { return false }
+        return arguments[flag + 1] == "schedule"
     }
 
     /// `-daily-push full` (or `empty`): the 6pm push's long-press view on the sample squad, as

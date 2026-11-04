@@ -28,6 +28,14 @@ public actor InMemoryNoticeSource: NoticeSource {
         seen = max(seen ?? through, through)
     }
 
+    /// Nothing is told live here: it listens until the app stops.
+    public func listen(_ heard: @escaping @Sendable (LiveNotice) async -> Void) async throws(NotificationsError) {
+        let (quiet, open) = AsyncStream.makeStream(of: Never.self)
+        // Ends only when the listening task is cancelled.
+        for await _ in quiet {}
+        open.finish()
+    }
+
     /// The sample squad's last two weeks, told before `now`: a teammate's comment, a scene move
     /// and the coach's reply today, the 6pm push yesterday, the 战报 and a store opening this week or
     /// last, and older ones. The newest two are new.

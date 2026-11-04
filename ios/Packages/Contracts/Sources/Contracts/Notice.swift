@@ -68,3 +68,11 @@ public struct NoticePage: Hashable, Sendable {
         (self.notices, self.seenThrough, self.next) = (notices, seenThrough, next)
     }
 }
+
+/// What the live stream of notices says.
+public enum LiveNotice: Hashable, Sendable {
+    /// It is listening: what was told before now is on the newest page.
+    case ready
+    /// A notice just told; nil for a kind this build can't show.
+    case told(Notice?)
+}

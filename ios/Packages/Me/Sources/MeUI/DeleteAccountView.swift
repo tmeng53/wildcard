@@ -97,9 +97,7 @@ struct DeleteAccountView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, Space.m)
             .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(Color(role: .borderDefault, in: theme))
-                    .frame(height: Sizing.hairline)
+                Hairline()
             }
     }
 }

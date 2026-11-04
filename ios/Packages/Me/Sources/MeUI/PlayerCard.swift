@@ -15,6 +15,8 @@ struct PlayerCard: View {
     let face: PlayerCardFace
     /// Wears a title (nil: the latest again); nil on a squadmate's card, which shows no 装备.
     var equip: ((String) -> Void)?
+    /// The colour of the 轻点翻面 line under the card: muted on a page, on-ink over a dim.
+    var hint: ColorRole = .fgMuted
     @State private var showsBack = false
     /// How far the card has turned on its vertical axis, in degrees: it turns edge-on, swaps sides
     /// out of sight and turns back.
@@ -47,7 +49,7 @@ struct PlayerCard: View {
             // It turns over rather than swipes, so it says so.
             Text("轻点翻面", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .foregroundStyle(Color(role: hint, in: theme))
                 .accessibilityHidden(true)
         }
         .sheet(item: $opened) { title in
@@ -217,7 +219,7 @@ private struct CardFront: View {
         .padding(.horizontal, Space.xxs)
         .padding(.top, Space.s)
         .padding(.bottom, Space.xxs)
-        .overlay(alignment: .top) { Hairline().padding(.horizontal, Space.xxs) }
+        .overlay(alignment: .top) { Hairline(on: .ink).padding(.horizontal, Space.xxs) }
         .padding(.top, Space.s)
     }
 }
@@ -285,7 +287,7 @@ private struct CardBack: View {
                     .monospacedDigit()
             }
             .padding(.top, Space.s)
-            .overlay(alignment: .top) { Hairline().offset(y: -Space.xxs) }
+            .overlay(alignment: .top) { Hairline(on: .ink).offset(y: -Space.xxs) }
             .padding(.top, Space.xxs)
             ScrollView {
                 LazyVGrid(columns: Self.columns, spacing: Space.s) {
@@ -311,17 +313,6 @@ private struct CardBack: View {
     }
 
     private static let columns = Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 3)
-}
-
-/// The card's dividers: a hairline across.
-private struct Hairline: View {
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        Rectangle()
-            .fill(Color(role: .borderOnInk, in: theme))
-            .frame(height: Sizing.hairline)
-    }
 }
 
 /// The card window's faint court: a boundary inset from the window's edge, a half line behind

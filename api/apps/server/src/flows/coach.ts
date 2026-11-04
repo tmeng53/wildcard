@@ -2,14 +2,23 @@ import {
   MemberId as CheckInMember,
   SquadId as CheckInSquad,
   WeekStart as CheckInWeek,
+  photosOf,
   type CheckInRecord,
   type CheckIns,
+  type WeeklyPlans,
 } from '@wildcard/check-ins';
-import type { SquadWeekSource, WeekCheckIn } from '@wildcard/coach';
+import type {
+  CoachMemberFacts,
+  MemberFacts,
+  PlanDayFacts,
+  SquadWeekSource,
+  WeekCheckIn,
+} from '@wildcard/coach';
 import type { Members } from '@wildcard/members';
 import type { Scenes } from '@wildcard/scenes';
 import type { Sports } from '@wildcard/sports';
 import { SceneWeek, SquadId as SquadsSquad, type Squads } from '@wildcard/squads';
+import { MemberId as AwardsMember, type WeeklyAwards } from '@wildcard/weekly-awards';
 
 // The coach across modules: who is in a squad from squads, its week from check-ins, its members'
 // nicknames from members and sports' names from sports, in the shape the coach reads.
@@ -57,6 +66,7 @@ export function coachSquadWeek(deps: {
         createdAt: record.createdAt,
         kind: record.kind,
         ...entryOf(record, sportNames),
+        photos: photosOf(record).map(({ path }) => path),
         reactions: week.reactions.get(record.id)?.length ?? 0,
         comments: (week.comments.get(record.id) ?? []).map(
           ({ id, member, text, commentedAt, replyToCoach }) => ({
@@ -101,4 +111,56 @@ function entryOf(
     case 'disclaimer':
       return { text: record.disclaimer.text };
   }
+}
+
+/**
+ * What the coach can look up about members: their lifetime counts and top sport from
+ * check-ins, their weekly titles from the awards, and this week's plan from the weekly plans,
+ * the same numbers 我 and 出赛表 show.
+ */
+export function coachMemberFacts(deps: {
+  readonly checkIns: CheckIns;
+  readonly plans: WeeklyPlans;
+  readonly awards: Pick<WeeklyAwards, 'titlesWon'>;
+  readonly sports: Sports;
+}): CoachMemberFacts {
+  return async ({ members, weekStart }) => {
+    const catalog = await deps.sports.catalog();
+    const sportNames = new Map(
+      catalog.categories.flatMap(({ sports }) => sports.map(({ id, names }) => [id, names.zhHans])),
+    );
+    const nameOf = (sport: string | undefined, custom: string | undefined) =>
+      custom ?? (sport === undefined ? undefined : (sportNames.get(sport) ?? sport));
+    return Promise.all(
+      members.map(async (member): Promise<MemberFacts> => {
+        const [totals, plan, won] = await Promise.all([
+          deps.checkIns.totals(CheckInMember.parse(member)),
+          deps.plans.find({
+            member: CheckInMember.parse(member),
+            weekStart: CheckInWeek.parse(weekStart),
+          }),
+          deps.awards.titlesWon(AwardsMember.parse(member)),
+        ]);
+        const top = totals.topSport;
+        const topName = top === undefined ? undefined : nameOf(top.sport, top.customSport);
+        return {
+          member,
+          trainedDays: totals.trainedDays,
+          healthyMeals: totals.healthyMeals,
+          cheatMeals: totals.cheatMeals,
+          disclaimers: totals.disclaimers,
+          ...(top === undefined || topName === undefined
+            ? {}
+            : { topSport: { name: topName, checkIns: top.checkIns } }),
+          titles: won.count,
+          ...(won.latest === undefined ? {} : { latestTitle: won.latest.title }),
+          plan: plan.days.map((day): PlanDayFacts => {
+            if (day.kind === 'rest') return { kind: 'rest' };
+            const sport = nameOf(day.sport, day.customSport);
+            return sport === undefined ? { kind: 'train' } : { kind: 'train', sport };
+          }),
+        };
+      }),
+    );
+  };
 }
