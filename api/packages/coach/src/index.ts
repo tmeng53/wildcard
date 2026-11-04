@@ -27,6 +27,7 @@ export {
 export { CoachEmoji, REPLY_LIMIT, type CoachAnswer, type CoachReply } from './domain/reply.js';
 export type { CheckInKind, SquadWeek, WeekCheckIn, WeekComment } from './domain/squad-week.js';
 export type { TokenUsage } from './domain/wake.js';
+export type { MemberFacts, PlanDayFacts } from './domain/member-facts.js';
 export type {
   AgentRun,
   CoachActivityStore,
@@ -37,7 +38,10 @@ export type {
   CoachReportStore,
   CoachSettingsStore,
   CoachStores,
+  CoachMemberFacts,
+  CoachPhotoUrls,
   CoachTool,
+  ToolAnswer,
   CoachTransaction,
   SquadCoaching,
   SquadWeekSource,

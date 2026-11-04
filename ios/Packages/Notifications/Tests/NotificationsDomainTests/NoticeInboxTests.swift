@@ -32,7 +32,26 @@ private actor FakeNotices: NoticeSource {
         seen = max(seen ?? through, through)
     }
 
+    /// What each `listen` hears in turn, before the server ends that stream. Once these run out,
+    /// it listens quietly until cancelled.
+    var streams: [[LiveNotice]] = []
+    /// What each `listen` throws in turn before it can be heard, ahead of `streams`.
+    var refusals: [NotificationsError] = []
+
+    func listen(_ heard: @escaping @Sendable (LiveNotice) async -> Void) async throws(NotificationsError) {
+        if !refusals.isEmpty { throw refusals.removeFirst() }
+        guard !streams.isEmpty else {
+            let (quiet, open) = AsyncStream.makeStream(of: Never.self)
+            for await _ in quiet {}
+            open.finish()
+            return
+        }
+        for event in streams.removeFirst() { await heard(event) }
+    }
+
     func set(unreachable: Bool) { self.unreachable = unreachable }
+    func set(streams: [[LiveNotice]]) { self.streams = streams }
+    func set(refusals: [NotificationsError]) { self.refusals = refusals }
     func hide(_ ids: Set<NoticeID>) { unknown = ids }
     func add(_ notice: Notice) { all.append(notice) }
 }
@@ -205,4 +224,79 @@ private var utc: Calendar {
     let parts = PushAlertWords(alert).parts("%1$@ 评论了你：%2$@")
     #expect(parts.title == "Coco 评论了你：这组深蹲太稳了")
     #expect(parts.detail == nil)
+}
+
+@Test @MainActor func aNoticeToldLiveLightsTheBellAndAReconnectReadsTheNewestPageAgain() async {
+    let server = FakeNotices([notice(1), notice(2)], seen: NoticeID(rawValue: 2))
+    let told = Notice(
+        id: NoticeID(rawValue: 3), toldAt: monday, squad: nil, subject: .unlocked(.prop, item: "racket"))
+    await server.set(streams: [[.ready, .told(told), .told(told), .told(nil)]])
+    let inbox = NoticeInbox(source: server)
+    await inbox.load()
+    #expect(!inbox.hasUnread)
+
+    let (paused, pause) = AsyncStream.makeStream(of: Void.self)
+    let following = Task { await inbox.follow(pause: { _ in pause.yield() }) }
+    var pauses = paused.makeAsyncIterator()
+    // The server ended the first stream; the inbox waits, then listens again.
+    _ = await pauses.next()
+    #expect(await server.reads == 2)
+    // Told once, though it came twice; a kind this build can't show is left out.
+    #expect(inbox.notices.map(\.id.rawValue) == [3, 2, 1])
+    #expect(inbox.hasUnread)
+    following.cancel()
+    await following.value
+}
+
+@Test @MainActor func aNoticeToldWhileTheBellIsOpenIsReadButShowsBold() async {
+    let server = FakeNotices([notice(1)], seen: NoticeID(rawValue: 1))
+    let told = Notice(
+        id: NoticeID(rawValue: 2), toldAt: monday, squad: nil, subject: .unlocked(.prop, item: "racket"))
+    await server.set(streams: [[.told(told)]])
+    let inbox = NoticeInbox(source: server)
+    await inbox.open()
+
+    let (paused, pause) = AsyncStream.makeStream(of: Void.self)
+    let following = Task { await inbox.follow(pause: { _ in pause.yield() }) }
+    var pauses = paused.makeAsyncIterator()
+    _ = await pauses.next()
+    #expect(!inbox.hasUnread)
+    #expect(await server.marked.last == NoticeID(rawValue: 2))
+    #expect(inbox.isUnread(told))
+    following.cancel()
+    await following.value
+
+    // Closed, a notice told lights the dot again.
+    inbox.close()
+    await server.set(streams: [[.told(notice(3))]])
+    let again = Task { await inbox.follow(pause: { _ in pause.yield() }) }
+    _ = await pauses.next()
+    #expect(inbox.hasUnread)
+    again.cancel()
+    await again.value
+}
+
+@Test @MainActor func aStreamThatCantBeHeardIsTriedLessOftenUntilItIsReadyAgain() async {
+    let server = FakeNotices([notice(1)])
+    await server.set(refusals: [.unavailable, .unavailable, .unavailable, .unavailable, .unavailable, .unavailable])
+    await server.set(streams: [[.ready]])
+    let inbox = NoticeInbox(source: server)
+
+    let (paused, pause) = AsyncStream.makeStream(of: Duration.self)
+    let following = Task { await inbox.follow(pause: { pause.yield($0) }) }
+    var pauses = paused.makeAsyncIterator()
+    var waits: [Duration] = []
+    for _ in 0..<7 { waits.append(await pauses.next() ?? .zero) }
+    // Doubling up to a minute while it fails; the server's 3 seconds once a stream was ready.
+    #expect(waits.map { $0.components.seconds } == [6, 12, 24, 48, 60, 60, 3])
+    following.cancel()
+    await following.value
+}
+
+@Test @MainActor func aSessionThatIsOverStopsFollowing() async {
+    let server = FakeNotices([notice(1)])
+    await server.set(refusals: [.signedOut])
+    let inbox = NoticeInbox(source: server)
+    // It returns by itself, without waiting to try again.
+    await inbox.follow(pause: { _ in Issue.record("waited after the session was over") })
 }

@@ -88,6 +88,7 @@ struct MainTabs: View {
                 try? await Task.sleep(for: .seconds(60))
             }
         }
+        .followsNotices(inbox)
         .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
