@@ -20,7 +20,6 @@ struct PhotoTiles: View {
     @State private var isPickingFromLibrary = false
     @State private var isTakingPhoto = false
     @State private var picked: [PhotosPickerItem] = []
-    @State private var isPreparing = false
     @State private var page = 0
     @State private var isViewing = false
 
@@ -84,7 +83,7 @@ struct PhotoTiles: View {
             }
         } label: {
             VStack(spacing: Space.xxs) {
-                if isPreparing {
+                if model.isPreparingPhotos {
                     LoadingDots()
                 } else {
                     Image(systemName: "plus")
@@ -100,7 +99,7 @@ struct PhotoTiles: View {
                 in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
         }
         .buttonStyle(PressableButtonStyle())
-        .disabled(isPreparing)
+        .disabled(model.isPreparingPhotos)
         .accessibilityLabel(Text("加照片", bundle: .module))
         .accessibilityIdentifier("compose.addPhoto")
     }
@@ -128,7 +127,7 @@ struct PhotoTiles: View {
     /// that can't be read is left out rather than stopping the post.
     private func prepare(_ items: [PhotosPickerItem]) async {
         var data: [Data] = []
-        isPreparing = true
+        model.isPreparingPhotos = true
         for item in items {
             if let loaded = try? await item.loadTransferable(type: Data.self) { data.append(loaded) }
         }
@@ -136,8 +135,8 @@ struct PhotoTiles: View {
     }
 
     private func prepare(_ data: [Data]) async {
-        isPreparing = true
-        defer { isPreparing = false }
+        model.isPreparingPhotos = true
+        defer { model.isPreparingPhotos = false }
         var prepared: [PreparedPhoto] = []
         for each in data {
             if let photo = try? await PhotoPreparation.prepare(each) { prepared.append(photo) }

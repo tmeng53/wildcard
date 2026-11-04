@@ -30,6 +30,8 @@ public final class ComposeModel {
     let suggestedActivity: Activity
     let recentActivities: [Activity]
     private(set) var isSending = false
+    /// Picked photos are still loading: the post waits for them, so none are left behind.
+    var isPreparingPhotos = false
     /// The last save didn't go through; the page says so and can try again.
     private(set) var sendFailed = false
 
@@ -108,6 +110,7 @@ public final class ComposeModel {
 
     /// A 请假条 needs its words; the other kinds post with photos or words or neither.
     var canSave: Bool {
+        guard !isPreparingPhotos else { return false }
         guard kind == .disclaimer else { return true }
         return (try? Disclaimer(line)) != nil
     }

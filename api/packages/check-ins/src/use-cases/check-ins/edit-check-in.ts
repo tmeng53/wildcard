@@ -81,7 +81,7 @@ export async function editCheckIn(
   );
   if (isSameCheckIn(saved, edited)) {
     // A retry after Storage failed: the edit is saved, so finish taking its photos off.
-    await deleteDroppedPhotos(deps, saved);
+    await deleteDroppedPhotos(deps, saved.id);
     return saved;
   }
 
@@ -103,7 +103,7 @@ export async function editCheckIn(
       { member, day: edited.day, training: edited.training },
     );
   }
-  await deleteDroppedPhotos(deps, edited);
+  await deleteDroppedPhotos(deps, edited.id);
   return edited;
 }
 
@@ -145,9 +145,15 @@ function withPhotos(
  * Deletes from Storage every photo the check-in had in an earlier version and has no more, so
  * an edit whose delete failed is finished by the next try. Deleting a file already gone is
  * fine.
+ *
+ * The history is read before the post as it is now, never this request's copy of it: a photo
+ * enters the history in the same transaction that puts it on the post, so one another edit
+ * saved meanwhile is either on the post as read, or not yet in the history read.
  */
-async function deleteDroppedPhotos(deps: Deps, checkIn: CheckInRecord): Promise<void> {
-  const left = new Set<string>(photosOf(checkIn).map(({ path }) => path));
-  const dropped = (await deps.store.photoHistory(checkIn.id)).filter((path) => !left.has(path));
+async function deleteDroppedPhotos(deps: Deps, id: CheckInId): Promise<void> {
+  const history = await deps.store.photoHistory(id);
+  const now = await deps.store.find(id);
+  const left = new Set<string>(now === undefined ? [] : photosOf(now).map(({ path }) => path));
+  const dropped = history.filter((path) => !left.has(path));
   if (dropped.length > 0) await deps.photos.delete(dropped);
 }

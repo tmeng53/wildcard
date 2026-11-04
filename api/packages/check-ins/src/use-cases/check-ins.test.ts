@@ -705,6 +705,58 @@ describe('editing a check-in', () => {
     expect([uploaded.has(second.path), uploaded.has(cover.path)]).toStrictEqual([false, true]);
   });
 
+  it('never deletes a photo another edit put on the post while this one ran', async () => {
+    const [member, mate] = [await newMember(), await newMember()];
+    const squad = await newSquad(member, mate);
+    const [cover, a, b] = [photoOf(member), photoOf(member), photoOf(member)];
+    const id = CheckInId.parse(randomUUID());
+    await checkIns.save({
+      id,
+      member,
+      draft: draft({ audience: [squad], kind: 'cheatMeal', meal: { photos: [cover] } }),
+    });
+    const toB = edit({ kind: 'cheatMeal', meal: { photos: [cover, b] } });
+    // Edit A saves [cover, a]; edit B saves [cover, b] before A takes its dropped photos off.
+    const real = createPostgresCheckInStore(db);
+    let overlapped = false;
+    const racing = createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
+      store: {
+        ...real,
+        photoHistory: async (checkIn) => {
+          if (!overlapped) {
+            overlapped = true;
+            await checkIns.edit({ id, member, edit: toB });
+          }
+          return real.photoHistory(checkIn);
+        },
+      },
+      membership,
+      reactions: createPostgresReactionStore(db),
+      comments: createPostgresCommentStore(db),
+      plans: createPostgresWeeklyPlanStore(db),
+      photos,
+      calendarOf,
+      clock: () => now,
+    });
+    await racing.edit({
+      id,
+      member,
+      edit: edit({ kind: 'cheatMeal', meal: { photos: [cover, a] } }),
+    });
+    // B's post stands, and its photo with it; A's photo, no longer on the post, is taken off.
+    const stored = await real.find(id);
+    expect(stored === undefined ? [] : photosOf(stored).map(({ path }) => path)).toStrictEqual([
+      cover.path,
+      b.path,
+    ]);
+    expect([uploaded.has(cover.path), uploaded.has(b.path), uploaded.has(a.path)]).toStrictEqual([
+      true,
+      true,
+      false,
+    ]);
+  });
+
   it('refuses another kind, a teammate’s post, and photos that aren’t the member’s or uploaded', async () => {
     const [member, mate, stranger] = [await newMember(), await newMember(), await newMember()];
     const squad = await newSquad(member, mate);
