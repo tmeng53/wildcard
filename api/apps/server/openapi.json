@@ -1221,6 +1221,135 @@
         ],
         "additionalProperties": false
       },
+      "CheckInEdit": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TrainedCheckInEdit"
+          },
+          {
+            "$ref": "#/components/schemas/HealthyMealCheckInEdit"
+          },
+          {
+            "$ref": "#/components/schemas/CheatMealCheckInEdit"
+          },
+          {
+            "$ref": "#/components/schemas/DisclaimerCheckInEdit"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "trained": "#/components/schemas/TrainedCheckInEdit",
+            "healthyMeal": "#/components/schemas/HealthyMealCheckInEdit",
+            "cheatMeal": "#/components/schemas/CheatMealCheckInEdit",
+            "disclaimer": "#/components/schemas/DisclaimerCheckInEdit"
+          }
+        }
+      },
+      "TrainedCheckInEdit": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trained"
+            ]
+          },
+          "training": {
+            "$ref": "#/components/schemas/Training"
+          }
+        },
+        "required": [
+          "version",
+          "kind",
+          "training"
+        ],
+        "additionalProperties": false
+      },
+      "HealthyMealCheckInEdit": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "healthyMeal"
+            ]
+          },
+          "meal": {
+            "$ref": "#/components/schemas/Meal"
+          }
+        },
+        "required": [
+          "version",
+          "kind",
+          "meal"
+        ],
+        "additionalProperties": false
+      },
+      "CheatMealCheckInEdit": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cheatMeal"
+            ]
+          },
+          "meal": {
+            "$ref": "#/components/schemas/Meal"
+          }
+        },
+        "required": [
+          "version",
+          "kind",
+          "meal"
+        ],
+        "additionalProperties": false
+      },
+      "DisclaimerCheckInEdit": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "disclaimer"
+            ]
+          },
+          "disclaimer": {
+            "$ref": "#/components/schemas/Disclaimer"
+          }
+        },
+        "required": [
+          "version",
+          "kind",
+          "disclaimer"
+        ],
+        "additionalProperties": false
+      },
       "SquadPostList": {
         "type": "object",
         "properties": {
@@ -4775,6 +4904,195 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in or photo storage can’t be reached right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "editCheckIn",
+        "summary": "Edit one of the member’s own check-ins",
+        "description": "Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckInEdit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), or with a photo that isn’t uploaded",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "A teammate’s check-in (`NOT_YOUR_CHECK_IN`), or someone else’s photo",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Another check-in uses one of the photos",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in or photo storage can’t be reached right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCheckIn",
+        "summary": "Delete one of the member’s own check-ins",
+        "description": "Deletes it with its photos and the reactions and comments on it. One already gone answers 204 too, so a retry is safe.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted, or gone already"
+          },
+          "400": {
+            "description": "Not a check-in id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "A teammate’s check-in (`NOT_YOUR_CHECK_IN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Another member’s check-in the caller can’t see (`CHECK_IN_NOT_FOUND`)",
             "content": {
               "application/problem+json": {
                 "schema": {

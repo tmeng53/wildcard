@@ -26,6 +26,8 @@ final class SquadCast {
         let line: String
         /// Their 请假条, held up on the scene.
         let disclaimer: String?
+        /// The words of their latest post today, under their status in the bubble.
+        let caption: String?
         var id: MemberID { member.id }
     }
 
@@ -81,7 +83,7 @@ final class SquadCast {
                     training: mate.training, activity: home.todaysSport(of: mate.member),
                     plannedRest: mate.plannedRest),
                 firstCheckInAt: mate.firstCheckInAt,
-                keepsToTheBack: Self.persona(of: mate) == .shy)
+                keepsToTheBack: Self.persona(of: mate) == .shy, eating: home.todaysMeal(of: mate.member))
         }
         stage.arrange(members, coach: coach != nil)
         mates = zip(teammates, members).compactMap { mate, member in
@@ -96,7 +98,7 @@ final class SquadCast {
             return Mate(
                 member: member, name: mate.character?.nickname.text, persona: persona, species: species, player: player,
                 line: mate.catchphrase?.text ?? Self.personaLine(persona),
-                disclaimer: home.todaysDisclaimer(of: member.id))
+                disclaimer: home.todaysDisclaimer(of: member.id), caption: home.todaysCaption(of: member.id))
         }
     }
 

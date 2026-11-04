@@ -101,7 +101,9 @@ final class PatStage {
             return
         }
         let pose = hop(mate, cast: cast, phase: phase, now: now)
-        let line = Self.status(mate.member.status, disclaimer: mate.disclaimer, asleep: pose == .asleep)
+        let line = Self.status(
+            mate.member.status, eating: mate.member.eating, caption: mate.caption, disclaimer: mate.disclaimer,
+            asleep: pose == .asleep)
         show(
             Bubble(
                 mate: mate.id, kind: .status, title: Self.titled(mate.name, line.title), detail: line.detail,
@@ -117,7 +119,7 @@ final class PatStage {
             if let clip = try? PlaceholderCharacter.clip("cheer", persona: mate.persona, species: mate.species) {
                 try? mate.player.play(clip, now: now)
             }
-        case .station, .inPlace, .asleep:
+        case .station, .inPlace, .eating, .asleep:
             break
         }
         return pose
@@ -153,13 +155,13 @@ final class PatStage {
 
     /// I tapped myself: my status over my head, 「我 · 今天还没打卡」, with nothing to do about
     /// it. Tapped again while it is up, it closes.
-    func tapMe(_ member: MemberID, status: StageStatus, disclaimer: String?) {
+    func tapMe(_ member: MemberID, status: StageStatus, eating: MealKind?, caption: String?, disclaimer: String?) {
         guard pat == nil else { return }
         if bubble?.kind == .mine {
             bubble = nil
             return
         }
-        let line = Self.status(status, disclaimer: disclaimer, asleep: false)
+        let line = Self.status(status, eating: eating, caption: caption, disclaimer: disclaimer, asleep: false)
         show(
             Bubble(
                 mate: member, kind: .mine,
@@ -264,29 +266,35 @@ final class PatStage {
         return String(localized: "\(name) · \(status)", bundle: .module.inAppLanguage)
     }
 
-    /// What someone is up to today, as the approved home says it: the status, and a second line
-    /// where there is one.
-    static func status(_ status: StageStatus, disclaimer: String?, asleep: Bool) -> (title: String, detail: String?) {
+    /// What someone is up to today, as their latest post says it: the status, and a second line
+    /// with the words they posted, else the approved home's line where there is one.
+    static func status(
+        _ status: StageStatus, eating: MealKind?, caption: String?, disclaimer: String?, asleep: Bool
+    ) -> (title: String, detail: String?) {
         if asleep { return (String(localized: "睡着了", bundle: .module.inAppLanguage), nil) }
-        switch status {
-        case .trained(let activity?):
+        switch (eating, status) {
+        case (.healthyMeal?, _):
+            return (String(localized: "在吃健康餐", bundle: .module.inAppLanguage), caption)
+        case (.cheatMeal?, _):
+            return (String(localized: "在吃放纵餐", bundle: .module.inAppLanguage), caption)
+        case (nil, .trained(let activity?)):
             return (
                 String(localized: "\(activity.localizedName) 中", bundle: .module.inAppLanguage),
-                String(localized: "今天练了", bundle: .module.inAppLanguage)
+                caption ?? String(localized: "今天练了", bundle: .module.inAppLanguage)
             )
-        case .trained(nil):
-            return (String(localized: "今天练了", bundle: .module.inAppLanguage), nil)
-        case .disclaimer:
+        case (nil, .trained(nil)):
+            return (String(localized: "今天练了", bundle: .module.inAppLanguage), caption)
+        case (nil, .disclaimer):
             return (
                 String(localized: "请假条", bundle: .module.inAppLanguage),
                 disclaimer ?? String(localized: "请假了", bundle: .module.inAppLanguage)
             )
-        case .restDay:
+        case (nil, .restDay):
             return (
                 String(localized: "休息日", bundle: .module.inAppLanguage),
                 String(localized: "按计划休息", bundle: .module.inAppLanguage)
             )
-        case .notYet:
+        case (nil, .notYet):
             return (String(localized: "今天还没打卡", bundle: .module.inAppLanguage), nil)
         }
     }

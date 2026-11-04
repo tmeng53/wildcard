@@ -31,7 +31,7 @@ public enum SquadCelebration: Hashable, Sendable {
     public static func pick(
         myself: MemberID, members: [StageMember], squadWeek: WeekCount, shown: Set<Kind>
     ) -> SquadCelebration? {
-        let trained = members.filter { if case .trained = $0.status { true } else { false } }
+        let trained = members.filter { if case .trained = $0.status { $0.eating == nil } else { false } }
             .sorted {
                 ($0.firstCheckInAt?.millisecondsSince1970 ?? .max) < ($1.firstCheckInAt?.millisecondsSince1970 ?? .max)
             }

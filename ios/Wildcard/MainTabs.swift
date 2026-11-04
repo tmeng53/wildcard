@@ -178,6 +178,17 @@ struct MainTabs: View {
         }
     }
 
+    /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.
+    private func postPage(_ id: CheckInID, over wall: PostWallStore) -> FeedModel {
+        let page = feed.page(of: id)
+        let parent = page.changed
+        page.changed = { change in
+            parent?(change)
+            wall.apply(change)
+        }
+        return page
+    }
+
     /// 动态 with the bell at its title, and 通知 over it once the bell is tapped, with a post it
     /// opens over that.
     private var feedPage: some View {
@@ -260,7 +271,7 @@ struct MainTabs: View {
             } else if let wall {
                 PostWallView(
                     store: wall, back: { self.wall = nil },
-                    open: { post = OpenedPost(id: $0.id, model: feed.page(of: $0.id)) },
+                    open: { post = OpenedPost(id: $0.id, model: postPage($0.id, over: wall)) },
                     checkIn: { selection = .today }
                 )
                 .allowsHitTesting(post == nil)
