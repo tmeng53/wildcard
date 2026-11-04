@@ -33,6 +33,13 @@ const squads = createSquads({
   aiConsent: () => Promise.resolve(true),
 });
 
+/** The five scenes open all year, and the winter 雪场 from mid-November to March, as seeded. */
+function openIn(week: string): string[] {
+  const day = week.slice(5);
+  const winter = day >= '11-15' || day <= '03-31';
+  return ['track', 'pool', 'gym', 'tennis', 'climbing', ...(winter ? ['ski'] : [])];
+}
+
 /** The scenes with last week's crown as the test sets it, and the week open as it sets it. */
 function scenesWith(state: { crown: MemberId[]; week: string }) {
   return createSquadScenes({
@@ -40,6 +47,7 @@ function scenesWith(state: { crown: MemberId[]; week: string }) {
     clock: () => new Date(),
     sceneWeekAt: () => SceneWeek.parse(state.week),
     crownHolders: () => Promise.resolve(state.crown),
+    openScenes: (week) => Promise.resolve(openIn(week)),
   });
 }
 
@@ -107,6 +115,46 @@ describe('picking the squad’s scene', () => {
       true,
       0,
     ]);
+  });
+
+  it('offers a winter scene only in its window, and goes back to the gym after it', async () => {
+    const { squad, people } = await squadOf(1);
+    const ann = nth(people, 0);
+    const nobody: MemberId[] = [];
+    const state = { crown: nobody, week: '2026-11-09' };
+    const scenes = scenesWith(state);
+    const autumn = await scenes.scene({ squad: squad.id, viewer: ann });
+    expect(autumn.open).not.toContain('ski');
+    expect(autumn.lastTrained.has('ski')).toBe(false);
+    await expect(
+      scenes.pick({
+        squad: squad.id,
+        member: ann,
+        week: SceneWeek.parse(state.week),
+        scene: 'ski',
+      }),
+    ).rejects.toMatchObject({ reason: 'SCENE_NOT_OPEN' });
+    await expect(
+      scenes.pick({
+        squad: squad.id,
+        member: ann,
+        week: SceneWeek.parse(state.week),
+        scene: 'moon',
+      }),
+    ).rejects.toMatchObject({ reason: 'SCENE_NOT_OPEN' });
+
+    state.week = '2027-03-29';
+    const { scene } = await scenes.pick({
+      squad: squad.id,
+      member: ann,
+      week: SceneWeek.parse(state.week),
+      scene: 'ski',
+    });
+    expect([scene.scene, scene.lastTrained.get('ski')]).toStrictEqual(['ski', 0]);
+
+    state.week = '2027-04-05';
+    const spring = await scenes.scene({ squad: squad.id, viewer: ann });
+    expect([spring.scene, spring.open.includes('ski')]).toStrictEqual(['gym', false]);
   });
 
   it('falls to the captain when the crown winners have left the squad', async () => {

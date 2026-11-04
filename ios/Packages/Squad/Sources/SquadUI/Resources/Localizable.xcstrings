@@ -1117,38 +1117,6 @@
         }
       }
     },
-    "往期战报": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Past recaps"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "過往戰報"
-          }
-        }
-      }
-    },
-    "战报": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recaps"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "戰報"
-          }
-        }
-      }
-    },
     "邀请": {
       "localizations": {
         "en": {
@@ -1161,6 +1129,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "邀請"
+          }
+        }
+      }
+    },
+    "今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天"
           }
         }
       }

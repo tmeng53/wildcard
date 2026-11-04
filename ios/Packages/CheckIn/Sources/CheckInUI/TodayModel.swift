@@ -58,12 +58,6 @@ public final class TodayModel {
     let together: TogetherStage
     /// Bumps on each of my 练了: the ring under my feet draws, the squad cheers, the streamers fall.
     private(set) var celebrations = 0
-    /// The coach's 战术板 line while its bubble is up on the sideline.
-    var coachSays: CoachNote?
-    /// Takes the coach's bubble down after its hold; the next one cancels it.
-    var coachHold: Task<Void, Never>?
-    /// How long the coach's bubble stays up.
-    let coachLineHold: Double
     /// How long a notice at the top stays up.
     let noticeHold: Double
     private(set) var step = Step.scene
@@ -127,7 +121,6 @@ public final class TodayModel {
         noSquad: @escaping @MainActor (Squad?) -> Void = { _ in }
     ) {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
-        coachLineHold = bubbleHold ?? Self.coachLineHold
         together = TogetherStage(isOn: celebratesTogether)
         noticeHold = bubbleHold ?? Motion.noticeHold
         self.scene = scene
@@ -147,8 +140,11 @@ public final class TodayModel {
     private static let scoreDelay = 1.7
     /// The squad's home, with the member's own posts counted.
     public var home: Home? { store.home }
-    /// Opens a teammate's player card, from their name on their bubble; the app sets it.
+    /// Opens a member's player card with their today over it, from a tap on them on the scene
+    /// (me too); the app sets it.
     @ObservationIgnored public var openTeammate: (MemberID) -> Void = { _ in }
+    /// Opens the squad's coach's 简历, from a tap on it on the sideline; the app sets it.
+    @ObservationIgnored public var openCoach: () -> Void = {}
 
     /// The squad dropping onto a newly picked scene, until everyone settles (`TodayModel+DropIn.swift`).
     var arrival: Arrival?

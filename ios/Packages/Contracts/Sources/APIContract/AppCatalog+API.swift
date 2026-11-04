@@ -8,7 +8,27 @@ extension AppCatalog {
         let dice = wire.disclaimerDice?.lines.map(CatalogNames.init) ?? []
         self.init(
             sports: wire.sports.map(SportCatalog.init) ?? fallback.sports,
-            diceLines: dice.isEmpty ? fallback.diceLines : dice)
+            diceLines: dice.isEmpty ? fallback.diceLines : dice,
+            switches: wire.switches.map(Self.switches) ?? fallback.switches)
+    }
+
+    /// Each switch by id; a mode this build doesn't know, or a schedule whose days can't be read,
+    /// reads as off.
+    static func switches(_ wire: Components.Schemas.SwitchesCatalog) -> [String: CatalogSwitch] {
+        var switches: [String: CatalogSwitch] = [:]
+        for each in wire.switches {
+            switch each.mode {
+            case "on": switches[each.id] = .alwaysOn
+            case "schedule":
+                if let window = each.window, let start = MonthDay(window.start), let end = MonthDay(window.end) {
+                    switches[each.id] = .schedule(start: start, end: end)
+                } else {
+                    switches[each.id] = .alwaysOff
+                }
+            default: switches[each.id] = .alwaysOff
+            }
+        }
+        return switches
     }
 }
 

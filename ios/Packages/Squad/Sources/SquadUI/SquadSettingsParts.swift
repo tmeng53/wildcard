@@ -291,4 +291,30 @@ struct SquadFailed: View {
             .frame(maxHeight: .infinity)
     }
 }
+
+/// What the captain is about to do to a member, waiting on the system's confirm.
+enum MemberAction: Hashable, Identifiable {
+    case handCaptaincy(MemberID, name: String)
+    case remove(MemberID, name: String)
+
+    var id: Self { self }
+
+    var title: Text {
+        switch self {
+        case .handCaptaincy(_, let name): Text("把队长转给 \(name)？", bundle: .module)
+        case .remove(_, let name): Text("把 \(name) 移出小队？", bundle: .module)
+        }
+    }
+}
+
+enum SquadSettingsMetrics {
+    /// The scene's thumbnail on 本周场地.
+    static let thumbnail = CGSize(width: 56, height: 72)
+    /// A member's row.
+    static let row = 56.0
+    /// A member's head.
+    static let head = 36.0
+    /// A scene tile's face in the picker.
+    static let tile = 64.0
+}
 #endif

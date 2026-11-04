@@ -15,6 +15,7 @@ import type {
   WeekCheckIn,
 } from '@wildcard/coach';
 import type { Members } from '@wildcard/members';
+import type { Scenes } from '@wildcard/scenes';
 import type { Sports } from '@wildcard/sports';
 import { SceneWeek, SquadId as SquadsSquad, type Squads } from '@wildcard/squads';
 import { MemberId as AwardsMember, type WeeklyAwards } from '@wildcard/weekly-awards';
@@ -28,6 +29,7 @@ export function coachSquadWeek(deps: {
   readonly members: Members;
   readonly squads: Squads;
   readonly sports: Sports;
+  readonly scenes: Pick<Scenes, 'openOn'>;
   readonly clock: () => Date;
 }): SquadWeekSource {
   return async ({ squad, weekStart }) => {
@@ -45,6 +47,7 @@ export function coachSquadWeek(deps: {
         squad: SquadsSquad.parse(squad),
         week: SceneWeek.parse(weekStart),
         moment: deps.clock(),
+        open: await deps.scenes.openOn(weekStart),
       }),
     ]);
     const sportNames = new Map(

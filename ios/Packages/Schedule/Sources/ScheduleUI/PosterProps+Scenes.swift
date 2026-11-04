@@ -230,5 +230,41 @@ extension PosterProps {
                 Part(path: circle(0, 0, 3.2), ink: .cut),
             ])
     }
+
+    // MARK: Ski
+
+    /// A snowflake: three bars through the middle, each end forked.
+    static func snowflake(at center: CGPoint, scale: Double) -> Prop {
+        var bars: [(CGPoint, CGPoint)] = []
+        for step in 0..<6 {
+            let angle = Double(step) * .pi / 3
+            let tip = CGPoint(x: cos(angle) * 26, y: sin(angle) * 26)
+            bars.append((.zero, tip))
+            for side in [-1.0, 1] {
+                let fork = angle + side * .pi / 4
+                let base = CGPoint(x: cos(angle) * 15, y: sin(angle) * 15)
+                bars.append((base, CGPoint(x: base.x + cos(fork) * 9, y: base.y + sin(fork) * 9)))
+            }
+        }
+        return Prop(center: center, scale: scale, parts: [Part(path: lines(bars), ink: .stroke(4))])
+    }
+
+    static var pine: Prop {
+        let tree = polygon([
+            CGPoint(x: 0, y: -34), CGPoint(x: 14, y: -12), CGPoint(x: 7, y: -12), CGPoint(x: 18, y: 6),
+            CGPoint(x: -18, y: 6), CGPoint(x: -7, y: -12), CGPoint(x: -14, y: -12),
+        ])
+        return Prop(
+            center: CGPoint(x: 300, y: 210),
+            parts: [
+                Part(path: tree, ink: .fill),
+                Part(path: rect(-3, 6, 6, 10, radius: 1), ink: .fill),
+                Part(
+                    path: lines([
+                        (CGPoint(x: -8, y: -14), CGPoint(x: 8, y: -14)), (CGPoint(x: -12, y: 2), CGPoint(x: 12, y: 2)),
+                    ]),
+                    ink: .cutStroke(2)),
+            ])
+    }
 }
 #endif

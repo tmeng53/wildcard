@@ -12,6 +12,9 @@ public struct SquadmateCardPopup: View {
     @Bindable private var model: SquadmateCardModel
     @Environment(\.sceneTheme) private var theme
 
+    /// The card's width, for what the app shows over it.
+    public static var width: Double { PlayerCard.size.width }
+
     public init(model: SquadmateCardModel) {
         self.model = model
     }

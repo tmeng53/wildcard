@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { lastTrained, sceneIn, SceneWeek, type Scene, type ScenePick } from './scene.js';
 
 const week = (day: string) => SceneWeek.parse(day);
+const FIVE = ['track', 'pool', 'gym', 'tennis', 'climbing'];
 const pick = (day: string, scene: Scene): ScenePick => ({
   week: week(day),
   scene,
@@ -13,15 +14,19 @@ const pick = (day: string, scene: Scene): ScenePick => ({
 describe('a squad’s scene', () => {
   it('is the gym before any pick, then the latest pick', () => {
     const picks = [pick('2026-10-12', 'pool'), pick('2026-10-26', 'tennis')];
-    expect(sceneIn([], week('2026-10-26'))).toBe('gym');
-    expect(sceneIn(picks, week('2026-10-05'))).toBe('gym');
-    expect(sceneIn(picks, week('2026-10-19'))).toBe('pool');
-    expect(sceneIn(picks, week('2026-11-09'))).toBe('tennis');
+    expect(sceneIn([], { current: week('2026-10-26'), open: FIVE })).toBe('gym');
+    expect(sceneIn(picks, { current: week('2026-10-05'), open: FIVE })).toBe('gym');
+    expect(sceneIn(picks, { current: week('2026-10-19'), open: FIVE })).toBe('pool');
+    expect(sceneIn(picks, { current: week('2026-11-09'), open: FIVE })).toBe('tennis');
   });
 
   it('says how many weeks ago the squad last trained on each scene', () => {
     const picks = [pick('2026-10-12', 'pool'), pick('2026-10-26', 'tennis')];
-    const last = lastTrained(picks, { firstWeek: week('2026-09-28'), current: week('2026-11-09') });
+    const last = lastTrained(picks, {
+      firstWeek: week('2026-09-28'),
+      current: week('2026-11-09'),
+      scenes: FIVE,
+    });
     expect(Object.fromEntries(last)).toStrictEqual({
       track: null,
       pool: 3,
@@ -35,6 +40,7 @@ describe('a squad’s scene', () => {
     const last = lastTrained([pick('2026-10-26', 'pool')], {
       firstWeek: week('2026-10-26'),
       current: week('2026-10-26'),
+      scenes: FIVE,
     });
     expect([last.get('gym'), last.get('pool')]).toStrictEqual([null, 0]);
   });
@@ -45,7 +51,23 @@ describe('a squad’s scene', () => {
       pick('2026-10-12', 'gym'),
       pick('2026-10-19', 'pool'),
     ];
-    const last = lastTrained(picks, { firstWeek: week('2026-10-05'), current: week('2026-11-02') });
+    const last = lastTrained(picks, {
+      firstWeek: week('2026-10-05'),
+      current: week('2026-11-02'),
+      scenes: FIVE,
+    });
     expect([last.get('pool'), last.get('gym')]).toStrictEqual([0, 3]);
+  });
+
+  it('goes back to the gym once a picked scene closes, and lists only the scenes asked about', () => {
+    const picks = [pick('2026-03-30', 'ski')];
+    expect(sceneIn(picks, { current: week('2026-03-30'), open: [...FIVE, 'ski'] })).toBe('ski');
+    expect(sceneIn(picks, { current: week('2026-04-06'), open: FIVE })).toBe('gym');
+    const last = lastTrained(picks, {
+      firstWeek: week('2026-03-02'),
+      current: week('2026-04-06'),
+      scenes: FIVE,
+    });
+    expect(last.has('ski')).toBe(false);
   });
 });

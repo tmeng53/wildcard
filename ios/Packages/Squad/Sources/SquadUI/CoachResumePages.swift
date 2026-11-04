@@ -10,6 +10,10 @@ import SwiftUI
 struct CoachPageStack: View {
     @Bindable var model: SquadSettingsModel
     @Binding var pages: [CoachRoute]
+    /// The coach's 战术板 line of the day, pinned on its own 简历.
+    var note: CoachNote?
+    /// Back from the last page.
+    var emptied: () -> Void = {}
     /// The page whose change didn't get through, which says so until the member moves on.
     @State private var failed: CoachRoute?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -39,7 +43,9 @@ struct CoachPageStack: View {
             .task { await model.loadMarket() }
         case .resume(let coach):
             CoachResumePage(
-                coach: coach, isCurrent: model.coach?.coach.id == coach.id, canHire: model.canHireCoach,
+                coach: coach, isCurrent: model.coach?.coach.id == coach.id,
+                note: model.coach?.coach.id == coach.id && note?.coach.id == coach.id ? note : nil,
+                canHire: model.canHireCoach,
                 isSaving: model.isSaving, failed: failed == route, back: back,
                 hire: { Task { finish(route, await model.hire(coach.id)) } },
                 change: { push(.market) }, fire: { push(.fire(coach)) })
@@ -59,6 +65,7 @@ struct CoachPageStack: View {
         guard !pages.isEmpty else { return }
         failed = nil
         withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { _ = pages.removeLast() }
+        if pages.isEmpty { emptied() }
     }
 
     /// A change that landed, or that the squad has moved past, ends on 小队设置.
@@ -79,6 +86,8 @@ struct CoachResumePage: View {
     let coach: Coach
     /// The squad has this coach now: nothing to hire.
     let isCurrent: Bool
+    /// Its 战术板 line of the day, on the squad's own coach's 简历 while the day lasts.
+    let note: CoachNote?
     let canHire: Bool
     let isSaving: Bool
     let failed: Bool
@@ -124,6 +133,7 @@ struct CoachResumePage: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 StatusTag(isCurrent: isCurrent)
             }
+            if let note { board(note) }
             Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: Space.m, verticalSpacing: 0) {
                 row(Text("履历", bundle: .module)) { Text(verbatim: coach.background) }
                 row(Text("执教", bundle: .module)) {
@@ -146,6 +156,30 @@ struct CoachResumePage: View {
             in: UnevenRoundedRectangle(
                 topLeadingRadius: CoachMetrics.sheetOverlap, topTrailingRadius: CoachMetrics.sheetOverlap,
                 style: .continuous))
+    }
+
+    /// 战术板: what the coach said today, pinned like 动态's (Tracy, 2026-11-04).
+    private func board(_ note: CoachNote) -> some View {
+        ClipboardCard {
+            VStack(alignment: .leading, spacing: Space.xs) {
+                HStack(spacing: Space.xxs) {
+                    Text("今天", bundle: .module)
+                    Text(verbatim: "·")
+                    Text(note.writtenAt, format: .dateTime.hour().minute())
+                }
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .lineLimit(1)
+                Text(verbatim: note.text)
+                    .typeStyle(TypeRamp.callout)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(Space.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("coach.resume.board")
     }
 
     private func row(_ label: Text, @ViewBuilder value: () -> some View) -> some View {

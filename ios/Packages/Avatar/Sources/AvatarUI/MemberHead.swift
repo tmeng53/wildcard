@@ -71,7 +71,11 @@ public struct MemberHead: View {
             if let emoji {
                 Text(verbatim: emoji)
                     .font(.system(size: size * 12 / 26))
-                    .offset(x: size * 0.12, y: size * 0.08)
+                    // Room around the glyph so the text's own bounds never cut the emoji, and no
+                    // size from the head's frame: the badge reaches past the head's edge.
+                    .padding(size * 0.1)
+                    .fixedSize()
+                    .offset(x: size * 0.12 + size * 0.1, y: size * 0.08 + size * 0.1)
             }
         }
         .overlay(alignment: .bottom) {
