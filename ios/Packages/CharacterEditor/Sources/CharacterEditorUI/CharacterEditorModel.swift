@@ -88,6 +88,23 @@ public final class CharacterEditorModel {
             draft: CharacterDraft(catalog: catalog, look: start, persona: persona, nickname: nickname), tab: tab)
     }
 
+    /// Locks `pieces` in an editor opened before they were known, as sign-up's first screen is,
+    /// for a member who has unlocked nothing yet: they become boxes, and a locked piece the look
+    /// wears goes back to what the rig draws there. Undo starts over.
+    public func lock(_ pieces: [LockedPiece]) throws(AvatarError) {
+        guard !pieces.isEmpty else { return }
+        let catalog = try Catalog.placeholder(locked: pieces)
+        var look = draft.picks
+        for (slot, locked) in catalog.locked {
+            guard let worn = look.variants[slot], locked[worn] != nil else { continue }
+            look.variants[slot] = catalog.defaults[slot]
+            look.colors[slot] = nil
+        }
+        draft = CharacterDraft(catalog: catalog, look: look, persona: draft.persona, nickname: draft.nickname)
+        (store, picked, unboxing) = (nil, nil, nil)
+        if player != nil { restyle(move: nil) }
+    }
+
     /// A fixed look for screenshots and UI tests: a person with a bob, a tee, shorts and a
     /// dumbbell.
     public static let sampleLook = PlaceholderCharacter.lifter
