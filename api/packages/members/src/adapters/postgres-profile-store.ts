@@ -35,6 +35,17 @@ function characterColumns(character: Character | null) {
       };
 }
 
+/** A profile's columns as `profile_events` logs them: the whole profile after each change. */
+const LOGGED = [
+  'member_id',
+  'time_zone',
+  'catchphrase',
+  'nickname',
+  'look',
+  'jersey_number',
+  'equipped_title',
+] as const;
+
 /** The profile store on Postgres (`supabase/migrations`). */
 export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileStore {
   return {
@@ -58,7 +69,15 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
       if (members.length === 0) return new Map();
       const rows = await db
         .selectFrom('profiles')
-        .select(['member_id', 'catchphrase', 'nickname', 'look'])
+        .select([
+          'member_id',
+          'catchphrase',
+          'nickname',
+          'look',
+          'jersey_number',
+          'created_at',
+          'equipped_title',
+        ])
         .where('member_id', 'in', members)
         .execute();
       return new Map(
@@ -67,9 +86,36 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
           {
             catchphrase: row.catchphrase,
             character: characterOf(row),
+            jerseyNumber: row.jersey_number,
+            joinedAt: new Date(row.created_at),
+            equippedTitle: row.equipped_title,
           },
         ]),
       );
+    },
+
+    async equipTitle(member, title) {
+      // One statement, like a save: the change and its log entry together, neither when the
+      // title is the one worn already.
+      await db
+        .with('saved', (cte) =>
+          cte
+            .updateTable('profiles')
+            .set({ equipped_title: title })
+            .where('member_id', '=', member)
+            .where(sql<boolean>`equipped_title is distinct from ${title}::text`)
+            .returning(LOGGED),
+        )
+        .insertInto('profile_events')
+        .columns(LOGGED)
+        .expression((eb) => eb.selectFrom('saved').select(LOGGED))
+        .execute();
+      const row = await db
+        .selectFrom('profiles')
+        .select('member_id')
+        .where('member_id', '=', member)
+        .executeTakeFirst();
+      return row !== undefined;
     },
 
     async joinedAt(member) {
@@ -132,29 +178,11 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
                       is distinct from (excluded.time_zone, excluded.catchphrase, excluded.nickname, excluded.look, ${number})`,
                   ),
               )
-              .returning([
-                'member_id',
-                'time_zone',
-                'catchphrase',
-                'nickname',
-                'look',
-                'jersey_number',
-              ]),
+              .returning(LOGGED),
           )
           .insertInto('profile_events')
-          .columns(['member_id', 'time_zone', 'catchphrase', 'nickname', 'look', 'jersey_number'])
-          .expression((eb) =>
-            eb
-              .selectFrom('saved')
-              .select([
-                'member_id',
-                'time_zone',
-                'catchphrase',
-                'nickname',
-                'look',
-                'jersey_number',
-              ]),
-          )
+          .columns(LOGGED)
+          .expression((eb) => eb.selectFrom('saved').select(LOGGED))
           .execute();
         return true;
       } catch (error) {

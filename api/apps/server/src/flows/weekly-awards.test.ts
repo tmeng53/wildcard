@@ -117,7 +117,14 @@ const titlesFor = (letters: readonly string[]) => ({
   version: 1,
   awards: letters.map((letter, index) => ({
     member: letter,
-    titles: [{ title: `狠人${String(index)}号`, speech: '周三下着雨还去跑了。', move: 'pump' }],
+    titles: [
+      {
+        title: `狠人${String(index)}号`,
+        speech: '周三下着雨还去跑了。',
+        move: 'pump',
+        badge: { shape: 'circle', colour: 'gym', glyph: 'flame.fill' },
+      },
+    ],
   })),
 });
 

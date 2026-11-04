@@ -31,6 +31,8 @@ struct MainTabs: View {
     let recap: RecapShelf
     /// The member's own posts, for 我的动态.
     let myPosts: any MyPostsSource
+    /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
+    let squadmateCards: (any SquadmateCards)?
     @Binding var selection: Tab
     /// The member left the squad on 小队设置.
     var leftSquad: () -> Void = {}
@@ -49,14 +51,17 @@ struct MainTabs: View {
     @State private var wall: PostWallStore?
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
+    /// A teammate's player card, opened from their name on the home's bubble.
+    @State private var teammate: SquadmateCardModel?
 
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
-        recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource, selection: Binding<Tab>,
-        leftSquad: @escaping () -> Void = {}
+        recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
+        squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>, leftSquad: @escaping () -> Void = {}
     ) {
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
+        self.squadmateCards = squadmateCards
         _selection = selection
         self.leftSquad = leftSquad
         _inbox = State(initialValue: NoticeInbox(source: notices))
@@ -102,6 +107,11 @@ struct MainTabs: View {
                     })
             }
         }
+        .sheet(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
+            if let teammate {
+                TeammateCard(model: teammate).environment(\.sceneTheme, today.scene)
+            }
+        }
         .fullScreenCover(isPresented: $showsSquad) {
             SquadSettingsView(
                 model: squad, close: { showsSquad = false },
@@ -111,7 +121,9 @@ struct MainTabs: View {
                     instant.disablesAnimations = true
                     withTransaction(instant) { showsSquad = false }
                     land(on: scene, coveredAt: coveredAt)
-                }
+                },
+                // It is over everything, so it shows the card over itself.
+                teammateCard: { squadCard(of: $0) }
             )
             .environment(\.sceneTheme, squad.scene)
         }
@@ -169,7 +181,9 @@ struct MainTabs: View {
                 openPost: { post in
                     feed.open(post)
                     selection = .feed
-                })
+                }
+            )
+            .onAppear { today.openTeammate = { teammate = homeCard(of: $0) } }
         case .feed:
             feedPage
         case .schedule:
@@ -178,17 +192,6 @@ struct MainTabs: View {
         case .profile:
             profilePage
         }
-    }
-
-    /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.
-    private func postPage(_ id: CheckInID, over wall: PostWallStore) -> FeedModel {
-        let page = feed.page(of: id)
-        let parent = page.changed
-        page.changed = { change in
-            parent?(change)
-            wall.apply(change)
-        }
-        return page
     }
 
     /// 动态 with the bell at its title, and 通知 over it once the bell is tapped, with a post it
@@ -331,6 +334,19 @@ private struct RecapTile: View {
             RecapEntryTile(
                 story: story, viewer: recap.cast?.reader, seen: recap.latestIsSeen, action: recap.openLatest)
         }
+    }
+}
+
+extension MainTabs {
+    /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.
+    private func postPage(_ id: CheckInID, over wall: PostWallStore) -> FeedModel {
+        let page = feed.page(of: id)
+        let parent = page.changed
+        page.changed = { change in
+            parent?(change)
+            wall.apply(change)
+        }
+        return page
     }
 }
 

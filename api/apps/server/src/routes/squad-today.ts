@@ -1,12 +1,14 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { LocalDay, MemberId, SquadId, type CheckIns } from '@wildcard/check-ins';
 import type { Character, Members } from '@wildcard/members';
+import { wornOf, type WeeklyAwards } from '@wildcard/weekly-awards';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { CharacterBody } from './character.js';
+import { WornTitleBody } from './titles.js';
 
 const count = (description: string) => z.int().min(0).meta({ description });
 
@@ -23,6 +25,11 @@ const MemberToday = z.strictObject({
   // Missing until they make their character. Left out rather than null: the Swift generator
   // can't read a nullable reference.
   character: CharacterBody.optional(),
+  title: WornTitleBody.optional().meta({
+    description:
+      'The weekly title they wear (头衔), shown beside their name: the one they equipped, else ' +
+      'their latest. Missing before their first.',
+  }),
   day: LocalDay.meta({
     description:
       'The member’s own today: their local date in their time zone, where anything before 3am ' +
@@ -103,6 +110,7 @@ export function squadToday(deps: {
   readonly verifyToken: VerifyToken;
   readonly checkIns: CheckIns;
   readonly members: Members;
+  readonly awards: WeeklyAwards;
 }) {
   const route = createRoute({
     method: 'get',
@@ -136,7 +144,15 @@ export function squadToday(deps: {
       squad,
     });
     // Only after squadToday, which refuses a viewer outside the squad.
-    const squadmates = await deps.members.squadmates(today.members.map(({ member }) => member));
+    const everyone = today.members.map(({ member }) => member);
+    const [squadmates, boards] = await Promise.all([
+      deps.members.squadmates(everyone),
+      deps.awards.boards(everyone),
+    ]);
+    const titleOf = (member: (typeof everyone)[number]) => {
+      const worn = wornOf(boards.get(member) ?? [], squadmates.get(member)?.equippedTitle);
+      return worn === undefined ? {} : { title: { title: worn.title, badge: worn.badge } };
+    };
     return c.json(
       {
         version: 1 as const,
@@ -145,6 +161,7 @@ export function squadToday(deps: {
           ...member,
           catchphrase: squadmates.get(member.member)?.catchphrase ?? null,
           ...characterOf(squadmates.get(member.member)?.character ?? null),
+          ...titleOf(member.member),
           ...(latestMeal === undefined ? {} : { latestMeal }),
           ...(firstCheckInAt === undefined ? {} : { firstCheckInAt: firstCheckInAt.toISOString() }),
         })),

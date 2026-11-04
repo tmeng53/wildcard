@@ -123,8 +123,23 @@ export type ProfileSave = Omit<Profile, 'jerseyNumber'> & {
   readonly jerseyNumber?: JerseyNumber | null | undefined;
 };
 
-/** What squadmates see of a member besides their check-ins. */
+/** The most characters an equipped title's words may have: room past today's 6. */
+export const EQUIPPED_TITLE_MAX = 40;
+
+/** The words of a weekly title a member wears on their player card (头衔), as it was given. */
+export const EquippedTitle = z.string().min(1).max(EQUIPPED_TITLE_MAX);
+export type EquippedTitle = z.infer<typeof EquippedTitle>;
+
+/** What squadmates see of a member besides their check-ins: also what their player card shows. */
 export interface Squadmate {
   readonly catchphrase: Catchphrase | null;
   readonly character: Character | null;
+  readonly jerseyNumber: JerseyNumber | null;
+  /** When they first saved their profile, right after signing up. */
+  readonly joinedAt: Date;
+  /**
+   * The title they chose to wear, by its words; null until they choose one. Whether they still
+   * hold it is the awards' to say.
+   */
+  readonly equippedTitle: EquippedTitle | null;
 }

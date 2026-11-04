@@ -110,6 +110,7 @@ const app = createApp({
       claimNudge: unused,
       claimReadyPush: unused,
       titlesWon: unused,
+      boards: unused,
       story: unused,
       freezeStory: unused,
       storiesWaiting: unused,

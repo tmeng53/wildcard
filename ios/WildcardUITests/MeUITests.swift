@@ -15,23 +15,24 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(card.label.contains("3/5"), "the card has no 本周: \(card.label)")
         XCTAssertTrue(card.label.contains("22号"), "the card has no number: \(card.label)")
         XCTAssertTrue(card.label.contains("SINCE 2026"), "the card has no join year: \(card.label)")
-        XCTAssertTrue(card.label.contains("早八战神"), "the card has no latest title: \(card.label)")
+        XCTAssertTrue(card.label.contains("早八战神"), "the card doesn't wear the latest title: \(card.label)")
+        XCTAssertTrue(card.label.contains("徽章"), "the card has no 徽章 count: \(card.label)")
         XCTAssertTrue(app.buttons["tab.me"].isSelected, "the 我 tab isn't the selected one")
         assertClearOfTabBar(app.buttons["me.editCharacter"], in: app)
         settle()
         keepScreenshot(named: "40-me")
 
-        // A tap turns the card over to the career numbers, and another turns it back.
+        // A tap turns the card over to the career line and the badge board; a tap off the badges
+        // turns it back.
         card.tap()
-        waitFor(card, "label CONTAINS '放纵餐'", "the card didn't turn over to the other kinds")
-        XCTAssertTrue(card.label.contains("46"), "the back has no 健康餐 count: \(card.label)")
-        XCTAssertTrue(card.label.contains("最常练"), "the back has no 最常练: \(card.label)")
-        XCTAssertTrue(card.label.contains("跑步"), "the back has no top sport: \(card.label)")
-        XCTAssertTrue(card.label.contains("×2"), "the back has no title count: \(card.label)")
+        let back = app.descendants(matching: .any).matching(identifier: "me.cardBack").firstMatch
+        XCTAssertTrue(back.waitForExistence(timeout: 5), "the card didn't turn over")
+        let badges = app.buttons.matching(identifier: "me.badge")
+        XCTAssertEqual(badges.count, 7, "the board doesn't show the seven titles")
         settle()
         keepScreenshot(named: "41-me-card-back")
-        card.tap()
-        waitFor(card, "NOT (label CONTAINS '放纵餐')", "the card didn't turn back")
+        back.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.05)).tap()
+        XCTAssertTrue(card.waitForExistence(timeout: 5), "the card didn't turn back")
     }
 
     /// 我的动态 from 我: the member's own posts as a wall under its month, the header's counts, a
@@ -199,7 +200,8 @@ final class MeUITests: XCTestCase {
         settle()
         keepScreenshot(named: "46-me-en")
         card.tap()
-        waitFor(card, "label CONTAINS 'Cheat meals'", "the back isn't in English")
+        XCTAssertTrue(app.staticTexts["Badges"].waitForExistence(timeout: 5), "the back isn't in English")
+        XCTAssertTrue(app.staticTexts["Sunday reveal"].exists, "the next slot isn't in English")
         settle()
         keepScreenshot(named: "47-me-card-back-en")
         app.buttons["me.settings"].tap()
