@@ -104,12 +104,6 @@ public final class SignUpModel {
         Task { await readLockedPieces() }
     }
 
-    /// The locked pieces become boxes in the editor, which may have opened before they arrived.
-    private func readLockedPieces() async {
-        lockedPieces = await service.lockedPieces()
-        if let editor, editor.draft.catalog.locked.isEmpty { try? editor.lock(lockedPieces) }
-    }
-
     /// Carries on a sign-up closed after 你的小队, at 平时练什么？ with its saved character; false if not.
     public func resume(in squad: SquadID, madeIt: Bool) async -> Bool {
         guard let resumed = try? await service.resume(in: squad) else { return false }
@@ -117,8 +111,9 @@ public final class SignUpModel {
         teammates = resumed.squad.teammates.map { CastMember(outfit: $0.outfit, persona: $0.persona) }
         if let made = resumed.character {
             (nickname, myCharacter) = (made.nickname.text, CastMember(outfit: made.outfit, persona: made.persona))
+            lockedPieces = await service.lockedPieces()
             editor = try? CharacterEditorModel.placeholder(
-                look: made.outfit, persona: made.persona, nickname: nickname, locked: await service.lockedPieces())
+                look: made.outfit, persona: made.persona, nickname: nickname, locked: lockedPieces)
             await myCharacter?.load(idle: false)
         }
         show(.sports)
@@ -350,18 +345,6 @@ public final class SignUpModel {
 
     // MARK: 上场
 
-    /// The squad's planned days this week, with the member's own once their plan is in.
-    var squadGoal: (before: Int, after: Int) {
-        let before = joined?.weekGoal ?? 0
-        return (before, before + plannedThisWeek)
-    }
-
-    /// The template's training days from today on: what this week plans, since the first week
-    /// counts only from the day the member joined.
-    var plannedThisWeek: Int {
-        week?.trainingDays(from: daysGone) ?? 0
-    }
-
     /// The squad the member is in once 上场 has played, or the scene picked has filled the
     /// screen, when home takes over.
     public private(set) var finished: JoinedSquad?
@@ -386,6 +369,26 @@ public final class SignUpModel {
                 failure = error
             }
         }
+    }
+}
+
+extension SignUpModel {
+    /// The locked pieces become boxes in the editor, which may have opened before they arrived.
+    fileprivate func readLockedPieces() async {
+        lockedPieces = await service.lockedPieces()
+        if let editor, editor.draft.catalog.locked.isEmpty { try? editor.lock(lockedPieces) }
+    }
+
+    /// The squad's planned days this week, with the member's own once their plan is in.
+    var squadGoal: (before: Int, after: Int) {
+        let before = joined?.weekGoal ?? 0
+        return (before, before + plannedThisWeek)
+    }
+
+    /// The template's training days from today on: what this week plans, since the first week
+    /// counts only from the day the member joined.
+    var plannedThisWeek: Int {
+        week?.trainingDays(from: daysGone) ?? 0
     }
 }
 #endif
