@@ -26,6 +26,7 @@ import type {
   Accounts,
   Database,
   IsScheduler,
+  LiveEvents,
   OAuthConsent,
   PhotoStorage,
   RevokeAppleSignIn,
@@ -39,6 +40,7 @@ import { aiConsent } from './routes/ai-consent.js';
 import { catalog, type CatalogSection } from './routes/catalog.js';
 import { checkIns } from './routes/check-ins.js';
 import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
+import { events } from './routes/events.js';
 import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { jobs } from './routes/jobs.js';
@@ -78,6 +80,8 @@ export interface AppDependencies {
   readonly notices: Notices;
   /** The coaches' names now, which a coach's notice shows. */
   readonly coachNames: CoachNames;
+  /** Members' live events, which `GET /me/events` streams to their open app. */
+  readonly liveEvents: LiveEvents;
   /** Members' consent to the AI copy, which squads and drafts ask for themselves. */
   readonly aiConsent: AiConsent;
   /** What `GET /public/catalog` serves: each section, as `main.ts` lists them. */
@@ -162,6 +166,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', coachActivity(deps));
   app.route('/', nudges(deps));
   app.route('/', notices(deps));
+  app.route('/', events(deps));
   app.route('/', weekSummary({ ...deps, words: deps.weekSummaryWords }));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));

@@ -313,6 +313,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/notices/seen`.
     /// - Remark: Generated from `#/paths//me/notices/seen/put(markMyNoticesSeen)`.
     func markMyNoticesSeen(_ input: Operations.MarkMyNoticesSeen.Input) async throws -> Operations.MarkMyNoticesSeen.Output
+    /// The caller’s live events (Server-Sent Events)
+    ///
+    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.
+    ///
+    /// - Remark: HTTP `GET /me/events`.
+    /// - Remark: Generated from `#/paths//me/events/get(streamMyEvents)`.
+    func streamMyEvents(_ input: Operations.StreamMyEvents.Input) async throws -> Operations.StreamMyEvents.Output
     /// A squad’s week: its awards and counts (周日战报)
     ///
     /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.
@@ -1030,6 +1037,15 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// The caller’s live events (Server-Sent Events)
+    ///
+    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.
+    ///
+    /// - Remark: HTTP `GET /me/events`.
+    /// - Remark: Generated from `#/paths//me/events/get(streamMyEvents)`.
+    public func streamMyEvents(headers: Operations.StreamMyEvents.Input.Headers = .init()) async throws -> Operations.StreamMyEvents.Output {
+        try await streamMyEvents(Operations.StreamMyEvents.Input(headers: headers))
     }
     /// A squad’s week: its awards and counts (周日战报)
     ///
