@@ -29,10 +29,13 @@ extension FeedModel {
     /// Sends the member's comment on a post, replying to whomever they picked. False when it
     /// couldn't go out; the words stay to try again.
     func comment(_ text: CommentText, on post: CheckInID) async -> Bool {
-        let sent = await store.comment(text, replyingTo: replyingTo, on: post)
+        let target = replyingTo
+        let sent = await store.comment(text, replyingTo: target, on: post)
         if sent {
-            replyingTo = nil
+            if replyingTo == target { replyingTo = nil }
             commentsSent += 1
+            // The server has the coach answer before it answers us, so its answer is there now.
+            if case .coach = target { await coach?.load(about: [post]) }
         }
         return sent
     }

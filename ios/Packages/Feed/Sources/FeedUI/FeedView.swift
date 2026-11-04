@@ -23,6 +23,8 @@ public struct FeedView: View {
     private let checkIn: () -> Void
     /// What the app shows under the title, before the posts: the squad's latest 战报.
     private let header: AnyView?
+    /// What the app shows at the title's right: the bell (通知).
+    private let accessory: AnyView?
 
     /// The feed's coordinate space: where the emoji bar is, where a finger slides and where emoji
     /// fly.
@@ -30,9 +32,10 @@ public struct FeedView: View {
     /// How long a post opened from the home stays held at the top.
     static let pinFor = Duration.seconds(2)
 
-    public init(model: FeedModel, header: AnyView? = nil, checkIn: @escaping () -> Void) {
+    public init(model: FeedModel, header: AnyView? = nil, accessory: AnyView? = nil, checkIn: @escaping () -> Void) {
         _model = State(initialValue: model)
         self.header = header
+        self.accessory = accessory
         self.checkIn = checkIn
     }
 
@@ -55,12 +58,16 @@ public struct FeedView: View {
         ScrollViewReader { scroller in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Space.m) {
-                    Text("动态", bundle: .module)
-                        .typeStyle(TypeRamp.largeTitle)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .accessibilityAddTraits(.isHeader)
-                        .accessibilityIdentifier("feed.title")
-                        .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                    HStack(alignment: .center, spacing: Space.s) {
+                        Text("动态", bundle: .module)
+                            .typeStyle(TypeRamp.largeTitle)
+                            .foregroundStyle(Color(role: .fgDefault, in: theme))
+                            .accessibilityAddTraits(.isHeader)
+                            .accessibilityIdentifier("feed.title")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        accessory
+                    }
+                    .blur(radius: model.lifted ? Scrim.blurRadius : 0)
                     header
                     content
                 }

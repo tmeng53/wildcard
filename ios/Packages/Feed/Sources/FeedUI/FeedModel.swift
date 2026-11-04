@@ -70,7 +70,7 @@ public final class FeedModel {
     /// bar while one is.
     public var opened: CheckInID?
     /// Whom the member's next comment replies to (回复 Mia：…), on the open page.
-    var replyingTo: MemberID?
+    var replyingTo: ReplyTarget?
     /// Bumps on each comment the member sends, for its haptic.
     var commentsSent = 0
     private(set) var played: [CheckInID: Played] = [:]

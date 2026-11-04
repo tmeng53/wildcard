@@ -16,9 +16,6 @@ public struct FeedPost: Hashable, Sendable, Identifiable {
         self.comments = comments
     }
 
-    /// The latest comments the card shows, oldest of them first.
-    public var commentsOnCard: ArraySlice<Comment> { comments.suffix(Self.cardComments) }
-
     public var id: CheckInID { checkIn.id }
     public var author: MemberID { checkIn.member }
 

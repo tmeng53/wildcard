@@ -118,7 +118,7 @@ extension InMemoryFeedSource {
         "salad": (1080, 1350), "burger": (1080, 1080),
     ]
 
-    fileprivate static func localized(_ key: String) -> String {
+    static func localized(_ key: String) -> String {
         Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil)
     }
 }
@@ -163,7 +163,7 @@ private struct SamplePosts {
             comments: comments.enumerated().compactMap { index, comment in
                 (try? CommentText(InMemoryFeedSource.localized(comment.2))).map {
                     Comment(
-                        id: CommentID(UUID()), member: comment.0, text: $0, replyTo: comment.1,
+                        id: CommentID(UUID()), member: comment.0, text: $0, replyTo: comment.1.map(ReplyTarget.member),
                         commentedAt: after(reactions.count + index))
                 }
             })
