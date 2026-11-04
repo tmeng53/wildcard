@@ -2,7 +2,12 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Admins } from '@wildcard/admins';
 import type { AiConsent } from '@wildcard/ai-consent';
 import type { CheckIns, WeekSummaryWords, WeeklyPlans } from '@wildcard/check-ins';
-import type { CoachActivity, CoachHiring, CoachWakes } from '@wildcard/coach';
+import {
+  SquadId as CoachSquadId,
+  type CoachActivity,
+  type CoachHiring,
+  type CoachWakes,
+} from '@wildcard/coach';
 import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
@@ -147,10 +152,23 @@ export function createApp(deps: AppDependencies) {
   app.route('/', catalog({ ...deps.catalog, publicRoutes: deps.publicRoutes }));
   app.route('/', me(deps));
   app.route('/', aiConsent(deps));
-  app.route('/', checkIns(deps));
+  const { coach } = deps.jobs;
+  app.route(
+    '/',
+    checkIns({
+      ...deps,
+      coachLook:
+        coach === undefined
+          ? undefined
+          : ({ checkIn, squads }) =>
+              coach.checkedIn({
+                checkIn,
+                squads: squads.map((squad) => CoachSquadId.parse(squad)),
+              }),
+    }),
+  );
   app.route('/', photoUploads(deps));
   app.route('/', reactions(deps));
-  const { coach } = deps.jobs;
   app.route(
     '/',
     comments({

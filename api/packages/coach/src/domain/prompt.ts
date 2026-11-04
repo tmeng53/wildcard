@@ -26,9 +26,10 @@ export function instructionsOf(settings: Pick<CoachSettings, 'rules'>, coach: Co
 /** How each kind of wake goes: the same for every squad, so it is part of the instructions. */
 const WAKES = [
   '你会在三种时候醒来，每次的任务会告诉你是哪一种：',
-  `- 有人打卡：看看这条打卡（需要的话先用 squad_week 看这周的情况），像队友在动态下面留言那样，用 reply 回一句（不超过 ${String(REPLY_LIMIT)} 字），用 react 点一个表情，或者两个都做。大多数打卡都值得回应；说得具体，接住对方说的话或练的东西，别说教、别催、别空喊加油。有值得记住的（新的梗、习惯、重要的事）就用 edit_file 写进文件。`,
+  `- 有人打卡：看看这条打卡（需要的话先用 squad_week 看这周的情况），像队友在动态下面留言那样，用 reply 回一句（不超过 ${String(REPLY_LIMIT)} 字），用 react 点一个表情，或者两个都做。大多数打卡都值得回应；说得具体，接住对方说的话或练的东西，别说教、别催、别空喊加油。任务里有你最近点过的表情，换着用，别总点同一个。听到长期有用的新东西（比如新外号、新的梗）才用 edit_file 记下来。`,
   `- 有人回复你：有人在一条打卡下面回复了你说的话。看看这条打卡和你们在下面的对话，用 answer 接着回这句（不超过 ${String(REPLY_LIMIT)} 字），像在评论里聊天那样，接住对方的话。一次只回这一句。`,
-  `- 新的一天：先用 squad_week 看看小队这周，用 read_file 读读你的文件，然后用 post_note 在小队的战术板上写今天的一句（不超过 ${String(NOTE_LIMIT)} 字），全队都会看到。别重复你最近写过的。没什么值得说的，就不写。学到值得记的，顺手改文件。`,
+  `- 新的一天：先用 squad_week 看看小队这周，用 read_file 读读你的文件，然后整理一次记性：把该记的补上，过时的删掉，没有新的长期信息就不改文件。再用 post_note 在小队的战术板上写今天的一句（不超过 ${String(NOTE_LIMIT)} 字），全队都会看到。别重复你最近写过的。没什么值得说的，就不写。`,
+  '记性：文件只记长期有用的：外号、小队的梗、长期的习惯和偏好、队员主动说过的伤病、重要的里程碑。不记单条打卡，也不记这周发生了什么，这些随时能用 squad_week 看。squad.md 记小队，memory.md 记你们之间的事，people/队员N.md 记每个人。',
   '队员看得到的话（战术板、回复）里称呼人用「你」或昵称，不要写队员N，那是只有你看得到的叫法。',
   '文件只能用任务里列出的那些；用 read_file 读，用 edit_file 改。',
 ].join('\n');
@@ -62,6 +63,7 @@ export function taskOf({
   files,
   recentNotes,
   thread,
+  recentEmoji = [],
 }: {
   readonly reason: WakeReason;
   readonly week: SquadWeek;
@@ -71,13 +73,19 @@ export function taskOf({
   readonly recentNotes: readonly { readonly day: string; readonly text: string }[];
   /** On a reply's wake, what was said under its check-in. */
   readonly thread?: CoachThread;
+  /** On a check-in's wake, the emoji the coach reacted with lately, newest first. */
+  readonly recentEmoji?: readonly string[];
 }): string | undefined {
   const fileList = [...files].map(([path, body]) => `${path}（${sizeWords(body)}）`).join('，');
   const filesLine = `你的文件：${fileList}。`;
   if (reason.kind === 'checkIn') {
     const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
     if (checkIn === undefined) return undefined;
-    return [`有人打卡：${checkInLine(checkIn, rosterOf(week))}`, filesLine].join('\n\n');
+    const emoji =
+      recentEmoji.length === 0
+        ? '你最近没点过表情。'
+        : `你最近点过的表情（新的在前）：${recentEmoji.join(' ')}`;
+    return [`有人打卡：${checkInLine(checkIn, rosterOf(week))}`, emoji, filesLine].join('\n\n');
   }
   if (reason.kind === 'comment') {
     const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);

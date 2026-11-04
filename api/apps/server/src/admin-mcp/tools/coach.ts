@@ -137,8 +137,9 @@ export function getSquadCoaching({ report, clock }: CoachToolDependencies) {
     description:
       'Shows a squad’s AI coach (null when it hired none) and what it has done: its memory files now (squad.md, memory.md and a ' +
       'page per member, stored as people/<member id>.md; the model sees each member as 队员N), ' +
-      'its last 14 战术板 lines, its last 20 wakes (checkIn or daily, state, tries, why the ' +
-      'last try failed) and the tokens and cost (millionths of a US dollar) of every wake so ' +
+      'its last 14 战术板 lines, its last 20 wakes (checkIn, comment or daily, state, tries, why ' +
+      'the last try failed, and each tool call of its runs in order: the tool, its arguments and ' +
+      'what it answered, a read by its length only) and the tokens and cost (millionths of a US dollar) of every wake so ' +
       'far and of the last 7 days. Members’ own words are in the files: read, don’t share.',
     changes: false,
     input: z.strictObject({ squad: SquadId.describe('The squad’s id.') }),

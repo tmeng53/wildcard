@@ -5,7 +5,7 @@ import type { StoredPath } from './domain/memory.js';
 import type { CoachModel, CoachSettings, MemberId, SquadId } from './domain/settings.js';
 import type { CoachAnswer, CoachEmoji, CoachReply } from './domain/reply.js';
 import type { SquadWeek } from './domain/squad-week.js';
-import type { NewWake, TokenUsage, Wake } from './domain/wake.js';
+import type { NewWake, TokenUsage, Wake, WakeStep } from './domain/wake.js';
 
 /** Where the coach settings are kept: one value, and a log of every change to it. */
 export interface CoachSettingsStore {
@@ -132,6 +132,8 @@ export interface CoachReplyStore {
     squad: SquadId,
     checkIn: string,
   ): Promise<{ readonly coach: CoachId; readonly text: string | undefined } | undefined>;
+  /** The emoji the squad's coaches reacted with lately, newest first. */
+  recent(squad: SquadId, limit: number): Promise<readonly CoachEmoji[]>;
 }
 
 /** What coaches answered members' replies to them, one a squad a reply. */
@@ -188,6 +190,16 @@ export interface CoachUsageStore {
   }): Promise<void>;
 }
 
+/** Each wake's tool calls, in order, for the admins to see how the coach worked. */
+export interface CoachStepStore {
+  /** Records a run's steps; recorded even when the wake has gone meanwhile: then nothing. */
+  record(input: {
+    readonly squad: SquadId;
+    readonly wake: number;
+    readonly steps: readonly WakeStep[];
+  }): Promise<void>;
+}
+
 /** The stores a wake's outcome is saved to, together. */
 export interface CoachStores {
   readonly wakes: CoachWakeStore;
@@ -196,6 +208,7 @@ export interface CoachStores {
   readonly replies: CoachReplyStore;
   readonly answers: CoachAnswerStore;
   readonly usage: CoachUsageStore;
+  readonly steps: CoachStepStore;
 }
 
 /** Runs `work` on the stores in one transaction: all of it is saved, or none. */
@@ -258,6 +271,8 @@ export interface SquadCoaching {
     readonly tries: number;
     readonly lastError: string | null;
     readonly createdAt: Date;
+    /** Its runs' tool calls, in order. */
+    readonly steps: readonly WakeStep[];
   }[];
   /** Every wake's tokens and cost so far, and those of the last 7 days. */
   readonly usage: Readonly<Record<'total' | 'lastWeek', UsageTotal>>;
