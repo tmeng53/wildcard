@@ -44,6 +44,8 @@ public struct PostDetailView: View {
             }
         }
         .feedSurface(model)
+        // Deleted from its own page, the page goes back.
+        .managesPosts(model) { if $0 == id { close() } }
         .haptic(.pick, trigger: model.commentsSent)
         // Keyed by the post, so a comment's push that switches the open page to another post
         // loads that one.

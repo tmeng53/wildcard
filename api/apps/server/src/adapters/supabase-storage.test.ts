@@ -67,6 +67,27 @@ describe('createSupabasePhotoStorage', () => {
     expect(await reasonOf(photos.createViewUrls([path, newPath()], 60))).toBe('PHOTO_NOT_FOUND');
   });
 
+  it('deletes the photos named, skipping one already gone, and leaves the rest', async () => {
+    const member = randomUUID();
+    const [kept, deleted] = [
+      PhotoPath.parse(`${member}/${randomUUID()}`),
+      PhotoPath.parse(`${member}/${randomUUID()}`),
+    ];
+    for (const path of [kept, deleted]) {
+      await fetch(await photos.createUploadUrl(path), {
+        method: 'PUT',
+        headers: { 'content-type': 'image/webp' },
+        body: 'RIFF',
+      });
+    }
+    expect(await photos.exists(deleted)).toBe(true);
+    await photos.delete([deleted, newPath()]);
+    expect(await photos.exists(deleted)).toBe(false);
+    expect(await photos.exists(kept)).toBe(true);
+    await photos.delete([deleted]);
+    await photos.delete([]);
+  });
+
   it('signs nothing for no photos, without calling Storage', async () => {
     const offline = createSupabasePhotoStorage({
       supabaseUrl: 'http://127.0.0.1:9',

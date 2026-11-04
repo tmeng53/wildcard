@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { earned, type UnlockRule } from './unlocks.js';
+import { earned, idFits, toGo, UnlockRuleEdit, type UnlockRule } from './unlocks.js';
 
 const start = new Date('2026-11-02T16:00:00Z');
 const deuce: UnlockRule = {
@@ -96,5 +96,42 @@ describe('earned', () => {
     expect(earned({ rules: [deuce, halfmoon], trained, has: [] })).toMatchObject([
       { id: 'halfmoon', by: { checkIn: 'c' } },
     ]);
+  });
+});
+
+describe('toGo', () => {
+  it('counts what each rule not yet reached still needs, in its sports, since its start', () => {
+    const bib: UnlockRule = {
+      kind: 'piece',
+      id: 'lap-bib',
+      sports: ['run', 'walk'],
+      after: 5,
+      countsFrom: start,
+    };
+    const trained = [
+      { id: 'a', sport: 'run', madeAt: at(-5) },
+      { id: 'b', sport: 'run', madeAt: at(1) },
+      { id: 'c', sport: 'walk', madeAt: at(2) },
+      { id: 'd', sport: 'tennis', madeAt: at(3) },
+    ];
+    expect(toGo({ rules: [bib, racket, halfmoon], trained })).toStrictEqual([
+      { kind: 'piece', id: 'lap-bib', toGo: 3 },
+      // The racket and HALF MOON are reached, so they aren't listed.
+    ]);
+  });
+});
+
+describe('piece ids', () => {
+  it('fit only their own kind', () => {
+    expect(idFits('piece', 'lap-bib')).toBe(true);
+    expect(idFits('piece', 'lap')).toBe(false);
+    expect(idFits('store', 'lap-bib')).toBe(false);
+    expect(idFits('prop', 'racket')).toBe(true);
+    expect(
+      UnlockRuleEdit.safeParse({ kind: 'store', id: 'lap-bib', sports: [], after: 3 }).success,
+    ).toBe(false);
+    expect(
+      UnlockRuleEdit.safeParse({ kind: 'piece', id: 'lap-bib', sports: [], after: 3 }).success,
+    ).toBe(true);
   });
 });

@@ -1084,6 +1084,22 @@
           }
         }
       }
+    },
+    "看球员卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens their player card"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看球員卡"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

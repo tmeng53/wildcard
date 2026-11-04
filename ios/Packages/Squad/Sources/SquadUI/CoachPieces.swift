@@ -155,7 +155,7 @@ struct CoachThumbnail: View {
     @Environment(\.sceneTheme) private var theme
 
     /// The head and shoulders on the coaches' 240 × 320 canvas.
-    private static let face = CGRect(x: 44, y: 44, width: 152, height: 152)
+    private static let face = CGRect(x: 40, y: 74, width: 160, height: 160)
 
     var body: some View {
         ZStack(alignment: .bottom) {

@@ -114,6 +114,28 @@ private var utc: Calendar {
     #expect(!inbox.hasMore)
 }
 
+@Test @MainActor func aLongRunOfUnknownPagesStopsAtSixAndMovesTheNextPageOn() async {
+    // 20 pages of one notice each; only the oldest is a kind this build can show.
+    let server = FakeNotices((1...20).map { notice($0) }, size: 1)
+    await server.hide(Set((2...20).map { NoticeID(rawValue: $0) }))
+    let inbox = NoticeInbox(source: server)
+
+    await inbox.load()
+    #expect(inbox.notices.isEmpty)
+    #expect(await server.reads == 6)
+    #expect(inbox.nextPage == NoticeID(rawValue: 15))
+
+    // Each scroll reads at most six more and moves the next page on, so the end of the list
+    // reads on again even though nothing showed.
+    await inbox.loadMore()
+    #expect(await server.reads == 12)
+    #expect(inbox.nextPage == NoticeID(rawValue: 9))
+    await inbox.loadMore()
+    await inbox.loadMore()
+    #expect(inbox.notices.map(\.id.rawValue) == [1])
+    #expect(!inbox.hasMore)
+}
+
 @Test @MainActor func offlineKeepsWhatWasLoadedAndAFailedPageCanBeTriedAgain() async {
     let server = FakeNotices((1...3).map { notice($0) }, size: 2)
     let inbox = NoticeInbox(source: server)

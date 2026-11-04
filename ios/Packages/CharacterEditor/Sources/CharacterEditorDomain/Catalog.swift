@@ -21,21 +21,36 @@ public struct Catalog: Hashable, Sendable {
     public var stores: [EditorChoices.Store]
     /// The store each piece of clothing hangs in, by variant.
     public var storeOf: [String: String]
+    /// The pieces still locked, by slot and variant, with how many 练了 each still takes. They
+    /// hang on their store's rack as 「？」 boxes and are never in `variants`, so no pick, shuffle
+    /// or random look can wear one.
+    public var locked: [Slot: [String: Int]]
 
     public init(
         species: [EditorChoices.Species], variants: [Slot: [String]], props: [String],
         swatches: [Slot: [String: [RGBAColor]]], originals: [Slot: [String: RGBAColor]],
-        defaults: [Slot: String] = [:], stores: [EditorChoices.Store] = [], storeOf: [String: String] = [:]
+        defaults: [Slot: String] = [:], stores: [EditorChoices.Store] = [], storeOf: [String: String] = [:],
+        locked: [Slot: [String: Int]] = [:]
     ) {
         (self.species, self.variants, self.props) = (species, variants, props)
         (self.swatches, self.originals, self.defaults) = (swatches, originals, defaults)
-        (self.stores, self.storeOf) = (stores, storeOf)
+        (self.stores, self.storeOf, self.locked) = (stores, storeOf, locked)
     }
 
     /// What `store`'s rack holds, tops first, then bottoms, shoes, hats and accessories.
     public func rack(of store: String) -> [(slot: Slot, variant: String)] {
         Self.clothingSlots.flatMap { slot in
             (variants[slot] ?? []).filter { storeOf[$0] == store }.map { (slot: slot, variant: $0) }
+        }
+    }
+
+    /// The pieces still locked on `store`'s rack, in the rack's slot order, the nearest to opening
+    /// first within a slot.
+    public func lockedRack(of store: String) -> [(slot: Slot, variant: String, toGo: Int)] {
+        Self.clothingSlots.flatMap { slot in
+            (locked[slot] ?? [:]).filter { storeOf[$0.key] == store }
+                .sorted { ($0.value, $0.key) < ($1.value, $1.key) }
+                .map { (slot: slot, variant: $0.key, toGo: $0.value) }
         }
     }
 

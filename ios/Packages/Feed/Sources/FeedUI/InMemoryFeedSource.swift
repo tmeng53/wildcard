@@ -9,7 +9,7 @@ public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
     private let viewer: MemberID
     private var posts: [FeedPost]
     private let characters: [MemberID: MemberCharacter]
-    private let photos: [String: Data]
+    private var photos: [String: Data]
     /// What the squad's coach said; nil for a squad without one.
     private var coach: CoachActivity?
 
@@ -87,6 +87,21 @@ public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
 }
 
 extension InMemoryFeedSource {
+    /// Puts the viewer's edited post in place of what it was, with any photo just added, by path.
+    func replace(_ checkIn: CheckIn, adding added: [String: Data]) throws(FeedError) {
+        guard let index = posts.firstIndex(where: { $0.id == checkIn.id }) else { throw .postGone }
+        guard posts[index].checkIn.member == viewer else { throw .refused }
+        photos.merge(added) { _, new in new }
+        posts[index] = posts[index].applying(.edited(checkIn)) ?? posts[index]
+    }
+
+    /// Deletes the viewer's post, with its reactions and comments; one already gone is fine.
+    func delete(_ id: CheckInID) throws(FeedError) {
+        guard let post = posts.first(where: { $0.id == id }) else { return }
+        guard post.checkIn.member == viewer else { throw .refused }
+        posts.removeAll { $0.id == id }
+    }
+
     /// The viewer's own posts, newest first, a page at a time; the next page starts past the
     /// post of the id given.
     public func myPosts(kind: PostKind?, after: String?) async throws(FeedError) -> MyPostsPage {
