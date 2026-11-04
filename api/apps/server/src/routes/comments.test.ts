@@ -140,6 +140,7 @@ const app = createApp({
         answersAsked.push(asked);
         return Promise.resolve();
       },
+      checkedIn: () => Promise.resolve(),
     },
   },
   admin: adminOn(),

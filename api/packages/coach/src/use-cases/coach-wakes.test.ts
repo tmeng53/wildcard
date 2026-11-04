@@ -24,7 +24,7 @@ import {
   CoachSquadNotFoundError,
   NoCoachHiredError,
 } from '../errors.js';
-import type { SquadWeek } from '../domain/squad-week.js';
+import { weekText, type SquadWeek } from '../domain/squad-week.js';
 import type { AgentRun, CoachAgent, CoachTool } from '../ports.js';
 import { createCoachActivity } from './coach-activity.js';
 import { createCoachHiring } from './coach-hiring.js';
@@ -318,6 +318,12 @@ describe('the coach', () => {
         trx,
       );
       expect(files.rows).toStrictEqual([
+        // The first wake starts the squad's file from who is in it.
+        {
+          path: 'squad.md',
+          body: `# 小队\n队员（昵称会变，以 squad_week 为准）：\n- {队员:${fixture.mia}}：昵称「米亚」\n- {队员:${leo}}`,
+          member_id: null,
+        },
         // Members named in a file are stored by id, so a name follows them when 队员N shifts.
         { path: 'memory.md', body: `- {队员:${fixture.mia}} 周日跑步`, member_id: null },
         { path: `people/${leo}.md`, body: '还没打卡过', member_id: leo },
@@ -411,7 +417,7 @@ describe('the coach', () => {
         catalog: createPostgresCoachCatalog(trx),
       });
       const { agent, runs } = scriptedAgent(() => [
-        { tool: 'edit_file', input: { path: 'squad.md', find: '', replace: '队名：squad' } },
+        { tool: 'edit_file', input: { path: 'memory.md', find: '', replace: '队名：squad' } },
       ]);
       await wakes(fixture, { agent }).run();
       expect(await hiring.fire({ squad, by })).toStrictEqual({ fired: 'xiaohun' });
@@ -435,12 +441,16 @@ describe('the coach', () => {
       ).rejects.toBeInstanceOf(CoachAlreadyHiredError);
       await wakes(fixture, { agent, at: tomorrow }).run();
       // Both earlier wakes added a line; the new hire reads them.
-      expect(runs[2]?.task).toContain('squad.md（17 字）');
+      expect(runs[2]?.task).toContain('memory.md（17 字）');
 
       const report = await createPostgresCoachReport(trx).squad(squad, tomorrow);
       expect(report).toMatchObject({
         coach: 'xiaohun',
-        files: [{ path: 'squad.md', body: '队名：squad\n队名：squad\n队名：squad' }],
+        files: [
+          { path: 'memory.md', body: '队名：squad\n队名：squad\n队名：squad' },
+          // Started once, on the first wake.
+          { path: 'squad.md' },
+        ],
         usage: {
           total: {
             wakes: 3,
@@ -704,6 +714,83 @@ describe('the coach', () => {
     });
   });
 
+  it('looks at a check-in at once, shows its recent emoji, and keeps every tool call', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('有人打卡')
+          ? [
+              { tool: 'squad_week', input: {} },
+              { tool: 'react', input: { emoji: '🔥' } },
+              { tool: 'reply', input: { text: '队员1 好' } },
+            ]
+          : [],
+      );
+      const other = SquadId.parse(randomUUID());
+      await sql`insert into public.squads (id, name, invite_code) values (${other}, 'other', ${other})`.execute(
+        trx,
+      );
+      // Only the check-in's wake runs, in the squad that hired a coach; the day's waits for the job.
+      await wakes(fixture, { agent }).checkedIn({ checkIn, squads: [other, squad] });
+      expect(runs).toHaveLength(1);
+      expect(runs[0]?.task).toContain('你最近没点过表情。');
+
+      // A second check-in sees the emoji the coach used, newest first.
+      const second = randomUUID();
+      await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+        values (${second}, ${mia}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(
+        trx,
+      );
+      const week: SquadWeek = {
+        ...fixture.week,
+        checkIns: [
+          ...fixture.week.checkIns,
+          {
+            id: second,
+            member: mia,
+            day: '2026-11-01',
+            createdAt: now,
+            kind: 'healthyMeal',
+            reactions: 0,
+            comments: [],
+          },
+        ],
+      };
+      await wakes({ ...fixture, week }, { agent }).checkedIn({ checkIn: second, squads: [squad] });
+      expect(runs).toHaveLength(2);
+      expect(runs[1]?.task).toContain('你最近点过的表情（新的在前）：🔥');
+
+      // Each call, with what the tool answered: a read by its length only.
+      const weekLength = weekText(fixture.week).length;
+      const report = await createPostgresCoachReport(trx).squad(squad, now);
+      expect(report.wakes[1]?.steps).toStrictEqual([
+        { tool: 'squad_week', input: {}, output: `（${String(weekLength)} 字）` },
+        { tool: 'react', input: { emoji: '🔥' }, output: '已点 🔥。' },
+        {
+          tool: 'reply',
+          input: { text: '队员1 好' },
+          output: '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
+        },
+      ]);
+      expect(report.wakes[1]?.steps[0]?.output).not.toContain('跑步');
+    });
+  });
+
+  it('does not look at a check-in while coaching is off', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      await createCoachSettings({ store: createPostgresCoachSettings(fixture.trx) }).change(
+        { coaching: false },
+        MemberId.parse(fixture.mia),
+      );
+      await wakes(fixture, { agent }).checkedIn({
+        checkIn: fixture.checkIn,
+        squads: [fixture.squad],
+      });
+      expect(runs).toHaveLength(0);
+    });
+  });
+
   it('saves no new version of a file an edit left as it was', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad } = fixture;
@@ -713,9 +800,10 @@ describe('the coach', () => {
       ]);
       expect(await wakes(fixture, { agent }).run()).toMatchObject({ done: 2 });
       expect(runs).toHaveLength(2);
-      const files = await sql<{ count: string }>`
-        select count(*) from public.coach_files where squad_id = ${squad}`.execute(trx);
-      expect(files.rows).toStrictEqual([{ count: '0' }]);
+      // Only the squad's file, started on the first wake.
+      const files = await sql<{ path: string }>`
+        select path from public.coach_files where squad_id = ${squad}`.execute(trx);
+      expect(files.rows).toStrictEqual([{ path: 'squad.md' }]);
     });
   });
 
