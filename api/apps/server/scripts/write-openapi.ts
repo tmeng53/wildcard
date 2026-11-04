@@ -20,6 +20,7 @@ import {
   createPostgresSettingsStore,
   createPush,
 } from '@wildcard/push';
+import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 
@@ -27,7 +28,7 @@ import { createDatabase } from '../src/adapters/postgres.js';
 import { createApp } from '../src/app.js';
 import { createLog } from '../src/log.js';
 import { openApiJson } from '../src/openapi.js';
-import { disclaimerDiceSection, sportsSection } from '../src/routes/catalog.js';
+import { disclaimerDiceSection, scenesSection, sportsSection } from '../src/routes/catalog.js';
 
 const unused = (): never => {
   throw new Error('Writing the OpenAPI document serves no requests');
@@ -49,6 +50,7 @@ const app = createApp({
     sections: [
       sportsSection(createSports({ store: createPostgresSportStore(db) })),
       disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+      scenesSection(createScenes({ store: createPostgresSceneStore(db) })),
     ],
     clock: unused,
   },
@@ -101,6 +103,7 @@ const app = createApp({
   coachHiring: { hire: unused, fire: unused, change: unused, current: unused, offered: unused },
   coachActivity: { squad: unused, spoke: unused },
   weekSummaryWords: () => Promise.reject(new Error('unused')),
+  scenes: createScenes({ store: createPostgresSceneStore(db) }),
   weeklyAwards: {
     awards: {
       give: unused,

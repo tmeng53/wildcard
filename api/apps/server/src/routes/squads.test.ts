@@ -23,6 +23,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -100,6 +101,7 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  scenes: scenesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   weekSummaryWords: unusedWeekSummaryWords,
@@ -441,10 +443,14 @@ describe('the squad’s scene', () => {
   const SceneBody = z.object({
     week: z.string(),
     scene: z.string(),
+    sceneId: z.string(),
     pickers: z.object({ by: z.string(), members: z.array(z.uuid()) }),
-    picked: z.object({ scene: z.string(), by: z.uuid().nullable() }).nullable(),
+    picked: z
+      .object({ scene: z.string(), sceneId: z.string(), by: z.uuid().nullable() })
+      .nullable(),
     canPick: z.boolean(),
     scenes: z.array(z.object({ scene: z.string(), weeksAgo: z.int().nullable() })),
+    options: z.array(z.object({ sceneId: z.string(), weeksAgo: z.int().nullable() })),
   });
 
   it('starts on the gym, and lets the captain pick once when nobody won the crown', async () => {
@@ -475,6 +481,15 @@ describe('the squad’s scene', () => {
         { scene: 'climbing', weeksAgo: null },
       ],
     });
+    expect(scene.sceneId).toBe('gym');
+    // The winter 雪场 joins the options only inside its window, so only the all-year ones are fixed.
+    expect(scene.options.filter(({ sceneId }) => sceneId !== 'ski')).toStrictEqual([
+      { sceneId: 'track', weeksAgo: null },
+      { sceneId: 'pool', weeksAgo: null },
+      { sceneId: 'gym', weeksAgo: 0 },
+      { sceneId: 'tennis', weeksAgo: null },
+      { sceneId: 'climbing', weeksAgo: null },
+    ]);
     const forBo = await call({ method: 'GET', path: `/squads/${squad.id}/scene`, token: bo.token });
     expect(SceneBody.parse(forBo.body).canPick).toBe(false);
 
@@ -486,6 +501,13 @@ describe('the squad’s scene', () => {
       body: { version: 1, scene: 'gym' },
     });
     expect([notBo.status, reason(notBo)]).toStrictEqual([403, 'NOT_SCENE_PICKER']);
+    const unlisted = await call({
+      method: 'PUT',
+      path,
+      token: ann.token,
+      body: { version: 1, scene: 'moon' },
+    });
+    expect([unlisted.status, reason(unlisted)]).toStrictEqual([400, 'SCENE_NOT_OPEN']);
     const picked = await call({
       method: 'PUT',
       path,
@@ -495,7 +517,8 @@ describe('the squad’s scene', () => {
     expect(picked.status).toBe(201);
     expect(SceneBody.parse(picked.body)).toMatchObject({
       scene: 'pool',
-      picked: { scene: 'pool', by: ann.userId },
+      sceneId: 'pool',
+      picked: { scene: 'pool', sceneId: 'pool', by: ann.userId },
       canPick: false,
     });
     const retry = await call({

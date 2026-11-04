@@ -9,6 +9,7 @@ import type { MemberTables } from '@wildcard/members';
 import type { MemeTables } from '@wildcard/memes';
 import type { PushTables } from '@wildcard/push';
 import type { SquadTables } from '@wildcard/squads';
+import type { SceneTables } from '@wildcard/scenes';
 import type { SportTables } from '@wildcard/sports';
 import type { UnlockTables } from '@wildcard/unlocks';
 import type { WeeklyAwardTables } from '@wildcard/weekly-awards';
@@ -164,6 +165,7 @@ export type Tables = CheckInTables &
   NudgeTables &
   WeeklyAwardTables &
   SportTables &
+  SceneTables &
   UnlockTables &
   CoachTables &
   NoticeTables;

@@ -52,6 +52,7 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -151,6 +152,7 @@ beforeAll(async () => {
           photos,
           aiConsent: aiConsentOn(db),
           nudges: nudgesOn(db),
+          scenes: scenesOn(db),
           weeklyAwards: unusedWeeklyAwards,
           unlocks: unusedUnlocks,
           weekSummaryWords: unusedWeekSummaryWords,

@@ -13,6 +13,7 @@ import {
 import { Scene } from '@wildcard/squads';
 
 import { bodyVersion } from '../body-version.js';
+import { LegacyScene, legacyScene } from '../legacy-scene.js';
 import {
   nudgeOrganisers,
   squadStory,
@@ -119,8 +120,16 @@ const storyFields = {
     })
     .openapi('StorySquad'),
   week: z.strictObject({ from: WeekStart, to: LocalDay }).openapi('StoryWeek'),
-  scene: Scene.meta({
-    description: 'The scene the squad trained on that week: the story takes its colours.',
+  scene: LegacyScene.meta({
+    description:
+      'The scene the squad trained on that week, for builds that know only the first five: one ' +
+      'added since is sent as `gym`. Newer builds read `sceneId`.',
+  }),
+  sceneId: Scene.meta({
+    description:
+      'The scene the squad trained on that week, by its id in the scenes list: the story takes ' +
+      'its colours.',
+    example: 'ski',
   }),
   members: z
     .array(
@@ -255,7 +264,7 @@ export const WeekStoryBody = z
 export function weekStory(
   deps: Pick<
     WeeklyAwardsDependencies,
-    'checkIns' | 'squads' | 'members' | 'awards' | 'push' | 'admins' | 'clock' | 'log'
+    'checkIns' | 'squads' | 'scenes' | 'members' | 'awards' | 'push' | 'admins' | 'clock' | 'log'
   > & {
     readonly verifyToken: VerifyToken;
     readonly photos: PhotoStorage;
@@ -362,7 +371,8 @@ export function weekStory(
         version: 1 as const,
         squad: story.squad,
         week: { from: weekStart, to },
-        scene: Scene.parse(story.scene),
+        scene: legacyScene(story.scene),
+        sceneId: Scene.parse(story.scene),
         members: story.members.map(({ member, character }) => {
           const parsed = CharacterBody.nullable().parse(character);
           return { member, ...(parsed === null ? {} : { character: parsed }) };

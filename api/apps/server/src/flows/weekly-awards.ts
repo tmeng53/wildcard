@@ -19,6 +19,7 @@ import {
   SquadId as SquadsSquad,
   type Squads,
 } from '@wildcard/squads';
+import type { Scenes } from '@wildcard/scenes';
 import {
   MemberId,
   awardsTimeOf,
@@ -49,6 +50,8 @@ export interface WeeklyAwardsDependencies {
   readonly checkIns: CheckIns;
   readonly members: Members;
   readonly squads: Squads;
+  /** Which scenes were open in a week: a squad on one that closed trained in the gym. */
+  readonly scenes: Pick<Scenes, 'openOn'>;
   readonly awards: WeeklyAwards;
   readonly push: Push;
   /** Where each push sent is kept for the member's 通知. */
@@ -262,7 +265,10 @@ export interface SquadStory {
  * awards (Sunday 8pm Eastern), `SquadNotJoinedError` for anyone not in the squad now.
  */
 export async function squadStory(
-  deps: Pick<WeeklyAwardsDependencies, 'checkIns' | 'squads' | 'members' | 'awards' | 'clock'>,
+  deps: Pick<
+    WeeklyAwardsDependencies,
+    'checkIns' | 'squads' | 'scenes' | 'members' | 'awards' | 'clock'
+  >,
   {
     viewer,
     squad,
@@ -309,7 +315,7 @@ export async function squadStory(
 export async function nudgeOrganisers(
   deps: Pick<
     WeeklyAwardsDependencies,
-    'checkIns' | 'squads' | 'members' | 'awards' | 'push' | 'admins' | 'clock' | 'log'
+    'checkIns' | 'squads' | 'scenes' | 'members' | 'awards' | 'push' | 'admins' | 'clock' | 'log'
   >,
   {
     viewer,
@@ -349,7 +355,7 @@ export async function nudgeOrganisers(
  * that checked in. A week nobody checked in is never stored.
  */
 async function frozenStory(
-  deps: Pick<WeeklyAwardsDependencies, 'checkIns' | 'squads' | 'members' | 'awards'>,
+  deps: Pick<WeeklyAwardsDependencies, 'checkIns' | 'squads' | 'scenes' | 'members' | 'awards'>,
   { squad, weekStart }: { readonly squad: SquadId; readonly weekStart: WeekStart },
 ): Promise<WeekStory> {
   const stored = await deps.awards.story({ squad, weekStart });
@@ -359,6 +365,7 @@ async function frozenStory(
     squad: SquadsSquad.parse(squad),
     week: SceneWeek.parse(weekStart),
     moment: before,
+    open: await deps.scenes.openOn(weekStart),
   });
   if (then === undefined) throw new Error(`Squad ${squad} is gone`);
   const week = await deps.checkIns.squadWeekCheckIns({

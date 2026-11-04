@@ -488,9 +488,9 @@
           {
             "id": "ski",
             "names": {
-              "zhHans": "滑雪",
+              "zhHans": "双板滑雪",
               "en": "Ski",
-              "zhHant": "滑雪"
+              "zhHant": "雙板滑雪"
             },
             "icon": "figure.skiing.downhill",
             "offered": true
@@ -498,9 +498,9 @@
           {
             "id": "snowboard",
             "names": {
-              "zhHans": "单板",
+              "zhHans": "单板滑雪",
               "en": "Snowboard",
-              "zhHant": "單板"
+              "zhHant": "單板滑雪"
             },
             "icon": "figure.snowboarding",
             "offered": true
@@ -513,6 +513,66 @@
               "zhHant": "溜冰"
             },
             "icon": "figure.skating",
+            "offered": true
+          },
+          {
+            "id": "crossCountrySki",
+            "names": {
+              "zhHans": "越野滑雪",
+              "en": "Cross-country ski",
+              "zhHant": "越野滑雪"
+            },
+            "shortNames": {
+              "zhHans": "越野滑雪",
+              "en": "XC ski",
+              "zhHant": "越野滑雪"
+            },
+            "icon": "figure.skiing.crosscountry",
+            "offered": true
+          },
+          {
+            "id": "curling",
+            "names": {
+              "zhHans": "冰壶",
+              "en": "Curling",
+              "zhHant": "冰壺"
+            },
+            "icon": "figure.curling",
+            "offered": true
+          },
+          {
+            "id": "snowHike",
+            "names": {
+              "zhHans": "雪地徒步",
+              "en": "Snow hike",
+              "zhHant": "雪地健行"
+            },
+            "icon": "figure.hiking",
+            "offered": true
+          },
+          {
+            "id": "snowman",
+            "names": {
+              "zhHans": "堆雪人",
+              "en": "Snowman",
+              "zhHant": "堆雪人"
+            },
+            "icon": "snowflake",
+            "offered": true
+          },
+          {
+            "id": "snowballFight",
+            "names": {
+              "zhHans": "打雪仗",
+              "en": "Snowball fight",
+              "zhHant": "打雪仗"
+            },
+            "shortNames": {
+              "zhHans": "打雪仗",
+              "en": "Snowballs",
+              "zhHant": "打雪仗"
+            },
+            "icon": "snowflake",
             "offered": true
           }
         ]
@@ -754,6 +814,106 @@
         "zhHans": "今天是战略性休息",
         "en": "Today is a strategic rest day",
         "zhHant": "今天是戰略性休息"
+      }
+    ]
+  },
+  "scenes": {
+    "scenes": [
+      {
+        "id": "track",
+        "names": {
+          "zhHans": "跑道",
+          "en": "Track",
+          "zhHant": "跑道"
+        },
+        "colors": {
+          "signature": "#E65345",
+          "onSignature": "#FFFFFF",
+          "wash": "#FCEDEB",
+          "text": "#B83325",
+          "floor": "#F8DDD9"
+        },
+        "limited": false
+      },
+      {
+        "id": "pool",
+        "names": {
+          "zhHans": "游泳池",
+          "en": "Pool",
+          "zhHant": "游泳池"
+        },
+        "colors": {
+          "signature": "#079BB8",
+          "onSignature": "#FFFFFF",
+          "wash": "#E2F5F9",
+          "text": "#066E83",
+          "floor": "#CDEBF1"
+        },
+        "limited": false
+      },
+      {
+        "id": "gym",
+        "names": {
+          "zhHans": "健身房",
+          "en": "Gym",
+          "zhHant": "健身房"
+        },
+        "colors": {
+          "signature": "#4A6C8C",
+          "onSignature": "#FFFFFF",
+          "wash": "#EDF0F4",
+          "text": "#3E5C78",
+          "floor": "#DBE2E8"
+        },
+        "limited": false
+      },
+      {
+        "id": "tennis",
+        "names": {
+          "zhHans": "网球场",
+          "en": "Tennis",
+          "zhHant": "網球場"
+        },
+        "colors": {
+          "signature": "#4F6B22",
+          "onSignature": "#FFFFFF",
+          "wash": "#EEF2E4",
+          "text": "#41591B",
+          "floor": "#DDE6CC"
+        },
+        "limited": false
+      },
+      {
+        "id": "climbing",
+        "names": {
+          "zhHans": "攀岩馆",
+          "en": "Climbing",
+          "zhHant": "攀岩館"
+        },
+        "colors": {
+          "signature": "#8E4A2C",
+          "onSignature": "#FFFFFF",
+          "wash": "#F6EDE8",
+          "text": "#7A3E24",
+          "floor": "#EBDDD5"
+        },
+        "limited": false
+      },
+      {
+        "id": "ski",
+        "names": {
+          "zhHans": "雪场",
+          "en": "Ski",
+          "zhHant": "雪場"
+        },
+        "colors": {
+          "signature": "#16384D",
+          "onSignature": "#D6F1FB",
+          "wash": "#EAF7FD",
+          "text": "#16384D",
+          "floor": "#D7ECF6"
+        },
+        "limited": true
       }
     ]
   }

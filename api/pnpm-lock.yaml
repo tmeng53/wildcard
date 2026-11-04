@@ -104,6 +104,9 @@ importers:
       '@wildcard/push':
         specifier: workspace:*
         version: link:../../packages/push
+      '@wildcard/scenes':
+        specifier: workspace:*
+        version: link:../../packages/scenes
       '@wildcard/sport-ids':
         specifier: workspace:*
         version: link:../../packages/sport-ids
@@ -383,6 +386,28 @@ importers:
         version: 5.0.5(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(yaml@2.9.1))
 
   packages/push:
+    dependencies:
+      '@wildcard/errors':
+        specifier: workspace:*
+        version: link:../errors
+      kysely:
+        specifier: 0.29.7
+        version: 0.29.7
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      vitest:
+        specifier: 5.0.5
+        version: 5.0.5(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(yaml@2.9.1))
+
+  packages/scenes:
     dependencies:
       '@wildcard/errors':
         specifier: workspace:*

@@ -102,6 +102,9 @@
           },
           "disclaimerDice": {
             "$ref": "#/components/schemas/DisclaimerDiceCatalog"
+          },
+          "scenes": {
+            "$ref": "#/components/schemas/ScenesCatalog"
           }
         },
         "required": [
@@ -240,6 +243,84 @@
         },
         "required": [
           "lines"
+        ],
+        "additionalProperties": {}
+      },
+      "ScenesCatalog": {
+        "type": "object",
+        "properties": {
+          "scenes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The id squads’ picks and 战报 name.",
+                  "example": "ski"
+                },
+                "names": {
+                  "$ref": "#/components/schemas/CatalogNames"
+                },
+                "colors": {
+                  "$ref": "#/components/schemas/SceneColors"
+                },
+                "limited": {
+                  "type": "boolean",
+                  "description": "True for a scene open only part of the year (冬季限定). The days stay on the server: the picker offers it while `GET /squads/{squadId}/scene` lists it."
+                }
+              },
+              "required": [
+                "id",
+                "names",
+                "colors",
+                "limited"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Every scene the picker may offer, in its order; retired ones are left out. The app draws the gym for one it has no art for."
+          }
+        },
+        "required": [
+          "scenes"
+        ],
+        "additionalProperties": {}
+      },
+      "SceneColors": {
+        "type": "object",
+        "properties": {
+          "signature": {
+            "type": "string",
+            "description": "The 打卡 button, the week’s icons, the poster.",
+            "example": "#16384D"
+          },
+          "onSignature": {
+            "type": "string",
+            "description": "Text drawn on the signature.",
+            "example": "#16384D"
+          },
+          "wash": {
+            "type": "string",
+            "description": "Its light ground.",
+            "example": "#16384D"
+          },
+          "text": {
+            "type": "string",
+            "description": "Its text colour on light grounds.",
+            "example": "#16384D"
+          },
+          "floor": {
+            "type": "string",
+            "description": "`#RRGGBB`.",
+            "example": "#16384D"
+          }
+        },
+        "required": [
+          "signature",
+          "onSignature",
+          "wash",
+          "text",
+          "floor"
         ],
         "additionalProperties": {}
       },
@@ -2250,8 +2331,14 @@
               "tennis",
               "climbing"
             ],
-            "description": "The squad’s scene this week.",
+            "description": "The squad’s scene this week (see `sceneId`).",
             "example": "pool"
+          },
+          "sceneId": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+            "description": "The squad’s scene this week.",
+            "example": "ski"
           },
           "pickers": {
             "type": "object",
@@ -2295,8 +2382,14 @@
                   "tennis",
                   "climbing"
                 ],
-                "description": "One of the scenes the app draws. More may come with an app release.",
+                "description": "The scene, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.",
                 "example": "pool"
+              },
+              "sceneId": {
+                "type": "string",
+                "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+                "description": "The scene’s id in the scenes list (`GET /public/catalog`, `scenes`). The app draws the gym for one it has no art for.",
+                "example": "ski"
               },
               "by": {
                 "type": [
@@ -2313,6 +2406,7 @@
             },
             "required": [
               "scene",
+              "sceneId",
               "by",
               "at"
             ],
@@ -2337,7 +2431,7 @@
                     "tennis",
                     "climbing"
                   ],
-                  "description": "One of the scenes the app draws. More may come with an app release.",
+                  "description": "The scene, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.",
                   "example": "pool"
                 },
                 "weeksAgo": {
@@ -2355,17 +2449,47 @@
               ],
               "additionalProperties": false
             },
-            "description": "Every scene, in the order the picker shows them."
+            "description": "The first five scenes, in the order the picker shows them, for builds that know only those. Newer builds read `options`."
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sceneId": {
+                  "type": "string",
+                  "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+                  "description": "The scene’s id in the scenes list (`GET /public/catalog`, `scenes`). The app draws the gym for one it has no art for.",
+                  "example": "ski"
+                },
+                "weeksAgo": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "How many weeks ago the squad last trained on it: 0 for this week’s scene, null for one it never has (the app shows it in its carton)."
+                }
+              },
+              "required": [
+                "sceneId",
+                "weeksAgo"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The scenes a pick may name this week, in the picker’s order: a limited one (the winter 雪场) only while it is open."
           }
         },
         "required": [
           "version",
           "week",
           "scene",
+          "sceneId",
           "pickers",
           "picked",
           "canPick",
-          "scenes"
+          "scenes",
+          "options"
         ],
         "additionalProperties": false
       },
@@ -2380,14 +2504,8 @@
           },
           "scene": {
             "type": "string",
-            "enum": [
-              "track",
-              "pool",
-              "gym",
-              "tennis",
-              "climbing"
-            ],
-            "description": "One of the scenes the app draws. More may come with an app release.",
+            "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+            "description": "The scene’s id: one of `options` in `GET /squads/{squadId}/scene`.",
             "example": "pool"
           }
         },
@@ -3639,7 +3757,13 @@
                   "tennis",
                   "climbing"
                 ],
-                "description": "The scene the squad trained on that week: the story takes its colours."
+                "description": "The scene the squad trained on that week, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`."
+              },
+              "sceneId": {
+                "type": "string",
+                "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+                "description": "The scene the squad trained on that week, by its id in the scenes list: the story takes its colours.",
+                "example": "ski"
               },
               "members": {
                 "type": "array",
@@ -3705,6 +3829,7 @@
               "squad",
               "week",
               "scene",
+              "sceneId",
               "members",
               "status",
               "titles"
@@ -3736,7 +3861,13 @@
                   "tennis",
                   "climbing"
                 ],
-                "description": "The scene the squad trained on that week: the story takes its colours."
+                "description": "The scene the squad trained on that week, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`."
+              },
+              "sceneId": {
+                "type": "string",
+                "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+                "description": "The scene the squad trained on that week, by its id in the scenes list: the story takes its colours.",
+                "example": "ski"
               },
               "members": {
                 "type": "array",
@@ -3775,6 +3906,7 @@
               "squad",
               "week",
               "scene",
+              "sceneId",
               "members",
               "status"
             ],
@@ -6946,7 +7078,7 @@
             }
           },
           "400": {
-            "description": "Not a valid squad id, week or scene, or a week that isn’t open for picking (`SCENE_WEEK_CLOSED`)",
+            "description": "Not a valid squad id, week or scene, a week that isn’t open for picking (`SCENE_WEEK_CLOSED`), or a scene that isn’t open this week (`SCENE_NOT_OPEN`)",
             "content": {
               "application/problem+json": {
                 "schema": {

@@ -23,6 +23,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -88,6 +89,7 @@ const app = createApp({
     inviteCodes: randomInviteCodes,
     aiConsent: () => Promise.resolve(true),
   }),
+  scenes: scenesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: createUnlocks({
     store: createPostgresUnlockStore(db),

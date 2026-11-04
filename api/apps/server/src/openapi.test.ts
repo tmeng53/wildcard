@@ -18,7 +18,7 @@ import { createApp } from './app.js';
 import { createDatabase } from './adapters/postgres.js';
 import { createLog } from './log.js';
 import { openApiJson } from './openapi.js';
-import { aiConsentOn, noJobs, nudgesOn, pushOn } from './test-kit/local-supabase.js';
+import { aiConsentOn, noJobs, nudgesOn, pushOn, scenesOn } from './test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from './test-kit/public-routes.js';
 import {
   unusedWeekSummaryWords,
@@ -81,6 +81,7 @@ describe('openapi.json', () => {
         inviteCodes: randomInviteCodes,
         aiConsent: () => Promise.resolve(true),
       }),
+      scenes: scenesOn(db),
       weeklyAwards: unusedWeeklyAwards,
       unlocks: unusedUnlocks,
       weekSummaryWords: unusedWeekSummaryWords,

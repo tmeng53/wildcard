@@ -2,7 +2,7 @@
 begin;
 select plan(16);
 
-select is((select count(*)::int from public.sports), 52, 'the first list has 52 sports');
+select is((select count(*)::int from public.sports), 57, 'the list has 57 sports, the winter ones included');
 select is(
   (select count(*)::int from public.sport_catalog_events),
   (select (select count(*) from public.sport_categories) + (select count(*) from public.sports)

@@ -29,6 +29,9 @@
       "path": "packages/sports"
     },
     {
+      "path": "packages/scenes"
+    },
+    {
       "path": "packages/unlocks"
     },
     {

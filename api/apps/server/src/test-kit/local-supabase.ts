@@ -21,6 +21,7 @@ import {
   createPush,
   type PushSender,
 } from '@wildcard/push';
+import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { z } from 'zod';
 
@@ -118,6 +119,11 @@ export function pushOn(db: Database, sender: PushSender = createOffSender()) {
     dailySettings: createPostgresDailyPushSettings(db),
     sender,
   });
+}
+
+/** The scenes on local Supabase, as seeded: the five all year and the winter 雪场. */
+export function scenesOn(db: Database) {
+  return createScenes({ store: createPostgresSceneStore(db) });
 }
 
 /** Jobs as a server without a scheduler has them: no token, so none runs. */

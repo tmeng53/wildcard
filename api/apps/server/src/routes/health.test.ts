@@ -16,7 +16,14 @@ import { createApp } from '../app.js';
 import { readConfig } from '../config.js';
 import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
-import { adminOn, aiConsentOn, noJobs, nudgesOn, pushOn } from '../test-kit/local-supabase.js';
+import {
+  scenesOn,
+  adminOn,
+  aiConsentOn,
+  noJobs,
+  nudgesOn,
+  pushOn,
+} from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeekSummaryWords,
@@ -77,6 +84,7 @@ async function getHealth(db: Database) {
       inviteCodes: randomInviteCodes,
       aiConsent: () => Promise.resolve(true),
     }),
+    scenes: scenesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     unlocks: unusedUnlocks,
     weekSummaryWords: unusedWeekSummaryWords,
@@ -174,6 +182,7 @@ describe('an unknown route', () => {
       weekSummaryWords: unusedWeekSummaryWords,
       coachHiring: unusedCoachHiring,
       coachActivity: unusedCoachActivity,
+      scenes: scenesOn(db),
       ...ignoredNotices,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),

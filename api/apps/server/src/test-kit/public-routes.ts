@@ -1,8 +1,14 @@
 import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-drafts';
+import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 
 import type { Database } from '../ports.js';
-import { disclaimerDiceSection, sportsSection, type CatalogSection } from '../routes/catalog.js';
+import {
+  disclaimerDiceSection,
+  scenesSection,
+  sportsSection,
+  type CatalogSection,
+} from '../routes/catalog.js';
 import type { PublicRoutes } from '../routes/squads.js';
 
 /** Public routes with no rate limit, for tests about something else. */
@@ -20,6 +26,7 @@ export const catalogOn = (
   sections: [
     sportsSection(createSports({ store: createPostgresSportStore(db) })),
     disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+    scenesSection(createScenes({ store: createPostgresSceneStore(db) })),
   ],
   clock,
 });
