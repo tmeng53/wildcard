@@ -2,7 +2,7 @@ import XCTest
 
 /// A teammate's player card, the way a member finds it: 小米's bubble on the home names her and
 /// the title she wears, and a tap on that line opens her card, which turns over to her badge
-/// board and opens a badge with no 装备; and from 小队设置's member list. Screenshots are kept
+/// board and opens a badge with no 装备; and from the 小队 tab's member list. Screenshots are kept
 /// for review.
 @MainActor
 final class TeammateCardUITests: XCTestCase {
@@ -46,14 +46,8 @@ final class TeammateCardUITests: XCTestCase {
         keepScreenshot(named: "58-teammate-badge-card")
     }
 
-    func testFromSquadSettings() {
-        let app = launch(["-tab", "me"])
-        let settings = app.buttons["me.settings"]
-        XCTAssertTrue(settings.waitForExistence(timeout: Self.wait), "我 never showed")
-        settings.tap()
-        let open = app.buttons["me.squad"]
-        XCTAssertTrue(open.waitForExistence(timeout: Self.wait), "设置 has no 小队设置")
-        open.tap()
+    func testFromSquadTab() {
+        let app = launch(["-tab", "squad"])
         let row = app.buttons.matching(identifier: "squad.member.card").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: Self.wait), "no teammate row opens a card")
         row.tap()
