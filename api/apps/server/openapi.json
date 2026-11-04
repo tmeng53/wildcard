@@ -4764,6 +4764,27 @@
           "topSport": {
             "$ref": "#/components/schemas/TopSport"
           },
+          "week": {
+            "type": "object",
+            "properties": {
+              "trainedDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Days they trained this week, from all their check-ins wherever they went."
+              },
+              "plannedDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Days their plan trains this week, from the day they joined on."
+              }
+            },
+            "required": [
+              "trainedDays",
+              "plannedDays"
+            ],
+            "additionalProperties": false,
+            "description": "Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week."
+          },
           "titles": {
             "type": "array",
             "items": {

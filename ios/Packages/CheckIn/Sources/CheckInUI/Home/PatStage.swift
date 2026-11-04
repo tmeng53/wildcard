@@ -8,8 +8,8 @@ import DesignSystemUI
 import Foundation
 import Observation
 
-/// 拍一拍 on the home scene (the approved C, 隔空拍). Tapping a teammate hops them and shows
-/// what they're up to in a bubble with 「拍一拍」; patting jabs from where I stand, a graphite (brand) dot
+/// 拍一拍 on the home scene (the approved C, 隔空拍). Tapping a teammate hops them (their card,
+/// with what they're up to and 「拍一拍」, pops up over the app); patting jabs from where I stand, a graphite (brand) dot
 /// flies over, a 「!」 pops over them and they take it their persona's way. On opening the home,
 /// whoever patted me does the same to me from where they stand, once, and their bubble offers
 /// one back.
@@ -30,28 +30,13 @@ final class PatStage {
         let duration: Double
     }
 
-    /// What a teammate's bubble is for.
+    /// What a teammate's bubble is for: the squad's news, never a tap (Tracy, 2026-11-04: a tap
+    /// opens a card, and bubbles are only for what happens by itself).
     enum BubbleKind: Equatable {
-        /// What they're up to today, after a tap.
-        case status
         /// They just patted me.
         case pattedMe
         /// They joined the squad since the home was last shown.
         case joined
-        /// My own status, after a tap on me: nothing to do about it.
-        case mine
-    }
-
-    /// Who a status bubble is about, over its words.
-    struct Eyebrow: Equatable {
-        let name: String
-        let title: WornTitle?
-
-        /// 「阿杰 · 早八战神」, or the name alone before their first title.
-        var text: String {
-            guard let title else { return name }
-            return String(localized: "\(name) · \(title.title)", bundle: .module.inAppLanguage)
-        }
     }
 
     /// A line over my own head: the squad's news for me, such as 「你现在是队长了」.
@@ -67,9 +52,6 @@ final class PatStage {
         let kind: BubbleKind
         let title: String
         let detail: String?
-        /// A tapped teammate's name and the title they wear, over their status: it opens their
-        /// card. Nil on the other bubbles.
-        var eyebrow: Eyebrow?
         /// Bumps each time a bubble opens, so a new one replaces an old one with its pop.
         let id: Int
     }
@@ -106,26 +88,13 @@ final class PatStage {
 
     // MARK: Tapping a teammate
 
-    /// A teammate was tapped: they hop, cheer if awake and not mid-sport, and their bubble says
-    /// what they're up to, with 「拍一拍」 (「拍过了」 once patted today). Tapped again while their
-    /// bubble is up, the bubble closes.
-    func tap(_ mate: SquadCast.Mate, cast: SquadCast, phase: DayPhase, now: Date = .now) {
-        guard pat == nil else { return }
-        if bubble?.mate == mate.id {
-            bubble = nil
-            return
-        }
-        let pose = hop(mate, cast: cast, phase: phase, now: now)
-        let line = Self.status(
-            mate.member.status, eating: mate.member.eating, caption: mate.caption, disclaimer: mate.disclaimer,
-            asleep: pose == .asleep)
-        // Their name and title go on the line over the status, which opens their card.
-        show(
-            Bubble(
-                mate: mate.id, kind: .status, title: line.title, detail: line.detail,
-                eyebrow: Eyebrow(
-                    name: mate.name ?? String(localized: "队友", bundle: .module.inAppLanguage), title: mate.title),
-                id: nextBubble()), for: hold)
+    /// A teammate was tapped: they hop and cheer if awake and not mid-sport, and any bubble
+    /// closes; their card opens over the app. Returns their pose, nil while a pat plays.
+    @discardableResult
+    func tap(_ mate: SquadCast.Mate, cast: SquadCast, phase: DayPhase, now: Date = .now) -> StagePose? {
+        guard pat == nil else { return nil }
+        bubble = nil
+        return hop(mate, cast: cast, phase: phase, now: now)
     }
 
     /// `mate` hops, and cheers if awake and not mid-sport; returns their pose.
@@ -169,25 +138,6 @@ final class PatStage {
             try? await Task.sleep(for: .seconds(hold))
             if self?.myLine == line { self?.myLine = nil }
         }
-    }
-
-    /// I tapped myself: my status over my head, 「我 · 今天还没打卡」, with nothing to do about
-    /// it. Tapped again while it is up, it closes.
-    func tapMe(
-        _ member: MemberID, status: StageStatus, eating: MealKind?, caption: String?, disclaimer: String?,
-        asleep: Bool = false
-    ) {
-        guard pat == nil else { return }
-        if bubble?.kind == .mine {
-            bubble = nil
-            return
-        }
-        let line = Self.status(status, eating: eating, caption: caption, disclaimer: disclaimer, asleep: asleep)
-        show(
-            Bubble(
-                mate: member, kind: .mine,
-                title: Self.titled(String(localized: "我", bundle: .module.inAppLanguage), line.title),
-                detail: line.detail, id: nextBubble()), for: hold)
     }
 
     /// A tap anywhere else on the scene closes the bubble.
@@ -279,12 +229,6 @@ final class PatStage {
             try? await Task.sleep(for: .seconds(seconds))
             if self?.bubble?.id == new.id { self?.bubble = nil }
         }
-    }
-
-    /// 「小米 · 今天还没打卡」, or the status alone for someone without a nickname yet.
-    static func titled(_ name: String?, _ status: String) -> String {
-        guard let name else { return status }
-        return String(localized: "\(name) · \(status)", bundle: .module.inAppLanguage)
     }
 
     /// What someone is up to today, as their latest post says it: the status, and a second line

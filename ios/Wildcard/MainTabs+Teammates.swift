@@ -7,7 +7,7 @@ import MeUI
 import SquadDomain
 import SwiftUI
 
-/// Teammates' player cards, opened from the home's bubble and 小队's member list.
+/// Players' cards, opened from a tap on them on the home and from 小队's member list.
 extension MainTabs {
     /// A teammate's card in `squad`, read from the API or, on the sample squad, made from the
     /// `characters` the page that opens it already shows.

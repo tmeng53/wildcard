@@ -17,9 +17,10 @@ final class TabsUITests: XCTestCase {
         XCTAssertTrue(today.waitForExistence(timeout: 30), "no tab bar")
         XCTAssertTrue(today.isSelected, "the app didn't open on 今天")
         XCTAssertEqual(
-            ["tab.today", "tab.feed", "tab.squad", "tab.me"].map { app.buttons[$0].label },
-            ["今天", "动态", "小队", "我"])
+            ["tab.today", "tab.feed", "tab.me"].map { app.buttons[$0].label },
+            ["今天", "动态", "我"])
         XCTAssertFalse(app.buttons["tab.schedule"].exists, "出赛表 is still a tab")
+        XCTAssertFalse(app.buttons["tab.squad"].exists, "小队 is still a tab")
         // 打卡 sits above the bar, not under it.
         let checkIn = app.buttons["today.checkin"]
         XCTAssertTrue(checkIn.isHittable, "打卡 is covered")
@@ -31,16 +32,10 @@ final class TabsUITests: XCTestCase {
         waitFor(app.buttons["tab.feed"], "isSelected == true", "动态 didn't open")
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: 30), "动态 shows another screen")
         XCTAssertFalse(checkIn.exists, "今天 still shows under 动态")
-        app.buttons["tab.squad"].tap()
-        waitFor(app.buttons["tab.squad"], "isSelected == true", "小队 didn't open")
-        let squadPage = app.descendants(matching: .any).matching(identifier: "squad.page").firstMatch
-        XCTAssertTrue(squadPage.waitForExistence(timeout: 30), "小队 shows another tab's screen")
-        XCTAssertFalse(checkIn.exists, "今天 still shows under 小队")
         app.buttons["tab.me"].tap()
         waitFor(app.buttons["tab.me"], "isSelected == true", "tab.me didn't open")
         let mePage = app.descendants(matching: .any).matching(identifier: "me.page").firstMatch
         XCTAssertTrue(mePage.waitForExistence(timeout: 30), "我 didn't show its page")
-        XCTAssertFalse(squadPage.exists, "我 shows 小队 under it")
         XCTAssertFalse(checkIn.exists, "今天 still shows under tab.me")
         app.buttons["tab.today"].tap()
         waitFor(today, "isSelected == true", "今天 didn't open again")
@@ -56,8 +51,9 @@ final class TabsUITests: XCTestCase {
         waitFor(today, "exists == false", "the tab bar stayed over the compose page")
     }
 
-    /// The squad's name on home's card switches to the 小队 tab.
-    func testSquadCardOpensTheSquadTab() {
+    /// The squad's name on home's card opens 小队 in 今天's place, with the tab bar under it, and
+    /// 返回 goes back home.
+    func testSquadCardOpensTheSquadPage() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push"]
@@ -67,9 +63,12 @@ final class TabsUITests: XCTestCase {
         let squadName = app.descendants(matching: .any)["squadcard.squad"]
         XCTAssertTrue(squadName.waitForExistence(timeout: 30), "home's card has no squad name")
         squadName.tap()
-        waitFor(app.buttons["tab.squad"], "isSelected == true", "the squad card didn't open the 小队 tab")
         let squadPage = app.descendants(matching: .any).matching(identifier: "squad.page").firstMatch
         XCTAssertTrue(squadPage.waitForExistence(timeout: 30), "the squad card didn't show 小队")
+        XCTAssertTrue(app.buttons["tab.today"].isSelected, "小队 left 今天")
+        app.buttons["squad.back"].tap()
+        waitFor(squadPage, "exists == false", "返回 didn't close 小队")
+        XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: 30), "返回 didn't go back home")
     }
 
     /// `-tab` opens straight on another tab, as screenshots of later tabs need; `-tab schedule`
