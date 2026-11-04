@@ -107,17 +107,11 @@ final class CoachHireUITests: XCTestCase {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments +=
-            ["-tab", "me", "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push"] + extra
+            ["-tab", "squad", "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push"] + extra
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
-        let settings = app.buttons["me.settings"]
-        XCTAssertTrue(settings.waitForExistence(timeout: 30), "我 never showed")
-        settings.tap()
-        let row = app.buttons["me.squad"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "设置 has no squad row")
-        row.tap()
         let page = app.descendants(matching: .any).matching(identifier: "squad.page").firstMatch
-        XCTAssertTrue(page.waitForExistence(timeout: 30), "小队设置 never showed")
+        XCTAssertTrue(page.waitForExistence(timeout: 30), "小队 never showed")
         return app
     }
 

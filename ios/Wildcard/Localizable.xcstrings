@@ -304,6 +304,22 @@
           }
         }
       }
+    },
+    "小队": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
