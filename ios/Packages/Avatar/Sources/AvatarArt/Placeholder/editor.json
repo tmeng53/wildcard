@@ -109,6 +109,12 @@
     { "id": "kettlebell" },
     { "id": "yogamat" },
     { "id": "chalkbag" },
-    { "id": "goggles" }
+    { "id": "goggles" },
+    { "id": "helmet" },
+    { "id": "gloves" },
+    { "id": "basketball" },
+    { "id": "soccerball" },
+    { "id": "skis" },
+    { "id": "snowboard" }
   ]
 }

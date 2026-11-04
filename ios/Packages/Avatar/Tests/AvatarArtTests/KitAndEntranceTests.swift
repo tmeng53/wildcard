@@ -40,11 +40,12 @@ import Testing
 @Test func sportsPickTheirKits() throws {
     let kits = try PlaceholderCharacter.sportKits()
     let picks: [Sport: String] = [
-        "swim": "swim", "surf": "swim", "run": "run", "hike": "run", "spin": "run", "strength": "strength",
-        "boxing": "strength", "kettlebell": "kettlebell", "tennis": "tennis", "squash": "tennis",
+        "swim": "swim", "surf": "swim", "run": "run", "hike": "run", "spin": "cycling", "strength": "strength",
+        "boxing": "boxing", "roadCycling": "cycling", "soccer": "soccer", "snowboard": "snowboard",
+        "kettlebell": "kettlebell", "tennis": "tennis", "squash": "tennis",
         "badminton": "badminton", "pickleball": "pickleball", "tableTennis": "pingpong", "climb": "climb",
-        "ski": "warmup",
-        "yoga": "yoga", "matPilates": "yoga", "basketball": "warmup", "dance": "warmup", "dogWalk": "warmup",
+        "ski": "ski",
+        "yoga": "yoga", "matPilates": "yoga", "basketball": "basketball", "dance": "warmup", "dogWalk": "warmup",
     ]
     for (sport, kit) in picks {
         #expect(kits.kit(for: .sport(sport), in: Looks.sports).id == kit, "\(sport)")
@@ -53,7 +54,7 @@ import Testing
     #expect(
         kits.kits.map(\.id) == [
             "swim", "run", "strength", "tennis", "climb", "yoga", "kettlebell", "badminton", "pickleball", "pingpong",
-            "warmup",
+            "cycling", "boxing", "basketball", "soccer", "ski", "snowboard", "warmup",
         ])
 }
 
@@ -75,7 +76,8 @@ import Testing
     }
     #expect(kits.kit(for: .sport("run"), in: Looks.sports).dress(look).variants["prop"] == "bottle")
     #expect(kits.kit(for: .sport("swim"), in: Looks.sports).dress(look).variants["prop"] == "goggles")
-    #expect(kits.kit(for: .sport("ski"), in: Looks.sports).dress(look) == look)
+    #expect(kits.kit(for: .sport("ski"), in: Looks.sports).dress(look).variants["prop"] == "skis")
+    #expect(kits.kit(for: .sport("dance"), in: Looks.sports).dress(look) == look)
 }
 
 @Test func kitsJSONIsChecked() throws {
@@ -145,7 +147,7 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     #expect(
         moves == [
             "goggles", "run", "dumbbell", "racket", "chalkbag", "yogamat", "kettlebell", "badminton", "pickleball",
-            "pingpong", "warmup",
+            "pingpong", "helmet", "gloves", "basketball", "soccerball", "skis", "snowboard", "warmup",
         ])
 }
 

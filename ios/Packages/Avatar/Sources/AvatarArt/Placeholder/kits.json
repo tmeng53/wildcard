@@ -11,15 +11,22 @@
     { "id": "badminton", "prop": "badminton" },
     { "id": "pickleball", "prop": "pickleball" },
     { "id": "pingpong", "prop": "pingpong" },
+    { "id": "cycling", "prop": "helmet" },
+    { "id": "boxing", "prop": "gloves" },
+    { "id": "basketball", "prop": "basketball" },
+    { "id": "soccer", "prop": "soccerball" },
+    { "id": "ski", "prop": "skis" },
+    { "id": "snowboard", "prop": "snowboard" },
     { "id": "warmup" }
   ],
   "categories": {
-    "runWalk": "run", "cardio": "run", "strength": "strength", "combat": "strength", "mindBody": "yoga",
-    "water": "swim", "racket": "tennis"
+    "runWalk": "run", "cardio": "run", "strength": "strength", "combat": "boxing", "mindBody": "yoga",
+    "water": "swim", "racket": "tennis", "cycling": "cycling"
   },
   "sports": {
     "climb": "climb", "kettlebell": "kettlebell", "badminton": "badminton", "pickleball": "pickleball",
-    "tableTennis": "pingpong"
+    "tableTennis": "pingpong", "spin": "cycling", "bikeCommute": "cycling", "basketball": "basketball",
+    "soccer": "soccer", "ski": "ski", "snowboard": "snowboard"
   },
   "otherwise": "warmup"
 }
