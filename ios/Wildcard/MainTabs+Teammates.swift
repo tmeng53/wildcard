@@ -7,7 +7,7 @@ import MeUI
 import SquadDomain
 import SwiftUI
 
-/// Teammates' player cards, opened from the home's bubble and 小队设置's member list.
+/// Teammates' player cards, opened from the home's bubble and 小队's member list.
 extension MainTabs {
     /// A teammate's card in `squad`, read from the API or, on the sample squad, made from the
     /// `characters` the page that opens it already shows.
@@ -22,12 +22,11 @@ extension MainTabs {
         return SquadmateCardModel(member: member, squad: squad.id, squadName: squad.name, cards: cards)
     }
 
-    /// A teammate's card on 小队设置, from the squad and characters that page shows.
-    func squadCard(of member: MemberID) -> AnyView {
-        AnyView(
-            squad.settings.map { settings in
-                TeammateCard(model: cardModel(of: member, in: settings.squad, characters: settings.characters))
-            })
+    /// A teammate's card on 小队, from the squad and characters that page shows.
+    func squadCard(of member: MemberID) -> SquadmateCardModel? {
+        squad.settings.map { settings in
+            cardModel(of: member, in: settings.squad, characters: settings.characters)
+        }
     }
 
     /// A teammate's card from the home, which knows the squad once it is read.

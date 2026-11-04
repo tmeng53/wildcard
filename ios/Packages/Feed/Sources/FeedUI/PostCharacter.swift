@@ -1,15 +1,16 @@
 #if os(iOS)
 import AvatarUI
+import CheckInUI
 import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import SwiftUI
 
-/// The author's character at the card's left, full height. On a 练了 it loops that sport's move
-/// while the card is on screen (the feed's cards are lazy, so only the visible ones draw); on the
-/// other kinds it holds still, drawn once, and redraws every frame only while a reaction's move
-/// plays. With Reduce Motion it always holds still. On my own post, a teammate's reaction that
-/// arrived shows in a small bubble over my character, with their head and emoji.
+/// The author's character at the card's left, full height, looping what the post is about while
+/// the card is on screen (the feed's cards are lazy, so only the visible ones draw): a 练了's
+/// sport, a meal being eaten, a 请假条 held up. With Reduce Motion it holds still. On my own post,
+/// a teammate's reaction that arrived shows in a small bubble over my character, with their head
+/// and emoji.
 struct PostCharacter: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: FeedModel
@@ -18,7 +19,16 @@ struct PostCharacter: View {
     var body: some View {
         if let player = model.player(for: post) {
             let played = model.played[post.id]
-            figure(player, moving: (played != nil || model.trains(post)) && !reduceMotion)
+            figure(player, moving: (played != nil || model.loops(post)) && !reduceMotion)
+                .overlay {
+                    if model.holdsSign(post) {
+                        GeometryReader { proxy in
+                            // On the rig's 240 × 320 canvas, centred at y 249, as on the home.
+                            let scale = proxy.size.height / 320
+                            SignCard(scale: scale).position(x: proxy.size.width / 2, y: 249 * scale)
+                        }
+                    }
+                }
                 .frame(height: Sizing.characterFull)
                 .anchorPreference(key: FeedAnchors.self, value: .bounds) { FeedAnchors.Value(heads: [post.id: $0]) }
                 .overlay(alignment: .top) {

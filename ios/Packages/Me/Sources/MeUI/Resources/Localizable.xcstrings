@@ -97,38 +97,6 @@
         }
       }
     },
-    "往期战报": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Past recaps"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "過往戰報"
-          }
-        }
-      }
-    },
-    "我的小队": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "My squad"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我的小隊"
-          }
-        }
-      }
-    },
     "所有打卡、照片和请假条会删掉": {
       "localizations": {
         "en": {
@@ -433,22 +401,6 @@
         }
       }
     },
-    "小队": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Squad"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小隊"
-          }
-        }
-      }
-    },
     "本周": {
       "localizations": {
         "en": {
@@ -541,38 +493,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "球衣背號"
-          }
-        }
-      }
-    },
-    "每周模板": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Weekly template"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每週模板"
-          }
-        }
-      }
-    },
-    "每周 %lld 天": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld/7 days a week"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每週 %lld 天"
           }
         }
       }
@@ -1061,6 +981,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "晚上十一點還在臥推。"
+          }
+        }
+      }
+    },
+    "出赛表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lineup"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "出賽表"
+          }
+        }
+      }
+    },
+    "本周 %lld/%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This week %lld/%lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週 %lld/%lld"
           }
         }
       }
