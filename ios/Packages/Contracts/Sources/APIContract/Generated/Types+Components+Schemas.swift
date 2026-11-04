@@ -6841,6 +6841,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/MyUnlocks/lockedPieces`.
             public var lockedPieces: [Components.Schemas.LockedPiece]
+            /// Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/gifts`.
+            public var gifts: [Components.Schemas.GiftedPiece]
             /// Creates a new `MyUnlocks`.
             ///
             /// - Parameters:
@@ -6848,22 +6852,26 @@ extension Components {
             ///   - unlocks: Every store and prop the member unlocked, the earliest first.
             ///   - pieces: Every clothing piece the member unlocked, the earliest first. A piece with a rule stays locked in its store, even an open one, until then.
             ///   - lockedPieces: Every piece with a rule the member hasn’t unlocked yet, and how far it is.
+            ///   - gifts: Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe.
             public init(
                 version: Components.Schemas.MyUnlocks.VersionPayload,
                 unlocks: [Components.Schemas.Unlock],
                 pieces: [Components.Schemas.PieceUnlock],
-                lockedPieces: [Components.Schemas.LockedPiece]
+                lockedPieces: [Components.Schemas.LockedPiece],
+                gifts: [Components.Schemas.GiftedPiece]
             ) {
                 self.version = version
                 self.unlocks = unlocks
                 self.pieces = pieces
                 self.lockedPieces = lockedPieces
+                self.gifts = gifts
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case unlocks
                 case pieces
                 case lockedPieces
+                case gifts
             }
         }
         /// - Remark: Generated from `#/components/schemas/Unlock`.
@@ -6999,6 +7007,41 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case checkInsToGo
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/GiftedPiece`.
+        public struct GiftedPiece: Codable, Hashable, Sendable {
+            /// The piece’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/GiftedPiece/id`.
+            public var id: Swift.String
+            /// The coach who gave it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/GiftedPiece/coach`.
+            public var coach: Swift.String
+            /// When the coach gave it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/GiftedPiece/givenAt`.
+            public var givenAt: Foundation.Date
+            /// Creates a new `GiftedPiece`.
+            ///
+            /// - Parameters:
+            ///   - id: The piece’s id in the app’s art.
+            ///   - coach: The coach who gave it.
+            ///   - givenAt: When the coach gave it.
+            public init(
+                id: Swift.String,
+                coach: Swift.String,
+                givenAt: Foundation.Date
+            ) {
+                self.id = id
+                self.coach = coach
+                self.givenAt = givenAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case coach
+                case givenAt
             }
         }
     }

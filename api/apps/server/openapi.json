@@ -4621,13 +4621,21 @@
               "$ref": "#/components/schemas/LockedPiece"
             },
             "description": "Every piece with a rule the member hasn’t unlocked yet, and how far it is."
+          },
+          "gifts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiftedPiece"
+            },
+            "description": "Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe."
           }
         },
         "required": [
           "version",
           "unlocks",
           "pieces",
-          "lockedPieces"
+          "lockedPieces",
+          "gifts"
         ],
         "additionalProperties": false
       },
@@ -4744,6 +4752,36 @@
         "required": [
           "id",
           "checkInsToGo"
+        ],
+        "additionalProperties": false
+      },
+      "GiftedPiece": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "gift-scarf"
+          },
+          "coach": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$",
+            "description": "The coach who gave it.",
+            "example": "xiaohun"
+          },
+          "givenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the coach gave it.",
+            "example": "2026-11-04T18:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "coach",
+          "givenAt"
         ],
         "additionalProperties": false
       }
@@ -9426,7 +9464,7 @@
       "get": {
         "operationId": "getMyUnlocks",
         "summary": "The stores, props and pieces the signed-in member unlocked",
-        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.",
+        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.",
         "security": [
           {
             "bearer": []

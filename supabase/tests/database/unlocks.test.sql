@@ -1,7 +1,7 @@
 -- What members unlock: the rules are logged and never deleted, and a member's unlocks are
 -- append-only until their account goes.
 begin;
-select plan(13);
+select plan(20);
 
 insert into auth.users (id, email) values ('e0000000-0000-0000-0000-000000000001', 'una@example.com');
 
@@ -56,9 +56,41 @@ select throws_ok(
   '23514', null, 'an unlock was earned by a check-in or given by an admin'
 );
 
+-- Gifts from a coach: a pool of pieces no store sells, logged and never deleted, and what each
+-- member was given, append-only.
+insert into public.gift_pieces (piece_id) values ('gift-scarf');
+update public.gift_pieces set offered = false where piece_id = 'gift-scarf';
+update public.gift_pieces set offered = false where piece_id = 'gift-scarf';
+select is(
+  (select array_agg(op order by id) from public.gift_piece_events where value ->> 'piece_id' = 'gift-scarf'),
+  array['INSERT', 'UPDATE'], 'a gift piece''s change is logged once, and a save that changed nothing is not'
+);
+select throws_ok(
+  $$insert into public.gift_pieces (piece_id) values ('Scarf')$$, '23514', null, 'a gift piece has a piece id'
+);
+select throws_ok(
+  $$delete from public.gift_pieces$$, '42501', null, 'a gift piece is never deleted'
+);
+select throws_ok($$delete from public.gift_piece_events$$, '42501', null, 'the gift pool log refuses a delete');
+
+insert into public.coach_gifts (member_id, piece_id, coach_id, squad_id)
+values ('e0000000-0000-0000-0000-000000000001', 'gift-scarf', (select id from public.coaches limit 1),
+  'e2000000-0000-0000-0000-000000000001');
+select throws_ok(
+  $$update public.coach_gifts set given_at = now() - interval '1 day'$$, '42501', null, 'a gift is never changed'
+);
+select throws_ok($$delete from public.coach_gifts$$, '42501', null, 'a gift is never taken back');
+select throws_ok(
+  $$insert into public.coach_gifts (member_id, piece_id, coach_id, squad_id)
+    values ('e0000000-0000-0000-0000-000000000001', 'gift-nowhere', (select id from public.coaches limit 1),
+      'e2000000-0000-0000-0000-000000000001')$$,
+  '23503', null, 'a gift is a piece in the pool'
+);
+
 delete from auth.users where id = 'e0000000-0000-0000-0000-000000000001';
 select is(
-  (select count(*)::int from public.member_unlocks), 0, 'deleting the account takes its unlocks'
+  (select count(*)::int from public.member_unlocks) + (select count(*)::int from public.coach_gifts), 0,
+  'deleting the account takes its unlocks and gifts'
 );
 
 select * from finish();

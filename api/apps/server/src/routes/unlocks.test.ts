@@ -13,7 +13,15 @@ import {
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
-import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
+import {
+  CoachId,
+  MemberId,
+  PieceId,
+  createCoachGifts,
+  createPostgresGiftStore,
+  createPostgresUnlockStore,
+  createUnlocks,
+} from '@wildcard/unlocks';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -47,6 +55,7 @@ const photos = createSupabasePhotoStorage({
   secretKey: config.supabaseSecretKey,
 });
 const sports = createSports({ store: createPostgresSportStore(db) });
+const gifts = createCoachGifts({ store: createPostgresGiftStore(db) });
 const checkIns = createCheckIns({
   sports,
   store: createPostgresCheckInStore(db),
@@ -95,6 +104,7 @@ const app = createApp({
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
   }),
+  gifts,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
@@ -257,5 +267,26 @@ describe('GET /me/unlocks', () => {
 
     expect((await unlocked(friend)).body).toMatchObject({ version: 1, unlocks: [], pieces: [] });
     expect((await call({ method: 'GET', path: '/me/unlocks' })).status).toBe(401);
+  });
+
+  it('lists the pieces a coach gave apart from what training unlocked', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const piece = PieceId.parse(`gift-${randomUUID().slice(0, 8)}`);
+    await gifts.putPiece({ id: piece, offered: true });
+    const { gift } = await gifts.give({
+      member: MemberId.parse(me.userId),
+      piece,
+      coach: CoachId.parse('xiaohun'),
+      squad: randomUUID(),
+    });
+    const mine = await call({ method: 'GET', path: '/me/unlocks', token: me.token });
+    expect(mine.body).toMatchObject({
+      version: 1,
+      unlocks: [],
+      pieces: [],
+      gifts: [{ id: piece, coach: 'xiaohun', givenAt: gift.givenAt.toISOString() }],
+    });
+    const theirs = await call({ method: 'GET', path: '/me/unlocks', token: friend.token });
+    expect(theirs.body).toMatchObject({ gifts: [] });
   });
 });

@@ -1,6 +1,15 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { SportId } from '@wildcard/sport-ids';
-import { AFTER_MAX, ItemId, MemberId, PieceId, UnlockKind, type Unlocks } from '@wildcard/unlocks';
+import {
+  AFTER_MAX,
+  CoachId,
+  ItemId,
+  MemberId,
+  PieceId,
+  UnlockKind,
+  type CoachGifts,
+  type Unlocks,
+} from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
@@ -57,6 +66,17 @@ const LockedPiece = z
   })
   .openapi('LockedPiece');
 
+const GiftedPiece = z
+  .strictObject({
+    id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'gift-scarf' }),
+    coach: CoachId.meta({ description: 'The coach who gave it.', example: 'xiaohun' }),
+    givenAt: z.iso.datetime({ offset: true }).meta({
+      description: 'When the coach gave it.',
+      example: '2026-11-04T18:30:00.000Z',
+    }),
+  })
+  .openapi('GiftedPiece');
+
 const MyUnlocks = z
   .strictObject({
     version: bodyVersion(1),
@@ -71,11 +91,20 @@ const MyUnlocks = z
     lockedPieces: z.array(LockedPiece).meta({
       description: 'Every piece with a rule the member hasn’t unlocked yet, and how far it is.',
     }),
+    gifts: z.array(GiftedPiece).meta({
+      description:
+        'Every piece a squad’s coach gave the member, the earliest first. No store sells these: ' +
+        'they belong in the member’s wardrobe.',
+    }),
   })
   .openapi('MyUnlocks');
 
 /** `GET /me/unlocks`: the stores, props and pieces the signed-in member unlocked by training. */
-export function unlocks(deps: { readonly verifyToken: VerifyToken; readonly unlocks: Unlocks }) {
+export function unlocks(deps: {
+  readonly verifyToken: VerifyToken;
+  readonly unlocks: Unlocks;
+  readonly gifts: Pick<CoachGifts, 'of'>;
+}) {
   const route = createRoute({
     method: 'get',
     path: '/me/unlocks',
@@ -83,7 +112,8 @@ export function unlocks(deps: { readonly verifyToken: VerifyToken; readonly unlo
     summary: 'The stores, props and pieces the signed-in member unlocked',
     description:
       'Stores on the character editor’s 商店街, props and clothing pieces open by 练了 ' +
-      'check-ins in their sports, counting only those made since the rule was added. Starters ' +
+      'check-ins in their sports, counting only those made since the rule was added; pieces a ' +
+      'squad’s coach gave come apart, in `gifts`. Starters ' +
       '(WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and ' +
       'never listed. An unlock is never taken back.',
     security: [{ bearer: [] }],
@@ -96,7 +126,11 @@ export function unlocks(deps: { readonly verifyToken: VerifyToken; readonly unlo
   });
 
   return new OpenAPIHono<SignedIn>().openapi(route, async (c) => {
-    const { unlocks, locked } = await deps.unlocks.standing(MemberId.parse(c.var.caller.userId));
+    const member = MemberId.parse(c.var.caller.userId);
+    const [{ unlocks, locked }, gifts] = await Promise.all([
+      deps.unlocks.standing(member),
+      deps.gifts.of(member),
+    ]);
     const shown = (unlock: (typeof unlocks)[number]) => ({
       id: unlock.id,
       unlockedAt: unlock.unlockedAt.toISOString(),
@@ -112,6 +146,11 @@ export function unlocks(deps: { readonly verifyToken: VerifyToken; readonly unlo
         lockedPieces: locked
           .filter(({ kind }) => kind === 'piece')
           .map(({ id, toGo }) => ({ id, checkInsToGo: toGo })),
+        gifts: gifts.map(({ piece, coach, givenAt }) => ({
+          id: piece,
+          coach,
+          givenAt: givenAt.toISOString(),
+        })),
       },
       200,
     );

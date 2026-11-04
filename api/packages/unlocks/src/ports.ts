@@ -1,5 +1,6 @@
 import type { SportId } from '@wildcard/sport-ids';
 
+import type { CoachGift, GiftPiece, GiftPieceEdit } from './domain/gifts.js';
 import type { MemberId, Trained, Unlock, UnlockRule, UnlockRuleEdit } from './domain/unlocks.js';
 
 /** Where the rules and members' unlocks are kept. */
@@ -30,3 +31,21 @@ export type TrainedSince = (query: {
 
 /** Whether `id` is on the sports list. */
 export type SportListed = (id: SportId) => Promise<boolean>;
+
+/** Where the gift pool and members' gifts are kept. */
+export interface GiftStore {
+  /** Every piece in the pool, offered or not, by id. */
+  pieces(): Promise<GiftPiece[]>;
+  /** Adds a piece to the pool or changes whether it is offered. */
+  putPiece(edit: GiftPieceEdit): Promise<void>;
+  /** What `member` was given, the earliest first. */
+  giftsOf(member: MemberId): Promise<CoachGift[]>;
+  /**
+   * Keeps `gift` for `member` unless they already have that piece. Answers with the gift as
+   * kept: this one when it is new, or the earlier one.
+   */
+  give(
+    member: MemberId,
+    gift: Omit<CoachGift, 'givenAt'>,
+  ): Promise<{ gift: CoachGift; fresh: boolean }>;
+}

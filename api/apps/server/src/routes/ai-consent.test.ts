@@ -38,6 +38,7 @@ import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
   unusedUnlocks,
+  unusedGifts,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
@@ -108,6 +109,7 @@ const app = createApp({
   push: pushOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
+  gifts: unusedGifts,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,

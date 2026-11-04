@@ -16,7 +16,7 @@ import type { Nudges } from '@wildcard/nudges';
 import type { Push } from '@wildcard/push';
 import type { Squads } from '@wildcard/squads';
 import type { WeeklyAwards } from '@wildcard/weekly-awards';
-import type { Unlocks } from '@wildcard/unlocks';
+import type { CoachGifts, Unlocks } from '@wildcard/unlocks';
 import { HTTPException } from 'hono/http-exception';
 import { routePath } from 'hono/route';
 import { z } from 'zod';
@@ -103,6 +103,8 @@ export interface AppDependencies {
   readonly weeklyAwards: { readonly awards: WeeklyAwards; readonly clock: () => Date };
   /** The stores, props and pieces members unlock by training. */
   readonly unlocks: Unlocks;
+  /** What squads' coaches gave members, for `/me/unlocks`. */
+  readonly gifts: Pick<CoachGifts, 'of'>;
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */
   readonly jobs: {

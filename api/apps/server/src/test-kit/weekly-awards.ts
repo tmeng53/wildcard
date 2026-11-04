@@ -40,6 +40,9 @@ export const unusedCoachActivity = { squad: unused, spoke: unused };
 /** What members unlocked, for an app whose test never reads it. */
 export const unusedUnlocks = { of: unused, standing: unused };
 
+/** What coaches gave members, for an app whose test never reads it. */
+export const unusedGifts = { of: unused };
+
 /**
  * What members were told, and their live events, for an app whose test never reads them: notices
  * told are dropped, since keeping them never decides what a request answers.
