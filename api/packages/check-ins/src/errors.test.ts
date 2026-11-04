@@ -4,9 +4,11 @@ import {
   CheckInDayMismatchError,
   CheckInIdConflictError,
   CheckInInTheFutureError,
+  CheckInKindChangedError,
   CheckInNotFoundError,
   CheckInTooOldError,
   CommentIdConflictError,
+  NotYourCheckInError,
   NotYourCommentError,
   OwnCheckInReactionError,
   PlanDayStartedError,
@@ -38,6 +40,8 @@ describe('check-in errors', () => {
         new CommentIdConflictError('k1'),
         new ReplyToNotInSquadError(),
         new NotYourCommentError(),
+        new NotYourCheckInError(),
+        new CheckInKindChangedError('trained'),
       ].map(({ name, reason, status }) => [name, reason, status]),
     ).toStrictEqual([
       ['CheckInIdConflictError', 'CHECK_IN_ID_CONFLICT', 'ALREADY_EXISTS'],
@@ -55,6 +59,8 @@ describe('check-in errors', () => {
       ['CommentIdConflictError', 'COMMENT_ID_CONFLICT', 'ALREADY_EXISTS'],
       ['ReplyToNotInSquadError', 'REPLY_TO_NOT_IN_SQUAD', 'INVALID_ARGUMENT'],
       ['NotYourCommentError', 'NOT_YOUR_COMMENT', 'PERMISSION_DENIED'],
+      ['NotYourCheckInError', 'NOT_YOUR_CHECK_IN', 'PERMISSION_DENIED'],
+      ['CheckInKindChangedError', 'CHECK_IN_KIND_CHANGED', 'INVALID_ARGUMENT'],
     ]);
   });
 });

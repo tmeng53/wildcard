@@ -2,6 +2,8 @@
 import AvatarArt
 import AvatarDomain
 import AvatarUI
+import CheckInDomain
+import CheckInUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -68,9 +70,9 @@ public final class FeedModel {
     /// bar while one is.
     public var opened: CheckInID?
     /// Whom the member's next comment replies to (回复 Mia：…), on the open page.
-    var replyingTo: MemberID?
+    var replyingTo: ReplyTarget?
     /// Bumps on each comment the member sends, for its haptic.
-    private(set) var commentsSent = 0
+    var commentsSent = 0
     private(set) var played: [CheckInID: Played] = [:]
     private(set) var flights: [Flight] = []
     private(set) var bubbles: [CheckInID: Bubble] = [:]
@@ -82,6 +84,17 @@ public final class FeedModel {
     private(set) var arrivals = 0
     /// Bumps when the bar opens by holding a card, for its haptic.
     private(set) var lifts = 0
+    /// Edits and deletes the member's own posts; without one, posts show no 「…」.
+    let editor: (any PostEditing)?
+    /// Told each change the member makes to one of their posts here, for the other screens that
+    /// show it (我的动态 under a post opened from it).
+    public var changed: ((PostChange) -> Void)?
+    /// The compose page open on one of the member's posts, to edit it.
+    var editing: ComposeModel?
+    /// The member's post they asked to delete, waiting for them to confirm.
+    var confirmingDelete: CheckInID?
+    /// The last delete didn't go through.
+    var deleteFailed = false
 
     /// Each player with the outfit it wears, so a look that changed since builds a new one.
     @ObservationIgnored private var players: [CheckInID: (outfit: Outfit, persona: Persona, player: CharacterPlayer)] =
@@ -90,15 +103,17 @@ public final class FeedModel {
     /// The coaches' characters, by coach, for their heads and the 战术板.
     @ObservationIgnored var coachPlayers: [CoachID: CharacterPlayer] = [:]
     @ObservationIgnored private var flightCount = 0
-    @ObservationIgnored private let now: () -> Date
-    @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored let now: () -> Date
+    @ObservationIgnored let defaults: UserDefaults
 
     public init(
-        store: FeedStore, viewer: MemberID, coach: FeedCoach? = nil, now: @escaping () -> Date = { Date() },
+        store: FeedStore, viewer: MemberID, editor: (any PostEditing)? = nil, coach: FeedCoach? = nil,
+        now: @escaping () -> Date = { Date() },
         defaults: UserDefaults = .standard
     ) {
         self.store = store
         self.viewer = viewer
+        self.editor = editor
         self.coach = coach
         self.now = now
         self.defaults = defaults
@@ -181,35 +196,6 @@ public final class FeedModel {
         guard let checkIn else { return }
         store.show(checkIn)
         focus = checkIn.id
-    }
-
-    // MARK: - A post's own page
-
-    /// Opens a post's own page, where its comments are: from its card, or from a comment's push.
-    public func openPage(_ post: CheckInID) {
-        // Already open (a comment's push while reading it): read it again for the new comment.
-        if opened == post { Task { await store.loadPost(post) } }
-        closeBar()
-        listing = nil
-        replyingTo = nil
-        opened = post
-    }
-
-    /// A post's own page outside the feed (a tile on 我的动态): one post, read and answered as
-    /// 动态 does, with the same recent emoji.
-    public func page(of post: CheckInID) -> FeedModel {
-        FeedModel(store: store.store(of: post), viewer: viewer, coach: coach, now: now, defaults: defaults)
-    }
-
-    /// Sends the member's comment on a post, replying to whomever they picked. False when it
-    /// couldn't go out; the words stay to try again.
-    func comment(_ text: CommentText, on post: CheckInID) async -> Bool {
-        let sent = await store.comment(text, replyingTo: replyingTo, on: post)
-        if sent {
-            replyingTo = nil
-            commentsSent += 1
-        }
-        return sent
     }
 
     // MARK: - Reacting

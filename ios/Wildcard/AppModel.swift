@@ -10,6 +10,7 @@ import FeedDomain
 import FeedUI
 import Foundation
 import MeDomain
+import NotificationsDomain
 import Observation
 import OnboardingUI
 import RecapDomain
@@ -282,7 +283,8 @@ final class AppModel {
             Task { await readScene(of: home.squad.id, into: today) }
         }
         screen = .tabs(
-            today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
+            today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home, editor: store),
+            squad: squad,
             recap: recap)
         homeSquad = home.squad.id
     }
@@ -317,6 +319,9 @@ final class AppModel {
 
     /// 我的动态 over our API.
     var myPosts: any MyPostsSource { APIMyPostsSource(api: api) }
+
+    /// 通知 over our API.
+    var notices: any NoticeSource { APINoticeSource(api: api) }
 
     private func registerForPush() async {
         try? await Push.registration.signedIn(APIDeviceRegistry(api: api))

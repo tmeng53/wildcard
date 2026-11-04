@@ -37,6 +37,7 @@ describe('openapi.json', () => {
       exists: () => Promise.reject(new Error('unused')),
       createViewUrls: () => Promise.reject(new Error('unused')),
       deleteAllOf: () => Promise.reject(new Error('unused')),
+      delete: () => Promise.reject(new Error('unused')),
     };
     const app = createApp({
       db,

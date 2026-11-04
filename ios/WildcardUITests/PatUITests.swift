@@ -65,6 +65,38 @@ final class PatUITests: XCTestCase {
         XCTAssertTrue(bubble.waitForNonExistence(timeout: Self.wait), "tapping 豆豆 again left the bubble up")
     }
 
+    /// Whoever posted a meal last eats it on the home, and their bubble says so with their words:
+    /// 小米 had a salad after her run, Leo a boba without training.
+    func testTeammatesEatingTheirLatestPost() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
+            "-today.cardPage", "0", "-uitest-meals", "-uitest-bubble-hold",
+        ]
+        app.launch()
+        let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "今天 never appeared")
+        Thread.sleep(forTimeInterval: 2)
+        keepScreenshot(named: "56-meals-home")
+
+        let bubble = app.descendants(matching: .any).matching(identifier: "today.patBubble").firstMatch
+        let pat = app.buttons["today.pat"]
+        for (nickname, status, words, shot) in [
+            ("Leo", "Leo · 在吃放纵餐", "奶茶续命", "57-meals-boba"), ("小米", "小米 · 在吃健康餐", "练完来碗沙拉", "58-meals-salad"),
+        ] {
+            mate(nickname, in: app).tap()
+            XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "tapping \(nickname) showed no bubble")
+            XCTAssertTrue(labeled(status, in: app).exists, "\(nickname)'s bubble doesn't say what she is eating")
+            XCTAssertTrue(labeled(words, in: app).exists, "\(nickname)'s bubble doesn't show her words")
+            expectOnScreen(bubble, pat, in: app)
+            Thread.sleep(forTimeInterval: 0.6)
+            keepScreenshot(named: shot)
+            mate(nickname, in: app).tap()
+            XCTAssertTrue(bubble.waitForNonExistence(timeout: Self.wait), "\(nickname)'s bubble stayed up")
+        }
+    }
+
     /// The bubble whole inside the window, below the status bar and above the tab bar, and its
     /// button tappable.
     private func expectOnScreen(_ bubble: XCUIElement, _ button: XCUIElement, in app: XCUIApplication) {

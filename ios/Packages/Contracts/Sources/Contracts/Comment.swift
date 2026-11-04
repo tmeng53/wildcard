@@ -14,21 +14,33 @@ public struct CommentText: Hashable, Sendable {
     }
 }
 
+/// Whom a comment replies to: a member who can see the post (回复 Mia：…), or the squad's coach
+/// that said something under it (回复 毛头：…), which answers it.
+public enum ReplyTarget: Hashable, Sendable {
+    case member(MemberID)
+    case coach(CoachID)
+}
+
 /// A comment under a check-in, from its author or a teammate who can see it: one level deep,
 /// never edited; its writer may delete it.
 public struct Comment: Hashable, Sendable, Identifiable {
     public let id: CommentID
     public let member: MemberID
     public let text: CommentText
-    /// Whom it replies to (回复 Mia：…), when it does.
-    public let replyTo: MemberID?
+    /// Whom it replies to, when it does.
+    public let replyTo: ReplyTarget?
     public let commentedAt: Timestamp
 
-    public init(id: CommentID, member: MemberID, text: CommentText, replyTo: MemberID?, commentedAt: Timestamp) {
+    public init(id: CommentID, member: MemberID, text: CommentText, replyTo: ReplyTarget?, commentedAt: Timestamp) {
         self.id = id
         self.member = member
         self.text = text
         self.replyTo = replyTo
         self.commentedAt = commentedAt
+    }
+
+    /// The member it replies to, when it replies to one.
+    public var replyToMember: MemberID? {
+        if case .member(let member) = replyTo { member } else { nil }
     }
 }

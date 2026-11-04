@@ -316,3 +316,17 @@ private func floorSpots(_ stage: SquadStage) -> [StagePoint] {
         if case .floor(let spot) = placement { spot } else { nil }
     }
 }
+
+@Test func someoneEatingTheirLatestPostEatsOnTheFloorAndSleepsAtNight() {
+    var stage = SquadStage(layout: .of(.track))
+    let ranThenAte = StageMember(
+        id: id(1), status: .trained(.sport("run")), firstCheckInAt: at(1), keepsToTheBack: false, eating: .healthyMeal)
+    let ate = StageMember(id: id(2), status: .notYet, firstCheckInAt: at(2), keepsToTheBack: false, eating: .cheatMeal)
+    stage.arrange([ranThenAte, ate])
+    // Off the track: eating, not running.
+    #expect(stage.placements[id(1)].map { if case .floor = $0 { true } else { false } } == true)
+    #expect(stage.pose(of: ranThenAte, at: .day) == .eating(.healthyMeal))
+    #expect(stage.pose(of: ate, at: .day) == .eating(.cheatMeal))
+    #expect(stage.pose(of: ate, at: .night) == .asleep)
+    #expect(stage.cheerers([ranThenAte, ate], at: .day) == [id(1), id(2)])
+}
