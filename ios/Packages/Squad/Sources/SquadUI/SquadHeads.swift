@@ -25,7 +25,7 @@ struct SquadHeads: View {
         FlowRow {
             ForEach(members) { member in
                 HeadSpot(name: Text(verbatim: MemberRow.name(of: member))) {
-                    MemberHead(character: member.character, size: SquadHeadsMetrics.circle)
+                    LookHead(character: member.character, size: SquadHeadsMetrics.circle)
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("squad.head")

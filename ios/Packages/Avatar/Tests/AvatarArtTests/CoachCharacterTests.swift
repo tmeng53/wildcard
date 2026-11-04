@@ -1,5 +1,6 @@
 import AvatarArt
 import AvatarDomain
+import Foundation
 import Testing
 
 /// Every bundled coach builds, plays each move from rest, and stays on the canvas.
@@ -16,16 +17,22 @@ import Testing
     }
 }
 
-/// At rest the coach's eyes are open and dry; blinking and crying show only in their moves.
-@Test func coachFacesShowOnlyInTheirMoves() throws {
-    let figure = try CoachCharacter.figure("xiaohun")
-    let (blink, cry) = (try figure.index("blink"), try figure.index("cry"))
-    #expect(figure.parts[blink].restOpacity == 0 && figure.parts[cry].restOpacity == 0)
-    let idle = try figure.bind(CoachCharacter.clip(.idle, coach: "xiaohun"))
-    #expect(figure.pose(idle, at: 1).parts[blink].opacity == 0)
-    #expect(figure.pose(idle, at: 2.7).parts[blink].opacity == 1)
-    let crying = try figure.bind(CoachCharacter.clip(.crying, coach: "xiaohun"))
-    #expect(figure.pose(crying, at: 0.5).parts[cry].opacity == 1)
+/// 毛头 is a member-style cat in its own jacket and whistle, moving as a deadpan cat.
+@Test func maotouWearsItsOwnLook() throws {
+    let look = try CoachCharacter.look("xiaohun")
+    #expect(look.persona == .deadpan)
+    #expect(look.species == "cat")
+    #expect(look.outfit.variants["body"] == "maotou")
+    #expect(look.outfit.variants["top"] == "coach-jacket")
+    #expect(look.outfit.variants["acc"] == "coach-gear")
+    #expect(look.outfit.colors["bottom"] == RGBAColor(hex: "#2A2D36"))
+}
+
+/// A coach's own parts never show in the character editor's lists.
+@Test func coachPartsStayOutOfTheEditor() {
+    #expect(!PlaceholderCharacter.variants(for: "body").contains("maotou"))
+    #expect(!PlaceholderCharacter.variants(for: "top").contains("coach-jacket"))
+    #expect(!PlaceholderCharacter.variants(for: "acc").contains("coach-gear"))
 }
 
 @Test func aCoachWithoutArtHasNone() {

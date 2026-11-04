@@ -20,9 +20,11 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 
 | Component | Use it for |
 | --- | --- |
-| `PrimaryButtonStyle`, `SecondaryButtonStyle`, `TextButtonStyle` | The one primary action (52, the accent tone: scene, brand, or ink on the 我 pages), a second action (44, grey; white inside a grey card), a quiet text action; `.danger` turns only the words red (`fgDanger`), for an action that can't be taken back (解雇), never the page's main action |
+| `PrimaryButtonStyle`, `SecondaryButtonStyle`, `TextButtonStyle` | The one primary action (52, the accent tone: scene, brand, or ink on the 我 pages), a second action (44, grey; white inside a grey card), a quiet text action; `.danger` turns only the words red (`fgDanger`), for an action that can't be taken back (解雇), never the page's main action. Solid in a page's content; floating (`controlPlacement(.floating)`, set by `actionBar`), they wear interactive Liquid Glass, the primary one tinted in its tone |
+| `.actionBar { }`, `ControlPlacement` | A page's bottom actions floating over its content in glass, in the system's bottom safe-area bar with the scroll edge effect, never a solid strip (sign-up steps, the character editor, 简历, 解雇). Glass is only for controls that float (bars, headers, over the scene or photos); buttons in content stay solid (Tracy, 2026-11-04) |
+| `StateView`, `InlineFailure` | Instead of a page's or card's content when it couldn't be read or is empty: an optional figure, one headline and at most one regular primary action (`.offline(retryIdentifier:retry:)` is 网络开小差了 with 再试一次); the footnote line under a change that didn't go out (网络开小差了，没存上) |
 | `AppleButtonStyle` | Confirming with Apple (注销), in Apple's own black as its button guidelines ask: filled, or `.outlined` when a gentler action leads |
-| `HeaderButton`, `HeaderMenu`, `StepHeader`, `StepSegments` | A 44-point round header button in the system's interactive Liquid Glass on every surface (a white glyph over photos on ink), and the same circle opening a menu (「…」 on the member's own post); a sign-up step's back button and ink segments |
+| `HeaderButton`, `HeaderTextButton`, `HeaderMenu`, `StepHeader`, `StepSegments` | A 44-point round header button in the system's interactive Liquid Glass on every surface (a white glyph over photos on ink), every 关闭 included, and the same circle opening a menu (「…」 on the member's own post); a header's words (取消, 发布, 保存) in a glass capsule, `prominent` tinted in the accent tone for the one that finishes the page; a sign-up step's back button and ink segments |
 | `.photoViewer(isPresented:count:page:load:)` | A post's photos full screen on ink, zooming out of the photos tapped: pinch or double tap to zoom, swipe between them, swipe down or 关闭 to put them back (发动态 and 动态) |
 | `swipesBack(isEnabled:perform:)` | A page with 返回 also goes back on a swipe right from anywhere on it, following the finger |
 | `CategoryBar` | Where am I: switching scenes, tabs in a panel, sport categories (ink capsule) |
@@ -31,7 +33,9 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `TickRuler`, `RulerScale` | A number slid under a needle (刻度), snapping to the scale's marks with one `pick` tick per mark (发动态's minutes under 其他) |
 | `InputField`, `SearchField` | Text entry |
 | `dismissesKeyboardOnTapOutside()` | Applied once at the app's root: a tap outside a text input puts the keyboard away on every screen, and still reaches what was tapped |
-| `KindButton`, `Tag`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
+| `KindButton`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
+| `Tag`, `Hairline` | A short label on a post, a card or a head: `.accent` (scene or brand fill), `.rest` (grey, 请假 and the moon), `.ink` (on the player card and 小队's statuses), `.regular` or `.small`; one hairline divider, `on: .page` or `.ink` |
+| `ReactionBar`, `EmojiPicker`, `ReactionBarMetrics` | Reacting to a post (动态 and the 6pm push): the floating glass bar of common emoji with the finger's slot raised and a plus, then the glass card of every emoji (recent, all, optional search) |
 | `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |
 | `TicketSpinner`, `TicketRock` | A whole-page wait: the logo's two tickets rocking apart and back on a 0.9 s beat, on graphite (`.brand`, the launch cover), the brand's light page (`.page`) or a light role of the scene (`.light`: 动态, 我, 出赛表, 小队设置, a photo still loading); still with Reduce Motion |
 | `.card(on:)`, `SectionLabel`, `ListRow`, `SwitchRow` | Cards (grey on a page, white on the scene), group labels, list rows (a plain menu leaves out icon and chevron), a setting's on/off row |

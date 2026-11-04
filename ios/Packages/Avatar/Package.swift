@@ -24,7 +24,9 @@ let package = Package(
                 .product(name: "DesignSystem", package: "DesignSystem"),
             ],
             resources: [.copy("Placeholder"), .copy("Coaches")]),
-        .target(name: "AvatarUI", dependencies: ["AvatarDomain", "AvatarArt"]),
+        .target(
+            name: "AvatarUI",
+            dependencies: ["AvatarDomain", "AvatarArt", .product(name: "DesignSystemUI", package: "DesignSystem")]),
         // The looks the tests and previews share; no product, so only this package's tests see it.
         .target(
             name: "AvatarLooks",
