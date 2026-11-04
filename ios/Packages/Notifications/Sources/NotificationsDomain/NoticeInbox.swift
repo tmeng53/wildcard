@@ -105,6 +105,8 @@ public final class NoticeInbox {
     public func load() async {
         generation += 1
         let mine = generation
+        // With nothing to show yet, the page says it is loading, as on a retry after a failed one.
+        if notices.isEmpty { phase = .loading }
         do {
             var page = try await source.notices(before: nil)
             var found = page.notices

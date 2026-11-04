@@ -97,16 +97,10 @@ public struct NoticesView: View {
             } else if inbox.phase == .current {
                 EmptyNotices(viewer: viewer)
             } else if inbox.phase == .offline {
-                Button {
-                    Task { await inbox.open() }
-                } label: {
-                    Text("加载失败，点一下再试", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: .gym))
-                }
-                .frame(maxWidth: .infinity, minHeight: Sizing.control)
-                .padding(.top, Space.xxl)
-                .accessibilityIdentifier("notices.retry")
+                tryAgain { await inbox.open() }
+                    .frame(maxWidth: .infinity, minHeight: Sizing.control)
+                    .padding(.top, Space.xxl)
+                    .accessibilityIdentifier("notices.retry")
             }
         } else {
             let shownAt = now()
@@ -136,13 +130,7 @@ public struct NoticesView: View {
     @ViewBuilder private var more: some View {
         Group {
             if inbox.moreFailed {
-                Button {
-                    Task { await inbox.loadMore() }
-                } label: {
-                    Text("加载失败，点一下再试", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: .gym))
-                }
+                tryAgain { await inbox.loadMore() }
             } else {
                 // Again after each page read, while the end is still in view, even one that had
                 // nothing this build can show.
@@ -151,6 +139,17 @@ public struct NoticesView: View {
             }
         }
         .frame(maxWidth: .infinity, minHeight: Sizing.control)
+    }
+
+    /// 加载失败，点一下再试: a read that didn't reach the server, tried again on a tap.
+    private func tryAgain(_ retry: @escaping @MainActor () async -> Void) -> some View {
+        Button {
+            Task { await retry() }
+        } label: {
+            Text("加载失败，点一下再试", bundle: .module)
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: .gym))
+        }
     }
 }
 
