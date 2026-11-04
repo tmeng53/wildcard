@@ -32,12 +32,7 @@ extension Catalog {
         var variants = choices.wear.mapValues { pieces in
             pieces.filter { open.contains($0.store) && toGo[$0.id] == nil }.map(\.id)
         }
-        let stillLocked = choices.wear.mapValues { pieces in
-            Dictionary(
-                uniqueKeysWithValues: pieces.filter { !packedAway.contains($0.store) }.compactMap { piece in
-                    toGo[piece.id].map { (piece.id, $0) }
-                })
-        }.filter { !$0.value.isEmpty }
+        let stillLocked = boxes(of: choices.wear, toGo: toGo, packedAway: packedAway)
         for slot in ["hair"] + PlaceholderCharacter.faceSlots {
             variants[slot] = PlaceholderCharacter.variants(for: slot)
         }
@@ -68,5 +63,18 @@ extension Catalog {
             originals: originals,
             defaults: try PlaceholderCharacter.rig().defaults.filter { Catalog.dressSlots.contains($0.key) },
             stores: everyStore, storeOf: storeOf, locked: stillLocked)
+    }
+
+    /// The 「？」 boxes by slot: each piece still to go, but none in a store packed away out of
+    /// its season, since nothing unlocks there until it opens again.
+    private static func boxes(
+        of wear: [Slot: [EditorChoices.Wearable]], toGo: [String: Int], packedAway: Set<String>
+    ) -> [Slot: [String: Int]] {
+        wear.mapValues { pieces in
+            Dictionary(
+                uniqueKeysWithValues: pieces.filter { !packedAway.contains($0.store) }.compactMap { piece in
+                    toGo[piece.id].map { (piece.id, $0) }
+                })
+        }.filter { !$0.value.isEmpty }
     }
 }
