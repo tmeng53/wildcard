@@ -173,13 +173,16 @@ final class PatStage {
 
     /// I tapped myself: my status over my head, 「我 · 今天还没打卡」, with nothing to do about
     /// it. Tapped again while it is up, it closes.
-    func tapMe(_ member: MemberID, status: StageStatus, eating: MealKind?, caption: String?, disclaimer: String?) {
+    func tapMe(
+        _ member: MemberID, status: StageStatus, eating: MealKind?, caption: String?, disclaimer: String?,
+        asleep: Bool = false
+    ) {
         guard pat == nil else { return }
         if bubble?.kind == .mine {
             bubble = nil
             return
         }
-        let line = Self.status(status, eating: eating, caption: caption, disclaimer: disclaimer, asleep: false)
+        let line = Self.status(status, eating: eating, caption: caption, disclaimer: disclaimer, asleep: asleep)
         show(
             Bubble(
                 mate: member, kind: .mine,

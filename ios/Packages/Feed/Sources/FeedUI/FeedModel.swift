@@ -279,33 +279,53 @@ public final class FeedModel {
 
     // MARK: - Characters
 
-    /// The author's character on a post: their look, and on a 练了 that day's sport, in its kit
-    /// and looping its move (`kits.json`, as every screen plays a sport), at the persona's tempo;
-    /// holding still on the other kinds. A reaction's move plays over either.
+    /// The author's character on a post, doing what the post is about, as the home does it: on a
+    /// 练了 that day's sport, in its kit and looping its move (`kits.json`, as every screen plays a
+    /// sport), on a meal eating it from the bowl or the boba, on a 请假条 holding it up (the card
+    /// draws the sign), each at the persona's tempo. A reaction's move plays over any of them.
     func player(for post: FeedPost) -> CharacterPlayer? {
         let character = store.characters[post.author]
         let persona = character?.look.moves ?? .energetic
         let look = character?.look.outfit ?? PlaceholderCharacter.lifter
-        let kit = trainingKit(of: post)
-        let outfit = kit?.dress(look) ?? look
+        let (outfit, loop) = Self.dressing(post, look: look, persona: persona)
         if let cached = players[post.id], cached.outfit == outfit, cached.persona == persona { return cached.player }
-        let idle = kit.flatMap { try? PlaceholderCharacter.move(for: $0, persona: persona) } ?? .still
         guard let figure = try? PlaceholderCharacter.figure(wearing: outfit),
-            let player = try? CharacterPlayer(figure: figure, idle: idle, now: now())
+            let player = try? CharacterPlayer(figure: figure, idle: loop ?? .still, now: now())
         else { return nil }
         players[post.id] = (outfit, persona, player)
         return player
     }
 
-    /// Whether the post's character trains at rest (a 练了), so its card keeps drawing it.
-    func trains(_ post: FeedPost) -> Bool {
-        trainingKit(of: post) != nil
+    /// Whether the post's character loops something at rest, so its card keeps drawing it.
+    func loops(_ post: FeedPost) -> Bool {
+        if case .trained(let training) = post.checkIn.entry {
+            return Self.kits?.kit(for: training.activity, in: SportList.shared.catalog) != nil
+        }
+        return true
     }
 
-    /// A 练了's sport kit, read once from `kits.json`.
-    private func trainingKit(of post: FeedPost) -> SportKit? {
-        guard case .trained(let training) = post.checkIn.entry else { return nil }
-        return Self.kits?.kit(for: training.activity, in: SportList.shared.catalog)
+    /// Whether the post's character holds up a 请假条, which the card draws over it.
+    func holdsSign(_ post: FeedPost) -> Bool {
+        if case .disclaimer = post.checkIn.entry { true } else { false }
+    }
+
+    /// What the author wears and loops for `post`; no loop when the art can't play one.
+    private static func dressing(_ post: FeedPost, look: Outfit, persona: Persona) -> (outfit: Outfit, loop: Clip?) {
+        switch post.checkIn.entry {
+        case .trained(let training):
+            guard let kit = kits?.kit(for: training.activity, in: SportList.shared.catalog) else { return (look, nil) }
+            return (kit.dress(look), try? PlaceholderCharacter.move(for: kit, persona: persona))
+        case .healthyMeal:
+            return eating(.healthyMeal, look: look, persona: persona)
+        case .cheatMeal:
+            return eating(.treatMeal, look: look, persona: persona)
+        case .disclaimer:
+            return (look, try? PlaceholderCharacter.holdingSign(persona: persona))
+        }
+    }
+
+    private static func eating(_ meal: CheckInMove, look: Outfit, persona: Persona) -> (outfit: Outfit, loop: Clip?) {
+        (PlaceholderCharacter.dressed(look, for: meal), try? PlaceholderCharacter.mealLoop(meal, persona: persona))
     }
 
     private static let kits = try? PlaceholderCharacter.sportKits()
