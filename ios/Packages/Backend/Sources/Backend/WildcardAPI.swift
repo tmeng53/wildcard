@@ -20,7 +20,8 @@ public struct WildcardAPI: Sendable {
 
     let client: Client
     /// The same API on `URLSession.live`, for the stream of live events, which stays quiet
-    /// longer than a call may.
+    /// longer than a call may; always that session, whatever `http` is, since it outwaits the
+    /// heartbeat.
     let live: Client
     private let http: URLSession
 

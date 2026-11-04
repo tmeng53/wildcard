@@ -87,6 +87,8 @@ public final class NoticeInbox {
     private var seenWhenOpened: NoticeID?
     /// Whether 通知 is on screen.
     private var isOpen = false
+    /// Whether the stream being heard got as far as `.ready`.
+    private var heardReady = false
     private var next: NoticeID?
     /// Bumped by every fresh load, so an older page that comes back after it is dropped.
     private var generation = 0
@@ -151,18 +153,33 @@ public final class NoticeInbox {
 
     /// Keeps the bell current while the app is open: listens for notices as they are told and,
     /// each time the stream ends or can't be heard, waits `pause` and listens again, until the
-    /// task is cancelled (the app went to the background).
-    public func follow(pause: @escaping @Sendable () async -> Void) async {
+    /// task is cancelled (the app went to the background) or the session is over. A stream the
+    /// server ended after it was ready waits `firstWait`, the server's `retry`; each try in a row
+    /// that never got that far waits twice as long as the last, up to `longestWait`.
+    public func follow(pause: @escaping @Sendable (Duration) async -> Void) async {
+        var misses = 0
         while !Task.isCancelled {
-            try? await source.listen { [weak self] heard in await self?.hear(heard) }
+            heardReady = false
+            do {
+                try await source.listen { [weak self] heard in await self?.hear(heard) }
+            } catch .signedOut {
+                return
+            } catch {}
             guard !Task.isCancelled else { return }
-            await pause()
+            misses = heardReady ? 0 : misses + 1
+            await pause(min(Self.firstWait * (1 << min(misses, 5)), Self.longestWait))
         }
     }
+
+    /// The wait before listening again after the server ended a stream: its `retry`.
+    public static let firstWait = Duration.seconds(3)
+    /// The longest wait between tries while the stream can't be heard.
+    public static let longestWait = Duration.seconds(60)
 
     func hear(_ heard: LiveNotice) async {
         switch heard {
         case .ready:
+            heardReady = true
             // Whatever was told while nobody listened is on the newest page.
             if isOpen { await refresh() } else { await load() }
         case .told(let notice):
