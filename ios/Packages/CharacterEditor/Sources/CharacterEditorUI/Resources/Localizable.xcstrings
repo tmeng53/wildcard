@@ -3362,22 +3362,6 @@
         }
       }
     },
-    "开箱试穿": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open and try on"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "開箱試穿"
-          }
-        }
-      }
-    },
     "先不了": {
       "localizations": {
         "en": {
@@ -3470,6 +3454,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "網球毛線帽"
+          }
+        }
+      }
+    },
+    "一键全开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open them all"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一鍵全開"
+          }
+        }
+      }
+    },
+    "可以开了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready to open"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以開了"
+          }
+        }
+      }
+    },
+    "新货，可以开了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New arrival, ready to open"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新貨，可以開了"
           }
         }
       }

@@ -137,9 +137,12 @@ struct MainTabs: View {
     /// Opens the editor on the member's own character.
     private func editCharacter() {
         guard let character = profile.overview?.character else { return }
+        // Which boxes this phone opened, per member; the sample squad's member is new each launch.
+        let marks: any WardrobeMarks =
+            today.home.map { DeviceWardrobeMarks(member: $0.member.description) } ?? MemoryWardrobeMarks()
         editor = try? CharacterEditorModel.placeholder(
             look: character.outfit, persona: character.persona, nickname: character.nickname,
-            unlocks: profile.overview?.unlocks ?? [], locked: profile.overview?.lockedPieces ?? [])
+            unlocks: profile.overview?.unlocks ?? [], locked: profile.overview?.lockedPieces ?? [], marks: marks)
     }
 
     /// A tap on the home's notice that a store or prop opened: 我's editor, inside that store or on
@@ -242,8 +245,13 @@ struct MainTabs: View {
             selection = .today
         case .post(let id):
             noticePost = OpenedPost(id: id, model: feed.page(of: id))
-        case .wardrobe:
-            editCharacter()
+        case .wardrobe(let kind, let item):
+            // As the home's banner does: a piece's row puts its boxes up, a store's opens it.
+            Task {
+                await profile.reload()
+                editCharacter()
+                editor?.show(kind, item: item)
+            }
         }
     }
 

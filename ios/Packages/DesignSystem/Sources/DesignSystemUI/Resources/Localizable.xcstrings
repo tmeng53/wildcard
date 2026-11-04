@@ -3002,6 +3002,22 @@
           }
         }
       }
+    },
+    "NEW": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEW"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEW"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

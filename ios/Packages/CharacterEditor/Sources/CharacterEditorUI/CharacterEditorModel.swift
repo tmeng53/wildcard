@@ -69,9 +69,19 @@ public final class CharacterEditorModel {
     /// Idle seconds on the 性格 tab before a held prop plays its move again.
     static let propEvery: Double = 12
 
-    public init(draft: CharacterDraft, tab: EditorTab = .look) {
+    public init(
+        draft: CharacterDraft, tab: EditorTab = .look, arrived: Set<String> = [],
+        marks: any WardrobeMarks = MemoryWardrobeMarks()
+    ) {
         self.draft = draft
         self.tab = tab
+        self.marks = marks
+        (opened, seen) = (marks.opened, marks.seen)
+        // A piece the look already wears was found before boxes came in; it needs no opening.
+        let worn = Set(draft.picks.variants.values)
+        self.arrived = arrived.filter { piece in
+            draft.catalog.storeOf[piece] != nil && !worn.contains(piece)
+        }
     }
 
     /// The placeholder character's catalog, with the stores and props the member unlocked open,
@@ -79,13 +89,14 @@ public final class CharacterEditorModel {
     /// look its first screen showed.
     public static func placeholder(
         look: Outfit? = nil, persona: Persona = .energetic, nickname: String, tab: EditorTab = .look,
-        unlocks: [Unlock] = [], locked: [LockedPiece] = []
+        unlocks: [Unlock] = [], locked: [LockedPiece] = [], marks: any WardrobeMarks = MemoryWardrobeMarks()
     ) throws(AvatarError) -> CharacterEditorModel {
         let catalog = try Catalog.placeholder(unlocks: unlocks, locked: locked)
         var generator = SystemRandomNumberGenerator()
         let start = look ?? CharacterDraft.randomLook(from: catalog, using: &generator)
         return CharacterEditorModel(
-            draft: CharacterDraft(catalog: catalog, look: start, persona: persona, nickname: nickname), tab: tab)
+            draft: CharacterDraft(catalog: catalog, look: start, persona: persona, nickname: nickname), tab: tab,
+            arrived: Set(unlocks.filter { $0.kind == .piece }.map(\.id)), marks: marks)
     }
 
     /// Locks `pieces` in an editor opened before they were known, as sign-up's first screen is,
@@ -101,7 +112,7 @@ public final class CharacterEditorModel {
             look.colors[slot] = nil
         }
         draft = CharacterDraft(catalog: catalog, look: look, persona: draft.persona, nickname: draft.nickname)
-        (store, picked, unboxing, arrival) = (nil, nil, nil, nil)
+        (store, picked, arrival) = (nil, nil, nil)
         if player != nil { restyle(move: nil) }
     }
 
@@ -143,69 +154,111 @@ public final class CharacterEditorModel {
         (self.store, picked) = (store.id, nil)
     }
 
-    /// Opens on what a 练了 just unlocked, from its notice on the home: inside the store on the
-    /// 穿搭 tab, or on the 道具 tab for a prop. A piece waits in its 「？」 box in a pop-up over the
-    /// editor, which tells only which store it came to, until the member opens it or not.
+    /// Opens on what a 练了 just unlocked, from its notice on the home or in 通知: inside the store on
+    /// the 穿搭 tab, or on the 道具 tab for a prop. New pieces wait in their 「？」 boxes in a pop-up
+    /// over the editor, every one this phone hasn't opened, which tells only which store they came
+    /// to, until the member opens them all at once or not.
     public func show(_ unlock: Unlock) {
-        switch unlock.kind {
+        show(unlock.kind, item: unlock.id)
+    }
+
+    /// `show(_:)` by what unlocked, as 通知 names it.
+    public func show(_ kind: Unlock.Kind, item: String) {
+        switch kind {
         case .store:
-            guard let store = draft.catalog.stores.first(where: { $0.id == unlock.id && $0.isOpen }) else { return }
+            guard let store = draft.catalog.stores.first(where: { $0.id == item && $0.isOpen }) else { return }
             tab = .outfit
             visit(store)
         case .prop:
             tab = .prop
         case .piece:
             tab = .outfit
-            // A piece given before its store opened waits on the street with it.
-            guard let id = draft.catalog.storeOf[unlock.id],
-                let store = draft.catalog.stores.first(where: { $0.id == id && $0.isOpen }),
-                draft.catalog.rack(of: id).contains(where: { $0.variant == unlock.id })
-            else { return }
-            arrival = Arrival(piece: unlock.id, store: store)
+            showArrivals()
         }
     }
 
-    /// A piece that came in, boxed in the pop-up the editor opens with.
-    struct Arrival: Equatable {
-        let piece: String
-        let store: EditorChoices.Store
+    /// The pieces that came in that this phone hasn't opened, on the racks of open stores, in
+    /// street order: they hang as boxes 「可以开了」 until opened.
+    var unopened: [String] {
+        let open = draft.catalog.stores.filter(\.isOpen).map(\.id)
+        return open.flatMap { store in
+            draft.catalog.rack(of: store).map(\.variant).filter { arrived.contains($0) && !opened.contains($0) }
+        }
     }
 
-    /// The piece waiting in the pop-up, until the member opens its box or leaves it.
+    /// Whether the piece came in and still waits in its box.
+    func isBoxed(_ piece: String) -> Bool { arrived.contains(piece) && !opened.contains(piece) }
+
+    /// Whether the piece was opened here and not tapped since: it wears NEW.
+    func isNew(_ piece: String) -> Bool { opened.contains(piece) && arrived.contains(piece) && !seen.contains(piece) }
+
+    /// Whether the store has a piece waiting in its box or wearing NEW, for its card on the street.
+    func hasNews(_ store: String) -> Bool {
+        draft.catalog.rack(of: store).contains { isBoxed($0.variant) || isNew($0.variant) }
+    }
+
+    /// The boxes waiting, in the pop-up the editor opens with.
+    struct Arrival: Equatable {
+        let pieces: [String]
+        /// The one store they all came to, or nil when they came to several.
+        let store: String?
+    }
+
+    /// The boxes waiting in the pop-up, until the member opens them or leaves them.
     private(set) var arrival: Arrival?
 
-    /// 开箱试穿: into its store, where its box opens on the rack and the piece is tried on. It is
-    /// only the draft's, so leaving without saving keeps the look the member had.
+    /// Puts the pop-up up with every box this phone hasn't opened, if any.
+    func showArrivals() {
+        let pieces = unopened
+        guard !pieces.isEmpty else { return }
+        let stores = Set(pieces.compactMap { draft.catalog.storeOf[$0] })
+        arrival = Arrival(pieces: pieces, store: stores.count == 1 ? stores.first : nil)
+    }
+
+    /// 一键全开, once the boxes' opening has played: every box opens, each piece wears NEW on its
+    /// rack, and the shopping street shows, each store with news marked. Nothing is put on.
     func openArrival() {
         guard let arrival else { return }
         self.arrival = nil
-        visit(arrival.store)
-        unboxing = arrival.piece
+        marks.open(Set(arrival.pieces))
+        opened = marks.opened
+        (store, picked) = (nil, nil)
     }
 
-    /// 先不了: the look stays as it is, and the piece hangs on its rack for later.
+    /// 先不了: the boxes stay on their racks, 「可以开了」, and open the pop-up again when tapped.
     func leaveArrival() {
         arrival = nil
     }
 
-    /// The piece whose 「？」 box opens on its rack, once, after 开箱试穿.
-    private(set) var unboxing: String?
-
-    /// The box finished opening: the piece inside is tried on.
-    func unboxed(revealing variant: String, in slot: Slot) {
-        guard unboxing == variant else { return }
-        unboxing = nil
-        pickFromRack(variant, for: slot)
+    /// A piece on a rack, its slot and the draft wearing it, so its picture shows in the colors
+    /// it would be worn in.
+    func preview(of piece: String) -> (slot: Slot, outfit: Outfit)? {
+        guard let store = draft.catalog.storeOf[piece],
+            let slot = draft.catalog.rack(of: store).first(where: { $0.variant == piece })?.slot
+        else { return nil }
+        var wearing = draft
+        wearing.pick(piece, for: slot)
+        return (slot, wearing.outfit)
     }
+
+    @ObservationIgnored private let marks: any WardrobeMarks
+    /// The pieces the member unlocked that hang on a rack this build has.
+    private let arrived: Set<String>
+    private var opened: Set<String>
+    private var seen: Set<String>
 
     /// Back out to the shopping street.
     func leaveStore() {
-        (store, picked, unboxing) = (nil, nil, nil)
+        (store, picked) = (nil, nil)
     }
 
     /// Puts on a piece from the open store's rack; a second tap takes off a hat or an accessory,
     /// which a look can go without.
     func pickFromRack(_ variant: String, for slot: Slot) {
+        if isNew(variant) {
+            marks.see(variant)
+            seen = marks.seen
+        }
         let takesOff = Self.optionalClothes.contains(slot) && draft.picks.variants[slot] == variant
         pick(takesOff ? nil : variant, for: slot)
         picked = takesOff ? nil : slot

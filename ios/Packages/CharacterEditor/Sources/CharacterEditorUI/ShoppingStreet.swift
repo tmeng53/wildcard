@@ -88,11 +88,16 @@ private struct StoreCard: View {
                     }
                 }
                 .frame(width: badge, height: badge)
-                StoreCopy.name(store.id)
-                    .typeStyle(TypeRamp.scoreSmall)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .opacity(store.isOpen ? 1 : 0.45)
-                    .lineLimit(1)
+                HStack(spacing: Space.xs) {
+                    StoreCopy.name(store.id)
+                        .typeStyle(TypeRamp.scoreSmall)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .opacity(store.isOpen ? 1 : 0.45)
+                        .lineLimit(1)
+                    if store.isOpen && model.hasNews(store.id) {
+                        InkTag.new.accessibilityIdentifier("editor.store.\(store.id).new")
+                    }
+                }
                 if store.isOpen {
                     Text("\(StoreCopy.local(store.id)) · \(StoreCopy.sports(store.id))", bundle: .module)
                         .typeStyle(TypeRamp.caption)
@@ -181,7 +186,11 @@ private struct StoreRack: View {
             .foregroundStyle(Color(role: .fgMuted, in: theme))
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 3), spacing: Space.xs) {
             ForEach(model.draft.catalog.rack(of: store.id), id: \.variant) { piece in
-                RackPiece(model: model, slot: piece.slot, variant: piece.variant)
+                if model.isBoxed(piece.variant) {
+                    ReadyBox(model: model, slot: piece.slot)
+                } else {
+                    RackPiece(model: model, slot: piece.slot, variant: piece.variant)
+                }
             }
             // The pieces still locked hang last, as boxes nobody can see into.
             ForEach(model.draft.catalog.lockedRack(of: store.id), id: \.variant) { piece in
@@ -215,8 +224,36 @@ private struct MysteryBox: View {
     }
 }
 
+/// A piece that came in but whose box this phone hasn't opened: the same 「？」 box, 「可以开了」
+/// under it. A tap puts the pop-up up again with every box waiting.
+private struct ReadyBox: View {
+    let model: CharacterEditorModel
+    let slot: Slot
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        Button(action: model.showArrivals) {
+            VStack(spacing: Space.xxs) {
+                MysteryFace()
+                    .aspectRatio(1, contentMode: .fit)
+                Text("可以开了", bundle: .module)
+                    .typeStyle(TypeRamp.caption)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("新货，可以开了", bundle: .module))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("editor.ready.\(slot.rawValue)")
+    }
+}
+
 /// The face of a locked piece's box: a big 「？」 on the subtle fill, in the tile's shape.
-private struct MysteryFace: View {
+struct MysteryFace: View {
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -251,8 +288,13 @@ private struct RackPiece: View {
                 }
             )
             .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant)")
-            .overlay {
-                if model.unboxing == variant { Unboxing(onOpen: { model.unboxed(revealing: variant, in: slot) }) }
+            .overlay(alignment: .topLeading) {
+                if model.isNew(variant) {
+                    InkTag.new
+                        .padding(Space.xxs)
+                        .allowsHitTesting(false)
+                        .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant).new")
+                }
             }
             EditorNames.variant(variant, in: slot)
                 .typeStyle(TypeRamp.caption)
@@ -268,97 +310,6 @@ private struct RackPiece: View {
         var draft = model.draft
         draft.pick(variant, for: slot)
         return draft.outfit
-    }
-}
-
-/// A piece just unlocked, the first time its store opens on it: its 「？」 box sits over it, lifts
-/// off and fades, and the piece is put on. With reduced motion the box just fades.
-private struct Unboxing: View {
-    let onOpen: () -> Void
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var isOpen = false
-
-    /// How long the closed box shows before it opens, so the eye finds it first.
-    private let hold: Double = 0.6
-    /// How far the box lifts as it opens, a share of its height.
-    private let lift: Double = 0.35
-    /// How much it grows as it lifts.
-    private let grow: Double = 1.12
-
-    var body: some View {
-        GeometryReader { box in
-            MysteryFace()
-                .scaleEffect(isOpen && !reduceMotion ? grow : 1)
-                .offset(y: isOpen && !reduceMotion ? -box.size.height * lift : 0)
-                .opacity(isOpen ? 0 : 1)
-        }
-        .allowsHitTesting(!isOpen)
-        .haptic(.appear, trigger: isOpen) { _, open in open }
-        .task {
-            try? await Task.sleep(for: .seconds(hold))
-            withAnimation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion)) { isOpen = true }
-            try? await Task.sleep(for: .seconds(Motion.celebrate.response))
-            onOpen()
-        }
-    }
-}
-
-/// The pop-up the editor opens with when a piece came in: its 「？」 box and which store it came
-/// to, never what it is. 开箱试穿 opens the box on the store's rack and tries the piece on;
-/// 先不了 leaves the look as it is.
-struct ArrivalPopup: View {
-    let model: CharacterEditorModel
-    let arrival: CharacterEditorModel.Arrival
-    @Environment(\.sceneTheme) private var theme
-
-    /// The box's side, big enough to read as the thing to open.
-    private let box: Double = 112
-
-    var body: some View {
-        ZStack {
-            // A veil over the editor, so the pop-up is the one thing to answer.
-            Color(role: .bgInk, in: theme).opacity(0.4)
-                .ignoresSafeArea()
-                .accessibilityHidden(true)
-            VStack(spacing: Space.m) {
-                MysteryFace()
-                    .frame(width: box, height: box)
-                VStack(spacing: Space.xxs) {
-                    UnlockNames.title(.piece, item: arrival.piece)
-                        .typeStyle(TypeRamp.taskTitle)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .multilineTextAlignment(.center)
-                    Text("盒子里是什么，开了才知道", bundle: .module)
-                        .typeStyle(TypeRamp.callout)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .multilineTextAlignment(.center)
-                }
-                VStack(spacing: Space.xs) {
-                    Button {
-                        model.openArrival()
-                    } label: {
-                        Text("开箱试穿", bundle: .module).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(PrimaryButtonStyle())
-                    .accessibilityIdentifier("editor.arrival.open")
-                    Button {
-                        model.leaveArrival()
-                    } label: {
-                        Text("先不了", bundle: .module)
-                    }
-                    .buttonStyle(TextButtonStyle(.muted))
-                    .accessibilityIdentifier("editor.arrival.leave")
-                }
-            }
-            .padding(Space.l)
-            .background(
-                Color(role: .bgCanvas, in: theme),
-                in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-            )
-            .padding(.horizontal, Space.pageMargin + Space.m)
-            .accessibilityElement(children: .contain)
-            .accessibilityIdentifier("editor.arrival")
-        }
     }
 }
 
