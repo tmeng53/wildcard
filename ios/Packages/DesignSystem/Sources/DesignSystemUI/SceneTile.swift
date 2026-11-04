@@ -116,6 +116,7 @@ struct TilePattern: View {
         case .gym: Palette.gymSignature
         case .tennis: Palette.tennisSignature
         case .climbing: Palette.climbingSignature
+        case .ski: Palette.skiSignature
         }
     }
 
@@ -130,13 +131,7 @@ struct TilePattern: View {
             }
             context.fill(lines, with: .color(ink.opacity(0.4)))
         case .pool:
-            var dots = Path()
-            for top in stride(from: 0.0, to: size.height, by: 9) {
-                for left in stride(from: 0.0, to: size.width, by: 9) {
-                    dots.addEllipse(in: CGRect(x: left + 4.5 - 1.7, y: top + 4.5 - 1.7, width: 3.4, height: 3.4))
-                }
-            }
-            context.fill(dots, with: .color(ink.opacity(0.3)))
+            context.fill(dots(in: size), with: .color(ink.opacity(0.3)))
         case .gym:
             // 135° stripes every 10 points, 2 wide along the gradient: lines where x + y is constant.
             var stripes = Path()
@@ -163,7 +158,33 @@ struct TilePattern: View {
                         x: x * size.width - radius, y: y * size.height - radius, width: radius * 2, height: radius * 2))
             }
             context.fill(holds, with: .color(ink.opacity(0.28)))
+        case .ski:
+            context.stroke(skiTracks(in: size), with: .color(ink.opacity(0.3)), lineWidth: 1.5)
         }
+    }
+
+    /// The pool's dot grid, every 9 points.
+    private static func dots(in size: CGSize) -> Path {
+        var dots = Path()
+        for top in stride(from: 0.0, to: size.height, by: 9) {
+            for left in stride(from: 0.0, to: size.width, by: 9) {
+                dots.addEllipse(in: CGRect(x: left + 4.5 - 1.7, y: top + 4.5 - 1.7, width: 3.4, height: 3.4))
+            }
+        }
+        return dots
+    }
+
+    /// Two ski tracks curving down the slope.
+    private static func skiTracks(in size: CGSize) -> Path {
+        var tracks = Path()
+        for offset in [-3.0, 3.0] {
+            tracks.move(to: CGPoint(x: size.width * 0.2 + offset, y: 0))
+            tracks.addCurve(
+                to: CGPoint(x: size.width * 0.7 + offset, y: size.height),
+                control1: CGPoint(x: size.width * 0.9 + offset, y: size.height * 0.3),
+                control2: CGPoint(x: size.width * 0.1 + offset, y: size.height * 0.65))
+        }
+        return tracks
     }
 
     /// The scene's 24-point line icon: lanes, waves, a dumbbell, a ball, a peak.
@@ -208,6 +229,13 @@ struct TilePattern: View {
             path.addLine(to: CGPoint(x: 15, y: 12))
             path.addLine(to: CGPoint(x: 21, y: 20))
             path.closeSubpath()
+        case .ski:
+            // A snowflake: three bars through the centre, each with a tick at both ends.
+            for angle in [Double.pi / 2, Double.pi / 6, -Double.pi / 6] {
+                let (dx, dy) = (cos(angle) * 9, sin(angle) * 9)
+                path.move(to: CGPoint(x: 12 - dx, y: 12 - dy))
+                path.addLine(to: CGPoint(x: 12 + dx, y: 12 + dy))
+            }
         }
         return path
     }

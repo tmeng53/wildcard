@@ -2,22 +2,29 @@ import {
   lastTrained,
   sceneIn,
   weekBefore,
+  type OpenScenes,
   type Scene,
   type ScenePick,
   type SceneWeek,
 } from '../domain/scene.js';
 import type { MemberId, SquadId } from '../domain/squad.js';
-import { NotScenePickerError, ScenePickedError, SceneWeekClosedError } from '../errors.js';
+import {
+  NotScenePickerError,
+  SceneNotOpenError,
+  ScenePickedError,
+  SceneWeekClosedError,
+} from '../errors.js';
 import type { CrownHolders, SceneWeekAt } from '../ports.js';
 import type { Squads } from './squads.js';
 
 /**
  * What the scene needs from outside the module: the squads, last week's crown (the check-ins'
- * week summary) and the awards' clock.
+ * week summary), the scenes open in a week (the scenes list) and the awards' clock.
  */
 export interface SceneDeps {
   readonly squads: Pick<Squads, 'find' | 'scenePicks' | 'savePick'>;
   readonly crownHolders: CrownHolders;
+  readonly openScenes: (week: SceneWeek) => Promise<OpenScenes>;
   readonly sceneWeekAt: SceneWeekAt;
   readonly clock: () => Date;
 }
@@ -33,7 +40,12 @@ export interface SquadScene {
   readonly picked: ScenePick | undefined;
   /** True when the viewer may pick now: one of the pickers, and nothing picked yet. */
   readonly canPick: boolean;
-  /** Every scene and how many weeks ago the squad last trained on it (0: this week; null: never). */
+  /** The scenes open this week, in the picker's order: the only ones a pick may name. */
+  readonly open: OpenScenes;
+  /**
+   * Each open scene and how many weeks ago the squad last trained on it (0: this week; null:
+   * never).
+   */
   readonly lastTrained: ReadonlyMap<Scene, number | null>;
 }
 
@@ -66,9 +78,10 @@ async function squadScene(
 ): Promise<SquadScene> {
   const squad = await deps.squads.find({ squad: input.squad, viewer: input.viewer });
   const week = deps.sceneWeekAt(deps.clock());
-  const [picks, crown] = await Promise.all([
+  const [picks, crown, open] = await Promise.all([
     deps.squads.scenePicks(squad.id),
     deps.crownHolders({ squad: squad.id, week: weekBefore(week), viewer: input.viewer }),
+    deps.openScenes(week),
   ]);
   const inSquad = crown.filter((member) => squad.members.some((each) => each.member === member));
   const pickers =
@@ -78,13 +91,15 @@ async function squadScene(
   const picked = picks.find((pick) => pick.week === week);
   return {
     week,
-    scene: sceneIn(picks, week),
+    scene: sceneIn(picks, { current: week, open }),
     pickers,
     picked,
     canPick: picked === undefined && pickers.members.includes(input.viewer),
+    open,
     lastTrained: lastTrained(picks, {
       firstWeek: deps.sceneWeekAt(squad.createdAt),
       current: week,
+      scenes: open,
     }),
   };
 }
@@ -107,6 +122,7 @@ async function pickScene(
     throw new ScenePickedError(input.week);
   }
   if (!now.canPick) throw new NotScenePickerError();
+  if (!now.open.includes(input.scene)) throw new SceneNotOpenError(input.scene);
   const outcome = await deps.squads.savePick({
     squad: input.squad,
     week: input.week,

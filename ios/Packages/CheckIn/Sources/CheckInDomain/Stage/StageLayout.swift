@@ -45,6 +45,7 @@ public enum StationKind: String, CaseIterable, Hashable, Sendable {
     case treadmill, squatRack, dumbbells, yogaMat
     case rally, serve
     case topRope, bouldering, chalk
+    case carving
 }
 
 /// How the people at a station move.

@@ -3194,6 +3194,22 @@
           }
         }
       }
+    },
+    "雪场": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ski"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "雪場"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

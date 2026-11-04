@@ -12,6 +12,7 @@ extension SceneTheme {
         case .gym: Text("健身房", bundle: .module)
         case .tennis: Text("网球场", bundle: .module)
         case .climbing: Text("攀岩馆", bundle: .module)
+        case .ski: Text("雪场", bundle: .module)
         }
     }
 }
