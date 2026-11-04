@@ -89,7 +89,7 @@ import Testing
     #expect(
         catalog.rack(of: "deuce").map(\.variant) == [
             "deuce-polo", "deuce-cable", "deuce-dress", "deuce-shorts", "deuce-skirt", "deuce-pants", "deuce-court",
-            "deuce-socks", "deuce-visor", "deuce-terry", "deuce-sweater",
+            "deuce-socks", "deuce-visor", "deuce-terry", "deuce-ball", "deuce-sweater",
         ])
     #expect(catalog.rack(of: "lap").isEmpty)
     // Its polo recolors in the store's colors; its court shoes keep their art's.
