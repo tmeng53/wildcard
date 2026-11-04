@@ -29,6 +29,13 @@ on:
   schedule:
     - cron: "23 */3 * * *"
   workflow_dispatch:
+    inputs:
+      only_testing:
+        description: >-
+          Run only these UI tests on the simulator (xcodebuild -only-testing ids, space separated,
+          e.g. WildcardUITests/PushLongPressUITests) and no other job, to reproduce one bug fast.
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -115,9 +122,10 @@ jobs:
     # If `changes` failed, run rather than skip; a draft PR skips `changes`, and so this.
     # A scheduled run is for `ios` and `avatar-preview`: the push to main already ran this.
     if: >-
+      !inputs.only_testing && (
       !cancelled() && !github.event.pull_request.draft && needs.changes.result != 'skipped' &&
       github.event_name != 'schedule' &&
-      (needs.changes.result != 'success' || needs.changes.outputs.swift == 'true')
+      (needs.changes.result != 'success' || needs.changes.outputs.swift == 'true'))
     # macOS also compiles the SwiftUI code (which Linux compiles out) and runs SwiftLint's custom
     # rules (which need SourceKit); a PR that changes neither the app nor its build and lint
     # setup can't break those. If `changes` failed, stay on Linux; main's run covers the Mac.
@@ -144,8 +152,9 @@ jobs:
   web:
     needs: changes
     if: >-
+      !inputs.only_testing && (
       !cancelled() && !github.event.pull_request.draft && github.event_name != 'schedule' &&
-      (needs.changes.result != 'success' || needs.changes.outputs.web == 'true')
+      (needs.changes.result != 'success' || needs.changes.outputs.web == 'true'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -161,8 +170,9 @@ jobs:
   supabase:
     needs: changes
     if: >-
+      !inputs.only_testing && (
       !cancelled() && !github.event.pull_request.draft && github.event_name != 'schedule' &&
-      (needs.changes.result != 'success' || needs.changes.outputs.backend == 'true')
+      (needs.changes.result != 'success' || needs.changes.outputs.backend == 'true'))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -211,6 +221,7 @@ jobs:
       - run: scripts/ios-test.sh
         env:
           PRINT_PREVIEWS: "1"
+          ONLY_TESTING: ${{ inputs.only_testing }}
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -231,7 +242,8 @@ jobs:
   avatar-preview:
     needs: changes
     if: >-
-      !cancelled() && github.event_name == 'workflow_dispatch' && needs.changes.outputs.avatar == 'true'
+      !inputs.only_testing && (
+      !cancelled() && github.event_name == 'workflow_dispatch' && needs.changes.outputs.avatar == 'true')
     runs-on: macos-26
     timeout-minutes: 30
     steps:

@@ -43,9 +43,14 @@ fi
 # A UI test that fails runs once more: a busy CI simulator sometimes times out a screenshot, a UI
 # query or stopping the app. A test that fails twice fails the run; one that passed only on its
 # second run is listed at the end of the log, so it stays visible.
+# ONLY_TESTING (space separated xcodebuild test ids, e.g. WildcardUITests/PushLongPressUITests)
+# runs just those, to reproduce one bug without the whole hour.
+only=()
+for test in ${ONLY_TESTING:-}; do only+=("-only-testing:$test"); done
 echo "==> xcodebuild test on $sim"
 status=0
 xcodebuild test \
+  ${only[@]+"${only[@]}"} \
   -project ios/Wildcard.xcodeproj \
   -scheme Wildcard \
   -destination "id=$udid" \
