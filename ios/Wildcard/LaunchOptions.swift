@@ -58,18 +58,24 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-recap-manual")
     }
 
-    /// `-tab me`: open on another tab than 今天 (`feed`, `squad`, `me`, or `schedule` for 我 with
-    /// 出赛表 open).
+    /// `-tab me`: open on another tab than 今天 (`feed`, `me`, or `schedule` for 我 with 出赛表
+    /// open; `squad` opens 今天 with 小队 open).
     static var firstTab: MainTabs.Tab {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flag = arguments.firstIndex(of: "-tab"), flag + 1 < arguments.count else { return .today }
         switch arguments[flag + 1] {
         case "feed": return .feed
-        case "squad": return .squad
         case "schedule": return .profile
         case "me": return .profile
         default: return .today
         }
+    }
+
+    /// `-tab squad`: 今天 opens on 小队.
+    static var opensSquad: Bool {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-tab"), flag + 1 < arguments.count else { return false }
+        return arguments[flag + 1] == "squad"
     }
 
     /// `-tab schedule`: 我 opens on 出赛表.

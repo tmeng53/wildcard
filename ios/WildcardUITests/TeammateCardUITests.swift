@@ -2,7 +2,7 @@ import XCTest
 
 /// A teammate's player card, the way a member finds it: 小米's bubble on the home names her and
 /// the title she wears, and a tap on that line opens her card, which turns over to her badge
-/// board and opens a badge with no 装备; and from the 小队 tab's member list. Screenshots are kept
+/// board and opens a badge with no 装备; and from 小队's member list. Screenshots are kept
 /// for review.
 @MainActor
 final class TeammateCardUITests: XCTestCase {

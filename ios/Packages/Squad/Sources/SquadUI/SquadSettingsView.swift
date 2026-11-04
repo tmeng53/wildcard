@@ -14,19 +14,19 @@ import SwiftUI
 import UIKit
 #endif
 
-/// 小队, the squad's own tab (approved canvas, 2026-10-22; a tab since 2026-11-02): the squad's
-/// name and captain, a still row of everyone's heads with the coach and 「+ 邀请」, this week's
-/// scene and who picks it, the coach, the invite code, the members, 往期战报, and leaving. The
-/// captain renames the squad and manages members from each row's ··· menu; last week's crown
-/// winner, or the captain when nobody won, picks the scene once. It is a tab, with no way back;
-/// the app follows `model.hasLeft` and opens 往期战报 (`pastRecaps`). A pick ends
-/// where every pick does, on home with the squad dropping in: once the reveal is over, `picked`
-/// hands the scene to the app, which takes over; while the reveal plays, `revealing` is true, so
-/// the app can put away its tab bar.
+/// 小队, the squad's page (approved canvas, 2026-10-22), opened from the home's squad card (a tab
+/// from 2026-11-02 until Tracy took the tab away on 2026-11-04): 返回, the squad's name and
+/// captain, a still row of everyone's heads with the coach and 「+ 邀请」, this week's scene and
+/// who picks it, the coach, the invite code, the members, and leaving. The captain renames the
+/// squad and manages members from each row's ··· menu; last week's crown winner, or the captain
+/// when nobody won, picks the scene once. `close` (返回 or a swipe) goes back; the app follows
+/// `model.hasLeft`. A pick ends where every pick does, on home with the squad dropping in: once
+/// the reveal is over, `picked` hands the scene to the app, which takes over; while the reveal
+/// plays, `revealing` is true, so the app can put away its tab bar.
 public struct SquadSettingsView: View {
     @Bindable private var model: SquadSettingsModel
     private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
-    private let pastRecaps: () -> Void
+    private let close: () -> Void
     @Binding private var revealing: Bool
     /// A teammate's player card, opened from their row.
     private let teammateCard: ((MemberID) -> AnyView)?
@@ -44,12 +44,12 @@ public struct SquadSettingsView: View {
 
     public init(
         model: SquadSettingsModel, picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void,
-        pastRecaps: @escaping () -> Void, revealing: Binding<Bool>,
+        close: @escaping () -> Void, revealing: Binding<Bool>,
         teammateCard: ((MemberID) -> AnyView)? = nil
     ) {
         self.model = model
         self.picked = picked
-        self.pastRecaps = pastRecaps
+        self.close = close
         _revealing = revealing
         self.teammateCard = teammateCard
     }
@@ -67,11 +67,17 @@ public struct SquadSettingsView: View {
                 case .loading:
                     Color.clear
                 case .failed:
-                    SquadFailed { Task { await model.reload() } }
+                    VStack(alignment: .leading, spacing: 0) {
+                        backButton
+                            .padding(.horizontal, Space.pageMargin)
+                            .padding(.top, Space.xs)
+                        SquadFailed { Task { await model.reload() } }
+                    }
                 case .loaded(let settings):
                     page(settings)
                 }
             }
+            .swipesBack(isEnabled: coachPages.isEmpty && reveal == nil, perform: close)
             .loadingCover(model.load == .loading) {
                 TicketSpinner(on: .light(.bgCanvas))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -112,6 +118,7 @@ public struct SquadSettingsView: View {
 
     private func sections(_ settings: SquadSettings) -> some View {
         VStack(alignment: .leading, spacing: Space.l) {
+            backButton
             VStack(alignment: .leading, spacing: Space.m) {
                 header(settings)
                 SquadHeads(
@@ -129,10 +136,6 @@ public struct SquadSettingsView: View {
             section(Text("邀请队友", bundle: .module)) { InviteCard(squad: settings.squad, openSpots: model.openSpots) }
             section(Text("队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
                 memberRows
-            }
-            section(Text("战报", bundle: .module)) {
-                ListRow(Text("往期战报", bundle: .module), showsDivider: false, action: pastRecaps)
-                    .accessibilityIdentifier("squad.pastRecaps")
             }
             leaveButton(settings)
         }
@@ -268,6 +271,11 @@ extension SquadSettingsView {
                 .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
             }
         }
+    }
+
+    private var backButton: some View {
+        HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
+            .accessibilityIdentifier("squad.back")
     }
 
     private func section(_ title: Text, @ViewBuilder content: () -> some View) -> some View {
