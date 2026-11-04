@@ -11,20 +11,11 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     #expect(
         figure.parts.map(\.id.rawValue) == [
             "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "torso", "medal", "acc",
-            "earL",
-            "earR", "head",
-            "flapL",
-            "flapR", "crown", "award",
-            "nose",
-            "eyes", "brows", "browsSad", "browsMad", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad",
-            "mouthGasp", "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL",
-            "heartR", "sparkle",
-            "tearL", "tearR",
-            "food0", "food1", "food2",
-            "armL", "propL", "gripL", "armR", "chin", "propR", "gripR", "flexL", "muscleL", "flexR", "muscleR", "heart",
-            "propFront",
-            "propOver",
-            "desk",
+            "earL", "earR", "head", "flapL", "flapR", "crown", "award", "nose", "eyes", "brows", "browsSad", "browsMad",
+            "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp", "drool", "vein", "steamL", "steamR",
+            "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR", "sparkle", "tearL", "tearR", "food0",
+            "food1", "food2", "armL", "propL", "gripL", "armR", "chin", "propR", "gripR", "flexL", "muscleL", "flexR",
+            "muscleR", "heart", "propFront", "propOver", "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
     #expect(try figure.part("acc").art.count == (outfit == Looks.bear ? 1 : 0))
