@@ -10,6 +10,7 @@ import {
 } from '@wildcard/ai-consent';
 import {
   MemberId as CheckInMember,
+  PhotoPath,
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresCommentStore,
@@ -107,7 +108,7 @@ import { coachTools } from './admin-mcp/tools/coach.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
-import { coachSquadWeek } from './flows/coach.js';
+import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
 import { pushCoachLine } from './flows/comment-push.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
@@ -342,6 +343,12 @@ const nudges = createNudges({
 /** A coach's name now, as its pushes put it. */
 const coachNameOf = async (coach: string): Promise<string> =>
   (await createPostgresCoachCatalog(db).list()).find(({ id }) => id === coach)?.name ?? coach;
+const weeklyPlans = createWeeklyPlans({
+  store: createPostgresWeeklyPlanStore(db),
+  sports,
+  calendarOf: memberCalendar(members),
+  clock: () => new Date(),
+});
 // The AI coach runs on OpenAI: without its key the coach never wakes, whatever the settings say.
 const coachWakes =
   openaiKey === undefined
@@ -358,6 +365,13 @@ const coachWakes =
           aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
         hiring: createPostgresCoachHiring(db),
         clock: () => new Date(),
+        memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
+        // OpenAI fetches a photo the coach asks to look at from a URL that lasts 10 minutes.
+        photoUrls: async (paths) => {
+          const parsed = paths.map((path) => PhotoPath.parse(path));
+          const urls = await photos.createViewUrls(parsed, 600);
+          return parsed.flatMap((path) => urls.get(path)?.href ?? []);
+        },
         // The check-in's author finds the reply in 通知, and a line is pushed to them like a
         // teammate's comment (Tracy, 2026-11-03).
         replied: async ({ squad, checkIn, author, coach, text, emoji }) => {
@@ -430,12 +444,7 @@ const app = createApp({
       ? undefined
       : createAppleSignInRevoker(config.appleSignInKey),
   checkIns,
-  weeklyPlans: createWeeklyPlans({
-    store: createPostgresWeeklyPlanStore(db),
-    sports,
-    calendarOf: memberCalendar(members),
-    clock: () => new Date(),
-  }),
+  weeklyPlans,
   members,
   squads,
   nudges,

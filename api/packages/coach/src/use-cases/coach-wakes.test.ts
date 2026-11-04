@@ -25,7 +25,13 @@ import {
   NoCoachHiredError,
 } from '../errors.js';
 import { weekText, type SquadWeek } from '../domain/squad-week.js';
-import type { AgentRun, CoachAgent, CoachTool } from '../ports.js';
+import type {
+  AgentRun,
+  CoachAgent,
+  CoachMemberFacts,
+  CoachPhotoUrls,
+  CoachTool,
+} from '../ports.js';
 import { createCoachActivity } from './coach-activity.js';
 import { createCoachHiring } from './coach-hiring.js';
 import { createCoachSettings } from './coach-settings.js';
@@ -126,7 +132,10 @@ function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
       if (steps === 'fail') return { ok: false, usage, error: 'ModelBehaviorError: no' };
       for (const step of steps) {
         const tool: CoachTool | undefined = tools.find(({ name }) => name === step.tool);
-        answers.push(tool === undefined ? `no tool ${step.tool}` : await tool.run(step.input));
+        const answer = tool === undefined ? `no tool ${step.tool}` : await tool.run(step.input);
+        answers.push(
+          typeof answer === 'string' ? answer : [answer.text, ...answer.images].join(' '),
+        );
       }
       return { ok: true, usage };
     },
@@ -147,6 +156,8 @@ function wakes(
     consented,
     replied,
     answered,
+    photoUrls,
+    memberFacts,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
@@ -154,6 +165,8 @@ function wakes(
     readonly consented?: readonly string[];
     readonly replied?: CoachReplied;
     readonly answered?: CoachAnswered;
+    readonly photoUrls?: CoachPhotoUrls;
+    readonly memberFacts?: CoachMemberFacts;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -178,6 +191,8 @@ function wakes(
     clock: () => at,
     ...(replied === undefined ? {} : { replied }),
     ...(answered === undefined ? {} : { answered }),
+    ...(photoUrls === undefined ? {} : { photoUrls }),
+    ...(memberFacts === undefined ? {} : { memberFacts }),
   });
 }
 
@@ -781,6 +796,104 @@ describe('the coach', () => {
       ]);
       expect(JSON.stringify(report.wakes)).not.toContain('跑步');
       expect(JSON.stringify(report.wakes)).not.toContain('怕下雨');
+    });
+  });
+
+  it('looks at a check-in’s photos only when it asks, once, and keeps only how many', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      const asked: (readonly string[])[] = [];
+      const photoUrls: CoachPhotoUrls = (paths) => {
+        asked.push(paths);
+        return Promise.resolve(paths.map((path) => `https://photos.test/${path}`));
+      };
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('有人打卡')
+          ? [
+              { tool: 'look_at_photos', input: {} },
+              { tool: 'look_at_photos', input: {} },
+              { tool: 'reply', input: { text: '这碗面看着不错' } },
+            ]
+          : [],
+      );
+      const week: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) =>
+          each.id === checkIn ? { ...each, photos: ['m/a.jpg', 'm/b.jpg'] } : each,
+        ),
+      };
+      await wakes({ ...fixture, week }, { agent, photoUrls }).checkedIn({
+        checkIn,
+        squads: [squad],
+      });
+      expect(runs[0]?.task).toContain('（2 张照片）');
+      expect(runs[0]?.task).not.toContain('m/a.jpg');
+      expect(runs[0]?.tools).toContain('look_at_photos');
+      expect(runs[0]?.answers).toStrictEqual([
+        '这条打卡的 2 张照片，第一张是封面： https://photos.test/m/a.jpg https://photos.test/m/b.jpg',
+        '照片你已经看过了，不用再看。',
+        '已回复。',
+      ]);
+      expect(asked).toStrictEqual([['m/a.jpg', 'm/b.jpg']]);
+      const report = await createPostgresCoachReport(fixture.trx).squad(squad, now);
+      expect(report.wakes[0]?.steps.slice(0, 2)).toStrictEqual([
+        { tool: 'look_at_photos', input: {}, output: '（2 张照片）' },
+        { tool: 'look_at_photos', input: {}, output: '已经看过了。' },
+      ]);
+    });
+  });
+
+  it('looks up members’ stats and an earlier week only when it asks', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn, mia } = fixture;
+      const asked: unknown[] = [];
+      const memberFacts: CoachMemberFacts = (input) => {
+        asked.push(input);
+        return Promise.resolve(
+          input.members.map((member) => ({
+            member,
+            trainedDays: 50,
+            healthyMeals: 0,
+            cheatMeals: 0,
+            disclaimers: 0,
+            titles: 0,
+            plan: Array.from({ length: 7 }, () => ({ kind: 'rest' as const })),
+          })),
+        );
+      };
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('有人打卡')
+          ? [
+              { tool: 'member_stats', input: {} },
+              { tool: 'squad_week', input: { weeks_ago: 1 } },
+            ]
+          : [],
+      );
+      const earlier = '2026-10-19';
+      await wakes(fixture, {
+        agent,
+        memberFacts,
+        consented: [mia],
+        weeks: {
+          [fixture.week.weekStart]: fixture.week,
+          [earlier]: { weekStart: earlier, members: fixture.week.members, checkIns: [] },
+        },
+      }).checkedIn({ checkIn, squads: [squad] });
+      expect(asked).toStrictEqual([{ members: [mia], weekStart: fixture.week.weekStart }]);
+      expect(runs[0]?.answers[0]).toContain('一共练了 50 天');
+      expect(runs[0]?.answers[1]).toContain(`本周从 ${earlier}（周一）开始。`);
+    });
+  });
+
+  it('has no photo tool for a check-in without photos', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, {
+        agent,
+        photoUrls: () => Promise.reject(new Error('never asked')),
+      }).checkedIn({ checkIn, squads: [squad] });
+      expect(runs[0]?.tools).not.toContain('look_at_photos');
     });
   });
 
