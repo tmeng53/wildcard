@@ -144,9 +144,21 @@ export const ScenesCatalog = z
             .openapi('SceneColors'),
           limited: z.boolean().meta({
             description:
-              'True for a scene open only part of the year (冬季限定). The days stay on the ' +
-              'server: the picker offers it while `GET /squads/{squadId}/scene` lists it.',
+              'True for a scene open only part of the year (冬季限定). The picker offers it ' +
+              'while `GET /squads/{squadId}/scene` lists it.',
           }),
+          window: z
+            .looseObject({
+              start: z.string().meta({ description: '`MM-DD`, included.', example: '11-15' }),
+              end: z.string().meta({ description: '`MM-DD`, included.', example: '03-31' }),
+            })
+            .optional()
+            .meta({
+              description:
+                'A limited scene’s days every year, New York time; it may run over New Year. ' +
+                'The app never shows them: it opens the scene’s store only on these days.',
+            })
+            .openapi('SceneWindow'),
         }),
       )
       .meta({
@@ -170,6 +182,7 @@ export function scenesSection(scenes: Pick<Scenes, 'list'>): CatalogSection<type
           names: { ...names },
           colors: { ...colors },
           limited: window !== undefined,
+          ...(window === undefined ? {} : { window: { ...window } }),
         })),
     }),
   };

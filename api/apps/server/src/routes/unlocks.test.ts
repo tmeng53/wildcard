@@ -199,7 +199,8 @@ describe('GET /me/unlocks', () => {
     const locked = z
       .object({ lockedPieces: z.array(z.object({ id: z.string(), checkInsToGo: z.int() })) })
       .parse(fresh.body).lockedPieces;
-    expect(locked).toHaveLength(39);
+    expect(locked).toHaveLength(52);
+    expect(locked.find(({ id }) => id === 'powder-salmonhelmet')?.checkInsToGo).toBe(13);
     expect(locked.find(({ id }) => id === 'warmup-headphones')?.checkInsToGo).toBe(2);
     expect(locked.find(({ id }) => id === 'deuce-sweater')?.checkInsToGo).toBe(5);
     const first = await train({ member: me, squad, sport: 'tennis' });

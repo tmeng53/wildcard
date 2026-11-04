@@ -63,7 +63,7 @@ describe('unlocks', () => {
     ]);
     // Each piece of the second wardrobe opens on its own, in its store's sports.
     const pieces = all.filter(({ kind }) => kind === 'piece');
-    expect(pieces).toHaveLength(39);
+    expect(pieces).toHaveLength(52);
     expect(
       pieces
         .filter(({ id }) => id.startsWith('lap-'))
@@ -76,6 +76,24 @@ describe('unlocks', () => {
       ['lap-split', ['run', 'walk'], 16],
       ['lap-vest', ['run', 'walk'], 25],
       ['lap-wind', ['run', 'walk'], 13],
+    ]);
+    // POWDER DAY's locked pieces open one a winter-sport 练了, the salmon helmet last.
+    const powder = pieces
+      .filter(({ id }) => id.startsWith('powder-'))
+      .toSorted((a, b) => a.after - b.after);
+    expect(powder.map(({ after }) => after)).toStrictEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+    ]);
+    expect(powder.at(-1)?.id).toBe('powder-salmonhelmet');
+    expect(powder[0]?.sports).toStrictEqual([
+      'ski',
+      'snowboard',
+      'skate',
+      'crossCountrySki',
+      'curling',
+      'snowHike',
+      'snowman',
+      'snowballFight',
     ]);
   });
 

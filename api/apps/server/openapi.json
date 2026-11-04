@@ -403,7 +403,10 @@
                 },
                 "limited": {
                   "type": "boolean",
-                  "description": "True for a scene open only part of the year (冬季限定). The days stay on the server: the picker offers it while `GET /squads/{squadId}/scene` lists it."
+                  "description": "True for a scene open only part of the year (冬季限定). The picker offers it while `GET /squads/{squadId}/scene` lists it."
+                },
+                "window": {
+                  "$ref": "#/components/schemas/SceneWindow"
                 }
               },
               "required": [
@@ -459,6 +462,27 @@
           "floor"
         ],
         "additionalProperties": {}
+      },
+      "SceneWindow": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "description": "`MM-DD`, included.",
+            "example": "11-15"
+          },
+          "end": {
+            "type": "string",
+            "description": "`MM-DD`, included.",
+            "example": "03-31"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "additionalProperties": {},
+        "description": "A limited scene’s days every year, New York time; it may run over New Year. The app never shows them: it opens the scene’s store only on these days."
       },
       "Me": {
         "type": "object",

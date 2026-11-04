@@ -913,7 +913,11 @@
           "text": "#16384D",
           "floor": "#D7ECF6"
         },
-        "limited": true
+        "limited": true,
+        "window": {
+          "start": "11-15",
+          "end": "03-31"
+        }
       }
     ]
   }

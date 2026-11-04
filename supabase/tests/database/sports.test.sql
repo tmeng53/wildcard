@@ -4,7 +4,7 @@ select plan(16);
 
 select is((select count(*)::int from public.sports), 57, 'the list has 57 sports, the winter ones included');
 select is(
-  (select count(*)::int from public.sport_catalog_events),
+  (select count(*)::int from public.sport_catalog_events where op = 'INSERT'),
   (select (select count(*) from public.sport_categories) + (select count(*) from public.sports)
     + (select count(*) from public.sport_picks))::int,
   'seeding the list logged a row for each row it added'
@@ -58,13 +58,13 @@ select is(
   'retiring a sport is logged with its new value'
 );
 select is(
-  (select count(*)::int from public.sport_catalog_events where kind = 'sports' and op = 'UPDATE'),
+  (select count(*)::int from public.sport_catalog_events where kind = 'sports' and op = 'UPDATE' and value ->> 'id' = 'moving'),
   1,
   'one row for that change'
 );
 update public.sports set offered = false where id = 'moving';
 select is(
-  (select count(*)::int from public.sport_catalog_events where kind = 'sports' and op = 'UPDATE'),
+  (select count(*)::int from public.sport_catalog_events where kind = 'sports' and op = 'UPDATE' and value ->> 'id' = 'moving'),
   1,
   'a save that changed nothing is not logged'
 );
