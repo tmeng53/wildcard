@@ -161,7 +161,7 @@ struct MemberRow: View {
 
     var body: some View {
         HStack(spacing: Space.s) {
-            MemberHead(character: member.character)
+            LookHead(character: member.character)
             HStack(spacing: Space.xs) {
                 Text(verbatim: name)
                     .typeStyle(TypeRamp.body)
@@ -238,34 +238,21 @@ struct MemberRow: View {
     }
 }
 
-/// A member's face, still, in a circle; an empty circle until they make their character.
-struct MemberHead: View {
+/// A member's face, still, in a `MemberHead`; an empty circle until they make their character.
+struct LookHead: View {
     let character: MemberCharacter?
-    @State private var drawing: (drawing: FigureDrawing, placements: [Placement])?
-    @Environment(\.sceneTheme) private var theme
-
-    /// The face on the rig's 240 by 320 canvas.
-    private static let face = CGRect(x: 40, y: 74, width: 160, height: 160)
+    @State private var player: CharacterPlayer?
 
     var body: some View {
-        ZStack {
-            Circle().fill(Color(role: .bgSubtle, in: theme))
-            if let drawing {
-                CharacterCanvas(drawing: drawing.drawing, placements: drawing.placements, crop: Self.face)
-                    .clipShape(Circle())
+        MemberHead(player: player, size: SquadSettingsMetrics.head)
+            .task(id: character) {
+                guard let character else { return }
+                let outfit = Outfit(character.look)
+                player = try? CharacterPlayer(
+                    figure: PlaceholderCharacter.figure(wearing: outfit),
+                    idle: PlaceholderCharacter.clip(
+                        "idle", persona: Persona(character.look), species: PlaceholderCharacter.species(of: outfit)))
             }
-        }
-        .frame(width: SquadSettingsMetrics.head, height: SquadSettingsMetrics.head)
-        .accessibilityHidden(true)
-        .task(id: character) {
-            guard let character else { return }
-            let outfit = Outfit(character.look)
-            drawing = try? CharacterPlayer(
-                figure: PlaceholderCharacter.figure(wearing: outfit),
-                idle: PlaceholderCharacter.clip(
-                    "idle", persona: Persona(character.look), species: PlaceholderCharacter.species(of: outfit))
-            ).restFrame
-        }
     }
 }
 

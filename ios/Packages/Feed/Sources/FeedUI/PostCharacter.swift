@@ -67,7 +67,7 @@ private struct ArrivalBubble: View {
 
     var body: some View {
         HStack(spacing: Space.xxs) {
-            Face(player: model.head(of: arrival.member), size: Self.head)
+            MemberHead(player: model.head(of: arrival.member), size: Self.head)
             Text(verbatim: arrival.emoji.text).font(.system(size: Self.emojiSize))
         }
         .padding(.horizontal, Space.xs)

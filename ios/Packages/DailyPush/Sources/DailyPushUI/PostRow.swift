@@ -138,7 +138,7 @@ struct PostRow: View {
             if !latest.isEmpty {
                 HStack(spacing: Space.xxs) {
                     ForEach(latest, id: \.member) { response in
-                        Face(player: model.head(of: response.member), size: Sizing.characterHead - 2, ring: nil)
+                        MemberHead(player: model.head(of: response.member), size: Sizing.characterHead - 2)
                             .overlay(alignment: .bottomTrailing) {
                                 Text(verbatim: response.kind.text)
                                     .font(.system(size: 12))
@@ -201,27 +201,6 @@ struct PostRow: View {
             mine.map { Text("我的回应 \($0.text)，换一个", bundle: .module) } ?? Text("回应", bundle: .module)
         )
         .accessibilityIdentifier("dailyPush.react")
-    }
-}
-
-/// A member's head in a small circle, as in 动态's row.
-struct Face: View {
-    let player: CharacterPlayer?
-    let size: Double
-    /// A ring in this colour, for heads that overlap.
-    let ring: ColorRole?
-
-    var body: some View {
-        Circle()
-            .fill(Color(role: .bgSubtle, in: .gym))
-            .overlay {
-                if let player { CharacterHead(player: player).clipShape(Circle()) }
-            }
-            .overlay {
-                if let ring { Circle().stroke(Color(role: ring, in: .gym), lineWidth: Sizing.ringGap) }
-            }
-            .frame(width: size, height: size)
-            .accessibilityHidden(true)
     }
 }
 

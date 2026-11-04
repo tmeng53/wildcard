@@ -81,43 +81,6 @@ private struct CoachFigure: View {
     }
 }
 
-/// The coach's head on a white disc with a graphite ring, so it never reads as a teammate's
-/// mist one, wearing its emoji at its lower right like a teammate's.
-struct CoachFace: View {
-    @Environment(\.sceneTheme) private var theme
-    let player: CharacterPlayer?
-    let emoji: Emoji?
-    let size: Double
-
-    /// The head on the coaches' 240 × 320 canvas.
-    private static let face = CGRect(x: 50, y: 46, width: 140, height: 140)
-    private static let ring: Double = 1.5
-
-    var body: some View {
-        Circle()
-            .fill(Color(role: .bgCanvas, in: theme))
-            .overlay {
-                if let player {
-                    let frame = player.restFrame
-                    CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.face)
-                        .aspectRatio(1, contentMode: .fit)
-                        .padding(Sizing.ringGap)
-                }
-            }
-            .clipShape(Circle())
-            .overlay { Circle().strokeBorder(Color(role: .bgInk, in: theme), lineWidth: Self.ring) }
-            .frame(width: size, height: size)
-            .overlay(alignment: .bottomTrailing) {
-                if let emoji {
-                    Text(verbatim: emoji.text)
-                        .font(.system(size: size * 12 / 26))
-                        .offset(x: size * 0.12, y: size * 0.08)
-                }
-            }
-            .accessibilityHidden(true)
-    }
-}
-
 /// The coach's line under a card: its name, the 教练 tag, 回复 and whom when it answers a reply,
 /// then the words.
 struct CoachCommentLine: View {
@@ -171,7 +134,7 @@ struct CoachCommentRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Space.s) {
-            CoachFace(player: model.coachPlayer(coach.id), emoji: nil, size: Self.faceSize)
+            MemberHead(player: model.coachPlayer(coach.id), size: Self.faceSize, figure: .coach)
             VStack(alignment: .leading, spacing: Space.xxs / 2) {
                 HStack(spacing: Space.xs) {
                     Text(verbatim: coach.name)

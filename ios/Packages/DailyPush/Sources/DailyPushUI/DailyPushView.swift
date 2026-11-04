@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DailyPushDomain
 import DesignSystem
@@ -114,7 +115,7 @@ private struct PushHeader: View {
         return HStack(spacing: Space.xs) {
             HStack(spacing: -Space.xs + 2) {
                 ForEach(pokers.prefix(3), id: \.self) { member in
-                    Face(player: model.head(of: member), size: Self.patHead, ring: .bgBrand)
+                    MemberHead(player: model.head(of: member), size: Self.patHead, rim: .cutout(.bgBrand))
                 }
             }
             Text("\(pokers.map(model.name(of:)).joined(separator: "、"))拍了拍你", bundle: .module)
