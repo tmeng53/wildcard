@@ -81,7 +81,17 @@ extension WildcardAPI {
         return UnlockStanding(
             // Both lists are the earliest first; so is the whole.
             unlocks: (stores + pieces).sorted { $0.unlockedAt < $1.unlockedAt },
-            lockedPieces: body.lockedPieces.map { LockedPiece(id: $0.id, checkInsToGo: $0.checkInsToGo) })
+            lockedPieces: body.lockedPieces.map { piece in
+                LockedPiece(
+                    id: piece.id, checkInsToGo: piece.checkInsToGo,
+                    sports: piece.sports.compactMap(Sport.init(rawValue:)))
+            },
+            claimed: Set(body.claimed.map(\.id)))
+    }
+
+    /// 领取: puts an unlocked piece in the member's wardrobe, on every phone. Safe to repeat.
+    public func claim(piece: String) async throws(APIError) {
+        _ = try await call { try await client.claimPiece(path: .init(pieceId: piece)).ok }
     }
 
     /// Whether the one daily push at 6pm is on; it is until the member turns it off.

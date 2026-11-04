@@ -15,17 +15,23 @@ public struct MeDestinations {
     public var schedule: () -> Void
     /// 我的动态: everything the member posted.
     public var myPosts: () -> Void
+    /// 商店街, opened inside 我 from its shopfront.
+    public var street: () -> Void
+    /// Whether a piece came in that 商店街 hasn't shown yet: the shopfront's dot.
+    public var streetHasNews: Bool
     /// The published policy pages.
     public var privacyPolicy: URL
     public var terms: URL
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void, myPosts: @escaping () -> Void,
-        privacyPolicy: URL, terms: URL
+        street: @escaping () -> Void = {}, streetHasNews: Bool = false, privacyPolicy: URL, terms: URL
     ) {
         self.editCharacter = editCharacter
         self.schedule = schedule
         self.myPosts = myPosts
+        self.street = street
+        self.streetHasNews = streetHasNews
         self.privacyPolicy = privacyPolicy
         self.terms = terms
     }
@@ -96,7 +102,8 @@ public struct MeView: View {
                 // Space.m between pieces, so the card, 出赛表 and the buttons all clear the tab bar
                 // on the smallest phone without scrolling.
                 VStack(spacing: Space.m) {
-                    HStack {
+                    HStack(alignment: .top) {
+                        Shopfront(hasNews: destinations.streetHasNews, open: destinations.street)
                         Spacer()
                         Button {
                             isSettingsOpen = true
@@ -128,6 +135,83 @@ public struct MeView: View {
             .refreshable { await model.reload() }
             .accessibilityIdentifier("me.page")
         }
+    }
+}
+
+/// 商店街's door at the top left of 我, opposite 设置 (the approved wardrobe design, 2026-11-04): a
+/// graphite and white shopfront over its name, with a dot while a piece waits there unseen.
+struct Shopfront: View {
+    let hasNews: Bool
+    let open: () -> Void
+    @Environment(\.sceneTheme) private var theme
+    private let door = CGSize(width: 40, height: 38)
+    private let dot: Double = 12
+
+    var body: some View {
+        Button(action: open) {
+            VStack(spacing: Space.xxs / 2) {
+                Canvas { context, size in draw(in: &context, size: size) }
+                    .frame(width: door.width, height: door.height)
+                    .overlay(alignment: .topTrailing) {
+                        if hasNews {
+                            Circle()
+                                .fill(Color(role: .bgInk, in: theme))
+                                .overlay(Circle().stroke(Color(role: .bgCanvas, in: theme), lineWidth: 2))
+                                .frame(width: dot, height: dot)
+                                .offset(x: Space.xxs, y: -Space.xxs)
+                                .accessibilityIdentifier("me.street.dot")
+                        }
+                    }
+                Text("商店街", bundle: .module)
+                    .typeStyle(TypeRamp.label)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .lineLimit(1)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(hasNews ? Text("有新货", bundle: .module) : Text(verbatim: ""))
+        .accessibilityIdentifier("me.street")
+    }
+
+    /// The shop in the design's 64 × 60 drawing: a white front, the graphite awning with its three
+    /// white seams and scalloped edge, a graphite door and a window.
+    private func draw(in context: inout GraphicsContext, size: CGSize) {
+        let ink = Color(role: .bgInk, in: theme)
+        let white = Color(role: .bgCanvas, in: theme)
+        let line = StrokeStyle(lineWidth: 2.5, lineCap: .round)
+        context.scaleBy(x: size.width / 64, y: size.height / 60)
+        let front = Path(roundedRect: CGRect(x: 10, y: 20, width: 44, height: 36), cornerRadius: 4)
+        context.fill(front, with: .color(white))
+        context.stroke(front, with: .color(ink), style: line)
+        var awning = Path()
+        awning.move(to: CGPoint(x: 6, y: 8))
+        awning.addArc(
+            center: CGPoint(x: 10, y: 8), radius: 4, startAngle: .degrees(180), endAngle: .degrees(270),
+            clockwise: false)
+        awning.addLine(to: CGPoint(x: 54, y: 4))
+        awning.addArc(
+            center: CGPoint(x: 54, y: 8), radius: 4, startAngle: .degrees(270), endAngle: .degrees(360),
+            clockwise: false)
+        awning.addLine(to: CGPoint(x: 58, y: 18))
+        for center in [51.5, 38.5, 25.5, 12.5] {
+            awning.addArc(
+                center: CGPoint(x: center, y: 18), radius: 6.5, startAngle: .degrees(0), endAngle: .degrees(180),
+                clockwise: false)
+        }
+        awning.closeSubpath()
+        context.fill(awning, with: .color(ink))
+        var seams = Path()
+        for seam in [19.0, 32, 45] {
+            seams.move(to: CGPoint(x: seam, y: 6))
+            seams.addLine(to: CGPoint(x: seam, y: 18))
+        }
+        context.stroke(seams, with: .color(white), style: line)
+        context.fill(Path(roundedRect: CGRect(x: 17, y: 32, width: 12, height: 24), cornerRadius: 2), with: .color(ink))
+        context.stroke(
+            Path(roundedRect: CGRect(x: 35, y: 32, width: 12, height: 10), cornerRadius: 2), with: .color(ink),
+            style: line)
     }
 }
 

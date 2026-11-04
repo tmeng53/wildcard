@@ -6,12 +6,12 @@ import SwiftUI
 
 /// The pop-up the editor opens with when pieces came in (approved 2026-11-04): their kraft
 /// cartons, each with a 「？」, and which store they came to, never what they are. 一键全开 opens
-/// every box at once (they shake, the flaps fly off and each piece pops out), then the shopping
-/// street shows with each new piece wearing NEW; nothing is put on. 先不了 leaves the boxes on
+/// every box at once (they shake, the flaps fly off and each piece pops out), then the store (or the
+/// street, when they came to several) shows each new piece wearing NEW; nothing is put on. 先不了 leaves the boxes on
 /// their racks. With reduced motion the pieces just fade in.
 struct ArrivalPopup: View {
-    let model: CharacterEditorModel
-    let arrival: CharacterEditorModel.Arrival
+    let model: StreetModel
+    let arrival: StreetModel.Arrival
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var step = Step.closed
@@ -75,7 +75,7 @@ struct ArrivalPopup: View {
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("editor.arrival")
         }
-        .haptic(.appear, trigger: step) { _, step in step == .open }
+        .haptic(.unbox, trigger: step) { _, step in step == .open }
     }
 
     /// 「LAP NINE 到新货了」 when they all came to one store, else 「商店街到新货了」.
@@ -106,7 +106,7 @@ struct ArrivalPopup: View {
 
 /// One carton with its 「？」: it shakes, its flaps fly off, and its piece pops up out of it.
 private struct Box: View {
-    let model: CharacterEditorModel
+    let model: StreetModel
     let piece: String
     let step: ArrivalPopup.Step
     let scale: Double

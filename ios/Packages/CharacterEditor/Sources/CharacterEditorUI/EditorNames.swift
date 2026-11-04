@@ -39,6 +39,18 @@ enum EditorNames {
         return Text(LocalizedStringKey(key), bundle: .module)
     }
 
+    /// A clothing slot's name, over its pieces in 我的衣橱.
+    static func slot(_ slot: Slot) -> Text {
+        switch slot.rawValue {
+        case "top": Text("上衣", bundle: .module)
+        case "bottom": Text("下装", bundle: .module)
+        case "shoes": Text("鞋子", bundle: .module)
+        case "hat": Text("帽子", bundle: .module)
+        case "acc": Text("配饰", bundle: .module)
+        default: Text(verbatim: slot.rawValue)
+        }
+    }
+
     /// The tile that takes a piece off, for VoiceOver: 不戴 for a hat, 不拿 for a prop.
     static func nothing(in slot: Slot) -> Text {
         switch slot.rawValue {

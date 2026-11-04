@@ -1016,6 +1016,38 @@
           }
         }
       }
+    },
+    "商店街": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shopping street"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "商店街"
+          }
+        }
+      }
+    },
+    "有新货": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New arrivals"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有新貨"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

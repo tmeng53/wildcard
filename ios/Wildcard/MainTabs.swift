@@ -43,8 +43,8 @@ struct MainTabs: View {
     /// A post opened from 通知 (the one the coach answered), over its page.
     @State private var noticePost: OpenedPost?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// The character editor, open from 我 over everything.
-    @State private var editor: CharacterEditorModel?
+    /// 商店街 and the character editor, open from 我.
+    @State private var wardrobe: Wardrobe
     /// 出赛表, open from 我 in its place.
     @State private var showsSchedule = LaunchOptions.opensSchedule
     /// 小队's scene pick is playing its reveal, which fills the screen.
@@ -67,6 +67,7 @@ struct MainTabs: View {
         _selection = selection
         self.leftSquad = leftSquad
         _inbox = State(initialValue: NoticeInbox(source: notices))
+        _wardrobe = State(initialValue: Wardrobe(profile: profile) { today.home?.member.description })
     }
 
     var body: some View {
@@ -96,13 +97,15 @@ struct MainTabs: View {
         .onChange(of: recap.picks) {
             if let picked = recap.picked { land(on: picked.scene, coveredAt: picked.coveredAt) }
         }
-        .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
-            if let editor {
+        .fullScreenCover(
+            isPresented: Binding(get: { wardrobe.editor != nil }, set: { if !$0 { wardrobe.editor = nil } })
+        ) {
+            if let editor = wardrobe.editor {
                 CharacterEditorView(
                     model: editor, context: .profile, issued: profile.overview?.joinedAt,
-                    onBack: { self.editor = nil },
+                    onBack: { wardrobe.editor = nil },
                     onDone: { edited in
-                        self.editor = nil
+                        wardrobe.editor = nil
                         Task {
                             await profile.save(
                                 MeCharacter(nickname: edited.nickname, outfit: edited.outfit, persona: edited.persona))
@@ -134,26 +137,10 @@ struct MainTabs: View {
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
     }
 
-    /// Opens the editor on the member's own character.
-    private func editCharacter() {
-        guard let character = profile.overview?.character else { return }
-        // Which boxes this phone opened, per member; the sample squad's member is new each launch.
-        let marks: any WardrobeMarks =
-            today.home.map { DeviceWardrobeMarks(member: $0.member.description) } ?? MemoryWardrobeMarks()
-        editor = try? CharacterEditorModel.placeholder(
-            look: character.outfit, persona: character.persona, nickname: character.nickname,
-            unlocks: profile.overview?.unlocks ?? [], locked: profile.overview?.lockedPieces ?? [], marks: marks)
-    }
-
-    /// A tap on the home's notice that a store or prop opened: 我's editor, inside that store or on
-    /// the props, read again first so what just opened is open in it.
+    /// A tap on the home's notice that a store, piece or prop opened.
     private func openUnlock(_ unlock: Unlock) {
         selection = .profile
-        Task {
-            await profile.reload()
-            editCharacter()
-            editor?.show(unlock)
-        }
+        Task { await wardrobe.open(unlock.kind, item: unlock.id) }
     }
 
     /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page, a scene
@@ -246,12 +233,10 @@ struct MainTabs: View {
         case .post(let id):
             noticePost = OpenedPost(id: id, model: feed.page(of: id))
         case .wardrobe(let kind, let item):
-            // As the home's banner does: a piece's row puts its boxes up, a store's opens it.
-            Task {
-                await profile.reload()
-                editCharacter()
-                editor?.show(kind, item: item)
-            }
+            // As the home's banner does.
+            showsNotices = false
+            selection = .profile
+            Task { await wardrobe.open(kind, item: item) }
         }
     }
 
@@ -279,6 +264,9 @@ struct MainTabs: View {
                     // Its buttons keep the scene's colour, as its poster does; 我's own are brand.
                     .accentTone(.scene)
                     .transition(.move(edge: .trailing))
+            } else if wardrobe.showsShop, let shop = wardrobe.shop {
+                ShoppingStreetPage(model: shop) { wardrobe.showsShop = false }
+                    .transition(.move(edge: .trailing))
             } else if let wall {
                 PostWallView(
                     store: wall, back: { self.wall = nil },
@@ -297,8 +285,9 @@ struct MainTabs: View {
                 MeView(
                     model: profile,
                     destinations: MeDestinations(
-                        editCharacter: editCharacter,
+                        editCharacter: wardrobe.editCharacter,
                         schedule: { showsSchedule = true },
+                        street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                         myPosts: { wall = PostWallStore(source: myPosts) },
                         privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
                 )
@@ -306,7 +295,10 @@ struct MainTabs: View {
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wall != nil)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsSchedule)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wardrobe.showsShop)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: post?.id)
+        // 商店街 follows what 我 reads, made again only while it is closed so an open one keeps its place.
+        .task(id: wardrobe.key) { wardrobe.refresh() }
         .accentTone(.brand)
     }
 

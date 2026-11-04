@@ -299,6 +299,13 @@ private struct RefusedTokens: AuthProvider {
     #expect(unlocked.first { $0.id == "deuce" }?.checkIns == 3)
     #expect(unlocked.first { $0.id == "warmup-headphones" }?.kind == .piece)
     #expect(
-        standing.lockedPieces.first { $0.id == "deuce-sweater" } == LockedPiece(id: "deuce-sweater", checkInsToGo: 2))
+        standing.lockedPieces.first { $0.id == "deuce-sweater" }
+            == LockedPiece(id: "deuce-sweater", checkInsToGo: 2, sports: ["tennis", "pickleball", "squash"]))
     #expect(!standing.lockedPieces.contains { $0.id == "warmup-headphones" })
+    #expect(standing.claimed.isEmpty)
+
+    // 领取 puts the headphones in the wardrobe, once however often it is asked.
+    try await member.api.claim(piece: "warmup-headphones")
+    try await member.api.claim(piece: "warmup-headphones")
+    #expect(try await member.api.unlockStanding().claimed == ["warmup-headphones"])
 }

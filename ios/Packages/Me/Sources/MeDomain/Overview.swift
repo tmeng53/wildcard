@@ -55,11 +55,13 @@ public struct MeOverview: Hashable, Sendable {
     public var unlocks: [Unlock]
     /// The pieces still locked, which the editor shows as 「？」 boxes.
     public var lockedPieces: [LockedPiece]
+    /// The unlocked pieces the member claimed (领取) into their wardrobe.
+    public var claimed: Set<String>
 
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
         dailyPushOn: Bool, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil, board: TitleBoard = .empty,
-        unlocks: [Unlock] = [], lockedPieces: [LockedPiece] = []
+        unlocks: [Unlock] = [], lockedPieces: [LockedPiece] = [], claimed: Set<String> = []
     ) {
         self.character = character
         self.joinedAt = joinedAt
@@ -72,6 +74,7 @@ public struct MeOverview: Hashable, Sendable {
         self.board = board
         self.unlocks = unlocks
         self.lockedPieces = lockedPieces
+        self.claimed = claimed
     }
 
     /// The number on the member's card.
