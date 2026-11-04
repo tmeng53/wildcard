@@ -46,6 +46,8 @@ const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
 });
+/** The check-ins the coaches were asked to look at, as the route asks. */
+const looked: { readonly checkIn: string; readonly squads: readonly string[] }[] = [];
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -96,7 +98,17 @@ const app = createApp({
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
   log: createLog(() => undefined),
-  jobs: noJobs,
+  jobs: {
+    ...noJobs,
+    coach: {
+      run: () => Promise.reject(new Error('unused')),
+      answer: () => Promise.reject(new Error('unused')),
+      checkedIn: (asked) => {
+        looked.push(asked);
+        return Promise.resolve();
+      },
+    },
+  },
   admin: adminOn(),
 });
 
@@ -207,6 +219,10 @@ describe('PUT /check-ins/{id}', () => {
       type: 'application/json',
       body: expected,
     });
+    // The squads' coaches look at it once, while the first save's request runs; not on a retry.
+    expect(looked.filter(({ checkIn }) => checkIn === id)).toStrictEqual([
+      { checkIn: id, squads: [squad] },
+    ]);
   });
 
   it('answers each refusal as a problem with its reason', async () => {

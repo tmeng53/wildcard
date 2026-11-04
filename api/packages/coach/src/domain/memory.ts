@@ -1,3 +1,5 @@
+import type { SquadWeek } from './squad-week.js';
+
 // A squad's memory: the files its coach keeps. Stored by member id (`people/<id>.md`), shown to
 // the model by roster name (`people/队员N.md`), so the model never sees an id and a member's
 // page follows them when the numbering changes.
@@ -82,4 +84,24 @@ export function editBody(
     return { ok: false, why: `文件最多 ${String(FILE_LIMIT)} 字，先删掉不再需要的内容。` };
   }
   return { ok: true, body: next };
+}
+
+/**
+ * The first `squad.md` of a squad whose coach hasn't written one: its name and who is in it, by
+ * the names the model knows them by, for the coach to build on.
+ */
+export function squadSeed(
+  week: Pick<SquadWeek, 'name' | 'members'>,
+  roster: ReadonlyMap<string, string>,
+): string {
+  const members = week.members.map(({ member, nickname }) => {
+    const name = roster.get(member) ?? '队员';
+    return nickname === undefined ? `- ${name}` : `- ${name}：昵称「${nickname}」`;
+  });
+  return [
+    '# 小队',
+    ...(week.name === undefined ? [] : [`队名：${week.name}`]),
+    '队员（昵称会变，以 squad_week 为准）：',
+    ...members,
+  ].join('\n');
 }
