@@ -45,6 +45,7 @@ import {
   unusedUnlocks,
   unusedCoachHiring,
   unusedCoachActivity,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
@@ -122,6 +123,7 @@ const deps = {
   coachActivity: unusedCoachActivity,
   notices,
   coachNames: () => Promise.reject(new Error('unused')),
+  liveEvents: ignoredNotices.liveEvents,
   log,
   jobs: { isScheduler: jobsTokenScheduler(JOBS_TOKEN), interactions, clock: () => new Date() },
   admin: adminOn(),

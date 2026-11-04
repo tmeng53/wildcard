@@ -133,6 +133,7 @@ const app = createApp({
   // Real, so a comment's notices are read back from 通知.
   notices: createNotices({ store: createPostgresNoticeStore(db) }),
   coachNames: ignoredNotices.coachNames,
+  liveEvents: ignoredNotices.liveEvents,
   log: createLog(() => undefined),
   jobs: {
     ...noJobs,

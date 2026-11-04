@@ -28,6 +28,7 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 export interface ProfileEvents {
   at: Generated<Timestamp>;
   catchphrase: string | null;
+  equipped_title: string | null;
   id: Generated<Int8>;
   jersey_number: number | null;
   look: Json | null;
@@ -39,6 +40,7 @@ export interface ProfileEvents {
 export interface Profiles {
   catchphrase: string | null;
   created_at: Generated<Timestamp>;
+  equipped_title: string | null;
   jersey_number: number | null;
   look: Json | null;
   member_id: string;

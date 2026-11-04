@@ -183,21 +183,48 @@ async function train({
 }
 
 describe('GET /me/unlocks', () => {
-  it('opens DEUCE CLUB after 3 网球类 练了 and the racket on the first', async () => {
+  it('opens DEUCE CLUB after 3 网球类 练了, the racket on the first and each piece on its own', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me);
     const unlocked = async (member: { readonly token: string }) =>
       call({ method: 'GET', path: '/me/unlocks', token: member.token });
 
-    expect(await unlocked(me)).toStrictEqual({
+    const fresh = await unlocked(me);
+    expect(fresh).toMatchObject({
       status: 200,
       type: 'application/json',
-      body: { version: 1, unlocks: [] },
+      body: { version: 1, unlocks: [], pieces: [] },
     });
+    // Every piece with a rule starts locked, with how far it is.
+    const locked = z
+      .object({ lockedPieces: z.array(z.object({ id: z.string(), checkInsToGo: z.int() })) })
+      .parse(fresh.body).lockedPieces;
+    expect(locked).toHaveLength(39);
+    expect(locked.find(({ id }) => id === 'warmup-headphones')?.checkInsToGo).toBe(2);
+    expect(locked.find(({ id }) => id === 'deuce-sweater')?.checkInsToGo).toBe(5);
     const first = await train({ member: me, squad, sport: 'tennis' });
-    await train({ member: me, squad, sport: 'run' });
+    const run = await train({ member: me, squad, sport: 'run' });
     const squash = await train({ member: me, squad, sport: 'squash' });
-    expect((await unlocked(me)).body).toStrictEqual({
+    const three = z
+      .object({
+        version: z.literal(1),
+        unlocks: z.unknown(),
+        pieces: z.unknown(),
+        lockedPieces: z.array(z.object({ id: z.string(), checkInsToGo: z.int() })),
+      })
+      .parse((await unlocked(me)).body);
+    expect(three.pieces).toStrictEqual([
+      // WARM-UP's headphones open on the 2nd 练了 of any sport.
+      {
+        id: 'warmup-headphones',
+        unlockedAt: run.at,
+        reason: { sports: [], checkIns: 2 },
+      },
+    ]);
+    expect(three.lockedPieces.find(({ id }) => id === 'deuce-sweater')?.checkInsToGo).toBe(3);
+    expect(three.lockedPieces.find(({ id }) => id === 'lap-bib')?.checkInsToGo).toBe(4);
+    expect(three.lockedPieces.some(({ id }) => id === 'warmup-headphones')).toBe(false);
+    expect(three).toMatchObject({
       version: 1,
       unlocks: [
         {
@@ -230,7 +257,7 @@ describe('GET /me/unlocks', () => {
 
     expect(z.unknown().parse((await unlocked(me)).body)).toMatchObject(after);
 
-    expect((await unlocked(friend)).body).toStrictEqual({ version: 1, unlocks: [] });
+    expect((await unlocked(friend)).body).toMatchObject({ version: 1, unlocks: [], pieces: [] });
     expect((await call({ method: 'GET', path: '/me/unlocks' })).status).toBe(401);
   });
 });

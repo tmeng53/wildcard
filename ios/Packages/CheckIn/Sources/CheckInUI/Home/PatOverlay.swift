@@ -25,6 +25,8 @@ struct PatOverlay: View {
     let unit: Double
     let canPat: (MemberID) -> Bool
     let pat: (MemberID) -> Void
+    /// Opens a teammate's player card, from the name line on their bubble.
+    var openCard: (MemberID) -> Void = { _ in }
 
     var body: some View {
         let isStill = pats.pat == nil && pats.bubble == nil && pats.myLine == nil
@@ -69,6 +71,17 @@ struct PatOverlay: View {
             patted ? Text("拍过了", bundle: .module) : Text("拍一拍", bundle: .module),
             isDone: patted, identifier: "today.pat"
         ) { pat(bubble.mate) }
+        let eyebrow = bubble.eyebrow.map { eyebrow in
+            SpeechBubble.StatusEyebrow(
+                Text(verbatim: eyebrow.text),
+                badge: eyebrow.title.map {
+                    TitleBadgeLook(shape: $0.badge.shape, colour: $0.badge.colour, glyph: $0.badge.glyph)
+                }, identifier: "today.mateCard"
+            ) {
+                pats.dismissBubble()
+                openCard(bubble.mate)
+            }
+        }
         return Color.clear
             .frame(width: 0, height: 0)
             .overlay(alignment: .bottom) {
@@ -76,7 +89,7 @@ struct PatOverlay: View {
                     Text(verbatim: bubble.title),
                     kind: .status(
                         detail: bubble.detail.map { Text(verbatim: $0) },
-                        button: bubble.kind == .mine ? nil : button)
+                        button: bubble.kind == .mine ? nil : button, eyebrow: eyebrow)
                 )
                 .fixedSize()
                 .accessibilityElement(children: .contain)

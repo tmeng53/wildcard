@@ -66,6 +66,9 @@ public final class NoticeInbox {
     public private(set) var notices: [Notice] = []
     /// Whether scrolling further can still find notices.
     public var hasMore: Bool { next != nil }
+    /// Where the next page starts, nil at the end: changes each time a page is read, even one
+    /// with nothing this build can show, so the end of the list knows to read on.
+    public var nextPage: NoticeID? { next }
     /// Whether the last try at the next page didn't reach the server.
     public private(set) var moreFailed = false
     /// The bell's dot: a notice newer than the newest the member has seen.
@@ -84,9 +87,9 @@ public final class NoticeInbox {
     private var loadingMore: Int?
     private let source: any NoticeSource
 
-    /// Pages read in one go past pages this build can't show any of, before waiting for the
-    /// member to scroll again.
-    static let skipLimit = 5
+    /// The most pages one load or one scroll reads in a row while none of them has anything this
+    /// build can show, before waiting for the member to scroll again.
+    static let pagesAtOnce = 6
 
     public init(source: any NoticeSource) {
         self.source = source
@@ -102,15 +105,17 @@ public final class NoticeInbox {
     public func load() async {
         generation += 1
         let mine = generation
+        // With nothing to show yet, the page says it is loading, as on a retry after a failed one.
+        if notices.isEmpty { phase = .loading }
         do {
             var page = try await source.notices(before: nil)
             var found = page.notices
-            var skipped = 0
+            var read = 1
             // A page of kinds this build can't show still goes on past them.
-            while found.isEmpty, let before = page.next, skipped < Self.skipLimit {
+            while found.isEmpty, let before = page.next, read < Self.pagesAtOnce {
                 page = try await source.notices(before: before)
                 found = page.notices
-                skipped += 1
+                read += 1
             }
             guard mine == generation else { return }
             notices = found
@@ -156,13 +161,13 @@ public final class NoticeInbox {
         moreFailed = false
         do {
             var found: [Notice] = []
-            var skipped = 0
-            while found.isEmpty, let before = next, skipped <= Self.skipLimit {
+            var read = 0
+            while found.isEmpty, let before = next, read < Self.pagesAtOnce {
                 let page = try await source.notices(before: before)
                 guard mine == generation else { return }
                 found = page.notices
                 next = page.next
-                skipped += 1
+                read += 1
             }
             let shown = Set(notices.map(\.id))
             notices += found.filter { !shown.contains($0.id) }

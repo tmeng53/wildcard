@@ -20,6 +20,12 @@ public protocol CheckInBackend: Sendable {
     /// Saves a check-in under its own id. Safe to retry: the same check-in again answers with
     /// the saved one.
     func save(_ checkIn: CheckIn) async throws(CheckInError) -> CheckIn
+    /// Makes the member's own saved check-in this one: its fields and photos, already uploaded.
+    /// The same edit again changes nothing.
+    func edit(_ checkIn: CheckIn) async throws(CheckInError) -> CheckIn
+    /// Deletes the member's own check-in, with its photos and what teammates left on it; fine
+    /// when it is gone already.
+    func delete(_ checkIn: CheckInID) async throws(CheckInError)
     func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction]
     /// Sets the member's one reaction on a check-in, replacing any earlier one.
     func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError)

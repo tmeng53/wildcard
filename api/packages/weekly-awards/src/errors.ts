@@ -42,3 +42,14 @@ export class WeekStoryNotReadyError extends AppError {
     super(`The story of the week from ${weekStart} comes on its Sunday at 8pm Eastern.`);
   }
 }
+
+/** Thrown when a member equips a title they haven't won. */
+export class TitleNotWonError extends AppError {
+  override readonly name = 'TitleNotWonError';
+  readonly reason = 'TITLE_NOT_WON';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor() {
+    super('The member hasn’t won this title.');
+  }
+}

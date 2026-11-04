@@ -41,6 +41,7 @@ const photos = {
   exists: notCalled,
   createViewUrls: notCalled,
   deleteAllOf: notCalled,
+  delete: notCalled,
 };
 const checkInsOn = (db: Database) =>
   createCheckIns({

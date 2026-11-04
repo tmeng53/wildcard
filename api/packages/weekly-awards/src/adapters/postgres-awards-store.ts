@@ -1,6 +1,7 @@
 import { sql, type Kysely } from 'kysely';
 
-import { MemberId, StoredAward, titlesWonOf } from '../domain/awards.js';
+import { MemberId, SquadId, StoredAward, type TitleWin } from '../domain/awards.js';
+import { WeekStart } from '../domain/schedule.js';
 import type { AwardsStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -48,15 +49,41 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
       };
     },
 
-    async titlesWon(member) {
+    async wins(members) {
+      if (members.length === 0) return new Map();
       const rows = await db
-        .selectFrom('weekly_award_winners')
-        .select('award')
-        .where('member_id', '=', member)
-        .orderBy('week_start', 'desc')
-        .orderBy('squad_id')
+        .selectFrom('weekly_award_winners as winner')
+        // The squad's name that week, from its frozen 战报; none for a week won before 战报 froze.
+        .leftJoin('week_stories as story', (join) =>
+          join
+            .onRef('story.squad_id', '=', 'winner.squad_id')
+            .onRef('story.week_start', '=', 'winner.week_start'),
+        )
+        .select([
+          'winner.member_id',
+          'winner.squad_id',
+          sql<string>`winner.week_start::text`.as('week'),
+          'winner.award',
+          // Only the name, not the whole frozen story with its pages.
+          sql<string | null>`story.story ->> 'name'`.as('squad_name'),
+        ])
+        .where('winner.member_id', 'in', members)
+        .orderBy('winner.week_start', 'desc')
+        .orderBy('winner.squad_id')
         .execute();
-      return titlesWonOf(rows.map(({ award }) => StoredAward.parse(award)));
+      const wins = new Map<MemberId, TitleWin[]>();
+      for (const row of rows) {
+        const member = MemberId.parse(row.member_id);
+        const squad = SquadId.parse(row.squad_id);
+        const weekStart = WeekStart.parse(row.week);
+        const squadName = row.squad_name ?? undefined;
+        const list = wins.get(member) ?? [];
+        for (const title of StoredAward.parse(row.award).titles) {
+          list.push({ squad, weekStart, title, ...(squadName === undefined ? {} : { squadName }) });
+        }
+        wins.set(member, list);
+      }
+      return wins;
     },
 
     save: ({ squad, weekStart, awards }) =>

@@ -14,24 +14,26 @@ export function createPostgresAwardSettings(db: Kysely<DB>): AwardSettingsStore 
         .$if(options?.forUpdate === true, (query) => query.forUpdate())
         .executeTakeFirstOrThrow();
       return AwardSettings.parse({
-        version: 1,
+        version: 2,
         model: row.model,
         instructions: row.instructions,
         moves: row.moves,
+        badges: row.badges,
       });
     },
 
     async save(settings, by) {
       const moves = JSON.stringify(settings.moves);
+      const badges = JSON.stringify(settings.badges);
       // One statement: the row changes only when something differs, and the log gets the whole
       // new value exactly when it does.
       const saved = await db
         .with('changed', (cte) =>
           cte
             .updateTable('weekly_award_settings')
-            .set({ model: settings.model, instructions: settings.instructions, moves })
+            .set({ model: settings.model, instructions: settings.instructions, moves, badges })
             .where(
-              sql<boolean>`(model, instructions, moves) is distinct from (${settings.model}, ${settings.instructions}, ${moves}::jsonb)`,
+              sql<boolean>`(model, instructions, moves, badges) is distinct from (${settings.model}, ${settings.instructions}, ${moves}::jsonb, ${badges}::jsonb)`,
             )
             .returning('only_row'),
         )

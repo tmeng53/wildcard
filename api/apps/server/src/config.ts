@@ -98,6 +98,12 @@ const APNS = [
 export interface Config {
   readonly port: number;
   readonly databaseUrl: string;
+  /**
+   * The database with a session of its own, which live events `LISTEN` on: `DATABASE_URL` itself,
+   * except that Supabase's transaction pooler (port 6543), which can't `LISTEN`, becomes its
+   * session pooler on 5432 of the same host, as the deploy's migrations use.
+   */
+  readonly liveEventsDatabaseUrl: string;
   /** The CA file to verify the database's TLS certificate against; undefined for no TLS. */
   readonly databaseCaFile: string | undefined;
   readonly supabaseUrl: string;
@@ -183,6 +189,7 @@ export function readConfig(environment: Record<string, string | undefined>): Con
   return {
     port: result.data.PORT,
     databaseUrl: result.data.DATABASE_URL,
+    liveEventsDatabaseUrl: sessionUrl(result.data.DATABASE_URL),
     databaseCaFile: result.data.DATABASE_CA_FILE,
     supabaseUrl: result.data.SUPABASE_URL.replace(/\/+$/, ''),
     supabaseSecretKey: result.data.SUPABASE_SECRET_KEY,
@@ -237,4 +244,12 @@ function readApns(data: z.infer<typeof Environment>): Config['apns'] {
       production: { keyId: APNS_PRODUCTION_KEY_ID, privateKey: APNS_PRODUCTION_PRIVATE_KEY },
     },
   };
+}
+
+/** `url` on Supabase's session pooler (5432) when it is the transaction pooler (6543). */
+function sessionUrl(url: string): string {
+  const parsed = new URL(url);
+  if (parsed.port !== '6543') return url;
+  parsed.port = '5432';
+  return parsed.toString();
 }

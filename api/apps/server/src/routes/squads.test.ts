@@ -38,6 +38,7 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -109,6 +110,7 @@ const app = createApp({
   coachActivity: unusedCoachActivity,
   notices: createNotices({ store: createPostgresNoticeStore(db) }),
   coachNames: () => Promise.reject(new Error('unused')),
+  liveEvents: ignoredNotices.liveEvents,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),

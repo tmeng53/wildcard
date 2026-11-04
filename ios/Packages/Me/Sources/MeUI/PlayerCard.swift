@@ -1,52 +1,77 @@
 #if os(iOS)
+import Contracts
 import DesignSystem
 import DesignSystemUI
 import MeDomain
-import SportsUI
 import SwiftUI
 
-/// 我's player card, like a baseball card: the front has the character, the name and squad and the
-/// headline numbers; a tap turns it over to the career numbers, as the line under it says. Ink card stock with white type, the character in a light grey window,
-/// standing on faint court lines.
+/// A player card, like a baseball card, as the approved 头衔徽章 design draws it: the front has the
+/// number over the title worn and its badge, the character, the name, squad and year, and the
+/// headline numbers; a tap turns it over to the career line and the badge board (徽章板), where a
+/// badge opens its own card. Ink card stock with white type, the character in a light grey window,
+/// standing on faint court lines. The member's own on 我 can wear a title from a badge's card
+/// (`equip`); a squadmate's can't.
 struct PlayerCard: View {
-    let overview: MeOverview
+    let face: PlayerCardFace
+    /// Wears a title (nil: the latest again); nil on a squadmate's card, which shows no 装备.
+    var equip: ((String) -> Void)?
     @State private var showsBack = false
     /// How far the card has turned on its vertical axis, in degrees: it turns edge-on, swaps sides
     /// out of sight and turns back.
     @State private var turn: Double = 0
     @State private var isTurning = false
+    @State private var opened: BoardTitle?
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     static let size = CGSize(width: 300, height: 460)
 
     var body: some View {
         VStack(spacing: Space.s) {
-            Button(action: flip) {
-                Group {
-                    if showsBack {
-                        CardBack(overview: overview)
-                    } else {
-                        CardFront(overview: overview)
-                    }
+            Group {
+                if showsBack {
+                    // The back's badges are buttons of their own, so the back is no button: a
+                    // tap anywhere else on it turns it over.
+                    sided(CardBack(face: face) { opened = $0 })
+                        .onTapGesture(perform: flip)
+                        .accessibilityElement(children: .contain)
+                        .accessibilityAction(named: Text("轻点翻面", bundle: .module), flip)
+                        .accessibilityIdentifier("me.cardBack")
+                } else {
+                    Button(action: flip) { sided(CardFront(face: face)) }
+                        .buttonStyle(PressableButtonStyle())
+                        .accessibilityHint(Text("轻点翻面", bundle: .module))
+                        .accessibilityIdentifier("me.card")
                 }
-                .padding(Space.xs)
-                .frame(width: Self.size.width, height: Self.size.height)
-                .background(Color(role: .bgInk, in: theme), in: Self.shape)
-                .contentShape(Self.shape)
-                .rotation3DEffect(.degrees(turn), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
             }
-            .buttonStyle(PressableButtonStyle())
-            .accessibilityHint(Text("轻点翻面", bundle: .module))
-            .accessibilityIdentifier("me.card")
+            .rotation3DEffect(.degrees(turn), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
             // It turns over rather than swipes, so it says so.
             Text("轻点翻面", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .accessibilityHidden(true)
         }
+        .sheet(item: $opened) { title in
+            BadgeCard(
+                title: title, isWorn: face.board.worn == title.title,
+                equip: equip.map { equip in
+                    {
+                        equip(title.title)
+                        opened = nil
+                    }
+                })
+        }
     }
 
     private static let shape = RoundedRectangle(cornerRadius: Radius.card + Space.xxs, style: .continuous)
+
+    /// A side on the card's stock, at the card's size.
+    private func sided(_ side: some View) -> some View {
+        side
+            .padding(Space.xs)
+            .frame(width: Self.size.width, height: Self.size.height)
+            .background(Color(role: .bgInk, in: theme), in: Self.shape)
+            .contentShape(Self.shape)
+    }
 
     /// Half a turn each way on the page spring's time; with Reduce Motion on, the sides swap with
     /// a fade.
@@ -72,44 +97,27 @@ struct PlayerCard: View {
     }
 }
 
-/// The front: the character in its window under the card's number and latest title, the name,
-/// squad and the year they joined, then 练了, 本周 and 拿过的奖.
+/// The front: in the character's window, the number over a short bar in the badge's colour and
+/// the title worn, with its badge at the top right; then the name, squad and the year they
+/// joined, and 练了, 本周 and 徽章.
 private struct CardFront: View {
-    let overview: MeOverview
+    let face: PlayerCardFace
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
-            MeStage(character: overview.character, floor: .borderDefault)
+            MeStage(character: face.character, floor: .borderDefault)
                 .padding(.bottom, -Space.xxs)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .overlay(alignment: .top) {
-                    // One row, so a long title gives way (truncating) before it can reach the number.
-                    HStack(alignment: .top, spacing: Space.xs) {
-                        if let number = overview.cardNumber {
-                            Text(verbatim: number.text)
-                                .typeStyle(TypeRamp.scoreHero)
-                                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                                .monospacedDigit()
-                                .fixedSize()
-                                .padding(.leading, Space.s)
-                                .padding(.top, Space.xs)
-                                .accessibilityLabel(Text("card.number \(number.text)", bundle: .module))
-                                .accessibilityIdentifier("me.cardNumber")
-                        }
-                        Spacer(minLength: 0)
-                        if let latest = overview.titles.latest {
-                            Text(verbatim: latest.title)
-                                .typeStyle(TypeRamp.footnoteEmphasis)
-                                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                                .lineLimit(1)
-                                .padding(.horizontal, Space.xs)
-                                .padding(.vertical, Space.xxs)
-                                .background(Color(role: .bgCanvas, in: theme), in: Capsule())
-                                .padding(.trailing, Space.xs)
-                                .padding(.top, Space.s)
-                                .accessibilityIdentifier("me.latestTitle")
-                        }
+                .overlay(alignment: .topLeading) { numberAndTitle }
+                .overlay(alignment: .topTrailing) {
+                    if let worn = face.board.wornTitle {
+                        TitleBadgeView(
+                            shape: worn.badge.shape, colour: worn.badge.colour, glyph: worn.badge.glyph,
+                            size: Self.badgeSize
+                        )
+                        .padding(Space.s)
+                        .accessibilityIdentifier("me.wornBadge")
                     }
                 }
                 .background {
@@ -123,7 +131,7 @@ private struct CardFront: View {
                 .clipShape(RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
             HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
                 nameAndSquad
-                if let year = overview.joinedAt.map({ String(Calendar.current.component(.year, from: $0)) }) {
+                if let year = face.joinedAt.map({ String(Calendar.current.component(.year, from: $0)) }) {
                     Text("card.since \(year)", bundle: .module)
                         .typeStyle(TypeRamp.label)
                         .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
@@ -136,14 +144,50 @@ private struct CardFront: View {
         }
     }
 
+    /// 60 points, as the approved front has it.
+    private static let badgeSize: Double = 60
+    /// The bar under the number: short and thin, in the worn badge's colour.
+    private static let bar = CGSize(width: 28, height: 3)
+
+    /// The number, the bar and the title down the window's left, clear of the badge.
+    private var numberAndTitle: some View {
+        VStack(alignment: .leading, spacing: Space.xxs + Space.xxs / 2) {
+            if let number = face.number {
+                Text(verbatim: number.text)
+                    .typeStyle(TypeRamp.scoreHero)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .monospacedDigit()
+                    .fixedSize()
+                    .accessibilityLabel(Text("card.number \(number.text)", bundle: .module))
+                    .accessibilityIdentifier("me.cardNumber")
+            }
+            if let worn = face.board.wornTitle {
+                Capsule()
+                    .fill(TitleBadgeView.enamel(worn.badge.colour))
+                    .frame(width: Self.bar.width, height: Self.bar.height)
+                    .accessibilityHidden(true)
+                Text(verbatim: worn.title)
+                    .typeStyle(TypeRamp.cardTitle)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .accessibilityIdentifier("me.wornTitle")
+            }
+        }
+        .padding(.leading, Space.m)
+        .padding(.top, Space.xs)
+        // Clear of the badge at the top right.
+        .padding(.trailing, Self.badgeSize + Space.s * 2)
+    }
+
     private var nameAndSquad: some View {
         VStack(alignment: .leading, spacing: Space.xxs / 2) {
-            Text(overview.character.nickname)
+            Text(face.character.nickname)
                 .typeStyle(TypeRamp.title)
                 .foregroundStyle(Color(role: .fgOnInk, in: theme))
                 .lineLimit(1)
                 .accessibilityIdentifier("me.nickname")
-            if let squad = overview.squadName {
+            if let squad = face.squadName {
                 Text(squad)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
@@ -157,16 +201,16 @@ private struct CardFront: View {
     private var stats: some View {
         HStack(alignment: .top, spacing: Space.xs) {
             FrontStat(label: Text("练了", bundle: .module)) {
-                Score(count: overview.counts.trainedDays, size: .card, onInk: true)
+                Score(count: face.counts.trainedDays, size: .card, onInk: true)
                     .accessibilityIdentifier("me.trainedDays")
             }
-            if let week = overview.week {
+            if let week = face.week {
                 FrontStat(label: Text("本周", bundle: .module)) {
                     Score(count: week.trainedDays, goal: week.plannedDays, size: .card, onInk: true)
                 }
             }
-            FrontStat(label: Text("拿过的奖", bundle: .module)) {
-                Score(count: overview.titles.count, size: .card, onInk: true)
+            FrontStat(label: Text("徽章", bundle: .module)) {
+                Score(count: face.board.count, size: .card, onInk: true)
                     .accessibilityIdentifier("me.titles")
             }
         }
@@ -197,113 +241,76 @@ private struct FrontStat<Value: View>: View {
     }
 }
 
-/// The back: the name and number, the career count of 练了 large, then every other kind, this
-/// week, the sport trained most and the latest title.
+/// The back: the name and number, the career count of 练了 large with 健康餐 and 请假条 beside
+/// it, then the badge board, three to a row, ending on the dashed slot of the next Sunday's.
 private struct CardBack: View {
-    let overview: MeOverview
+    let face: PlayerCardFace
+    let open: (BoardTitle) -> Void
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
-                Text(overview.character.nickname)
+                Text(face.character.nickname)
                     .typeStyle(TypeRamp.headline)
                     .foregroundStyle(Color(role: .fgOnInk, in: theme))
                     .lineLimit(1)
                 Spacer(minLength: Space.s)
-                if let number = overview.cardNumber {
+                if let number = face.number {
                     Text(verbatim: "#\(number.text)")
-                        .typeStyle(TypeRamp.scoreInline)
+                        .typeStyle(TypeRamp.scoreSmall)
                         .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                         .monospacedDigit()
                 }
             }
-            Text("card.career", bundle: .module)
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
-                .padding(.top, Space.m)
             HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
-                Score(count: overview.counts.trainedDays, size: .hero, onInk: true)
-                Text("次训练", bundle: .module)
-                    .typeStyle(TypeRamp.callout)
+                Score(count: face.counts.trainedDays, size: .hero, onInk: true)
+                Text("card.career \(face.counts.healthyMeals) \(face.counts.disclaimers)", bundle: .module)
+                    .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
+                    // One line, shrunk to fit, so a word never breaks across lines.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
             }
-            .padding(.top, Space.xxs)
-            VStack(spacing: 0) {
-                BackStat(label: Text("健康餐", bundle: .module), isLast: false) {
-                    Score(count: overview.counts.healthyMeals, size: .inline, onInk: true)
-                }
-                BackStat(label: Text("放纵餐", bundle: .module), isLast: false) {
-                    Score(count: overview.counts.cheatMeals, size: .inline, onInk: true)
-                }
-                BackStat(label: Text("请假条", bundle: .module), isLast: false) {
-                    Score(count: overview.counts.disclaimers, size: .inline, onInk: true)
-                }
-                if let week = overview.week {
-                    BackStat(label: Text("本周", bundle: .module), isLast: false) {
-                        Score(count: week.trainedDays, goal: week.plannedDays, size: .inline, onInk: true)
-                    }
-                }
-                if let most = overview.mostTrained {
-                    BackStat(label: Text("最常练", bundle: .module), isLast: false) {
-                        HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                            most.activity.name
-                                .typeStyle(TypeRamp.callout)
-                                .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                                .lineLimit(1)
-                            Score(count: most.checkIns, size: .inline, onInk: true)
-                        }
-                    }
-                    .accessibilityIdentifier("me.mostTrained")
-                }
-                BackStat(label: Text("拿过的奖", bundle: .module), isLast: true) {
-                    if let latest = overview.titles.latest {
-                        HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                            Text(verbatim: latest.title)
-                                .typeStyle(TypeRamp.callout)
-                                .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                                .lineLimit(1)
-                            Text(verbatim: "×\(latest.times)")
-                                .typeStyle(TypeRamp.scoreInline)
-                                .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                                .monospacedDigit()
-                        }
-                    } else {
-                        Score(count: 0, size: .inline, onInk: true)
-                    }
-                }
-                .accessibilityIdentifier("me.backTitles")
+            .padding(.top, Space.xs)
+            .accessibilityElement(children: .combine)
+            HStack(alignment: .firstTextBaseline) {
+                Text("徽章", bundle: .module)
+                    .typeStyle(TypeRamp.label)
+                    .foregroundStyle(Color(role: .fgOnInk, in: theme))
+                Spacer()
+                Text(verbatim: "\(face.board.count)")
+                    .typeStyle(TypeRamp.scoreCaption)
+                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
+                    .monospacedDigit()
             }
             .padding(.top, Space.s)
-            Spacer(minLength: 0)
+            .overlay(alignment: .top) { Hairline().offset(y: -Space.xxs) }
+            .padding(.top, Space.xxs)
+            ScrollView {
+                LazyVGrid(columns: Self.columns, spacing: Space.s) {
+                    ForEach(face.board.titles) { title in
+                        Button {
+                            open(title)
+                        } label: {
+                            BadgeCell(title: title, isWorn: face.board.worn == title.title)
+                        }
+                        .buttonStyle(PressableButtonStyle())
+                        .accessibilityIdentifier("me.badge")
+                    }
+                    NextBadgeCell()
+                }
+                .padding(.vertical, Space.s)
+            }
+            .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize)
         }
         .padding(.horizontal, Space.xs)
-        .padding(.top, Space.s)
+        .padding(.top, Space.xs)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
-}
 
-/// One line of the back: the kind on the left, its number on the right, a hairline under it.
-private struct BackStat<Value: View>: View {
-    let label: Text
-    let isLast: Bool
-    @ViewBuilder let value: Value
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            label
-                .typeStyle(TypeRamp.body)
-                .foregroundStyle(Color(role: .fgOnInk, in: theme))
-            Spacer(minLength: Space.s)
-            value
-        }
-        .padding(.vertical, Space.xs)
-        .overlay(alignment: .bottom) {
-            if !isLast { Hairline() }
-        }
-        .accessibilityElement(children: .combine)
-    }
+    private static let columns = Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 3)
 }
 
 /// The card's dividers: a hairline across.
@@ -316,6 +323,7 @@ private struct Hairline: View {
             .frame(height: Sizing.hairline)
     }
 }
+
 /// The card window's faint court: a boundary inset from the window's edge, a half line behind
 /// the character's middle and a centre circle on it. The card's only backdrop for now; more can
 /// come later as backdrops a member unlocks.

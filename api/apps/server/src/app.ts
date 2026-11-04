@@ -27,6 +27,7 @@ import type {
   Accounts,
   Database,
   IsScheduler,
+  LiveEvents,
   OAuthConsent,
   PhotoStorage,
   RevokeAppleSignIn,
@@ -40,6 +41,7 @@ import { aiConsent } from './routes/ai-consent.js';
 import { catalog, type CatalogSection } from './routes/catalog.js';
 import { checkIns } from './routes/check-ins.js';
 import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
+import { events } from './routes/events.js';
 import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { jobs } from './routes/jobs.js';
@@ -55,6 +57,7 @@ import { squadCoach } from './routes/squad-coach.js';
 import { coachActivity } from './routes/coach-activity.js';
 import { squadScene } from './routes/squad-scene.js';
 import { squadToday } from './routes/squad-today.js';
+import { titles } from './routes/titles.js';
 import { weekStory } from './routes/week-story.js';
 import { weekSummary } from './routes/week-summary.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
@@ -81,6 +84,8 @@ export interface AppDependencies {
   readonly notices: Notices;
   /** The coaches' names now, which a coach's notice shows. */
   readonly coachNames: CoachNames;
+  /** Members' live events, which `GET /me/events` streams to their open app. */
+  readonly liveEvents: LiveEvents;
   /** Members' consent to the AI copy, which squads and drafts ask for themselves. */
   readonly aiConsent: AiConsent;
   /** What `GET /public/catalog` serves: each section, as `main.ts` lists them. */
@@ -94,7 +99,7 @@ export interface AppDependencies {
   readonly weekSummaryWords: () => Promise<WeekSummaryWords>;
   /** Each squad's weekly awards, and the clock that says when they are due. */
   readonly weeklyAwards: { readonly awards: WeeklyAwards; readonly clock: () => Date };
-  /** The stores and props members unlock by training. */
+  /** The stores, props and pieces members unlock by training. */
   readonly unlocks: Unlocks;
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */
@@ -159,17 +164,19 @@ export function createApp(deps: AppDependencies) {
   app.route('/', devices(deps));
   app.route('/', pushSettings(deps));
   app.route('/', squads(deps));
-  app.route('/', squadToday(deps));
+  app.route('/', squadToday({ ...deps, awards: deps.weeklyAwards.awards }));
   app.route('/', squadScene({ ...deps, clock: deps.weeklyAwards.clock }));
   app.route('/', squadCoach(deps));
   app.route('/', coachActivity(deps));
   app.route('/', nudges(deps));
   app.route('/', notices(deps));
+  app.route('/', events(deps));
   app.route('/', weekSummary({ ...deps, words: deps.weekSummaryWords }));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
   app.route('/', weekStory({ ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) }));
   app.route('/', awardTotals({ ...deps, ...deps.weeklyAwards }));
+  app.route('/', titles({ ...deps, awards: deps.weeklyAwards.awards }));
   app.route('/', unlocks(deps));
   // Not part of the app's contract, so not in openapi.json: a scheduler calls it.
   app.route(
