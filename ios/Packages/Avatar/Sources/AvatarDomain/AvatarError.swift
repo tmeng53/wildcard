@@ -33,6 +33,8 @@ public enum AvatarError: Error, Equatable, Sendable {
     case canvasMismatch(art: String)
     /// A clip moves a part the rig doesn't have.
     case unknownPart(clip: String, part: PartID)
+    /// A clip bends a part the rig gives no elbow.
+    case noElbow(clip: String, part: PartID)
     /// A clip whose duration isn't a positive number of seconds.
     case invalidDuration(clip: String)
     /// A track with no keys, keys out of time order, or keys outside the clip.

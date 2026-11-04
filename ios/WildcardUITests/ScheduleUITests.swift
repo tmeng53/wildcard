@@ -22,7 +22,7 @@ final class ScheduleUITests: XCTestCase {
 
     func testThisWeekChangesTodayAndDaysStillToCome() {
         let app = launch()
-        let tabBar = tabButton("tab.schedule", in: app)
+        let tabBar = tabButton("tab.me", in: app)
         XCTAssertTrue(tabBar.isSelected)
         // The poster and the counts under it sit clear of the tab bar.
         let poster = find(app, "schedule.poster")
@@ -72,7 +72,7 @@ final class ScheduleUITests: XCTestCase {
 
     func testNextWeekChangesFreelyWithFoodGoals() {
         let app = launch()
-        let tabBar = tabButton("tab.schedule", in: app)
+        let tabBar = tabButton("tab.me", in: app)
         // The bar opens on 本周 with 下周 beside it, in view and tappable.
         let nextWeek = app.buttons["下周"]
         waitFor(nextWeek, "hittable == true", "下周 isn't in view", timeout: 10)
@@ -147,7 +147,7 @@ final class ScheduleUITests: XCTestCase {
         settle()
         XCTAssertEqual(app.buttons["schedule.save"].frame.minY, saveTop, accuracy: 1, "the top bar scrolled away")
         XCTAssertLessThanOrEqual(
-            award.frame.maxY, app.buttons["tab.schedule"].frame.minY, "the award sits under the tab bar")
+            award.frame.maxY, app.buttons["tab.me"].frame.minY, "the award sits under the tab bar")
         keepScreenshot(named: "67-schedule-past-week-award-words")
         app.swipeDown()
         settle()
@@ -195,7 +195,7 @@ final class ScheduleUITests: XCTestCase {
     /// 存图; a change to next week offers to change the template too.
     func testTemplatePlansEveryWeekAndAWeekOffersIt() {
         let app = launch()
-        let tabBar = tabButton("tab.schedule", in: app)
+        let tabBar = tabButton("tab.me", in: app)
         let template = app.buttons["schedule.template"]
         XCTAssertTrue(template.waitForExistence(timeout: 10), "no 每周模板 chip")
         if !template.isHittable { app.buttons["下周"].swipeLeft() }

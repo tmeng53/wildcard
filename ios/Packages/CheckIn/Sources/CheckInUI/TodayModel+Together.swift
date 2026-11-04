@@ -44,7 +44,7 @@ extension TodayModel {
         try? await Task.sleep(for: .seconds(Self.togetherDelay))
         await untilArrived()
         guard isScenePlain else { return }
-        if defaults.string(forKey: Self.stretchKey(for: home.member)) != day.description,
+        if defaults.string(forKey: Self.stretchKey(for: home.member)) != day.description, stretchesInPose,
             let player, let clip = try? PlaceholderCharacter.clip(for: .stretch, persona: myPersona)
         {
             defaults.set(day.description, forKey: Self.stretchKey(for: home.member))
@@ -53,12 +53,7 @@ extension TodayModel {
             guard isScenePlain else { return }
         }
         let shown = shownTogether(for: home.member, on: day)
-        let mine = StageMember(
-            id: home.member,
-            status: StageStatus(
-                training: store.myStatus, activity: home.todaysSport(of: home.member),
-                plannedRest: home.mine?.plannedRest ?? false),
-            firstCheckInAt: home.mine?.firstCheckInAt, keepsToTheBack: false)
+        guard let mine = myMember else { return }
         guard
             let celebration = SquadCelebration.pick(
                 myself: home.member, members: [mine] + cast.mates.map(\.member), squadWeek: home.today.squadWeek,
@@ -67,6 +62,15 @@ extension TodayModel {
         else { return }
         let kinds = (shown.map(\.rawValue) + [celebration.kind.rawValue]).sorted()
         defaults.set([day.description] + kinds, forKey: Self.togetherKey(for: home.member))
+    }
+
+    /// Whether my pose leaves room for the stretch: standing or training, not sitting, eating,
+    /// holding my 请假条 up or asleep.
+    private var stretchesInPose: Bool {
+        switch myPose(at: stagePhase) {
+        case .standing?, .inPlace?, .station?, nil: true
+        case .sitting?, .holdingSign?, .eating?, .asleep?: false
+        }
     }
 
     /// Nothing else is on the scene: no check-in being made, no pat, the lights not off.
@@ -96,7 +100,12 @@ extension TodayModel {
             guard let spot = cast.stage.position(of: mate.id, at: seconds) else { continue }
             figures[PatStage.Figure.mate(mate.id)] = (mate.player, mate.persona, spot)
         }
-        if let player { figures[PatStage.Figure.mine] = (player, myPersona, StagePosition.mine) }
+        // I join in as they do: not while holding my 请假条 up, asleep or eating.
+        switch myPose(at: stagePhase) {
+        case .holdingSign?, .asleep?, .eating?: break
+        case .standing?, .sitting?, .station?, .inPlace?, nil:
+            if let player { figures[PatStage.Figure.mine] = (player, myPersona, StagePosition.mine) }
+        }
         return figures
     }
 }
