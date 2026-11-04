@@ -41,15 +41,17 @@ final class AppModel {
     }
 
     private(set) var screen = Screen.starting {
-        // The cover came up again: signing in on the open screen opens 今天 under it.
-        didSet { if isStarting, !oldValue.isStarting { coverSince = .now } }
+        // The cover came up again; a sign-in's cover is already up and counting.
+        didSet { if isStarting, !oldValue.isStarting, !isSigningIn { coverSince = .now } }
     }
     /// When the launch cover last came up, so it stays until its word has landed.
     @ObservationIgnored var coverSince = Date.now
     /// Whether the launch cover is up: until the first screen, with its scene, is ready.
     var isStarting: Bool { screen.isStarting }
     /// Signing in on the open screen, until the screen after it opens.
-    private(set) var isSigningIn = false
+    private(set) var isSigningIn = false {
+        didSet { if isSigningIn, !oldValue { coverSince = .now } }
+    }
     /// The squad the member is no longer in (removed, or left on another phone), said once.
     var lostSquadName: String?
     /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the

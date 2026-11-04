@@ -8,10 +8,13 @@ import SwiftUI
 /// (`UILaunchScreen` in `Config/Info.plist`), so the app opens without a white frame and the
 /// logo moves on from where it stood.
 struct LaunchCover: View {
-    @State private var start = Date.now
+    /// When the cover came up, so two covers over each other (signing in, then 今天 opening
+    /// under it) draw the same frame; without it, when this one appeared.
+    var start: Date?
+    @State private var appeared = Date.now
 
     var body: some View {
-        LaunchWordmark(start: start)
+        LaunchWordmark(start: start ?? appeared)
             // Centred on the whole screen, as the system's launch screen centres its image.
             .ignoresSafeArea()
             .accessibilityIdentifier("launch.cover")
