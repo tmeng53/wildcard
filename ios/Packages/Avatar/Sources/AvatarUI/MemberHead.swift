@@ -40,7 +40,7 @@ public struct MemberHead: View {
     private let showsCoachTag: Bool
 
     /// The face on a member's 240 by 320 canvas.
-    static let memberFace = CGRect(x: 40, y: 74, width: 160, height: 160)
+    static let memberFace = CharacterHead.face
     /// The head on a coach's 240 by 320 canvas.
     static let coachFace = CGRect(x: 50, y: 46, width: 140, height: 140)
     /// The coach's graphite ring.
