@@ -11,7 +11,7 @@ public struct CoachTag: View {
         case regular
         case small
 
-        var height: Double {
+        public var height: Double {
             switch self {
             case .regular: 18
             case .small: 16

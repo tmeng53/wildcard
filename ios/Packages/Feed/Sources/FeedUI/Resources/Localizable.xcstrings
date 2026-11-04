@@ -961,22 +961,6 @@
         }
       }
     },
-    "搜索表情" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search emoji"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "搜尋表情符號"
-          }
-        }
-      }
-    },
     "昨天" : {
       "localizations" : {
         "en" : {
@@ -989,38 +973,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "昨天"
-          }
-        }
-      }
-    },
-    "更多表情" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "More emoji"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "更多表情符號"
-          }
-        }
-      }
-    },
-    "最近" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recent"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最近"
           }
         }
       }
@@ -1297,22 +1249,6 @@
         }
       }
     },
-    "选一个回应" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pick a reaction"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "選一個回應"
-          }
-        }
-      }
-    },
     "队友" : {
       "localizations" : {
         "en" : {
@@ -1453,22 +1389,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "這一類還沒發過"
-          }
-        }
-      }
-    },
-    "网络开小差了" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't reach the server"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "網路開小差了"
           }
         }
       }

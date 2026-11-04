@@ -32,7 +32,7 @@ public actor InMemoryMeService: MeService {
                 dailyPushOn: true,
                 jerseyNumber: try? JerseyNumber(22), squadPlace: 2,
                 board: .sample,
-                templateDays: 5, unlocks: unlocks, lockedPieces: lockedPieces),
+                unlocks: unlocks, lockedPieces: lockedPieces),
             failsSaving: failsSaving)
     }
 

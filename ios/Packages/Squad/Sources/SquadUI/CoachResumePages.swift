@@ -41,12 +41,18 @@ struct CoachPageStack: View {
             CoachResumePage(
                 coach: coach, isCurrent: model.coach?.coach.id == coach.id, canHire: model.canHireCoach,
                 isSaving: model.isSaving, failed: failed == route, back: back,
-                hire: { Task { finish(route, await model.hire(coach.id)) } })
+                hire: { Task { finish(route, await model.hire(coach.id)) } },
+                change: { push(.market) }, fire: { push(.fire(coach)) })
         case .fire(let coach):
             FireCoachPage(
                 coach: coach, isSaving: model.isSaving, failed: failed == route, back: back,
                 fire: { Task { finish(route, await model.fireCoach()) } })
         }
+    }
+
+    private func push(_ route: CoachRoute) {
+        failed = nil
+        withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { pages.append(route) }
     }
 
     private func back() {
@@ -67,7 +73,7 @@ struct CoachPageStack: View {
 }
 
 /// A coach's 简历: its stage, name and title, then 履历, 执教, 风格 and 期望待遇, and 招聘 for
-/// the captain. The field names never wrap: each keeps one line and the column grows to the
+/// the captain; on the squad's own coach, the captain's small 换教练 and 解雇 instead. The field names never wrap: each keeps one line and the column grows to the
 /// longest.
 struct CoachResumePage: View {
     let coach: Coach
@@ -78,6 +84,9 @@ struct CoachResumePage: View {
     let failed: Bool
     let back: () -> Void
     let hire: () -> Void
+    /// 教练招聘会, to hire another coach in this one's place.
+    let change: () -> Void
+    let fire: () -> Void
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -101,7 +110,7 @@ struct CoachResumePage: View {
                     .padding(.top, Space.xs)
                     .accessibilityIdentifier("coach.resume.back")
             }
-            .safeAreaInset(edge: .bottom) { action }
+            .actionBar { action }
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .accessibilityElement(children: .contain)
@@ -161,9 +170,7 @@ struct CoachResumePage: View {
     }
 
     private var hairline: some View {
-        Rectangle()
-            .fill(Color(role: .borderDefault, in: theme))
-            .frame(height: Sizing.hairline)
+        Hairline()
             .gridCellColumns(2)
             .gridCellUnsizedAxes(.horizontal)
     }
@@ -171,9 +178,7 @@ struct CoachResumePage: View {
     @ViewBuilder private var action: some View {
         VStack(spacing: Space.xs) {
             if failed {
-                Text("网络开小差了，没存上", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                InlineFailure()
                     .accessibilityIdentifier("coach.resume.failed")
             }
             if !canHire {
@@ -190,13 +195,19 @@ struct CoachResumePage: View {
                 .accentTone(.ink)
                 .disabled(isSaving)
                 .accessibilityIdentifier("coach.resume.hire")
+            } else {
+                HStack(spacing: Space.l) {
+                    Button(action: change) { Text("换教练", bundle: .module) }
+                        .buttonStyle(TextButtonStyle(.muted))
+                        .accessibilityIdentifier("coach.resume.change")
+                    Button(action: fire) { Text("解雇", bundle: .module) }
+                        .buttonStyle(TextButtonStyle(.danger))
+                        .accessibilityIdentifier("coach.resume.fire")
+                }
+                .disabled(isSaving)
             }
         }
-        .padding(.horizontal, Space.pageMargin)
-        .padding(.top, Space.xs)
-        .padding(.bottom, Space.xs)
         .frame(maxWidth: .infinity)
-        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea(edges: .bottom))
     }
 }
 
@@ -238,12 +249,10 @@ struct FireCoachPage: View {
             .padding(.bottom, Space.l)
         }
         .scrollIndicators(.hidden)
-        .safeAreaInset(edge: .bottom) {
+        .actionBar {
             VStack(spacing: Space.xs) {
                 if failed {
-                    Text("网络开小差了，没存上", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    InlineFailure()
                 }
                 Button(action: back) {
                     Text("先不解雇", bundle: .module).frame(maxWidth: .infinity)
@@ -258,9 +267,6 @@ struct FireCoachPage: View {
                 .disabled(isSaving)
                 .accessibilityIdentifier("coach.fire.confirm")
             }
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.top, Space.xs)
-            .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea(edges: .bottom))
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .accessibilityElement(children: .contain)

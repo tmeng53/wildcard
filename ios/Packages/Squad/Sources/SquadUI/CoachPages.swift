@@ -107,24 +107,8 @@ struct CoachCard: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("squad.coach.open")
-            if canHire {
-                HStack(spacing: Space.xs) {
-                    Button {
-                        open(.market)
-                    } label: {
-                        Text("换教练", bundle: .module).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(SecondaryButtonStyle(.inCard))
-                    .accessibilityIdentifier("squad.coach.change")
-                    Button {
-                        open(.fire(coach))
-                    } label: {
-                        Text("解雇", bundle: .module).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(SecondaryButtonStyle(.inCard, tone: .danger))
-                    .accessibilityIdentifier("squad.coach.fire")
-                }
-            } else {
+            // 换教练 and 解雇 are rare, so they wait on the coach's 简历 (Tracy, 2026-11-04).
+            if !canHire {
                 browse
             }
         }
@@ -195,17 +179,10 @@ struct CoachMarketPage: View {
                 .frame(maxWidth: .infinity, minHeight: CoachMetrics.marketCardStage)
                 .background(Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.ticket))
         case .failed:
-            VStack(spacing: Space.m) {
-                Text("网络开小差了", bundle: .module)
-                    .typeStyle(TypeRamp.headline)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Button(action: retry) { Text("再试一次", bundle: .module) }
-                    .buttonStyle(PrimaryButtonStyle(.regular))
-                    .accentTone(.ink)
-                    .accessibilityIdentifier("coach.market.retry")
-            }
-            .frame(maxWidth: .infinity, minHeight: CoachMetrics.marketCardStage)
-            .background(Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.ticket))
+            StateView.offline(retryIdentifier: "coach.market.retry", retry: retry)
+                .accentTone(.ink)
+                .frame(maxWidth: .infinity, minHeight: CoachMetrics.marketCardStage)
+                .background(Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.ticket))
         case .loaded(let coaches):
             VStack(spacing: Space.s) {
                 ForEach(coaches) { coach in
@@ -263,7 +240,7 @@ private struct MarketCard: View {
                     }
                     .padding(.top, Space.s)
                     .overlay(alignment: .top) {
-                        Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: Sizing.hairline)
+                        Hairline()
                     }
                 }
                 .padding(.horizontal, Space.m)

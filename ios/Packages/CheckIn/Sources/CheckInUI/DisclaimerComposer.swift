@@ -66,7 +66,9 @@ struct DisclaimerComposer: View {
             }
             ShareRow(squads: model.shareSquads, shared: $shared)
                 .padding(.bottom, Space.xs)
+            // The page's last line, over nothing else: it floats, in glass.
             PostButton(model: model, disclaimer: entry.disclaimer, shared: shared, day: day)
+                .controlPlacement(.floating)
         }
         .padding(.horizontal, Space.l)
         .padding(.top, Space.xs)

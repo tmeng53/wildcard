@@ -4,11 +4,15 @@ import {
   Runner,
   tool,
   type ModelProvider,
+  type ToolOutputImage,
+  type ToolOutputText,
   type Usage,
 } from '@openai/agents-core';
 import { OpenAIProvider } from '@openai/agents-openai';
-import type { AgentRun, CoachAgent, TokenUsage } from '@wildcard/coach';
+import type { AgentRun, CoachAgent, TokenUsage, ToolAnswer } from '@wildcard/coach';
 import OpenAI from 'openai';
+
+type ToolOutput = ToolOutputText | ToolOutputImage;
 
 /** How many model turns one wake may take: reading, a few edits, a line, and the end. */
 const MAX_TURNS = 12;
@@ -61,7 +65,7 @@ export function createOpenAICoachAgent(options: {
             name: each.name,
             description: each.description,
             parameters: each.parameters,
-            execute: (input) => each.run(input),
+            execute: async (input) => outputOf(await each.run(input)),
           }),
         ),
       });
@@ -83,6 +87,19 @@ export function createOpenAICoachAgent(options: {
       }
     },
   };
+}
+
+/**
+ * A tool's answer as the SDK sends it: words alone, or words then each picture at low detail,
+ * which OpenAI bills at a small fixed number of tokens a picture.
+ * https://platform.openai.com/docs/guides/images-vision
+ */
+function outputOf(answer: ToolAnswer): string | ToolOutput[] {
+  if (typeof answer === 'string') return answer;
+  return [
+    { type: 'text', text: answer.text },
+    ...answer.images.map((url): ToolOutput => ({ type: 'image', image: { url }, detail: 'low' })),
+  ];
 }
 
 function tokensOf(usage: Usage): TokenUsage {

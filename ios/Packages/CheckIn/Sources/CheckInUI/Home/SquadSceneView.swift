@@ -18,6 +18,12 @@ struct SquadSceneView: View {
     let cast: SquadCast
     let myPlayer: CharacterPlayer?
     let myRing: RingStatus
+    /// Whether I sleep at night, as a teammate does who isn't training or eating, and whether I
+    /// hold up a 请假条 by day.
+    var iSleep = false
+    var iHoldSign = false
+    /// How long my doze lasts after the lights went off.
+    var myDoze = 0.0
     let phase: DayPhase
     /// Whether the member switched the lights on tonight, and their latest pull of the cord.
     let lightsOn: Bool
@@ -57,10 +63,11 @@ struct SquadSceneView: View {
     private func plays(_ pull: TodayModel.LightsPull) -> Double {
         guard !pull.isOn else { return Self.pullPlays }
         let flip = LightsFlip(isOn: false, reduceMotion: reduceMotion)
-        let longest =
-            cast.sleepers.enumerated().map { index, mate in
-                flip.start(ofSleeper: index) + (cast.dozes[mate.id] ?? 0)
-            }.max() ?? 0
+        let mates = cast.sleepers.enumerated().map { index, mate in
+            flip.start(ofSleeper: index) + (cast.dozes[mate.id] ?? 0)
+        }
+        let mine = iSleep ? [flip.start(ofSleeper: cast.sleepers.count) + myDoze] : []
+        let longest = (mates + mine).max() ?? 0
         return max(Self.pullPlays, longest + LightsFlip.fade)
     }
 
@@ -165,7 +172,9 @@ struct SquadSceneView: View {
         var figures = cast.mates.compactMap { mate -> Placed? in
             guard let spot = cast.stage.position(of: mate.id, at: seconds) else { return nil }
             let (position, bob) = together.position(of: .mate(mate.id), home: spot, at: date)
-            let (sleep, sign) = drowse(of: mate, sleeper: sleepers.firstIndex(of: mate.id), at: date)
+            let (sleep, sign) = drowse(
+                holdsSign: cast.stage.pose(of: mate.member, at: .day) == .holdingSign,
+                sleeper: sleepers.firstIndex(of: mate.id), doze: cast.dozes[mate.id] ?? 0, at: date)
             let hop = Self.hop(since: pats.hops[mate.id], at: date, scale: position.scale) + bob
             return Placed(
                 id: .mate(mate.id), player: mate.player, position: position, ring: mate.member.status.ring,
@@ -173,10 +182,13 @@ struct SquadSceneView: View {
         }
         if let myPlayer {
             let (position, bob) = together.position(of: .mine, home: .mine, at: date)
+            // I sleep after the last of the squad, and wake after them.
+            let (sleep, sign) = drowse(
+                holdsSign: iHoldSign, sleeper: iSleep ? sleepers.count : nil, doze: myDoze, at: date)
             figures.append(
                 Placed(
                     id: .mine, player: myPlayer, position: position,
-                    ring: myRing, sleep: 0, sign: 0, hop: bob, fall: fall(of: nil, at: date)))
+                    ring: myRing, sleep: sleep, sign: sign, hop: bob, fall: fall(of: nil, at: date)))
         }
         // Under Reduce Motion everyone is simply there.
         if arrival != nil, !reduceMotion {
@@ -195,17 +207,17 @@ struct SquadSceneView: View {
         }
     }
 
-    /// How asleep a teammate looks at `date`, for their "z z", and how much of their 请假条 shows:
+    /// How asleep someone looks at `date`, for their "z z", and how much of their 请假条 shows:
     /// at night the sleepers (`sleeper`, their place among them) are asleep with the sign put
-    /// away, until the lights wake them; a pull plays out by `LightsFlip`.
-    private func drowse(of mate: SquadCast.Mate, sleeper: Int?, at date: Date) -> (sleep: Double, sign: Double) {
-        let holdsSign = cast.stage.pose(of: mate.member, at: .day) == .holdingSign
+    /// away, until the lights wake them; a pull plays out by `LightsFlip`, their "z z" coming
+    /// back `doze` seconds after the lights go off.
+    private func drowse(holdsSign: Bool, sleeper: Int?, doze: Double, at date: Date) -> (sleep: Double, sign: Double) {
         guard phase == .night, let sleeper else { return (0, holdsSign ? 1 : 0) }
         guard let pull = playingPull else { return (lightsOn ? 0 : 1, lightsOn && holdsSign ? 1 : 0) }
         let flip = LightsFlip(isOn: pull.isOn, reduceMotion: reduceMotion)
         let seconds = date.timeIntervalSince(pull.start)
         return (
-            flip.sleep(ofSleeper: sleeper, at: seconds, dozeDuration: cast.dozes[mate.id] ?? 0),
+            flip.sleep(ofSleeper: sleeper, at: seconds, dozeDuration: doze),
             holdsSign ? flip.sign(ofSleeper: sleeper, at: seconds) : 0
         )
     }
@@ -375,26 +387,6 @@ private struct GroundRing: View {
             withAnimation(.timingCurve(0.2, 0.8, 0.3, 1, duration: Motion.ringFill)) { drawn = 1 }
         }
         .allowsHitTesting(false)
-    }
-}
-
-/// The 请假条 a teammate holds up in front of their chest.
-private struct SignCard: View {
-    @Environment(\.sceneTheme) private var theme
-    let scale: Double
-
-    var body: some View {
-        Text("请假条", bundle: .module)
-            .font(.system(size: 27 * scale, weight: .bold))
-            .foregroundStyle(Color(role: .fgAccent, in: theme))
-            .frame(width: 108 * scale, height: 58 * scale)
-            .background(Color(role: .bgCanvas, in: theme), in: card)
-            .overlay(card.stroke(Color(role: .fgAccent, in: theme), lineWidth: 4 * scale))
-    }
-
-    /// The card as the design draws it in the rig's points: 108 by 58, corners of 9.
-    private var card: RoundedRectangle {
-        RoundedRectangle(cornerSize: CGSize(width: 9 * scale, height: 9 * scale))
     }
 }
 #endif

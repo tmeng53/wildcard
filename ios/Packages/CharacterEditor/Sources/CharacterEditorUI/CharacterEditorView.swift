@@ -8,30 +8,32 @@ import SwiftUI
 /// The character editor: the character on its ticket at the top, with its nickname on the stub
 /// under its feet and the day the member signed up in the corner; tabs of choices below; and one
 /// button to finish. In sign-up it shows the step, a back button and the title 创建你的外卡运动员;
-/// from 我 it shows 取消 and saves.
+/// from 我 it shows 取消, the member's 球衣号码 when the app passes one, and saves.
 public struct CharacterEditorView: View {
     @Bindable private var model: CharacterEditorModel
     private let context: EditorContext
     private let issued: Date?
     private let onBack: () -> Void
     private let onDone: (EditedCharacter) -> Void
+    private let jerseyNumber: JerseyNumberEntry?
     @FocusState private var isNaming: Bool
     @Environment(\.sceneTheme) private var theme
 
     public init(
         model: CharacterEditorModel, context: EditorContext, issued: Date?, onBack: @escaping () -> Void,
-        onDone: @escaping (EditedCharacter) -> Void
+        onDone: @escaping (EditedCharacter) -> Void, jerseyNumber: JerseyNumberEntry? = nil
     ) {
         self.model = model
         self.context = context
         self.issued = issued
         self.onBack = onBack
         self.onDone = onDone
+        self.jerseyNumber = jerseyNumber
     }
 
     public var body: some View {
         VStack(spacing: 0) {
-            EditorHeader(model: model, context: context, onBack: onBack)
+            EditorHeader(model: model, context: context, jerseyNumber: jerseyNumber, onBack: onBack)
             if showsTitle {
                 Text("创建你的外卡运动员", bundle: .module)
                     .typeStyle(TypeRamp.taskTitle)
@@ -70,7 +72,7 @@ public struct CharacterEditorView: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .background(Color(role: .bgCanvas, in: theme))
         .scrollDismissesKeyboard(.interactively)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        .actionBar {
             DoneBar(
                 context: context, result: model.result, isNaming: isNaming, onNamed: { isNaming = false },
                 onDone: onDone)
@@ -88,11 +90,25 @@ public struct CharacterEditorView: View {
     }
 }
 
-/// Back or 取消 on the leading side, the sign-up step segments in the middle, undo and shuffle
-/// on the trailing side.
+/// The member's 球衣号码 as the editor opened from 我 shows it, and what a tap on it opens: the
+/// number lives on the player card, whose page the app passes in.
+public struct JerseyNumberEntry {
+    /// The number as the card prints it ("07"), nil before the member picks one.
+    public let number: String?
+    public let open: () -> Void
+
+    public init(number: String?, open: @escaping () -> Void) {
+        self.number = number
+        self.open = open
+    }
+}
+
+/// Back or 取消 on the leading side, the sign-up step segments or, from 我, the 球衣号码 in the
+/// middle, undo and shuffle on the trailing side.
 private struct EditorHeader: View {
     let model: CharacterEditorModel
     let context: EditorContext
+    let jerseyNumber: JerseyNumberEntry?
     let onBack: () -> Void
 
     var body: some View {
@@ -102,11 +118,8 @@ private struct EditorHeader: View {
                 HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: onBack)
                     .accessibilityIdentifier("editor.back")
             case .profile:
-                Button(action: onBack) {
-                    Text("取消", bundle: .module)
-                }
-                .buttonStyle(TextButtonStyle(.plain))
-                .accessibilityIdentifier("editor.cancel")
+                HeaderTextButton(Text("取消", bundle: .module), action: onBack)
+                    .accessibilityIdentifier("editor.cancel")
             }
             if case .signUp(let step, let total) = context {
                 StepSegments(step: step, of: total)
@@ -114,6 +127,14 @@ private struct EditorHeader: View {
                     .accessibilityIdentifier("editor.steps")
             } else {
                 Spacer(minLength: 0)
+                if context == .profile, let jerseyNumber {
+                    Button(action: jerseyNumber.open) {
+                        Text("球衣号码 \(jerseyNumber.number ?? "--")", bundle: .module)
+                    }
+                    .buttonStyle(TextButtonStyle(.plain))
+                    .accessibilityIdentifier("editor.jerseyNumber")
+                    Spacer(minLength: 0)
+                }
             }
             HeaderButton(Text("撤销", bundle: .module), systemImage: "arrow.uturn.backward") { model.undo() }
                 .disabled(!model.draft.canUndo)
@@ -159,10 +180,6 @@ private struct DoneBar: View {
         .buttonStyle(PrimaryButtonStyle())
         .disabled(!isNaming && result == nil)
         .accessibilityIdentifier(isNaming ? "editor.named" : "editor.done")
-        .padding(.horizontal, Space.pageMargin)
-        .padding(.top, Space.s)
-        .padding(.bottom, Space.xs)
-        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea(edges: .bottom))
     }
 }
 #endif

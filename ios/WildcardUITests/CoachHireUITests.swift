@@ -1,7 +1,7 @@
 import XCTest
 
 /// Hiring the squad's coach the way a captain does, on the in-memory squad: 小队设置's empty 教练
-/// card, 教练招聘会, 毛头's 简历, 招聘, 解雇 and back; a mate reading the 简历 only; and the 简历's
+/// card, 教练招聘会, 毛头's 简历, 招聘, then 解雇 from the 简历 and back; a mate reading the 简历 only; and the 简历's
 /// field names on one line each, in Chinese and English. Keeps screenshots for review against
 /// the approved 雇教练页面 canvas.
 @MainActor
@@ -32,11 +32,22 @@ final class CoachHireUITests: XCTestCase {
         let week = app.staticTexts["squad.coach.week"]
         XCTAssertTrue(week.waitForExistence(timeout: 30), "招聘 didn't end on 小队设置 with the coach")
         XCTAssertEqual(week.label, "执教第 1 周")
-        XCTAssertTrue(app.buttons["squad.coach.change"].exists, "the captain can't change the coach")
+        XCTAssertFalse(app.buttons["squad.coach.change"].exists, "换教练 is still on the card")
+        XCTAssertFalse(app.buttons["squad.coach.fire"].exists, "解雇 is still on the card")
         settle()
         keepScreenshot(named: "85-coach-hired")
 
-        app.buttons["squad.coach.fire"].tap()
+        // 换教练 and 解雇 wait on the coach's 简历, small.
+        app.buttons["squad.coach.open"].tap()
+        let fire = app.buttons["coach.resume.fire"]
+        XCTAssertTrue(fire.waitForExistence(timeout: 30), "the 简历 has no 解雇 for the captain")
+        XCTAssertTrue(app.buttons["coach.resume.change"].exists, "the 简历 has no 换教练 for the captain")
+        XCTAssertFalse(app.buttons["coach.resume.hire"].exists, "the squad's own coach offers 招聘")
+        assertClear(of: fire, app)
+        settle()
+        keepScreenshot(named: "85-coach-resume-manage")
+
+        fire.tap()
         let confirm = app.buttons["coach.fire.confirm"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 30), "解雇 didn't ask first")
         assertInside(confirm, app)
@@ -44,8 +55,8 @@ final class CoachHireUITests: XCTestCase {
         keepScreenshot(named: "86-coach-fire")
 
         app.buttons["coach.fire.keep"].tap()
-        XCTAssertTrue(app.buttons["squad.coach.fire"].waitForExistence(timeout: 30), "先不解雇 didn't go back")
-        app.buttons["squad.coach.fire"].tap()
+        XCTAssertTrue(fire.waitForExistence(timeout: 30), "先不解雇 didn't go back to the 简历")
+        fire.tap()
         XCTAssertTrue(confirm.waitForExistence(timeout: 30), "解雇 didn't open again")
         confirm.tap()
         XCTAssertTrue(hire.waitForExistence(timeout: 30), "确认解雇 didn't leave the squad without a coach")
@@ -58,6 +69,7 @@ final class CoachHireUITests: XCTestCase {
         XCTAssertFalse(app.buttons["squad.coach.change"].exists, "a mate can change the coach")
         XCTAssertFalse(app.buttons["squad.coach.fire"].exists, "a mate can fire the coach")
         open.tap()
+        XCTAssertFalse(app.buttons["coach.resume.fire"].exists, "a mate can fire the coach from the 简历")
         let captainOnly = app.staticTexts["coach.resume.captainOnly"]
         XCTAssertTrue(captainOnly.waitForExistence(timeout: 30), "the 简历 doesn't say only the captain hires")
         XCTAssertFalse(app.buttons["coach.resume.hire"].exists, "a mate can hire")
@@ -107,17 +119,11 @@ final class CoachHireUITests: XCTestCase {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments +=
-            ["-tab", "me", "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push"] + extra
+            ["-tab", "squad", "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push"] + extra
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
-        let settings = app.buttons["me.settings"]
-        XCTAssertTrue(settings.waitForExistence(timeout: 30), "我 never showed")
-        settings.tap()
-        let row = app.buttons["me.squad"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "设置 has no squad row")
-        row.tap()
         let page = app.descendants(matching: .any).matching(identifier: "squad.page").firstMatch
-        XCTAssertTrue(page.waitForExistence(timeout: 30), "小队设置 never showed")
+        XCTAssertTrue(page.waitForExistence(timeout: 30), "小队 never showed")
         return app
     }
 
