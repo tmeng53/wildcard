@@ -163,7 +163,10 @@ const TAG =
   /^<(\/?)([A-Za-z][\w:.-]*)((?:\s+[A-Za-z_:][\w:.-]*\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>/;
 const ATTRIBUTE = /([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
 
-const attributeProblem = (element: string, name: string, value: string): string | undefined => {
+const attributeProblem = (
+  element: string,
+  [name, value]: readonly [string, string],
+): string | undefined => {
   if (INERT.has(name)) return undefined;
   if (name === 'opacity' && (element === 'svg' || element === 'g'))
     return `opacity on <${element}> isn’t read`;
@@ -189,7 +192,7 @@ const svgProblem = (text: string): string | undefined => {
       if (name === 'd' && /[Aa]/.test(value)) return 'paths have no arcs (outline them)';
       if (name === 'viewBox' && element === 'svg') viewBox = true;
       if (name !== 'style') {
-        const problem = attributeProblem(element, name, value);
+        const problem = attributeProblem(element, [name, value]);
         if (problem !== undefined) return problem;
         continue;
       }
@@ -197,7 +200,7 @@ const svgProblem = (text: string): string | undefined => {
         if (declaration.trim() === '') continue;
         const [key = '', ...rest] = declaration.split(':');
         if (rest.length !== 1) return `style="${value}" on <${element}> isn’t read`;
-        const problem = attributeProblem(element, key.trim(), rest[0]?.trim() ?? '');
+        const problem = attributeProblem(element, [key.trim(), rest[0]?.trim() ?? '']);
         if (problem !== undefined) return problem;
       }
     }
