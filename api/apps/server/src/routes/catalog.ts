@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { Art } from '@wildcard/art';
 import type { DiceLinesAdmin } from '@wildcard/disclaimer-drafts';
 import type { SportCatalog, Sports } from '@wildcard/sports';
 
@@ -116,6 +117,59 @@ export function disclaimerDiceSection(
     name: 'disclaimerDice',
     schema: DisclaimerDiceCatalog,
     load: async () => ({ lines: (await dice.current()).lines.map((line) => ({ ...line })) }),
+  };
+}
+
+export const ArtCatalog = z
+  .looseObject({
+    generation: z
+      .int()
+      .min(0)
+      .meta({
+        description:
+          'The newest change’s number. The app uses a generation only once it has every file of ' +
+          'it, and keeps the one it has until then.',
+      }),
+    baseUrl: z.url().meta({
+      description: 'Where each file downloads from: this URL, then `<sha256>.<extension>`.',
+      example: 'https://example.supabase.co/storage/v1/object/public/art/',
+    }),
+    files: z
+      .array(
+        z.looseObject({
+          path: z.string().meta({
+            description:
+              'Where the file goes in the app’s art tree (`avatar/…` over the character’s ' +
+              'bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home ' +
+              'scene pictures), in place of the bundled ' +
+              'file there.',
+            example: 'avatar/art/top/warmup-tee/torso.svg',
+          }),
+          sha256: z
+            .string()
+            .meta({ description: 'The file’s SHA-256, lowercase hex; also its name.' }),
+          size: z.int().min(1).meta({ description: 'Its size in bytes.' }),
+          rigVersion: z.int().min(1).meta({
+            description:
+              'The lowest rig version that draws it: a build with an older rig leaves it out.',
+          }),
+        }),
+      )
+      .meta({
+        description: 'Every file put over the bundled art. Paths not listed use the bundled file.',
+      }),
+  })
+  .openapi('ArtCatalog');
+
+/** The `art` section: the art files apps download over the ones they bundle. */
+export function artSection(art: Art): CatalogSection<typeof ArtCatalog> {
+  return {
+    name: 'art',
+    schema: ArtCatalog,
+    load: async () => {
+      const { generation, baseUrl, files } = await art.manifest();
+      return { generation, baseUrl: baseUrl.href, files: files.map((file) => ({ ...file })) };
+    },
   };
 }
 

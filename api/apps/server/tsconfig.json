@@ -57,6 +57,9 @@
     },
     {
       "path": "../../packages/unlocks"
+    },
+    {
+      "path": "../../packages/art"
     }
   ]
 }

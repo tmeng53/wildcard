@@ -1,4 +1,5 @@
 import Contracts
+import Foundation
 
 extension AppCatalog {
     /// What this build reads of `GET /public/catalog`. A section, list or field it doesn't know is
@@ -8,7 +9,19 @@ extension AppCatalog {
         let dice = wire.disclaimerDice?.lines.map(CatalogNames.init) ?? []
         self.init(
             sports: wire.sports.map(SportCatalog.init) ?? fallback.sports,
-            diceLines: dice.isEmpty ? fallback.diceLines : dice)
+            diceLines: dice.isEmpty ? fallback.diceLines : dice,
+            art: wire.art.map(ArtManifest.init) ?? fallback.art)
+    }
+}
+
+extension ArtManifest {
+    /// The `art` section of `GET /public/catalog`.
+    public init(_ wire: Components.Schemas.ArtCatalog) {
+        self.init(
+            generation: wire.generation, baseURL: URL(string: wire.baseUrl),
+            files: wire.files.map {
+                File(path: $0.path, sha256: $0.sha256, size: $0.size, rigVersion: $0.rigVersion)
+            })
     }
 }
 
