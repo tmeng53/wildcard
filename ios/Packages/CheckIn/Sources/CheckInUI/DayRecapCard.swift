@@ -165,7 +165,7 @@ struct DayRecapCard: View {
             }
         case .disclaimer(let note):
             HStack(spacing: Space.xs) {
-                MoonTag(label: Text("请假条", bundle: .module))
+                Tag(Text("请假条", bundle: .module), systemImage: "moon.fill", style: .rest, size: .small)
                 Text(verbatim: note)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
@@ -173,29 +173,8 @@ struct DayRecapCard: View {
                     .truncationMode(.tail)
             }
         case .restDay:
-            MoonTag(label: Text("休息日", bundle: .module))
+            Tag(Text("休息日", bundle: .module), systemImage: "moon.fill", style: .rest, size: .small)
         }
-    }
-}
-
-/// A grey tag with a moon: a 请假条 or a rest day, as the feed marks them.
-private struct MoonTag: View {
-    @Environment(\.sceneTheme) private var theme
-    let label: Text
-
-    var body: some View {
-        HStack(spacing: Space.xxs) {
-            Image(systemName: "moon.fill")
-                .font(.system(size: RecapMetrics.tagMoon))
-                .foregroundStyle(Color(role: .fgSubtle, in: theme))
-            label
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-        }
-        .padding(.horizontal, Space.xs)
-        .frame(height: RecapMetrics.tagHeight)
-        .background(Color(role: .bgSubtle, in: theme), in: Capsule())
-        .fixedSize()
     }
 }
 
@@ -205,7 +184,5 @@ private enum RecapMetrics {
     static let dot: Double = 10
     static let head: Double = 22
     static let row: Double = 32
-    static let tagHeight: Double = 20
-    static let tagMoon: Double = 9
 }
 #endif

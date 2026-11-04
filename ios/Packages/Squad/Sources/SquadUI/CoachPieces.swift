@@ -34,23 +34,12 @@ struct CoachName: View {
 /// 求职中 on a coach looking for a squad; 你们的教练 on the squad's own.
 struct StatusTag: View {
     let isCurrent: Bool
-    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        Group {
-            if isCurrent {
-                Text("你们的教练", bundle: .module)
-            } else {
-                Text("求职中", bundle: .module)
-            }
-        }
-        .typeStyle(TypeRamp.label)
-        .foregroundStyle(Color(role: .fgOnInk, in: theme))
-        .lineLimit(1)
+        Tag(
+            isCurrent ? Text("你们的教练", bundle: .module) : Text("求职中", bundle: .module), style: .ink, size: .small
+        )
         .fixedSize()
-        .padding(.horizontal, Space.s - 2)
-        .padding(.vertical, Space.xxs - 1)
-        .background(Color(role: .bgInk, in: theme), in: Capsule())
     }
 }
 

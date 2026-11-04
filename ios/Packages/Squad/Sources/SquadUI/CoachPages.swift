@@ -256,7 +256,7 @@ private struct MarketCard: View {
                     }
                     .padding(.top, Space.s)
                     .overlay(alignment: .top) {
-                        Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: Sizing.hairline)
+                        Hairline()
                     }
                 }
                 .padding(.horizontal, Space.m)

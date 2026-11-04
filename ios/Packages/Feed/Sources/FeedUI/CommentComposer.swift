@@ -57,7 +57,7 @@ struct CommentComposer: View {
         .padding(.vertical, Space.xs)
         .background(Color(role: .bgCanvas, in: theme))
         .overlay(alignment: .top) {
-            Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: Sizing.hairline)
+            Hairline()
         }
     }
 

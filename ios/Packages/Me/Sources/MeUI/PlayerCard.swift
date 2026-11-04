@@ -173,7 +173,7 @@ private struct CardFront: View {
         .padding(.horizontal, Space.xxs)
         .padding(.top, Space.s)
         .padding(.bottom, Space.xxs)
-        .overlay(alignment: .top) { Hairline().padding(.horizontal, Space.xxs) }
+        .overlay(alignment: .top) { Hairline(on: .ink).padding(.horizontal, Space.xxs) }
         .padding(.top, Space.s)
     }
 }
@@ -300,22 +300,12 @@ private struct BackStat<Value: View>: View {
         }
         .padding(.vertical, Space.xs)
         .overlay(alignment: .bottom) {
-            if !isLast { Hairline() }
+            if !isLast { Hairline(on: .ink) }
         }
         .accessibilityElement(children: .combine)
     }
 }
 
-/// The card's dividers: a hairline across.
-private struct Hairline: View {
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        Rectangle()
-            .fill(Color(role: .borderOnInk, in: theme))
-            .frame(height: Sizing.hairline)
-    }
-}
 /// The card window's faint court: a boundary inset from the window's edge, a half line behind
 /// the character's middle and a centre circle on it. The card's only backdrop for now; more can
 /// come later as backdrops a member unlocks.

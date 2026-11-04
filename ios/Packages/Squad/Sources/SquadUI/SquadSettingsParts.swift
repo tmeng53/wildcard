@@ -229,9 +229,7 @@ struct MemberRow: View {
         .frame(minHeight: SquadSettingsMetrics.row)
         .overlay(alignment: .top) {
             if showsDivider {
-                Rectangle()
-                    .fill(Color(role: .borderDefault, in: theme))
-                    .frame(height: Sizing.hairline)
+                Hairline()
             }
         }
         // Contain, so the row's identifier doesn't replace its ··· button's.

@@ -161,9 +161,7 @@ struct CoachResumePage: View {
     }
 
     private var hairline: some View {
-        Rectangle()
-            .fill(Color(role: .borderDefault, in: theme))
-            .frame(height: Sizing.hairline)
+        Hairline()
             .gridCellColumns(2)
             .gridCellUnsizedAxes(.horizontal)
     }

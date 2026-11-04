@@ -124,7 +124,7 @@ struct PostRow: View {
         case .cheatMeal:
             Tag(Text("坦白放纵餐", bundle: .module))
         case .disclaimer:
-            LeaveTag()
+            Tag(Text("请假条", bundle: .module), systemImage: "moon.fill", style: .rest)
         }
     }
 
@@ -201,25 +201,6 @@ struct PostRow: View {
             mine.map { Text("我的回应 \($0.text)，换一个", bundle: .module) } ?? Text("回应", bundle: .module)
         )
         .accessibilityIdentifier("dailyPush.react")
-    }
-}
-
-/// 请假条's tag: grey, with the moon.
-private struct LeaveTag: View {
-    var body: some View {
-        HStack(spacing: Space.xxs) {
-            Image(systemName: "moon.fill")
-                .font(.system(size: Sizing.smallIcon - 3, weight: .semibold))
-                .accessibilityHidden(true)
-            Text("请假条", bundle: .module)
-                .typeStyle(TypeRamp.footnoteEmphasis)
-                .lineLimit(1)
-        }
-        .foregroundStyle(Color(role: .fgMuted, in: .gym))
-        .padding(.horizontal, Space.s)
-        .frame(minHeight: Sizing.tag)
-        .background(Color(role: .borderDefault, in: .gym), in: Capsule())
-        .accessibilityElement(children: .combine)
     }
 }
 

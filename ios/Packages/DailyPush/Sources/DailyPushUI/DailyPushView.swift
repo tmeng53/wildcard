@@ -214,13 +214,4 @@ private struct EmptyDay: View {
     }
 }
 
-/// A line between rows, edge to edge.
-struct Hairline: View {
-    var body: some View {
-        Rectangle()
-            .fill(Color(role: .borderDefault, in: .gym))
-            .frame(height: Sizing.hairline)
-            .accessibilityHidden(true)
-    }
-}
 #endif

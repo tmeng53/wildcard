@@ -58,17 +58,12 @@ struct ShareRow: View {
 /// In a page's content, a hairline above the row; floating in 发动态's action bar, a glass
 /// panel of its own, so the switch and its hint read over the caption scrolling under it.
 private struct ShareRowSurface: ViewModifier {
-    @Environment(\.sceneTheme) private var theme
     let placement: ControlPlacement
 
     func body(content: Content) -> some View {
         switch placement {
         case .inContent:
-            content.background(alignment: .top) {
-                Rectangle()
-                    .fill(Color(role: .borderDefault, in: theme))
-                    .frame(height: Sizing.hairline)
-            }
+            content.background(alignment: .top) { Hairline() }
         case .floating:
             content
                 .padding(.horizontal, Space.m)
