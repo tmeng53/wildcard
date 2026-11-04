@@ -108,6 +108,7 @@ beforeAll(async () => {
           exists: unused,
           createViewUrls: unused,
           deleteAllOf: unused,
+          delete: unused,
         };
         app = createApp({
           db,

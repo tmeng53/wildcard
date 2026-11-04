@@ -71,6 +71,7 @@ extension TodayModel {
                 status: StageStatus(
                     training: store.myStatus, activity: home.todaysSport(of: home.member),
                     plannedRest: home.mine?.plannedRest ?? false),
+                eating: home.todaysMeal(of: home.member), caption: home.todaysCaption(of: home.member),
                 disclaimer: home.todaysDisclaimer(of: home.member))
         }
         guard pats.pat == nil, arrival == nil, !holdsDress, !isChanging, let player else { return }

@@ -270,7 +270,7 @@ struct MainTabs: View {
             if let wall {
                 PostWallView(
                     store: wall, back: { self.wall = nil },
-                    open: { post = OpenedPost(id: $0.id, model: feed.page(of: $0.id)) },
+                    open: { post = OpenedPost(id: $0.id, model: postPage($0.id, over: wall)) },
                     checkIn: { selection = .today }
                 )
                 .allowsHitTesting(post == nil)
@@ -334,6 +334,19 @@ private struct RecapTile: View {
             RecapEntryTile(
                 story: story, viewer: recap.cast?.reader, seen: recap.latestIsSeen, action: recap.openLatest)
         }
+    }
+}
+
+extension MainTabs {
+    /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.
+    private func postPage(_ id: CheckInID, over wall: PostWallStore) -> FeedModel {
+        let page = feed.page(of: id)
+        let parent = page.changed
+        page.changed = { change in
+            parent?(change)
+            wall.apply(change)
+        }
+        return page
     }
 }
 

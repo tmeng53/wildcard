@@ -2,11 +2,13 @@
 import DesignSystem
 import SwiftUI
 
-/// What a character says, in a small bubble with a tail pointing down at them: no border, no
-/// shadow. `.line` is a 口头禅 or a cheer, one line of 13/600 up to 160 wide; `.info` is what a tap
-/// on a person shows (their status, a 请假条's words, a caption), 13/400 up to 200 wide, with an
+/// What a character says, in a small bubble with a tail pointing down at them. Over the scene it
+/// is light Liquid Glass (the system's `glassEffect`, tinted white so ink words read on any scene,
+/// day or night), the bubble and its tail one piece of glass; on a page, plain light grey, since
+/// glass on a flat fill shows nothing. `.line` is a 口头禅 or a cheer, one line of 13/600 up to
+/// 160 wide; `.info` is what a tap on a person shows (their status, a 请假条's words, a caption), 13/400 up to 200 wide, with an
 /// optional title line (name · kind); it wraps to show all of it, since those are words people
-/// typed (a 请假条 is up to 80 characters) and a bubble can't be opened to read the rest. White on the scene, light grey on a page.
+/// typed (a 请假条 is up to 80 characters) and a bubble can't be opened to read the rest.
 /// It pops in from its tail with `.speech(reduceMotion:)`; the caller keeps it `Motion.speechHold`.
 /// Given an `action`, it is a button that opens what it says (a caption opens its post) and
 /// shrinks while held like every other control. `.status` is a teammate's status with one thing
@@ -107,19 +109,39 @@ public struct SpeechBubble: View {
         }
     }
 
-    private var bubble: some View {
-        content
+    @ViewBuilder private var bubble: some View {
+        let padded =
+            content
             .padding(.vertical, isStatus ? Space.s - Space.xxs / 2 : Self.verticalPadding)
             .padding(.horizontal, isStatus ? Space.s : Self.horizontalPadding)
-            .background(fill, in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
             .padding(.bottom, Self.tailSize.height)
-            .background(alignment: tail == .leading ? .bottomLeading : .bottom) {
-                Tail()
-                    .fill(fill)
-                    .frame(width: Self.tailSize.width, height: Self.tailSize.height)
-                    .padding(.leading, tail == .leading ? Self.leadingTail - Self.tailSize.width / 2 : 0)
-            }
+        switch surface {
+        case .scene:
+            padded.glassEffect(.regular.tint(Color(role: .bgCanvas, in: theme).opacity(Self.glassTint)), in: shape)
+        case .page:
+            padded.background(Color(role: .bgSubtle, in: theme), in: shape)
+        }
     }
+
+    private var shape: BubbleShape {
+        BubbleShape(
+            tail: Self.tailSize,
+            tailMid: tail == .leading ? Self.leadingTail : nil,
+            cornerRadius: Radius.pick)
+    }
+
+    /// How much white the glass carries: enough that a coloured scene (the red track) doesn't dye
+    /// it and ink words read at night, little enough that the scene still shows through.
+    private static let glassTint = 0.72
+
+    /// A title or detail's colour: on glass, ink at `glassMuted`, which takes on the scene's hue
+    /// through the glass where a fixed grey would look dirty on a coloured scene; on a page, muted.
+    private var muted: Color {
+        surface == .scene
+            ? Color(role: .fgDefault, in: theme).opacity(Self.glassMuted) : Color(role: .fgMuted, in: theme)
+    }
+
+    private static let glassMuted = 0.55
 
     @ViewBuilder private var content: some View {
         switch kind {
@@ -144,7 +166,7 @@ public struct SpeechBubble: View {
                     if let title {
                         title
                             .typeStyle(TypeRamp.label)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .foregroundStyle(muted)
                             .lineLimit(1)
                     }
                     text
@@ -160,7 +182,7 @@ public struct SpeechBubble: View {
                         CoachTag()
                         name
                             .typeStyle(TypeRamp.label)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .foregroundStyle(muted)
                             .lineLimit(1)
                     }
                     text
@@ -182,7 +204,7 @@ public struct SpeechBubble: View {
                     if let detail {
                         detail
                             .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .foregroundStyle(muted)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -202,10 +224,6 @@ public struct SpeechBubble: View {
     /// A `.status` bubble's narrowest and widest, from the approved home 拍一拍.
     private static let statusMinWidth: Double = 120
     private static let statusWidth: Double = 220
-
-    private var fill: Color {
-        Color(role: surface == .scene ? .bgCanvas : .bgSubtle, in: theme)
-    }
 }
 
 /// Offers its content at most `max` wide and takes only the width the content uses (at least
@@ -291,15 +309,25 @@ private struct EyebrowLine: View {
     private static let chevron: Double = 9
 }
 
-/// A triangle pointing down from the middle of the bubble's bottom edge.
-private struct Tail: Shape {
+/// A bubble and its tail as one outline, so glass bends light across both as one piece: a
+/// rounded rectangle above `tail.height`, and a triangle under it pointing down, its middle at
+/// `tailMid` from the leading edge, or at the middle when nil.
+private struct BubbleShape: Shape {
+    let tail: CGSize
+    let tailMid: Double?
+    let cornerRadius: Double
+
     func path(in rect: CGRect) -> Path {
-        Path { path in
-            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        let body = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height - tail.height)
+        let mid = rect.minX + (tailMid ?? rect.width / 2)
+        // The triangle reaches a point into the body so no seam shows where they join.
+        let point = Path { path in
+            path.move(to: CGPoint(x: mid - tail.width / 2, y: body.maxY - 1))
+            path.addLine(to: CGPoint(x: mid + tail.width / 2, y: body.maxY - 1))
+            path.addLine(to: CGPoint(x: mid, y: rect.maxY))
             path.closeSubpath()
         }
+        return Path(roundedRect: body, cornerRadius: cornerRadius, style: .continuous).union(point)
     }
 }
 
