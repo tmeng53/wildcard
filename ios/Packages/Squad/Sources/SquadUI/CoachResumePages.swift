@@ -101,7 +101,7 @@ struct CoachResumePage: View {
                     .padding(.top, Space.xs)
                     .accessibilityIdentifier("coach.resume.back")
             }
-            .safeAreaInset(edge: .bottom) { action }
+            .actionBar { action }
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .accessibilityElement(children: .contain)
@@ -171,9 +171,7 @@ struct CoachResumePage: View {
     @ViewBuilder private var action: some View {
         VStack(spacing: Space.xs) {
             if failed {
-                Text("网络开小差了，没存上", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                InlineFailure()
                     .accessibilityIdentifier("coach.resume.failed")
             }
             if !canHire {
@@ -192,11 +190,7 @@ struct CoachResumePage: View {
                 .accessibilityIdentifier("coach.resume.hire")
             }
         }
-        .padding(.horizontal, Space.pageMargin)
-        .padding(.top, Space.xs)
-        .padding(.bottom, Space.xs)
         .frame(maxWidth: .infinity)
-        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea(edges: .bottom))
     }
 }
 
@@ -238,12 +232,10 @@ struct FireCoachPage: View {
             .padding(.bottom, Space.l)
         }
         .scrollIndicators(.hidden)
-        .safeAreaInset(edge: .bottom) {
+        .actionBar {
             VStack(spacing: Space.xs) {
                 if failed {
-                    Text("网络开小差了，没存上", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    InlineFailure()
                 }
                 Button(action: back) {
                     Text("先不解雇", bundle: .module).frame(maxWidth: .infinity)
@@ -258,9 +250,6 @@ struct FireCoachPage: View {
                 .disabled(isSaving)
                 .accessibilityIdentifier("coach.fire.confirm")
             }
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.top, Space.xs)
-            .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea(edges: .bottom))
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .accessibilityElement(children: .contain)

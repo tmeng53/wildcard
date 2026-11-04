@@ -74,8 +74,7 @@ struct ScenePickerGrid: View {
             .disabled(!picker.canConfirm)
             .accessibilityIdentifier("squad.scene.confirm")
             if case .failed(.unavailable) = picker.phase {
-                Text("网络开小差了，没存上", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
+                InlineFailure()
             }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: picker.selection)
@@ -275,18 +274,10 @@ struct MemberHead: View {
 /// 小队设置 couldn't be read: one line and a way to try again.
 struct SquadFailed: View {
     let retry: () -> Void
-    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        VStack(spacing: Space.m) {
-            Text("网络开小差了", bundle: .module)
-                .typeStyle(TypeRamp.headline)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-            Button(action: retry) { Text("再试一次", bundle: .module) }
-                .buttonStyle(PrimaryButtonStyle(.regular))
-                .accessibilityIdentifier("squad.retry")
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        StateView.offline(retryIdentifier: "squad.retry", retry: retry)
+            .frame(maxHeight: .infinity)
     }
 }
 #endif

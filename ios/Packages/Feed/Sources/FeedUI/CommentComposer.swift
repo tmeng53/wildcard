@@ -45,9 +45,7 @@ struct CommentComposer: View {
                 }
             }
             if let unsent, unsent == draft {
-                Text("网络开小差了，没发出去", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                InlineFailure(Text("网络开小差了，没发出去", bundle: .module))
                     .accessibilityIdentifier("post.sendFailed")
             }
             HStack(alignment: .bottom, spacing: Space.xs) {

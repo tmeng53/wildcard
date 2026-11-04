@@ -59,7 +59,9 @@ struct DisclaimerComposer: View {
             }
             ShareRow(squads: model.shareSquads, shared: $shared)
                 .padding(.bottom, Space.xs)
+            // The page's last line, over nothing else: it floats, in glass.
             PostButton(model: model, disclaimer: entry.disclaimer, shared: shared)
+                .controlPlacement(.floating)
         }
         .padding(.horizontal, Space.l)
         .padding(.top, Space.xs)
@@ -90,16 +92,8 @@ struct DisclaimerComposer: View {
                     .accessibilityAddTraits(.isHeader)
             }
             Spacer()
-            Button {
-                model.cancel()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: Sizing.smallIcon, weight: .medium))
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget, alignment: .trailing)
-            }
-            .accessibilityLabel(Text("关闭", bundle: .module))
-            .accessibilityIdentifier("disclaimer.close")
+            HeaderButton(Text("关闭", bundle: .module), systemImage: "xmark") { model.cancel() }
+                .accessibilityIdentifier("disclaimer.close")
         }
     }
 

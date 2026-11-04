@@ -99,25 +99,12 @@ struct ComposeView: View {
 
     private var bar: some View {
         HStack {
-            Button {
-                model.cancel()
-            } label: {
-                Text("取消", bundle: .module)
-                    .typeStyle(TypeRamp.body)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .frame(minHeight: Sizing.minimumTapTarget)
-            }
-            .accessibilityIdentifier("compose.cancel")
+            HeaderTextButton(Text("取消", bundle: .module)) { model.cancel() }
+                .accessibilityIdentifier("compose.cancel")
             Spacer()
-            Button {
+            HeaderTextButton(Text("发布", bundle: .module), prominent: true, isWorking: model.isSending) {
                 Task { await model.post(draft, sharedTo: shared) }
-            } label: {
-                Text("发布", bundle: .module)
-                    .typeStyle(TypeRamp.headline)
-                    .loadingLabel(model.isSending)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
             }
-            .frame(minHeight: Sizing.minimumTapTarget)
             .disabled(model.isSending)
             .accessibilityIdentifier("compose.post")
         }
