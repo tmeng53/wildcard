@@ -1,4 +1,5 @@
 import type { Coach } from './coach.js';
+import { REPLY_LIMIT } from './reply.js';
 import type { CoachSettings } from './settings.js';
 import { checkInLine, rosterOf, type SquadWeek } from './squad-week.js';
 import type { WakeReason } from './wake.js';
@@ -24,11 +25,27 @@ export function instructionsOf(settings: Pick<CoachSettings, 'rules'>, coach: Co
 
 /** How each kind of wake goes: the same for every squad, so it is part of the instructions. */
 const WAKES = [
-  '你会在两种时候醒来，每次的任务会告诉你是哪一种：',
-  '- 有人打卡：这一次你不发言，只整理记忆。需要的话先用 squad_week 看这周的情况，有值得记住的（新的梗、习惯、重要的事）就用 edit_file 写进文件，没有就什么都不做。',
+  '你会在三种时候醒来，每次的任务会告诉你是哪一种：',
+  `- 有人打卡：看看这条打卡（需要的话先用 squad_week 看这周的情况），像队友在动态下面留言那样，用 reply 回一句（不超过 ${String(REPLY_LIMIT)} 字），用 react 点一个表情，或者两个都做。大多数打卡都值得回应；说得具体，接住对方说的话或练的东西，别说教、别催、别空喊加油。有值得记住的（新的梗、习惯、重要的事）就用 edit_file 写进文件。`,
+  `- 有人回复你：有人在一条打卡下面回复了你说的话。看看这条打卡和你们在下面的对话，用 answer 接着回这句（不超过 ${String(REPLY_LIMIT)} 字），像在评论里聊天那样，接住对方的话。一次只回这一句。`,
   `- 新的一天：先用 squad_week 看看小队这周，用 read_file 读读你的文件，然后用 post_note 在小队的战术板上写今天的一句（不超过 ${String(NOTE_LIMIT)} 字），全队都会看到。别重复你最近写过的。没什么值得说的，就不写。学到值得记的，顺手改文件。`,
+  '队员看得到的话（战术板、回复）里称呼人用「你」或昵称，不要写队员N，那是只有你看得到的叫法。',
   '文件只能用任务里列出的那些；用 read_file 读，用 edit_file 改。',
 ].join('\n');
+
+/** What was said to and by the coach under one check-in, oldest first. */
+export interface CoachThread {
+  /** The coach's own reply to the check-in. */
+  readonly reply: string;
+  /** Members' replies to the coach and its answers since, oldest first. */
+  readonly said: readonly {
+    /** The member who wrote it, or `undefined` for the coach. */
+    readonly member: string | undefined;
+    readonly text: string;
+    /** The reply this wake answers. */
+    readonly answering?: boolean;
+  }[];
+}
 
 /** A file's size, as the task lists it. */
 function sizeWords(body: string | undefined): string {
@@ -44,6 +61,7 @@ export function taskOf({
   week,
   files,
   recentNotes,
+  thread,
 }: {
   readonly reason: WakeReason;
   readonly week: SquadWeek;
@@ -51,6 +69,8 @@ export function taskOf({
   readonly files: ReadonlyMap<string, string | undefined>;
   /** The squad's last 战术板 lines, newest first. */
   readonly recentNotes: readonly { readonly day: string; readonly text: string }[];
+  /** On a reply's wake, what was said under its check-in. */
+  readonly thread?: CoachThread;
 }): string | undefined {
   const fileList = [...files].map(([path, body]) => `${path}（${sizeWords(body)}）`).join('，');
   const filesLine = `你的文件：${fileList}。`;
@@ -58,6 +78,20 @@ export function taskOf({
     const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
     if (checkIn === undefined) return undefined;
     return [`有人打卡：${checkInLine(checkIn, rosterOf(week))}`, filesLine].join('\n\n');
+  }
+  if (reason.kind === 'comment') {
+    const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
+    if (checkIn === undefined || thread === undefined) return undefined;
+    const roster = rosterOf(week);
+    const said = thread.said.map(
+      ({ member, text, answering }) =>
+        `- ${member === undefined ? '你' : (roster.get(member) ?? '队员')}：「${text}」${answering === true ? '（要回的这句）' : ''}`,
+    );
+    return [
+      `有人回复你。这条打卡：${checkInLine({ ...checkIn, comments: [] }, roster)}`,
+      `你们在下面的对话：\n- 你：「${thread.reply}」\n${said.join('\n')}`,
+      filesLine,
+    ].join('\n\n');
   }
   const notes =
     recentNotes.length === 0

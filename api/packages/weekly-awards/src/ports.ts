@@ -6,7 +6,7 @@ import type {
   Failures,
   MemberId,
   SquadId,
-  TitlesWon,
+  TitleWin,
 } from './domain/awards.js';
 import type { PromptMeme } from './domain/prompt.js';
 import type { WeekStart } from './domain/schedule.js';
@@ -58,8 +58,8 @@ export interface AwardsStore {
     readonly awards: Awards;
   }): Promise<boolean>;
   /**
-   * Marks a squad's awards for a week as told to its winners; true only for the one call that
-   * marks them, false when they were told already or there are none.
+   * Marks a squad's 战报 for a week as told to the squad; true only for the one call that marks
+   * it, false when it was told already or its awards aren't written yet.
    */
   markNotified(squad: SquadId, weekStart: WeekStart): Promise<boolean>;
   /** Counts a failed try at a squad's awards for a week, keeping why it failed. */
@@ -73,8 +73,11 @@ export interface AwardsStore {
    * when none was claimed since the last failed try, else `undefined`, as it is once given.
    */
   claimNudge(squad: SquadId, weekStart: WeekStart): Promise<Failures | undefined>;
-  /** Every title the member has won, in all their squads. */
-  titlesWon(member: MemberId): Promise<TitlesWon>;
+  /**
+   * Every title these members have won, in all their squads, by member: the latest week first,
+   * each week's titles in the order given. A member who won nothing is left out.
+   */
+  wins(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, readonly TitleWin[]>>;
 }
 
 /** Where each squad's frozen 战报 is kept: written once a week, never changed. */

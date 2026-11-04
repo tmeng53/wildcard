@@ -3,6 +3,8 @@ import CheckInUI
 import Contracts
 import DesignSystem
 import Foundation
+import NotificationsDomain
+import NotificationsUI
 import ScheduleUI
 import SquadUI
 import UIKit
@@ -80,6 +82,13 @@ enum LaunchOptions {
     /// flip back and a delete fail.
     static var meFailsSaving: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitest-me-fails")
+    }
+
+    /// The sample member's 通知: the sample squad's last two weeks, or none with
+    /// `-uitest-no-notices`, to see the page empty.
+    static var notices: any NoticeSource {
+        ProcessInfo.processInfo.arguments.contains("-uitest-no-notices")
+            ? InMemoryNoticeSource.empty : InMemoryNoticeSource.sample(now: now())
     }
 
     /// `-uitest-empty-feed`: 动态 with no posts, to see its empty scene.
@@ -178,17 +187,38 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-patted")
     }
 
-    /// `-uitest-bubble-hold`: a teammate's bubble on 今天 stays up for a minute instead of 5
-    /// seconds, so a UI test checks it without racing its timer.
+    /// `-uitest-bubble-hold`: a teammate's bubble, the coach's line and a notice on 今天 stay up
+    /// for a minute instead of a few seconds, so a UI test checks them without racing their timers.
     static var bubbleHold: Double? {
         ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
     }
 
-    /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted` a
-    /// suite emptied at launch.
+    /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, said on the
+    /// home on every launch and pinned on 动态, and replied to three of its posts.
+    static var sidelineCoach: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-coach")
+    }
+
+    /// `-uitest-together wave|stack|bump`: the sample squad's home opens on that celebration
+    /// (人浪, 叠罗汉, 撞头). Without it the sample squad never celebrates together, so other UI
+    /// tests meet a home that holds still.
+    static var together: SquadCelebration.Kind? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-uitest-together"), flag + 1 < arguments.count else { return nil }
+        return SquadCelebration.Kind(rawValue: arguments[flag + 1])
+    }
+
+    /// `-uitest-meals`: two of the sample squad's latest posts are meals (小米's salad after her
+    /// run, Leo's boba), so they eat on the home and their bubbles say so.
+    static var meals: Bool { ProcessInfo.processInfo.arguments.contains("-uitest-meals") }
+
+    /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted`,
+    /// `-uitest-coach` or `-uitest-together` a suite emptied at launch.
     static var todayDefaults: UserDefaults {
         let suite = "uitest-today"
-        guard pattedMe, let defaults = UserDefaults(suiteName: suite) else { return .standard }
+        guard pattedMe || sidelineCoach || together != nil, let defaults = UserDefaults(suiteName: suite) else {
+            return .standard
+        }
         defaults.removePersistentDomain(forName: suite)
         return defaults
     }
@@ -200,6 +230,42 @@ enum LaunchOptions {
             let scene = SceneTheme(rawValue: arguments[flag + 1])
         else { return .gym }
         return scene
+    }
+
+    /// `-uitest-scene-moved track`: a teammate moves the sample squad to that scene once 今天
+    /// is up, so UI tests see the drop and its notice.
+    static var sceneMoved: SceneTheme? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-uitest-scene-moved"), flag + 1 < arguments.count else { return nil }
+        return SceneTheme(rawValue: arguments[flag + 1])
+    }
+
+    /// `-uitest-unlocked`: the sample member's training has just opened DEUCE CLUB, which 今天
+    /// tells once it is up and 我's editor has open, so UI tests see the notice and its tap.
+    /// `-uitest-unlocked-piece`: WARM-UP's headphones have just come in instead, which 今天 tells as
+    /// 「热身社 到新货了」 and whose box opens in the store on a tap.
+    static var unlocked: [Unlock] {
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-uitest-unlocked-piece") {
+            return [Unlock(kind: .piece, id: "warmup-headphones", unlockedAt: now(), sports: [], checkIns: 2)]
+        }
+        guard arguments.contains("-uitest-unlocked") else { return [] }
+        return [Unlock(kind: .store, id: "deuce", unlockedAt: now(), sports: ["tennis"], checkIns: 3)]
+    }
+
+    /// The sample member's pieces still locked: WARM-UP's and DEUCE CLUB's newer ones, as the
+    /// server's first rules have them for someone who just started (WARM-UP takes any 练了).
+    static var lockedPieces: [LockedPiece] {
+        let warmUp = [
+            ("warmup-headphones", 2), ("warmup-stripe", 4), ("warmup-beanie", 6), ("warmup-overalls", 9),
+            ("warmup-hightop", 12), ("warmup-raglan", 15), ("warmup-long", 20),
+        ]
+        let deuce = [
+            ("deuce-sweater", 5), ("deuce-dress", 7), ("deuce-socks", 10), ("deuce-cable", 13),
+            ("deuce-terry", 16), ("deuce-pants", 20),
+        ]
+        let held = Set(unlocked.map(\.id))
+        return (warmUp + deuce).filter { !held.contains($0.0) }.map { LockedPiece(id: $0.0, checkInsToGo: $0.1) }
     }
 
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the

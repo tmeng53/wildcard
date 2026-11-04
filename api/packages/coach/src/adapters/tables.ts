@@ -25,6 +25,17 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface CoachAnswers {
+  at: Generated<Timestamp>;
+  check_in_id: string;
+  coach_id: string;
+  comment_id: string;
+  id: Generated<Int8>;
+  squad_id: string;
+  text: string;
+  wake_id: Int8 | null;
+}
+
 export interface CoachCatalogEvents {
   at: Generated<Timestamp>;
   changed_by: string | null;
@@ -70,6 +81,17 @@ export interface CoachNotes {
   wake_id: Int8 | null;
 }
 
+export interface CoachReplies {
+  at: Generated<Timestamp>;
+  check_in_id: string;
+  coach_id: string;
+  emoji: string | null;
+  id: Generated<Int8>;
+  squad_id: string;
+  text: string | null;
+  wake_id: Int8 | null;
+}
+
 export interface CoachSettingEvents {
   at: Generated<Timestamp>;
   changed_by: string | null;
@@ -104,6 +126,7 @@ export interface CoachUsage {
 export interface CoachWakes {
   check_in_id: string | null;
   claimed_at: Timestamp | null;
+  comment_id: string | null;
   created_at: Generated<Timestamp>;
   day: string | null;
   id: Generated<Int8>;
@@ -131,9 +154,11 @@ export interface SquadCoachEvents {
 }
 
 export interface DB {
+  coach_answers: CoachAnswers;
   coach_catalog_events: CoachCatalogEvents;
   coach_files: CoachFiles;
   coach_notes: CoachNotes;
+  coach_replies: CoachReplies;
   coach_setting_events: CoachSettingEvents;
   coach_settings: CoachSettings;
   coach_usage: CoachUsage;

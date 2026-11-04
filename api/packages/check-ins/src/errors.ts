@@ -37,7 +37,7 @@ export class CheckInInTheFutureError extends AppError {
 }
 
 /**
- * Thrown when a check-in's day is one the member hadn't reached when they made it, or is too far
+ * Thrown when a check-in's day is after the one the member posted it on, or more than 7 days
  * before it.
  */
 export class CheckInDayMismatchError extends AppError {
@@ -47,6 +47,20 @@ export class CheckInDayMismatchError extends AppError {
 
   constructor(readonly day: string) {
     super(`A check-in made at this time can’t count for ${day}.`);
+  }
+}
+
+/**
+ * Thrown for a 请假条 on a day the member already trained on (练了). The app greys that day out:
+ * read the member's check-ins again.
+ */
+export class AlreadyTrainedError extends AppError {
+  override readonly name = 'AlreadyTrainedError';
+  readonly reason = 'ALREADY_TRAINED';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(readonly day: string) {
+    super(`The member already trained on ${day}, so it can’t be a rest day.`);
   }
 }
 
@@ -125,6 +139,28 @@ export class CheckInNotFoundError extends AppError {
   }
 }
 
+/** Thrown when a member edits or deletes someone else's check-in: each changes only their own. */
+export class NotYourCheckInError extends AppError {
+  override readonly name = 'NotYourCheckInError';
+  readonly reason = 'NOT_YOUR_CHECK_IN';
+  readonly status = 'PERMISSION_DENIED';
+
+  constructor() {
+    super('You can only change your own check-ins.');
+  }
+}
+
+/** Thrown for an edit of another kind than the check-in saved: a post keeps its kind. */
+export class CheckInKindChangedError extends AppError {
+  override readonly name = 'CheckInKindChangedError';
+  readonly reason = 'CHECK_IN_KIND_CHANGED';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(readonly saved: string) {
+    super(`This check-in is a ${saved}; an edit can't change its kind.`);
+  }
+}
+
 /** Thrown when a member reacts to their own check-in: reactions are for teammates. */
 export class OwnCheckInReactionError extends AppError {
   override readonly name = 'OwnCheckInReactionError';
@@ -151,6 +187,16 @@ export class CommentIdConflictError extends AppError {
 }
 
 /** Thrown for a reply to someone who can't see the check-in: a reply names a teammate. */
+export class ReplyToCoachNotFoundError extends AppError {
+  override readonly name = 'ReplyToCoachNotFoundError';
+  readonly reason = 'REPLY_TO_COACH_NOT_FOUND';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor() {
+    super('You can only reply to a coach that said something on this post.');
+  }
+}
+
 export class ReplyToNotInSquadError extends AppError {
   override readonly name = 'ReplyToNotInSquadError';
   readonly reason = 'REPLY_TO_NOT_IN_SQUAD';

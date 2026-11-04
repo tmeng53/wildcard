@@ -1,4 +1,10 @@
-import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../domain/check-in.js';
+import type {
+  CheckInEdit,
+  CheckInId,
+  CheckInRecord,
+  MemberId,
+  SquadId,
+} from '../domain/check-in.js';
 import type { DayRange, Unshared } from '../domain/day-range.js';
 import type { CheckInTotals, TrainedCheckIn } from '../domain/totals.js';
 import type { WeekStart } from '../domain/weekly-plan.js';
@@ -7,6 +13,7 @@ import type { Reaction } from '../domain/reaction.js';
 import type {
   CheckInStore,
   Clock,
+  CoachSpoke,
   CommentStore,
   MemberCalendar,
   PhotoFiles,
@@ -15,6 +22,7 @@ import type {
   SquadMembership,
   WeeklyPlanStore,
 } from '../ports.js';
+import { deleteCheckIn, editCheckIn } from './check-ins/edit-check-in.js';
 import { findPost } from './check-ins/find-post.js';
 import { listMyCheckIns } from './check-ins/list-my-check-ins.js';
 import { listMyPosts, type ListMyPostsInput, type MyPostsPage } from './check-ins/list-my-posts.js';
@@ -52,6 +60,16 @@ import {
 /** Daily check-ins: saving them, reading them back, and teammates' reactions and comments. */
 export interface CheckIns {
   save(input: SaveCheckInInput): Promise<SavedCheckIn>;
+  /** Replaces the fields and photos of the member's own check-in; the same edit again is a no-op. */
+  edit(input: {
+    readonly id: CheckInId;
+    readonly member: MemberId;
+    readonly edit: CheckInEdit;
+  }): Promise<CheckInRecord>;
+  /** Deletes the member's own check-in with its photos and everything left on it. */
+  delete(input: { readonly id: CheckInId; readonly member: MemberId }): Promise<void>;
+  /** A check-in as it is saved now, whoever made it; undefined once it is deleted. */
+  current(id: CheckInId): Promise<CheckInRecord | undefined>;
   /** A squad's feed: its check-ins for a range of days, each with its reactions and comments. */
   listForSquad(input: ListSquadCheckInsInput): Promise<SquadPost[]>;
   /** One post, as the feed shows it, for its author or a teammate who can see it. */
@@ -128,6 +146,8 @@ export function createCheckIns(deps: {
   readonly membership: SquadMembership;
   readonly reactions: ReactionStore;
   readonly comments: CommentStore;
+  /** Whether a coach spoke under a check-in, so members may reply to it. */
+  readonly coachSpoke?: CoachSpoke;
   readonly photos: PhotoFiles;
   /** Which sports a 练了 may name. */
   readonly sports: SportList;
@@ -137,6 +157,9 @@ export function createCheckIns(deps: {
 }): CheckIns {
   return {
     save: (input) => saveCheckIn(deps, input),
+    edit: (input) => editCheckIn(deps, input),
+    delete: (input) => deleteCheckIn(deps, input),
+    current: (id) => deps.store.find(id),
     listForSquad: (input) => listSquadCheckIns(deps, input),
     post: (input) => findPost(deps, input),
     listMine: (input) => listMyCheckIns(deps, input),

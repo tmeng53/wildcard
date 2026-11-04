@@ -39,6 +39,8 @@ import {
   unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
+  unusedCoachActivity,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
 // DELETE /me against local Supabase's Auth, Storage and database. Only Apple is stood in for:
@@ -99,6 +101,8 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     unlocks: unusedUnlocks,
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
+    coachActivity: unusedCoachActivity,
+    ...ignoredNotices,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,
     admin: adminOn(),

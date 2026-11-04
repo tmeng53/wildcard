@@ -129,11 +129,41 @@ export const CheckInDraft = z.discriminatedUnion('kind', [
 ]);
 export type CheckInDraft = z.output<typeof CheckInDraft>;
 
+/**
+ * The body of `PATCH /check-ins/{id}`: a saved check-in's own fields, all of them, as they are
+ * to be. Its kind must be the one saved; the day, time and audience are never changed.
+ */
+export const CheckInEdit = z.discriminatedUnion('kind', [
+  z
+    .strictObject({ version: draftFields.version, kind: z.literal('trained'), training: Training })
+    .meta({ id: 'TrainedCheckInEdit' }),
+  z
+    .strictObject({ version: draftFields.version, kind: z.literal('healthyMeal'), meal: Meal })
+    .meta({ id: 'HealthyMealCheckInEdit' }),
+  z
+    .strictObject({ version: draftFields.version, kind: z.literal('cheatMeal'), meal: Meal })
+    .meta({ id: 'CheatMealCheckInEdit' }),
+  z
+    .strictObject({
+      version: draftFields.version,
+      kind: z.literal('disclaimer'),
+      disclaimer: Disclaimer,
+    })
+    .meta({ id: 'DisclaimerCheckInEdit' }),
+]);
+export type CheckInEdit = z.output<typeof CheckInEdit>;
+
 /** A check-in as the module holds it, saved or about to be. */
 export type CheckInRecord = Entry & {
   readonly id: CheckInId;
   readonly member: MemberId;
+  /** The day it counts for: the day posted on or one of the 7 before (补打卡). */
   readonly day: LocalDay;
+  /**
+   * The member's own day when they posted it, which orders the squad's feed. Every saved
+   * check-in has one; a draft gets it from the member's time zone when it is saved.
+   */
+  readonly postedDay?: LocalDay;
   readonly createdAt: Date;
   readonly audience: readonly SquadId[];
 };
@@ -160,7 +190,11 @@ export function recordFromDraft(
  * kind, day, moment (to the millisecond), fields and audience in the same order.
  */
 export function isSameCheckIn(saved: CheckInRecord, retry: CheckInRecord): boolean {
-  return isDeepStrictEqual(contents(saved), contents(retry));
+  // The day posted on comes from the save, not the draft, so it isn't compared.
+  return isDeepStrictEqual(
+    contents({ ...saved, postedDay: undefined }),
+    contents({ ...retry, postedDay: undefined }),
+  );
 }
 
 function contents(record: CheckInRecord) {

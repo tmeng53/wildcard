@@ -269,10 +269,36 @@ private struct RefusedTokens: AuthProvider {
     let squad = try await stack.squad(of: member)
 
     #expect(try await member.api.checkInTotals().topSport == nil)
-    #expect(try await member.api.awardTotals() == AwardTotals(titles: 0, latest: nil))
+    #expect(try await member.api.titleBoard() == .empty)
 
     for activity in [Activity.sport("run"), .custom(try CustomSport("飞盘")), .sport("run")] {
         _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(Training(activity: activity))))
     }
     #expect(try await member.api.checkInTotals().topSport == TopSport(activity: .sport("run"), checkIns: 2))
+}
+
+@Test func tennisCheckInsUnlockTheRacketThenDeuceClubAndHalfMoonAndPiecesOneByOne() async throws {
+    let stack = try LocalStack()
+    let member = try await stack.signedInMember()
+    let squad = try await stack.squad(of: member)
+    #expect(try await member.api.unlocks().isEmpty)
+
+    let tennis = { () async throws in
+        let training = Training(activity: .sport("tennis"))
+        _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(training)))
+    }
+    try await tennis()
+    #expect(try await member.api.unlocks().map(\.id) == ["racket"])
+
+    try await tennis()
+    try await tennis()
+    let standing = try await member.api.unlockStanding()
+    let unlocked = standing.unlocks
+    // WARM-UP's headphones open on the 2nd 练了 of any sport.
+    #expect(Set(unlocked.map(\.id)) == ["racket", "deuce", "halfmoon", "warmup-headphones"])
+    #expect(unlocked.first { $0.id == "deuce" }?.checkIns == 3)
+    #expect(unlocked.first { $0.id == "warmup-headphones" }?.kind == .piece)
+    #expect(
+        standing.lockedPieces.first { $0.id == "deuce-sweater" } == LockedPiece(id: "deuce-sweater", checkInsToGo: 2))
+    #expect(!standing.lockedPieces.contains { $0.id == "warmup-headphones" })
 }

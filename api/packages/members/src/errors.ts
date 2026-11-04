@@ -10,3 +10,14 @@ export class TimeZoneUnknownError extends AppError {
     super(`${timeZone} is not a known time zone.`);
   }
 }
+
+/** Thrown for a change to a profile the member hasn't saved yet (they save it right after signing up). */
+export class ProfileMissingError extends AppError {
+  override readonly name = 'ProfileMissingError';
+  readonly reason = 'PROFILE_MISSING';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('The member has no profile yet.');
+  }
+}

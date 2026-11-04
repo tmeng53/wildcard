@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   CheckInDraft,
+  CheckInEdit,
   CheckInId,
   CheckInKind,
   DEFAULT_PAGE,
@@ -35,7 +36,13 @@ const checkInFields = {
   member: z.uuid().meta({ description: 'The member who made it.' }),
   day: LocalDay.meta({
     description:
-      'The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before.',
+      'The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).',
+  }),
+  postedDay: LocalDay.optional().meta({
+    description:
+      'The member’s local day when they posted it (their day at `createdAt`), which orders the ' +
+      'squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always ' +
+      'sent; optional only so copies saved before it existed still read.',
   }),
   createdAt: z.iso.datetime().meta({
     description: 'When the member made it, in UTC with milliseconds.',
@@ -180,30 +187,32 @@ const installedBuildsReplies: { readonly replies: readonly never[] } = { replies
 
 const count = (description: string) => z.int().nonnegative().meta({ description });
 
+/** A member's lifetime counts by kind, wherever the API shows them. */
+export const checkInTotalsFields = {
+  trainedDays: count('Days with a 练了; several 练了 on one day count once.'),
+  healthyMeals: count('健康餐 check-ins.'),
+  cheatMeals: count('坦白放纵餐 check-ins.'),
+  disclaimers: count('今日请假条 check-ins.'),
+  topSport: z
+    .strictObject({
+      sport: storedTrainingFields.sport,
+      customSport: z
+        .string()
+        .optional()
+        .meta({ description: 'The name of a `custom` sport; a listed sport has none.' }),
+      checkIns: count('练了 check-ins of this sport.'),
+    })
+    .optional()
+    .meta({
+      description:
+        'The sport with the most 练了 (最常练; a custom sport counts by its name), the latest ' +
+        'one on a tie. Left out before the first 练了.',
+    })
+    .openapi('TopSport'),
+};
+
 const CheckInTotals = z
-  .strictObject({
-    version: bodyVersion(1),
-    trainedDays: count('Days with a 练了; several 练了 on one day count once.'),
-    healthyMeals: count('健康餐 check-ins.'),
-    cheatMeals: count('坦白放纵餐 check-ins.'),
-    disclaimers: count('今日请假条 check-ins.'),
-    topSport: z
-      .strictObject({
-        sport: storedTrainingFields.sport,
-        customSport: z
-          .string()
-          .optional()
-          .meta({ description: 'The name of a `custom` sport; a listed sport has none.' }),
-        checkIns: count('练了 check-ins of this sport.'),
-      })
-      .optional()
-      .meta({
-        description:
-          'The sport with the most 练了 (最常练; a custom sport counts by its name), the latest ' +
-          'one on a tie. Left out before the first 练了.',
-      })
-      .openapi('TopSport'),
-  })
+  .strictObject({ version: bodyVersion(1), ...checkInTotalsFields })
   .openapi('CheckInTotals');
 
 /** Signs a view URL for every photo of these check-ins, in one call to storage. */
@@ -233,6 +242,7 @@ function wire(record: CheckInRecord, urls: ViewUrls) {
     id: record.id,
     member: record.member,
     day: record.day,
+    postedDay: record.postedDay ?? record.day,
     createdAt: record.createdAt.toISOString(),
     audience: [...record.audience],
   };
@@ -253,8 +263,8 @@ const signedInFailures = {
 };
 
 /**
- * Daily check-ins: `PUT /check-ins/{id}` saves one and `GET` the same path reads it as a post
- * (its own page), `GET /squads/{squadId}/check-ins` (the squad's feed, with reactions and
+ * Daily check-ins: `PUT /check-ins/{id}` saves one, `PATCH` and `DELETE` the same path edit and
+ * delete the member's own, and `GET` reads it as a post (its own page), `GET /squads/{squadId}/check-ins` (the squad's feed, with reactions and
  * comments) and `GET /me/check-ins` read them back for a range of days, and
  * `GET /me/check-in-totals` counts all of the member's own.
  */
@@ -289,11 +299,66 @@ export function checkIns(deps: {
       201: { description: 'Saved', content: { 'application/json': { schema: CheckIn } } },
       400: problem(
         'Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, ' +
-          'counted for the wrong day, or with a photo that isn’t uploaded',
+          'counted for the wrong day (after the day it was posted on or more than 7 before it), ' +
+          'a 请假条 for a day the member trained on (`ALREADY_TRAINED`), or with a photo that ' +
+          'isn’t uploaded',
       ),
       403: problem('Sent to a squad the member isn’t in, or with someone else’s photo'),
       409: problem('The id holds a different check-in, or another check-in uses one of the photos'),
       ...jsonBodyFailures,
+      ...signedInFailures,
+    },
+  });
+
+  const edit = createRoute({
+    method: 'patch',
+    path: '/check-ins/{id}',
+    operationId: 'editCheckIn',
+    summary: 'Edit one of the member’s own check-ins',
+    description:
+      'Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, ' +
+      'day, time and audience stay as posted. The same edit again changes nothing, so a retry ' +
+      'is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit ' +
+      'leaves out are deleted. Teammates’ reactions and comments stay.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      params: z.strictObject({ id: CheckInId }),
+      body: {
+        required: true,
+        content: { 'application/json': { schema: CheckInEdit.meta({ id: 'CheckInEdit' }) } },
+      },
+    },
+    responses: {
+      200: { description: 'Saved', content: { 'application/json': { schema: CheckIn } } },
+      400: problem(
+        'Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), or ' +
+          'with a photo that isn’t uploaded',
+      ),
+      403: problem('A teammate’s check-in (`NOT_YOUR_CHECK_IN`), or someone else’s photo'),
+      404: problem('No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)'),
+      409: problem('Another check-in uses one of the photos'),
+      ...jsonBodyFailures,
+      ...signedInFailures,
+    },
+  });
+
+  const remove = createRoute({
+    method: 'delete',
+    path: '/check-ins/{id}',
+    operationId: 'deleteCheckIn',
+    summary: 'Delete one of the member’s own check-ins',
+    description:
+      'Deletes it with its photos and the reactions and comments on it. One already gone ' +
+      'answers 204 too, so a retry is safe.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params: z.strictObject({ id: CheckInId }) },
+    responses: {
+      204: { description: 'Deleted, or gone already' },
+      400: problem('Not a check-in id'),
+      403: problem('A teammate’s check-in (`NOT_YOUR_CHECK_IN`)'),
+      404: problem('Another member’s check-in the caller can’t see (`CHECK_IN_NOT_FOUND`)'),
       ...signedInFailures,
     },
   });
@@ -304,7 +369,8 @@ export function checkIns(deps: {
     operationId: 'listSquadCheckIns',
     summary: 'A squad’s check-ins for a range of days, with their reactions and comments',
     description:
-      'The squad’s feed: check-ins sent to the squad by members still in it, newest day first, ' +
+      'The squad’s feed: check-ins sent to the squad by members still in it and posted on a day ' +
+      'in the range (`postedDay`), newest posted first, ' +
       'each with the reactions and comments of the teammates the viewer shares a squad with. ' +
       'Only for members of the squad.',
     security: [{ bearer: [] }],
@@ -408,6 +474,21 @@ export function checkIns(deps: {
       });
       const body = wire(checkIn, await viewUrls(deps.photos, [checkIn]));
       return created ? c.json(body, 201) : c.json(body, 200);
+    })
+    .openapi(edit, async (c) => {
+      const checkIn = await deps.checkIns.edit({
+        id: c.req.valid('param').id,
+        member: MemberId.parse(c.var.caller.userId),
+        edit: c.req.valid('json'),
+      });
+      return c.json(wire(checkIn, await viewUrls(deps.photos, [checkIn])), 200);
+    })
+    .openapi(remove, async (c) => {
+      await deps.checkIns.delete({
+        id: c.req.valid('param').id,
+        member: MemberId.parse(c.var.caller.userId),
+      });
+      return c.body(null, 204);
     })
     .openapi(listForSquad, async (c) => {
       const posts = await deps.checkIns.listForSquad({

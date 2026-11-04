@@ -12,6 +12,7 @@ export { createPostgresWeekSummaryWords } from './adapters/postgres-week-summary
 export {
   Audience,
   CheckInDraft,
+  CheckInEdit,
   CheckInId,
   Disclaimer,
   LocalDay,
@@ -40,7 +41,7 @@ export {
 export type { CheckInTotals, TopSport, TrainedCheckIn } from './domain/totals.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
 export { CommentId, type Comment } from './domain/comment.js';
-export { CommentText } from './domain/text.js';
+export { COMMENT_MAX_CHARACTERS, CommentText } from './domain/text.js';
 export {
   DEFAULT_PLAN_DAYS,
   PlanDay,
@@ -52,18 +53,22 @@ export {
 } from './domain/weekly-plan.js';
 export { SportKey } from './domain/sports.js';
 export {
+  AlreadyTrainedError,
   CheckInDayMismatchError,
   CheckInIdConflictError,
   CheckInInTheFutureError,
+  CheckInKindChangedError,
   CheckInNotFoundError,
   CheckInTooOldError,
   CommentIdConflictError,
+  NotYourCheckInError,
   NotYourCommentError,
   OwnCheckInReactionError,
   PhotoInUseError,
   PhotoNotUploadedError,
   PhotoNotYoursError,
   PlanDayStartedError,
+  ReplyToCoachNotFoundError,
   ReplyToNotInSquadError,
   SportNotListedError,
   SquadNotJoinedError,
@@ -81,6 +86,7 @@ export type {
   MemberCalendar,
   PhotoFiles,
   ReactionStore,
+  CoachSpoke,
   SportList,
   SquadMembership,
   WeeklyPlanStore,
@@ -126,4 +132,10 @@ export {
 } from './domain/week-summary.js';
 export type { SquadWeekSummary } from './use-cases/check-ins/week-summary.js';
 export type { SquadWeekCheckIns } from './use-cases/check-ins/week-for-awards.js';
-export type { MemberPage, StoryDay, WeekPages } from './domain/week-pages.js';
+export {
+  podiumOf,
+  type MemberPage,
+  type Podium,
+  type StoryDay,
+  type WeekPages,
+} from './domain/week-pages.js';

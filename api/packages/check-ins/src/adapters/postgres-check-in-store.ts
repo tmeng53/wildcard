@@ -14,7 +14,7 @@ import {
 } from '../domain/check-in.js';
 import { PhotoPath, type PhotoRef } from '../domain/photos.js';
 import { SportKey } from '../domain/sports.js';
-import type { CheckInStore, InsertOutcome } from '../ports.js';
+import type { CheckInStore, InsertOutcome, UpdateOutcome } from '../ports.js';
 import type { CheckIns, DB } from './tables.js';
 
 /** The tables this store reads and writes, as generated from the migrations. */
@@ -29,6 +29,33 @@ const UNIQUE_RULES: Record<string, 'id' | 'photo' | undefined> = {
 
 const Constraint = z.object({ constraint: z.string() });
 
+/** The photo rows of a check-in, the cover at position 1. */
+function photoRows(checkIn: CheckInRecord) {
+  return photosOf(checkIn).map(({ path, size }, index) => ({
+    path,
+    check_in_id: checkIn.id,
+    position: index + 1,
+    width: size?.width ?? null,
+    height: size?.height ?? null,
+  }));
+}
+
+/** A `check_in_events` row: the whole entry as saved, the photos in order. */
+function eventRow(checkIn: CheckInRecord, kind: 'posted' | 'edited') {
+  return {
+    check_in_id: checkIn.id,
+    member_id: checkIn.member,
+    kind,
+    entry: JSON.stringify({
+      version: 1,
+      payload: storedPayload(checkIn),
+      photos: photosOf(checkIn).map(({ path, size }) =>
+        size === undefined ? { path } : { path, width: size.width, height: size.height },
+      ),
+    }),
+  };
+}
+
 /** The check-in store on Postgres (`supabase/migrations`). */
 export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInStore {
   // A `date` read as text: node-postgres would turn it into a Date at local midnight.
@@ -36,6 +63,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
     'check_ins.id',
     'check_ins.member_id',
     sql<string>`check_ins.day::text`.as('day'),
+    sql<string>`check_ins.posted_day::text`.as('posted_day'),
     'check_ins.created_at',
     'check_ins.kind',
     'check_ins.payload',
@@ -43,6 +71,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
 
   type Row = Pick<Selectable<CheckIns>, 'id' | 'member_id' | 'created_at' | 'kind' | 'payload'> & {
     day: string;
+    posted_day: string;
   };
 
   /** Rows with their audiences and photos, in the rows' order. */
@@ -82,6 +111,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       id: CheckInId.parse(row.id),
       member: MemberId.parse(row.member_id),
       day: LocalDay.parse(row.day),
+      postedDay: LocalDay.parse(row.posted_day),
       createdAt: row.created_at,
       audience: audiences.get(row.id) ?? [],
       ...entryFromStored({ ...row, photos: photos.get(row.id) ?? [] }),
@@ -108,6 +138,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
               id: checkIn.id,
               member_id: checkIn.member,
               day: checkIn.day,
+              posted_day: checkIn.postedDay ?? checkIn.day,
               created_at: checkIn.createdAt,
               kind: checkIn.kind,
               payload: JSON.stringify(storedPayload(checkIn)),
@@ -125,21 +156,9 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
               )
               .execute();
           }
-          const photos = photosOf(checkIn);
-          if (photos.length > 0) {
-            await trx
-              .insertInto('check_in_photos')
-              .values(
-                photos.map(({ path, size }, index) => ({
-                  path,
-                  check_in_id: checkIn.id,
-                  position: index + 1,
-                  width: size?.width ?? null,
-                  height: size?.height ?? null,
-                })),
-              )
-              .execute();
-          }
+          const photos = photoRows(checkIn);
+          if (photos.length > 0) await trx.insertInto('check_in_photos').values(photos).execute();
+          await trx.insertInto('check_in_events').values(eventRow(checkIn, 'posted')).execute();
         });
         return { saved: true };
       } catch (error) {
@@ -148,6 +167,47 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         if (hasErrorCode(error, '23505') && taken !== undefined) return { saved: false, taken };
         throw error;
       }
+    },
+
+    async update(checkIn): Promise<UpdateOutcome> {
+      try {
+        await db.transaction().execute(async (trx) => {
+          await trx
+            .updateTable('check_ins')
+            .set({ payload: JSON.stringify(storedPayload(checkIn)) })
+            .where('id', '=', checkIn.id)
+            .execute();
+          await trx.deleteFrom('check_in_photos').where('check_in_id', '=', checkIn.id).execute();
+          const photos = photoRows(checkIn);
+          if (photos.length > 0) await trx.insertInto('check_in_photos').values(photos).execute();
+          await trx.insertInto('check_in_events').values(eventRow(checkIn, 'edited')).execute();
+        });
+        return { saved: true };
+      } catch (error) {
+        const constraint = Constraint.safeParse(error).data?.constraint;
+        if (
+          hasErrorCode(error, '23505') &&
+          constraint !== undefined &&
+          UNIQUE_RULES[constraint] === 'photo'
+        ) {
+          return { saved: false, taken: 'photo' };
+        }
+        throw error;
+      }
+    },
+
+    async remove(id) {
+      // Its audience, photo rows, reactions, comments, coach wakes and log go with it.
+      await db.deleteFrom('check_ins').where('id', '=', id).execute();
+    },
+
+    async photoHistory(id) {
+      const rows = await db
+        .selectFrom('check_in_events')
+        .select(sql<string>`jsonb_array_elements(entry -> 'photos') ->> 'path'`.as('path'))
+        .where('check_in_id', '=', id)
+        .execute();
+      return [...new Set(rows.map(({ path }) => path))].map((path) => PhotoPath.parse(path));
     },
 
     async totals(member) {
@@ -209,8 +269,9 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       }));
     },
 
-    async listForSquad({ squad, members, from, to }) {
+    async listForSquad({ squad, members, from, to, by = 'day' }) {
       if (members.length === 0) return [];
+      const dayColumn = by === 'postedDay' ? 'check_ins.posted_day' : 'check_ins.day';
       const rows = await db
         .selectFrom('check_ins')
         .innerJoin('check_in_squads', (join) =>
@@ -220,9 +281,9 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         )
         .select(checkInColumns)
         .where('check_ins.member_id', 'in', members)
-        .where('check_ins.day', '>=', from)
-        .where('check_ins.day', '<=', to)
-        .orderBy('check_ins.day', 'desc')
+        .where(dayColumn, '>=', from)
+        .where(dayColumn, '<=', to)
+        .orderBy(dayColumn, 'desc')
         .orderBy('check_ins.created_at', 'desc')
         .orderBy('check_ins.id')
         .execute();

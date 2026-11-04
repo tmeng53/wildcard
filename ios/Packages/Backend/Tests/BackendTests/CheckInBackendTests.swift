@@ -82,6 +82,33 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     #expect(today.phase == .noSquad)
 }
 
+@Test func aMemberWhoTravelledTakesThePhonesZoneAndKeepsTheRestOfTheirProfile() async throws {
+    let stack = try LocalStack()
+    let traveller = try await stack.signedInMember()
+    _ = try await stack.squad(of: traveller)
+    let losAngeles = try #require(TimeZone(identifier: "America/Los_Angeles"))
+    let shanghai = try #require(TimeZone(identifier: "Asia/Shanghai"))
+    let character = MemberCharacter(
+        nickname: try Nickname("小周"), look: CharacterLook(persona: "deadpan", variants: ["body": "tuxedo"], colors: [:])
+    )
+    let before = Profile(
+        timeZone: losAngeles, catchphrase: try Catchphrase("冲就完了"), character: character,
+        jerseyNumber: try JerseyNumber(7))
+    _ = try await traveller.api.save(before)
+
+    let backend = APICheckInBackend(api: traveller.api, directory: scratch(), phoneZone: { shanghai })
+    #expect(try await backend.home()?.timeZone == losAngeles)
+    #expect(try await backend.followPhoneZone())
+    #expect(try await backend.home()?.timeZone == shanghai)
+    #expect(
+        try await traveller.api.me().profile
+            == Profile(
+                timeZone: shanghai, catchphrase: before.catchphrase, character: character,
+                jerseyNumber: before.jerseyNumber))
+    // Already in the phone's zone: nothing to save.
+    #expect(try await backend.followPhoneZone() == false)
+}
+
 @MainActor @Test func aTrainingWithPhotosPostsCountsAndTheSquadSeesIt() async throws {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()

@@ -1,5 +1,6 @@
 import type { AdminTables } from '@wildcard/admins';
 import type { AiConsentTables } from '@wildcard/ai-consent';
+import type { NoticeTables } from '@wildcard/notices';
 import type { NudgeTables } from '@wildcard/nudges';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { CoachTables } from '@wildcard/coach';
@@ -164,7 +165,8 @@ export type Tables = CheckInTables &
   WeeklyAwardTables &
   SportTables &
   UnlockTables &
-  CoachTables;
+  CoachTables &
+  NoticeTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;
@@ -198,6 +200,8 @@ export interface PhotoStorage {
    * repeat.
    */
   readonly deleteAllOf: (member: UserId) => Promise<void>;
+  /** Deletes these photos; one already gone is skipped. Safe to repeat. */
+  readonly delete: (paths: readonly PhotoPath[]) => Promise<void>;
 }
 
 /**
@@ -207,3 +211,37 @@ export interface PhotoStorage {
 export type RateLimit = (
   key: string,
 ) => { readonly allowed: true } | { readonly allowed: false; readonly retryAfterSeconds: number };
+
+/** Something that just happened for one member, as soon as it is committed. */
+export interface LiveEvent {
+  /** A notice was told to the member (通知): its id in the notices. */
+  readonly kind: 'notice';
+  readonly id: number;
+}
+
+/** What hears a member's live events: each one, then the end of the feed. */
+export interface LiveListener {
+  readonly event: (event: LiveEvent) => void;
+  /**
+   * The feed ended without being stopped (the server is shutting down, or lost its connection to
+   * where events come from), so events after it are missed: the client reconnects and reads again.
+   */
+  readonly end: () => void;
+}
+
+/**
+ * Members' live events, across every instance of the server, for `GET /me/events`. Delivery is at
+ * most once and only while subscribed: a client that reconnects reads what it missed from the
+ * routes that keep it (such as `GET /me/notices`).
+ */
+export interface LiveEvents {
+  /**
+   * Starts hearing `member`'s events; resolves once every event committed from then on will
+   * reach `listener`, and gives the function that stops it.
+   *
+   * @throws {LiveEventsUnavailableError} When events can't be heard right now.
+   */
+  readonly subscribe: (member: UserId, listener: LiveListener) => Promise<() => void>;
+  /** Ends every subscription (each listener's `end`) and stops hearing events, on shutdown. */
+  readonly close: () => Promise<void>;
+}

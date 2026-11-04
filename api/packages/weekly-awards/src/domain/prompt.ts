@@ -1,6 +1,6 @@
+import type { BadgeCatalog } from './badges.js';
 import { promptKey, type MemberId, type MemberWeek, type WeekCheckIn } from './awards.js';
-import { AwardMove } from './moves.js';
-import type { AwardSettings } from './settings.js';
+import { offeredMoves, type AwardSettings } from './settings.js';
 import type { WeekStart } from './schedule.js';
 
 // The user message for a squad's weekly awards. The standing instructions and the moves'
@@ -9,7 +9,8 @@ import type { WeekStart } from './schedule.js';
 // 请假条 one). Members go by a letter, never their id or name, and only those who checked in are
 // listed, so the model can't write about anyone who didn't. Comments come with each check-in
 // (its latest `PROMPT_COMMENTS`), their writers by letter too, or as 队友 when they aren't listed.
-// The memes in use from the meme library come along, for the model to use where one fits.
+// The memes in use from the meme library come along, for the model to use where one fits, and
+// the badge catalog, for the model to pick each title's badge from.
 
 const KIND_NAMES: Record<WeekCheckIn['kind'], string> = {
   trained: '练了',
@@ -48,13 +49,14 @@ export interface PromptMeme {
 
 /**
  * The user message: the week as JSON, members who checked in by letter in the order given,
- * each day's check-ins, the moves to pick from, described as the settings have them, and the
- * memes in use (left out when there are none).
+ * each day's check-ins, the moves and badges to pick from, described as the settings have
+ * them, and the memes in use (left out when there are none).
  */
 export function promptFor(week: {
   readonly weekStart: WeekStart;
   readonly members: readonly MemberWeek[];
   readonly moves: AwardSettings['moves'];
+  readonly badges: BadgeCatalog;
   readonly memes: readonly PromptMeme[];
 }): string {
   const keys = new Map(week.members.map(({ member }, index) => [member, promptKey(index)]));
@@ -83,8 +85,9 @@ export function promptFor(week: {
             }),
       })),
     })),
-    // In the moves' own order, whatever order the database keeps them in.
-    moves: AwardMove.options.map((id) => ({ id, description: week.moves[id] })),
+    // By id, whatever order the database keeps them in, so the same settings make the same prompt.
+    moves: offeredMoves(week.moves).map((id) => ({ id, description: week.moves[id] })),
+    badges: week.badges,
     ...(week.memes.length === 0
       ? {}
       : {

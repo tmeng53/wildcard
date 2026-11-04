@@ -16,14 +16,31 @@ public struct FeedPost: Hashable, Sendable, Identifiable {
         self.comments = comments
     }
 
-    /// The latest comments the card shows, oldest of them first.
-    public var commentsOnCard: ArraySlice<Comment> { comments.suffix(Self.cardComments) }
-
     public var id: CheckInID { checkIn.id }
     public var author: MemberID { checkIn.member }
 
     /// Teammates react; nobody reacts to their own post.
     public func canRespond(_ viewer: MemberID) -> Bool { viewer != author }
+}
+
+/// The member changed one of their own posts: every screen holding it shows the change.
+public enum PostChange: Hashable, Sendable {
+    /// Edited: its fields and photos are these now; teammates' responses stay.
+    case edited(CheckIn)
+    /// Deleted, with everything left on it.
+    case deleted(CheckInID)
+}
+
+extension FeedPost {
+    /// The post after `change`; nil once it is deleted.
+    public func applying(_ change: PostChange) -> FeedPost? {
+        switch change {
+        case .edited(let checkIn) where checkIn.id == id:
+            FeedPost(checkIn: checkIn, reactions: reactions, comments: comments)
+        case .deleted(let deleted) where deleted == id: nil
+        default: self
+        }
+    }
 }
 
 /// A move from the character's move library, by id, which the author's character plays when a

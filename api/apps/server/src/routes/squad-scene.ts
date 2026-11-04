@@ -9,9 +9,11 @@ import {
   type SquadScene,
   type Squads,
 } from '@wildcard/squads';
+import { MemberId as NoticeMember, SquadId as NoticeSquad, type Notices } from '@wildcard/notices';
 import { latestAwardedWeek } from '@wildcard/weekly-awards';
 
 import { bodyVersion } from '../body-version.js';
+import type { Log } from '../log.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
@@ -120,7 +122,10 @@ export function squadScene(deps: {
   readonly verifyToken: VerifyToken;
   readonly squads: Squads;
   readonly checkIns: CheckIns;
+  /** Where the move is kept for the squadmates' 通知. */
+  readonly notices: Notices;
   readonly clock: () => Date;
+  readonly log: Log;
 }) {
   const scenes = createSquadScenes({
     squads: deps.squads,
@@ -211,12 +216,44 @@ export function squadScene(deps: {
     })
     .openapi(pick, async (c) => {
       const { squadId, weekStart } = c.req.valid('param');
+      const member = MemberId.parse(c.var.caller.userId);
       const { scene, picked } = await scenes.pick({
         squad: squadId,
-        member: MemberId.parse(c.var.caller.userId),
+        member,
         week: weekStart,
         scene: c.req.valid('json').scene,
       });
+      if (picked)
+        await tellMoved({ ...deps, squad: squadId, by: member, scene: c.req.valid('json').scene });
       return picked ? c.json(wire(scene), 201) : c.json(wire(scene), 200);
     });
+}
+
+/**
+ * Tells every squadmate but the picker that the squad moved (通知). After the pick, and never
+ * undoing it: a notice that can't be kept is logged.
+ */
+async function tellMoved(deps: {
+  readonly squads: Squads;
+  readonly notices: Notices;
+  readonly log: Log;
+  readonly squad: SquadId;
+  readonly by: MemberId;
+  readonly scene: string;
+}): Promise<void> {
+  try {
+    const members = await deps.squads.membersOf(deps.squad);
+    await deps.notices.tell(
+      members
+        .filter((member) => member !== deps.by)
+        .map((member) => ({
+          member: NoticeMember.parse(member),
+          squad: NoticeSquad.parse(deps.squad),
+          kind: 'sceneMoved' as const,
+          subject: { version: 1 as const, scene: deps.scene, by: NoticeMember.parse(deps.by) },
+        })),
+    );
+  } catch (error) {
+    deps.log.warn('scene move not kept in notices', { squad: deps.squad, error });
+  }
 }

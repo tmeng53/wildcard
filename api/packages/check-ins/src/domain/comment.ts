@@ -18,13 +18,23 @@ export interface Comment {
   readonly text: CommentText;
   /** Whom it replies to (回复 Mia：…), when it does. */
   readonly replyTo?: MemberId | undefined;
+  /**
+   * The coach it replies to (回复 毛头：…), by the coach's id, when it does: one who said
+   * something under the check-in. Never with `replyTo`.
+   */
+  readonly replyToCoach?: string | undefined;
   readonly commentedAt: Date;
 }
 
 /** Whether two writes of one comment id say the same thing, so the second is a retry. */
 export function sameComment(
-  a: Pick<Comment, 'member' | 'text' | 'replyTo'>,
-  b: Pick<Comment, 'member' | 'text' | 'replyTo'>,
+  a: Pick<Comment, 'member' | 'text' | 'replyTo' | 'replyToCoach'>,
+  b: Pick<Comment, 'member' | 'text' | 'replyTo' | 'replyToCoach'>,
 ): boolean {
-  return a.member === b.member && a.text === b.text && a.replyTo === b.replyTo;
+  return (
+    a.member === b.member &&
+    a.text === b.text &&
+    a.replyTo === b.replyTo &&
+    a.replyToCoach === b.replyToCoach
+  );
 }

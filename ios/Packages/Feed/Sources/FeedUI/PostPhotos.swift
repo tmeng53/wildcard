@@ -53,25 +53,36 @@ struct PostPhotos: View {
     }
 }
 
-/// One photo, filling its page: its place in grey until it loads. Decoded off the main actor, so
-/// scrolling past photos doesn't drop frames.
+/// One photo, filling its page: until it loads, the two tickets rock small on the card's mist, and
+/// the photo fades in over them; a photo that can't be read leaves the plain mist. Decoded off the main actor, so scrolling past photos doesn't drop
+/// frames.
 private struct FeedPhoto: View {
     @Environment(\.sceneTheme) private var theme
     let model: FeedModel
     let ref: PhotoRef
     @State private var image: CGImage?
+    /// The photo couldn't be read, so the tickets stop waiting for it.
+    @State private var failed = false
 
     var body: some View {
-        Color(role: .borderDefault, in: theme)
+        Color(role: .bgSubtle, in: theme)
             .overlay {
                 if let image {
                     Image(decorative: image, scale: 1).resizable().scaledToFill()
+                        .transition(.opacity)
+                } else if !failed {
+                    TicketSpinner(size: 32, on: .light(.bgSubtle))
+                        .accessibilityHidden(true)
                 }
             }
             .clipped()
             .task(id: ref.loadID) {
-                guard let jpeg = await model.store.photo(ref) else { return }
-                image = await Self.decode(jpeg)
+                failed = false
+                guard let jpeg = await model.store.photo(ref), let decoded = await Self.decode(jpeg) else {
+                    if !Task.isCancelled { failed = true }
+                    return
+                }
+                withAnimation(.wildcard(Motion.fadeIn)) { image = decoded }
             }
     }
 

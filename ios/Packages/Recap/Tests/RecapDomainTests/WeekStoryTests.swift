@@ -81,11 +81,30 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(story.firstTitle(of: id(2)) == nil)
 }
 
-@Test func anUnknownMoveCheers() throws {
+@Test func onlyThoseOnThePodiumCarryThePlanDoneMark() {
+    let podium = Podium(champion: id(1), sides: [id(2), id(3), id(4)], planDone: [id(1), id(3), id(4)])
+    #expect(podium.planDone == [id(1), id(3)])
+}
+
+/// Any move id the API sends is kept as it is, so new moves need no app change; the art plays
+/// the cheer for one it doesn't have (StoryArtTests).
+@Test func aMoveKeepsItsId() throws {
     #expect(AwardMove(wire: "pump") == .pump)
-    #expect(AwardMove(wire: "moonwalk") == .cheer)
+    #expect(AwardMove(wire: "chin-up").rawValue == "chin-up")
+    #expect(AwardMove(wire: "swim").solo.rawValue == "swim")
     #expect(AwardMove.stack.solo == .cheer)
     #expect(AwardMove.wave.solo == .wave)
+}
+
+/// Beside the hottest post: the AI's move, else a 练了's own sport move, else the cheer.
+@Test func theHottestPostPlaysItsSportUnlessTheAIPicked() throws {
+    let swum = Hottest(checkIn: checkIn, day: try day(16), kind: .trained, sport: "swim", reactions: [])
+    #expect(swum.clip == .sport("swim"))
+    let picked = Hottest(
+        checkIn: checkIn, day: try day(16), kind: .trained, sport: "swim", reactions: [], move: .pose)
+    #expect(picked.clip == .award(.pose))
+    let meal = Hottest(checkIn: checkIn, day: try day(16), kind: .healthyMeal, reactions: [])
+    #expect(meal.clip == .award(.cheer))
 }
 
 @Test func eachDayPlaysItsSportRestOrDisclaimerMove() throws {

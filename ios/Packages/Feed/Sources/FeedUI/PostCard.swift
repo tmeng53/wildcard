@@ -35,6 +35,8 @@ struct PostCard: View {
     /// On its own page the post lists every comment under the card instead.
     private var showsAllComments: Bool { model.opened == post.id }
     private var isLifted: Bool { model.lifted && model.picking == post.id }
+    /// Teammates' comments, or the coach's line.
+    private var hasComments: Bool { !post.comments.isEmpty || model.coachReply(on: post.id)?.text != nil }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -46,8 +48,8 @@ struct PostCard: View {
             details
             ReactionRow(model: model, post: post)
                 .padding(.horizontal, Space.m)
-                .padding(.bottom, post.comments.isEmpty || showsAllComments ? Space.xs : 0)
-            if !post.comments.isEmpty && !showsAllComments {
+                .padding(.bottom, !hasComments || showsAllComments ? Space.xs : 0)
+            if hasComments && !showsAllComments {
                 CardComments(model: model, post: post)
                     .padding(.horizontal, Space.m)
                     .padding(.bottom, Space.s)
@@ -56,6 +58,11 @@ struct PostCard: View {
         .background(
             Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
         )
+        .overlay(alignment: .topTrailing) {
+            if model.canManage(post) {
+                manageMenu.padding(Space.s)
+            }
+        }
         .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .gesture(HoldAndSlide(isEnabled: canRespond, held: hold(at:), letGo: letGo(at:)))
         .scaleEffect(isLifted && !reduceMotion ? Self.liftScale : 1)
@@ -82,6 +89,33 @@ struct PostCard: View {
             }
         }
         .accessibilityIdentifier("feed.post")
+    }
+
+    /// 「…」 on the member's own post: 编辑 opens the compose page on it, 删除 asks first.
+    private var manageMenu: some View {
+        HeaderMenu(Text("编辑或删除", bundle: .module), on: .ink) {
+            Button {
+                model.edit(post)
+            } label: {
+                Label {
+                    Text("编辑", bundle: .module)
+                } icon: {
+                    Image(systemName: "pencil")
+                }
+            }
+            .accessibilityIdentifier("post.edit")
+            Button(role: .destructive) {
+                model.confirmingDelete = post.id
+            } label: {
+                Label {
+                    Text("删除", bundle: .module)
+                } icon: {
+                    Image(systemName: "trash")
+                }
+            }
+            .accessibilityIdentifier("post.delete")
+        }
+        .accessibilityIdentifier("post.manage")
     }
 
     /// Held on the card: the bar opens over it, and the finger's place picks the slot under it.

@@ -5,6 +5,8 @@
 
 import type { ColumnType } from "kysely";
 
+export type CheckInEventKind = "edited" | "posted";
+
 export type CheckInKind = "cheatMeal" | "disclaimer" | "healthyMeal" | "trained";
 
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
@@ -33,7 +35,17 @@ export interface CheckInComments {
   id: string;
   member_id: string;
   reply_to: string | null;
+  reply_to_coach: string | null;
   text: string;
+}
+
+export interface CheckInEvents {
+  at: Generated<Timestamp>;
+  check_in_id: string;
+  entry: Json;
+  id: Generated<Int8>;
+  kind: CheckInEventKind;
+  member_id: string;
 }
 
 export interface CheckInPhotos {
@@ -58,6 +70,7 @@ export interface CheckIns {
   kind: CheckInKind;
   member_id: string;
   payload: Json;
+  posted_day: string;
 }
 
 export interface CheckInSquads {
@@ -116,6 +129,7 @@ export interface WeekSummaryWords {
 
 export interface DB {
   check_in_comments: CheckInComments;
+  check_in_events: CheckInEvents;
   check_in_photos: CheckInPhotos;
   check_in_reactions: CheckInReactions;
   check_in_squads: CheckInSquads;

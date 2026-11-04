@@ -18,6 +18,7 @@ import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
+import { PhotoPath } from '../ports.js';
 import { createLog } from '../log.js';
 import {
   adminOn,
@@ -34,6 +35,8 @@ import {
   unusedUnlocks,
   unusedWeekSummaryWords,
   unusedCoachHiring,
+  unusedCoachActivity,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -86,6 +89,8 @@ const app = createApp({
   unlocks: unusedUnlocks,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
+  coachActivity: unusedCoachActivity,
+  ...ignoredNotices,
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
   log: createLog(() => undefined),
@@ -114,7 +119,8 @@ async function call({
   return {
     status: response.status,
     type: response.headers.get('content-type'),
-    body: await response.json(),
+    // A 204 has no body.
+    body: response.status === 204 ? undefined : await response.json(),
   };
 }
 
@@ -179,6 +185,7 @@ describe('PUT /check-ins/{id}', () => {
       id,
       member: me.userId,
       day,
+      postedDay: day,
       createdAt,
       audience: [squad],
       kind: 'trained',
@@ -351,6 +358,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
       id,
       member: friend.userId,
       day,
+      postedDay: day,
       createdAt,
       kind: 'healthyMeal',
       meal: { caption: '番茄炒蛋' },
@@ -452,6 +460,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
             id,
             member: me.userId,
             day,
+            postedDay: day,
             createdAt,
             audience: [],
             kind: 'disclaimer',
@@ -529,7 +538,7 @@ describe('GET /me/posts', () => {
       expect(
         (await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body })).status,
       ).toBe(201);
-      return { ...body, id, member: me.userId };
+      return { ...body, id, member: me.userId, postedDay: body.day };
     };
     const run = await put(earlier, { kind: 'trained', training: { sport: 'run', minutes: 30 } });
     const meal = await put(later, { kind: 'cheatMeal', meal: { caption: '火锅' } });
@@ -608,6 +617,7 @@ describe('GET /me/check-in-totals', () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me);
     const yesterday = new Date(Date.now() - 24 * 60 * 60_000);
+    const twoDaysAgo = new Date(Date.now() - 47 * 60 * 60_000);
     const put = async (when: Date, fields: Record<string, unknown>): Promise<number> => {
       const body = {
         version: 1,
@@ -627,7 +637,8 @@ describe('GET /me/check-in-totals', () => {
       await put(now, { kind: 'healthyMeal', meal: { caption: '沙拉' } }),
       await put(yesterday, { kind: 'healthyMeal', meal: {} }),
       await put(now, { kind: 'cheatMeal', meal: {} }),
-      await put(yesterday, { kind: 'disclaimer', disclaimer: { text: '下雨了' } }),
+      // A 请假条 never goes on a day with a 练了.
+      await put(twoDaysAgo, { kind: 'disclaimer', disclaimer: { text: '下雨了' } }),
     ];
     expect(statuses).toStrictEqual([201, 201, 201, 201, 201, 201, 201]);
 
@@ -851,5 +862,92 @@ describe('photos on check-ins', () => {
     expect(await put(mine)).toStrictEqual([201, 'saved']);
     expect(await put(mine)).toStrictEqual([409, 'PHOTO_IN_USE']);
     expect(await put('not-a-photo.jpg')).toStrictEqual([400, 'REQUEST_INVALID']);
+  });
+});
+
+describe('editing and deleting a post', () => {
+  it('lets the author edit it, photos and all, and delete it with its photos', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const [cover, second] = [
+      await uploadPhoto(me.token, 'cover'),
+      await uploadPhoto(me.token, 'two'),
+    ];
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const posted = await call({
+      method: 'PUT',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: {
+        version: 1,
+        day,
+        createdAt,
+        audience: [squad],
+        kind: 'cheatMeal',
+        meal: { caption: '炸鸡', photos: [{ path: cover }] },
+      },
+    });
+    expect(posted.status).toBe(201);
+
+    const change = {
+      version: 1,
+      kind: 'cheatMeal',
+      meal: { caption: '炸鸡和可乐', photos: [{ path: second }] },
+    };
+    const byFriend = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: friend.token,
+      body: change,
+    });
+    expect([byFriend.status, byFriend.body]).toMatchObject([403, { reason: 'NOT_YOUR_CHECK_IN' }]);
+    const otherKind = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: { version: 1, kind: 'healthyMeal', meal: {} },
+    });
+    expect([otherKind.status, otherKind.body]).toMatchObject([
+      400,
+      { reason: 'CHECK_IN_KIND_CHANGED' },
+    ]);
+
+    const edited = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: change,
+    });
+    expect(edited.status).toBe(200);
+    expect(edited.body).toMatchObject({
+      id,
+      day,
+      audience: [squad],
+      kind: 'cheatMeal',
+      meal: { caption: '炸鸡和可乐', photos: [{ path: second }] },
+    });
+    // The photo it left out is gone from Storage.
+    expect([
+      await photos.exists(PhotoPath.parse(cover)),
+      await photos.exists(PhotoPath.parse(second)),
+    ]).toStrictEqual([false, true]);
+    const read = await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token });
+    expect(read.body).toMatchObject({ checkIn: { meal: { caption: '炸鸡和可乐' } } });
+
+    const deleteBy = (token: string) => call({ method: 'DELETE', path: `/check-ins/${id}`, token });
+    expect((await deleteBy(friend.token)).status).toBe(403);
+    expect((await deleteBy(me.token)).status).toBe(204);
+    expect((await deleteBy(me.token)).status).toBe(204);
+    expect(await photos.exists(PhotoPath.parse(second))).toBe(false);
+    const gone = await call({ method: 'GET', path: `/check-ins/${id}`, token: me.token });
+    expect([gone.status, gone.body]).toMatchObject([404, { reason: 'CHECK_IN_NOT_FOUND' }]);
+    const editGone = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: change,
+    });
+    expect(editGone.status).toBe(404);
   });
 });

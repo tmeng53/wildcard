@@ -26,6 +26,8 @@ struct SquadSceneView: View {
     let celebration: Int
     /// 拍一拍: taps, pats under way and the bubble over a teammate.
     let pats: PatStage
+    /// The squad celebrating together: who walks where and when.
+    let together: TogetherStage
     /// Whether I can still pat a teammate today; else their bubble says 「拍过了」.
     let canPat: (MemberID) -> Bool
     let tapMate: (MemberID) -> Void
@@ -34,6 +36,10 @@ struct SquadSceneView: View {
     let patMate: (MemberID) -> Void
     /// The squad dropping onto a newly picked scene: nobody is on it until their turn.
     var arrival: TodayModel.Arrival?
+    /// The coach's 战术板 line while its bubble is up.
+    var coachSays: CoachNote?
+    /// I tapped the coach on the sideline.
+    var tapCoach: () -> Void = {}
 
     /// The pull whose wake-up (or doze) has played out, after which the scene stops redrawing
     /// for it under Reduce Motion.
@@ -74,6 +80,9 @@ struct SquadSceneView: View {
                         .allowsHitTesting(false)
                 }
                 CheerBubbles(cast: cast, unit: unit)
+                if let coach = cast.coach, arrival == nil {
+                    CoachBubble(coach: coach, line: coachSays, unit: unit)
+                }
                 if phase == .night { WokenLine(cast: cast, pull: playingPull, unit: unit) }
                 PatOverlay(layer: .marks, cast: cast, pats: pats, unit: unit, canPat: canPat, pat: patMate)
                 Streamers(trigger: celebration)
@@ -121,14 +130,22 @@ struct SquadSceneView: View {
                             case .mine: tapMe()
                             }
                         }
-                        // Each teammate is a button by their nickname, and I am one by 我, for
-                        // VoiceOver and UI tests.
+                        // Each teammate is a button by their nickname, and I am one by 我, for VoiceOver and UI tests.
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(Text(verbatim: nickname(of: figure.id) ?? ""))
                         .accessibilityIdentifier(figure.id == .mine ? "today.me" : "today.mate")
                         .accessibilityAddTraits(.isButton)
                         .accessibilityHidden(nickname(of: figure.id) == nil)
                         .zIndex(figure.depth)
+                }
+                if let coach = cast.coach, arrival == nil {
+                    SidelineCoachFigure(coach: coach, unit: unit, date: timeline.date, reduceMotion: reduceMotion)
+                        .onTapGesture(perform: tapCoach)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(Text(verbatim: coach.speaker.name))
+                        .accessibilityIdentifier("today.coach")
+                        .accessibilityAddTraits(.isButton)
+                        .zIndex(coach.spot.y)
                 }
                 ForEach(Array(Stage.fronts(of: theme).enumerated()), id: \.offset) { index, depth in
                     SceneArt(scene: theme, layer: .front(index))
@@ -140,26 +157,26 @@ struct SquadSceneView: View {
         }
     }
 
-    /// Each figure's spot this frame, back to front. Me a little in front of my own row. In a
-    /// pat, the one patting turns to the other, who faces the same way, so their reaction's step
-    /// back moves away; a tapped teammate hops.
+    /// Each figure's spot this frame, back to front, me a little in front of my row. In a pat, the
+    /// patter turns to the other, who faces the same way (their step back moves away); a tapped one hops.
     private func placed(at seconds: Double, date: Date) -> [Placed] {
         let pat = pats.pat
         let sleepers = cast.sleepers.map(\.id)
         var figures = cast.mates.compactMap { mate -> Placed? in
-            guard let position = cast.stage.position(of: mate.id, at: seconds) else { return nil }
+            guard let spot = cast.stage.position(of: mate.id, at: seconds) else { return nil }
+            let (position, bob) = together.position(of: .mate(mate.id), home: spot, at: date)
             let (sleep, sign) = drowse(of: mate, sleeper: sleepers.firstIndex(of: mate.id), at: date)
+            let hop = Self.hop(since: pats.hops[mate.id], at: date, scale: position.scale) + bob
             return Placed(
                 id: .mate(mate.id), player: mate.player, position: position, ring: mate.member.status.ring,
-                sleep: sleep, sign: sign, hop: Self.hop(since: pats.hops[mate.id], at: date, scale: position.scale),
-                fall: fall(of: mate.id, at: date))
+                sleep: sleep, sign: sign, hop: hop, fall: fall(of: mate.id, at: date))
         }
         if let myPlayer {
+            let (position, bob) = together.position(of: .mine, home: .mine, at: date)
             figures.append(
                 Placed(
-                    id: .mine, player: myPlayer,
-                    position: .mine,
-                    ring: myRing, sleep: 0, sign: 0, hop: 0, fall: fall(of: nil, at: date)))
+                    id: .mine, player: myPlayer, position: position,
+                    ring: myRing, sleep: 0, sign: 0, hop: bob, fall: fall(of: nil, at: date)))
         }
         // Under Reduce Motion everyone is simply there.
         if arrival != nil, !reduceMotion {

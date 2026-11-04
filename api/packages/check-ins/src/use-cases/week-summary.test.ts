@@ -54,7 +54,7 @@ const checkInsAt = (moment: Date, joinedAt = JOINED) =>
     reactions: createPostgresReactionStore(db),
     comments: createPostgresCommentStore(db),
     plans,
-    photos: { exists: () => Promise.reject(new Error('unused')) },
+    photos: { exists: () => Promise.reject(new Error('unused')), delete: () => Promise.resolve() },
     calendarOf: (member) => {
       const timeZone = zones.get(member);
       return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt });
@@ -266,7 +266,7 @@ describe('a squad’s week summary', () => {
     });
   });
 
-  it('shares the crown on a tie, and gives no award nobody won', async () => {
+  it('crowns the earliest to join on a tie, and gives no award nobody won', async () => {
     const one = await newMember('America/Los_Angeles');
     const two = await newMember('America/Los_Angeles');
     const resting = await newMember('America/Los_Angeles');
@@ -292,13 +292,29 @@ describe('a squad’s week summary', () => {
           { member: two, value: 2 },
         ],
       },
-      {
-        kind: 'crown',
-        winners: [
-          { member: one, value: 2 },
-          { member: two, value: 2 },
-        ],
-      },
+      { kind: 'crown', winners: [{ member: one, value: 2 }] },
+    ]);
+  });
+
+  it('crowns whoever trained the most days, plan finished or not', async () => {
+    const most = await newMember('America/Los_Angeles');
+    const done = await newMember('America/Los_Angeles');
+    const squad = await newSquad(most, done);
+    // Most keeps the default plan (5 days) and trains 3; Done plans 2 and trains both.
+    for (const day of ['2026-10-19', '2026-10-20', '2026-10-21']) {
+      await checkedIn(most, { kind: 'trained', day, audience: [squad] });
+    }
+    await planned(done, {
+      monday: '2026-10-19',
+      days: [train, train, rest, rest, rest, rest, rest],
+    });
+    await checkedIn(done, { kind: 'trained', day: '2026-10-19', audience: [squad] });
+    await checkedIn(done, { kind: 'trained', day: '2026-10-20', audience: [squad] });
+
+    const summary = await checkIns.weekSummary({ viewer: done, squad, weekStart: week });
+    expect(summary.awards).toStrictEqual([
+      { kind: 'planCompleted', winners: [{ member: done, value: 2 }] },
+      { kind: 'crown', winners: [{ member: most, value: 3 }] },
     ]);
   });
 
@@ -398,7 +414,6 @@ describe('a squad’s week for its awards', () => {
         ...(kind === 'run' ? { kind: 'trained', sport: 'run' } : { kind }),
       }));
     expect(pages).toStrictEqual({
-      podium: { champion: ace, sides: [tokyo] },
       members: [
         {
           member: ace,

@@ -22,8 +22,7 @@ public struct TodayView: View {
     /// How far above the screen's bottom edge the app's tab bar reaches, which 打卡 stands on:
     /// measured while the bar shows and kept while it hides, so 打卡 stays put when the burst opens.
     @State private var barRoom = Self.barRoomBeforeMeasured
-    /// The day whose 今日赛况 was last opened on this phone (`LocalDay`'s description): its tag
-    /// shows a dot until then.
+    /// The day whose 今日赛况 was last opened on this phone (`LocalDay`'s description): its tag shows a dot until then.
     @AppStorage("today.recapSeen") private var recapSeen = ""
     /// The day whose 今日赛况 box score is open in the card's place: left open past the day's
     /// end, it doesn't reopen by itself the next evening.
@@ -56,8 +55,8 @@ public struct TodayView: View {
                     .transition(.opacity)
             }
 
-            if case .composing(let kind) = model.step {
-                ComposeView(model: model, kind: kind)
+            if case .composing = model.step, let compose = model.compose {
+                ComposeView(model: compose)
                     .accentTone(.brand)
                     .transition(reduceMotion ? .opacity : .move(edge: .trailing))
                     .zIndex(1)
@@ -71,11 +70,7 @@ public struct TodayView: View {
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.step)
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.home)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.payoff)
-        .sheet(isPresented: isPickingPhotos) {
-            PhotoStep(model: model)
-                .environment(\.sceneTheme, theme)
-                .accentTone(.brand)
-        }
+        .modifier(HomeNotices(model: model))
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
         // 拍一拍 landing: mine on a teammate, or a teammate's on me.
@@ -103,8 +98,9 @@ public struct TodayView: View {
             SquadSceneView(
                 cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
-                pats: model.pats, canPat: model.canPat, tapMate: model.tapMate, tapMe: model.tapMe,
-                patMate: model.patMate, arrival: model.arrival
+                pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
+                tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, coachSays: model.coachSays,
+                tapCoach: model.tapCoach
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -133,7 +129,7 @@ public struct TodayView: View {
             GeometryReader { proxy in
                 PatOverlay(
                     layer: .bubble, cast: model.cast, pats: model.pats, unit: proxy.size.width / StageLayout.width,
-                    canPat: model.canPat, pat: model.patMate)
+                    canPat: model.canPat, pat: model.patMate, openCard: { model.openTeammate($0) })
             }
             .ignoresSafeArea()
             .opacity(model.step == .disclaimer ? 0 : 1)
@@ -310,15 +306,6 @@ public struct TodayView: View {
                 meals: meals)
         }
     }
-
-    private var isPickingPhotos: Binding<Bool> {
-        Binding {
-            if case .pickingPhotos = model.step { true } else { false }
-        } set: { isPresented in
-            // Swiped down: the same as 取消.
-            if !isPresented, case .pickingPhotos = model.step { model.cancel() }
-        }
-    }
 }
 
 /// Moves a piece of the home out of place while the squad drops onto a newly picked scene, by
@@ -330,8 +317,7 @@ private struct Arriving: ViewModifier {
     let offset: (DropIn, Double) -> Double
 
     func body(content: Content) -> some View {
-        // One TimelineView either way, so the card and 打卡 keep their state as the drop
-        // starts and ends.
+        // One TimelineView either way, so the card and 打卡 keep their state as the drop starts and ends.
         let moving = arrival != nil && !reduceMotion
         TimelineView(.animation(minimumInterval: nil, paused: !moving)) { timeline in
             content.offset(y: moving ? arrival.map { offset($0.drop, $0.elapsed(at: timeline.date)) } ?? 0 : 0)
@@ -339,8 +325,7 @@ private struct Arriving: ViewModifier {
     }
 }
 
-/// My payoff over my character, front and centre: the 「+1」 of a 练了 and the line in the bubble
-/// on my head.
+/// My payoff over my character, front and centre: the 「+1」 of a 练了 and the line in the bubble on my head.
 private struct MyPayoff: View {
     let model: TodayModel
     let openPost: (CheckIn?) -> Void

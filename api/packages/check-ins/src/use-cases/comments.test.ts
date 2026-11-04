@@ -55,7 +55,7 @@ const checkIns = createCheckIns({
   reactions: createPostgresReactionStore(db),
   comments: createPostgresCommentStore(db),
   plans: createPostgresWeeklyPlanStore(db),
-  photos: { exists: () => Promise.resolve(true) },
+  photos: { exists: () => Promise.resolve(true), delete: () => Promise.resolve() },
   calendarOf: () => Promise.resolve(undefined),
   clock: () => now,
 });
@@ -122,6 +122,7 @@ describe('commenting on a check-in', () => {
         commentedAt: new Date('2026-10-18T20:05:00.000Z'),
       },
       created: true,
+      author: tracy,
     });
     now = new Date('2026-10-18T20:06:00.000Z');
     await checkIns.comment({

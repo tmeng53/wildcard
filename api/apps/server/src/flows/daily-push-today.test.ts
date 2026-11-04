@@ -78,7 +78,16 @@ const everyoneNamed = {
     squadmates: (members: readonly ProfileMember[]) =>
       Promise.resolve(
         new Map<ProfileMember, Squadmate>(
-          members.map((member) => [member, { catchphrase: null, character: { nickname, look } }]),
+          members.map((member) => [
+            member,
+            {
+              catchphrase: null,
+              character: { nickname, look },
+              jerseyNumber: null,
+              joinedAt: new Date(),
+              equippedTitle: null,
+            },
+          ]),
         ),
       ),
   },

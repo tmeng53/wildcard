@@ -32,6 +32,15 @@ public struct WeekSheet: Hashable, Sendable {
         self.fuel = fuel
     }
 
+    /// What the member trains at on day `index` (Monday 0): the sport of that day's 练了, else
+    /// `plan`'s (the board's while it changes); nil for a rest day or a day with neither.
+    public func activity(on index: Int, plan: [PlanDay]) -> Activity? {
+        guard marks.indices.contains(index) else { return nil }
+        if case .trained(let activity) = marks[index] { return activity }
+        guard plan.indices.contains(index), case .train(let activity?) = plan[index] else { return nil }
+        return activity
+    }
+
     /// The days the plan trains.
     public var plannedDays: Int { plan.count { $0 != .rest } }
 

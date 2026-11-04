@@ -9,9 +9,17 @@ public protocol MeService: Sendable {
     /// Saves the number the member picked for their player card.
     func save(jerseyNumber: JerseyNumber) async throws(MeError)
     func setDailyPush(_ isOn: Bool) async throws(MeError)
+    /// Wears one of the member's titles on their card (nil: the latest won again); answers the
+    /// board as it now stands.
+    func equip(_ title: String?) async throws(MeError) -> TitleBoard
     /// Deletes the account and everything that is the member's, for good. Signing out on this phone
     /// is the app's to do after.
     func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError)
+}
+
+/// How a squadmate's player card is read, for the sheet a teammate's name opens.
+public protocol SquadmateCards: Sendable {
+    func card(of member: MemberID, in squad: SquadID) async throws(MeError) -> PlayerCardFace
 }
 
 /// How the member confirmed deleting their account. Someone who signs in with Apple confirms

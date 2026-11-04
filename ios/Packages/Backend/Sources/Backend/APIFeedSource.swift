@@ -39,11 +39,11 @@ public struct APIFeedSource: FeedSource {
         }
     }
 
-    public func comment(_ text: CommentText, id: CommentID, replyingTo member: MemberID?, on checkIn: CheckInID)
+    public func comment(_ text: CommentText, id: CommentID, replyingTo target: ReplyTarget?, on checkIn: CheckInID)
         async throws(FeedError) -> Comment
     {
         do throws(APIError) {
-            return try await api.comment(text, id: id, replyingTo: member, on: checkIn)
+            return try await api.comment(text, id: id, replyingTo: target, on: checkIn)
         } catch {
             throw FeedError(error)
         }
@@ -118,5 +118,15 @@ extension FeedError {
             case .refused(.checkInNotFound): .postGone
             case .refused, .unreadableResponse: .refused
             }
+    }
+}
+
+extension APIFeedSource: CoachSource {
+    public func activity(in squad: SquadID, about checkIns: [CheckInID]) async throws(FeedError) -> CoachActivity {
+        do throws(APIError) {
+            return try await api.coachActivity(of: squad, about: checkIns)
+        } catch {
+            throw FeedError(error)
+        }
     }
 }

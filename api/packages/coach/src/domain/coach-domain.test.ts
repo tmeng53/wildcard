@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { editBody, FILE_LIMIT, shownBody, shownPaths, storedBody, storedPathOf } from './memory.js';
 import { taskOf } from './prompt.js';
+import { lineProblem } from './reply.js';
 import { SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
 import { costMicros, newYorkTime, wakesDue, weekStartOf, weeksAround } from './wake.js';
@@ -24,7 +25,7 @@ const week: SquadWeek = {
       minutes: 30,
       text: '腿废了',
       reactions: 2,
-      comments: [{ member: leo, text: '强' }],
+      comments: [{ id: 'k1', member: leo, text: '强', at: new Date('2026-10-27T12:30:00Z') }],
     },
     {
       id: 'c2',
@@ -170,6 +171,76 @@ describe('when the coach wakes', () => {
     expect(wakesDue({ squad, week, now: new Date('2026-11-01T10:59:00Z') })).toStrictEqual([]);
   });
 
+  it('wakes for replies to the coach of the last hour, even under an older check-in', () => {
+    const [c1, c2] = week.checkIns;
+    if (c1 === undefined || c2 === undefined) throw new Error('no check-ins');
+    const replied: SquadWeek = {
+      ...week,
+      checkIns: [
+        {
+          ...c1,
+          comments: [
+            ...c1.comments,
+            {
+              id: 'k2',
+              member: leo,
+              text: '教练你说谁',
+              at: new Date('2026-11-01T13:55:00Z'),
+              toCoach: 'xiaohun',
+            },
+            // A reply to a member, not the coach: nothing to wake for.
+            { id: 'k3', member: mia, text: '说你', at: new Date('2026-11-01T13:56:00Z') },
+          ],
+        },
+        c2,
+      ],
+    };
+    expect(wakesDue({ squad, week: replied, now: new Date('2026-11-01T14:00:00Z') })).toStrictEqual(
+      [
+        { squad, reason: { kind: 'checkIn', checkIn: 'c2' } },
+        { squad, reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' } },
+        { squad, reason: { kind: 'daily', day: '2026-11-01' } },
+      ],
+    );
+    // Two hours on, it is the coach job's no more: it was answered when written, or never.
+    expect(wakesDue({ squad, week: replied, now: new Date('2026-11-01T16:00:00Z') })).toStrictEqual(
+      [{ squad, reason: { kind: 'daily', day: '2026-11-01' } }],
+    );
+  });
+
+  it('gives a reply’s wake the talk under the check-in, the reply to answer marked', () => {
+    const task = taskOf({
+      reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' },
+      week,
+      files: new Map([['memory.md', undefined]]),
+      recentNotes: [],
+      thread: {
+        reply: '腿废了也算练',
+        said: [
+          { member: leo, text: '教练你也跑吗' },
+          { member: undefined, text: '我负责喊' },
+          { member: mia, text: '那你喊大声点', answering: true },
+        ],
+      },
+    });
+    expect(task).toBe(
+      [
+        '有人回复你。这条打卡：10-27 周二 队员1 练了 跑步 30 分钟 「腿废了」 · 2 个表情',
+        '你们在下面的对话：\n- 你：「腿废了也算练」\n- 队员2：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1：「那你喊大声点」（要回的这句）',
+        '你的文件：memory.md（空）。',
+      ].join('\n\n'),
+    );
+    // Without the talk, or once the check-in left the week, there is nothing to answer.
+    expect(
+      taskOf({
+        reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' },
+        week,
+        files: new Map(),
+        recentNotes: [],
+      }),
+    ).toBeUndefined();
+  });
+
   it('counts a wake’s cost at the settings’ prices, cached input at its own, rounded up', () => {
     const prices = {
       inputMicrosPerMillion: 100_000,
@@ -241,5 +312,17 @@ describe('when the coach wakes', () => {
         recentNotes: [{ day: '2026-10-31', text: '周末也要动一动' }],
       }),
     ).toContain('- 2026-10-31：周末也要动一动');
+  });
+});
+
+describe('a line members read', () => {
+  it('never names anyone as 队员N, however the number is written', () => {
+    const named = '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。';
+    expect(
+      ['队员1 加油', '队员 3 加油', '队员３加油'].map((line) => lineProblem(line, 100)),
+    ).toStrictEqual([named, named, named]);
+    expect(lineProblem('全体队员加油', 100)).toBeUndefined();
+    expect(lineProblem('跑跑跑', 2)).toBe('太长了：3 字，最多 2 字。');
+    expect(lineProblem('', 2)).toBe('这句是空的。');
   });
 });

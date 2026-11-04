@@ -1,4 +1,4 @@
-import { Kysely, PostgresDialect } from 'kysely';
+import { Kysely, PostgresDialect, sql } from 'kysely';
 import pg from 'pg';
 
 import type { Database, Tables } from '../ports.js';
@@ -31,4 +31,23 @@ export function createDatabase(
   // It stays silent: idle drops reach onIdleError through the pool, and would be logged twice.
   pool.on('connect', (client) => client.on('error', () => undefined));
   return new Kysely<Tables>({ dialect: new PostgresDialect({ pool }) });
+}
+
+/**
+ * Runs `work` so that its failure can't spoil the rest of `scope`: inside a transaction it gets a
+ * savepoint, which a failure rolls back to before throwing, so the transaction carries on (in
+ * Postgres a failed statement otherwise aborts the whole transaction). Outside one it just runs.
+ * https://www.postgresql.org/docs/current/sql-savepoint.html
+ */
+export async function onItsOwn<T>(scope: Database, work: () => Promise<T>): Promise<T> {
+  if (!scope.isTransaction) return work();
+  await sql`savepoint on_its_own`.execute(scope);
+  try {
+    const done = await work();
+    await sql`release savepoint on_its_own`.execute(scope);
+    return done;
+  } catch (error) {
+    await sql`rollback to savepoint on_its_own`.execute(scope);
+    throw error;
+  }
 }

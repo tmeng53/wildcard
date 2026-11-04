@@ -264,3 +264,69 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     #expect(stage.cheerers(people, at: .day) == [id(2), id(3), id(5)])
     #expect(stage.cheerers(people, at: .night) == [])
 }
+
+@Test func theCoachStandsOnTheFrontRowsLeftEdgeAsBigAsMe() {
+    #expect(StageLayout.coachScale == StageLayout.myScale)
+    for scene in [SceneTheme.gym, .pool, .track, .tennis, .climbing] {
+        let sideline = StageLayout.of(scene).sideline
+        // The front row's leftmost spot (43, 626), moved in just enough to draw the coach whole.
+        #expect(sideline?.y == 626)
+        #expect(sideline.map { abs($0.x - 48.8) < 0.001 } == true)
+        #expect(sideline.map { StageLayout.fitsOnScreen($0, scale: StageLayout.coachScale) } == true)
+    }
+}
+
+@Test func teammatesLeaveTheSidelineToTheCoach() {
+    let squad = (1...7).map { member($0, .notYet) }
+    var stage = SquadStage(layout: .of(.gym))
+    stage.arrange(squad, coach: true)
+    let spots = floorSpots(stage)
+    #expect(spots.count == 7)
+    #expect(!spots.contains(StagePoint(x: 43, y: 626)))
+    // Without a coach, a squad this big uses it.
+    stage = SquadStage(layout: .of(.gym))
+    stage.arrange(squad)
+    #expect(stage.placements.values.contains(.floor(StagePoint(x: 43, y: 626))))
+}
+
+@Test func nobodyStandsUnderTheCoachsBubbleOrBehindItWhileThereIsRoom() {
+    let layout = StageLayout.of(.gym)
+    // Just behind the coach, where its 战术板 bubble hid a teammate (beta feedback).
+    #expect(layout.coachCovers(StagePoint(x: 80, y: 549)))
+    #expect(!layout.coachCovers(StagePoint(x: 300, y: 549)))
+    for scene in [SceneTheme.gym, .pool, .track, .tennis, .climbing] {
+        var stage = SquadStage(layout: .of(scene))
+        stage.arrange((1...4).map { member($0, .notYet) }, coach: true)
+        let spots = floorSpots(stage)
+        #expect(spots.count == 4)
+        #expect(!spots.contains { StageLayout.of(scene).coachCovers($0) }, "\(scene): \(spots)")
+    }
+}
+
+@Test func aBigSquadStillAllStandsOnTheSceneWithACoach() {
+    for scene in [SceneTheme.gym, .pool, .track, .tennis, .climbing] {
+        var stage = SquadStage(layout: .of(scene))
+        stage.arrange((1...7).map { member($0, .notYet) }, coach: true)
+        #expect(stage.placements.count == 7, "\(scene)")
+    }
+}
+
+private func floorSpots(_ stage: SquadStage) -> [StagePoint] {
+    stage.placements.values.compactMap { placement -> StagePoint? in
+        if case .floor(let spot) = placement { spot } else { nil }
+    }
+}
+
+@Test func someoneEatingTheirLatestPostEatsOnTheFloorAndSleepsAtNight() {
+    var stage = SquadStage(layout: .of(.track))
+    let ranThenAte = StageMember(
+        id: id(1), status: .trained(.sport("run")), firstCheckInAt: at(1), keepsToTheBack: false, eating: .healthyMeal)
+    let ate = StageMember(id: id(2), status: .notYet, firstCheckInAt: at(2), keepsToTheBack: false, eating: .cheatMeal)
+    stage.arrange([ranThenAte, ate])
+    // Off the track: eating, not running.
+    #expect(stage.placements[id(1)].map { if case .floor = $0 { true } else { false } } == true)
+    #expect(stage.pose(of: ranThenAte, at: .day) == .eating(.healthyMeal))
+    #expect(stage.pose(of: ate, at: .day) == .eating(.cheatMeal))
+    #expect(stage.pose(of: ate, at: .night) == .asleep)
+    #expect(stage.cheerers([ranThenAte, ate], at: .day) == [id(1), id(2)])
+}

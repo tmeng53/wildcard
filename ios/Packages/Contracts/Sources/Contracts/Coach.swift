@@ -71,3 +71,83 @@ public struct SquadCoach: Hashable, Sendable {
         self.canHire = canHire
     }
 }
+
+/// The coach as members see it speak: its name, beside the 教练 tag, and its character.
+public struct CoachSpeaker: Hashable, Sendable {
+    public let id: CoachID
+    public let name: String
+
+    public init(id: CoachID, name: String) {
+        self.id = id
+        self.name = name
+    }
+}
+
+/// The squad's 战术板 line: what its coach says to everyone once a day.
+public struct CoachNote: Hashable, Sendable {
+    /// The day it is for, New York's, as every coach's day is.
+    public let day: LocalDay
+    public let text: String
+    public let coach: CoachSpeaker
+    public let writtenAt: Date
+
+    public init(day: LocalDay, text: String, coach: CoachSpeaker, writtenAt: Date) {
+        (self.day, self.text, self.coach, self.writtenAt) = (day, text, coach, writtenAt)
+    }
+
+    /// Coaches keep New York's day.
+    public static let timeZone = TimeZone(identifier: "America/New_York") ?? .gmt
+
+    /// Whether it is still the line's day at `moment`, so the home shows it.
+    public func isCurrent(at moment: Date) -> Bool {
+        LocalDay(at: moment, in: Self.timeZone) == day
+    }
+}
+
+/// What the coach said under one check-in: a line among its comments, an emoji first among its
+/// reactions, or both, each with the 教练 tag. It stays after the squad fires the coach.
+public struct CoachReply: Hashable, Sendable {
+    public let checkIn: CheckInID
+    public let coach: CoachSpeaker
+    /// Nil when it only reacted.
+    public let text: String?
+    /// Nil when it only spoke. Not one of the post's reactions.
+    public let emoji: Emoji?
+    public let writtenAt: Date
+
+    public init(checkIn: CheckInID, coach: CoachSpeaker, text: String?, emoji: Emoji?, writtenAt: Date) {
+        (self.checkIn, self.coach, self.text, self.emoji, self.writtenAt) = (checkIn, coach, text, emoji, writtenAt)
+    }
+}
+
+/// What the coach answered a member's reply to it (回复 毛头：…): a line shown right after that
+/// reply, as a reply to its writer.
+public struct CoachAnswer: Hashable, Sendable, Identifiable {
+    public let checkIn: CheckInID
+    /// The reply it answers.
+    public let comment: CommentID
+    public let coach: CoachSpeaker
+    public let text: String
+    public let writtenAt: Date
+
+    public var id: CommentID { comment }
+
+    public init(checkIn: CheckInID, comment: CommentID, coach: CoachSpeaker, text: String, writtenAt: Date) {
+        (self.checkIn, self.comment, self.coach, self.text, self.writtenAt) = (checkIn, comment, coach, text, writtenAt)
+    }
+}
+
+/// What the squad's coach said: its newest 战术板 line, its replies to the check-ins asked
+/// about, and its answers to members' replies to it there.
+public struct CoachActivity: Hashable, Sendable {
+    public let note: CoachNote?
+    public let replies: [CoachReply]
+    /// Oldest first.
+    public let answers: [CoachAnswer]
+
+    public init(note: CoachNote?, replies: [CoachReply], answers: [CoachAnswer] = []) {
+        self.note = note
+        self.replies = replies
+        self.answers = answers
+    }
+}

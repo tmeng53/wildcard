@@ -7,7 +7,8 @@ extension FeedPost {
     public func latestNews(for viewer: MemberID) -> Timestamp? {
         var moments: [Timestamp] = []
         if author != viewer { moments.append(checkIn.createdAt) }
-        for comment in comments where comment.member != viewer && (author == viewer || comment.replyTo == viewer) {
+        for comment in comments where comment.member != viewer && (author == viewer || comment.replyToMember == viewer)
+        {
             moments.append(comment.commentedAt)
         }
         if author == viewer {

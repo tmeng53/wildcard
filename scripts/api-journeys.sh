@@ -763,7 +763,16 @@ if want coach; then
   expect 200
   [ "$(jq -c . <<<"$body")" = '{"version":1,"coaching":false,"squads":0,"queued":0,"done":0,"failed":0}' ] ||
     fail "without an OpenAI key the coach run does nothing: $body"
-  echo "coach: a member's token refused (401); without an OpenAI key the scheduler's run woke no coach"
+  # What the coach said, as 今天 and 动态 read it: nothing yet, for a squad's member only.
+  squad_of "$coach_member_token"
+  call GET "/squads/$squad/coach/activity?checkIns=$(new_id)" "$coach_member_token"
+  expect 200
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"note":null,"replies":[],"answers":[]}' ] ||
+    fail "a squad whose coach said nothing reads as empty: $body"
+  read -r _ outsider_token <<<"$(sign_up)"
+  call GET "/squads/$squad/coach/activity" "$outsider_token"
+  expect 403 SQUAD_NOT_JOINED
+  echo "coach: a member's token refused (401); without an OpenAI key the scheduler's run woke no coach; the squad's coach activity reads empty for its member and 403 for anyone else"
 fi
 
 if want account; then

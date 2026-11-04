@@ -25,6 +25,8 @@ import {
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedCoachHiring,
+  unusedCoachActivity,
+  ignoredNotices,
 } from './test-kit/weekly-awards.js';
 
 describe('openapi.json', () => {
@@ -35,6 +37,7 @@ describe('openapi.json', () => {
       exists: () => Promise.reject(new Error('unused')),
       createViewUrls: () => Promise.reject(new Error('unused')),
       deleteAllOf: () => Promise.reject(new Error('unused')),
+      delete: () => Promise.reject(new Error('unused')),
     };
     const app = createApp({
       db,
@@ -83,6 +86,8 @@ describe('openapi.json', () => {
       unlocks: unusedUnlocks,
       weekSummaryWords: unusedWeekSummaryWords,
       coachHiring: unusedCoachHiring,
+      coachActivity: unusedCoachActivity,
+      ...ignoredNotices,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),
       log: createLog(() => undefined),

@@ -25,6 +25,7 @@
     "@wildcard/errors": "workspace:*",
     "@wildcard/members": "workspace:*",
     "@wildcard/memes": "workspace:*",
+    "@wildcard/notices": "workspace:*",
     "@wildcard/nudges": "workspace:*",
     "@wildcard/push": "workspace:*",
     "@wildcard/sport-ids": "workspace:*",

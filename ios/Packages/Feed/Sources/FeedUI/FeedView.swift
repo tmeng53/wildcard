@@ -23,6 +23,8 @@ public struct FeedView: View {
     private let checkIn: () -> Void
     /// What the app shows under the title, before the posts: the squad's latest 战报.
     private let header: AnyView?
+    /// What the app shows at the title's right: the bell (通知).
+    private let accessory: AnyView?
 
     /// The feed's coordinate space: where the emoji bar is, where a finger slides and where emoji
     /// fly.
@@ -30,9 +32,10 @@ public struct FeedView: View {
     /// How long a post opened from the home stays held at the top.
     static let pinFor = Duration.seconds(2)
 
-    public init(model: FeedModel, header: AnyView? = nil, checkIn: @escaping () -> Void) {
+    public init(model: FeedModel, header: AnyView? = nil, accessory: AnyView? = nil, checkIn: @escaping () -> Void) {
         _model = State(initialValue: model)
         self.header = header
+        self.accessory = accessory
         self.checkIn = checkIn
     }
 
@@ -55,12 +58,16 @@ public struct FeedView: View {
         ScrollViewReader { scroller in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Space.m) {
-                    Text("动态", bundle: .module)
-                        .typeStyle(TypeRamp.largeTitle)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .accessibilityAddTraits(.isHeader)
-                        .accessibilityIdentifier("feed.title")
-                        .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                    HStack(alignment: .center, spacing: Space.s) {
+                        Text("动态", bundle: .module)
+                            .typeStyle(TypeRamp.largeTitle)
+                            .foregroundStyle(Color(role: .fgDefault, in: theme))
+                            .accessibilityAddTraits(.isHeader)
+                            .accessibilityIdentifier("feed.title")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        accessory
+                    }
+                    .blur(radius: model.lifted ? Scrim.blurRadius : 0)
                     header
                     content
                 }
@@ -102,9 +109,10 @@ public struct FeedView: View {
             }
         }
         .feedSurface(model, isActive: model.opened == nil)
-        // Opened before any post was read: the character jogs in place until the list arrives.
+        .managesPosts(model, isActive: model.opened == nil)
+        // Opened before any post was read: the tickets rock until the list arrives.
         .loadingCover(model.store.phase == .loading && model.store.sections.isEmpty) {
-            LoadingCharacter()
+            TicketSpinner(on: .light(.bgCanvas))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(role: .bgCanvas, in: theme))
         }
@@ -122,8 +130,20 @@ public struct FeedView: View {
                 EmptyFeed(model: model, checkIn: checkIn)
             }
         } else {
+            // 战术板 tops today, even before anyone posted today (a squad that never posted
+            // shows its empty scene instead). Its day is New York's, as on the home's sideline.
+            if let note = model.coachNote, sections.first?.heading != .today {
+                SectionLabel(DayHeading.today.title)
+                    .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                CoachBoard(model: model, note: note)
+                    .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+            }
             ForEach(sections) { section in
                 Section {
+                    if section.heading == .today, let note = model.coachNote {
+                        CoachBoard(model: model, note: note)
+                            .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                    }
                     ForEach(section.posts) { post in
                         PostCard(model: model, post: post)
                             .id(post.id)
@@ -143,7 +163,7 @@ public struct FeedView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: Space.xxl)
-                .task(id: sections.last?.id) { await model.store.loadEarlier() }
+                .task(id: sections.last?.id) { await model.loadEarlier() }
             }
         }
     }

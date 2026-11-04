@@ -1,7 +1,14 @@
-import { earned, type MemberId, type Unlock, type UnlockRule } from '../domain/unlocks.js';
+import {
+  earned,
+  toGo,
+  type Locked,
+  type MemberId,
+  type Unlock,
+  type UnlockRule,
+} from '../domain/unlocks.js';
 import type { UnlockGift, UnlockRuleEdit } from '../domain/unlocks.js';
 import { UnlockItemMissingError, UnlockSportNotListedError } from '../errors.js';
-import type { SportListed, TrainedSince, UnlockStore } from '../ports.js';
+import type { SportListed, TrainedSince, UnlockStore, Unlocked } from '../ports.js';
 
 /** What members unlock by training. */
 export interface Unlocks {
@@ -10,6 +17,8 @@ export interface Unlocks {
    * read is kept first, so an unlock never goes back, even when its check-in is deleted.
    */
   of(member: MemberId): Promise<Unlock[]>;
+  /** What `member` unlocked, as `of` keeps it, and how far they are from everything else. */
+  standing(member: MemberId): Promise<{ unlocks: Unlock[]; locked: Locked[] }>;
 }
 
 /** The rules, for admins. */
@@ -18,7 +27,7 @@ export interface UnlocksAdmin {
   /** Adds or changes a rule and answers with every rule now. */
   putRule(edit: UnlockRuleEdit): Promise<UnlockRule[]>;
   /**
-   * Gives `gift.member` the stores and props it names (every one with a rule when it names none)
+   * Gives `gift.member` the stores, props and pieces it names (every one with a rule when it names none)
    * from `admin`, now; what they already hold stays as it was. Answers with all they hold.
    */
   give(gift: UnlockGift, admin: MemberId): Promise<Unlock[]>;
@@ -28,20 +37,29 @@ export function createUnlocks(deps: {
   readonly store: UnlockStore;
   readonly trainedSince: TrainedSince;
   readonly sportListed: SportListed;
+  /** Told what each grant kept new; left out where nobody needs telling. */
+  readonly unlocked?: Unlocked;
 }): Unlocks & UnlocksAdmin {
+  const grant = async (member: MemberId, unlocks: readonly Unlock[]) => {
+    const kept = await deps.store.grant(member, unlocks);
+    if (kept.length > 0) await deps.unlocked?.(member, kept);
+  };
+  const standing = async (member: MemberId) => {
+    const [rules, has] = await Promise.all([deps.store.rules(), deps.store.unlocksOf(member)]);
+    const held = new Set(has.map(({ kind, id }) => `${kind}:${id}`));
+    const open = rules.filter(({ kind, id }) => !held.has(`${kind}:${id}`));
+    if (open.length === 0) return { unlocks: has, locked: [] };
+    const since = new Date(Math.min(...open.map(({ countsFrom }) => countsFrom.getTime())));
+    const trained = await deps.trainedSince({ member, since });
+    const fresh = earned({ rules: open, trained, has });
+    const locked = toGo({ rules: open, trained });
+    if (fresh.length === 0) return { unlocks: has, locked };
+    await grant(member, fresh);
+    return { unlocks: await deps.store.unlocksOf(member), locked };
+  };
   return {
-    async of(member) {
-      const [rules, has] = await Promise.all([deps.store.rules(), deps.store.unlocksOf(member)]);
-      const held = new Set(has.map(({ kind, id }) => `${kind}:${id}`));
-      const open = rules.filter(({ kind, id }) => !held.has(`${kind}:${id}`));
-      if (open.length === 0) return has;
-      const since = new Date(Math.min(...open.map(({ countsFrom }) => countsFrom.getTime())));
-      const trained = await deps.trainedSince({ member, since });
-      const fresh = earned({ rules: open, trained, has });
-      if (fresh.length === 0) return has;
-      await deps.store.grant(member, fresh);
-      return deps.store.unlocksOf(member);
-    },
+    of: async (member) => (await standing(member)).unlocks,
+    standing,
 
     rules: () => deps.store.rules(),
 
@@ -64,7 +82,7 @@ export function createUnlocks(deps: {
       const given =
         items === undefined ? rules : rules.filter(({ kind, id }) => named.has(`${kind}:${id}`));
       const unlockedAt = new Date();
-      await deps.store.grant(
+      await grant(
         member,
         given.map(({ kind, id, sports, after }) => ({
           kind,

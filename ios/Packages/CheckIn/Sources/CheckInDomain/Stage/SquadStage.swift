@@ -8,12 +8,18 @@ public struct StageMember: Hashable, Sendable {
     public let firstCheckInAt: Timestamp?
     /// 社恐 takes the free spot furthest back.
     public let keepsToTheBack: Bool
+    /// What they are eating, when their latest post today is a meal: they eat it on their spot,
+    /// off the equipment, even after a 练了.
+    public let eating: MealKind?
 
-    public init(id: MemberID, status: StageStatus, firstCheckInAt: Timestamp?, keepsToTheBack: Bool) {
+    public init(
+        id: MemberID, status: StageStatus, firstCheckInAt: Timestamp?, keepsToTheBack: Bool, eating: MealKind? = nil
+    ) {
         self.id = id
         self.status = status
         self.firstCheckInAt = firstCheckInAt
         self.keepsToTheBack = keepsToTheBack
+        self.eating = eating
     }
 }
 
@@ -44,24 +50,32 @@ public struct SquadStage: Hashable, Sendable {
     ///    the court included but off any lane someone is running: on their old spot if it is
     ///    still free, else (earliest check-ins first, those not checked in after) on the free
     ///    spot that keeps everyone well apart; 社恐 take the free spot furthest back.
-    public mutating func arrange(_ teammates: [StageMember]) {
+    ///
+    /// With `coach`, nobody stands on the sideline, the coach's, and while there is room
+    /// elsewhere nobody stands where the coach or its 战术板 bubble would hide them.
+    public mutating func arrange(_ teammates: [StageMember], coach: Bool = false) {
         let ordered = Self.byCheckIn(teammates)
         var next = stations(for: ordered)
         let running = runningLanes(next)
-        let open = layout.floor.filter { spot in !running.contains { $0.blocks(spot) } }
+        let sideline = coach ? layout.sideline : nil
+        let open = layout.floor.filter { spot in
+            !running.contains { $0.blocks(spot) } && sideline.map { !StageLayout.crowds($0, spot) } != false
+        }
+        let clear = coach ? open.filter { !layout.coachCovers($0) } : open
         var taken: [StagePoint] = []
         // A spot is free while nobody stands on it or close enough to be drawn over them.
         func isFree(_ spot: StagePoint) -> Bool { !taken.contains { StageLayout.crowds($0, spot) } }
         // Old spots are kept first, so nobody is pushed off theirs by someone newer.
         for member in ordered where next[member.id] == nil {
-            if case .floor(let spot)? = placements[member.id], open.contains(spot), isFree(spot) {
+            if case .floor(let spot)? = placements[member.id], clear.contains(spot), isFree(spot) {
                 taken.append(spot)
                 next[member.id] = .floor(spot)
             }
         }
         for member in ordered where next[member.id] == nil {
-            let free = open.filter(isFree)
-            let spot = member.keepsToTheBack ? Self.furthestBack(free) : Self.apart(free, from: taken)
+            let free = clear.filter(isFree)
+            let spots = free.isEmpty ? open.filter(isFree) : free
+            let spot = member.keepsToTheBack ? Self.furthestBack(spots) : Self.apart(spots, from: taken)
             guard let spot else { continue }
             taken.append(spot)
             next[member.id] = .floor(spot)
@@ -126,7 +140,8 @@ public struct SquadStage: Hashable, Sendable {
     }
 
     private func sport(of member: StageMember) -> Sport? {
-        if case .trained(.sport(let sport)?) = member.status { sport } else { nil }
+        guard member.eating == nil else { return nil }
+        return if case .trained(.sport(let sport)?) = member.status { sport } else { nil }
     }
 
     private func uses(_ sport: Sport, _ kind: StationKind) -> Bool {

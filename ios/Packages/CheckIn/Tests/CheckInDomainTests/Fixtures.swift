@@ -82,8 +82,23 @@ actor ScriptedBackend: CheckInBackend {
 
     func savedHome() async -> Home? { saved }
 
+    /// Whether the phone is in another zone than the profile; `followPhoneZone` clears it.
+    var phoneZoneMoved = false
+    /// How many posts had reached the server each time the zone was followed.
+    private(set) var savesWhenZoneFollowed: [Int] = []
+    private(set) var homeLoads = 0
+    func set(phoneZoneMoved moved: Bool) { phoneZoneMoved = moved }
+
+    func followPhoneZone() async throws(CheckInError) -> Bool {
+        if let failure { throw failure }
+        savesWhenZoneFollowed.append(saves.count)
+        defer { phoneZoneMoved = false }
+        return phoneZoneMoved
+    }
+
     func home() async throws(CheckInError) -> Home? {
         if let failure { throw failure }
+        homeLoads += 1
         saved = server
         return server
     }
@@ -109,6 +124,25 @@ actor ScriptedBackend: CheckInBackend {
             server = home
         }
         return checkIn
+    }
+
+    private(set) var edits: [CheckIn] = []
+    private(set) var deletes: [CheckInID] = []
+
+    func edit(_ checkIn: CheckIn) async throws(CheckInError) -> CheckIn {
+        if let failure { throw failure }
+        edits.append(checkIn)
+        if var home = server, let index = home.checkIns.firstIndex(where: { $0.id == checkIn.id }) {
+            home.checkIns[index] = checkIn
+            server = home
+        }
+        return checkIn
+    }
+
+    func delete(_ checkIn: CheckInID) async throws(CheckInError) {
+        if let failure { throw failure }
+        deletes.append(checkIn)
+        server?.checkIns.removeAll { $0.id == checkIn }
     }
 
     func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction] {
@@ -140,6 +174,14 @@ actor ScriptedBackend: CheckInBackend {
         pats.append(member)
         serverPokes.sent.insert(member)
     }
+
+    var serverCoach: SidelineCoach?
+    func set(coach: SidelineCoach?) { serverCoach = coach }
+
+    func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? {
+        if let failure { throw failure }
+        return serverCoach
+    }
 }
 
 actor MemoryOutbox: Outbox {
@@ -159,10 +201,12 @@ final class Counter: @unchecked Sendable {  // Only the main actor's store calls
 }
 
 @MainActor
-func store(_ backend: ScriptedBackend, outbox: MemoryOutbox = MemoryOutbox(), now: Date = tuesdayMorning) -> TodayStore
-{
+func store(
+    _ backend: ScriptedBackend, outbox: MemoryOutbox = MemoryOutbox(), unlocks: ScriptedLedger? = nil,
+    now: Date = tuesdayMorning
+) -> TodayStore {
     let counter = Counter()
-    return TodayStore(backend: backend, outbox: outbox, now: { now }, newID: { counter() })
+    return TodayStore(backend: backend, outbox: outbox, unlocks: unlocks, now: { now }, newID: { counter() })
 }
 
 func photo(_ number: Int) -> PreparedPhoto {
