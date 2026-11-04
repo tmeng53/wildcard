@@ -15,6 +15,142 @@
       }
     },
     "schemas": {
+      "LiveReady": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false,
+        "description": "The `ready` event’s data."
+      },
+      "LiveNotice": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "notice": {
+            "$ref": "#/components/schemas/NoticeEntry"
+          }
+        },
+        "required": [
+          "version",
+          "notice"
+        ],
+        "additionalProperties": false,
+        "description": "The `notice` event’s data."
+      },
+      "NoticeEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The order notices were told in: a later one is larger."
+          },
+          "kind": {
+            "type": "string",
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know."
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was told, in UTC."
+          },
+          "squadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The squad it is about, if any."
+          },
+          "alert": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "The String Catalog key the push used."
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Its placeholders’ values, in order."
+              }
+            },
+            "required": [
+              "key",
+              "args"
+            ],
+            "additionalProperties": false,
+            "description": "A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`)."
+          },
+          "weekStart": {
+            "type": "string",
+            "format": "date",
+            "description": "The Monday of the week whose 战报 is in (`weeklyAwards`)."
+          },
+          "scene": {
+            "type": "string",
+            "description": "The scene moved to (`sceneMoved`)."
+          },
+          "by": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who moved it (`sceneMoved`); left out once they deleted their account."
+          },
+          "byName": {
+            "type": "string",
+            "description": "Their nickname now (`sceneMoved`), when they have one."
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`)."
+          },
+          "coach": {
+            "type": "string",
+            "description": "The coach who answered (`coachReply`)."
+          },
+          "coachName": {
+            "type": "string",
+            "description": "Its name now (`coachReply`)."
+          },
+          "replied": {
+            "type": "boolean",
+            "description": "Whether the coach wrote a line (`coachReply`); else only its emoji."
+          },
+          "emoji": {
+            "type": "string",
+            "description": "The coach’s emoji (`coachReply`), if any."
+          },
+          "unlockKind": {
+            "type": "string",
+            "description": "What opened (`unlocked`): `store`, `prop` or `piece`. Skip another."
+          },
+          "item": {
+            "type": "string",
+            "description": "The store’s, prop’s or piece’s id (`unlocked`)."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "at"
+        ],
+        "additionalProperties": false,
+        "description": "As `GET /me/notices` lists it."
+      },
       "Health": {
         "type": "object",
         "properties": {
@@ -3075,105 +3211,6 @@
         ],
         "additionalProperties": false
       },
-      "NoticeEntry": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "description": "The order notices were told in: a later one is larger."
-          },
-          "kind": {
-            "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know."
-          },
-          "at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When it was told, in UTC."
-          },
-          "squadId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The squad it is about, if any."
-          },
-          "alert": {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string",
-                "description": "The String Catalog key the push used."
-              },
-              "args": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "description": "Its placeholders’ values, in order."
-              }
-            },
-            "required": [
-              "key",
-              "args"
-            ],
-            "additionalProperties": false,
-            "description": "A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`)."
-          },
-          "weekStart": {
-            "type": "string",
-            "format": "date",
-            "description": "The Monday of the week whose 战报 is in (`weeklyAwards`)."
-          },
-          "scene": {
-            "type": "string",
-            "description": "The scene moved to (`sceneMoved`)."
-          },
-          "by": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Who moved it (`sceneMoved`); left out once they deleted their account."
-          },
-          "byName": {
-            "type": "string",
-            "description": "Their nickname now (`sceneMoved`), when they have one."
-          },
-          "checkIn": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`)."
-          },
-          "coach": {
-            "type": "string",
-            "description": "The coach who answered (`coachReply`)."
-          },
-          "coachName": {
-            "type": "string",
-            "description": "Its name now (`coachReply`)."
-          },
-          "replied": {
-            "type": "boolean",
-            "description": "Whether the coach wrote a line (`coachReply`); else only its emoji."
-          },
-          "emoji": {
-            "type": "string",
-            "description": "The coach’s emoji (`coachReply`), if any."
-          },
-          "unlockKind": {
-            "type": "string",
-            "description": "What opened (`unlocked`): `store` or `prop`. Skip another."
-          },
-          "item": {
-            "type": "string",
-            "description": "The store’s or prop’s id (`unlocked`)."
-          }
-        },
-        "required": [
-          "id",
-          "kind",
-          "at"
-        ],
-        "additionalProperties": false
-      },
       "NoticesSeen": {
         "type": "object",
         "properties": {
@@ -4570,11 +4607,27 @@
               "$ref": "#/components/schemas/Unlock"
             },
             "description": "Every store and prop the member unlocked, the earliest first."
+          },
+          "pieces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PieceUnlock"
+            },
+            "description": "Every clothing piece the member unlocked, the earliest first. A piece with a rule stays locked in its store, even an open one, until then."
+          },
+          "lockedPieces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LockedPiece"
+            },
+            "description": "Every piece with a rule the member hasn’t unlocked yet, and how far it is."
           }
         },
         "required": [
           "version",
-          "unlocks"
+          "unlocks",
+          "pieces",
+          "lockedPieces"
         ],
         "additionalProperties": false
       },
@@ -4640,6 +4693,57 @@
         "required": [
           "sports",
           "checkIns"
+        ],
+        "additionalProperties": false
+      },
+      "PieceUnlock": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "lap-bib"
+          },
+          "unlockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the member made the check-in that unlocked it.",
+            "example": "2026-11-03T18:30:00.000Z"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/UnlockReason"
+          }
+        },
+        "required": [
+          "id",
+          "unlockedAt",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "LockedPiece": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "lap-singlet"
+          },
+          "checkInsToGo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "How many more 练了 check-ins in its sports open it.",
+            "example": 2
+          }
+        },
+        "required": [
+          "id",
+          "checkInsToGo"
         ],
         "additionalProperties": false
       }
@@ -8301,6 +8405,51 @@
         }
       }
     },
+    "/me/events": {
+      "get": {
+        "operationId": "streamMyEvents",
+        "summary": "The caller’s live events (Server-Sent Events)",
+        "description": "A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The stream of events",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Server-Sent Events, as described above."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now, or live events can’t be heard (`LIVE_EVENTS_UNAVAILABLE`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/squads/{squadId}/weeks/{weekStart}/summary": {
       "get": {
         "operationId": "getSquadWeekSummary",
@@ -9276,8 +9425,8 @@
     "/me/unlocks": {
       "get": {
         "operationId": "getMyUnlocks",
-        "summary": "The stores and props the signed-in member unlocked",
-        "description": "Stores on the character editor’s 商店街 and props open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler and the dumbbell) are everyone’s and never listed. An unlock is never taken back.",
+        "summary": "The stores, props and pieces the signed-in member unlocked",
+        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.",
         "security": [
           {
             "bearer": []

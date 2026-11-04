@@ -7,6 +7,226 @@ public import struct Foundation.Date
 extension Components {
     /// Types generated from the `#/components/schemas` section of the OpenAPI document.
     public enum Schemas {
+        /// The `ready` event’s data.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LiveReady`.
+        public struct LiveReady: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/LiveReady/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/LiveReady/version`.
+            public var version: Components.Schemas.LiveReady.VersionPayload
+            /// Creates a new `LiveReady`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            public init(version: Components.Schemas.LiveReady.VersionPayload) {
+                self.version = version
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+            }
+        }
+        /// The `notice` event’s data.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LiveNotice`.
+        public struct LiveNotice: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/LiveNotice/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/LiveNotice/version`.
+            public var version: Components.Schemas.LiveNotice.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/LiveNotice/notice`.
+            public var notice: Components.Schemas.NoticeEntry
+            /// Creates a new `LiveNotice`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - notice:
+            public init(
+                version: Components.Schemas.LiveNotice.VersionPayload,
+                notice: Components.Schemas.NoticeEntry
+            ) {
+                self.version = version
+                self.notice = notice
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case notice
+            }
+        }
+        /// As `GET /me/notices` lists it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/NoticeEntry`.
+        public struct NoticeEntry: Codable, Hashable, Sendable {
+            /// The order notices were told in: a later one is larger.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
+            public var id: Swift.Int
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
+            public var kind: Swift.String
+            /// When it was told, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/at`.
+            public var at: Foundation.Date
+            /// The squad it is about, if any.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/squadId`.
+            public var squadId: Swift.String?
+            /// A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert`.
+            public struct AlertPayload: Codable, Hashable, Sendable {
+                /// The String Catalog key the push used.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert/key`.
+                public var key: Swift.String
+                /// Its placeholders’ values, in order.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert/args`.
+                public var args: [Swift.String]
+                /// Creates a new `AlertPayload`.
+                ///
+                /// - Parameters:
+                ///   - key: The String Catalog key the push used.
+                ///   - args: Its placeholders’ values, in order.
+                public init(
+                    key: Swift.String,
+                    args: [Swift.String]
+                ) {
+                    self.key = key
+                    self.args = args
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case key
+                    case args
+                }
+            }
+            /// A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert`.
+            public var alert: Components.Schemas.NoticeEntry.AlertPayload?
+            /// The Monday of the week whose 战报 is in (`weeklyAwards`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/weekStart`.
+            public var weekStart: Swift.String?
+            /// The scene moved to (`sceneMoved`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/scene`.
+            public var scene: Swift.String?
+            /// Who moved it (`sceneMoved`); left out once they deleted their account.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/by`.
+            public var by: Swift.String?
+            /// Their nickname now (`sceneMoved`), when they have one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/byName`.
+            public var byName: Swift.String?
+            /// The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/checkIn`.
+            public var checkIn: Swift.String?
+            /// The coach who answered (`coachReply`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/coach`.
+            public var coach: Swift.String?
+            /// Its name now (`coachReply`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/coachName`.
+            public var coachName: Swift.String?
+            /// Whether the coach wrote a line (`coachReply`); else only its emoji.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/replied`.
+            public var replied: Swift.Bool?
+            /// The coach’s emoji (`coachReply`), if any.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/emoji`.
+            public var emoji: Swift.String?
+            /// What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/unlockKind`.
+            public var unlockKind: Swift.String?
+            /// The store’s, prop’s or piece’s id (`unlocked`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/item`.
+            public var item: Swift.String?
+            /// Creates a new `NoticeEntry`.
+            ///
+            /// - Parameters:
+            ///   - id: The order notices were told in: a later one is larger.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
+            ///   - at: When it was told, in UTC.
+            ///   - squadId: The squad it is about, if any.
+            ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
+            ///   - weekStart: The Monday of the week whose 战报 is in (`weeklyAwards`).
+            ///   - scene: The scene moved to (`sceneMoved`).
+            ///   - by: Who moved it (`sceneMoved`); left out once they deleted their account.
+            ///   - byName: Their nickname now (`sceneMoved`), when they have one.
+            ///   - checkIn: The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`).
+            ///   - coach: The coach who answered (`coachReply`).
+            ///   - coachName: Its name now (`coachReply`).
+            ///   - replied: Whether the coach wrote a line (`coachReply`); else only its emoji.
+            ///   - emoji: The coach’s emoji (`coachReply`), if any.
+            ///   - unlockKind: What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.
+            ///   - item: The store’s, prop’s or piece’s id (`unlocked`).
+            public init(
+                id: Swift.Int,
+                kind: Swift.String,
+                at: Foundation.Date,
+                squadId: Swift.String? = nil,
+                alert: Components.Schemas.NoticeEntry.AlertPayload? = nil,
+                weekStart: Swift.String? = nil,
+                scene: Swift.String? = nil,
+                by: Swift.String? = nil,
+                byName: Swift.String? = nil,
+                checkIn: Swift.String? = nil,
+                coach: Swift.String? = nil,
+                coachName: Swift.String? = nil,
+                replied: Swift.Bool? = nil,
+                emoji: Swift.String? = nil,
+                unlockKind: Swift.String? = nil,
+                item: Swift.String? = nil
+            ) {
+                self.id = id
+                self.kind = kind
+                self.at = at
+                self.squadId = squadId
+                self.alert = alert
+                self.weekStart = weekStart
+                self.scene = scene
+                self.by = by
+                self.byName = byName
+                self.checkIn = checkIn
+                self.coach = coach
+                self.coachName = coachName
+                self.replied = replied
+                self.emoji = emoji
+                self.unlockKind = unlockKind
+                self.item = item
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case kind
+                case at
+                case squadId
+                case alert
+                case weekStart
+                case scene
+                case by
+                case byName
+                case checkIn
+                case coach
+                case coachName
+                case replied
+                case emoji
+                case unlockKind
+                case item
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/Health`.
         public struct Health: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Health/version`.
@@ -4540,174 +4760,6 @@ extension Components {
                 case next
             }
         }
-        /// - Remark: Generated from `#/components/schemas/NoticeEntry`.
-        public struct NoticeEntry: Codable, Hashable, Sendable {
-            /// The order notices were told in: a later one is larger.
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
-            public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
-            public var kind: Swift.String
-            /// When it was told, in UTC.
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/at`.
-            public var at: Foundation.Date
-            /// The squad it is about, if any.
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/squadId`.
-            public var squadId: Swift.String?
-            /// A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert`.
-            public struct AlertPayload: Codable, Hashable, Sendable {
-                /// The String Catalog key the push used.
-                ///
-                /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert/key`.
-                public var key: Swift.String
-                /// Its placeholders’ values, in order.
-                ///
-                /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert/args`.
-                public var args: [Swift.String]
-                /// Creates a new `AlertPayload`.
-                ///
-                /// - Parameters:
-                ///   - key: The String Catalog key the push used.
-                ///   - args: Its placeholders’ values, in order.
-                public init(
-                    key: Swift.String,
-                    args: [Swift.String]
-                ) {
-                    self.key = key
-                    self.args = args
-                }
-                public enum CodingKeys: String, CodingKey {
-                    case key
-                    case args
-                }
-            }
-            /// A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert`.
-            public var alert: Components.Schemas.NoticeEntry.AlertPayload?
-            /// The Monday of the week whose 战报 is in (`weeklyAwards`).
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/weekStart`.
-            public var weekStart: Swift.String?
-            /// The scene moved to (`sceneMoved`).
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/scene`.
-            public var scene: Swift.String?
-            /// Who moved it (`sceneMoved`); left out once they deleted their account.
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/by`.
-            public var by: Swift.String?
-            /// Their nickname now (`sceneMoved`), when they have one.
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/byName`.
-            public var byName: Swift.String?
-            /// The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`).
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/checkIn`.
-            public var checkIn: Swift.String?
-            /// The coach who answered (`coachReply`).
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/coach`.
-            public var coach: Swift.String?
-            /// Its name now (`coachReply`).
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/coachName`.
-            public var coachName: Swift.String?
-            /// Whether the coach wrote a line (`coachReply`); else only its emoji.
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/replied`.
-            public var replied: Swift.Bool?
-            /// The coach’s emoji (`coachReply`), if any.
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/emoji`.
-            public var emoji: Swift.String?
-            /// What opened (`unlocked`): `store` or `prop`. Skip another.
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/unlockKind`.
-            public var unlockKind: Swift.String?
-            /// The store’s or prop’s id (`unlocked`).
-            ///
-            /// - Remark: Generated from `#/components/schemas/NoticeEntry/item`.
-            public var item: Swift.String?
-            /// Creates a new `NoticeEntry`.
-            ///
-            /// - Parameters:
-            ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
-            ///   - at: When it was told, in UTC.
-            ///   - squadId: The squad it is about, if any.
-            ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
-            ///   - weekStart: The Monday of the week whose 战报 is in (`weeklyAwards`).
-            ///   - scene: The scene moved to (`sceneMoved`).
-            ///   - by: Who moved it (`sceneMoved`); left out once they deleted their account.
-            ///   - byName: Their nickname now (`sceneMoved`), when they have one.
-            ///   - checkIn: The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`).
-            ///   - coach: The coach who answered (`coachReply`).
-            ///   - coachName: Its name now (`coachReply`).
-            ///   - replied: Whether the coach wrote a line (`coachReply`); else only its emoji.
-            ///   - emoji: The coach’s emoji (`coachReply`), if any.
-            ///   - unlockKind: What opened (`unlocked`): `store` or `prop`. Skip another.
-            ///   - item: The store’s or prop’s id (`unlocked`).
-            public init(
-                id: Swift.Int,
-                kind: Swift.String,
-                at: Foundation.Date,
-                squadId: Swift.String? = nil,
-                alert: Components.Schemas.NoticeEntry.AlertPayload? = nil,
-                weekStart: Swift.String? = nil,
-                scene: Swift.String? = nil,
-                by: Swift.String? = nil,
-                byName: Swift.String? = nil,
-                checkIn: Swift.String? = nil,
-                coach: Swift.String? = nil,
-                coachName: Swift.String? = nil,
-                replied: Swift.Bool? = nil,
-                emoji: Swift.String? = nil,
-                unlockKind: Swift.String? = nil,
-                item: Swift.String? = nil
-            ) {
-                self.id = id
-                self.kind = kind
-                self.at = at
-                self.squadId = squadId
-                self.alert = alert
-                self.weekStart = weekStart
-                self.scene = scene
-                self.by = by
-                self.byName = byName
-                self.checkIn = checkIn
-                self.coach = coach
-                self.coachName = coachName
-                self.replied = replied
-                self.emoji = emoji
-                self.unlockKind = unlockKind
-                self.item = item
-            }
-            public enum CodingKeys: String, CodingKey {
-                case id
-                case kind
-                case at
-                case squadId
-                case alert
-                case weekStart
-                case scene
-                case by
-                case byName
-                case checkIn
-                case coach
-                case coachName
-                case replied
-                case emoji
-                case unlockKind
-                case item
-            }
-        }
         /// - Remark: Generated from `#/components/schemas/NoticesSeen`.
         public struct NoticesSeen: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/NoticesSeen/version`.
@@ -6781,21 +6833,37 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/MyUnlocks/unlocks`.
             public var unlocks: [Components.Schemas.Unlock]
+            /// Every clothing piece the member unlocked, the earliest first. A piece with a rule stays locked in its store, even an open one, until then.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/pieces`.
+            public var pieces: [Components.Schemas.PieceUnlock]
+            /// Every piece with a rule the member hasn’t unlocked yet, and how far it is.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/lockedPieces`.
+            public var lockedPieces: [Components.Schemas.LockedPiece]
             /// Creates a new `MyUnlocks`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - unlocks: Every store and prop the member unlocked, the earliest first.
+            ///   - pieces: Every clothing piece the member unlocked, the earliest first. A piece with a rule stays locked in its store, even an open one, until then.
+            ///   - lockedPieces: Every piece with a rule the member hasn’t unlocked yet, and how far it is.
             public init(
                 version: Components.Schemas.MyUnlocks.VersionPayload,
-                unlocks: [Components.Schemas.Unlock]
+                unlocks: [Components.Schemas.Unlock],
+                pieces: [Components.Schemas.PieceUnlock],
+                lockedPieces: [Components.Schemas.LockedPiece]
             ) {
                 self.version = version
                 self.unlocks = unlocks
+                self.pieces = pieces
+                self.lockedPieces = lockedPieces
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case unlocks
+                case pieces
+                case lockedPieces
             }
         }
         /// - Remark: Generated from `#/components/schemas/Unlock`.
@@ -6871,6 +6939,66 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case sports
                 case checkIns
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PieceUnlock`.
+        public struct PieceUnlock: Codable, Hashable, Sendable {
+            /// The piece’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PieceUnlock/id`.
+            public var id: Swift.String
+            /// When the member made the check-in that unlocked it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PieceUnlock/unlockedAt`.
+            public var unlockedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/PieceUnlock/reason`.
+            public var reason: Components.Schemas.UnlockReason
+            /// Creates a new `PieceUnlock`.
+            ///
+            /// - Parameters:
+            ///   - id: The piece’s id in the app’s art.
+            ///   - unlockedAt: When the member made the check-in that unlocked it.
+            ///   - reason:
+            public init(
+                id: Swift.String,
+                unlockedAt: Foundation.Date,
+                reason: Components.Schemas.UnlockReason
+            ) {
+                self.id = id
+                self.unlockedAt = unlockedAt
+                self.reason = reason
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case unlockedAt
+                case reason
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/LockedPiece`.
+        public struct LockedPiece: Codable, Hashable, Sendable {
+            /// The piece’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LockedPiece/id`.
+            public var id: Swift.String
+            /// How many more 练了 check-ins in its sports open it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LockedPiece/checkInsToGo`.
+            public var checkInsToGo: Swift.Int
+            /// Creates a new `LockedPiece`.
+            ///
+            /// - Parameters:
+            ///   - id: The piece’s id in the app’s art.
+            ///   - checkInsToGo: How many more 练了 check-ins in its sports open it.
+            public init(
+                id: Swift.String,
+                checkInsToGo: Swift.Int
+            ) {
+                self.id = id
+                self.checkInsToGo = checkInsToGo
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case checkInsToGo
             }
         }
     }
