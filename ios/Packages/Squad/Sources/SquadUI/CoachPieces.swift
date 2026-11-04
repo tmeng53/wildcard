@@ -94,42 +94,10 @@ struct CoachStage: View {
     }
 
     private var figure: some View {
-        CoachFigure(coach: coach, mood: mood, greets: greets)
-            .frame(height: figureHeight)
-    }
-}
-
-/// The coach on its stage: its character from `AvatarArt`, idling (or crying, being fired), or
-/// for a coach this build has no character for, a silhouette in its place.
-struct CoachFigure: View {
-    let coach: CoachID
-    var mood: CoachSilhouette.Mood = .calm
-    var greets = false
-    @State private var player: CharacterPlayer?
-    @Environment(\.sceneTheme) private var theme
-
-    /// The figure with room above for its hop and swaying head, on the coaches' 240 × 320 canvas.
-    static let crop = CGRect(x: 36, y: 24, width: 168, height: 296)
-
-    var body: some View {
-        Group {
-            if let player {
-                CharacterView(player: player, crop: Self.crop)
-            } else if !CoachCharacter.exists(coach.rawValue) {
-                CoachSilhouette(fill: Color(role: .bgInk, in: theme), mood: mood)
-            } else {
-                Color.clear.aspectRatio(Self.crop.width / Self.crop.height, contentMode: .fit)
-            }
+        CoachFigure(coach: coach.rawValue, pose: mood == .crying ? .crying : .idle, greets: greets) {
+            CoachSilhouette(fill: Color(role: .bgInk, in: theme), mood: mood)
         }
-        .accessibilityHidden(true)
-        .task(id: mood) {
-            let id = coach.rawValue
-            guard CoachCharacter.exists(id) else { return }
-            player = try? CharacterPlayer(
-                figure: CoachCharacter.figure(id),
-                idle: CoachCharacter.clip(mood == .crying ? .crying : .idle, coach: id))
-            if greets, mood == .calm { try? player?.play(CoachCharacter.clip(.cheer, coach: id)) }
-        }
+        .frame(height: figureHeight)
     }
 }
 

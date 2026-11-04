@@ -20,7 +20,8 @@ struct CoachBoard: View {
 
     var body: some View {
         HStack(alignment: .bottom, spacing: Space.s) {
-            CoachFigure(player: model.coachPlayer(note.coach.id))
+            CoachFigure(coach: note.coach.id.rawValue, pose: .still, crop: CoachCanvas.full) { EmptyView() }
+                .frame(maxHeight: .infinity, alignment: .bottom)
                 .frame(width: Self.figure.width, height: Self.figure.height)
             VStack(alignment: .leading, spacing: Space.xs) {
                 HStack(spacing: Space.xxs) {
@@ -59,25 +60,6 @@ struct CoachBoard: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("教练 \(note.coach.name)：\(note.text)", bundle: .module))
         .accessibilityIdentifier("feed.coachBoard")
-    }
-}
-
-/// The coach standing still, its feet on the box's bottom edge; nothing for a coach this build
-/// has no character for.
-private struct CoachFigure: View {
-    let player: CharacterPlayer?
-
-    /// The coaches' canvas, as members'.
-    private static let canvas = CGRect(x: 0, y: 0, width: 240, height: 320)
-
-    var body: some View {
-        if let player {
-            let frame = player.restFrame
-            CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.canvas)
-                .aspectRatio(Self.canvas.width / Self.canvas.height, contentMode: .fit)
-                .frame(maxHeight: .infinity, alignment: .bottom)
-                .accessibilityHidden(true)
-        }
     }
 }
 
