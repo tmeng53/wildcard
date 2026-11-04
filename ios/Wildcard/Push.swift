@@ -53,15 +53,25 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     /// Where the 6pm push's view asked to go, kept until the tabs take it: a tap that launched
     /// the app comes before they are there.
     private var destination: PushDestination?
-    private lazy var taps = NotificationTaps { [weak self] in
+    /// A plain tap on the 6pm push, kept until the tabs take it, as `destination` is: the home
+    /// then plays the day's pats on the member again.
+    private var tappedDailyPush = false
+    private lazy var taps = NotificationTaps { [weak self] opened in
         self?.destination = Push.takeDestination()
-        self?.opened($0)
+        self?.tappedDailyPush = opened == .dailyProgress
+        self?.opened(opened)
     }
 
     /// Where the last tapped notification asked to go, once.
     func takeDestination() -> PushDestination? {
         defer { destination = nil }
         return destination
+    }
+
+    /// Whether the last tap was on the 6pm push itself, once.
+    func takeDailyPushTap() -> Bool {
+        defer { tappedDailyPush = false }
+        return tappedDailyPush
     }
 
     func application(

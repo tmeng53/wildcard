@@ -49,11 +49,20 @@ extension TodayModel {
         "today.patsShownUntil.\(member)"
     }
 
+    /// The 6pm push was tapped: on the next open, everyone who patted me today pats me again,
+    /// even if those pats already played on this phone.
+    public func replayPatsOnMe() {
+        replaysPatsOnMe = true
+    }
+
     /// Whoever patted me since the last pat shown pats me now, from where they stand: the
-    /// earliest, with the next one named on their bubble. Each pat plays once on this phone.
+    /// earliest, with the next one named on their bubble. Each pat plays once on this phone,
+    /// unless the 6pm push was tapped (`replayPatsOnMe`), which plays the day's pats again.
     func playPatsOnMe() async {
         guard let member = store.home?.member else { return }
-        let shown = defaults.double(forKey: Self.patsShownKey(for: member))
+        let replays = replaysPatsOnMe
+        replaysPatsOnMe = false
+        let shown = replays ? 0 : defaults.double(forKey: Self.patsShownKey(for: member))
         let fresh = store.pokes.received.filter { Double($0.patAt.millisecondsSince1970) > shown }
         let patters = fresh.compactMap { pat in cast.mates.first { $0.id == pat.from } }
         guard let latest = fresh.last, let first = patters.first else { return }

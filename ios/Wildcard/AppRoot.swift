@@ -46,8 +46,11 @@ struct AppRoot: View {
                 }
                 .onAppear {
                     // A tap that launched the app came before the tabs.
+                    let dailyPush = delegate.takeDailyPushTap()
                     if let destination = delegate.takeDestination() {
                         WildcardApp.open(destination, today: today, tab: $tab)
+                    } else if dailyPush {
+                        today.replayPatsOnMe()
                     }
                     if let post = postToOpen {
                         postToOpen = nil
@@ -100,10 +103,12 @@ struct AppRoot: View {
                         // A tap that launched the app comes before the tabs, which open it.
                         $postToOpen.wrappedValue = post
                     }
-                case .other:
+                case .dailyProgress, .other:
                     // Before the tabs are up, they take the 6pm push's destination when they appear.
                     if case .tabs(let today, _, _, _, _, _) = app.screen {
-                        WildcardApp.open(delegate.takeDestination(), today: today, tab: $tab)
+                        WildcardApp.open(
+                            delegate.takeDestination(), dailyPush: delegate.takeDailyPushTap(), today: today,
+                            tab: $tab)
                     }
                     Task { await app.reloadToday() }
                 }
