@@ -25,7 +25,8 @@ struct BadgeCard: View {
                     .minimumScaleFactor(0.7)
                     .accessibilityIdentifier("me.badgeCard.title")
                 FlowRow {
-                    ForEach(title.weeks, id: \.weekStart) { week in
+                    // By place, not date: one title won in two squads the same week is two chips.
+                    ForEach(Array(title.weeks.enumerated()), id: \.offset) { _, week in
                         Text(verbatim: Self.range(of: week.weekStart))
                             .typeStyle(TypeRamp.scoreCaption)
                             .monospacedDigit()
