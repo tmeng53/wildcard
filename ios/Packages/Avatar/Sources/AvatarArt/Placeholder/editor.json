@@ -14,7 +14,7 @@
     { "id": "moss" },
     { "id": "halfmoon" },
     { "id": "deuce" },
-    { "id": "powder", "open": true, "season": "ski" }
+    { "id": "powder", "open": true, "switch": "winter" }
   ],
   "wear": {
     "top": [

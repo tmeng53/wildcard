@@ -343,6 +343,8 @@ extension Components {
             public var disclaimerDice: Components.Schemas.DisclaimerDiceCatalog?
             /// - Remark: Generated from `#/components/schemas/Catalog/scenes`.
             public var scenes: Components.Schemas.ScenesCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/switches`.
+            public var switches: Components.Schemas.SwitchesCatalog?
             /// A container of undocumented properties.
             public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
             /// Creates a new `Catalog`.
@@ -352,18 +354,21 @@ extension Components {
             ///   - sports:
             ///   - disclaimerDice:
             ///   - scenes:
+            ///   - switches:
             ///   - additionalProperties: A container of undocumented properties.
             public init(
                 version: Components.Schemas.Catalog.VersionPayload,
                 sports: Components.Schemas.SportsCatalog? = nil,
                 disclaimerDice: Components.Schemas.DisclaimerDiceCatalog? = nil,
                 scenes: Components.Schemas.ScenesCatalog? = nil,
+                switches: Components.Schemas.SwitchesCatalog? = nil,
                 additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
             ) {
                 self.version = version
                 self.sports = sports
                 self.disclaimerDice = disclaimerDice
                 self.scenes = scenes
+                self.switches = switches
                 self.additionalProperties = additionalProperties
             }
             public enum CodingKeys: String, CodingKey {
@@ -371,6 +376,7 @@ extension Components {
                 case sports
                 case disclaimerDice
                 case scenes
+                case switches
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -390,11 +396,16 @@ extension Components {
                     Components.Schemas.ScenesCatalog.self,
                     forKey: .scenes
                 )
+                self.switches = try container.decodeIfPresent(
+                    Components.Schemas.SwitchesCatalog.self,
+                    forKey: .switches
+                )
                 additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                     "version",
                     "sports",
                     "disclaimerDice",
-                    "scenes"
+                    "scenes",
+                    "switches"
                 ])
             }
             public func encode(to encoder: any Swift.Encoder) throws {
@@ -414,6 +425,10 @@ extension Components {
                 try container.encodeIfPresent(
                     self.scenes,
                     forKey: .scenes
+                )
+                try container.encodeIfPresent(
+                    self.switches,
+                    forKey: .switches
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
@@ -854,8 +869,10 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/limited`.
                 public var limited: Swift.Bool
-                /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/window`.
-                public var window: Components.Schemas.SceneWindow?
+                /// The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/switchId`.
+                public var switchId: Swift.String?
                 /// A container of undocumented properties.
                 public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
                 /// Creates a new `ScenesPayloadPayload`.
@@ -865,21 +882,21 @@ extension Components {
                 ///   - names:
                 ///   - colors:
                 ///   - limited: True for a scene open only part of the year (冬季限定). The picker offers it while `GET /squads/{squadId}/scene` lists it.
-                ///   - window:
+                ///   - switchId: The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.
                 ///   - additionalProperties: A container of undocumented properties.
                 public init(
                     id: Swift.String,
                     names: Components.Schemas.CatalogNames,
                     colors: Components.Schemas.SceneColors,
                     limited: Swift.Bool,
-                    window: Components.Schemas.SceneWindow? = nil,
+                    switchId: Swift.String? = nil,
                     additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
                 ) {
                     self.id = id
                     self.names = names
                     self.colors = colors
                     self.limited = limited
-                    self.window = window
+                    self.switchId = switchId
                     self.additionalProperties = additionalProperties
                 }
                 public enum CodingKeys: String, CodingKey {
@@ -887,7 +904,7 @@ extension Components {
                     case names
                     case colors
                     case limited
-                    case window
+                    case switchId
                 }
                 public init(from decoder: any Swift.Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -907,16 +924,16 @@ extension Components {
                         Swift.Bool.self,
                         forKey: .limited
                     )
-                    self.window = try container.decodeIfPresent(
-                        Components.Schemas.SceneWindow.self,
-                        forKey: .window
+                    self.switchId = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .switchId
                     )
                     additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                         "id",
                         "names",
                         "colors",
                         "limited",
-                        "window"
+                        "switchId"
                     ])
                 }
                 public func encode(to encoder: any Swift.Encoder) throws {
@@ -938,8 +955,8 @@ extension Components {
                         forKey: .limited
                     )
                     try container.encodeIfPresent(
-                        self.window,
-                        forKey: .window
+                        self.switchId,
+                        forKey: .switchId
                     )
                     try encoder.encodeAdditionalProperties(additionalProperties)
                 }
@@ -1098,21 +1115,139 @@ extension Components {
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
         }
-        /// A limited scene’s days every year, New York time; it may run over New Year. The app never shows them: it opens the scene’s store only on these days.
+        /// - Remark: Generated from `#/components/schemas/SwitchesCatalog`.
+        public struct SwitchesCatalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/SwitchesPayload`.
+            public struct SwitchesPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/SwitchesPayload/id`.
+                public var id: Swift.String
+                /// `on`, `off` or `schedule` (on only in `window`); read any other as off.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/SwitchesPayload/mode`.
+                public var mode: Swift.String
+                /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/SwitchesPayload/window`.
+                public var window: Components.Schemas.SwitchWindow?
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `SwitchesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                ///   - mode: `on`, `off` or `schedule` (on only in `window`); read any other as off.
+                ///   - window:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    id: Swift.String,
+                    mode: Swift.String,
+                    window: Components.Schemas.SwitchWindow? = nil,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.id = id
+                    self.mode = mode
+                    self.window = window
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case mode
+                    case window
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.id = try container.decode(
+                        Swift.String.self,
+                        forKey: .id
+                    )
+                    self.mode = try container.decode(
+                        Swift.String.self,
+                        forKey: .mode
+                    )
+                    self.window = try container.decodeIfPresent(
+                        Components.Schemas.SwitchWindow.self,
+                        forKey: .window
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "id",
+                        "mode",
+                        "window"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.id,
+                        forKey: .id
+                    )
+                    try container.encode(
+                        self.mode,
+                        forKey: .mode
+                    )
+                    try container.encodeIfPresent(
+                        self.window,
+                        forKey: .window
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Every global switch scenes, stores and unlock rules follow.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/switches`.
+            public typealias SwitchesPayload = [Components.Schemas.SwitchesCatalog.SwitchesPayloadPayload]
+            /// Every global switch scenes, stores and unlock rules follow.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/switches`.
+            public var switches: Components.Schemas.SwitchesCatalog.SwitchesPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `SwitchesCatalog`.
+            ///
+            /// - Parameters:
+            ///   - switches: Every global switch scenes, stores and unlock rules follow.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                switches: Components.Schemas.SwitchesCatalog.SwitchesPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.switches = switches
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case switches
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.switches = try container.decode(
+                    Components.Schemas.SwitchesCatalog.SwitchesPayload.self,
+                    forKey: .switches
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "switches"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.switches,
+                    forKey: .switches
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// A scheduled switch’s days every year, New York time; it may run over New Year. The app never shows them.
         ///
-        /// - Remark: Generated from `#/components/schemas/SceneWindow`.
-        public struct SceneWindow: Codable, Hashable, Sendable {
+        /// - Remark: Generated from `#/components/schemas/SwitchWindow`.
+        public struct SwitchWindow: Codable, Hashable, Sendable {
             /// `MM-DD`, included.
             ///
-            /// - Remark: Generated from `#/components/schemas/SceneWindow/start`.
+            /// - Remark: Generated from `#/components/schemas/SwitchWindow/start`.
             public var start: Swift.String
             /// `MM-DD`, included.
             ///
-            /// - Remark: Generated from `#/components/schemas/SceneWindow/end`.
+            /// - Remark: Generated from `#/components/schemas/SwitchWindow/end`.
             public var end: Swift.String
             /// A container of undocumented properties.
             public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
-            /// Creates a new `SceneWindow`.
+            /// Creates a new `SwitchWindow`.
             ///
             /// - Parameters:
             ///   - start: `MM-DD`, included.

@@ -208,7 +208,7 @@ beforeAll(async () => {
                   trainedSince: () => Promise.reject(new Error('unused')),
                   sportListed: (id) =>
                     createSports({ store: createPostgresSportStore(scope) }).isListed(id),
-                  inWindow: () => true,
+                  switches: () => Promise.resolve(() => true),
                 }),
               }),
               ...coachTools({

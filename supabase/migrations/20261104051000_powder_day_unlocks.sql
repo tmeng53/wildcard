@@ -3,26 +3,22 @@
 -- other thirteen opens with the next winter-sport 练了, one piece each, the salmon helmet last.
 -- Data like every rule, retuned with put_unlock_rule.
 --
--- A limited piece limits when it unlocks, never when it is worn (Tracy, 2026-11-04): any rule may
--- have a window of days every year, `MM-DD` in New York, both included (the end may be before the
--- start, over New Year), and then counts only 练了 made in it; what a member unlocked stays theirs
--- all year. A window is plain data, set with put_unlock_rule, for any limited piece.
-alter table public.unlock_rules
-  add column window_start text check (window_start ~ '^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'),
-  add column window_end text check (window_end ~ '^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'),
-  add constraint unlock_rules_window_whole check ((window_start is null) = (window_end is null));
+-- A limited piece limits when it unlocks, never when it is worn (Tracy, 2026-11-04): a rule may
+-- follow a switch, and then counts only 练了 made while it is on; what a member unlocked stays
+-- theirs all year. POWDER DAY's follow the winter switch, with the 雪场.
+alter table public.unlock_rules add column switch_id text references public.switches (id);
 
-insert into public.unlock_rules (kind, item_id, sports, after, window_start, window_end) values
-  ('piece', 'powder-tuna', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 1, '11-15', '03-31'),
-  ('piece', 'powder-ikura', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 2, '11-15', '03-31'),
-  ('piece', 'powder-temaki', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 3, '11-15', '03-31'),
-  ('piece', 'powder-nori', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 4, '11-15', '03-31'),
-  ('piece', 'powder-tamago', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 5, '11-15', '03-31'),
-  ('piece', 'powder-scarf', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 6, '11-15', '03-31'),
-  ('piece', 'powder-edamame', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 7, '11-15', '03-31'),
-  ('piece', 'powder-uni', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 8, '11-15', '03-31'),
-  ('piece', 'powder-pants', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 9, '11-15', '03-31'),
-  ('piece', 'powder-ebi', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 10, '11-15', '03-31'),
-  ('piece', 'powder-ebifry', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 11, '11-15', '03-31'),
-  ('piece', 'powder-maki', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 12, '11-15', '03-31'),
-  ('piece', 'powder-salmonhelmet', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 13, '11-15', '03-31');
+insert into public.unlock_rules (kind, item_id, sports, after, switch_id) values
+  ('piece', 'powder-tuna', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 1, 'winter'),
+  ('piece', 'powder-ikura', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 2, 'winter'),
+  ('piece', 'powder-temaki', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 3, 'winter'),
+  ('piece', 'powder-nori', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 4, 'winter'),
+  ('piece', 'powder-tamago', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 5, 'winter'),
+  ('piece', 'powder-scarf', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 6, 'winter'),
+  ('piece', 'powder-edamame', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 7, 'winter'),
+  ('piece', 'powder-uni', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 8, 'winter'),
+  ('piece', 'powder-pants', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 9, 'winter'),
+  ('piece', 'powder-ebi', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 10, 'winter'),
+  ('piece', 'powder-ebifry', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 11, 'winter'),
+  ('piece', 'powder-maki', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 12, 'winter'),
+  ('piece', 'powder-salmonhelmet', '{ski,snowboard,skate,crossCountrySki,curling,snowHike,snowman,snowballFight}', 13, 'winter');

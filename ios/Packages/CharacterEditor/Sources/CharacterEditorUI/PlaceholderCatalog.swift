@@ -7,22 +7,23 @@ extension Catalog {
     /// What the placeholder character's bundled art offers a member who unlocked `unlocks`: the
     /// species and stores in its `editor.json`, the clothes of the stores open to them but the
     /// `locked` pieces, which hang there as 「？」 boxes, the props they hold (the starters, with
-    /// nothing unlocked), every bundled hair and face part, and their preset colors. A seasonal
-    /// store (POWDER DAY) unlocks only while `inSeason` says its scene is: out of season it stays
-    /// on the street as the member's own rack, what they hold worn all year, without the boxes.
+    /// nothing unlocked), every bundled hair and face part, and their preset colors. A store on a
+    /// switch (POWDER DAY) unlocks only while `isOn` says the switch is on: while it is off the
+    /// store stays on the street as the member's own rack, what they hold worn all year, without
+    /// the boxes.
     public static func placeholder(
         unlocks: [Unlock] = [], locked: [LockedPiece] = [],
-        inSeason: (String) -> Bool = { StoreSeasons.shared.isOpen($0) }
+        isOn: (String) -> Bool = { StoreSwitches.shared.isOn($0) }
     ) throws(AvatarError) -> Catalog {
         let choices = try PlaceholderCharacter.editorChoices()
         let unlocked = { (kind: Unlock.Kind) in Set(unlocks.filter { $0.kind == kind }.map(\.id)) }
         let (unlockedStores, unlockedProps) = (unlocked(.store), unlocked(.prop))
         let everyStore = choices.stores.map { store in
             EditorChoices.Store(
-                id: store.id, isOpen: store.isOpen || unlockedStores.contains(store.id), season: store.season)
+                id: store.id, isOpen: store.isOpen || unlockedStores.contains(store.id), switchId: store.switchId)
         }
         let open = Set(everyStore.filter(\.isOpen).map(\.id))
-        let packedAway = Set(everyStore.filter { $0.season.map { !inSeason($0) } ?? false }.map(\.id))
+        let packedAway = Set(everyStore.filter { $0.switchId.map { !isOn($0) } ?? false }.map(\.id))
         let props = choices.props.filter { $0.isOpen || unlockedProps.contains($0.id) }.map(\.id)
         // A piece the member holds is never locked, whatever an older list says.
         let unlockedPieces = unlocked(.piece)
@@ -65,8 +66,8 @@ extension Catalog {
             stores: everyStore, storeOf: storeOf, locked: stillLocked)
     }
 
-    /// The 「？」 boxes by slot: each piece still to go, but none in a store packed away out of
-    /// its season, since nothing unlocks there until it opens again.
+    /// The 「？」 boxes by slot: each piece still to go, but none in a store packed away while its
+    /// switch is off, since nothing unlocks there until it is on again.
     private static func boxes(
         of wear: [Slot: [EditorChoices.Wearable]], toGo: [String: Int], packedAway: Set<String>
     ) -> [Slot: [String: Int]] {

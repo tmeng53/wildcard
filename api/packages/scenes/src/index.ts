@@ -3,15 +3,13 @@
 
 export { createPostgresSceneStore, type SceneTables } from './adapters/postgres-scene-store.js';
 export {
-  inWindow,
   isOpen,
   SceneId,
   type ListedScene,
   type LocalizedNames,
   type SceneColors,
-  type SceneWindow,
+  type SwitchOn,
 } from './domain/catalog.js';
-export { SceneEdit, SceneWindowEdit } from './domain/edits.js';
-export { SceneNotFoundError } from './errors.js';
-export type { SceneStore } from './ports.js';
+export { SceneEdit } from './domain/edits.js';
+export type { SceneStore, SwitchStates } from './ports.js';
 export { createScenes, type Scenes, type ScenesAdmin } from './use-cases/scenes.js';

@@ -64,7 +64,7 @@ private let powderLocked = [
 /// every piece of clothing on a rack, WARM-UP's nineteen pieces, tops first, then bottoms, shoes,
 /// hats and accessories.
 @Test func everyPieceHangsInAStore() throws {
-    let catalog = try Catalog.placeholder(locked: powderLocked, inSeason: { _ in true })
+    let catalog = try Catalog.placeholder(locked: powderLocked, isOn: { _ in true })
     #expect(catalog.stores.map(\.id) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce", "powder"])
     #expect(catalog.stores.filter(\.isOpen).map(\.id) == ["warmup", "powder"])
     #expect(
@@ -155,13 +155,13 @@ private let powderLocked = [
     }
 }
 
-/// POWDER DAY unlocks only in the ski scene's season, and stays the member's all year: out of it
+/// POWDER DAY unlocks only while the winter switch is on, and stays the member's all year: while off
 /// the store is still on the street with what they hold, only without the 「？」 boxes.
-@Test func aSeasonalStoreKeepsWhatAMemberHoldsOutOfSeason() throws {
+@Test func aStoreOnASwitchKeepsWhatAMemberHoldsWhileOff() throws {
     let unlockedAt = Date(timeIntervalSince1970: 1_800_000_000)
     let tuna = Unlock(kind: .piece, id: "powder-tuna", unlockedAt: unlockedAt, sports: ["ski"], checkIns: 1)
-    let winter = try Catalog.placeholder(unlocks: [tuna], locked: powderLocked, inSeason: { $0 == "ski" })
-    let summer = try Catalog.placeholder(unlocks: [tuna], locked: powderLocked, inSeason: { _ in false })
+    let winter = try Catalog.placeholder(unlocks: [tuna], locked: powderLocked, isOn: { $0 == "winter" })
+    let summer = try Catalog.placeholder(unlocks: [tuna], locked: powderLocked, isOn: { _ in false })
     #expect(winter.stores.map(\.id).last == "powder" && summer.stores.map(\.id).last == "powder")
     #expect(winter.lockedRack(of: "powder").count == 12)
     #expect(summer.lockedRack(of: "powder").isEmpty)
@@ -172,15 +172,19 @@ private let powderLocked = [
     #expect(summer.rack(of: "powder").map(\.variant) == winter.rack(of: "powder").map(\.variant))
 }
 
-/// The seasons come from the catalog, in New York days, and run over New Year; a scene the
-/// catalog gives no season is open all year.
-@Test func storeSeasonsFollowTheCatalog() throws {
-    let seasons = StoreSeasons()
-    #expect(seasons.isOpen("ski", on: try LocalDay("2026-07-01")))
-    seasons.show(["ski": SceneSeason(start: try #require(MonthDay("11-15")), end: try #require(MonthDay("03-31")))])
-    #expect(seasons.isOpen("ski", on: try LocalDay("2026-11-15")))
-    #expect(seasons.isOpen("ski", on: try LocalDay("2027-03-31")))
-    #expect(!seasons.isOpen("ski", on: try LocalDay("2027-04-01")))
-    #expect(!seasons.isOpen("ski", on: try LocalDay("2026-11-14")))
-    #expect(seasons.isOpen("gym", on: try LocalDay("2026-07-01")))
+/// The switches come from the catalog, in New York days, and run over New Year; a switch the
+/// catalog doesn't list is on.
+@Test func storeSwitchesFollowTheCatalog() throws {
+    let switches = StoreSwitches()
+    #expect(switches.isOn("winter", on: try LocalDay("2026-07-01")))
+    switches.show([
+        "winter": .schedule(start: try #require(MonthDay("11-15")), end: try #require(MonthDay("03-31"))),
+        "never": .alwaysOff,
+    ])
+    #expect(switches.isOn("winter", on: try LocalDay("2026-11-15")))
+    #expect(switches.isOn("winter", on: try LocalDay("2027-03-31")))
+    #expect(!switches.isOn("winter", on: try LocalDay("2027-04-01")))
+    #expect(!switches.isOn("winter", on: try LocalDay("2026-11-14")))
+    #expect(!switches.isOn("never", on: try LocalDay("2026-12-01")))
+    #expect(switches.isOn("other", on: try LocalDay("2026-07-01")))
 }

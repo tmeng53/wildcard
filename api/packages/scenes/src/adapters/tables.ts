@@ -19,10 +19,9 @@ export interface Scenes {
   on_signature: string;
   position: number;
   signature: string;
+  switch_id: string | null;
   text_color: string;
   wash: string;
-  window_end: string | null;
-  window_start: string | null;
 }
 
 export interface DB {

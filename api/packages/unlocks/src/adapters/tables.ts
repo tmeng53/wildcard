@@ -29,8 +29,7 @@ export interface UnlockRules {
   item_id: string;
   kind: string;
   sports: Generated<string[]>;
-  window_end: string | null;
-  window_start: string | null;
+  switch_id: string | null;
 }
 
 export interface DB {

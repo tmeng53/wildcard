@@ -1,7 +1,6 @@
 import { isOpen, type ListedScene } from '../domain/catalog.js';
-import type { SceneEdit, SceneWindowEdit } from '../domain/edits.js';
-import { SceneNotFoundError } from '../errors.js';
-import type { SceneStore } from '../ports.js';
+import type { SceneEdit } from '../domain/edits.js';
+import type { SceneStore, SwitchStates } from '../ports.js';
 
 /** The scenes: what the picker shows and which a squad may train on in a week. */
 export interface Scenes {
@@ -15,18 +14,23 @@ export interface Scenes {
 export interface ScenesAdmin {
   /** Adds a scene, or replaces every field of one, keeping its id. */
   putScene(edit: SceneEdit): Promise<readonly ListedScene[]>;
-  /** Changes only when a scene is open. */
-  setWindow(edit: SceneWindowEdit): Promise<readonly ListedScene[]>;
 }
 
-export function createScenes({ store }: { readonly store: SceneStore }): Scenes & ScenesAdmin {
+export function createScenes({
+  store,
+  switches,
+}: {
+  readonly store: SceneStore;
+  readonly switches: SwitchStates;
+}): Scenes & ScenesAdmin {
   return {
     list: () => store.list(),
     async openOn(day) {
-      return (await store.list()).filter((scene) => isOpen(scene, day)).map(({ id }) => id);
+      const [scenes, switchOn] = await Promise.all([store.list(), switches()]);
+      return scenes.filter((scene) => isOpen(scene, { day, switchOn })).map(({ id }) => id);
     },
 
-    async putScene({ position, window, ...fields }) {
+    async putScene({ position, switchId, ...fields }) {
       const scenes = await store.list();
       const current = scenes.findIndex(({ id }) => id === fields.id);
       const others = scenes.map(({ id }) => id).filter((id) => id !== fields.id);
@@ -34,23 +38,11 @@ export function createScenes({ store }: { readonly store: SceneStore }): Scenes 
         (position ?? (current === -1 ? Infinity : current + 1)) - 1,
         others.length,
       );
-      await store.save({ ...fields, ...(window === undefined ? {} : { window }) }, [
+      await store.save({ ...fields, ...(switchId === undefined ? {} : { switchId }) }, [
         ...others.slice(0, at),
         fields.id,
         ...others.slice(at),
       ]);
-      return store.list();
-    },
-
-    async setWindow({ id, window }) {
-      const scenes = await store.list();
-      const scene = scenes.find((each) => each.id === id);
-      if (scene === undefined) throw new SceneNotFoundError(id);
-      const { id: kept, names, colors, offered } = scene;
-      await store.save(
-        { id: kept, names, colors, offered, ...(window === null ? {} : { window }) },
-        scenes.map((each) => each.id),
-      );
       return store.list();
     },
   };

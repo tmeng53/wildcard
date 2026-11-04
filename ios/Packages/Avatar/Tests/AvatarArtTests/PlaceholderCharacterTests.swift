@@ -354,12 +354,12 @@ func outline(_ path: [PathElement]) -> [Point] {
 }
 
 /// The street: WARM-UP open at the start, then the five stores that open with check-ins, and
-/// POWDER DAY, open in the ski scene's season only, each with a badge the app can draw.
+/// POWDER DAY, open only while the winter switch is on, each with a badge the app can draw.
 @Test func everyStoreHasABadge() throws {
     let stores = try PlaceholderCharacter.editorChoices().stores
     #expect(stores.map(\.id) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce", "powder"])
     #expect(stores.filter(\.isOpen).map(\.id) == ["warmup", "powder"])
-    #expect(stores.compactMap(\.season) == ["ski"])
+    #expect(stores.compactMap(\.switchId) == ["winter"])
     let starters = try PlaceholderCharacter.editorChoices().starterWear.values.joined()
     #expect(starters.count == 19 && starters.allSatisfy { $0.store == "warmup" })
     for store in stores {

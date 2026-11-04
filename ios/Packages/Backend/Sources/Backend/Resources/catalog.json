@@ -914,6 +914,15 @@
           "floor": "#D7ECF6"
         },
         "limited": true,
+        "switchId": "winter"
+      }
+    ]
+  },
+  "switches": {
+    "switches": [
+      {
+        "id": "winter",
+        "mode": "schedule",
         "window": {
           "start": "11-15",
           "end": "03-31"

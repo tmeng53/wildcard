@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { Hex, MonthDay, SceneId } from './catalog.js';
+import { Hex, SceneId } from './catalog.js';
 
 const Name = z.string().trim().min(1).max(40);
 
@@ -14,23 +14,16 @@ export const SceneColorsInput = z.strictObject({
   floor: Hex,
 });
 
-export const SceneWindowInput = z
-  .strictObject({
-    start: MonthDay.meta({ description: 'First open day, `MM-DD`, New York time.' }),
-    end: MonthDay.meta({
-      description: 'Last open day, `MM-DD`; may be before start (over New Year).',
-    }),
-  })
-  .meta({ description: 'The days of every year the scene is open, both included.' });
-
 /** Adds a scene, or replaces every field of one. */
 export const SceneEdit = z.strictObject({
   id: SceneId.meta({ description: 'Its id, camelCase, such as `ski`. Never changes.' }),
   names: LocalizedNamesInput,
   colors: SceneColorsInput,
   offered: z.boolean().meta({ description: 'False retires it: the picker stops offering it.' }),
-  window: SceneWindowInput.optional().meta({
-    description: 'Leave it out for a scene open all year.',
+  switchId: SceneId.optional().meta({
+    description:
+      'The switch a limited scene follows (get_switches), such as `winter`: squads may pick it ' +
+      'only while it is on. Leave it out for a scene open all year.',
   }),
   position: z.int().min(1).optional().meta({
     description:
@@ -38,10 +31,3 @@ export const SceneEdit = z.strictObject({
   }),
 });
 export type SceneEdit = z.infer<typeof SceneEdit>;
-
-/** Changes only a scene's open window. */
-export const SceneWindowEdit = z.strictObject({
-  id: SceneId,
-  window: SceneWindowInput.nullable().meta({ description: 'Null opens it all year.' }),
-});
-export type SceneWindowEdit = z.infer<typeof SceneWindowEdit>;

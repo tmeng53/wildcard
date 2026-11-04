@@ -15,12 +15,11 @@ export {
   earned,
   idFits,
   toGo,
-  type InWindow,
+  type SwitchOn,
   type Locked,
   type Trained,
   type Unlock,
   type UnlockRule,
-  type UnlockWindow,
 } from './domain/unlocks.js';
 export { UnlockItemMissingError, UnlockSportNotListedError } from './errors.js';
 export type { SportListed, TrainedSince, UnlockStore, Unlocked } from './ports.js';

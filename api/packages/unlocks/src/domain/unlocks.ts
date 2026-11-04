@@ -28,9 +28,6 @@ export function idFits(kind: UnlockKind, id: string): boolean {
   return (kind === 'piece' ? PieceId : ItemId).safeParse(id).success;
 }
 
-/** A day of the year, `MM-DD`. */
-const MonthDay = z.string().regex(/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/);
-
 /** The most check-ins a rule may ask for. */
 export const AFTER_MAX = 100;
 
@@ -44,21 +41,14 @@ export interface UnlockRule {
   /** Only check-ins made from then on count: when the rule was added. */
   readonly countsFrom: Date;
   /**
-   * The days of every year a check-in must be made in to count, both included, `MM-DD` in New
-   * York (`end` may be before `start`, over New Year); none for all year. A limited piece only
-   * unlocks then, and stays the member's all year.
+   * The switch a limited piece follows (such as `winter`): only 练了 made while it is on count,
+   * and what a member unlocked stays theirs all year. None for a rule that counts all year.
    */
-  readonly window?: UnlockWindow;
+  readonly switchId?: string;
 }
 
-/** Days of the year, `MM-DD`, both included. */
-export interface UnlockWindow {
-  readonly start: string;
-  readonly end: string;
-}
-
-/** Whether a check-in made at `at` falls in `window`. */
-export type InWindow = (window: UnlockWindow, at: Date) => boolean;
+/** Whether the switch `id` was on when a check-in was made at `at`. */
+export type SwitchOn = (id: string, at: Date) => boolean;
 
 /** A store, prop or piece a member unlocked, with the rule as it was then. Never taken back. */
 export interface Unlock {
@@ -88,17 +78,17 @@ export function earned({
   rules,
   trained,
   has,
-  inWindow,
+  switchOn,
 }: {
   readonly rules: readonly UnlockRule[];
   readonly trained: readonly Trained[];
   readonly has: readonly Unlock[];
-  readonly inWindow: InWindow;
+  readonly switchOn: SwitchOn;
 }): Unlock[] {
   const held = new Set(has.map(({ kind, id }) => `${kind}:${id}`));
   return rules.flatMap((rule) => {
     if (held.has(`${rule.kind}:${rule.id}`)) return [];
-    const reached = counting(rule, { trained, inWindow })[rule.after - 1];
+    const reached = counting(rule, { trained, switchOn })[rule.after - 1];
     if (reached === undefined) return [];
     return [
       {
@@ -116,13 +106,13 @@ export function earned({
 /** The check-ins in `trained` that count towards `rule`, the earliest first. */
 function counting(
   rule: UnlockRule,
-  { trained, inWindow }: { readonly trained: readonly Trained[]; readonly inWindow: InWindow },
+  { trained, switchOn }: { readonly trained: readonly Trained[]; readonly switchOn: SwitchOn },
 ): Trained[] {
   return trained.filter(
     ({ sport, madeAt }) =>
       madeAt >= rule.countsFrom &&
       (rule.sports.length === 0 || rule.sports.includes(sport)) &&
-      (rule.window === undefined || inWindow(rule.window, madeAt)),
+      (rule.switchId === undefined || switchOn(rule.switchId, madeAt)),
   );
 }
 
@@ -138,14 +128,14 @@ export interface Locked {
 export function toGo({
   rules,
   trained,
-  inWindow,
+  switchOn,
 }: {
   readonly rules: readonly UnlockRule[];
   readonly trained: readonly Trained[];
-  readonly inWindow: InWindow;
+  readonly switchOn: SwitchOn;
 }): Locked[] {
   return rules.flatMap((rule) => {
-    const left = rule.after - counting(rule, { trained, inWindow }).length;
+    const left = rule.after - counting(rule, { trained, switchOn }).length;
     return left > 0 ? [{ kind: rule.kind, id: rule.id, toGo: left }] : [];
   });
 }
@@ -189,17 +179,15 @@ export const UnlockRuleEdit = z
       .min(1)
       .max(AFTER_MAX)
       .describe('How many 练了 check-ins in those sports open it.'),
-    window: z
-      .strictObject({
-        start: MonthDay.describe('First day, `MM-DD`, New York time.'),
-        end: MonthDay.describe('Last day, `MM-DD`; may be before start (over New Year).'),
-      })
+    switchId: z
+      .string()
+      .regex(/^[a-z][A-Za-z0-9]{0,39}$/)
       .nullable()
       .optional()
       .describe(
-        'The days of every year whose 练了 count, both included, for a limited piece; it stays ' +
-          'the member’s all year once unlocked. null counts all year; leave out to keep what the ' +
-          'rule has.',
+        'The switch a limited piece follows (get_switches), such as `winter`: only 练了 made ' +
+          'while it is on count, and the piece stays the member’s all year once unlocked. null ' +
+          'counts all year; leave out to keep what the rule has.',
       ),
   })
   .refine(({ kind, id }) => idFits(kind, id), {

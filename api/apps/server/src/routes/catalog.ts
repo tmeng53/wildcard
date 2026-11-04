@@ -4,6 +4,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { DiceLinesAdmin } from '@wildcard/disclaimer-drafts';
 import type { Scenes } from '@wildcard/scenes';
 import type { SportCatalog, Sports } from '@wildcard/sports';
+import type { Switches } from '@wildcard/switches';
 
 import { bodyVersion } from '../body-version.js';
 import { problem } from '../problem.js';
@@ -147,18 +148,15 @@ export const ScenesCatalog = z
               'True for a scene open only part of the year (冬季限定). The picker offers it ' +
               'while `GET /squads/{squadId}/scene` lists it.',
           }),
-          window: z
-            .looseObject({
-              start: z.string().meta({ description: '`MM-DD`, included.', example: '11-15' }),
-              end: z.string().meta({ description: '`MM-DD`, included.', example: '03-31' }),
-            })
+          switchId: z
+            .string()
             .optional()
             .meta({
               description:
-                'A limited scene’s days every year, New York time; it may run over New Year. ' +
-                'The app never shows them: it opens the scene’s store only on these days.',
-            })
-            .openapi('SceneWindow'),
+                'The switch a limited scene follows (the `switches` section): it is open, and its ' +
+                'store unlocks, only while that switch is on.',
+              example: 'winter',
+            }),
         }),
       )
       .meta({
@@ -177,13 +175,58 @@ export function scenesSection(scenes: Pick<Scenes, 'list'>): CatalogSection<type
     load: async () => ({
       scenes: (await scenes.list())
         .filter(({ offered }) => offered)
-        .map(({ id, names, colors, window }) => ({
+        .map(({ id, names, colors, switchId }) => ({
           id,
           names: { ...names },
           colors: { ...colors },
-          limited: window !== undefined,
-          ...(window === undefined ? {} : { window: { ...window } }),
+          limited: switchId !== undefined,
+          ...(switchId === undefined ? {} : { switchId }),
         })),
+    }),
+  };
+}
+
+export const SwitchesCatalog = z
+  .looseObject({
+    switches: z
+      .array(
+        z.looseObject({
+          id: z.string().meta({ example: 'winter' }),
+          mode: z.string().meta({
+            description: '`on`, `off` or `schedule` (on only in `window`); read any other as off.',
+            example: 'schedule',
+          }),
+          window: z
+            .looseObject({
+              start: z.string().meta({ description: '`MM-DD`, included.', example: '11-15' }),
+              end: z.string().meta({ description: '`MM-DD`, included.', example: '03-31' }),
+            })
+            .optional()
+            .meta({
+              description:
+                'A scheduled switch’s days every year, New York time; it may run over New ' +
+                'Year. The app never shows them.',
+            })
+            .openapi('SwitchWindow'),
+        }),
+      )
+      .meta({ description: 'Every global switch scenes, stores and unlock rules follow.' }),
+  })
+  .openapi('SwitchesCatalog');
+
+/** The `switches` section: each switch's mode and days, so the app works out what is on itself. */
+export function switchesSection(
+  switches: Pick<Switches, 'list'>,
+): CatalogSection<typeof SwitchesCatalog> {
+  return {
+    name: 'switches',
+    schema: SwitchesCatalog,
+    load: async () => ({
+      switches: (await switches.list()).map(({ id, mode, window }) => ({
+        id,
+        mode,
+        ...(window === undefined ? {} : { window: { ...window } }),
+      })),
     }),
   };
 }

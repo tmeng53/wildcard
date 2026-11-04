@@ -1,7 +1,7 @@
 import {
   earned,
   toGo,
-  type InWindow,
+  type SwitchOn,
   type Locked,
   type MemberId,
   type Unlock,
@@ -38,8 +38,8 @@ export function createUnlocks(deps: {
   readonly store: UnlockStore;
   readonly trainedSince: TrainedSince;
   readonly sportListed: SportListed;
-  /** Whether a moment falls in a rule's window, by the New York day. */
-  readonly inWindow: InWindow;
+  /** Every switch as it is now, as one lookup. */
+  readonly switches: () => Promise<SwitchOn>;
   /** Told what each grant kept new; left out where nobody needs telling. */
   readonly unlocked?: Unlocked;
 }): Unlocks & UnlocksAdmin {
@@ -53,9 +53,12 @@ export function createUnlocks(deps: {
     const open = rules.filter(({ kind, id }) => !held.has(`${kind}:${id}`));
     if (open.length === 0) return { unlocks: has, locked: [] };
     const since = new Date(Math.min(...open.map(({ countsFrom }) => countsFrom.getTime())));
-    const trained = await deps.trainedSince({ member, since });
-    const fresh = earned({ rules: open, trained, has, inWindow: deps.inWindow });
-    const locked = toGo({ rules: open, trained, inWindow: deps.inWindow });
+    const [trained, switchOn] = await Promise.all([
+      deps.trainedSince({ member, since }),
+      deps.switches(),
+    ]);
+    const fresh = earned({ rules: open, trained, has, switchOn });
+    const locked = toGo({ rules: open, trained, switchOn });
     if (fresh.length === 0) return { unlocks: has, locked };
     await grant(member, fresh);
     return { unlocks: await deps.store.unlocksOf(member), locked };

@@ -1,6 +1,6 @@
 import { sql, type Kysely } from 'kysely';
 
-import { MonthDay, SceneId, type ListedScene } from '../domain/catalog.js';
+import { SceneId, type ListedScene } from '../domain/catalog.js';
 import type { SceneStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -19,8 +19,7 @@ function columns(scene: ListedScene) {
     text_color: scene.colors.text,
     floor: scene.colors.floor,
     offered: scene.offered,
-    window_start: scene.window?.start ?? null,
-    window_end: scene.window?.end ?? null,
+    switch_id: scene.switchId ?? null,
   };
 }
 
@@ -44,14 +43,7 @@ export function createPostgresSceneStore(db: Kysely<SceneTables>): SceneStore {
           floor: row.floor,
         },
         offered: row.offered,
-        ...(row.window_start === null || row.window_end === null
-          ? {}
-          : {
-              window: {
-                start: MonthDay.parse(row.window_start),
-                end: MonthDay.parse(row.window_end),
-              },
-            }),
+        ...(row.switch_id === null ? {} : { switchId: row.switch_id }),
       }));
     },
 

@@ -241,6 +241,9 @@
           },
           "scenes": {
             "$ref": "#/components/schemas/ScenesCatalog"
+          },
+          "switches": {
+            "$ref": "#/components/schemas/SwitchesCatalog"
           }
         },
         "required": [
@@ -405,8 +408,10 @@
                   "type": "boolean",
                   "description": "True for a scene open only part of the year (冬季限定). The picker offers it while `GET /squads/{squadId}/scene` lists it."
                 },
-                "window": {
-                  "$ref": "#/components/schemas/SceneWindow"
+                "switchId": {
+                  "type": "string",
+                  "description": "The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.",
+                  "example": "winter"
                 }
               },
               "required": [
@@ -463,7 +468,42 @@
         ],
         "additionalProperties": {}
       },
-      "SceneWindow": {
+      "SwitchesCatalog": {
+        "type": "object",
+        "properties": {
+          "switches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "winter"
+                },
+                "mode": {
+                  "type": "string",
+                  "description": "`on`, `off` or `schedule` (on only in `window`); read any other as off.",
+                  "example": "schedule"
+                },
+                "window": {
+                  "$ref": "#/components/schemas/SwitchWindow"
+                }
+              },
+              "required": [
+                "id",
+                "mode"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Every global switch scenes, stores and unlock rules follow."
+          }
+        },
+        "required": [
+          "switches"
+        ],
+        "additionalProperties": {}
+      },
+      "SwitchWindow": {
         "type": "object",
         "properties": {
           "start": {
@@ -482,7 +522,7 @@
           "end"
         ],
         "additionalProperties": {},
-        "description": "A limited scene’s days every year, New York time; it may run over New Year. The app never shows them: it opens the scene’s store only on these days."
+        "description": "A scheduled switch’s days every year, New York time; it may run over New Year. The app never shows them."
       },
       "Me": {
         "type": "object",

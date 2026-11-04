@@ -34,8 +34,8 @@ function unlocksWith(trained: Map<MemberId, Trained[]>, told: string[] = []) {
     trainedSince: ({ member, since }) =>
       Promise.resolve((trained.get(member) ?? []).filter(({ madeAt }) => madeAt >= since)),
     sportListed: (id) => Promise.resolve(id !== 'quidditch'),
-    // July (UTC) is outside every window, so a test can train out of one.
-    inWindow: (_window, at) => at.getUTCMonth() !== 6,
+    // Every switch is off in July (UTC), so a test can train while one is off.
+    switches: () => Promise.resolve((_id, at) => at.getUTCMonth() !== 6),
     unlocked: (_member, unlocks) => {
       told.push(...unlocks.map(({ kind, id }) => `${kind}:${id}`));
       return Promise.resolve();
@@ -87,9 +87,7 @@ describe('unlocks', () => {
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
     ]);
     expect(powder.at(-1)?.id).toBe('powder-salmonhelmet');
-    expect(new Set(powder.map(({ window }) => JSON.stringify(window)))).toStrictEqual(
-      new Set([JSON.stringify({ start: '11-15', end: '03-31' })]),
-    );
+    expect(new Set(powder.map(({ switchId }) => switchId))).toStrictEqual(new Set(['winter']));
     expect(powder[0]?.sports).toStrictEqual([
       'ski',
       'snowboard',
@@ -102,28 +100,27 @@ describe('unlocks', () => {
     ]);
   });
 
-  it('counts only check-ins made in its window toward a rule with one', async () => {
+  it('counts only check-ins made while its switch is on toward a rule with one', async () => {
     const unlocks = unlocksWith(new Map());
-    const window = { start: '11-15', end: '03-31' };
-    const rule = { kind: 'piece', id: 'test-snowsuit', sports: ['ski'], after: 1 } as const;
-    await unlocks.putRule({ ...rule, window });
-    // A change that leaves the window out keeps it; null makes it count all year.
+    const rule = { kind: 'prop' as const, id: 'testSnowboard', sports: ['ski'], after: 1 };
+    await unlocks.putRule({ ...rule, switchId: 'winter' });
+    // A change that leaves the switch out keeps it; null makes it count all year.
     const kept = await unlocks.putRule(rule);
-    expect(kept.find(({ id }) => id === 'test-snowsuit')?.window).toStrictEqual(window);
-    const allYear = await unlocks.putRule({ ...rule, id: 'test-allyear', window: null });
-    expect(allYear.find(({ id }) => id === 'test-allyear')?.window).toBeUndefined();
+    expect(kept.find(({ id }) => id === 'testSnowboard')?.switchId).toBe('winter');
+    const allYear = await unlocks.putRule({ ...rule, id: 'testAllYear', switchId: null });
+    expect(allYear.find(({ id }) => id === 'testAllYear')?.switchId).toBeUndefined();
 
     const me = await newMember();
     const july = { id: randomUUID(), sport: 'ski', madeAt: new Date('2099-07-01T12:00:00Z') };
     const december = { id: randomUUID(), sport: 'ski', madeAt: new Date('2099-12-01T12:00:00Z') };
     const trained = new Map<MemberId, Trained[]>([[me, [july]]]);
-    const windowed = unlocksWith(trained);
-    const summer = await windowed.standing(me);
-    expect(summer.unlocks.some(({ id }) => id === 'test-snowsuit')).toBe(false);
-    expect(summer.locked.find(({ id }) => id === 'test-snowsuit')?.toGo).toBe(1);
+    const switched = unlocksWith(trained);
+    const summer = await switched.standing(me);
+    expect(summer.unlocks.some(({ id }) => id === 'testSnowboard')).toBe(false);
+    expect(summer.locked.find(({ id }) => id === 'testSnowboard')?.toGo).toBe(1);
     trained.set(me, [july, december]);
-    const winter = await windowed.of(me);
-    expect(winter.find(({ id }) => id === 'test-snowsuit')?.by).toStrictEqual({
+    const winter = await switched.of(me);
+    expect(winter.find(({ id }) => id === 'testSnowboard')?.by).toStrictEqual({
       checkIn: december.id,
     });
   });

@@ -9,18 +9,26 @@ extension AppCatalog {
         self.init(
             sports: wire.sports.map(SportCatalog.init) ?? fallback.sports,
             diceLines: dice.isEmpty ? fallback.diceLines : dice,
-            seasons: wire.scenes.map(Self.seasons) ?? fallback.seasons)
+            switches: wire.switches.map(Self.switches) ?? fallback.switches)
     }
 
-    /// Each limited scene's season; a window that can't be read leaves its scene out.
-    static func seasons(_ wire: Components.Schemas.ScenesCatalog) -> [String: SceneSeason] {
-        var seasons: [String: SceneSeason] = [:]
-        for scene in wire.scenes {
-            guard let window = scene.window, let start = MonthDay(window.start), let end = MonthDay(window.end)
-            else { continue }
-            seasons[scene.id] = SceneSeason(start: start, end: end)
+    /// Each switch by id; a mode this build doesn't know, or a schedule whose days can't be read,
+    /// reads as off.
+    static func switches(_ wire: Components.Schemas.SwitchesCatalog) -> [String: CatalogSwitch] {
+        var switches: [String: CatalogSwitch] = [:]
+        for each in wire.switches {
+            switch each.mode {
+            case "on": switches[each.id] = .alwaysOn
+            case "schedule":
+                if let window = each.window, let start = MonthDay(window.start), let end = MonthDay(window.end) {
+                    switches[each.id] = .schedule(start: start, end: end)
+                } else {
+                    switches[each.id] = .alwaysOff
+                }
+            default: switches[each.id] = .alwaysOff
+            }
         }
-        return seasons
+        return switches
     }
 }
 

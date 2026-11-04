@@ -29,6 +29,7 @@
     "@wildcard/nudges": "workspace:*",
     "@wildcard/push": "workspace:*",
     "@wildcard/scenes": "workspace:*",
+    "@wildcard/switches": "workspace:*",
     "@wildcard/sport-ids": "workspace:*",
     "@wildcard/sports": "workspace:*",
     "@wildcard/squads": "workspace:*",

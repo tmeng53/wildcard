@@ -23,6 +23,7 @@ import {
 } from '@wildcard/push';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
 import { z } from 'zod';
 
 import type { AdminTool } from '../admin-mcp/admin-tool.js';
@@ -121,9 +122,10 @@ export function pushOn(db: Database, sender: PushSender = createOffSender()) {
   });
 }
 
-/** The scenes on local Supabase, as seeded: the five all year and the winter 雪场. */
+/** The scenes on local Supabase, as seeded: the five all year and the winter 雪场 on its switch. */
 export function scenesOn(db: Database) {
-  return createScenes({ store: createPostgresSceneStore(db) });
+  const switches = createSwitches({ store: createPostgresSwitchStore(db) });
+  return createScenes({ store: createPostgresSceneStore(db), switches: () => switches.states() });
 }
 
 /** Jobs as a server without a scheduler has them: no token, so none runs. */

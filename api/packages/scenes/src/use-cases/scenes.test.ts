@@ -4,7 +4,6 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createPostgresSceneStore, type SceneTables } from '../adapters/postgres-scene-store.js';
-import { SceneNotFoundError } from '../errors.js';
 import { createScenes } from './scenes.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Each test changes the seeded
@@ -42,21 +41,28 @@ const colors = {
   floor: '#F5D9D3',
 };
 
+/** The seeded winter switch's days: November 15 to March 31. */
+const winter = () =>
+  Promise.resolve(
+    (id: string, day: string) =>
+      id === 'winter' && (day.slice(5) >= '11-15' || day.slice(5) <= '03-31'),
+  );
+
 describe('the scenes', () => {
-  it('starts with the five scenes and the winter 雪场, open 11/15 to 3/31', async () => {
-    const scenes = createScenes({ store: createPostgresSceneStore(db) });
+  it('starts with the five scenes and the winter 雪场, which follows the winter switch', async () => {
+    const scenes = createScenes({ store: createPostgresSceneStore(db), switches: winter });
     const list = await scenes.list();
     expect(list.map(({ id }) => id)).toEqual(['track', 'pool', 'gym', 'tennis', 'climbing', 'ski']);
     expect(list.find(({ id }) => id === 'ski')).toMatchObject({
       names: { zhHans: '雪场', en: 'Ski', zhHant: '雪場' },
       colors: { signature: '#16384D', onSignature: '#D6F1FB' },
-      window: { start: '11-15', end: '03-31' },
+      switchId: 'winter',
     });
-    expect(list.find(({ id }) => id === 'gym')?.window).toBeUndefined();
+    expect(list.find(({ id }) => id === 'gym')?.switchId).toBeUndefined();
   });
 
-  it('opens the 雪场 only in its window', async () => {
-    const scenes = createScenes({ store: createPostgresSceneStore(db) });
+  it('opens the 雪场 only while its switch is on', async () => {
+    const scenes = createScenes({ store: createPostgresSceneStore(db), switches: winter });
     expect(await scenes.openOn('2026-11-09')).not.toContain('ski');
     expect(await scenes.openOn('2026-11-16')).toContain('ski');
     expect(await scenes.openOn('2027-03-30')).toContain('ski');
@@ -69,16 +75,16 @@ describe('the scenes', () => {
     ]);
   });
 
-  it('adds a scene at its place, logs it, and changes a window alone', async () => {
+  it('adds a scene at its place and logs it', async () => {
     await rolledBack(async (trx) => {
-      const scenes = createScenes({ store: createPostgresSceneStore(trx) });
+      const scenes = createScenes({ store: createPostgresSceneStore(trx), switches: winter });
       const before = await logCount(trx);
       const added = await scenes.putScene({
         id: 'beach',
         names: { zhHans: '沙滩', en: 'Beach', zhHant: '沙灘' },
         colors,
         offered: true,
-        window: { start: '06-01', end: '08-31' },
+        switchId: 'winter',
         position: 2,
       });
       expect(added.map(({ id }) => id)).toEqual([
@@ -93,29 +99,17 @@ describe('the scenes', () => {
       // The new row, and the five it moved down.
       expect((await logCount(trx)) - before).toBe(6);
 
-      const reopened = await scenes.setWindow({
-        id: 'ski',
-        window: { start: '12-01', end: '03-15' },
-      });
-      expect(reopened.find(({ id }) => id === 'ski')?.window).toEqual({
-        start: '12-01',
-        end: '03-15',
-      });
-      expect((await logCount(trx)) - before).toBe(7);
-
-      const allYear = await scenes.setWindow({ id: 'beach', window: null });
-      expect(allYear.find(({ id }) => id === 'beach')?.window).toBeUndefined();
+      expect(added.find(({ id }) => id === 'beach')?.switchId).toBe('winter');
       // Saving the same again writes nothing.
-      await scenes.setWindow({ id: 'beach', window: null });
-      expect((await logCount(trx)) - before).toBe(8);
+      await scenes.putScene({
+        id: 'beach',
+        names: { zhHans: '沙滩', en: 'Beach', zhHant: '沙灘' },
+        colors,
+        offered: true,
+        switchId: 'winter',
+      });
+      expect((await logCount(trx)) - before).toBe(6);
     });
-  });
-
-  it('refuses a window for a scene it doesn’t have', async () => {
-    const scenes = createScenes({ store: createPostgresSceneStore(db) });
-    await expect(scenes.setWindow({ id: 'moon', window: null })).rejects.toBeInstanceOf(
-      SceneNotFoundError,
-    );
   });
 
   it('never deletes a scene or changes its id', async () => {
