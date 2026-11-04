@@ -3,6 +3,8 @@ import CheckInUI
 import Contracts
 import DesignSystem
 import Foundation
+import NotificationsDomain
+import NotificationsUI
 import ScheduleUI
 import SquadUI
 import UIKit
@@ -80,6 +82,13 @@ enum LaunchOptions {
     /// flip back and a delete fail.
     static var meFailsSaving: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitest-me-fails")
+    }
+
+    /// The sample member's 通知: the sample squad's last two weeks, or none with
+    /// `-uitest-no-notices`, to see the page empty.
+    static var notices: any NoticeSource {
+        ProcessInfo.processInfo.arguments.contains("-uitest-no-notices")
+            ? InMemoryNoticeSource.empty : InMemoryNoticeSource.sample(now: now())
     }
 
     /// `-uitest-empty-feed`: 动态 with no posts, to see its empty scene.

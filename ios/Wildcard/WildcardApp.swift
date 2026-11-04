@@ -14,6 +14,7 @@ import FeedUI
 import Foundation
 import MeDomain
 import MeUI
+import NotificationsUI
 import OnboardingUI
 import RecapUI
 import ScheduleDomain
@@ -248,7 +249,7 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, selection: $tab
+                myPosts: myPosts, notices: LaunchOptions.notices, selection: $tab
             )
             .onAppear {
                 // As on the real backend: the awards push opens 动态, where the 战报 is, a comment's
