@@ -1,10 +1,13 @@
-import type {
-  Awards,
-  AwardsState,
-  Failures,
-  MemberId,
-  SquadId,
-  TitlesWon,
+import {
+  boardOf,
+  titlesWonOf,
+  type Awards,
+  type AwardsState,
+  type BoardTitle,
+  type Failures,
+  type MemberId,
+  type SquadId,
+  type TitlesWon,
 } from '../domain/awards.js';
 import type { WeekStart } from '../domain/schedule.js';
 import type { WeekStory } from '../domain/week-story.js';
@@ -46,6 +49,11 @@ export interface WeeklyAwards {
   }): Promise<boolean>;
   /** Every title the member has won, in all their squads (周奖 on their player card). */
   titlesWon(member: MemberId): Promise<TitlesWon>;
+  /**
+   * These members' badge boards (徽章板), by member: every title they won in all their squads,
+   * the latest first. A member who won nothing has an empty board.
+   */
+  boards(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, readonly BoardTitle[]>>;
   /** A squad's frozen 战报 for the week, or `undefined` before it is frozen. */
   story(input: {
     readonly squad: SquadId;
@@ -73,7 +81,12 @@ export function createWeeklyAwards(deps: {
     find: ({ squad, weekStart }) => deps.store.find(squad, weekStart),
     claimNudge: ({ squad, weekStart }) => deps.store.claimNudge(squad, weekStart),
     claimReadyPush: ({ squad, weekStart }) => deps.store.markNotified(squad, weekStart),
-    titlesWon: (member) => deps.store.titlesWon(member),
+    titlesWon: async (member) =>
+      titlesWonOf(boardOf((await deps.store.wins([member])).get(member) ?? [])),
+    boards: async (members) => {
+      const wins = await deps.store.wins(members);
+      return new Map(members.map((member) => [member, boardOf(wins.get(member) ?? [])]));
+    },
     story: ({ squad, weekStart }) => deps.stories.find(squad, weekStart),
     storiesWaiting: ({ weekStart }) => deps.stories.waitingForAwards(weekStart),
     freezeStory: async (story) => {

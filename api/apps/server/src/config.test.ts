@@ -32,6 +32,7 @@ describe('readConfig', () => {
     expect(readConfig(base)).toStrictEqual({
       port: 8080,
       databaseUrl: base.DATABASE_URL,
+      liveEventsDatabaseUrl: base.DATABASE_URL,
       databaseCaFile: undefined,
       supabaseUrl: 'http://127.0.0.1:54321',
       supabaseSecretKey: 'sb_secret_local',
@@ -45,6 +46,16 @@ describe('readConfig', () => {
       errorReports: undefined,
       traceProject: undefined,
     });
+  });
+
+  it('listens for live events on the session pooler when the server uses the transaction pooler', () => {
+    const pooler = 'postgresql://postgres.ref:secret@aws-0-us-east-1.pooler.supabase.com';
+    expect(
+      readConfig({ ...base, DATABASE_URL: `${pooler}:6543/postgres` }).liveEventsDatabaseUrl,
+    ).toBe(`${pooler}:5432/postgres`);
+    expect(
+      readConfig({ ...base, DATABASE_URL: `${pooler}:5432/postgres` }).liveEventsDatabaseUrl,
+    ).toBe(`${pooler}:5432/postgres`);
   });
 
   it('reports errors only once there is a DSN, naming the revision Cloud Run serves', () => {

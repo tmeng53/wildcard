@@ -98,6 +98,17 @@ export class DatabaseUnavailableError extends AppError {
   }
 }
 
+/** Thrown when live events can't be heard, so `GET /me/events` can't stream. Retry later. */
+export class LiveEventsUnavailableError extends AppError {
+  override readonly name = 'LiveEventsUnavailableError';
+  readonly reason = 'LIVE_EVENTS_UNAVAILABLE';
+  readonly status = 'UNAVAILABLE';
+
+  constructor(options?: ErrorOptions) {
+    super('Live updates are unavailable right now. Try again shortly.', options);
+  }
+}
+
 /** Thrown when a request's path, query or body isn't what the route takes. Fix the request. */
 export class RequestInvalidError extends AppError {
   override readonly name = 'RequestInvalidError';

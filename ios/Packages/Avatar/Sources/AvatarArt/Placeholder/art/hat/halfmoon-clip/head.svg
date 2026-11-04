@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+  <path d="M 99 82 Q 96.48 90 97.95 97 M 107.4 82 Q 105.888 90 106.77000000000001 97 M 115.8 82 Q 115.29599999999999 90 115.59 97 M 124.2 82 Q 124.70400000000001 90 124.41 97 M 132.6 82 Q 134.112 90 133.23 97 M 141 82 Q 143.52 90 142.05 97" fill="none" stroke="#6E4526" stroke-width="7.4" stroke-linecap="round"/>
+  <path d="M 99 82 Q 96.48 90 97.95 97 M 107.4 82 Q 105.888 90 106.77000000000001 97 M 115.8 82 Q 115.29599999999999 90 115.59 97 M 124.2 82 Q 124.70400000000001 90 124.41 97 M 132.6 82 Q 134.112 90 133.23 97 M 141 82 Q 143.52 90 142.05 97" fill="none" stroke="#B9803F" stroke-width="4.4" stroke-linecap="round"/>
+  <path d="M 99 76 Q 93.75 66 95.22 58 M 107.4 76 Q 104.25 66 105.132 58 M 115.8 76 Q 114.75 66 115.044 58 M 124.2 76 Q 125.25 66 124.956 58 M 132.6 76 Q 135.75 66 134.868 58 M 141 76 Q 146.25 66 144.78 58" fill="none" stroke="#6E4526" stroke-width="7.4" stroke-linecap="round"/>
+  <path d="M 99 76 Q 93.75 66 95.22 58 M 107.4 76 Q 104.25 66 105.132 58 M 115.8 76 Q 114.75 66 115.044 58 M 124.2 76 Q 125.25 66 124.956 58 M 132.6 76 Q 135.75 66 134.868 58 M 141 76 Q 146.25 66 144.78 58" fill="none" stroke="#B9803F" stroke-width="4.4" stroke-linecap="round"/>
+  <rect x="94" y="73.2" width="52" height="11.6" rx="5.8" fill="#B9803F" stroke="#6E4526" stroke-width="2.2"/>
+  <circle cx="103" cy="78.4" r="2" fill="#6E4526"/>
+  <circle cx="114" cy="80.6" r="1.4" fill="#6E4526"/>
+  <circle cx="126" cy="77.6" r="2.2" fill="#6E4526"/>
+  <circle cx="138" cy="80" r="1.6" fill="#6E4526"/>
+  <path d="M 99 76.4 L 116 76.4" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.5"/>
+</svg>

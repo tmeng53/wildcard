@@ -189,30 +189,32 @@ const installedBuildsReplies: { readonly replies: readonly never[] } = { replies
 
 const count = (description: string) => z.int().nonnegative().meta({ description });
 
+/** A member's lifetime counts by kind, wherever the API shows them. */
+export const checkInTotalsFields = {
+  trainedDays: count('Days with a 练了; several 练了 on one day count once.'),
+  healthyMeals: count('健康餐 check-ins.'),
+  cheatMeals: count('坦白放纵餐 check-ins.'),
+  disclaimers: count('今日请假条 check-ins.'),
+  topSport: z
+    .strictObject({
+      sport: storedTrainingFields.sport,
+      customSport: z
+        .string()
+        .optional()
+        .meta({ description: 'The name of a `custom` sport; a listed sport has none.' }),
+      checkIns: count('练了 check-ins of this sport.'),
+    })
+    .optional()
+    .meta({
+      description:
+        'The sport with the most 练了 (最常练; a custom sport counts by its name), the latest ' +
+        'one on a tie. Left out before the first 练了.',
+    })
+    .openapi('TopSport'),
+};
+
 const CheckInTotals = z
-  .strictObject({
-    version: bodyVersion(1),
-    trainedDays: count('Days with a 练了; several 练了 on one day count once.'),
-    healthyMeals: count('健康餐 check-ins.'),
-    cheatMeals: count('坦白放纵餐 check-ins.'),
-    disclaimers: count('今日请假条 check-ins.'),
-    topSport: z
-      .strictObject({
-        sport: storedTrainingFields.sport,
-        customSport: z
-          .string()
-          .optional()
-          .meta({ description: 'The name of a `custom` sport; a listed sport has none.' }),
-        checkIns: count('练了 check-ins of this sport.'),
-      })
-      .optional()
-      .meta({
-        description:
-          'The sport with the most 练了 (最常练; a custom sport counts by its name), the latest ' +
-          'one on a tie. Left out before the first 练了.',
-      })
-      .openapi('TopSport'),
-  })
+  .strictObject({ version: bodyVersion(1), ...checkInTotalsFields })
   .openapi('CheckInTotals');
 
 /** Signs a view URL for every photo of these check-ins, in one call to storage. */

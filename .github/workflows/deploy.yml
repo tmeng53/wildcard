@@ -177,11 +177,15 @@ jobs:
           remove=()
           if [ -n "$absent" ]; then remove=(--remove-secrets "$absent"); fi
           # The startup probe keeps traffic on the old revision unless the new one reaches the
-          # database (/health runs `select 1`).
+          # database (/health runs `select 1`). The request timeout is an hour, Cloud Run's most,
+          # so `GET /me/events` streams stay open (the server ends each one after 50 minutes);
+          # every other route answers long before it.
+          # https://cloud.google.com/run/docs/configuring/request-timeout
           gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$GCP_REGION" \
             --service-account "wildcard-api@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
             --allow-unauthenticated \
             --max-instances 3 \
+            --timeout 3600 \
             --startup-probe httpGet.path=/health,httpGet.port=8080,periodSeconds=3,timeoutSeconds=3,failureThreshold=10 \
             --update-secrets "$secrets" \
             "${remove[@]}" \
