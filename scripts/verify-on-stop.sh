@@ -58,7 +58,7 @@ if [ -n "${base:-}" ]; then
       web/*) add web ;;
       supabase/*) add supabase; add api; add backend ;;
       api/*) add supabase; add api; add backend; add swift ;;
-      ios/*) add swift; add backend; add web ;;
+      ios/*) parts="swift web supabase api backend"; break ;;  # API tests read the app's catalog, strings and art
       *) parts="swift web supabase api backend"; break ;;
     esac
   done <<<"$files"

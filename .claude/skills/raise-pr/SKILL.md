@@ -141,7 +141,7 @@ When a review bot or a person comments, read every finding first, then check eac
 Tracy's rule (2026-10-23, "why aren't agents merging themselves"): **the owner thread merges its own PR**, every PR, AGENTS.md, `.claude/`, `.github/`, contract and schema PRs included, and never waits for Tracy to merge. It merges when all of these hold on its current head commit:
 
 1. Every check is green: the `verify` workflow passed on the head commit (for a new screen or a big redesign, with its `ios` job run through the `ios-ci` label).
-2. For tier 2 or 3, the latest verifier verdict is `PASS` or `PASS+NOTES` (or a human's written call on a disputed `FAIL`), covers the current diff, and each of its notes has an answer on the PR (see Independent verification).
+2. For tier 2 or 3, the latest verifier verdict is `PASS` or `PASS+NOTES` (or a human's written call on a disputed `FAIL`), covers the current diff (a merge of `main` that needed no logic change keeps the earlier verdict's hash), and each of its notes has an answer on the PR (see Independent verification).
 3. For tier 2 or 3, the Claude review is clean on the head commit; on a bigger PR, Codex has reviewed a head of this PR or 30 minutes have passed since the ask (see After opening), and each finding it posted is answered; and no review thread is unresolved.
 4. No human has requested changes, and there is no merge conflict.
 
