@@ -1180,6 +1180,22 @@
           }
         }
       }
+    },
+    "今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

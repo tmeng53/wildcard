@@ -27,12 +27,11 @@ extension TodayModel {
     static let togetherDelay = 0.6
 
     /// What the home plays once it has loaded, one after another: a notice, the news, pats on
-    /// me, the coach's line, then the squad celebrating together.
+    /// me, then the squad celebrating together.
     func playOpening() async {
         await showNextNotice()
         await tellNews()
         await playPatsOnMe()
-        await sayCoachLine()
         await celebrateTogether()
     }
 

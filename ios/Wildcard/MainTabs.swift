@@ -51,6 +51,8 @@ struct MainTabs: View {
     @State private var showsSchedule = LaunchOptions.opensSchedule
     /// 小队, open from the home's squad card in 今天's place.
     @State private var showsSquad = LaunchOptions.opensSquad
+    /// 小队 opens on its coach's 简历, from a tap on the coach on the home.
+    @State private var squadOpensCoach = false
     /// 小队's scene pick is playing its reveal, which fills the screen.
     @State private var squadRevealing = false
     /// 我的动态, open from 我 in its place.
@@ -108,7 +110,13 @@ struct MainTabs: View {
         }
         .cardPopup(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
             if let teammate {
-                TeammateCard(model: teammate).environment(\.sceneTheme, today.scene)
+                // What they're up to today over their card, with 拍一拍 (2026-11-04).
+                VStack(spacing: Space.xs) {
+                    MateTodayStrip(model: today, member: teammate.member) { self.teammate = nil }
+                        .frame(width: SquadmateCardPopup.width)
+                    TeammateCard(model: teammate)
+                }
+                .environment(\.sceneTheme, today.scene)
             }
         }
         .onChange(of: squad.hasLeft) { _, left in
@@ -126,6 +134,7 @@ struct MainTabs: View {
         withTransaction(instant) {
             squadRevealing = false
             showsSquad = false
+            squadOpensCoach = false
             selection = .today
         }
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
@@ -315,25 +324,41 @@ private struct RecapTile: View {
 }
 
 extension MainTabs {
-    /// 今天, or 小队 in its place, opened from the home's squad card.
+    /// 今天, or 小队 in its place, opened from the home's squad card, or on its coach's 简历 from
+    /// a tap on the coach on the sideline.
     private var todayPage: some View {
         ZStack {
             if showsSquad {
                 SquadSettingsView(
-                    model: squad, picked: land(on:coveredAt:), close: { showsSquad = false },
-                    revealing: $squadRevealing, openTeammate: { teammate = squadCard(of: $0) }
+                    model: squad, picked: land(on:coveredAt:),
+                    close: {
+                        showsSquad = false
+                        squadOpensCoach = false
+                    },
+                    revealing: $squadRevealing, openTeammate: { teammate = squadCard(of: $0) },
+                    coachNote: today.coachLine, opensCoach: squadOpensCoach
                 )
                 .environment(\.sceneTheme, squad.scene)
                 .transition(.move(edge: .trailing))
             } else {
                 TodayView(
-                    model: today, openSquad: { showsSquad = true },
+                    model: today,
+                    openSquad: {
+                        squadOpensCoach = false
+                        showsSquad = true
+                    },
                     openPost: { post in
                         feed.open(post)
                         selection = .feed
                     }
                 )
-                .onAppear { today.openTeammate = { teammate = homeCard(of: $0) } }
+                .onAppear {
+                    today.openTeammate = { teammate = homeCard(of: $0) }
+                    today.openCoach = {
+                        squadOpensCoach = true
+                        showsSquad = true
+                    }
+                }
             }
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsSquad)

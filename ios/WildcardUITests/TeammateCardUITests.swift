@@ -1,29 +1,23 @@
 import XCTest
 
-/// A teammate's player card, the way a member finds it: 小米's bubble on the home names her and
-/// the title she wears, and a tap on that line opens her card, which turns over to her badge
-/// board and opens a badge with no 装备; and from 小队's member list, where it pops up over
-/// the dimmed page and a tap off it closes it. Screenshots are kept
-/// for review.
+/// A teammate's player card, the way a member finds it: a tap on 小米 on the home opens her card
+/// with her today over it, wearing her title, which turns over to her badge board and opens a
+/// badge with no 装备; and from 小队's member list, where it pops up over the dimmed page and a
+/// tap off it closes it. Screenshots are kept for review.
 @MainActor
 final class TeammateCardUITests: XCTestCase {
     private static let wait: TimeInterval = 30
 
-    func testFromTheHomeBubble() {
-        let app = launch(["-uitest-noon", "-today.cardPage", "0", "-uitest-bubble-hold"])
+    func testFromTheHome() {
+        let app = launch(["-uitest-noon", "-today.cardPage", "0"])
         let mate = app.buttons.matching(identifier: "today.mate").matching(NSPredicate(format: "label == %@", "小米"))
             .firstMatch
         XCTAssertTrue(mate.waitForExistence(timeout: Self.wait), "小米 isn't on the home")
         mate.tap()
-        let name = app.buttons["today.mateCard"]
-        XCTAssertTrue(name.waitForExistence(timeout: Self.wait), "小米's bubble has no name line")
-        XCTAssertEqual(name.label, "小米 · 早八战神", "the bubble doesn't name her title")
         let window = app.windows.firstMatch.frame
-        XCTAssertTrue(window.contains(name.frame), "the name line runs off the screen: \(name.frame)")
-        Thread.sleep(forTimeInterval: 0.6)
-        keepScreenshot(named: "55-mate-bubble-title")
-
-        name.tap()
+        let today = app.descendants(matching: .any).matching(identifier: "today.mateToday").firstMatch
+        XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "her today didn't open over her card")
+        XCTAssertTrue(window.contains(today.frame), "her today runs off the screen: \(today.frame)")
         let card = app.buttons["me.card"]
         let opened = card.waitForExistence(timeout: Self.wait)
         // Kept before the check, so a failure still shows what the screen held.
@@ -33,6 +27,7 @@ final class TeammateCardUITests: XCTestCase {
         XCTAssertTrue(card.label.contains("小米"), "the card isn't hers: \(card.label)")
         XCTAssertTrue(card.label.contains("早八战神"), "the card doesn't wear her title: \(card.label)")
         XCTAssertTrue(window.contains(card.frame), "the card runs off the screen: \(card.frame)")
+        XCTAssertLessThanOrEqual(today.frame.maxY, card.frame.minY, "her today covers her card: \(today.frame)")
 
         card.tap()
         let badges = app.buttons.matching(identifier: "me.badge")
@@ -47,7 +42,7 @@ final class TeammateCardUITests: XCTestCase {
         keepScreenshot(named: "58-teammate-badge-card")
     }
 
-    func testFromSquadTab() {
+    func testFromSquadPage() {
         let app = launch(["-tab", "squad"])
         let row = app.buttons.matching(identifier: "squad.member.card").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: Self.wait), "no teammate row opens a card")
@@ -62,7 +57,7 @@ final class TeammateCardUITests: XCTestCase {
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap()
         XCTAssertTrue(
             card.waitForNonExistence(timeout: 5), "a tap off the card didn't close it:\n\(app.debugDescription)")
-        XCTAssertTrue(row.isHittable, "the 小队 tab isn't back under the card")
+        XCTAssertTrue(row.isHittable, "小队 isn't back under the card")
     }
 
     private func launch(_ extra: [String]) -> XCUIApplication {

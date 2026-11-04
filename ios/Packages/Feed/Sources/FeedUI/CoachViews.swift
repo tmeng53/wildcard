@@ -15,47 +15,33 @@ struct CoachBoard: View {
     let note: CoachNote
 
     private static let figure = CGSize(width: 66, height: 88)
-    private static let clip = CGSize(width: 54, height: 12)
-    private static let border: Double = 1.5
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: Space.s) {
-            CoachFigure(player: model.coachPlayer(note.coach.id))
-                .frame(width: Self.figure.width, height: Self.figure.height)
-            VStack(alignment: .leading, spacing: Space.xs) {
-                HStack(spacing: Space.xxs) {
-                    CoachTag().padding(.trailing, Space.xxs)
-                    Text(verbatim: note.coach.name)
-                    Text(verbatim: "·")
-                    Text(note.writtenAt, format: .dateTime.hour().minute())
+        ClipboardCard {
+            HStack(alignment: .bottom, spacing: Space.s) {
+                CoachFigure(player: model.coachPlayer(note.coach.id))
+                    .frame(width: Self.figure.width, height: Self.figure.height)
+                VStack(alignment: .leading, spacing: Space.xs) {
+                    HStack(spacing: Space.xxs) {
+                        CoachTag().padding(.trailing, Space.xxs)
+                        Text(verbatim: note.coach.name)
+                        Text(verbatim: "·")
+                        Text(note.writtenAt, format: .dateTime.hour().minute())
+                    }
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .lineLimit(1)
+                    Text(verbatim: note.text)
+                        .typeStyle(TypeRamp.callout)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                .lineLimit(1)
-                Text(verbatim: note.text)
-                    .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, Space.s)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, Space.s)
+            .padding(.top, Space.m)
+            .padding(.horizontal, Space.m)
         }
-        .padding(.top, Space.m)
-        .padding(.horizontal, Space.m)
-        .background(
-            Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                .strokeBorder(Color(role: .fgDefault, in: theme), lineWidth: Self.border)
-        }
-        .overlay(alignment: .top) {
-            Capsule()
-                .fill(Color(role: .fgDefault, in: theme))
-                .frame(width: Self.clip.width, height: Self.clip.height)
-                .offset(y: -Self.clip.height / 2)
-        }
-        .padding(.top, Self.clip.height / 2)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("教练 \(note.coach.name)：\(note.text)", bundle: .module))
         .accessibilityIdentifier("feed.coachBoard")

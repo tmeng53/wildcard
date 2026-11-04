@@ -31,6 +31,7 @@ import {
   type ListSquadCheckInsInput,
   type SquadPost,
 } from './check-ins/list-squad-check-ins.js';
+import { memberWeek, type MemberWeek } from './check-ins/member-week.js';
 import { squadToday, type SquadToday } from './check-ins/squad-today.js';
 import {
   reactToCheckIn,
@@ -118,6 +119,8 @@ export interface CheckIns {
   }): Promise<Comment[]>;
   /** The home screen's squad: each member's today and the week's counts, for one of them. */
   squadToday(input: { readonly viewer: MemberId; readonly squad: SquadId }): Promise<SquadToday>;
+  /** A member's own 本周 x/y, for a squadmate's view of their card, in the member's time zone. */
+  memberWeek(input: { readonly member: MemberId; readonly viewer: MemberId }): Promise<MemberWeek>;
   /** A squad's week (周日战报): its awards and counts, for one of its members. */
   weekSummary(input: {
     readonly viewer: MemberId;
@@ -183,6 +186,7 @@ export function createCheckIns(deps: {
     listComments: (input) =>
       listResponses({ ...deps, list: (checkIn) => deps.comments.list(checkIn) }, input),
     squadToday: (input) => squadToday(deps, input),
+    memberWeek: (input) => memberWeek(deps, input),
     weekSummary: (input) => squadWeekSummary(deps, input),
     squadsCheckedInto: (input) => squadsCheckedInto(deps, input),
     squadWeekCheckIns: (input) => squadWeekCheckIns(deps, input),

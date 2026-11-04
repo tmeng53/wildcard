@@ -124,9 +124,9 @@ public struct StageLayout: Hashable, Sendable {
         return teammate.overlaps(coach) || teammate.overlaps(bubble)
     }
 
-    /// The most room the coach's bubble takes, in stage points: up to 170 wide (the bubble's
-    /// widest, `SpeechBubble.coachWidth`) and its tag and four lines tall, with its tail 32 points
-    /// in from its left.
+    /// The room kept clear over the coach's head, in stage points, where its line was said until
+    /// a tap on it opened its 简历 instead (2026-11-04): 170 wide and 112 tall, from 32 points to
+    /// the left of its head.
     static let bubbleSize = (width: 170.0, height: 112.0)
     static let bubbleTail = 32.0
 

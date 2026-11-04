@@ -6752,6 +6752,39 @@ extension Components {
             public var disclaimers: Swift.Int
             /// - Remark: Generated from `#/components/schemas/PlayerCard/topSport`.
             public var topSport: Components.Schemas.TopSport?
+            /// Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/week`.
+            public struct WeekPayload: Codable, Hashable, Sendable {
+                /// Days they trained this week, from all their check-ins wherever they went.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/trainedDays`.
+                public var trainedDays: Swift.Int
+                /// Days their plan trains this week, from the day they joined on.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/plannedDays`.
+                public var plannedDays: Swift.Int
+                /// Creates a new `WeekPayload`.
+                ///
+                /// - Parameters:
+                ///   - trainedDays: Days they trained this week, from all their check-ins wherever they went.
+                ///   - plannedDays: Days their plan trains this week, from the day they joined on.
+                public init(
+                    trainedDays: Swift.Int,
+                    plannedDays: Swift.Int
+                ) {
+                    self.trainedDays = trainedDays
+                    self.plannedDays = plannedDays
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case trainedDays
+                    case plannedDays
+                }
+            }
+            /// Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/week`.
+            public var week: Components.Schemas.PlayerCard.WeekPayload?
             /// Every title won, in all the member’s squads, one per title by its words, the latest won first.
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/titles`.
@@ -6774,6 +6807,7 @@ extension Components {
             ///   - cheatMeals: 坦白放纵餐 check-ins.
             ///   - disclaimers: 今日请假条 check-ins.
             ///   - topSport:
+            ///   - week: Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.
             ///   - titles: Every title won, in all the member’s squads, one per title by its words, the latest won first.
             ///   - worn: The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
             public init(
@@ -6788,6 +6822,7 @@ extension Components {
                 cheatMeals: Swift.Int,
                 disclaimers: Swift.Int,
                 topSport: Components.Schemas.TopSport? = nil,
+                week: Components.Schemas.PlayerCard.WeekPayload? = nil,
                 titles: [Components.Schemas.BoardTitle],
                 worn: Swift.String? = nil
             ) {
@@ -6802,6 +6837,7 @@ extension Components {
                 self.cheatMeals = cheatMeals
                 self.disclaimers = disclaimers
                 self.topSport = topSport
+                self.week = week
                 self.titles = titles
                 self.worn = worn
             }
@@ -6817,6 +6853,7 @@ extension Components {
                 case cheatMeals
                 case disclaimers
                 case topSport
+                case week
                 case titles
                 case worn
             }

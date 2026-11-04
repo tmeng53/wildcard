@@ -30,6 +30,11 @@ public struct SquadSettingsView: View {
     @Binding private var revealing: Bool
     /// Opens a teammate's player card, from their row; the app pops it up over everything.
     private let openTeammate: ((MemberID) -> Void)?
+    /// The coach's 战术板 line of the day, pinned on its 简历.
+    private let coachNote: CoachNote?
+    /// Opens straight on the squad's coach's 简历, as a tap on the coach on the home does: back
+    /// from it closes the page.
+    private let opensCoach: Bool
     @State private var renaming: String?
     @State private var confirming: MemberAction?
     @State private var isLeaving = false
@@ -44,8 +49,10 @@ public struct SquadSettingsView: View {
     public init(
         model: SquadSettingsModel, picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void,
         close: @escaping () -> Void, revealing: Binding<Bool>,
-        openTeammate: ((MemberID) -> Void)? = nil
+        openTeammate: ((MemberID) -> Void)? = nil, coachNote: CoachNote? = nil, opensCoach: Bool = false
     ) {
+        self.coachNote = coachNote
+        self.opensCoach = opensCoach
         self.model = model
         self.picked = picked
         self.close = close
@@ -77,7 +84,10 @@ public struct SquadSettingsView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
             }
-            CoachPageStack(model: model, pages: $coachPages)
+            CoachPageStack(model: model, pages: $coachPages, note: coachNote) {
+                // Back from the 简历 the home opened goes back to the home.
+                if opensCoach { close() }
+            }
             if let reveal {
                 UnboxRevealView(
                     reveal.unboxing, scene: reveal.scene, startedAt: reveal.startedAt,
@@ -91,6 +101,12 @@ public struct SquadSettingsView: View {
             }
         }
         .task { await model.reload() }
+        .task(id: model.coach?.coach.id) {
+            guard opensCoach, coachPages.isEmpty, let coach = model.coach?.coach else { return }
+            var instant = Transaction()
+            instant.disablesAnimations = true
+            withTransaction(instant) { coachPages = [.resume(coach)] }
+        }
         .onChange(of: reveal != nil) { _, playing in revealing = playing }
     }
 
@@ -359,31 +375,5 @@ enum Working: Hashable {
     case rename
     case member(MemberID)
     case leave
-}
-
-/// What the captain is about to do to a member, waiting on the system's confirm.
-enum MemberAction: Hashable, Identifiable {
-    case handCaptaincy(MemberID, name: String)
-    case remove(MemberID, name: String)
-
-    var id: Self { self }
-
-    var title: Text {
-        switch self {
-        case .handCaptaincy(_, let name): Text("把队长转给 \(name)？", bundle: .module)
-        case .remove(_, let name): Text("把 \(name) 移出小队？", bundle: .module)
-        }
-    }
-}
-
-enum SquadSettingsMetrics {
-    /// The scene's thumbnail on 本周场地.
-    static let thumbnail = CGSize(width: 56, height: 72)
-    /// A member's row.
-    static let row = 56.0
-    /// A member's head.
-    static let head = 36.0
-    /// A scene tile's face in the picker.
-    static let tile = 64.0
 }
 #endif
