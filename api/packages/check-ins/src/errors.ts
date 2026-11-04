@@ -37,7 +37,7 @@ export class CheckInInTheFutureError extends AppError {
 }
 
 /**
- * Thrown when a check-in's day is one the member hadn't reached when they made it, or is too far
+ * Thrown when a check-in's day is after the one the member posted it on, or more than 7 days
  * before it.
  */
 export class CheckInDayMismatchError extends AppError {
@@ -47,6 +47,20 @@ export class CheckInDayMismatchError extends AppError {
 
   constructor(readonly day: string) {
     super(`A check-in made at this time can’t count for ${day}.`);
+  }
+}
+
+/**
+ * Thrown for a 请假条 on a day the member already trained on (练了). The app greys that day out:
+ * read the member's check-ins again.
+ */
+export class AlreadyTrainedError extends AppError {
+  override readonly name = 'AlreadyTrainedError';
+  readonly reason = 'ALREADY_TRAINED';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(readonly day: string) {
+    super(`The member already trained on ${day}, so it can’t be a rest day.`);
   }
 }
 

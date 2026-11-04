@@ -26,9 +26,17 @@ export interface CheckInStore {
     readonly member: MemberId;
     readonly since: Date;
   }): Promise<TrainedCheckIn[]>;
-  /** Check-ins sent to `squad` from these members, newest day first, with their whole audience. */
+  /**
+   * Check-ins sent to `squad` from these members, newest day first, then newest made, with their
+   * whole audience: by the day each counts for, or with `by: 'postedDay'` the day each was
+   * posted on (the feed, where a 补打卡 shows when it was posted).
+   */
   listForSquad(
-    query: DayRange & { readonly squad: SquadId; readonly members: readonly MemberId[] },
+    query: DayRange & {
+      readonly squad: SquadId;
+      readonly members: readonly MemberId[];
+      readonly by?: 'day' | 'postedDay';
+    },
   ): Promise<CheckInRecord[]>;
   /**
    * Squads that got a check-in for a day from `from` to `to` made before `before`, from anyone,
