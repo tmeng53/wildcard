@@ -56,6 +56,8 @@ public actor DeviceOutbox: Outbox {
         let id: CheckInID
         let member: MemberID
         let day: LocalDay
+        /// Missing on posts kept before 补打卡: those were posted the day they count for.
+        let postedDay: LocalDay?
         let createdAt: Timestamp
         let audience: [SquadID]
         let kind: String
@@ -70,6 +72,7 @@ public actor DeviceOutbox: Outbox {
             id = post.id
             member = post.member
             day = post.day
+            postedDay = post.postedDay
             createdAt = post.createdAt
             audience = post.audience.squads
             photos = post.draft.photos.map {
@@ -138,8 +141,8 @@ public actor DeviceOutbox: Outbox {
             default: return nil
             }
             return PendingCheckIn(
-                id: id, member: member, day: day, createdAt: createdAt, audience: try Audience(audience), draft: draft,
-                uploaded: uploaded)
+                id: id, member: member, day: day, postedDay: postedDay, createdAt: createdAt,
+                audience: try Audience(audience), draft: draft, uploaded: uploaded)
         }
     }
 }

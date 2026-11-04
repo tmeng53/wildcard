@@ -21,6 +21,7 @@ import { createApp } from '../app.js';
 import { PhotoPath } from '../ports.js';
 import { createLog } from '../log.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -87,6 +88,7 @@ const app = createApp({
     inviteCodes: randomInviteCodes,
     aiConsent: () => Promise.resolve(true),
   }),
+  scenes: scenesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   weekSummaryWords: unusedWeekSummaryWords,

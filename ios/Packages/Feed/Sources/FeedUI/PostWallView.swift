@@ -211,20 +211,12 @@ private struct EmptyWall: View {
 
 /// The first load didn't reach the server: say so plainly, with a way to try again.
 private struct WallOffline: View {
-    @Environment(\.sceneTheme) private var theme
     let retry: () -> Void
 
     var body: some View {
-        VStack(spacing: Space.s) {
-            Text("网络开小差了", bundle: .module)
-                .typeStyle(TypeRamp.callout)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-            Button(action: retry) { Text("再试一次", bundle: .module) }
-                .buttonStyle(SecondaryButtonStyle())
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, Space.xxl)
-        .accessibilityIdentifier("wall.offline")
+        StateView.offline(retryIdentifier: "wall.retry", retry: retry)
+            .padding(.top, Space.xxl)
+            .accessibilityIdentifier("wall.offline")
     }
 }
 #endif

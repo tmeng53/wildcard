@@ -53,12 +53,8 @@ struct StepPage<Content: View, Actions: View>: View {
             }
             .scrollDismissesKeyboard(.interactively)
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        .actionBar {
             VStack(spacing: Space.xxs) { actions }
-                .padding(.horizontal, Space.pageMargin)
-                .padding(.top, Space.xs)
-                .padding(.bottom, Space.xs)
-                .background(Color(role: .bgCanvas, in: theme))
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
     }

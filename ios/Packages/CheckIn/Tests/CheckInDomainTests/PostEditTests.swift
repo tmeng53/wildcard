@@ -97,3 +97,15 @@ private let picked = PreparedPhoto(
     #expect(await backend.uploads == [picked.id, second.id])
     #expect(await backend.edits == [edited])
 }
+
+@Test func anEditOfABackfillKeepsTheDayItWasPosted() throws {
+    let made = try savedMeal(photos: [], caption: "补一顿")
+    let saved = CheckIn(
+        id: made.id, member: made.member, day: made.day, postedDay: made.day.adding(days: 2),
+        createdAt: made.createdAt, audience: made.audience, entry: made.entry)
+    let edited = try PostEdit(original: saved, activity: .sport("run"), minutes: nil, line: "补两顿", photos: [])
+        .checkIn(uploaded: [:])
+    #expect(edited.day == saved.day)
+    #expect(edited.postedDay == saved.postedDay)
+    #expect(edited.isBackfill)
+}

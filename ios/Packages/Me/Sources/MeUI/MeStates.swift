@@ -22,19 +22,10 @@ struct MeLoading: View {
 /// 我 couldn't be read: the character, one line and a way to try again (character states, 出错).
 struct MeFailed: View {
     let retry: () -> Void
-    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        VStack(spacing: Space.m) {
-            StateCharacter()
-            Text("网络开小差了", bundle: .module)
-                .typeStyle(TypeRamp.headline)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-            Button(action: retry) { Text("再试一次", bundle: .module) }
-                .buttonStyle(PrimaryButtonStyle(.regular))
-                .accessibilityIdentifier("me.retry")
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        StateView.offline(retryIdentifier: "me.retry", retry: retry) { StateCharacter() }
+            .frame(maxHeight: .infinity)
     }
 }
 

@@ -109,6 +109,7 @@ export {
   type WeekSummaryWordsAdmin,
 } from './use-cases/week-summary-words.js';
 export type { SquadMemberToday, SquadToday } from './use-cases/check-ins/squad-today.js';
+export type { MemberWeek } from './use-cases/check-ins/member-week.js';
 export {
   createWeeklyPlans,
   type PlanTemplate,

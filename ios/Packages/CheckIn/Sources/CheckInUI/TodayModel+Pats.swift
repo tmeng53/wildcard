@@ -23,10 +23,33 @@ extension TodayModel {
         try? await Task.sleep(for: .seconds(pats.hold))
     }
 
-    /// A teammate on the scene was tapped: their status and 「拍一拍」.
+    /// A teammate on the scene was tapped: they hop, and their card opens with their today and
+    /// 「拍一拍」 over it.
     func tapMate(_ id: MemberID) {
-        guard let mate = cast.mates.first(where: { $0.id == id }) else { return }
-        pats.tap(mate, cast: cast, phase: stagePhase)
+        guard let mate = cast.mates.first(where: { $0.id == id }),
+            pats.tap(mate, cast: cast, phase: stagePhase) != nil
+        else { return }
+        openTeammate(id)
+    }
+
+    /// What `member` is up to today, as the home shows them (睡着了 while asleep on the scene),
+    /// for the 今天 line over their card; nil for someone the home doesn't show.
+    func today(of member: MemberID) -> MateToday? {
+        guard let home else { return nil }
+        if member == home.member {
+            let line = PatStage.status(
+                StageStatus(
+                    training: store.myStatus, activity: home.todaysSport(of: member),
+                    plannedRest: home.mine?.plannedRest ?? false),
+                eating: home.todaysMeal(of: member), caption: home.todaysCaption(of: member),
+                disclaimer: home.todaysDisclaimer(of: member), asleep: myPose(at: stagePhase) == .asleep)
+            return MateToday(title: line.title, detail: line.detail, isMe: true)
+        }
+        guard let mate = cast.mates.first(where: { $0.id == member }) else { return nil }
+        let line = PatStage.status(
+            mate.member.status, eating: mate.member.eating, caption: mate.caption, disclaimer: mate.disclaimer,
+            asleep: cast.stage.pose(of: mate.member, at: stagePhase) == .asleep)
+        return MateToday(title: line.title, detail: line.detail, isMe: false)
     }
 
     /// Whether I can still pat `id` today.
@@ -34,7 +57,8 @@ extension TodayModel {
         store.canPat(id)
     }
 
-    /// I pat a teammate from their bubble: it plays at once and goes to the server, once a day.
+    /// I pat a teammate from their card or their bubble: it plays at once and goes to the server,
+    /// once a day.
     func patMate(_ id: MemberID) {
         guard store.canPat(id), !isChanging, together.playing == nil,
             let mate = cast.mates.first(where: { $0.id == id })

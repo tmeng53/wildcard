@@ -45,6 +45,7 @@ public enum StationKind: String, CaseIterable, Hashable, Sendable {
     case treadmill, squatRack, dumbbells, yogaMat
     case rally, serve
     case topRope, bouldering, chalk
+    case carving
 }
 
 /// How the people at a station move.
@@ -110,25 +111,13 @@ public struct StageLayout: Hashable, Sendable {
     /// The coach's size: as big as me, so it reads as the coach, not one more teammate.
     public static let coachScale = myScale
 
-    /// Whether a teammate standing at `spot` would be hidden by the coach on the sideline or by
-    /// its 战术板 bubble over its head: teammates leave those spots free while the squad has a
-    /// coach.
+    /// Whether a teammate standing at `spot` would be hidden by the coach on the sideline:
+    /// teammates leave that spot free while the squad has a coach.
     func coachCovers(_ spot: StagePoint) -> Bool {
         guard let sideline else { return false }
         let teammate = Self.figure(at: spot, scale: Self.scale(atDepth: spot.y))
-        let coach = Self.coachFigure(at: sideline)
-        // The bubble's tail sits over the coach's head, near the bubble's left end.
-        let bubble = StageRect(
-            x: (sideline.x - Self.bubbleTail)...(sideline.x - Self.bubbleTail + Self.bubbleSize.width),
-            y: (coach.minY - Self.bubbleSize.height)...coach.minY)
-        return teammate.overlaps(coach) || teammate.overlaps(bubble)
+        return teammate.overlaps(Self.coachFigure(at: sideline))
     }
-
-    /// The most room the coach's bubble takes, in stage points: up to 170 wide (the bubble's
-    /// widest, `SpeechBubble.coachWidth`) and its tag and four lines tall, with its tail 32 points
-    /// in from its left.
-    static let bubbleSize = (width: 170.0, height: 112.0)
-    static let bubbleTail = 32.0
 
     /// Where a member's body is drawn with its feet at `point`: about 140 of the canvas's 240
     /// points wide, and from the feet up to the top of the head (78 on the rig).
@@ -136,11 +125,8 @@ public struct StageLayout: Hashable, Sendable {
         StageRect(x: (point.x - 70 * scale)...(point.x + 70 * scale), y: (point.y - 238 * scale)...point.y)
     }
 
-    /// The coach's body: its head starts higher on its rig (24).
-    static func coachFigure(at point: StagePoint) -> StageRect {
-        StageRect(
-            x: (point.x - 70 * coachScale)...(point.x + 70 * coachScale), y: (point.y - 292 * coachScale)...point.y)
-    }
+    /// The coach's body, on members' rig.
+    static func coachFigure(at point: StagePoint) -> StageRect { figure(at: point, scale: coachScale) }
 
     /// The stage's width, the screen's in the design.
     public static let width = 390.0

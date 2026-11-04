@@ -1,12 +1,16 @@
 import { createPostgresArtStore } from '@wildcard/art';
 import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-drafts';
+import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
+import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
 
 import type { Database } from '../ports.js';
 import {
   artSection,
   disclaimerDiceSection,
+  scenesSection,
   sportsSection,
+  switchesSection,
   type CatalogSection,
 } from '../routes/catalog.js';
 import type { PublicRoutes } from '../routes/squads.js';
@@ -27,6 +31,13 @@ export const catalogOn = (
   sections: [
     sportsSection(createSports({ store: createPostgresSportStore(db) })),
     disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+    scenesSection(
+      createScenes({
+        store: createPostgresSceneStore(db),
+        switches: () => createSwitches({ store: createPostgresSwitchStore(db) }).states(),
+      }),
+    ),
+    switchesSection(createSwitches({ store: createPostgresSwitchStore(db) })),
     // The art as main.ts serves it: the database's list, downloaded from local Storage.
     artSection({
       manifest: async () => ({

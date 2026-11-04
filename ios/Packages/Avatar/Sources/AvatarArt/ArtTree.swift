@@ -44,7 +44,7 @@ public enum ArtTree {
     /// Whether `data` is art this build reads at `path` (`avatar/…`, `coaches/…`, `scenes/…`,
     /// `openings/…`, whose JSON this build doesn't read yet),
     /// read the way the screens will: SVG through the parser, each JSON file through its own
-    /// decoder (the rig, clips, tones, holds, `editor.json`, `kits.json`), a PNG by its signature.
+    /// decoder (the rig, clips, tones, holds, a coach's look, `editor.json`, `kits.json`), a PNG by its signature.
     /// A downloaded file that fails is left out, so its path keeps the bundled file.
     public static func reads(_ data: Data, at path: String) -> Bool {
         let name = path.split(separator: "/").last.map(String.init) ?? ""
@@ -61,6 +61,7 @@ public enum ArtTree {
         case "kits.json": return parts == ["avatar", "kits.json"] && (try? SportKits.decode(data)) != nil
         case "tones.json": return (try? Tones.decode(data)) != nil
         case "hold.json": return Figure.readsHold(data)
+        case "look.json": return parts.first == "coaches" && CoachCharacter.readsLook(data)
         default:
             let clipFolders: Set<String> = ["clips", "moves", "accents"]
             return parts.contains { clipFolders.contains($0) } && (try? Clip.decode(data)) != nil

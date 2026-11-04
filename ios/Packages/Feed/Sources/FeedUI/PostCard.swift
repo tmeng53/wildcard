@@ -165,6 +165,13 @@ struct PostCard: View {
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .lineLimit(1)
+                    if let backfill = BackfillDay(post.checkIn) {
+                        BackfillLabel(day: backfill)
+                            .typeStyle(TypeRamp.footnote)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .lineLimit(1)
+                            .accessibilityIdentifier("post.backfill")
+                    }
                     if post.checkIn.photos != nil, case .trained(let training) = post.checkIn.entry,
                         let minutes = training.minutes
                     {
@@ -236,6 +243,31 @@ struct PostCard: View {
             .typeStyle(TypeRamp.body)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+/// 补周日的: which day a 补打卡 counts for, after the post's time.
+struct BackfillLabel: View {
+    let day: BackfillDay
+
+    var body: some View {
+        switch day {
+        case .yesterday: Text("补昨天的", bundle: .module)
+        case .weekday(1): Text("补周一的", bundle: .module)
+        case .weekday(2): Text("补周二的", bundle: .module)
+        case .weekday(3): Text("补周三的", bundle: .module)
+        case .weekday(4): Text("补周四的", bundle: .module)
+        case .weekday(5): Text("补周五的", bundle: .module)
+        case .weekday(6): Text("补周六的", bundle: .module)
+        case .weekday: Text("补周日的", bundle: .module)
+        case .weekdayLastWeek(1): Text("补上周一的", bundle: .module)
+        case .weekdayLastWeek(2): Text("补上周二的", bundle: .module)
+        case .weekdayLastWeek(3): Text("补上周三的", bundle: .module)
+        case .weekdayLastWeek(4): Text("补上周四的", bundle: .module)
+        case .weekdayLastWeek(5): Text("补上周五的", bundle: .module)
+        case .weekdayLastWeek(6): Text("补上周六的", bundle: .module)
+        case .weekdayLastWeek: Text("补上周日的", bundle: .module)
+        }
     }
 }
 

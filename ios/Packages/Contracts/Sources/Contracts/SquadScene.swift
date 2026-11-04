@@ -1,6 +1,6 @@
 /// A scene a squad trains on. The raw values are the API's ids.
 public enum SceneID: String, CaseIterable, Hashable, Sendable {
-    case track, pool, gym, tennis, climbing
+    case track, pool, gym, tennis, climbing, ski
 }
 
 /// A squad's scene this week (小队设置): last week's crown winners pick it once a week, or the

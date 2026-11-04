@@ -53,6 +53,7 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -155,6 +156,7 @@ beforeAll(async () => {
           photos,
           aiConsent: aiConsentOn(db),
           nudges: nudgesOn(db),
+          scenes: scenesOn(db),
           weeklyAwards: unusedWeeklyAwards,
           unlocks: unusedUnlocks,
           weekSummaryWords: unusedWeekSummaryWords,
@@ -209,6 +211,7 @@ beforeAll(async () => {
                   trainedSince: () => Promise.reject(new Error('unused')),
                   sportListed: (id) =>
                     createSports({ store: createPostgresSportStore(scope) }).isListed(id),
+                  switches: () => Promise.resolve(() => true),
                 }),
               }),
               ...artTools({

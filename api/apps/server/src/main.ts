@@ -79,6 +79,8 @@ import {
   createPostgresWeekStoryStore,
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
+import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
+import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
 
@@ -107,6 +109,8 @@ import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
 import { pushCoachLine } from './flows/comment-push.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
+import { sceneTools } from './admin-mcp/tools/scenes.js';
+import { switchTools } from './admin-mcp/tools/switches.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { artTools } from './admin-mcp/tools/art.js';
@@ -115,7 +119,13 @@ import { createSentryErrorReports } from './adapters/sentry.js';
 import { createSupabaseArtStorage } from './adapters/supabase-art-storage.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
-import { artSection, disclaimerDiceSection, sportsSection } from './routes/catalog.js';
+import {
+  artSection,
+  disclaimerDiceSection,
+  scenesSection,
+  sportsSection,
+  switchesSection,
+} from './routes/catalog.js';
 import { readConfig } from './config.js';
 import { createLog, redactText, reportingErrors } from './log.js';
 import { memberCalendar } from './member-calendar.js';
@@ -245,6 +255,13 @@ const squads = createSquads({
 });
 // The sports list every picker shows, kept in the database.
 const sports = createSports({ store: createPostgresSportStore(db) });
+// Global on/off switches (a winter theme, a holiday) that limited scenes and unlock rules follow.
+const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
+const switches = switchesOn(db);
+const scenes = createScenes({
+  store: createPostgresSceneStore(db),
+  switches: () => switches.states(),
+});
 // What each squad's coach said; check-ins ask it whether a member may reply to the coach.
 const coachActivity = createCoachActivity({ store: createPostgresCoachActivity(db) });
 const checkIns = createCheckIns({
@@ -283,6 +300,7 @@ const tellAfter = async (
     log.warn(`${what} not kept in notices`, { error });
   }
 };
+const newYorkDays = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' });
 // What members unlock by training: the unlocks module keeps the rules and who earned what, and
 // asks check-ins for the 练了 that count and the sports module which sports exist.
 const unlocksOn = (scope: Database) =>
@@ -291,6 +309,11 @@ const unlocksOn = (scope: Database) =>
     trainedSince: ({ member, since }) =>
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
+    // A rule on a switch counts only 练了 made while it was on, by the New York day.
+    switches: async () => {
+      const on = await switchesOn(scope).states();
+      return (id, at) => on(id, newYorkDays.format(at));
+    },
     unlocked: (member, unlocks) =>
       tellAfter(scope, {
         told: unlocks.map(({ kind, id }) => ({
@@ -327,7 +350,14 @@ const coachWakes =
         stores: createPostgresCoachStores(db),
         transaction: postgresCoachTransaction(db),
         agent: createOpenAICoachAgent({ apiKey: openaiKey }),
-        squadWeek: coachSquadWeek({ checkIns, members, squads, sports, clock: () => new Date() }),
+        squadWeek: coachSquadWeek({
+          checkIns,
+          members,
+          squads,
+          sports,
+          scenes,
+          clock: () => new Date(),
+        }),
         // Only the words of members who agreed to the current AI copy reach the model.
         aiConsented: (members) =>
           aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
@@ -415,6 +445,7 @@ const app = createApp({
   weeklyPlans,
   members,
   squads,
+  scenes,
   nudges,
   notices,
   liveEvents,
@@ -424,6 +455,8 @@ const app = createApp({
   catalog: {
     sections: [
       sportsSection(sports),
+      scenesSection(scenes),
+      switchesSection(switches),
       disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
       artSection(artOn(db)),
     ],
@@ -501,6 +534,13 @@ const app = createApp({
         words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
+      ...switchTools({ switches: switchesOn(scope) }),
+      ...sceneTools({
+        scenes: createScenes({
+          store: createPostgresSceneStore(scope),
+          switches: () => switchesOn(scope).states(),
+        }),
+      }),
       ...unlockTools({ unlocks: unlocksOn(scope) }),
       ...artTools({ art: artOn(scope) }),
       ...coachTools({

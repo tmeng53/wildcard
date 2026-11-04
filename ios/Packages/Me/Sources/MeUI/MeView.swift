@@ -168,12 +168,8 @@ struct ScheduleRow: View {
 
 /// The last change didn't save; says so until the next one.
 struct SaveFailed: View {
-    @Environment(\.sceneTheme) private var theme
-
     var body: some View {
-        Text("网络开小差了，没存上", bundle: .module)
-            .typeStyle(TypeRamp.footnote)
-            .foregroundStyle(Color(role: .fgMuted, in: theme))
+        InlineFailure()
             .accessibilityIdentifier("me.saveFailed")
     }
 }

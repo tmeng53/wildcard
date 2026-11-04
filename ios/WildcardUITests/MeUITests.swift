@@ -1,6 +1,7 @@
 import XCTest
 
-/// 我 the way a member uses it, on the in-memory member: the player card and its back, 球衣号码,
+/// 我 the way a member uses it, on the in-memory member: the player card and its back, 球衣号码
+/// from the character editor,
 /// 出赛表 opened inside 我, 设置 with the notification switch, and the 注销账号 page. Keeps screenshots for review.
 @MainActor
 final class MeUITests: XCTestCase {
@@ -130,29 +131,37 @@ final class MeUITests: XCTestCase {
         waitFor(confirm, "isEnabled == false", "the confirm button still takes taps after deleting")
     }
 
-    /// The member picks their card's number in 设置, and the card wears it.
+    /// The member picks their card's number from the character editor, and the card wears it;
+    /// 设置 no longer has it.
     func testJerseyNumber() {
         let app = launch(language: "zh-Hans")
-        let settingsButton = app.buttons["me.settings"]
-        XCTAssertTrue(settingsButton.waitForExistence(timeout: 30), "我 never showed")
-        settingsButton.tap()
-        let row = app.buttons["me.jerseyNumber"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 球衣号码 row")
-        XCTAssertTrue(row.label.contains("22"), "the row doesn't show the number: \(row.label)")
-        row.tap()
+        let edit = app.buttons["me.editCharacter"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 30), "我 never showed")
+        edit.tap()
+        let entry = app.buttons["editor.jerseyNumber"]
+        XCTAssertTrue(entry.waitForExistence(timeout: 30), "the editor has no 球衣号码")
+        XCTAssertTrue(entry.label.contains("22"), "the editor doesn't show the number: \(entry.label)")
+        let window = app.windows.firstMatch.frame
+        XCTAssertTrue(window.contains(entry.frame), "球衣号码 runs off the screen: \(entry.frame)")
+        settle()
+        keepScreenshot(named: "48-editor-jersey-number")
+        entry.tap()
         let wheel = app.pickerWheels.firstMatch
         XCTAssertTrue(wheel.waitForExistence(timeout: 30), "the number page never opened")
         wheel.adjust(toPickerWheelValue: "07")
-        assertClearOfTabBar(app.buttons["number.save"], in: app)
+        XCTAssertTrue(window.contains(app.buttons["number.save"].frame), "保存 runs off the screen")
         settle()
         keepScreenshot(named: "49-jersey-number")
         app.buttons["number.save"].tap()
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "saving didn't go back to 设置")
-        waitFor(row, "label CONTAINS '07'", "the row doesn't show the new number")
-        app.buttons["settings.back"].tap()
+        XCTAssertTrue(entry.waitForExistence(timeout: 30), "saving didn't go back to the editor")
+        waitFor(entry, "label CONTAINS '07'", "the editor doesn't show the new number")
+        app.buttons["editor.cancel"].tap()
         let card = app.buttons["me.card"]
         XCTAssertTrue(card.waitForExistence(timeout: 30))
         XCTAssertTrue(card.label.contains("07号"), "the card doesn't wear the new number: \(card.label)")
+        app.buttons["me.settings"].tap()
+        XCTAssertTrue(app.buttons["settings.back"].waitForExistence(timeout: 30), "设置 never opened")
+        XCTAssertFalse(app.buttons["me.jerseyNumber"].exists, "设置 still has 球衣号码")
     }
 
     /// 出赛表 opens inside 我 from the row under the card, with this week's count, and its
