@@ -96,7 +96,7 @@ const app = createApp({
     trainedSince: ({ member, since }) =>
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
-    seasons: () => Promise.resolve({ scenes: new Set(['ski']), inSeason: () => true }),
+    inWindow: () => true,
   }),
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,

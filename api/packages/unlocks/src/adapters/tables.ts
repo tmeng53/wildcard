@@ -28,8 +28,9 @@ export interface UnlockRules {
   counts_from: Generated<Timestamp>;
   item_id: string;
   kind: string;
-  season: string | null;
   sports: Generated<string[]>;
+  window_end: string | null;
+  window_start: string | null;
 }
 
 export interface DB {

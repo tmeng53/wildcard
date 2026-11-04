@@ -15,16 +15,13 @@ export {
   earned,
   idFits,
   toGo,
-  type InSeason,
+  type InWindow,
   type Locked,
   type Trained,
   type Unlock,
   type UnlockRule,
+  type UnlockWindow,
 } from './domain/unlocks.js';
-export {
-  UnlockItemMissingError,
-  UnlockSeasonNotListedError,
-  UnlockSportNotListedError,
-} from './errors.js';
-export type { Seasons, SportListed, TrainedSince, UnlockStore, Unlocked } from './ports.js';
+export { UnlockItemMissingError, UnlockSportNotListedError } from './errors.js';
+export type { SportListed, TrainedSince, UnlockStore, Unlocked } from './ports.js';
 export { createUnlocks, type Unlocks, type UnlocksAdmin } from './use-cases/unlocks.js';

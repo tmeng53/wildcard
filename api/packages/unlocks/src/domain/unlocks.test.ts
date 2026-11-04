@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { earned, idFits, toGo, UnlockRuleEdit, type UnlockRule } from './unlocks.js';
+import {
+  earned,
+  idFits,
+  toGo,
+  UnlockRuleEdit,
+  type UnlockRule,
+  type UnlockWindow,
+} from './unlocks.js';
 
 const start = new Date('2026-11-02T16:00:00Z');
 const deuce: UnlockRule = {
@@ -36,7 +43,7 @@ describe('earned', () => {
       { id: 'd', sport: 'squash', madeAt: at(4) },
     ];
     expect(
-      earned({ rules: [deuce, halfmoon, racket], trained, has: [], inSeason: allYear }),
+      earned({ rules: [deuce, halfmoon, racket], trained, has: [], inWindow: allYear }),
     ).toStrictEqual([
       {
         kind: 'store',
@@ -81,14 +88,14 @@ describe('earned', () => {
       unlockedAt: at(-100),
     };
     expect(
-      earned({ rules: [deuce, racket], trained, has: [held], inSeason: allYear }),
+      earned({ rules: [deuce, racket], trained, has: [held], inWindow: allYear }),
     ).toStrictEqual([]);
     expect(
       earned({
         rules: [deuce],
         trained: [...trained, { id: 'e', sport: 'tennis', madeAt: at(6) }],
         has: [],
-        inSeason: allYear,
+        inWindow: allYear,
       }),
     ).toMatchObject([{ id: 'deuce', by: { checkIn: 'e' }, unlockedAt: at(6) }]);
   });
@@ -99,7 +106,7 @@ describe('earned', () => {
       sport: 'custom',
       madeAt: at(index + 1),
     }));
-    expect(earned({ rules: [deuce, halfmoon], trained, has: [], inSeason: allYear })).toMatchObject(
+    expect(earned({ rules: [deuce, halfmoon], trained, has: [], inWindow: allYear })).toMatchObject(
       [{ id: 'halfmoon', by: { checkIn: 'c' } }],
     );
   });
@@ -120,36 +127,37 @@ describe('toGo', () => {
       { id: 'c', sport: 'walk', madeAt: at(2) },
       { id: 'd', sport: 'tennis', madeAt: at(3) },
     ];
-    expect(toGo({ rules: [bib, racket, halfmoon], trained, inSeason: allYear })).toStrictEqual([
+    expect(toGo({ rules: [bib, racket, halfmoon], trained, inWindow: allYear })).toStrictEqual([
       { kind: 'piece', id: 'lap-bib', toGo: 3 },
       // The racket and HALF MOON are reached, so they aren't listed.
     ]);
   });
 });
 
-describe('a seasonal rule', () => {
-  it('counts only check-ins made in its scene’s season', () => {
+describe('a rule with a window', () => {
+  it('counts only check-ins made in its window', () => {
     const tuna: UnlockRule = {
       kind: 'piece',
       id: 'powder-tuna',
       sports: ['ski'],
       after: 2,
       countsFrom: start,
-      season: 'ski',
+      window: { start: '11-15', end: '03-31' },
     };
-    // In season only from the third hour on.
-    const inSeason = (scene: string, madeAt: Date) => scene === 'ski' && madeAt >= at(180);
+    // In the window only from the third hour on.
+    const inWindow = (window: UnlockWindow, madeAt: Date) =>
+      window.start === '11-15' && madeAt >= at(180);
     const trained = [
       { id: 'a', sport: 'ski', madeAt: at(60) },
       { id: 'b', sport: 'ski', madeAt: at(120) },
       { id: 'c', sport: 'ski', madeAt: at(200) },
     ];
-    expect(earned({ rules: [tuna], trained, has: [], inSeason })).toStrictEqual([]);
-    expect(toGo({ rules: [tuna], trained, inSeason })).toStrictEqual([
+    expect(earned({ rules: [tuna], trained, has: [], inWindow })).toStrictEqual([]);
+    expect(toGo({ rules: [tuna], trained, inWindow })).toStrictEqual([
       { kind: 'piece', id: 'powder-tuna', toGo: 1 },
     ]);
     const more = [...trained, { id: 'd', sport: 'ski', madeAt: at(240) }];
-    expect(earned({ rules: [tuna], trained: more, has: [], inSeason })).toMatchObject([
+    expect(earned({ rules: [tuna], trained: more, has: [], inWindow })).toMatchObject([
       { id: 'powder-tuna', by: { checkIn: 'd' } },
     ]);
   });

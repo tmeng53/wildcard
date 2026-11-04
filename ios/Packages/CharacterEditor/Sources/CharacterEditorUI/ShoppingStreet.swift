@@ -114,9 +114,9 @@ private struct StoreCard: View {
                 }
             }
             .overlay(alignment: .topTrailing) {
-                // A seasonal store says so, never its dates.
-                if store.isOpen, store.season != nil {
-                    Text("冬季限定", bundle: .module)
+                // A limited store says so, never its dates.
+                if store.isOpen, let limited = StoreCopy.limited(store.id) {
+                    limited
                         .typeStyle(TypeRamp.label)
                         .foregroundStyle(Color(role: .fgAccent, in: theme))
                         .padding(Space.s)
@@ -317,6 +317,8 @@ enum StoreCopy {
     static func sports(_ store: String) -> Text { text(sportLines[store], or: "") }
     static func tagline(_ store: String) -> Text { text(taglines[store], or: "") }
     static func unlock(_ store: String) -> Text { text(unlocks[store], or: "") }
+    /// The tag a limited store wears, such as 冬季限定; nil for one without.
+    static func limited(_ store: String) -> Text? { limits[store].map { text($0, or: "") } }
 
     private static func text(_ key: String?, or fallback: String) -> Text {
         guard let key else { return Text(verbatim: fallback) }
@@ -344,5 +346,6 @@ enum StoreCopy {
         "lap": "跑步 3 次解锁", "nolook": "篮球 3 次解锁", "moss": "攀岩或徒步 3 次解锁", "halfmoon": "随便练 3 次解锁",
         "deuce": "网球类 3 次解锁",
     ]
+    private static let limits = ["powder": "冬季限定"]
 }
 #endif

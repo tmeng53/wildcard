@@ -283,16 +283,8 @@ const unlocksOn = (scope: Database) =>
     trainedSince: ({ member, since }) =>
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
-    // A seasonal rule counts only 练了 made in its scene's window, by the New York day.
-    seasons: async () => {
-      const newYorkDay = (at: Date) => newYorkDays.format(at);
-      const listed = await scenes.list();
-      const windows = new Map(listed.map(({ id, window }) => [id, window]));
-      return {
-        scenes: new Set(windows.keys()),
-        inSeason: (scene, at) => windows.has(scene) && inWindow(windows.get(scene), newYorkDay(at)),
-      };
-    },
+    // A rule with a window counts only 练了 made in it, by the New York day.
+    inWindow: (window, at) => inWindow(window, newYorkDays.format(at)),
     unlocked: (member, unlocks) =>
       tellAfter(scope, {
         told: unlocks.map(({ kind, id }) => ({
