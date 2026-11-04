@@ -31,7 +31,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// run like 小米, and `.bump` has me trained too.
     public static func sampleSquad(
         now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID()),
-        patted: Bool = false, coach: Bool = false, together: SquadCelebration.Kind? = nil
+        patted: Bool = false, coach: Bool = false, together: SquadCelebration.Kind? = nil, meals: Bool = false
     ) -> InMemoryCheckInBackend {
         let zone = TimeZone.current
         let day = LocalDay(at: now, in: zone)
@@ -60,6 +60,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             sampleCheckIns(by: everyone, on: day, in: squadID, secondSport: together == .stack ? "run" : "yoga") {
                 at($0)
             }.filter { kept.contains($0.member) }
+            + (meals ? sampleMeals(by: everyone, on: day, in: squadID) { at($0) } : [])
             + myEarlierCheckIns(by: member, on: earlier, in: squadID) { at($0) }
         let plan = try? WeeklyPlan(
             member: member, weekStart: day.weekStart,
@@ -148,6 +149,26 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             checkIn(mates[1], 4, .trained(Training(activity: .sport(secondSport)))),
             checkIn(mates[2], 3, .trained(Training(activity: .sport("swim")))),
         ] + (leave.map { [checkIn(mates[3], 2, .disclaimer($0))] } ?? [])
+    }
+
+    /// With `meals`, two teammates' latest posts are meals: 小米 had a salad after her run, and
+    /// Leo, who hasn't trained, owned up to a boba. Both eat on the home.
+    private static func sampleMeals(
+        by mates: [MemberID], on day: LocalDay, in squad: SquadID, at time: (Double) -> Timestamp
+    ) -> [CheckIn] {
+        let words = Bundle.module.inAppLanguage
+        guard let audience = try? Audience([squad]),
+            let salad = try? Caption(words.localizedString(forKey: "练完来碗沙拉", value: nil, table: nil)),
+            let boba = try? Caption(words.localizedString(forKey: "奶茶续命", value: nil, table: nil))
+        else { return [] }
+        return [
+            CheckIn(
+                id: CheckInID(UUID()), member: mates[0], day: day, createdAt: time(1), audience: audience,
+                entry: .healthyMeal(Meal(caption: salad))),
+            CheckIn(
+                id: CheckInID(UUID()), member: mates[5], day: day, createdAt: time(0.5), audience: audience,
+                entry: .cheatMeal(Meal(caption: boba))),
+        ]
     }
 
     /// The member's own check-ins on `days` (most recent first): a run and a healthy meal, then

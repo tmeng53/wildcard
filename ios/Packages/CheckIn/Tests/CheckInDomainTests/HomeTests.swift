@@ -128,3 +128,29 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
         #expect(home.today.today == sampleToday().today)
     }
 }
+
+@Test func whatSomeoneDoesOnTheHomeIsTheirLatestPostAndItsWords() throws {
+    let trainedThenAte = sampleHome(checkIns: [
+        try checkIn(1, by: mate, .trained(Training(activity: .sport("climb"), caption: try Caption("爬到顶了")))),
+        try checkIn(2, by: mate, .cheatMeal(Meal())),
+    ])
+    #expect(trainedThenAte.todaysMeal(of: mate) == .cheatMeal)
+    // The bubble says what the latest post says: this meal has no words.
+    #expect(trainedThenAte.todaysCaption(of: mate) == nil)
+
+    let ateThenTrained = sampleHome(checkIns: [
+        try checkIn(1, by: mate, .healthyMeal(Meal(caption: try Caption("沙拉")))),
+        try checkIn(2, by: mate, .trained(Training(activity: .sport("climb")))),
+    ])
+    #expect(ateThenTrained.todaysMeal(of: mate) == nil)
+    #expect(ateThenTrained.todaysCaption(of: mate) == nil)
+    #expect(
+        sampleHome(checkIns: [try checkIn(1, by: mate, .healthyMeal(Meal(caption: try Caption("沙拉"))))])
+            .todaysCaption(of: mate) == "沙拉")
+
+    let yesterday = sampleHome(checkIns: [
+        try checkIn(1, by: mate, on: tuesday.adding(days: -1), .healthyMeal(Meal(caption: try Caption("昨天的"))))
+    ])
+    #expect(yesterday.todaysMeal(of: mate) == nil)
+    #expect(yesterday.todaysCaption(of: mate) == nil)
+}

@@ -85,7 +85,7 @@ struct WildcardApp: App {
                 backend: InMemoryCheckInBackend.sampleSquad(
                     now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
                     patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach,
-                    together: LaunchOptions.together),
+                    together: LaunchOptions.together, meals: LaunchOptions.meals),
                 outbox: InMemoryOutbox(), unlocks: SampleUnlockLedger(unlocks: LaunchOptions.unlocked),
                 now: LaunchOptions.now, newID: { UUID() }),
             writer: LaunchOptions.disclaimerWriter,
