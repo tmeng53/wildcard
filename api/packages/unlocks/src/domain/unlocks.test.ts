@@ -146,7 +146,7 @@ describe('a rule with a switch', () => {
     ];
     expect(earned({ rules: [tuna], trained, has: [], switchOn })).toStrictEqual([]);
     expect(toGo({ rules: [tuna], trained, switchOn })).toStrictEqual([
-      { kind: 'piece', id: 'powder-tuna', toGo: 1 },
+      { kind: 'piece', id: 'powder-tuna', toGo: 1, sports: ['ski'] },
     ]);
     const more = [...trained, { id: 'd', sport: 'ski', madeAt: at(240) }];
     expect(earned({ rules: [tuna], trained: more, has: [], switchOn })).toMatchObject([
