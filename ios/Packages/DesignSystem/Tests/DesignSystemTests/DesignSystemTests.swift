@@ -216,7 +216,7 @@ struct LayoutTests {
     }
 
     @Test func radiiAreSixTenTwelveAndCapsules() {
-        #expect([Radius.thumbnail, Radius.pick, Radius.card] == [6, 10, 12])
+        #expect([Radius.thumbnail, Radius.pick, Radius.card, Radius.menu] == [6, 10, 12, 24])
         #expect(Radius.capsule(height: Sizing.primaryControl) == 26)
         #expect(Radius.concentric(outer: Radius.card, inset: 6) == 6)
         #expect(Radius.concentric(outer: Radius.thumbnail, inset: 8) == 0)

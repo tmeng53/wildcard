@@ -113,6 +113,7 @@ struct ButtonSection: View {
                 .frame(height: Self.tabsHeight)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             }
+            GuideGroup(Text("菜单：液态玻璃，从「···」或长按打开", bundle: .module)) { GlassMenuSample() }
         }
     }
 }

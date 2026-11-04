@@ -135,15 +135,19 @@ struct SettingsView: View {
                 isSigningOut = true
             }
             .accessibilityIdentifier("me.signOut")
-            // The system's own confirm, as the design asks: signing out is one tap from undoable.
-            .confirmationDialog(Text("退出登录？", bundle: .module), isPresented: $isSigningOut, titleVisibility: .visible) {
-                Button(role: .destructive) {
+            // Signing out asks once, in the app's glass menu, from the row itself.
+            .glassConfirm(
+                isPresented: $isSigningOut,
+                GlassMenuItem(
+                    Text("退出登录", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right",
+                    role: .destructive, id: "me.signOut.menu",
+                    confirm: .init(
+                        Text("退出登录？", bundle: .module), label: Text("退出登录", bundle: .module),
+                        id: "me.signOut.confirm")
+                ) {
                     Task { await model.signOut() }
-                } label: {
-                    Text("退出登录", bundle: .module)
                 }
-                .accessibilityIdentifier("me.signOut.confirm")
-            }
+            )
             ListRow(Text("注销账号", bundle: .module), showsDivider: false) {
                 model.openDeletion()
             }

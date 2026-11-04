@@ -16,9 +16,13 @@ public struct PostDetailView: View {
     private let model: FeedModel
     private let id: CheckInID
     private let close: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var isTyping: Bool
+    /// The comment held, lifted under its glass menu.
+    @State private var holding: Comment.ID?
 
     private static let faceSize: Double = 32
+    private static let liftScale: Double = 1.03
 
     public init(model: FeedModel, post: CheckInID, close: @escaping () -> Void) {
         self.model = model
@@ -103,65 +107,77 @@ public struct PostDetailView: View {
         }
     }
 
-    /// A comment: the writer's head, name and time, then 回复 and whom, then the words.
+    /// A comment: the writer's head, name and time, then 回复 and whom, then the words. A tap
+    /// replies to a teammate's; holding one lifts it and opens the glass menu.
     private func row(_ comment: Comment, on post: FeedPost) -> some View {
         let isMine = comment.member == model.viewer
-        return Button {
-            guard !isMine else { return }
-            model.replyingTo = comment.member
-            isTyping = true
-        } label: {
-            HStack(alignment: .top, spacing: Space.s) {
-                Face(player: model.head(of: comment.member), size: Self.faceSize)
-                VStack(alignment: .leading, spacing: Space.xxs / 2) {
-                    HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
-                        Text(verbatim: model.displayName(of: comment.member))
-                            .typeStyle(TypeRamp.footnoteEmphasis)
-                            .foregroundStyle(Color(role: .fgDefault, in: theme))
-                            .lineLimit(1)
-                        Text(comment.commentedAt.date, format: .dateTime.hour().minute())
-                            .typeStyle(TypeRamp.caption)
-                            .foregroundStyle(Color(role: .fgSubtle, in: theme))
-                            .lineLimit(1)
-                    }
-                    words(of: comment)
-                        .typeStyle(TypeRamp.body)
+        let items = menu(for: comment, on: post)
+        return HStack(alignment: .top, spacing: Space.s) {
+            Face(player: model.head(of: comment.member), size: Self.faceSize)
+            VStack(alignment: .leading, spacing: Space.xxs / 2) {
+                HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
+                    Text(verbatim: model.displayName(of: comment.member))
+                        .typeStyle(TypeRamp.footnoteEmphasis)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(1)
+                    Text(comment.commentedAt.date, format: .dateTime.hour().minute())
+                        .typeStyle(TypeRamp.caption)
+                        .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                        .lineLimit(1)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                words(of: comment)
+                    .typeStyle(TypeRamp.body)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .contentShape(Rectangle())
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .buttonStyle(.plain)
-        .contextMenu { menu(for: comment, on: post) }
+        .contentShape(Rectangle())
+        .scaleEffect(holding == comment.id ? Self.liftScale : 1)
+        .animation(.wildcard(Motion.press, reduceMotion: reduceMotion), value: holding)
+        .onTapGesture { reply(to: comment) }
+        .onLongPressGesture { holding = comment.id }
+        .haptic(.pick, trigger: holding) { _, new in new == comment.id }
+        .glassMenu(isPresented: isHolding(comment), items: items)
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(isMine ? [] : .isButton)
         .accessibilityHint(isMine ? Text(verbatim: "") : Text("回复", bundle: .module))
+        .accessibilityAction { reply(to: comment) }
+        .accessibilityActions {
+            ForEach(items) { item in
+                Button(action: item.action) { item.title }
+            }
+        }
         .accessibilityIdentifier("post.comment")
     }
 
+    /// 回复 Mia: a teammate's comment only.
+    private func reply(to comment: Comment) {
+        guard comment.member != model.viewer else { return }
+        model.replyingTo = comment.member
+        isTyping = true
+    }
+
+    private func isHolding(_ comment: Comment) -> Binding<Bool> {
+        Binding(get: { holding == comment.id }, set: { if !$0, holding == comment.id { holding = nil } })
+    }
+
     /// Holding a comment: 复制, and 删除 on the member's own.
-    @ViewBuilder private func menu(for comment: Comment, on post: FeedPost) -> some View {
-        Button {
-            UIPasteboard.general.string = comment.text.text
-        } label: {
-            Label {
-                Text("复制", bundle: .module)
-            } icon: {
-                Image(systemName: "doc.on.doc")
+    private func menu(for comment: Comment, on post: FeedPost) -> [GlassMenuItem] {
+        var items = [
+            GlassMenuItem(Text("复制", bundle: .module), systemImage: "doc.on.doc", id: "post.comment.copy") {
+                UIPasteboard.general.string = comment.text.text
             }
-        }
+        ]
         if comment.member == model.viewer, !model.store.isSending(comment.id, on: post.id) {
-            Button(role: .destructive) {
-                Task { await model.store.deleteComment(comment.id, on: post.id) }
-            } label: {
-                Label {
-                    Text("删除", bundle: .module)
-                } icon: {
-                    Image(systemName: "trash")
-                }
-            }
+            items.append(
+                GlassMenuItem(
+                    Text("删除", bundle: .module), systemImage: "trash", role: .destructive, id: "post.comment.delete"
+                ) {
+                    Task { await model.store.deleteComment(comment.id, on: post.id) }
+                })
         }
+        return items
     }
 
     /// 回复 Mia：the words, with 回复 and the name in grey.

@@ -25,7 +25,6 @@ public struct SquadSettingsView: View {
     private let close: () -> Void
     private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
     @State private var renaming: String?
-    @State private var confirming: MemberAction?
     @State private var isLeaving = false
     @State private var reveal: Reveal?
     /// The change last asked for, so its own control shows the wait while it saves.
@@ -231,32 +230,20 @@ public struct SquadSettingsView: View {
         VStack(spacing: 0) {
             ForEach(Array(model.members.enumerated()), id: \.element.id) { index, member in
                 MemberRow(member: member, showsDivider: index > 0, isSaving: isSaving(.member(member.id))) { action in
-                    confirming = action
+                    perform(action)
                 }
             }
         }
-        .confirmationDialog(
-            confirming.map { $0.title } ?? Text(verbatim: ""), isPresented: isConfirming, titleVisibility: .visible,
-            presenting: confirming
-        ) { action in
-            switch action {
-            case .handCaptaincy(let member, _):
-                Button {
-                    working = .member(member)
-                    Task { await model.handCaptaincy(to: member) }
-                } label: {
-                    Text("转让", bundle: .module)
-                }
-                .accessibilityIdentifier("squad.handCaptaincy.confirm")
-            case .remove(let member, _):
-                Button(role: .destructive) {
-                    working = .member(member)
-                    Task { await model.remove(member) }
-                } label: {
-                    Text("移出", bundle: .module)
-                }
-                .accessibilityIdentifier("squad.remove.confirm")
-            }
+    }
+
+    private func perform(_ action: MemberAction) {
+        switch action {
+        case .handCaptaincy(let member, _):
+            working = .member(member)
+            Task { await model.handCaptaincy(to: member) }
+        case .remove(let member, _):
+            working = .member(member)
+            Task { await model.remove(member) }
         }
     }
 
@@ -272,21 +259,26 @@ public struct SquadSettingsView: View {
         .buttonStyle(TextButtonStyle(.plain))
         .frame(maxWidth: .infinity)
         .accessibilityIdentifier("squad.leave")
-        .confirmationDialog(Text("退出小队？", bundle: .module), isPresented: $isLeaving, titleVisibility: .visible) {
-            Button(role: .destructive) {
+        .glassConfirm(
+            isPresented: $isLeaving,
+            GlassMenuItem(
+                Text("退出小队", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right", role: .destructive,
+                id: "squad.leave.menu",
+                confirm: .init(
+                    Text("退出小队？", bundle: .module), message: leaveMessage(settings),
+                    label: Text("退出小队", bundle: .module), id: "squad.leave.confirm")
+            ) {
                 working = .leave
                 Task { await model.leave() }
-            } label: {
-                Text("退出小队", bundle: .module)
             }
-            .accessibilityIdentifier("squad.leave.confirm")
-        } message: {
-            if settings.squad.members.count == 1 {
-                Text("你走了，小队就散了", bundle: .module)
-            } else if model.isCaptain {
-                Text("队长会交给最早加入的队友", bundle: .module)
-            }
-        }
+        )
+    }
+
+    /// What leaving does beyond the member's own seat, when it does more.
+    private func leaveMessage(_ settings: SquadSettings) -> Text? {
+        if settings.squad.members.count == 1 { return Text("你走了，小队就散了", bundle: .module) }
+        if model.isCaptain { return Text("队长会交给最早加入的队友", bundle: .module) }
+        return nil
     }
 }
 
@@ -299,10 +291,6 @@ extension SquadSettingsView {
 
     private func openCoachPage(_ route: CoachRoute) {
         withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { coachPages.append(route) }
-    }
-
-    private var isConfirming: Binding<Bool> {
-        Binding(get: { confirming != nil }, set: { if !$0 { confirming = nil } })
     }
 
     /// Whether `change` is the one saving now.
@@ -325,7 +313,7 @@ enum Working: Hashable {
     case leave
 }
 
-/// What the captain is about to do to a member, waiting on the system's confirm.
+/// What the captain is about to do to a member, asked first in the glass menu.
 enum MemberAction: Hashable, Identifiable {
     case handCaptaincy(MemberID, name: String)
     case remove(MemberID, name: String)

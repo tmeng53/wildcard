@@ -33,6 +33,8 @@ public enum Radius {
     public static let card: Double = 12
     /// The character's ticket in the editor.
     public static let ticket: Double = 14
+    /// The glass menu (`GlassMenu`), the app's one popup.
+    public static let menu: Double = 24
 
     /// Capsules (buttons, pills, tags): half the height, so the ends are fully round.
     public static func capsule(height: Double) -> Double {
