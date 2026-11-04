@@ -2,6 +2,7 @@ import type { Coach, CoachId } from '../domain/coach.js';
 import {
   shownBody,
   shownPaths,
+  squadSeed,
   storedBody,
   storedPathOf,
   type StoredPath,
@@ -35,6 +36,12 @@ const AT_ONCE = 4;
 /** How many of its last 战术板 lines a coach sees, so it doesn't repeat itself. */
 const RECENT_NOTES = 7;
 
+/** How many of its last reactions a coach sees on a check-in's wake, so it varies them. */
+const RECENT_EMOJI = 8;
+
+/** The file a squad's coach starts from: its name and who is in it. */
+const SEEDED = 'squad.md';
+
 /** What one run of the coach did. */
 export interface CoachRun {
   /** Whether coaching is on; off, a run does nothing. */
@@ -64,6 +71,15 @@ export interface CoachWakes {
     readonly checkIn: string;
     readonly comment: string;
     readonly coach: string;
+  }): Promise<void>;
+  /**
+   * Has the coach of each of these squads that hired one look at a check-in just made, now:
+   * queues its wake and runs the squad's waiting wakes. Does nothing while coaching is off. What
+   * doesn't finish now, the next `run` does.
+   */
+  checkedIn(input: {
+    readonly checkIn: string;
+    readonly squads: readonly SquadId[];
   }): Promise<void>;
 }
 
@@ -153,6 +169,21 @@ export function createCoachWakes(deps: CoachWakesDependencies): CoachWakes {
       const coaches = new Map((await deps.catalog.list()).map((each) => [each.id, each]));
       await drain(deps, { squads, hired, coaches, settings, now });
     },
+
+    checkedIn: async ({ checkIn, squads: sharedTo }) => {
+      const now = deps.clock();
+      const settings = await deps.settings.current();
+      if (!settings.coaching) return;
+      const hired = await deps.hiring.hired();
+      const squads = sharedTo.filter((squad) => hired.has(squad));
+      if (squads.length === 0) return;
+      await deps.stores.wakes.enqueue(
+        squads.map((squad) => ({ squad, reason: { kind: 'checkIn', checkIn } })),
+        now,
+      );
+      const coaches = new Map((await deps.catalog.list()).map((each) => [each.id, each]));
+      await drain(deps, { squads, hired, coaches, settings, now });
+    },
   };
 }
 
@@ -223,7 +254,10 @@ async function wakeWeek(
   if (reason.kind === 'daily') {
     return weekOf(deps, { squad: wake.squad, weekStart: weekStartOf(reason.day) });
   }
-  for (const weekStart of weeksAround(now)) {
+  // A check-in may count for a day up to a week before it was posted (补打卡), so its week may
+  // be the one before.
+  const weekBefore = weeksAround(new Date(now.getTime() - 7 * 86_400_000));
+  for (const weekStart of new Set([...weeksAround(now), ...weekBefore])) {
     const week = await weekOf(deps, { squad: wake.squad, weekStart });
     if (week.checkIns.some(({ id }) => id === reason.checkIn)) return week;
   }
@@ -277,12 +311,19 @@ async function runWake(
       reply: undefined,
       reaction: undefined,
       answer: undefined,
+      steps: [],
     };
+    // A squad whose coach hasn't written its file yet starts from its name and who is in it,
+    // saved with the run's other changes.
+    if ((stored.get(SEEDED) ?? '') === '') {
+      draft.files.set(SEEDED, squadSeed(week, roster));
+      draft.changed.add(SEEDED);
+    }
     const daily = wake.reason.kind === 'daily';
     const files = new Map(
       shownPaths(roster).map((path) => {
         const at = storedPathOf(path, roster);
-        return [path, at === undefined ? undefined : stored.get(at)];
+        return [path, at === undefined ? undefined : draft.files.get(at)];
       }),
     );
     const task = taskOf({
@@ -291,6 +332,10 @@ async function runWake(
       files,
       recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
       ...(thread === undefined ? {} : { thread: thread.thread }),
+      recentEmoji:
+        wake.reason.kind === 'checkIn'
+          ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
+          : [],
     });
     if (task === undefined) {
       await deps.stores.wakes.finish(wake.id);
@@ -315,6 +360,7 @@ async function runWake(
       usage: run.usage,
       costMicros: costMicros(run.usage, settings),
     });
+    await deps.stores.steps.record({ squad: wake.squad, wake: wake.id, steps: draft.steps });
     if (!run.ok) {
       await deps.stores.wakes.fail(wake.id, run.error);
       return false;
