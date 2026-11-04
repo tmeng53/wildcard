@@ -199,11 +199,22 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-coach")
     }
 
-    /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted` or
-    /// `-uitest-coach` a suite emptied at launch.
+    /// `-uitest-together wave|stack|bump`: the sample squad's home opens on that celebration
+    /// (人浪, 叠罗汉, 撞头). Without it the sample squad never celebrates together, so other UI
+    /// tests meet a home that holds still.
+    static var together: SquadCelebration.Kind? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-uitest-together"), flag + 1 < arguments.count else { return nil }
+        return SquadCelebration.Kind(rawValue: arguments[flag + 1])
+    }
+
+    /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted`,
+    /// `-uitest-coach` or `-uitest-together` a suite emptied at launch.
     static var todayDefaults: UserDefaults {
         let suite = "uitest-today"
-        guard pattedMe || sidelineCoach, let defaults = UserDefaults(suiteName: suite) else { return .standard }
+        guard pattedMe || sidelineCoach || together != nil, let defaults = UserDefaults(suiteName: suite) else {
+            return .standard
+        }
         defaults.removePersistentDomain(forName: suite)
         return defaults
     }
