@@ -106,7 +106,7 @@ public struct MeView: View {
                         .buttonStyle(SecondaryButtonStyle())
                         .accessibilityIdentifier("me.settings")
                     }
-                    PlayerCard(overview: overview)
+                    PlayerCard(face: overview.card, equip: { title in Task { await model.equip(title) } })
                     ScheduleRow(week: overview.week, open: destinations.schedule)
                     VStack(spacing: Space.xs) {
                         ViewThatFits(in: .horizontal) {

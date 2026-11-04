@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { editBody, FILE_LIMIT, shownBody, shownPaths, storedBody, storedPathOf } from './memory.js';
+import {
+  editBody,
+  FILE_LIMIT,
+  shownBody,
+  shownPaths,
+  squadSeed,
+  storedBody,
+  storedPathOf,
+} from './memory.js';
 import { taskOf } from './prompt.js';
 import { lineProblem } from './reply.js';
 import { SquadId } from './settings.js';
@@ -82,6 +90,27 @@ describe('the squad’s week, as the model reads it', () => {
       ].join('\n'),
     );
   });
+
+  it('names the squad, and says when a check-in was posted days after the day it counts for', () => {
+    const [first] = week.checkIns;
+    if (first === undefined) throw new Error('no check-in');
+    const backdated = { ...first, comments: [], reactions: 0, postedDay: '2026-10-29' };
+    expect(checkInLine(backdated, rosterOf(week))).toBe(
+      '10-27 周二 队员1 练了 （补打卡：10-29 周四 才发） 跑步 30 分钟 「腿废了」',
+    );
+    expect(weekText({ ...week, name: '周末不睡懒觉', checkIns: [] })).toBe(
+      [
+        '队名：周末不睡懒觉',
+        '本周从 2026-10-26（周一）开始。',
+        '队员：队员1（昵称：米亚），队员2',
+        '这周还没有人打卡。',
+      ].join('\n'),
+    );
+    // A member without AI consent keeps the squad's name, but not their nickname.
+    expect(consentedOnly({ ...week, name: '周末不睡懒觉' }, new Set([leo])).name).toBe(
+      '周末不睡懒觉',
+    );
+  });
 });
 
 describe('the memory files', () => {
@@ -109,6 +138,18 @@ describe('the memory files', () => {
     expect(storedPathOf('people/队员3.md', roster)).toBeUndefined();
     expect(storedPathOf(`people/${mia}.md`, roster)).toBeUndefined();
     expect(storedPathOf('../secrets.md', roster)).toBeUndefined();
+  });
+
+  it('start a squad’s file from its name and who is in it', () => {
+    expect(squadSeed({ ...week, name: '周末不睡懒觉' }, rosterOf(week))).toBe(
+      [
+        '# 小队',
+        '队名：周末不睡懒觉',
+        '队员（昵称会变，以 squad_week 为准）：',
+        '- 队员1：昵称「米亚」',
+        '- 队员2',
+      ].join('\n'),
+    );
   });
 
   it('edit by replacing text found once, or adding at the end', () => {
@@ -293,7 +334,21 @@ describe('when the coach wakes', () => {
         files: new Map([['memory.md', undefined]]),
         recentNotes: [],
       }),
-    ).toBe('有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你的文件：memory.md（空）。');
+    ).toBe(
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n你的文件：memory.md（空）。',
+    );
+    // The emoji it reacted with lately, so it varies them.
+    expect(
+      taskOf({
+        reason: { kind: 'checkIn', checkIn: 'c2' },
+        week,
+        files: new Map([['memory.md', undefined]]),
+        recentNotes: [],
+        recentEmoji: ['🔥', '🔥', '💪'],
+      }),
+    ).toBe(
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n你的文件：memory.md（空）。',
+    );
   });
 
   it('has nothing to do for a check-in no longer in the week', () => {

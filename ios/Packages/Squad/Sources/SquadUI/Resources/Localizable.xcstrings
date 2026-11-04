@@ -1133,18 +1133,34 @@
         }
       }
     },
-    "战报": {
+    "看球员卡": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Recaps"
+            "value": "Opens their player card"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "戰報"
+            "value": "看球員卡"
+          }
+        }
+      }
+    },
+    "%@教练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coach %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@教練"
           }
         }
       }
@@ -1165,6 +1181,22 @@
         }
       }
     },
+    "战报": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recaps"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "戰報"
+          }
+        }
+      }
+    },
     "邀请": {
       "localizations": {
         "en": {
@@ -1177,22 +1209,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "邀請"
-          }
-        }
-      }
-    },
-    "%@教练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Coach %@"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@教練"
           }
         }
       }

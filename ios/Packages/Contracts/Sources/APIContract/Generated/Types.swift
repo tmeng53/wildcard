@@ -327,6 +327,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/notices/seen`.
     /// - Remark: Generated from `#/paths//me/notices/seen/put(markMyNoticesSeen)`.
     func markMyNoticesSeen(_ input: Operations.MarkMyNoticesSeen.Input) async throws -> Operations.MarkMyNoticesSeen.Output
+    /// The caller’s live events (Server-Sent Events)
+    ///
+    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.
+    ///
+    /// - Remark: HTTP `GET /me/events`.
+    /// - Remark: Generated from `#/paths//me/events/get(streamMyEvents)`.
+    func streamMyEvents(_ input: Operations.StreamMyEvents.Input) async throws -> Operations.StreamMyEvents.Output
     /// A squad’s week: its awards and counts (周日战报)
     ///
     /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.
@@ -397,6 +404,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/award-totals`.
     /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
     func getMyAwardTotals(_ input: Operations.GetMyAwardTotals.Input) async throws -> Operations.GetMyAwardTotals.Output
+    /// The signed-in member’s badge board
+    ///
+    /// Every weekly title they won, with its badge, the weeks and award lines (徽章板), and the one they wear.
+    ///
+    /// - Remark: HTTP `GET /me/titles`.
+    /// - Remark: Generated from `#/paths//me/titles/get(getMyTitles)`.
+    func getMyTitles(_ input: Operations.GetMyTitles.Input) async throws -> Operations.GetMyTitles.Output
+    /// Wear a title on the signed-in member’s card
+    ///
+    /// Wears one of the member’s titles on their player card and beside their name on the home, logged with their profile. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/equipped-title`.
+    /// - Remark: Generated from `#/paths//me/equipped-title/put(putMyEquippedTitle)`.
+    func putMyEquippedTitle(_ input: Operations.PutMyEquippedTitle.Input) async throws -> Operations.PutMyEquippedTitle.Output
+    /// A squadmate’s player card
+    ///
+    /// What a squadmate’s card shows, front and back: their character, number, lifetime counts and badge board, with award lines only from weeks won in this squad. Only for members of the squad, about a member of it.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/members/{memberId}/card`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/members/{memberId}/card/get(getSquadmateCard)`.
+    func getSquadmateCard(_ input: Operations.GetSquadmateCard.Input) async throws -> Operations.GetSquadmateCard.Output
     /// The stores, props and pieces the signed-in member unlocked
     ///
     /// Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.
@@ -1077,6 +1105,15 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// The caller’s live events (Server-Sent Events)
+    ///
+    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.
+    ///
+    /// - Remark: HTTP `GET /me/events`.
+    /// - Remark: Generated from `#/paths//me/events/get(streamMyEvents)`.
+    public func streamMyEvents(headers: Operations.StreamMyEvents.Input.Headers = .init()) async throws -> Operations.StreamMyEvents.Output {
+        try await streamMyEvents(Operations.StreamMyEvents.Input(headers: headers))
+    }
     /// A squad’s week: its awards and counts (周日战报)
     ///
     /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.
@@ -1218,6 +1255,45 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
     public func getMyAwardTotals(headers: Operations.GetMyAwardTotals.Input.Headers = .init()) async throws -> Operations.GetMyAwardTotals.Output {
         try await getMyAwardTotals(Operations.GetMyAwardTotals.Input(headers: headers))
+    }
+    /// The signed-in member’s badge board
+    ///
+    /// Every weekly title they won, with its badge, the weeks and award lines (徽章板), and the one they wear.
+    ///
+    /// - Remark: HTTP `GET /me/titles`.
+    /// - Remark: Generated from `#/paths//me/titles/get(getMyTitles)`.
+    public func getMyTitles(headers: Operations.GetMyTitles.Input.Headers = .init()) async throws -> Operations.GetMyTitles.Output {
+        try await getMyTitles(Operations.GetMyTitles.Input(headers: headers))
+    }
+    /// Wear a title on the signed-in member’s card
+    ///
+    /// Wears one of the member’s titles on their player card and beside their name on the home, logged with their profile. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/equipped-title`.
+    /// - Remark: Generated from `#/paths//me/equipped-title/put(putMyEquippedTitle)`.
+    public func putMyEquippedTitle(
+        headers: Operations.PutMyEquippedTitle.Input.Headers = .init(),
+        body: Operations.PutMyEquippedTitle.Input.Body
+    ) async throws -> Operations.PutMyEquippedTitle.Output {
+        try await putMyEquippedTitle(Operations.PutMyEquippedTitle.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// A squadmate’s player card
+    ///
+    /// What a squadmate’s card shows, front and back: their character, number, lifetime counts and badge board, with award lines only from weeks won in this squad. Only for members of the squad, about a member of it.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/members/{memberId}/card`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/members/{memberId}/card/get(getSquadmateCard)`.
+    public func getSquadmateCard(
+        path: Operations.GetSquadmateCard.Input.Path,
+        headers: Operations.GetSquadmateCard.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadmateCard.Output {
+        try await getSquadmateCard(Operations.GetSquadmateCard.Input(
+            path: path,
+            headers: headers
+        ))
     }
     /// The stores, props and pieces the signed-in member unlocked
     ///

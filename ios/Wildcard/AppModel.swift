@@ -250,8 +250,7 @@ final class AppModel {
         }
     }
 
-    /// 今天 under the tab bar, on the member's squad's home; on a picked scene the member drops
-    /// onto it.
+    /// 今天 under the tab bar, on the member's squad's home; on a picked scene they drop onto it.
     private func openTabs(on home: Home, store: TodayStore, landingOn scene: SceneTheme?) async {
         let today = TodayModel(
             store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted,
@@ -317,8 +316,9 @@ final class AppModel {
             service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
 
-    /// 我的动态 over our API.
+    /// 我的动态 and squadmates' player cards over our API.
     var myPosts: any MyPostsSource { APIMyPostsSource(api: api) }
+    var squadmateCards: any SquadmateCards { APISquadmateCards(api: api) }
 
     /// 通知 over our API.
     var notices: any NoticeSource { APINoticeSource(api: api) }

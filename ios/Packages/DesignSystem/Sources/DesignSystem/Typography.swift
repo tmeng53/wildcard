@@ -116,6 +116,13 @@ public enum TypeRamp {
     public static let posterWeek = TypeStyle(
         face: .scoreboard(.extraBoldItalic), size: 128, tracking: -5, anchor: .largeTitle)
 
+    /// A weekly title (头衔) worn on the player card's front: 20, spaced out, like lettering on a
+    /// jersey. The card is drawn at a fixed size, so it doesn't scale with Dynamic Type.
+    public static let cardTitle = TypeStyle(face: .text(.semibold), size: 20, tracking: 1.6, anchor: .title3)
+
+    /// A title on its badge's own card: 26, spaced out the same way.
+    public static let badgeTitle = TypeStyle(face: .text(.semibold), size: 26, tracking: 2, anchor: .title)
+
     /// The denominator after a number (`/22`): a weight lighter and a little over half the size.
     public static func denominator(of number: TypeStyle) -> TypeStyle {
         TypeStyle(face: .scoreboard(.semibold), size: (number.size * 0.55).rounded(), anchor: number.anchor)
@@ -130,6 +137,7 @@ public enum TypeRamp {
         ("scoreHero", scoreHero),
         ("scoreCard", scoreCard),
         ("scoreInline", scoreInline), ("scoreSmall", scoreSmall), ("scoreCaption", scoreCaption),
-        ("ticketDate", ticketDate), ("posterWeek", posterWeek),
+        ("ticketDate", ticketDate), ("posterWeek", posterWeek), ("cardTitle", cardTitle),
+        ("badgeTitle", badgeTitle),
     ]
 }

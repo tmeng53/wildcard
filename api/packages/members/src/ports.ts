@@ -1,4 +1,4 @@
-import type { MemberId, Profile, ProfileSave, Squadmate } from './domain/profile.js';
+import type { EquippedTitle, MemberId, Profile, ProfileSave, Squadmate } from './domain/profile.js';
 
 /** Where members' profiles are kept. */
 export interface ProfileStore {
@@ -11,6 +11,12 @@ export interface ProfileStore {
   save(member: MemberId, profile: ProfileSave): Promise<boolean>;
   /** What squadmates see of these members, by member. Members without a profile are left out. */
   squadmates(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, Squadmate>>;
+  /**
+   * Saves the title the member wears (null for none), logged with the rest of the profile;
+   * nothing is saved or logged when it is the one worn already. Returns `false` when the member
+   * has no profile.
+   */
+  equipTitle(member: MemberId, title: EquippedTitle | null): Promise<boolean>;
   /** When the member first saved their profile, right after signing up. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
   /**

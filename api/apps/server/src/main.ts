@@ -85,6 +85,7 @@ import { byProvider } from './adapters/language-models.js';
 import { createOpenAICoachAgent } from './adapters/openai-coach-agent.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
 import { createMemoryRateLimit } from './adapters/memory-rate-limit.js';
+import { createPostgresLiveEvents } from './adapters/postgres-live-events.js';
 import { createDatabase, onItsOwn } from './adapters/postgres.js';
 import { createAppleSignInRevoker } from './adapters/apple-sign-in.js';
 import {
@@ -128,10 +129,19 @@ const stdoutLog = createLog((line) => process.stdout.write(line), {
 });
 const log = errorReports === undefined ? stdoutLog : reportingErrors(stdoutLog, errorReports);
 if (errorReports === undefined) log.info('no Sentry DSN (SENTRY_DSN_API): errors are only logged');
+const databaseCa =
+  config.databaseCaFile === undefined ? undefined : readFileSync(config.databaseCaFile, 'utf8');
 const db = createDatabase(config.databaseUrl, {
-  ca: config.databaseCaFile === undefined ? undefined : readFileSync(config.databaseCaFile, 'utf8'),
+  ca: databaseCa,
   onIdleError: (error) => {
     log.warn('the database dropped an idle connection', { error });
+  },
+});
+// Members' live events (`GET /me/events`), heard from the database on a session of their own.
+const liveEvents = createPostgresLiveEvents(config.liveEventsDatabaseUrl, {
+  ...(databaseCa === undefined ? {} : { ca: databaseCa }),
+  onLost: (error) => {
+    log.warn('lost the live events connection; open streams end and reconnect', { error });
   },
 });
 const photos = createSupabasePhotoStorage({
@@ -387,6 +397,7 @@ const app = createApp({
   squads,
   nudges,
   notices,
+  liveEvents,
   coachNames: async () => new Map((await coachCatalog.list()).map(({ id, name }) => [id, name])),
   aiConsent,
   // Data the app shows that lives in the database. Each module keeps its own section.
@@ -499,6 +510,8 @@ const server = serve({ fetch: app.fetch, port: config.port }, (info) => {
 // Cloud Run sends SIGTERM before stopping an instance: finish open requests, then close the pool.
 process.once('SIGTERM', () => {
   log.info('shutting down');
+  // Open streams would hold the server open: end them first, and the apps reconnect elsewhere.
+  void liveEvents.close();
   server.close(() => {
     void db.destroy();
   });

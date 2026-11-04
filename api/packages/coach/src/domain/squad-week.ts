@@ -8,8 +8,10 @@ export type CheckInKind = 'trained' | 'healthyMeal' | 'cheatMeal' | 'disclaimer'
 export interface WeekCheckIn {
   readonly id: string;
   readonly member: string;
-  /** The member's own day, `YYYY-MM-DD`. */
+  /** The member's own day it counts for, `YYYY-MM-DD`. */
   readonly day: string;
+  /** The member's day when they posted it, when that was after `day` (补打卡). */
+  readonly postedDay?: string;
   readonly createdAt: Date;
   readonly kind: CheckInKind;
   /** A 练了's sport, by its name. */
@@ -36,6 +38,8 @@ export interface WeekComment {
 export interface SquadWeek {
   /** The Monday the week starts, `YYYY-MM-DD`. */
   readonly weekStart: string;
+  /** The squad's name now. */
+  readonly name?: string;
   /** Everyone in the squad now, in the order they joined. */
   readonly members: readonly { readonly member: string; readonly nickname?: string }[];
   /** The week's check-ins shared to the squad, oldest first. */
@@ -65,6 +69,9 @@ function dayWords(day: string): string {
 export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, string>): string {
   const who = roster.get(checkIn.member) ?? '队员';
   const parts = [`${dayWords(checkIn.day)} ${who} ${KIND_WORDS[checkIn.kind]}`];
+  if (checkIn.postedDay !== undefined && checkIn.postedDay !== checkIn.day) {
+    parts.push(`（补打卡：${dayWords(checkIn.postedDay)} 才发）`);
+  }
   if (checkIn.sport !== undefined) parts.push(checkIn.sport);
   if (checkIn.minutes !== undefined) parts.push(`${String(checkIn.minutes)} 分钟`);
   if (checkIn.text !== undefined) parts.push(`「${checkIn.text}」`);
@@ -89,6 +96,7 @@ export function weekText(week: SquadWeek): string {
   );
   const checkIns = week.checkIns.map((checkIn) => `- ${checkInLine(checkIn, roster)}`);
   return [
+    ...(week.name === undefined ? [] : [`队名：${week.name}`]),
     `本周从 ${week.weekStart}（周一）开始。`,
     `队员：${members.join('，')}`,
     checkIns.length === 0 ? '这周还没有人打卡。' : `打卡：\n${checkIns.join('\n')}`,
@@ -103,6 +111,7 @@ export function weekText(week: SquadWeek): string {
 export function consentedOnly(week: SquadWeek, consented: ReadonlySet<string>): SquadWeek {
   return {
     weekStart: week.weekStart,
+    ...(week.name === undefined ? {} : { name: week.name }),
     members: week.members.map((entry) =>
       consented.has(entry.member) ? entry : { member: entry.member },
     ),

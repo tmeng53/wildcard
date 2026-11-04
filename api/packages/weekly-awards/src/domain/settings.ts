@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { BadgeCatalog } from './badges.js';
 import { AwardMove, CHEER } from './moves.js';
 
 // What the weekly awards are written with, as kept in the database and changed by an admin: so
@@ -21,14 +22,19 @@ const fields = {
     .min(1)
     .max(20_000)
     .describe('The standing instructions (system prompt), Chinese, as the product spec has them.'),
+  badges: BadgeCatalog.describe(
+    'What the model picks each title’s badge from: shapes and colours the app draws, and glyphs ' +
+      'as SF Symbol names, each with what it means. Lists are replaced whole.',
+  ),
 };
 
 /**
  * The settings, whole, as stored and logged. `moves` is the list the model picks from: every
- * move offered, with what it looks like; `cheer` is always there.
+ * move offered, with what it looks like; `cheer` is always there. Version 2 added the badge
+ * catalog.
  */
 export const AwardSettings = z.strictObject({
-  version: z.literal(1),
+  version: z.literal(2),
   ...fields,
   moves: z
     .record(AwardMove, MoveDescription)

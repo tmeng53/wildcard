@@ -107,7 +107,6 @@ public final class TodayModel {
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
     private let noSquad: @MainActor (Squad?) -> Void
-
     let now: () -> Date
     /// Keeps when the latest pat I was shown arrived, so each pat on me plays once, and the night
     /// the lights are on for.
@@ -145,9 +144,10 @@ public final class TodayModel {
     /// How long after posting a 练了 the week's count flips up: after the ring closes and the
     /// squad starts cheering (the approved check-in moment's 1.7 seconds).
     private static let scoreDelay = 1.7
-
     /// The squad's home, with the member's own posts counted.
     public var home: Home? { store.home }
+    /// Opens a teammate's player card, from their name on their bubble; the app sets it.
+    @ObservationIgnored public var openTeammate: (MemberID) -> Void = { _ in }
 
     /// The squad dropping onto a newly picked scene, until everyone settles (`TodayModel+DropIn.swift`).
     var arrival: Arrival?

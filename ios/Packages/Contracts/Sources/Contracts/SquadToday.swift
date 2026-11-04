@@ -40,12 +40,14 @@ public struct SquadmateToday: Hashable, Sendable {
     public let plannedRest: Bool
     /// When they first checked in today, of any kind.
     public var firstCheckInAt: Timestamp?
+    /// The weekly title they wear beside their name (头衔); nil before their first.
+    public let title: WornTitle?
 
     public init(
         member: MemberID, catchphrase: Catchphrase?, character: MemberCharacter?, day: LocalDay,
         training: TrainingStatus,
         latestMeal: MealKind?,
-        plannedRest: Bool, firstCheckInAt: Timestamp?
+        plannedRest: Bool, firstCheckInAt: Timestamp?, title: WornTitle? = nil
     ) {
         self.member = member
         self.catchphrase = catchphrase
@@ -55,6 +57,7 @@ public struct SquadmateToday: Hashable, Sendable {
         self.latestMeal = latestMeal
         self.plannedRest = plannedRest
         self.firstCheckInAt = firstCheckInAt
+        self.title = title
     }
 }
 
