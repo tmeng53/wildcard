@@ -24,7 +24,10 @@ public struct SquadSettingsView: View {
     @Bindable private var model: SquadSettingsModel
     private let close: () -> Void
     private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
+    /// A teammate's player card, opened from their row.
+    private let teammateCard: ((MemberID) -> AnyView)?
     @State private var renaming: String?
+    @State private var openedMate: OpenedMate?
     @State private var isLeaving = false
     @State private var reveal: Reveal?
     /// The change last asked for, so its own control shows the wait while it saves.
@@ -36,11 +39,18 @@ public struct SquadSettingsView: View {
 
     public init(
         model: SquadSettingsModel, close: @escaping () -> Void,
-        picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void = { _, _ in }
+        picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void = { _, _ in },
+        teammateCard: ((MemberID) -> AnyView)? = nil
     ) {
         self.model = model
         self.close = close
         self.picked = picked
+        self.teammateCard = teammateCard
+    }
+
+    /// A teammate whose card is open.
+    private struct OpenedMate: Identifiable {
+        let id: MemberID
     }
 
     public var body: some View {
@@ -224,29 +234,6 @@ public struct SquadSettingsView: View {
         .card()
     }
 
-    // MARK: 队员
-
-    private var memberRows: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(model.members.enumerated()), id: \.element.id) { index, member in
-                MemberRow(member: member, showsDivider: index > 0, isSaving: isSaving(.member(member.id))) { action in
-                    perform(action)
-                }
-            }
-        }
-    }
-
-    private func perform(_ action: MemberAction) {
-        switch action {
-        case .handCaptaincy(let member, _):
-            working = .member(member)
-            Task { await model.handCaptaincy(to: member) }
-        case .remove(let member, _):
-            working = .member(member)
-            Task { await model.remove(member) }
-        }
-    }
-
     // MARK: 退出小队
 
     private func leaveButton(_ settings: SquadSettings) -> some View {
@@ -283,6 +270,35 @@ public struct SquadSettingsView: View {
 }
 
 extension SquadSettingsView {
+    // MARK: 队员
+
+    private var memberRows: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(model.members.enumerated()), id: \.element.id) { index, member in
+                MemberRow(
+                    member: member, showsDivider: index > 0, isSaving: isSaving(.member(member.id)),
+                    open: member.isMe || teammateCard == nil ? nil : { openedMate = OpenedMate(id: member.id) }
+                ) { action in
+                    perform(action)
+                }
+            }
+        }
+        .sheet(item: $openedMate) { mate in
+            teammateCard?(mate.id)
+        }
+    }
+
+    private func perform(_ action: MemberAction) {
+        switch action {
+        case .handCaptaincy(let member, _):
+            working = .member(member)
+            Task { await model.handCaptaincy(to: member) }
+        case .remove(let member, _):
+            working = .member(member)
+            Task { await model.remove(member) }
+        }
+    }
+
     // MARK: 教练
 
     private var coachCard: some View {

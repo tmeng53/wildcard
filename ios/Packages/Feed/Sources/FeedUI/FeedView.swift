@@ -109,6 +109,7 @@ public struct FeedView: View {
             }
         }
         .feedSurface(model, isActive: model.opened == nil)
+        .managesPosts(model, isActive: model.opened == nil)
         // Opened before any post was read: the tickets rock until the list arrives.
         .loadingCover(model.store.phase == .loading && model.store.sections.isEmpty) {
             TicketSpinner(on: .light(.bgCanvas))

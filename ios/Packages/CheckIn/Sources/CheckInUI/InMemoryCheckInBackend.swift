@@ -31,25 +31,26 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// run like 小米, and `.bump` has me trained too.
     public static func sampleSquad(
         now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID()),
-        patted: Bool = false, coach: Bool = false, together: SquadCelebration.Kind? = nil
+        patted: Bool = false, coach: Bool = false, together: SquadCelebration.Kind? = nil, meals: Bool = false
     ) -> InMemoryCheckInBackend {
-        let zone = TimeZone.current
-        let day = LocalDay(at: now, in: zone)
+        let (zone, day) = (TimeZone.current, LocalDay(at: now, in: TimeZone.current))
         let everyone = (0..<7).map { _ in MemberID(UUID()) }
         let kept = Set([3, 0, 4, 1, 5, 2, 6].prefix(min(7, max(0, size - 1))).map { everyone[$0] })
-        let mates = everyone.filter(kept.contains)
         func at(_ hoursAgo: Double) -> Timestamp { Timestamp(now.addingTimeInterval(-hoursAgo * 3600)) }
-        func mate(_ id: MemberID, _ training: TrainingStatus, rest: Bool = false, since first: Timestamp? = nil)
-            -> SquadmateToday
-        {
+        func mate(
+            _ id: MemberID, _ training: TrainingStatus, rest: Bool = false, since first: Timestamp? = nil,
+            title: WornTitle? = nil
+        ) -> SquadmateToday {
             SquadmateToday(
                 member: id, catchphrase: nil, character: character(of: id, everyone: everyone), day: day,
-                training: training, latestMeal: nil, plannedRest: rest, firstCheckInAt: first)
+                training: training, latestMeal: nil, plannedRest: rest, firstCheckInAt: first, title: title)
         }
+        // Two wear a weekly title beside their name, as the approved 头衔徽章 home shows.
         let members =
             [
-                mate(everyone[0], .trained, since: at(5)), mate(everyone[1], .trained, since: at(4)),
-                mate(everyone[2], .trained, since: at(3)), mate(everyone[3], .disclaimer, since: at(2)),
+                mate(everyone[0], .trained, since: at(5), title: worn("早八战神", "shield", "track", "sun.max.fill")),
+                mate(everyone[1], .trained, since: at(4)), mate(everyone[2], .trained, since: at(3)),
+                mate(everyone[3], .disclaimer, since: at(2), title: worn("请假条艺术家", "circle", "pool", "doc.text.fill")),
                 mate(everyone[4], .notCheckedIn, rest: true), mate(everyone[5], .notCheckedIn),
                 mate(everyone[6], .notCheckedIn),
             ].filter { kept.contains($0.member) }
@@ -60,6 +61,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             sampleCheckIns(by: everyone, on: day, in: squadID, secondSport: together == .stack ? "run" : "yoga") {
                 at($0)
             }.filter { kept.contains($0.member) }
+            + (meals ? sampleMeals(by: everyone, on: day, in: squadID) { at($0) } : [])
             + myEarlierCheckIns(by: member, on: earlier, in: squadID) { at($0) }
         let plan = try? WeeklyPlan(
             member: member, weekStart: day.weekStart,
@@ -71,7 +73,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     squad: Squad(
                         id: squadID,
                         name: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
-                        inviteCode: "K7M2QX9P", members: mates + [member], captain: member),
+                        inviteCode: "K7M2QX9P", members: everyone.filter(kept.contains) + [member], captain: member),
                     today: SquadToday(
                         squad: squadID, members: members,
                         today: counts(of: members),
@@ -94,6 +96,13 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             day: LocalDay(at: now, in: CoachNote.timeZone), text: line, coach: coach,
             writtenAt: now.addingTimeInterval(-3600))
         return SidelineCoach(coach: coach, note: note)
+    }
+
+    /// A sample title, its words from the catalog.
+    private static func worn(_ key: String, _ shape: String, _ colour: String, _ glyph: String) -> WornTitle {
+        WornTitle(
+            title: Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil),
+            badge: TitleBadge(shape: shape, colour: colour, glyph: glyph))
     }
 
     /// `patters` patted me, the first an hour ago and each next one ten minutes later.
@@ -150,6 +159,26 @@ public actor InMemoryCheckInBackend: CheckInBackend {
         ] + (leave.map { [checkIn(mates[3], 2, .disclaimer($0))] } ?? [])
     }
 
+    /// With `meals`, two teammates' latest posts are meals: 小米 had a salad after her run, and
+    /// Leo, who hasn't trained, owned up to a boba. Both eat on the home.
+    private static func sampleMeals(
+        by mates: [MemberID], on day: LocalDay, in squad: SquadID, at time: (Double) -> Timestamp
+    ) -> [CheckIn] {
+        let words = Bundle.module.inAppLanguage
+        guard let audience = try? Audience([squad]),
+            let salad = try? Caption(words.localizedString(forKey: "练完来碗沙拉", value: nil, table: nil)),
+            let boba = try? Caption(words.localizedString(forKey: "奶茶续命", value: nil, table: nil))
+        else { return [] }
+        return [
+            CheckIn(
+                id: CheckInID(UUID()), member: mates[0], day: day, createdAt: time(1), audience: audience,
+                entry: .healthyMeal(Meal(caption: salad))),
+            CheckIn(
+                id: CheckInID(UUID()), member: mates[5], day: day, createdAt: time(0.5), audience: audience,
+                entry: .cheatMeal(Meal(caption: boba))),
+        ]
+    }
+
     /// The member's own check-ins on `days` (most recent first): a run and a healthy meal, then
     /// a swim. Yesterday's 练了 is the run, so the suggested sport is 跑步 on any weekday.
     private static func myEarlierCheckIns(
@@ -187,6 +216,19 @@ public actor InMemoryCheckInBackend: CheckInBackend {
         home.checkIns.append(checkIn)
         current = home
         return checkIn
+    }
+
+    public func edit(_ checkIn: CheckIn) async throws(CheckInError) -> CheckIn {
+        guard var home = current, let index = home.checkIns.firstIndex(where: { $0.id == checkIn.id }) else {
+            throw .refused
+        }
+        home.checkIns[index] = checkIn
+        current = home
+        return checkIn
+    }
+
+    public func delete(_ checkIn: CheckInID) async throws(CheckInError) {
+        current?.checkIns.removeAll { $0.id == checkIn }
     }
 
     public func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction] {

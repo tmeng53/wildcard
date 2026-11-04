@@ -84,6 +84,9 @@ struct GlassMenu: View {
     private let items: [GlassMenuItem]
     private let close: () -> Void
     @State private var confirming: GlassMenuItem.ID?
+    /// The picked action, run once the panel is gone, so one that presents a sheet or a full-screen
+    /// page doesn't race the popover's dismissal.
+    @State private var picked: (@MainActor () -> Void)?
 
     static let width: Double = 240
     /// Between the panel's edge and its rows' pressed pill.
@@ -101,8 +104,7 @@ struct GlassMenu: View {
             if let item = items.first(where: { $0.id == confirming }), let confirmation = item.confirmation {
                 header(confirmation.question, message: confirmation.message)
                 GlassMenuRow(confirmation.label, systemImage: item.systemImage, role: item.role, isEmphasized: true) {
-                    close()
-                    item.action()
+                    pick(item)
                 }
                 .accessibilityIdentifier(confirmation.id)
                 groupGap
@@ -121,6 +123,15 @@ struct GlassMenu: View {
         .frame(width: Self.width, alignment: .leading)
         .fixedSize(horizontal: false, vertical: true)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: confirming)
+        .onDisappear {
+            picked?()
+            picked = nil
+        }
+    }
+
+    private func pick(_ item: GlassMenuItem) {
+        picked = item.action
+        close()
     }
 
     private func row(_ item: GlassMenuItem) -> some View {
@@ -128,8 +139,7 @@ struct GlassMenu: View {
             if item.confirmation != nil {
                 confirming = item.id
             } else {
-                close()
-                item.action()
+                pick(item)
             }
         }
         .accessibilityIdentifier(item.id)

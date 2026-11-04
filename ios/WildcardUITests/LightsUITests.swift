@@ -28,8 +28,9 @@ final class LightsUITests: XCTestCase {
 
         // Asleep, Coco's bubble says so.
         mate("Coco", in: app).tap()
-        XCTAssertTrue(labeled("Coco · 睡着了", in: app).waitForExistence(timeout: Self.wait), "Coco isn't asleep")
         let bubble = app.descendants(matching: .any).matching(identifier: "today.patBubble").firstMatch
+        XCTAssertTrue(labeled("睡着了", in: bubble).waitForExistence(timeout: Self.wait), "Coco isn't asleep")
+        XCTAssertTrue(app.buttons["today.mateCard"].exists, "Coco's bubble doesn't name her")
         XCTAssertFalse(bubble.frame.intersects(cord.frame), "the bubble covers the cord: \(bubble.frame)")
 
         cord.tap()
@@ -44,8 +45,8 @@ final class LightsUITests: XCTestCase {
         // Awake, Coco is on her rest day.
         mate("Coco", in: app).tap()
         XCTAssertTrue(
-            labeled("Coco · 休息日", in: app).waitForExistence(timeout: Self.wait), "Coco didn't wake for the lights")
-        XCTAssertFalse(labeled("Coco · 睡着了", in: app).exists, "Coco still sleeps with the lights on")
+            labeled("休息日", in: bubble).waitForExistence(timeout: Self.wait), "Coco didn't wake for the lights")
+        XCTAssertFalse(labeled("睡着了", in: bubble).exists, "Coco still sleeps with the lights on")
 
         cord.tap()
         XCTAssertEqual(cord.label, "开灯")
@@ -69,7 +70,7 @@ final class LightsUITests: XCTestCase {
     }
 
     /// Any element showing exactly `label`.
-    private func labeled(_ label: String, in app: XCUIApplication) -> XCUIElement {
+    private func labeled(_ label: String, in app: XCUIElement) -> XCUIElement {
         app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
     }
 

@@ -56,6 +56,7 @@ import {
   unusedCoachHiring,
   unusedCoachActivity,
   unusedUnlocks,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
@@ -116,7 +117,14 @@ const titlesFor = (letters: readonly string[]) => ({
   version: 1,
   awards: letters.map((letter, index) => ({
     member: letter,
-    titles: [{ title: `狠人${String(index)}号`, speech: '周三下着雨还去跑了。', move: 'pump' }],
+    titles: [
+      {
+        title: `狠人${String(index)}号`,
+        speech: '周三下着雨还去跑了。',
+        move: 'pump',
+        badge: { shape: 'circle', colour: 'gym', glyph: 'flame.fill' },
+      },
+    ],
   })),
 });
 
@@ -177,6 +185,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     coachActivity: unusedCoachActivity,
     notices: createNotices({ store: createPostgresNoticeStore(db) }),
     coachNames: () => Promise.reject(new Error('unused')),
+    liveEvents: ignoredNotices.liveEvents,
     aiConsent,
     nudges: nudgesOn(db),
     log: createLog(() => undefined),
@@ -472,6 +481,28 @@ describe('weekly awards', () => {
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
     expect(prompts.filter((prompt) => prompt.includes(caption))).toHaveLength(1);
     expect(before.sent).toBe(3);
+
+    // Ana edits her hottest post, taking its photo off: the story keeps its words and reactions
+    // as frozen at the awards, but never shows the photo gone from Storage.
+    const edited = `改了 ${randomUUID().slice(0, 8)}`;
+    await checkIns.edit({
+      id: CheckInId.parse(top),
+      member: CheckInMember.parse(ana.userId),
+      edit: { version: 1, kind: 'trained', training: { sport: 'run', caption: edited } },
+    });
+    const afterEdit = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(afterEdit.hottest?.caption).toBe(caption);
+    expect(afterEdit.hottest?.photos).toStrictEqual([]);
+    expect(afterEdit.hottest?.reactions).toStrictEqual([{ emoji: '❤️', count: 1 }]);
+
+    // Ana deletes her hottest post: her titles stay, the post leaves her story.
+    await checkIns.delete({
+      id: CheckInId.parse(top),
+      member: CheckInMember.parse(ana.userId),
+    });
+    const afterDelete = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(afterDelete.titles?.[0]?.titles).toStrictEqual(forCy.titles?.[0]?.titles);
+    expect(afterDelete.hottest).toBeUndefined();
   });
 
   it('counts every title a member won, in all their squads, for their player card', async () => {

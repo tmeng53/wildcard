@@ -58,6 +58,11 @@ struct PostCard: View {
         .background(
             Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
         )
+        .overlay(alignment: .topTrailing) {
+            if model.canManage(post) {
+                manageMenu.padding(Space.s)
+            }
+        }
         .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .gesture(HoldAndSlide(isEnabled: canRespond, held: hold(at:), letGo: letGo(at:)))
         .scaleEffect(isLifted && !reduceMotion ? Self.liftScale : 1)
@@ -84,6 +89,28 @@ struct PostCard: View {
             }
         }
         .accessibilityIdentifier("feed.post")
+    }
+
+    /// 「…」 on the member's own post: 编辑 opens the compose page on it, 删除 asks first, in the menu.
+    private var manageMenu: some View {
+        HeaderMenu(
+            Text("编辑或删除", bundle: .module), on: .ink,
+            items: [
+                GlassMenuItem(Text("编辑", bundle: .module), systemImage: "pencil", id: "post.edit") {
+                    model.edit(post)
+                },
+                GlassMenuItem(
+                    Text("删除", bundle: .module), systemImage: "trash", role: .destructive, id: "post.delete",
+                    confirm: .init(
+                        Text("删掉这条动态？", bundle: .module),
+                        message: Text("队友的回应和评论也会一起删掉", bundle: .module),
+                        label: Text("删除", bundle: .module), id: "post.delete.confirm")
+                ) {
+                    model.deleting = post.id
+                },
+            ]
+        )
+        .accessibilityIdentifier("post.manage")
     }
 
     /// Held on the card: the bar opens over it, and the finger's place picks the slot under it.

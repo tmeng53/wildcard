@@ -153,6 +153,8 @@ struct MemberRow: View {
     let showsDivider: Bool
     /// A change to this member is saving: the ··· menu waits as 三拍.
     let isSaving: Bool
+    /// Opens their player card; nil on my own row.
+    let open: (() -> Void)?
     /// The captain confirmed a change to this member.
     let act: (MemberAction) -> Void
     @Environment(\.sceneTheme) private var theme
@@ -181,19 +183,15 @@ struct MemberRow: View {
 
     var body: some View {
         HStack(spacing: Space.s) {
-            MemberHead(character: member.character)
-            HStack(spacing: Space.xs) {
-                Text(verbatim: name)
-                    .typeStyle(TypeRamp.body)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .lineLimit(1)
-                if member.isMe {
-                    Text("我", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                }
+            if let open {
+                // A teammate's face and name open their player card.
+                Button(action: open) { who }
+                    .buttonStyle(PressableButtonStyle())
+                    .accessibilityHint(Text("看球员卡", bundle: .module))
+                    .accessibilityIdentifier("squad.member.card")
+            } else {
+                who
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             if member.hasCrown {
                 // Tags keep their words; a long nickname gives way instead.
                 Tag(Text("上周冠军", bundle: .module), systemImage: "crown")
@@ -240,6 +238,27 @@ struct MemberRow: View {
         // Contain, so the row's identifier doesn't replace its ··· button's.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("squad.member")
+    }
+
+    /// Their face, nickname and 我.
+    private var who: some View {
+        HStack(spacing: Space.s) {
+            MemberHead(character: member.character)
+            HStack(spacing: Space.xs) {
+                Text(verbatim: name)
+                    .typeStyle(TypeRamp.body)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .lineLimit(1)
+                if member.isMe {
+                    Text("我", bundle: .module)
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(minHeight: SquadSettingsMetrics.row)
+        .contentShape(Rectangle())
     }
 }
 

@@ -9,6 +9,8 @@ export {
   CATCHPHRASE_MAX_CHARACTERS,
   Catchphrase,
   Character,
+  EQUIPPED_TITLE_MAX,
+  EquippedTitle,
   JERSEY_NUMBER_MAX,
   JerseyNumber,
   LOOK_MAX_SLOTS,
@@ -22,6 +24,6 @@ export {
   TimeZone,
   type Squadmate,
 } from './domain/profile.js';
-export { TimeZoneUnknownError } from './errors.js';
+export { ProfileMissingError, TimeZoneUnknownError } from './errors.js';
 export type { PastLocalHour, ProfileStore } from './ports.js';
 export { createMembers, type Members } from './use-cases/members.js';

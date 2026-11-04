@@ -1,7 +1,7 @@
 import { SportId } from '@wildcard/sport-ids';
 import type { Kysely } from 'kysely';
 
-import { ItemId, MemberId, UnlockKind, type Unlock, type UnlockRule } from '../domain/unlocks.js';
+import { MemberId, UnlockKind, idFits, type Unlock, type UnlockRule } from '../domain/unlocks.js';
 import type { UnlockStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -23,7 +23,7 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
         .execute();
       return rows.map((row): UnlockRule => ({
         kind: UnlockKind.parse(row.kind),
-        id: ItemId.parse(row.item_id),
+        id: itemId(row),
         sports: row.sports.map((sport) => SportId.parse(sport)),
         after: row.after,
         countsFrom: new Date(row.counts_from),
@@ -51,7 +51,7 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
         .execute();
       return rows.map((row) => ({
         kind: UnlockKind.parse(row.kind),
-        id: ItemId.parse(row.item_id),
+        id: itemId(row),
         sports: row.sports.map((sport) => SportId.parse(sport)),
         after: row.after,
         by: unlockedBy(row),
@@ -82,6 +82,14 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
       return unlocks.filter(({ kind, id }) => fresh.has(`${kind}:${id}`));
     },
   };
+}
+
+/** A row's id, checked against its kind's shape (the database checks it too). */
+function itemId(row: { kind: string; item_id: string }): string {
+  if (!idFits(UnlockKind.parse(row.kind), row.item_id)) {
+    throw new Error(`${row.item_id} is not a ${row.kind} id`);
+  }
+  return row.item_id;
 }
 
 /** A row's check-in, or else its giver: the table holds exactly one of them. */

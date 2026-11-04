@@ -30,39 +30,6 @@ public struct MeCharacter: Hashable, Sendable {
     }
 }
 
-/// The sport a member logged the most 练了 for (最常练), and how many.
-public struct MostTrained: Hashable, Sendable {
-    public var activity: Activity
-    public var checkIns: Int
-
-    public init(activity: Activity, checkIns: Int) {
-        (self.activity, self.checkIns) = (activity, checkIns)
-    }
-}
-
-/// The weekly titles (周奖) a member has won, in all their squads.
-public struct TitlesWon: Hashable, Sendable {
-    /// The latest title, and how many times they have won it.
-    public struct Latest: Hashable, Sendable {
-        public var title: String
-        public var times: Int
-
-        public init(title: String, times: Int) {
-            (self.title, self.times) = (title, times)
-        }
-    }
-
-    public var count: Int
-    /// Nil before the first.
-    public var latest: Latest?
-
-    public init(count: Int, latest: Latest?) {
-        (self.count, self.latest) = (count, latest)
-    }
-
-    public static let none = TitlesWon(count: 0, latest: nil)
-}
-
 /// What 我 shows: the character, the player card's records, this week, the squad and the
 /// notification switch.
 public struct MeOverview: Hashable, Sendable {
@@ -81,18 +48,20 @@ public struct MeOverview: Hashable, Sendable {
     public var jerseyNumber: JerseyNumber?
     /// Their place in their squad, the first to join being 1; nil before they are in one.
     public var squadPlace: Int?
-    /// Nil before their first 练了.
-    public var mostTrained: MostTrained?
-    public var titles: TitlesWon
+    /// Every weekly title they won, and the one they wear (徽章板).
+    public var board: TitleBoard
     /// The training days in the member's 每周模板, for 设置's row; nil when it didn't load.
     public var templateDays: Int?
-    /// The stores and props the member unlocked by training, which the character editor opens.
+    /// The stores, props and pieces the member unlocked by training, which the character editor
+    /// opens.
     public var unlocks: [Unlock]
+    /// The pieces still locked, which the editor shows as 「？」 boxes.
+    public var lockedPieces: [LockedPiece]
 
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
-        dailyPushOn: Bool, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil, mostTrained: MostTrained? = nil,
-        titles: TitlesWon = .none, templateDays: Int? = nil, unlocks: [Unlock] = []
+        dailyPushOn: Bool, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil, board: TitleBoard = .empty,
+        templateDays: Int? = nil, unlocks: [Unlock] = [], lockedPieces: [LockedPiece] = []
     ) {
         self.character = character
         self.joinedAt = joinedAt
@@ -102,15 +71,52 @@ public struct MeOverview: Hashable, Sendable {
         self.dailyPushOn = dailyPushOn
         self.jerseyNumber = jerseyNumber
         self.squadPlace = squadPlace
-        self.mostTrained = mostTrained
-        self.titles = titles
+        self.board = board
         self.templateDays = templateDays
         self.unlocks = unlocks
+        self.lockedPieces = lockedPieces
     }
 
-    /// The number the card shows: the member's pick, else their place in their squad (the first
-    /// to join wears 01); nil with neither.
-    public var cardNumber: JerseyNumber? {
-        jerseyNumber ?? squadPlace.flatMap { place in try? JerseyNumber(min(place, JerseyNumber.range.upperBound)) }
+    /// The number on the member's card.
+    public var cardNumber: JerseyNumber? { PlayerCardFace.number(picked: jerseyNumber, place: squadPlace) }
+
+    /// The member's own player card.
+    public var card: PlayerCardFace {
+        PlayerCardFace(
+            character: character, number: cardNumber,
+            squadName: squadName, joinedAt: joinedAt, counts: counts, week: week, board: board)
+    }
+}
+
+/// What a player card shows, front and back: the member's own on 我, or a squadmate's.
+public struct PlayerCardFace: Hashable, Sendable {
+    public var character: MeCharacter
+    /// The number on it; nil with neither a pick nor a place in a squad.
+    public var number: JerseyNumber?
+    public var squadName: String?
+    /// When they signed up: the year on the card.
+    public var joinedAt: Date?
+    public var counts: LifetimeCounts
+    /// 本周 x/y; nil when it isn't known (a squadmate's, or no plan this week).
+    public var week: WeekCount?
+    public var board: TitleBoard
+
+    public init(
+        character: MeCharacter, number: JerseyNumber?, squadName: String?, joinedAt: Date?, counts: LifetimeCounts,
+        week: WeekCount?, board: TitleBoard
+    ) {
+        self.character = character
+        self.number = number
+        self.squadName = squadName
+        self.joinedAt = joinedAt
+        self.counts = counts
+        self.week = week
+        self.board = board
+    }
+
+    /// The number a card shows: the member's pick, else their place in their squad (the first to
+    /// join wears 01); nil with neither.
+    public static func number(picked: JerseyNumber?, place: Int?) -> JerseyNumber? {
+        picked ?? place.flatMap { place in try? JerseyNumber(min(place, JerseyNumber.range.upperBound)) }
     }
 }

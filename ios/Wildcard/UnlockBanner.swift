@@ -5,9 +5,9 @@ import DesignSystemUI
 import SportsUI
 import SwiftUI
 
-/// The home's notice that a 练了 unlocked a store or a prop (approved 2026-11-02, design A):
-/// 「DEUCE CLUB 开门了 · 网球练满 3 次」, 「解锁了网球拍 · 第一次打网球」. A tap opens the
-/// editor there. Its words are `CharacterEditorUI`'s `UnlockNames`, the same as on 通知's row.
+/// The home's notice that a 练了 unlocked a store, a prop or a piece (approved 2026-11-02, design
+/// A): 「DEUCE CLUB 开门了 · 网球练满 3 次」, 「解锁了网球拍 · 第一次打网球」, 「LAP NINE 到新货了」.
+/// A tap opens the editor there. Its words are `CharacterEditorUI`'s `UnlockNames`, the same as on 通知's row.
 struct UnlockBanner: View {
     let unlock: Unlock
     private let glyph: Double = 17
@@ -28,6 +28,7 @@ struct UnlockBanner: View {
     private var symbol: String {
         switch unlock.kind {
         case .store: "storefront.fill"
+        case .piece: "shippingbox.fill"
         case .prop: unlock.sports.first?.symbol ?? "gift.fill"
         }
     }

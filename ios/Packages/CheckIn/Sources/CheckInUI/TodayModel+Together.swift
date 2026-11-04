@@ -81,7 +81,8 @@ extension TodayModel {
         return Set(kept.dropFirst().compactMap(SquadCelebration.Kind.init(rawValue:)))
     }
 
-    /// Everyone who can join in, where they stand now: awake and not holding a 请假条 up.
+    /// Everyone who can join in, where they stand now: awake, not holding a 请假条 up and not
+    /// eating, whose bowl or boba stays in their hands.
     private func togetherFigures() -> [PatStage.Figure: (
         player: CharacterPlayer, persona: Persona, spot: StagePosition
     )] {
@@ -89,7 +90,7 @@ extension TodayModel {
         var figures: [PatStage.Figure: (player: CharacterPlayer, persona: Persona, spot: StagePosition)] = [:]
         for mate in cast.mates {
             switch cast.stage.pose(of: mate.member, at: stagePhase) {
-            case .holdingSign, .asleep: continue
+            case .holdingSign, .asleep, .eating: continue
             case .standing, .sitting, .station, .inPlace: break
             }
             guard let spot = cast.stage.position(of: mate.id, at: seconds) else { continue }

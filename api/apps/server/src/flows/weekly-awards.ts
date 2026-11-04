@@ -1,4 +1,5 @@
 import {
+  CheckInId,
   MemberId as CheckInMember,
   SquadId as CheckInSquad,
   WeekStart as CheckInWeek,
@@ -276,7 +277,8 @@ export async function squadStory(
   ]);
   const { story, members } = frozen;
   const ids = new Set<string>(members.map(({ member }) => member));
-  const mine = members.find(({ member }) => member === viewer);
+  const frozenMine = members.find(({ member }) => member === viewer);
+  const mine = frozenMine && (await withPhotosStillPosted(deps, frozenMine));
   const best = members.flatMap(({ member, bestDisclaimer }) =>
     bestDisclaimer === undefined ? [] : [{ author: member, ...bestDisclaimer }],
   )[0];
@@ -499,4 +501,23 @@ function weekCheckIn(
     case 'disclaimer':
       return { ...base, text: record.disclaimer.text };
   }
+}
+
+/**
+ * The member's part with its hottest post's photos cut to those the post still has: an edit
+ * that took a photo off also took it out of Storage. Its words stay as they were frozen.
+ */
+async function withPhotosStillPosted(
+  deps: Pick<WeeklyAwardsDependencies, 'checkIns'>,
+  member: StoryMember,
+): Promise<StoryMember> {
+  const { hottest } = member;
+  if (hottest === undefined || hottest.photos.length === 0) return member;
+  const post = await deps.checkIns.current(CheckInId.parse(hottest.checkIn));
+  if (post === undefined) return member;
+  const posted = new Set<string>(photosOf(post).map(({ path }) => path));
+  const photos = hottest.photos.filter((path) => posted.has(path));
+  return photos.length === hottest.photos.length
+    ? member
+    : { ...member, hottest: { ...hottest, photos } };
 }

@@ -54,7 +54,7 @@ const checkInsAt = (moment: Date, joinedAt = JOINED) =>
     reactions: createPostgresReactionStore(db),
     comments: createPostgresCommentStore(db),
     plans,
-    photos: { exists: () => Promise.reject(new Error('unused')) },
+    photos: { exists: () => Promise.reject(new Error('unused')), delete: () => Promise.resolve() },
     calendarOf: (member) => {
       const timeZone = zones.get(member);
       return Promise.resolve(timeZone === undefined ? undefined : { timeZone, joinedAt });

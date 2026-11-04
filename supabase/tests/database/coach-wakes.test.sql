@@ -1,7 +1,7 @@
 -- The coach at work: one coach a squad, hires logged; one wake per check-in and per squad-day; files, notes and usage that only
 -- grow, until the squad ends or (for a member's page) the member's account goes.
 begin;
-select plan(17);
+select plan(20);
 
 insert into auth.users (id, email) values
   ('11111111-1111-4111-8111-111111111111', 'mia@example.com'),
@@ -60,11 +60,17 @@ select throws_ok($$insert into public.coach_usage (squad_id, coach_id, model, re
   values ('33333333-3333-4333-8333-333333333333', 'xiaohun', 'openai/gpt-6-luna', 1, 500, -1, 0, 0)$$,
   '23514', null, 'cached input is never negative');
 select throws_ok($$delete from public.coach_usage$$, '42501', null, 'usage is never removed');
+insert into public.coach_wake_steps (squad_id, wake_id, step, tool, input, output) values
+  ('33333333-3333-4333-8333-333333333333', 1, 1, 'squad_week', '{}', '（120 字）'),
+  ('33333333-3333-4333-8333-333333333333', 2, 1, 'post_note', '{"text": "先动起来"}', '已写上战术板。');
+select throws_ok($$update public.coach_wake_steps set output = '改'$$, '42501', null, 'a step is never changed');
+select throws_ok($$delete from public.coach_wake_steps where wake_id = 2$$, '42501', null, 'a step stays while its wake does');
 
 -- The check-in's deletion takes its wake; what the wake wrote stays.
 delete from public.check_ins where id = '44444444-4444-4444-8444-444444444444';
 select is((select wake_id from public.coach_files where path = 'memory.md'), null, 'a file outlives its wake');
 select is((select count(*)::int from public.coach_usage), 1, 'usage outlives its wake');
+select is((select array_agg(tool) from public.coach_wake_steps), array['post_note'], 'a wake''s steps go with it');
 
 -- A member's deletion takes their page, and the squad's end everything else.
 -- A deleted account leaves the log's who; its page goes with it.
@@ -76,6 +82,7 @@ delete from public.squads where id = '33333333-3333-4333-8333-333333333333';
 select is(
   (select count(*)::int from public.coach_files) + (select count(*)::int from public.coach_notes)
     + (select count(*)::int from public.coach_usage) + (select count(*)::int from public.coach_wakes)
+    + (select count(*)::int from public.coach_wake_steps)
     + (select count(*)::int from public.squad_coaches) + (select count(*)::int from public.squad_coach_events),
   0, 'the squad''s end takes its coaching'
 );
