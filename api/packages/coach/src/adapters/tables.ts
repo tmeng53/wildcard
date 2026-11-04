@@ -137,6 +137,17 @@ export interface CoachWakes {
   tries: Generated<number>;
 }
 
+export interface CoachWakeSteps {
+  at: Generated<Timestamp>;
+  id: Generated<Int8>;
+  input: Json;
+  output: string;
+  squad_id: string;
+  step: number;
+  tool: string;
+  wake_id: Int8;
+}
+
 export interface SquadCoaches {
   coach_id: string;
   hired_at: Generated<Timestamp>;
@@ -162,6 +173,7 @@ export interface DB {
   coach_setting_events: CoachSettingEvents;
   coach_settings: CoachSettings;
   coach_usage: CoachUsage;
+  coach_wake_steps: CoachWakeSteps;
   coach_wakes: CoachWakes;
   coaches: Coaches;
   squad_coach_events: SquadCoachEvents;
