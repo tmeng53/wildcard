@@ -62,7 +62,7 @@ export const NoticeSubjects = {
   /** A store opened or a prop unlocked for the member, by training or as a gift. */
   unlocked: z.strictObject({
     version: z.literal(1),
-    kind: z.enum(['store', 'prop']),
+    kind: z.enum(['store', 'prop', 'piece']),
     item: z.string().min(1),
   }),
 } as const;

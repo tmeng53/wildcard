@@ -56,6 +56,7 @@ import {
   unusedCoachHiring,
   unusedCoachActivity,
   unusedUnlocks,
+  ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
@@ -184,6 +185,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     coachActivity: unusedCoachActivity,
     notices: createNotices({ store: createPostgresNoticeStore(db) }),
     coachNames: () => Promise.reject(new Error('unused')),
+    liveEvents: ignoredNotices.liveEvents,
     aiConsent,
     nudges: nudgesOn(db),
     log: createLog(() => undefined),

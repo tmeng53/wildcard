@@ -1,12 +1,25 @@
 -- What members unlock: the rules are logged and never deleted, and a member's unlocks are
 -- append-only until their account goes.
 begin;
-select plan(10);
+select plan(13);
 
 insert into auth.users (id, email) values ('e0000000-0000-0000-0000-000000000001', 'una@example.com');
 
 select is(
-  (select count(*)::int from public.unlock_rules), 13, 'a rule for each store and prop that is not a starter'
+  (select count(*)::int from public.unlock_rules where kind <> 'piece'), 13,
+  'a rule for each store and prop that is not a starter'
+);
+select is(
+  (select count(*)::int from public.unlock_rules where kind = 'piece'), 39,
+  'a rule for each piece the second wardrobe added'
+);
+select throws_ok(
+  $$insert into public.unlock_rules (kind, item_id, after) values ('piece', 'Lap Bib', 3)$$,
+  '23514', null, 'a piece has a piece id'
+);
+select throws_ok(
+  $$insert into public.unlock_rules (kind, item_id, after) values ('store', 'lap-bib', 3)$$,
+  '23514', null, 'a store or prop keeps its catalog id'
 );
 
 update public.unlock_rules set after = 4 where kind = 'store' and item_id = 'deuce';

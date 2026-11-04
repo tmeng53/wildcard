@@ -25,6 +25,10 @@ public protocol SignUpService: Sendable {
     /// The squad the member joined or made in a sign-up the app was closed during, and the
     /// character they saved before it, to carry on from the step after 你的小队.
     func resume(in squad: SquadID) async throws(SignUpError) -> ResumedSignUp
+    /// The pieces still locked for the member, so the character editor hangs them as 「？」 boxes
+    /// from the first screen; empty when it can't be read, which shows them rather than stops
+    /// sign-up.
+    func lockedPieces() async -> [LockedPiece]
 }
 
 /// What a sign-up the app was closed during had saved: the squad, and the character if it was
