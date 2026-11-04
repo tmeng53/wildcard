@@ -43,7 +43,7 @@ public final class TodayStore {
 
     public private(set) var phase = Phase.loading
     /// The home as the server last sent it, with the posts it saved since folded in.
-    public private(set) var savedHome: Home?
+    public internal(set) var savedHome: Home?
     /// Posts not yet saved, oldest first.
     public private(set) var pending: [PendingCheckIn] = []
     /// Posts dropped because the server refused them while they went out late.
@@ -68,6 +68,8 @@ public final class TodayStore {
     let ledger: (any UnlockLedger)?
     /// The last unlock check, so the next waits for it and none tells an unlock twice.
     var unlockCheck: Task<Void, Never>?
+    /// Photos an edit already uploaded, by the picked photo, so its retry sends each once.
+    var editUploads: [UUID: PhotoRef] = [:]
     private let outbox: any Outbox
     let now: @Sendable () -> Date
     private let newID: @Sendable () -> UUID
@@ -290,7 +292,7 @@ public final class TodayStore {
         await outbox.save(pending)
     }
 
-    private func drop(_ id: CheckInID) async {
+    func drop(_ id: CheckInID) async {
         pending.removeAll { $0.id == id }
         await outbox.save(pending)
     }

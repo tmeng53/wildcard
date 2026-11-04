@@ -106,6 +106,17 @@ export function createSupabasePhotoStorage(options: {
         }),
       );
     },
+    async delete(paths) {
+      if (paths.length === 0) return;
+      // Storage answers with the objects it deleted, leaving out any already gone.
+      Listed.parse(
+        await callFor({
+          method: 'DELETE',
+          path: `/object/${BUCKET}`,
+          body: { prefixes: paths },
+        }),
+      );
+    },
     async deleteAllOf(member) {
       // Each round deletes what the folder lists until it lists nothing, so a repeat, or a
       // photo uploaded meanwhile, is covered too.

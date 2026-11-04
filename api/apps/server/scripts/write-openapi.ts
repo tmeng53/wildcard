@@ -39,6 +39,7 @@ const photos = {
   exists: unused,
   createViewUrls: unused,
   deleteAllOf: unused,
+  delete: unused,
 };
 const app = createApp({
   db,

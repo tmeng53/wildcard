@@ -34,6 +34,7 @@ let package = Package(
                 .product(name: "AvatarUI", package: "Avatar"),
                 .product(name: "SportsUI", package: "Sports"),
                 .product(name: "CheckInUI", package: "CheckIn"),
+                .product(name: "CheckInDomain", package: "CheckIn"),
             ],
             resources: [.process("Resources/Localizable.xcstrings")]
         ),

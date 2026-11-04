@@ -1,34 +1,194 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
-    "下一步": {
+    "继续编辑": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Next"
+            "value": "Keep Editing"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "下一步"
+            "value": "繼續編輯"
           }
         }
       }
     },
-    "不加照片": {
+    "照片": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No photo"
+            "value": "Photo"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "不加照片"
+            "value": "照片"
+          }
+        }
+      }
+    },
+    "没保存上，再点一次保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Didn't save. Tap Save again."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒儲存上，再點一次儲存"
+          }
+        }
+      }
+    },
+    "放弃这条动态？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard this post?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放棄這條動態？"
+          }
+        }
+      }
+    },
+    "放弃这些修改？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard your changes?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放棄這些修改？"
+          }
+        }
+      }
+    },
+    "放弃": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放棄"
+          }
+        }
+      }
+    },
+    "拍照": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take Photo"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拍照"
+          }
+        }
+      }
+    },
+    "加照片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add photos"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加照片"
+          }
+        }
+      }
+    },
+    "删掉这张": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove this photo"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪掉這張"
+          }
+        }
+      }
+    },
+    "保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "儲存"
+          }
+        }
+      }
+    },
+    "从相册选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose from Library"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "從相簿選"
+          }
+        }
+      }
+    },
+    "今天为什么请假…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Why the day off today…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天為什麼請假…"
           }
         }
       }
@@ -445,22 +605,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "更多"
-          }
-        }
-      }
-    },
-    "最近项目": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recents"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最近的運動"
           }
         }
       }
