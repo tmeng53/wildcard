@@ -303,6 +303,65 @@ private struct Unboxing: View {
     }
 }
 
+/// The pop-up the editor opens with when a piece came in: its 「？」 box and which store it came
+/// to, never what it is. 开箱试穿 opens the box on the store's rack and tries the piece on;
+/// 先不了 leaves the look as it is.
+struct ArrivalPopup: View {
+    let model: CharacterEditorModel
+    let arrival: CharacterEditorModel.Arrival
+    @Environment(\.sceneTheme) private var theme
+
+    /// The box's side, big enough to read as the thing to open.
+    private let box: Double = 112
+
+    var body: some View {
+        ZStack {
+            // A veil over the editor, so the pop-up is the one thing to answer.
+            Color(role: .bgInk, in: theme).opacity(0.4)
+                .ignoresSafeArea()
+                .accessibilityHidden(true)
+            VStack(spacing: Space.m) {
+                MysteryFace()
+                    .frame(width: box, height: box)
+                VStack(spacing: Space.xxs) {
+                    UnlockNames.title(.piece, item: arrival.piece)
+                        .typeStyle(TypeRamp.taskTitle)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .multilineTextAlignment(.center)
+                    Text("盒子里是什么，开了才知道", bundle: .module)
+                        .typeStyle(TypeRamp.callout)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .multilineTextAlignment(.center)
+                }
+                VStack(spacing: Space.xs) {
+                    Button {
+                        model.openArrival()
+                    } label: {
+                        Text("开箱试穿", bundle: .module).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .accessibilityIdentifier("editor.arrival.open")
+                    Button {
+                        model.leaveArrival()
+                    } label: {
+                        Text("先不了", bundle: .module)
+                    }
+                    .buttonStyle(TextButtonStyle(.muted))
+                    .accessibilityIdentifier("editor.arrival.leave")
+                }
+            }
+            .padding(Space.l)
+            .background(
+                Color(role: .bgCanvas, in: theme),
+                in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+            )
+            .padding(.horizontal, Space.pageMargin + Space.m)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("editor.arrival")
+        }
+    }
+}
+
 /// A store's copy, from the String Catalog: its name (a wordmark, the same in every language),
 /// its Chinese name, its sports, its line, and how a closed one unlocks.
 enum StoreCopy {

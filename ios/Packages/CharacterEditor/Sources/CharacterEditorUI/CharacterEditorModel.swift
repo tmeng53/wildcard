@@ -101,7 +101,7 @@ public final class CharacterEditorModel {
             look.colors[slot] = nil
         }
         draft = CharacterDraft(catalog: catalog, look: look, persona: draft.persona, nickname: draft.nickname)
-        (store, picked, unboxing) = (nil, nil, nil)
+        (store, picked, unboxing, arrival) = (nil, nil, nil, nil)
         if player != nil { restyle(move: nil) }
     }
 
@@ -144,7 +144,8 @@ public final class CharacterEditorModel {
     }
 
     /// Opens on what a 练了 just unlocked, from its notice on the home: inside the store on the
-    /// 穿搭 tab, or on the 道具 tab for a prop. A piece opens its store with its box opening.
+    /// 穿搭 tab, or on the 道具 tab for a prop. A piece waits in its 「？」 box in a pop-up over the
+    /// editor, which tells only which store it came to, until the member opens it or not.
     public func show(_ unlock: Unlock) {
         switch unlock.kind {
         case .store:
@@ -160,15 +161,37 @@ public final class CharacterEditorModel {
                 let store = draft.catalog.stores.first(where: { $0.id == id && $0.isOpen }),
                 draft.catalog.rack(of: id).contains(where: { $0.variant == unlock.id })
             else { return }
-            visit(store)
-            unboxing = unlock.id
+            arrival = Arrival(piece: unlock.id, store: store)
         }
     }
 
-    /// The piece whose 「？」 box opens on its rack, once, when the editor opens on it.
+    /// A piece that came in, boxed in the pop-up the editor opens with.
+    struct Arrival: Equatable {
+        let piece: String
+        let store: EditorChoices.Store
+    }
+
+    /// The piece waiting in the pop-up, until the member opens its box or leaves it.
+    private(set) var arrival: Arrival?
+
+    /// 开箱试穿: into its store, where its box opens on the rack and the piece is tried on. It is
+    /// only the draft's, so leaving without saving keeps the look the member had.
+    func openArrival() {
+        guard let arrival else { return }
+        self.arrival = nil
+        visit(arrival.store)
+        unboxing = arrival.piece
+    }
+
+    /// 先不了: the look stays as it is, and the piece hangs on its rack for later.
+    func leaveArrival() {
+        arrival = nil
+    }
+
+    /// The piece whose 「？」 box opens on its rack, once, after 开箱试穿.
     private(set) var unboxing: String?
 
-    /// The box finished opening: the piece inside is put on.
+    /// The box finished opening: the piece inside is tried on.
     func unboxed(revealing variant: String, in slot: Slot) {
         guard unboxing == variant else { return }
         unboxing = nil

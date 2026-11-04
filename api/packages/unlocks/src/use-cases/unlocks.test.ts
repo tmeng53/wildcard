@@ -63,12 +63,13 @@ describe('unlocks', () => {
     ]);
     // Each piece of the second wardrobe opens on its own, in its store's sports.
     const pieces = all.filter(({ kind }) => kind === 'piece');
-    expect(pieces).toHaveLength(39);
+    expect(pieces).toHaveLength(44);
     expect(
       pieces
         .filter(({ id }) => id.startsWith('lap-'))
         .map(({ id, sports, after }) => [id, sports, after]),
     ).toStrictEqual([
+      ['lap-baguette', ['run', 'walk'], 30],
       ['lap-bib', ['run', 'walk'], 5],
       ['lap-runcap', ['run', 'walk'], 20],
       ['lap-singlet', ['run', 'walk'], 7],

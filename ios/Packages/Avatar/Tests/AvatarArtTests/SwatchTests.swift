@@ -71,10 +71,10 @@ func everySwatchApplies(outfit: Outfit) throws {
     #expect(PlaceholderCharacter.swatches(for: "top", wearing: "cape").isEmpty)
     // The other stores' tops and bottoms recolor too, in their own store's colors.
     let stores = [
-        ("top", "lap-jacket"), ("bottom", "lap-pants"), ("top", "nolook-jersey"), ("top", "moss-anorak"),
+        ("top", "lap-jacket"), ("bottom", "lap-pants"), ("top", "nolook-shooter"), ("top", "moss-anorak"),
         ("top", "halfmoon-tank"), ("bottom", "deuce-shorts"), ("bottom", "deuce-skirt"),
     ].map { PlaceholderCharacter.swatches(for: Slot($0.0), wearing: $0.1).count }
-    #expect(stores == [4, 3, 5, 4, 4, 3, 4])
+    #expect(stores == [4, 3, 4, 4, 4, 3, 4])
 }
 
 /// Skin, fur, hair and eyes come from the design system's palette, and clothes from their own

@@ -44,14 +44,7 @@ final class UnlockNoticeUITests: XCTestCase {
     /// the store, where the piece's box opens and it is put on, while the rest stay boxes.
     func testAPieceThatCameInIsToldAndItsBoxOpens() {
         continueAfterFailure = false
-        let app = XCUIApplication()
-        app.launchArguments += [
-            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
-            "-uitest-bubble-hold",
-            "-today.cardPage", "0", "-uitest-unlocked-piece",
-        ]
-        app.launch()
-
+        let app = launchWithAPieceCameIn()
         let banner = app.descendants(matching: .any).matching(identifier: "notice.banner").firstMatch
         XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "the notice never dropped in")
         XCTAssertTrue(banner.label.contains("WARM-UP 到新货了"), "the notice says \(banner.label)")
@@ -61,16 +54,59 @@ final class UnlockNoticeUITests: XCTestCase {
         keepScreenshot(named: "98-notice-piece-came-in")
 
         banner.tap()
+        let popup = waitForArrival(in: app)
+        Thread.sleep(forTimeInterval: 0.4)
+        keepScreenshot(named: "99-piece-arrival-popup")
+        app.buttons["editor.arrival.open"].tap()
+        XCTAssertTrue(popup.waitForNonExistence(timeout: Self.wait), "the pop-up stayed up")
         let mystery = app.descendants(matching: .any).matching(identifier: "editor.mystery.top").firstMatch
         XCTAssertTrue(mystery.waitForExistence(timeout: Self.wait), "the store has no locked boxes")
         XCTAssertTrue(mystery.label.contains("再练"), "the box says \(mystery.label)")
         let piece = app.buttons["editor.tile.hat.warmup-headphones"]
         XCTAssertTrue(piece.waitForExistence(timeout: Self.wait), "the headphones aren't on the rack")
-        // The box opens, then the piece is put on.
+        // The box opens on the rack, then the piece is tried on.
         let worn = NSPredicate(format: "isSelected == true")
         expectation(for: worn, evaluatedWith: piece)
         waitForExpectations(timeout: Self.wait)
-        keepScreenshot(named: "99-piece-unboxed")
+        keepScreenshot(named: "100-piece-tried-on")
+    }
+
+    func testAPieceLeftInItsBoxLeavesTheLookAsItWas() {
+        continueAfterFailure = false
+        let app = launchWithAPieceCameIn()
+        let banner = app.descendants(matching: .any).matching(identifier: "notice.banner").firstMatch
+        XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "the notice never dropped in")
+        banner.tap()
+        let popup = waitForArrival(in: app)
+        app.buttons["editor.arrival.leave"].tap()
+        XCTAssertTrue(popup.waitForNonExistence(timeout: Self.wait), "the pop-up stayed up")
+        // Still on the shopping street, wearing what the member wore.
+        let store = app.descendants(matching: .any).matching(identifier: "editor.store.warmup").firstMatch
+        XCTAssertTrue(store.waitForExistence(timeout: Self.wait), "the shopping street isn't showing")
+        XCTAssertFalse(app.buttons["editor.tile.hat.warmup-headphones"].exists, "a store opened by itself")
+    }
+
+    private func launchWithAPieceCameIn() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
+            "-uitest-bubble-hold",
+            "-today.cardPage", "0", "-uitest-unlocked-piece",
+        ]
+        app.launch()
+        return app
+    }
+
+    /// The pop-up the editor opens with: the box and its store, never the piece.
+    private func waitForArrival(in app: XCUIApplication) -> XCUIElement {
+        let popup = app.descendants(matching: .any).matching(identifier: "editor.arrival").firstMatch
+        XCTAssertTrue(popup.waitForExistence(timeout: Self.wait), "the editor opened without the pop-up")
+        let words = popup.staticTexts.allElementsBoundByIndex.map(\.label).joined(separator: " ")
+        XCTAssertTrue(words.contains("WARM-UP 到新货了"), "the pop-up says \(words)")
+        XCTAssertFalse(words.contains("耳机"), "the pop-up gave the piece away: \(words)")
+        XCTAssertTrue(app.buttons["editor.arrival.open"].exists, "the pop-up has no 开箱试穿")
+        XCTAssertFalse(app.buttons["editor.tile.hat.warmup-headphones"].exists, "the piece shows under the pop-up")
+        return popup
     }
 
     private func keepScreenshot(named name: String) {

@@ -75,6 +75,13 @@ public struct CharacterEditorView: View {
                 context: context, result: model.result, isNaming: isNaming, onNamed: { isNaming = false },
                 onDone: onDone)
         }
+        .overlay {
+            if let arrival = model.arrival {
+                ArrivalPopup(model: model, arrival: arrival)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.wildcard(Motion.sheet), value: model.arrival)
         .onAppear { model.start() }
         // A brand screen wherever it opens: sign-up, or a cover over 我 that doesn't inherit
         // 我's tone. Its button, tabs, picks and swatches never wear the squad's scene.

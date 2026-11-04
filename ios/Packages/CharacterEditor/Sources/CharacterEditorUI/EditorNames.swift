@@ -80,6 +80,8 @@ enum EditorNames {
         "deuce-dress": "网球连衣裙", "deuce-pants": "俱乐部热身长裤", "deuce-socks": "条纹高筒袜球鞋", "deuce-terry": "复古毛巾头带",
         "deuce-sweater": "肩上搭的毛衣", "warmup-long": "基础长袖 T", "warmup-raglan": "插肩棒球 T", "warmup-stripe": "海魂条纹 T",
         "warmup-overalls": "工装背带裤", "warmup-hightop": "高帮帆布鞋", "warmup-beanie": "毛球针织帽", "warmup-headphones": "头戴耳机",
+        "lap-baguette": "法棍发带", "nolook-ball": "篮球毛线帽", "moss-mushroom": "蘑菇渔夫帽", "halfmoon-mintchip": "薄荷巧克力背心",
+        "deuce-ball": "网球毛线帽",
         "dumbbell": "哑铃", "bottle": "外卡水杯",
         "kettlebell": "壶铃", "yogamat": "瑜伽垫", "racket": "网球拍", "pickleball": "匹克球拍", "badminton": "羽毛球拍",
         "pingpong": "乒乓球拍", "chalkbag": "镁粉袋", "goggles": "泳镜",
