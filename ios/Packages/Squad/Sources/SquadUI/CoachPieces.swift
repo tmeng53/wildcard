@@ -154,7 +154,7 @@ struct CoachThumbnail: View {
     @State private var head: CharacterPlayer?
     @Environment(\.sceneTheme) private var theme
 
-    /// The head and shoulders on the coaches' 240 × 320 canvas.
+    /// The head and shoulders on the 240 × 320 canvas coaches share with members.
     private static let face = CGRect(x: 40, y: 74, width: 160, height: 160)
 
     var body: some View {

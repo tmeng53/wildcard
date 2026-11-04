@@ -166,6 +166,7 @@ struct DayRecapCard: View {
         case .disclaimer(let note):
             HStack(spacing: Space.xs) {
                 Tag(Text("请假条", bundle: .module), systemImage: "moon.fill", style: .rest, size: .small)
+                    .fixedSize()
                 Text(verbatim: note)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
