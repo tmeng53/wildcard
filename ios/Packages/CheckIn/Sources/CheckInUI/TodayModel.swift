@@ -199,6 +199,10 @@ public final class TodayModel {
     var litNight: String?
     /// The latest pull of the cord, which the scene plays.
     var lightsPull: LightsPull?
+    /// How long my doze lasts after the lights went off: my "z z" come back after it.
+    var myDoze = 0.0
+    /// My wake-up or doze still waiting for its turn; the next pull cancels it.
+    @ObservationIgnored var myLightsMove: Task<Void, Never>?
 
     /// The character whose head the card shows for a member (`MemberID`'s description).
     func head(of member: String) -> CharacterPlayer? {
