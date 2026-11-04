@@ -14,7 +14,7 @@ struct SidelineCoachFigure: View {
     let date: Date
     let reduceMotion: Bool
 
-    /// Members' canvas, which coaches share, and where its feet are on it.
+    /// The coaches' canvas, as members', and where its feet are on it.
     static let canvas = CGSize(width: 240, height: 320)
     static let feet = CGPoint(x: 120, y: 316)
     /// The room above the canvas its cheer's hop reaches into, in rig points.
@@ -46,8 +46,8 @@ struct CoachBubble: View {
     let line: CoachNote?
     let unit: Double
 
-    /// Just over the top of the coach's head, in rig points on its canvas, as a member's.
-    private static let headTop = 66.0
+    /// Just over the top of the coach's head, in rig points on its canvas.
+    private static let headTop = 24.0
 
     var body: some View {
         let scale = coach.scale * unit

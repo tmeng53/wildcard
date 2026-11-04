@@ -136,8 +136,11 @@ public struct StageLayout: Hashable, Sendable {
         StageRect(x: (point.x - 70 * scale)...(point.x + 70 * scale), y: (point.y - 238 * scale)...point.y)
     }
 
-    /// The coach's body, on members' rig.
-    static func coachFigure(at point: StagePoint) -> StageRect { figure(at: point, scale: coachScale) }
+    /// The coach's body: its head starts higher on its rig (24).
+    static func coachFigure(at point: StagePoint) -> StageRect {
+        StageRect(
+            x: (point.x - 70 * coachScale)...(point.x + 70 * coachScale), y: (point.y - 292 * coachScale)...point.y)
+    }
 
     /// The stage's width, the screen's in the design.
     public static let width = 390.0
