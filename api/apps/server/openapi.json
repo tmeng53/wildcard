@@ -555,7 +555,12 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+          },
+          "postedDay": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read."
           },
           "createdAt": {
             "type": "string",
@@ -699,7 +704,12 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+          },
+          "postedDay": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read."
           },
           "createdAt": {
             "type": "string",
@@ -777,7 +787,12 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+          },
+          "postedDay": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read."
           },
           "createdAt": {
             "type": "string",
@@ -836,7 +851,12 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: their day at `createdAt` or the day before."
+            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+          },
+          "postedDay": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read."
           },
           "createdAt": {
             "type": "string",
@@ -4781,7 +4801,7 @@
             }
           },
           "400": {
-            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day, or with a photo that isn’t uploaded",
+            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), or with a photo that isn’t uploaded",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4920,7 +4940,7 @@
       "get": {
         "operationId": "listSquadCheckIns",
         "summary": "A squad’s check-ins for a range of days, with their reactions and comments",
-        "description": "The squad’s feed: check-ins sent to the squad by members still in it, newest day first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.",
+        "description": "The squad’s feed: check-ins sent to the squad by members still in it and posted on a day in the range (`postedDay`), newest posted first, each with the reactions and comments of the teammates the viewer shares a squad with. Only for members of the squad.",
         "security": [
           {
             "bearer": []

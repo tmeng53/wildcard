@@ -92,7 +92,9 @@ import Testing
             "deuce-socks", "deuce-visor", "deuce-terry", "deuce-sweater",
         ])
     #expect(catalog.rack(of: "lap").isEmpty)
-    #expect(catalog.swatches(for: "top", wearing: "deuce-polo").isEmpty)
+    // Its polo recolors in the store's colors; its court shoes keep their art's.
+    #expect(catalog.swatches(for: "top", wearing: "deuce-polo").count == 4)
+    #expect(catalog.swatches(for: "shoes", wearing: "deuce-court").isEmpty)
     #expect(
         catalog.variants["top"] == [
             "warmup-tee", "warmup-tank", "warmup-hoodie", "warmup-long", "warmup-raglan", "warmup-stripe", "deuce-polo",

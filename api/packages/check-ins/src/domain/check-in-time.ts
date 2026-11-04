@@ -10,30 +10,37 @@ const DAY = 24 * HOUR;
 const OFFLINE_WINDOW = 48 * HOUR;
 /** How far ahead of the server a phone's clock may run. */
 const CLOCK_SKEW = 5 * MINUTE;
+/** How many days before the one it's posted on a check-in may count for (补打卡, Tracy, 2026-11-03). */
+export const BACKFILL_DAYS = 7;
 
 /**
- * Checks a new check-in's moment and day against the server's clock: made at most 48 hours ago
- * and at most 5 minutes ahead, and counted for a day the member had reached when they made it.
- * With their time zone that is their day at that moment (the 3am rule the home summary and plans
- * use) or the day before, never the day after. Without one, any day within one day of the
- * moment's UTC date (every time zone's local date is). Throws the matching error otherwise.
+ * Checks a new check-in's moment and day against the server's clock, and gives the day it was
+ * posted on. Made at most 48 hours ago and at most 5 minutes ahead; posted on the member's day at
+ * that moment, with their time zone (the 3am rule the home summary and plans use); and counted for
+ * that day or one of the 7 before it (补打卡), never a later one. Without a time zone, the day
+ * posted on is the one it counts for when that is within one day of the moment's UTC date (every
+ * time zone's local date is), else the UTC date, which it may count up to 7 days before. Throws
+ * the matching error otherwise.
  */
 export function checkCheckInTime(
   checkIn: { readonly createdAt: Date; readonly day: LocalDay },
   { now, timeZone }: { readonly now: Date; readonly timeZone: string | undefined },
-): void {
+): LocalDay {
   const age = now.getTime() - checkIn.createdAt.getTime();
   if (age > OFFLINE_WINDOW) throw new CheckInTooOldError();
   if (-age > CLOCK_SKEW) throw new CheckInInTheFutureError();
-  if (timeZone === undefined) {
-    const utcDay = Date.parse(checkIn.createdAt.toISOString().slice(0, 10));
-    if (Math.abs(Date.parse(checkIn.day) - utcDay) > DAY) {
-      throw new CheckInDayMismatchError(checkIn.day);
-    }
-    return;
-  }
-  const theirDay = localDayAt(checkIn.createdAt, timeZone);
-  if (checkIn.day !== theirDay && checkIn.day !== addDays(theirDay, -1)) {
+  const postedDay = postedDayOf(checkIn, timeZone);
+  if (checkIn.day > postedDay || checkIn.day < addDays(postedDay, -BACKFILL_DAYS)) {
     throw new CheckInDayMismatchError(checkIn.day);
   }
+  return postedDay;
+}
+
+function postedDayOf(
+  { createdAt, day }: { readonly createdAt: Date; readonly day: LocalDay },
+  timeZone: string | undefined,
+): LocalDay {
+  if (timeZone !== undefined) return localDayAt(createdAt, timeZone);
+  const utcDay = createdAt.toISOString().slice(0, 10);
+  return Math.abs(Date.parse(day) - Date.parse(utcDay)) <= DAY ? day : utcDay;
 }

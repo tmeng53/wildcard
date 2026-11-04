@@ -288,8 +288,8 @@ func outline(_ path: [PathElement]) -> [Point] {
 }
 
 /// Every body the editor groups is bundled, and every bundled body is in a group; every piece of
-/// clothing and prop it offers is bundled, and WARM-UP's twelve pieces recolor, their first color
-/// their art's own; every member starts with the tumbler and the dumbbell.
+/// clothing and prop it offers is bundled, and WARM-UP's nineteen pieces recolor; any piece's first
+/// color is its art's own; every member starts with the tumbler and the dumbbell.
 @Test func theEditorOffersBundledArt() throws {
     let choices = try PlaceholderCharacter.editorChoices()
     #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
@@ -301,15 +301,16 @@ func outline(_ path: [PathElement]) -> [Point] {
     #expect(Set(choices.props.map(\.id)) == Set(PlaceholderCharacter.variants(for: "prop")))
     #expect(
         choices.wear.mapValues { $0.filter { $0.store == "warmup" }.map(\.id) } == [
-            "top": ["warmup-tee", "warmup-tank", "warmup-hoodie"],
-            "bottom": ["warmup-shorts", "warmup-joggers", "warmup-leggings"],
-            "shoes": ["warmup-canvas", "warmup-runner"],
-            "hat": ["warmup-cap", "warmup-headband"],
+            "top": ["warmup-tee", "warmup-tank", "warmup-hoodie", "warmup-long", "warmup-raglan", "warmup-stripe"],
+            "bottom": ["warmup-shorts", "warmup-joggers", "warmup-leggings", "warmup-overalls"],
+            "shoes": ["warmup-canvas", "warmup-runner", "warmup-hightop"],
+            "hat": ["warmup-cap", "warmup-headband", "warmup-beanie", "warmup-headphones"],
             "acc": ["warmup-towel", "warmup-waistbag"],
         ])
     #expect(
         choices.wear.values.joined().filter { $0.store == "deuce" }.map(\.id).sorted() == [
-            "deuce-court", "deuce-polo", "deuce-shorts", "deuce-skirt", "deuce-visor",
+            "deuce-cable", "deuce-court", "deuce-dress", "deuce-pants", "deuce-polo", "deuce-shorts", "deuce-skirt",
+            "deuce-socks", "deuce-sweater", "deuce-terry", "deuce-visor",
         ])
     for (slot, pieces) in choices.wear {
         #expect(Set(pieces.map(\.id)).isSubset(of: PlaceholderCharacter.variants(for: slot)))
@@ -317,6 +318,8 @@ func outline(_ path: [PathElement]) -> [Point] {
         #expect(Set(pieces.map(\.id)) == Set(PlaceholderCharacter.variants(for: slot).filter { $0.contains("-") }))
         for piece in pieces where piece.store == "warmup" {
             #expect(piece.swatches.count == 6, "\(piece.id)")
+        }
+        for piece in pieces where !piece.swatches.isEmpty {
             #expect(
                 piece.swatches.first == PlaceholderCharacter.tones(for: slot, wearing: piece.id)?.base, "\(piece.id)")
         }
@@ -357,7 +360,7 @@ func outline(_ path: [PathElement]) -> [Point] {
     #expect(stores.map(\.id) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce"])
     #expect(stores.filter(\.isOpen).map(\.id) == ["warmup"])
     let starters = try PlaceholderCharacter.editorChoices().starterWear.values.joined()
-    #expect(starters.count == 12 && starters.allSatisfy { $0.store == "warmup" })
+    #expect(starters.count == 19 && starters.allSatisfy { $0.store == "warmup" })
     for store in stores {
         #expect(try !PlaceholderCharacter.storeBadge(store.id).shapes.isEmpty)
     }

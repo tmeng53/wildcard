@@ -17,10 +17,12 @@ func everySwatchApplies(outfit: Outfit) throws {
             continue
         }
         if clothes.contains(slot) {
-            // WARM-UP's pieces recolor; the other stores' keep their art's colors.
+            // A piece with colors in `editor.json` offers 3 to 5 besides its own; the rest keep their art's.
             let piece = (try PlaceholderCharacter.editorChoices().wear[slot] ?? []).first { $0.id == variant }
             let recolors = piece.map { !$0.swatches.isEmpty } ?? false
-            #expect(swatches.count == (recolors ? 5 : 0), "\(slot) \(variant) has \(swatches.count) swatches")
+            #expect(
+                recolors ? (3...5).contains(swatches.count) : swatches.isEmpty,
+                "\(slot) \(variant) has \(swatches.count) swatches")
         } else {
             #expect((6...8).contains(swatches.count), "\(slot) \(variant) has \(swatches.count) swatches")
         }
@@ -67,6 +69,12 @@ func everySwatchApplies(outfit: Outfit) throws {
         .map { PlaceholderCharacter.swatches(for: Slot($0.0), wearing: $0.1).count }
     #expect(furs == [6, 6, 6, 7])
     #expect(PlaceholderCharacter.swatches(for: "top", wearing: "cape").isEmpty)
+    // The other stores' tops and bottoms recolor too, in their own store's colors.
+    let stores = [
+        ("top", "lap-jacket"), ("bottom", "lap-pants"), ("top", "nolook-jersey"), ("top", "moss-anorak"),
+        ("top", "halfmoon-tank"), ("bottom", "deuce-shorts"), ("bottom", "deuce-skirt"),
+    ].map { PlaceholderCharacter.swatches(for: Slot($0.0), wearing: $0.1).count }
+    #expect(stores == [4, 3, 5, 4, 4, 3, 4])
 }
 
 /// Skin, fur, hair and eyes come from the design system's palette, and clothes from their own
