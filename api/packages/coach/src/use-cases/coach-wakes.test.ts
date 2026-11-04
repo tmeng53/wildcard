@@ -723,6 +723,7 @@ describe('the coach', () => {
               { tool: 'squad_week', input: {} },
               { tool: 'react', input: { emoji: '🔥' } },
               { tool: 'reply', input: { text: '队员1 好' } },
+              { tool: 'edit_file', input: { path: 'memory.md', find: '', replace: '米亚怕下雨' } },
             ]
           : [],
       );
@@ -771,8 +772,15 @@ describe('the coach', () => {
           input: { text: '队员1 好' },
           output: '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
         },
+        // A file's text by its length: it may be a member's words.
+        {
+          tool: 'edit_file',
+          input: { path: 'memory.md', find: '（0 字）', replace: '（5 字）' },
+          output: '已改好，memory.md 现在 5 字。',
+        },
       ]);
-      expect(report.wakes[1]?.steps[0]?.output).not.toContain('跑步');
+      expect(JSON.stringify(report.wakes)).not.toContain('跑步');
+      expect(JSON.stringify(report.wakes)).not.toContain('怕下雨');
     });
   });
 

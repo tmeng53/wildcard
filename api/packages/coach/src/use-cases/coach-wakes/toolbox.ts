@@ -27,8 +27,8 @@ export interface WakeDraft {
 
 /**
  * A tool whose arguments are checked against its own shape before it runs, and whose every call
- * is kept in the draft's steps: a read's answer by its length only, since it holds members' words
- * kept elsewhere.
+ * is kept in the draft's steps: a read's answer by its length only, and a file edit's text by its
+ * length, since they hold members' words kept elsewhere.
  */
 function defineTool<Shape extends z.ZodObject>(
   steps: WakeStep[],
@@ -38,6 +38,8 @@ function defineTool<Shape extends z.ZodObject>(
     readonly parameters: Shape;
     /** A read: its answer is kept by its length only. */
     readonly reads?: boolean;
+    /** What of its arguments is kept, when not all of them: they may hold members' words. */
+    readonly kept?: (input: z.infer<Shape>) => unknown;
     run(input: z.infer<Shape>): string;
   },
 ): CoachTool {
@@ -52,7 +54,7 @@ function defineTool<Shape extends z.ZodObject>(
         : `参数不对：${z.prettifyError(parsed.error)}`;
       steps.push({
         tool: tool.name,
-        input,
+        input: parsed.success && tool.kept !== undefined ? tool.kept(parsed.data) : input,
         output: tool.reads === true && parsed.success ? `（${String(output.length)} 字）` : output,
       });
       return Promise.resolve(output);
@@ -107,6 +109,12 @@ export function toolbox({
         path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
         find: z.string().describe('要换掉的原文，照抄；为空就是加到末尾'),
         replace: z.string().describe('换成的新内容'),
+      }),
+      // A file's text may be a member's words, kept in the file only as long as the file has it.
+      kept: ({ path, find, replace }) => ({
+        path,
+        find: `（${String(find.length)} 字）`,
+        replace: `（${String(replace.length)} 字）`,
       }),
       run: ({ path, find, replace }) => {
         const stored = storedPathOf(path, roster);
