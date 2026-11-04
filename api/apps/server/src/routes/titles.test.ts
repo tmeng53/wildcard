@@ -44,6 +44,7 @@ import {
   signUp,
 } from '../test-kit/local-supabase.js';
 import {
+  ignoredNotices,
   unusedCoachActivity,
   unusedUnlocks,
   unusedWeekSummaryWords,
@@ -119,6 +120,7 @@ const app = createApp({
   coachActivity: unusedCoachActivity,
   notices: createNotices({ store: createPostgresNoticeStore(db) }),
   coachNames: () => Promise.reject(new Error('unused')),
+  liveEvents: ignoredNotices.liveEvents,
   coachHiring: createCoachHiring({
     hiring: createPostgresCoachHiring(db),
     catalog: createPostgresCoachCatalog(db),
