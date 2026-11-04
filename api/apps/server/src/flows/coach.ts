@@ -8,7 +8,7 @@ import {
 import type { SquadWeekSource, WeekCheckIn } from '@wildcard/coach';
 import type { Members } from '@wildcard/members';
 import type { Sports } from '@wildcard/sports';
-import { SquadId as SquadsSquad, type Squads } from '@wildcard/squads';
+import { SceneWeek, SquadId as SquadsSquad, type Squads } from '@wildcard/squads';
 
 // The coach across modules: who is in a squad from squads, its week from check-ins, its members'
 // nicknames from members and sports' names from sports, in the shape the coach reads.
@@ -29,9 +29,14 @@ export function coachSquadWeek(deps: {
       before: deps.clock(),
       members: inSquad.map((member) => CheckInMember.parse(member)),
     });
-    const [squadmates, catalog] = await Promise.all([
+    const [squadmates, catalog, now] = await Promise.all([
       deps.members.squadmates(week.members.map(({ member }) => member)),
       deps.sports.catalog(),
+      deps.squads.squadAt({
+        squad: SquadsSquad.parse(squad),
+        week: SceneWeek.parse(weekStart),
+        moment: deps.clock(),
+      }),
     ]);
     const sportNames = new Map(
       catalog.categories.flatMap(({ sports }) => sports.map(({ id, names }) => [id, names.zhHans])),
@@ -43,6 +48,9 @@ export function coachSquadWeek(deps: {
         id: record.id,
         member: record.member,
         day: record.day,
+        ...(record.postedDay === undefined || record.postedDay === record.day
+          ? {}
+          : { postedDay: record.postedDay }),
         createdAt: record.createdAt,
         kind: record.kind,
         ...entryOf(record, sportNames),
@@ -59,6 +67,7 @@ export function coachSquadWeek(deps: {
       }));
     return {
       weekStart,
+      ...(now === undefined ? {} : { name: now.name }),
       members: week.members.map(({ member }) => {
         const nickname = squadmates.get(member)?.character?.nickname;
         return nickname === undefined ? { member } : { member, nickname };

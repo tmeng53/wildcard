@@ -2,6 +2,7 @@ import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely } from 'kysely';
 
 import { CoachId } from '../domain/coach.js';
+import { CoachEmoji } from '../domain/reply.js';
 import { memberOfPath } from '../domain/memory.js';
 import { SquadId } from '../domain/settings.js';
 import type { NewWake, Wake } from '../domain/wake.js';
@@ -224,7 +225,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
               path,
               member_id: memberOfPath(path) ?? null,
               body,
-              wake_id: String(wake),
+              // Null when the wake has gone meanwhile (its check-in was deleted).
+              wake_id: db.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
             })),
           )
           .execute();
@@ -277,6 +279,21 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           ? undefined
           : { coach: CoachId.parse(row.coach_id), text: row.text ?? undefined };
       },
+
+      async recent(squad, limit) {
+        const rows = await db
+          .selectFrom('coach_replies')
+          .select('emoji')
+          .where('squad_id', '=', squad)
+          .where('emoji', 'is not', null)
+          .orderBy('id', 'desc')
+          .limit(limit)
+          .execute();
+        return rows.flatMap(({ emoji }) => {
+          const parsed = CoachEmoji.safeParse(emoji);
+          return parsed.success ? [parsed.data] : [];
+        });
+      },
     },
 
     answers: {
@@ -326,6 +343,26 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
             cost_micros: costMicros,
           })
           .execute();
+      },
+    },
+
+    steps: {
+      async record({ squad, wake, steps }) {
+        if (steps.length === 0) return;
+        // Nothing when the wake has gone meanwhile (its check-in or comment was deleted).
+        await sql`
+          insert into public.coach_wake_steps (squad_id, wake_id, step, tool, input, output)
+          select ${squad}, wake.id, step.n, step.tool, step.input, step.output
+          from public.coach_wakes wake,
+            jsonb_to_recordset(${JSON.stringify(
+              steps.map(({ tool, input, output }, index) => ({
+                n: index + 1,
+                tool: tool.slice(0, 40),
+                input: input ?? null,
+                output: output.slice(0, 2000),
+              })),
+            )}::jsonb) as step (n integer, tool text, input jsonb, output text)
+          where wake.id = ${String(wake)}`.execute(db);
       },
     },
   };
@@ -441,11 +478,24 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
         .execute();
       const wakes = await db
         .selectFrom('coach_wakes')
-        .select(['reason', 'state', 'tries', 'last_error', 'created_at'])
+        .select(['id', 'reason', 'state', 'tries', 'last_error', 'created_at'])
         .where('squad_id', '=', squad)
         .orderBy('id', 'desc')
         .limit(20)
         .execute();
+      const steps =
+        wakes.length === 0
+          ? []
+          : await db
+              .selectFrom('coach_wake_steps')
+              .select(['wake_id', 'tool', 'input', 'output'])
+              .where(
+                'wake_id',
+                'in',
+                wakes.map(({ id }) => id),
+              )
+              .orderBy('id')
+              .execute();
       const weekAgo = new Date(now.getTime() - 7 * 86_400_000);
       const totalSince = async (since: Date | undefined): Promise<UsageTotal> => {
         const row = await db
@@ -486,6 +536,9 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
           tries: wake.tries,
           lastError: wake.last_error,
           createdAt: new Date(wake.created_at),
+          steps: steps
+            .filter(({ wake_id }) => wake_id === wake.id)
+            .map(({ tool, input, output }) => ({ tool, input, output })),
         })),
         usage: { total: await totalSince(undefined), lastWeek: await totalSince(weekAgo) },
       };
