@@ -8,6 +8,8 @@ public struct FigureDrawing {
     public let width: Double
     public let height: Double
     let parts: [[DrawableShape]]
+    /// Each part's art as read, kept for an arm, whose paths are rebuilt bent each frame it bends.
+    let bendable: [[ArtShape]?]
 
     struct DrawableShape {
         let path: Path
@@ -20,6 +22,18 @@ public struct FigureDrawing {
         width = figure.width
         height = figure.height
         parts = figure.parts.map { part in Self.shapes(part.art.flatMap(\.shapes)) }
+        bendable = figure.parts.map { part in part.elbow.map { _ in part.art.flatMap(\.shapes) } }
+    }
+
+    /// A part's shapes as `placement` draws them: bent first when it is a bent arm.
+    func shapes(_ part: Int, _ placement: Placement) -> [DrawableShape] {
+        guard let bend = placement.bend, let art = bendable[part] else { return parts[part] }
+        return Self.shapes(
+            art.map { shape in
+                var bent = shape
+                bent.path = bend.apply(to: shape.path)
+                return bent
+            })
     }
 
     /// The canvas area the drawing covers in `placements`, strokes included: where a crop
@@ -77,7 +91,9 @@ public struct CharacterCanvas: View {
             let fit = CGAffineTransform(scaleX: scale, y: scale).translatedBy(
                 x: (size.width / scale - area.width) / 2 - area.minX,
                 y: (size.height / scale - area.height) / 2 - area.minY)
-            for (shapes, placement) in zip(drawing.parts, placements) where placement.opacity > 0 && !shapes.isEmpty {
+            for (index, placement) in zip(drawing.parts.indices, placements)
+            where placement.opacity > 0 && !drawing.parts[index].isEmpty {
+                let shapes = drawing.shapes(index, placement)
                 var part = context
                 part.transform = CGAffineTransform(placement.transform).concatenating(fit)
                 guard placement.opacity < 1 else {

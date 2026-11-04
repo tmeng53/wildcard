@@ -84,9 +84,29 @@ public struct Rig: Hashable, Sendable {
         /// second mouth that a clip swaps in.
         public var opacity: Double
         public var layers: [Layer]
+        /// Where an arm bends, for a part drawn as one whole arm from its pivot (the shoulder)
+        /// to its hand. Nil for a part that never bends.
+        public var elbow: Elbow?
 
-        public init(id: PartID, parent: PartID? = nil, pivot: Point, opacity: Double = 1, layers: [Layer] = []) {
+        public init(
+            id: PartID, parent: PartID? = nil, pivot: Point, opacity: Double = 1, layers: [Layer] = [],
+            elbow: Elbow? = nil
+        ) {
             (self.id, self.parent, self.pivot, self.opacity, self.layers) = (id, parent, pivot, opacity, layers)
+            self.elbow = elbow
+        }
+    }
+
+    /// An arm's elbow and hand, in canvas coordinates. The `bend` channel turns the forearm
+    /// around the elbow: the art past it turns with it, the upper arm stays and the art
+    /// between them curves (`Bend`), so the arm bends as one soft line, never a hinge.
+    public struct Elbow: Hashable, Sendable {
+        public var point: Point
+        /// The hand's middle, which with the pivot gives the arm's direction.
+        public var hand: Point
+
+        public init(point: Point, hand: Point) {
+            (self.point, self.hand) = (point, hand)
         }
     }
 
@@ -119,7 +139,8 @@ public struct Rig: Hashable, Sendable {
             parts: file.parts.map { part in
                 Part(
                     id: part.id, parent: part.parent, pivot: part.pivot.point,
-                    opacity: part.opacity ?? 1, layers: part.layers ?? [])
+                    opacity: part.opacity ?? 1, layers: part.layers ?? [],
+                    elbow: part.elbow.map { Elbow(point: $0.point.point, hand: $0.hand.point) })
             },
             defaults: Dictionary(uniqueKeysWithValues: (file.defaults ?? [:]).map { (Slot($0.key), $0.value) }),
             skin: try file.skin.map { skin throws(AvatarError) in
@@ -147,6 +168,7 @@ private struct RigFile: Decodable {
             .object([
                 "id": .value, "parent": .value, "pivot": .value, "opacity": .value,
                 "layers": .array(.object(["slot": .value, "art": .value, "hand": .value])),
+                "elbow": .object(["at": .value, "hand": .value]),
             ])),
     ])
 
@@ -166,6 +188,17 @@ private struct RigFile: Decodable {
         let pivot: Pair
         let opacity: Double?
         let layers: [Rig.Layer]?
+        let elbow: ElbowFile?
+    }
+}
+
+/// `{"at": [x, y], "hand": [x, y]}`.
+private struct ElbowFile: Decodable {
+    let point: Pair
+    let hand: Pair
+
+    enum CodingKeys: String, CodingKey {
+        case point = "at", hand
     }
 }
 

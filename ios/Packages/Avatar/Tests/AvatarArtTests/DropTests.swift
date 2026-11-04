@@ -35,7 +35,9 @@ func theDropFallsInAndLandsAtRest(look: Outfit) throws {
         where placement.opacity > 0 {
             for shape in part.art.flatMap(\.shapes) {
                 let margin = (shape.stroke?.width ?? 0) / 2
-                for point in outline(shape.path).map(placement.transform.apply(to:)) {
+                for point in outline(placement.bend?.apply(to: shape.path) ?? shape.path).map(
+                    placement.transform.apply(to:))
+                {
                     #expect(
                         point.x - margin >= 0 && point.x + margin <= figure.width && point.y - margin >= 0
                             && (part.id == "shadow" || point.y + margin <= figure.height),
