@@ -38,10 +38,8 @@ public struct MemberHead: View {
     private let emoji: String?
     private let showsCoachTag: Bool
 
-    /// The face on a member's 240 by 320 canvas.
-    static let memberFace = CGRect(x: 40, y: 74, width: 160, height: 160)
-    /// The head on a coach's 240 by 320 canvas.
-    static let coachFace = CGRect(x: 50, y: 46, width: 140, height: 140)
+    /// The face on the 240 by 320 canvas members and coaches share.
+    static let face = CGRect(x: 40, y: 74, width: 160, height: 160)
     /// The coach's graphite ring.
     private static let coachRing: Double = 1.5
 
@@ -95,7 +93,7 @@ public struct MemberHead: View {
             let frame = player.restFrame
             CharacterCanvas(
                 drawing: frame.drawing, placements: frame.placements,
-                crop: figure == .coach ? Self.coachFace : Self.memberFace
+                crop: Self.face
             )
             .aspectRatio(1, contentMode: .fit)
         }

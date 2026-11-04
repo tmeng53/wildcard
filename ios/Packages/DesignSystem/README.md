@@ -33,7 +33,9 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `TickRuler`, `RulerScale` | A number slid under a needle (刻度), snapping to the scale's marks with one `pick` tick per mark (发动态's minutes under 其他) |
 | `InputField`, `SearchField` | Text entry |
 | `dismissesKeyboardOnTapOutside()` | Applied once at the app's root: a tap outside a text input puts the keyboard away on every screen, and still reaches what was tapped |
-| `KindButton`, `Tag`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
+| `KindButton`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
+| `Tag`, `Hairline` | A short label on a post, a card or a head: `.accent` (scene or brand fill), `.rest` (grey, 请假 and the moon), `.ink` (on the player card and 小队's statuses), `.regular` or `.small`; one hairline divider, `on: .page` or `.ink` |
+| `ReactionBar`, `EmojiPicker`, `ReactionBarMetrics` | Reacting to a post (动态 and the 6pm push): the floating glass bar of common emoji with the finger's slot raised and a plus, then the glass card of every emoji (recent, all, optional search) |
 | `SquadCard`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week; today's rings; Barlow numbers; the 「+1」 pop |
 | `TicketSpinner`, `TicketRock` | A whole-page wait: the logo's two tickets rocking apart and back on a 0.9 s beat, on graphite (`.brand`, the launch cover), the brand's light page (`.page`) or a light role of the scene (`.light`: 动态, 我, 出赛表, 小队设置, a photo still loading); still with Reduce Motion |
 | `.card(on:)`, `SectionLabel`, `ListRow`, `SwitchRow` | Cards (grey on a page, white on the scene), group labels, list rows (a plain menu leaves out icon and chevron), a setting's on/off row |
