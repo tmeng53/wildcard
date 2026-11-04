@@ -1,7 +1,15 @@
 import type { SportId } from '@wildcard/sport-ids';
 
 import type { CoachGift, GiftPiece, GiftPieceEdit } from './domain/gifts.js';
-import type { MemberId, Trained, Unlock, UnlockRule, UnlockRuleEdit } from './domain/unlocks.js';
+import type {
+  Claim,
+  MemberId,
+  PieceId,
+  Trained,
+  Unlock,
+  UnlockRule,
+  UnlockRuleEdit,
+} from './domain/unlocks.js';
 
 /** Where the rules and members' unlocks are kept. */
 export interface UnlockStore {
@@ -15,6 +23,13 @@ export interface UnlockStore {
    * call kept, so two at once never both count the same unlock as new.
    */
   grant(member: MemberId, unlocks: readonly Unlock[]): Promise<Unlock[]>;
+  /** The pieces `member` claimed, the earliest first. */
+  claimsOf(member: MemberId): Promise<Claim[]>;
+  /**
+   * Keeps `member`'s claim of `piece`, which they unlocked, unless they claimed it already, and
+   * answers with the claim as kept; undefined when they haven't unlocked it.
+   */
+  claim(member: MemberId, piece: PieceId): Promise<Claim | undefined>;
 }
 
 /**

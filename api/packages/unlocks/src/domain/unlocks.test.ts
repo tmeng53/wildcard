@@ -115,7 +115,7 @@ describe('toGo', () => {
       { id: 'd', sport: 'tennis', madeAt: at(3) },
     ];
     expect(toGo({ rules: [bib, racket, halfmoon], trained })).toStrictEqual([
-      { kind: 'piece', id: 'lap-bib', toGo: 3 },
+      { kind: 'piece', id: 'lap-bib', toGo: 3, sports: ['run', 'walk'] },
       // The racket and HALF MOON are reached, so they aren't listed.
     ]);
   });

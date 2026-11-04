@@ -58,6 +58,10 @@ const PieceUnlock = z
 const LockedPiece = z
   .strictObject({
     id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'lap-singlet' }),
+    sports: z.array(SportId).meta({
+      description: 'The sports whose 练了 count towards it; empty for any sport.',
+      example: ['run', 'walk'],
+    }),
     checkInsToGo: z
       .int()
       .min(1)
@@ -77,6 +81,20 @@ const GiftedPiece = z
   })
   .openapi('GiftedPiece');
 
+const PieceClaim = z
+  .strictObject({
+    id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'lap-bib' }),
+    claimedAt: z.iso.datetime({ offset: true }).meta({
+      description: 'When the member claimed it (领取) into their wardrobe.',
+      example: '2026-11-04T18:30:00.000Z',
+    }),
+  })
+  .openapi('PieceClaim');
+
+const ClaimedPiece = z
+  .strictObject({ version: bodyVersion(1), claim: PieceClaim })
+  .openapi('ClaimedPiece');
+
 const MyUnlocks = z
   .strictObject({
     version: bodyVersion(1),
@@ -90,6 +108,11 @@ const MyUnlocks = z
     }),
     lockedPieces: z.array(LockedPiece).meta({
       description: 'Every piece with a rule the member hasn’t unlocked yet, and how far it is.',
+    }),
+    claimed: z.array(PieceClaim).meta({
+      description:
+        'Every piece the member claimed (领取) into their wardrobe, the earliest first. An ' +
+        'unlocked piece waits in its store, marked new, until claimed.',
     }),
     gifts: z.array(GiftedPiece).meta({
       description:
@@ -125,34 +148,68 @@ export function unlocks(deps: {
     },
   });
 
-  return new OpenAPIHono<SignedIn>().openapi(route, async (c) => {
-    const member = MemberId.parse(c.var.caller.userId);
-    const [{ unlocks, locked }, gifts] = await Promise.all([
-      deps.unlocks.standing(member),
-      deps.gifts.of(member),
-    ]);
-    const shown = (unlock: (typeof unlocks)[number]) => ({
-      id: unlock.id,
-      unlockedAt: unlock.unlockedAt.toISOString(),
-      reason: { sports: [...unlock.sports], checkIns: unlock.after },
-    });
-    return c.json(
-      {
-        version: 1 as const,
-        unlocks: unlocks.flatMap((unlock) =>
-          unlock.kind === 'piece' ? [] : [{ kind: unlock.kind, ...shown(unlock) }],
-        ),
-        pieces: unlocks.filter(({ kind }) => kind === 'piece').map(shown),
-        lockedPieces: locked
-          .filter(({ kind }) => kind === 'piece')
-          .map(({ id, toGo }) => ({ id, checkInsToGo: toGo })),
-        gifts: gifts.map(({ piece, coach, givenAt }) => ({
-          id: piece,
-          coach,
-          givenAt: givenAt.toISOString(),
-        })),
-      },
-      200,
-    );
+  const claim = createRoute({
+    method: 'put',
+    path: '/me/pieces/{pieceId}/claim',
+    operationId: 'claimPiece',
+    summary: 'Claim an unlocked piece into the signed-in member’s wardrobe',
+    description:
+      '领取: puts a piece the member unlocked in their wardrobe (我的衣橱), on every phone. Nothing ' +
+      'is bought. Claiming it again answers with the first claim.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params: z.strictObject({ pieceId: PieceId }) },
+    responses: {
+      200: { description: 'The claim', content: { 'application/json': { schema: ClaimedPiece } } },
+      400: problem('Not a piece id, or a piece the member hasn’t unlocked (`PIECE_NOT_UNLOCKED`)'),
+      401: problem('No bearer token, or not a valid one'),
+      503: problem('Sign-in can’t be checked right now'),
+    },
   });
+
+  const shownClaim = ({ piece, claimedAt }: { piece: string; claimedAt: Date }) => ({
+    id: piece,
+    claimedAt: claimedAt.toISOString(),
+  });
+
+  return new OpenAPIHono<SignedIn>()
+    .openapi(claim, async (c) => {
+      const kept = await deps.unlocks.claim(
+        MemberId.parse(c.var.caller.userId),
+        PieceId.parse(c.req.valid('param').pieceId),
+      );
+      return c.json({ version: 1 as const, claim: shownClaim(kept) }, 200);
+    })
+    .openapi(route, async (c) => {
+      const member = MemberId.parse(c.var.caller.userId);
+      const [{ unlocks, locked }, claims, gifts] = await Promise.all([
+        deps.unlocks.standing(member),
+        deps.unlocks.claimsOf(member),
+        deps.gifts.of(member),
+      ]);
+      const shown = (unlock: (typeof unlocks)[number]) => ({
+        id: unlock.id,
+        unlockedAt: unlock.unlockedAt.toISOString(),
+        reason: { sports: [...unlock.sports], checkIns: unlock.after },
+      });
+      return c.json(
+        {
+          version: 1 as const,
+          unlocks: unlocks.flatMap((unlock) =>
+            unlock.kind === 'piece' ? [] : [{ kind: unlock.kind, ...shown(unlock) }],
+          ),
+          pieces: unlocks.filter(({ kind }) => kind === 'piece').map(shown),
+          lockedPieces: locked
+            .filter(({ kind }) => kind === 'piece')
+            .map(({ id, toGo, sports }) => ({ id, sports: [...sports], checkInsToGo: toGo })),
+          claimed: claims.map(shownClaim),
+          gifts: gifts.map(({ piece, coach, givenAt }) => ({
+            id: piece,
+            coach,
+            givenAt: givenAt.toISOString(),
+          })),
+        },
+        200,
+      );
+    });
 }

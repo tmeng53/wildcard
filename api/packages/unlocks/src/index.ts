@@ -16,6 +16,7 @@ export {
   earned,
   idFits,
   toGo,
+  type Claim,
   type Locked,
   type Trained,
   type Unlock,
@@ -30,6 +31,7 @@ export {
 } from './domain/gifts.js';
 export {
   GiftPieceNotOfferedError,
+  PieceNotUnlockedError,
   UnlockItemMissingError,
   UnlockSportNotListedError,
 } from './errors.js';

@@ -32,3 +32,14 @@ export class GiftPieceNotOfferedError extends AppError {
     super(`${piece} is not in the gift pool, or is no longer offered.`);
   }
 }
+
+/** Thrown when a member claims a piece they haven't unlocked. */
+export class PieceNotUnlockedError extends AppError {
+  override readonly name = 'PieceNotUnlockedError';
+  readonly reason = 'PIECE_NOT_UNLOCKED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly piece: string) {
+    super(`${piece} is not unlocked yet.`);
+  }
+}

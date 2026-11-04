@@ -37,6 +37,13 @@ export interface MemberUnlocks {
   unlocked_at: Timestamp;
 }
 
+export interface PieceClaims {
+  claimed_at: Generated<Timestamp>;
+  kind: Generated<string>;
+  member_id: string;
+  piece_id: string;
+}
+
 export interface UnlockRules {
   after: number;
   counts_from: Generated<Timestamp>;
@@ -49,5 +56,6 @@ export interface DB {
   coach_gifts: CoachGifts;
   gift_pieces: GiftPieces;
   member_unlocks: MemberUnlocks;
+  piece_claims: PieceClaims;
   unlock_rules: UnlockRules;
 }

@@ -1,7 +1,7 @@
 -- What members unlock: the rules are logged and never deleted, and a member's unlocks are
 -- append-only until their account goes.
 begin;
-select plan(20);
+select plan(23);
 
 insert into auth.users (id, email) values ('e0000000-0000-0000-0000-000000000001', 'una@example.com');
 
@@ -87,10 +87,25 @@ select throws_ok(
   '23503', null, 'a gift is a piece in the pool'
 );
 
+-- 领取: only a piece the member unlocked, and never undone.
+insert into public.member_unlocks (member_id, kind, item_id, sports, after, given_by, unlocked_at)
+values ('e0000000-0000-0000-0000-000000000001', 'piece', 'lap-bib', '{run,walk}', 5,
+  'e0000000-0000-0000-0000-000000000001', now());
+insert into public.piece_claims (member_id, piece_id) values ('e0000000-0000-0000-0000-000000000001', 'lap-bib');
+select throws_ok(
+  $$insert into public.piece_claims (member_id, piece_id) values ('e0000000-0000-0000-0000-000000000001', 'lap-vest')$$,
+  '23503', null, 'a claim is of a piece the member unlocked'
+);
+select throws_ok($$delete from public.piece_claims$$, '42501', null, 'a claim is never taken back');
+select throws_ok(
+  $$update public.piece_claims set claimed_at = now() - interval '1 day'$$, '42501', null, 'a claim is never changed'
+);
+
 delete from auth.users where id = 'e0000000-0000-0000-0000-000000000001';
 select is(
-  (select count(*)::int from public.member_unlocks) + (select count(*)::int from public.coach_gifts), 0,
-  'deleting the account takes its unlocks and gifts'
+  (select count(*)::int from public.member_unlocks) + (select count(*)::int from public.coach_gifts)
+    + (select count(*)::int from public.piece_claims), 0,
+  'deleting the account takes its unlocks, gifts and claims'
 );
 
 select * from finish();

@@ -108,6 +108,7 @@ describe('unlocks', () => {
       kind: 'piece',
       id: 'warmup-stripe',
       toGo: 2,
+      sports: [],
     });
     expect(locked.find(({ id }) => id === 'deuce-sweater')?.toGo).toBe(3);
     expect(locked.find(({ id }) => id === 'lap-bib')?.toGo).toBe(5);
