@@ -26,16 +26,17 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// `member` and `squad` to share them with another screen's sample, such as 动态's.
     /// Everyone goes by the approved home's names (小米, 阿杰, 豆豆, …). With `patted`, the
     /// runner (小米) and the 请假条 (阿杰) patted me an hour ago, so the home plays it. With `coach`,
-    /// the squad has hired 毛头, who wrote today's 战术板 line.
+    /// the squad has hired 毛头, who wrote today's 战术板 line. With `together`, the home opens on
+    /// that celebration: `.wave` reaches the squad's week (22/22), `.stack` has the yoga teammate
+    /// run like 小米, and `.bump` has me trained too.
     public static func sampleSquad(
         now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID()),
-        patted: Bool = false, coach: Bool = false
+        patted: Bool = false, coach: Bool = false, together: SquadCelebration.Kind? = nil
     ) -> InMemoryCheckInBackend {
         let zone = TimeZone.current
         let day = LocalDay(at: now, in: zone)
         let everyone = (0..<7).map { _ in MemberID(UUID()) }
         let kept = Set([3, 0, 4, 1, 5, 2, 6].prefix(min(7, max(0, size - 1))).map { everyone[$0] })
-        let mates = everyone.filter(kept.contains)
         func at(_ hoursAgo: Double) -> Timestamp { Timestamp(now.addingTimeInterval(-hoursAgo * 3600)) }
         func mate(
             _ id: MemberID, _ training: TrainingStatus, rest: Bool = false, since first: Timestamp? = nil,
@@ -49,16 +50,18 @@ public actor InMemoryCheckInBackend: CheckInBackend {
         let members =
             [
                 mate(everyone[0], .trained, since: at(5), title: worn("早八战神", "shield", "track", "sun.max.fill")),
-                mate(everyone[1], .trained, since: at(4)),
-                mate(everyone[2], .trained, since: at(3)),
+                mate(everyone[1], .trained, since: at(4)), mate(everyone[2], .trained, since: at(3)),
                 mate(everyone[3], .disclaimer, since: at(2), title: worn("请假条艺术家", "circle", "pool", "doc.text.fill")),
                 mate(everyone[4], .notCheckedIn, rest: true), mate(everyone[5], .notCheckedIn),
                 mate(everyone[6], .notCheckedIn),
-            ].filter { kept.contains($0.member) } + [mate(member, .notCheckedIn)]
+            ].filter { kept.contains($0.member) }
+            + [mate(member, together == .bump ? .trained : .notCheckedIn, since: together == .bump ? at(1) : nil)]
         // My week so far: a swim yesterday and a run the day before, where those are this week.
         let earlier = [1, 2].map { day.adding(days: -$0) }.filter { $0.weekStart == day.weekStart }
         let checkIns =
-            sampleCheckIns(by: everyone, on: day, in: squadID) { at($0) }.filter { kept.contains($0.member) }
+            sampleCheckIns(by: everyone, on: day, in: squadID, secondSport: together == .stack ? "run" : "yoga") {
+                at($0)
+            }.filter { kept.contains($0.member) }
             + myEarlierCheckIns(by: member, on: earlier, in: squadID) { at($0) }
         let plan = try? WeeklyPlan(
             member: member, weekStart: day.weekStart,
@@ -70,14 +73,14 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     squad: Squad(
                         id: squadID,
                         name: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
-                        inviteCode: "K7M2QX9P", members: mates + [member], captain: member),
+                        inviteCode: "K7M2QX9P", members: everyone.filter(kept.contains) + [member], captain: member),
                     today: SquadToday(
                         squad: squadID, members: members,
                         today: counts(of: members),
                         myWeek: MyWeek(
                             firstDay: day.weekStart, lastDay: day.weekStart.adding(days: 6),
                             week: WeekCount(trainedDays: earlier.count, plannedDays: 5)),
-                        squadWeek: WeekCount(trainedDays: 14, plannedDays: 22)),
+                        squadWeek: WeekCount(trainedDays: together == .wave ? 22 : 14, plannedDays: 22)),
                     plan: plan, checkIns: checkIns)
             },
             pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none,
@@ -138,7 +141,8 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     /// The sample squad's check-ins today: three 练了 and a 请假条.
     private static func sampleCheckIns(
-        by mates: [MemberID], on day: LocalDay, in squad: SquadID, at time: (Double) -> Timestamp
+        by mates: [MemberID], on day: LocalDay, in squad: SquadID, secondSport: Sport = "yoga",
+        at time: (Double) -> Timestamp
     ) -> [CheckIn] {
         guard let audience = try? Audience([squad]) else { return [] }
         func checkIn(_ who: MemberID, _ hoursAgo: Double, _ entry: CheckIn.Entry) -> CheckIn {
@@ -150,7 +154,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             Bundle.module.inAppLanguage.localizedString(forKey: "加班到十点，腿说它也想下班", value: nil, table: nil))
         return [
             checkIn(mates[0], 5, .trained(Training(activity: .sport("run")))),
-            checkIn(mates[1], 4, .trained(Training(activity: .sport("yoga")))),
+            checkIn(mates[1], 4, .trained(Training(activity: .sport(secondSport)))),
             checkIn(mates[2], 3, .trained(Training(activity: .sport("swim")))),
         ] + (leave.map { [checkIn(mates[3], 2, .disclaimer($0))] } ?? [])
     }

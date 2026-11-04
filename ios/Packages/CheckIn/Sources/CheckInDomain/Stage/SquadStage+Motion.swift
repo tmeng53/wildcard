@@ -38,6 +38,10 @@ public struct StagePosition: Hashable, Sendable {
     public let facing: Double
     public let scale: Double
 
+    public init(point: StagePoint, facing: Double, scale: Double) {
+        (self.point, self.facing, self.scale) = (point, facing, scale)
+    }
+
     /// Where I stand: front and centre, facing right, a little bigger than the squad.
     public static let mine = StagePosition(point: StageLayout.mySpot, facing: 1, scale: StageLayout.myScale)
 

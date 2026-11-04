@@ -1,7 +1,4 @@
-import AvatarArt
-import AvatarDomain
 import CharacterEditorUI
-import CheckInDomain
 import CheckInUI
 import Contracts
 import DesignSystem
@@ -10,6 +7,8 @@ import FeedDomain
 import FeedUI
 import MeDomain
 import MeUI
+import NotificationsDomain
+import NotificationsUI
 import RecapUI
 import ScheduleUI
 import SquadDomain
@@ -33,10 +32,16 @@ struct MainTabs: View {
     /// The member's own posts, for 我的动态.
     let myPosts: any MyPostsSource
     /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
-    var squadmateCards: (any SquadmateCards)?
+    let squadmateCards: (any SquadmateCards)?
     @Binding var selection: Tab
     /// The member left the squad on 小队设置.
     var leftSquad: () -> Void = {}
+    /// 通知, behind the bell on 动态: one for as long as the tabs are up.
+    @State private var inbox: NoticeInbox
+    /// 通知's page, open over 动态.
+    @State private var showsNotices = false
+    /// A post opened from 通知 (the one the coach answered), over its page.
+    @State private var noticePost: OpenedPost?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
     @State private var editor: CharacterEditorModel?
@@ -48,6 +53,19 @@ struct MainTabs: View {
     @State private var post: OpenedPost?
     /// A teammate's player card, opened from their name on the home's bubble.
     @State private var teammate: SquadmateCardModel?
+
+    init(
+        today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
+        recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
+        squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>, leftSquad: @escaping () -> Void = {}
+    ) {
+        (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
+        (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
+        self.squadmateCards = squadmateCards
+        _selection = selection
+        self.leftSquad = leftSquad
+        _inbox = State(initialValue: NoticeInbox(source: notices))
+    }
 
     var body: some View {
         AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: feed.hasNews ? [.feed] : []) { tab in
@@ -105,13 +123,7 @@ struct MainTabs: View {
                     land(on: scene, coveredAt: coveredAt)
                 },
                 // It is over everything, so it shows the card over itself.
-                teammateCard: { member in
-                    AnyView(
-                        squad.settings.map { settings in
-                            TeammateCard(
-                                model: cardModel(of: member, in: settings.squad, characters: settings.characters))
-                        })
-                }
+                teammateCard: { squadCard(of: $0) }
             )
             .environment(\.sceneTheme, squad.scene)
         }
@@ -127,28 +139,6 @@ struct MainTabs: View {
     private func land(on scene: SceneTheme, coveredAt: Date) {
         selection = .today
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
-    }
-
-    /// A teammate's card in `squad`, read from the API or, on the sample squad, made from the
-    /// `characters` the page that opens it already shows.
-    private func cardModel(
-        of member: MemberID, in squad: Squad, characters: [MemberID: MemberCharacter]
-    ) -> SquadmateCardModel {
-        let looks = characters.mapValues { character in
-            MeCharacter(
-                nickname: character.nickname.text, outfit: Outfit(character.look), persona: Persona(character.look))
-        }
-        let cards = squadmateCards ?? InMemorySquadmateCards(characters: { looks[$0] })
-        return SquadmateCardModel(member: member, squad: squad.id, squadName: squad.name, cards: cards)
-    }
-
-    /// A teammate's card from the home, which knows the squad once it is read.
-    private func homeCard(of member: MemberID) -> SquadmateCardModel? {
-        guard let home = today.home else { return nil }
-        let characters = Dictionary(
-            home.today.members.compactMap { mate in mate.character.map { (mate.member, $0) } },
-            uniquingKeysWith: { first, _ in first })
-        return cardModel(of: member, in: home.squad, characters: characters)
     }
 
     /// Opens the editor on the member's own character.
@@ -176,7 +166,7 @@ struct MainTabs: View {
         switch selection {
         case .today: today.showsTabBar
         case .profile: !profile.isDeletionOpen && post == nil
-        case .feed: feed.opened == nil
+        case .feed: feed.opened == nil && !showsNotices && noticePost == nil
         case .schedule: true
         }
     }
@@ -195,15 +185,83 @@ struct MainTabs: View {
             )
             .onAppear { today.openTeammate = { teammate = homeCard(of: $0) } }
         case .feed:
-            FeedView(model: feed, header: AnyView(RecapTile(recap: recap))) { selection = .today }
-                .environment(\.sceneTheme, today.scene)
-                .task { await recap.refresh() }
+            feedPage
         case .schedule:
             ScheduleView(model: schedule)
                 .environment(\.sceneTheme, today.scene)
         case .profile:
             profilePage
         }
+    }
+
+    /// 动态 with the bell at its title, and 通知 over it once the bell is tapped, with a post it
+    /// opens over that.
+    private var feedPage: some View {
+        ZStack {
+            FeedView(
+                model: feed, header: AnyView(RecapTile(recap: recap)),
+                accessory: AnyView(NoticeBell(inbox: inbox) { showsNotices = true })
+            ) { selection = .today }
+            .allowsHitTesting(!showsNotices)
+            .accessibilityHidden(showsNotices)
+            .task { await recap.refresh() }
+            // The bell's dot, read each time 动态 opens, and the member 通知 shows: their character
+            // when it is empty and their unlocks for how a store opened.
+            .task {
+                await inbox.load()
+                if profile.overview == nil { await profile.reload() }
+            }
+            if showsNotices {
+                NoticesView(
+                    inbox: inbox, viewer: noticeViewer, unlocked: unlockWords, now: LaunchOptions.now,
+                    open: open, close: { showsNotices = false }
+                )
+                .allowsHitTesting(noticePost == nil)
+                .accessibilityHidden(noticePost != nil)
+                .transition(.move(edge: .trailing))
+            }
+            if let noticePost {
+                PostDetailView(model: noticePost.model, post: noticePost.id) { self.noticePost = nil }
+                    .transition(.move(edge: .trailing))
+            }
+        }
+        .environment(\.sceneTheme, today.scene)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsNotices)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: noticePost?.id)
+    }
+
+    /// Where a tapped notice goes. 通知 stays under a post or the wardrobe it opens, so back
+    /// returns to it; elsewhere it closes.
+    private func open(_ target: NoticeTarget) {
+        switch target {
+        case .feed:
+            showsNotices = false
+        case .recap(_, let week):
+            showsNotices = false
+            if recap.latest?.week.monday == week { recap.openLatest() }
+        case .home:
+            showsNotices = false
+            selection = .today
+        case .post(let id):
+            noticePost = OpenedPost(id: id, model: feed.page(of: id))
+        case .wardrobe:
+            editCharacter()
+        }
+    }
+
+    /// The member's own character, on the empty 通知.
+    private var noticeViewer: NoticeViewer? {
+        profile.overview.map { NoticeViewer(outfit: $0.character.outfit, persona: $0.character.persona) }
+    }
+
+    /// A store's or prop's words and badge on its 通知 row, as the home's banner says them. How a
+    /// store opened comes from the member's unlock; a prop's title says it all (the bell design).
+    private func unlockWords(_ kind: Unlock.Kind, item: String) -> UnlockWords {
+        let unlock = profile.overview?.unlocks.first { $0.kind == kind && $0.id == item }
+        return UnlockWords(
+            title: UnlockNames.title(kind, item: item),
+            detail: kind == .store ? unlock.map(UnlockNames.detail) : nil,
+            icon: AnyView(WardrobeBadge(kind, item: item)))
     }
 
     /// 我, or 我的动态 in its place, with a post opened from it over the wall.
@@ -283,17 +341,4 @@ private struct RecapTile: View {
 private struct OpenedPost {
     let id: CheckInID
     let model: FeedModel
-}
-
-/// A teammate's card sheet, keeping the model it opened with however often its parent draws.
-private struct TeammateCard: View {
-    @State private var model: SquadmateCardModel
-
-    init(model: SquadmateCardModel) {
-        _model = State(initialValue: model)
-    }
-
-    var body: some View {
-        SquadmateCardSheet(model: model)
-    }
 }
