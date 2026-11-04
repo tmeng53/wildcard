@@ -40,7 +40,15 @@ export interface UnlockRule {
   readonly after: number;
   /** Only check-ins made from then on count: when the rule was added. */
   readonly countsFrom: Date;
+  /**
+   * A limited scene (the winter `ski`) whose window a check-in must be made in to count, for a
+   * seasonal store's pieces: they open only in season, and stay the member's all year.
+   */
+  readonly season?: string;
 }
+
+/** Whether a check-in made at `at` falls in `scene`'s season. */
+export type InSeason = (scene: string, at: Date) => boolean;
 
 /** A store, prop or piece a member unlocked, with the rule as it was then. Never taken back. */
 export interface Unlock {
@@ -70,15 +78,17 @@ export function earned({
   rules,
   trained,
   has,
+  inSeason,
 }: {
   readonly rules: readonly UnlockRule[];
   readonly trained: readonly Trained[];
   readonly has: readonly Unlock[];
+  readonly inSeason: InSeason;
 }): Unlock[] {
   const held = new Set(has.map(({ kind, id }) => `${kind}:${id}`));
   return rules.flatMap((rule) => {
     if (held.has(`${rule.kind}:${rule.id}`)) return [];
-    const reached = counting(rule, trained)[rule.after - 1];
+    const reached = counting(rule, { trained, inSeason })[rule.after - 1];
     if (reached === undefined) return [];
     return [
       {
@@ -94,10 +104,15 @@ export function earned({
 }
 
 /** The check-ins in `trained` that count towards `rule`, the earliest first. */
-function counting(rule: UnlockRule, trained: readonly Trained[]): Trained[] {
+function counting(
+  rule: UnlockRule,
+  { trained, inSeason }: { readonly trained: readonly Trained[]; readonly inSeason: InSeason },
+): Trained[] {
   return trained.filter(
     ({ sport, madeAt }) =>
-      madeAt >= rule.countsFrom && (rule.sports.length === 0 || rule.sports.includes(sport)),
+      madeAt >= rule.countsFrom &&
+      (rule.sports.length === 0 || rule.sports.includes(sport)) &&
+      (rule.season === undefined || inSeason(rule.season, madeAt)),
   );
 }
 
@@ -113,12 +128,14 @@ export interface Locked {
 export function toGo({
   rules,
   trained,
+  inSeason,
 }: {
   readonly rules: readonly UnlockRule[];
   readonly trained: readonly Trained[];
+  readonly inSeason: InSeason;
 }): Locked[] {
   return rules.flatMap((rule) => {
-    const left = rule.after - counting(rule, trained).length;
+    const left = rule.after - counting(rule, { trained, inSeason }).length;
     return left > 0 ? [{ kind: rule.kind, id: rule.id, toGo: left }] : [];
   });
 }
@@ -162,6 +179,15 @@ export const UnlockRuleEdit = z
       .min(1)
       .max(AFTER_MAX)
       .describe('How many 练了 check-ins in those sports open it.'),
+    season: z
+      .string()
+      .max(40)
+      .nullable()
+      .optional()
+      .describe(
+        'A limited scene id (such as `ski`): only 练了 made inside its window count, for a seasonal ' +
+          'store’s pieces. null makes it count all year; leave out to keep what the rule has.',
+      ),
   })
   .refine(({ kind, id }) => idFits(kind, id), {
     message: 'the id doesn’t fit its kind',

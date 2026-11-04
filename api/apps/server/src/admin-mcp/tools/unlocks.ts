@@ -33,7 +33,8 @@ export function getUnlockRules({ unlocks }: UnlockToolDependencies) {
     description:
       'Shows how each store on the character editor’s 商店街, each prop and each clothing ' +
       'piece with a rule unlocks: kind (store, prop or piece), id, sports (empty = any sport), ' +
-      'after (练了 check-ins needed) and countsFrom (only check-ins made from then count). ' +
+      'after (练了 check-ins needed), countsFrom (only check-ins made from then count) and, for a ' +
+      'seasonal store’s piece, season (a scene id: only check-ins made in its window count). ' +
       'Starters (WARM-UP, the tumbler, the dumbbell) and pieces without a rule (they come ' +
       'with their store) are open to everyone.',
     changes: false,
@@ -48,7 +49,7 @@ export function putUnlockRule({ unlocks }: UnlockToolDependencies) {
     name: 'put_unlock_rule',
     title: 'Add or change an unlock rule',
     description:
-      'Adds a rule for a store, prop or piece, or changes the sports or count of one. A piece ' +
+      'Adds a rule for a store, prop or piece, or changes the sports, count or season of one. A piece ' +
       'with a rule stays locked in its store until earned. A new rule counts check-ins made ' +
       'from now; a changed one keeps its start. Members who already unlocked it keep it. Only ' +
       'the id’s shape is checked, and a rule is never deleted, so use an id the app’s art has ' +

@@ -155,14 +155,21 @@ private let powderLocked = [
     }
 }
 
-/// POWDER DAY is on the street only in the ski scene's season: out of it the door is gone, while
-/// its pieces stay the member's to wear.
-@Test func aSeasonalStoreLeavesTheStreetOutOfSeason() throws {
-    let winter = try Catalog.placeholder(locked: powderLocked, inSeason: { $0 == "ski" })
-    let summer = try Catalog.placeholder(locked: powderLocked, inSeason: { _ in false })
-    #expect(winter.stores.map(\.id).last == "powder")
-    #expect(!summer.stores.contains { $0.id == "powder" })
-    #expect(summer.variants["top"]?.contains("powder-salmon") == true)
+/// POWDER DAY unlocks only in the ski scene's season, and stays the member's all year: out of it
+/// the store is still on the street with what they hold, only without the 「？」 boxes.
+@Test func aSeasonalStoreKeepsWhatAMemberHoldsOutOfSeason() throws {
+    let unlockedAt = Date(timeIntervalSince1970: 1_800_000_000)
+    let tuna = Unlock(kind: .piece, id: "powder-tuna", unlockedAt: unlockedAt, sports: ["ski"], checkIns: 1)
+    let winter = try Catalog.placeholder(unlocks: [tuna], locked: powderLocked, inSeason: { $0 == "ski" })
+    let summer = try Catalog.placeholder(unlocks: [tuna], locked: powderLocked, inSeason: { _ in false })
+    #expect(winter.stores.map(\.id).last == "powder" && summer.stores.map(\.id).last == "powder")
+    #expect(winter.lockedRack(of: "powder").count == 12)
+    #expect(summer.lockedRack(of: "powder").isEmpty)
+    #expect(
+        summer.rack(of: "powder").map(\.variant) == [
+            "powder-salmon", "powder-tuna", "powder-rice", "powder-saba", "powder-helmet",
+        ])
+    #expect(summer.rack(of: "powder").map(\.variant) == winter.rack(of: "powder").map(\.variant))
 }
 
 /// The seasons come from the catalog, in New York days, and run over New Year; a scene the

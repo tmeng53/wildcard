@@ -77,7 +77,7 @@ import {
   createPostgresWeekStoryStore,
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
-import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
+import { createPostgresSceneStore, createScenes, inWindow } from '@wildcard/scenes';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
 
@@ -274,6 +274,7 @@ const tellAfter = async (
     log.warn(`${what} not kept in notices`, { error });
   }
 };
+const newYorkDays = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' });
 // What members unlock by training: the unlocks module keeps the rules and who earned what, and
 // asks check-ins for the 练了 that count and the sports module which sports exist.
 const unlocksOn = (scope: Database) =>
@@ -282,6 +283,16 @@ const unlocksOn = (scope: Database) =>
     trainedSince: ({ member, since }) =>
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
+    // A seasonal rule counts only 练了 made in its scene's window, by the New York day.
+    seasons: async () => {
+      const newYorkDay = (at: Date) => newYorkDays.format(at);
+      const listed = await scenes.list();
+      const windows = new Map(listed.map(({ id, window }) => [id, window]));
+      return {
+        scenes: new Set(windows.keys()),
+        inSeason: (scene, at) => windows.has(scene) && inWindow(windows.get(scene), newYorkDay(at)),
+      };
+    },
     unlocked: (member, unlocks) =>
       tellAfter(scope, {
         told: unlocks.map(({ kind, id }) => ({

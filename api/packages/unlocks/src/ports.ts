@@ -1,6 +1,13 @@
 import type { SportId } from '@wildcard/sport-ids';
 
-import type { MemberId, Trained, Unlock, UnlockRule, UnlockRuleEdit } from './domain/unlocks.js';
+import type {
+  InSeason,
+  MemberId,
+  Trained,
+  Unlock,
+  UnlockRule,
+  UnlockRuleEdit,
+} from './domain/unlocks.js';
 
 /** Where the rules and members' unlocks are kept. */
 export interface UnlockStore {
@@ -27,6 +34,15 @@ export type TrainedSince = (query: {
   readonly member: MemberId;
   readonly since: Date;
 }) => Promise<Trained[]>;
+
+/**
+ * The scenes' seasons as they are now: whether a moment falls in a scene's window, and which
+ * scene ids exist (a scene without a window is in season all year).
+ */
+export type Seasons = () => Promise<{
+  readonly inSeason: InSeason;
+  readonly scenes: ReadonlySet<string>;
+}>;
 
 /** Whether `id` is on the sports list. */
 export type SportListed = (id: SportId) => Promise<boolean>;

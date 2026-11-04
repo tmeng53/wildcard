@@ -28,7 +28,8 @@ public struct EditorChoices: Hashable, Sendable {
         /// the member unlocks them by training.
         public let isOpen: Bool
         /// The limited scene whose season the store keeps (POWDER DAY keeps the winter `ski`
-        /// scene's): it is on the street only then. Nil for a store open all year.
+        /// scene's): its pieces unlock only then, and are worn all year. Nil for a store with no
+        /// season.
         public let season: String?
 
         public init(id: String, isOpen: Bool = false, season: String? = nil) {

@@ -7,8 +7,12 @@ import {
   type UnlockRule,
 } from '../domain/unlocks.js';
 import type { UnlockGift, UnlockRuleEdit } from '../domain/unlocks.js';
-import { UnlockItemMissingError, UnlockSportNotListedError } from '../errors.js';
-import type { SportListed, TrainedSince, UnlockStore, Unlocked } from '../ports.js';
+import {
+  UnlockItemMissingError,
+  UnlockSeasonNotListedError,
+  UnlockSportNotListedError,
+} from '../errors.js';
+import type { Seasons, SportListed, TrainedSince, UnlockStore, Unlocked } from '../ports.js';
 
 /** What members unlock by training. */
 export interface Unlocks {
@@ -37,6 +41,7 @@ export function createUnlocks(deps: {
   readonly store: UnlockStore;
   readonly trainedSince: TrainedSince;
   readonly sportListed: SportListed;
+  readonly seasons: Seasons;
   /** Told what each grant kept new; left out where nobody needs telling. */
   readonly unlocked?: Unlocked;
 }): Unlocks & UnlocksAdmin {
@@ -50,9 +55,12 @@ export function createUnlocks(deps: {
     const open = rules.filter(({ kind, id }) => !held.has(`${kind}:${id}`));
     if (open.length === 0) return { unlocks: has, locked: [] };
     const since = new Date(Math.min(...open.map(({ countsFrom }) => countsFrom.getTime())));
-    const trained = await deps.trainedSince({ member, since });
-    const fresh = earned({ rules: open, trained, has });
-    const locked = toGo({ rules: open, trained });
+    const [trained, { inSeason }] = await Promise.all([
+      deps.trainedSince({ member, since }),
+      deps.seasons(),
+    ]);
+    const fresh = earned({ rules: open, trained, has, inSeason });
+    const locked = toGo({ rules: open, trained, inSeason });
     if (fresh.length === 0) return { unlocks: has, locked };
     await grant(member, fresh);
     return { unlocks: await deps.store.unlocksOf(member), locked };
@@ -66,6 +74,9 @@ export function createUnlocks(deps: {
     async putRule(edit) {
       for (const sport of edit.sports) {
         if (!(await deps.sportListed(sport))) throw new UnlockSportNotListedError(sport);
+      }
+      if (typeof edit.season === 'string' && !(await deps.seasons()).scenes.has(edit.season)) {
+        throw new UnlockSeasonNotListedError(edit.season);
       }
       await deps.store.putRule(edit);
       return deps.store.rules();
