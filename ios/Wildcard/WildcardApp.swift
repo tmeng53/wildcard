@@ -85,7 +85,7 @@ struct WildcardApp: App {
                 backend: InMemoryCheckInBackend.sampleSquad(
                     now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
                     patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach,
-                    together: LaunchOptions.together),
+                    together: LaunchOptions.together, meals: LaunchOptions.meals),
                 outbox: InMemoryOutbox(), unlocks: SampleUnlockLedger(unlocks: LaunchOptions.unlocked),
                 now: LaunchOptions.now, newID: { UUID() }),
             writer: LaunchOptions.disclaimerWriter,
@@ -169,7 +169,9 @@ struct WildcardApp: App {
             source: source, squad: squad, viewer: viewer, today: { LocalDay(at: LaunchOptions.now(), in: zone) },
             now: { Timestamp(LaunchOptions.now()) }, newCommentID: { CommentID(UUID()) })
         let coach = FeedCoach(source: source, squad: squad, now: { LaunchOptions.now() })
-        return FeedModel(store: store, viewer: viewer, coach: coach, now: LaunchOptions.now)
+        return FeedModel(
+            store: store, viewer: viewer, editor: InMemoryPostEditor(source: source), coach: coach,
+            now: LaunchOptions.now)
     }
 
     /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with

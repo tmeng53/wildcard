@@ -208,6 +208,10 @@ enum LaunchOptions {
         return SquadCelebration.Kind(rawValue: arguments[flag + 1])
     }
 
+    /// `-uitest-meals`: two of the sample squad's latest posts are meals (小米's salad after her
+    /// run, Leo's boba), so they eat on the home and their bubbles say so.
+    static var meals: Bool { ProcessInfo.processInfo.arguments.contains("-uitest-meals") }
+
     /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted`,
     /// `-uitest-coach` or `-uitest-together` a suite emptied at launch.
     static var todayDefaults: UserDefaults {

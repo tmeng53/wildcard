@@ -52,27 +52,52 @@ extension CheckIn {
             .trained(
                 .init(
                     version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .trained,
-                    training: .init(
-                        sport: training.activity.wireSport, customSport: training.activity.wireCustomSport,
-                        minutes: training.minutes?.value, caption: training.caption?.text,
-                        photos: training.photos?.wire)))
+                    training: training.wire))
         case .healthyMeal(let meal):
             .healthyMeal(
                 .init(
                     version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .healthyMeal,
-                    meal: .init(caption: meal.caption?.text, photos: meal.photos?.wire)))
+                    meal: meal.wire))
         case .cheatMeal(let meal):
             .cheatMeal(
                 .init(
                     version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .cheatMeal,
-                    meal: .init(caption: meal.caption?.text, photos: meal.photos?.wire)))
+                    meal: meal.wire))
         case .disclaimer(let disclaimer):
             .disclaimer(
                 .init(
                     version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .disclaimer,
-                    disclaimer: .init(text: disclaimer.text, photos: disclaimer.photos?.wire)))
+                    disclaimer: disclaimer.wire))
         }
     }
+
+    /// The body of `PATCH /check-ins/{id}` that makes the saved check-in this one: its fields and
+    /// photos, all of them. The day, time and audience stay as posted, so they aren't in it.
+    public var edit: Components.Schemas.CheckInEdit {
+        switch entry {
+        case .trained(let training): .trained(.init(version: ._1, kind: .trained, training: training.wire))
+        case .healthyMeal(let meal): .healthyMeal(.init(version: ._1, kind: .healthyMeal, meal: meal.wire))
+        case .cheatMeal(let meal): .cheatMeal(.init(version: ._1, kind: .cheatMeal, meal: meal.wire))
+        case .disclaimer(let disclaimer):
+            .disclaimer(.init(version: ._1, kind: .disclaimer, disclaimer: disclaimer.wire))
+        }
+    }
+}
+
+extension Training {
+    var wire: Components.Schemas.Training {
+        .init(
+            sport: activity.wireSport, customSport: activity.wireCustomSport, minutes: minutes?.value,
+            caption: caption?.text, photos: photos?.wire)
+    }
+}
+
+extension Meal {
+    var wire: Components.Schemas.Meal { .init(caption: caption?.text, photos: photos?.wire) }
+}
+
+extension Disclaimer {
+    var wire: Components.Schemas.Disclaimer { .init(text: text, photos: photos?.wire) }
 }
 
 extension Training {
