@@ -24,7 +24,7 @@ export const NoticeEntry = z
       description:
         'What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is ' +
         'in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the ' +
-        'squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or ' +
+        'squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or ' +
         '`comment` (a teammate commented on the caller’s check-in or replied to them). ' +
         'More kinds may come: skip one you don’t know.',
     }),
@@ -69,8 +69,11 @@ export const NoticeEntry = z
     unlockKind: z
       .string()
       .optional()
-      .meta({ description: 'What opened (`unlocked`): `store` or `prop`. Skip another.' }),
-    item: z.string().optional().meta({ description: 'The store’s or prop’s id (`unlocked`).' }),
+      .meta({ description: 'What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.' }),
+    item: z
+      .string()
+      .optional()
+      .meta({ description: 'The store’s, prop’s or piece’s id (`unlocked`).' }),
   })
   .openapi('NoticeEntry');
 

@@ -134,7 +134,7 @@ struct MainTabs: View {
         guard let character = profile.overview?.character else { return }
         editor = try? CharacterEditorModel.placeholder(
             look: character.outfit, persona: character.persona, nickname: character.nickname,
-            unlocks: profile.overview?.unlocks ?? [])
+            unlocks: profile.overview?.unlocks ?? [], locked: profile.overview?.lockedPieces ?? [])
     }
 
     /// A tap on the home's notice that a store or prop opened: 我's editor, inside that store or on
@@ -251,13 +251,13 @@ struct MainTabs: View {
         profile.overview.map { NoticeViewer(outfit: $0.character.outfit, persona: $0.character.persona) }
     }
 
-    /// A store's or prop's words and badge on its 通知 row, as the home's banner says them. How a
-    /// store opened comes from the member's unlock; a prop's title says it all (the bell design).
+    /// A store's, prop's or piece's words and badge on its 通知 row, as the home's banner says them.
+    /// How a store or piece opened comes from the member's unlock; a prop's title says it all (the bell design).
     private func unlockWords(_ kind: Unlock.Kind, item: String) -> UnlockWords {
         let unlock = profile.overview?.unlocks.first { $0.kind == kind && $0.id == item }
         return UnlockWords(
             title: UnlockNames.title(kind, item: item),
-            detail: kind == .store ? unlock.map(UnlockNames.detail) : nil,
+            detail: kind == .prop ? nil : unlock.map(UnlockNames.detail),
             icon: AnyView(WardrobeBadge(kind, item: item)))
     }
 

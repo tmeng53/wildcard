@@ -25,13 +25,32 @@ extension WildcardAPI {
             titles: totals.titles, latest: totals.latest.map { AwardTotals.Latest(title: $0.title, times: $0.times) })
     }
 
-    /// The stores and props the member unlocked by training, the earliest first.
+    /// The stores, props and pieces the member unlocked by training, the earliest first.
     public func unlocks() async throws(APIError) -> [Unlock] {
-        try await call { try await client.getMyUnlocks().ok.body.json }.unlocks.map { unlock in
-            Unlock(
-                kind: unlock.kind == .store ? .store : .prop, id: unlock.id, unlockedAt: unlock.unlockedAt,
-                sports: unlock.reason.sports.compactMap(Sport.init(rawValue:)), checkIns: unlock.reason.checkIns)
+        try await unlockStanding().unlocks
+    }
+
+    /// What the member unlocked by training, the earliest first, and the pieces still locked.
+    public func unlockStanding() async throws(APIError) -> UnlockStanding {
+        let body = try await call { try await client.getMyUnlocks().ok.body.json }
+        let reason = { (reason: Components.Schemas.UnlockReason) in
+            (sports: reason.sports.compactMap(Sport.init(rawValue:)), checkIns: reason.checkIns)
         }
+        let stores = body.unlocks.map { unlock in
+            let why = reason(unlock.reason)
+            return Unlock(
+                kind: unlock.kind == .store ? .store : .prop, id: unlock.id, unlockedAt: unlock.unlockedAt,
+                sports: why.sports, checkIns: why.checkIns)
+        }
+        let pieces = body.pieces.map { piece in
+            let why = reason(piece.reason)
+            return Unlock(
+                kind: .piece, id: piece.id, unlockedAt: piece.unlockedAt, sports: why.sports, checkIns: why.checkIns)
+        }
+        return UnlockStanding(
+            // Both lists are the earliest first; so is the whole.
+            unlocks: (stores + pieces).sorted { $0.unlockedAt < $1.unlockedAt },
+            lockedPieces: body.lockedPieces.map { LockedPiece(id: $0.id, checkInsToGo: $0.checkInsToGo) })
     }
 
     /// Whether the one daily push at 6pm is on; it is until the member turns it off.

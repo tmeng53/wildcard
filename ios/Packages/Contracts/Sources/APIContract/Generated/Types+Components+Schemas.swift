@@ -4478,7 +4478,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -4559,11 +4559,11 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/emoji`.
             public var emoji: Swift.String?
-            /// What opened (`unlocked`): `store` or `prop`. Skip another.
+            /// What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/unlockKind`.
             public var unlockKind: Swift.String?
-            /// The store’s or prop’s id (`unlocked`).
+            /// The store’s, prop’s or piece’s id (`unlocked`).
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/item`.
             public var item: Swift.String?
@@ -4571,7 +4571,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store or prop opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - squadId: The squad it is about, if any.
             ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
@@ -4584,8 +4584,8 @@ extension Components {
             ///   - coachName: Its name now (`coachReply`).
             ///   - replied: Whether the coach wrote a line (`coachReply`); else only its emoji.
             ///   - emoji: The coach’s emoji (`coachReply`), if any.
-            ///   - unlockKind: What opened (`unlocked`): `store` or `prop`. Skip another.
-            ///   - item: The store’s or prop’s id (`unlocked`).
+            ///   - unlockKind: What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.
+            ///   - item: The store’s, prop’s or piece’s id (`unlocked`).
             public init(
                 id: Swift.Int,
                 kind: Swift.String,
@@ -6456,21 +6456,37 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/MyUnlocks/unlocks`.
             public var unlocks: [Components.Schemas.Unlock]
+            /// Every clothing piece the member unlocked, the earliest first. A piece with a rule stays locked in its store, even an open one, until then.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/pieces`.
+            public var pieces: [Components.Schemas.PieceUnlock]
+            /// Every piece with a rule the member hasn’t unlocked yet, and how far it is.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/lockedPieces`.
+            public var lockedPieces: [Components.Schemas.LockedPiece]
             /// Creates a new `MyUnlocks`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - unlocks: Every store and prop the member unlocked, the earliest first.
+            ///   - pieces: Every clothing piece the member unlocked, the earliest first. A piece with a rule stays locked in its store, even an open one, until then.
+            ///   - lockedPieces: Every piece with a rule the member hasn’t unlocked yet, and how far it is.
             public init(
                 version: Components.Schemas.MyUnlocks.VersionPayload,
-                unlocks: [Components.Schemas.Unlock]
+                unlocks: [Components.Schemas.Unlock],
+                pieces: [Components.Schemas.PieceUnlock],
+                lockedPieces: [Components.Schemas.LockedPiece]
             ) {
                 self.version = version
                 self.unlocks = unlocks
+                self.pieces = pieces
+                self.lockedPieces = lockedPieces
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case unlocks
+                case pieces
+                case lockedPieces
             }
         }
         /// - Remark: Generated from `#/components/schemas/Unlock`.
@@ -6546,6 +6562,66 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case sports
                 case checkIns
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PieceUnlock`.
+        public struct PieceUnlock: Codable, Hashable, Sendable {
+            /// The piece’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PieceUnlock/id`.
+            public var id: Swift.String
+            /// When the member made the check-in that unlocked it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PieceUnlock/unlockedAt`.
+            public var unlockedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/PieceUnlock/reason`.
+            public var reason: Components.Schemas.UnlockReason
+            /// Creates a new `PieceUnlock`.
+            ///
+            /// - Parameters:
+            ///   - id: The piece’s id in the app’s art.
+            ///   - unlockedAt: When the member made the check-in that unlocked it.
+            ///   - reason:
+            public init(
+                id: Swift.String,
+                unlockedAt: Foundation.Date,
+                reason: Components.Schemas.UnlockReason
+            ) {
+                self.id = id
+                self.unlockedAt = unlockedAt
+                self.reason = reason
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case unlockedAt
+                case reason
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/LockedPiece`.
+        public struct LockedPiece: Codable, Hashable, Sendable {
+            /// The piece’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LockedPiece/id`.
+            public var id: Swift.String
+            /// How many more 练了 check-ins in its sports open it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LockedPiece/checkInsToGo`.
+            public var checkInsToGo: Swift.Int
+            /// Creates a new `LockedPiece`.
+            ///
+            /// - Parameters:
+            ///   - id: The piece’s id in the app’s art.
+            ///   - checkInsToGo: How many more 练了 check-ins in its sports open it.
+            public init(
+                id: Swift.String,
+                checkInsToGo: Swift.Int
+            ) {
+                self.id = id
+                self.checkInsToGo = checkInsToGo
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case checkInsToGo
             }
         }
     }

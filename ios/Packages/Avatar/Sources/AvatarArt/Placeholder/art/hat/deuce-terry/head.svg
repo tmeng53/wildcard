@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+  <path d="M 41 130.8 C 67.2 109.2 172.8 109.2 199 130.8 L 199 145.2 C 172.8 123.6 67.2 123.6 41 145.2 Z" fill="#F4F6FA" stroke="#AFAEB9" stroke-width="2.4"/>
+  <path d="M 44.4 132.6 C 70 112.8 170 112.8 195.6 132.6" fill="none" stroke="#24396B" stroke-width="2.2" stroke-dasharray="0" />
+  <path d="M 44.4 136.4 C 70 116.6 170 116.6 195.6 136.4" fill="none" stroke="#E65345" stroke-width="1.6"/>
+  <path d="M 44.4 140.2 C 70 120.4 170 120.4 195.6 140.2" fill="none" stroke="#24396B" stroke-width="2.2"/>
+</svg>

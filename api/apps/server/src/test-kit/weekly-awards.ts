@@ -31,7 +31,7 @@ export const unusedCoachHiring = {
 export const unusedCoachActivity = { squad: unused, spoke: unused };
 
 /** What members unlocked, for an app whose test never reads it. */
-export const unusedUnlocks = { of: unused };
+export const unusedUnlocks = { of: unused, standing: unused };
 
 /**
  * What members were told, for an app whose test never reads it: notices told are dropped, since
