@@ -69,10 +69,14 @@ export async function editCheckIn(
   if (saved.kind !== edit.kind) throw new CheckInKindChangedError(saved.kind);
   const kept = new Map(photosOf(saved).map((photo) => [photo.path, photo] as const));
   const edited = withPhotos(
-    recordFromDraft(
-      { ...edit, day: saved.day, createdAt: saved.createdAt, audience: [...saved.audience] },
-      { id, member },
-    ),
+    {
+      ...recordFromDraft(
+        { ...edit, day: saved.day, createdAt: saved.createdAt, audience: [...saved.audience] },
+        { id, member },
+      ),
+      // An edit keeps the day it was posted on, as it keeps the day it counts for.
+      ...(saved.postedDay === undefined ? {} : { postedDay: saved.postedDay }),
+    },
     (photos) => photos.map((photo) => kept.get(photo.path) ?? photo),
   );
   if (isSameCheckIn(saved, edited)) {
