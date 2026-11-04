@@ -57,8 +57,8 @@ if [ -n "${base:-}" ]; then
       *.md | docs/* | LICENSE) ;;
       web/*) add web ;;
       supabase/*) add supabase; add api; add backend ;;
-      api/*) add supabase; add api; add backend ;;
-      ios/*) add swift; add backend ;;
+      api/*) add supabase; add api; add backend; add swift ;;
+      ios/*) add swift; add backend; add web ;;
       *) parts="swift web supabase api backend"; break ;;
     esac
   done <<<"$files"
