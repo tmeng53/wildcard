@@ -1016,6 +1016,70 @@
         }
       }
     },
+    "在吃健康餐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eating a clean meal"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在吃健康餐"
+          }
+        }
+      }
+    },
+    "在吃放纵餐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eating a cheat meal"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在吃放縱餐"
+          }
+        }
+      }
+    },
+    "练完来碗沙拉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salad after the run"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "練完來碗沙拉"
+          }
+        }
+      }
+    },
+    "奶茶续命": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boba to survive the day"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "奶茶續命"
+          }
+        }
+      }
+    },
     "今天还没打卡": {
       "localizations": {
         "en": {

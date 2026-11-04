@@ -36,7 +36,9 @@ extension TodayModel {
 
     /// I pat a teammate from their bubble: it plays at once and goes to the server, once a day.
     func patMate(_ id: MemberID) {
-        guard store.canPat(id), !isChanging, let mate = cast.mates.first(where: { $0.id == id }) else { return }
+        guard store.canPat(id), !isChanging, together.playing == nil,
+            let mate = cast.mates.first(where: { $0.id == id })
+        else { return }
         guard pats.pat(mate, mine: player) else { return }
         Task { try? await store.pat(id) }
     }

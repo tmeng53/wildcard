@@ -33,4 +33,23 @@ extension PlaceholderCharacter {
         case .excuse: try Clip.decode(file("moves/checkins/doze.json")).atTempo(persona.accentTempo)
         }
     }
+
+    /// A meal's move looping, for someone on the home eating their latest post: after each
+    /// bite the fork goes back and the food fills up again over `refill` seconds, so it loops
+    /// without a jump. Only for `healthyMeal` and `treatMeal`.
+    public static func mealLoop(_ move: CheckInMove, persona: Persona) throws(AvatarError) -> Clip {
+        let once = try clip(for: move, persona: persona)
+        let refill = 0.6
+        let end = once.duration + refill
+        let tracks = once.tracks.map { track in
+            guard let first = track.keys.first, let last = track.keys.last, first.value != last.value else {
+                return track
+            }
+            var keys = track.keys
+            keys.append(Clip.Keyframe(time: once.duration, value: last.value))
+            keys.append(Clip.Keyframe(time: end, value: first.value, easing: .easeInOut))
+            return Clip.Track(part: track.part, channel: track.channel, keys: keys)
+        }
+        return try Clip(name: once.name + "-loop", duration: end, loops: true, tracks: tracks, holds: once.holds)
+    }
 }

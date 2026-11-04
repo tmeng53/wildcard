@@ -27,6 +27,8 @@ public enum StagePose: Hashable, Sendable {
     case holdingSign
     /// A rest day: sitting on the floor, cheering when someone checks in.
     case sitting
+    /// Their latest post today is a meal: eating it on their spot.
+    case eating(MealKind)
     /// Not checked in yet: standing in everyday clothes.
     case standing
     case asleep
@@ -37,6 +39,10 @@ public struct StagePosition: Hashable, Sendable {
     public let point: StagePoint
     public let facing: Double
     public let scale: Double
+
+    public init(point: StagePoint, facing: Double, scale: Double) {
+        (self.point, self.facing, self.scale) = (point, facing, scale)
+    }
 
     /// Where I stand: front and centre, facing right, a little bigger than the squad.
     public static let mine = StagePosition(point: StageLayout.mySpot, facing: 1, scale: StageLayout.myScale)
@@ -50,6 +56,7 @@ public struct StagePosition: Hashable, Sendable {
 
 extension SquadStage {
     public func pose(of member: StageMember, at phase: DayPhase) -> StagePose {
+        if let meal = member.eating { return phase == .night ? .asleep : .eating(meal) }
         if case .trained(let activity) = member.status {
             if case .station(let kind, _) = placements[member.id] { return .station(kind) }
             return .inPlace(activity)
@@ -113,7 +120,7 @@ extension SquadStage {
     /// (they keep going), so nobody at night. The screen times each cheer by persona.
     public func cheerers(_ teammates: [StageMember], at phase: DayPhase) -> [MemberID] {
         teammates.filter { member in
-            if case .trained = member.status { return false }
+            if case .trained = member.status, member.eating == nil { return false }
             return pose(of: member, at: phase) != .asleep
         }
         .map(\.id)

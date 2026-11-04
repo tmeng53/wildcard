@@ -14,6 +14,7 @@ import FeedUI
 import Foundation
 import MeDomain
 import MeUI
+import NotificationsUI
 import OnboardingUI
 import RecapUI
 import ScheduleDomain
@@ -83,7 +84,8 @@ struct WildcardApp: App {
             store: TodayStore(
                 backend: InMemoryCheckInBackend.sampleSquad(
                     now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
-                    patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach),
+                    patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach,
+                    together: LaunchOptions.together, meals: LaunchOptions.meals),
                 outbox: InMemoryOutbox(), unlocks: SampleUnlockLedger(unlocks: LaunchOptions.unlocked),
                 now: LaunchOptions.now, newID: { UUID() }),
             writer: LaunchOptions.disclaimerWriter,
@@ -92,6 +94,7 @@ struct WildcardApp: App {
             now: LaunchOptions.now,
             defaults: LaunchOptions.todayDefaults,
             bubbleHold: LaunchOptions.bubbleHold,
+            celebratesTogether: LaunchOptions.together != nil,
             posted: Self.askForNotifications)
         _today = State(initialValue: today)
         _profile = State(initialValue: Self.sampleProfile())
@@ -248,7 +251,7 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, selection: $tab
+                myPosts: myPosts, notices: LaunchOptions.notices, selection: $tab
             )
             .onAppear {
                 // As on the real backend: the awards push opens 动态, where the 战报 is, a comment's
