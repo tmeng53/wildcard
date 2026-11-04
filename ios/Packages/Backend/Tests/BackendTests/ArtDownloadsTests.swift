@@ -93,6 +93,18 @@ private func text(_ root: URL, _ path: String) -> String? {
     #expect(text(root, "avatar/moves/ski.json") == nil)
 }
 
+@Test func aPieceWithAPartThisBuildCantReadIsLeftOutWhole() async {
+    let broken = Data(#"<svg viewBox="0 0 1 1"><circle cx="1"/></svg>"#.utf8)
+    let (art, root) = downloads(from: Bucket([svg, json, broken]))
+    let files = [
+        file("avatar/art/hat/zzcap/crown.svg", broken), file("avatar/art/hat/zzcap/tones.json", json),
+        file("avatar/art/hat/beanie/crown.svg", svg),
+    ]
+    #expect(await art.update(to: ArtManifest(generation: 1, baseURL: base, files: files)))
+    #expect(!FileManager.default.fileExists(atPath: root.appending(path: "current/avatar/art/hat/zzcap").path))
+    #expect(text(root, "avatar/art/hat/beanie/crown.svg") != nil)
+}
+
 @Test func artForANewerRigOrOutsideTheTreeIsLeftOut() async {
     let (art, root) = downloads(from: Bucket([svg]))
     let files = [

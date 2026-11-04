@@ -33,21 +33,25 @@ public actor ArtDownloads {
     }
 
     /// Brings the art on this phone to `manifest`: downloads the files it lacks, checks them,
-    /// and swaps the tree. Leaves out files a newer rig draws, and files this build can't read
-    /// (their paths keep the bundled art). Answers whether the art changed; false when it was
+    /// and swaps the tree. Leaves out files a newer rig draws, and pieces this build can't read in
+    /// full (their folders keep the bundled art). Answers whether the art changed; false when it was
     /// current or a file couldn't be downloaded whole, which the next call tries again.
     @discardableResult
     public func update(to manifest: ArtManifest) async -> Bool {
         guard manifest.generation != kept() else { return false }
         let files = manifest.files.filter { $0.rigVersion <= ArtTree.rigVersion && Self.isInTree($0.path) }
         var blobs: [(file: ArtManifest.File, at: URL)] = []
+        var unreadable: Set<String> = []
         for file in files {
             switch await blob(file, from: manifest.baseURL) {
             case .here(let blob): blobs.append((file, blob))
-            case .unreadable: continue
+            case .unreadable: unreadable.insert(Self.unit(of: file.path))
             case .unavailable: return false
             }
         }
+        // A piece is its folder's files together: one this build can't read leaves the whole
+        // folder out, so the bundled piece (or none) stands, never half of one.
+        blobs.removeAll { unreadable.contains(Self.unit(of: $0.file.path)) }
         let next = root.appending(path: "next-\(UUID().uuidString)")
         do {
             for (file, blob) in blobs {
@@ -115,6 +119,15 @@ public actor ArtDownloads {
         where name.hasPrefix("next-") {
             try? FileManager.default.removeItem(at: root.appending(path: name))
         }
+    }
+
+    /// What stands or falls together: a character variant's folder (`avatar/art/<slot>/<variant>`),
+    /// a coach's (`coaches/<coach>`), else the file itself (a move, a scene picture).
+    static func unit(of path: String) -> String {
+        let parts = path.split(separator: "/")
+        if parts.count > 4, parts[0] == "avatar", parts[1] == "art" { return parts[0..<4].joined(separator: "/") }
+        if parts.count > 2, parts[0] == "coaches" { return parts[0..<2].joined(separator: "/") }
+        return path
     }
 
     /// Whether `path` stays inside the art tree, whatever the server sent.

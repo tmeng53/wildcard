@@ -131,7 +131,7 @@ const isNumbers = (value: string, count?: number) => {
   return (count === undefined || numbers.length === count) && numbers.every(isNumber);
 };
 const VALUES: Record<string, (value: string) => boolean> = {
-  d: (value) => /^[MmLlHhVvCcSsQqTtZz0-9eE.,+\-\s]*$/.test(value),
+  d: (value) => /^\s*[Mm][MmLlHhVvCcSsQqTtZz0-9eE.,+\-\s]*$/.test(value),
   cx: isNumber,
   cy: isNumber,
   r: isNumber,
@@ -149,7 +149,13 @@ const VALUES: Record<string, (value: string) => boolean> = {
   stroke: isColor,
   'stroke-linecap': (value) => ['butt', 'round', 'square'].includes(value),
   'stroke-linejoin': (value) => ['miter', 'round', 'bevel'].includes(value),
-  'stroke-dasharray': (value) => value === 'none' || isNumbers(value),
+  'stroke-dasharray': (value) =>
+    value === 'none' ||
+    (isNumbers(value) &&
+      value
+        .trim()
+        .split(/[\s,]+/)
+        .every((n) => Number(n) >= 0)),
   viewBox: (value) => {
     const [x, y] = value
       .trim()
@@ -176,17 +182,34 @@ const attributeProblem = (
   return undefined;
 };
 
+// What each shape can't be drawn without.
+const REQUIRED: Record<string, readonly string[]> = {
+  path: ['d'],
+  circle: ['r'],
+  ellipse: ['rx', 'ry'],
+  rect: ['width', 'height'],
+};
+
 const svgProblem = (text: string): string | undefined => {
   const body = text.replace(/^\s*<\?xml[^>]*\?>/, '').replace(/<!--[\s\S]*?-->/g, '');
   if (!/^\s*<svg[\s>]/.test(body)) return 'it must start with <svg>';
   if (/<!|<\?|&/.test(body)) return 'no DOCTYPE, processing instructions or entities';
   let viewBox = false;
+  const open: string[] = [];
   for (let at = body.indexOf('<'); at !== -1; at = body.indexOf('<', at + 1)) {
     const tag = TAG.exec(body.slice(at));
     if (tag === null) return 'every tag is whole, with its attributes quoted';
-    const [, closing = '', element = '', attributes = ''] = tag;
+    const [, closing = '', element = '', attributes = '', selfClosing = ''] = tag;
     if (!ELEMENTS.has(element)) return `<${element}> isn’t drawn`;
-    if (closing !== '') continue;
+    if (closing !== '') {
+      if (open.pop() !== element) return `</${element}> closes no <${element}>`;
+      continue;
+    }
+    if (selfClosing === '') open.push(element);
+    const names = [...attributes.matchAll(ATTRIBUTE)].map(([, name = '']) => name);
+    if (new Set(names).size !== names.length) return `<${element}> names an attribute twice`;
+    const missing = (REQUIRED[element] ?? []).find((name) => !names.includes(name));
+    if (missing !== undefined) return `<${element}> needs ${missing}`;
     for (const [, name = '', double, single] of attributes.matchAll(ATTRIBUTE)) {
       const value = double ?? single ?? '';
       if (name === 'd' && /[Aa]/.test(value)) return 'paths have no arcs (outline them)';
@@ -205,6 +228,7 @@ const svgProblem = (text: string): string | undefined => {
       }
     }
   }
+  if (open.length > 0) return `<${open.at(-1) ?? ''}> is never closed`;
   if (!viewBox) return 'the <svg> needs a viewBox at 0 0';
   return undefined;
 };

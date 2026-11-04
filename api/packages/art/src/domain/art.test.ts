@@ -85,6 +85,15 @@ describe('checkArt', () => {
     );
     expect(refusal(path, svg('<circle r="one"/>'))).toBe('r="one" on <circle> isn’t read');
     expect(refusal(path, svg('<g opacity="0.5"/>'))).toBe('opacity on <g> isn’t read');
+    expect(refusal(path, svg('<path d="L0 0 1 1"/>'))).toBe('d="L0 0 1 1" on <path> isn’t read');
+    expect(refusal(path, svg('<circle cx="1"/>'))).toBe('<circle> needs r');
+    expect(refusal(path, svg('<rect width="1"/>'))).toBe('<rect> needs height');
+    expect(refusal(path, svg('<path fill="#000"/>'))).toBe('<path> needs d');
+    expect(refusal(path, svg('<circle r="1"></g>'))).toBe('</g> closes no <g>');
+    expect(refusal(path, svg('<circle r="1" r="2"/>'))).toBe('<circle> names an attribute twice');
+    expect(refusal(path, svg('<circle r="1" stroke-dasharray="-1 2"/>'))).toBe(
+      'stroke-dasharray="-1 2" on <circle> isn’t read',
+    );
     expect(refusal(path, svg('<circle r=1/>'))).toBe(
       'every tag is whole, with its attributes quoted',
     );
