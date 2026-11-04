@@ -155,6 +155,16 @@ public final class PostWallStore {
         await load()
     }
 
+    /// Shows the member's change to one of their posts at once: edited in place, or gone (and
+    /// one fewer in the counts).
+    public func apply(_ change: PostChange) {
+        if case .deleted(let id) = change, let gone = posts.first(where: { $0.id == id }), let counts {
+            self.counts = MyPostCounts(
+                posts: max(counts.posts - 1, 0), reactions: max(counts.reactions - gone.reactions.all.count, 0))
+        }
+        posts = posts.compactMap { $0.applying(change) }
+    }
+
     /// Loads the next page, as the member scrolls to the end or tries again after a failed page.
     /// Safe to call while one is loading.
     public func loadMore() async {

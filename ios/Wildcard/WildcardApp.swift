@@ -169,7 +169,9 @@ struct WildcardApp: App {
             source: source, squad: squad, viewer: viewer, today: { LocalDay(at: LaunchOptions.now(), in: zone) },
             now: { Timestamp(LaunchOptions.now()) }, newCommentID: { CommentID(UUID()) })
         let coach = FeedCoach(source: source, squad: squad, now: { LaunchOptions.now() })
-        return FeedModel(store: store, viewer: viewer, coach: coach, now: LaunchOptions.now)
+        return FeedModel(
+            store: store, viewer: viewer, editor: InMemoryPostEditor(source: source), coach: coach,
+            now: LaunchOptions.now)
     }
 
     /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with

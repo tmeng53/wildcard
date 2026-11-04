@@ -22,7 +22,7 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | --- | --- |
 | `PrimaryButtonStyle`, `SecondaryButtonStyle`, `TextButtonStyle` | The one primary action (52, the accent tone: scene, brand, or ink on the 我 pages), a second action (44, grey; white inside a grey card), a quiet text action; `.danger` turns only the words red (`fgDanger`), for an action that can't be taken back (解雇), never the page's main action |
 | `AppleButtonStyle` | Confirming with Apple (注销), in Apple's own black as its button guidelines ask: filled, or `.outlined` when a gentler action leads |
-| `HeaderButton`, `StepHeader`, `StepSegments` | A 44-point round header button in the system's interactive Liquid Glass on every surface (a white glyph over photos on ink); a sign-up step's back button and ink segments |
+| `HeaderButton`, `HeaderMenu`, `StepHeader`, `StepSegments` | A 44-point round header button in the system's interactive Liquid Glass on every surface (a white glyph over photos on ink), and the same circle opening a menu (「…」 on the member's own post); a sign-up step's back button and ink segments |
 | `.photoViewer(isPresented:count:page:load:)` | A post's photos full screen on ink, zooming out of the photos tapped: pinch or double tap to zoom, swipe between them, swipe down or 关闭 to put them back (发动态 and 动态) |
 | `swipesBack(isEnabled:perform:)` | A page with 返回 also goes back on a swipe right from anywhere on it, following the finger |
 | `CategoryBar` | Where am I: switching scenes, tabs in a panel, sport categories (ink capsule) |

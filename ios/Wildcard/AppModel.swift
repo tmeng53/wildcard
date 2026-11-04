@@ -283,7 +283,8 @@ final class AppModel {
             Task { await readScene(of: home.squad.id, into: today) }
         }
         screen = .tabs(
-            today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home), squad: squad,
+            today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home, editor: store),
+            squad: squad,
             recap: recap)
         homeSquad = home.squad.id
     }
