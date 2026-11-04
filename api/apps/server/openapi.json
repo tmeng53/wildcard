@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -141,6 +141,60 @@
           "item": {
             "type": "string",
             "description": "The store’s, prop’s or piece’s id (`unlocked`)."
+          },
+          "broadcast": {
+            "type": "string",
+            "description": "The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now."
+          },
+          "title": {
+            "$ref": "#/components/schemas/LocalizedWords"
+          },
+          "body": {
+            "$ref": "#/components/schemas/LocalizedWords"
+          },
+          "action": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "$ref": "#/components/schemas/LocalizedWords"
+              },
+              "destination": {
+                "type": "string",
+                "description": "Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` (小队), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show no button for one you don’t know."
+              }
+            },
+            "required": [
+              "label",
+              "destination"
+            ],
+            "additionalProperties": false,
+            "description": "A button that opens a place in the app (`broadcast`), if any: its `label`."
+          },
+          "style": {
+            "type": "string",
+            "description": "How the app first shows it (`broadcast`): `banner` (the home’s notice banner) or `celebration` (full screen). Show another as `banner`."
+          },
+          "gifts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "`store`, `prop` or `piece`. Skip another."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Its id in the app’s art."
+                }
+              },
+              "required": [
+                "kind",
+                "id"
+              ],
+              "additionalProperties": false
+            },
+            "description": "What it gave the caller when they were told (`broadcast`), already among their unlocks; left out when it gave nothing."
           }
         },
         "required": [
@@ -150,6 +204,26 @@
         ],
         "additionalProperties": false,
         "description": "As `GET /me/notices` lists it."
+      },
+      "LocalizedWords": {
+        "type": "object",
+        "properties": {
+          "zhHans": {
+            "type": "string"
+          },
+          "en": {
+            "type": "string"
+          },
+          "zhHant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "zhHans",
+          "en",
+          "zhHant"
+        ],
+        "additionalProperties": false
       },
       "Health": {
         "type": "object",

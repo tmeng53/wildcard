@@ -1,6 +1,14 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { MemberId as ProfileMember, type Members } from '@wildcard/members';
-import { MemberId, NoticeId, PAGE_LIMIT, type Notice, type Notices } from '@wildcard/notices';
+import {
+  MemberId,
+  NoticeId,
+  PAGE_LIMIT,
+  type Broadcast,
+  type Notice,
+  type NoticePage as Page,
+  type Notices,
+} from '@wildcard/notices';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
@@ -15,6 +23,15 @@ export type CoachNames = () => Promise<ReadonlyMap<string, string>>;
 
 const WireNoticeId = z.int().positive();
 
+/** Words in each language the app speaks; the app shows the one picked in the app. */
+const LocalizedWords = z
+  .strictObject({
+    zhHans: z.string(),
+    en: z.string(),
+    zhHant: z.string(),
+  })
+  .openapi('LocalizedWords');
+
 export const NoticeEntry = z
   .strictObject({
     id: WireNoticeId.meta({
@@ -24,8 +41,9 @@ export const NoticeEntry = z
       description:
         'What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is ' +
         'in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the ' +
-        'squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or ' +
-        '`comment` (a teammate commented on the caller’s check-in or replied to them). ' +
+        'squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened), ' +
+        '`comment` (a teammate commented on the caller’s check-in or replied to them) or ' +
+        '`broadcast` (a notice we sent everyone). ' +
         'More kinds may come: skip one you don’t know.',
     }),
     at: z.iso.datetime().meta({ description: 'When it was told, in UTC.' }),
@@ -74,6 +92,53 @@ export const NoticeEntry = z
       .string()
       .optional()
       .meta({ description: 'The store’s, prop’s or piece’s id (`unlocked`).' }),
+    broadcast: z
+      .string()
+      .optional()
+      .meta({
+        description:
+          'The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is ' +
+          'what it says and `body` its muted second line, if any, each as it says them now.',
+      }),
+    // A component used more than once takes no description of its own here, so the generated
+    // clients read it as the component itself: what each says is on the kind.
+    title: LocalizedWords.optional(),
+    body: LocalizedWords.optional(),
+    action: z
+      .strictObject({
+        label: LocalizedWords,
+        destination: z.string().meta({
+          description:
+            'Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` ' +
+            '(小队), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show ' +
+            'no button for one you don’t know.',
+        }),
+      })
+      .optional()
+      .meta({
+        description: 'A button that opens a place in the app (`broadcast`), if any: its `label`.',
+      }),
+    style: z
+      .string()
+      .optional()
+      .meta({
+        description:
+          'How the app first shows it (`broadcast`): `banner` (the home’s notice banner) or ' +
+          '`celebration` (full screen). Show another as `banner`.',
+      }),
+    gifts: z
+      .array(
+        z.strictObject({
+          kind: z.string().meta({ description: '`store`, `prop` or `piece`. Skip another.' }),
+          id: z.string().meta({ description: 'Its id in the app’s art.' }),
+        }),
+      )
+      .optional()
+      .meta({
+        description:
+          'What it gave the caller when they were told (`broadcast`), already among their ' +
+          'unlocks; left out when it gave nothing.',
+      }),
   })
   .openapi('NoticeEntry');
 
@@ -188,7 +253,7 @@ export function notices(deps: {
       return c.json(
         {
           version: 1 as const,
-          notices: await noticeEntries(deps, page.notices),
+          notices: await noticeEntries(deps, page),
           ...(page.seenThrough === undefined ? {} : { seenThrough: page.seenThrough }),
           ...(page.next === undefined ? {} : { next: page.next }),
         },
@@ -205,7 +270,7 @@ export function notices(deps: {
 /** The notices as the app reads them, with the names they show as they are now. */
 export async function noticeEntries(
   deps: { readonly members: Members; readonly coachNames: CoachNames },
-  told: readonly Notice[],
+  { notices: told, broadcasts }: Pick<Page, 'notices' | 'broadcasts'>,
 ): Promise<z.infer<typeof NoticeEntry>[]> {
   const movers = [
     ...new Set(
@@ -223,8 +288,13 @@ export async function noticeEntries(
   const names = {
     member: (id: string) => profiles?.get(ProfileMember.parse(id))?.character?.nickname,
     coach: (id: string) => coaches?.get(id),
+    broadcast: (id: Broadcast['id']) => broadcasts.get(id),
   };
-  return told.map((notice) => wireNotice(notice, names));
+  // A broadcast since lost has nothing to say, so it is left out.
+  return told.flatMap((notice) => {
+    const entry = wireNotice(notice, names);
+    return entry === undefined ? [] : [entry];
+  });
 }
 
 function wireNotice(
@@ -232,8 +302,9 @@ function wireNotice(
   names: {
     readonly member: (id: string) => string | undefined;
     readonly coach: (id: string) => string | undefined;
+    readonly broadcast: (id: Broadcast['id']) => Broadcast | undefined;
   },
-): z.infer<typeof NoticeEntry> {
+): z.infer<typeof NoticeEntry> | undefined {
   const common = {
     id: notice.id,
     kind: notice.kind,
@@ -271,5 +342,19 @@ function wireNotice(
       return { ...common, unlockKind: notice.subject.kind, item: notice.subject.item };
     case 'comment':
       return { ...common, alert: notice.subject.alert, checkIn: notice.subject.checkIn };
+    case 'broadcast': {
+      const told = names.broadcast(notice.subject.broadcast);
+      if (told === undefined) return undefined;
+      const { title, body, action, style, gifts } = told.value;
+      return {
+        ...common,
+        broadcast: told.id,
+        title,
+        ...(body === undefined ? {} : { body }),
+        ...(action === undefined ? {} : { action }),
+        style,
+        ...(gifts.length === 0 ? {} : { gifts }),
+      };
+    }
   }
 }

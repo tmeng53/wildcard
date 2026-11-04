@@ -53,7 +53,9 @@ import {
   MemberId as NoticeMember,
   SquadId as NoticeSquad,
   createNotices,
+  createPostgresBroadcastStore,
   createPostgresNoticeStore,
+  type GiveGifts,
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
@@ -78,7 +80,11 @@ import {
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
-import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
+import {
+  MemberId as UnlockMember,
+  createPostgresUnlockStore,
+  createUnlocks,
+} from '@wildcard/unlocks';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { byProvider } from './adapters/language-models.js';
@@ -107,6 +113,7 @@ import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-p
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
+import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
@@ -255,7 +262,13 @@ const checkIns = createCheckIns({
   clock: () => new Date(),
 });
 // What each member was told (通知, the bell on 动态): pushes and in-app notices, kept forever.
-const noticesOn = (scope: Database) => createNotices({ store: createPostgresNoticeStore(scope) });
+const noticesOn = (scope: Database) =>
+  createNotices({
+    store: createPostgresNoticeStore(scope),
+    broadcasts: createPostgresBroadcastStore(scope),
+    clock: () => new Date(),
+    giveGifts: giveBroadcastGifts(scope),
+  });
 const notices = noticesOn(db);
 /**
  * Keeps notices after what they tell of happened: a failure is logged, never the event's, even
@@ -289,6 +302,36 @@ const unlocksOn = (scope: Database) =>
         what: 'an unlock',
       }),
   });
+/**
+ * A broadcast's gifts, unlocked for the member from the admin who saved it, like `give_unlocks`
+ * but quietly: the broadcast itself says the 商店街 has something new, so no unlock notice is
+ * told for them.
+ */
+const giveBroadcastGifts =
+  (scope: Database): GiveGifts =>
+  async (member, broadcast) => {
+    if (broadcast.value.gifts.length === 0) return true;
+    if (broadcast.by === null) {
+      // Its admin deleted their account: told without the gifts, which nobody can give now.
+      log.warn('a broadcast’s gifts have no admin to give them', { broadcast: broadcast.id });
+      return true;
+    }
+    try {
+      await createUnlocks({
+        store: createPostgresUnlockStore(scope),
+        trainedSince: ({ member: who, since }) =>
+          checkIns.trainedSince({ member: CheckInMember.parse(who), since }),
+        sportListed: (id) => sports.isListed(id),
+      }).give(
+        { member: UnlockMember.parse(member), items: broadcast.value.gifts },
+        UnlockMember.parse(broadcast.by),
+      );
+      return true;
+    } catch (error) {
+      log.warn('a broadcast’s gifts not given', { broadcast: broadcast.id, error });
+      return false;
+    }
+  };
 const nudges = createNudges({
   store: createPostgresNudgeStore(db),
   // Who is in which squad is the squads module's to keep: nudges ask it.
@@ -481,6 +524,11 @@ const app = createApp({
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
       ...unlockTools({ unlocks: unlocksOn(scope) }),
+      ...broadcastTools({
+        broadcasts: noticesOn(scope),
+        unlocks: unlocksOn(scope),
+        clock: () => new Date(),
+      }),
       ...coachTools({
         settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
         coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),

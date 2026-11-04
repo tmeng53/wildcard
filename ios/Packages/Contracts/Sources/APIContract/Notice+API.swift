@@ -39,13 +39,12 @@ extension Notice {
         case "coachReply":
             return checkIn.flatMap { coachReply(wire, checkIn: $0) }
         case "unlocked":
-            guard let kind = wire.unlockKind.flatMap(Unlock.Kind.init(rawValue:)), let item = wire.item else {
-                return nil
-            }
-            return .unlocked(kind, item: item)
+            return unlocked(wire)
         case "comment":
             guard let alert, let checkIn else { return nil }
             return .comment(alert, checkIn: checkIn)
+        case "broadcast":
+            return broadcast(wire).map(Subject.broadcast)
         default:
             return nil
         }
@@ -56,6 +55,57 @@ extension Notice {
         return .coachReply(
             checkIn: checkIn, coach: coach, coachName: wire.coachName, replied: replied,
             emoji: wire.emoji.flatMap { try? Emoji($0) })
+    }
+}
+
+extension Notice {
+    private static func unlocked(_ wire: Components.Schemas.NoticeEntry) -> Subject? {
+        guard let kind = wire.unlockKind.flatMap(Unlock.Kind.init(rawValue:)), let item = wire.item else { return nil }
+        return .unlocked(kind, item: item)
+    }
+
+    private static func broadcast(_ wire: Components.Schemas.NoticeEntry) -> Broadcast? {
+        guard let id = wire.broadcast, let title = wire.title.map(CatalogNames.init) else { return nil }
+        let action = wire.action.flatMap { action in
+            AppDestination(path: action.destination).map {
+                Broadcast.Action(label: CatalogNames(action.label), destination: $0)
+            }
+        }
+        return Broadcast(
+            id: id, title: title, body: wire.body.map(CatalogNames.init), action: action,
+            style: wire.style == "celebration" ? .celebration : .banner,
+            gifts: (wire.gifts ?? []).compactMap { gift in
+                Unlock.Kind(rawValue: gift.kind).map { Broadcast.Gift(kind: $0, id: gift.id) }
+            })
+    }
+}
+
+extension CatalogNames {
+    init(_ wire: Components.Schemas.LocalizedWords) {
+        self.init(simplifiedChinese: wire.zhHans, english: wire.en, traditionalChinese: wire.zhHant)
+    }
+}
+
+extension AppDestination {
+    /// A broadcast's button's place, as the API names it; nil for one this build doesn't know,
+    /// which shows no button.
+    init?(path: String) {
+        switch path {
+        case "stores": self = .stores
+        case "schedule": self = .schedule
+        case "squad": self = .squad
+        case "feed": self = .feed
+        case "today": self = .today
+        case "me": self = .profile
+        default:
+            if path.hasPrefix("store/"), path.count > "store/".count {
+                self = .store(String(path.dropFirst("store/".count)))
+            } else if path.hasPrefix("post/"), let id = try? CheckInID(wire: String(path.dropFirst("post/".count))) {
+                self = .post(id)
+            } else {
+                return nil
+            }
+        }
     }
 }
 

@@ -9,7 +9,11 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
+import {
+  createNotices,
+  createPostgresNoticeStore,
+  createPostgresBroadcastStore,
+} from '@wildcard/notices';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -106,7 +110,11 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
-  notices: createNotices({ store: createPostgresNoticeStore(db) }),
+  notices: createNotices({
+    store: createPostgresNoticeStore(db),
+    broadcasts: createPostgresBroadcastStore(db),
+    clock: () => new Date(),
+  }),
   coachNames: () => Promise.reject(new Error('unused')),
   liveEvents: ignoredNotices.liveEvents,
   log: createLog(() => undefined),

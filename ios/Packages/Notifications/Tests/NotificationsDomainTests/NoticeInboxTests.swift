@@ -220,7 +220,7 @@ private var utc: Calendar {
     let alert = PushAlert(key: "push.comment", args: ["Coco", "这组深蹲太稳了"])
     let comment = Notice(
         id: NoticeID(rawValue: 1), toldAt: monday, squad: nil, subject: .comment(alert, checkIn: checkIn))
-    #expect(comment.target == .post(checkIn))
+    #expect(comment.destination == .post(checkIn))
     let parts = PushAlertWords(alert).parts("%1$@ 评论了你：%2$@")
     #expect(parts.title == "Coco 评论了你：这组深蹲太稳了")
     #expect(parts.detail == nil)
@@ -299,4 +299,45 @@ private var utc: Calendar {
     let inbox = NoticeInbox(source: server)
     // It returns by itself, without waiting to try again.
     await inbox.follow(pause: { _ in Issue.record("waited after the session was over") })
+}
+
+@Test @MainActor func aNoticeHeardLiveStaysWhenALoadCameBackWithoutIt() async {
+    let server = FakeNotices([notice(1), notice(2)], seen: NoticeID(rawValue: 2))
+    let told = Notice(
+        id: NoticeID(rawValue: 3), toldAt: monday, squad: nil, subject: .unlocked(.prop, item: "racket"))
+    await server.set(streams: [[.told(told)]])
+    let inbox = NoticeInbox(source: server)
+    let (paused, pause) = AsyncStream.makeStream(of: Void.self)
+    let following = Task { await inbox.follow(pause: { _ in pause.yield() }) }
+    var pauses = paused.makeAsyncIterator()
+    _ = await pauses.next()
+    following.cancel()
+    await following.value
+
+    // A page read before the server had it, coming back after it was heard.
+    await inbox.load()
+
+    #expect(inbox.notices.map(\.id.rawValue) == [3, 2, 1])
+}
+
+@Test @MainActor func theHomeTellsTheBroadcastsNotYetSeenIn通知TheEarliestFirst() async {
+    let words = { (line: String) in CatalogNames(simplifiedChinese: line, english: line, traditionalChinese: line) }
+    let broadcast = { (id: String) in
+        Broadcast(
+            id: id, title: words(id), body: nil,
+            action: Broadcast.Action(label: words("去商店街看看"), destination: .stores), style: .banner, gifts: [])
+    }
+    let told = { (id: Int, name: String) in
+        Notice(id: NoticeID(rawValue: id), toldAt: monday, squad: nil, subject: .broadcast(broadcast(name)))
+    }
+    let server = FakeNotices(
+        [told(1, "seen-already"), notice(2), told(3, "soon"), told(4, "today")], seen: NoticeID(rawValue: 2))
+    let inbox = NoticeInbox(source: server)
+
+    await inbox.load()
+
+    #expect(inbox.unseenBroadcasts.map(\.id) == ["soon", "today"])
+    #expect(inbox.notices.first?.destination == .stores)
+    await inbox.open()
+    #expect(inbox.unseenBroadcasts.isEmpty)
 }

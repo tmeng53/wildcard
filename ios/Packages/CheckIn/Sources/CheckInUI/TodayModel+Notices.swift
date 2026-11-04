@@ -5,7 +5,8 @@ import DesignSystem
 import Foundation
 
 /// News nobody on the scene can tell, in a `NoticeBanner` at the top of 今天: a teammate moving
-/// the squad to another scene, and a store or prop the member's training unlocked.
+/// the squad to another scene, a store or prop the member's training unlocked, and a notice we sent
+/// every member (群发通知).
 extension TodayModel {
     /// What a notice tells.
     enum NoticeNews: Equatable {
@@ -14,6 +15,8 @@ extension TodayModel {
         case moved(SceneTheme, picker: String?)
         /// A 练了 opened a store or a prop.
         case unlocked(Unlock)
+        /// A notice we sent every member, told on this phone once.
+        case broadcast(Broadcast)
     }
 
     /// One notice on the home.
@@ -62,6 +65,20 @@ extension TodayModel {
         guard !unlocks.isEmpty else { return }
         pendingNotices += unlocks.map { Notice(news: .unlocked($0)) }
         Task { await showNextNotice() }
+    }
+
+    /// Tells `broadcast` in a banner, after any notice already waiting; a tap opens its button's
+    /// place through `open`, as its 通知 row does.
+    public func tell(_ broadcast: Broadcast, open: @escaping (AppDestination) -> Void) {
+        openDestination = open
+        pendingNotices.append(Notice(news: .broadcast(broadcast)))
+        Task { await showNextNotice() }
+    }
+
+    /// How long `notice` stays: one with a button stays until it is tapped or swiped away.
+    func hold(_ notice: Notice) -> Double? {
+        if case .broadcast(let broadcast) = notice.news, broadcast.action != nil { return nil }
+        return noticeHold
     }
 
     /// The next notice waiting, once the squad has landed and the scene is in view: not while a

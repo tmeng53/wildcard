@@ -12,7 +12,7 @@ struct HomeNotices: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .noticeBanner(item: $model.notice, hold: model.noticeHold, onTap: tap) { notice in banner(for: notice) }
+            .noticeBanner(item: $model.notice, hold: model.hold, onTap: tap) { notice in banner(for: notice) }
             // Only an unlock: something the member earned arrives.
             .haptic(.appear, trigger: model.notice?.id) { _, id in id != nil && isUnlock(model.notice) }
             .onChange(of: model.notice == nil && model.step == .scene && !model.isBurstOpen) { _, free in
@@ -35,11 +35,23 @@ struct HomeNotices: ViewModifier {
             ) { SceneBadge(scene) }
         case .unlocked(let unlock):
             if let unlocks { unlocks.banner(unlock) }
+        case .broadcast(let broadcast):
+            let language = [AppLanguage.current.rawValue]
+            NoticeBanner(
+                Text(verbatim: broadcast.title.localized(in: language)),
+                detail: broadcast.body.map { Text(verbatim: $0.localized(in: language)) },
+                action: broadcast.action.map { Text(verbatim: $0.label.localized(in: language)) }
+            ) { NoticeSymbol(systemImage: "sparkles") }
         }
     }
 
     private func tap(_ notice: TodayModel.Notice) {
-        if case .unlocked(let unlock) = notice.news { unlocks?.open(unlock) }
+        switch notice.news {
+        case .unlocked(let unlock): unlocks?.open(unlock)
+        case .broadcast(let broadcast):
+            if let action = broadcast.action { model.openDestination?(action.destination) }
+        case .moved: break
+        }
     }
 
     private func isUnlock(_ notice: TodayModel.Notice?) -> Bool {

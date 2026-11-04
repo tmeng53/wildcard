@@ -1,7 +1,7 @@
 -- The notices a member was told (the bell's history) and how far they read them: never
 -- changed, gone with the member's account, and a squad's notices with the squad.
 begin;
-select plan(10);
+select plan(15);
 
 insert into auth.users (id, email) values
   ('11111111-1111-4111-8111-111111111111', 'mia@example.com'),
@@ -38,6 +38,24 @@ select is((select count(*)::int from public.notices
   where member_id = '11111111-1111-4111-8111-111111111111'), 0, 'the account takes its notices');
 select is((select count(*)::int from public.notice_reads), 0, 'and how far it read them');
 select is((select count(*)::int from public.notices), 1, 'others'' notices stay');
+
+-- Broadcasts: each save a new row, never changed; a member is told each once.
+insert into public.broadcasts (broadcast_id, changed_by, broadcast) values
+  ('soon', '22222222-2222-4222-8222-222222222222', '{"version": 1}');
+select throws_ok($$insert into public.broadcasts (broadcast_id, broadcast) values ('Soon!', '{"version": 1}')$$,
+  '23514', null, 'a broadcast''s id is a slug');
+select throws_ok($$insert into public.broadcasts (broadcast_id, broadcast) values ('soon', '{}')$$,
+  '23514', null, 'a broadcast carries its version');
+select throws_ok($$update public.broadcasts set broadcast = '{"version": 2}'$$, '42501', null,
+  'a broadcast is never changed in place');
+insert into public.notices (member_id, kind, subject) values
+  ('22222222-2222-4222-8222-222222222222', 'broadcast', '{"version": 1, "broadcast": "soon"}');
+select throws_ok($$insert into public.notices (member_id, kind, subject) values
+  ('22222222-2222-4222-8222-222222222222', 'broadcast', '{"version": 1, "broadcast": "soon"}')$$,
+  '23505', null, 'a member is told a broadcast once');
+delete from auth.users where id = '22222222-2222-4222-8222-222222222222';
+select is((select changed_by from public.broadcasts where broadcast_id = 'soon'), null,
+  'a broadcast outlives the admin who wrote it');
 
 select * from finish();
 rollback;

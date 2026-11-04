@@ -1,11 +1,13 @@
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 
 import { Kysely, PostgresDialect, sql } from 'kysely';
 import pg from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { createPostgresBroadcastStore } from '../adapters/postgres-broadcast-store.js';
 import { createPostgresNoticeStore, type NoticeTables } from '../adapters/postgres-notice-store.js';
+import { BroadcastId, BroadcastValue, type Broadcast } from '../domain/broadcast.js';
 import { MemberId, NoticeId, SquadId, type NewNotice } from '../domain/notice.js';
 import { NoticeNotFoundError } from '../errors.js';
 import { createNotices } from './notices.js';
@@ -18,7 +20,12 @@ const db = new Kysely<NoticeTables>({
 });
 afterAll(() => db.destroy());
 
-const notices = createNotices({ store: createPostgresNoticeStore(db) });
+// Broadcasts are every member's, so the tests below that don't send one read at a time none runs.
+const notices = createNotices({
+  store: createPostgresNoticeStore(db),
+  broadcasts: createPostgresBroadcastStore(db),
+  clock: () => new Date('2000-01-01T00:00:00Z'),
+});
 
 async function newMember() {
   const id = MemberId.parse(randomUUID());
@@ -125,5 +132,134 @@ describe('notices', () => {
       count: string;
     }>`select count(*) from public.notice_reads where member_id = ${me}`.execute(db);
     expect(reads.rows[0]?.count).toBe('2');
+  });
+});
+
+describe('broadcasts', () => {
+  // Far from now, so a test elsewhere reading notices today is never told these.
+  const words = (zhHans: string) => ({ zhHans, en: `${zhHans} (en)`, zhHant: `${zhHans}（繁）` });
+  // A year of this run's own, so broadcasts other runs left in the database never run with these.
+  const year = String(2100 + randomInt(7800));
+  const when = (iso: string) => iso.replace(/^2090/, year);
+  const value = (overrides: Partial<BroadcastValue> = {}): BroadcastValue => {
+    const merged = {
+      version: 1,
+      title: words('感恩节快到了'),
+      body: words('TURKEY TROT 限定上新'),
+      action: {
+        label: { zhHans: '去商店街', en: 'Shop now', zhHant: '去商店街' },
+        destination: 'stores',
+      },
+      style: 'banner',
+      gifts: [],
+      startsAt: '2090-11-20T00:00:00Z',
+      endsAt: '2090-11-24T00:00:00Z',
+      ...overrides,
+    };
+    return BroadcastValue.parse({
+      ...merged,
+      startsAt: when(merged.startsAt),
+      endsAt: when(merged.endsAt),
+    });
+  };
+  const unique = (name: string) => BroadcastId.parse(`${name}-${randomUUID().slice(0, 8)}`);
+  const at = (iso: string) => {
+    const gifts: [MemberId, Broadcast][] = [];
+    let giving = true;
+    const box = createNotices({
+      store: createPostgresNoticeStore(db),
+      broadcasts: createPostgresBroadcastStore(db),
+      clock: () => new Date(when(iso)),
+      giveGifts: async (member, broadcast) => {
+        await Promise.resolve();
+        if (giving) gifts.push([member, broadcast]);
+        return giving;
+      },
+    });
+    return { box, gifts, failGifts: () => (giving = false), giveAgain: () => (giving = true) };
+  };
+
+  it('tells each member a running broadcast once, on their newest page, with its words now', async () => {
+    const [me, admin] = [await newMember(), await newMember()];
+    const id = unique('soon');
+    const { box } = at('2090-11-21T12:00:00Z');
+    await box.put({ id, value: value(), by: admin });
+
+    // An older page tells nobody anything.
+    expect((await box.page({ member: me, before: NoticeId.parse(1), limit: 5 })).notices).toEqual(
+      [],
+    );
+    const first = await box.page({ member: me, limit: 5 });
+    // Other tests' broadcasts may run then too.
+    const told = first.notices.filter((notice) =>
+      notice.kind === 'broadcast' ? notice.subject.broadcast === id : false,
+    );
+    expect(told.map((notice) => notice.subject)).toEqual([{ version: 1, broadcast: id }]);
+    expect(first.broadcasts.get(id)?.value.title.zhHans).toBe('感恩节快到了');
+    expect(first.broadcasts.get(id)?.by).toBe(admin);
+
+    // Again, and from two opens at once: still once.
+    await Promise.all([box.page({ member: me, limit: 5 }), box.page({ member: me, limit: 5 })]);
+    const count = await sql<{
+      count: string;
+    }>`select count(*) from public.notices where member_id = ${me} and subject ->> 'broadcast' = ${id}`.execute(
+      db,
+    );
+    expect(count.rows[0]?.count).toBe('1');
+
+    // A fixed typo shows to whoever was told already.
+    await box.put({ id, value: value({ title: words('感恩节就快到了') }), by: admin });
+    expect((await box.page({ member: me, limit: 5 })).broadcasts.get(id)?.value.title.zhHans).toBe(
+      '感恩节就快到了',
+    );
+  });
+
+  it('tells nobody before it starts or after it ends, and logs only saves that change it', async () => {
+    const [me, admin] = [await newMember(), await newMember()];
+    const id = unique('window');
+    await at('2090-11-01T00:00:00Z').box.put({ id, value: value(), by: admin });
+    await at('2090-11-01T00:00:00Z').box.put({ id, value: value(), by: admin });
+    const rows = await sql<{
+      count: string;
+    }>`select count(*) from public.broadcasts where broadcast_id = ${id}`.execute(db);
+    expect(rows.rows[0]?.count).toBe('1');
+
+    const before = await at('2090-11-19T23:59:59Z').box.page({ member: me, limit: 5 });
+    const after = await at('2090-11-24T00:00:00Z').box.page({ member: me, limit: 5 });
+    const told = [...before.notices, ...after.notices].filter((notice) =>
+      notice.kind === 'broadcast' ? notice.subject.broadcast === id : false,
+    );
+    expect(told).toEqual([]);
+  });
+
+  it('gives its gifts before telling it, and tries again on a later open when they fail', async () => {
+    const [me, admin] = [await newMember(), await newMember()];
+    const id = unique('gift');
+    const { box, gifts, failGifts, giveAgain } = at('2090-12-24T08:00:00Z');
+    await box.put({
+      id,
+      value: value({
+        gifts: [{ kind: 'piece', id: 'jingle-hat' }],
+        style: 'celebration',
+        startsAt: '2090-12-23T00:00:00Z',
+        endsAt: '2090-12-26T00:00:00Z',
+      }),
+      by: admin,
+    });
+    const mine = (page: Awaited<ReturnType<typeof box.page>>) =>
+      page.notices.filter((notice) =>
+        notice.kind === 'broadcast' ? notice.subject.broadcast === id : false,
+      );
+
+    failGifts();
+    expect(mine(await box.page({ member: me, limit: 5 }))).toEqual([]);
+    giveAgain();
+    expect(mine(await box.page({ member: me, limit: 5 }))).toHaveLength(1);
+    const given = () =>
+      gifts.filter(([, broadcast]) => broadcast.id === id).map(([member]) => member);
+    expect(given()).toEqual([me]);
+    // Told: never given again.
+    await box.page({ member: me, limit: 5 });
+    expect(given()).toEqual([me]);
   });
 });

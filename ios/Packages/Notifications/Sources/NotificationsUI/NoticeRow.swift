@@ -35,6 +35,11 @@ struct NoticeRow: View {
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: .gym))
                 }
+                // A broadcast's button: the row's tap opens it.
+                if let action = words.action {
+                    NoticeActionLabel(action, on: .page)
+                        .padding(.top, Space.xxs)
+                }
             }
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -80,6 +85,7 @@ struct NoticeRow: View {
         let title: Text
         let detail: Text?
         let icon: AnyView
+        var action: Text?
     }
 
     private var words: Words {
@@ -103,7 +109,7 @@ struct NoticeRow: View {
                 title: moverName.map { Text("\($0) 把小队搬到了\(place)", bundle: .module) }
                     ?? Text("小队搬到了\(place)", bundle: .module),
                 detail: nil,
-                icon: AnyView(theme.map { AnyView(SceneBadge($0)) } ?? AnyView(BrandIcon(systemImage: "map"))))
+                icon: AnyView(theme.map { AnyView(SceneBadge($0)) } ?? AnyView(NoticeSymbol(systemImage: "map"))))
         case .coachReply(_, let coach, let coachName, let replied, let emoji):
             return Words(
                 title: Self.coachTitle(name: coachName, replied: replied, emoji: emoji), detail: nil,
@@ -115,7 +121,13 @@ struct NoticeRow: View {
             return Words(
                 title: Self.pushParts(alert).map { Text(verbatim: $0.title) }
                     ?? Text("队友评论了你的打卡", bundle: .module),
-                detail: nil, icon: AnyView(BrandIcon(systemImage: "bubble.left.fill")))
+                detail: nil, icon: AnyView(NoticeSymbol(systemImage: "bubble.left.fill")))
+        case .broadcast(let broadcast):
+            return Words(
+                title: Text(verbatim: broadcast.title.localized(in: [AppLanguage.current.rawValue])),
+                detail: broadcast.body.map { Text(verbatim: $0.localized(in: [AppLanguage.current.rawValue])) },
+                icon: AnyView(NoticeSymbol(systemImage: "sparkles")),
+                action: broadcast.action.map { Text(verbatim: $0.label.localized(in: [AppLanguage.current.rawValue])) })
         }
     }
 
@@ -185,21 +197,6 @@ private struct CrownIcon: View {
     }
 }
 
-/// A symbol on graphite, for news without a picture of its own.
-private struct BrandIcon: View {
-    let systemImage: String
-
-    var body: some View {
-        ZStack {
-            Color(role: .bgBrand, in: .gym)
-            Image(systemName: systemImage)
-                .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                .foregroundStyle(Color(role: .fgOnBrand, in: .gym))
-        }
-        .accessibilityHidden(true)
-    }
-}
-
 /// The coach's head, as on the sideline; a coach this build has no art for shows the 教练 symbol.
 private struct CoachIcon: View {
     let coach: CoachID
@@ -211,7 +208,7 @@ private struct CoachIcon: View {
                 Color(role: .bgSubtle, in: .gym)
                 CharacterHead(player: head)
             } else {
-                BrandIcon(systemImage: "megaphone.fill")
+                NoticeSymbol(systemImage: "megaphone.fill")
             }
         }
         .accessibilityHidden(true)

@@ -34,6 +34,8 @@ struct MainTabs: View {
     /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
     let squadmateCards: (any SquadmateCards)?
     @Binding var selection: Tab
+    /// A place a tapped push asked for, opened once the tabs are up (`open(_:)`), then cleared.
+    @Binding var destination: AppDestination?
     /// The member left the squad on 小队.
     var leftSquad: () -> Void = {}
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
@@ -59,12 +61,14 @@ struct MainTabs: View {
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
         recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
-        squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>, leftSquad: @escaping () -> Void = {}
+        squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
+        destination: Binding<AppDestination?> = .constant(nil), leftSquad: @escaping () -> Void = {}
     ) {
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
         self.squadmateCards = squadmateCards
         _selection = selection
+        _destination = destination
         self.leftSquad = leftSquad
         _inbox = State(initialValue: NoticeInbox(source: notices))
     }
@@ -77,7 +81,20 @@ struct MainTabs: View {
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
-        .task { today.tellUnlocks(with: UnlockNotices(banner: { UnlockBanner(unlock: $0) }, open: openUnlock)) }
+        .task {
+            today.tellUnlocks(
+                with: UnlockNotices(banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) })
+            )
+        }
+        // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone; its
+        // button opens what its 通知 row opens.
+        .onChange(of: inbox.unseenBroadcasts.map(\.id), initial: true) { tellBroadcasts() }
+        // A tapped push's place.
+        .onChange(of: destination, initial: true) { _, asked in
+            guard let asked else { return }
+            destination = nil
+            open(asked)
+        }
         // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
         // 今天 opens 动态 on doesn't move down under it.
         .task { await recap.refresh() }
@@ -140,17 +157,6 @@ struct MainTabs: View {
         editor = try? CharacterEditorModel.placeholder(
             look: character.outfit, persona: character.persona, nickname: character.nickname,
             unlocks: profile.overview?.unlocks ?? [], locked: profile.overview?.lockedPieces ?? [])
-    }
-
-    /// A tap on the home's notice that a store or prop opened: 我's editor, inside that store or on
-    /// the props, read again first so what just opened is open in it.
-    private func openUnlock(_ unlock: Unlock) {
-        selection = .profile
-        Task {
-            await profile.reload()
-            editCharacter()
-            editor?.show(unlock)
-        }
     }
 
     /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page, a scene
@@ -226,25 +232,6 @@ struct MainTabs: View {
         .environment(\.sceneTheme, today.scene)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsNotices)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: noticePost?.id)
-    }
-
-    /// Where a tapped notice goes. 通知 stays under a post or the wardrobe it opens, so back
-    /// returns to it; elsewhere it closes.
-    private func open(_ target: NoticeTarget) {
-        switch target {
-        case .feed:
-            showsNotices = false
-        case .recap(_, let week):
-            showsNotices = false
-            if recap.latest?.week.monday == week { recap.openLatest() }
-        case .home:
-            showsNotices = false
-            selection = .today
-        case .post(let id):
-            noticePost = OpenedPost(id: id, model: feed.page(of: id))
-        case .wardrobe:
-            editCharacter()
-        }
     }
 
     /// The member's own character, on the empty 通知.
@@ -345,6 +332,63 @@ extension MainTabs {
             wall.apply(change)
         }
         return page
+    }
+
+    /// Where every notice goes, the one place that decides it: a 通知 row, the home's banners and
+    /// a tapped push all open `Notice.destination` here, and a broadcast's button its place. 通知
+    /// stays under a post or the editor it opens, so back returns to it; elsewhere it closes.
+    fileprivate func open(_ destination: AppDestination) {
+        switch destination {
+        case .post(let id):
+            selection = .feed
+            noticePost = OpenedPost(id: id, model: feed.page(of: id))
+        case .unlock(let kind, let item):
+            // Read again first, so what just opened is open in the editor.
+            Task {
+                await profile.reload()
+                editCharacter()
+                if let unlock = profile.overview?.unlocks.first(where: { $0.kind == kind && $0.id == item }) {
+                    editor?.show(unlock)
+                }
+            }
+        case .stores, .store:
+            editCharacter()
+        default:
+            showsNotices = false
+            openTab(for: destination)
+        }
+    }
+
+    /// A place that is a tab, or on one: 通知 closes.
+    private func openTab(for destination: AppDestination) {
+        switch destination {
+        case .feed:
+            selection = .feed
+        case .recap(_, let week):
+            selection = .feed
+            Task {
+                await recap.refresh()
+                if recap.latest?.week.monday == week { recap.openLatest() }
+            }
+        case .today:
+            selection = .today
+        case .schedule:
+            selection = .profile
+            showsSchedule = true
+        case .squad:
+            selection = .squad
+        case .profile:
+            selection = .profile
+        case .post, .unlock, .stores, .store:
+            break
+        }
+    }
+
+    /// The broadcasts not yet seen in 通知 that this phone hasn't shown, each in a banner on 今天.
+    fileprivate func tellBroadcasts() {
+        for broadcast in inbox.unseenBroadcasts where ShownBroadcasts.first(broadcast.id) {
+            today.tell(broadcast, open: open)
+        }
     }
 }
 
