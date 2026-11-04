@@ -44,6 +44,28 @@ if base="$(git merge-base HEAD origin/main 2>/dev/null)"; then
   fi
 fi
 
+# Run only the parts of verify.sh the branch's changes can break (docs-only runs none). Any path
+# not listed here, or no merge base, runs everything: a wrong guess must cost time, not a miss.
+# Mirrors the path rules of .github/workflows/verify.yml; CI still runs its own full set.
+if [ -n "${base:-}" ]; then
+  files="$( { git diff --name-only "$base"; git ls-files --others --exclude-standard; } | sort -u)"
+  parts=""
+  add() { [[ " $parts " == *" $1 "* ]] || parts="$parts $1"; }
+  while IFS= read -r f; do
+    case "$f" in
+      "") ;;
+      *.md | docs/* | LICENSE) ;;
+      web/*) add web ;;
+      supabase/*) add supabase; add api; add backend ;;
+      api/*) add supabase; add api; add backend ;;
+      ios/*) add swift; add backend ;;
+      *) parts="swift web supabase api backend"; break ;;
+    esac
+  done <<<"$files"
+  if [ -z "$parts" ]; then exit 0; fi
+  VERIFY=(scripts/verify.sh $parts)
+fi
+
 # One log per checkout, inside .git so it's never committed; each run overwrites it.
 log="$(git rev-parse --absolute-git-dir)/verify-on-stop.log"
 # timeout runs the check in its own process group (pgid = its pid). After a

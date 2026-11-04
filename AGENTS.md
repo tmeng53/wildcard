@@ -31,7 +31,7 @@ The shared rules and skills here come from `sponge-ai-lab/engineering-skills`. C
 
 Add each command here in the PR that makes it real.
 
-In Claude cloud sessions a SessionStart hook (`scripts/cloud-session-start.sh`) starts what the checks need, and a Stop hook (`scripts/verify-on-stop.sh`) runs `scripts/verify.sh` whenever the branch has changes of its own and blocks the first stop while it's red: fix it, or tell the user exactly what is red. If a toolchain or service isn't available, say that check is inconclusive; never skip or fake it.
+In Claude cloud sessions a SessionStart hook (`scripts/cloud-session-start.sh`) starts what the checks need, and a Stop hook (`scripts/verify-on-stop.sh`) runs `scripts/verify.sh` whenever the branch has changes of its own and blocks the first stop while it's red (it runs only the parts the branch's changed paths can break; an unlisted path runs all): fix it, or tell the user exactly what is red. If a toolchain or service isn't available, say that check is inconclusive; never skip or fake it.
 
 Install any tool that helps the task (`apt`, `pip`, `npm`, a binary); cloud machines are yours and thrown away after the session. If every session should have it, add it to `scripts/cloud-session-start.sh` in a PR.
 
