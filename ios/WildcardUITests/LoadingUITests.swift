@@ -1,14 +1,14 @@
 import XCTest
 
-/// The loaders a fast load never shows long enough to see: the launch cover with the two tickets
-/// rocking, the same over a slow sign-in, and 三拍 in the style guide's buttons. Screenshots are
-/// kept to compare with the approved design.
+/// The loaders a fast load never shows long enough to see: the launch cover with WILDCARD
+/// waving under the logo, the same over a slow sign-in, and 三拍 in the style guide's buttons.
+/// Screenshots are kept to compare with the approved design.
 @MainActor
 final class LoadingUITests: XCTestCase {
     /// Slow CI simulators can take many seconds to show a screen; a real failure still fails.
     private static let wait: TimeInterval = 30
 
-    func testTheLaunchCoverRocks() {
+    func testTheLaunchCoverWaves() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += [
@@ -18,8 +18,8 @@ final class LoadingUITests: XCTestCase {
         let loader = app.descendants(matching: .any).matching(identifier: "launch.cover").firstMatch
         let shown = loader.waitForExistence(timeout: Self.wait)
         if !shown { print(app.debugDescription) }
-        // Kept either way, so a failure still shows what the page drew.
-        Thread.sleep(forTimeInterval: 0.6)
+        // Kept either way, so a failure still shows what the page drew; by then the word has landed.
+        Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "90-launch-cover")
         XCTAssertTrue(shown, "the launch cover never showed")
         XCTAssertEqual(loader.label, "加载中")

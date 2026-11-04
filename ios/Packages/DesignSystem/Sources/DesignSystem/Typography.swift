@@ -116,6 +116,11 @@ public enum TypeRamp {
     public static let posterWeek = TypeStyle(
         face: .scoreboard(.extraBoldItalic), size: 128, tracking: -5, anchor: .largeTitle)
 
+    /// WILDCARD under the logo on the launch cover: 40, spaced a little. The cover is drawn at a
+    /// fixed size, like the system's launch screen it continues, so it doesn't scale with
+    /// Dynamic Type.
+    public static let launchWord = TypeStyle(face: .scoreboard(.extraBold), size: 40, tracking: 1, anchor: .largeTitle)
+
     /// A weekly title (头衔) worn on the player card's front: 20, spaced out, like lettering on a
     /// jersey. The card is drawn at a fixed size, so it doesn't scale with Dynamic Type.
     public static let cardTitle = TypeStyle(face: .text(.semibold), size: 20, tracking: 1.6, anchor: .title3)
@@ -137,7 +142,7 @@ public enum TypeRamp {
         ("scoreHero", scoreHero),
         ("scoreCard", scoreCard),
         ("scoreInline", scoreInline), ("scoreSmall", scoreSmall), ("scoreCaption", scoreCaption),
-        ("ticketDate", ticketDate), ("posterWeek", posterWeek), ("cardTitle", cardTitle),
+        ("ticketDate", ticketDate), ("posterWeek", posterWeek), ("launchWord", launchWord), ("cardTitle", cardTitle),
         ("badgeTitle", badgeTitle),
     ]
 }
