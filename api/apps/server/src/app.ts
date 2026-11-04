@@ -95,7 +95,7 @@ export interface AppDependencies {
   readonly weekSummaryWords: () => Promise<WeekSummaryWords>;
   /** Each squad's weekly awards, and the clock that says when they are due. */
   readonly weeklyAwards: { readonly awards: WeeklyAwards; readonly clock: () => Date };
-  /** The stores and props members unlock by training. */
+  /** The stores, props and pieces members unlock by training. */
   readonly unlocks: Unlocks;
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */

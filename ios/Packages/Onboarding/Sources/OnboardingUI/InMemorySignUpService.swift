@@ -80,4 +80,7 @@ public actor InMemorySignUpService: SignUpService {
         guard let joined = self.squad, joined.id == squad else { throw .rejected }
         return ResumedSignUp(squad: joined, character: character)
     }
+
+    /// The sample has no unlock rules: every piece shows.
+    public func lockedPieces() async -> [LockedPiece] { [] }
 }

@@ -86,13 +86,17 @@ public struct MeOverview: Hashable, Sendable {
     public var titles: TitlesWon
     /// The training days in the member's 每周模板, for 设置's row; nil when it didn't load.
     public var templateDays: Int?
-    /// The stores and props the member unlocked by training, which the character editor opens.
+    /// The stores, props and pieces the member unlocked by training, which the character editor
+    /// opens.
     public var unlocks: [Unlock]
+    /// The pieces still locked, which the editor shows as 「？」 boxes.
+    public var lockedPieces: [LockedPiece]
 
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
         dailyPushOn: Bool, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil, mostTrained: MostTrained? = nil,
-        titles: TitlesWon = .none, templateDays: Int? = nil, unlocks: [Unlock] = []
+        titles: TitlesWon = .none, templateDays: Int? = nil, unlocks: [Unlock] = [],
+        lockedPieces: [LockedPiece] = []
     ) {
         self.character = character
         self.joinedAt = joinedAt
@@ -106,6 +110,7 @@ public struct MeOverview: Hashable, Sendable {
         self.titles = titles
         self.templateDays = templateDays
         self.unlocks = unlocks
+        self.lockedPieces = lockedPieces
     }
 
     /// The number the card shows: the member's pick, else their place in their squad (the first
