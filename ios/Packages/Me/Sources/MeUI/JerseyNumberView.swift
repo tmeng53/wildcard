@@ -6,10 +6,11 @@ import MeDomain
 import SwiftUI
 
 /// 球衣号码: the member picks the number on their player card, 00 to 99, on a wheel under the
-/// number as the card prints it. Squadmates may wear the same one.
-struct JerseyNumberView: View {
-    @Bindable var model: MeModel
-    let close: () -> Void
+/// number as the card prints it. Squadmates may wear the same one. It opens from the character
+/// editor's 球衣号码, which the app passes this page to.
+public struct JerseyNumberView: View {
+    @Bindable private var model: MeModel
+    private let close: () -> Void
     @State private var picked: JerseyNumber
     /// Set once this page has saved: a failure shows only for a save made here, never for an
     /// earlier one on another page, and 保存 waits while one is on its way.
@@ -17,13 +18,13 @@ struct JerseyNumberView: View {
     @State private var saved = false
     @Environment(\.sceneTheme) private var theme
 
-    init(model: MeModel, close: @escaping () -> Void) {
+    public init(model: MeModel, close: @escaping () -> Void) {
         self.model = model
         self.close = close
         _picked = State(initialValue: model.overview?.cardNumber ?? Self.numbers[0])
     }
 
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
                 .accessibilityIdentifier("number.back")

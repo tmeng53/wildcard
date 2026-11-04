@@ -15,6 +15,8 @@ struct PlayerCard: View {
     let face: PlayerCardFace
     /// Wears a title (nil: the latest again); nil on a squadmate's card, which shows no 装备.
     var equip: ((String) -> Void)?
+    /// The colour of the 轻点翻面 line under the card: muted on a page, on-ink over a dim.
+    var hint: ColorRole = .fgMuted
     @State private var showsBack = false
     /// How far the card has turned on its vertical axis, in degrees: it turns edge-on, swaps sides
     /// out of sight and turns back.
@@ -47,7 +49,7 @@ struct PlayerCard: View {
             // It turns over rather than swipes, so it says so.
             Text("轻点翻面", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .foregroundStyle(Color(role: hint, in: theme))
                 .accessibilityHidden(true)
         }
         .sheet(item: $opened) { title in

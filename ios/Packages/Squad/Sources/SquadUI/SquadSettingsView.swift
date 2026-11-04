@@ -28,10 +28,9 @@ public struct SquadSettingsView: View {
     private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
     private let pastRecaps: () -> Void
     @Binding private var revealing: Bool
-    /// A teammate's player card, opened from their row.
-    private let teammateCard: ((MemberID) -> AnyView)?
+    /// Opens a teammate's player card, from their row; the app pops it up over everything.
+    private let openTeammate: ((MemberID) -> Void)?
     @State private var renaming: String?
-    @State private var openedMate: OpenedMate?
     @State private var confirming: MemberAction?
     @State private var isLeaving = false
     @State private var reveal: Reveal?
@@ -45,18 +44,13 @@ public struct SquadSettingsView: View {
     public init(
         model: SquadSettingsModel, picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void,
         pastRecaps: @escaping () -> Void, revealing: Binding<Bool>,
-        teammateCard: ((MemberID) -> AnyView)? = nil
+        openTeammate: ((MemberID) -> Void)? = nil
     ) {
         self.model = model
         self.picked = picked
         self.pastRecaps = pastRecaps
         _revealing = revealing
-        self.teammateCard = teammateCard
-    }
-
-    /// A teammate whose card is open.
-    private struct OpenedMate: Identifiable {
-        let id: MemberID
+        self.openTeammate = openTeammate
     }
 
     public var body: some View {
@@ -168,14 +162,11 @@ public struct SquadSettingsView: View {
             ForEach(Array(model.members.enumerated()), id: \.element.id) { index, member in
                 MemberRow(
                     member: member, showsDivider: index > 0, isSaving: isSaving(.member(member.id)),
-                    open: member.isMe || teammateCard == nil ? nil : { openedMate = OpenedMate(id: member.id) }
+                    open: member.isMe ? nil : openTeammate.map { open in { open(member.id) } }
                 ) { action in
                     confirming = action
                 }
             }
-        }
-        .sheet(item: $openedMate) { mate in
-            teammateCard?(mate.id)
         }
         .confirmationDialog(
             confirming.map { $0.title } ?? Text(verbatim: ""), isPresented: isConfirming, titleVisibility: .visible,

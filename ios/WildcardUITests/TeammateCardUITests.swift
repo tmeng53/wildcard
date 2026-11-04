@@ -2,7 +2,8 @@ import XCTest
 
 /// A teammate's player card, the way a member finds it: 小米's bubble on the home names her and
 /// the title she wears, and a tap on that line opens her card, which turns over to her badge
-/// board and opens a badge with no 装备; and from the 小队 tab's member list. Screenshots are kept
+/// board and opens a badge with no 装备; and from the 小队 tab's member list, where it pops up over
+/// the dimmed page and a tap off it closes it. Screenshots are kept
 /// for review.
 @MainActor
 final class TeammateCardUITests: XCTestCase {
@@ -31,7 +32,7 @@ final class TeammateCardUITests: XCTestCase {
         XCTAssertTrue(opened, "her card didn't open:\n\(app.debugDescription)")
         XCTAssertTrue(card.label.contains("小米"), "the card isn't hers: \(card.label)")
         XCTAssertTrue(card.label.contains("早八战神"), "the card doesn't wear her title: \(card.label)")
-        XCTAssertTrue(window.contains(card.frame), "the card runs off the sheet: \(card.frame)")
+        XCTAssertTrue(window.contains(card.frame), "the card runs off the screen: \(card.frame)")
 
         card.tap()
         let badges = app.buttons.matching(identifier: "me.badge")
@@ -55,6 +56,13 @@ final class TeammateCardUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "59-teammate-card-from-squad")
         XCTAssertTrue(opened, "the teammate's card didn't open:\n\(app.debugDescription)")
+        let card = app.buttons["me.card"]
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(card.frame), "the card runs off the screen: \(card.frame)")
+        // It pops up over the dimmed page, and a tap off it, above it, closes it.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap()
+        XCTAssertTrue(
+            card.waitForNonExistence(timeout: 5), "a tap off the card didn't close it:\n\(app.debugDescription)")
+        XCTAssertTrue(row.isHittable, "the 小队 tab isn't back under the card")
     }
 
     private func launch(_ extra: [String]) -> XCUIApplication {

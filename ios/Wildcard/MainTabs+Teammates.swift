@@ -23,11 +23,10 @@ extension MainTabs {
     }
 
     /// A teammate's card on 小队, from the squad and characters that page shows.
-    func squadCard(of member: MemberID) -> AnyView {
-        AnyView(
-            squad.settings.map { settings in
-                TeammateCard(model: cardModel(of: member, in: settings.squad, characters: settings.characters))
-            })
+    func squadCard(of member: MemberID) -> SquadmateCardModel? {
+        squad.settings.map { settings in
+            cardModel(of: member, in: settings.squad, characters: settings.characters)
+        }
     }
 
     /// A teammate's card from the home, which knows the squad once it is read.
@@ -40,7 +39,7 @@ extension MainTabs {
     }
 }
 
-/// A teammate's card sheet, keeping the model it opened with however often its parent draws.
+/// A teammate's pop-up card, keeping the model it opened with however often its parent draws.
 struct TeammateCard: View {
     @State private var model: SquadmateCardModel
 
@@ -49,6 +48,6 @@ struct TeammateCard: View {
     }
 
     var body: some View {
-        SquadmateCardSheet(model: model)
+        SquadmateCardPopup(model: model)
     }
 }

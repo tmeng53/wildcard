@@ -3345,6 +3345,23 @@
           }
         }
       }
+    },
+    "球衣号码 %@": {
+      "comment": "The button in the character editor opened from 我 that opens the jersey number picker, with the member's number (00 to 99), or no number yet.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jersey number %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "球衣背號 %@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -53,7 +53,8 @@ struct MainTabs: View {
     @State private var wall: PostWallStore?
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
-    /// A teammate's player card, opened from their name on the home's bubble.
+    /// A teammate's player card, opened from their name on the home's bubble or their row on 小队,
+    /// popped up over every tab and the tab bar.
     @State private var teammate: SquadmateCardModel?
 
     init(
@@ -98,19 +99,10 @@ struct MainTabs: View {
         }
         .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
             if let editor {
-                CharacterEditorView(
-                    model: editor, context: .profile, issued: profile.overview?.joinedAt,
-                    onBack: { self.editor = nil },
-                    onDone: { edited in
-                        self.editor = nil
-                        Task {
-                            await profile.save(
-                                MeCharacter(nickname: edited.nickname, outfit: edited.outfit, persona: edited.persona))
-                        }
-                    })
+                ProfileEditor(model: editor, profile: profile) { self.editor = nil }
             }
         }
-        .sheet(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
+        .cardPopup(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
             if let teammate {
                 TeammateCard(model: teammate).environment(\.sceneTheme, today.scene)
             }
@@ -184,7 +176,7 @@ struct MainTabs: View {
                 model: squad, picked: land(on:coveredAt:),
                 // Past 战报 live in 动态 until they have a page of their own.
                 pastRecaps: { selection = .feed }, revealing: $squadRevealing,
-                teammateCard: { squadCard(of: $0) }
+                openTeammate: { teammate = squadCard(of: $0) }
             )
             .environment(\.sceneTheme, squad.scene)
         case .profile:

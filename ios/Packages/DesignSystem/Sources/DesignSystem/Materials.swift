@@ -13,6 +13,9 @@ public enum Scrim {
     /// Seconds to fade in and out.
     public static let fadeIn: Double = 0.20
     public static let fadeOut: Double = 0.16
+    /// How far the ink dims the page under a card that pops up over it (`CardPopup`), where the
+    /// card, not the page, is what to look at.
+    public static let dimOpacity: Double = 0.5
 }
 
 /// The dark over a scene at night: the design's tint, which `CheckIn/SceneArt/render.mjs` bakes
