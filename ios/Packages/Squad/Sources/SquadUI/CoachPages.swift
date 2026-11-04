@@ -107,24 +107,8 @@ struct CoachCard: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("squad.coach.open")
-            if canHire {
-                HStack(spacing: Space.xs) {
-                    Button {
-                        open(.market)
-                    } label: {
-                        Text("换教练", bundle: .module).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(SecondaryButtonStyle(.inCard))
-                    .accessibilityIdentifier("squad.coach.change")
-                    Button {
-                        open(.fire(coach))
-                    } label: {
-                        Text("解雇", bundle: .module).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(SecondaryButtonStyle(.inCard, tone: .danger))
-                    .accessibilityIdentifier("squad.coach.fire")
-                }
-            } else {
+            // 换教练 and 解雇 are rare, so they wait on the coach's 简历 (Tracy, 2026-11-04).
+            if !canHire {
                 browse
             }
         }
