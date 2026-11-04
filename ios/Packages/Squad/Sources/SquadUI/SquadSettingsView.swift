@@ -33,8 +33,8 @@ public struct SquadSettingsView: View {
     /// The coach's 战术板 line of the day, pinned on its 简历.
     private let coachNote: CoachNote?
     /// Opens straight on the squad's coach's 简历, as a tap on the coach on the home does: back
-    /// from it closes the page.
-    private let opensCoach: Bool
+    /// from it closes the page, until the member goes on past that 简历.
+    @State private var opensCoach: Bool
     @State private var renaming: String?
     @State private var confirming: MemberAction?
     @State private var isLeaving = false
@@ -52,7 +52,7 @@ public struct SquadSettingsView: View {
         openTeammate: ((MemberID) -> Void)? = nil, coachNote: CoachNote? = nil, opensCoach: Bool = false
     ) {
         self.coachNote = coachNote
-        self.opensCoach = opensCoach
+        _opensCoach = State(initialValue: opensCoach)
         self.model = model
         self.picked = picked
         self.close = close
@@ -106,6 +106,11 @@ public struct SquadSettingsView: View {
             var instant = Transaction()
             instant.disablesAnimations = true
             withTransaction(instant) { coachPages = [.resume(coach)] }
+        }
+        .onChange(of: coachPages.count) { _, count in
+            // Past the 简历 the home opened (教练招聘会, 解雇, or a change that ends on 小队设置), the
+            // coach's pages work as they do on 小队.
+            if count != 1 { opensCoach = false }
         }
         .onChange(of: reveal != nil) { _, playing in revealing = playing }
     }

@@ -15,16 +15,7 @@ import SwiftUI
 /// to do about it (拍一拍): the status in 13/600 over a muted detail, centred, and a compact
 /// accent capsule under them; once done, the capsule turns grey and does nothing. My own status
 /// has nothing to do: no capsule.
-///
-/// The tail points down from the middle, or, with `tail: .leading`, from near the bubble's
-/// leading corner, for a speaker by the screen's edge.
 public struct SpeechBubble: View {
-    /// Where the tail leaves the bubble's bottom edge.
-    public enum TailSpot {
-        case center
-        case leading
-    }
-
     public enum Kind {
         case line
         /// A line said in `.line`'s type that must show whole (a coach's catchphrase, which can be
@@ -57,7 +48,6 @@ public struct SpeechBubble: View {
     private let kind: Kind
     private let surface: CardSurface
     private let action: (() -> Void)?
-    private let tail: TailSpot
 
     private static let lineWidth: Double = 160
     private static let infoWidth: Double = 200
@@ -65,17 +55,13 @@ public struct SpeechBubble: View {
     private static let verticalPadding: Double = 6
     private static let horizontalPadding: Double = 10
 
-    /// The tail's middle from the bubble's leading edge, with `tail: .leading`.
-    public static let leadingTail: Double = 32
-
     public init(
-        _ text: Text, kind: Kind = .line, on surface: CardSurface = .scene, tail: TailSpot = .center,
+        _ text: Text, kind: Kind = .line, on surface: CardSurface = .scene,
         action: (() -> Void)? = nil
     ) {
         self.text = text
         self.kind = kind
         self.surface = surface
-        self.tail = tail
         self.action = action
     }
 
@@ -103,10 +89,7 @@ public struct SpeechBubble: View {
     }
 
     private var shape: BubbleShape {
-        BubbleShape(
-            tail: Self.tailSize,
-            tailMid: tail == .leading ? Self.leadingTail : nil,
-            cornerRadius: Radius.pick)
+        BubbleShape(tail: Self.tailSize, cornerRadius: Radius.pick)
     }
 
     /// How much white the glass carries: enough that a coloured scene (the red track) doesn't dye
@@ -236,16 +219,14 @@ private struct StatusCapsule: View {
 }
 
 /// A bubble and its tail as one outline, so glass bends light across both as one piece: a
-/// rounded rectangle above `tail.height`, and a triangle under it pointing down, its middle at
-/// `tailMid` from the leading edge, or at the middle when nil.
+/// rounded rectangle above `tail.height`, and a triangle under it pointing down from its middle.
 private struct BubbleShape: Shape {
     let tail: CGSize
-    let tailMid: Double?
     let cornerRadius: Double
 
     func path(in rect: CGRect) -> Path {
         let body = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height - tail.height)
-        let mid = rect.minX + (tailMid ?? rect.width / 2)
+        let mid = rect.midX
         // The triangle reaches a point into the body so no seam shows where they join.
         let point = Path { path in
             path.move(to: CGPoint(x: mid - tail.width / 2, y: body.maxY - 1))

@@ -59,9 +59,12 @@ struct MainTabs: View {
     @State private var wall: PostWallStore?
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
-    /// A teammate's player card, opened from their name on the home's bubble or their row on 小队,
+    /// A player's card, opened from a tap on them on the home or their row on 小队,
     /// popped up over every tab and the tab bar.
     @State private var teammate: SquadmateCardModel?
+    /// The card was opened from the home, so 今天 and 拍一拍 go over it; from 小队 the scene isn't
+    /// in view to play a pat on.
+    @State private var teammateOnHome = false
 
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
@@ -112,8 +115,10 @@ struct MainTabs: View {
             if let teammate {
                 // What they're up to today over their card, with 拍一拍 (2026-11-04).
                 VStack(spacing: Space.xs) {
-                    MateTodayStrip(model: today, member: teammate.member) { self.teammate = nil }
-                        .frame(width: SquadmateCardPopup.width)
+                    if teammateOnHome {
+                        MateTodayStrip(model: today, member: teammate.member) { self.teammate = nil }
+                            .frame(width: SquadmateCardPopup.width)
+                    }
                     TeammateCard(model: teammate)
                 }
                 .environment(\.sceneTheme, today.scene)
@@ -335,7 +340,11 @@ extension MainTabs {
                         showsSquad = false
                         squadOpensCoach = false
                     },
-                    revealing: $squadRevealing, openTeammate: { teammate = squadCard(of: $0) },
+                    revealing: $squadRevealing,
+                    openTeammate: {
+                        teammateOnHome = false
+                        teammate = squadCard(of: $0)
+                    },
                     coachNote: today.coachLine, opensCoach: squadOpensCoach
                 )
                 .environment(\.sceneTheme, squad.scene)
@@ -353,7 +362,10 @@ extension MainTabs {
                     }
                 )
                 .onAppear {
-                    today.openTeammate = { teammate = homeCard(of: $0) }
+                    today.openTeammate = {
+                        teammateOnHome = true
+                        teammate = homeCard(of: $0)
+                    }
                     today.openCoach = {
                         squadOpensCoach = true
                         showsSquad = true

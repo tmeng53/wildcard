@@ -110,25 +110,13 @@ public struct StageLayout: Hashable, Sendable {
     /// The coach's size: as big as me, so it reads as the coach, not one more teammate.
     public static let coachScale = myScale
 
-    /// Whether a teammate standing at `spot` would be hidden by the coach on the sideline or by
-    /// its 战术板 bubble over its head: teammates leave those spots free while the squad has a
-    /// coach.
+    /// Whether a teammate standing at `spot` would be hidden by the coach on the sideline:
+    /// teammates leave that spot free while the squad has a coach.
     func coachCovers(_ spot: StagePoint) -> Bool {
         guard let sideline else { return false }
         let teammate = Self.figure(at: spot, scale: Self.scale(atDepth: spot.y))
-        let coach = Self.coachFigure(at: sideline)
-        // The bubble's tail sits over the coach's head, near the bubble's left end.
-        let bubble = StageRect(
-            x: (sideline.x - Self.bubbleTail)...(sideline.x - Self.bubbleTail + Self.bubbleSize.width),
-            y: (coach.minY - Self.bubbleSize.height)...coach.minY)
-        return teammate.overlaps(coach) || teammate.overlaps(bubble)
+        return teammate.overlaps(Self.coachFigure(at: sideline))
     }
-
-    /// The room kept clear over the coach's head, in stage points, where its line was said until
-    /// a tap on it opened its 简历 instead (2026-11-04): 170 wide and 112 tall, from 32 points to
-    /// the left of its head.
-    static let bubbleSize = (width: 170.0, height: 112.0)
-    static let bubbleTail = 32.0
 
     /// Where a member's body is drawn with its feet at `point`: about 140 of the canvas's 240
     /// points wide, and from the feet up to the top of the head (78 on the rig).
