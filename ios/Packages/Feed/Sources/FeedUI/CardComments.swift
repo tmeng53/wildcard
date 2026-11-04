@@ -6,8 +6,8 @@ import FeedDomain
 import SwiftUI
 
 /// Under a card's emoji row: the coach's line first, with the 教练 tag, then the latest two
-/// comments, each its writer's name then the words (回复 Mia first when it replies), two lines at
-/// most, then 全部 N 条评论 when there are more. A tap opens the post's own page, where all of
+/// comments or coach's answers, each its writer's name then the words (回复 Mia first when it
+/// replies), two lines at most, then 全部 N 条评论 when there are more. A tap opens the post's own page, where all of
 /// them are.
 struct CardComments: View {
     @Environment(\.sceneTheme) private var theme
@@ -24,13 +24,23 @@ struct CardComments: View {
                     CoachCommentLine(coach: reply.coach, text: text)
                         .lineLimit(2)
                 }
-                ForEach(post.commentsOnCard) { comment in
-                    CommentLine(model: model, comment: comment)
+                let answers = model.coachAnswers(on: post.id)
+                ForEach(post.threadOnCard(answers: answers)) { entry in
+                    switch entry {
+                    case .comment(let comment):
+                        CommentLine(model: model, comment: comment)
+                            .lineLimit(2)
+                    case .answer(let answer, let member):
+                        CoachCommentLine(
+                            coach: answer.coach, text: answer.text, recipient: model.displayName(of: member)
+                        )
                         .lineLimit(2)
+                    }
                 }
-                if post.comments.count > FeedPost.cardComments {
+                let thread = post.thread(answers: answers)
+                if thread.count > FeedPost.cardComments {
                     // The coach's line counts, as on the post's own page.
-                    let count = post.comments.count + (model.coachReply(on: post.id)?.text == nil ? 0 : 1)
+                    let count = thread.count + (model.coachReply(on: post.id)?.text == nil ? 0 : 1)
                     Text("全部 \(count) 条评论", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
@@ -63,7 +73,7 @@ struct CommentLine: View {
     private var line: Text {
         let name = Text(verbatim: model.displayName(of: comment.member)).fontWeight(.semibold)
         let words = comment.text.text
-        guard let recipient = comment.replyTo.map(model.displayName) else {
+        guard let recipient = comment.replyTo.map({ model.displayName(of: $0) }) else {
             return Text("\(name)  \(words)", bundle: .module)
         }
         let reply = Text("回复 \(recipient)", bundle: .module)

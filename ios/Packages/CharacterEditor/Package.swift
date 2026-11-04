@@ -13,7 +13,10 @@ let package = Package(
         .library(name: "CharacterEditorDomain", targets: ["CharacterEditorDomain"]),
         .library(name: "CharacterEditorUI", targets: ["CharacterEditorUI"]),
     ],
-    dependencies: [.package(path: "../Avatar"), .package(path: "../Contracts"), .package(path: "../DesignSystem")],
+    dependencies: [
+        .package(path: "../Avatar"), .package(path: "../Contracts"), .package(path: "../DesignSystem"),
+        .package(path: "../Sports"),
+    ],
     targets: [
         .target(
             name: "CharacterEditorDomain",
@@ -29,6 +32,7 @@ let package = Package(
                 .product(name: "AvatarUI", package: "Avatar"), .product(name: "Contracts", package: "Contracts"),
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "DesignSystemUI", package: "DesignSystem"),
+                .product(name: "SportsUI", package: "Sports"),
             ],
             resources: [.process("Resources/Localizable.xcstrings")]),
         .testTarget(

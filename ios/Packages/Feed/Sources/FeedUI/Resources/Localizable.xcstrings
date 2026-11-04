@@ -1,6 +1,54 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "教练" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教練"
+          }
+        }
+      }
+    },
+    "教练 %@ 回复 %@：%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach %1$@ replied to %2$@: %3$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教練 %1$@ 回覆 %2$@：%3$@"
+          }
+        }
+      }
+    },
+    "收到，下次带你一起练" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Got it. Next time we train together."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收到，下次帶你一起練"
+          }
+        }
+      }
+    },
     "毛头" : {
       "localizations" : {
         "en" : {

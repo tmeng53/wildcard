@@ -96,7 +96,6 @@ final class MeUITests: XCTestCase {
 
         // 退出登录 asks first; the in-memory member has nothing to sign out of, so 设置 stays.
         app.buttons["me.signOut"].tap()
-        // The system sheet nests the button, so the identifier matches twice.
         let signOut = app.buttons.matching(identifier: "me.signOut.confirm").firstMatch
         XCTAssertTrue(signOut.waitForExistence(timeout: 30), "退出登录 didn't ask first")
         signOut.tap()

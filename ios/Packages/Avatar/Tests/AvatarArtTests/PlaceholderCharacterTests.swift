@@ -288,8 +288,8 @@ func outline(_ path: [PathElement]) -> [Point] {
 }
 
 /// Every body the editor groups is bundled, and every bundled body is in a group; every piece of
-/// clothing and prop it offers is bundled, and WARM-UP's twelve pieces recolor, their first color
-/// their art's own; every member starts with the tumbler and the dumbbell.
+/// clothing and prop it offers is bundled, and WARM-UP's twelve pieces recolor; any piece's first
+/// color is its art's own; every member starts with the tumbler and the dumbbell.
 @Test func theEditorOffersBundledArt() throws {
     let choices = try PlaceholderCharacter.editorChoices()
     #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
@@ -317,6 +317,8 @@ func outline(_ path: [PathElement]) -> [Point] {
         #expect(Set(pieces.map(\.id)) == Set(PlaceholderCharacter.variants(for: slot).filter { $0.contains("-") }))
         for piece in pieces where piece.store == "warmup" {
             #expect(piece.swatches.count == 6, "\(piece.id)")
+        }
+        for piece in pieces where !piece.swatches.isEmpty {
             #expect(
                 piece.swatches.first == PlaceholderCharacter.tones(for: slot, wearing: piece.id)?.base, "\(piece.id)")
         }

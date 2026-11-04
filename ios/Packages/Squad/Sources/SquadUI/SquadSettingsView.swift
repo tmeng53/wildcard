@@ -314,11 +314,9 @@ enum Working: Hashable {
 }
 
 /// What the captain is about to do to a member, asked first in the glass menu.
-enum MemberAction: Hashable, Identifiable {
+enum MemberAction: Hashable {
     case handCaptaincy(MemberID, name: String)
     case remove(MemberID, name: String)
-
-    var id: Self { self }
 
     var title: Text {
         switch self {

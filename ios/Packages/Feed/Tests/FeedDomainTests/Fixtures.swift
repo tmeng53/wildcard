@@ -42,7 +42,9 @@ func text(_ words: String) -> CommentText {
 func comment(_ number: Int, by writer: MemberID, _ words: String, replyTo: MemberID? = nil, at moment: Int64 = 0)
     -> Comment
 {
-    Comment(id: commentID(number), member: writer, text: text(words), replyTo: replyTo, commentedAt: at(moment))
+    Comment(
+        id: commentID(number), member: writer, text: text(words), replyTo: replyTo.map(ReplyTarget.member),
+        commentedAt: at(moment))
 }
 
 func emoji(_ text: String) -> Emoji {
@@ -60,7 +62,7 @@ actor FakeSource: FeedSource {
         case posts(LocalDay, LocalDay)
         case reaction(Emoji?, CheckInID)
         case post(CheckInID)
-        case comment(CommentID, String, MemberID?, CheckInID)
+        case comment(CommentID, String, ReplyTarget?, CheckInID)
         case deleteComment(CommentID, CheckInID)
     }
 
@@ -114,14 +116,14 @@ actor FakeSource: FeedSource {
         return post
     }
 
-    func comment(_ text: CommentText, id: CommentID, replyingTo member: MemberID?, on checkIn: CheckInID)
+    func comment(_ text: CommentText, id: CommentID, replyingTo target: ReplyTarget?, on checkIn: CheckInID)
         async throws(FeedError) -> Comment
     {
-        calls.append(.comment(id, text.text, member, checkIn))
+        calls.append(.comment(id, text.text, target, checkIn))
         await wait()
         if let failure { throw failure }
         guard posts.contains(where: { $0.id == checkIn }) else { throw .postGone }
-        return Comment(id: id, member: coco, text: text, replyTo: member, commentedAt: at(900))
+        return Comment(id: id, member: coco, text: text, replyTo: target, commentedAt: at(900))
     }
 
     func deleteComment(_ id: CommentID, on checkIn: CheckInID) async throws(FeedError) {
