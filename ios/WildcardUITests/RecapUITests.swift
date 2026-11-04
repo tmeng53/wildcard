@@ -72,28 +72,20 @@ final class RecapUITests: XCTestCase {
         XCTAssertEqual(app.buttons["recap.planNextWeek"].label, "Plan next week")
     }
 
-    /// 小队 shows the squad's newest 战报 as its tile at the top, and 动态 no longer does; the tile
-    /// opens it.
-    func testSquadTileOpensTheStory() {
-        let app = launch(language: "zh-Hans", extra: ["-tab", "squad"], demo: false)
+    /// 动态 shows the squad's newest 战报 as its tile, clear of the tab bar, and the tile opens it.
+    func testFeedTileOpensTheStory() {
+        let app = launch(language: "zh-Hans", extra: ["-tab", "feed"], demo: false)
         let tile = app.buttons["recap.entry"]
-        XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "小队 shows no 战报 tile")
-        let bar = tabButton("tab.squad", in: app)
-        XCTAssertTrue(bar.isSelected, "-tab squad didn't open on 小队")
+        XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "动态 shows no 战报 tile")
+        let bar = tabButton("tab.feed", in: app)
+        XCTAssertTrue(bar.isSelected, "-tab feed didn't open on 动态")
         XCTAssertLessThan(tile.frame.maxY, bar.frame.minY, "the tile runs under the tab bar")
-        let name = app.staticTexts["squad.name"]
-        XCTAssertTrue(name.exists, "小队 has no name under the tile")
-        XCTAssertLessThan(tile.frame.minY, name.frame.minY, "the tile isn't at the top of 小队")
         Thread.sleep(forTimeInterval: 1)
-        keepScreenshot(named: "81-recap-squad-tile")
+        keepScreenshot(named: "81-recap-feed-tile")
         tile.tap()
         show("podium", in: app)
         app.buttons["recap.close"].tap()
-        XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "✕ didn't go back to 小队")
-        tabButton("tab.feed", in: app).tap()
-        let feedTitle = app.descendants(matching: .any).matching(identifier: "feed.title").firstMatch
-        XCTAssertTrue(feedTitle.waitForExistence(timeout: Self.wait), "动态 never showed")
-        XCTAssertFalse(tile.exists, "动态 still shows the 战报 tile")
+        XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "✕ didn't go back to 动态")
     }
 
     private func launch(language: String, extra: [String] = [], demo: Bool = true) -> XCUIApplication {

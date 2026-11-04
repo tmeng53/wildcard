@@ -53,6 +53,9 @@ final class SquadSettingsUITests: XCTestCase {
         app.swipeUp()
         settle()
         keepScreenshot(named: "62-squad-bottom")
+        // 往期战报 lives in 动态 for now.
+        app.buttons["squad.pastRecaps"].tap()
+        waitFor(app.buttons["tab.feed"], "isSelected == true", "往期战报 didn't open 动态")
     }
 
     func testTheWinnerPicksTheSceneOnce() {

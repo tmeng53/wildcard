@@ -14,20 +14,19 @@ import SwiftUI
 import UIKit
 #endif
 
-/// 小队, the squad's own tab (approved canvas, 2026-10-22; a tab since 2026-11-02): at the top the
-/// app's `header` (the squad's newest 战报, 2026-11-04), then the squad's name and captain, a still row of everyone's heads with the coach and 「+ 邀请」, this week's
-/// scene and who picks it, the coach, the invite code, the members, and leaving. The
+/// 小队, the squad's own tab (approved canvas, 2026-10-22; a tab since 2026-11-02): the squad's
+/// name and captain, a still row of everyone's heads with the coach and 「+ 邀请」, this week's
+/// scene and who picks it, the coach, the invite code, the members, 往期战报, and leaving. The
 /// captain renames the squad and manages members from each row's ··· menu; last week's crown
 /// winner, or the captain when nobody won, picks the scene once. It is a tab, with no way back;
-/// the app follows `model.hasLeft`. A pick ends
+/// the app follows `model.hasLeft` and opens 往期战报 (`pastRecaps`). A pick ends
 /// where every pick does, on home with the squad dropping in: once the reveal is over, `picked`
 /// hands the scene to the app, which takes over; while the reveal plays, `revealing` is true, so
 /// the app can put away its tab bar.
 public struct SquadSettingsView: View {
     @Bindable private var model: SquadSettingsModel
     private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
-    /// What the app shows above the squad's name: its newest 战报.
-    private let top: AnyView?
+    private let pastRecaps: () -> Void
     @Binding private var revealing: Bool
     /// Opens a teammate's player card, from their row; the app pops it up over everything.
     private let openTeammate: ((MemberID) -> Void)?
@@ -44,12 +43,12 @@ public struct SquadSettingsView: View {
 
     public init(
         model: SquadSettingsModel, picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void,
-        header: AnyView? = nil, revealing: Binding<Bool>,
+        pastRecaps: @escaping () -> Void, revealing: Binding<Bool>,
         openTeammate: ((MemberID) -> Void)? = nil
     ) {
         self.model = model
         self.picked = picked
-        self.top = header
+        self.pastRecaps = pastRecaps
         _revealing = revealing
         self.openTeammate = openTeammate
     }
@@ -107,7 +106,6 @@ public struct SquadSettingsView: View {
 
     private func sections(_ settings: SquadSettings) -> some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            top
             VStack(alignment: .leading, spacing: Space.m) {
                 header(settings)
                 SquadHeads(
@@ -125,6 +123,10 @@ public struct SquadSettingsView: View {
             section(Text("邀请队友", bundle: .module)) { InviteCard(squad: settings.squad, openSpots: model.openSpots) }
             section(Text("队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
                 memberRows
+            }
+            section(Text("战报", bundle: .module)) {
+                ListRow(Text("往期战报", bundle: .module), showsDivider: false, action: pastRecaps)
+                    .accessibilityIdentifier("squad.pastRecaps")
             }
             leaveButton(settings)
         }

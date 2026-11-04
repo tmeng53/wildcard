@@ -79,7 +79,8 @@ struct MainTabs: View {
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
         .task { today.tellUnlocks(with: UnlockNotices(banner: { UnlockBanner(unlock: $0) }, open: openUnlock)) }
-        // Read once at the start too, so the 战报 tile is on 小队 before it first opens.
+        // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
+        // 今天 opens 动态 on doesn't move down under it.
         .task { await recap.refresh() }
         // 动态's dot: looked for each minute while 动态 isn't open; opening it clears the dot.
         .task(id: selection) {
@@ -172,12 +173,11 @@ struct MainTabs: View {
         case .squad:
             SquadSettingsView(
                 model: squad, picked: land(on:coveredAt:),
-                // The squad's newest 战报 tops its page (2026-11-04).
-                header: AnyView(RecapTile(recap: recap)), revealing: $squadRevealing,
+                // Past 战报 live in 动态 until they have a page of their own.
+                pastRecaps: { selection = .feed }, revealing: $squadRevealing,
                 openTeammate: { teammate = squadCard(of: $0) }
             )
             .environment(\.sceneTheme, squad.scene)
-            .task { await recap.refresh() }
         case .profile:
             profilePage
         }
@@ -188,11 +188,12 @@ struct MainTabs: View {
     private var feedPage: some View {
         ZStack {
             FeedView(
-                model: feed,
+                model: feed, header: AnyView(RecapTile(recap: recap)),
                 accessory: AnyView(NoticeBell(inbox: inbox) { showsNotices = true })
             ) { selection = .today }
             .allowsHitTesting(!showsNotices)
             .accessibilityHidden(showsNotices)
+            .task { await recap.refresh() }
             // The bell's dot, read each time 动态 opens, and the member 通知 shows: their character
             // when it is empty and their unlocks for how a store opened.
             .task {
