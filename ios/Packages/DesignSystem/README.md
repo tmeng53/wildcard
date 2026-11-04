@@ -28,6 +28,7 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `CategoryBar` | Where am I: switching scenes, tabs in a panel, sport categories (ink capsule) |
 | `AppTabs`, `TabBarItem` | The app's tabs in the system's own Liquid Glass tab bar, the selected tab in ink |
 | `PickRow`, `PickPill`, `PickTile`, `Swatch`, `CheckBadge` | What did I pick: white with a hairline; picked, a 1.5 stroke and a check in the accent tone; a `.solid` `PickPill` fills with the accent tone instead (发动态's sport) |
+| `DayStrip` | Which day: today and the week before it in one line (补打卡's 日期), each the squad card's day circle with its weekday over it; today is 今天 in an ink ring, the picked day fills with the accent tone, a day that can't be picked is grey |
 | `TickRuler`, `RulerScale` | A number slid under a needle (刻度), snapping to the scale's marks with one `pick` tick per mark (发动态's minutes under 其他) |
 | `InputField`, `SearchField` | Text entry |
 | `dismissesKeyboardOnTapOutside()` | Applied once at the app's root: a tap outside a text input puts the keyboard away on every screen, and still reaches what was tapped |

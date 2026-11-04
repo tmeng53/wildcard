@@ -33,6 +33,18 @@ public struct ComposeView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: Space.l) {
                         PhotoTiles(model: model)
+                        if let day = model.day, model.postableDays.count > 1 {
+                            VStack(alignment: .leading, spacing: Space.xxs) {
+                                SectionLabel(Text("日期", bundle: .module))
+                                DayPick(
+                                    days: model.postableDays,
+                                    picked: Binding {
+                                        day
+                                    } set: {
+                                        model.day = $0
+                                    })
+                            }
+                        }
                         if model.kind == .trained {
                             SportRow(
                                 selected: model.currentActivity, isPickingSport: $isPickingSport

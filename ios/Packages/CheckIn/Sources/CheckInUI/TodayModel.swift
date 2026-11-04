@@ -221,8 +221,22 @@ public final class TodayModel {
         cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach)
     }
 
+    /// A 请假条 is on offer while some day it can count for is free of a 练了 (补打卡).
     var unavailable: Set<CheckInKind> {
-        store.myStatus.allowsDisclaimer && !store.restsToday ? [] : [.disclaimer]
+        let blocked = blockedForDisclaimer
+        return disclaimerDays.contains { !blocked.contains($0) } ? [] : [.disclaimer]
+    }
+
+    /// The days a 请假条 can count for, today last.
+    var disclaimerDays: [LocalDay] { store.postableDays }
+
+    /// The days a 请假条 can't go on: one with a 练了, and today when it rules one out.
+    var blockedForDisclaimer: Set<LocalDay> {
+        var blocked = store.trainedDays
+        if let today = store.postableDays.last, !store.myStatus.allowsDisclaimer || store.restsToday {
+            blocked.insert(today)
+        }
+        return blocked
     }
 
     /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member
@@ -275,8 +289,11 @@ public final class TodayModel {
             let given: [PreparedPhoto] = if case .provided(let photos) = photoSource { photos } else { [] }
             compose = ComposeModel(
                 kind: kind, purpose: .new(shareSquads: shareSquads), photos: given.map(ComposedPhoto.new),
-                suggestedActivity: suggestedActivity, recentActivities: recentActivities,
-                save: { [weak self] model in await self?.post(model.draft, sharedTo: model.shared) ?? false },
+                postableDays: store.postableDays, suggestedActivity: suggestedActivity,
+                recentActivities: recentActivities,
+                save: { [weak self] model in
+                    await self?.post(model.draft, sharedTo: model.shared, on: model.day) ?? false
+                },
                 close: { [weak self] in self?.cancel() })
             step = .composing(kind)
         }
@@ -292,10 +309,10 @@ public final class TodayModel {
         await writer.suggestions(for: reason, style: style)
     }
 
-    /// Posts `draft` to the squads in `shared` (none keeps it to the member). False when it
-    /// can't be posted; the open page says so.
+    /// Posts `draft` to the squads in `shared` (none keeps it to the member), for `day` (today
+    /// when left out). False when it can't be posted; the open page says so.
     @discardableResult
-    func post(_ draft: CheckInDraft, sharedTo shared: Set<SquadID>) async -> Bool {
+    func post(_ draft: CheckInDraft, sharedTo shared: Set<SquadID>, on day: LocalDay? = nil) async -> Bool {
         guard !isSending else { return false }
         isSending = true
         sendFailed = false
@@ -304,16 +321,18 @@ public final class TodayModel {
         do {
             // Posted or waiting to go out, it counts on the scene now.
             let audience = shareSquads.map(\.id).filter(shared.contains)
-            let outcome = try await store.post(draft, sharedTo: audience)
+            // A past day's post (补打卡) leaves today's ring and kit as they are.
+            let isBackfill = day.map { $0 != store.postableDays.last } ?? false
+            let outcome = try await store.post(draft, sharedTo: audience, on: day)
             // A 练了's kit goes on after its cheer.
-            if draft.kind == .trained {
+            if draft.kind == .trained, !isBackfill {
                 dressHolds += 1
                 dressHeldBy = dressHolds
             }
             placeSquad()
             step = .scene
             compose = nil
-            land(draft, weekBefore: before, saved: outcome)
+            land(draft, weekBefore: before, saved: outcome, isBackfill: isBackfill)
             posted()
             return true
         } catch {
@@ -325,7 +344,8 @@ public final class TodayModel {
     /// Stays on the scene: the character celebrates and the line appears over it. The photos stay
     /// in the post, off the scene (the product owner: too busy).
     private func land(
-        _ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?, saved: TodayStore.PostOutcome
+        _ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?, saved: TodayStore.PostOutcome,
+        isBackfill: Bool
     ) {
         let line: String?
         switch draft {
@@ -345,7 +365,7 @@ public final class TodayModel {
                 "cheer", persona: myPersona, species: PlaceholderCharacter.species(of: myLook))
         // A clip would stop a hop into the kit halfway, in the clothes on screen.
         if let cheer, !isChanging { try? player?.play(cheer) }
-        guard draft.kind == .trained else { return }
+        guard draft.kind == .trained, !isBackfill else { return }
         // The big moment: my ring draws and closes, the squad turns and cheers, and only then
         // does the week's count flip up.
         celebrations += 1

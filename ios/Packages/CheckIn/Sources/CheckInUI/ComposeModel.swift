@@ -27,6 +27,10 @@ public final class ComposeModel {
     var minutes: WorkoutMinutes?
     /// The squads a new post goes to.
     var shared: Set<SquadID>
+    /// The days a new post can count for (补打卡), today last; none for an edit, whose day stays.
+    let postableDays: [LocalDay]
+    /// The day a new post counts for: today until the member picks another.
+    var day: LocalDay?
     let suggestedActivity: Activity
     let recentActivities: [Activity]
     private(set) var isSending = false
@@ -46,12 +50,15 @@ public final class ComposeModel {
     ///   - save: posts or saves it; false when it didn't go through.
     ///   - close: leaves the page without saving.
     init(
-        kind: CheckInKind, purpose: Purpose, photos: [ComposedPhoto] = [], suggestedActivity: Activity,
+        kind: CheckInKind, purpose: Purpose, photos: [ComposedPhoto] = [], postableDays: [LocalDay] = [],
+        suggestedActivity: Activity,
         recentActivities: [Activity], loadPhoto: @escaping @Sendable (PhotoRef) async -> Data? = { _ in nil },
         save: @escaping @MainActor (ComposeModel) async -> Bool, close: @escaping @MainActor () -> Void
     ) {
         self.kind = kind
         self.purpose = purpose
+        self.postableDays = postableDays
+        day = postableDays.last
         self.suggestedActivity = suggestedActivity
         self.recentActivities = recentActivities
         self.loadPhoto = loadPhoto
@@ -124,6 +131,7 @@ public final class ComposeModel {
             return Snapshot(photos: photos, line: line, activity: activity, minutes: minutes) != initial
         }
         return !photos.isEmpty || !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || day != postableDays.last
     }
 
     func add(_ picked: [PreparedPhoto]) {

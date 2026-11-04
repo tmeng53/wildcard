@@ -6,7 +6,10 @@ import Foundation
 public struct PendingCheckIn: Hashable, Sendable, Identifiable {
     public let id: CheckInID
     public let member: MemberID
+    /// The day it counts for: `postedDay`, or one of the days before it (补打卡).
     public let day: LocalDay
+    /// The member's day when they made it.
+    public let postedDay: LocalDay
     public let createdAt: Timestamp
     public let audience: Audience
     public let draft: CheckInDraft
@@ -15,12 +18,13 @@ public struct PendingCheckIn: Hashable, Sendable, Identifiable {
     public var uploaded: [UUID: PhotoRef]
 
     public init(
-        id: CheckInID, member: MemberID, day: LocalDay, createdAt: Timestamp, audience: Audience, draft: CheckInDraft,
-        uploaded: [UUID: PhotoRef] = [:]
+        id: CheckInID, member: MemberID, day: LocalDay, postedDay: LocalDay? = nil, createdAt: Timestamp,
+        audience: Audience, draft: CheckInDraft, uploaded: [UUID: PhotoRef] = [:]
     ) {
         self.id = id
         self.member = member
         self.day = day
+        self.postedDay = postedDay ?? day
         self.createdAt = createdAt
         self.audience = audience
         self.draft = draft
@@ -54,7 +58,9 @@ public struct PendingCheckIn: Hashable, Sendable, Identifiable {
                     .cheatMeal(Meal(photos: photos, caption: try body.caption.map(Caption.init)))
                 case .disclaimer(let disclaimer): .disclaimer(disclaimer)
                 }
-            return CheckIn(id: id, member: member, day: day, createdAt: createdAt, audience: audience, entry: entry)
+            return CheckIn(
+                id: id, member: member, day: day, postedDay: postedDay, createdAt: createdAt, audience: audience,
+                entry: entry)
         } catch {
             // `PostBody` and `Disclaimer` already keep to these rules.
             throw .refused

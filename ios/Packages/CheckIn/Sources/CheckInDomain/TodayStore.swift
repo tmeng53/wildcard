@@ -174,42 +174,34 @@ public final class TodayStore {
     // MARK: - Posting
 
     /// Posts a check-in, shared to `squads` (every squad the member is in when left out; none
-    /// keeps it to the member): counted on the home at once, saved by the server now or,
-    /// offline, later. Throws when it can never be saved: a 请假条 after a 练了 or a second one
-    /// today, or a refusal from the server.
+    /// keeps it to the member), for `chosen`, today or one of the `backfillDays` before it
+    /// (补打卡; today when left out): counted on the home at once, saved by the server now or,
+    /// offline, later. Throws when it can never be saved: a 请假条 on a day with a 练了, a day
+    /// out of reach, or a refusal from the server.
     @discardableResult
-    public func post(_ draft: CheckInDraft, sharedTo squads: [SquadID]? = nil) async throws(CheckInError)
-        -> PostOutcome
+    public func post(_ draft: CheckInDraft, sharedTo squads: [SquadID]? = nil, on chosen: LocalDay? = nil)
+        async throws(CheckInError) -> PostOutcome
     {
-        try await check(draft)
+        if let chosen, !postableDays.contains(chosen) { throw .refused }
+        try await check(draft, on: chosen)
         guard let home, let day else { throw .notSent }
         let audience: Audience
         do { audience = try Audience(squads ?? home.squads.map(\.id)) } catch { throw .refused }
         let post = PendingCheckIn(
-            id: CheckInID(newID()), member: home.member, day: day, createdAt: Timestamp(now()), audience: audience,
-            draft: draft)
+            id: CheckInID(newID()), member: home.member, day: chosen ?? day, postedDay: day,
+            createdAt: Timestamp(now()), audience: audience, draft: draft)
         pending.append(post)
         await outbox.save(pending)
         switch await drain(watching: post.id) {
         case .saved(let saved):
+            // A past day's counts (my week, 出赛表) come from the server.
+            if saved.isBackfill { await refresh() }
             // A 练了 is what opens a store or a prop; the payoff doesn't wait for the answer.
             if case .trained = saved.entry { Task { await checkUnlocks() } }
             return .posted(saved)
         case .refused(let reason): throw reason
         case .waiting: return .queued
         }
-    }
-
-    /// Throws when the day already rules the draft out. Another phone may have posted since the
-    /// last load: a 请假条 must know about a 练了 the server has, and a copy from an earlier day
-    /// can't say what today holds, so the server is asked first; offline, the home shown decides.
-    private func check(_ draft: CheckInDraft) async throws(CheckInError) {
-        guard case .disclaimer = draft else {
-            if let saved = savedHome, let day, saved.mine.map({ $0.day < day }) ?? false { await refresh() }
-            return
-        }
-        await refresh()
-        if !myStatus.allowsDisclaimer { throw .alreadyTrained }
     }
 
     /// Sends every post still waiting, oldest first, and stops at the first that can't go out
