@@ -96,6 +96,17 @@ public struct NoticesView: View {
                 more
             } else if inbox.phase == .current {
                 EmptyNotices(viewer: viewer)
+            } else if inbox.phase == .offline {
+                Button {
+                    Task { await inbox.open() }
+                } label: {
+                    Text("加载失败，点一下再试", bundle: .module)
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgMuted, in: .gym))
+                }
+                .frame(maxWidth: .infinity, minHeight: Sizing.control)
+                .padding(.top, Space.xxl)
+                .accessibilityIdentifier("notices.retry")
             }
         } else {
             let shownAt = now()
@@ -133,9 +144,10 @@ public struct NoticesView: View {
                         .foregroundStyle(Color(role: .fgMuted, in: .gym))
                 }
             } else {
-                // Again after each page, while the end is still in view.
+                // Again after each page read, while the end is still in view, even one that had
+                // nothing this build can show.
                 LoadingDots()
-                    .task(id: inbox.notices.count) { await inbox.loadMore() }
+                    .task(id: inbox.nextPage) { await inbox.loadMore() }
             }
         }
         .frame(maxWidth: .infinity, minHeight: Sizing.control)
