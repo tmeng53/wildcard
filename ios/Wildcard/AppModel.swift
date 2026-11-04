@@ -33,14 +33,21 @@ final class AppModel {
         case tabs(
             today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
             recap: RecapShelf)
+
+        var isStarting: Bool {
+            if case .starting = self { return true }
+            return false
+        }
     }
 
-    private(set) var screen = Screen.starting
-    /// Whether the launch cover is up: until the first screen, with its scene, is ready.
-    var isStarting: Bool {
-        if case .starting = screen { return true }
-        return false
+    private(set) var screen = Screen.starting {
+        // The cover came up again: signing in on the open screen opens 今天 under it.
+        didSet { if isStarting, !oldValue.isStarting { coverSince = .now } }
     }
+    /// When the launch cover last came up, so it stays until its word has landed.
+    @ObservationIgnored var coverSince = Date.now
+    /// Whether the launch cover is up: until the first screen, with its scene, is ready.
+    var isStarting: Bool { screen.isStarting }
     /// Signing in on the open screen, until the screen after it opens.
     private(set) var isSigningIn = false
     /// The squad the member is no longer in (removed, or left on another phone), said once.
@@ -281,6 +288,7 @@ final class AppModel {
             today.scene = KeptScene.scene(of: home.squad.id) ?? .gym
             Task { await readScene(of: home.squad.id, into: today) }
         }
+        await letLaunchWordLand()
         screen = .tabs(
             today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home, editor: store),
             squad: squad,
