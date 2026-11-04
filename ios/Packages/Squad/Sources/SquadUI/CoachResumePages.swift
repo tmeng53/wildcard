@@ -41,12 +41,18 @@ struct CoachPageStack: View {
             CoachResumePage(
                 coach: coach, isCurrent: model.coach?.coach.id == coach.id, canHire: model.canHireCoach,
                 isSaving: model.isSaving, failed: failed == route, back: back,
-                hire: { Task { finish(route, await model.hire(coach.id)) } })
+                hire: { Task { finish(route, await model.hire(coach.id)) } },
+                change: { push(.market) }, fire: { push(.fire(coach)) })
         case .fire(let coach):
             FireCoachPage(
                 coach: coach, isSaving: model.isSaving, failed: failed == route, back: back,
                 fire: { Task { finish(route, await model.fireCoach()) } })
         }
+    }
+
+    private func push(_ route: CoachRoute) {
+        failed = nil
+        withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { pages.append(route) }
     }
 
     private func back() {
@@ -67,7 +73,7 @@ struct CoachPageStack: View {
 }
 
 /// A coach's 简历: its stage, name and title, then 履历, 执教, 风格 and 期望待遇, and 招聘 for
-/// the captain. The field names never wrap: each keeps one line and the column grows to the
+/// the captain; on the squad's own coach, the captain's small 换教练 and 解雇 instead. The field names never wrap: each keeps one line and the column grows to the
 /// longest.
 struct CoachResumePage: View {
     let coach: Coach
@@ -78,6 +84,9 @@ struct CoachResumePage: View {
     let failed: Bool
     let back: () -> Void
     let hire: () -> Void
+    /// 教练招聘会, to hire another coach in this one's place.
+    let change: () -> Void
+    let fire: () -> Void
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -190,6 +199,16 @@ struct CoachResumePage: View {
                 .accentTone(.ink)
                 .disabled(isSaving)
                 .accessibilityIdentifier("coach.resume.hire")
+            } else {
+                HStack(spacing: Space.l) {
+                    Button(action: change) { Text("换教练", bundle: .module) }
+                        .buttonStyle(TextButtonStyle(.muted))
+                        .accessibilityIdentifier("coach.resume.change")
+                    Button(action: fire) { Text("解雇", bundle: .module) }
+                        .buttonStyle(TextButtonStyle(.danger))
+                        .accessibilityIdentifier("coach.resume.fire")
+                }
+                .disabled(isSaving)
             }
         }
         .padding(.horizontal, Space.pageMargin)
