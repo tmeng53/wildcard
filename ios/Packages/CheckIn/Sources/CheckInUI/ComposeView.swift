@@ -69,10 +69,8 @@ public struct ComposeView: View {
                 }
             }
         }
-        .actionBar {
-            if !model.isEditing {
-                ShareRow(squads: model.shareSquads, shared: $model.shared)
-            }
+        .actionBar(isShown: !model.isEditing) {
+            ShareRow(squads: model.shareSquads, shared: $model.shared)
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .sheet(isPresented: $isPickingSport) {

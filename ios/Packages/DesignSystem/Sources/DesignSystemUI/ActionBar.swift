@@ -25,16 +25,22 @@ extension View {
     /// A page's bottom actions (下一步, 发布, 完成) floating over its content in Liquid Glass: the
     /// system's bottom safe-area bar, so the content scrolls under it behind the scroll edge effect
     /// and stops above it, with no bar of its own. Buttons inside wear glass; the primary one
-    /// keeps its tone's colour as a glass tint.
-    public func actionBar<Bar: View>(@ViewBuilder _ bar: () -> Bar) -> some View {
-        safeAreaBar(edge: .bottom, spacing: 0) {
-            GlassEffectContainer(spacing: Space.s) {
-                bar()
+    /// keeps its tone's colour as a glass tint. With `isShown` false the page has no bar at all, so
+    /// no empty strip is kept for it (发动态 while editing a post).
+    @ViewBuilder
+    public func actionBar<Bar: View>(isShown: Bool = true, @ViewBuilder _ bar: () -> Bar) -> some View {
+        if isShown {
+            safeAreaBar(edge: .bottom, spacing: 0) {
+                GlassEffectContainer(spacing: Space.s) {
+                    bar()
+                }
+                .padding(.horizontal, Space.pageMargin)
+                .padding(.top, Space.xs)
+                .padding(.bottom, Space.xs)
+                .controlPlacement(.floating)
             }
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.top, Space.xs)
-            .padding(.bottom, Space.xs)
-            .controlPlacement(.floating)
+        } else {
+            self
         }
     }
 }

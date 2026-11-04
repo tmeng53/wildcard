@@ -23,16 +23,9 @@ public struct MemberHead: View {
         case none
     }
 
-    /// Whose canvas the player draws on: a member's rig or a coach's.
-    public enum Figure: Sendable {
-        case member
-        case coach
-    }
-
     @Environment(\.sceneTheme) private var theme
     private let player: CharacterPlayer?
     private let size: Double
-    private let figure: Figure
     private let rim: Rim
     private let status: RingStatus?
     private let emoji: String?
@@ -44,13 +37,12 @@ public struct MemberHead: View {
     private static let coachRing: Double = 1.5
 
     public init(
-        player: CharacterPlayer?, size: Double, figure: Figure = .member, rim: Rim? = nil, status: RingStatus? = nil,
+        player: CharacterPlayer?, size: Double, rim: Rim = .mist, status: RingStatus? = nil,
         emoji: String? = nil, showsCoachTag: Bool = false
     ) {
         self.player = player
         self.size = size
-        self.figure = figure
-        self.rim = rim ?? (figure == .coach ? .coach : .mist)
+        self.rim = rim
         self.status = status
         self.emoji = emoji
         self.showsCoachTag = showsCoachTag

@@ -80,7 +80,7 @@ struct WhoPanel: View {
 
     private func coachRow(_ coach: CoachSpeaker, _ emoji: Emoji) -> some View {
         HStack(spacing: Space.s) {
-            MemberHead(player: model.coachPlayer(coach.id), size: Self.head, figure: .coach)
+            MemberHead(player: model.coachPlayer(coach.id), size: Self.head, rim: .coach)
             Text(verbatim: coach.name)
                 .typeStyle(TypeRamp.body)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))

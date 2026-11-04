@@ -3122,6 +3122,12 @@
             "state": "translated",
             "value": "More emoji"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更多表情"
+          }
         }
       }
     },
@@ -3132,6 +3138,12 @@
             "state": "translated",
             "value": "Pick a reaction"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選一個回應"
+          }
         }
       }
     },
@@ -3141,6 +3153,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "All emoji"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部表情"
           }
         }
       }

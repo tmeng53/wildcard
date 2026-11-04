@@ -116,7 +116,7 @@ struct CoachCommentRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Space.s) {
-            MemberHead(player: model.coachPlayer(coach.id), size: Self.faceSize, figure: .coach)
+            MemberHead(player: model.coachPlayer(coach.id), size: Self.faceSize, rim: .coach)
             VStack(alignment: .leading, spacing: Space.xxs / 2) {
                 HStack(spacing: Space.xs) {
                     Text(verbatim: coach.name)
