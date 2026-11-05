@@ -33,9 +33,10 @@ final class CoachSidelineUITests: XCTestCase {
         XCTAssertTrue(card.label.contains("混混教练"), "the card doesn't wear the coach's title: \(card.label)")
         XCTAssertTrue(card.label.contains("带队 1 天"), "the card doesn't count its days: \(card.label)")
         XCTAssertFalse(labeled("轻点翻面", in: app).exists, "the coach's card says it turns over")
-        let board = app.buttons["coachCard.board"]
-        XCTAssertTrue(board.waitForExistence(timeout: Self.wait), "no 战术板 over the card")
-        XCTAssertTrue(board.label.contains(Self.line), "the board doesn't show today's line: \(board.label)")
+        // The board's button may surface as the board inside it, so it is found by its line.
+        let board = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", Self.line)).firstMatch
+        XCTAssertTrue(board.waitForExistence(timeout: Self.wait), "no 战术板 with today's line over the card")
         let screen = app.windows.firstMatch.frame
         XCTAssertTrue(screen.contains(board.frame), "the board runs off the screen: \(board.frame)")
         XCTAssertTrue(screen.contains(card.frame), "the card runs off the screen: \(card.frame)")
@@ -53,8 +54,9 @@ final class CoachSidelineUITests: XCTestCase {
         XCTAssertTrue(board.waitForExistence(timeout: Self.wait), "the card didn't open again")
         board.tap()
         XCTAssertTrue(card.waitForNonExistence(timeout: Self.wait), "the card stayed over 动态")
+        XCTAssertTrue(element("feed.title", in: app).waitForExistence(timeout: Self.wait), "the 战术板 didn't open 动态")
         XCTAssertTrue(
-            element("feed.coachBoard", in: app).waitForExistence(timeout: Self.wait), "the 战术板 didn't open 动态")
+            element("feed.coachBoard", in: app).waitForExistence(timeout: Self.wait), "动态 has no 战术板 on top")
     }
 
     private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
