@@ -8,13 +8,13 @@
     { "id": "bear", "bodies": ["bear"] }
   ],
   "stores": [
-    { "id": "warmup", "open": true },
+    { "id": "warmup" },
     { "id": "lap" },
     { "id": "nolook" },
     { "id": "moss" },
     { "id": "halfmoon" },
     { "id": "deuce" },
-    { "id": "powder", "open": true, "switch": "winter" }
+    { "id": "powder" }
   ],
   "wear": {
     "top": [

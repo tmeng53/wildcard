@@ -152,6 +152,7 @@ public enum StoryPage: Hashable, Sendable {
 }
 
 /// 领奖台: the top 3 by days trained, the crown winner (who picks next week's scene) in the middle.
+/// A tie goes to whoever finished their own weekly plan first.
 public struct Podium: Hashable, Sendable {
     /// The most days trained, with the crown.
     public let champion: MemberID
@@ -159,18 +160,22 @@ public struct Podium: Hashable, Sendable {
     public let sides: [MemberID]
     /// Those on the podium who trained every day they planned (练够计划), marked on their step.
     public let planDone: Set<MemberID>
+    /// Whether finishing the weekly plan first decided a place (a tie on days trained), so the page
+    /// can say why.
+    public let tieBrokenByPlan: Bool
     /// The 颁奖词 for the champion.
     public let speech: String?
     public let championMove: AwardMove?
     public let sideMove: AwardMove?
 
     public init(
-        champion: MemberID, sides: [MemberID], planDone: Set<MemberID> = [], speech: String? = nil,
-        championMove: AwardMove? = nil, sideMove: AwardMove? = nil
+        champion: MemberID, sides: [MemberID], planDone: Set<MemberID> = [], tieBrokenByPlan: Bool = false,
+        speech: String? = nil, championMove: AwardMove? = nil, sideMove: AwardMove? = nil
     ) {
         self.champion = champion
         self.sides = Array(sides.prefix(2))
         self.planDone = planDone.intersection([champion] + self.sides)
+        self.tieBrokenByPlan = tieBrokenByPlan
         self.speech = speech
         self.championMove = championMove
         self.sideMove = sideMove

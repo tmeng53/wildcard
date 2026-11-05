@@ -22,6 +22,17 @@ export class UnlockItemMissingError extends AppError {
   }
 }
 
+/** Thrown when an admin hangs a piece in a store that doesn't exist. */
+export class UnlockStoreMissingError extends AppError {
+  override readonly name = 'UnlockStoreMissingError';
+  readonly reason = 'UNLOCK_STORE_MISSING';
+  readonly status = 'NOT_FOUND';
+
+  constructor(readonly store: string) {
+    super(`There is no store ${store}.`);
+  }
+}
+
 /** Thrown when a coach gives a piece the gift pool doesn't offer. */
 export class GiftPieceNotOfferedError extends AppError {
   override readonly name = 'GiftPieceNotOfferedError';

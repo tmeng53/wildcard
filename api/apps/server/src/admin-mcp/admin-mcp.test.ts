@@ -427,6 +427,10 @@ describe('the admin MCP server', () => {
       ['get_unlock_rules', true],
       ['put_unlock_rule', false],
       ['give_unlocks', false],
+      ['get_stores', true],
+      ['put_store', false],
+      ['get_pieces', true],
+      ['put_piece', false],
       ['get_gift_pieces', true],
       ['put_gift_piece', false],
       ['list_broadcasts', true],
@@ -1075,6 +1079,55 @@ describe('the admin MCP server', () => {
           after: 3,
         },
       },
+    ]);
+    await client.close();
+  });
+
+  it('reads the stores and pieces, puts one back as it is and refuses a store that doesn’t exist', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const stores = z
+      .object({ stores: z.array(z.object({ id: z.string() }).loose()) })
+      .parse(JSON.parse((await call('get_stores')).text)).stores;
+    expect(stores.find(({ id }) => id === 'powder')).toStrictEqual({
+      id: 'powder',
+      position: 7,
+      switchId: 'winter',
+      offered: true,
+    });
+    const pieces = z
+      .object({ pieces: z.array(z.object({ id: z.string() }).loose()) })
+      .parse(JSON.parse((await call('get_pieces')).text)).pieces;
+    expect(pieces.find(({ id }) => id === 'powder-salmon')).toStrictEqual({
+      id: 'powder-salmon',
+      storeId: 'powder',
+      slot: 'top',
+      starter: true,
+      offered: true,
+    });
+    const powder = { id: 'powder', position: 7, switchId: 'winter', offered: true };
+    expect((await call('put_store', powder)).isError).toBe(false);
+    const refused = await call('put_piece', {
+      id: 'nowhere-cap',
+      storeId: 'nowhere',
+      slot: 'hat',
+      starter: true,
+      switchId: null,
+      offered: true,
+    });
+    expect(refused).toStrictEqual({
+      isError: true,
+      text: 'UNLOCK_STORE_MISSING: There is no store nowhere.',
+    });
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      { version: 1, tool: 'put_store', arguments: powder },
     ]);
     await client.close();
   });

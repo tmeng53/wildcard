@@ -62,7 +62,7 @@ extension WildcardAPI {
         try await unlockStanding().unlocks
     }
 
-    /// What the member unlocked by training, the earliest first, and the pieces still locked.
+    /// What the member unlocked by training, the earliest first, and their 商店街 now.
     public func unlockStanding() async throws(APIError) -> UnlockStanding {
         let body = try await call { try await client.getMyUnlocks().ok.body.json }
         let reason = { (reason: Components.Schemas.UnlockReason) in
@@ -82,12 +82,20 @@ extension WildcardAPI {
         return UnlockStanding(
             // Both lists are the earliest first; so is the whole.
             unlocks: (stores + pieces).sorted { $0.unlockedAt < $1.unlockedAt },
-            lockedPieces: body.lockedPieces.map { piece in
-                LockedPiece(
-                    id: piece.id, checkInsToGo: piece.checkInsToGo,
-                    sports: piece.sports.compactMap(Sport.init(rawValue:)))
-            },
-            claimed: Set(body.claimed.map(\.id)))
+            claimed: Set(body.claimed.map(\.id)),
+            stock: StreetStock(
+                stores: body.shelf.stores.map { StreetStock.Store(id: $0.id, isOpen: $0.open) },
+                pieces: body.shelf.pieces.map { piece in
+                    let state: StreetStock.State =
+                        switch piece.state {
+                        case .owned: .owned
+                        case .available: .available
+                        case .locked: .locked(toGo: piece.checkInsToGo ?? 1)
+                        }
+                    return StreetStock.Piece(
+                        id: piece.id, store: piece.storeId, state: state,
+                        sports: piece.sports.compactMap(Sport.init(rawValue:)))
+                }))
     }
 
     /// 领取: puts an unlocked piece in the member's wardrobe, on every phone. Safe to repeat.
