@@ -14,20 +14,28 @@ import SwiftUI
 import UIKit
 #endif
 
-/// 小队设置 (approved canvas, 2026-10-22): the squad's name and captain, this week's scene and
-/// who picks it, the invite code, the members, and leaving. The captain renames the squad and
-/// manages members from each row's ··· menu; last week's crown winner, or the captain when
-/// nobody won, picks the scene once. `close` goes back; the app follows `model.hasLeft`. A pick
-/// ends where every pick does, on home with the squad dropping in: once the reveal is over,
-/// `picked` hands the scene to the app, which takes over.
+/// 小队, the squad's page (approved canvas, 2026-10-22), opened from the home's squad card (a tab
+/// from 2026-11-02 until Tracy took the tab away on 2026-11-04): 返回, the squad's name and
+/// captain, a still row of everyone's heads with the coach and 「+ 邀请」, this week's scene and
+/// who picks it, the coach, the invite code, the members, and leaving. The captain renames the
+/// squad and manages members from each row's ··· menu; last week's crown winner, or the captain
+/// when nobody won, picks the scene once. `close` (返回 or a swipe) goes back; the app follows
+/// `model.hasLeft`. A pick ends where every pick does, on home with the squad dropping in: once
+/// the reveal is over, `picked` hands the scene to the app, which takes over; while the reveal
+/// plays, `revealing` is true, so the app can put away its tab bar.
 public struct SquadSettingsView: View {
     @Bindable private var model: SquadSettingsModel
-    private let close: () -> Void
     private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
-    /// A teammate's player card, opened from their row.
-    private let teammateCard: ((MemberID) -> AnyView)?
+    private let close: () -> Void
+    @Binding private var revealing: Bool
+    /// Opens a teammate's player card, from their row; the app pops it up over everything.
+    private let openTeammate: ((MemberID) -> Void)?
+    /// The coach's 战术板 line of the day, pinned on its 简历.
+    private let coachNote: CoachNote?
+    /// Opens straight on the squad's coach's 简历, as a tap on the coach on the home does: back
+    /// from it closes the page, until the member goes on past that 简历.
+    @State private var opensCoach: Bool
     @State private var renaming: String?
-    @State private var openedMate: OpenedMate?
     @State private var confirming: MemberAction?
     @State private var isLeaving = false
     @State private var reveal: Reveal?
@@ -39,19 +47,17 @@ public struct SquadSettingsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(
-        model: SquadSettingsModel, close: @escaping () -> Void,
-        picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void = { _, _ in },
-        teammateCard: ((MemberID) -> AnyView)? = nil
+        model: SquadSettingsModel, picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void,
+        close: @escaping () -> Void, revealing: Binding<Bool>,
+        openTeammate: ((MemberID) -> Void)? = nil, coachNote: CoachNote? = nil, opensCoach: Bool = false
     ) {
+        self.coachNote = coachNote
+        _opensCoach = State(initialValue: opensCoach)
         self.model = model
-        self.close = close
         self.picked = picked
-        self.teammateCard = teammateCard
-    }
-
-    /// A teammate whose card is open.
-    private struct OpenedMate: Identifiable {
-        let id: MemberID
+        self.close = close
+        _revealing = revealing
+        self.openTeammate = openTeammate
     }
 
     public var body: some View {
@@ -62,17 +68,26 @@ public struct SquadSettingsView: View {
                 case .loading:
                     Color.clear
                 case .failed:
-                    SquadFailed { Task { await model.reload() } }
+                    VStack(alignment: .leading, spacing: 0) {
+                        backButton
+                            .padding(.horizontal, Space.pageMargin)
+                            .padding(.top, Space.xs)
+                        SquadFailed { Task { await model.reload() } }
+                    }
                 case .loaded(let settings):
-                    page(settings).swipesBack(isEnabled: coachPages.isEmpty, perform: close)
+                    page(settings)
                 }
             }
+            .swipesBack(isEnabled: coachPages.isEmpty && reveal == nil, perform: close)
             .loadingCover(model.load == .loading) {
                 TicketSpinner(on: .light(.bgCanvas))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
             }
-            CoachPageStack(model: model, pages: $coachPages)
+            CoachPageStack(model: model, pages: $coachPages, note: coachNote) {
+                // Back from the 简历 the home opened goes back to the home.
+                if opensCoach { close() }
+            }
             if let reveal {
                 UnboxRevealView(
                     reveal.unboxing, scene: reveal.scene, startedAt: reveal.startedAt,
@@ -86,62 +101,153 @@ public struct SquadSettingsView: View {
             }
         }
         .task { await model.reload() }
+        .task(id: model.coach?.coach.id) {
+            guard opensCoach, coachPages.isEmpty, let coach = model.coach?.coach else { return }
+            var instant = Transaction()
+            instant.disablesAnimations = true
+            withTransaction(instant) { coachPages = [.resume(coach)] }
+        }
+        .onChange(of: coachPages.count) { _, count in
+            // Past the 简历 the home opened (教练招聘会, 解雇, or a change that ends on 小队设置), the
+            // coach's pages work as they do on 小队.
+            if count != 1 { opensCoach = false }
+        }
+        .onChange(of: reveal != nil) { _, playing in revealing = playing }
     }
 
     private func page(_ settings: SquadSettings) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Space.l) {
-                HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
-                    .accessibilityIdentifier("squad.back")
-                header(settings)
-                if model.changeFailed {
-                    Text("网络开小差了，没存上", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .accessibilityIdentifier("squad.changeFailed")
-                }
-                section(Text("本周场地", bundle: .module)) { sceneCard }
-                section(Text("教练", bundle: .module)) { coachCard }
-                section(Text("邀请队友", bundle: .module)) { InviteCard(squad: settings.squad, openSpots: model.openSpots) }
-                section(Text("队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
-                    memberRows
-                }
-                leaveButton(settings)
-            }
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.top, Space.xs)
-            .padding(.bottom, Space.xl)
+            sections(settings)
+                .padding(.horizontal, Space.pageMargin)
+                .padding(.top, Space.xs)
+                .padding(.bottom, Space.xl)
         }
         .scrollIndicators(.hidden)
         .refreshable { await model.reload() }
         .disabled(model.isSaving)
         .accessibilityIdentifier("squad.page")
         .alert(Text("改队名", bundle: .module), isPresented: isRenaming) {
-            TextField(text: Binding(get: { renaming ?? "" }, set: { renaming = $0 })) {
-                Text("队名", bundle: .module)
-            }
-            .accessibilityIdentifier("squad.rename.field")
-            Button(role: .cancel) {
-                renaming = nil
-            } label: {
-                Text("取消", bundle: .module)
-            }
-            Button {
-                let typed = renaming ?? ""
-                renaming = nil
-                working = .rename
-                Task { await model.rename(to: typed) }
-            } label: {
-                Text("保存", bundle: .module)
-            }
-            .accessibilityIdentifier("squad.rename.save")
+            renameAlert
         }
+    }
+
+    private func sections(_ settings: SquadSettings) -> some View {
+        VStack(alignment: .leading, spacing: Space.l) {
+            backButton
+            VStack(alignment: .leading, spacing: Space.m) {
+                header(settings)
+                SquadHeads(
+                    members: model.members, coach: model.coach, canHireCoach: model.canHireCoach,
+                    squad: settings.squad, openSpots: model.openSpots, openCoach: openCoachPage)
+            }
+            if model.changeFailed {
+                InlineFailure()
+                    .accessibilityIdentifier("squad.changeFailed")
+            }
+            section(Text("本周场地", bundle: .module)) { sceneCard }
+            section(Text("教练", bundle: .module)) { coachCard }
+            section(Text("邀请队友", bundle: .module)) { InviteCard(squad: settings.squad, openSpots: model.openSpots) }
+            section(Text("队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
+                memberRows
+            }
+            leaveButton(settings)
+        }
+    }
+
+    @ViewBuilder private var renameAlert: some View {
+        TextField(text: Binding(get: { renaming ?? "" }, set: { renaming = $0 })) {
+            Text("队名", bundle: .module)
+        }
+        .accessibilityIdentifier("squad.rename.field")
+        Button(role: .cancel) {
+            renaming = nil
+        } label: {
+            Text("取消", bundle: .module)
+        }
+        Button {
+            let typed = renaming ?? ""
+            renaming = nil
+            working = .rename
+            Task { await model.rename(to: typed) }
+        } label: {
+            Text("保存", bundle: .module)
+        }
+        .accessibilityIdentifier("squad.rename.save")
     }
 
     private var isRenaming: Binding<Bool> {
         Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })
     }
 
+    // MARK: 队员
+
+    private var memberRows: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(model.members.enumerated()), id: \.element.id) { index, member in
+                MemberRow(
+                    member: member, showsDivider: index > 0, isSaving: isSaving(.member(member.id)),
+                    open: member.isMe ? nil : openTeammate.map { open in { open(member.id) } }
+                ) { action in
+                    confirming = action
+                }
+            }
+        }
+        .confirmationDialog(
+            confirming.map { $0.title } ?? Text(verbatim: ""), isPresented: isConfirming, titleVisibility: .visible,
+            presenting: confirming
+        ) { action in
+            switch action {
+            case .handCaptaincy(let member, _):
+                Button {
+                    working = .member(member)
+                    Task { await model.handCaptaincy(to: member) }
+                } label: {
+                    Text("转让", bundle: .module)
+                }
+                .accessibilityIdentifier("squad.handCaptaincy.confirm")
+            case .remove(let member, _):
+                Button(role: .destructive) {
+                    working = .member(member)
+                    Task { await model.remove(member) }
+                } label: {
+                    Text("移出", bundle: .module)
+                }
+                .accessibilityIdentifier("squad.remove.confirm")
+            }
+        }
+    }
+
+    // MARK: 退出小队
+
+    private func leaveButton(_ settings: SquadSettings) -> some View {
+        Button {
+            isLeaving = true
+        } label: {
+            Text("退出小队", bundle: .module)
+                .loadingLabel(isSaving(.leave))
+        }
+        .buttonStyle(TextButtonStyle(.danger))
+        .frame(maxWidth: .infinity)
+        .accessibilityIdentifier("squad.leave")
+        .confirmationDialog(Text("退出小队？", bundle: .module), isPresented: $isLeaving, titleVisibility: .visible) {
+            Button(role: .destructive) {
+                working = .leave
+                Task { await model.leave() }
+            } label: {
+                Text("退出小队", bundle: .module)
+            }
+            .accessibilityIdentifier("squad.leave.confirm")
+        } message: {
+            if settings.squad.members.count == 1 {
+                Text("你走了，小队就散了", bundle: .module)
+            } else if model.isCaptain {
+                Text("队长会交给最早加入的队友", bundle: .module)
+            }
+        }
+    }
+}
+
+extension SquadSettingsView {
     private func header(_ settings: SquadSettings) -> some View {
         HStack(alignment: .top, spacing: Space.s) {
             VStack(alignment: .leading, spacing: Space.xxs) {
@@ -175,6 +281,11 @@ public struct SquadSettingsView: View {
                 .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
             }
         }
+    }
+
+    private var backButton: some View {
+        HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
+            .accessibilityIdentifier("squad.back")
     }
 
     private func section(_ title: Text, @ViewBuilder content: () -> some View) -> some View {
@@ -235,78 +346,6 @@ public struct SquadSettingsView: View {
         .card()
     }
 
-    // MARK: 退出小队
-
-    private func leaveButton(_ settings: SquadSettings) -> some View {
-        Button {
-            isLeaving = true
-        } label: {
-            Text("退出小队", bundle: .module)
-                .loadingLabel(isSaving(.leave))
-        }
-        .buttonStyle(TextButtonStyle(.plain))
-        .frame(maxWidth: .infinity)
-        .accessibilityIdentifier("squad.leave")
-        .confirmationDialog(Text("退出小队？", bundle: .module), isPresented: $isLeaving, titleVisibility: .visible) {
-            Button(role: .destructive) {
-                working = .leave
-                Task { await model.leave() }
-            } label: {
-                Text("退出小队", bundle: .module)
-            }
-            .accessibilityIdentifier("squad.leave.confirm")
-        } message: {
-            if settings.squad.members.count == 1 {
-                Text("你走了，小队就散了", bundle: .module)
-            } else if model.isCaptain {
-                Text("队长会交给最早加入的队友", bundle: .module)
-            }
-        }
-    }
-}
-
-extension SquadSettingsView {
-    // MARK: 队员
-
-    private var memberRows: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(model.members.enumerated()), id: \.element.id) { index, member in
-                MemberRow(
-                    member: member, showsDivider: index > 0, isSaving: isSaving(.member(member.id)),
-                    open: member.isMe || teammateCard == nil ? nil : { openedMate = OpenedMate(id: member.id) }
-                ) { action in
-                    confirming = action
-                }
-            }
-        }
-        .sheet(item: $openedMate) { mate in
-            teammateCard?(mate.id)
-        }
-        .confirmationDialog(
-            confirming.map { $0.title } ?? Text(verbatim: ""), isPresented: isConfirming, titleVisibility: .visible,
-            presenting: confirming
-        ) { action in
-            switch action {
-            case .handCaptaincy(let member, _):
-                Button {
-                    working = .member(member)
-                    Task { await model.handCaptaincy(to: member) }
-                } label: {
-                    Text("转让", bundle: .module)
-                }
-                .accessibilityIdentifier("squad.handCaptaincy.confirm")
-            case .remove(let member, _):
-                Button(role: .destructive) {
-                    working = .member(member)
-                    Task { await model.remove(member) }
-                } label: {
-                    Text("移出", bundle: .module)
-                }
-                .accessibilityIdentifier("squad.remove.confirm")
-            }
-        }
-    }
-
     // MARK: 教练
 
     private var coachCard: some View {
@@ -339,31 +378,5 @@ enum Working: Hashable {
     case rename
     case member(MemberID)
     case leave
-}
-
-/// What the captain is about to do to a member, waiting on the system's confirm.
-enum MemberAction: Hashable, Identifiable {
-    case handCaptaincy(MemberID, name: String)
-    case remove(MemberID, name: String)
-
-    var id: Self { self }
-
-    var title: Text {
-        switch self {
-        case .handCaptaincy(_, let name): Text("把队长转给 \(name)？", bundle: .module)
-        case .remove(_, let name): Text("把 \(name) 移出小队？", bundle: .module)
-        }
-    }
-}
-
-enum SquadSettingsMetrics {
-    /// The scene's thumbnail on 本周场地.
-    static let thumbnail = CGSize(width: 56, height: 72)
-    /// A member's row.
-    static let row = 56.0
-    /// A member's head.
-    static let head = 36.0
-    /// A scene tile's face in the picker.
-    static let tile = 64.0
 }
 #endif

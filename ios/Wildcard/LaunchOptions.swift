@@ -58,16 +58,31 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-recap-manual")
     }
 
-    /// `-tab me`: open on another tab than 今天 (`feed`, `schedule`, `me`).
+    /// `-tab me`: open on another tab than 今天 (`feed`, `me`, or `schedule` for 我 with 出赛表
+    /// open; `squad` opens 今天 with 小队 open).
     static var firstTab: MainTabs.Tab {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flag = arguments.firstIndex(of: "-tab"), flag + 1 < arguments.count else { return .today }
         switch arguments[flag + 1] {
         case "feed": return .feed
-        case "schedule": return .schedule
+        case "schedule": return .profile
         case "me": return .profile
         default: return .today
         }
+    }
+
+    /// `-tab squad`: 今天 opens on 小队.
+    static var opensSquad: Bool {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-tab"), flag + 1 < arguments.count else { return false }
+        return arguments[flag + 1] == "squad"
+    }
+
+    /// `-tab schedule`: 我 opens on 出赛表.
+    static var opensSchedule: Bool {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-tab"), flag + 1 < arguments.count else { return false }
+        return arguments[flag + 1] == "schedule"
     }
 
     /// `-daily-push full` (or `empty`): the 6pm push's long-press view on the sample squad, as
@@ -98,11 +113,13 @@ enum LaunchOptions {
 
     /// `-squad-seat winner`: who the member is on the in-memory squad's 小队设置 (`captain`,
     /// `winner`, `member`, `noWinner`, `coached` for the captain of a squad with a coach,
-    /// `coachedMember` for a mate in it); the captain by default.
+    /// `coachedMember` for a mate in it); the captain by default, of a squad with a coach under
+    /// `-uitest-coach`, so the coach on the home opens its 简历.
     static var squadSeat: InMemorySquadSettingsService.Seat {
         let arguments = ProcessInfo.processInfo.arguments
-        guard let flag = arguments.firstIndex(of: "-squad-seat"), flag + 1 < arguments.count else { return .captain }
-        return InMemorySquadSettingsService.Seat(rawValue: arguments[flag + 1]) ?? .captain
+        let fallback: InMemorySquadSettingsService.Seat = sidelineCoach ? .coached : .captain
+        guard let flag = arguments.firstIndex(of: "-squad-seat"), flag + 1 < arguments.count else { return fallback }
+        return InMemorySquadSettingsService.Seat(rawValue: arguments[flag + 1]) ?? fallback
     }
 
     /// `-uitest-long-names`: the in-memory squad's names are as long as the rules allow.
@@ -187,14 +204,14 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-patted")
     }
 
-    /// `-uitest-bubble-hold`: a teammate's bubble, the coach's line and a notice on 今天 stay up
+    /// `-uitest-bubble-hold`: a pat's bubble and a notice on 今天 stay up
     /// for a minute instead of a few seconds, so a UI test checks them without racing their timers.
     static var bubbleHold: Double? {
         ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
     }
 
-    /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, said on the
-    /// home on every launch and pinned on 动态, and replied to three of its posts.
+    /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, on its 简历
+    /// opened from the home and pinned on 动态, and replied to three of its posts.
     static var sidelineCoach: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitest-coach")
     }

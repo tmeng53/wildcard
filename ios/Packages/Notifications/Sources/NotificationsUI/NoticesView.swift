@@ -86,6 +86,7 @@ public struct NoticesView: View {
         }
         .swipesBack(perform: close)
         .task { await inbox.open() }
+        .onDisappear { inbox.close() }
         .accessibilityIdentifier("notices.page")
     }
 

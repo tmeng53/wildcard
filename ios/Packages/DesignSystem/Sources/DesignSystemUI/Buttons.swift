@@ -5,7 +5,9 @@ import SwiftUI
 /// The one primary action on a screen (下一步, 打卡, 发布): a solid capsule in the accent tone's
 /// colour (the scene's, the brand's under `.accentTone(.brand)`, or ink under `.accentTone(.ink)`), flat, that shrinks while held.
 /// `.large` is 52 points tall and fills its width when the label asks for it; `.regular` is 44,
-/// for an action inside content (去打卡). Disabled, it turns a quiet grey.
+/// for an action inside content (去打卡). Disabled, it turns a quiet grey. Floating (in an
+/// `actionBar` or under `.controlPlacement(.floating)`), it is interactive Liquid Glass tinted in
+/// the tone's colour, as the system's prominent glass buttons are.
 public struct PrimaryButtonStyle: ButtonStyle {
     public enum Size: Sendable {
         case large
@@ -15,6 +17,7 @@ public struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accentTone) private var tone
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.controlPlacement) private var placement
     private let size: Size
 
     public init(_ size: Size = .large) {
@@ -28,15 +31,37 @@ public struct PrimaryButtonStyle: ButtonStyle {
             .foregroundStyle(Color(role: isEnabled ? tone.onFill : .fgSubtle, in: theme))
             .padding(.horizontal, size == .large ? Space.l : Space.m + Space.xxs)
             .frame(minHeight: size == .large ? Sizing.primaryControl : Sizing.control)
-            .background(Color(role: isEnabled ? tone.fill : .borderDefault, in: theme), in: Capsule())
+            .modifier(
+                ControlSurface(placement: placement, fill: isEnabled ? tone.fill : .borderDefault, tinted: isEnabled)
+            )
             .contentShape(Capsule())
             .modifier(PressFeedback(isPressed: configuration.isPressed))
     }
 }
 
+/// A button's capsule: solid in content, interactive Liquid Glass when it floats. A tinted one
+/// (the primary action) carries its fill as the glass's tint; an untinted one is clear glass.
+struct ControlSurface: ViewModifier {
+    @Environment(\.sceneTheme) private var theme
+    let placement: ControlPlacement
+    let fill: ColorRole
+    let tinted: Bool
+
+    func body(content: Content) -> some View {
+        switch placement {
+        case .inContent:
+            content.background(Color(role: fill, in: theme), in: Capsule())
+        case .floating:
+            content.glassEffect(
+                tinted ? .regular.tint(Color(role: fill, in: theme)).interactive() : .regular.interactive(),
+                in: Capsule())
+        }
+    }
+}
+
 /// A second action beside or under the primary one (换一组): a light grey capsule, 44 tall. Inside
 /// a grey card it turns white (`.inCard`). `.danger` is for an action that can't be taken back
-/// (解雇): only its words turn red.
+/// (解雇): only its words turn red. Floating, it is clear interactive Liquid Glass.
 public struct SecondaryButtonStyle: ButtonStyle {
     public enum Placement: Sendable {
         case onPage
@@ -44,6 +69,7 @@ public struct SecondaryButtonStyle: ButtonStyle {
     }
 
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.controlPlacement) private var controlPlacement
     private let placement: Placement
     private let tone: ButtonTone
 
@@ -59,7 +85,10 @@ public struct SecondaryButtonStyle: ButtonStyle {
             .foregroundStyle(Color(role: tone == .danger ? .fgDanger : .fgDefault, in: theme))
             .padding(.horizontal, Space.m + Space.xxs)
             .frame(minHeight: Sizing.control)
-            .background(Color(role: placement == .inCard ? .bgCanvas : .bgSubtle, in: theme), in: Capsule())
+            .modifier(
+                ControlSurface(
+                    placement: controlPlacement, fill: placement == .inCard ? .bgCanvas : .bgSubtle, tinted: false)
+            )
             .contentShape(Capsule())
             .modifier(PressFeedback(isPressed: configuration.isPressed))
     }

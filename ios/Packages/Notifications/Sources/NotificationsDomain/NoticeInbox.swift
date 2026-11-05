@@ -10,6 +10,10 @@ public protocol NoticeSource: Sendable {
     func notices(before: NoticeID?) async throws(NotificationsError) -> NoticePage
     /// Everything up to `through` is read. Safe to repeat; never goes back.
     func markSeen(through: NoticeID) async throws(NotificationsError)
+    /// Hears notices as they are told, telling `heard` each, until the server ends the stream
+    /// (it returns) or it can't be heard (it throws). Nothing told while it wasn't heard is
+    /// replayed: each time it starts, `heard` gets `.ready`, and the newest page is read again.
+    func listen(_ heard: @escaping @Sendable (LiveNotice) async -> Void) async throws(NotificationsError)
 }
 
 /// 通知's groups, in the order the page shows them.
@@ -81,6 +85,10 @@ public final class NoticeInbox {
     private var seenThrough: NoticeID?
     /// What had been seen when the page last opened: newer ones show as new until it opens again.
     private var seenWhenOpened: NoticeID?
+    /// Whether 通知 is on screen.
+    private var isOpen = false
+    /// Whether the stream being heard got as far as `.ready`.
+    private var heardReady = false
     private var next: NoticeID?
     /// Bumped by every fresh load, so an older page that comes back after it is dropped.
     private var generation = 0
@@ -132,9 +140,54 @@ public final class NoticeInbox {
     /// The page opened: loads the newest notices, keeps which were new for the bold rows, and
     /// marks everything up to the newest read, which takes the bell's dot away.
     public func open() async {
+        isOpen = true
         await load()
         seenWhenOpened = seenThrough
         await markNewestSeen()
+    }
+
+    /// The page closed: what is told from now on lights the bell's dot again.
+    public func close() {
+        isOpen = false
+    }
+
+    /// Keeps the bell current while the app is open: listens for notices as they are told and,
+    /// each time the stream ends or can't be heard, waits `pause` and listens again, until the
+    /// task is cancelled (the app went to the background) or the session is over. A stream the
+    /// server ended after it was ready waits `firstWait`, the server's `retry`; each try in a row
+    /// that never got that far waits twice as long as the last, up to `longestWait`.
+    public func follow(pause: @escaping @Sendable (Duration) async -> Void) async {
+        var misses = 0
+        while !Task.isCancelled {
+            heardReady = false
+            do {
+                try await source.listen { [weak self] heard in await self?.hear(heard) }
+            } catch .signedOut {
+                return
+            } catch {}
+            guard !Task.isCancelled else { return }
+            misses = heardReady ? 0 : misses + 1
+            await pause(min(Self.firstWait * (1 << min(misses, 5)), Self.longestWait))
+        }
+    }
+
+    /// The wait before listening again after the server ended a stream: its `retry`.
+    public static let firstWait = Duration.seconds(3)
+    /// The longest wait between tries while the stream can't be heard.
+    public static let longestWait = Duration.seconds(60)
+
+    func hear(_ heard: LiveNotice) async {
+        switch heard {
+        case .ready:
+            heardReady = true
+            // Whatever was told while nobody listened is on the newest page.
+            if isOpen { await refresh() } else { await load() }
+        case .told(let notice):
+            guard let notice, !notices.contains(where: { $0.id == notice.id }) else { return }
+            notices.insert(notice, at: notices.firstIndex { $0.id < notice.id } ?? notices.endIndex)
+            // On the open page it shows bold, and is read.
+            if isOpen { await markNewestSeen() }
+        }
     }
 
     /// The open page pulled: loads the newest notices and marks them read, keeping the rows that

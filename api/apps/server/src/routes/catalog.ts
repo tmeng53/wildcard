@@ -2,7 +2,9 @@ import { createHash } from 'node:crypto';
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { DiceLinesAdmin } from '@wildcard/disclaimer-drafts';
+import type { Scenes } from '@wildcard/scenes';
 import type { SportCatalog, Sports } from '@wildcard/sports';
+import type { Switches } from '@wildcard/switches';
 
 import { bodyVersion } from '../body-version.js';
 import { problem } from '../problem.js';
@@ -116,6 +118,116 @@ export function disclaimerDiceSection(
     name: 'disclaimerDice',
     schema: DisclaimerDiceCatalog,
     load: async () => ({ lines: (await dice.current()).lines.map((line) => ({ ...line })) }),
+  };
+}
+
+const Color = z.string().meta({ description: '`#RRGGBB`.', example: '#16384D' });
+
+export const ScenesCatalog = z
+  .looseObject({
+    scenes: z
+      .array(
+        z.looseObject({
+          id: z
+            .string()
+            .meta({ description: 'The id squads’ picks and 战报 name.', example: 'ski' }),
+          names: Names,
+          colors: z
+            .looseObject({
+              signature: Color.meta({
+                description: 'The 打卡 button, the week’s icons, the poster.',
+              }),
+              onSignature: Color.meta({ description: 'Text drawn on the signature.' }),
+              wash: Color.meta({ description: 'Its light ground.' }),
+              text: Color.meta({ description: 'Its text colour on light grounds.' }),
+              floor: Color,
+            })
+            .openapi('SceneColors'),
+          limited: z.boolean().meta({
+            description:
+              'True for a scene open only part of the year (冬季限定). The picker offers it ' +
+              'while `GET /squads/{squadId}/scene` lists it.',
+          }),
+          switchId: z
+            .string()
+            .optional()
+            .meta({
+              description:
+                'The switch a limited scene follows (the `switches` section): it is open, and its ' +
+                'store unlocks, only while that switch is on.',
+              example: 'winter',
+            }),
+        }),
+      )
+      .meta({
+        description:
+          'Every scene the picker may offer, in its order; retired ones are left out. The app ' +
+          'draws the gym for one it has no art for.',
+      }),
+  })
+  .openapi('ScenesCatalog');
+
+/** The `scenes` section: each scene's names and colours, so a new colour needs no release. */
+export function scenesSection(scenes: Pick<Scenes, 'list'>): CatalogSection<typeof ScenesCatalog> {
+  return {
+    name: 'scenes',
+    schema: ScenesCatalog,
+    load: async () => ({
+      scenes: (await scenes.list())
+        .filter(({ offered }) => offered)
+        .map(({ id, names, colors, switchId }) => ({
+          id,
+          names: { ...names },
+          colors: { ...colors },
+          limited: switchId !== undefined,
+          ...(switchId === undefined ? {} : { switchId }),
+        })),
+    }),
+  };
+}
+
+export const SwitchesCatalog = z
+  .looseObject({
+    switches: z
+      .array(
+        z.looseObject({
+          id: z.string().meta({ example: 'winter' }),
+          mode: z.string().meta({
+            description: '`on`, `off` or `schedule` (on only in `window`); read any other as off.',
+            example: 'schedule',
+          }),
+          window: z
+            .looseObject({
+              start: z.string().meta({ description: '`MM-DD`, included.', example: '11-15' }),
+              end: z.string().meta({ description: '`MM-DD`, included.', example: '03-31' }),
+            })
+            .optional()
+            .meta({
+              description:
+                'A scheduled switch’s days every year, New York time; it may run over New ' +
+                'Year. The app never shows them.',
+            })
+            .openapi('SwitchWindow'),
+        }),
+      )
+      .meta({ description: 'Every global switch scenes, stores and unlock rules follow.' }),
+  })
+  .openapi('SwitchesCatalog');
+
+/** The `switches` section: each switch's mode and days, so the app works out what is on itself. */
+export function switchesSection(
+  switches: Pick<Switches, 'list'>,
+): CatalogSection<typeof SwitchesCatalog> {
+  return {
+    name: 'switches',
+    schema: SwitchesCatalog,
+    load: async () => ({
+      switches: (await switches.list()).map(({ id, mode, window }) => ({
+        id,
+        mode,
+        ...(window === undefined ? {} : { window: { ...window } }),
+      })),
+    }),
   };
 }
 

@@ -34,7 +34,7 @@ describe('the sports list', () => {
       'dance',
       'everyday',
     ]);
-    expect(categories.flatMap(({ sports }) => sports)).toHaveLength(52);
+    expect(categories.flatMap(({ sports }) => sports)).toHaveLength(57);
     expect(categories[0]).toEqual({
       id: 'runWalk',
       names: { zhHans: '跑走', en: 'Run and walk', zhHant: '跑步健走' },

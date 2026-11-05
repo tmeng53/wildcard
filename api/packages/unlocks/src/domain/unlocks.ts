@@ -40,7 +40,15 @@ export interface UnlockRule {
   readonly after: number;
   /** Only check-ins made from then on count: when the rule was added. */
   readonly countsFrom: Date;
+  /**
+   * The switch a limited piece follows (such as `winter`): only 练了 made while it is on count,
+   * and what a member unlocked stays theirs all year. None for a rule that counts all year.
+   */
+  readonly switchId?: string;
 }
+
+/** Whether the switch `id` was on when a check-in was made at `at`. */
+export type SwitchOn = (id: string, at: Date) => boolean;
 
 /** A store, prop or piece a member unlocked, with the rule as it was then. Never taken back. */
 export interface Unlock {
@@ -70,15 +78,17 @@ export function earned({
   rules,
   trained,
   has,
+  switchOn,
 }: {
   readonly rules: readonly UnlockRule[];
   readonly trained: readonly Trained[];
   readonly has: readonly Unlock[];
+  readonly switchOn: SwitchOn;
 }): Unlock[] {
   const held = new Set(has.map(({ kind, id }) => `${kind}:${id}`));
   return rules.flatMap((rule) => {
     if (held.has(`${rule.kind}:${rule.id}`)) return [];
-    const reached = counting(rule, trained)[rule.after - 1];
+    const reached = counting(rule, { trained, switchOn })[rule.after - 1];
     if (reached === undefined) return [];
     return [
       {
@@ -94,10 +104,15 @@ export function earned({
 }
 
 /** The check-ins in `trained` that count towards `rule`, the earliest first. */
-function counting(rule: UnlockRule, trained: readonly Trained[]): Trained[] {
+function counting(
+  rule: UnlockRule,
+  { trained, switchOn }: { readonly trained: readonly Trained[]; readonly switchOn: SwitchOn },
+): Trained[] {
   return trained.filter(
     ({ sport, madeAt }) =>
-      madeAt >= rule.countsFrom && (rule.sports.length === 0 || rule.sports.includes(sport)),
+      madeAt >= rule.countsFrom &&
+      (rule.sports.length === 0 || rule.sports.includes(sport)) &&
+      (rule.switchId === undefined || switchOn(rule.switchId, madeAt)),
   );
 }
 
@@ -113,12 +128,14 @@ export interface Locked {
 export function toGo({
   rules,
   trained,
+  switchOn,
 }: {
   readonly rules: readonly UnlockRule[];
   readonly trained: readonly Trained[];
+  readonly switchOn: SwitchOn;
 }): Locked[] {
   return rules.flatMap((rule) => {
-    const left = rule.after - counting(rule, trained).length;
+    const left = rule.after - counting(rule, { trained, switchOn }).length;
     return left > 0 ? [{ kind: rule.kind, id: rule.id, toGo: left }] : [];
   });
 }
@@ -162,6 +179,16 @@ export const UnlockRuleEdit = z
       .min(1)
       .max(AFTER_MAX)
       .describe('How many 练了 check-ins in those sports open it.'),
+    switchId: z
+      .string()
+      .regex(/^[a-z][A-Za-z0-9]{0,39}$/)
+      .nullable()
+      .optional()
+      .describe(
+        'The switch a limited piece follows (get_switches), such as `winter`: only 练了 made ' +
+          'while it is on count, and the piece stays the member’s all year once unlocked. null ' +
+          'counts all year; leave out to keep what the rule has.',
+      ),
   })
   .refine(({ kind, id }) => idFits(kind, id), {
     message: 'the id doesn’t fit its kind',

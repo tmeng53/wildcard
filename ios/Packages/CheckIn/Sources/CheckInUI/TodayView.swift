@@ -96,11 +96,12 @@ public struct TodayView: View {
     private var scene: some View {
         ZStack {
             SquadSceneView(
-                cast: model.cast, myPlayer: model.player, myRing: model.myRing, phase: model.phase,
+                cast: model.cast, myPlayer: model.player, myRing: model.myRing,
+                iSleep: model.myPose(at: .night) == .asleep, iHoldSign: model.myPose(at: .day) == .holdingSign,
+                myDoze: model.myDoze, phase: model.phase,
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
                 pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
-                tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, coachSays: model.coachSays,
-                tapCoach: model.tapCoach
+                tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, tapCoach: model.tapCoach
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -124,12 +125,12 @@ public struct TodayView: View {
                 Spacer()
             }
 
-            // A tapped teammate's bubble, over the card like the approved design's, laid out on
-            // the scene's own stage.
+            // A teammate's bubble when they pat me or join, over the card like the approved
+            // design's, laid out on the scene's own stage.
             GeometryReader { proxy in
                 PatOverlay(
                     layer: .bubble, cast: model.cast, pats: model.pats, unit: proxy.size.width / StageLayout.width,
-                    canPat: model.canPat, pat: model.patMate, openCard: { model.openTeammate($0) })
+                    canPat: model.canPat, pat: model.patMate)
             }
             .ignoresSafeArea()
             .opacity(model.step == .disclaimer ? 0 : 1)

@@ -7,16 +7,19 @@ import {
   storedPathOf,
   type StoredPath,
 } from '../domain/memory.js';
-import { instructionsOf, taskOf, type CoachThread } from '../domain/prompt.js';
+import { instructionsOf, taskOf, type CoachThread, type DayTalk } from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
 import type { CoachSettings, SquadId } from '../domain/settings.js';
-import { consentedOnly, rosterOf, type SquadWeek } from '../domain/squad-week.js';
+import { factsText } from '../domain/member-facts.js';
+import { consentedOnly, rosterOf, weekText, type SquadWeek } from '../domain/squad-week.js';
 import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
 import type {
   AiConsented,
   CoachAgent,
   CoachCatalogStore,
   CoachHiringStore,
+  CoachMemberFacts,
+  CoachPhotoUrls,
   CoachSettingsStore,
   CoachStores,
   CoachTransaction,
@@ -38,6 +41,9 @@ const RECENT_NOTES = 7;
 
 /** How many of its last reactions a coach sees on a check-in's wake, so it varies them. */
 const RECENT_EMOJI = 8;
+
+/** How far back the daily wake reads the talk under check-ins, to remember from it. */
+const TALK_WINDOW_MS = 24 * 60 * 60_000;
 
 /** The file a squad's coach starts from: its name and who is in it. */
 const SEEDED = 'squad.md';
@@ -93,6 +99,10 @@ export interface CoachWakesDependencies {
   readonly aiConsented: AiConsented;
   readonly hiring: CoachHiringStore;
   readonly clock: () => Date;
+  /** Without it the coach never sees photos. */
+  readonly photoUrls?: CoachPhotoUrls;
+  /** Without it the coach has no member stats or plans to look up. */
+  readonly memberFacts?: CoachMemberFacts;
   /** Told each reply to a check-in once it is saved; the server tells its author. */
   readonly replied?: CoachReplied;
   /** Told each answer to a member's reply once it is saved; the server tells that member. */
@@ -336,6 +346,7 @@ async function runWake(
         wake.reason.kind === 'checkIn'
           ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
           : [],
+      talks: daily ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
     });
     if (task === undefined) {
       await deps.stores.wakes.finish(wake.id);
@@ -345,7 +356,21 @@ async function runWake(
       model: settings.model,
       instructions: instructionsOf(settings, coach),
       task,
-      tools: toolbox({ week, roster, draft, kind: wake.reason.kind }),
+      tools: toolbox({
+        week,
+        roster,
+        draft,
+        kind: wake.reason.kind,
+        ...photosOf(deps.photoUrls, { week, wake }),
+        ...factsFor(deps, { week, roster }),
+        pastWeek: async (weeksAgo) =>
+          weekText(
+            await weekOf(deps, {
+              squad: wake.squad,
+              weekStart: weekStartOf(dayBefore(week.weekStart, weeksAgo * 7)),
+            }),
+          ),
+      }),
       // Every wake of a coach begins with its same instructions, then its tools (each kind's own
       // last: the daily wake's post_note, a check-in's reply and react, a reply's answer), so
       // every kind shares the rest.
@@ -391,6 +416,42 @@ async function runWake(
     await deps.stores.wakes.fail(wake.id, error instanceof Error ? error.message : String(error));
     return false;
   }
+}
+
+/**
+ * The stats and this week's plans of the squad's members who agreed to AI use (the others have
+ * nothing in the week the model reads), as the `member_stats` tool answers.
+ */
+function factsFor(
+  deps: CoachWakesDependencies,
+  { week, roster }: { readonly week: SquadWeek; readonly roster: ReadonlyMap<string, string> },
+): { readonly facts?: () => Promise<string> } {
+  const { memberFacts } = deps;
+  if (memberFacts === undefined) return {};
+  return {
+    facts: async () => {
+      const all = week.members.map(({ member }) => member);
+      const consented = new Set(await deps.aiConsented(all));
+      const members = all.filter((member) => consented.has(member));
+      return factsText(await memberFacts({ members, weekStart: week.weekStart }), roster);
+    },
+  };
+}
+
+/** `YYYY-MM-DD`, `days` before `day`. */
+function dayBefore(day: string, days: number): string {
+  return new Date(Date.parse(`${day}T00:00:00Z`) - days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** The photos of the check-in a wake is about, to look at on demand, when it has any. */
+function photosOf(
+  photoUrls: CoachPhotoUrls | undefined,
+  { week, wake }: { readonly week: SquadWeek; readonly wake: Wake },
+): { readonly photos?: () => Promise<readonly string[]> } {
+  if (photoUrls === undefined || wake.reason.kind === 'daily') return {};
+  const { checkIn } = wake.reason;
+  const paths = week.checkIns.find(({ id }) => id === checkIn)?.photos ?? [];
+  return paths.length === 0 ? {} : { photos: () => photoUrls(paths) };
 }
 
 /**
@@ -458,6 +519,57 @@ async function saveDraft(
     if (await stores.answers.save({ ...answer, wake: wake.id })) return { answer };
   }
   return {};
+}
+
+/**
+ * On a daily wake, what was said under check-ins over the last day (members' comments, and the
+ * coach's reply and answers), so the coach can remember what it missed while talking. Looks at
+ * this week and the one before, since Monday's wake looks back at Sunday.
+ */
+async function talksOf(
+  deps: CoachWakesDependencies,
+  {
+    squad,
+    week,
+    coach,
+    now,
+  }: {
+    readonly squad: SquadId;
+    readonly week: SquadWeek;
+    readonly coach: Coach;
+    readonly now: Date;
+  },
+): Promise<readonly DayTalk[]> {
+  const since = now.getTime() - TALK_WINDOW_MS;
+  const before = await weekOf(deps, {
+    squad,
+    weekStart: weekStartOf(dayBefore(week.weekStart, 7)),
+  });
+  const talks: DayTalk[] = [];
+  const checkIns = new Map([...before.checkIns, ...week.checkIns].map((each) => [each.id, each]));
+  for (const checkIn of checkIns.values()) {
+    const lately = checkIn.comments.filter(({ at }) => at.getTime() >= since);
+    if (lately.length === 0) continue;
+    const reply = await deps.stores.replies.find(squad, checkIn.id);
+    const answers = new Map(
+      (await deps.stores.answers.ofCheckIn(squad, checkIn.id)).map(({ comment, text }) => [
+        comment,
+        text,
+      ]),
+    );
+    talks.push({
+      checkIn,
+      ...(reply?.coach === coach.id && reply.text !== undefined ? { reply: reply.text } : {}),
+      said: lately.flatMap(({ id, member, text }) => {
+        const answer = answers.get(id);
+        return [
+          { member, text },
+          ...(answer === undefined ? [] : [{ member: undefined, text: answer }]),
+        ];
+      }),
+    });
+  }
+  return talks;
 }
 
 /**

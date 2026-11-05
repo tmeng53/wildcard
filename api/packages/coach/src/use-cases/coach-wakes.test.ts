@@ -25,7 +25,13 @@ import {
   NoCoachHiredError,
 } from '../errors.js';
 import { weekText, type SquadWeek } from '../domain/squad-week.js';
-import type { AgentRun, CoachAgent, CoachTool } from '../ports.js';
+import type {
+  AgentRun,
+  CoachAgent,
+  CoachMemberFacts,
+  CoachPhotoUrls,
+  CoachTool,
+} from '../ports.js';
 import { createCoachActivity } from './coach-activity.js';
 import { createCoachHiring } from './coach-hiring.js';
 import { createCoachSettings } from './coach-settings.js';
@@ -126,7 +132,10 @@ function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
       if (steps === 'fail') return { ok: false, usage, error: 'ModelBehaviorError: no' };
       for (const step of steps) {
         const tool: CoachTool | undefined = tools.find(({ name }) => name === step.tool);
-        answers.push(tool === undefined ? `no tool ${step.tool}` : await tool.run(step.input));
+        const answer = tool === undefined ? `no tool ${step.tool}` : await tool.run(step.input);
+        answers.push(
+          typeof answer === 'string' ? answer : [answer.text, ...answer.images].join(' '),
+        );
       }
       return { ok: true, usage };
     },
@@ -147,6 +156,8 @@ function wakes(
     consented,
     replied,
     answered,
+    photoUrls,
+    memberFacts,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
@@ -154,6 +165,8 @@ function wakes(
     readonly consented?: readonly string[];
     readonly replied?: CoachReplied;
     readonly answered?: CoachAnswered;
+    readonly photoUrls?: CoachPhotoUrls;
+    readonly memberFacts?: CoachMemberFacts;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -178,6 +191,8 @@ function wakes(
     clock: () => at,
     ...(replied === undefined ? {} : { replied }),
     ...(answered === undefined ? {} : { answered }),
+    ...(photoUrls === undefined ? {} : { photoUrls }),
+    ...(memberFacts === undefined ? {} : { memberFacts }),
   });
 }
 
@@ -227,15 +242,11 @@ describe('the coach', () => {
         task.includes('新的一天')
           ? [
               { tool: 'squad_week', input: {} },
-              { tool: 'read_file', input: { path: 'memory.md' } },
               { tool: 'post_note', input: { text: '队员1 周日也跑了' } },
               { tool: 'post_note', input: { text: '  周日也跑了，米亚是认真的  ' } },
             ]
           : [
-              {
-                tool: 'edit_file',
-                input: { path: 'memory.md', find: '', replace: '- 队员1 周日跑步' },
-              },
+              { tool: 'remember', input: { path: 'memory.md', fact: ' 队员1 周日跑步 ' } },
               {
                 tool: 'edit_file',
                 input: { path: 'people/队员2.md', find: '', replace: '还没打卡过' },
@@ -281,12 +292,12 @@ describe('the coach', () => {
       // The check-in's wake ran first: it may edit files and reply and react to the check-in, but
       // not post on the 战术板; the daily wake posts but replies to nothing.
       expect(runs.map(({ tools }) => tools)).toStrictEqual([
-        ['squad_week', 'read_file', 'edit_file', 'reply', 'react'],
-        ['squad_week', 'read_file', 'edit_file', 'post_note'],
+        ['squad_week', 'remember', 'edit_file', 'reply', 'react'],
+        ['squad_week', 'remember', 'edit_file', 'post_note'],
       ]);
       expect(runs[0]?.task).toContain('队员1 练了 跑步');
       expect(runs[0]?.answers).toStrictEqual([
-        '已改好，memory.md 现在 10 字。',
+        '记下了，在 memory.md。',
         '已改好，people/队员2.md 现在 5 字。',
         '没有 people/队员3.md 这个文件；能用的文件见任务里的列表。',
         'no tool post_note',
@@ -297,13 +308,13 @@ describe('the coach', () => {
         expect.stringContaining('参数不对'),
         '已点 🔥。',
       ]);
-      expect(runs[1]?.answers.slice(2)).toStrictEqual([
+      expect(runs[1]?.answers.slice(1)).toStrictEqual([
         '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
         '已写上战术板。',
       ]);
-      // The daily wake read what the first one wrote, and the instructions are 小混's.
-      expect(runs[1]?.answers[1]).toBe('- 队员1 周日跑步');
-      expect(runs[1]?.task).toContain('memory.md（10 字）');
+      // The daily wake sees what the first one remembered, and the instructions are 小混's.
+      expect(runs[1]?.task).toContain('【memory.md】\n- 队员1 周日跑步');
+      expect(runs[1]?.task).toContain('过去一天没人在打卡下面和你说话。');
       expect(runs[1]?.instructions).toContain('你是小混');
       expect(runs[1]?.instructions).toContain('不提谁没打卡');
       // How each wake goes is in the instructions, the same every time, so it can be cached.
@@ -441,7 +452,7 @@ describe('the coach', () => {
       ).rejects.toBeInstanceOf(CoachAlreadyHiredError);
       await wakes(fixture, { agent, at: tomorrow }).run();
       // Both earlier wakes added a line; the new hire reads them.
-      expect(runs[2]?.task).toContain('memory.md（17 字）');
+      expect(runs[2]?.task).toContain('【memory.md】\n队名：squad\n队名：squad');
 
       const report = await createPostgresCoachReport(trx).squad(squad, tomorrow);
       expect(report).toMatchObject({
@@ -652,6 +663,17 @@ describe('the coach', () => {
         { squad, checkIn, comment: first.id, commenter: leo, coach: 'xiaohun', text: '你也来跑' },
         { squad, checkIn, comment: second.id, commenter: mia, coach: 'xiaohun', text: '喊破嗓子' },
       ]);
+      // The next day's wake goes over the last day's talk, to remember what it missed.
+      await wakes(
+        { ...fixture, week: withBoth },
+        { agent, at: new Date(now.getTime() + 20 * 3_600_000) },
+      ).run();
+      expect(runs.at(-1)?.task).toContain(
+        '过去一天打卡下面的对话（先后顺序）：\n- 11-01 周日 队员1 练了 跑步',
+      );
+      expect(runs.at(-1)?.task).toContain(
+        '  你：「周日也跑？」\n  队员2：「你也跑吗」\n  你：「你也来跑」\n  队员1：「那你喊大声点」\n  你：「喊破嗓子」',
+      );
       const activity = await createCoachActivity({
         store: createPostgresCoachActivity(trx),
       }).squad({ squad, checkIns: [checkIn] });
@@ -781,6 +803,104 @@ describe('the coach', () => {
       ]);
       expect(JSON.stringify(report.wakes)).not.toContain('跑步');
       expect(JSON.stringify(report.wakes)).not.toContain('怕下雨');
+    });
+  });
+
+  it('looks at a check-in’s photos only when it asks, once, and keeps only how many', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      const asked: (readonly string[])[] = [];
+      const photoUrls: CoachPhotoUrls = (paths) => {
+        asked.push(paths);
+        return Promise.resolve(paths.map((path) => `https://photos.test/${path}`));
+      };
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('有人打卡')
+          ? [
+              { tool: 'look_at_photos', input: {} },
+              { tool: 'look_at_photos', input: {} },
+              { tool: 'reply', input: { text: '这碗面看着不错' } },
+            ]
+          : [],
+      );
+      const week: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) =>
+          each.id === checkIn ? { ...each, photos: ['m/a.jpg', 'm/b.jpg'] } : each,
+        ),
+      };
+      await wakes({ ...fixture, week }, { agent, photoUrls }).checkedIn({
+        checkIn,
+        squads: [squad],
+      });
+      expect(runs[0]?.task).toContain('（2 张照片）');
+      expect(runs[0]?.task).not.toContain('m/a.jpg');
+      expect(runs[0]?.tools).toContain('look_at_photos');
+      expect(runs[0]?.answers).toStrictEqual([
+        '这条打卡的 2 张照片，第一张是封面： https://photos.test/m/a.jpg https://photos.test/m/b.jpg',
+        '照片你已经看过了，不用再看。',
+        '已回复。',
+      ]);
+      expect(asked).toStrictEqual([['m/a.jpg', 'm/b.jpg']]);
+      const report = await createPostgresCoachReport(fixture.trx).squad(squad, now);
+      expect(report.wakes[0]?.steps.slice(0, 2)).toStrictEqual([
+        { tool: 'look_at_photos', input: {}, output: '（2 张照片）' },
+        { tool: 'look_at_photos', input: {}, output: '已经看过了。' },
+      ]);
+    });
+  });
+
+  it('looks up members’ stats and an earlier week only when it asks', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn, mia } = fixture;
+      const asked: unknown[] = [];
+      const memberFacts: CoachMemberFacts = (input) => {
+        asked.push(input);
+        return Promise.resolve(
+          input.members.map((member) => ({
+            member,
+            trainedDays: 50,
+            healthyMeals: 0,
+            cheatMeals: 0,
+            disclaimers: 0,
+            titles: 0,
+            plan: Array.from({ length: 7 }, () => ({ kind: 'rest' as const })),
+          })),
+        );
+      };
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('有人打卡')
+          ? [
+              { tool: 'member_stats', input: {} },
+              { tool: 'squad_week', input: { weeks_ago: 1 } },
+            ]
+          : [],
+      );
+      const earlier = '2026-10-19';
+      await wakes(fixture, {
+        agent,
+        memberFacts,
+        consented: [mia],
+        weeks: {
+          [fixture.week.weekStart]: fixture.week,
+          [earlier]: { weekStart: earlier, members: fixture.week.members, checkIns: [] },
+        },
+      }).checkedIn({ checkIn, squads: [squad] });
+      expect(asked).toStrictEqual([{ members: [mia], weekStart: fixture.week.weekStart }]);
+      expect(runs[0]?.answers[0]).toContain('一共练了 50 天');
+      expect(runs[0]?.answers[1]).toContain(`本周从 ${earlier}（周一）开始。`);
+    });
+  });
+
+  it('has no photo tool for a check-in without photos', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, {
+        agent,
+        photoUrls: () => Promise.reject(new Error('never asked')),
+      }).checkedIn({ checkIn, squads: [squad] });
+      expect(runs[0]?.tools).not.toContain('look_at_photos');
     });
   });
 

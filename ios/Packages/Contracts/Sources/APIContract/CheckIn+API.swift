@@ -11,21 +11,25 @@ extension CheckIn {
         switch wire {
         case .trained(let checkIn):
             try self.init(
-                id: checkIn.id, member: checkIn.member, day: checkIn.day, createdAt: checkIn.createdAt,
+                id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
+                createdAt: checkIn.createdAt,
                 audience: checkIn.audience, entry: .trained(Training(checkIn.training)))
         case .healthyMeal(let checkIn):
             try self.init(
-                id: checkIn.id, member: checkIn.member, day: checkIn.day, createdAt: checkIn.createdAt,
+                id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
+                createdAt: checkIn.createdAt,
                 audience: checkIn.audience,
                 entry: .healthyMeal(Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos)))
         case .cheatMeal(let checkIn):
             try self.init(
-                id: checkIn.id, member: checkIn.member, day: checkIn.day, createdAt: checkIn.createdAt,
+                id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
+                createdAt: checkIn.createdAt,
                 audience: checkIn.audience,
                 entry: .cheatMeal(Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos)))
         case .disclaimer(let checkIn):
             try self.init(
-                id: checkIn.id, member: checkIn.member, day: checkIn.day, createdAt: checkIn.createdAt,
+                id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
+                createdAt: checkIn.createdAt,
                 audience: checkIn.audience,
                 entry: .disclaimer(
                     Disclaimer(checkIn.disclaimer.text, photos: try Photos(wire: checkIn.disclaimer.photos))))
@@ -33,11 +37,14 @@ extension CheckIn {
     }
 
     private init(
-        id: String, member: String, day: String, createdAt: Date, audience: [String], entry: Entry
+        id: String, member: String, day: String, postedDay: String?, createdAt: Date, audience: [String],
+        entry: Entry
     ) throws(ContractsError) {
+        let posted: LocalDay? = if let postedDay { try LocalDay(postedDay) } else { nil }
         self.init(
             id: try CheckInID(wire: id), member: try MemberID(wire: member), day: try LocalDay(day),
-            createdAt: Timestamp(wire: createdAt), audience: try Audience(audience.map(SquadID.init(wire:))),
+            postedDay: posted, createdAt: Timestamp(wire: createdAt),
+            audience: try Audience(audience.map(SquadID.init(wire:))),
             entry: entry)
     }
 

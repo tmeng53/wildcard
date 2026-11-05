@@ -51,26 +51,6 @@
         }
       }
     },
-    "全部": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ALL"
-          }
-        }
-      }
-    },
-    "全部表情": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "All emoji"
-          }
-        }
-      }
-    },
     "回应": {
       "localizations": {
         "en": {
@@ -147,16 +127,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Opens the feed"
-          }
-        }
-      }
-    },
-    "更多表情": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "More emoji"
           }
         }
       }
@@ -247,16 +217,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld more in the feed"
-          }
-        }
-      }
-    },
-    "选一个回应": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pick a reaction"
           }
         }
       }

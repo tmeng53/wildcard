@@ -111,3 +111,17 @@ func planLengthIsTheAPIs(schema: String) throws {
     #expect(days?.minItems == WeeklyPlan.dayCount)
     #expect(days?.maxItems == WeeklyPlan.dayCount)
 }
+
+/// 补打卡's reach is the API's `BACKFILL_DAYS`, which the OpenAPI document only states in words,
+/// so the test reads the rule's own source.
+@Test func aPostReachesBackAsFarAsTheAPIAllows() throws {
+    let url = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .appending(path: "../../../../../api/packages/check-ins/src/domain/check-in-time.ts")
+    let source = try String(contentsOf: url.standardizedFileURL, encoding: .utf8)
+    let line = source.split(separator: "\n").first { $0.contains("export const BACKFILL_DAYS = ") }
+    let days = line.flatMap {
+        Int($0.split(separator: "=").last?.trimmingCharacters(in: .init(charactersIn: " ;")) ?? "")
+    }
+    #expect(days == CheckIn.backfillDays)
+}

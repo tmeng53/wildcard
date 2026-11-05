@@ -15,12 +15,14 @@ import SquadDomain
 import SquadUI
 import SwiftUI
 
-/// The app once the member is signed in and in a squad: the four tabs in the system's Liquid Glass
-/// tab bar (`AppTabs`). Each tab screen keeps to the safe area, which the system raises above the
-/// bar, so none of them draws the bar itself.
+/// The app once the member is signed in and in a squad: the three tabs (今天, 动态, 我) in the
+/// system's Liquid Glass tab bar (`AppTabs`), with 小队 opened inside 今天 from the home's squad
+/// card (Tracy took 小队's own tab away on 2026-11-04; the coach chat opens from home too).
+/// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
+/// them draws the bar itself.
 struct MainTabs: View {
     enum Tab: Hashable {
-        case today, feed, schedule, profile
+        case today, feed, profile
     }
 
     let today: TodayModel
@@ -34,7 +36,7 @@ struct MainTabs: View {
     /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
     let squadmateCards: (any SquadmateCards)?
     @Binding var selection: Tab
-    /// The member left the squad on 小队设置.
+    /// The member left the squad on its page.
     var leftSquad: () -> Void = {}
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
     @State private var inbox: NoticeInbox
@@ -45,14 +47,24 @@ struct MainTabs: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The character editor, open from 我 over everything.
     @State private var editor: CharacterEditorModel?
-    /// 小队设置, open from 我 over everything.
-    @State private var showsSquad = false
+    /// 出赛表, open from 我 in its place.
+    @State private var showsSchedule = LaunchOptions.opensSchedule
+    /// 小队, open from the home's squad card in 今天's place.
+    @State private var showsSquad = LaunchOptions.opensSquad
+    /// 小队 opens on its coach's 简历, from a tap on the coach on the home.
+    @State private var squadOpensCoach = false
+    /// 小队's scene pick is playing its reveal, which fills the screen.
+    @State private var squadRevealing = false
     /// 我的动态, open from 我 in its place.
     @State private var wall: PostWallStore?
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
-    /// A teammate's player card, opened from their name on the home's bubble.
+    /// A player's card, opened from a tap on them on the home or their row on 小队,
+    /// popped up over every tab and the tab bar.
     @State private var teammate: SquadmateCardModel?
+    /// The card was opened from the home, so 今天 and 拍一拍 go over it; from 小队 the scene isn't
+    /// in view to play a pat on.
+    @State private var teammateOnHome = false
 
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
@@ -86,6 +98,7 @@ struct MainTabs: View {
                 try? await Task.sleep(for: .seconds(60))
             }
         }
+        .followsNotices(inbox)
         .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
@@ -95,41 +108,24 @@ struct MainTabs: View {
         }
         .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
             if let editor {
-                CharacterEditorView(
-                    model: editor, context: .profile, issued: profile.overview?.joinedAt,
-                    onBack: { self.editor = nil },
-                    onDone: { edited in
-                        self.editor = nil
-                        Task {
-                            await profile.save(
-                                MeCharacter(nickname: edited.nickname, outfit: edited.outfit, persona: edited.persona))
-                        }
-                    })
+                ProfileEditor(model: editor, profile: profile) { self.editor = nil }
             }
         }
-        .sheet(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
+        .cardPopup(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
             if let teammate {
-                TeammateCard(model: teammate).environment(\.sceneTheme, today.scene)
+                // What they're up to today over their card, with 拍一拍 (2026-11-04).
+                VStack(spacing: Space.xs) {
+                    if teammateOnHome {
+                        MateTodayStrip(model: today, member: teammate.member) { self.teammate = nil }
+                            .frame(width: SquadmateCardPopup.width)
+                    }
+                    TeammateCard(model: teammate)
+                }
+                .environment(\.sceneTheme, today.scene)
             }
-        }
-        .fullScreenCover(isPresented: $showsSquad) {
-            SquadSettingsView(
-                model: squad, close: { showsSquad = false },
-                picked: { scene, coveredAt in
-                    // The page goes at once: its reveal's last frame is the scene home draws.
-                    var instant = Transaction()
-                    instant.disablesAnimations = true
-                    withTransaction(instant) { showsSquad = false }
-                    land(on: scene, coveredAt: coveredAt)
-                },
-                // It is over everything, so it shows the card over itself.
-                teammateCard: { squadCard(of: $0) }
-            )
-            .environment(\.sceneTheme, squad.scene)
         }
         .onChange(of: squad.hasLeft) { _, left in
             guard left else { return }
-            showsSquad = false
             leftSquad()
         }
     }
@@ -137,7 +133,15 @@ struct MainTabs: View {
     /// Every scene pick ends on home: the picked scene filled the screen at `coveredAt`, and the
     /// squad drops onto it.
     private func land(on scene: SceneTheme, coveredAt: Date) {
-        selection = .today
+        // At once: the reveal's last frame is the scene home draws.
+        var instant = Transaction()
+        instant.disablesAnimations = true
+        withTransaction(instant) {
+            squadRevealing = false
+            showsSquad = false
+            squadOpensCoach = false
+            selection = .today
+        }
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
     }
 
@@ -160,14 +164,13 @@ struct MainTabs: View {
         }
     }
 
-    /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page) hides the
-    /// bar.
+    /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page, a scene
+    /// pick's reveal) hides the bar.
     private var showsTabBar: Bool {
         switch selection {
-        case .today: today.showsTabBar
+        case .today: showsSquad ? !squadRevealing : today.showsTabBar
         case .profile: !profile.isDeletionOpen && post == nil
         case .feed: feed.opened == nil && !showsNotices && noticePost == nil
-        case .schedule: true
         }
     }
 
@@ -176,19 +179,9 @@ struct MainTabs: View {
     @ViewBuilder private func screen(_ tab: Tab) -> some View {
         switch tab {
         case .today:
-            TodayView(
-                model: today, openSquad: { showsSquad = true },
-                openPost: { post in
-                    feed.open(post)
-                    selection = .feed
-                }
-            )
-            .onAppear { today.openTeammate = { teammate = homeCard(of: $0) } }
+            todayPage
         case .feed:
             feedPage
-        case .schedule:
-            ScheduleView(model: schedule)
-                .environment(\.sceneTheme, today.scene)
         case .profile:
             profilePage
         }
@@ -264,10 +257,16 @@ struct MainTabs: View {
             icon: AnyView(WardrobeBadge(kind, item: item)))
     }
 
-    /// 我, or 我的动态 in its place, with a post opened from it over the wall.
+    /// 我, or 出赛表 or 我的动态 in its place, with a post opened from the wall over it.
     private var profilePage: some View {
         ZStack {
-            if let wall {
+            if showsSchedule {
+                ScheduleView(model: schedule) { showsSchedule = false }
+                    .environment(\.sceneTheme, today.scene)
+                    // Its buttons keep the scene's colour, as its poster does; 我's own are brand.
+                    .accentTone(.scene)
+                    .transition(.move(edge: .trailing))
+            } else if let wall {
                 PostWallView(
                     store: wall, back: { self.wall = nil },
                     open: { post = OpenedPost(id: $0.id, model: postPage($0.id, over: wall)) },
@@ -285,20 +284,15 @@ struct MainTabs: View {
                 MeView(
                     model: profile,
                     destinations: MeDestinations(
-                        // Past 战报 live in 动态 until they have a page of their own.
-                        squad: { showsSquad = true },
-                        pastRecaps: { selection = .feed },
                         editCharacter: editCharacter,
-                        weeklyTemplate: {
-                            schedule.showTemplate()
-                            selection = .schedule
-                        },
+                        schedule: { showsSchedule = true },
                         myPosts: { wall = PostWallStore(source: myPosts) },
                         privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
                 )
             }
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wall != nil)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsSchedule)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: post?.id)
         .accentTone(.brand)
     }
@@ -318,9 +312,6 @@ struct MainTabs: View {
             accessibilityIdentifier: "tab.feed"
         ),
         TabBarItem(
-            id: .schedule, title: Text("出赛表"), systemImage: "calendar",
-            accessibilityIdentifier: "tab.schedule"),
-        TabBarItem(
             id: .profile, title: Text("我"), systemImage: "person.crop.circle", accessibilityIdentifier: "tab.me"),
     ]
 }
@@ -338,6 +329,53 @@ private struct RecapTile: View {
 }
 
 extension MainTabs {
+    /// 今天, or 小队 in its place, opened from the home's squad card, or on its coach's 简历 from
+    /// a tap on the coach on the sideline.
+    private var todayPage: some View {
+        ZStack {
+            if showsSquad {
+                SquadSettingsView(
+                    model: squad, picked: land(on:coveredAt:),
+                    close: {
+                        showsSquad = false
+                        squadOpensCoach = false
+                    },
+                    revealing: $squadRevealing,
+                    openTeammate: {
+                        teammateOnHome = false
+                        teammate = squadCard(of: $0)
+                    },
+                    coachNote: today.coachLine, opensCoach: squadOpensCoach
+                )
+                .environment(\.sceneTheme, squad.scene)
+                .transition(.move(edge: .trailing))
+            } else {
+                TodayView(
+                    model: today,
+                    openSquad: {
+                        squadOpensCoach = false
+                        showsSquad = true
+                    },
+                    openPost: { post in
+                        feed.open(post)
+                        selection = .feed
+                    }
+                )
+                .onAppear {
+                    today.openTeammate = {
+                        teammateOnHome = true
+                        teammate = homeCard(of: $0)
+                    }
+                    today.openCoach = {
+                        squadOpensCoach = true
+                        showsSquad = true
+                    }
+                }
+            }
+        }
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsSquad)
+    }
+
     /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.
     private func postPage(_ id: CheckInID, over wall: PostWallStore) -> FeedModel {
         let page = feed.page(of: id)
