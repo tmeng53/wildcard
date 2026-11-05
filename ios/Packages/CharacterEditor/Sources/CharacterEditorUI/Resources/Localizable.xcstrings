@@ -3907,6 +3907,22 @@
         }
       }
     },
+    "还是空的": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing here yet"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還是空的"
+          }
+        }
+      }
+    },
     "头饰": {
       "localizations": {
         "en": {
