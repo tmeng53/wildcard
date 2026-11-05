@@ -138,6 +138,18 @@ final class UnlockNoticeUITests: XCTestCase {
         return popup
     }
 
+    /// Swipes the rack up (then back down) until the lazy grid has drawn `element`.
+    private func scroll(to element: XCUIElement, in app: XCUIApplication) -> Bool {
+        if element.waitForExistence(timeout: 2) { return true }
+        for direction in [true, false] {
+            for _ in 0..<24 where !element.exists {
+                if direction { app.swipeUp(velocity: .fast) } else { app.swipeDown(velocity: .fast) }
+            }
+            if element.exists { return true }
+        }
+        return element.waitForExistence(timeout: Self.wait)
+    }
+
     private func keepScreenshot(named name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name

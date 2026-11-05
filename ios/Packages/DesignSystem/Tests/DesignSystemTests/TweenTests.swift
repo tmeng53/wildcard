@@ -91,3 +91,44 @@ struct TicketRockTests {
         #expect(TicketRock.amount(at: 0.18) > 1)
     }
 }
+
+struct LaunchWaveTests {
+    private func near(_ value: Double, _ expected: Double) -> Bool { abs(value - expected) < 1e-6 }
+
+    /// The approved design A 字母浪 (2026-11-04): the first frame is the system's launch screen,
+    /// the logo alone at the centre and every letter hidden below its place.
+    @Test func opensOnTheLaunchScreen() {
+        #expect(near(LaunchWave.logoLift(at: 0), 0))
+        #expect(near(LaunchWave.rock(at: 0), 0))
+        for index in 0..<8 {
+            #expect(near(LaunchWave.letter(index, at: 0).offset, 22))
+            #expect(near(LaunchWave.letter(index, at: 0).opacity, 0))
+        }
+    }
+
+    /// The logo lifts 30 points in 0.35 s; the last letter lands by 0.73 s, inside the 0.8 s the
+    /// cover stays up at least.
+    @Test func wordLandsBeforeTheCoverCanFade() {
+        #expect(near(LaunchWave.logoLift(at: 0.35), 30))
+        #expect(LaunchWave.logoLift(at: 0.2) > 30)
+        #expect(near(LaunchWave.letter(0, at: 0.1).opacity, 0))
+        #expect(near(LaunchWave.letter(7, at: 0.73).offset, 0))
+        #expect(near(LaunchWave.letter(7, at: 0.73).opacity, 1))
+        #expect(
+            LaunchWave.letterStart + 7 * LaunchWave.letterStagger + LaunchWave.letterDuration <= LaunchWave.entrance)
+        #expect(LaunchWave.word.count == 8)
+    }
+
+    /// From 0.9 s, each 0.9 s beat rocks the tickets and runs a wave of hops left to right.
+    @Test func lettersWaveWithTheTickets() {
+        #expect(near(LaunchWave.rock(at: 0.89), 0))
+        #expect(near(LaunchWave.rock(at: 0.9 + 0.27), 1))
+        // The first letter is at the top of its hop 0.12 + 0.14 of the way into the beat.
+        let top = 0.9 + (0.12 + 0.14) * 0.9
+        #expect(near(LaunchWave.letter(0, at: top).offset, -7))
+        #expect(near(LaunchWave.letter(7, at: top).offset, 0))
+        let lastTop = top + 7 * 0.045 * 0.9
+        #expect(near(LaunchWave.letter(7, at: lastTop).offset, -7))
+        #expect(near(LaunchWave.letter(0, at: top + 0.9).offset, -7))
+    }
+}
