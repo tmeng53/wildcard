@@ -188,12 +188,13 @@ struct MainTabs: View {
         Task { await wardrobe.open(kind, item: item) }
     }
 
-    /// A tab's full-screen step (writing a check-in, a scene pick's reveal) hides the bar. A
-    /// pushed page with a bar of its own (a post's page, 注销账号) hides it itself, as it slides in.
+    /// A tab's full-screen step (writing a check-in, a scene pick's reveal) and a pushed page with
+    /// a bar of its own (a post's page, 注销账号) or of its own place (通知) hide the bar.
     private var showsTabBar: Bool {
         switch selection {
         case .today: todayPages.isEmpty ? today.showsTabBar : !squadRevealing
-        case .profile, .feed: true
+        case .profile: !profile.isDeletionOpen && post == nil
+        case .feed: feed.opened == nil && feedPages.isEmpty
         }
     }
 

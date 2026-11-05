@@ -18,7 +18,7 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(card.label.contains("SINCE 2026"), "the card has no join year: \(card.label)")
         XCTAssertTrue(card.label.contains("早八战神"), "the card doesn't wear the latest title: \(card.label)")
         XCTAssertTrue(card.label.contains("徽章"), "the card has no 徽章 count: \(card.label)")
-        XCTAssertTrue(app.buttons["tab.me"].isSelected, "the 我 tab isn't the selected one")
+        XCTAssertTrue(tabButton("tab.me", in: app).isSelected, "the 我 tab isn't the selected one")
         assertClearOfTabBar(app.buttons["me.editCharacter"], in: app)
         settle()
         keepScreenshot(named: "40-me")
@@ -64,7 +64,8 @@ final class MeUITests: XCTestCase {
         tile.tap()
         let back = backButton(in: app)
         XCTAssertTrue(back.waitForExistence(timeout: 30), "a tile didn't open the post's page")
-        XCTAssertFalse(app.buttons["tab.feed"].exists, "the tab bar stayed over the post's page")
+        waitFor(
+            app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar stayed over the post's page")
         settle()
         keepScreenshot(named: "94-my-posts-post")
         back.tap()
@@ -117,7 +118,8 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(delete.waitForExistence(timeout: 30), "the 注销账号 page never opened")
         XCTAssertTrue(app.staticTexts["你会离开周三不练腿俱乐部"].exists)
         XCTAssertTrue(app.staticTexts["给 AI 的同意也一起撤回"].exists)
-        XCTAssertFalse(app.buttons["tab.me"].exists, "the tab bar stayed over the 注销账号 page")
+        waitFor(
+            app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar stayed over the 注销账号 page")
         let lastLine = app.staticTexts["删了就找不回来了。"]
         XCTAssertLessThanOrEqual(
             lastLine.frame.maxY, app.buttons["delete.cancel"].frame.minY, "the buttons cover what is deleted")
@@ -126,7 +128,7 @@ final class MeUITests: XCTestCase {
 
         app.buttons["delete.cancel"].tap()
         XCTAssertTrue(settings.waitForExistence(timeout: 30), "先不注销 didn't go back to 设置")
-        XCTAssertTrue(app.buttons["tab.me"].waitForExistence(timeout: 30), "the tab bar didn't come back")
+        XCTAssertTrue(tabButton("tab.me", in: app).waitForExistence(timeout: 30), "the tab bar didn't come back")
 
         app.buttons["me.deleteAccount"].tap()
         let confirm = app.buttons["delete.confirm"]
@@ -181,7 +183,7 @@ final class MeUITests: XCTestCase {
         assertClearOfTabBar(row, in: app)
         row.tap()
         XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "出赛表 didn't open")
-        XCTAssertTrue(app.buttons["tab.me"].isSelected, "出赛表 left 我")
+        XCTAssertTrue(tabButton("tab.me", in: app).isSelected, "出赛表 left 我")
         app.buttons["schedule.template"].tap()
         let note = app.descendants(matching: .any)["schedule.template.note"]
         XCTAssertTrue(note.waitForExistence(timeout: 30), "the 每周模板 chip didn't open the template")
@@ -220,7 +222,7 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 30))
         XCTAssertTrue(card.label.contains("Workouts"), "the card isn't in English: \(card.label)")
         XCTAssertTrue(app.buttons["Edit your Wildcard athlete"].exists)
-        XCTAssertTrue(app.buttons["tab.me"].label.contains("Me"))
+        XCTAssertTrue(tabButton("tab.me", in: app).label.contains("Me"))
         settle()
         keepScreenshot(named: "46-me-en")
         card.tap()

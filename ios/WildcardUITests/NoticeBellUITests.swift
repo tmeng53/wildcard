@@ -30,8 +30,7 @@ final class NoticeBellUITests: XCTestCase {
         let daily = app.buttons["notices.row.5"].label
         XCTAssertTrue(daily.hasPrefix("本周小队已练 9/16 次"), "the 6pm row says \(daily)")
         XCTAssertTrue(daily.contains("Coco和另外 2 人拍了拍你"), "the 6pm row says \(daily)")
-        let feedTab = app.buttons["tab.feed"]
-        waitFor(feedTab, "exists == false OR hittable == false", "the tab bar stayed over 通知")
+        waitFor(app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar stayed over 通知")
         for id in 1...8 {
             let row = app.buttons["notices.row.\(id)"]
             if row.exists, row.frame.maxY < app.windows.firstMatch.frame.maxY {

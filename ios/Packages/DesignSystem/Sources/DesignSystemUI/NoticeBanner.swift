@@ -233,6 +233,9 @@ private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
                         put(away: shown)
                     }
                     .transition(transition)
+                    // One element with the banner's words, whatever the caller draws around it
+                    // (the edges of the notices still to come).
+                    .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(.isButton)
                     .accessibilityIdentifier("notice.banner")
             }
