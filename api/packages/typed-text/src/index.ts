@@ -132,3 +132,22 @@ const LINK = new RegExp(
 export function containsLink(text: string): boolean {
   return LINK.test(text);
 }
+
+/** No emoji in Unicode takes more code points than this; it keeps a stored one small. */
+const MAX_CODE_POINTS = 16;
+
+/**
+ * Whether `text` is one emoji: one grapheme whose first code point is an emoji that shows as
+ * one by itself, or is followed by more (a variation selector, a keycap, a skin tone, a joiner).
+ * So ❤️, 1️⃣, flags and family emoji are, and a bare digit or `#` is not.
+ */
+export function isOneEmoji(text: string): boolean {
+  // Code points, not graphemes: what a joiner or a selector follows is what matters here.
+  const codePoints = Array.from(text);
+  const [first] = codePoints;
+  if (first === undefined || codePoints.length > MAX_CODE_POINTS) return false;
+  if ([...graphemes.segment(text)].length !== 1) return false;
+  return (
+    /\p{Emoji}/u.test(first) && (/\p{Emoji_Presentation}/u.test(first) || codePoints.length > 1)
+  );
+}

@@ -23,6 +23,15 @@ import Testing
     #expect(opened == .comment(checkIn: CheckInID(try #require(UUID(uuidString: checkIn)))))
 }
 
+@Test func aChatPushOpensItsSquadsChat() throws {
+    let squad = "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a60"
+
+    let opened = OpenedNotification(category: "chat", event: ["kind": "chat", "squad": squad])
+
+    #expect(opened == .chat(squad: SquadID(try #require(UUID(uuidString: squad)))))
+    #expect(OpenedNotification(category: "chat", event: ["squad": "nope"]) == .other)
+}
+
 @Test func anyOtherOrUnreadablePushOpensToday() {
     #expect(OpenedNotification(category: "comment", event: ["checkIn": "nope"]) == .other)
     #expect(OpenedNotification(category: "dailyProgress", event: [:]) == .other)

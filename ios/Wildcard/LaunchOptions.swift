@@ -78,6 +78,13 @@ enum LaunchOptions {
         return arguments[flag + 1] == "squad"
     }
 
+    /// `-tab chat`: 今天 opens on the squad's 群聊.
+    static var opensChat: Bool {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-tab"), flag + 1 < arguments.count else { return false }
+        return arguments[flag + 1] == "chat"
+    }
+
     /// `-tab schedule`: 我 opens on 出赛表.
     static var opensSchedule: Bool {
         let arguments = ProcessInfo.processInfo.arguments

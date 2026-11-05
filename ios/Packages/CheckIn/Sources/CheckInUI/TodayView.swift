@@ -33,13 +33,17 @@ public struct TodayView: View {
     private let openPost: (CheckIn?) -> Void
     /// Opens 我的小队, from the squad's name on the card.
     private let openSquad: () -> Void
+    /// The round button to the right of 打卡 (the squad chat's entry), hidden while the burst is open.
+    private let besideCheckIn: AnyView?
 
     public init(
-        model: TodayModel, openSquad: @escaping () -> Void = {}, openPost: @escaping (CheckIn?) -> Void = { _ in }
+        model: TodayModel, openSquad: @escaping () -> Void = {}, openPost: @escaping (CheckIn?) -> Void = { _ in },
+        besideCheckIn: AnyView? = nil
     ) {
         _model = State(initialValue: model)
         self.openSquad = openSquad
         self.openPost = openPost
+        self.besideCheckIn = besideCheckIn
     }
 
     public var body: some View {
@@ -153,6 +157,13 @@ public struct TodayView: View {
                         isOpen: $model.isBurstOpen, unavailable: model.unavailable, identifierPrefix: "today"
                     ) { kind in
                         model.pick(kind)
+                    }
+                    .overlay(alignment: .trailing) {
+                        if let besideCheckIn, !model.isBurstOpen {
+                            besideCheckIn
+                                .offset(x: Sizing.control + Space.s)
+                                .transition(.opacity)
+                        }
                     }
                     .padding(.bottom, Space.l)
                     .modifier(Arriving(arrival: model.arrival) { $0.buttonOffset(at: $1) })

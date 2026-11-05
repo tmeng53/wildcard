@@ -102,6 +102,7 @@ const app = createApp({
     ...noJobs,
     coach: {
       run: () => Promise.reject(new Error('unused')),
+      chat: () => Promise.reject(new Error('unused')),
       answer: () => Promise.reject(new Error('unused')),
       checkedIn: (asked) => {
         looked.push(asked);

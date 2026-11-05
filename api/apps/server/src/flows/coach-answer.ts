@@ -21,6 +21,12 @@ export type CoachLooker = (input: {
   readonly squads: readonly string[];
 }) => Promise<void>;
 
+/** Has the coach answer a chat message that @s it or replies to it now (the coach module's `chat`). */
+export type ChatCoachAnswerer = (input: {
+  readonly squad: string;
+  readonly message: string;
+}) => Promise<void>;
+
 /**
  * Runs the coach's work before a request ends, since Cloud Run gives the server CPU only while a
  * request runs. Never throws, and waits at most `COACH_WAIT_MS`: what the request saved stays
@@ -35,6 +41,7 @@ async function coachWithinRequest({
 }: {
   readonly log: Log;
   readonly what: string;
+  /** What the work is about, for the log: a check-in, or a chat message. */
   readonly checkIn: string;
   readonly work: () => Promise<void>;
 }): Promise<void> {
@@ -71,5 +78,18 @@ export function coachLooksAtCheckIn(
     what: 'reply',
     checkIn: checkIn.checkIn,
     work: () => deps.look(checkIn),
+  });
+}
+
+/** Has the squad's coach answer a chat message to it before the message's request ends. */
+export function answerInChat(
+  deps: { readonly answer: ChatCoachAnswerer; readonly log: Log },
+  message: Parameters<ChatCoachAnswerer>[0],
+): Promise<void> {
+  return coachWithinRequest({
+    log: deps.log,
+    what: 'chat answer',
+    checkIn: message.message,
+    work: () => deps.answer(message),
   });
 }

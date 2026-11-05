@@ -51,6 +51,8 @@ struct WildcardApp: App {
     /// The sample member's own posts, from the sample squad's 动态.
     @State private var myPosts: any MyPostsSource
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
+    /// The sample squad's chat opens on 今天 (`-chat`, or a tapped chat push).
+    @State private var opensChat = LaunchOptions.opensChat
     @State private var profile: MeModel
     @State private var squad: SquadSettingsModel
     @State private var recap: RecapShelf
@@ -255,15 +257,19 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, notices: LaunchOptions.notices, selection: $tab
+                myPosts: myPosts, notices: LaunchOptions.notices, chat: SampleChat.source(for:), selection: $tab,
+                opensChat: $opensChat
             )
             .onAppear {
                 // As on the real backend: the awards push opens 动态, where the 战报 is, a comment's
                 // push its post's page, and any other push 今天, or where the 6pm push's view asked.
-                delegate.opened = { [delegate, today, feed, $tab] opened in
+                delegate.opened = { [delegate, today, feed, $tab, $opensChat] opened in
                     switch opened {
                     case .weeklyAwards:
                         $tab.wrappedValue = .feed
+                    case .chat:
+                        $tab.wrappedValue = .today
+                        $opensChat.wrappedValue = true
                     case .comment(let post):
                         $tab.wrappedValue = .feed
                         feed.openPage(post)

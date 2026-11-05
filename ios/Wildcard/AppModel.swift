@@ -2,6 +2,7 @@ import AccountDomain
 import AccountUI
 import Backend
 import CharacterEditorUI
+import ChatDomain
 import CheckInDomain
 import CheckInUI
 import Contracts
@@ -324,6 +325,8 @@ final class AppModel {
 
     /// 通知 over our API.
     var notices: any NoticeSource { APINoticeSource(api: api) }
+    /// 群聊 over the API.
+    var chat: any ChatSource { APIChatSource(api: api) }
 
     private func registerForPush() async {
         try? await Push.registration.signedIn(APIDeviceRegistry(api: api))

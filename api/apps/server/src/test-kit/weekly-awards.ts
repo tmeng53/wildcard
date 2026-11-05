@@ -47,5 +47,26 @@ export const unusedUnlocks = { of: unused, standing: unused };
 export const ignoredNotices = {
   notices: { tell: () => Promise.resolve(), page: unused, markSeen: unused },
   coachNames: unused,
-  liveEvents: { subscribe: unused, close: () => Promise.resolve() },
+  liveEvents: {
+    subscribe: unused,
+    publish: () => Promise.resolve(),
+    close: () => Promise.resolve(),
+  },
+  chat: {
+    page: unused,
+    send: unused,
+    remove: unused,
+    react: unused,
+    report: unused,
+    alerts: unused,
+    setAlerts: unused,
+    markRead: unused,
+    unread: unused,
+    seen: unused,
+    find: unused,
+    recent: unused,
+    coachAnswer: unused,
+    coachNote: unused,
+    pushTargets: unused,
+  },
 };

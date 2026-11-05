@@ -8,6 +8,8 @@ public enum OpenedNotification: Hashable, Sendable {
     case weeklyAwards(squad: SquadID, week: LocalDay)
     /// Someone commented on the member's post, or replied to them: the app opens the post's page.
     case comment(checkIn: CheckInID)
+    /// A message in the squad's chat (群聊): the app opens the chat.
+    case chat(squad: SquadID)
     /// Anything else: the app opens 今天.
     case other
 
@@ -30,6 +32,12 @@ public enum OpenedNotification: Hashable, Sendable {
                 return
             }
             self = .comment(checkIn: CheckInID(checkIn))
+        case "chat":
+            guard let squad = event["squad"].flatMap(UUID.init(uuidString:)) else {
+                self = .other
+                return
+            }
+            self = .chat(squad: SquadID(squad))
         default:
             self = .other
         }

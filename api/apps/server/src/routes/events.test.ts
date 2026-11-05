@@ -1,6 +1,16 @@
 // GET /me/events over the real database's notifications, notices and sign-in.
+import { randomUUID } from 'node:crypto';
+
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { MemberId, createNotices, createPostgresNoticeStore } from '@wildcard/notices';
+import {
+  ChatEmoji,
+  MessageId,
+  MessageText,
+  MemberId as ChatMember,
+  SquadId as ChatSquad,
+} from '@wildcard/squad-chat';
+import { InviteCode, MemberId as SquadsMember, SquadId, SquadName } from '@wildcard/squads';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -9,7 +19,7 @@ import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createLog } from '../log.js';
 import { UserId, type LiveEvent } from '../ports.js';
-import { config, signUp } from '../test-kit/local-supabase.js';
+import { chatOn, config, signUp, squadsOn } from '../test-kit/local-supabase.js';
 import { events, type StreamTiming } from './events.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -19,18 +29,23 @@ afterAll(async () => {
   await db.destroy();
 });
 const notices = createNotices({ store: createPostgresNoticeStore(db) });
+const chat = chatOn(db);
+const squads = squadsOn(db);
 
 function appWith(timing: StreamTiming) {
   return events({
     verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
     liveEvents,
     notices,
+    chat,
     members: createMembers({ store: createPostgresProfileStore(db) }),
     coachNames: () => Promise.resolve(new Map()),
     log: createLog(() => undefined),
     timing,
   });
 }
+
+const ChatEmojiOf = (emoji: string) => ChatEmoji.parse(emoji);
 
 const unlocked = (member: string, item: string) => ({
   member: MemberId.parse(member),
@@ -106,6 +121,75 @@ describe('GET /me/events', () => {
     let rest = 0;
     while ((await stream.next()) !== undefined) rest += 1;
     expect(rest).toBeGreaterThan(0);
+  });
+});
+
+describe('GET /me/events in the squad chat', () => {
+  it('streams a squadmate’s message, its reactions changing, its deletion and the coach typing', async () => {
+    const [ana, bea, stranger] = await Promise.all([signUp(), signUp(), signUp()]);
+    const made = await squads.create({
+      id: SquadId.parse(randomUUID()),
+      creator: SquadsMember.parse(ana.userId),
+      name: SquadName.parse('夜跑'),
+    });
+    await squads.join({
+      inviteCode: InviteCode.parse(made.squad.inviteCode),
+      member: SquadsMember.parse(bea.userId),
+    });
+    const squad = ChatSquad.parse(made.squad.id);
+    const open = async (token: string) => {
+      const response = await appWith({ heartbeatMs: 60_000, maxAgeMs: 60_000 }).request(
+        '/me/events',
+        { headers: { authorization: `Bearer ${token}` } },
+      );
+      const stream = reader(response.body);
+      expect(await stream.next()).toContain('event: ready');
+      return stream;
+    };
+    const [stream, outside] = await Promise.all([open(bea.token), open(stranger.token)]);
+
+    const id = MessageId.parse(randomUUID());
+    const { message } = await chat.send({
+      member: ChatMember.parse(ana.userId),
+      squad,
+      id,
+      text: MessageText.parse('今晚 8 点'),
+      mentions: [],
+      mentionsCoach: false,
+    });
+    const event = await stream.next();
+    expect(event).toContain('event: chat\n');
+    expect(event).toContain(`"seq":${String(message.seq)}`);
+    expect(event).toContain('"text":"今晚 8 点"');
+
+    await chat.react({
+      member: ChatMember.parse(ana.userId),
+      squad,
+      message: id,
+      emoji: ChatEmojiOf('🔥'),
+    });
+    expect(await stream.next()).toContain('"emoji":"🔥"');
+
+    await liveEvents.publish([bea.userId], {
+      kind: 'coachTyping',
+      squad,
+      coach: 'xiaohun',
+      typing: true,
+    });
+    expect(await stream.next()).toBe(
+      `event: coachTyping\ndata: {"version":1,"squadId":"${squad}","coachId":"xiaohun","typing":true}`,
+    );
+
+    await chat.remove({ member: ChatMember.parse(ana.userId), squad, message: id });
+    expect(await stream.next()).toBe(
+      `event: chatDeleted\ndata: {"version":1,"squadId":"${squad}","messageId":"${id}"}`,
+    );
+    await stream.cancel();
+
+    // Someone outside the squad heard none of it: the next thing they hear is their own notice.
+    await notices.tell([unlocked(stranger.userId, 'own')]);
+    expect(await outside.next()).toContain('event: notice');
+    await outside.cancel();
   });
 });
 

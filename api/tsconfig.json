@@ -62,6 +62,9 @@
       "path": "packages/coach"
     },
     {
+      "path": "packages/squad-chat"
+    },
+    {
       "path": "apps/server"
     }
   ]

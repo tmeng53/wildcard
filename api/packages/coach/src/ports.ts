@@ -217,6 +217,46 @@ export interface CoachStepStore {
   }): Promise<void>;
 }
 
+/** A message in the squad's chat, as the coach reads it on a wake for one to it. */
+export interface CoachChatLine {
+  readonly id: string;
+  /** Who wrote it, or `undefined` for the coach. */
+  readonly member: string | undefined;
+  readonly text: string;
+}
+
+/** The squad's chat, which the chat module keeps: what the coach reads there and writes. */
+export interface CoachChat {
+  /**
+   * The squad's last messages up to and with `message`, oldest first: `undefined` when it is
+   * gone, isn't the squad's or isn't a member's.
+   */
+  thread(input: {
+    readonly squad: SquadId;
+    readonly message: string;
+  }): Promise<readonly CoachChatLine[] | undefined>;
+  /** Saves the coach's answer to a member's message, once a message however often it is tried. */
+  answer(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly message: string;
+    readonly text: string;
+  }): Promise<void>;
+  /** Posts the day's 战术板 line in the chat too, once a day. */
+  note(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly day: string;
+    readonly text: string;
+  }): Promise<void>;
+  /** Tells the squad the coach started writing in the chat, or stopped. Never throws. */
+  typing(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly typing: boolean;
+  }): Promise<void>;
+}
+
 /** The stores a wake's outcome is saved to, together. */
 export interface CoachStores {
   readonly wakes: CoachWakeStore;
@@ -283,7 +323,7 @@ export interface SquadCoaching {
   readonly notes: readonly { readonly day: string; readonly text: string }[];
   /** The last wakes, newest first, with why a failed one failed. */
   readonly wakes: readonly {
-    readonly reason: 'checkIn' | 'comment' | 'daily';
+    readonly reason: 'checkIn' | 'comment' | 'daily' | 'chat';
     readonly state: string;
     readonly tries: number;
     readonly lastError: string | null;

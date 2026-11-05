@@ -2,14 +2,17 @@ import type { CoachSettings, SquadId } from './settings.js';
 import type { SquadWeek } from './squad-week.js';
 
 // When a coach wakes: for each check-in shared to its squad, to learn from it, for each reply a
-// member writes to it under a check-in, to answer, and once a day for the squad's 战术板 line.
+// member writes to it under a check-in, and each chat message that @s it or replies to it, to
+// answer, and once a day for the squad's 战术板 line.
 // Days are New York's, as the weekly awards' are.
 
 /** Why a coach woke. */
 export type WakeReason =
   | { readonly kind: 'checkIn'; readonly checkIn: string }
   | { readonly kind: 'comment'; readonly checkIn: string; readonly comment: string }
-  | { readonly kind: 'daily'; readonly day: string };
+  | { readonly kind: 'daily'; readonly day: string }
+  /** A member's chat message that @s the coach or replies to it, by its id. */
+  | { readonly kind: 'chat'; readonly message: string };
 
 export interface NewWake {
   readonly squad: SquadId;

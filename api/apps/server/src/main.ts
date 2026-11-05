@@ -59,6 +59,12 @@ import {
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
 import {
+  MessageId as ChatMessageId,
+  SquadId as ChatSquad,
+  createPostgresChatStore,
+  createSquadChat,
+} from '@wildcard/squad-chat';
+import {
   createApnsSender,
   createOffSender,
   createDailyPushSettings,
@@ -68,7 +74,12 @@ import {
   createPostgresSettingsStore,
   createPush,
 } from '@wildcard/push';
-import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import {
+  SquadId as SquadsSquad,
+  createPostgresSquadStore,
+  createSquads,
+  randomInviteCodes,
+} from '@wildcard/squads';
 import {
   AwardsModelMissingError,
   AwardsWriterUnavailableError,
@@ -105,6 +116,8 @@ import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
+import { chatMembership } from './flows/chat-membership.js';
+import { pushChatMessage } from './flows/chat-push.js';
 import { pushCoachLine } from './flows/comment-push.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
@@ -319,6 +332,13 @@ const nudges = createNudges({
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
+const chat = createSquadChat({
+  store: createPostgresChatStore(db),
+  // Who is in which squad, and since when, is the squads module's to keep: the chat asks it.
+  membership: chatMembership(squads),
+});
+const coachNames = async () =>
+  new Map((await createPostgresCoachCatalog(db).list()).map(({ id, name }) => [id, name]));
 /** A coach's name now, as its pushes put it. */
 const coachNameOf = async (coach: string): Promise<string> =>
   (await createPostgresCoachCatalog(db).list()).find(({ id }) => id === coach)?.name ?? coach;
@@ -391,6 +411,37 @@ const coachWakes =
             },
           );
         },
+        // The squad's chat: the coach reads it and answers there, pushed like a member's message,
+        // and posts its 战术板 line there too.
+        chat: {
+          thread: async ({ squad, message }) => {
+            const asked = await chat.find(ChatSquad.parse(squad), ChatMessageId.parse(message));
+            if (asked?.author.kind !== 'member') return undefined;
+            const lines = await chat.recent({ squad: asked.squad, upTo: asked.seq, limit: 20 });
+            return lines.map(({ id, author, text }) => ({
+              id,
+              member: author.kind === 'member' ? author.member : undefined,
+              text,
+            }));
+          },
+          answer: async ({ squad, coach, message, text }) => {
+            const chatSquad = ChatSquad.parse(squad);
+            const replyTo = ChatMessageId.parse(message);
+            const saved = await chat.coachAnswer({ squad: chatSquad, coach, replyTo, text });
+            if (!saved.created) return;
+            await pushChatMessage(
+              { chat, members, push, coachNames, log },
+              { message: saved.message, repliedTo: await chat.find(chatSquad, replyTo) },
+            );
+          },
+          note: async ({ squad, coach, day, text }) => {
+            await chat.coachNote({ squad: ChatSquad.parse(squad), coach, day, text });
+          },
+          typing: async ({ squad, coach, typing }) => {
+            const to = await squads.membersOf(SquadsSquad.parse(squad));
+            await liveEvents.publish(to, { kind: 'coachTyping', squad, coach, typing });
+          },
+        },
         // So does the member whose reply to the coach it answered.
         answered: async ({ squad, checkIn, comment, commenter, coach, text }) => {
           await tellAfter(db, {
@@ -417,7 +468,6 @@ const coachWakes =
           );
         },
       });
-const coachCatalog = createPostgresCoachCatalog(db);
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -437,7 +487,8 @@ const app = createApp({
   nudges,
   notices,
   liveEvents,
-  coachNames: async () => new Map((await coachCatalog.list()).map(({ id, name }) => [id, name])),
+  chat,
+  coachNames,
   aiConsent,
   // Data the app shows that lives in the database. Each module keeps its own section.
   catalog: {

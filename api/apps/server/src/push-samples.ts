@@ -1,8 +1,10 @@
 import { COMMENT_MAX_CHARACTERS } from '@wildcard/check-ins';
+import { MESSAGE_MAX_CHARACTERS, MessageId, SquadId as ChatSquad } from '@wildcard/squad-chat';
 import { NICKNAME_MAX_CHARACTERS } from '@wildcard/members';
 import { apnsPayload } from '@wildcard/push';
 import { SquadId, WeekStart } from '@wildcard/weekly-awards';
 
+import { chatNotification } from './flows/chat-push.js';
 import { commentNotification } from './flows/comment-push.js';
 import { dailyProgressNotification } from './flows/daily-progress-push.js';
 import { awardsReadyNotification, awardsStuckNotification } from './flows/weekly-awards.js';
@@ -45,6 +47,16 @@ export function pushSamples(): Record<PushCopyKey, unknown> {
       text: '冲'.repeat(COMMENT_MAX_CHARACTERS),
       reply,
     });
+  const chat = ({ mentioned }: { readonly mentioned: boolean }) =>
+    chatNotification({
+      message: {
+        id: MessageId.parse('5d2e8f1a-3b4c-4d6e-9f0a-1b2c3d4e5f60'),
+        squad: ChatSquad.parse(squad),
+        text: '冲'.repeat(MESSAGE_MAX_CHARACTERS),
+      },
+      name: longestNickname,
+      mentioned,
+    });
   return {
     'push.dailyProgress': apnsPayload(
       dailyProgressNotification({
@@ -59,6 +71,8 @@ export function pushSamples(): Record<PushCopyKey, unknown> {
     'push.dailyProgress.poke.more': apnsPayload(daily({ others: 7 })),
     'push.comment': apnsPayload(comment({ reply: false })),
     'push.comment.reply': apnsPayload(comment({ reply: true })),
+    'push.chat': apnsPayload(chat({ mentioned: false })),
+    'push.chat.mention': apnsPayload(chat({ mentioned: true })),
     'push.weeklyAwards.ready': apnsPayload(awardsReadyNotification(squad, week)),
     'push.weeklyAwards.stuck': apnsPayload(
       awardsStuckNotification({

@@ -22,6 +22,7 @@ import {
 } from '@wildcard/push';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import { createPostgresChatStore, createSquadChat } from '@wildcard/squad-chat';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 
@@ -87,7 +88,11 @@ const app = createApp({
   nudges: { send: unused, received: unused, inSquad: unused },
   notices: { tell: unused, page: unused, markSeen: unused },
   coachNames: unused,
-  liveEvents: { subscribe: unused, close: unused },
+  liveEvents: { subscribe: unused, publish: unused, close: unused },
+  chat: createSquadChat({
+    store: createPostgresChatStore(db),
+    membership: { joinedAt: unused, membersOf: unused },
+  }),
   disclaimerDrafts: { write: unused },
   weeklyPlans: createWeeklyPlans({
     sports: createSports({ store: createPostgresSportStore(db) }),

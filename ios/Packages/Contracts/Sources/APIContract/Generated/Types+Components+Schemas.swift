@@ -227,6 +227,268 @@ extension Components {
                 case item
             }
         }
+        /// The `chat` event’s data: a message new to the chat, or whose reactions changed, as `GET /squads/{squadId}/chat/messages` lists it, with `quoted`, the message it replies to when it does and the caller can see it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LiveChat`.
+        public struct LiveChat: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/LiveChat/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/LiveChat/version`.
+            public var version: Components.Schemas.LiveChat.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/LiveChat/squadId`.
+            public var squadId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/LiveChat/message`.
+            public var message: Components.Schemas.ChatMessage
+            /// - Remark: Generated from `#/components/schemas/LiveChat/quoted`.
+            public var quoted: Components.Schemas.ChatMessage?
+            /// Creates a new `LiveChat`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - squadId:
+            ///   - message:
+            ///   - quoted:
+            public init(
+                version: Components.Schemas.LiveChat.VersionPayload,
+                squadId: Swift.String,
+                message: Components.Schemas.ChatMessage,
+                quoted: Components.Schemas.ChatMessage? = nil
+            ) {
+                self.version = version
+                self.squadId = squadId
+                self.message = message
+                self.quoted = quoted
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case squadId
+                case message
+                case quoted
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ChatMessage`.
+        public struct ChatMessage: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/version`.
+            public var version: Components.Schemas.ChatMessage.VersionPayload
+            /// The message’s id: the app picks a member’s.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/id`.
+            public var id: Swift.String
+            /// Its place in the squad’s chat, oldest first: what pages, `PUT …/chat/read` and the live `chat` event go by.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/seq`.
+            public var seq: Swift.Int
+            /// Who wrote it, for a member’s message.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/member`.
+            public var member: Swift.String?
+            /// The coach who wrote it, by id, for the coach’s (with the 教练 tag).
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/coachId`.
+            public var coachId: Swift.String?
+            /// `text` is written; `note` is the coach’s 战术板 line of the day, shown as its card. Skip a kind you don’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case text = "text"
+                case note = "note"
+            }
+            /// `text` is written; `note` is the coach’s 战术板 line of the day, shown as its card. Skip a kind you don’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/kind`.
+            public var kind: Components.Schemas.ChatMessage.KindPayload
+            /// What it says.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/text`.
+            public var text: Swift.String
+            /// The message it replies to, while that one is there.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/replyTo`.
+            public var replyTo: Swift.String?
+            /// The squadmates it @s.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/mentions`.
+            public var mentions: [Swift.String]
+            /// Whether it @s the coach.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/mentionsCoach`.
+            public var mentionsCoach: Swift.Bool
+            /// When it was sent, in UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/at`.
+            public var at: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/ReactionsPayload`.
+            public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/ChatMessage/ReactionsPayload/member`.
+                public var member: Swift.String
+                /// - Remark: Generated from `#/components/schemas/ChatMessage/ReactionsPayload/emoji`.
+                public var emoji: Swift.String
+                /// Creates a new `ReactionsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - member:
+                ///   - emoji:
+                public init(
+                    member: Swift.String,
+                    emoji: Swift.String
+                ) {
+                    self.member = member
+                    self.emoji = emoji
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case member
+                    case emoji
+                }
+            }
+            /// Members’ reactions, one each, the earliest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/reactions`.
+            public typealias ReactionsPayload = [Components.Schemas.ChatMessage.ReactionsPayloadPayload]
+            /// Members’ reactions, one each, the earliest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessage/reactions`.
+            public var reactions: Components.Schemas.ChatMessage.ReactionsPayload
+            /// Creates a new `ChatMessage`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id: The message’s id: the app picks a member’s.
+            ///   - seq: Its place in the squad’s chat, oldest first: what pages, `PUT …/chat/read` and the live `chat` event go by.
+            ///   - member: Who wrote it, for a member’s message.
+            ///   - coachId: The coach who wrote it, by id, for the coach’s (with the 教练 tag).
+            ///   - kind: `text` is written; `note` is the coach’s 战术板 line of the day, shown as its card. Skip a kind you don’t know.
+            ///   - text: What it says.
+            ///   - replyTo: The message it replies to, while that one is there.
+            ///   - mentions: The squadmates it @s.
+            ///   - mentionsCoach: Whether it @s the coach.
+            ///   - at: When it was sent, in UTC with milliseconds.
+            ///   - reactions: Members’ reactions, one each, the earliest first.
+            public init(
+                version: Components.Schemas.ChatMessage.VersionPayload,
+                id: Swift.String,
+                seq: Swift.Int,
+                member: Swift.String? = nil,
+                coachId: Swift.String? = nil,
+                kind: Components.Schemas.ChatMessage.KindPayload,
+                text: Swift.String,
+                replyTo: Swift.String? = nil,
+                mentions: [Swift.String],
+                mentionsCoach: Swift.Bool,
+                at: Foundation.Date,
+                reactions: Components.Schemas.ChatMessage.ReactionsPayload
+            ) {
+                self.version = version
+                self.id = id
+                self.seq = seq
+                self.member = member
+                self.coachId = coachId
+                self.kind = kind
+                self.text = text
+                self.replyTo = replyTo
+                self.mentions = mentions
+                self.mentionsCoach = mentionsCoach
+                self.at = at
+                self.reactions = reactions
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case seq
+                case member
+                case coachId
+                case kind
+                case text
+                case replyTo
+                case mentions
+                case mentionsCoach
+                case at
+                case reactions
+            }
+        }
+        /// The `chatDeleted` event’s data.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LiveChatDeleted`.
+        public struct LiveChatDeleted: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/LiveChatDeleted/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/LiveChatDeleted/version`.
+            public var version: Components.Schemas.LiveChatDeleted.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/LiveChatDeleted/squadId`.
+            public var squadId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/LiveChatDeleted/messageId`.
+            public var messageId: Swift.String
+            /// Creates a new `LiveChatDeleted`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - squadId:
+            ///   - messageId:
+            public init(
+                version: Components.Schemas.LiveChatDeleted.VersionPayload,
+                squadId: Swift.String,
+                messageId: Swift.String
+            ) {
+                self.version = version
+                self.squadId = squadId
+                self.messageId = messageId
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case squadId
+                case messageId
+            }
+        }
+        /// The `coachTyping` event’s data: show the coach’s three dots while it is true.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LiveCoachTyping`.
+        public struct LiveCoachTyping: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/LiveCoachTyping/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/LiveCoachTyping/version`.
+            public var version: Components.Schemas.LiveCoachTyping.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/LiveCoachTyping/squadId`.
+            public var squadId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/LiveCoachTyping/coachId`.
+            public var coachId: Swift.String
+            /// Whether the coach is writing now. A `chat` event with its message ends it too, and so does a reconnect.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LiveCoachTyping/typing`.
+            public var typing: Swift.Bool
+            /// Creates a new `LiveCoachTyping`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - squadId:
+            ///   - coachId:
+            ///   - typing: Whether the coach is writing now. A `chat` event with its message ends it too, and so does a reconnect.
+            public init(
+                version: Components.Schemas.LiveCoachTyping.VersionPayload,
+                squadId: Swift.String,
+                coachId: Swift.String,
+                typing: Swift.Bool
+            ) {
+                self.version = version
+                self.squadId = squadId
+                self.coachId = coachId
+                self.typing = typing
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case squadId
+                case coachId
+                case typing
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/Health`.
         public struct Health: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Health/version`.
@@ -5061,6 +5323,260 @@ extension Components {
                 case coach
                 case text
                 case at
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ChatPage`.
+        public struct ChatPage: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ChatPage/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ChatPage/version`.
+            public var version: Components.Schemas.ChatPage.VersionPayload
+            /// Newest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatPage/messages`.
+            public var messages: [Components.Schemas.ChatMessage]
+            /// The messages those reply to that aren’t among them, so each reply can show what it replies to.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatPage/quoted`.
+            public var quoted: [Components.Schemas.ChatMessage]
+            /// Whether older messages come before these.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatPage/more`.
+            public var more: Swift.Bool
+            /// How far the caller read (a `seq`), 0 before they read any.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatPage/readThrough`.
+            public var readThrough: Swift.Int
+            /// The caller’s alerts in this squad.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatPage/alerts`.
+            @frozen public enum AlertsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case mentions = "mentions"
+                case all = "all"
+                case none = "none"
+            }
+            /// The caller’s alerts in this squad.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatPage/alerts`.
+            public var alerts: Components.Schemas.ChatPage.AlertsPayload
+            /// Creates a new `ChatPage`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - messages: Newest first.
+            ///   - quoted: The messages those reply to that aren’t among them, so each reply can show what it replies to.
+            ///   - more: Whether older messages come before these.
+            ///   - readThrough: How far the caller read (a `seq`), 0 before they read any.
+            ///   - alerts: The caller’s alerts in this squad.
+            public init(
+                version: Components.Schemas.ChatPage.VersionPayload,
+                messages: [Components.Schemas.ChatMessage],
+                quoted: [Components.Schemas.ChatMessage],
+                more: Swift.Bool,
+                readThrough: Swift.Int,
+                alerts: Components.Schemas.ChatPage.AlertsPayload
+            ) {
+                self.version = version
+                self.messages = messages
+                self.quoted = quoted
+                self.more = more
+                self.readThrough = readThrough
+                self.alerts = alerts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case messages
+                case quoted
+                case more
+                case readThrough
+                case alerts
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ChatMessageDraft`.
+        public struct ChatMessageDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/version`.
+            public var version: Components.Schemas.ChatMessageDraft.VersionPayload
+            /// Trimmed, then 1 to 500 characters as people see them; may span lines.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/text`.
+            public var text: Swift.String
+            /// The message it replies to: one the caller can see in this chat.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/replyTo`.
+            public var replyTo: Swift.String?
+            /// The squadmates it @s; anyone not in the squad is left out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/mentions`.
+            public var mentions: [Swift.String]?
+            /// Whether it @s the coach, who then answers (as it does a reply to it).
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/mentionsCoach`.
+            public var mentionsCoach: Swift.Bool?
+            /// Creates a new `ChatMessageDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - text: Trimmed, then 1 to 500 characters as people see them; may span lines.
+            ///   - replyTo: The message it replies to: one the caller can see in this chat.
+            ///   - mentions: The squadmates it @s; anyone not in the squad is left out.
+            ///   - mentionsCoach: Whether it @s the coach, who then answers (as it does a reply to it).
+            public init(
+                version: Components.Schemas.ChatMessageDraft.VersionPayload,
+                text: Swift.String,
+                replyTo: Swift.String? = nil,
+                mentions: [Swift.String]? = nil,
+                mentionsCoach: Swift.Bool? = nil
+            ) {
+                self.version = version
+                self.text = text
+                self.replyTo = replyTo
+                self.mentions = mentions
+                self.mentionsCoach = mentionsCoach
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case text
+                case replyTo
+                case mentions
+                case mentionsCoach
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ChatReaction`.
+        public struct ChatReaction: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ChatReaction/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ChatReaction/version`.
+            public var version: Components.Schemas.ChatReaction.VersionPayload
+            /// Any one emoji.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatReaction/emoji`.
+            public var emoji: Swift.String
+            /// Creates a new `ChatReaction`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - emoji: Any one emoji.
+            public init(
+                version: Components.Schemas.ChatReaction.VersionPayload,
+                emoji: Swift.String
+            ) {
+                self.version = version
+                self.emoji = emoji
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case emoji
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ChatAlertSettings`.
+        public struct ChatAlertSettings: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ChatAlertSettings/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ChatAlertSettings/version`.
+            public var version: Components.Schemas.ChatAlertSettings.VersionPayload
+            /// When the caller gets a push for this squad’s messages: `mentions` (an @ or a reply to them, the default), `all` or `none`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatAlertSettings/alerts`.
+            @frozen public enum AlertsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case mentions = "mentions"
+                case all = "all"
+                case none = "none"
+            }
+            /// When the caller gets a push for this squad’s messages: `mentions` (an @ or a reply to them, the default), `all` or `none`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatAlertSettings/alerts`.
+            public var alerts: Components.Schemas.ChatAlertSettings.AlertsPayload
+            /// Creates a new `ChatAlertSettings`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - alerts: When the caller gets a push for this squad’s messages: `mentions` (an @ or a reply to them, the default), `all` or `none`.
+            public init(
+                version: Components.Schemas.ChatAlertSettings.VersionPayload,
+                alerts: Components.Schemas.ChatAlertSettings.AlertsPayload
+            ) {
+                self.version = version
+                self.alerts = alerts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case alerts
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ChatRead`.
+        public struct ChatRead: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ChatRead/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ChatRead/version`.
+            public var version: Components.Schemas.ChatRead.VersionPayload
+            /// The newest message the caller has seen.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatRead/seq`.
+            public var seq: Swift.Int
+            /// Creates a new `ChatRead`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - seq: The newest message the caller has seen.
+            public init(
+                version: Components.Schemas.ChatRead.VersionPayload,
+                seq: Swift.Int
+            ) {
+                self.version = version
+                self.seq = seq
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case seq
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ChatUnread`.
+        public struct ChatUnread: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ChatUnread/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ChatUnread/version`.
+            public var version: Components.Schemas.ChatUnread.VersionPayload
+            /// Messages the caller hasn’t read.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatUnread/count`.
+            public var count: Swift.Int
+            /// Those of them that @ the caller or reply to them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ChatUnread/mentions`.
+            public var mentions: Swift.Int
+            /// Creates a new `ChatUnread`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - count: Messages the caller hasn’t read.
+            ///   - mentions: Those of them that @ the caller or reply to them.
+            public init(
+                version: Components.Schemas.ChatUnread.VersionPayload,
+                count: Swift.Int,
+                mentions: Swift.Int
+            ) {
+                self.version = version
+                self.count = count
+                self.mentions = mentions
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case count
+                case mentions
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadNudges`.

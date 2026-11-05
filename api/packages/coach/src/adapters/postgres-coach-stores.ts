@@ -34,6 +34,7 @@ function wakeOf(row: {
   readonly reason: string;
   readonly check_in_id: string | null;
   readonly comment_id: string | null;
+  readonly chat_message_id: string | null;
   readonly day: string | null;
 }): Wake {
   const squad = SquadId.parse(row.squad_id);
@@ -47,6 +48,9 @@ function wakeOf(row: {
       squad,
       reason: { kind: 'comment', checkIn: row.check_in_id, comment: row.comment_id },
     };
+  }
+  if (row.reason === 'chat' && row.chat_message_id !== null) {
+    return { id, squad, reason: { kind: 'chat', message: row.chat_message_id } };
   }
   // The database keeps a check-in wake's check-in.
   return { id, squad, reason: { kind: 'checkIn', checkIn: row.check_in_id ?? '' } };
@@ -79,6 +83,16 @@ function insertWake(
         select ${squad}, 'comment', check_in_id, id, ${now}
         from public.check_in_comments where id = ${reason.comment} and check_in_id = ${reason.checkIn}
         on conflict (squad_id, comment_id) where reason = 'comment' do nothing
+        returning id`
+        .execute(db)
+        .then(({ rows }) => rows);
+    case 'chat':
+      // Nothing when the message is gone already, or isn't the squad's.
+      return sql<{ id: string }>`
+        insert into public.coach_wakes (squad_id, reason, chat_message_id, created_at)
+        select squad_id, 'chat', id, ${now}
+        from public.squad_messages where id = ${reason.message} and squad_id = ${squad}
+        on conflict (squad_id, chat_message_id) where reason = 'chat' do nothing
         returning id`
         .execute(db)
         .then(({ rows }) => rows);
@@ -147,8 +161,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           )
           .orderBy('wake.squad_id')
           .orderBy(sql`wake.state = 'running'`, 'desc')
-          // A member's reply waits on its answer, so it goes before older wakes.
-          .orderBy(sql`wake.reason = 'comment'`, 'desc')
+          // A member's reply or chat message waits on its answer, so it goes before older wakes.
+          .orderBy(sql`wake.reason in ('comment', 'chat')`, 'desc')
           .orderBy('wake.created_at')
           .orderBy('wake.id')
           .execute();
@@ -170,6 +184,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
               'reason',
               'check_in_id',
               'comment_id',
+              'chat_message_id',
               sql<string | null>`to_char(day, 'YYYY-MM-DD')`.as('day'),
             ])
             .executeTakeFirst()
@@ -531,7 +546,10 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
         files: files.map(({ path, body, at }) => ({ path, body, at: new Date(at) })),
         notes,
         wakes: wakes.map((wake) => ({
-          reason: wake.reason === 'daily' || wake.reason === 'comment' ? wake.reason : 'checkIn',
+          reason:
+            wake.reason === 'daily' || wake.reason === 'comment' || wake.reason === 'chat'
+              ? wake.reason
+              : 'checkIn',
           state: wake.state,
           tries: wake.tries,
           lastError: wake.last_error,

@@ -32,6 +32,8 @@ export type {
   AgentRun,
   CoachActivityStore,
   CoachAgent,
+  CoachChat,
+  CoachChatLine,
   CoachCatalogStore,
   CoachHiringStore,
   CoachNoteShown,

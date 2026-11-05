@@ -299,6 +299,70 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.
     func getSquadCoachActivity(_ input: Operations.GetSquadCoachActivity.Input) async throws -> Operations.GetSquadCoachActivity.Output
+    /// A page of the squad’s chat (群聊)
+    ///
+    /// Newest first, only what was sent since the caller joined. Pass the oldest `seq` you have as `before` for the page before it.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/chat/messages`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/get(listSquadChat)`.
+    func listSquadChat(_ input: Operations.ListSquadChat.Input) async throws -> Operations.ListSquadChat.Output
+    /// Send a message to the squad’s chat
+    ///
+    /// The app names the message, so the same one again changes nothing and is safe to repeat. Messages are never edited. The squad hears it at once (`GET /me/events`), and members are pushed by their alerts. A message that @s the coach, or replies to it, is answered soon after: members see the coach typing (`coachTyping`), then its message.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/chat/messages/{messageId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/{messageId}/put(sendChatMessage)`.
+    func sendChatMessage(_ input: Operations.SendChatMessage.Input) async throws -> Operations.SendChatMessage.Output
+    /// Delete your message
+    ///
+    /// It is gone for everyone; a reply to it stays, without what it replied to.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/chat/messages/{messageId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/{messageId}/delete(deleteChatMessage)`.
+    func deleteChatMessage(_ input: Operations.DeleteChatMessage.Input) async throws -> Operations.DeleteChatMessage.Output
+    /// React to a message
+    ///
+    /// One emoji per member a message; another one takes its place.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/chat/messages/{messageId}/reaction`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/{messageId}/reaction/put(reactToChatMessage)`.
+    func reactToChatMessage(_ input: Operations.ReactToChatMessage.Input) async throws -> Operations.ReactToChatMessage.Output
+    /// Take your reaction off a message
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/chat/messages/{messageId}/reaction`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/{messageId}/reaction/delete(unreactToChatMessage)`.
+    func unreactToChatMessage(_ input: Operations.UnreactToChatMessage.Input) async throws -> Operations.UnreactToChatMessage.Output
+    /// Report someone’s message (举报)
+    ///
+    /// The admins see what it said even if it is deleted later. Reporting it again changes nothing.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/chat/messages/{messageId}/report`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/{messageId}/report/post(reportChatMessage)`.
+    func reportChatMessage(_ input: Operations.ReportChatMessage.Input) async throws -> Operations.ReportChatMessage.Output
+    /// When the caller gets a push for this squad’s chat
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/chat/alerts`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/alerts/get(getChatAlerts)`.
+    func getChatAlerts(_ input: Operations.GetChatAlerts.Input) async throws -> Operations.GetChatAlerts.Output
+    /// Change when the caller gets a push for this squad’s chat
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/chat/alerts`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/alerts/put(setChatAlerts)`.
+    func setChatAlerts(_ input: Operations.SetChatAlerts.Input) async throws -> Operations.SetChatAlerts.Output
+    /// Mark the squad’s chat read up to a message
+    ///
+    /// Never moves back, so a stale call is harmless.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/chat/read`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/read/put(markChatRead)`.
+    func markChatRead(_ input: Operations.MarkChatRead.Input) async throws -> Operations.MarkChatRead.Output
+    /// How much of the squad’s chat the caller hasn’t read
+    ///
+    /// The count on the chat’s button beside 打卡.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/chat/unread`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/unread/get(getChatUnread)`.
+    func getChatUnread(_ input: Operations.GetChatUnread.Input) async throws -> Operations.GetChatUnread.Output
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -329,7 +393,7 @@ public protocol APIProtocol: Sendable {
     func markMyNoticesSeen(_ input: Operations.MarkMyNoticesSeen.Input) async throws -> Operations.MarkMyNoticesSeen.Output
     /// The caller’s live events (Server-Sent Events)
     ///
-    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.
+    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` and the open chat again, since events sent while it was closed are not replayed.
     ///
     /// - Remark: HTTP `GET /me/events`.
     /// - Remark: Generated from `#/paths//me/events/get(streamMyEvents)`.
@@ -1041,6 +1105,160 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// A page of the squad’s chat (群聊)
+    ///
+    /// Newest first, only what was sent since the caller joined. Pass the oldest `seq` you have as `before` for the page before it.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/chat/messages`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/get(listSquadChat)`.
+    public func listSquadChat(
+        path: Operations.ListSquadChat.Input.Path,
+        query: Operations.ListSquadChat.Input.Query = .init(),
+        headers: Operations.ListSquadChat.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadChat.Output {
+        try await listSquadChat(Operations.ListSquadChat.Input(
+            path: path,
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Send a message to the squad’s chat
+    ///
+    /// The app names the message, so the same one again changes nothing and is safe to repeat. Messages are never edited. The squad hears it at once (`GET /me/events`), and members are pushed by their alerts. A message that @s the coach, or replies to it, is answered soon after: members see the coach typing (`coachTyping`), then its message.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/chat/messages/{messageId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/{messageId}/put(sendChatMessage)`.
+    public func sendChatMessage(
+        path: Operations.SendChatMessage.Input.Path,
+        headers: Operations.SendChatMessage.Input.Headers = .init(),
+        body: Operations.SendChatMessage.Input.Body
+    ) async throws -> Operations.SendChatMessage.Output {
+        try await sendChatMessage(Operations.SendChatMessage.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Delete your message
+    ///
+    /// It is gone for everyone; a reply to it stays, without what it replied to.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/chat/messages/{messageId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/{messageId}/delete(deleteChatMessage)`.
+    public func deleteChatMessage(
+        path: Operations.DeleteChatMessage.Input.Path,
+        headers: Operations.DeleteChatMessage.Input.Headers = .init()
+    ) async throws -> Operations.DeleteChatMessage.Output {
+        try await deleteChatMessage(Operations.DeleteChatMessage.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// React to a message
+    ///
+    /// One emoji per member a message; another one takes its place.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/chat/messages/{messageId}/reaction`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/{messageId}/reaction/put(reactToChatMessage)`.
+    public func reactToChatMessage(
+        path: Operations.ReactToChatMessage.Input.Path,
+        headers: Operations.ReactToChatMessage.Input.Headers = .init(),
+        body: Operations.ReactToChatMessage.Input.Body
+    ) async throws -> Operations.ReactToChatMessage.Output {
+        try await reactToChatMessage(Operations.ReactToChatMessage.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Take your reaction off a message
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}/chat/messages/{messageId}/reaction`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/{messageId}/reaction/delete(unreactToChatMessage)`.
+    public func unreactToChatMessage(
+        path: Operations.UnreactToChatMessage.Input.Path,
+        headers: Operations.UnreactToChatMessage.Input.Headers = .init()
+    ) async throws -> Operations.UnreactToChatMessage.Output {
+        try await unreactToChatMessage(Operations.UnreactToChatMessage.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Report someone’s message (举报)
+    ///
+    /// The admins see what it said even if it is deleted later. Reporting it again changes nothing.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/chat/messages/{messageId}/report`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/messages/{messageId}/report/post(reportChatMessage)`.
+    public func reportChatMessage(
+        path: Operations.ReportChatMessage.Input.Path,
+        headers: Operations.ReportChatMessage.Input.Headers = .init()
+    ) async throws -> Operations.ReportChatMessage.Output {
+        try await reportChatMessage(Operations.ReportChatMessage.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// When the caller gets a push for this squad’s chat
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/chat/alerts`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/alerts/get(getChatAlerts)`.
+    public func getChatAlerts(
+        path: Operations.GetChatAlerts.Input.Path,
+        headers: Operations.GetChatAlerts.Input.Headers = .init()
+    ) async throws -> Operations.GetChatAlerts.Output {
+        try await getChatAlerts(Operations.GetChatAlerts.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Change when the caller gets a push for this squad’s chat
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/chat/alerts`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/alerts/put(setChatAlerts)`.
+    public func setChatAlerts(
+        path: Operations.SetChatAlerts.Input.Path,
+        headers: Operations.SetChatAlerts.Input.Headers = .init(),
+        body: Operations.SetChatAlerts.Input.Body
+    ) async throws -> Operations.SetChatAlerts.Output {
+        try await setChatAlerts(Operations.SetChatAlerts.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Mark the squad’s chat read up to a message
+    ///
+    /// Never moves back, so a stale call is harmless.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/chat/read`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/read/put(markChatRead)`.
+    public func markChatRead(
+        path: Operations.MarkChatRead.Input.Path,
+        headers: Operations.MarkChatRead.Input.Headers = .init(),
+        body: Operations.MarkChatRead.Input.Body
+    ) async throws -> Operations.MarkChatRead.Output {
+        try await markChatRead(Operations.MarkChatRead.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// How much of the squad’s chat the caller hasn’t read
+    ///
+    /// The count on the chat’s button beside 打卡.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/chat/unread`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/chat/unread/get(getChatUnread)`.
+    public func getChatUnread(
+        path: Operations.GetChatUnread.Input.Path,
+        headers: Operations.GetChatUnread.Input.Headers = .init()
+    ) async throws -> Operations.GetChatUnread.Output {
+        try await getChatUnread(Operations.GetChatUnread.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -1107,7 +1325,7 @@ extension APIProtocol {
     }
     /// The caller’s live events (Server-Sent Events)
     ///
-    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.
+    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` and the open chat again, since events sent while it was closed are not replayed.
     ///
     /// - Remark: HTTP `GET /me/events`.
     /// - Remark: Generated from `#/paths//me/events/get(streamMyEvents)`.
