@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -120,11 +120,11 @@
           },
           "coach": {
             "type": "string",
-            "description": "The coach who answered (`coachReply`)."
+            "description": "The coach who answered (`coachReply`) or wrote (`coachNote`)."
           },
           "coachName": {
             "type": "string",
-            "description": "Its name now (`coachReply`)."
+            "description": "Its name now (`coachReply`, `coachNote`)."
           },
           "replied": {
             "type": "boolean",
@@ -133,6 +133,20 @@
           "emoji": {
             "type": "string",
             "description": "The coach’s emoji (`coachReply`), if any."
+          },
+          "note": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The morning note’s id (`coachNote`): the same as the coach activity’s."
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "The New York day the morning note was written for (`coachNote`)."
+          },
+          "text": {
+            "type": "string",
+            "description": "The morning note’s words (`coachNote`)."
           },
           "unlockKind": {
             "type": "string",
@@ -2480,11 +2494,15 @@
             "properties": {
               "dailyProgress": {
                 "type": "boolean"
+              },
+              "coach": {
+                "type": "boolean"
               }
             },
-            "description": "Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.",
+            "description": "Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.",
             "example": {
-              "dailyProgress": true
+              "dailyProgress": true,
+              "coach": true
             }
           }
         },
@@ -3350,6 +3368,26 @@
         ],
         "additionalProperties": false
       },
+      "CoachNotePutAway": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "noteId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "version",
+          "noteId"
+        ],
+        "additionalProperties": false
+      },
       "CoachActivity": {
         "type": "object",
         "properties": {
@@ -3375,6 +3413,9 @@
               "$ref": "#/components/schemas/CoachAnswer"
             },
             "description": "The coach’s answers to members’ replies to it under the check-ins asked about, oldest first."
+          },
+          "memberNote": {
+            "$ref": "#/components/schemas/CoachMemberNote"
           }
         },
         "required": [
@@ -3529,6 +3570,43 @@
           "at"
         ],
         "additionalProperties": false
+      },
+      "CoachMemberNote": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The note’s id, which putting it away (收下) and `coachNote` notices name."
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "The day (New York) the note was written for."
+          },
+          "text": {
+            "type": "string",
+            "description": "The note’s words.",
+            "example": "昨天那组深蹲我看见了"
+          },
+          "coach": {
+            "$ref": "#/components/schemas/CoachSpeaker"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was written."
+          }
+        },
+        "required": [
+          "id",
+          "day",
+          "text",
+          "coach",
+          "at"
+        ],
+        "additionalProperties": false,
+        "description": "The caller’s own newest morning note (便条) from the squad’s coach, for 今天 to show on the first open after it arrived; only the caller sees it. Left out when there is none from the last day and a half."
       },
       "SquadNudges": {
         "type": "object",
@@ -7347,7 +7425,7 @@
             }
           },
           "400": {
-            "description": "Not a valid body, or a switch missing",
+            "description": "Not a valid body",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8675,11 +8753,104 @@
         }
       }
     },
+    "/squads/{squadId}/coach/notes/{noteId}/put-away": {
+      "put": {
+        "operationId": "putAwayCoachMemberNote",
+        "summary": "Put the caller’s morning note away (收下)",
+        "description": "The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "name": "noteId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Put away",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachNotePutAway"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad or note id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not one of the caller’s notes in this squad (`COACH_NOTE_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/squads/{squadId}/coach/activity": {
       "get": {
         "operationId": "getSquadCoachActivity",
         "summary": "What the squad’s coach said (战术板, replies and reactions)",
-        "description": "The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, and its answers to members’ replies to it there. Only for the squad’s members. They stay after the squad fires its coach.",
+        "description": "The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note. Only for the squad’s members. They stay after the squad fires its coach.",
         "security": [
           {
             "bearer": []

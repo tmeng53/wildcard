@@ -27,6 +27,7 @@ import { adminMcp } from './admin-mcp/admin-mcp.js';
 import type { AdminTool } from './admin-mcp/admin-tool.js';
 import { consentPage } from './admin-mcp/consent-page.js';
 import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } from './errors.js';
+import type { CoachNotesDependencies } from './flows/coach-notes.js';
 import type { InteractionSource } from './flows/daily-progress-push.js';
 import type { Log } from './log.js';
 import type {
@@ -122,6 +123,8 @@ export interface AppDependencies {
     readonly clock: () => Date;
     /** The AI coach's wakes; left out without an OpenAI key, and then the coach never wakes. */
     readonly coach?: CoachWakes;
+    /** The coach's morning notes to deliver, and how to tell them in the bell. */
+    readonly coachNotes: Pick<CoachNotesDependencies, 'notes' | 'noteHour' | 'tell' | 'clock'>;
   };
   /** The admin MCP server at `/mcp`. */
   readonly admin: {
@@ -220,6 +223,13 @@ export function createApp(deps: AppDependencies) {
       dailyProgress: { ...deps, interactions: deps.jobs.interactions, clock: deps.jobs.clock },
       weeklyAwards: { ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) },
       ...(deps.jobs.coach === undefined ? {} : { coach: deps.jobs.coach }),
+      coachNotes: {
+        ...deps.jobs.coachNotes,
+        members: deps.members,
+        squads: deps.squads,
+        push: deps.push,
+        log: deps.log,
+      },
     }),
   );
   // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.

@@ -59,6 +59,16 @@ extension WildcardAPI {
             try await client.getSquadCoachActivity(path: .init(squadId: squad.description), query: query).ok.body
                 .json
         }
-        return try read { () throws(ContractsError) in try CoachActivity(wire) }
+        return try read { () throws(ContractsError) in try CoachActivity(wire, squad: squad) }
+    }
+
+    /// The member put their morning note away on 今天 (收下), so none of their phones shows it
+    /// again. Safe to repeat.
+    public func putAway(_ note: CoachMemberNote) async throws(APIError) {
+        _ = try await call {
+            try await client.putAwayCoachMemberNote(
+                path: .init(squadId: note.squad.description, noteId: note.id)
+            ).ok.body.json
+        }
     }
 }

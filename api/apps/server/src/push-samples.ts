@@ -3,6 +3,7 @@ import { NICKNAME_MAX_CHARACTERS } from '@wildcard/members';
 import { apnsPayload } from '@wildcard/push';
 import { SquadId, WeekStart } from '@wildcard/weekly-awards';
 
+import { coachNoteNotification } from './flows/coach-notes.js';
 import { commentNotification, type CommentNews } from './flows/comment-push.js';
 import { dailyProgressNotification } from './flows/daily-progress-push.js';
 import { awardsReadyNotification, awardsStuckNotification } from './flows/weekly-awards.js';
@@ -60,6 +61,9 @@ export function pushSamples(): Record<PushCopyKey, unknown> {
     'push.comment': apnsPayload(comment('comment')),
     'push.comment.reply': apnsPayload(comment('reply')),
     'push.comment.mention': apnsPayload(comment('mention')),
+    'push.coach.note': apnsPayload(
+      coachNoteNotification({ id: 1234, coachName: '毛头', text: '便'.repeat(60) }),
+    ),
     'push.weeklyAwards.ready': apnsPayload(awardsReadyNotification(squad, week)),
     'push.weeklyAwards.stuck': apnsPayload(
       awardsStuckNotification({

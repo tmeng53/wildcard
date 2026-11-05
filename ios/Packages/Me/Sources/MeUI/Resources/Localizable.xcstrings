@@ -1000,6 +1000,38 @@
           }
         }
       }
+    },
+    "教练消息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coach messages"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "教練訊息"
+          }
+        }
+      }
+    },
+    "教练的消息和回复，静默推送。关掉后通知里照样有。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your coach's messages and replies, delivered quietly. Turned off, they're still in Notifications."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "教練的訊息和回覆，靜默推送。關掉後通知裡照樣有。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

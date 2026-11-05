@@ -54,6 +54,8 @@ struct RowShell<Trailing: View>: View {
     let title: Text
     let systemImage: String?
     let showsDivider: Bool
+    /// A line under the title saying more, in muted ink; nil for none.
+    var detail: Text?
     @ViewBuilder let trailing: Trailing
 
     var body: some View {
@@ -65,12 +67,21 @@ struct RowShell<Trailing: View>: View {
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityHidden(true)
             }
-            title
-                .typeStyle(TypeRamp.body)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: Space.xxs / 2) {
+                title
+                    .typeStyle(TypeRamp.body)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                if let detail {
+                    detail
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             trailing
         }
+        .padding(.vertical, detail == nil ? 0 : Space.s)
         .frame(minHeight: Sizing.pickRow)
         .overlay(alignment: .bottom) {
             if showsDivider {
