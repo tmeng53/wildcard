@@ -135,4 +135,20 @@ describe('art', () => {
     const again = await art.retire({ paths: [path] }, admin);
     expect(again.generation).toBe(retired.generation);
   });
+
+  it('logs nothing for a put that changes nothing', async () => {
+    const { blobs } = memoryBlobs();
+    const art = createArt({ store: createPostgresArtStore(db), blobs });
+    const under = folder();
+    const path = ArtPath.parse(`${under}/torso.svg`);
+    const first = await art.put({ files: [{ path, text: svg }], rigVersion: 1 }, admin);
+
+    const again = await art.put({ files: [{ path, text: svg }], rigVersion: 1 }, admin);
+    expect(again.generation).toBe(first.generation);
+    const newerRig = await art.put({ files: [{ path, text: svg }], rigVersion: 2 }, admin);
+    expect(newerRig.generation).toBeGreaterThan(first.generation);
+    expect(ours(newerRig.files, under)).toEqual([
+      { path, sha256: sha(svg), size: svg.length, rigVersion: 2 },
+    ]);
+  });
 });

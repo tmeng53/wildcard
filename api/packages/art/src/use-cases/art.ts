@@ -70,7 +70,13 @@ export function createArt(deps: { readonly store: ArtStore; readonly blobs: ArtB
           return { path: file.path, file: { sha256, size: bytes.byteLength, rigVersion } };
         }),
       );
-      await store.record(changes, admin);
+      // A file already standing at its path, the same bytes for the same rig, is no change.
+      const standing = new Map((await store.manifest()).files.map((file) => [file.path, file]));
+      const changed = changes.filter(({ path, file }) => {
+        const now = standing.get(path);
+        return now?.sha256 !== file.sha256 || now.rigVersion !== file.rigVersion;
+      });
+      if (changed.length > 0) await store.record(changed, admin);
       return store.manifest();
     },
 
