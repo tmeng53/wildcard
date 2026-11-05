@@ -26,6 +26,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -38,6 +39,7 @@ import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
   unusedUnlocks,
+  unusedGifts,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
@@ -106,8 +108,10 @@ const app = createApp({
     random: () => 0,
   }),
   push: pushOn(db),
+  scenes: scenesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
+  gifts: unusedGifts,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,

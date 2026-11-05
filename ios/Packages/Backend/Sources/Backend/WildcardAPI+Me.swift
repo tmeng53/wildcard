@@ -52,6 +52,7 @@ extension WildcardAPI {
                     topSport: try card.topSport.map { top throws(ContractsError) in
                         TopSport(activity: try Activity(top), checkIns: top.checkIns)
                     }),
+                week: card.week.map { WeekCount(trainedDays: $0.trainedDays, plannedDays: $0.plannedDays) },
                 board: try TitleBoard(card))
         }
     }
@@ -81,7 +82,17 @@ extension WildcardAPI {
         return UnlockStanding(
             // Both lists are the earliest first; so is the whole.
             unlocks: (stores + pieces).sorted { $0.unlockedAt < $1.unlockedAt },
-            lockedPieces: body.lockedPieces.map { LockedPiece(id: $0.id, checkInsToGo: $0.checkInsToGo) })
+            lockedPieces: body.lockedPieces.map { piece in
+                LockedPiece(
+                    id: piece.id, checkInsToGo: piece.checkInsToGo,
+                    sports: piece.sports.compactMap(Sport.init(rawValue:)))
+            },
+            claimed: Set(body.claimed.map(\.id)))
+    }
+
+    /// 领取: puts an unlocked piece in the member's wardrobe, on every phone. Safe to repeat.
+    public func claim(piece: String) async throws(APIError) {
+        _ = try await call { try await client.claimPiece(path: .init(pieceId: piece)).ok }
     }
 
     /// Whether the one daily push at 6pm is on; it is until the member turns it off.
@@ -147,5 +158,7 @@ public struct SquadmateCard: Hashable, Sendable {
     /// When they signed up; nil before they saved a profile.
     public let joinedAt: Date?
     public let totals: CheckInTotals
+    /// Their own 本周 x/y; nil from a server that doesn't send it.
+    public let week: WeekCount?
     public let board: TitleBoard
 }

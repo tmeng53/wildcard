@@ -276,6 +276,8 @@ struct EndingButtons: View {
                 .accessibilityIdentifier("recap.planNextWeek")
         }
         .padding(.horizontal, Space.m)
+        // Over the week's scene: glass, as every button that floats over art is.
+        .controlPlacement(.floating)
     }
 }
 #endif

@@ -312,6 +312,12 @@
           },
           "disclaimerDice": {
             "$ref": "#/components/schemas/DisclaimerDiceCatalog"
+          },
+          "scenes": {
+            "$ref": "#/components/schemas/ScenesCatalog"
+          },
+          "switches": {
+            "$ref": "#/components/schemas/SwitchesCatalog"
           }
         },
         "required": [
@@ -452,6 +458,145 @@
           "lines"
         ],
         "additionalProperties": {}
+      },
+      "ScenesCatalog": {
+        "type": "object",
+        "properties": {
+          "scenes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The id squads’ picks and 战报 name.",
+                  "example": "ski"
+                },
+                "names": {
+                  "$ref": "#/components/schemas/CatalogNames"
+                },
+                "colors": {
+                  "$ref": "#/components/schemas/SceneColors"
+                },
+                "limited": {
+                  "type": "boolean",
+                  "description": "True for a scene open only part of the year (冬季限定). The picker offers it while `GET /squads/{squadId}/scene` lists it."
+                },
+                "switchId": {
+                  "type": "string",
+                  "description": "The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.",
+                  "example": "winter"
+                }
+              },
+              "required": [
+                "id",
+                "names",
+                "colors",
+                "limited"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Every scene the picker may offer, in its order; retired ones are left out. The app draws the gym for one it has no art for."
+          }
+        },
+        "required": [
+          "scenes"
+        ],
+        "additionalProperties": {}
+      },
+      "SceneColors": {
+        "type": "object",
+        "properties": {
+          "signature": {
+            "type": "string",
+            "description": "The 打卡 button, the week’s icons, the poster.",
+            "example": "#16384D"
+          },
+          "onSignature": {
+            "type": "string",
+            "description": "Text drawn on the signature.",
+            "example": "#16384D"
+          },
+          "wash": {
+            "type": "string",
+            "description": "Its light ground.",
+            "example": "#16384D"
+          },
+          "text": {
+            "type": "string",
+            "description": "Its text colour on light grounds.",
+            "example": "#16384D"
+          },
+          "floor": {
+            "type": "string",
+            "description": "`#RRGGBB`.",
+            "example": "#16384D"
+          }
+        },
+        "required": [
+          "signature",
+          "onSignature",
+          "wash",
+          "text",
+          "floor"
+        ],
+        "additionalProperties": {}
+      },
+      "SwitchesCatalog": {
+        "type": "object",
+        "properties": {
+          "switches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "winter"
+                },
+                "mode": {
+                  "type": "string",
+                  "description": "`on`, `off` or `schedule` (on only in `window`); read any other as off.",
+                  "example": "schedule"
+                },
+                "window": {
+                  "$ref": "#/components/schemas/SwitchWindow"
+                }
+              },
+              "required": [
+                "id",
+                "mode"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Every global switch scenes, stores and unlock rules follow."
+          }
+        },
+        "required": [
+          "switches"
+        ],
+        "additionalProperties": {}
+      },
+      "SwitchWindow": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "description": "`MM-DD`, included.",
+            "example": "11-15"
+          },
+          "end": {
+            "type": "string",
+            "description": "`MM-DD`, included.",
+            "example": "03-31"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "additionalProperties": {},
+        "description": "A scheduled switch’s days every year, New York time; it may run over New Year. The app never shows them."
       },
       "Me": {
         "type": "object",
@@ -2637,8 +2782,14 @@
               "tennis",
               "climbing"
             ],
-            "description": "The squad’s scene this week.",
+            "description": "The squad’s scene this week (see `sceneId`).",
             "example": "pool"
+          },
+          "sceneId": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+            "description": "The squad’s scene this week.",
+            "example": "ski"
           },
           "pickers": {
             "type": "object",
@@ -2682,8 +2833,14 @@
                   "tennis",
                   "climbing"
                 ],
-                "description": "One of the scenes the app draws. More may come with an app release.",
+                "description": "The scene, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.",
                 "example": "pool"
+              },
+              "sceneId": {
+                "type": "string",
+                "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+                "description": "The scene’s id in the scenes list (`GET /public/catalog`, `scenes`). The app draws the gym for one it has no art for.",
+                "example": "ski"
               },
               "by": {
                 "type": [
@@ -2700,6 +2857,7 @@
             },
             "required": [
               "scene",
+              "sceneId",
               "by",
               "at"
             ],
@@ -2724,7 +2882,7 @@
                     "tennis",
                     "climbing"
                   ],
-                  "description": "One of the scenes the app draws. More may come with an app release.",
+                  "description": "The scene, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`.",
                   "example": "pool"
                 },
                 "weeksAgo": {
@@ -2742,17 +2900,47 @@
               ],
               "additionalProperties": false
             },
-            "description": "Every scene, in the order the picker shows them."
+            "description": "The first five scenes, in the order the picker shows them, for builds that know only those. Newer builds read `options`."
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sceneId": {
+                  "type": "string",
+                  "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+                  "description": "The scene’s id in the scenes list (`GET /public/catalog`, `scenes`). The app draws the gym for one it has no art for.",
+                  "example": "ski"
+                },
+                "weeksAgo": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "How many weeks ago the squad last trained on it: 0 for this week’s scene, null for one it never has (the app shows it in its carton)."
+                }
+              },
+              "required": [
+                "sceneId",
+                "weeksAgo"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The scenes a pick may name this week, in the picker’s order: a limited one (the winter 雪场) only while it is open."
           }
         },
         "required": [
           "version",
           "week",
           "scene",
+          "sceneId",
           "pickers",
           "picked",
           "canPick",
-          "scenes"
+          "scenes",
+          "options"
         ],
         "additionalProperties": false
       },
@@ -2767,14 +2955,8 @@
           },
           "scene": {
             "type": "string",
-            "enum": [
-              "track",
-              "pool",
-              "gym",
-              "tennis",
-              "climbing"
-            ],
-            "description": "One of the scenes the app draws. More may come with an app release.",
+            "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+            "description": "The scene’s id: one of `options` in `GET /squads/{squadId}/scene`.",
             "example": "pool"
           }
         },
@@ -3927,7 +4109,13 @@
                   "tennis",
                   "climbing"
                 ],
-                "description": "The scene the squad trained on that week: the story takes its colours."
+                "description": "The scene the squad trained on that week, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`."
+              },
+              "sceneId": {
+                "type": "string",
+                "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+                "description": "The scene the squad trained on that week, by its id in the scenes list: the story takes its colours.",
+                "example": "ski"
               },
               "members": {
                 "type": "array",
@@ -3993,6 +4181,7 @@
               "squad",
               "week",
               "scene",
+              "sceneId",
               "members",
               "status",
               "titles"
@@ -4024,7 +4213,13 @@
                   "tennis",
                   "climbing"
                 ],
-                "description": "The scene the squad trained on that week: the story takes its colours."
+                "description": "The scene the squad trained on that week, for builds that know only the first five: one added since is sent as `gym`. Newer builds read `sceneId`."
+              },
+              "sceneId": {
+                "type": "string",
+                "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+                "description": "The scene the squad trained on that week, by its id in the scenes list: the story takes its colours.",
+                "example": "ski"
               },
               "members": {
                 "type": "array",
@@ -4063,6 +4258,7 @@
               "squad",
               "week",
               "scene",
+              "sceneId",
               "members",
               "status"
             ],
@@ -4642,6 +4838,27 @@
           "topSport": {
             "$ref": "#/components/schemas/TopSport"
           },
+          "week": {
+            "type": "object",
+            "properties": {
+              "trainedDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Days they trained this week, from all their check-ins wherever they went."
+              },
+              "plannedDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Days their plan trains this week, from the day they joined on."
+              }
+            },
+            "required": [
+              "trainedDays",
+              "plannedDays"
+            ],
+            "additionalProperties": false,
+            "description": "Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week."
+          },
           "titles": {
             "type": "array",
             "items": {
@@ -4663,6 +4880,48 @@
           "cheatMeals",
           "disclaimers",
           "titles"
+        ],
+        "additionalProperties": false
+      },
+      "ClaimedPiece": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "claim": {
+            "$ref": "#/components/schemas/PieceClaim"
+          }
+        },
+        "required": [
+          "version",
+          "claim"
+        ],
+        "additionalProperties": false
+      },
+      "PieceClaim": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "lap-bib"
+          },
+          "claimedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the member claimed it (领取) into their wardrobe.",
+            "example": "2026-11-04T18:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "claimedAt"
         ],
         "additionalProperties": false
       },
@@ -4695,13 +4954,29 @@
               "$ref": "#/components/schemas/LockedPiece"
             },
             "description": "Every piece with a rule the member hasn’t unlocked yet, and how far it is."
+          },
+          "claimed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PieceClaim"
+            },
+            "description": "Every piece the member claimed (领取) into their wardrobe, the earliest first. An unlocked piece waits in its store, marked new, until claimed."
+          },
+          "gifts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiftedPiece"
+            },
+            "description": "Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe."
           }
         },
         "required": [
           "version",
           "unlocks",
           "pieces",
-          "lockedPieces"
+          "lockedPieces",
+          "claimed",
+          "gifts"
         ],
         "additionalProperties": false
       },
@@ -4807,6 +5082,18 @@
             "description": "The piece’s id in the app’s art.",
             "example": "lap-singlet"
           },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][A-Za-z0-9]{0,39}$"
+            },
+            "description": "The sports whose 练了 count towards it; empty for any sport.",
+            "example": [
+              "run",
+              "walk"
+            ]
+          },
           "checkInsToGo": {
             "type": "integer",
             "minimum": 1,
@@ -4817,7 +5104,38 @@
         },
         "required": [
           "id",
+          "sports",
           "checkInsToGo"
+        ],
+        "additionalProperties": false
+      },
+      "GiftedPiece": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "gift-scarf"
+          },
+          "coach": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$",
+            "description": "The coach who gave it.",
+            "example": "xiaohun"
+          },
+          "givenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the coach gave it.",
+            "example": "2026-11-04T18:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "coach",
+          "givenAt"
         ],
         "additionalProperties": false
       }
@@ -7672,7 +7990,7 @@
             }
           },
           "400": {
-            "description": "Not a valid squad id, week or scene, or a week that isn’t open for picking (`SCENE_WEEK_CLOSED`)",
+            "description": "Not a valid squad id, week or scene, a week that isn’t open for picking (`SCENE_WEEK_CLOSED`), or a scene that isn’t open this week (`SCENE_NOT_OPEN`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -9496,11 +9814,77 @@
         }
       }
     },
+    "/me/pieces/{pieceId}/claim": {
+      "put": {
+        "operationId": "claimPiece",
+        "summary": "Claim an unlocked piece into the signed-in member’s wardrobe",
+        "description": "领取: puts a piece the member unlocked in their wardrobe (我的衣橱), on every phone. Nothing is bought. Claiming it again answers with the first claim.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 48,
+              "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$"
+            },
+            "required": true,
+            "name": "pieceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The claim",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimedPiece"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a piece id, or a piece the member hasn’t unlocked (`PIECE_NOT_UNLOCKED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/me/unlocks": {
       "get": {
         "operationId": "getMyUnlocks",
         "summary": "The stores, props and pieces the signed-in member unlocked",
-        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.",
+        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.",
         "security": [
           {
             "bearer": []

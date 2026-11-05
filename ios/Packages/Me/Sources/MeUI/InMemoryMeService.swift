@@ -61,6 +61,11 @@ public actor InMemoryMeService: MeService {
         return current.board
     }
 
+    public func claim(piece: String) async throws(MeError) {
+        if failsSaving { throw .unavailable }
+        current.claimed.insert(piece)
+    }
+
     public func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {
         if failsSaving { throw .unavailable }
     }
@@ -84,7 +89,8 @@ public struct InMemorySquadmateCards: SquadmateCards {
                     outfit: PlaceholderCharacter.lifter, persona: .deadpan),
             number: try? JerseyNumber(7), squadName: nil,
             joinedAt: Date(timeIntervalSince1970: 1_792_756_800),
-            counts: LifetimeCounts(trainedDays: 42, healthyMeals: 18, cheatMeals: 5, disclaimers: 4), week: nil,
+            counts: LifetimeCounts(trainedDays: 42, healthyMeals: 18, cheatMeals: 5, disclaimers: 4),
+            week: WeekCount(trainedDays: 2, plannedDays: 4),
             board: .sample)
     }
 }

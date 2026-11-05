@@ -39,6 +39,18 @@ enum EditorNames {
         return Text(LocalizedStringKey(key), bundle: .module)
     }
 
+    /// A clothing slot's name, over its pieces in 我的衣橱.
+    static func slot(_ slot: Slot) -> Text {
+        switch slot.rawValue {
+        case "top": Text("上衣", bundle: .module)
+        case "bottom": Text("下装", bundle: .module)
+        case "shoes": Text("鞋子", bundle: .module)
+        case "hat": Text("帽子", bundle: .module)
+        case "acc": Text("配饰", bundle: .module)
+        default: Text(verbatim: slot.rawValue)
+        }
+    }
+
     /// The tile that takes a piece off, for VoiceOver: 不戴 for a hat, 不拿 for a prop.
     static func nothing(in slot: Slot) -> Text {
         switch slot.rawValue {
@@ -79,7 +91,14 @@ enum EditorNames {
         "halfmoon-grip": "防滑瑜伽袜", "halfmoon-clip": "玳瑁鲨鱼夹", "halfmoon-tote": "瑜伽垫托特包", "deuce-cable": "绞花毛衣背心",
         "deuce-dress": "网球连衣裙", "deuce-pants": "俱乐部热身长裤", "deuce-socks": "条纹高筒袜球鞋", "deuce-terry": "复古毛巾头带",
         "deuce-sweater": "肩上搭的毛衣", "warmup-long": "基础长袖 T", "warmup-raglan": "插肩棒球 T", "warmup-stripe": "海魂条纹 T",
+        "powder-salmon": "三文鱼滑雪服", "powder-tuna": "吞拿鱼滑雪服", "powder-tamago": "玉子烧滑雪服",
+        "powder-ebi": "甜虾滑雪服", "powder-maki": "紫菜卷滑雪服", "powder-rice": "米饭雪裤", "powder-nori": "海苔雪裤",
+        "powder-pants": "雪裤", "powder-salmonhelmet": "三文鱼雪盔", "powder-ikura": "鱼子毛线帽", "powder-uni": "海胆毛线帽",
+        "powder-helmet": "雪盔", "powder-saba": "青花鱼雪靴", "powder-temaki": "手卷雪靴", "powder-edamame": "毛豆雪靴",
+        "powder-ebifry": "炸虾雪靴", "powder-scarf": "海苔围巾",
         "warmup-overalls": "工装背带裤", "warmup-hightop": "高帮帆布鞋", "warmup-beanie": "毛球针织帽", "warmup-headphones": "头戴耳机",
+        "lap-baguette": "法棍发带", "nolook-ball": "篮球毛线帽", "moss-mushroom": "蘑菇渔夫帽", "halfmoon-mintchip": "薄荷巧克力背心",
+        "deuce-ball": "网球毛线帽",
         "dumbbell": "哑铃", "bottle": "外卡水杯",
         "kettlebell": "壶铃", "yogamat": "瑜伽垫", "racket": "网球拍", "pickleball": "匹克球拍", "badminton": "羽毛球拍",
         "pingpong": "乒乓球拍", "chalkbag": "镁粉袋", "goggles": "泳镜",

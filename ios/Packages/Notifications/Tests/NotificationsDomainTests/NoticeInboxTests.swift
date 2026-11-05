@@ -198,6 +198,26 @@ private var utc: Calendar {
         NoticeSection.sections([notice(1, hoursAfterMonday: -1)], now: now, calendar: utc).map(\.heading) == [.earlier])
 }
 
+@Test func piecesThatCameToOneStoreTogetherAreOneRow() {
+    let now = monday.addingTimeInterval(12 * 3600)
+    let piece = { (id: Int, item: String, seconds: Double) in
+        Notice(
+            id: NoticeID(rawValue: id), toldAt: monday.addingTimeInterval(3600 + seconds), squad: nil,
+            subject: .unlocked(.piece, item: item))
+    }
+    let notices = [
+        piece(1, "lap-bib", 0),
+        piece(2, "lap-singlet", 1),
+        piece(3, "deuce-ball", 2),
+        piece(4, "deuce-socks", 2),
+        // The same store again, but later: its own arrival.
+        piece(5, "lap-spikes", 600),
+        notice(6, hoursAfterMonday: 2),
+    ]
+    let rows = NoticeSection.sections(notices.shuffled(), now: now, calendar: utc).flatMap(\.notices)
+    #expect(rows.map(\.id.rawValue) == [6, 5, 4, 2])
+}
+
 @Test func aPushLineSplitsIntoATitleAndWhatFollows() {
     let poke = PushAlertWords(PushAlert(key: "push.dailyProgress.poke", args: ["3", "12", "小林"]))
     let parts = poke.parts("%3$@拍了拍你 · 本周小队已练 %1$@/%2$@ 次")

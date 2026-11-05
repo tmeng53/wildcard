@@ -206,7 +206,7 @@ private struct CoachIcon: View {
         ZStack {
             if let head {
                 Color(role: .bgSubtle, in: .gym)
-                CharacterHead(player: head)
+                CharacterHead(player: head, figure: .coach)
             } else {
                 NoticeSymbol(systemImage: "megaphone.fill")
             }

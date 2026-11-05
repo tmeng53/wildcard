@@ -90,6 +90,8 @@ public enum Sizing {
     public static let kindIcon: Double = 22
     /// A tag's height.
     public static let tag: Double = 28
+    /// A small tag's height, inside a row or beside a name (求职中, 休息日).
+    public static let smallTag: Double = 20
 
     // MARK: Progress and status
 

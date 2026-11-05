@@ -19,6 +19,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { PhotoPath } from '../ports.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -31,6 +32,7 @@ import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
   unusedUnlocks,
+  unusedGifts,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
@@ -87,8 +89,10 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       inviteCodes: randomInviteCodes,
       aiConsent: () => Promise.resolve(true),
     }),
+    scenes: scenesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     unlocks: unusedUnlocks,
+    gifts: unusedGifts,
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,

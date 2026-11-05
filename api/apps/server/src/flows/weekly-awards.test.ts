@@ -47,6 +47,7 @@ import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import { PhotoPath } from '../ports.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -60,6 +61,7 @@ import {
   unusedCoachHiring,
   unusedCoachActivity,
   unusedUnlocks,
+  unusedGifts,
   ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
@@ -182,8 +184,10 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     squads,
     push,
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+    scenes: scenesOn(db),
     weeklyAwards: { awards, clock },
     unlocks: unusedUnlocks,
+    gifts: unusedGifts,
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,

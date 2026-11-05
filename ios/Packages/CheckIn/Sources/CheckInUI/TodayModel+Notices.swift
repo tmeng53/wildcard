@@ -58,10 +58,16 @@ extension TodayModel {
     }
 
     /// The stores and props the member's training opened that the home hasn't told, one banner
-    /// each, the earliest first. Without `unlockNotices` they wait.
+    /// each, the earliest first; pieces that came to one store together share one, which opens all
+    /// their boxes. Without `unlockNotices` they wait.
     func tellUnlocks() {
         guard unlockNotices != nil else { return }
-        let unlocks = store.takeUnlocks()
+        var stores: Set<Substring> = []
+        let unlocks = store.takeUnlocks().filter { unlock in
+            // The art names each piece `<store>-<piece>`.
+            guard unlock.kind == .piece, let store = unlock.id.split(separator: "-").first else { return true }
+            return stores.insert(store).inserted
+        }
         guard !unlocks.isEmpty else { return }
         pendingNotices += unlocks.map { Notice(news: .unlocked($0)) }
         Task { await showNextNotice() }

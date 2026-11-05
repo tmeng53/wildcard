@@ -11,6 +11,20 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface CoachGifts {
+  coach_id: string;
+  given_at: Generated<Timestamp>;
+  member_id: string;
+  piece_id: string;
+  squad_id: string;
+}
+
+export interface GiftPieces {
+  added_at: Generated<Timestamp>;
+  offered: Generated<boolean>;
+  piece_id: string;
+}
+
 export interface MemberUnlocks {
   after: number;
   check_in_id: string | null;
@@ -23,15 +37,26 @@ export interface MemberUnlocks {
   unlocked_at: Timestamp;
 }
 
+export interface PieceClaims {
+  claimed_at: Generated<Timestamp>;
+  kind: Generated<string>;
+  member_id: string;
+  piece_id: string;
+}
+
 export interface UnlockRules {
   after: number;
   counts_from: Generated<Timestamp>;
   item_id: string;
   kind: string;
   sports: Generated<string[]>;
+  switch_id: string | null;
 }
 
 export interface DB {
+  coach_gifts: CoachGifts;
+  gift_pieces: GiftPieces;
   member_unlocks: MemberUnlocks;
+  piece_claims: PieceClaims;
   unlock_rules: UnlockRules;
 }

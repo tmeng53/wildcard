@@ -1,7 +1,8 @@
 // @wildcard/unlocks: what members unlock by training (the character editor's stores, props and
 // clothing pieces), by rules kept in the database, so a threshold or a sport changes without an
-// app release.
+// app release; and gifts a squad's coach gives, pieces no store sells.
 
+export { createPostgresGiftStore } from './adapters/postgres-gift-store.js';
 export { createPostgresUnlockStore, type UnlockTables } from './adapters/postgres-unlock-store.js';
 export {
   AFTER_MAX,
@@ -15,11 +16,26 @@ export {
   earned,
   idFits,
   toGo,
+  type Claim,
+  type SwitchOn,
   type Locked,
   type Trained,
   type Unlock,
   type UnlockRule,
 } from './domain/unlocks.js';
-export { UnlockItemMissingError, UnlockSportNotListedError } from './errors.js';
-export type { SportListed, TrainedSince, UnlockStore, Unlocked } from './ports.js';
+export {
+  CoachId,
+  GiftPieceEdit,
+  type CoachGift,
+  type GiftPiece,
+  type GiftRequest,
+} from './domain/gifts.js';
+export {
+  GiftPieceNotOfferedError,
+  PieceNotUnlockedError,
+  UnlockItemMissingError,
+  UnlockSportNotListedError,
+} from './errors.js';
+export type { GiftStore, SportListed, TrainedSince, UnlockStore, Unlocked } from './ports.js';
+export { createCoachGifts, type CoachGifts, type GiftsAdmin } from './use-cases/gifts.js';
 export { createUnlocks, type Unlocks, type UnlocksAdmin } from './use-cases/unlocks.js';

@@ -109,31 +109,41 @@ private let squad = "33333333-3333-3333-3333-333333333333"
     #expect(Emoji.heart.draft == .init(version: ._1, emoji: "❤️"))
 }
 
-@Test func everySceneIsOneTheAPIKnows() {
-    for scene in SceneID.allCases {
-        #expect(Components.Schemas.ScenePick.ScenePayload(rawValue: scene.rawValue) != nil)
-        #expect(Components.Schemas.SquadScene.ScenePayload(rawValue: scene.rawValue) != nil)
-    }
-    #expect(Components.Schemas.SquadScene.ScenePayload.allCases.count == SceneID.allCases.count)
+/// The five-scene field older builds read stays as it was; this build reads `sceneId`.
+@Test func theLegacySceneFieldKeepsTheFirstFive() {
+    #expect(
+        Components.Schemas.SquadScene.ScenePayload.allCases.map(\.rawValue) == [
+            "track", "pool", "gym", "tennis", "climbing",
+        ])
 }
 
 @Test func aSquadsSceneReads() throws {
     let ann = "a0000000-0000-4000-8000-000000000001"
     let wire = Components.Schemas.SquadScene(
-        version: ._1, week: "2026-10-26", scene: .pool, pickers: .init(by: .crown, members: [ann]),
-        picked: .init(scene: .pool, by: ann, at: Date(timeIntervalSince1970: 0)), canPick: false,
+        version: ._1, week: "2026-12-07", scene: .gym, sceneId: "ski", pickers: .init(by: .crown, members: [ann]),
+        picked: .init(scene: .gym, sceneId: "ski", by: ann, at: Date(timeIntervalSince1970: 0)), canPick: false,
         scenes: [
-            .init(scene: .track, weeksAgo: 1), .init(scene: .pool, weeksAgo: 0), .init(scene: .gym, weeksAgo: nil),
+            .init(scene: .track, weeksAgo: 1), .init(scene: .pool, weeksAgo: nil), .init(scene: .gym, weeksAgo: nil),
+        ],
+        options: [
+            .init(sceneId: "track", weeksAgo: 1), .init(sceneId: "ski", weeksAgo: 0),
+            .init(sceneId: "moon", weeksAgo: nil),
         ])
     let scene = try SquadScene(wire)
     let member = MemberID(try #require(UUID(uuidString: ann)))
+    #expect(scene.scene == .ski)
     #expect(scene.pickers == .crown([member]))
-    #expect(scene.picked == SquadScene.Pick(scene: .pool, picker: member))
-    #expect(
-        scene.history == [
-            SceneHistory(scene: .track, weeksAgo: 1), SceneHistory(scene: .pool, weeksAgo: 0),
-            SceneHistory(scene: .gym, weeksAgo: nil),
-        ])
+    #expect(scene.picked == SquadScene.Pick(scene: .ski, picker: member))
+    // The options open this week, without one this build has no art for.
+    #expect(scene.history == [SceneHistory(scene: .track, weeksAgo: 1), SceneHistory(scene: .ski, weeksAgo: 0)])
+}
+
+@Test func aSceneThisBuildCantDrawIsTheLegacyOneOrTheGym() throws {
+    let wire = Components.Schemas.SquadScene(
+        version: ._1, week: "2026-12-07", scene: .pool, sceneId: "moon", pickers: .init(by: .captain, members: []),
+        picked: nil, canPick: true, scenes: [], options: [])
+    #expect(try SquadScene(wire).scene == .pool)
+    #expect(SceneID.ski.pick() == .init(version: ._1, scene: "ski"))
 }
 
 /// A build already on phones keeps reading replies after the API adds a field to them.

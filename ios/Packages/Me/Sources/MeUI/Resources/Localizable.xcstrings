@@ -33,22 +33,6 @@
         }
       }
     },
-    "再试一次": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Try again"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "再試一次"
-          }
-        }
-      }
-    },
     "删了就找不回来了。": {
       "localizations": {
         "en": {
@@ -193,22 +177,6 @@
         }
       }
     },
-    "网络开小差了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The connection took a break"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網路怪怪的"
-          }
-        }
-      }
-    },
     "Apple 那边没确认上，再试一次": {
       "localizations": {
         "en": {
@@ -237,22 +205,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "網路怪怪的，再試一次"
-          }
-        }
-      }
-    },
-    "网络开小差了，没存上": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't save. Check your connection"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網路怪怪的，沒存到"
           }
         }
       }
@@ -1013,6 +965,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "本週 %lld/%lld"
+          }
+        }
+      }
+    },
+    "商店街": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shopping street"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "商店街"
+          }
+        }
+      }
+    },
+    "有新货": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New arrivals"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有新貨"
           }
         }
       }

@@ -14,9 +14,10 @@ import type { Members } from '@wildcard/members';
 import type { Notices } from '@wildcard/notices';
 import type { Nudges } from '@wildcard/nudges';
 import type { Push } from '@wildcard/push';
+import type { Scenes } from '@wildcard/scenes';
 import type { Squads } from '@wildcard/squads';
 import type { WeeklyAwards } from '@wildcard/weekly-awards';
-import type { Unlocks } from '@wildcard/unlocks';
+import type { CoachGifts, Unlocks } from '@wildcard/unlocks';
 import { HTTPException } from 'hono/http-exception';
 import { routePath } from 'hono/route';
 import { z } from 'zod';
@@ -76,6 +77,8 @@ export interface AppDependencies {
   readonly weeklyPlans: WeeklyPlans;
   readonly members: Members;
   readonly squads: Squads;
+  /** The scenes squads train on, and which are open in a week. */
+  readonly scenes: Scenes;
   /** Each squad's coach, and the coaches it can hire (教练招聘会). */
   readonly coachHiring: CoachHiring;
   /** What each squad's coach said: its 战术板 line and its replies to check-ins. */
@@ -103,6 +106,8 @@ export interface AppDependencies {
   readonly weeklyAwards: { readonly awards: WeeklyAwards; readonly clock: () => Date };
   /** The stores, props and pieces members unlock by training. */
   readonly unlocks: Unlocks;
+  /** What squads' coaches gave members, for `/me/unlocks`. */
+  readonly gifts: Pick<CoachGifts, 'of'>;
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */
   readonly jobs: {

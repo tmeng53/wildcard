@@ -1,7 +1,15 @@
 import { SportId } from '@wildcard/sport-ids';
 import type { Kysely } from 'kysely';
 
-import { MemberId, UnlockKind, idFits, type Unlock, type UnlockRule } from '../domain/unlocks.js';
+import {
+  MemberId,
+  PieceId,
+  UnlockKind,
+  idFits,
+  type Claim,
+  type Unlock,
+  type UnlockRule,
+} from '../domain/unlocks.js';
 import type { UnlockStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -27,16 +35,21 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
         sports: row.sports.map((sport) => SportId.parse(sport)),
         after: row.after,
         countsFrom: new Date(row.counts_from),
+        ...(row.switch_id === null ? {} : { switchId: row.switch_id }),
       }));
     },
 
-    async putRule({ kind, id, sports, after }) {
+    async putRule({ kind, id, sports, after, switchId }) {
+      // Left out, the switch stays as the rule has it; null clears it.
+      const changed = {
+        sports: [...sports],
+        after,
+        ...(switchId === undefined ? {} : { switch_id: switchId }),
+      };
       await db
         .insertInto('unlock_rules')
-        .values({ kind, item_id: id, sports: [...sports], after })
-        .onConflict((conflict) =>
-          conflict.columns(['kind', 'item_id']).doUpdateSet({ sports: [...sports], after }),
-        )
+        .values({ kind, item_id: id, ...changed })
+        .onConflict((conflict) => conflict.columns(['kind', 'item_id']).doUpdateSet(changed))
         .execute();
     },
 
@@ -81,7 +94,45 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
       const fresh = new Set(inserted.map(({ kind, item_id }) => `${kind}:${item_id}`));
       return unlocks.filter(({ kind, id }) => fresh.has(`${kind}:${id}`));
     },
+
+    async claimsOf(member) {
+      const rows = await db
+        .selectFrom('piece_claims')
+        .select(['piece_id', 'claimed_at'])
+        .where('member_id', '=', member)
+        .orderBy('claimed_at')
+        .orderBy('piece_id')
+        .execute();
+      return rows.map(claimOf);
+    },
+
+    async claim(member, piece) {
+      const unlocked = await db
+        .selectFrom('member_unlocks')
+        .select('item_id')
+        .where('member_id', '=', member)
+        .where('kind', '=', 'piece')
+        .where('item_id', '=', piece)
+        .executeTakeFirst();
+      if (unlocked === undefined) return undefined;
+      await db
+        .insertInto('piece_claims')
+        .values({ member_id: member, piece_id: piece })
+        .onConflict((conflict) => conflict.columns(['member_id', 'piece_id']).doNothing())
+        .execute();
+      const kept = await db
+        .selectFrom('piece_claims')
+        .select(['piece_id', 'claimed_at'])
+        .where('member_id', '=', member)
+        .where('piece_id', '=', piece)
+        .executeTakeFirstOrThrow();
+      return claimOf(kept);
+    },
   };
+}
+
+function claimOf(row: { piece_id: string; claimed_at: Date | string }): Claim {
+  return { piece: PieceId.parse(row.piece_id), claimedAt: new Date(row.claimed_at) };
 }
 
 /** A row's id, checked against its kind's shape (the database checks it too). */

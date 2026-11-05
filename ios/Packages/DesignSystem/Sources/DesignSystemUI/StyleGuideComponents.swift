@@ -86,6 +86,8 @@ struct ButtonSection: View {
                     .buttonStyle(AppleButtonStyle())
                 }
             }
+            FloatingGuide()
+            StateGuide()
             LoadingGuide()
             GuideGroup(Text("页头：44 的圆，右边最多一个", bundle: .module)) {
                 VStack(alignment: .leading, spacing: Space.m) {

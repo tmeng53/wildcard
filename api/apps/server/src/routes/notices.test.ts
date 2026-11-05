@@ -23,6 +23,8 @@ import {
 } from '@wildcard/notices';
 import {
   MemberId as UnlockMember,
+  createCoachGifts,
+  createPostgresGiftStore,
   createPostgresUnlockStore,
   createUnlocks,
 } from '@wildcard/unlocks';
@@ -41,6 +43,7 @@ import {
   noJobs,
   nudgesOn,
   pushOn,
+  scenesOn,
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
@@ -79,6 +82,7 @@ const unlocks = createUnlocks({
   trainedSince: ({ member, since }) =>
     checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
   sportListed: (id) => sports.isListed(id),
+  switches: () => Promise.resolve(() => true),
 });
 // A year of this run's own, so broadcasts other runs left in the database never run with these.
 const year = 2100 + randomInt(7800);
@@ -122,7 +126,9 @@ const app = createApp({
     aiConsent: () => Promise.resolve(true),
   }),
   weeklyAwards: unusedWeeklyAwards,
+  scenes: scenesOn(db),
   unlocks,
+  gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,

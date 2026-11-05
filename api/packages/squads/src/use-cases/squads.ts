@@ -1,5 +1,11 @@
 import type { InviteCodes } from '../domain/invite-code.js';
-import { sceneIn, type ScenePick, type Scene, type SceneWeek } from '../domain/scene.js';
+import {
+  sceneIn,
+  type OpenScenes,
+  type ScenePick,
+  type Scene,
+  type SceneWeek,
+} from '../domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from '../domain/squad.js';
 import type { AiConsentCheck, PickOutcome, SquadStore } from '../ports.js';
 import { createSquad, type CreatedSquad, type CreateSquadInput } from './squads/create-squad.js';
@@ -40,9 +46,14 @@ export interface Squads {
   /**
    * A squad as it stood at a moment in a week, for its frozen 战报: its name, that week's scene
    * and the members in it then, in the order they joined; `undefined` when there is no such
-   * squad.
+   * squad. `open` is the scenes open that week (`@wildcard/scenes`).
    */
-  squadAt(input: { squad: SquadId; week: SceneWeek; moment: Date }): Promise<SquadAt | undefined>;
+  squadAt(input: {
+    squad: SquadId;
+    week: SceneWeek;
+    moment: Date;
+    open: OpenScenes;
+  }): Promise<SquadAt | undefined>;
   /**
    * Takes the member out of the squad; nothing happens if they aren't in it. When the last member
    * leaves, the squad ends: its invite stops working, and it stays. A squad is deleted only with
@@ -84,14 +95,14 @@ export function createSquads(deps: {
     squadIdsOf: (member) => deps.store.squadIdsOf(member),
     membersOf: (squad) => deps.store.membersOf(squad),
     membersOfAny: (squads) => deps.store.membersOfAny(squads),
-    squadAt: async ({ squad, week, moment }) => {
+    squadAt: async ({ squad, week, moment, open }) => {
       const [found, picks, members] = await Promise.all([
         deps.store.find(squad),
         deps.store.scenePicks(squad),
         deps.store.membersAt(squad, moment),
       ]);
       if (found === undefined) return undefined;
-      return { name: found.name, scene: sceneIn(picks, week), members };
+      return { name: found.name, scene: sceneIn(picks, { current: week, open }), members };
     },
     leave: ({ squad, member }) => deps.store.leave(squad, member),
     rename: (input) => renameSquad(deps, input),

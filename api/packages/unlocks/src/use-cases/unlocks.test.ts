@@ -34,6 +34,8 @@ function unlocksWith(trained: Map<MemberId, Trained[]>, told: string[] = []) {
     trainedSince: ({ member, since }) =>
       Promise.resolve((trained.get(member) ?? []).filter(({ madeAt }) => madeAt >= since)),
     sportListed: (id) => Promise.resolve(id !== 'quidditch'),
+    // Every switch is off in July (UTC), so a test can train while one is off.
+    switches: () => Promise.resolve((_id, at) => at.getUTCMonth() !== 6),
     unlocked: (_member, unlocks) => {
       told.push(...unlocks.map(({ kind, id }) => `${kind}:${id}`));
       return Promise.resolve();
@@ -63,12 +65,13 @@ describe('unlocks', () => {
     ]);
     // Each piece of the second wardrobe opens on its own, in its store's sports.
     const pieces = all.filter(({ kind }) => kind === 'piece');
-    expect(pieces).toHaveLength(39);
+    expect(pieces).toHaveLength(57);
     expect(
       pieces
         .filter(({ id }) => id.startsWith('lap-'))
         .map(({ id, sports, after }) => [id, sports, after]),
     ).toStrictEqual([
+      ['lap-baguette', ['run', 'walk'], 30],
       ['lap-bib', ['run', 'walk'], 5],
       ['lap-runcap', ['run', 'walk'], 20],
       ['lap-singlet', ['run', 'walk'], 7],
@@ -77,6 +80,50 @@ describe('unlocks', () => {
       ['lap-vest', ['run', 'walk'], 25],
       ['lap-wind', ['run', 'walk'], 13],
     ]);
+    // POWDER DAY's locked pieces open one a winter-sport 练了, the salmon helmet last.
+    const powder = pieces
+      .filter(({ id }) => id.startsWith('powder-'))
+      .toSorted((a, b) => a.after - b.after);
+    expect(powder.map(({ after }) => after)).toStrictEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+    ]);
+    expect(powder.at(-1)?.id).toBe('powder-salmonhelmet');
+    expect(new Set(powder.map(({ switchId }) => switchId))).toStrictEqual(new Set(['winter']));
+    expect(powder[0]?.sports).toStrictEqual([
+      'ski',
+      'snowboard',
+      'skate',
+      'crossCountrySki',
+      'curling',
+      'snowHike',
+      'snowman',
+      'snowballFight',
+    ]);
+  });
+
+  it('counts only check-ins made while its switch is on toward a rule with one', async () => {
+    const unlocks = unlocksWith(new Map());
+    const rule = { kind: 'prop' as const, id: 'testSnowboard', sports: ['ski'], after: 1 };
+    await unlocks.putRule({ ...rule, switchId: 'winter' });
+    // A change that leaves the switch out keeps it; null makes it count all year.
+    const kept = await unlocks.putRule(rule);
+    expect(kept.find(({ id }) => id === 'testSnowboard')?.switchId).toBe('winter');
+    const allYear = await unlocks.putRule({ ...rule, id: 'testAllYear', switchId: null });
+    expect(allYear.find(({ id }) => id === 'testAllYear')?.switchId).toBeUndefined();
+
+    const me = await newMember();
+    const july = { id: randomUUID(), sport: 'ski', madeAt: new Date('2099-07-01T12:00:00Z') };
+    const december = { id: randomUUID(), sport: 'ski', madeAt: new Date('2099-12-01T12:00:00Z') };
+    const trained = new Map<MemberId, Trained[]>([[me, [july]]]);
+    const switched = unlocksWith(trained);
+    const summer = await switched.standing(me);
+    expect(summer.unlocks.some(({ id }) => id === 'testSnowboard')).toBe(false);
+    expect(summer.locked.find(({ id }) => id === 'testSnowboard')?.toGo).toBe(1);
+    trained.set(me, [july, december]);
+    const winter = await switched.of(me);
+    expect(winter.find(({ id }) => id === 'testSnowboard')?.by).toStrictEqual({
+      checkIn: december.id,
+    });
   });
 
   it('keeps what a member earned, even once the check-in that earned it is gone', async () => {
@@ -107,6 +154,7 @@ describe('unlocks', () => {
       kind: 'piece',
       id: 'warmup-stripe',
       toGo: 2,
+      sports: [],
     });
     expect(locked.find(({ id }) => id === 'deuce-sweater')?.toGo).toBe(3);
     expect(locked.find(({ id }) => id === 'lap-bib')?.toGo).toBe(5);

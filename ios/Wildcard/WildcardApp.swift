@@ -78,6 +78,7 @@ struct WildcardApp: App {
         // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
         SportList.shared.show(CatalogClient.bundled.sports)
         DiceLines.shared.show(CatalogClient.bundled.diceLines)
+        StoreSwitches.shared.show(CatalogClient.bundled.switches)
         LaunchOptions.forgetSeenRecapIfAsked()
         LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.

@@ -40,7 +40,12 @@ import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
-import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
+import {
+  createCoachGifts,
+  createPostgresGiftStore,
+  createPostgresUnlockStore,
+  createUnlocks,
+} from '@wildcard/unlocks';
 import {
   createNotices,
   createPostgresBroadcastStore,
@@ -57,6 +62,7 @@ import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters
 import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -80,6 +86,7 @@ import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
   unusedUnlocks,
+  unusedGifts,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
@@ -158,8 +165,10 @@ beforeAll(async () => {
           photos,
           aiConsent: aiConsentOn(db),
           nudges: nudgesOn(db),
+          scenes: scenesOn(db),
           weeklyAwards: unusedWeeklyAwards,
           unlocks: unusedUnlocks,
+          gifts: unusedGifts,
           weekSummaryWords: unusedWeekSummaryWords,
           coachHiring: unusedCoachHiring,
           coachActivity: unusedCoachActivity,
@@ -212,7 +221,9 @@ beforeAll(async () => {
                   trainedSince: () => Promise.reject(new Error('unused')),
                   sportListed: (id) =>
                     createSports({ store: createPostgresSportStore(scope) }).isListed(id),
+                  switches: () => Promise.resolve(() => true),
                 }),
+                gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
               }),
               ...broadcastTools({
                 broadcasts: createNotices({
@@ -404,6 +415,8 @@ describe('the admin MCP server', () => {
       ['get_unlock_rules', true],
       ['put_unlock_rule', false],
       ['give_unlocks', false],
+      ['get_gift_pieces', true],
+      ['put_gift_piece', false],
       ['list_broadcasts', true],
       ['put_broadcast', false],
       ['get_coach_settings', true],
@@ -1078,6 +1091,28 @@ describe('the admin MCP server', () => {
     expect(rows.rows.map(({ action }) => action)).toStrictEqual([
       { version: 1, tool: 'put_broadcast', arguments: { id, broadcast } },
       { version: 1, tool: 'put_broadcast', arguments: { id, broadcast } },
+    ]);
+    await client.close();
+  });
+
+  it('adds a piece to the coach gift pool and logs it', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const edit = { id: `gift-${randomUUID().slice(0, 8)}`, offered: true };
+    const put = await client.callTool({ name: 'put_gift_piece', arguments: edit });
+    expect(put.isError).not.toBe(true);
+    expect(
+      z.object({ pieces: z.array(z.unknown()) }).parse(JSON.parse(textOf(put))).pieces,
+    ).toContainEqual(edit);
+    const read = await client.callTool({ name: 'get_gift_pieces', arguments: {} });
+    expect(
+      z.object({ pieces: z.array(z.unknown()) }).parse(JSON.parse(textOf(read))).pieces,
+    ).toContainEqual(edit);
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      { version: 1, tool: 'put_gift_piece', arguments: edit },
     ]);
     await client.close();
   });

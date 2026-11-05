@@ -15,12 +15,14 @@ import SquadDomain
 import SquadUI
 import SwiftUI
 
-/// The app once the member is signed in and in a squad: the four tabs in the system's Liquid Glass
-/// tab bar (`AppTabs`). Each tab screen keeps to the safe area, which the system raises above the
-/// bar, so none of them draws the bar itself.
+/// The app once the member is signed in and in a squad: the three tabs (今天, 动态, 我) in the
+/// system's Liquid Glass tab bar (`AppTabs`), with 小队 opened inside 今天 from the home's squad
+/// card (Tracy took 小队's own tab away on 2026-11-04; the coach chat opens from home too).
+/// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
+/// them draws the bar itself.
 struct MainTabs: View {
     enum Tab: Hashable {
-        case today, feed, squad, profile
+        case today, feed, profile
     }
 
     let today: TodayModel
@@ -36,27 +38,35 @@ struct MainTabs: View {
     @Binding var selection: Tab
     /// A place a tapped push asked for, opened once the tabs are up (`open(_:)`), then cleared.
     @Binding var destination: AppDestination?
-    /// The member left the squad on 小队.
+    /// The member left the squad on its page.
     var leftSquad: () -> Void = {}
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
-    @State private var inbox: NoticeInbox
+    @State var inbox: NoticeInbox
     /// 通知's page, open over 动态.
-    @State private var showsNotices = false
+    @State var showsNotices = false
     /// A post opened from 通知 (the one the coach answered), over its page.
-    @State private var noticePost: OpenedPost?
+    @State var noticePost: OpenedPost?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// The character editor, open from 我 over everything.
-    @State private var editor: CharacterEditorModel?
+    /// 商店街 and the character editor, open from 我.
+    @State var wardrobe: Wardrobe
     /// 出赛表, open from 我 in its place.
-    @State private var showsSchedule = LaunchOptions.opensSchedule
+    @State var showsSchedule = LaunchOptions.opensSchedule
+    /// 小队, open from the home's squad card in 今天's place.
+    @State var showsSquad = LaunchOptions.opensSquad
+    /// 小队 opens on its coach's 简历, from a tap on the coach on the home.
+    @State private var squadOpensCoach = false
     /// 小队's scene pick is playing its reveal, which fills the screen.
     @State private var squadRevealing = false
     /// 我的动态, open from 我 in its place.
     @State private var wall: PostWallStore?
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
-    /// A teammate's player card, opened from their name on the home's bubble.
+    /// A player's card, opened from a tap on them on the home or their row on 小队,
+    /// popped up over every tab and the tab bar.
     @State private var teammate: SquadmateCardModel?
+    /// The card was opened from the home, so 今天 and 拍一拍 go over it; from 小队 the scene isn't
+    /// in view to play a pat on.
+    @State private var teammateOnHome = false
 
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
@@ -71,6 +81,7 @@ struct MainTabs: View {
         _destination = destination
         self.leftSquad = leftSquad
         _inbox = State(initialValue: NoticeInbox(source: notices))
+        _wardrobe = State(initialValue: Wardrobe(profile: profile) { today.home?.member.description })
     }
 
     var body: some View {
@@ -113,23 +124,24 @@ struct MainTabs: View {
         .onChange(of: recap.picks) {
             if let picked = recap.picked { land(on: picked.scene, coveredAt: picked.coveredAt) }
         }
-        .fullScreenCover(isPresented: Binding(get: { editor != nil }, set: { if !$0 { editor = nil } })) {
-            if let editor {
-                CharacterEditorView(
-                    model: editor, context: .profile, issued: profile.overview?.joinedAt,
-                    onBack: { self.editor = nil },
-                    onDone: { edited in
-                        self.editor = nil
-                        Task {
-                            await profile.save(
-                                MeCharacter(nickname: edited.nickname, outfit: edited.outfit, persona: edited.persona))
-                        }
-                    })
+        .fullScreenCover(
+            isPresented: Binding(get: { wardrobe.editor != nil }, set: { if !$0 { wardrobe.editor = nil } })
+        ) {
+            if let editor = wardrobe.editor {
+                ProfileEditor(model: editor, profile: profile) { wardrobe.editor = nil }
             }
         }
-        .sheet(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
+        .cardPopup(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
             if let teammate {
-                TeammateCard(model: teammate).environment(\.sceneTheme, today.scene)
+                // What they're up to today over their card, with 拍一拍 (2026-11-04).
+                VStack(spacing: Space.xs) {
+                    if teammateOnHome {
+                        MateTodayStrip(model: today, member: teammate.member) { self.teammate = nil }
+                            .frame(width: SquadmateCardPopup.width)
+                    }
+                    TeammateCard(model: teammate)
+                }
+                .environment(\.sceneTheme, today.scene)
             }
         }
         .onChange(of: squad.hasLeft) { _, left in
@@ -146,27 +158,20 @@ struct MainTabs: View {
         instant.disablesAnimations = true
         withTransaction(instant) {
             squadRevealing = false
+            showsSquad = false
+            squadOpensCoach = false
             selection = .today
         }
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
-    }
-
-    /// Opens the editor on the member's own character.
-    private func editCharacter() {
-        guard let character = profile.overview?.character else { return }
-        editor = try? CharacterEditorModel.placeholder(
-            look: character.outfit, persona: character.persona, nickname: character.nickname,
-            unlocks: profile.overview?.unlocks ?? [], locked: profile.overview?.lockedPieces ?? [])
     }
 
     /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page, a scene
     /// pick's reveal) hides the bar.
     private var showsTabBar: Bool {
         switch selection {
-        case .today: today.showsTabBar
+        case .today: showsSquad ? !squadRevealing : today.showsTabBar
         case .profile: !profile.isDeletionOpen && post == nil
         case .feed: feed.opened == nil && !showsNotices && noticePost == nil
-        case .squad: !squadRevealing
         }
     }
 
@@ -175,24 +180,9 @@ struct MainTabs: View {
     @ViewBuilder private func screen(_ tab: Tab) -> some View {
         switch tab {
         case .today:
-            TodayView(
-                model: today, openSquad: { selection = .squad },
-                openPost: { post in
-                    feed.open(post)
-                    selection = .feed
-                }
-            )
-            .onAppear { today.openTeammate = { teammate = homeCard(of: $0) } }
+            todayPage
         case .feed:
             feedPage
-        case .squad:
-            SquadSettingsView(
-                model: squad, picked: land(on:coveredAt:),
-                // Past 战报 live in 动态 until they have a page of their own.
-                pastRecaps: { selection = .feed }, revealing: $squadRevealing,
-                teammateCard: { squadCard(of: $0) }
-            )
-            .environment(\.sceneTheme, squad.scene)
         case .profile:
             profilePage
         }
@@ -258,6 +248,9 @@ struct MainTabs: View {
                     // Its buttons keep the scene's colour, as its poster does; 我's own are brand.
                     .accentTone(.scene)
                     .transition(.move(edge: .trailing))
+            } else if wardrobe.showsShop, let shop = wardrobe.shop {
+                ShoppingStreetPage(model: shop) { wardrobe.showsShop = false }
+                    .transition(.move(edge: .trailing))
             } else if let wall {
                 PostWallView(
                     store: wall, back: { self.wall = nil },
@@ -276,8 +269,9 @@ struct MainTabs: View {
                 MeView(
                     model: profile,
                     destinations: MeDestinations(
-                        editCharacter: editCharacter,
+                        editCharacter: wardrobe.editCharacter,
                         schedule: { showsSchedule = true },
+                        street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                         myPosts: { wall = PostWallStore(source: myPosts) },
                         privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
                 )
@@ -285,7 +279,10 @@ struct MainTabs: View {
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wall != nil)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsSchedule)
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wardrobe.showsShop)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: post?.id)
+        // 商店街 follows what 我 reads, made again only while it is closed so an open one keeps its place.
+        .task(id: wardrobe.key) { wardrobe.refresh() }
         .accentTone(.brand)
     }
 
@@ -304,8 +301,6 @@ struct MainTabs: View {
             accessibilityIdentifier: "tab.feed"
         ),
         TabBarItem(
-            id: .squad, title: Text("小队"), systemImage: "person.3", accessibilityIdentifier: "tab.squad"),
-        TabBarItem(
             id: .profile, title: Text("我"), systemImage: "person.crop.circle", accessibilityIdentifier: "tab.me"),
     ]
 }
@@ -323,6 +318,53 @@ private struct RecapTile: View {
 }
 
 extension MainTabs {
+    /// 今天, or 小队 in its place, opened from the home's squad card, or on its coach's 简历 from
+    /// a tap on the coach on the sideline.
+    private var todayPage: some View {
+        ZStack {
+            if showsSquad {
+                SquadSettingsView(
+                    model: squad, picked: land(on:coveredAt:),
+                    close: {
+                        showsSquad = false
+                        squadOpensCoach = false
+                    },
+                    revealing: $squadRevealing,
+                    openTeammate: {
+                        teammateOnHome = false
+                        teammate = squadCard(of: $0)
+                    },
+                    coachNote: today.coachLine, opensCoach: squadOpensCoach
+                )
+                .environment(\.sceneTheme, squad.scene)
+                .transition(.move(edge: .trailing))
+            } else {
+                TodayView(
+                    model: today,
+                    openSquad: {
+                        squadOpensCoach = false
+                        showsSquad = true
+                    },
+                    openPost: { post in
+                        feed.open(post)
+                        selection = .feed
+                    }
+                )
+                .onAppear {
+                    today.openTeammate = {
+                        teammateOnHome = true
+                        teammate = homeCard(of: $0)
+                    }
+                    today.openCoach = {
+                        squadOpensCoach = true
+                        showsSquad = true
+                    }
+                }
+            }
+        }
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsSquad)
+    }
+
     /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.
     private func postPage(_ id: CheckInID, over wall: PostWallStore) -> FeedModel {
         let page = feed.page(of: id)
@@ -333,67 +375,10 @@ extension MainTabs {
         }
         return page
     }
-
-    /// Where every notice goes, the one place that decides it: a 通知 row, the home's banners and
-    /// a tapped push all open `Notice.destination` here, and a broadcast's button its place. 通知
-    /// stays under a post or the editor it opens, so back returns to it; elsewhere it closes.
-    fileprivate func open(_ destination: AppDestination) {
-        switch destination {
-        case .post(let id):
-            selection = .feed
-            noticePost = OpenedPost(id: id, model: feed.page(of: id))
-        case .unlock(let kind, let item):
-            // Read again first, so what just opened is open in the editor.
-            Task {
-                await profile.reload()
-                editCharacter()
-                if let unlock = profile.overview?.unlocks.first(where: { $0.kind == kind && $0.id == item }) {
-                    editor?.show(unlock)
-                }
-            }
-        case .stores, .store:
-            editCharacter()
-        default:
-            showsNotices = false
-            openTab(for: destination)
-        }
-    }
-
-    /// A place that is a tab, or on one: 通知 closes.
-    private func openTab(for destination: AppDestination) {
-        switch destination {
-        case .feed:
-            selection = .feed
-        case .recap(_, let week):
-            selection = .feed
-            Task {
-                await recap.refresh()
-                if recap.latest?.week.monday == week { recap.openLatest() }
-            }
-        case .today:
-            selection = .today
-        case .schedule:
-            selection = .profile
-            showsSchedule = true
-        case .squad:
-            selection = .squad
-        case .profile:
-            selection = .profile
-        case .post, .unlock, .stores, .store:
-            break
-        }
-    }
-
-    /// The broadcasts not yet seen in 通知 that this phone hasn't shown, each in a banner on 今天.
-    fileprivate func tellBroadcasts() {
-        for broadcast in inbox.unseenBroadcasts where ShownBroadcasts.first(broadcast.id) {
-            today.tell(broadcast, open: open)
-        }
-    }
 }
 
 /// A post opened from 我的动态, with the page's own model of it.
-private struct OpenedPost {
+struct OpenedPost {
     let id: CheckInID
     let model: FeedModel
 }

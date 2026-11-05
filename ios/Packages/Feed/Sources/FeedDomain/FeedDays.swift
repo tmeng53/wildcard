@@ -24,6 +24,29 @@ public enum DayHeading: Hashable, Sendable {
     }
 }
 
+/// The day a 补打卡 counts for, said from the day it was posted, after the post's time on
+/// 动态 (补周日的). Nil for a post made the day it counts for.
+public enum BackfillDay: Hashable, Sendable {
+    /// 补昨天的
+    case yesterday
+    /// 补周一的 (1) to 补周日的 (7): a day in the six before the posted day.
+    case weekday(Int)
+    /// 补上周二的: the same weekday a week before, the furthest a post can go back.
+    case weekdayLastWeek(Int)
+
+    public init?(_ checkIn: CheckIn) {
+        let posted = checkIn.postedDay
+        guard checkIn.day < posted else { return nil }
+        if checkIn.day == posted.adding(days: -1) {
+            self = .yesterday
+        } else if checkIn.day.weekday == posted.weekday {
+            self = .weekdayLastWeek(checkIn.day.weekday)
+        } else {
+            self = .weekday(checkIn.day.weekday)
+        }
+    }
+}
+
 /// One day of the feed: its posts, newest first.
 public struct FeedSection: Hashable, Sendable, Identifiable {
     public let day: LocalDay
@@ -32,9 +55,10 @@ public struct FeedSection: Hashable, Sendable, Identifiable {
 
     public var id: LocalDay { day }
 
-    /// Posts grouped by the day they count for, newest day first.
+    /// Posts grouped by the day they were posted (a 补打卡 sits on the day it went up, not the
+    /// day it counts for), newest day first.
     public static func sections(_ posts: [FeedPost], today: LocalDay) -> [FeedSection] {
-        Dictionary(grouping: posts, by: \.checkIn.day)
+        Dictionary(grouping: posts, by: \.checkIn.postedDay)
             .sorted { $0.key > $1.key }
             .map { day, posts in
                 FeedSection(

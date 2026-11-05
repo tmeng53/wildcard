@@ -1,6 +1,6 @@
 import XCTest
 
-/// 小队 the way a member uses it, on the in-memory squad: its own tab, the row of heads, the
+/// 小队 the way a member uses it, on the in-memory squad: its page from home, the row of heads, the
 /// captain's page and menu, the crown winner picking the scene, and the longest names on the smallest phone.
 /// Keeps screenshots for review.
 @MainActor
@@ -12,7 +12,7 @@ final class SquadSettingsUITests: XCTestCase {
         XCTAssertTrue(app.buttons["squad.rename"].exists, "the captain can't rename")
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the captain can pick though Coco won")
         XCTAssertEqual(app.buttons.matching(identifier: "squad.member.more").count, 4, "not one ··· per other member")
-        XCTAssertFalse(app.buttons["squad.back"].exists, "the tab has a way back")
+        XCTAssertTrue(app.buttons["squad.back"].exists, "the page has no way back")
         XCTAssertEqual(
             app.descendants(matching: .any).matching(identifier: "squad.head").count, 5, "not one head per member")
         XCTAssertTrue(app.descendants(matching: .any)["squad.head.coach"].exists, "no coach in the row of heads")
@@ -53,9 +53,7 @@ final class SquadSettingsUITests: XCTestCase {
         app.swipeUp()
         settle()
         keepScreenshot(named: "62-squad-bottom")
-        // 往期战报 lives in 动态 for now.
-        app.buttons["squad.pastRecaps"].tap()
-        waitFor(app.buttons["tab.feed"], "isSelected == true", "往期战报 didn't open 动态")
+        XCTAssertFalse(app.buttons["squad.pastRecaps"].exists, "往期战报 is back on 小队; the 战报 live in 动态")
     }
 
     func testTheWinnerPicksTheSceneOnce() {
@@ -112,7 +110,7 @@ final class SquadSettingsUITests: XCTestCase {
         keepScreenshot(named: "66-squad-en")
     }
 
-    /// Opens on the 小队 tab.
+    /// Opens on 小队.
     private func launch(language: String = "zh-Hans", extra: [String] = []) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()

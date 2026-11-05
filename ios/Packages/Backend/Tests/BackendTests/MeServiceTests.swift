@@ -28,7 +28,7 @@ import Testing
 
     var overview = try await service.overview()
     // Every piece with a rule starts locked, WARM-UP's headphones 2 练了 away.
-    #expect(overview.lockedPieces.count == 39)
+    #expect(overview.lockedPieces.count == 57)
     #expect(overview.lockedPieces.first { $0.id == "warmup-headphones" }?.checkInsToGo == 2)
     overview.lockedPieces = []
     #expect(

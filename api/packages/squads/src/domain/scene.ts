@@ -2,9 +2,15 @@ import { z } from 'zod';
 
 import type { MemberId } from './squad.js';
 
-/** The scenes a squad trains on: the app draws each one. */
-export const Scene = z.enum(['track', 'pool', 'gym', 'tennis', 'climbing']);
+/**
+ * A scene a squad trains on, by its id in the scenes list (`@wildcard/scenes`), which says which
+ * are open in a week. The app draws each one, and the gym for one it has no art for.
+ */
+export const Scene = z.string().regex(/^[a-z][A-Za-z0-9]{0,39}$/);
 export type Scene = z.infer<typeof Scene>;
+
+/** The scenes a squad may train on in a week, in the picker's order. */
+export type OpenScenes = readonly Scene[];
 
 /** Where every squad starts, before anyone picks: the gym, the scene the designs are drawn on. */
 export const FIRST_SCENE: Scene = 'gym';
@@ -37,37 +43,52 @@ export interface ScenePick {
 }
 
 /**
- * Each scene and how many weeks ago the squad last trained on it: 0 for the scene of `current`,
- * null for one it never has. A squad trains on its latest pick until the next one, and on the
- * gym from the week it was made until its first pick.
+ * Each of `scenes` and how many weeks ago the squad last trained on it: 0 for the scene of
+ * `current`, null for one it never has. A squad trains on its latest pick until the next one, and
+ * on the gym from the week it was made until its first pick.
  */
 export function lastTrained(
   picks: readonly ScenePick[],
-  { firstWeek, current }: { readonly firstWeek: SceneWeek; readonly current: SceneWeek },
+  {
+    firstWeek,
+    current,
+    scenes,
+  }: {
+    readonly firstWeek: SceneWeek;
+    readonly current: SceneWeek;
+    readonly scenes: readonly Scene[];
+  },
 ): Map<Scene, number | null> {
   const stints: { scene: Scene; from: SceneWeek }[] = [{ scene: FIRST_SCENE, from: firstWeek }];
   for (const pick of picks.toSorted((a, b) => a.week.localeCompare(b.week))) {
     if (pick.week > current) break;
     stints.push({ scene: pick.scene, from: pick.week });
   }
-  const last = new Map<Scene, number | null>(Scene.options.map((scene) => [scene, null]));
+  const last = new Map<Scene, number | null>(scenes.map((scene) => [scene, null]));
   stints.forEach(({ scene, from }, index) => {
     const next = stints[index + 1]?.from;
     // A stint that a pick in its own first week replaced was never trained on.
     if (next !== undefined && next <= from) return;
     const until = next === undefined ? current : weekBefore(next);
     const ago = weeksBetween(until, current);
+    if (!last.has(scene)) return;
     const before = last.get(scene);
     if (before === null || before === undefined || ago < before) last.set(scene, ago);
   });
   return last;
 }
 
-/** The squad's scene in `current`: its latest pick up to then, else the gym. */
-export function sceneIn(picks: readonly ScenePick[], current: SceneWeek): Scene {
+/**
+ * The squad's scene in `current`: its latest pick up to then, else the gym. A pick whose scene
+ * isn't open in `current` (a winter scene once winter is over, or a retired one) is the gym.
+ */
+export function sceneIn(
+  picks: readonly ScenePick[],
+  { current, open }: { readonly current: SceneWeek; readonly open: OpenScenes },
+): Scene {
   let latest: ScenePick | undefined;
   for (const pick of picks) {
     if (pick.week <= current && (latest === undefined || pick.week > latest.week)) latest = pick;
   }
-  return latest?.scene ?? FIRST_SCENE;
+  return latest !== undefined && open.includes(latest.scene) ? latest.scene : FIRST_SCENE;
 }

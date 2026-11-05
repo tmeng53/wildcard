@@ -37,14 +37,12 @@ struct SquadSceneView: View {
     /// Whether I can still pat a teammate today; else their bubble says 「拍过了」.
     let canPat: (MemberID) -> Bool
     let tapMate: (MemberID) -> Void
-    /// I tapped my own character: it plays its signature move.
+    /// I tapped my own character: it plays its signature move and my card opens.
     let tapMe: () -> Void
     let patMate: (MemberID) -> Void
     /// The squad dropping onto a newly picked scene: nobody is on it until their turn.
     var arrival: TodayModel.Arrival?
-    /// The coach's 战术板 line while its bubble is up.
-    var coachSays: CoachNote?
-    /// I tapped the coach on the sideline.
+    /// I tapped the coach on the sideline: its 简历 opens.
     var tapCoach: () -> Void = {}
 
     /// The pull whose wake-up (or doze) has played out, after which the scene stops redrawing
@@ -87,9 +85,6 @@ struct SquadSceneView: View {
                         .allowsHitTesting(false)
                 }
                 CheerBubbles(cast: cast, unit: unit)
-                if let coach = cast.coach, arrival == nil {
-                    CoachBubble(coach: coach, line: coachSays, unit: unit)
-                }
                 if phase == .night { WokenLine(cast: cast, pull: playingPull, unit: unit) }
                 PatOverlay(layer: .marks, cast: cast, pats: pats, unit: unit, canPat: canPat, pat: patMate)
                 Streamers(trigger: celebration)
