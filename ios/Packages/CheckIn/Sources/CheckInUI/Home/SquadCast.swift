@@ -48,6 +48,8 @@ final class SquadCast {
     private(set) var coach: Coach?
     /// Bumps each time the squad cheers me, with who joins in, nearest first.
     private(set) var cheer = Cheer(count: 0, order: [])
+    /// What the coach last saw on the home, for its next cue, and whose eyes they were.
+    private var coachSaw: (coach: CoachID?, sighting: CoachCue.Sighting)?
 
     struct Cheer: Equatable {
         var count: Int
@@ -75,6 +77,7 @@ final class SquadCast {
     func update(home: Home, scene: SceneTheme, phase: DayPhase, coach speaker: CoachSpeaker? = nil) {
         if stage.layout != .of(scene) { stage = SquadStage(layout: .of(scene)) }
         coach = sideline(speaker)
+        watch(home, by: speaker)
         let teammates = home.today.members.filter { $0.member != home.member }
         let members = teammates.map { mate in
             StageMember(
@@ -189,10 +192,27 @@ final class SquadCast {
         return Coach(speaker: speaker, player: player, spot: spot)
     }
 
-    /// The coach cheers once, when tapped.
-    func cheerCoach() {
+    /// The coach gives its pep talk, when tapped: its 战术板 line is on the 简历 the tap opens.
+    func coachTalks() {
+        play(.pepTalk)
+    }
+
+    /// The coach whistles at a post that arrived and claps at a week that reached its goal, as
+    /// the home changes under it; it lands as my ring closes, when the post is mine.
+    private func watch(_ home: Home, by speaker: CoachSpeaker?) {
+        let now = CoachCue.Sighting(home)
+        let before = coachSaw?.coach == speaker?.id ? coachSaw?.sighting : nil
+        coachSaw = (speaker?.id, now)
+        guard let cue = CoachCue.after(before, now: now) else { return }
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(Motion.ringFill))
+            self?.play(cue == .clap ? .clap : .whistle)
+        }
+    }
+
+    private func play(_ move: CoachCharacter.Move) {
         guard let coach else { return }
-        try? coach.player.play(CoachCharacter.clip(.cheer, coach: coach.speaker.id.rawValue))
+        try? coach.player.play(CoachCharacter.clip(move, coach: coach.speaker.id.rawValue))
     }
 
     /// The member's character, made again when what they wear or their persona changes (a kit

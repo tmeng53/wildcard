@@ -161,22 +161,6 @@
         }
       }
     },
-    "编辑外卡运动员": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit your Wildcard athlete"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "編輯外卡運動員"
-          }
-        }
-      }
-    },
     "Apple 那边没确认上，再试一次": {
       "localizations": {
         "en": {
@@ -521,22 +505,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@號"
-          }
-        }
-      }
-    },
-    "我的动态": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "My posts"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我的動態"
           }
         }
       }
@@ -997,6 +965,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "有新貨"
+          }
+        }
+      }
+    },
+    "换装": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dress up"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "換裝"
+          }
+        }
+      }
+    },
+    "出赛表 · %lld/%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lineup · %lld/%lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "出賽表 · %lld/%lld"
           }
         }
       }

@@ -42,16 +42,10 @@ struct ArrivalPopup: View {
                     }
                 }
                 .padding(.top, Space.l)
-                VStack(spacing: Space.xxs) {
-                    title
-                        .typeStyle(TypeRamp.taskTitle)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .multilineTextAlignment(.center)
-                    Text("盒子里是什么，开了才知道", bundle: .module)
-                        .typeStyle(TypeRamp.callout)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .multilineTextAlignment(.center)
-                }
+                title
+                    .typeStyle(TypeRamp.taskTitle)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .multilineTextAlignment(.center)
                 VStack(spacing: Space.xs) {
                     Button(action: open) {
                         Text("一键全开", bundle: .module).frame(maxWidth: .infinity)
@@ -142,7 +136,9 @@ private struct Box: View {
                     .foregroundStyle(Color(role: .fgOnInk, in: theme))
                     .offset(y: CartonBox.size.height * 0.16)
             }
-            .scaleEffect(scale, anchor: .bottom)
+            // CartonBox lays out at its full 170 × 190, so it shrinks about its middle to sit
+            // inside the smaller frame; about its bottom it would hang below it, over the title.
+            .scaleEffect(scale)
             .frame(width: size.width, height: size.height)
             .keyframeAnimator(initialValue: 0.0, trigger: step >= .shaking && !reduceMotion) { box, degrees in
                 box.rotationEffect(.degrees(degrees), anchor: .bottom)

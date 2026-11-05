@@ -8,8 +8,9 @@ import Foundation
 /// anything draws exactly what it shipped with.
 public enum ArtTree {
     /// The rig this build draws. Downloaded art that needs a newer one is left out
-    /// (`rigVersion` in the catalog), so new rig parts never break an older build.
-    public static let rigVersion = 1
+    /// (`rigVersion` in the catalog), so new rig parts never break an older build. 2: the coaches'
+    /// rigs gained the parts their shared moves play (the whistle, its cord, the front left arm).
+    public static let rigVersion = 2
 
     /// Where the downloaded files stand, mirroring the tree's paths: Application Support's
     /// `Art/current`, swapped whole for a newer generation once all of it is downloaded.

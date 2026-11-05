@@ -159,21 +159,24 @@ public final class CharacterEditorModel {
     /// only the draft's, so leaving without saving keeps the look the member had.
     public func tryOn(_ piece: String) {
         tab = .outfit
-        guard let slot = wardrobe.first(where: { $0.pieces.contains(piece) })?.slot,
-            draft.picks.variants[slot] != piece
-        else { return }
+        guard let slot = wardrobe.first(where: { $0.pieces.contains(piece) })?.slot else { return }
+        // Already worn, it isn't put on again (a second tap takes it off), but its slot still shows.
+        guard draft.picks.variants[slot] != piece else {
+            picked = slot
+            return
+        }
         wear(piece, for: slot)
     }
 
-    /// 我的衣橱: what the member owns, by slot in the art's order: every piece of the open stores but
+    /// 我的衣橱: what the member owns, by slot in the art's order, every slot even when empty: every piece of the open stores but
     /// the unlocked ones not claimed yet, which wait on 商店街.
     var wardrobe: [(slot: Slot, pieces: [String])] {
         let catalog = draft.catalog
         let open = catalog.stores.filter(\.isOpen).map(\.id)
         let racks = open.flatMap { catalog.rack(of: $0) }.filter { owns($0.variant) }
-        return Catalog.clothingSlots.compactMap { slot in
-            let pieces = racks.filter { $0.slot == slot }.map(\.variant)
-            return pieces.isEmpty ? nil : (slot, pieces)
+        // Every slot, an empty one too: its tab says it's still empty (Tracy 2026-11-05).
+        return Catalog.clothingSlots.map { slot in
+            (slot, racks.filter { $0.slot == slot }.map(\.variant))
         }
     }
 

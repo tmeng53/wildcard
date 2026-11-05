@@ -33,6 +33,13 @@ import Testing
     #expect(stock.pieces.first { $0.id == "warmup-headphones" }?.state == .locked(toGo: 2))
     #expect(!stock.pieces.contains { $0.store == "deuce" })
     overview.stock = nil
+    // The 出赛表 tile's week: the member's first, numbered 1, with nothing trained yet and today
+    // marked once.
+    let glance = try #require(overview.weekGlance)
+    #expect(glance.number == 1)
+    #expect(glance.days.count == 7 && !glance.days.contains { $0.mark == .trained })
+    #expect(glance.days.filter(\.isToday).count == 1)
+    overview.weekGlance = nil
     #expect(
         overview
             == MeOverview(

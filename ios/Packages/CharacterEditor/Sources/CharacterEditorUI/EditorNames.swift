@@ -50,7 +50,7 @@ enum EditorNames {
         case "top": Text("上衣", bundle: .module)
         case "bottom": Text("下装", bundle: .module)
         case "shoes": Text("鞋子", bundle: .module)
-        case "hat": Text("帽子", bundle: .module)
+        case "hat": Text("头饰", bundle: .module)
         case "acc": Text("配饰", bundle: .module)
         default: Text(verbatim: slot.rawValue)
         }
