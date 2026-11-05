@@ -22,7 +22,7 @@ export {
   OwnMessageReportError,
   SquadNotJoinedError,
 } from './errors.js';
-export type { ChatMembership, ChatStore, NewMessage } from './ports.js';
+export type { ChatMembership, ChatReport, ChatStore, NewMessage } from './ports.js';
 export {
   PAGE_LIMIT,
   createSquadChat,

@@ -204,12 +204,10 @@ describe('squad chat', () => {
     await chat.report({ member: bea, squad, message: message.id });
     await chat.report({ member: bea, squad, message: message.id });
     await chat.remove({ member: ana, squad, message: message.id });
-    const reports = await db
-      .selectFrom('squad_message_reports')
-      .select(['reported_text', 'message_id'])
-      .where('squad_id', '=', squad)
-      .execute();
-    expect(reports).toStrictEqual([{ reported_text: '不好的话', message_id: null }]);
+    const reports = (await chat.reports({ limit: 200 })).filter((each) => each.squad === squad);
+    expect(
+      reports.map(({ text, message: id, writer, reporter }) => ({ text, id, writer, reporter })),
+    ).toStrictEqual([{ text: '不好的话', id: undefined, writer: ana, reporter: bea }]);
   });
 
   it('counts what a member hasn’t read, and the @s and replies to them in it', async () => {
@@ -234,7 +232,12 @@ describe('squad chat', () => {
     const plain = await send(ana, { squad, words: '出发' });
     expect(await chat.pushTargets(plain)).toStrictEqual([{ member: cy, mentioned: false }]);
     const mention = await send(ana, { squad, words: '@Bea', mentions: [bea] });
-    expect(await chat.pushTargets(mention)).toStrictEqual([
+    // In no particular order.
+    expect(
+      (await chat.pushTargets(mention)).toSorted(
+        (one, other) => (one.mentioned ? -1 : 0) - (other.mentioned ? -1 : 0),
+      ),
+    ).toStrictEqual([
       { member: bea, mentioned: true },
       { member: cy, mentioned: false },
     ]);

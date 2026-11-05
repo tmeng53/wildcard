@@ -71,5 +71,6 @@ export const ignoredNotices = {
     coachAnswer: unused,
     coachNote: unused,
     pushTargets: unused,
+    reports: unused,
   },
 };

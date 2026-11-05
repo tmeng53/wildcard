@@ -61,6 +61,8 @@ public final class ChatStore {
     /// The member's own not yet taken, in the order sent.
     private var pending: [(message: ChatMessage, draft: ChatDraft, failed: Bool)] = []
     private var readThrough = 0
+    /// The member's own deleted while still going out, to delete once saved.
+    private var withdrawn: Set<ChatMessageID> = []
     private var markingRead = false
 
     private let source: any ChatSource
@@ -116,6 +118,8 @@ public final class ChatStore {
     public func heard(_ event: ChatLive) async {
         switch event {
         case .ready:
+            // Dots from before the stream dropped may never hear their end.
+            coachTyping = nil
             await load()
         case .message(let squad, let message, let quote):
             if squad == self.squad { show(message, quoting: quote) }
@@ -133,6 +137,8 @@ public final class ChatStore {
     /// A message heard live: new, or with its reactions changed. The coach's ends its dots.
     private func show(_ message: ChatMessage, quoting quote: ChatMessage?) {
         if let quote { quoted[quote.id] = quote }
+        // The member's own deleted while going out: its echo isn't shown.
+        guard !withdrawn.contains(message.id) else { return }
         loaded[message.id] = message
         pending.removeAll { $0.message.id == message.id }
         if case .coach(let coach) = message.author, coach == coachTyping { coachTyping = nil }
@@ -197,10 +203,21 @@ public final class ChatStore {
         guard let draft = pending.first(where: { $0.message.id == id })?.draft else { return }
         do throws(ChatError) {
             let saved = try await source.send(draft, id: id, in: squad)
+            phase = .current
+            // Deleted while it was going out: it reached the server, so it goes from there too.
+            if withdrawn.remove(id) != nil {
+                rebuild()
+                await delete(saved.id, loadedAs: saved)
+                return
+            }
             pending.removeAll { $0.message.id == id }
             loaded[saved.id] = saved
-            phase = .current
         } catch {
+            if withdrawn.remove(id) != nil {
+                // It may have been saved before the answer was lost.
+                try? await source.delete(id, in: squad)
+                return
+            }
             if let index = pending.firstIndex(where: { $0.message.id == id }) { pending[index].failed = true }
             if error != .notSent { failure = error }
         }
@@ -209,12 +226,27 @@ public final class ChatStore {
 
     /// Deletes the member's own message; one that never went out just goes.
     public func delete(_ id: ChatMessageID) async {
-        if pending.contains(where: { $0.message.id == id }) {
+        if let item = pending.first(where: { $0.message.id == id }) {
             pending.removeAll { $0.message.id == id }
             rebuild()
+            // One still going out may yet be saved: it is deleted once it is. A failed one may
+            // have reached the server before the answer was lost, so it is deleted there too.
+            if !item.failed {
+                withdrawn.insert(id)
+                return
+            }
+            do throws(ChatError) {
+                try await source.delete(id, in: squad)
+            } catch {
+                // Never saved, or gone already: nothing to tell.
+            }
             return
         }
         guard let message = loaded[id], message.member == viewer else { return }
+        await delete(id, loadedAs: message)
+    }
+
+    private func delete(_ id: ChatMessageID, loadedAs message: ChatMessage) async {
         loaded[id] = nil
         rebuild()
         do throws(ChatError) {
@@ -284,16 +316,21 @@ public final class ChatStore {
         }
     }
 
-    // MARK: Inside
+}
+
+// MARK: Inside
+
+extension ChatStore {
 
     private func take(_ page: ChatPage, isNewest: Bool) {
         for message in page.messages { loaded[message.id] = message }
         for message in page.quoted { quoted[message.id] = message }
         if isNewest {
             // A message gone from the newest page's range was deleted while the chat was closed.
-            if let oldest = page.messages.map(\.seq).min() {
+            // One newer than the page (heard or sent while it loaded) stays.
+            if let oldest = page.messages.map(\.seq).min(), let newest = page.messages.map(\.seq).max() {
                 for (id, message) in loaded
-                where message.seq >= oldest && !page.messages.contains(where: { $0.id == id }) {
+                where (oldest...newest).contains(message.seq) && !page.messages.contains(where: { $0.id == id }) {
                     loaded[id] = nil
                 }
             } else {

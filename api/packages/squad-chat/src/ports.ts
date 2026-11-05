@@ -32,6 +32,18 @@ export type NewMessage =
       readonly text: string;
     };
 
+/** A member's report of a message, with what it said as it was reported. */
+export interface ChatReport {
+  readonly at: Date;
+  readonly squad: SquadId;
+  /** `undefined` once the message is deleted. */
+  readonly message: MessageId | undefined;
+  /** Who wrote it: `undefined` for the coach's, or once the writer's account is gone. */
+  readonly writer: MemberId | undefined;
+  readonly text: string;
+  readonly reporter: MemberId;
+}
+
 /** Where squads' chats are kept. Messages are never changed; deleting one removes it. */
 export interface ChatStore {
   /**
@@ -60,6 +72,8 @@ export interface ChatStore {
   }): Promise<void>;
   /** Records a member's report of a message, once. */
   report(input: { readonly message: ChatMessage; readonly member: MemberId }): Promise<void>;
+  /** The newest reports, every squad's, newest first. */
+  reports(limit: number): Promise<ChatReport[]>;
   /** Each of these members' alerts in the squad, for those who set them. */
   alerts(squad: SquadId, members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, ChatAlerts>>;
   /** Saves a member's alerts in the squad, unless they are the alerts already. */

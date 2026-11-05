@@ -399,31 +399,36 @@ async function runWake(
     // The squad sees the coach's three dots while it works on its answer.
     const typing = wake.reason.kind === 'chat' ? deps.chat : undefined;
     await typing?.typing({ squad: wake.squad, coach: coach.id, typing: true });
-    const run = await deps.agent.run({
-      model: settings.model,
-      instructions: instructionsOf(settings, coach),
-      task,
-      tools: toolbox({
-        week,
-        roster,
-        draft,
-        kind: wake.reason.kind,
-        ...photosOf(deps.photoUrls, { week, wake }),
-        ...factsFor(deps, { week, roster }),
-        pastWeek: async (weeksAgo) =>
-          weekText(
-            await weekOf(deps, {
-              squad: wake.squad,
-              weekStart: weekStartOf(dayBefore(week.weekStart, weeksAgo * 7)),
-            }),
-          ),
-      }),
-      // Every wake of a coach begins with its same instructions, then its tools (each kind's own
-      // last: the daily wake's post_note, a check-in's reply and react, a reply's answer), so
-      // every kind shares the rest.
-      cacheKey: `coach:${coach.id}`,
-    });
-    await typing?.typing({ squad: wake.squad, coach: coach.id, typing: false });
+    // The dots end however the run ends.
+    let run: Awaited<ReturnType<CoachAgent['run']>>;
+    try {
+      run = await deps.agent.run({
+        model: settings.model,
+        instructions: instructionsOf(settings, coach),
+        task,
+        tools: toolbox({
+          week,
+          roster,
+          draft,
+          kind: wake.reason.kind,
+          ...photosOf(deps.photoUrls, { week, wake }),
+          ...factsFor(deps, { week, roster }),
+          pastWeek: async (weeksAgo) =>
+            weekText(
+              await weekOf(deps, {
+                squad: wake.squad,
+                weekStart: weekStartOf(dayBefore(week.weekStart, weeksAgo * 7)),
+              }),
+            ),
+        }),
+        // Every wake of a coach begins with its same instructions, then its tools (each kind's own
+        // last: the daily wake's post_note, a check-in's reply and react, a reply's answer), so
+        // every kind shares the rest.
+        cacheKey: `coach:${coach.id}`,
+      });
+    } finally {
+      await typing?.typing({ squad: wake.squad, coach: coach.id, typing: false });
+    }
     // The tokens were spent whatever comes next, so they are counted first, on their own.
     await deps.stores.usage.record({
       squad: wake.squad,

@@ -115,6 +115,7 @@ import {
 import { googleScheduler, jobsTokenScheduler } from './adapters/scheduler.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
+import { listChatReports } from './admin-mcp/tools/chat-reports.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
@@ -560,6 +561,7 @@ const app = createApp({
     admins: adminsOn,
     tools: (scope) => [
       listAdminLog({ admins: adminsOn(scope) }),
+      listChatReports({ chat }),
       ...memeTools({
         memes: createMemes({ store: createPostgresMemeStore(scope), clock: () => new Date() }),
         clock: () => new Date(),

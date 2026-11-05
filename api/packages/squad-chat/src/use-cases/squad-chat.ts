@@ -16,7 +16,7 @@ import {
   OwnMessageReportError,
   SquadNotJoinedError,
 } from '../errors.js';
-import type { ChatMembership, ChatStore } from '../ports.js';
+import type { ChatMembership, ChatReport, ChatStore } from '../ports.js';
 
 /** The most messages one page holds. */
 export const PAGE_LIMIT = 50;
@@ -90,6 +90,8 @@ export interface SquadChat {
     readonly squad: SquadId;
     readonly message: MessageId;
   }): Promise<void>;
+  /** For the admins: the newest reports, every squad's, newest first. */
+  reports(input: { readonly limit: number }): Promise<ChatReport[]>;
   /** The member's alerts in the squad. */
   alerts(input: { readonly member: MemberId; readonly squad: SquadId }): Promise<ChatAlerts>;
   setAlerts(input: {
@@ -255,6 +257,10 @@ export function createSquadChat(deps: {
         throw new OwnMessageReportError();
       }
       await deps.store.report({ message, member });
+    },
+
+    async reports({ limit }) {
+      return deps.store.reports(limit);
     },
 
     async alerts({ member, squad }) {

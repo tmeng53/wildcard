@@ -131,6 +131,22 @@ struct ChatStoreTests {
         #expect(chat.lines.map(\.message.text) == ["回你"])
     }
 
+    @Test func aLoadKeepsWhatCameAfterItsPage() async throws {
+        let chat = store(try source([message(1, by: .member(mia), "嗨")]))
+        await chat.load()
+        await chat.heard(.message(squad, message(9, by: .member(mia), "刚到"), quoted: nil))
+        await chat.load()
+        #expect(chat.lines.map(\.message.text) == ["嗨", "刚到"])
+    }
+
+    @Test func aReconnectEndsTheCoachsDots() async throws {
+        let chat = store(try source())
+        await chat.load()
+        await chat.heard(.coachTyping(squad, "xiaohun", typing: true))
+        await chat.heard(.ready)
+        #expect(chat.coachTyping == nil)
+    }
+
     @Test func reactingShowsAtOnceAndPickingItAgainTakesItBack() async throws {
         let chat = store(try source([message(1, by: .member(mia), "嗨")]))
         await chat.load()

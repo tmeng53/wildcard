@@ -421,14 +421,14 @@ export function squadChat(
         mentionsCoach: draft.mentionsCoach,
       });
       // Sent before answering: Cloud Run gives the server CPU only while a request runs.
-      if (sent.created) {
-        await pushChatMessage(deps, sent);
-        if (deps.chatCoachAnswer !== undefined && asksCoach(sent.message, sent.repliedTo?.author)) {
-          await answerInChat(
-            { answer: deps.chatCoachAnswer, log: deps.log },
-            { squad: squadId, message: messageId },
-          );
-        }
+      if (sent.created) await pushChatMessage(deps, sent);
+      // A retry asks again too: a first try that died before the coach's wake was queued would
+      // otherwise never be answered. The wake is one per message, and so is the answer.
+      if (deps.chatCoachAnswer !== undefined && asksCoach(sent.message, sent.repliedTo?.author)) {
+        await answerInChat(
+          { answer: deps.chatCoachAnswer, log: deps.log },
+          { squad: squadId, message: messageId },
+        );
       }
       const body = wireMessage(sent.message);
       return sent.created ? c.json(body, 201) : c.json(body, 200);

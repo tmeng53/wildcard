@@ -1,3 +1,4 @@
+import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely, type Selectable } from 'kysely';
 
 import {
@@ -8,8 +9,12 @@ import {
   SquadId,
   type ChatMessage,
 } from '../domain/message.js';
+import { ChatMessageNotFoundError } from '../errors.js';
 import type { ChatStore } from '../ports.js';
 import type { DB, SquadMessages } from './tables.js';
+
+/** Postgres's code for a reference to a row that isn't there: here, the message replied to. */
+const FOREIGN_KEY_VIOLATION = '23503';
 
 /** The tables this store reads and writes, as generated from the migrations. */
 export type ChatTables = DB;
@@ -88,7 +93,18 @@ export function createPostgresChatStore(db: Kysely<ChatTables>): ChatStore {
         .values(values)
         .onConflict((conflict) => conflict.doNothing())
         .returningAll()
-        .executeTakeFirst();
+        .executeTakeFirst()
+        .catch((error: unknown) => {
+          // The message it replies to was deleted since it was checked.
+          if (
+            hasErrorCode(error, FOREIGN_KEY_VIOLATION) &&
+            'replyTo' in message &&
+            message.replyTo !== undefined
+          ) {
+            throw new ChatMessageNotFoundError(message.replyTo);
+          }
+          throw error;
+        });
       if (inserted !== undefined) {
         const [saved] = await withReactions([inserted]);
         if (saved !== undefined) return { message: saved, created: true };
@@ -155,6 +171,24 @@ export function createPostgresChatStore(db: Kysely<ChatTables>): ChatStore {
         })
         .onConflict((conflict) => conflict.columns(['message_id', 'member_id']).doNothing())
         .execute();
+    },
+
+    async reports(limit) {
+      const rows = await db
+        .selectFrom('squad_message_reports')
+        .selectAll()
+        .orderBy('id', 'desc')
+        .limit(limit)
+        .execute();
+      return rows.map((row) => ({
+        at: new Date(row.at),
+        squad: SquadId.parse(row.squad_id),
+        message: row.message_id === null ? undefined : MessageId.parse(row.message_id),
+        writer:
+          row.reported_member_id === null ? undefined : MemberId.parse(row.reported_member_id),
+        text: row.reported_text,
+        reporter: MemberId.parse(row.member_id),
+      }));
     },
 
     async alerts(squad, members) {
