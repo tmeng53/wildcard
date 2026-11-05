@@ -18,11 +18,15 @@ extension Figure {
             } catch .malformedJSON(let problem) {
                 throw .malformedJSON("\(path)\(problem)")
             }
-            guard let arm = rig.parts.firstIndex(where: { $0.id == file.level }) else {
-                throw .unknownArm(art: path, arm: file.level)
+            var arms: [Int] = []
+            for id in file.level {
+                guard let arm = rig.parts.firstIndex(where: { $0.id == id }) else {
+                    throw .unknownArm(art: path, arm: id)
+                }
+                arms.append(arm)
             }
             let held = rig.parts.indices.filter { index in
-                parents[index] == arm && rig.parts[index].layers.contains { $0.slot == slot }
+                parents[index].map(arms.contains) == true && rig.parts[index].layers.contains { $0.slot == slot }
             }
             return Level(variant: variant, parts: held)
         }
@@ -63,9 +67,21 @@ extension Figure {
     }
 }
 
-/// `{"version": 1, "level": "armR"}`: the arm a variant keeps level in.
+/// `{"version": 1, "level": "armR"}`: the arm a variant keeps level in, or the arms, as
+/// `["armL", "armR"]` for a pair (ski poles).
 private struct HoldFile: Decodable {
     static let shape = JSONShape.object(["version": .value, "level": .value])
 
-    let level: PartID
+    let level: [PartID]
+
+    enum CodingKeys: String, CodingKey { case level }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let arm = try? container.decode(PartID.self, forKey: .level) {
+            level = [arm]
+        } else {
+            level = try container.decode([PartID].self, forKey: .level)
+        }
+    }
 }

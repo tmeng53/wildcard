@@ -157,14 +157,33 @@ struct MemberRow: View {
     let isSaving: Bool
     /// Opens their player card; nil on my own row.
     let open: (() -> Void)?
+    /// The captain confirmed a change to this member.
     let act: (MemberAction) -> Void
     @Environment(\.sceneTheme) private var theme
+    @State private var isManaging = false
 
     private var name: String { Self.name(of: member) }
 
     /// The member's nickname, or 新队友 until they make their character.
     static func name(of member: SquadMemberRow) -> String {
         member.character?.nickname.text ?? String(localized: "新队友", bundle: .module.inAppLanguage)
+    }
+
+    /// 转让队长 and 移出小队, each asking first.
+    private var manageItems: [GlassMenuItem] {
+        let hand = MemberAction.handCaptaincy(member.id, name: name)
+        let remove = MemberAction.remove(member.id, name: name)
+        return [
+            GlassMenuItem(
+                Text("转让队长", bundle: .module), systemImage: "crown", id: "squad.member.handCaptaincy",
+                confirm: .init(hand.title, label: Text("转让", bundle: .module), id: "squad.handCaptaincy.confirm")
+            ) { act(hand) },
+            GlassMenuItem(
+                Text("移出小队", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right", role: .destructive,
+                id: "squad.member.remove",
+                confirm: .init(remove.title, label: Text("移出", bundle: .module), id: "squad.remove.confirm")
+            ) { act(remove) },
+        ]
     }
 
     var body: some View {
@@ -195,27 +214,8 @@ struct MemberRow: View {
             }
             if member.isManageable {
                 LoadingSwap(isSaving) {
-                    Menu {
-                        Button {
-                            act(.handCaptaincy(member.id, name: name))
-                        } label: {
-                            Label {
-                                Text("转让队长", bundle: .module)
-                            } icon: {
-                                Image(systemName: "crown")
-                            }
-                        }
-                        .accessibilityIdentifier("squad.member.handCaptaincy")
-                        Button(role: .destructive) {
-                            act(.remove(member.id, name: name))
-                        } label: {
-                            Label {
-                                Text("移出小队", bundle: .module)
-                            } icon: {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                            }
-                        }
-                        .accessibilityIdentifier("squad.member.remove")
+                    Button {
+                        isManaging = true
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: Sizing.icon - 3, weight: .semibold))
@@ -223,8 +223,10 @@ struct MemberRow: View {
                             .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
                             .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                     .accessibilityLabel(Text("管理 \(name)", bundle: .module))
                     .accessibilityIdentifier("squad.member.more")
+                    .glassMenu(isPresented: $isManaging, items: manageItems)
                 }
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
@@ -292,12 +294,10 @@ struct SquadFailed: View {
     }
 }
 
-/// What the captain is about to do to a member, waiting on the system's confirm.
-enum MemberAction: Hashable, Identifiable {
+/// What the captain is about to do to a member, asked first in the glass menu.
+enum MemberAction: Hashable {
     case handCaptaincy(MemberID, name: String)
     case remove(MemberID, name: String)
-
-    var id: Self { self }
 
     var title: Text {
         switch self {
