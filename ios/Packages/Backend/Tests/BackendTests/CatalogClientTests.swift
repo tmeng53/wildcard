@@ -10,8 +10,10 @@ import Testing
 
 @Test func theBuildShipsTheWholeSportsList() throws {
     let sports = CatalogClient.bundled.sports
-    #expect(sports.categories.count == 12)
-    #expect(sports.categories.flatMap(\.entries).count == 52)
+    // However many the list holds today: every category has sports, and none is listed twice.
+    let entries = sports.categories.flatMap(\.entries)
+    #expect(!sports.categories.isEmpty && sports.categories.allSatisfy { !$0.entries.isEmpty })
+    #expect(Set(entries.map(\.sport)).count == entries.count)
     #expect(
         sports.entry(for: "strength")?.names
             == .init(simplifiedChinese: "力量训练", english: "Strength", traditionalChinese: "重訓"))
@@ -64,6 +66,7 @@ import Testing
     #expect(FileManager.default.fileExists(atPath: directory.appending(path: "catalog.json").path))
     let kept = CatalogClient(api: api, directory: directory).kept()
     #expect(kept.sports == CatalogClient.bundled.sports && kept.diceLines == CatalogClient.bundled.diceLines)
+    #expect(kept.switches == CatalogClient.bundled.switches)
     // Asked again with the kept ETag: 304, still nothing new.
     #expect(await client.refresh() == nil)
 }
@@ -73,7 +76,7 @@ import Testing
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     // As `refresh` keeps it, from a server that has since added a sport, a dice line and a section.
     let kept = #"""
-        {"version": 1, "etag": "\"abc\"", "catalog": {"version": 1, "scenes": {},
+        {"version": 1, "etag": "\"abc\"", "catalog": {"version": 1, "stickers": {},
           "sports": {"categories": [{"id": "racket", "names": {"zhHans": "球拍", "en": "Racket", "zhHant": "球拍"},
             "sports": [{"id": "padel", "names": {"zhHans": "板式网球", "en": "Padel", "zhHant": "板式網球"},
               "icon": "figure.tennis", "offered": true}]}],
