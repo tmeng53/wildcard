@@ -83,7 +83,7 @@ export async function deliverCoachNotes(deps: CoachNotesDependencies): Promise<C
 }
 
 /**
- * The push of a morning note: 「毛头给你留了张便条：…」, silent, as every coach push is. A tap opens
+ * The push of a morning note: 「毛头：…」, silent, as every coach push is. A tap opens
  * 今天, where the note waits.
  */
 export function coachNoteNotification(note: {

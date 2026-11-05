@@ -72,19 +72,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ left you a note: %2$@"
+            "value": "%1$@: %2$@"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 给你留了张便条：%2$@"
+            "value": "%1$@：%2$@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 給你留了張便條：%2$@"
+            "value": "%1$@：%2$@"
           }
         }
       }
