@@ -298,7 +298,10 @@ private struct RefusedTokens: AuthProvider {
     #expect(Set(unlocked.map(\.id)) == ["racket", "deuce", "halfmoon", "warmup-headphones"])
     #expect(unlocked.first { $0.id == "deuce" }?.checkIns == 3)
     #expect(unlocked.first { $0.id == "warmup-headphones" }?.kind == .piece)
+    // The street as the server works it out: DEUCE CLUB earned, its sweater 2 练了 away.
     #expect(
-        standing.lockedPieces.first { $0.id == "deuce-sweater" } == LockedPiece(id: "deuce-sweater", checkInsToGo: 2))
-    #expect(!standing.lockedPieces.contains { $0.id == "warmup-headphones" })
+        standing.shelf.pieces.first { $0.id == "deuce-sweater" }
+            == Shelf.Piece(id: "deuce-sweater", store: "deuce", state: .locked(toGo: 2)))
+    #expect(standing.shelf.pieces.first { $0.id == "warmup-headphones" }?.state == .owned)
+    #expect(standing.shelf.stores.map(\.id).first == "warmup")
 }

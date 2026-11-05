@@ -1,12 +1,30 @@
 import type { SportId } from '@wildcard/sport-ids';
 
-import type { MemberId, Trained, Unlock, UnlockRule, UnlockRuleEdit } from './domain/unlocks.js';
+import type {
+  MemberId,
+  Piece,
+  PieceEdit,
+  Store,
+  StoreEdit,
+  Trained,
+  Unlock,
+  UnlockRule,
+  UnlockRuleEdit,
+} from './domain/unlocks.js';
 
 /** Where the rules and members' unlocks are kept. */
 export interface UnlockStore {
   rules(): Promise<UnlockRule[]>;
   /** Adds a rule counting from now, or changes one, keeping when it counts from. */
   putRule(edit: UnlockRuleEdit): Promise<void>;
+  /** Every store, retired ones too, in the street's order. */
+  stores(): Promise<Store[]>;
+  /** Every piece, retired ones too. */
+  pieces(): Promise<Piece[]>;
+  /** Adds a store or replaces it whole. */
+  putStore(edit: StoreEdit): Promise<void>;
+  /** Adds a piece or replaces it whole. */
+  putPiece(edit: PieceEdit): Promise<void>;
   /** What `member` unlocked, the earliest first. */
   unlocksOf(member: MemberId): Promise<Unlock[]>;
   /**

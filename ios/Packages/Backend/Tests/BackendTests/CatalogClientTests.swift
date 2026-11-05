@@ -11,7 +11,7 @@ import Testing
 @Test func theBuildShipsTheWholeSportsList() throws {
     let sports = CatalogClient.bundled.sports
     #expect(sports.categories.count == 12)
-    #expect(sports.categories.flatMap(\.entries).count == 52)
+    #expect(sports.categories.flatMap(\.entries).count == 57)
     #expect(
         sports.entry(for: "strength")?.names
             == .init(simplifiedChinese: "力量训练", english: "Strength", traditionalChinese: "重訓"))
@@ -72,7 +72,7 @@ import Testing
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     // As `refresh` keeps it, from a server that has since added a sport, a dice line and a section.
     let kept = #"""
-        {"version": 1, "etag": "\"abc\"", "catalog": {"version": 1, "scenes": {},
+        {"version": 1, "etag": "\"abc\"", "catalog": {"version": 1, "laterSection": {},
           "sports": {"categories": [{"id": "racket", "names": {"zhHans": "球拍", "en": "Racket", "zhHant": "球拍"},
             "sports": [{"id": "padel", "names": {"zhHans": "板式网球", "en": "Padel", "zhHant": "板式網球"},
               "icon": "figure.tennis", "offered": true}]}],

@@ -121,6 +121,8 @@ import {
   scenesSection,
   sportsSection,
   switchesSection,
+  storesSection,
+  piecesSection,
 } from './routes/catalog.js';
 import { readConfig } from './config.js';
 import { createLog, redactText, reportingErrors } from './log.js';
@@ -243,7 +245,7 @@ const squads = createSquads({
 });
 // The sports list every picker shows, kept in the database.
 const sports = createSports({ store: createPostgresSportStore(db) });
-// Global on/off switches (a winter theme, a holiday) that limited scenes and unlock rules follow.
+// Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
 const switches = switchesOn(db);
 const scenes = createScenes({
@@ -297,7 +299,7 @@ const unlocksOn = (scope: Database) =>
     trainedSince: ({ member, since }) =>
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
-    // A rule on a switch counts only 练了 made while it was on, by the New York day.
+    // A rule counts only 练了 made while its store's and piece's switches were on, by the New York day.
     switches: async () => {
       const on = await switchesOn(scope).states();
       return (id, at) => on(id, newYorkDays.format(at));
@@ -445,6 +447,8 @@ const app = createApp({
       sportsSection(sports),
       scenesSection(scenes),
       switchesSection(switches),
+      storesSection(unlocksOn(db)),
+      piecesSection(unlocksOn(db)),
       disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
     ],
     clock: () => new Date(),

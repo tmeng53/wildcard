@@ -7,16 +7,41 @@ import Foundation
 import Testing
 
 /// POWDER DAY's pieces that open one winter check-in at a time, as the API lists them before any.
-private let powderLocked = [
-    "tuna", "ikura", "temaki", "nori", "tamago", "scarf", "edamame", "uni", "pants", "ebi", "ebifry", "maki",
-    "salmonhelmet",
-].enumerated().map { LockedPiece(id: "powder-\($1)", checkInsToGo: $0 + 1) }
+private let powderLocked = Dictionary(
+    uniqueKeysWithValues: [
+        "tuna", "ikura", "temaki", "nori", "tamago", "scarf", "edamame", "uni", "pants", "ebi", "ebifry", "maki",
+        "salmonhelmet",
+    ].enumerated().map { ("powder-\($1)", $0 + 1) })
+
+private let unlockedAt = Date(timeIntervalSince1970: 1_800_000_000)
+
+/// The 商店街 as the server sends it: every store, `closed` ones shut; the pieces of each store
+/// in `earned` that is open, boxed when in `locked` and owned when in `owned`, otherwise available;
+/// and what is owned in a closed store.
+private func shelf(
+    earned: Set<String>, closed: Set<String> = [], locked: [String: Int] = [:], owned: Set<String> = []
+) throws -> Shelf {
+    let stores = ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce", "powder"]
+    let wear = try PlaceholderCharacter.editorChoices().wear.values.joined()
+    return Shelf(
+        stores: stores.map { Shelf.Store(id: $0, isOpen: !closed.contains($0)) },
+        pieces: wear.compactMap { piece in
+            if owned.contains(piece.id) { return Shelf.Piece(id: piece.id, store: piece.store, state: .owned) }
+            guard earned.contains(piece.store), !closed.contains(piece.store) else { return nil }
+            let state: Shelf.State = locked[piece.id].map { .locked(toGo: $0) } ?? .available
+            return Shelf.Piece(id: piece.id, store: piece.store, state: state)
+        })
+}
+
+/// A winter street for a member who just started: WARM-UP's nineteen pieces and POWDER DAY's
+/// starters out, the rest of POWDER DAY boxed.
+private func winterStart() throws -> Shelf { try shelf(earned: ["warmup", "powder"], locked: powderLocked) }
 
 /// The bundled art gives the editor what the design shows: five species, WARM-UP's nineteen pieces
 /// and POWDER DAY's four starters, the two props every member starts with, and swatches with a 原色
 /// for exactly the pieces that recolor (POWDER DAY's keep their colours).
 @Test func thePlaceholderCatalogComesFromTheArt() throws {
-    let catalog = try Catalog.placeholder(locked: powderLocked)
+    let catalog = try Catalog.placeholder(shelf: try winterStart())
     #expect(catalog.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
     #expect(catalog.props == ["bottle", "dumbbell"])
     #expect(
@@ -64,7 +89,7 @@ private let powderLocked = [
 /// every piece of clothing on a rack, WARM-UP's nineteen pieces, tops first, then bottoms, shoes,
 /// hats and accessories.
 @Test func everyPieceHangsInAStore() throws {
-    let catalog = try Catalog.placeholder(locked: powderLocked, isOn: { _ in true })
+    let catalog = try Catalog.placeholder(shelf: try winterStart())
     #expect(catalog.stores.map(\.id) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce", "powder"])
     #expect(catalog.stores.filter(\.isOpen).map(\.id) == ["warmup", "powder"])
     #expect(
@@ -84,7 +109,8 @@ private let powderLocked = [
 /// Every random look the editor can start from is one the art can draw, POWDER DAY's every piece
 /// included.
 @Test func randomLooksBuild() throws {
-    let catalog = try Catalog.placeholder()
+    let catalog = try Catalog.placeholder(
+        shelf: try shelf(earned: ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce", "powder"]))
     var generator = SystemRandomNumberGenerator()
     for _ in 0..<40 {
         let look = CharacterDraft.randomLook(from: catalog, using: &generator)
@@ -98,14 +124,13 @@ private let powderLocked = [
 /// A store the member unlocked opens on the street with its rack, and an unlocked prop joins
 /// the starters; the rest stay shut.
 @Test func unlocksOpenTheirStoresAndProps() throws {
-    let unlockedAt = Date(timeIntervalSince1970: 1_800_000_000)
     let catalog = try Catalog.placeholder(
         unlocks: [
             Unlock(
                 kind: .store, id: "deuce", unlockedAt: unlockedAt, sports: ["tennis", "pickleball", "squash"],
                 checkIns: 3),
             Unlock(kind: .prop, id: "racket", unlockedAt: unlockedAt, sports: ["tennis", "squash"], checkIns: 1),
-        ], locked: powderLocked)
+        ], shelf: try shelf(earned: ["warmup", "deuce", "powder"], locked: powderLocked))
     #expect(catalog.stores.filter(\.isOpen).map(\.id) == ["warmup", "deuce", "powder"])
     #expect(catalog.props == ["bottle", "dumbbell", "racket"])
     #expect(
@@ -125,23 +150,17 @@ private let powderLocked = [
 }
 
 /// A piece still locked hangs on its store's rack only as a box, nearest to opening first, and
-/// never in what a look can wear; one the member unlocked hangs as any other.
+/// never in what a look can wear; one the member unlocked hangs as any other. A store not earned
+/// yet shows no rack.
 @Test func lockedPiecesHangAsBoxes() throws {
-    let unlockedAt = Date(timeIntervalSince1970: 1_800_000_000)
     let catalog = try Catalog.placeholder(
-        unlocks: [Unlock(kind: .piece, id: "warmup-headphones", unlockedAt: unlockedAt, sports: [], checkIns: 2)],
-        locked: [
-            LockedPiece(id: "warmup-beanie", checkInsToGo: 4),
-            LockedPiece(id: "warmup-stripe", checkInsToGo: 2),
-            LockedPiece(id: "warmup-long", checkInsToGo: 18),
-            // An older list may still name what was just unlocked: what the member holds wins.
-            LockedPiece(id: "warmup-headphones", checkInsToGo: 1),
-            // A piece in a closed store stays out of sight with it.
-            LockedPiece(id: "deuce-cable", checkInsToGo: 13),
-        ] + powderLocked)
+        shelf: try shelf(
+            earned: ["warmup", "powder"],
+            locked: ["warmup-beanie": 4, "warmup-stripe": 2, "warmup-long": 18].merging(powderLocked) { $1 },
+            owned: ["warmup-headphones"]))
     #expect(catalog.lockedRack(of: "warmup").map(\.variant) == ["warmup-stripe", "warmup-long", "warmup-beanie"])
     #expect(catalog.lockedRack(of: "warmup").map(\.toGo) == [2, 18, 4])
-    #expect(catalog.lockedRack(of: "deuce").map(\.variant) == ["deuce-cable"])
+    #expect(catalog.lockedRack(of: "deuce").isEmpty && catalog.rack(of: "deuce").isEmpty)
     #expect(
         !catalog.rack(of: "warmup").contains { ["warmup-stripe", "warmup-long", "warmup-beanie"].contains($0.variant) })
     #expect(catalog.rack(of: "warmup").contains { $0.variant == "warmup-headphones" })
@@ -155,36 +174,37 @@ private let powderLocked = [
     }
 }
 
-/// POWDER DAY unlocks only while the winter switch is on, and stays the member's all year: while off
-/// the store is still on the street with what they hold, only without the 「？」 boxes.
-@Test func aStoreOnASwitchKeepsWhatAMemberHoldsWhileOff() throws {
-    let unlockedAt = Date(timeIntervalSince1970: 1_800_000_000)
-    let tuna = Unlock(kind: .piece, id: "powder-tuna", unlockedAt: unlockedAt, sports: ["ski"], checkIns: 1)
-    let winter = try Catalog.placeholder(unlocks: [tuna], locked: powderLocked, isOn: { $0 == "winter" })
-    let summer = try Catalog.placeholder(unlocks: [tuna], locked: powderLocked, isOn: { _ in false })
+/// While POWDER DAY is closed, what a member unlocked stays theirs: the store shows only those
+/// pieces, without the starters or the 「？」 boxes, and leaves the street for a member who
+/// unlocked none.
+@Test func aClosedStoreKeepsWhatAMemberUnlocked() throws {
+    let winter = try Catalog.placeholder(
+        shelf: try shelf(earned: ["warmup", "powder"], locked: powderLocked, owned: ["powder-tuna"]))
+    let summer = try Catalog.placeholder(
+        shelf: try shelf(earned: ["warmup", "powder"], closed: ["powder"], owned: ["powder-tuna"]))
     #expect(winter.stores.map(\.id).last == "powder" && summer.stores.map(\.id).last == "powder")
+    #expect(summer.stores.last?.isOpen == true)
     #expect(winter.lockedRack(of: "powder").count == 12)
     #expect(summer.lockedRack(of: "powder").isEmpty)
     #expect(
-        summer.rack(of: "powder").map(\.variant) == [
+        winter.rack(of: "powder").map(\.variant) == [
             "powder-salmon", "powder-tuna", "powder-rice", "powder-saba", "powder-helmet",
         ])
-    #expect(summer.rack(of: "powder").map(\.variant) == winter.rack(of: "powder").map(\.variant))
+    #expect(summer.rack(of: "powder").map(\.variant) == ["powder-tuna"])
+    let newcomer = try Catalog.placeholder(shelf: try shelf(earned: ["warmup", "powder"], closed: ["powder"]))
+    #expect(!newcomer.stores.map(\.id).contains("powder"))
+    #expect(newcomer.rack(of: "powder").isEmpty)
 }
 
-/// The switches come from the catalog, in New York days, and run over New Year; a switch the
-/// catalog doesn't list is on.
-@Test func storeSwitchesFollowTheCatalog() throws {
-    let switches = StoreSwitches()
-    #expect(switches.isOn("winter", on: try LocalDay("2026-07-01")))
-    switches.show([
-        "winter": .schedule(start: try #require(MonthDay("11-15")), end: try #require(MonthDay("03-31"))),
-        "never": .alwaysOff,
-    ])
-    #expect(switches.isOn("winter", on: try LocalDay("2026-11-15")))
-    #expect(switches.isOn("winter", on: try LocalDay("2027-03-31")))
-    #expect(!switches.isOn("winter", on: try LocalDay("2027-04-01")))
-    #expect(!switches.isOn("winter", on: try LocalDay("2026-11-14")))
-    #expect(!switches.isOn("never", on: try LocalDay("2026-12-01")))
-    #expect(switches.isOn("other", on: try LocalDay("2026-07-01")))
+/// Before the member's own street is read, the editor offers the starter street the app was
+/// last given, and a store the art has no badge for is left out.
+@Test func theStarterStreetStandsInUntilTheMembersOwn() throws {
+    let starter = Shelf(
+        stores: [Shelf.Store(id: "warmup", isOpen: true), Shelf.Store(id: "newstore", isOpen: true)],
+        pieces: [Shelf.Piece(id: "warmup-tee", store: "warmup", state: .available)])
+    StarterShelf.shared.show(starter)
+    defer { StarterShelf.shared.show(.empty) }
+    let catalog = try Catalog.placeholder()
+    #expect(catalog.stores == [EditorChoices.Store(id: "warmup", isOpen: true)])
+    #expect(catalog.variants["top"] == ["warmup-tee"])
 }

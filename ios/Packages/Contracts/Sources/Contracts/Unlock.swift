@@ -22,26 +22,13 @@ public struct Unlock: Hashable, Sendable {
     }
 }
 
-/// A piece of clothing that stays locked in its store, even an open one, until the member's
-/// training reaches its rule: the editor shows it as a 「？」 box until then.
-public struct LockedPiece: Hashable, Sendable {
-    /// The piece's id in the art, such as `lap-bib`.
-    public let id: String
-    /// How many more 练了 in its sports open it, 1 or more.
-    public let checkInsToGo: Int
-
-    public init(id: String, checkInsToGo: Int) {
-        (self.id, self.checkInsToGo) = (id, checkInsToGo)
-    }
-}
-
-/// Everything the member unlocked, and the pieces still locked.
+/// Everything the member unlocked, and the 商店街 as it stands for them.
 public struct UnlockStanding: Hashable, Sendable {
     /// The stores, props and pieces unlocked, the earliest first.
     public let unlocks: [Unlock]
-    public let lockedPieces: [LockedPiece]
+    public let shelf: Shelf
 
-    public init(unlocks: [Unlock], lockedPieces: [LockedPiece]) {
-        (self.unlocks, self.lockedPieces) = (unlocks, lockedPieces)
+    public init(unlocks: [Unlock], shelf: Shelf) {
+        (self.unlocks, self.shelf) = (unlocks, shelf)
     }
 }

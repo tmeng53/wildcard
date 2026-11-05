@@ -2,6 +2,7 @@ import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-d
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import { createPostgresUnlockStore } from '@wildcard/unlocks';
 
 import type { Database } from '../ports.js';
 import {
@@ -9,6 +10,8 @@ import {
   scenesSection,
   sportsSection,
   switchesSection,
+  storesSection,
+  piecesSection,
   type CatalogSection,
 } from '../routes/catalog.js';
 import type { PublicRoutes } from '../routes/squads.js';
@@ -35,6 +38,8 @@ export const catalogOn = (
       }),
     ),
     switchesSection(createSwitches({ store: createPostgresSwitchStore(db) })),
+    storesSection(createPostgresUnlockStore(db)),
+    piecesSection(createPostgresUnlockStore(db)),
   ],
   clock,
 });

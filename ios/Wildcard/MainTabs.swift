@@ -150,7 +150,7 @@ struct MainTabs: View {
         guard let character = profile.overview?.character else { return }
         editor = try? CharacterEditorModel.placeholder(
             look: character.outfit, persona: character.persona, nickname: character.nickname,
-            unlocks: profile.overview?.unlocks ?? [], locked: profile.overview?.lockedPieces ?? [])
+            unlocks: profile.overview?.unlocks ?? [], shelf: profile.overview?.shelf)
     }
 
     /// A tap on the home's notice that a store or prop opened: 我's editor, inside that store or on

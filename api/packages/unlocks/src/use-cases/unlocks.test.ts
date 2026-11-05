@@ -7,7 +7,11 @@ import { z } from 'zod';
 
 import { createPostgresUnlockStore, type UnlockTables } from '../adapters/postgres-unlock-store.js';
 import { MemberId, type Trained } from '../domain/unlocks.js';
-import { UnlockItemMissingError, UnlockSportNotListedError } from '../errors.js';
+import {
+  UnlockItemMissingError,
+  UnlockSportNotListedError,
+  UnlockStoreMissingError,
+} from '../errors.js';
 import { createUnlocks } from './unlocks.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
@@ -87,7 +91,6 @@ describe('unlocks', () => {
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
     ]);
     expect(powder.at(-1)?.id).toBe('powder-salmonhelmet');
-    expect(new Set(powder.map(({ switchId }) => switchId))).toStrictEqual(new Set(['winter']));
     expect(powder[0]?.sports).toStrictEqual([
       'ski',
       'snowboard',
@@ -100,15 +103,65 @@ describe('unlocks', () => {
     ]);
   });
 
-  it('counts only check-ins made while its switch is on toward a rule with one', async () => {
+  it('keeps each store and piece with its own switch, starters needing no rule', async () => {
     const unlocks = unlocksWith(new Map());
-    const rule = { kind: 'prop' as const, id: 'testSnowboard', sports: ['ski'], after: 1 };
-    await unlocks.putRule({ ...rule, switchId: 'winter' });
-    // A change that leaves the switch out keeps it; null makes it count all year.
-    const kept = await unlocks.putRule(rule);
-    expect(kept.find(({ id }) => id === 'testSnowboard')?.switchId).toBe('winter');
-    const allYear = await unlocks.putRule({ ...rule, id: 'testAllYear', switchId: null });
-    expect(allYear.find(({ id }) => id === 'testAllYear')?.switchId).toBeUndefined();
+    const stores = await unlocks.stores();
+    expect(
+      stores.filter(({ id }) => !id.startsWith('test')).map(({ id, switchId }) => [id, switchId]),
+    ).toStrictEqual([
+      ['warmup', undefined],
+      ['lap', undefined],
+      ['nolook', undefined],
+      ['moss', undefined],
+      ['halfmoon', undefined],
+      ['deuce', undefined],
+      ['powder', 'winter'],
+    ]);
+    const powder = (await unlocks.pieces()).filter(({ storeId }) => storeId === 'powder');
+    expect(powder).toHaveLength(17);
+    expect(powder.filter(({ starter }) => starter).map(({ id }) => id)).toStrictEqual([
+      'powder-helmet',
+      'powder-rice',
+      'powder-saba',
+      'powder-salmon',
+    ]);
+    // A piece follows its store's switch; none has one of its own yet.
+    expect(powder.every(({ switchId }) => switchId === undefined)).toBe(true);
+  });
+
+  it('counts only check-ins made while the store’s switch is on, and shows its rack only then', async () => {
+    const unlocks = unlocksWith(new Map());
+    const store = `testw${randomUUID().slice(0, 8)}`;
+    await unlocks.putStore({ id: store, position: 99, switchId: 'winter', offered: true });
+    const starter = `${store}-suit`;
+    const board = `${store}-board`;
+    await unlocks.putPiece({
+      id: starter,
+      storeId: store,
+      slot: 'top',
+      starter: true,
+      switchId: null,
+      offered: true,
+    });
+    await unlocks.putPiece({
+      id: board,
+      storeId: store,
+      slot: 'acc',
+      starter: false,
+      switchId: null,
+      offered: true,
+    });
+    await unlocks.putRule({ kind: 'piece', id: board, sports: ['ski'], after: 1 });
+    await expect(
+      unlocks.putPiece({
+        id: 'testnowhere-cap',
+        storeId: 'testnowhere',
+        slot: 'hat',
+        starter: true,
+        switchId: null,
+        offered: true,
+      }),
+    ).rejects.toBeInstanceOf(UnlockStoreMissingError);
 
     const me = await newMember();
     const july = { id: randomUUID(), sport: 'ski', madeAt: new Date('2099-07-01T12:00:00Z') };
@@ -116,13 +169,46 @@ describe('unlocks', () => {
     const trained = new Map<MemberId, Trained[]>([[me, [july]]]);
     const switched = unlocksWith(trained);
     const summer = await switched.standing(me);
-    expect(summer.unlocks.some(({ id }) => id === 'testSnowboard')).toBe(false);
-    expect(summer.locked.find(({ id }) => id === 'testSnowboard')?.toGo).toBe(1);
+    expect(summer.unlocks.some(({ id }) => id === board)).toBe(false);
+    expect(summer.locked.find(({ id }) => id === board)?.toGo).toBe(1);
     trained.set(me, [july, december]);
     const winter = await switched.of(me);
-    expect(winter.find(({ id }) => id === 'testSnowboard')?.by).toStrictEqual({
-      checkIn: december.id,
+    expect(winter.find(({ id }) => id === board)?.by).toStrictEqual({ checkIn: december.id });
+
+    // Whether the rack is out follows the switch now, and today is not in July.
+    const today = await switched.standing(me);
+    expect(today.shelf.stores.find(({ id }) => id === store)).toStrictEqual({
+      id: store,
+      open: true,
     });
+    expect(
+      today.shelf.pieces
+        .filter(({ storeId }) => storeId === store)
+        .map(({ id, state }) => [id, state]),
+    ).toStrictEqual([
+      [board, 'owned'],
+      [starter, 'available'],
+    ]);
+
+    // Retired, the store leaves the street and its pieces are boxed for nobody, so other tests
+    // count only the seeded ones.
+    await unlocks.putStore({ id: store, position: 99, switchId: 'winter', offered: false });
+    const retired = await unlocksWith(new Map()).standing(await newMember());
+    expect(retired.shelf.stores.some(({ id }) => id === store)).toBe(false);
+    expect(retired.locked.some(({ id }) => id === board)).toBe(true);
+    await unlocks.putPiece({
+      id: board,
+      storeId: store,
+      slot: 'acc',
+      starter: false,
+      switchId: null,
+      offered: false,
+    });
+    expect(
+      (await unlocksWith(new Map()).standing(await newMember())).locked.some(
+        ({ id }) => id === board,
+      ),
+    ).toBe(false);
   });
 
   it('keeps what a member earned, even once the check-in that earned it is gone', async () => {

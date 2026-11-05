@@ -1,3 +1,4 @@
+import AvatarArt
 import CheckInDomain
 import CheckInUI
 import Contracts
@@ -270,19 +271,31 @@ enum LaunchOptions {
         return [Unlock(kind: .store, id: "deuce", unlockedAt: now(), sports: ["tennis"], checkIns: 3)]
     }
 
-    /// The sample member's pieces still locked: WARM-UP's and DEUCE CLUB's newer ones, as the
-    /// server's first rules have them for someone who just started (WARM-UP takes any 练了).
-    static var lockedPieces: [LockedPiece] {
-        let warmUp = [
-            ("warmup-headphones", 2), ("warmup-stripe", 4), ("warmup-beanie", 6), ("warmup-overalls", 9),
-            ("warmup-hightop", 12), ("warmup-raglan", 15), ("warmup-long", 20),
-        ]
-        let deuce = [
-            ("deuce-sweater", 5), ("deuce-dress", 7), ("deuce-socks", 10), ("deuce-cable", 13),
-            ("deuce-terry", 16), ("deuce-pants", 20),
+    /// The sample member's 商店街, as the server works it out for someone who just started, in
+    /// November: WARM-UP open with its newer pieces boxed (they take any 练了), DEUCE CLUB's too once
+    /// `-uitest-unlocked` has opened it, the other stores still to earn, and POWDER DAY closed.
+    static var shelf: Shelf {
+        let boxed: [String: [(String, Int)]] = [
+            "warmup": [
+                ("warmup-headphones", 2), ("warmup-stripe", 4), ("warmup-beanie", 6), ("warmup-overalls", 9),
+                ("warmup-hightop", 12), ("warmup-raglan", 15), ("warmup-long", 20),
+            ],
+            "deuce": [
+                ("deuce-sweater", 5), ("deuce-dress", 7), ("deuce-socks", 10), ("deuce-cable", 13),
+                ("deuce-terry", 16), ("deuce-pants", 20),
+            ],
         ]
         let held = Set(unlocked.map(\.id))
-        return (warmUp + deuce).filter { !held.contains($0.0) }.map { LockedPiece(id: $0.0, checkInsToGo: $0.1) }
+        let earned = ["warmup"] + (held.contains("deuce") ? ["deuce"] : [])
+        let wear = (try? PlaceholderCharacter.editorChoices().wear.values.joined()).map(Array.init) ?? []
+        let pieces = wear.filter { earned.contains($0.store) }.map { piece in
+            let toGo = boxed[piece.store]?.first { $0.0 == piece.id }?.1
+            let state: Shelf.State =
+                held.contains(piece.id) ? .owned : toGo.map { .locked(toGo: $0) } ?? .available
+            return Shelf.Piece(id: piece.id, store: piece.store, state: state)
+        }
+        let stores = ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce"].map { Shelf.Store(id: $0, isOpen: true) }
+        return Shelf(stores: stores + [Shelf.Store(id: "powder", isOpen: false)], pieces: pieces)
     }
 
     /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the

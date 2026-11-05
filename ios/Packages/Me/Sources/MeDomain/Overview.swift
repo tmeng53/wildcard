@@ -53,13 +53,14 @@ public struct MeOverview: Hashable, Sendable {
     /// The stores, props and pieces the member unlocked by training, which the character editor
     /// opens.
     public var unlocks: [Unlock]
-    /// The pieces still locked, which the editor shows as 「？」 boxes.
-    public var lockedPieces: [LockedPiece]
+    /// The 商店街 as the server works it out for the member, which the editor draws; nil for the
+    /// starter street.
+    public var shelf: Shelf?
 
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
         dailyPushOn: Bool, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil, board: TitleBoard = .empty,
-        unlocks: [Unlock] = [], lockedPieces: [LockedPiece] = []
+        unlocks: [Unlock] = [], shelf: Shelf? = nil
     ) {
         self.character = character
         self.joinedAt = joinedAt
@@ -71,7 +72,7 @@ public struct MeOverview: Hashable, Sendable {
         self.squadPlace = squadPlace
         self.board = board
         self.unlocks = unlocks
-        self.lockedPieces = lockedPieces
+        self.shelf = shelf
     }
 
     /// The number on the member's card.

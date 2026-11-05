@@ -7,20 +7,33 @@ export {
   AFTER_MAX,
   ItemId,
   MemberId,
+  PieceEdit,
   PieceId,
+  SLOTS,
+  StoreEdit,
   UNLOCK_KINDS,
   UnlockGift,
   UnlockKind,
   UnlockRuleEdit,
   earned,
   idFits,
+  shelf,
   toGo,
+  type CountedRule,
   type SwitchOn,
   type Locked,
+  type Piece,
+  type PieceState,
+  type Shelf,
+  type Store,
   type Trained,
   type Unlock,
   type UnlockRule,
 } from './domain/unlocks.js';
-export { UnlockItemMissingError, UnlockSportNotListedError } from './errors.js';
+export {
+  UnlockItemMissingError,
+  UnlockSportNotListedError,
+  UnlockStoreMissingError,
+} from './errors.js';
 export type { SportListed, TrainedSince, UnlockStore, Unlocked } from './ports.js';
 export { createUnlocks, type Unlocks, type UnlocksAdmin } from './use-cases/unlocks.js';

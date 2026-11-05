@@ -1,5 +1,7 @@
 import {
   MemberId,
+  PieceEdit,
+  StoreEdit,
   UnlockGift,
   UnlockRuleEdit,
   type UnlocksAdmin,
@@ -33,11 +35,9 @@ export function getUnlockRules({ unlocks }: UnlockToolDependencies) {
     description:
       'Shows how each store on the character editor’s 商店街, each prop and each clothing ' +
       'piece with a rule unlocks: kind (store, prop or piece), id, sports (empty = any sport), ' +
-      'after (练了 check-ins needed), countsFrom (only check-ins made from then count) and, for a ' +
-      'limited piece, switchId (only check-ins made while that switch is on count, see ' +
-      'get_switches). ' +
-      'Starters (WARM-UP, the tumbler, the dumbbell) and pieces without a rule (they come ' +
-      'with their store) are open to everyone.',
+      'after (练了 check-ins needed) and countsFrom (only check-ins made from then count). A rule ' +
+      'counts only check-ins made while its store’s and piece’s switches are on (get_stores, ' +
+      'get_pieces). Starter pieces (get_pieces) and the tumbler and dumbbell need no rule.',
     changes: false,
     input: z.strictObject({}),
     run: async () => shown(await unlocks.rules()),
@@ -50,8 +50,9 @@ export function putUnlockRule({ unlocks }: UnlockToolDependencies) {
     name: 'put_unlock_rule',
     title: 'Add or change an unlock rule',
     description:
-      'Adds a rule for a store, prop or piece, or changes the sports, count or switch of one. A piece ' +
-      'with a rule stays locked in its store until earned. A new rule counts check-ins made ' +
+      'Adds a rule for a store, prop or piece, or changes the sports or count of one. A piece ' +
+      'with a rule stays locked in its store until earned; when it is out follows its store and ' +
+      'piece (put_store, put_piece). A new rule counts check-ins made ' +
       'from now; a changed one keeps its start. Members who already unlocked it keep it. Only ' +
       'the id’s shape is checked, and a rule is never deleted, so use an id the app’s art has ' +
       '(one it doesn’t is ignored by the app). Returns every rule now.',
@@ -82,8 +83,76 @@ export function giveUnlocks({ unlocks }: UnlockToolDependencies) {
   });
 }
 
+/** `get_stores`: every store on the 商店街. */
+export function getStores({ unlocks }: UnlockToolDependencies) {
+  return adminTool({
+    name: 'get_stores',
+    title: 'Read the stores',
+    description:
+      'Shows every store on the character editor’s 商店街, in its order: id, position, switchId ' +
+      '(open only while that switch is on, see get_switches; none for always) and offered. A ' +
+      'closed store shows each member only the pieces they own. Whether a member has earned a ' +
+      'store is its unlock rule (get_unlock_rules).',
+    changes: false,
+    input: z.strictObject({}),
+    run: async () => ({ version: 1, stores: await unlocks.stores() }),
+  });
+}
+
+/** `put_store`: adds a store, or replaces one whole. */
+export function putStore({ unlocks }: UnlockToolDependencies) {
+  return adminTool({
+    name: 'put_store',
+    title: 'Add or change a store',
+    description:
+      'Adds a store, or replaces every field of one (read it with get_stores first: null ' +
+      'switchId opens it always). A store needs its art in the app; builds without it leave it ' +
+      'out. Set offered to false to retire one. Members see it on their next read. Returns ' +
+      'every store now.',
+    changes: true,
+    input: StoreEdit,
+    run: async (edit) => ({ version: 1, stores: await unlocks.putStore(edit) }),
+  });
+}
+
+/** `get_pieces`: every clothing piece. */
+export function getPieces({ unlocks }: UnlockToolDependencies) {
+  return adminTool({
+    name: 'get_pieces',
+    title: 'Read the clothing pieces',
+    description:
+      'Shows every clothing piece: id, storeId, slot, starter (everyone has it while it is out; ' +
+      'any other needs an unlock rule), switchId (its own switch, apart from its store’s) and ' +
+      'offered. A piece is out while its store is open and its own switch is on; what a member ' +
+      'owns stays theirs all year.',
+    changes: false,
+    input: z.strictObject({}),
+    run: async () => ({ version: 1, pieces: await unlocks.pieces() }),
+  });
+}
+
+/** `put_piece`: adds a piece, or replaces one whole. */
+export function putPiece({ unlocks }: UnlockToolDependencies) {
+  return adminTool({
+    name: 'put_piece',
+    title: 'Add or change a clothing piece',
+    description:
+      'Adds a piece to a store, or replaces every field of one (read it with get_pieces first). ' +
+      'A piece that is not a starter also needs an unlock rule (put_unlock_rule), or it never ' +
+      'shows. A piece needs its art in the app. Set offered to false to retire one: nobody can ' +
+      'earn it any more and only those who own it see it. Returns every piece now.',
+    changes: true,
+    input: PieceEdit,
+    run: async (edit) => ({ version: 1, pieces: await unlocks.putPiece(edit) }),
+  });
+}
+
 export const unlockTools = (deps: UnlockToolDependencies) => [
   getUnlockRules(deps),
   putUnlockRule(deps),
   giveUnlocks(deps),
+  getStores(deps),
+  putStore(deps),
+  getPieces(deps),
+  putPiece(deps),
 ];

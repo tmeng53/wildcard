@@ -345,6 +345,10 @@ extension Components {
             public var scenes: Components.Schemas.ScenesCatalog?
             /// - Remark: Generated from `#/components/schemas/Catalog/switches`.
             public var switches: Components.Schemas.SwitchesCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/stores`.
+            public var stores: Components.Schemas.StoresCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/pieces`.
+            public var pieces: Components.Schemas.PiecesCatalog?
             /// A container of undocumented properties.
             public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
             /// Creates a new `Catalog`.
@@ -355,6 +359,8 @@ extension Components {
             ///   - disclaimerDice:
             ///   - scenes:
             ///   - switches:
+            ///   - stores:
+            ///   - pieces:
             ///   - additionalProperties: A container of undocumented properties.
             public init(
                 version: Components.Schemas.Catalog.VersionPayload,
@@ -362,6 +368,8 @@ extension Components {
                 disclaimerDice: Components.Schemas.DisclaimerDiceCatalog? = nil,
                 scenes: Components.Schemas.ScenesCatalog? = nil,
                 switches: Components.Schemas.SwitchesCatalog? = nil,
+                stores: Components.Schemas.StoresCatalog? = nil,
+                pieces: Components.Schemas.PiecesCatalog? = nil,
                 additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
             ) {
                 self.version = version
@@ -369,6 +377,8 @@ extension Components {
                 self.disclaimerDice = disclaimerDice
                 self.scenes = scenes
                 self.switches = switches
+                self.stores = stores
+                self.pieces = pieces
                 self.additionalProperties = additionalProperties
             }
             public enum CodingKeys: String, CodingKey {
@@ -377,6 +387,8 @@ extension Components {
                 case disclaimerDice
                 case scenes
                 case switches
+                case stores
+                case pieces
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -400,12 +412,22 @@ extension Components {
                     Components.Schemas.SwitchesCatalog.self,
                     forKey: .switches
                 )
+                self.stores = try container.decodeIfPresent(
+                    Components.Schemas.StoresCatalog.self,
+                    forKey: .stores
+                )
+                self.pieces = try container.decodeIfPresent(
+                    Components.Schemas.PiecesCatalog.self,
+                    forKey: .pieces
+                )
                 additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                     "version",
                     "sports",
                     "disclaimerDice",
                     "scenes",
-                    "switches"
+                    "switches",
+                    "stores",
+                    "pieces"
                 ])
             }
             public func encode(to encoder: any Swift.Encoder) throws {
@@ -429,6 +451,14 @@ extension Components {
                 try container.encodeIfPresent(
                     self.switches,
                     forKey: .switches
+                )
+                try container.encodeIfPresent(
+                    self.stores,
+                    forKey: .stores
+                )
+                try container.encodeIfPresent(
+                    self.pieces,
+                    forKey: .pieces
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
@@ -869,7 +899,7 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/limited`.
                 public var limited: Swift.Bool
-                /// The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.
+                /// The switch a limited scene follows (the `switches` section): it is open only while that switch is on.
                 ///
                 /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/switchId`.
                 public var switchId: Swift.String?
@@ -882,7 +912,7 @@ extension Components {
                 ///   - names:
                 ///   - colors:
                 ///   - limited: True for a scene open only part of the year (冬季限定). The picker offers it while `GET /squads/{squadId}/scene` lists it.
-                ///   - switchId: The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.
+                ///   - switchId: The switch a limited scene follows (the `switches` section): it is open only while that switch is on.
                 ///   - additionalProperties: A container of undocumented properties.
                 public init(
                     id: Swift.String,
@@ -1189,11 +1219,11 @@ extension Components {
                     try encoder.encodeAdditionalProperties(additionalProperties)
                 }
             }
-            /// Every global switch scenes, stores and unlock rules follow.
+            /// Every global switch scenes, stores and pieces follow.
             ///
             /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/switches`.
             public typealias SwitchesPayload = [Components.Schemas.SwitchesCatalog.SwitchesPayloadPayload]
-            /// Every global switch scenes, stores and unlock rules follow.
+            /// Every global switch scenes, stores and pieces follow.
             ///
             /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/switches`.
             public var switches: Components.Schemas.SwitchesCatalog.SwitchesPayload
@@ -1202,7 +1232,7 @@ extension Components {
             /// Creates a new `SwitchesCatalog`.
             ///
             /// - Parameters:
-            ///   - switches: Every global switch scenes, stores and unlock rules follow.
+            ///   - switches: Every global switch scenes, stores and pieces follow.
             ///   - additionalProperties: A container of undocumented properties.
             public init(
                 switches: Components.Schemas.SwitchesCatalog.SwitchesPayload,
@@ -1290,6 +1320,278 @@ extension Components {
                 try container.encode(
                     self.end,
                     forKey: .end
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StoresCatalog`.
+        public struct StoresCatalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoresCatalog/StoresPayload`.
+            public struct StoresPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/StoresCatalog/StoresPayload/id`.
+                public var id: Swift.String
+                /// The switch the store is out with (the `switches` section); none for always.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoresCatalog/StoresPayload/switchId`.
+                public var switchId: Swift.String?
+                /// Open to everyone with no 练了 (no unlock rule), such as WARM-UP; any other store is earned.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoresCatalog/StoresPayload/free`.
+                public var free: Swift.Bool
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `StoresPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                ///   - switchId: The switch the store is out with (the `switches` section); none for always.
+                ///   - free: Open to everyone with no 练了 (no unlock rule), such as WARM-UP; any other store is earned.
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    id: Swift.String,
+                    switchId: Swift.String? = nil,
+                    free: Swift.Bool,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.id = id
+                    self.switchId = switchId
+                    self.free = free
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case switchId
+                    case free
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.id = try container.decode(
+                        Swift.String.self,
+                        forKey: .id
+                    )
+                    self.switchId = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .switchId
+                    )
+                    self.free = try container.decode(
+                        Swift.Bool.self,
+                        forKey: .free
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "id",
+                        "switchId",
+                        "free"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.id,
+                        forKey: .id
+                    )
+                    try container.encodeIfPresent(
+                        self.switchId,
+                        forKey: .switchId
+                    )
+                    try container.encode(
+                        self.free,
+                        forKey: .free
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Every store on the 商店街, in its order; retired ones are left out. A signed-in member’s own street comes from `GET /me/unlocks`; the app has art only for some.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoresCatalog/stores`.
+            public typealias StoresPayload = [Components.Schemas.StoresCatalog.StoresPayloadPayload]
+            /// Every store on the 商店街, in its order; retired ones are left out. A signed-in member’s own street comes from `GET /me/unlocks`; the app has art only for some.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoresCatalog/stores`.
+            public var stores: Components.Schemas.StoresCatalog.StoresPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `StoresCatalog`.
+            ///
+            /// - Parameters:
+            ///   - stores: Every store on the 商店街, in its order; retired ones are left out. A signed-in member’s own street comes from `GET /me/unlocks`; the app has art only for some.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                stores: Components.Schemas.StoresCatalog.StoresPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.stores = stores
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case stores
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.stores = try container.decode(
+                    Components.Schemas.StoresCatalog.StoresPayload.self,
+                    forKey: .stores
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "stores"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.stores,
+                    forKey: .stores
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PiecesCatalog`.
+        public struct PiecesCatalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload`.
+            public struct PiecesPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload/id`.
+                public var id: Swift.String
+                /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload/storeId`.
+                public var storeId: Swift.String
+                /// Where it is worn: top, bottom, shoes, hat or acc.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload/slot`.
+                public var slot: Swift.String
+                /// Everyone has it while it is out; any other piece is earned by a rule.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload/starter`.
+                public var starter: Swift.Bool
+                /// The switch the piece, apart from its store, is out with (the `switches` section); none for always.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload/switchId`.
+                public var switchId: Swift.String?
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `PiecesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                ///   - storeId:
+                ///   - slot: Where it is worn: top, bottom, shoes, hat or acc.
+                ///   - starter: Everyone has it while it is out; any other piece is earned by a rule.
+                ///   - switchId: The switch the piece, apart from its store, is out with (the `switches` section); none for always.
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    id: Swift.String,
+                    storeId: Swift.String,
+                    slot: Swift.String,
+                    starter: Swift.Bool,
+                    switchId: Swift.String? = nil,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.id = id
+                    self.storeId = storeId
+                    self.slot = slot
+                    self.starter = starter
+                    self.switchId = switchId
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case storeId
+                    case slot
+                    case starter
+                    case switchId
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.id = try container.decode(
+                        Swift.String.self,
+                        forKey: .id
+                    )
+                    self.storeId = try container.decode(
+                        Swift.String.self,
+                        forKey: .storeId
+                    )
+                    self.slot = try container.decode(
+                        Swift.String.self,
+                        forKey: .slot
+                    )
+                    self.starter = try container.decode(
+                        Swift.Bool.self,
+                        forKey: .starter
+                    )
+                    self.switchId = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .switchId
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "id",
+                        "storeId",
+                        "slot",
+                        "starter",
+                        "switchId"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.id,
+                        forKey: .id
+                    )
+                    try container.encode(
+                        self.storeId,
+                        forKey: .storeId
+                    )
+                    try container.encode(
+                        self.slot,
+                        forKey: .slot
+                    )
+                    try container.encode(
+                        self.starter,
+                        forKey: .starter
+                    )
+                    try container.encodeIfPresent(
+                        self.switchId,
+                        forKey: .switchId
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Every clothing piece in a store; retired ones, and a retired store’s, are left out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PiecesCatalog/pieces`.
+            public typealias PiecesPayload = [Components.Schemas.PiecesCatalog.PiecesPayloadPayload]
+            /// Every clothing piece in a store; retired ones, and a retired store’s, are left out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PiecesCatalog/pieces`.
+            public var pieces: Components.Schemas.PiecesCatalog.PiecesPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `PiecesCatalog`.
+            ///
+            /// - Parameters:
+            ///   - pieces: Every clothing piece in a store; retired ones, and a retired store’s, are left out.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                pieces: Components.Schemas.PiecesCatalog.PiecesPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.pieces = pieces
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case pieces
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.pieces = try container.decode(
+                    Components.Schemas.PiecesCatalog.PiecesPayload.self,
+                    forKey: .pieces
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "pieces"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.pieces,
+                    forKey: .pieces
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
@@ -7410,6 +7712,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/MyUnlocks/lockedPieces`.
             public var lockedPieces: [Components.Schemas.LockedPiece]
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/shelf`.
+            public var shelf: Components.Schemas.Shelf
             /// Creates a new `MyUnlocks`.
             ///
             /// - Parameters:
@@ -7417,22 +7721,26 @@ extension Components {
             ///   - unlocks: Every store and prop the member unlocked, the earliest first.
             ///   - pieces: Every clothing piece the member unlocked, the earliest first. A piece with a rule stays locked in its store, even an open one, until then.
             ///   - lockedPieces: Every piece with a rule the member hasn’t unlocked yet, and how far it is.
+            ///   - shelf:
             public init(
                 version: Components.Schemas.MyUnlocks.VersionPayload,
                 unlocks: [Components.Schemas.Unlock],
                 pieces: [Components.Schemas.PieceUnlock],
-                lockedPieces: [Components.Schemas.LockedPiece]
+                lockedPieces: [Components.Schemas.LockedPiece],
+                shelf: Components.Schemas.Shelf
             ) {
                 self.version = version
                 self.unlocks = unlocks
                 self.pieces = pieces
                 self.lockedPieces = lockedPieces
+                self.shelf = shelf
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case unlocks
                 case pieces
                 case lockedPieces
+                case shelf
             }
         }
         /// - Remark: Generated from `#/components/schemas/Unlock`.
@@ -7568,6 +7876,129 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case checkInsToGo
+            }
+        }
+        /// The 商店街 as it stands for the member now, worked out by the server from the stores’, pieces’ and switches’ rows: the app draws it as it is.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Shelf`.
+        public struct Shelf: Codable, Hashable, Sendable {
+            /// Every store on the 商店街, in its order, and whether it is open now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Shelf/stores`.
+            public var stores: [Components.Schemas.ShelfStore]
+            /// Every piece the member may see now: what they own, and what is out in an open store they have earned. A piece left out is not shown.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Shelf/pieces`.
+            public var pieces: [Components.Schemas.ShelfPiece]
+            /// Creates a new `Shelf`.
+            ///
+            /// - Parameters:
+            ///   - stores: Every store on the 商店街, in its order, and whether it is open now.
+            ///   - pieces: Every piece the member may see now: what they own, and what is out in an open store they have earned. A piece left out is not shown.
+            public init(
+                stores: [Components.Schemas.ShelfStore],
+                pieces: [Components.Schemas.ShelfPiece]
+            ) {
+                self.stores = stores
+                self.pieces = pieces
+            }
+            public enum CodingKeys: String, CodingKey {
+                case stores
+                case pieces
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ShelfStore`.
+        public struct ShelfStore: Codable, Hashable, Sendable {
+            /// The store’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfStore/id`.
+            public var id: Swift.String
+            /// Whether it is open now (its switch on). A closed store shows only what the member owns.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfStore/open`.
+            public var open: Swift.Bool
+            /// Creates a new `ShelfStore`.
+            ///
+            /// - Parameters:
+            ///   - id: The store’s id in the app’s art.
+            ///   - open: Whether it is open now (its switch on). A closed store shows only what the member owns.
+            public init(
+                id: Swift.String,
+                open: Swift.Bool
+            ) {
+                self.id = id
+                self.open = open
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case open
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ShelfPiece`.
+        public struct ShelfPiece: Codable, Hashable, Sendable {
+            /// The piece’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/id`.
+            public var id: Swift.String
+            /// The store it hangs in.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/storeId`.
+            public var storeId: Swift.String
+            /// `owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box).
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/state`.
+            @frozen public enum StatePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case owned = "owned"
+                case available = "available"
+                case locked = "locked"
+            }
+            /// `owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box).
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/state`.
+            public var state: Components.Schemas.ShelfPiece.StatePayload
+            /// For a locked piece: how many more 练了 check-ins in its sports open it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/checkInsToGo`.
+            public var checkInsToGo: Swift.Int?
+            /// The sports whose 练了 count towards it; empty for any sport.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/sports`.
+            public var sports: [Swift.String]
+            /// How many 练了 check-ins it takes; 0 for a starter.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/checkIns`.
+            public var checkIns: Swift.Int
+            /// Creates a new `ShelfPiece`.
+            ///
+            /// - Parameters:
+            ///   - id: The piece’s id in the app’s art.
+            ///   - storeId: The store it hangs in.
+            ///   - state: `owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box).
+            ///   - checkInsToGo: For a locked piece: how many more 练了 check-ins in its sports open it.
+            ///   - sports: The sports whose 练了 count towards it; empty for any sport.
+            ///   - checkIns: How many 练了 check-ins it takes; 0 for a starter.
+            public init(
+                id: Swift.String,
+                storeId: Swift.String,
+                state: Components.Schemas.ShelfPiece.StatePayload,
+                checkInsToGo: Swift.Int? = nil,
+                sports: [Swift.String],
+                checkIns: Swift.Int
+            ) {
+                self.id = id
+                self.storeId = storeId
+                self.state = state
+                self.checkInsToGo = checkInsToGo
+                self.sports = sports
+                self.checkIns = checkIns
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case storeId
+                case state
+                case checkInsToGo
+                case sports
+                case checkIns
             }
         }
     }

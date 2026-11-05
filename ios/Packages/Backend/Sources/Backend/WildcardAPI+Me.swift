@@ -62,7 +62,7 @@ extension WildcardAPI {
         try await unlockStanding().unlocks
     }
 
-    /// What the member unlocked by training, the earliest first, and the pieces still locked.
+    /// What the member unlocked by training, the earliest first, and their 商店街 now.
     public func unlockStanding() async throws(APIError) -> UnlockStanding {
         let body = try await call { try await client.getMyUnlocks().ok.body.json }
         let reason = { (reason: Components.Schemas.UnlockReason) in
@@ -82,7 +82,17 @@ extension WildcardAPI {
         return UnlockStanding(
             // Both lists are the earliest first; so is the whole.
             unlocks: (stores + pieces).sorted { $0.unlockedAt < $1.unlockedAt },
-            lockedPieces: body.lockedPieces.map { LockedPiece(id: $0.id, checkInsToGo: $0.checkInsToGo) })
+            shelf: Shelf(
+                stores: body.shelf.stores.map { Shelf.Store(id: $0.id, isOpen: $0.open) },
+                pieces: body.shelf.pieces.map { piece in
+                    let state: Shelf.State =
+                        switch piece.state {
+                        case .owned: .owned
+                        case .available: .available
+                        case .locked: .locked(toGo: piece.checkInsToGo ?? 1)
+                        }
+                    return Shelf.Piece(id: piece.id, store: piece.storeId, state: state)
+                }))
     }
 
     /// Whether the one daily push at 6pm is on; it is until the member turns it off.

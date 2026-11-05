@@ -1,28 +1,40 @@
 import { describe, expect, it } from 'vitest';
 
-import { earned, idFits, toGo, UnlockRuleEdit, type UnlockRule } from './unlocks.js';
+import {
+  earned,
+  idFits,
+  shelf,
+  toGo,
+  UnlockRuleEdit,
+  type CountedRule,
+  type Piece,
+  type Store,
+} from './unlocks.js';
 
 const start = new Date('2026-11-02T16:00:00Z');
-const deuce: UnlockRule = {
+const deuce: CountedRule = {
   kind: 'store',
   id: 'deuce',
   sports: ['tennis', 'pickleball', 'squash'],
   after: 3,
   countsFrom: start,
+  switchIds: [],
 };
-const halfmoon: UnlockRule = {
+const halfmoon: CountedRule = {
   kind: 'store',
   id: 'halfmoon',
   sports: [],
   after: 3,
   countsFrom: start,
+  switchIds: [],
 };
-const racket: UnlockRule = {
+const racket: CountedRule = {
   kind: 'prop',
   id: 'racket',
   sports: ['tennis', 'squash'],
   after: 1,
   countsFrom: start,
+  switchIds: [],
 };
 const at = (minutes: number) => new Date(start.getTime() + minutes * 60_000);
 const allYear = () => true;
@@ -107,12 +119,13 @@ describe('earned', () => {
 
 describe('toGo', () => {
   it('counts what each rule not yet reached still needs, in its sports, since its start', () => {
-    const bib: UnlockRule = {
+    const bib: CountedRule = {
       kind: 'piece',
       id: 'lap-bib',
       sports: ['run', 'walk'],
       after: 5,
       countsFrom: start,
+      switchIds: [],
     };
     const trained = [
       { id: 'a', sport: 'run', madeAt: at(-5) },
@@ -127,15 +140,15 @@ describe('toGo', () => {
   });
 });
 
-describe('a rule with a switch', () => {
-  it('counts only check-ins made while its switch is on', () => {
-    const tuna: UnlockRule = {
+describe('a rule with switches', () => {
+  it('counts only check-ins made while all its switches are on', () => {
+    const tuna: CountedRule = {
       kind: 'piece',
       id: 'powder-tuna',
       sports: ['ski'],
       after: 2,
       countsFrom: start,
-      switchId: 'winter',
+      switchIds: ['winter'],
     };
     // On only from the third hour on.
     const switchOn = (id: string, madeAt: Date) => id === 'winter' && madeAt >= at(180);
@@ -152,6 +165,86 @@ describe('a rule with a switch', () => {
     expect(earned({ rules: [tuna], trained: more, has: [], switchOn })).toMatchObject([
       { id: 'powder-tuna', by: { checkIn: 'd' } },
     ]);
+  });
+});
+
+describe('shelf', () => {
+  const stores: Store[] = [
+    { id: 'warmup', position: 1, offered: true },
+    { id: 'deuce', position: 2, offered: true },
+    { id: 'powder', position: 3, switchId: 'winter', offered: true },
+    { id: 'gone', position: 4, offered: false },
+  ];
+  const piece = (
+    id: string,
+    { starter = true, switchId }: { starter?: boolean; switchId?: string } = {},
+  ): Piece => ({
+    id,
+    storeId: id.split('-')[0] ?? '',
+    slot: 'top',
+    starter,
+    offered: true,
+    ...(switchId === undefined ? {} : { switchId }),
+  });
+  const pieces = [
+    piece('warmup-tee'),
+    piece('deuce-polo'),
+    piece('powder-salmonsuit'),
+    piece('powder-tuna', { starter: false }),
+    piece('powder-ikura', { starter: false }),
+    piece('warmup-scarf', { switchId: 'winter' }),
+    piece('gone-cap'),
+  ];
+  const tuna: CountedRule = {
+    kind: 'piece',
+    id: 'powder-tuna',
+    sports: ['ski'],
+    after: 1,
+    countsFrom: start,
+    switchIds: ['winter'],
+  };
+  const ikura = { ...tuna, id: 'powder-ikura', after: 2 };
+  const ownedTuna = {
+    kind: 'piece' as const,
+    id: 'powder-tuna',
+    sports: ['ski'],
+    after: 1,
+    by: { checkIn: 'a' },
+    unlockedAt: at(1),
+  };
+  const rules = [deuce, tuna, ikura];
+  const locked = [{ kind: 'piece' as const, id: 'powder-ikura', toGo: 1 }];
+
+  it('shows a closed store’s starters and locked pieces to nobody, and what a member owns all year', () => {
+    const off = shelf({ stores, pieces, rules, has: [ownedTuna], locked, on: () => false });
+    expect(off.stores).toStrictEqual([
+      { id: 'warmup', open: true },
+      { id: 'deuce', open: true },
+      { id: 'powder', open: false },
+    ]);
+    expect(off.pieces).toStrictEqual([
+      { id: 'warmup-tee', storeId: 'warmup', state: 'available', sports: [], after: 0 },
+      // Owned stays on the rack, whatever the switch.
+      { id: 'powder-tuna', storeId: 'powder', state: 'owned', sports: ['ski'], after: 1 },
+    ]);
+  });
+
+  it('puts out an open store’s starters and locked pieces, and a piece on its own switch', () => {
+    const on = shelf({ stores, pieces, rules, has: [], locked, on: (id) => id === 'winter' });
+    expect(on.stores.find(({ id }) => id === 'powder')?.open).toBe(true);
+    expect(on.pieces.map(({ id, state }) => [id, state])).toStrictEqual([
+      ['warmup-tee', 'available'],
+      // DEUCE CLUB is not earned yet, so its starter waits.
+      ['powder-salmonsuit', 'available'],
+      // The tuna is reached but not yet kept: it shows once it is owned.
+      ['powder-ikura', 'locked'],
+      ['warmup-scarf', 'available'],
+    ]);
+    expect(on.pieces.find(({ id }) => id === 'powder-ikura')).toMatchObject({
+      toGo: 1,
+      sports: ['ski'],
+      after: 2,
+    });
   });
 });
 

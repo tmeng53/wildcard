@@ -1,7 +1,16 @@
 import { SportId } from '@wildcard/sport-ids';
 import type { Kysely } from 'kysely';
 
-import { MemberId, UnlockKind, idFits, type Unlock, type UnlockRule } from '../domain/unlocks.js';
+import {
+  MemberId,
+  SLOTS,
+  UnlockKind,
+  idFits,
+  type Piece,
+  type Store,
+  type Unlock,
+  type UnlockRule,
+} from '../domain/unlocks.js';
 import type { UnlockStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -9,8 +18,9 @@ import type { DB } from './tables.js';
 export type UnlockTables = DB;
 
 /**
- * The rules and members' unlocks on Postgres (`supabase/migrations`, `unlock_rules` and
- * `member_unlocks`). A trigger logs each rule that changes; an unlock row is its own log.
+ * The rules and members' unlocks on Postgres (`supabase/migrations`, `unlock_rules`,
+ * `member_unlocks`, `stores` and `pieces`). Triggers log each rule, store and piece that changes;
+ * an unlock row is its own log.
  */
 export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore {
   return {
@@ -27,21 +37,61 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
         sports: row.sports.map((sport) => SportId.parse(sport)),
         after: row.after,
         countsFrom: new Date(row.counts_from),
-        ...(row.switch_id === null ? {} : { switchId: row.switch_id }),
       }));
     },
 
-    async putRule({ kind, id, sports, after, switchId }) {
-      // Left out, the switch stays as the rule has it; null clears it.
-      const changed = {
-        sports: [...sports],
-        after,
-        ...(switchId === undefined ? {} : { switch_id: switchId }),
-      };
+    async putRule({ kind, id, sports, after }) {
+      const changed = { sports: [...sports], after };
       await db
         .insertInto('unlock_rules')
         .values({ kind, item_id: id, ...changed })
         .onConflict((conflict) => conflict.columns(['kind', 'item_id']).doUpdateSet(changed))
+        .execute();
+    },
+
+    async stores() {
+      const rows = await db.selectFrom('stores').selectAll().orderBy('position').execute();
+      return rows.map((row): Store => ({
+        id: row.id,
+        position: row.position,
+        offered: row.offered,
+        ...(row.switch_id === null ? {} : { switchId: row.switch_id }),
+      }));
+    },
+
+    async pieces() {
+      const rows = await db.selectFrom('pieces').selectAll().orderBy('id').execute();
+      return rows.map((row): Piece => ({
+        id: row.id,
+        storeId: row.store_id,
+        slot: slot(row.slot),
+        starter: row.starter,
+        offered: row.offered,
+        ...(row.switch_id === null ? {} : { switchId: row.switch_id }),
+      }));
+    },
+
+    async putStore({ id, ...edit }) {
+      const changed = { position: edit.position, switch_id: edit.switchId, offered: edit.offered };
+      await db
+        .insertInto('stores')
+        .values({ id, ...changed })
+        .onConflict((conflict) => conflict.column('id').doUpdateSet(changed))
+        .execute();
+    },
+
+    async putPiece({ id, ...edit }) {
+      const changed = {
+        store_id: edit.storeId,
+        slot: edit.slot,
+        starter: edit.starter,
+        switch_id: edit.switchId,
+        offered: edit.offered,
+      };
+      await db
+        .insertInto('pieces')
+        .values({ id, ...changed })
+        .onConflict((conflict) => conflict.column('id').doUpdateSet(changed))
         .execute();
     },
 
@@ -95,6 +145,13 @@ function itemId(row: { kind: string; item_id: string }): string {
     throw new Error(`${row.item_id} is not a ${row.kind} id`);
   }
   return row.item_id;
+}
+
+/** A row's slot, which the database checks too. */
+function slot(value: string): Piece['slot'] {
+  const found = SLOTS.find((known) => known === value);
+  if (found === undefined) throw new Error(`${value} is not a slot`);
+  return found;
 }
 
 /** A row's check-in, or else its giver: the table holds exactly one of them. */

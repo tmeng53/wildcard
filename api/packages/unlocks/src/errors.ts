@@ -21,3 +21,14 @@ export class UnlockItemMissingError extends AppError {
     super(`${item} has no unlock rule.`);
   }
 }
+
+/** Thrown when an admin hangs a piece in a store that doesn't exist. */
+export class UnlockStoreMissingError extends AppError {
+  override readonly name = 'UnlockStoreMissingError';
+  readonly reason = 'UNLOCK_STORE_MISSING';
+  readonly status = 'NOT_FOUND';
+
+  constructor(readonly store: string) {
+    super(`There is no store ${store}.`);
+  }
+}
