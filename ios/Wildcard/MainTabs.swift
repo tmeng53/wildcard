@@ -282,8 +282,8 @@ struct MainTabs: View {
                     destinations: MeDestinations(
                         editCharacter: wardrobe.editCharacter,
                         schedule: { showsSchedule = true },
-                        street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                         myPosts: { wall = PostWallStore(source: myPosts) },
+                        street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                         privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
                 )
             }
