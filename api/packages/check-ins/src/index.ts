@@ -40,7 +40,7 @@ export {
 } from './domain/post-cursor.js';
 export type { CheckInTotals, TopSport, TrainedCheckIn } from './domain/totals.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
-export { CommentId, type Comment } from './domain/comment.js';
+export { CommentId, MAX_MENTIONS, type Comment } from './domain/comment.js';
 export { COMMENT_MAX_CHARACTERS, CommentText } from './domain/text.js';
 export {
   DEFAULT_PLAN_DAYS,
@@ -86,6 +86,7 @@ export type {
   MemberCalendar,
   PhotoFiles,
   ReactionStore,
+  CoachHired,
   CoachSpoke,
   SportList,
   SquadMembership,

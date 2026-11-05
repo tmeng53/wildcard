@@ -289,22 +289,6 @@
         }
       }
     },
-    "分享到": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Share to"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "分享到"
-          }
-        }
-      }
-    },
     "分享到 %@": {
       "localizations": {
         "en": {
@@ -893,22 +877,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "這餐很自律…"
-          }
-        }
-      }
-    },
-    "都不选就是仅自己可见": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pick none to keep it to yourself"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "都不選就是僅自己可見"
           }
         }
       }
@@ -1812,6 +1780,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "今天"
+          }
+        }
+      }
+    },
+    "还有新通知 · 去看看": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More new notices · Take a look"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還有新通知 · 去看看"
           }
         }
       }

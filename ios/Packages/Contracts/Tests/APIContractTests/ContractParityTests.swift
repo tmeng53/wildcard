@@ -64,6 +64,10 @@ func commentLimitIsTheAPIs(schema: String) throws {
     #expect(try property("text", of: schema)?.maxCharacters == CommentText.maxLength)
 }
 
+@Test func mentionLimitIsTheAPIs() throws {
+    #expect(try property("mentions", of: "CommentDraft")?.maxItems == Mentions.maxMembers)
+}
+
 @Test func disclaimerLimitIsTheAPIs() throws {
     #expect(try property("text", of: "Disclaimer")?.maxCharacters == Disclaimer.maxLength)
 }

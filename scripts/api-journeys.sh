@@ -790,7 +790,9 @@ if want account; then
   jq -e '.profile.joinedAt | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$")' <<<"$body" >/dev/null || fail "the profile should say when they joined: $body"
   echo "account: a new member has no profile, an unknown zone is refused (400 TIME_ZONE_UNKNOWN), America/Toronto saved, joined $(jq -r .profile.joinedAt <<<"$body")"
 
-  squad_of "$leaver_token" "$mate_token"
+  # Mate is in the shared squad already, and a member is in one at a time: a new teammate.
+  read -r _ keeper_token <<<"$(sign_up)"
+  squad_of "$leaver_token" "$keeper_token"
   call POST /photo-uploads "$leaver_token"
   expect 201
   path="$(jq -r .path <<<"$body")"
@@ -801,7 +803,7 @@ if want account; then
   toronto_day="$(node -p "new Date(Date.parse(new Date('$now').toLocaleString('sv-SE', { timeZone: 'America/Toronto' }) + 'Z') - 3 * 3_600_000).toISOString().slice(0, 10)")"
   call PUT "/check-ins/$(new_id)" "$leaver_token" "$(check_in_of "$squad" "$toronto_day" healthyMeal "\"meal\":{\"photos\":[{\"path\":\"$path\"}]}")"
   expect 201
-  echo "account: leaver made a squad with mate and posted a meal with a photo"
+  echo "account: leaver made a squad with keeper and posted a meal with a photo"
 
   call DELETE /me "$leaver_token" '{"version":1}'
   expect 204
@@ -815,8 +817,8 @@ if want account; then
       (select count(*) from public.ai_consents where member_id = '$leaver') || ' ' ||
       (select count(*) from storage.objects where name like '$leaver/%') || ' ' ||
       (select count(*) from public.squad_members where squad_id = '$squad')")"
-  [ "$left" = "0 0 0 0 0 0 0 0 1" ] || fail "user, profile and its log, membership log, check-ins, memberships, AI consent, photos should be gone and the squad left to mate: $left"
-  echo "account: deleted (204): no user, profile, profile or membership log, check-in, membership, AI consent or photo left; the squad stays with mate"
+  [ "$left" = "0 0 0 0 0 0 0 0 1" ] || fail "user, profile and its log, membership log, check-ins, memberships, AI consent, photos should be gone and the squad left to keeper: $left"
+  echo "account: deleted (204): no user, profile, profile or membership log, check-in, membership, AI consent or photo left; the squad stays with keeper"
 
   call DELETE /me "$leaver_token" '{"version":1}'
   expect 401
@@ -929,7 +931,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_scenes,put_scene,get_unlock_rules,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,send_test_push" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_scenes,put_scene,get_unlock_rules,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,send_test_push" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 

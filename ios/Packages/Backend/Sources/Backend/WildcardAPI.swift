@@ -102,10 +102,10 @@ public struct WildcardAPI: Sendable {
 
     // MARK: - Squads and their today
 
-    /// The member's squads, the earliest joined first.
-    public func mySquads() async throws(APIError) -> [Squad] {
-        let list = try await mySquadsWire()
-        return try read { () throws(ContractsError) in try list.squads.map(Squad.init) }
+    /// The member's squad, or nil in none: a member is in one squad at most.
+    public func mySquad() async throws(APIError) -> Squad? {
+        guard let wire = try await mySquadWire() else { return nil }
+        return try read { () throws(ContractsError) in try Squad(wire) }
     }
 
     /// The squad's today: every member's day, today's counts, the member's 本周 and the squad's.
@@ -192,8 +192,9 @@ public struct WildcardAPI: Sendable {
         try await call { try await client.getMe().ok.body.json }
     }
 
-    func mySquadsWire() async throws(APIError) -> Components.Schemas.SquadList {
-        try await call { try await client.listMySquads().ok.body.json }
+    /// The API lists a member's squads, which is one at most.
+    func mySquadWire() async throws(APIError) -> Components.Schemas.Squad? {
+        try await call { try await client.listMySquads().ok.body.json }.squads.first
     }
 
     func todayWire(of squad: SquadID) async throws(APIError) -> Components.Schemas.SquadToday {

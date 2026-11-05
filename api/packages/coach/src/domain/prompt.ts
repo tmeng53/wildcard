@@ -1,7 +1,7 @@
 import type { Coach } from './coach.js';
 import { REPLY_LIMIT } from './reply.js';
 import type { CoachSettings } from './settings.js';
-import { checkInLine, rosterOf, type SquadWeek, type WeekCheckIn } from './squad-week.js';
+import { checkInLine, rosterOf, saidTo, type SquadWeek, type WeekCheckIn } from './squad-week.js';
 import type { WakeReason } from './wake.js';
 
 // What the model reads: the standing instructions (the rules every coach follows, this coach's
@@ -27,7 +27,7 @@ export function instructionsOf(settings: Pick<CoachSettings, 'rules'>, coach: Co
 const WAKES = [
   '你会在三种时候醒来，每次的任务会告诉你是哪一种：',
   `- 有人打卡：看看这条打卡（需要的话先用 squad_week 看这周的情况），像队友在动态下面留言那样，用 reply 回一句（不超过 ${String(REPLY_LIMIT)} 字），用 react 点一个表情，或者两个都做。大多数打卡都值得回应；说得具体，接住对方说的话或练的东西，别说教、别催、别空喊加油。任务里有你最近点过的表情，换着用，别总点同一个。`,
-  `- 有人回复你：有人在一条打卡下面回复了你说的话。看看这条打卡和你们在下面的对话，用 answer 接着回这句（不超过 ${String(REPLY_LIMIT)} 字），像在评论里聊天那样，接住对方的话。一次只回这一句。`,
+  `- 有人回复你或 @ 你：有人在一条打卡下面回复了你说的话，或在评论里 @ 了你。看看这条打卡和你们在下面的对话，用 answer 回这句（不超过 ${String(REPLY_LIMIT)} 字），像在评论里聊天那样，接住对方的话。一次只回这一句。`,
   `- 新的一天：先用 squad_week 看看小队这周。任务里有过去一天大家和你的对话，过一遍，把长期有用的用 remember 记下，再用 edit_file 整理一次记性：合并重复的，删掉过时的。然后用 post_note 在小队的战术板上写今天的一句（不超过 ${String(NOTE_LIMIT)} 字），全队都会看到。别重复你最近写过的。没什么值得说的，就不写。`,
   '记性：你每次醒来都会忘掉以前的一切，只记得任务里「你的记性」那些。没用 remember 记下的，下次就不知道了。所以每次醒来，只要听到长期有用的新东西，就在回话的同时用 remember 记下：外号、小队的梗、长期的习惯和偏好、队员主动说过的伤病、重要的里程碑、队员纠正你的事、你答应过的事。不记单条打卡，也不记这周发生了什么，这些随时能用 squad_week 看。squad.md 记小队，memory.md 记你们之间的事，people/队员N.md 记每个人。记性里已经有的不用再记。',
   '没用 remember 记下，就别说「记下了」「记住了」。',
@@ -37,9 +37,9 @@ const WAKES = [
 
 /** What was said to and by the coach under one check-in, oldest first. */
 export interface CoachThread {
-  /** The coach's own reply to the check-in. */
-  readonly reply: string;
-  /** Members' replies to the coach and its answers since, oldest first. */
+  /** The coach's own reply to the check-in, when it wrote one. */
+  readonly reply?: string;
+  /** Members' replies to and @s of the coach and its answers since, oldest first. */
   readonly said: readonly {
     /** The member who wrote it, or `undefined` for the coach. */
     readonly member: string | undefined;
@@ -122,12 +122,14 @@ export function taskOf({
     );
     // The rest of the post's comments too, so the coach knows what the squad said around it.
     const others = checkIn.comments
-      .filter(({ toCoach }) => toCoach === undefined)
+      .filter((comment) => saidTo(comment) === undefined)
       .map(({ member, text }) => `- ${roster.get(member) ?? '队员'}：「${text}」`);
+    const answering = checkIn.comments.find(({ id }) => id === reason.comment);
+    const ownReply = thread.reply === undefined ? [] : [`- 你：「${thread.reply}」`];
     return [
-      `有人回复你。这条打卡：${checkInLine({ ...checkIn, comments: [] }, roster)}`,
+      `${answering?.toCoach === undefined && answering?.mentionsCoach !== undefined ? '有人在评论里 @ 你' : '有人回复你'}。这条打卡：${checkInLine({ ...checkIn, comments: [] }, roster)}`,
       ...(others.length === 0 ? [] : [`这条下面别人的评论（先后顺序）：\n${others.join('\n')}`]),
-      `你们在下面的对话：\n- 你：「${thread.reply}」\n${said.join('\n')}`,
+      `你们在下面的对话：\n${[...ownReply, ...said].join('\n')}`,
       filesLine,
     ].join('\n\n');
   }

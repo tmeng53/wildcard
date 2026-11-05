@@ -9,7 +9,11 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
+import {
+  createNotices,
+  createPostgresNoticeStore,
+  createPostgresBroadcastStore,
+} from '@wildcard/notices';
 import {
   MemberId as PushMember,
   createPostgresDailyPushSettings,
@@ -96,7 +100,11 @@ const JOBS_TOKEN = randomBytes(32).toString('hex');
 const nudges = nudgesOn(db);
 const interactions = [checkInInteractions(checkIns), nudgeInteractions(nudges)];
 
-const notices = createNotices({ store: createPostgresNoticeStore(db) });
+const notices = createNotices({
+  store: createPostgresNoticeStore(db),
+  broadcasts: createPostgresBroadcastStore(db),
+  clock: () => new Date(),
+});
 const deps = {
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),

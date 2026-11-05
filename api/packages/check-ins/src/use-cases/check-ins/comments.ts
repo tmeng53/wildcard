@@ -1,5 +1,5 @@
-import type { CheckInId, MemberId } from '../../domain/check-in.js';
-import type { Comment, CommentId } from '../../domain/comment.js';
+import type { CheckInId, MemberId, SquadId } from '../../domain/check-in.js';
+import { MAX_MENTIONS, type Comment, type CommentId } from '../../domain/comment.js';
 import type { CommentText } from '../../domain/text.js';
 import {
   CommentIdConflictError,
@@ -10,6 +10,7 @@ import {
 import type {
   CheckInStore,
   Clock,
+  CoachHired,
   CoachSpoke,
   CommentStore,
   SquadMembership,
@@ -22,6 +23,8 @@ interface Deps {
   readonly comments: CommentStore;
   /** Whether a coach spoke under a check-in; without it, no comment may reply to a coach. */
   readonly coachSpoke?: CoachSpoke | undefined;
+  /** Whether a squad has a coach hired now; without it, no comment may @ a coach. */
+  readonly coachHired?: CoachHired | undefined;
 }
 
 export interface CommentInput {
@@ -32,6 +35,10 @@ export interface CommentInput {
   readonly replyTo?: MemberId | undefined;
   /** The coach it replies to, by id. Never with `replyTo`. */
   readonly replyToCoach?: string | undefined;
+  /** Whom it @s, in the order written. */
+  readonly mentions?: readonly MemberId[] | undefined;
+  /** The coach it @s, by id. */
+  readonly mentionsCoach?: string | undefined;
 }
 
 export interface Commented {
@@ -39,6 +46,8 @@ export interface Commented {
   readonly created: boolean;
   /** Who posted the check-in, to tell them about a new comment. */
   readonly author: MemberId;
+  /** The squads the commenter sees the check-in through, where its coach may answer. */
+  readonly squads: readonly SquadId[];
 }
 
 /**
@@ -48,37 +57,61 @@ export interface Commented {
  * coach of such a squad that said something under it. Throws `CheckInNotFoundError` for a
  * check-in they can't see, `ReplyToNotInSquadError` for a reply to anyone else,
  * `ReplyToCoachNotFoundError` for one to any other coach and `CommentIdConflictError` for an id
- * that holds another comment.
+ * that holds another comment. An @ of anyone who can't see the check-in (or of the commenter)
+ * is left out, as is one of a coach no such squad has now: the words stay, nobody is told.
  */
 export async function commentOnCheckIn(
   deps: Deps & { readonly clock: Clock },
-  { checkIn: id, id: commentId, member, text, replyTo, replyToCoach }: CommentInput,
+  {
+    checkIn: id,
+    id: commentId,
+    member,
+    text,
+    replyTo,
+    replyToCoach,
+    mentions: asked = [],
+    mentionsCoach: askedCoach,
+  }: CommentInput,
 ): Promise<Commented> {
   const { checkIn, through } = await findVisibleCheckIn(deps, { id, viewer: member });
-  if (replyTo !== undefined && replyTo !== checkIn.member) {
-    const teammates = await deps.membership.membersOfAny(through);
-    if (!teammates.has(replyTo)) throw new ReplyToNotInSquadError();
+  const needTeammates = (replyTo !== undefined && replyTo !== checkIn.member) || asked.length > 0;
+  const teammates = needTeammates
+    ? await deps.membership.membersOfAny(through)
+    : new Set<MemberId>();
+  if (replyTo !== undefined && replyTo !== checkIn.member && !teammates.has(replyTo)) {
+    throw new ReplyToNotInSquadError();
   }
+  const mentions = [...new Set(asked)]
+    .filter((each) => each !== member && (each === checkIn.member || teammates.has(each)))
+    .slice(0, MAX_MENTIONS);
+  const mentionsCoach =
+    askedCoach !== undefined &&
+    ((await deps.coachHired?.({ squads: through, coach: askedCoach })) ?? false)
+      ? askedCoach
+      : undefined;
   if (replyToCoach !== undefined) {
     const spoke =
       replyTo === undefined &&
       ((await deps.coachSpoke?.({ checkIn: id, squads: through, coach: replyToCoach })) ?? false);
     if (!spoke) throw new ReplyToCoachNotFoundError();
   }
-  const asked: Comment = {
+  const written: Comment = {
     id: commentId,
     member,
     text,
     ...(replyTo === undefined ? {} : { replyTo }),
     ...(replyToCoach === undefined ? {} : { replyToCoach }),
+    ...(mentions.length === 0 ? {} : { mentions }),
+    ...(mentionsCoach === undefined ? {} : { mentionsCoach }),
     commentedAt: deps.clock(),
   };
-  const outcome = await deps.comments.insert(id, asked);
+  const outcome = await deps.comments.insert(id, written);
   if (outcome === 'conflict') throw new CommentIdConflictError(commentId);
-  if (outcome === 'created') return { comment: asked, created: true, author: checkIn.member };
+  const answer = { author: checkIn.member, squads: through };
+  if (outcome === 'created') return { comment: written, created: true, ...answer };
   // Saved before: answer with it as it was first written.
   const saved = await deps.comments.find(commentId);
-  return { comment: saved ?? asked, created: false, author: checkIn.member };
+  return { comment: saved ?? written, created: false, ...answer };
 }
 
 /**

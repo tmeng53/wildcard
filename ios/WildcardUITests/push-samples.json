@@ -151,6 +151,28 @@
       "comment": "9b2c4d6e-1f3a-4c5b-8d7e-0a1b2c3d4e5f"
     }
   },
+  "push.comment.mention": {
+    "version": 1,
+    "aps": {
+      "alert": {
+        "loc-key": "push.comment.mention",
+        "loc-args": [
+          "超超超超超超超超超超超超",
+          "冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲冲"
+        ]
+      },
+      "category": "comment",
+      "thread-id": "comments-3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59",
+      "interruption-level": "active",
+      "sound": "default",
+      "mutable-content": 1
+    },
+    "event": {
+      "kind": "comment",
+      "checkIn": "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59",
+      "comment": "9b2c4d6e-1f3a-4c5b-8d7e-0a1b2c3d4e5f"
+    }
+  },
   "push.weeklyAwards.ready": {
     "version": 1,
     "aps": {

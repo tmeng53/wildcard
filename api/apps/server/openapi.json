@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -141,6 +141,79 @@
           "item": {
             "type": "string",
             "description": "The store’s, prop’s or piece’s id (`unlocked`)."
+          },
+          "broadcast": {
+            "type": "string",
+            "description": "The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now."
+          },
+          "title": {
+            "$ref": "#/components/schemas/LocalizedWords"
+          },
+          "body": {
+            "$ref": "#/components/schemas/LocalizedWords"
+          },
+          "action": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "$ref": "#/components/schemas/LocalizedWords"
+              },
+              "destination": {
+                "type": "string",
+                "description": "Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` (小队), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show no button for one you don’t know."
+              }
+            },
+            "required": [
+              "label",
+              "destination"
+            ],
+            "additionalProperties": false,
+            "description": "A button that opens a place in the app (`broadcast`), if any: its `label`."
+          },
+          "style": {
+            "type": "string",
+            "description": "How the app first shows it (`broadcast`): `banner` (the home’s notice banner) or `celebration` (full screen). Show another as `banner`."
+          },
+          "icon": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "description": "`store`, `prop` or `piece`. Skip another."
+              },
+              "id": {
+                "type": "string",
+                "description": "Its id in the app’s art."
+              }
+            },
+            "required": [
+              "kind",
+              "id"
+            ],
+            "additionalProperties": false,
+            "description": "The picture beside its words (`broadcast`): a store’s sign, a prop or a piece the app draws; left out, or one this build doesn’t draw, shows its own symbol."
+          },
+          "gifts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "`store`, `prop` or `piece`. Skip another."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Its id in the app’s art."
+                }
+              },
+              "required": [
+                "kind",
+                "id"
+              ],
+              "additionalProperties": false
+            },
+            "description": "What it gave the caller when they were told (`broadcast`), already among their unlocks; left out when it gave nothing."
           }
         },
         "required": [
@@ -150,6 +223,26 @@
         ],
         "additionalProperties": false,
         "description": "As `GET /me/notices` lists it."
+      },
+      "LocalizedWords": {
+        "type": "object",
+        "properties": {
+          "zhHans": {
+            "type": "string"
+          },
+          "en": {
+            "type": "string"
+          },
+          "zhHant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "zhHans",
+          "en",
+          "zhHant"
+        ],
+        "additionalProperties": false
       },
       "Health": {
         "type": "object",
@@ -1884,6 +1977,18 @@
             "type": "string",
             "description": "The coach it replies to, by id, when it does (回复 毛头：…)."
           },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone."
+          },
+          "mentionsCoach": {
+            "type": "string",
+            "description": "The coach it @s, by id, when it does (@毛头)."
+          },
           "commentedAt": {
             "type": "string",
             "format": "date-time",
@@ -2210,6 +2315,18 @@
             "type": "string",
             "description": "The coach it replies to, by id, when it does (回复 毛头：…)."
           },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone."
+          },
+          "mentionsCoach": {
+            "type": "string",
+            "description": "The coach it @s, by id, when it does (@毛头)."
+          },
           "commentedAt": {
             "type": "string",
             "format": "date-time",
@@ -2250,6 +2367,21 @@
             "type": "string",
             "pattern": "^[a-z][a-z0-9-]{1,39}$",
             "description": "The coach it replies to (回复 毛头：…), by the coach’s id: one that said something under the check-in for a squad the caller sees it through. Never with `replyTo`. The coach answers it soon after.",
+            "example": "xiaohun"
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 8,
+            "description": "Whom the comment @s, in the order written: up to 8 who can see the check-in (its author or a teammate). Each is told by push. Anyone else, or the writer, is left out."
+          },
+          "mentionsCoach": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$",
+            "description": "The coach the comment @s (@毛头), by id: the coach of a squad the caller sees the check-in through. The coach answers it soon after. Left out for any other coach.",
             "example": "xiaohun"
           }
         },
@@ -2376,7 +2508,7 @@
             "items": {
               "$ref": "#/components/schemas/Squad"
             },
-            "description": "The member’s squads, the earliest joined first: at most 3."
+            "description": "The member’s squads, the earliest joined first: at most 1."
           }
         },
         "required": [
@@ -7353,7 +7485,7 @@
             }
           },
           "400": {
-            "description": "Not a valid name, the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
+            "description": "Not a valid name, the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7863,7 +7995,7 @@
             }
           },
           "400": {
-            "description": "The squad has 8 members (`SQUAD_FULL`), the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
+            "description": "The squad has 8 members (`SQUAD_FULL`), the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {

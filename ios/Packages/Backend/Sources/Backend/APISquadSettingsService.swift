@@ -18,7 +18,7 @@ public struct APISquadSettingsService: SquadSettingsService {
     public func settings() async throws(SquadError) -> SquadSettings {
         try await squad { () throws(APIError) in
             let member = try await api.me()
-            guard let first = try await api.mySquads().first else { throw .refused(.squadNotJoined) }
+            guard let first = try await api.mySquad() else { throw .refused(.squadNotJoined) }
             let today = try await api.today(of: first.id)
             let scene = try await api.scene(of: first.id)
             let coach = try await api.coach(of: first.id)

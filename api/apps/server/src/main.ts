@@ -55,7 +55,9 @@ import {
   MemberId as NoticeMember,
   SquadId as NoticeSquad,
   createNotices,
+  createPostgresBroadcastStore,
   createPostgresNoticeStore,
+  type GiveGifts,
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
@@ -84,6 +86,7 @@ import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
 import { createCampaigns, createPostgresCampaignStore } from '@wildcard/campaigns';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import {
+  MemberId as UnlockMember,
   createCoachGifts,
   createPostgresGiftStore,
   createPostgresUnlockStore,
@@ -121,6 +124,7 @@ import { campaignTools } from './admin-mcp/tools/campaigns.js';
 import { newYorkDay } from './new-york-day.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
+import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
 import { artTools } from './admin-mcp/tools/art.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
@@ -288,13 +292,65 @@ const checkIns = createCheckIns({
       checkIn,
       coach,
     }),
+  coachHired: async ({ squads: through, coach }) => {
+    const hiring = createPostgresCoachHiring(db);
+    for (const squad of through) {
+      if ((await hiring.coachOf(CoachSquadId.parse(squad)))?.coach === coach) return true;
+    }
+    return false;
+  },
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
 });
+/** What the unlocks module asks other modules, for `unlocksOn` and a broadcast's gifts. */
+const unlockSources = (scope: Database) => ({
+  store: createPostgresUnlockStore(scope),
+  trainedSince: ({ member, since }: { readonly member: string; readonly since: Date }) =>
+    checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
+  sportListed: (id: string) => sports.isListed(id),
+  // A rule counts only 练了 made while its store's and piece's switches were on, by the New
+  // York day, as the member sees them (a previewer also counts those in preview, on their
+  // pretend day).
+  switches: async (member: string) => {
+    const { on } = await switchesOn(scope).statesFor(member);
+    return (id: string, at: Date) => on(id, newYorkDay(at));
+  },
+});
+/**
+ * A broadcast's gifts, unlocked for the member from the admin who saved it, like `give_unlocks`
+ * but quietly: the broadcast itself says the 商店街 has something new, so no unlock notice is
+ * told for them.
+ */
+const giveBroadcastGifts =
+  (scope: Database): GiveGifts =>
+  async (member, broadcast) => {
+    if (broadcast.value.gifts.length === 0) return true;
+    if (broadcast.by === null) {
+      // Its admin deleted their account: told without the gifts, which nobody can give now.
+      log.warn('a broadcast’s gifts have no admin to give them', { broadcast: broadcast.id });
+      return true;
+    }
+    try {
+      await createUnlocks(unlockSources(scope)).give(
+        { member: UnlockMember.parse(member), items: broadcast.value.gifts },
+        UnlockMember.parse(broadcast.by),
+      );
+      return true;
+    } catch (error) {
+      log.warn('a broadcast’s gifts not given', { broadcast: broadcast.id, error });
+      return false;
+    }
+  };
 // What each member was told (通知, the bell on 动态): pushes and in-app notices, kept forever.
-const noticesOn = (scope: Database) => createNotices({ store: createPostgresNoticeStore(scope) });
+const noticesOn = (scope: Database) =>
+  createNotices({
+    store: createPostgresNoticeStore(scope),
+    broadcasts: createPostgresBroadcastStore(scope),
+    clock: () => new Date(),
+    giveGifts: giveBroadcastGifts(scope),
+  });
 const notices = noticesOn(db);
 /**
  * Keeps notices after what they tell of happened: a failure is logged, never the event's, even
@@ -314,17 +370,7 @@ const tellAfter = async (
 // asks check-ins for the 练了 that count and the sports module which sports exist.
 const unlocksOn = (scope: Database) =>
   createUnlocks({
-    store: createPostgresUnlockStore(scope),
-    trainedSince: ({ member, since }) =>
-      checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
-    sportListed: (id) => sports.isListed(id),
-    // A rule counts only 练了 made while its store's and piece's switches were on, by the New
-    // York day, as the member sees them (a previewer also counts those in preview, on their
-    // pretend day).
-    switches: async (member) => {
-      const { on } = await switchesOn(scope).statesFor(member);
-      return (id, at) => on(id, newYorkDay(at));
-    },
+    ...unlockSources(scope),
     unlocked: (member, unlocks) =>
       tellAfter(scope, {
         told: unlocks.map(({ kind, id }) => ({
@@ -559,6 +605,11 @@ const app = createApp({
       ...unlockTools({
         unlocks: unlocksOn(scope),
         gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
+      }),
+      ...broadcastTools({
+        broadcasts: noticesOn(scope),
+        unlocks: unlocksOn(scope),
+        clock: () => new Date(),
       }),
       ...artTools({ art: artOn(scope) }),
       ...campaignTools({

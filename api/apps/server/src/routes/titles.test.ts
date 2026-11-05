@@ -22,7 +22,11 @@ import {
   createPostgresWeekStoryStore,
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
-import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
+import {
+  createNotices,
+  createPostgresNoticeStore,
+  createPostgresBroadcastStore,
+} from '@wildcard/notices';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -37,6 +41,7 @@ import { memberCalendar } from '../member-calendar.js';
 import {
   adminOn,
   aiConsentOn,
+  alsoJoinedEarlier,
   config,
   scenesOn,
   switchesOn,
@@ -124,7 +129,11 @@ const app = createApp({
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   coachActivity: unusedCoachActivity,
-  notices: createNotices({ store: createPostgresNoticeStore(db) }),
+  notices: createNotices({
+    store: createPostgresNoticeStore(db),
+    broadcasts: createPostgresBroadcastStore(db),
+    clock: () => new Date(),
+  }),
   coachNames: () => Promise.reject(new Error('unused')),
   liveEvents: ignoredNotices.liveEvents,
   coachHiring: createCoachHiring({
@@ -354,7 +363,8 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     await profileOf(me, { nickname: '小米' });
     await profileOf(mate, { nickname: '阿杰', jerseyNumber: 7 });
     const squad = await squadOf(me, mate);
-    const elsewhere = await squadOf(mate);
+    const elsewhere = await squadOf(await signUp());
+    await alsoJoinedEarlier(db, { squad: elsewhere, member: mate.userId });
     await award({ squad: squad, weekStart: '2026-10-19', member: mate.userId }, [
       { title: '冷面杀手', speech: '一句话不说', badge: hexagon },
     ]);

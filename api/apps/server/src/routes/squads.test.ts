@@ -9,7 +9,11 @@ import {
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
+import {
+  createNotices,
+  createPostgresNoticeStore,
+  createPostgresBroadcastStore,
+} from '@wildcard/notices';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -112,7 +116,11 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
-  notices: createNotices({ store: createPostgresNoticeStore(db) }),
+  notices: createNotices({
+    store: createPostgresNoticeStore(db),
+    broadcasts: createPostgresBroadcastStore(db),
+    clock: () => new Date(),
+  }),
   coachNames: () => Promise.reject(new Error('unused')),
   liveEvents: ignoredNotices.liveEvents,
   log: createLog(() => undefined),
@@ -196,15 +204,15 @@ describe('PUT /squads/{squadId}', () => {
     expect([conflict.status, reason(conflict)]).toStrictEqual([409, 'SQUAD_ID_CONFLICT']);
   });
 
-  it('refuses a blank or too long name, and a fourth squad', async () => {
+  it('refuses a blank or too long name, and a second squad', async () => {
     const me = await signUp();
     for (const name of ['  ', '跑'.repeat(21), '早八\n跑团', 3]) {
       const refused = await create(me.token, { name });
       expect([refused.status, reason(refused)]).toStrictEqual([400, 'REQUEST_INVALID']);
     }
-    for (let i = 0; i < 3; i += 1) await newSquad(me.token);
-    const fourth = await create(me.token, { name: '第四个' });
-    expect([fourth.status, fourth.type, reason(fourth)]).toStrictEqual([
+    await newSquad(me.token);
+    const second = await create(me.token, { name: '第二个' });
+    expect([second.status, second.type, reason(second)]).toStrictEqual([
       400,
       'application/problem+json',
       'SQUAD_LIMIT_REACHED',
@@ -304,18 +312,10 @@ describe('reading and leaving squads', () => {
     const [me, friend] = [await signUp(), await signUp()];
     const mine = await newSquad(me.token, '一');
     const theirs = await newSquad(friend.token, '二');
-    await call({
-      method: 'POST',
-      path: `/squad-invites/${theirs.inviteCode}/accept`,
-      token: me.token,
-    });
 
     const list = await call({ method: 'GET', path: '/me/squads', token: me.token });
     expect(list.status).toBe(200);
-    expect(SquadListBody.parse(list.body).squads.map(({ name }) => name)).toStrictEqual([
-      '一',
-      '二',
-    ]);
+    expect(SquadListBody.parse(list.body).squads.map(({ name }) => name)).toStrictEqual(['一']);
 
     const seen = await call({ method: 'GET', path: `/squads/${mine.id}`, token: friend.token });
     expect([seen.status, reason(seen)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
@@ -334,24 +334,24 @@ describe('reading and leaving squads', () => {
       expect([malformed.status, reason(malformed)]).toStrictEqual([400, 'REQUEST_INVALID']);
     }
     expect(
-      (await call({ method: 'GET', path: `/squads/${theirs.id}`, token: me.token })).status,
+      (await call({ method: 'GET', path: `/squads/${mine.id}`, token: me.token })).status,
     ).toBe(200);
 
     const left = await call({
       method: 'DELETE',
-      path: `/squads/${theirs.id}/members/${me.userId}`,
+      path: `/squads/${mine.id}/members/${me.userId}`,
       token: me.token,
     });
     expect([left.status, left.body]).toStrictEqual([204, undefined]);
     const leftAgain = await call({
       method: 'DELETE',
-      path: `/squads/${theirs.id}/members/${me.userId}`,
+      path: `/squads/${mine.id}/members/${me.userId}`,
       token: me.token,
     });
     expect(leftAgain.status).toBe(204);
     const after = await call({ method: 'GET', path: '/me/squads', token: me.token });
-    expect(SquadListBody.parse(after.body).squads.map(({ id }) => id)).toStrictEqual([mine.id]);
-    const gone = await call({ method: 'GET', path: `/squads/${theirs.id}`, token: me.token });
+    expect(SquadListBody.parse(after.body).squads).toStrictEqual([]);
+    const gone = await call({ method: 'GET', path: `/squads/${mine.id}`, token: me.token });
     expect(reason(gone)).toBe('SQUAD_NOT_JOINED');
   });
 });

@@ -47,6 +47,11 @@ import {
   createPostgresUnlockStore,
   createUnlocks,
 } from '@wildcard/unlocks';
+import {
+  createNotices,
+  createPostgresBroadcastStore,
+  createPostgresNoticeStore,
+} from '@wildcard/notices';
 import { createAwardSettings, createPostgresAwardSettings } from '@wildcard/weekly-awards';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -79,6 +84,7 @@ import { memeTools } from './tools/memes.js';
 import { coachTools } from './tools/coach.js';
 import { sportTools } from './tools/sports.js';
 import { unlockTools } from './tools/unlocks.js';
+import { broadcastTools } from './tools/broadcasts.js';
 import { weekSummaryWordTools } from './tools/week-summary-words.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
@@ -223,6 +229,15 @@ beforeAll(async () => {
                   switches: () => Promise.resolve(() => true),
                 }),
                 gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
+              }),
+              ...broadcastTools({
+                broadcasts: createNotices({
+                  store: createPostgresNoticeStore(scope),
+                  broadcasts: createPostgresBroadcastStore(scope),
+                  clock: () => new Date(),
+                }),
+                unlocks: createPostgresUnlockStore(scope),
+                clock: () => new Date('2091-11-21T00:00:00Z'),
               }),
               ...artTools({
                 art: createArt({
@@ -420,6 +435,8 @@ describe('the admin MCP server', () => {
       ['put_piece', false],
       ['get_gift_pieces', true],
       ['put_gift_piece', false],
+      ['list_broadcasts', true],
+      ['put_broadcast', false],
       ['get_art', true],
       ['art_upload_url', true],
       ['put_art', false],
@@ -1133,6 +1150,65 @@ describe('the admin MCP server', () => {
     `.execute(db);
     expect(rows.rows.map(({ action }) => action)).toStrictEqual([
       { version: 1, tool: 'give_unlocks', arguments: gift },
+    ]);
+    await client.close();
+  });
+
+  it('writes a broadcast, logs it, and refuses a gift without an unlock rule', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const id = `soon-${randomUUID().slice(0, 8)}`;
+    const words = (zhHans: string, en: string) => ({ zhHans, en, zhHant: zhHans });
+    const broadcast = {
+      version: 1,
+      title: words('商店街上新了', 'New in the stores'),
+      body: words('商店街上新了，快去看看吧！', 'Something new in the stores. Take a look!'),
+      action: { label: words('去商店街看看', 'Take a look'), destination: 'stores' },
+      style: 'banner',
+      gifts: [{ kind: 'store', id: 'deuce' }],
+      // A year no other test's broadcast runs in, so no member is told it.
+      startsAt: '2091-11-20T00:00:00Z',
+      endsAt: '2091-11-27T00:00:00Z',
+    };
+    const put = await call('put_broadcast', { id, broadcast });
+    expect(put.isError).toBe(false);
+    expect(JSON.parse(put.text)).toMatchObject({
+      version: 1,
+      changed: true,
+      broadcast: { id, ...broadcast, running: true, by: admin.userId },
+    });
+    // The same again changes nothing, but the call is still logged.
+    expect(JSON.parse((await call('put_broadcast', { id, broadcast })).text)).toMatchObject({
+      changed: false,
+    });
+    const listed = z
+      .object({ broadcasts: z.array(z.object({ id: z.string() }).loose()) })
+      .parse(JSON.parse((await call('list_broadcasts')).text));
+    expect(listed.broadcasts.filter((each) => each.id === id)).toHaveLength(1);
+
+    expect(
+      await call('put_broadcast', {
+        id,
+        broadcast: { ...broadcast, gifts: [{ kind: 'piece', id: 'nowhere-hat' }] },
+      }),
+    ).toStrictEqual({
+      isError: true,
+      text: 'UNLOCK_ITEM_MISSING: piece:nowhere-hat has no unlock rule.',
+    });
+    expect(
+      (await call('put_broadcast', { id, broadcast: { ...broadcast, endsAt: broadcast.startsAt } }))
+        .isError,
+    ).toBe(true);
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      { version: 1, tool: 'put_broadcast', arguments: { id, broadcast } },
+      { version: 1, tool: 'put_broadcast', arguments: { id, broadcast } },
     ]);
     await client.close();
   });

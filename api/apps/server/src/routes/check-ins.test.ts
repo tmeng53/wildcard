@@ -25,6 +25,7 @@ import {
   switchesOn,
   adminOn,
   aiConsentOn,
+  alsoJoinedEarlier,
   config,
   noJobs,
   nudgesOn,
@@ -361,7 +362,8 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
   it('lists a squad’s check-ins for its members, and a member’s own', async () => {
     const [me, friend, stranger] = [await signUp(), await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
-    const friendsOther = await squadOf(friend);
+    const friendsOther = await squadOf(await signUp());
+    await alsoJoinedEarlier(db, { squad: friendsOther, member: friend.userId });
     const { day, createdAt } = todayAndNow();
     const id = randomUUID();
     const body = {

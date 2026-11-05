@@ -14,7 +14,11 @@ import {
   SquadId as CoachSquadId,
 } from '@wildcard/coach';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
+import {
+  createNotices,
+  createPostgresNoticeStore,
+  createPostgresBroadcastStore,
+} from '@wildcard/notices';
 import {
   DeviceToken,
   MemberId as PushMember,
@@ -76,6 +80,7 @@ const answersAsked: {
   readonly checkIn: string;
   readonly comment: string;
   readonly coach: string;
+  readonly squads: readonly string[];
 }[] = [];
 const coachActivity = createCoachActivity({ store: createPostgresCoachActivity(db) });
 const app = createApp({
@@ -105,6 +110,8 @@ const app = createApp({
         checkIn,
         coach,
       }),
+    // 小混 is every squad's coach here.
+    coachHired: ({ coach }) => Promise.resolve(coach === 'xiaohun'),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
     calendarOf: memberCalendar(members),
@@ -135,7 +142,11 @@ const app = createApp({
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   // Real, so a comment's notices are read back from 通知.
-  notices: createNotices({ store: createPostgresNoticeStore(db) }),
+  notices: createNotices({
+    store: createPostgresNoticeStore(db),
+    broadcasts: createPostgresBroadcastStore(db),
+    clock: () => new Date(),
+  }),
   coachNames: ignoredNotices.coachNames,
   liveEvents: ignoredNotices.liveEvents,
   log: createLog(() => undefined),
@@ -352,7 +363,7 @@ describe('/check-ins/{checkInId}/comments', () => {
       status: 200,
     });
     expect(answersAsked.filter(({ checkIn: at }) => at === run)).toStrictEqual([
-      { checkIn: run, comment: id, coach: 'xiaohun' },
+      { checkIn: run, comment: id, coach: 'xiaohun', squads: [squad] },
     ]);
     const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: tracy.token });
     expect(listed).toMatchObject({ body: { comments: [{ id, replyToCoach: 'xiaohun' }] } });
@@ -518,6 +529,57 @@ describe('/check-ins/{checkInId}/comments', () => {
       { kind: 'comment', alert: { key: 'push.comment.reply', args: ['波波', '算我一个'] } },
     ]);
     expect(await noticesOf(bo.token)).toStrictEqual([]);
+  });
+
+  it('tells each member a comment @s, and has the coach it @s answer', async () => {
+    const [tracy, ann, bo] = [
+      await withPhone('翠西'),
+      await withPhone('安安'),
+      await withPhone('波波'),
+    ];
+    const squad = await squadOf(tracy, ann, bo);
+    const run = await checkIn(tracy.token, squad);
+    const id = randomUUID();
+    const written = await call('PUT', {
+      path: `/check-ins/${run}/comments/${id}`,
+      token: ann.token,
+      body: {
+        version: 1,
+        text: '@波波 @小混 周六爬山',
+        mentions: [bo.userId, ann.userId],
+        mentionsCoach: 'xiaohun',
+      },
+    });
+    expect(written).toMatchObject({
+      status: 201,
+      body: { id, mentions: [bo.userId], mentionsCoach: 'xiaohun' },
+    });
+    const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: tracy.token });
+    expect(listed).toMatchObject({
+      body: { comments: [{ id, mentions: [bo.userId], mentionsCoach: 'xiaohun' }] },
+    });
+    expect(answersAsked.filter(({ checkIn: at }) => at === run)).toStrictEqual([
+      { checkIn: run, comment: id, coach: 'xiaohun', squads: [squad] },
+    ]);
+    expect(sentTo(tracy.phone, ann.phone, bo.phone)).toMatchObject([
+      [{ aps: { alert: { 'loc-key': 'push.comment' } } }],
+      [],
+      [{ aps: { alert: { 'loc-key': 'push.comment.mention' } } }],
+    ]);
+    expect(await noticesOf(bo.token)).toMatchObject([
+      {
+        kind: 'comment',
+        alert: { key: 'push.comment.mention', args: ['安安', '@波波 @小混 周六爬山'] },
+        checkIn: run,
+      },
+    ]);
+    // More than 8 is not a comment.
+    const many = await call('PUT', {
+      path: `/check-ins/${run}/comments/${randomUUID()}`,
+      token: ann.token,
+      body: { version: 1, text: '大家', mentions: Array.from({ length: 9 }, () => randomUUID()) },
+    });
+    expect(many.status).toBe(400);
   });
 
   it('sends no comment push to a member who turned push off', async () => {
