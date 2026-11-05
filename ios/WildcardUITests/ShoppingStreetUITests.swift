@@ -1,18 +1,19 @@
 import XCTest
 
-/// 商店街 from 我 on the in-memory member: the shopfront, a closed store, WARM-UP's rack and its
+/// 商店街 from 我 on the in-memory member: its header button, a closed store, WARM-UP's rack and its
 /// sports tip, and back. Keeps screenshots for review.
 @MainActor
 final class ShoppingStreetUITests: XCTestCase {
-    /// 商店街 from the shopfront at 我's top left: a closed store's card says how it unlocks and a
+    /// 商店街 from its header button on 我, between 换装 and 设置: a closed store's card says how it unlocks and a
     /// tap keeps it shut; WARM-UP lets the member in, its ⓘ names the sports, and back walks out to
     /// the street and then to 我.
     func testShoppingStreet() {
         let app = launch(language: "zh-Hans")
-        let shopfront = app.buttons["me.street"]
-        XCTAssertTrue(shopfront.waitForExistence(timeout: 30), "我 has no shopfront")
-        XCTAssertLessThan(shopfront.frame.midX, app.buttons["me.settings"].frame.midX, "the shopfront isn't left of 设置")
-        shopfront.tap()
+        let street = app.buttons["me.street"]
+        XCTAssertTrue(street.waitForExistence(timeout: 30), "我 has no 商店街 button")
+        XCTAssertLessThan(app.buttons["me.editCharacter"].frame.midX, street.frame.midX, "换装 isn't left of 商店街")
+        XCTAssertLessThan(street.frame.midX, app.buttons["me.settings"].frame.midX, "商店街 isn't left of 设置")
+        street.tap()
         let page = app.descendants(matching: .any).matching(identifier: "street.page").firstMatch
         XCTAssertTrue(page.waitForExistence(timeout: 30), "商店街 never opened")
         let warmup = app.buttons["street.store.warmup"]
@@ -42,7 +43,7 @@ final class ShoppingStreetUITests: XCTestCase {
         }
         XCTAssertTrue(warmup.exists, "back didn't walk out to the street")
         back.tap()
-        XCTAssertTrue(shopfront.waitForExistence(timeout: 30), "back didn't return to 我")
+        XCTAssertTrue(street.waitForExistence(timeout: 30), "back didn't return to 我")
     }
 
     private func launch(language: String) -> XCUIApplication {

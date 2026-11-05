@@ -247,7 +247,7 @@ final class MeUITests: XCTestCase {
         let card = app.buttons["me.card"]
         XCTAssertTrue(card.waitForExistence(timeout: 30))
         XCTAssertTrue(card.label.contains("練了"), "the card isn't in Traditional Chinese: \(card.label)")
-        XCTAssertTrue(app.buttons["編輯外卡運動員"].exists)
+        XCTAssertEqual(app.buttons["me.editCharacter"].label, "換裝")
         settle()
         keepScreenshot(named: "49-me-zh-hant")
         app.buttons["me.settings"].tap()
