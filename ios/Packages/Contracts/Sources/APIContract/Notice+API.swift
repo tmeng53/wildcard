@@ -38,6 +38,8 @@ extension Notice {
             }
         case "coachReply":
             return checkIn.flatMap { coachReply(wire, checkIn: $0) }
+        case "coachNote":
+            return coachNote(wire)
         case "unlocked":
             guard let kind = wire.unlockKind.flatMap(Unlock.Kind.init(rawValue:)), let item = wire.item else {
                 return nil
@@ -56,6 +58,20 @@ extension Notice {
         return .coachReply(
             checkIn: checkIn, coach: coach, coachName: wire.coachName, replied: replied,
             emoji: wire.emoji.flatMap { try? Emoji($0) })
+    }
+}
+
+extension Notice {
+    /// The morning note as 今天 shows it again from 通知; the coach's name is as it is now.
+    fileprivate static func coachNote(_ wire: Components.Schemas.NoticeEntry) -> Subject? {
+        guard let note = wire.note, let coach = wire.coach.flatMap(CoachID.init(rawValue:)),
+            let day = wire.day.flatMap({ try? LocalDay($0) }), let text = wire.text,
+            let squad = wire.squadId.flatMap({ try? SquadID(wire: $0) })
+        else { return nil }
+        return .coachNote(
+            CoachMemberNote(
+                id: note, squad: squad, day: day, text: text,
+                coach: CoachSpeaker(id: coach, name: wire.coachName ?? "")))
     }
 }
 

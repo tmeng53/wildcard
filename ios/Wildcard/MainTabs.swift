@@ -225,6 +225,11 @@ struct MainTabs: View {
         case .home:
             showsNotices = false
             selection = .today
+        case .coachNote(let note):
+            // 今天, where the morning note slides up again.
+            showsNotices = false
+            selection = .today
+            today.showAgain(note)
         case .post(let id):
             noticePost = OpenedPost(id: id, model: feed.page(of: id))
         case .wardrobe(let kind, let item):

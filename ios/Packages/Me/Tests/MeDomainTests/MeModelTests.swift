@@ -49,6 +49,13 @@ private actor FakeService: MeService {
         current.dailyPushOn = isOn
     }
 
+    private(set) var coachPushSaves: [Bool] = []
+    func setCoachPush(_ isOn: Bool) async throws(MeError) {
+        coachPushSaves.append(isOn)
+        if let failing { throw failing }
+        current.coachPushOn = isOn
+    }
+
     func equip(_ title: String?) async throws(MeError) -> TitleBoard {
         if let failing { throw failing }
         current.board.worn = title ?? current.board.titles.first?.title
@@ -156,6 +163,24 @@ struct MeModelTests {
         // Flipping to what it already is saves nothing.
         await page.setDailyPush(false)
         #expect(await service.pushSaves == [false, true])
+    }
+
+    @Test func savesTheCoachsSwitchApartFromTheDailyPush() async {
+        let service = FakeService(sample)
+        let page = model(service)
+        await page.reload()
+        #expect(page.coachPushOn)
+
+        await page.setCoachPush(false)
+        #expect(!page.coachPushOn)
+        #expect(page.dailyPushOn)
+        #expect(await service.coachPushSaves == [false])
+        #expect(await service.pushSaves == [])
+
+        await service.fail(with: .unavailable)
+        await page.setCoachPush(true)
+        #expect(!page.coachPushOn)
+        #expect(page.saveFailed)
     }
 
     @Test func showsTheEditedCharacterOnceSaved() async {

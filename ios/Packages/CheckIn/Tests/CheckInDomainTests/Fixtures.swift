@@ -182,6 +182,21 @@ actor ScriptedBackend: CheckInBackend {
         if let failure { throw failure }
         return serverCoach
     }
+
+    private var serverNotes: [CoachMemberNote] = []
+    private(set) var putAway: [Int] = []
+    func set(notes: [CoachMemberNote]) { serverNotes = notes }
+
+    func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote] {
+        if let failure { throw failure }
+        return squads.compactMap { squad in serverNotes.first { $0.squad == squad } }
+    }
+
+    func putAway(_ note: CoachMemberNote) async throws(CheckInError) {
+        if let failure { throw failure }
+        putAway.append(note.id)
+        serverNotes.removeAll { $0.id == note.id }
+    }
 }
 
 actor MemoryOutbox: Outbox {

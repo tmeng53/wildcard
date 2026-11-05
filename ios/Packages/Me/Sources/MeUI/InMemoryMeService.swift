@@ -55,6 +55,11 @@ public actor InMemoryMeService: MeService {
         current.dailyPushOn = isOn
     }
 
+    public func setCoachPush(_ isOn: Bool) async throws(MeError) {
+        if failsSaving { throw .unavailable }
+        current.coachPushOn = isOn
+    }
+
     public func equip(_ title: String?) async throws(MeError) -> TitleBoard {
         if failsSaving { throw .unavailable }
         current.board.worn = title ?? current.board.titles.first?.title

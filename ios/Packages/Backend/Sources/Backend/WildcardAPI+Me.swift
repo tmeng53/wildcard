@@ -103,16 +103,26 @@ extension WildcardAPI {
         _ = try await call { try await client.claimPiece(path: .init(pieceId: piece)).ok }
     }
 
-    /// Whether the one daily push at 6pm is on; it is until the member turns it off.
-    public func dailyPushOn() async throws(APIError) -> Bool {
-        try await call { try await client.getMyPushSettings().ok.body.json }.settings.dailyProgress ?? true
+    /// Whether the one daily push at 6pm and the coach's pushes are on; each is until the member
+    /// turns it off.
+    public func pushSwitches() async throws(APIError) -> (dailyProgress: Bool, coach: Bool) {
+        let settings = try await call { try await client.getMyPushSettings().ok.body.json }.settings
+        return (settings.dailyProgress ?? true, settings.coach ?? true)
     }
 
-    /// Turns the daily push on or off. Safe to repeat.
+    /// Turns the daily push on or off, leaving the coach's as it is. Safe to repeat.
     public func setDailyPush(_ isOn: Bool) async throws(APIError) {
+        try await savePushSwitches(.init(dailyProgress: isOn))
+    }
+
+    /// Turns the coach's pushes on or off, leaving the daily push as it is. Safe to repeat.
+    public func setCoachPush(_ isOn: Bool) async throws(APIError) {
+        try await savePushSwitches(.init(coach: isOn))
+    }
+
+    private func savePushSwitches(_ settings: Components.Schemas.PushSettings.SettingsPayload) async throws(APIError) {
         _ = try await call {
-            try await client.saveMyPushSettings(body: .json(.init(version: ._1, settings: .init(dailyProgress: isOn))))
-                .ok
+            try await client.saveMyPushSettings(body: .json(.init(version: ._1, settings: settings))).ok
         }
     }
 

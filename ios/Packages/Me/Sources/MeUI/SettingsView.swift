@@ -66,6 +66,15 @@ struct SettingsView: View {
                     set: { isOn in Task { await model.setDailyPush(isOn) } })
             )
             .accessibilityIdentifier("me.notifications")
+            // The coach's own switch, under 通知: silent pushes, and 通知 keeps its words anyway.
+            SwitchRow(
+                Text("教练消息", bundle: .module),
+                detail: Text("教练的便条和回复，静默推送。关掉后通知里照样有。", bundle: .module),
+                isOn: Binding(
+                    get: { model.coachPushOn },
+                    set: { isOn in Task { await model.setCoachPush(isOn) } })
+            )
+            .accessibilityIdentifier("me.coachNotifications")
             ListRow(
                 Text("语言", bundle: .module), value: Text(verbatim: AppLanguage.current.name), showsDivider: false
             ) {

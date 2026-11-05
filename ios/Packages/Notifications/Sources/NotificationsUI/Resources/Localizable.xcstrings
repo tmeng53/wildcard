@@ -336,6 +336,38 @@
           }
         }
       }
+    },
+    "教练 %@ 给你写了张便条": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coach %@ left you a note"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "教練 %@ 給你寫了張便條"
+          }
+        }
+      }
+    },
+    "教练给你写了张便条": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your coach left you a note"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "教練給你寫了張便條"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

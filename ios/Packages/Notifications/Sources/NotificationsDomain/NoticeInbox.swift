@@ -269,6 +269,8 @@ public enum NoticeTarget: Hashable, Sendable {
     case post(CheckInID)
     /// The character editor, where the store or prop opened.
     case wardrobe(Unlock.Kind, item: String)
+    /// 今天, where the coach's morning note shows again.
+    case coachNote(CoachMemberNote)
 }
 
 extension Notice {
@@ -278,6 +280,7 @@ extension Notice {
         case .weeklyAwards(_, let week): .recap(squad: squad, week: week)
         case .sceneMoved: .home
         case .coachReply(let checkIn, _, _, _, _): .post(checkIn)
+        case .coachNote(let note): .coachNote(note)
         case .unlocked(let kind, let item): .wardrobe(kind, item: item)
         case .comment(_, let checkIn): .post(checkIn)
         }

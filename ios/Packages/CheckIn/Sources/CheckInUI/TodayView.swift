@@ -165,7 +165,16 @@ public struct TodayView: View {
                 .ignoresSafeArea(edges: .bottom)
                 .transition(.opacity)
             }
+
+            // The coach's morning note, slid up from the sideline over everything on the scene.
+            if let note = model.coachNote {
+                CoachMemberNoteOverlay(note: note, reader: model.noteReader) { model.putAwayNote() }
+                    .id(note.id)
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+                    .zIndex(2)
+            }
         }
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.coachNote?.id)
     }
 
     /// The card at the top: the squad card, with the 今日赛况 tag as its last row from the evening

@@ -133,6 +133,20 @@ public struct APICheckInBackend: CheckInBackend {
                 note: try await api.coachActivity(of: squad).note)
         } catch { throw CheckInError(error) }
     }
+
+    public func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote] {
+        var notes: [CoachMemberNote] = []
+        for squad in squads {
+            do {
+                if let note = try await api.coachActivity(of: squad).memberNote { notes.append(note) }
+            } catch { throw CheckInError(error) }
+        }
+        return notes
+    }
+
+    public func putAway(_ note: CoachMemberNote) async throws(CheckInError) {
+        do { try await api.putAway(note) } catch { throw CheckInError(error) }
+    }
 }
 
 /// The home as the API sent it. Stored JSON, so it carries a `version`.

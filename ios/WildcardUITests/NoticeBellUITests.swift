@@ -20,8 +20,10 @@ final class NoticeBellUITests: XCTestCase {
         keepScreenshot(named: "100-notices-bell")
 
         bell.tap()
+        let note = app.buttons["notices.row.9"]
+        XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "通知 didn't open on its newest row")
+        XCTAssertTrue(note.label.contains("教练 毛头 给你写了张便条"), "the note row says \(note.label)")
         let comment = app.buttons["notices.row.8"]
-        XCTAssertTrue(comment.waitForExistence(timeout: Self.wait), "通知 didn't open on its newest row")
         XCTAssertTrue(comment.label.contains("Coco 评论了你：这组深蹲太稳了"), "the comment row says \(comment.label)")
         let moved = app.buttons["notices.row.7"]
         XCTAssertTrue(moved.label.contains("阿杰 把小队搬到了跑道"), "the scene row says \(moved.label)")
@@ -32,7 +34,7 @@ final class NoticeBellUITests: XCTestCase {
         XCTAssertTrue(daily.contains("Coco和另外 2 人拍了拍你"), "the 6pm row says \(daily)")
         let feedTab = app.buttons["tab.feed"]
         waitFor(feedTab, "exists == false OR hittable == false", "the tab bar stayed over 通知")
-        for id in 1...8 {
+        for id in 1...9 {
             let row = app.buttons["notices.row.\(id)"]
             if row.exists, row.frame.maxY < app.windows.firstMatch.frame.maxY {
                 assertOnScreen(row, in: app)
@@ -61,6 +63,18 @@ final class NoticeBellUITests: XCTestCase {
         XCTAssertTrue(
             tabButton("tab.today", in: app).waitForExistence(timeout: Self.wait), "the scene row didn't go home")
         waitFor(tabButton("tab.today", in: app), "selected == true", "the scene row didn't open 今天")
+
+        // The morning note's row opens it again on 今天, where 收下 puts it away.
+        tabButton("tab.feed", in: app).tap()
+        XCTAssertTrue(bell.waitForExistence(timeout: Self.wait))
+        bell.tap()
+        XCTAssertTrue(note.waitForExistence(timeout: Self.wait))
+        note.tap()
+        let putAway = app.buttons["today.coachNote.putAway"]
+        XCTAssertTrue(putAway.waitForExistence(timeout: Self.wait), "the note row didn't show the note on 今天")
+        assertOnScreen(putAway, in: app)
+        putAway.tap()
+        waitFor(putAway, "exists == false", "收下 didn't put the note away")
     }
 
     func testNothingToldYet() {
@@ -86,7 +100,7 @@ final class NoticeBellUITests: XCTestCase {
         let moved = app.buttons["notices.row.7"]
         XCTAssertTrue(moved.waitForExistence(timeout: Self.wait), "通知 didn't open")
         XCTAssertTrue(moved.label.contains("moved the squad to"), "the scene row says \(moved.label)")
-        for id in 1...8 {
+        for id in 1...9 {
             let row = app.buttons["notices.row.\(id)"]
             if row.exists, row.frame.maxY < app.windows.firstMatch.frame.maxY {
                 assertOnScreen(row, in: app)

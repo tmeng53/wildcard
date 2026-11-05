@@ -1,7 +1,7 @@
 -- The coach's morning note to each member: one a member a squad a day, never changed, gone with
 -- the member or the squad; delivered once.
 begin;
-select plan(9);
+select plan(11);
 
 insert into auth.users (id, email) values
   ('11111111-1111-4111-8111-111111111111', 'mia@example.com'),
@@ -27,6 +27,10 @@ select throws_ok($$insert into public.coach_member_note_deliveries (note_id) val
 insert into public.coach_member_note_reads (note_id) values (1);
 select throws_ok($$insert into public.coach_member_note_reads (note_id) values (1)$$,
   '23505', null, 'put away once');
+select throws_ok($$delete from public.coach_member_note_reads where note_id = 1$$,
+  '42501', null, 'a put-away stays');
+select throws_ok($$update public.coach_member_note_deliveries set at = now() where note_id = 1$$,
+  '42501', null, 'a delivery stays');
 
 delete from auth.users where id = '22222222-2222-4222-8222-222222222222';
 select is((select count(*)::int from public.coach_member_notes), 1, 'a deleted account takes its notes');

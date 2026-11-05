@@ -43,3 +43,30 @@ create table public.coach_member_note_reads (
 );
 
 alter table public.coach_member_note_reads enable row level security;
+
+-- A note's delivery and its putting away are never changed: they go only with their note.
+create or replace function public.coach_note_marks_append_only()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'DELETE' and not exists (select 1 from public.coach_member_notes where id = old.note_id) then
+    return old;
+  end if;
+  raise exception '% is append-only', tg_table_name using errcode = '42501';
+end;
+$$;
+
+create trigger coach_member_note_deliveries_append_only
+  before update or delete on public.coach_member_note_deliveries
+  for each row execute function public.coach_note_marks_append_only();
+create trigger coach_member_note_deliveries_no_truncate
+  before truncate on public.coach_member_note_deliveries
+  for each statement execute function public.settings_log_append_only();
+create trigger coach_member_note_reads_append_only
+  before update or delete on public.coach_member_note_reads
+  for each row execute function public.coach_note_marks_append_only();
+create trigger coach_member_note_reads_no_truncate
+  before truncate on public.coach_member_note_reads
+  for each statement execute function public.settings_log_append_only();

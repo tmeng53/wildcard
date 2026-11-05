@@ -37,6 +37,11 @@ public protocol CheckInBackend: Sendable {
     /// The coach the squad hired, standing on the home's sideline, with its newest 战术板 line;
     /// nil while the squad has none.
     func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach?
+    /// The coaches' morning notes (便条) waiting for the member on 今天, one at most from each of
+    /// `squads`, in their order.
+    func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote]
+    /// The member put the note away (收下): none of their phones shows it again. Safe to repeat.
+    func putAway(_ note: CoachMemberNote) async throws(CheckInError)
 }
 
 /// Check-ins waiting to go out, kept on the device so a post made offline survives the app

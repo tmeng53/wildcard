@@ -12,10 +12,38 @@ extension TodayStore {
     /// Loads the squad's coach and its line; keeps what was shown when the server can't be
     /// reached.
     public func loadCoach() async {
-        guard let squad = savedHome?.squad.id, phase == .current else { return }
+        guard let home = savedHome, phase == .current else { return }
         do {
-            loadedCoach = (squad, try await backend.coach(in: squad))
+            loadedCoach = (home.squad.id, try await backend.coach(in: home.squad.id))
         } catch {}
+        await loadCoachNotes(in: home)
+    }
+
+    /// The coaches' morning notes waiting for the member, from every squad they are in: the
+    /// home's own squad's first, then the others', one after another (Tracy, 2026-11-05).
+    private func loadCoachNotes(in home: Home) async {
+        let squads = [home.squad.id] + home.squads.map(\.id).filter { $0 != home.squad.id }
+        guard let found = try? await backend.coachNotes(in: squads) else { return }
+        coachNotes = found.filter { !putAway.contains($0.id) }
+    }
+
+    /// The note on 今天 now, if any: one shown again from 通知, else the first waiting.
+    public var coachNote: CoachMemberNote? { noteAgain ?? coachNotes.first }
+
+    /// 收下: the note on 今天 goes, the next (if any) follows, and the server remembers it so no
+    /// phone shows it again. When the server can't be reached, it stays put away on this phone
+    /// until the app is next launched.
+    public func putAwayNote() async {
+        guard let note = coachNote else { return }
+        noteAgain = nil
+        coachNotes.removeAll { $0.id == note.id }
+        putAway.insert(note.id)
+        try? await backend.putAway(note)
+    }
+
+    /// Shows a note again from 通知, before any other waiting.
+    public func showAgain(_ note: CoachMemberNote) {
+        noteAgain = note
     }
 
     /// The 战术板 line the coach says on the home now, while its day lasts.
