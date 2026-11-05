@@ -33,8 +33,7 @@ const CoachNoteBody = z
 const CoachMemberNoteBody = z
   .strictObject({
     id: z.int().positive().meta({
-      description:
-        'The note’s id, which putting it away (收下) and `coachNote` notices name.',
+      description: 'The note’s id, which putting it away (收下) and `coachNote` notices name.',
     }),
     day: z.iso.date().meta({ description: 'The day (New York) the note was written for.' }),
     text: z.string().meta({ description: 'The note’s words.', example: '昨天那组深蹲我看见了' }),

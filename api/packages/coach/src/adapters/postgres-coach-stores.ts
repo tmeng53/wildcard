@@ -432,10 +432,11 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         .where('coach_member_notes.squad_id', '=', squad)
         .where('coach_member_notes.member_id', '=', member)
         .where('coach_member_note_deliveries.at', '>=', since)
-        .where(({ not, exists, selectFrom }) =>
-          not(
-            exists(
-              selectFrom('coach_member_note_reads')
+        .where((eb) =>
+          eb.not(
+            eb.exists(
+              eb
+                .selectFrom('coach_member_note_reads')
                 .select('coach_member_note_reads.note_id')
                 .whereRef('coach_member_note_reads.note_id', '=', 'coach_member_notes.id'),
             ),

@@ -42,9 +42,9 @@ export async function deliverCoachNotes(deps: CoachNotesDependencies): Promise<C
     const now = deps.clock();
     const waiting = await deps.notes.waiting(now);
     if (waiting.length === 0) return { waiting: 0, delivered: 0, pushed: 0 };
-    const morning = new Set(
+    const morning = new Set<string>(
       (await deps.members.pastLocalHour({ hour: await deps.noteHour(), now })).map(
-        ({ member }) => member as string,
+        ({ member }) => member,
       ),
     );
     let delivered = 0;

@@ -439,8 +439,7 @@ describe('the coach', () => {
         ].toSorted((a, b) => a.member.localeCompare(b.member)),
       );
       const miaNote = waiting.find(({ member }) => member === fixture.mia);
-      expect(miaNote).toBeDefined();
-      if (miaNote === undefined) return;
+      if (miaNote === undefined) throw new Error('no note for mia');
       expect(await delivery.delivered(miaNote.id)).toBe(true);
       expect(await delivery.delivered(miaNote.id)).toBe(false);
       expect((await delivery.waiting(now)).map(({ member }) => member)).toStrictEqual([leo]);

@@ -1,4 +1,4 @@
-import type { NoteToDeliver } from '@wildcard/coach';
+import { CoachId, type NoteToDeliver, SquadId } from '@wildcard/coach';
 import { MemberId as ProfileMember } from '@wildcard/members';
 import type { NewNotice } from '@wildcard/notices';
 import type { PushNotification } from '@wildcard/push';
@@ -13,12 +13,12 @@ const west = '00000000-0000-4000-8000-00000000000b';
 const quiet = '00000000-0000-4000-8000-00000000000c';
 const now = new Date('2026-11-05T11:05:00Z');
 
-function note(id: number, member: string, text: string): NoteToDeliver {
+function note({ id, member, text }: { id: number; member: string; text: string }): NoteToDeliver {
   return {
     id,
-    squad: squad as NoteToDeliver['squad'],
+    squad: SquadId.parse(squad),
     member,
-    coach: 'xiaohun' as NoteToDeliver['coach'],
+    coach: CoachId.parse('xiaohun'),
     day: '2026-11-05',
     text,
     at: new Date('2026-11-05T11:00:00Z'),
@@ -76,9 +76,9 @@ function setUp(waiting: readonly NoteToDeliver[]) {
 describe('the coach’s morning notes delivered', () => {
   it('reach each member past the hour once: in the bell always, by a silent push under the coach’s switch', async () => {
     const { deps, told, sent, hours } = setUp([
-      note(1, east, '昨天那组深蹲我看见了'),
-      note(2, west, '今天别硬撑'),
-      note(3, quiet, '慢慢来'),
+      note({ id: 1, member: east, text: '昨天那组深蹲我看见了' }),
+      note({ id: 2, member: west, text: '今天别硬撑' }),
+      note({ id: 3, member: quiet, text: '慢慢来' }),
     ]);
 
     expect(await deliverCoachNotes(deps)).toStrictEqual({ waiting: 3, delivered: 2, pushed: 1 });
@@ -122,9 +122,9 @@ describe('the coach’s morning notes delivered', () => {
   });
 
   it('tells a note another run already claimed no more', async () => {
-    const { deps, told, sent } = setUp([note(1, east, '早')]);
+    const { deps, told, sent } = setUp([note({ id: 1, member: east, text: '早' })]);
     await deps.notes.delivered(1);
-    const waiting = [note(1, east, '早')];
+    const waiting = [note({ id: 1, member: east, text: '早' })];
     const run = await deliverCoachNotes({
       ...deps,
       notes: { ...deps.notes, waiting: () => Promise.resolve(waiting) },
