@@ -1,7 +1,6 @@
 import AvatarDomain
 import Contracts
 import Foundation
-import Synchronization
 
 /// The names uploaded art carries (`avatar/names.json`), in each of the app's languages, so a
 /// piece or store added through the admin tools is named without an app release. Nothing is
@@ -99,18 +98,13 @@ private struct ArtWords: Decodable {
 }
 
 extension PlaceholderCharacter {
-    /// The uploaded names, read again only when the downloaded file changes; none when nothing
-    /// was uploaded or the file can't be read.
-    public static func names() -> ArtNames {
-        let url = ArtTree.url("names.json", in: tree, bundled: folder)
-        let stamp =
-            (try? FileManager.default.attributesOfItem(atPath: url.path(percentEncoded: false)))?[
-                .modificationDate] as? Date
-        if let cached = namesCache.withLock({ $0 }), cached.url == url, cached.stamp == stamp { return cached.names }
-        let names = stamp == nil ? ArtNames.none : (try? ArtNames.decode(Data(contentsOf: url))) ?? .none
-        namesCache.withLock { $0 = (url, stamp, names) }
-        return names
-    }
+    /// The uploaded names; none when nothing was uploaded or the file can't be read. Read once
+    /// per launch, as the scene pictures are, so a view body never reads the disk; a newer
+    /// download names from the next launch.
+    public static func names() -> ArtNames { uploadedNames }
 
-    private static let namesCache = Mutex<(url: URL, stamp: Date?, names: ArtNames)?>(nil)
+    private static let uploadedNames: ArtNames = {
+        let url = ArtTree.url("names.json", in: tree, bundled: folder)
+        return (try? ArtNames.decode(Data(contentsOf: url))) ?? .none
+    }()
 }
