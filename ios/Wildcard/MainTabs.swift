@@ -37,26 +37,28 @@ struct MainTabs: View {
     /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
     let squadmateCards: (any SquadmateCards)?
     @Binding var selection: Tab
+    /// A place a tapped push asked for, opened once the tabs are up (`open(_:)`), then cleared.
+    @Binding var destination: AppDestination?
     /// The member left the squad on its page.
     var leftSquad: () -> Void = {}
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
-    @State private var inbox: NoticeInbox
-    /// 通知's page, pushed over 动态.
-    @State private var showsNotices = false
-    /// A post opened from 通知 (the one the coach answered), pushed over its page.
-    @State private var noticePost: OpenedPost?
+    @State var inbox: NoticeInbox
+    /// The pages pushed over 动态: 通知, once the bell is tapped, and a post a notice opens, over
+    /// 通知 or straight over 动态 (the home's banner, a push).
+    @State var feedPages: [FeedPage] = []
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// 商店街 and the character editor, open from 我.
-    @State private var wardrobe: Wardrobe
+    @State var wardrobe: Wardrobe
     /// 出赛表, pushed over 我.
-    @State private var showsSchedule = LaunchOptions.opensSchedule
-    /// The pages pushed over 今天: 小队, from the home's squad card, and the coach's pages over it,
-    /// or the squad's coach's 简历 alone, from a tap on the coach on the home.
-    @State private var todayPages: [TodayPage] = LaunchOptions.opensSquad ? [.squad] : []
+    @State var showsSchedule = LaunchOptions.opensSchedule
+    /// The pages pushed over 今天: 小队, from the home's squad card, and the coach's pages over it.
+    @State var todayPages: [TodayPage] = LaunchOptions.opensSquad ? [.squad] : []
+    /// The coach's card, opened from a tap on the coach on the home, popped up like a player's.
+    @State private var showsCoachCard = false
     /// 小队's scene pick is playing its reveal, which fills the screen.
     @State private var squadRevealing = false
     /// 我的动态, pushed over 我.
-    @State private var wall: PostWallStore?
+    @State var wall: PostWallStore?
     /// 我的动态's tile on 我: the wall's first page, read again each time 我 shows.
     @State private var newestPosts: PostWallStore
     /// A post opened from 我的动态: 动态's post page, pushed over the wall.
@@ -71,12 +73,14 @@ struct MainTabs: View {
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
         recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
-        squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>, leftSquad: @escaping () -> Void = {}
+        squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
+        destination: Binding<AppDestination?> = .constant(nil), leftSquad: @escaping () -> Void = {}
     ) {
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
         self.squadmateCards = squadmateCards
         _selection = selection
+        _destination = destination
         self.leftSquad = leftSquad
         _inbox = State(initialValue: NoticeInbox(source: notices))
         _newestPosts = State(initialValue: PostWallStore(source: myPosts))
@@ -91,7 +95,26 @@ struct MainTabs: View {
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
-        .task { today.tellUnlocks(with: UnlockNotices(banner: { UnlockBanner(unlock: $0) }, open: openUnlock)) }
+        .task {
+            // 「还有新通知」 and a broadcast's button on 今天 open here too.
+            today.openDestination = { open($0) }
+            today.tellUnlocks(
+                with: UnlockNotices(
+                    banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },
+                    badge: { WardrobeBadge($0, item: $1) })
+            )
+        }
+        // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the
+        // home says whose it is; its button opens what its 通知 row opens.
+        .onChange(of: inbox.unseenBroadcasts.map(\.id) + [today.home?.member.description ?? ""], initial: true) {
+            tellBroadcasts()
+        }
+        // A tapped push's place.
+        .onChange(of: destination, initial: true) { _, asked in
+            guard let asked else { return }
+            destination = nil
+            open(asked)
+        }
         // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
         // 今天 opens 动态 on doesn't move down under it.
         .task { await recap.refresh() }
@@ -130,6 +153,13 @@ struct MainTabs: View {
                 .environment(\.sceneTheme, today.scene)
             }
         }
+        .cardPopup(isPresented: $showsCoachCard) {
+            CoachCardPopup(note: today.coachLine, squad: squad) { opensFeed in
+                showsCoachCard = false
+                if opensFeed { selection = .feed }
+            }
+            .environment(\.sceneTheme, today.scene)
+        }
         .onChange(of: squad.hasLeft) { _, left in
             guard left else { return }
             leftSquad()
@@ -150,13 +180,8 @@ struct MainTabs: View {
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
     }
 
-    /// A tap on the home's notice that a store, piece or prop opened.
-    private func openUnlock(_ unlock: Unlock) {
-        openWardrobe(unlock.kind, item: unlock.id)
-    }
-
     /// 我 with the wardrobe pushed over it, in place of any other page 我 had open.
-    private func openWardrobe(_ kind: Unlock.Kind, item: String) {
+    func openWardrobe(_ kind: Unlock.Kind, item: String) {
         selection = .profile
         showsSchedule = false
         wall = nil
@@ -188,7 +213,7 @@ struct MainTabs: View {
     /// 动态 with the bell at its title, and 通知 pushed over it once the bell is tapped, with a post
     /// it opens pushed over that.
     private var feedPage: some View {
-        NavigationStack {
+        NavigationStack(path: $feedPages) {
             FeedView(
                 model: feed, header: AnyView(RecapTile(recap: recap)),
                 accessory: AnyView(NoticeBell(inbox: inbox) { showsNotices = true })
@@ -201,37 +226,18 @@ struct MainTabs: View {
                 await inbox.load()
                 if profile.overview == nil { await profile.reload() }
             }
-            .navigationDestination(isPresented: $showsNotices) {
-                NoticesView(
-                    inbox: inbox, viewer: noticeViewer, unlocked: unlockWords, now: LaunchOptions.now, open: open
-                )
-                .navigationDestination(item: $noticePost) { opened in
+            .navigationDestination(for: FeedPage.self) { page in
+                switch page {
+                case .notices:
+                    NoticesView(
+                        inbox: inbox, viewer: noticeViewer, unlocked: unlockWords, now: LaunchOptions.now, open: open
+                    )
+                case .post(let opened):
                     PostDetailView(model: opened.model, post: opened.id) { noticePost = nil }
                 }
             }
         }
         .environment(\.sceneTheme, today.scene)
-    }
-
-    /// Where a tapped notice goes. 通知 stays under a post or the wardrobe it opens, so back
-    /// returns to it; elsewhere it closes.
-    private func open(_ target: NoticeTarget) {
-        switch target {
-        case .feed:
-            showsNotices = false
-        case .recap(_, let week):
-            showsNotices = false
-            if recap.latest?.week.monday == week { recap.openLatest() }
-        case .home:
-            showsNotices = false
-            selection = .today
-        case .post(let id):
-            noticePost = OpenedPost(id: id, model: feed.page(of: id))
-        case .wardrobe(let kind, let item):
-            // As the home's banner does.
-            showsNotices = false
-            openWardrobe(kind, item: item)
-        }
     }
 
     /// The member's own character, on the empty 通知.
@@ -306,8 +312,7 @@ struct MainTabs: View {
 }
 
 extension MainTabs {
-    /// 今天, with 小队 pushed over it from the home's squad card and the coach's pages over that, or
-    /// the squad's coach's 简历 pushed straight over it from a tap on the coach on the sideline.
+    /// 今天, with 小队 pushed over it from the home's squad card and the coach's pages over that.
     private var todayPage: some View {
         NavigationStack(path: $todayPages) {
             TodayView(
@@ -324,7 +329,7 @@ extension MainTabs {
                     teammateOnHome = true
                     teammate = homeCard(of: $0)
                 }
-                today.openCoach = openCoach
+                today.openCoach = { showsCoachCard = true }
             }
             .navigationDestination(for: TodayPage.self) { page in
                 switch page {
@@ -345,12 +350,11 @@ extension MainTabs {
                 }
             }
         }
-        // 小队 opens on what was read last, and the coach's 简历 from the home knows its coach.
+        // 小队 opens on what was read last.
         .task { if squad.load == .loading { await squad.reload() } }
     }
 
-    /// The coach's pages on 今天's stack; taking them away goes back to 小队, or to the home when
-    /// the 简历 was opened from there.
+    /// The coach's pages on 今天's stack; taking them away goes back to 小队.
     private var coachPages: Binding<[CoachRoute]> {
         Binding(
             get: {
@@ -362,15 +366,6 @@ extension MainTabs {
             set: { routes in
                 todayPages = todayPages.filter { $0 == .squad } + routes.map(TodayPage.coach)
             })
-    }
-
-    /// A tap on the coach on the home: its 简历, once 小队 has read who it is.
-    private func openCoach() {
-        Task {
-            if squad.coach == nil { await squad.reload() }
-            guard let coach = squad.coach?.coach else { return }
-            todayPages = [.coach(.resume(coach))]
-        }
     }
 
     /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.

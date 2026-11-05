@@ -1,5 +1,6 @@
 import { sql, type Kysely } from 'kysely';
 
+import { BroadcastId } from '../domain/broadcast.js';
 import { NoticeId, parseNotice, type Notice } from '../domain/notice.js';
 import type { NoticeStore } from '../ports.js';
 import type { DB } from './tables.js';
@@ -23,6 +24,35 @@ export function createPostgresNoticeStore(db: Kysely<NoticeTables>): NoticeStore
           })),
         )
         .execute();
+    },
+
+    async toldBroadcasts(member) {
+      const rows = await db
+        .selectFrom('notices')
+        .select(sql<string>`subject ->> 'broadcast'`.as('broadcast'))
+        .where('member_id', '=', member)
+        .where('kind', '=', 'broadcast')
+        .execute();
+      return new Set(rows.map(({ broadcast }) => BroadcastId.parse(broadcast)));
+    },
+
+    async tellBroadcasts(member, broadcasts) {
+      const told: BroadcastId[] = [];
+      for (const broadcast of broadcasts) {
+        // The unique index on (member, broadcast) keeps a racing open from telling it twice.
+        const row = await db
+          .insertInto('notices')
+          .values({
+            member_id: member,
+            kind: 'broadcast',
+            subject: JSON.stringify({ version: 1, broadcast }),
+          })
+          .onConflict((conflict) => conflict.doNothing())
+          .returning('id')
+          .executeTakeFirst();
+        if (row !== undefined) told.push(broadcast);
+      }
+      return told;
     },
 
     async page({ member, before, limit }) {

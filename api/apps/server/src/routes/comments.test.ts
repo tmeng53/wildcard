@@ -14,7 +14,11 @@ import {
   SquadId as CoachSquadId,
 } from '@wildcard/coach';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
+import {
+  createNotices,
+  createPostgresNoticeStore,
+  createPostgresBroadcastStore,
+} from '@wildcard/notices';
 import {
   DeviceToken,
   MemberId as PushMember,
@@ -133,7 +137,11 @@ const app = createApp({
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   // Real, so a comment's notices are read back from 通知.
-  notices: createNotices({ store: createPostgresNoticeStore(db) }),
+  notices: createNotices({
+    store: createPostgresNoticeStore(db),
+    broadcasts: createPostgresBroadcastStore(db),
+    clock: () => new Date(),
+  }),
   coachNames: ignoredNotices.coachNames,
   liveEvents: ignoredNotices.liveEvents,
   log: createLog(() => undefined),

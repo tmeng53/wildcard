@@ -55,8 +55,7 @@ export function trainedDays(checkIns: readonly CheckInRecord[], days: readonly L
  */
 export function planFinishedAt(
   checkIns: readonly CheckInRecord[],
-  days: readonly LocalDay[],
-  plannedDays: number,
+  { days, plannedDays }: { readonly days: readonly LocalDay[]; readonly plannedDays: number },
 ): Date | undefined {
   if (plannedDays < 1) return undefined;
   const firsts = days

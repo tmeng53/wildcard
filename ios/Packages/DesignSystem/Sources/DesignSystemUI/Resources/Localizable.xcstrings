@@ -3274,6 +3274,54 @@
           }
         }
       }
+    },
+    "商店街上新了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New in the stores"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "商店街上新了"
+          }
+        }
+      }
+    },
+    "快去看看吧！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take a look!"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快去看看吧！"
+          }
+        }
+      }
+    },
+    "去商店街看看": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visit the stores"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "去商店街看看"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

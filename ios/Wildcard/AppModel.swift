@@ -163,13 +163,6 @@ final class AppModel {
         if case .tabs(let today, _, _, _, _, _) = screen { await today.load() }
     }
 
-    /// A tapped awards push: 动态 reads the 战报 again, so its tile shows the new one for the
-    /// member to open. Tabs not up yet read it as they open.
-    func readRecapAgain() async {
-        guard case .tabs(_, _, _, _, _, let recap) = screen else { return }
-        await recap.refresh()
-    }
-
     /// The member left their squad on 小队设置: sign-up's squad step, as for a member in none.
     func leftSquad() async {
         await openHome(saysLost: false)
@@ -188,10 +181,10 @@ final class AppModel {
         await art.update(to: (fresh ?? catalog.kept()).art)
     }
 
-    /// Hands each part of the catalog to the screens that read it. Static, since `init` calls it
-    /// before every property is set.
-    private static func show(_ catalog: AppCatalog) {
+    /// Hands each part of the catalog to the screens; static, since `init` calls it first.
+    static func show(_ catalog: AppCatalog) {
         SportList.shared.show(catalog.sports)
+        SceneTheme.list(catalog.scenes)
         DiceLines.shared.show(catalog.diceLines)
         StarterStock.shared.show(catalog.starterStock)
     }

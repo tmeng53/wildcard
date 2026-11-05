@@ -1,37 +1,43 @@
 import Contracts
 import Foundation
 
-/// What a tapped notification is about, read from its payload's `aps.category` and `event`, so
-/// the app can open the screen it points at.
+/// What a tapped notification opens, read from its payload's `aps.category` and `event`: the same
+/// place its notice in 通知 and the home's banner open (`Notice.destination`), so a push, a 通知
+/// row and a banner about one thing never go to two places.
 public enum OpenedNotification: Hashable, Sendable {
-    /// The squad's Sunday 战报 for the week starting `week` is ready.
-    case weeklyAwards(squad: SquadID, week: LocalDay)
-    /// Someone commented on the member's post, or replied to them: the app opens the post's page.
-    case comment(checkIn: CheckInID)
-    /// Anything else: the app opens 今天.
+    /// Where its notice goes.
+    case open(AppDestination)
+    /// A push this build can't read: the app opens 今天.
     case other
 
     /// - Parameters:
-    ///   - category: the payload's `aps.category`.
+    ///   - category: the payload's `aps.category`, its notice's kind.
     ///   - event: the payload's `event`; values that aren't text are left out.
     public init(category: String?, event: [String: String]) {
+        self = Self.subject(category: category, event: event).flatMap(\.destination).map(Self.open) ?? .other
+    }
+
+    /// The notice a push tells, as far as `Notice.destination` reads it.
+    private static func subject(category: String?, event: [String: String]) -> Notice? {
+        let told = Date(timeIntervalSince1970: 0)
         switch category {
+        case "dailyProgress":
+            return Notice(
+                id: NoticeID(rawValue: 0), toldAt: told, squad: nil, subject: .dailyProgress(PushAlert(key: "")))
         case "weeklyAwards":
             guard let squad = event["squad"].flatMap(UUID.init(uuidString:)),
                 let week = event["weekStart"].flatMap({ try? LocalDay($0) })
-            else {
-                self = .other
-                return
-            }
-            self = .weeklyAwards(squad: SquadID(squad), week: week)
+            else { return nil }
+            return Notice(
+                id: NoticeID(rawValue: 0), toldAt: told, squad: SquadID(squad),
+                subject: .weeklyAwards(PushAlert(key: ""), week: week))
         case "comment":
-            guard let checkIn = event["checkIn"].flatMap(UUID.init(uuidString:)) else {
-                self = .other
-                return
-            }
-            self = .comment(checkIn: CheckInID(checkIn))
+            guard let checkIn = event["checkIn"].flatMap(UUID.init(uuidString:)) else { return nil }
+            return Notice(
+                id: NoticeID(rawValue: 0), toldAt: told, squad: nil,
+                subject: .comment(PushAlert(key: ""), checkIn: CheckInID(checkIn)))
         default:
-            self = .other
+            return nil
         }
     }
 }

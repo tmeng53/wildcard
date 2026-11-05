@@ -30,6 +30,8 @@ public struct Notice: Hashable, Sendable, Identifiable {
         /// A teammate commented on the member's check-in or replied to them there, in the words
         /// the push put it in (who, and what they wrote).
         case comment(PushAlert, checkIn: CheckInID)
+        /// A notice we sent every member.
+        case broadcast(Broadcast)
     }
 
     public let id: NoticeID

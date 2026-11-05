@@ -4,15 +4,29 @@ import SwiftUI
 
 /// Names and symbols for scenes and check-in kinds, shared by the style guide and the screens.
 extension SceneTheme {
-    /// The scene's name (「第 42 周 · 跑道」).
+    /// The scene's name (「第 42 周 · 跑道」); a scene added since this build, the catalog's.
     public var name: Text {
-        switch self {
+        if Base(rawValue: rawValue) == nil, let listed = Self.listing(self) {
+            return Text(verbatim: listed.name(in: AppLanguage.current))
+        }
+        return switch base {
         case .pool: Text("游泳池", bundle: .module)
         case .track: Text("跑道", bundle: .module)
         case .gym: Text("健身房", bundle: .module)
         case .tennis: Text("网球场", bundle: .module)
         case .climbing: Text("攀岩馆", bundle: .module)
         case .ski: Text("雪场", bundle: .module)
+        }
+    }
+}
+
+extension SceneTheme.Listing {
+    /// The name in `language`.
+    func name(in language: AppLanguage) -> String {
+        switch language {
+        case .simplifiedChinese: simplifiedChinese
+        case .traditionalChinese: traditionalChinese
+        case .english: english
         }
     }
 }

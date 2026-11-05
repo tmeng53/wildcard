@@ -53,3 +53,31 @@ struct OpenedPost: Hashable {
     static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
+
+/// A page pushed over 动态.
+enum FeedPage: Hashable {
+    /// 通知, behind the bell.
+    case notices
+    /// A post a notice opened, over 通知 or straight over 动态.
+    case post(OpenedPost)
+}
+
+extension MainTabs {
+    /// 通知 is pushed over 动态; closing it takes any post over it away too.
+    var showsNotices: Bool {
+        get { feedPages.first == .notices }
+        nonmutating set { feedPages = newValue ? [.notices] : [] }
+    }
+
+    /// The post a notice opened, over 通知 when it is open, so back returns to it.
+    var noticePost: OpenedPost? {
+        get {
+            guard case .post(let opened) = feedPages.last else { return nil }
+            return opened
+        }
+        nonmutating set {
+            let under: [FeedPage] = showsNotices ? [.notices] : []
+            feedPages = under + (newValue.map { [.post($0)] } ?? [])
+        }
+    }
+}

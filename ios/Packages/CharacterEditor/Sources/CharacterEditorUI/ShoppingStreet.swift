@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import AvatarArt
 import AvatarDomain
 import AvatarUI
@@ -16,6 +16,8 @@ import SwiftUI
 /// then offers to try it on. Boxes that came in open from a pop-up over the page.
 public struct ShoppingStreetPage: View {
     let model: StreetModel
+    /// A store's rack is pushed and on screen over the street.
+    @State private var rackOnScreen = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -28,7 +30,10 @@ public struct ShoppingStreetPage: View {
             .pushedPage()
             .navigationDestination(item: openStore) { id in
                 if let store = model.catalog.stores.first(where: { $0.id == id }) {
-                    page(store).pushedPage()
+                    page(store)
+                        .pushedPage()
+                        .onAppear { rackOnScreen = true }
+                        .onDisappear { rackOnScreen = false }
                 }
             }
             .onAppear { model.didOpen() }
@@ -40,9 +45,10 @@ public struct ShoppingStreetPage: View {
     }
 
     /// The street (`store` nil) or a store's rack. The pop-up, the 领取 sheet and the notice
-    /// belong to whichever page is on top, so the street under a rack doesn't show them twice.
+    /// belong to whichever page is on screen on top, so the street under a rack doesn't show them
+    /// twice, and the street shows them until the rack it opens on has slid in.
     private func page(_ store: EditorChoices.Store?) -> some View {
-        let isOnTop = store != nil || model.store == nil
+        let isOnTop = store != nil || !rackOnScreen
         return ScrollView {
             VStack(alignment: .leading, spacing: Space.xs) {
                 if let store {
@@ -262,15 +268,22 @@ struct StoreBadge: View {
 /// A store's copy, from the String Catalog: its name (a wordmark, the same in every language),
 /// its Chinese name, its sports, its line, and how a closed one unlocks.
 enum StoreCopy {
-    static func name(_ store: String) -> Text { text(names[store], or: store) }
-    static func local(_ store: String) -> Text { text(locals[store], or: store) }
-    static func sports(_ store: String) -> Text { text(sportLines[store], or: "") }
-    static func tagline(_ store: String) -> Text { text(taglines[store], or: "") }
-    static func unlock(_ store: String) -> Text { text(unlocks[store], or: "") }
+    static func name(_ store: String) -> Text { text(uploaded(store)?.name, names[store], or: store) }
+    static func local(_ store: String) -> Text { text(uploaded(store)?.local, locals[store], or: store) }
+    static func sports(_ store: String) -> Text { text(uploaded(store)?.sports, sportLines[store], or: "") }
+    static func tagline(_ store: String) -> Text { text(uploaded(store)?.tagline, taglines[store], or: "") }
+    static func unlock(_ store: String) -> Text { text(uploaded(store)?.unlock, unlocks[store], or: "") }
     /// The tag a limited store wears, such as 冬季限定; nil for one without.
-    static func limited(_ store: String) -> Text? { limits[store].map { text($0, or: "") } }
+    static func limited(_ store: String) -> Text? {
+        if let words = uploaded(store)?.limited { return Text(verbatim: words.localized) }
+        return limits[store].map { text(nil, $0, or: "") }
+    }
 
-    private static func text(_ key: String?, or fallback: String) -> Text {
+    /// A store added by upload carries its words in `names.json`, in front of the catalog's.
+    private static func uploaded(_ store: String) -> ArtNames.Store? { PlaceholderCharacter.names().stores[store] }
+
+    private static func text(_ words: CatalogNames?, _ key: String?, or fallback: String) -> Text {
+        if let words { return Text(verbatim: words.localized) }
         guard let key else { return Text(verbatim: fallback) }
         return Text(LocalizedStringKey(key), bundle: .module)
     }

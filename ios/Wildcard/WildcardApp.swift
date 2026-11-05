@@ -51,6 +51,8 @@ struct WildcardApp: App {
     /// The sample member's own posts, from the sample squad's 动态.
     @State private var myPosts: any MyPostsSource
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
+    /// Where a tapped push goes, kept until the tabs open it.
+    @State private var pushDestination: AppDestination?
     @State private var profile: MeModel
     @State private var squad: SquadSettingsModel
     @State private var recap: RecapShelf
@@ -74,9 +76,7 @@ struct WildcardApp: App {
         // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
         AppLanguage.current.share(in: AppGroup.defaults)
         // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
-        SportList.shared.show(CatalogClient.bundled.sports)
-        DiceLines.shared.show(CatalogClient.bundled.diceLines)
-        StarterStock.shared.show(CatalogClient.bundled.starterStock)
+        AppModel.show(CatalogClient.bundled)
         LaunchOptions.forgetSeenRecapIfAsked()
         LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
@@ -255,19 +255,16 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, notices: LaunchOptions.notices, selection: $tab
+                myPosts: myPosts, notices: LaunchOptions.notices, selection: $tab, destination: $pushDestination
             )
             .onAppear {
-                // As on the real backend: the awards push opens 动态, where the 战报 is, a comment's
-                // push its post's page, and any other push 今天, or where the 6pm push's view asked.
-                delegate.opened = { [delegate, today, feed, $tab] opened in
+                // As on the real backend: a push opens where its notice in 通知 goes, unless the
+                // 6pm push's view asked for 动态 or 打卡; any other push opens 今天.
+                delegate.opened = { [delegate, today, $tab, $pushDestination] opened in
                     switch opened {
-                    case .weeklyAwards:
-                        $tab.wrappedValue = .feed
-                    case .comment(let post):
-                        $tab.wrappedValue = .feed
-                        feed.openPage(post)
-                    case .other:
+                    case .open(let place) where !delegate.hasDestination:
+                        $pushDestination.wrappedValue = place
+                    case .open, .other:
                         Self.open(delegate.takeDestination(), today: today, tab: $tab)
                         Task { await today.load() }
                     }
