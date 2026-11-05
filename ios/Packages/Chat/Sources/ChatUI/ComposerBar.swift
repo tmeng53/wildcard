@@ -142,7 +142,6 @@ struct LiftedMessage: View {
     let model: ChatModel
     let line: ChatStore.Line
 
-    private static let menuWidth: Double = 220
     private static let pickerHeight: Double = 260
 
     private var isMine: Bool { line.message.member == model.store.viewer }
@@ -191,42 +190,37 @@ struct LiftedMessage: View {
     }
 
     private var menu: some View {
-        VStack(spacing: 0) {
-            ForEach(model.store.actions(for: line.id), id: \.self) { action in
-                Button {
-                    run(action)
-                } label: {
-                    HStack(spacing: Space.s - 2) {
-                        Image(systemName: symbol(action))
-                            .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
-                            .frame(width: Sizing.icon)
-                        title(action).typeStyle(TypeRamp.body)
-                        Spacer(minLength: 0)
-                    }
-                    .foregroundStyle(Color(role: action == .delete ? .fgDanger : .fgDefault, in: theme))
-                    .padding(.horizontal, Space.s + 2)
-                    .frame(height: Sizing.control)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(PressableButtonStyle())
-                .accessibilityIdentifier("chat.menu.\(String(describing: action))")
-            }
-        }
-        .padding(Space.xxs + 2)
-        .frame(width: Self.menuWidth)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.card + 14, style: .continuous))
-        .accessibilityElement(children: .contain)
-        .padding(.leading, isMine ? 0 : MessageRow.head + Space.xs)
+        InlineGlassMenu(items: model.store.actions(for: line.id).map(item), close: putDown)
+            .padding(.leading, isMine ? 0 : MessageRow.head + Space.xs)
     }
 
-    private func run(_ action: MessageAction) {
+    private func item(_ action: MessageAction) -> GlassMenuItem {
+        let id = "chat.menu.\(String(describing: action))"
         switch action {
-        case .reply: model.reply(to: line.id)
+        case .reply:
+            return GlassMenuItem(Text("回复", bundle: .module), systemImage: "arrowshape.turn.up.left", id: id) {
+                model.reply(to: line.id)
+            }
         case .copy:
-            UIPasteboard.general.string = line.message.text
-            putDown()
-        case .report: model.report(line.id)
-        case .delete: model.delete(line.id)
+            return GlassMenuItem(Text("复制", bundle: .module), systemImage: "doc.on.doc", id: id) {
+                UIPasteboard.general.string = line.message.text
+            }
+        case .report:
+            return GlassMenuItem(
+                Text("举报", bundle: .module), systemImage: "exclamationmark.bubble", id: id,
+                confirm: .init(
+                    Text("举报这条消息？", bundle: .module), label: Text("举报", bundle: .module), id: "\(id).confirm")
+            ) {
+                model.report(line.id)
+            }
+        case .delete:
+            return GlassMenuItem(
+                Text("删除", bundle: .module), systemImage: "trash", role: .destructive, id: id,
+                confirm: .init(
+                    Text("删除这条消息？", bundle: .module), label: Text("删除", bundle: .module), id: "\(id).confirm")
+            ) {
+                model.delete(line.id)
+            }
         }
     }
 
@@ -234,24 +228,6 @@ struct LiftedMessage: View {
         withAnimation(.wildcard(Motion.sheet.exit, reduceMotion: reduceMotion)) {
             model.lifted = nil
             model.browsing = false
-        }
-    }
-
-    private func symbol(_ action: MessageAction) -> String {
-        switch action {
-        case .reply: "arrowshape.turn.up.left"
-        case .copy: "doc.on.doc"
-        case .report: "exclamationmark.bubble"
-        case .delete: "trash"
-        }
-    }
-
-    private func title(_ action: MessageAction) -> Text {
-        switch action {
-        case .reply: Text("回复", bundle: .module)
-        case .copy: Text("复制", bundle: .module)
-        case .report: Text("举报", bundle: .module)
-        case .delete: Text("删除", bundle: .module)
         }
     }
 }

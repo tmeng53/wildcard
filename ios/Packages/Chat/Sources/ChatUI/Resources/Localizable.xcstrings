@@ -464,6 +464,38 @@
           }
         }
       }
+    },
+    "举报这条消息？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report this message?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "檢舉這則訊息？"
+          }
+        }
+      }
+    },
+    "删除这条消息？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this message?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除這則訊息？"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

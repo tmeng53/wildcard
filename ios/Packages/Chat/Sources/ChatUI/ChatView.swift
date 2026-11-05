@@ -251,41 +251,31 @@ struct EmptyChat: View {
     }
 }
 
-/// The bell: the system's glass pull-down of when this squad's messages are pushed, the chosen one
-/// ticked. 不提醒 slashes the bell.
+/// The bell: the glass menu of when this squad's messages are pushed, the chosen one ticked.
+/// 不提醒 slashes the bell.
 struct AlertsMenu: View {
     let model: ChatModel
 
     var body: some View {
+        let alerts = model.store.alerts
         HeaderMenu(
-            Text("消息提醒", bundle: .module), systemImage: model.store.alerts == .none ? "bell.slash" : "bell"
-        ) {
-            Picker(
-                selection: Binding(
-                    get: { model.store.alerts },
-                    set: { alerts in Task { await model.store.setAlerts(alerts) } })
-            ) {
-                Label {
-                    Text("有人@我", bundle: .module)
-                } icon: {
-                    Image(systemName: "at")
-                }.tag(ChatAlerts.mentions)
-                Label {
-                    Text("每条消息", bundle: .module)
-                } icon: {
-                    Image(systemName: "bell")
-                }.tag(ChatAlerts.all)
-                Label {
-                    Text("不提醒", bundle: .module)
-                } icon: {
-                    Image(systemName: "bell.slash")
-                }.tag(ChatAlerts.none)
-            } label: {
-                Text("消息提醒", bundle: .module)
-            }
-            .pickerStyle(.inline)
-        }
+            Text("消息提醒", bundle: .module), systemImage: alerts == .none ? "bell.slash" : "bell",
+            items: [
+                item(.mentions, Text("有人@我", bundle: .module), systemImage: "at"),
+                item(.all, Text("每条消息", bundle: .module), systemImage: "bell"),
+                item(.none, Text("不提醒", bundle: .module), systemImage: "bell.slash"),
+            ]
+        )
         .accessibilityIdentifier("chat.alerts")
+    }
+
+    private func item(_ choice: ChatAlerts, _ title: Text, systemImage: String) -> GlassMenuItem {
+        GlassMenuItem(
+            title, systemImage: systemImage, isSelected: model.store.alerts == choice,
+            id: "chat.alerts.\(choice.rawValue)"
+        ) {
+            Task { await model.store.setAlerts(choice) }
+        }
     }
 }
 #endif
