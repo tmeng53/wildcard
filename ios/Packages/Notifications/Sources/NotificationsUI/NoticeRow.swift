@@ -126,7 +126,8 @@ struct NoticeRow: View {
             return Words(
                 title: Text(verbatim: broadcast.title.localized(in: [AppLanguage.current.rawValue])),
                 detail: broadcast.body.map { Text(verbatim: $0.localized(in: [AppLanguage.current.rawValue])) },
-                icon: AnyView(NoticeSymbol(systemImage: "sparkles")),
+                icon: broadcast.icon.map { unlocked($0.kind, $0.id).icon }
+                    ?? AnyView(NoticeSymbol(systemImage: "sparkles")),
                 action: broadcast.action.map { Text(verbatim: $0.label.localized(in: [AppLanguage.current.rawValue])) })
         }
     }

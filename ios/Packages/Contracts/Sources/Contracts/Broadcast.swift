@@ -39,12 +39,16 @@ public struct Broadcast: Hashable, Sendable {
     /// Nil without one, or for a place this build doesn't know.
     public let action: Action?
     public let style: Style
+    /// The store's sign, prop or piece drawn beside its words; nil draws its own symbol.
+    public let icon: Gift?
     public let gifts: [Gift]
 
     public init(
-        id: String, title: CatalogNames, body: CatalogNames?, action: Action?, style: Style, gifts: [Gift]
+        id: String, title: CatalogNames, body: CatalogNames?, action: Action?, style: Style, icon: Gift? = nil,
+        gifts: [Gift]
     ) {
-        (self.id, self.title, self.body, self.action, self.style, self.gifts) = (id, title, body, action, style, gifts)
+        (self.id, self.title, self.body, self.action, self.style) = (id, title, body, action, style)
+        (self.icon, self.gifts) = (icon, gifts)
     }
 }
 

@@ -94,7 +94,9 @@ struct MainTabs: View {
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
         .task {
             today.tellUnlocks(
-                with: UnlockNotices(banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) })
+                with: UnlockNotices(
+                    banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },
+                    badge: { WardrobeBadge($0, item: $1) })
             )
         }
         // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the

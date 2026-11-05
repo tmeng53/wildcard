@@ -126,6 +126,17 @@ export const NoticeEntry = z
           'How the app first shows it (`broadcast`): `banner` (the home’s notice banner) or ' +
           '`celebration` (full screen). Show another as `banner`.',
       }),
+    icon: z
+      .strictObject({
+        kind: z.string().meta({ description: '`store`, `prop` or `piece`. Skip another.' }),
+        id: z.string().meta({ description: 'Its id in the app’s art.' }),
+      })
+      .optional()
+      .meta({
+        description:
+          'The picture beside its words (`broadcast`): a store’s sign, a prop or a piece the app ' +
+          'draws; left out, or one this build doesn’t draw, shows its own symbol.',
+      }),
     gifts: z
       .array(
         z.strictObject({
@@ -345,7 +356,7 @@ function wireNotice(
     case 'broadcast': {
       const told = names.broadcast(notice.subject.broadcast);
       if (told === undefined) return undefined;
-      const { title, body, action, style, gifts } = told.value;
+      const { title, body, action, style, icon, gifts } = told.value;
       return {
         ...common,
         broadcast: told.id,
@@ -353,6 +364,7 @@ function wireNotice(
         ...(body === undefined ? {} : { body }),
         ...(action === undefined ? {} : { action }),
         style,
+        ...(icon === undefined ? {} : { icon }),
         ...(gifts.length === 0 ? {} : { gifts }),
       };
     }

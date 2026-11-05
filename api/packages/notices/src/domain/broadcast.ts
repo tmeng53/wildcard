@@ -62,12 +62,25 @@ export const BroadcastValue = z
       '`banner`: the home’s notice banner. `celebration`: the full-screen opening (a build ' +
         'without it shows the banner).',
     ),
+    icon: BroadcastGift.optional().describe(
+      'A store’s sign, a prop or a piece the app already draws, beside its words (such as ' +
+        '`{ "kind": "store", "id": "powder" }`); left out, a sparkle. A build without it shows the sparkle.',
+    ),
     gifts: z
       .array(BroadcastGift)
       .max(10)
       .describe(
         'Stores, props or pieces unlocked for each member when they are told (they show as ' +
           'NEW in the 商店街); may be empty.',
+      ),
+    members: z
+      .array(z.uuid())
+      .min(1)
+      .max(50)
+      .optional()
+      .describe(
+        'Only these members (by member id) are told it, such as admins trying it first; left ' +
+          'out, every member. Widening it later tells the others too.',
       ),
     startsAt: z.iso.datetime({ offset: true }).describe('From when members are told it.'),
     endsAt: z.iso
@@ -89,6 +102,11 @@ export interface Broadcast {
   /** The member id of the admin who last saved it; null once they deleted their account. */
   readonly by: string | null;
   readonly savedAt: Date;
+}
+
+/** Whether `broadcast` is for `member`: everyone, unless it names its members. */
+export function isFor(broadcast: BroadcastValue, member: string): boolean {
+  return broadcast.members === undefined || broadcast.members.includes(member);
 }
 
 /** Whether `broadcast` is told to members who open the app at `now`. */

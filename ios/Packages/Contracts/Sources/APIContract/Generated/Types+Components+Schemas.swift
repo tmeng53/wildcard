@@ -197,6 +197,39 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/style`.
             public var style: Swift.String?
+            /// The picture beside its words (`broadcast`): a store’s sign, a prop or a piece the app draws; left out, or one this build doesn’t draw, shows its own symbol.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/icon`.
+            public struct IconPayload: Codable, Hashable, Sendable {
+                /// `store`, `prop` or `piece`. Skip another.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/icon/kind`.
+                public var kind: Swift.String
+                /// Its id in the app’s art.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/icon/id`.
+                public var id: Swift.String
+                /// Creates a new `IconPayload`.
+                ///
+                /// - Parameters:
+                ///   - kind: `store`, `prop` or `piece`. Skip another.
+                ///   - id: Its id in the app’s art.
+                public init(
+                    kind: Swift.String,
+                    id: Swift.String
+                ) {
+                    self.kind = kind
+                    self.id = id
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case kind
+                    case id
+                }
+            }
+            /// The picture beside its words (`broadcast`): a store’s sign, a prop or a piece the app draws; left out, or one this build doesn’t draw, shows its own symbol.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/icon`.
+            public var icon: Components.Schemas.NoticeEntry.IconPayload?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/GiftsPayload`.
             public struct GiftsPayloadPayload: Codable, Hashable, Sendable {
                 /// `store`, `prop` or `piece`. Skip another.
@@ -256,6 +289,7 @@ extension Components {
             ///   - body:
             ///   - action: A button that opens a place in the app (`broadcast`), if any: its `label`.
             ///   - style: How the app first shows it (`broadcast`): `banner` (the home’s notice banner) or `celebration` (full screen). Show another as `banner`.
+            ///   - icon: The picture beside its words (`broadcast`): a store’s sign, a prop or a piece the app draws; left out, or one this build doesn’t draw, shows its own symbol.
             ///   - gifts: What it gave the caller when they were told (`broadcast`), already among their unlocks; left out when it gave nothing.
             public init(
                 id: Swift.Int,
@@ -279,6 +313,7 @@ extension Components {
                 body: Components.Schemas.LocalizedWords? = nil,
                 action: Components.Schemas.NoticeEntry.ActionPayload? = nil,
                 style: Swift.String? = nil,
+                icon: Components.Schemas.NoticeEntry.IconPayload? = nil,
                 gifts: Components.Schemas.NoticeEntry.GiftsPayload? = nil
             ) {
                 self.id = id
@@ -302,6 +337,7 @@ extension Components {
                 self.body = body
                 self.action = action
                 self.style = style
+                self.icon = icon
                 self.gifts = gifts
             }
             public enum CodingKeys: String, CodingKey {
@@ -326,6 +362,7 @@ extension Components {
                 case body
                 case action
                 case style
+                case icon
                 case gifts
             }
         }

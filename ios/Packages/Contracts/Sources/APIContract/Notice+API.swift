@@ -74,6 +74,9 @@ extension Notice {
         return Broadcast(
             id: id, title: title, body: wire.body.map(CatalogNames.init), action: action,
             style: wire.style == "celebration" ? .celebration : .banner,
+            icon: wire.icon.flatMap { icon in
+                Unlock.Kind(rawValue: icon.kind).map { Broadcast.Gift(kind: $0, id: icon.id) }
+            },
             gifts: (wire.gifts ?? []).compactMap { gift in
                 Unlock.Kind(rawValue: gift.kind).map { Broadcast.Gift(kind: $0, id: gift.id) }
             })

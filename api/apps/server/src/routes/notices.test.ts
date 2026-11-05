@@ -162,7 +162,9 @@ describe('GET /me/notices: broadcasts', () => {
         destination: 'stores',
       },
       style: 'banner',
+      icon: { kind: 'store', id: 'deuce' },
       gifts: [{ kind: 'store', id: 'deuce' }],
+      members: [me.userId],
       startsAt: `${String(year)}-11-20T00:00:00Z`,
       endsAt: `${String(year)}-11-27T00:00:00Z`,
     });
@@ -182,9 +184,12 @@ describe('GET /me/notices: broadcasts', () => {
         body: broadcast.body,
         action: broadcast.action,
         style: 'banner',
+        icon: { kind: 'store', id: 'deuce' },
         gifts: [{ kind: 'store', id: 'deuce' }],
       },
     ]);
+    // Whom it names stays with the admins.
+    expect(told[0]).not.toHaveProperty('members');
     // Its gift is the member's, as if given with give_unlocks.
     expect((await get('/me/unlocks', me.token)).body).toMatchObject({
       unlocks: [{ kind: 'store', id: 'deuce' }],

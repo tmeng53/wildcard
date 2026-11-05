@@ -3,7 +3,9 @@ import Contracts
 import Foundation
 import Testing
 
-private func entry(action: String?, style: String = "banner", gifts: String = "[]") throws -> Notice? {
+private func entry(
+    action: String?, style: String = "banner", gifts: String = "[]", icon: String = "null"
+) throws -> Notice? {
     let button =
         action.map {
             #", "action": {"label": {"zhHans": "去商店街看看", "en": "Take a look", "zhHant": "去商店街看看"}, "destination": "\#($0)"}"#
@@ -11,7 +13,7 @@ private func entry(action: String?, style: String = "banner", gifts: String = "[
     let json = #"""
         {"id": 7, "kind": "broadcast", "at": "2026-11-20T08:00:00Z", "broadcast": "soon",
          "title": {"zhHans": "商店街上新了", "en": "New in the stores", "zhHant": "商店街上新了"},
-         "style": "\#(style)", "gifts": \#(gifts)\#(button)}
+         "style": "\#(style)", "gifts": \#(gifts), "icon": \#(icon)\#(button)}
         """#
     let decoder = JSONDecoder()
     decoder.dateDecodingStrategy = .iso8601
@@ -20,7 +22,9 @@ private func entry(action: String?, style: String = "banner", gifts: String = "[
 
 @Test func aBroadcastReadsWithItsWordsButtonAndGifts() throws {
     let notice = try #require(
-        try entry(action: "stores", gifts: #"[{"kind": "piece", "id": "lap-bib"}, {"kind": "badge", "id": "x"}]"#))
+        try entry(
+            action: "stores", gifts: #"[{"kind": "piece", "id": "lap-bib"}, {"kind": "badge", "id": "x"}]"#,
+            icon: #"{"kind": "store", "id": "powder"}"#))
     guard case .broadcast(let broadcast) = notice.subject else {
         Issue.record("not a broadcast")
         return
@@ -32,6 +36,7 @@ private func entry(action: String?, style: String = "banner", gifts: String = "[
     #expect(broadcast.style == .banner)
     // A kind this build doesn't know is left out.
     #expect(broadcast.gifts == [Broadcast.Gift(kind: .piece, id: "lap-bib")])
+    #expect(broadcast.icon == Broadcast.Gift(kind: .store, id: "powder"))
     #expect(notice.destination == .stores)
 }
 
@@ -51,6 +56,7 @@ private func entry(action: String?, style: String = "banner", gifts: String = "[
     }
     #expect(broadcast.action == nil)
     #expect(broadcast.style == .banner)
+    #expect(broadcast.icon == nil)
     #expect(notice.destination == nil)
     #expect(try entry(action: "post/nope")?.destination == nil)
     #expect(try entry(action: nil)?.destination == nil)

@@ -41,7 +41,13 @@ struct HomeNotices: ViewModifier {
                 Text(verbatim: broadcast.title.localized(in: language)),
                 detail: broadcast.body.map { Text(verbatim: $0.localized(in: language)) },
                 action: broadcast.action.map { Text(verbatim: $0.label.localized(in: language)) }
-            ) { NoticeSymbol(systemImage: "sparkles") }
+            ) {
+                if let icon = broadcast.icon, let unlocks {
+                    unlocks.badge(icon.kind, icon.id)
+                } else {
+                    NoticeSymbol(systemImage: "sparkles")
+                }
+            }
         }
     }
 
@@ -64,13 +70,19 @@ struct HomeNotices: ViewModifier {
 public struct UnlockNotices {
     let banner: (Unlock) -> AnyView
     let open: (Unlock) -> Void
+    let badge: (Unlock.Kind, String) -> AnyView
 
     /// - Parameters:
     ///   - banner: the `NoticeBanner` that says what opened.
     ///   - open: a tap on it: the editor, at that store or prop.
-    public init<Banner: View>(banner: @escaping (Unlock) -> Banner, open: @escaping (Unlock) -> Void) {
+    ///   - badge: a store's sign or a piece's or prop's picture, as a broadcast's icon.
+    public init<Banner: View, Badge: View>(
+        banner: @escaping (Unlock) -> Banner, open: @escaping (Unlock) -> Void,
+        badge: @escaping (Unlock.Kind, String) -> Badge
+    ) {
         self.banner = { AnyView(banner($0)) }
         self.open = open
+        self.badge = { AnyView(badge($0, $1)) }
     }
 }
 #endif

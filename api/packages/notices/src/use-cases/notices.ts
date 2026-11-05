@@ -1,6 +1,7 @@
 import { isDeepStrictEqual } from 'node:util';
 
 import {
+  isFor,
   isRunning,
   type Broadcast,
   type BroadcastId,
@@ -88,7 +89,7 @@ export function createNotices(deps: {
   const tellRunning = async (member: MemberId) => {
     const now = await deps.clock(member);
     const running = (await deps.broadcasts.all())
-      .filter(({ value }) => isRunning(value, now))
+      .filter(({ value }) => isRunning(value, now) && isFor(value, member))
       .sort((a, b) => Date.parse(a.value.startsAt) - Date.parse(b.value.startsAt));
     if (running.length === 0) return;
     const told = await deps.store.toldBroadcasts(member);

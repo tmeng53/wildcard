@@ -232,6 +232,30 @@ describe('broadcasts', () => {
     expect(told).toEqual([]);
   });
 
+  it('tells only the members it names, and the others once it names everyone', async () => {
+    const [me, other, admin] = [await newMember(), await newMember(), await newMember()];
+    const id = unique('try');
+    const { box } = at('2090-11-21T12:00:00Z');
+    const told = async (member: MemberId) =>
+      (await box.page({ member, limit: 5 })).notices.filter((notice) =>
+        notice.kind === 'broadcast' ? notice.subject.broadcast === id : false,
+      );
+    await box.put({
+      id,
+      value: value({ members: [me], icon: { kind: 'store', id: 'powder' } }),
+      by: admin,
+    });
+    expect(await told(other)).toEqual([]);
+    expect(await told(me)).toHaveLength(1);
+    expect((await box.page({ member: me, limit: 5 })).broadcasts.get(id)?.value.icon).toEqual({
+      kind: 'store',
+      id: 'powder',
+    });
+
+    await box.put({ id, value: value({ icon: { kind: 'store', id: 'powder' } }), by: admin });
+    expect(await told(other)).toHaveLength(1);
+  });
+
   it('gives its gifts before telling it, and tries again on a later open when they fail', async () => {
     const [me, admin] = [await newMember(), await newMember()];
     const id = unique('gift');
