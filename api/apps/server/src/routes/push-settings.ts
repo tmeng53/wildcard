@@ -10,15 +10,19 @@ import { requireCaller, type SignedIn } from '../require-caller.js';
 export const PushSettings = z
   .strictObject({
     version: bodyVersion(1),
-    settings: z.partialRecord(PushTopic, z.boolean()).meta({
-      description:
-        'Each kind of push, on or off; all on until the member turns one off. A save may leave ' +
-        'switches out, which keep what they were; a read has every one. ' +
-        '`dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates ' +
-        'sent them. `coach`: what the squad’s coach says to the member (its replies, answers ' +
-        'and morning note), sent silently; the bell keeps them whatever this is.',
-      example: { dailyProgress: true, coach: true },
-    }),
+    settings: z
+      .partialRecord(PushTopic, z.boolean())
+      // A save that names no switch is a mistake, not a save of nothing.
+      .refine((settings) => Object.keys(settings).length > 0, 'names no switch')
+      .meta({
+        description:
+          'Each kind of push, on or off; all on until the member turns one off. A save may leave ' +
+          'switches out, which keep what they were; a read has every one. ' +
+          '`dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates ' +
+          'sent them. `coach`: what the squad’s coach says to the member (its replies, answers ' +
+          'and morning note), sent silently; the bell keeps them whatever this is.',
+        example: { dailyProgress: true, coach: true },
+      }),
   })
   .openapi('PushSettings');
 
