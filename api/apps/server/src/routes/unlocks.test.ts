@@ -214,6 +214,35 @@ describe('GET /me/unlocks', () => {
     expect(locked.find(({ id }) => id === 'powder-salmonhelmet')?.checkInsToGo).toBe(13);
     expect(locked.find(({ id }) => id === 'warmup-headphones')?.checkInsToGo).toBe(2);
     expect(locked.find(({ id }) => id === 'deuce-sweater')?.checkInsToGo).toBe(5);
+    // The 商店街 as the server works it out, every switch on here: POWDER DAY is open with its
+    // four starters out and the rest boxed; DEUCE CLUB, not yet earned, shows no piece.
+    const shelf = z
+      .object({
+        shelf: z.object({
+          stores: z.array(z.object({ id: z.string(), open: z.boolean() })),
+          pieces: z.array(
+            z.object({
+              id: z.string(),
+              storeId: z.string(),
+              state: z.string(),
+              checkInsToGo: z.int().optional(),
+            }),
+          ),
+        }),
+      })
+      .parse(fresh.body).shelf;
+    expect(shelf.stores.find(({ id }) => id === 'powder')).toStrictEqual({
+      id: 'powder',
+      open: true,
+    });
+    const powder = shelf.pieces.filter(({ storeId }) => storeId === 'powder');
+    expect(powder.filter(({ state }) => state === 'available')).toHaveLength(4);
+    expect(powder.filter(({ state }) => state === 'locked')).toHaveLength(13);
+    expect(powder.find(({ id }) => id === 'powder-tuna')).toMatchObject({
+      state: 'locked',
+      checkInsToGo: 1,
+    });
+    expect(shelf.pieces.some(({ storeId }) => storeId === 'deuce')).toBe(false);
     const first = await train({ member: me, squad, sport: 'tennis' });
     const run = await train({ member: me, squad, sport: 'run' });
     const squash = await train({ member: me, squad, sport: 'squash' });

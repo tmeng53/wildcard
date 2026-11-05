@@ -2,7 +2,7 @@ import pg from 'pg';
 import { z } from 'zod';
 
 import { LiveEventsUnavailableError } from '../errors.js';
-import type { LiveEvent, LiveEvents, LiveListener, UserId } from '../ports.js';
+import type { LiveEvents, LiveListener, UserId } from '../ports.js';
 
 /** The channel the database tells live events on (the `live_events` migration). */
 const CHANNEL = 'live_events';
@@ -10,55 +10,12 @@ const CHANNEL = 'live_events';
 /** How often the listening connection is checked, so a dropped one is noticed and replaced. */
 const PING_MS = 60_000;
 
-const Payload = z.discriminatedUnion('kind', [
-  z.object({
-    version: z.literal(1),
-    member: z.uuid(),
-    kind: z.literal('notice'),
-    id: z.int().positive(),
-  }),
-  z.object({
-    version: z.literal(1),
-    member: z.uuid(),
-    kind: z.literal('chat'),
-    id: z.int().positive(),
-    squad: z.uuid(),
-  }),
-  z.object({
-    version: z.literal(1),
-    member: z.uuid(),
-    kind: z.literal('chatDeleted'),
-    squad: z.uuid(),
-    message: z.uuid(),
-  }),
-  z.object({
-    version: z.literal(1),
-    member: z.uuid(),
-    kind: z.literal('coachTyping'),
-    squad: z.uuid(),
-    coach: z.string().min(1).max(64),
-    typing: z.boolean(),
-  }),
-]);
-
-/** The event a payload tells, as listeners hear it. */
-function eventOf(payload: z.infer<typeof Payload>): LiveEvent {
-  switch (payload.kind) {
-    case 'notice':
-      return { kind: 'notice', id: payload.id };
-    case 'chat':
-      return { kind: 'chat', squad: payload.squad, seq: payload.id };
-    case 'chatDeleted':
-      return { kind: 'chatDeleted', squad: payload.squad, message: payload.message };
-    case 'coachTyping':
-      return {
-        kind: 'coachTyping',
-        squad: payload.squad,
-        coach: payload.coach,
-        typing: payload.typing,
-      };
-  }
-}
+const Payload = z.object({
+  version: z.literal(1),
+  member: z.uuid(),
+  kind: z.string(),
+  id: z.int().positive(),
+});
 
 /**
  * Live events from Postgres: one connection per server instance `LISTEN`s on the `live_events`
@@ -100,9 +57,9 @@ export function createPostgresLiveEvents(
     }
     const event = Payload.safeParse(parsed);
     // A kind this build doesn't know (told by a newer migration) is left out.
-    if (!event.success) return;
+    if (!event.success || event.data.kind !== 'notice') return;
     for (const listener of listeners.get(event.data.member) ?? []) {
-      listener.event(eventOf(event.data));
+      listener.event({ kind: 'notice', id: event.data.id });
     }
   }
 
@@ -168,37 +125,6 @@ export function createPostgresLiveEvents(
         now?.delete(listener);
         if (now?.size === 0) listeners.delete(member);
       };
-    },
-
-    async publish(members, event) {
-      if (closed || members.length === 0) return;
-      connection ??= connect();
-      const current = connection;
-      try {
-        const client = await current;
-        await client.query(`select pg_notify($1, payload) from unnest($2::text[]) as payload`, [
-          CHANNEL,
-          members.map((member) =>
-            JSON.stringify({
-              version: 1,
-              member,
-              kind: event.kind,
-              squad: event.squad,
-              coach: event.coach,
-              typing: event.typing,
-            }),
-          ),
-        ]);
-      } catch {
-        // A connection that never opened is opened again by the next caller; one that dropped
-        // has told its subscribers already.
-        await current.then(
-          () => undefined,
-          () => {
-            if (connection === current) connection = undefined;
-          },
-        );
-      }
     },
 
     async close() {

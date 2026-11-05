@@ -126,7 +126,6 @@ const deps = {
   notices,
   coachNames: () => Promise.reject(new Error('unused')),
   liveEvents: ignoredNotices.liveEvents,
-  chat: ignoredNotices.chat,
   log,
   jobs: { isScheduler: jobsTokenScheduler(JOBS_TOKEN), interactions, clock: () => new Date() },
   admin: adminOn(),

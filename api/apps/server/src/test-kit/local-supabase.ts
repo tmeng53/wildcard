@@ -12,7 +12,6 @@ import {
   MemberId as ProfileMember,
 } from '@wildcard/members';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
-import { createPostgresChatStore, createSquadChat } from '@wildcard/squad-chat';
 import {
   createOffSender,
   createPostgresDailyPushSettings,
@@ -28,7 +27,6 @@ import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
 import { z } from 'zod';
 
 import type { AdminTool } from '../admin-mcp/admin-tool.js';
-import { chatMembership } from '../flows/chat-membership.js';
 import { readConfig } from '../config.js';
 import type { Database } from '../ports.js';
 
@@ -132,20 +130,3 @@ export function scenesOn(db: Database) {
 
 /** Jobs as a server without a scheduler has them: no token, so none runs. */
 export const noJobs = { isScheduler: undefined, interactions: [], clock: () => new Date() };
-
-/** Squads on local Supabase, everyone agreeing to the AI copy. */
-export function squadsOn(db: Database) {
-  return createSquads({
-    store: createPostgresSquadStore(db),
-    inviteCodes: randomInviteCodes,
-    aiConsent: () => Promise.resolve(true),
-  });
-}
-
-/** The squads' chats on local Supabase, between squadmates as the squads module keeps them. */
-export function chatOn(db: Database) {
-  return createSquadChat({
-    store: createPostgresChatStore(db),
-    membership: chatMembership(squadsOn(db)),
-  });
-}

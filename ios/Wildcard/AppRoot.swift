@@ -14,8 +14,6 @@ struct AppRoot: View {
     let delegate: AppDelegate
     /// A post a comment's push asked to open before the tabs were up.
     @State private var postToOpen: CheckInID?
-    /// A chat push was tapped: 今天 opens the chat.
-    @State private var opensChat = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -42,10 +40,10 @@ struct AppRoot: View {
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(
                     today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                    myPosts: app.myPosts, notices: app.notices, squadmateCards: app.squadmateCards,
-                    chat: { _ in app.chat }, selection: $tab, opensChat: $opensChat,
-                    leftSquad: { Task { await app.leftSquad() } }
-                )
+                    myPosts: app.myPosts, notices: app.notices, squadmateCards: app.squadmateCards, selection: $tab
+                ) {
+                    Task { await app.leftSquad() }
+                }
                 .onAppear {
                     // A tap that launched the app came before the tabs.
                     if let destination = delegate.takeDestination() {
@@ -87,7 +85,7 @@ struct AppRoot: View {
             }
         }
         .onAppear {
-            delegate.opened = { [app, delegate, $tab, $postToOpen, $opensChat] opened in
+            delegate.opened = { [app, delegate, $tab, $postToOpen] opened in
                 switch opened {
                 // 动态, where the member sees the new 战报's tile and opens it themselves.
                 case .weeklyAwards:
@@ -102,10 +100,6 @@ struct AppRoot: View {
                         // A tap that launched the app comes before the tabs, which open it.
                         $postToOpen.wrappedValue = post
                     }
-                // 群聊, over 今天; before the tabs are up, they open it once they can.
-                case .chat:
-                    $tab.wrappedValue = .today
-                    $opensChat.wrappedValue = true
                 case .other:
                     // Before the tabs are up, they take the 6pm push's destination when they appear.
                     if case .tabs(let today, _, _, _, _, _) = app.screen {

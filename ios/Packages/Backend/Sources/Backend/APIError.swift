@@ -65,8 +65,6 @@ public enum Refusal: Equatable, Sendable {
     case weekClosed
     /// A day of this week that has started keeps its plan.
     case planDayStarted
-    /// The chat message is gone, or was sent before the member joined.
-    case chatMessageNotFound
     /// Any other refusal, with its `reason`: a request this build should never send.
     case invalid(reason: String)
 
@@ -100,6 +98,5 @@ public enum Refusal: Equatable, Sendable {
         "SCENE_WEEK_CLOSED": .sceneWeekClosed,
         "WEEK_OVER": .weekClosed,
         "PLAN_DAY_STARTED": .planDayStarted,
-        "CHAT_MESSAGE_NOT_FOUND": .chatMessageNotFound,
     ]
 }

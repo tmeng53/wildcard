@@ -40,6 +40,7 @@ import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
+import { createArt, createPostgresArtStore } from '@wildcard/art';
 import {
   createCoachGifts,
   createPostgresGiftStore,
@@ -66,7 +67,9 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
+import { createSupabaseArtStorage } from '../adapters/supabase-art-storage.js';
 import { adminTool } from './admin-tool.js';
+import { artTools } from './tools/art.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { aiWritingTools } from './tools/ai-writing.js';
 import { dailyPushTools } from './tools/daily-push.js';
@@ -218,6 +221,15 @@ beforeAll(async () => {
                   switches: () => Promise.resolve(() => true),
                 }),
                 gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
+              }),
+              ...artTools({
+                art: createArt({
+                  store: createPostgresArtStore(scope),
+                  blobs: createSupabaseArtStorage({
+                    supabaseUrl: config.supabaseUrl,
+                    secretKey: config.supabaseSecretKey,
+                  }),
+                }),
               }),
               ...coachTools({
                 settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
@@ -400,8 +412,16 @@ describe('the admin MCP server', () => {
       ['get_unlock_rules', true],
       ['put_unlock_rule', false],
       ['give_unlocks', false],
+      ['get_stores', true],
+      ['put_store', false],
+      ['get_pieces', true],
+      ['put_piece', false],
       ['get_gift_pieces', true],
       ['put_gift_piece', false],
+      ['get_art', true],
+      ['art_upload_url', true],
+      ['put_art', false],
+      ['retire_art', false],
       ['get_coach_settings', true],
       ['change_coach_settings', false],
       ['list_coaches', true],
@@ -940,6 +960,53 @@ describe('the admin MCP server', () => {
     await client.close();
   });
 
+  it('puts art, refusing what the app can’t draw, and logs the change', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const path = `avatar/art/hat/t${randomUUID().slice(0, 8)}/crown.svg`;
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320"><circle cx="9" cy="9" r="4" fill="#1F2128"/></svg>';
+    const put = { files: [{ path, text: svg }], rigVersion: 1 };
+
+    const added = await call('put_art', put);
+    expect(added.isError).toBe(false);
+    const Art = z.object({
+      version: z.literal(1),
+      generation: z.int(),
+      files: z.array(z.object({ path: z.string(), size: z.int() }).loose()),
+    });
+    expect(
+      Art.parse(JSON.parse(added.text)).files.find((file) => file.path === path),
+    ).toMatchObject({
+      size: svg.length,
+      rigVersion: 1,
+    });
+    const refused = await call('put_art', {
+      files: [{ path, text: '<svg viewBox="0 0 1 1"><text>hi</text></svg>' }],
+    });
+    expect(refused).toStrictEqual({
+      isError: true,
+      text: `ART_REFUSED: ${path}: <text> isn’t drawn`,
+    });
+    const retired = await call('retire_art', { paths: [path] });
+    expect(Art.parse(JSON.parse(retired.text)).files.some((file) => file.path === path)).toBe(
+      false,
+    );
+
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      { version: 1, tool: 'put_art', arguments: put },
+      { version: 1, tool: 'retire_art', arguments: { paths: [path] } },
+    ]);
+    await client.close();
+  });
+
   it('reads the unlock rules and logs a change, refusing a sport the list lacks', async () => {
     const admin = await member({ admin: true });
     const client = await connect(clientSignedInAs(admin));
@@ -995,6 +1062,55 @@ describe('the admin MCP server', () => {
           after: 3,
         },
       },
+    ]);
+    await client.close();
+  });
+
+  it('reads the stores and pieces, puts one back as it is and refuses a store that doesn’t exist', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const stores = z
+      .object({ stores: z.array(z.object({ id: z.string() }).loose()) })
+      .parse(JSON.parse((await call('get_stores')).text)).stores;
+    expect(stores.find(({ id }) => id === 'powder')).toStrictEqual({
+      id: 'powder',
+      position: 7,
+      switchId: 'winter',
+      offered: true,
+    });
+    const pieces = z
+      .object({ pieces: z.array(z.object({ id: z.string() }).loose()) })
+      .parse(JSON.parse((await call('get_pieces')).text)).pieces;
+    expect(pieces.find(({ id }) => id === 'powder-salmon')).toStrictEqual({
+      id: 'powder-salmon',
+      storeId: 'powder',
+      slot: 'top',
+      starter: true,
+      offered: true,
+    });
+    const powder = { id: 'powder', position: 7, switchId: 'winter', offered: true };
+    expect((await call('put_store', powder)).isError).toBe(false);
+    const refused = await call('put_piece', {
+      id: 'nowhere-cap',
+      storeId: 'nowhere',
+      slot: 'hat',
+      starter: true,
+      switchId: null,
+      offered: true,
+    });
+    expect(refused).toStrictEqual({
+      isError: true,
+      text: 'UNLOCK_STORE_MISSING: There is no store nowhere.',
+    });
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      { version: 1, tool: 'put_store', arguments: powder },
     ]);
     await client.close();
   });

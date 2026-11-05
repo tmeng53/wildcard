@@ -62,10 +62,10 @@
       "path": "packages/coach"
     },
     {
-      "path": "packages/squad-chat"
+      "path": "apps/server"
     },
     {
-      "path": "apps/server"
+      "path": "packages/art"
     }
   ]
 }

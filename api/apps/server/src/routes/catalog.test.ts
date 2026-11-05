@@ -24,7 +24,9 @@ describe('GET /public/catalog', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('application/json');
     expect(response.headers.get('cache-control')).toBe('no-cache');
-    const body: unknown = await response.json();
+    // The art is left out of the bundled copy: the app bundles the art itself, and tests put some.
+    const { art, ...body } = z.looseObject({ art: z.unknown() }).parse(await response.json());
+    expect(art).toMatchObject({ baseUrl: 'http://127.0.0.1:54321/storage/v1/object/public/art/' });
     expect(body).toMatchObject({
       version: 1,
       sports: {

@@ -7,29 +7,15 @@ import {
   storedPathOf,
   type StoredPath,
 } from '../domain/memory.js';
-import {
-  instructionsOf,
-  taskOf,
-  type CoachChatTalk,
-  type CoachThread,
-  type DayTalk,
-} from '../domain/prompt.js';
+import { instructionsOf, taskOf, type CoachThread, type DayTalk } from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
 import type { CoachSettings, SquadId } from '../domain/settings.js';
 import { factsText } from '../domain/member-facts.js';
 import { consentedOnly, rosterOf, weekText, type SquadWeek } from '../domain/squad-week.js';
-import {
-  costMicros,
-  newYorkTime,
-  wakesDue,
-  weekStartOf,
-  weeksAround,
-  type Wake,
-} from '../domain/wake.js';
+import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
 import type {
   AiConsented,
   CoachAgent,
-  CoachChat,
   CoachCatalogStore,
   CoachHiringStore,
   CoachMemberFacts,
@@ -101,12 +87,6 @@ export interface CoachWakes {
     readonly checkIn: string;
     readonly squads: readonly SquadId[];
   }): Promise<void>;
-  /**
-   * Answers a member's chat message that @s the squad's coach or replies to it, now: queues its
-   * wake and runs the squad's waiting wakes. Does nothing while coaching is off or the squad has
-   * no coach. What doesn't finish now, the next `run` does.
-   */
-  chat(input: { readonly squad: SquadId; readonly message: string }): Promise<void>;
 }
 
 export interface CoachWakesDependencies {
@@ -127,8 +107,6 @@ export interface CoachWakesDependencies {
   readonly replied?: CoachReplied;
   /** Told each answer to a member's reply once it is saved; the server tells that member. */
   readonly answered?: CoachAnswered;
-  /** The squad's chat; without it the coach never answers there or posts its line there. */
-  readonly chat?: CoachChat;
 }
 
 /** An answer the coach just saved to a member's reply to it. */
@@ -216,18 +194,6 @@ export function createCoachWakes(deps: CoachWakesDependencies): CoachWakes {
       const coaches = new Map((await deps.catalog.list()).map((each) => [each.id, each]));
       await drain(deps, { squads, hired, coaches, settings, now });
     },
-
-    chat: async ({ squad, message }) => {
-      if (deps.chat === undefined) return;
-      const now = deps.clock();
-      const settings = await deps.settings.current();
-      if (!settings.coaching) return;
-      const hired = await deps.hiring.hired();
-      if (!hired.has(squad)) return;
-      await deps.stores.wakes.enqueue([{ squad, reason: { kind: 'chat', message } }], now);
-      const coaches = new Map((await deps.catalog.list()).map((each) => [each.id, each]));
-      await drain(deps, { squads: [squad], hired, coaches, settings, now });
-    },
   };
 }
 
@@ -298,9 +264,6 @@ async function wakeWeek(
   if (reason.kind === 'daily') {
     return weekOf(deps, { squad: wake.squad, weekStart: weekStartOf(reason.day) });
   }
-  if (reason.kind === 'chat') {
-    return weekOf(deps, { squad: wake.squad, weekStart: weekStartOf(newYorkTime(now).day) });
-  }
   // A check-in may count for a day up to a week before it was posted (补打卡), so its week may
   // be the one before.
   const weekBefore = weeksAround(new Date(now.getTime() - 7 * 86_400_000));
@@ -351,12 +314,6 @@ async function runWake(
       await deps.stores.wakes.finish(wake.id);
       return true;
     }
-    const chat = await chatOf(deps, { wake, week });
-    // A chat message's wake with nothing to answer: it went, or its writer can't be read.
-    if (wake.reason.kind === 'chat' && chat === undefined) {
-      await deps.stores.wakes.finish(wake.id);
-      return true;
-    }
     const draft: WakeDraft = {
       files: new Map(stored),
       changed: new Set(),
@@ -385,7 +342,6 @@ async function runWake(
       files,
       recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
       ...(thread === undefined ? {} : { thread: thread.thread }),
-      ...(chat === undefined ? {} : { chat }),
       recentEmoji:
         wake.reason.kind === 'checkIn'
           ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
@@ -396,39 +352,30 @@ async function runWake(
       await deps.stores.wakes.finish(wake.id);
       return true;
     }
-    // The squad sees the coach's three dots while it works on its answer.
-    const typing = wake.reason.kind === 'chat' ? deps.chat : undefined;
-    await typing?.typing({ squad: wake.squad, coach: coach.id, typing: true });
-    // The dots end however the run ends.
-    let run: Awaited<ReturnType<CoachAgent['run']>>;
-    try {
-      run = await deps.agent.run({
-        model: settings.model,
-        instructions: instructionsOf(settings, coach),
-        task,
-        tools: toolbox({
-          week,
-          roster,
-          draft,
-          kind: wake.reason.kind,
-          ...photosOf(deps.photoUrls, { week, wake }),
-          ...factsFor(deps, { week, roster }),
-          pastWeek: async (weeksAgo) =>
-            weekText(
-              await weekOf(deps, {
-                squad: wake.squad,
-                weekStart: weekStartOf(dayBefore(week.weekStart, weeksAgo * 7)),
-              }),
-            ),
-        }),
-        // Every wake of a coach begins with its same instructions, then its tools (each kind's own
-        // last: the daily wake's post_note, a check-in's reply and react, a reply's answer), so
-        // every kind shares the rest.
-        cacheKey: `coach:${coach.id}`,
-      });
-    } finally {
-      await typing?.typing({ squad: wake.squad, coach: coach.id, typing: false });
-    }
+    const run = await deps.agent.run({
+      model: settings.model,
+      instructions: instructionsOf(settings, coach),
+      task,
+      tools: toolbox({
+        week,
+        roster,
+        draft,
+        kind: wake.reason.kind,
+        ...photosOf(deps.photoUrls, { week, wake }),
+        ...factsFor(deps, { week, roster }),
+        pastWeek: async (weeksAgo) =>
+          weekText(
+            await weekOf(deps, {
+              squad: wake.squad,
+              weekStart: weekStartOf(dayBefore(week.weekStart, weeksAgo * 7)),
+            }),
+          ),
+      }),
+      // Every wake of a coach begins with its same instructions, then its tools (each kind's own
+      // last: the daily wake's post_note, a check-in's reply and react, a reply's answer), so
+      // every kind shares the rest.
+      cacheKey: `coach:${coach.id}`,
+    });
     // The tokens were spent whatever comes next, so they are counted first, on their own.
     await deps.stores.usage.record({
       squad: wake.squad,
@@ -443,16 +390,6 @@ async function runWake(
       await deps.stores.wakes.fail(wake.id, run.error);
       return false;
     }
-    // Before the wake ends: the chat saves an answer once a message, so a try that fails after it
-    // and is tried again doesn't answer twice.
-    if (wake.reason.kind === 'chat' && draft.answer !== undefined) {
-      await deps.chat?.answer({
-        squad: wake.squad,
-        coach: coach.id,
-        message: wake.reason.message,
-        text: draft.answer,
-      });
-    }
     const saved = await deps.transaction(async (stores) => {
       const saved = await saveDraft(stores, {
         squad: wake.squad,
@@ -466,10 +403,7 @@ async function runWake(
       return saved;
     });
     // After the save, and never undoing it: telling the member is the caller's to log if it fails.
-    const { reply, answer, note } = saved;
-    if (note !== undefined) {
-      await deps.chat?.note({ squad: wake.squad, coach: coach.id, ...note }).catch(() => undefined);
-    }
+    const { reply, answer } = saved;
     const author = week.checkIns.find(({ id }) => id === reply?.checkIn)?.member;
     if (reply !== undefined && author !== undefined) {
       await deps.replied?.({ ...reply, author }).catch(() => undefined);
@@ -514,9 +448,7 @@ function photosOf(
   photoUrls: CoachPhotoUrls | undefined,
   { week, wake }: { readonly week: SquadWeek; readonly wake: Wake },
 ): { readonly photos?: () => Promise<readonly string[]> } {
-  if (photoUrls === undefined || wake.reason.kind === 'daily' || wake.reason.kind === 'chat') {
-    return {};
-  }
+  if (photoUrls === undefined || wake.reason.kind === 'daily') return {};
   const { checkIn } = wake.reason;
   const paths = week.checkIns.find(({ id }) => id === checkIn)?.photos ?? [];
   return paths.length === 0 ? {} : { photos: () => photoUrls(paths) };
@@ -548,8 +480,6 @@ async function saveDraft(
 ): Promise<{
   readonly reply?: Omit<Parameters<CoachReplied>[0], 'author'>;
   readonly answer?: Omit<Parameters<CoachAnswered>[0], 'commenter'>;
-  /** The 战术板 line saved, for the chat too. */
-  readonly note?: { readonly day: string; readonly text: string };
 }> {
   const files = [...draft.changed]
     .map((path) => ({ path, body: draft.files.get(path) ?? '' }))
@@ -557,10 +487,13 @@ async function saveDraft(
     .map(({ path, body }) => ({ path, body: storedBody(body, roster) }));
   if (files.length > 0) await stores.memory.save({ squad, wake: wake.id, files });
   if (draft.note !== undefined && wake.reason.kind === 'daily') {
-    const note = { day: wake.reason.day, text: draft.note };
-    if (await stores.notes.save({ squad, coach: coach.id, ...note, wake: wake.id })) {
-      return { note };
-    }
+    await stores.notes.save({
+      squad,
+      coach: coach.id,
+      day: wake.reason.day,
+      text: draft.note,
+      wake: wake.id,
+    });
   }
   if (
     wake.reason.kind === 'checkIn' &&
@@ -673,38 +606,4 @@ async function threadOf(
       ];
     });
   return { thread: { reply: reply.text, said }, commenter: answering.member };
-}
-
-/** How many of the chat's last messages a coach reads on a chat message's wake. */
-const CHAT_LINES = 20;
-
-/**
- * On a chat message's wake, the squad's chat before it for the coach to go on, only the words of
- * members with a current AI consent: `undefined` on another wake, or when there is nothing to
- * answer (the message went, or its writer withdrew their consent, or isn't in the squad).
- */
-async function chatOf(
-  deps: CoachWakesDependencies,
-  { wake, week }: { readonly wake: Wake; readonly week: SquadWeek },
-): Promise<CoachChatTalk | undefined> {
-  const { reason } = wake;
-  if (reason.kind !== 'chat' || deps.chat === undefined) return undefined;
-  const lines = await deps.chat.thread({ squad: wake.squad, message: reason.message });
-  const asking = lines?.find(({ id }) => id === reason.message);
-  if (lines === undefined || asking?.member === undefined) return undefined;
-  const inSquad = new Set(week.members.map(({ member }) => member));
-  const writers = [
-    ...new Set(lines.flatMap(({ member }) => (member === undefined ? [] : [member]))),
-  ];
-  const consented = new Set(await deps.aiConsented(writers));
-  if (!consented.has(asking.member) || !inSquad.has(asking.member)) return undefined;
-  const said = lines
-    .slice(-CHAT_LINES)
-    .filter(({ member }) => member === undefined || (consented.has(member) && inSquad.has(member)))
-    .map(({ id, member, text }) => ({
-      member,
-      text,
-      ...(id === reason.message ? { answering: true } : {}),
-    }));
-  return { said };
 }

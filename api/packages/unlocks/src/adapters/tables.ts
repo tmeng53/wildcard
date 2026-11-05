@@ -44,13 +44,28 @@ export interface PieceClaims {
   piece_id: string;
 }
 
+export interface Pieces {
+  id: string;
+  offered: Generated<boolean>;
+  slot: string;
+  starter: Generated<boolean>;
+  store_id: string;
+  switch_id: string | null;
+}
+
+export interface Stores {
+  id: string;
+  offered: Generated<boolean>;
+  position: number;
+  switch_id: string | null;
+}
+
 export interface UnlockRules {
   after: number;
   counts_from: Generated<Timestamp>;
   item_id: string;
   kind: string;
   sports: Generated<string[]>;
-  switch_id: string | null;
 }
 
 export interface DB {
@@ -58,5 +73,7 @@ export interface DB {
   gift_pieces: GiftPieces;
   member_unlocks: MemberUnlocks;
   piece_claims: PieceClaims;
+  pieces: Pieces;
+  stores: Stores;
   unlock_rules: UnlockRules;
 }

@@ -75,26 +75,6 @@ extension View {
     }
 }
 
-/// The glass menu's rows on a glass panel of their own, in place rather than in a popover, for a
-/// menu that stays beside other live controls: 群聊's lifted message keeps its emoji bar tappable
-/// over it, as iMessage's does. The same rows, groups and confirmations; `close` puts it away,
-/// and a picked action runs once it is gone.
-public struct InlineGlassMenu: View {
-    private let items: [GlassMenuItem]
-    private let close: () -> Void
-
-    public init(items: [GlassMenuItem], close: @escaping () -> Void) {
-        self.items = items
-        self.close = close
-    }
-
-    public var body: some View {
-        GlassMenu(title: nil, items: items, confirming: nil, close: close)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.menu, style: .continuous))
-            .accessibilityElement(children: .contain)
-    }
-}
-
 /// The panel: the system's popover, which on iOS 26 is Liquid Glass and grows from its source,
 /// holding our rows.
 struct GlassMenu: View {

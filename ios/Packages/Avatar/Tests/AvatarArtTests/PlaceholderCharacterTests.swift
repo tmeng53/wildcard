@@ -10,19 +10,12 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "dustL", "dustR", "root", "propBack", "tail", "legL", "legR", "torso", "medal", "acc", "earL",
-            "earR", "head",
-            "flapL",
-            "flapR", "crown", "award",
-            "nose",
-            "eyes", "brows", "browsSad", "browsMad", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad",
-            "mouthGasp", "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL",
-            "heartR", "sparkle",
-            "tearL", "tearR",
-            "food0", "food1", "food2",
-            "armL", "armR", "chin", "propR", "gripR", "flexL", "muscleL", "flexR", "muscleR", "heart", "propFront",
-            "propOver",
-            "desk",
+            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "torso", "medal", "acc",
+            "earL", "earR", "head", "flapL", "flapR", "crown", "award", "nose", "eyes", "brows", "browsSad", "browsMad",
+            "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp", "drool", "vein", "steamL", "steamR",
+            "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR", "sparkle", "tearL", "tearR", "food0",
+            "food1", "food2", "armL", "propL", "gripL", "armR", "chin", "propR", "gripR", "flexL", "muscleL", "flexR",
+            "muscleR", "heart", "propFront", "propOver", "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
     #expect(try figure.part("acc").art.count == (outfit == Looks.bear ? 1 : 0))
@@ -76,7 +69,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 59)
+    #expect(figure.parts.count == 62)
 }
 
 @Test(arguments: Persona.allCases)
@@ -361,15 +354,12 @@ func outline(_ path: [PathElement]) -> [Point] {
     }
 }
 
-/// The street: WARM-UP open at the start, then the five stores that open with check-ins, and
-/// POWDER DAY, open only while the winter switch is on, each with a badge the app can draw.
+/// The street's art: WARM-UP, the five stores that open with check-ins, and POWDER DAY, each with
+/// a badge the app can draw. Which are open is the server's.
 @Test func everyStoreHasABadge() throws {
     let stores = try PlaceholderCharacter.editorChoices().stores
     #expect(stores.map(\.id) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce", "powder"])
-    #expect(stores.filter(\.isOpen).map(\.id) == ["warmup", "powder"])
-    #expect(stores.compactMap(\.switchId) == ["winter"])
-    let starters = try PlaceholderCharacter.editorChoices().starterWear.values.joined()
-    #expect(starters.count == 19 && starters.allSatisfy { $0.store == "warmup" })
+    #expect(stores.allSatisfy { !$0.isOpen })
     for store in stores {
         #expect(try !PlaceholderCharacter.storeBadge(store.id).shapes.isEmpty)
     }

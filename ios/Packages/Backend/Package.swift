@@ -24,7 +24,6 @@ import PackageDescription
 //   `AppGroup` and `SharedSquad`, what the app shares with that push's view.
 // - `APIFeedSource`, the adapter behind `FeedDomain`'s `FeedSource`: 动态's posts with their
 //   reactions, the squad's characters and the photos.
-// - `APIChatSource`, behind `ChatDomain`'s `ChatSource`: 群聊, with its live events.
 // - `APISquadSettingsService`, behind `SquadDomain`'s `SquadSettingsService`: 小队设置; and
 //   `APIScenePickService`, behind `ScenePickDomain`'s `ScenePickService`: the 战报's scene pick.
 // - `APIScheduleBackend`, the adapter behind `ScheduleDomain`'s `ScheduleBackend`: 出赛表's weekly
@@ -36,7 +35,6 @@ let package = Package(
     dependencies: [
         .package(path: "../Account"),
         .package(path: "../Avatar"),
-        .package(path: "../Chat"),
         .package(path: "../CheckIn"),
         .package(path: "../Contracts"),
         .package(path: "../DailyPush"),
@@ -59,7 +57,6 @@ let package = Package(
             dependencies: [
                 .product(name: "AccountDomain", package: "Account"),
                 .product(name: "AvatarArt", package: "Avatar"), .product(name: "AvatarDomain", package: "Avatar"),
-                .product(name: "ChatDomain", package: "Chat"),
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
                 .product(name: "APIContract", package: "Contracts"),
                 .product(name: "DailyPushDomain", package: "DailyPush"),
@@ -84,7 +81,6 @@ let package = Package(
                 "Backend", .product(name: "AccountDomain", package: "Account"),
                 .product(name: "APIContract", package: "Contracts"),
                 .product(name: "AvatarArt", package: "Avatar"), .product(name: "AvatarDomain", package: "Avatar"),
-                .product(name: "ChatDomain", package: "Chat"),
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
                 .product(name: "FeedDomain", package: "Feed"),
                 .product(name: "MeDomain", package: "Me"),

@@ -8,12 +8,12 @@ import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
 import type { MemberTables } from '@wildcard/members';
 import type { MemeTables } from '@wildcard/memes';
 import type { PushTables } from '@wildcard/push';
-import type { ChatTables } from '@wildcard/squad-chat';
 import type { SquadTables } from '@wildcard/squads';
 import type { SceneTables } from '@wildcard/scenes';
 import type { SportTables } from '@wildcard/sports';
 import type { SwitchTables } from '@wildcard/switches';
 import type { UnlockTables } from '@wildcard/unlocks';
+import type { ArtTables } from '@wildcard/art';
 import type { WeeklyAwardTables } from '@wildcard/weekly-awards';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
@@ -161,7 +161,6 @@ export type Tables = CheckInTables &
   MemberTables &
   MemeTables &
   PushTables &
-  ChatTables &
   SquadTables &
   AdminTables &
   AiConsentTables &
@@ -172,7 +171,8 @@ export type Tables = CheckInTables &
   SwitchTables &
   UnlockTables &
   CoachTables &
-  NoticeTables;
+  NoticeTables &
+  ArtTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;
@@ -219,20 +219,11 @@ export type RateLimit = (
 ) => { readonly allowed: true } | { readonly allowed: false; readonly retryAfterSeconds: number };
 
 /** Something that just happened for one member, as soon as it is committed. */
-export type LiveEvent =
+export interface LiveEvent {
   /** A notice was told to the member (通知): its id in the notices. */
-  | { readonly kind: 'notice'; readonly id: number }
-  /** A message in one of the member's squads' chats is new, or its reactions changed: its `seq`. */
-  | { readonly kind: 'chat'; readonly squad: string; readonly seq: number }
-  /** A message in one of the member's squads' chats was deleted: its id. */
-  | { readonly kind: 'chatDeleted'; readonly squad: string; readonly message: string }
-  /** The squad's coach started or stopped writing in its chat. */
-  | {
-      readonly kind: 'coachTyping';
-      readonly squad: string;
-      readonly coach: string;
-      readonly typing: boolean;
-    };
+  readonly kind: 'notice';
+  readonly id: number;
+}
 
 /** What hears a member's live events: each one, then the end of the feed. */
 export interface LiveListener {
@@ -257,15 +248,6 @@ export interface LiveEvents {
    * @throws {LiveEventsUnavailableError} When events can't be heard right now.
    */
   readonly subscribe: (member: UserId, listener: LiveListener) => Promise<() => void>;
-  /**
-   * Tells these members an event that no table keeps (the coach writing in a chat), on every
-   * instance. Never throws: an event that can't be told is missed, as one told while a member
-   * wasn't listening is.
-   */
-  readonly publish: (
-    members: readonly string[],
-    event: Extract<LiveEvent, { readonly kind: 'coachTyping' }>,
-  ) => Promise<void>;
   /** Ends every subscription (each listener's `end`) and stops hearing events, on shutdown. */
   readonly close: () => Promise<void>;
 }

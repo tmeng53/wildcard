@@ -1,10 +1,12 @@
 import { createHash } from 'node:crypto';
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { Art } from '@wildcard/art';
 import type { DiceLinesAdmin } from '@wildcard/disclaimer-drafts';
 import type { Scenes } from '@wildcard/scenes';
 import type { SportCatalog, Sports } from '@wildcard/sports';
 import type { Switches } from '@wildcard/switches';
+import type { UnlocksAdmin } from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
 import { problem } from '../problem.js';
@@ -121,6 +123,59 @@ export function disclaimerDiceSection(
   };
 }
 
+export const ArtCatalog = z
+  .looseObject({
+    generation: z
+      .int()
+      .min(0)
+      .meta({
+        description:
+          'The newest change’s number. The app uses a generation only once it has every file of ' +
+          'it, and keeps the one it has until then.',
+      }),
+    baseUrl: z.url().meta({
+      description: 'Where each file downloads from: this URL, then `<sha256>.<extension>`.',
+      example: 'https://example.supabase.co/storage/v1/object/public/art/',
+    }),
+    files: z
+      .array(
+        z.looseObject({
+          path: z.string().meta({
+            description:
+              'Where the file goes in the app’s art tree (`avatar/…` over the character’s ' +
+              'bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home ' +
+              'scene pictures, `openings/…` the opening animations), in place of the bundled ' +
+              'file there.',
+            example: 'avatar/art/top/warmup-tee/torso.svg',
+          }),
+          sha256: z
+            .string()
+            .meta({ description: 'The file’s SHA-256, lowercase hex; also its name.' }),
+          size: z.int().min(1).meta({ description: 'Its size in bytes.' }),
+          rigVersion: z.int().min(1).meta({
+            description:
+              'The lowest rig version that draws it: a build with an older rig leaves it out.',
+          }),
+        }),
+      )
+      .meta({
+        description: 'Every file put over the bundled art. Paths not listed use the bundled file.',
+      }),
+  })
+  .openapi('ArtCatalog');
+
+/** The `art` section: the art files apps download over the ones they bundle. */
+export function artSection(art: Art): CatalogSection<typeof ArtCatalog> {
+  return {
+    name: 'art',
+    schema: ArtCatalog,
+    load: async () => {
+      const { generation, baseUrl, files } = await art.manifest();
+      return { generation, baseUrl: baseUrl.href, files: files.map((file) => ({ ...file })) };
+    },
+  };
+}
+
 const Color = z.string().meta({ description: '`#RRGGBB`.', example: '#16384D' });
 
 export const ScenesCatalog = z
@@ -153,8 +208,8 @@ export const ScenesCatalog = z
             .optional()
             .meta({
               description:
-                'The switch a limited scene follows (the `switches` section): it is open, and its ' +
-                'store unlocks, only while that switch is on.',
+                'The switch a limited scene follows (the `switches` section): it is open only ' +
+                'while that switch is on.',
               example: 'winter',
             }),
         }),
@@ -210,7 +265,7 @@ export const SwitchesCatalog = z
             .openapi('SwitchWindow'),
         }),
       )
-      .meta({ description: 'Every global switch scenes, stores and unlock rules follow.' }),
+      .meta({ description: 'Every global switch scenes, stores and pieces follow.' }),
   })
   .openapi('SwitchesCatalog');
 
@@ -228,6 +283,108 @@ export function switchesSection(
         ...(window === undefined ? {} : { window: { ...window } }),
       })),
     }),
+  };
+}
+
+const switchRef = (what: string) =>
+  z
+    .string()
+    .optional()
+    .meta({
+      description: `The switch ${what} is out with (the \`switches\` section); none for always.`,
+      example: 'winter',
+    });
+
+export const StoresCatalog = z
+  .looseObject({
+    stores: z
+      .array(
+        z.looseObject({
+          id: z.string().meta({ example: 'powder' }),
+          switchId: switchRef('the store'),
+          free: z.boolean().meta({
+            description:
+              'Open to everyone with no 练了 (no unlock rule), such as WARM-UP; any other store ' +
+              'is earned.',
+          }),
+        }),
+      )
+      .meta({
+        description:
+          'Every store on the 商店街, in its order; retired ones are left out. A signed-in ' +
+          'member’s own street comes from `GET /me/unlocks`; the app has art only for some.',
+      }),
+  })
+  .openapi('StoresCatalog');
+
+/** The `stores` section: the 商店街's stores, the switch each one is open with and the free ones. */
+export function storesSection(
+  unlocks: Pick<UnlocksAdmin, 'stores' | 'rules'>,
+): CatalogSection<typeof StoresCatalog> {
+  return {
+    name: 'stores',
+    schema: StoresCatalog,
+    load: async () => {
+      const [stores, rules] = await Promise.all([unlocks.stores(), unlocks.rules()]);
+      const earned = new Set(rules.filter(({ kind }) => kind === 'store').map(({ id }) => id));
+      return {
+        stores: stores
+          .filter(({ offered }) => offered)
+          .map(({ id, switchId }) => ({
+            id,
+            ...(switchId === undefined ? {} : { switchId }),
+            free: !earned.has(id),
+          })),
+      };
+    },
+  };
+}
+
+export const PiecesCatalog = z
+  .looseObject({
+    pieces: z
+      .array(
+        z.looseObject({
+          id: z.string().meta({ example: 'powder-salmon' }),
+          storeId: z.string().meta({ example: 'powder' }),
+          slot: z
+            .string()
+            .meta({ description: 'Where it is worn: top, bottom, shoes, hat or acc.' }),
+          starter: z.boolean().meta({
+            description: 'Everyone has it while it is out; any other piece is earned by a rule.',
+          }),
+          switchId: switchRef('the piece, apart from its store,'),
+        }),
+      )
+      .meta({
+        description:
+          'Every clothing piece in a store; retired ones, and a retired store’s, are left out.',
+      }),
+  })
+  .openapi('PiecesCatalog');
+
+/** The `pieces` section: each piece's store, slot, whether it is a starter and its own switch. */
+export function piecesSection(
+  unlocks: Pick<UnlocksAdmin, 'stores' | 'pieces'>,
+): CatalogSection<typeof PiecesCatalog> {
+  return {
+    name: 'pieces',
+    schema: PiecesCatalog,
+    load: async () => {
+      const [stores, pieces] = await Promise.all([unlocks.stores(), unlocks.pieces()]);
+      const offered = new Set(stores.filter((store) => store.offered).map(({ id }) => id));
+      return {
+        pieces: pieces
+          .filter((piece) => piece.offered && offered.has(piece.storeId))
+          .map(({ id, storeId, slot, starter, switchId }) => ({
+            id,
+            storeId,
+            slot,
+            starter,
+            ...(switchId === undefined ? {} : { switchId }),
+          })),
+      };
+    },
   };
 }
 

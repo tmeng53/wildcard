@@ -124,7 +124,6 @@ export interface CoachUsage {
 }
 
 export interface CoachWakes {
-  chat_message_id: string | null;
   check_in_id: string | null;
   claimed_at: Timestamp | null;
   comment_id: string | null;

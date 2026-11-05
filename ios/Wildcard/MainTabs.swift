@@ -1,7 +1,4 @@
 import CharacterEditorUI
-import ChatDomain
-import ChatUI
-import CheckInDomain
 import CheckInUI
 import Contracts
 import DesignSystem
@@ -38,11 +35,7 @@ struct MainTabs: View {
     let myPosts: any MyPostsSource
     /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
     let squadmateCards: (any SquadmateCards)?
-    /// 群聊 for the member's squad: the API's, or the sample squad's made from its home.
-    let chatSource: (Home) -> any ChatSource
     @Binding var selection: Tab
-    /// A chat push was tapped: 今天 opens the chat once it can.
-    @Binding var opensChat: Bool
     /// The member left the squad on its page.
     var leftSquad: () -> Void = {}
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
@@ -57,7 +50,7 @@ struct MainTabs: View {
     /// 出赛表, open from 我 in its place.
     @State private var showsSchedule = LaunchOptions.opensSchedule
     /// 小队, open from the home's squad card in 今天's place.
-    @State var showsSquad = LaunchOptions.opensSquad
+    @State private var showsSquad = LaunchOptions.opensSquad
     /// 小队 opens on its coach's 简历, from a tap on the coach on the home.
     @State private var squadOpensCoach = false
     /// 小队's scene pick is playing its reveal, which fills the screen.
@@ -72,23 +65,16 @@ struct MainTabs: View {
     /// The card was opened from the home, so 今天 and 拍一拍 go over it; from 小队 the scene isn't
     /// in view to play a pat on.
     @State private var teammateOnHome = false
-    /// The count on the chat's button beside 打卡, for the squad on home.
-    @State var chatBadge: ChatBadge?
-    /// 群聊, open in 今天's place.
-    @State var chat: ChatModel?
 
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
         recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
-        squadmateCards: (any SquadmateCards)? = nil, chat: @escaping (Home) -> any ChatSource,
-        selection: Binding<Tab>, opensChat: Binding<Bool> = .constant(false), leftSquad: @escaping () -> Void = {}
+        squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>, leftSquad: @escaping () -> Void = {}
     ) {
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
         self.squadmateCards = squadmateCards
-        chatSource = chat
         _selection = selection
-        _opensChat = opensChat
         self.leftSquad = leftSquad
         _inbox = State(initialValue: NoticeInbox(source: notices))
         _wardrobe = State(initialValue: Wardrobe(profile: profile) { today.home?.member.description })
@@ -172,7 +158,7 @@ struct MainTabs: View {
     /// pick's reveal) hides the bar.
     private var showsTabBar: Bool {
         switch selection {
-        case .today: chat == nil && (showsSquad ? !squadRevealing : today.showsTabBar)
+        case .today: showsSquad ? !squadRevealing : today.showsTabBar
         case .profile: !profile.isDeletionOpen && post == nil
         case .feed: feed.opened == nil && !showsNotices && noticePost == nil
         }
@@ -296,8 +282,8 @@ struct MainTabs: View {
                     destinations: MeDestinations(
                         editCharacter: wardrobe.editCharacter,
                         schedule: { showsSchedule = true },
-                        street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                         myPosts: { wall = PostWallStore(source: myPosts) },
+                        street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                         privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
                 )
             }
@@ -310,6 +296,36 @@ struct MainTabs: View {
         .task(id: wardrobe.key) { wardrobe.refresh() }
         .accentTone(.brand)
     }
+
+    /// The tabs as home opens with them, around `content` on 今天, for 上场, whose end hands over
+    /// to home: the bar rises once `showsBar`.
+    static func entranceTabs(showsBar: Bool, content: AnyView) -> some View {
+        AppTabs(tabs, selection: .constant(Tab.today), showsBar: showsBar) { tab in
+            if tab == .today { content }
+        }
+    }
+
+    private static let tabs: [TabBarItem<Tab>] = [
+        TabBarItem(id: .today, title: Text("今天"), systemImage: "sun.max", accessibilityIdentifier: "tab.today"),
+        TabBarItem(
+            id: .feed, title: Text("动态"), systemImage: "bubble.left.and.bubble.right",
+            accessibilityIdentifier: "tab.feed"
+        ),
+        TabBarItem(
+            id: .profile, title: Text("我"), systemImage: "person.crop.circle", accessibilityIdentifier: "tab.me"),
+    ]
+}
+
+/// The squad's newest 战报, once there is one, opening it.
+private struct RecapTile: View {
+    let recap: RecapShelf
+
+    var body: some View {
+        if let story = recap.latest {
+            RecapEntryTile(
+                story: story, viewer: recap.cast?.reader, seen: recap.latestIsSeen, action: recap.openLatest)
+        }
+    }
 }
 
 extension MainTabs {
@@ -317,14 +333,7 @@ extension MainTabs {
     /// a tap on the coach on the sideline.
     private var todayPage: some View {
         ZStack {
-            if let chat {
-                ChatView(model: chat) {
-                    self.chat = nil
-                    Task { await chatBadge?.refresh() }
-                }
-                .environment(\.sceneTheme, today.scene)
-                .transition(.move(edge: .trailing))
-            } else if showsSquad {
+            if showsSquad {
                 SquadSettingsView(
                     model: squad, picked: land(on:coveredAt:),
                     close: {
@@ -350,8 +359,7 @@ extension MainTabs {
                     openPost: { post in
                         feed.open(post)
                         selection = .feed
-                    },
-                    besideCheckIn: chatBadge.map { badge in AnyView(ChatEntryButton(badge: badge, open: openChat)) }
+                    }
                 )
                 .onAppear {
                     today.openTeammate = {
@@ -366,9 +374,6 @@ extension MainTabs {
             }
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsSquad)
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: chat != nil)
-        .task(id: today.home?.squad.id) { makeChatBadge() }
-        .onChange(of: opensChat, initial: true) { makeChatBadge() }
     }
 
     /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.

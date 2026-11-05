@@ -70,9 +70,9 @@ func homePosesPlayOnEveryLook(persona: Persona) throws {
             figure, bound, for: woken.duration, "woken", sideways: PlaceholderCharacter.moveReachSideways,
             above: PlaceholderCharacter.moveReachAbove, below: 2)
         let end = figure.pose(bound, at: woken.duration)
-        // At rest, the hand prop still put away: the day pose that follows brings it back if it has one.
+        // At rest, the props still put away: the day pose that follows brings them back if it has them.
         var rest = figure.restPose
-        rest.parts[try figure.index("propR")].opacity = 0
+        for prop: PartID in ["propR", "propL", "propFeet"] { rest.parts[try figure.index(prop)].opacity = 0 }
         #expect(nearlyEqual(end, rest))
     }
 }

@@ -15,7 +15,6 @@ import type { Notices } from '@wildcard/notices';
 import type { Nudges } from '@wildcard/nudges';
 import type { Push } from '@wildcard/push';
 import type { Scenes } from '@wildcard/scenes';
-import type { SquadChat } from '@wildcard/squad-chat';
 import type { Squads } from '@wildcard/squads';
 import type { WeeklyAwards } from '@wildcard/weekly-awards';
 import type { CoachGifts, Unlocks } from '@wildcard/unlocks';
@@ -58,7 +57,6 @@ import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
 import { comments } from './routes/comments.js';
 import { reactions } from './routes/reactions.js';
-import { squadChat } from './routes/squad-chat.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadCoach } from './routes/squad-coach.js';
 import { coachActivity } from './routes/coach-activity.js';
@@ -93,8 +91,6 @@ export interface AppDependencies {
   readonly coachNames: CoachNames;
   /** Members' live events, which `GET /me/events` streams to their open app. */
   readonly liveEvents: LiveEvents;
-  /** Each squad's group chat (群聊). */
-  readonly chat: SquadChat;
   /** Members' consent to the AI copy, which squads and drafts ask for themselves. */
   readonly aiConsent: AiConsent;
   /** What `GET /public/catalog` serves: each section, as `main.ts` lists them. */
@@ -192,16 +188,6 @@ export function createApp(deps: AppDependencies) {
   app.route('/', squadScene({ ...deps, clock: deps.weeklyAwards.clock }));
   app.route('/', squadCoach(deps));
   app.route('/', coachActivity(deps));
-  app.route(
-    '/',
-    squadChat({
-      ...deps,
-      chatCoachAnswer:
-        coach === undefined
-          ? undefined
-          : ({ squad, message }) => coach.chat({ squad: CoachSquadId.parse(squad), message }),
-    }),
-  );
   app.route('/', nudges(deps));
   app.route('/', notices(deps));
   app.route('/', events(deps));

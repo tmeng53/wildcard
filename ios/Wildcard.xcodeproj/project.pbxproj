@@ -27,8 +27,6 @@
 		A1C0DE0000000000000000BA /* AvatarUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000B9 /* AvatarUI */; };
 		A1C0DE000000000000000062 /* OnboardingUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000061 /* OnboardingUI */; };
 		A1C0DE000000000000000082 /* FeedDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000081 /* FeedDomain */; };
-		A1C0DE000000000000000322 /* ChatDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000321 /* ChatDomain */; };
-		A1C0DE000000000000000324 /* ChatUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000323 /* ChatUI */; };
 		A1C0DE000000000000000084 /* FeedUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000083 /* FeedUI */; };
 		A1C0DE000000000000000077 /* AccountDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000073 /* AccountDomain */; };
 		A1C0DE000000000000000078 /* AccountUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000074 /* AccountUI */; };
@@ -175,8 +173,6 @@
 				A1C0DE0000000000000000BA /* AvatarUI in Frameworks */,
 				A1C0DE000000000000000062 /* OnboardingUI in Frameworks */,
 				A1C0DE000000000000000082 /* FeedDomain in Frameworks */,
-				A1C0DE000000000000000322 /* ChatDomain in Frameworks */,
-				A1C0DE000000000000000324 /* ChatUI in Frameworks */,
 				A1C0DE000000000000000084 /* FeedUI in Frameworks */,
 				A1C0DE000000000000000077 /* AccountDomain in Frameworks */,
 				A1C0DE000000000000000078 /* AccountUI in Frameworks */,
@@ -292,8 +288,6 @@
 				A1C0DE0000000000000000B9 /* AvatarUI */,
 				A1C0DE000000000000000061 /* OnboardingUI */,
 				A1C0DE000000000000000081 /* FeedDomain */,
-				A1C0DE000000000000000321 /* ChatDomain */,
-				A1C0DE000000000000000323 /* ChatUI */,
 				A1C0DE000000000000000083 /* FeedUI */,
 				A1C0DE000000000000000073 /* AccountDomain */,
 				A1C0DE000000000000000074 /* AccountUI */,
@@ -435,7 +429,6 @@
 				A1C0DE0000000000000000BB /* XCLocalSwiftPackageReference "Packages/Avatar" */,
 				A1C0DE000000000000000060 /* XCLocalSwiftPackageReference "Packages/Onboarding" */,
 				A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */,
-				A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Chat" */,
 				A1C0DE000000000000000209 /* XCLocalSwiftPackageReference "Packages/DailyPush" */,
 				A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */,
 				A1C0DE000000000000000071 /* XCLocalSwiftPackageReference "Packages/Backend" */,
@@ -879,10 +872,6 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Feed;
 		};
-		A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Chat" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Packages/Chat;
-		};
 		A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Account;
@@ -921,16 +910,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A1C0DE000000000000000321 /* ChatDomain */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Chat" */;
-			productName = ChatDomain;
-		};
-		A1C0DE000000000000000323 /* ChatUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Chat" */;
-			productName = ChatUI;
-		};
 		A1C0DE000000000000000081 /* FeedDomain */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000080 /* XCLocalSwiftPackageReference "Packages/Feed" */;

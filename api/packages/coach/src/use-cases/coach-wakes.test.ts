@@ -28,7 +28,6 @@ import { weekText, type SquadWeek } from '../domain/squad-week.js';
 import type {
   AgentRun,
   CoachAgent,
-  CoachChat,
   CoachMemberFacts,
   CoachPhotoUrls,
   CoachTool,
@@ -159,10 +158,8 @@ function wakes(
     answered,
     photoUrls,
     memberFacts,
-    chat,
   }: {
     readonly agent: CoachAgent;
-    readonly chat?: CoachChat;
     readonly at?: Date;
     readonly weeks?: Readonly<Record<string, SquadWeek>>;
     readonly consented?: readonly string[];
@@ -196,7 +193,6 @@ function wakes(
     ...(answered === undefined ? {} : { answered }),
     ...(photoUrls === undefined ? {} : { photoUrls }),
     ...(memberFacts === undefined ? {} : { memberFacts }),
-    ...(chat === undefined ? {} : { chat }),
   });
 }
 
@@ -322,7 +318,7 @@ describe('the coach', () => {
       expect(runs[1]?.instructions).toContain('你是小混');
       expect(runs[1]?.instructions).toContain('不提谁没打卡');
       // How each wake goes is in the instructions, the same every time, so it can be cached.
-      expect(runs[1]?.instructions).toContain('你会在四种时候醒来');
+      expect(runs[1]?.instructions).toContain('你会在三种时候醒来');
       // The 简历 is for the app only: the model never reads the coach's missing license.
       expect(runs[1]?.instructions).not.toContain('证还没考下来');
       expect(runs[0]?.instructions).toBe(runs[1]?.instructions);
@@ -1059,102 +1055,6 @@ describe('the coach', () => {
       expect((await stores.memory.files(squad)).get('memory.md')).toBe('a');
       await sql`delete from public.squads where id = ${squad}`.execute(trx);
       expect((await stores.memory.files(squad)).size).toBe(0);
-    });
-  });
-});
-
-/** The squad's chat as a fake of the chat module: these lines, and what the coach did there. */
-function chatOf(lines: readonly { id: string; member: string | undefined; text: string }[]) {
-  const did: string[] = [];
-  const chat: CoachChat = {
-    thread: ({ message }) =>
-      Promise.resolve(lines.some(({ id }) => id === message) ? lines : undefined),
-    answer: ({ message, text }) => {
-      did.push(`answer ${message}: ${text}`);
-      return Promise.resolve();
-    },
-    note: ({ day, text }) => {
-      did.push(`note ${day}: ${text}`);
-      return Promise.resolve();
-    },
-    typing: ({ typing }) => {
-      did.push(typing ? 'typing' : 'stopped');
-      return Promise.resolve();
-    },
-  };
-  return { chat, did };
-}
-
-/** A member's message in the squad's chat, as the chat module saves it. */
-async function chatMessage(
-  trx: Kysely<CoachTables>,
-  {
-    squad,
-    member,
-    text,
-  }: { readonly squad: string; readonly member: string; readonly text: string },
-) {
-  const id = randomUUID();
-  await sql`insert into public.squad_messages (id, squad_id, member_id, kind, text, mentions_coach)
-    values (${id}, ${squad}, ${member}, 'text', ${text}, true)`.execute(trx);
-  return id;
-}
-
-describe('the coach in the squad chat', () => {
-  it('answers a message that @s it, typing while it works, with the chat before it', async () => {
-    await rolledBack(async (fixture) => {
-      const { trx, squad, mia, leo } = fixture;
-      const asked = await chatMessage(trx, { squad, member: mia, text: '@小混 明天练什么' });
-      const { chat, did } = chatOf([
-        { id: randomUUID(), member: leo, text: '我先练腿' },
-        { id: randomUUID(), member: undefined, text: '好' },
-        { id: asked, member: mia, text: '@小混 明天练什么' },
-      ]);
-      const { agent, runs } = scriptedAgent(() => [
-        { tool: 'answer', input: { text: '明天上肢，跟着 Leo 练' } },
-      ]);
-      await wakes(fixture, { agent, chat }).chat({ squad, message: asked });
-      expect(did).toStrictEqual(['typing', 'stopped', `answer ${asked}: 明天上肢，跟着 Leo 练`]);
-      expect(runs[0]?.task).toContain('有人在群聊里找你');
-      expect(runs[0]?.task).toContain('- 队员1：「@小混 明天练什么」（要回的这句）');
-      expect(runs[0]?.task).toContain('- 你：「好」');
-      expect(runs[0]?.tools).toContain('answer');
-      // Answered once: a second call finds its wake done.
-      await wakes(fixture, { agent, chat }).chat({ squad, message: asked });
-      expect(runs).toHaveLength(1);
-    });
-  });
-
-  it('reads none of a member’s words without their AI consent, and doesn’t answer them', async () => {
-    await rolledBack(async (fixture) => {
-      const { trx, squad, mia, leo } = fixture;
-      const asked = await chatMessage(trx, { squad, member: leo, text: '@小混 在吗' });
-      const { chat, did } = chatOf([
-        { id: randomUUID(), member: mia, text: '米亚的话' },
-        { id: asked, member: leo, text: '@小混 在吗' },
-      ]);
-      const { agent, runs } = scriptedAgent(() => [{ tool: 'answer', input: { text: '在' } }]);
-      await wakes(fixture, { agent, chat, consented: [leo] }).chat({ squad, message: asked });
-      expect(runs[0]?.task).not.toContain('米亚的话');
-      const { agent: other, runs: none } = scriptedAgent(() => []);
-      const second = await chatMessage(trx, { squad, member: leo, text: '@小混 还在吗' });
-      await wakes(fixture, { agent: other, chat, consented: [mia] }).chat({
-        squad,
-        message: second,
-      });
-      expect(none).toStrictEqual([]);
-      expect(did.filter((each) => each.startsWith('answer'))).toHaveLength(1);
-    });
-  });
-
-  it('posts the day’s 战术板 line in the chat too', async () => {
-    await rolledBack(async (fixture) => {
-      const { chat, did } = chatOf([]);
-      const { agent } = scriptedAgent((task) =>
-        task.startsWith('新的一天') ? [{ tool: 'post_note', input: { text: '今天全队拉伸' } }] : [],
-      );
-      await wakes(fixture, { agent, chat }).run();
-      expect(did).toStrictEqual(['note 2026-11-01: 今天全队拉伸']);
     });
   });
 });

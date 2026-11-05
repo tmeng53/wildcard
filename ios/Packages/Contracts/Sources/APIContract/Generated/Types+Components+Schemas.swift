@@ -227,268 +227,6 @@ extension Components {
                 case item
             }
         }
-        /// The `chat` event’s data: a message new to the chat, or whose reactions changed, as `GET /squads/{squadId}/chat/messages` lists it, with `quoted`, the message it replies to when it does and the caller can see it.
-        ///
-        /// - Remark: Generated from `#/components/schemas/LiveChat`.
-        public struct LiveChat: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/LiveChat/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/LiveChat/version`.
-            public var version: Components.Schemas.LiveChat.VersionPayload
-            /// - Remark: Generated from `#/components/schemas/LiveChat/squadId`.
-            public var squadId: Swift.String
-            /// - Remark: Generated from `#/components/schemas/LiveChat/message`.
-            public var message: Components.Schemas.ChatMessage
-            /// - Remark: Generated from `#/components/schemas/LiveChat/quoted`.
-            public var quoted: Components.Schemas.ChatMessage?
-            /// Creates a new `LiveChat`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - squadId:
-            ///   - message:
-            ///   - quoted:
-            public init(
-                version: Components.Schemas.LiveChat.VersionPayload,
-                squadId: Swift.String,
-                message: Components.Schemas.ChatMessage,
-                quoted: Components.Schemas.ChatMessage? = nil
-            ) {
-                self.version = version
-                self.squadId = squadId
-                self.message = message
-                self.quoted = quoted
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case squadId
-                case message
-                case quoted
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ChatMessage`.
-        public struct ChatMessage: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/version`.
-            public var version: Components.Schemas.ChatMessage.VersionPayload
-            /// The message’s id: the app picks a member’s.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/id`.
-            public var id: Swift.String
-            /// Its place in the squad’s chat, oldest first: what pages, `PUT …/chat/read` and the live `chat` event go by.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/seq`.
-            public var seq: Swift.Int
-            /// Who wrote it, for a member’s message.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/member`.
-            public var member: Swift.String?
-            /// The coach who wrote it, by id, for the coach’s (with the 教练 tag).
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/coachId`.
-            public var coachId: Swift.String?
-            /// `text` is written; `note` is the coach’s 战术板 line of the day, shown as its card. Skip a kind you don’t know.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/kind`.
-            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case text = "text"
-                case note = "note"
-            }
-            /// `text` is written; `note` is the coach’s 战术板 line of the day, shown as its card. Skip a kind you don’t know.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/kind`.
-            public var kind: Components.Schemas.ChatMessage.KindPayload
-            /// What it says.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/text`.
-            public var text: Swift.String
-            /// The message it replies to, while that one is there.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/replyTo`.
-            public var replyTo: Swift.String?
-            /// The squadmates it @s.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/mentions`.
-            public var mentions: [Swift.String]
-            /// Whether it @s the coach.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/mentionsCoach`.
-            public var mentionsCoach: Swift.Bool
-            /// When it was sent, in UTC with milliseconds.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/at`.
-            public var at: Foundation.Date
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/ReactionsPayload`.
-            public struct ReactionsPayloadPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/ChatMessage/ReactionsPayload/member`.
-                public var member: Swift.String
-                /// - Remark: Generated from `#/components/schemas/ChatMessage/ReactionsPayload/emoji`.
-                public var emoji: Swift.String
-                /// Creates a new `ReactionsPayloadPayload`.
-                ///
-                /// - Parameters:
-                ///   - member:
-                ///   - emoji:
-                public init(
-                    member: Swift.String,
-                    emoji: Swift.String
-                ) {
-                    self.member = member
-                    self.emoji = emoji
-                }
-                public enum CodingKeys: String, CodingKey {
-                    case member
-                    case emoji
-                }
-            }
-            /// Members’ reactions, one each, the earliest first.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/reactions`.
-            public typealias ReactionsPayload = [Components.Schemas.ChatMessage.ReactionsPayloadPayload]
-            /// Members’ reactions, one each, the earliest first.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessage/reactions`.
-            public var reactions: Components.Schemas.ChatMessage.ReactionsPayload
-            /// Creates a new `ChatMessage`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - id: The message’s id: the app picks a member’s.
-            ///   - seq: Its place in the squad’s chat, oldest first: what pages, `PUT …/chat/read` and the live `chat` event go by.
-            ///   - member: Who wrote it, for a member’s message.
-            ///   - coachId: The coach who wrote it, by id, for the coach’s (with the 教练 tag).
-            ///   - kind: `text` is written; `note` is the coach’s 战术板 line of the day, shown as its card. Skip a kind you don’t know.
-            ///   - text: What it says.
-            ///   - replyTo: The message it replies to, while that one is there.
-            ///   - mentions: The squadmates it @s.
-            ///   - mentionsCoach: Whether it @s the coach.
-            ///   - at: When it was sent, in UTC with milliseconds.
-            ///   - reactions: Members’ reactions, one each, the earliest first.
-            public init(
-                version: Components.Schemas.ChatMessage.VersionPayload,
-                id: Swift.String,
-                seq: Swift.Int,
-                member: Swift.String? = nil,
-                coachId: Swift.String? = nil,
-                kind: Components.Schemas.ChatMessage.KindPayload,
-                text: Swift.String,
-                replyTo: Swift.String? = nil,
-                mentions: [Swift.String],
-                mentionsCoach: Swift.Bool,
-                at: Foundation.Date,
-                reactions: Components.Schemas.ChatMessage.ReactionsPayload
-            ) {
-                self.version = version
-                self.id = id
-                self.seq = seq
-                self.member = member
-                self.coachId = coachId
-                self.kind = kind
-                self.text = text
-                self.replyTo = replyTo
-                self.mentions = mentions
-                self.mentionsCoach = mentionsCoach
-                self.at = at
-                self.reactions = reactions
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case id
-                case seq
-                case member
-                case coachId
-                case kind
-                case text
-                case replyTo
-                case mentions
-                case mentionsCoach
-                case at
-                case reactions
-            }
-        }
-        /// The `chatDeleted` event’s data.
-        ///
-        /// - Remark: Generated from `#/components/schemas/LiveChatDeleted`.
-        public struct LiveChatDeleted: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/LiveChatDeleted/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/LiveChatDeleted/version`.
-            public var version: Components.Schemas.LiveChatDeleted.VersionPayload
-            /// - Remark: Generated from `#/components/schemas/LiveChatDeleted/squadId`.
-            public var squadId: Swift.String
-            /// - Remark: Generated from `#/components/schemas/LiveChatDeleted/messageId`.
-            public var messageId: Swift.String
-            /// Creates a new `LiveChatDeleted`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - squadId:
-            ///   - messageId:
-            public init(
-                version: Components.Schemas.LiveChatDeleted.VersionPayload,
-                squadId: Swift.String,
-                messageId: Swift.String
-            ) {
-                self.version = version
-                self.squadId = squadId
-                self.messageId = messageId
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case squadId
-                case messageId
-            }
-        }
-        /// The `coachTyping` event’s data: show the coach’s three dots while it is true.
-        ///
-        /// - Remark: Generated from `#/components/schemas/LiveCoachTyping`.
-        public struct LiveCoachTyping: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/LiveCoachTyping/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/LiveCoachTyping/version`.
-            public var version: Components.Schemas.LiveCoachTyping.VersionPayload
-            /// - Remark: Generated from `#/components/schemas/LiveCoachTyping/squadId`.
-            public var squadId: Swift.String
-            /// - Remark: Generated from `#/components/schemas/LiveCoachTyping/coachId`.
-            public var coachId: Swift.String
-            /// Whether the coach is writing now. A `chat` event with its message ends it too, and so does a reconnect.
-            ///
-            /// - Remark: Generated from `#/components/schemas/LiveCoachTyping/typing`.
-            public var typing: Swift.Bool
-            /// Creates a new `LiveCoachTyping`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - squadId:
-            ///   - coachId:
-            ///   - typing: Whether the coach is writing now. A `chat` event with its message ends it too, and so does a reconnect.
-            public init(
-                version: Components.Schemas.LiveCoachTyping.VersionPayload,
-                squadId: Swift.String,
-                coachId: Swift.String,
-                typing: Swift.Bool
-            ) {
-                self.version = version
-                self.squadId = squadId
-                self.coachId = coachId
-                self.typing = typing
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case squadId
-                case coachId
-                case typing
-            }
-        }
         /// - Remark: Generated from `#/components/schemas/Health`.
         public struct Health: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Health/version`.
@@ -607,6 +345,12 @@ extension Components {
             public var scenes: Components.Schemas.ScenesCatalog?
             /// - Remark: Generated from `#/components/schemas/Catalog/switches`.
             public var switches: Components.Schemas.SwitchesCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/stores`.
+            public var stores: Components.Schemas.StoresCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/pieces`.
+            public var pieces: Components.Schemas.PiecesCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/art`.
+            public var art: Components.Schemas.ArtCatalog?
             /// A container of undocumented properties.
             public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
             /// Creates a new `Catalog`.
@@ -617,6 +361,9 @@ extension Components {
             ///   - disclaimerDice:
             ///   - scenes:
             ///   - switches:
+            ///   - stores:
+            ///   - pieces:
+            ///   - art:
             ///   - additionalProperties: A container of undocumented properties.
             public init(
                 version: Components.Schemas.Catalog.VersionPayload,
@@ -624,6 +371,9 @@ extension Components {
                 disclaimerDice: Components.Schemas.DisclaimerDiceCatalog? = nil,
                 scenes: Components.Schemas.ScenesCatalog? = nil,
                 switches: Components.Schemas.SwitchesCatalog? = nil,
+                stores: Components.Schemas.StoresCatalog? = nil,
+                pieces: Components.Schemas.PiecesCatalog? = nil,
+                art: Components.Schemas.ArtCatalog? = nil,
                 additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
             ) {
                 self.version = version
@@ -631,6 +381,9 @@ extension Components {
                 self.disclaimerDice = disclaimerDice
                 self.scenes = scenes
                 self.switches = switches
+                self.stores = stores
+                self.pieces = pieces
+                self.art = art
                 self.additionalProperties = additionalProperties
             }
             public enum CodingKeys: String, CodingKey {
@@ -639,6 +392,9 @@ extension Components {
                 case disclaimerDice
                 case scenes
                 case switches
+                case stores
+                case pieces
+                case art
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -662,12 +418,27 @@ extension Components {
                     Components.Schemas.SwitchesCatalog.self,
                     forKey: .switches
                 )
+                self.stores = try container.decodeIfPresent(
+                    Components.Schemas.StoresCatalog.self,
+                    forKey: .stores
+                )
+                self.pieces = try container.decodeIfPresent(
+                    Components.Schemas.PiecesCatalog.self,
+                    forKey: .pieces
+                )
+                self.art = try container.decodeIfPresent(
+                    Components.Schemas.ArtCatalog.self,
+                    forKey: .art
+                )
                 additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                     "version",
                     "sports",
                     "disclaimerDice",
                     "scenes",
-                    "switches"
+                    "switches",
+                    "stores",
+                    "pieces",
+                    "art"
                 ])
             }
             public func encode(to encoder: any Swift.Encoder) throws {
@@ -691,6 +462,18 @@ extension Components {
                 try container.encodeIfPresent(
                     self.switches,
                     forKey: .switches
+                )
+                try container.encodeIfPresent(
+                    self.stores,
+                    forKey: .stores
+                )
+                try container.encodeIfPresent(
+                    self.pieces,
+                    forKey: .pieces
+                )
+                try container.encodeIfPresent(
+                    self.art,
+                    forKey: .art
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
@@ -1131,7 +914,7 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/limited`.
                 public var limited: Swift.Bool
-                /// The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.
+                /// The switch a limited scene follows (the `switches` section): it is open only while that switch is on.
                 ///
                 /// - Remark: Generated from `#/components/schemas/ScenesCatalog/ScenesPayload/switchId`.
                 public var switchId: Swift.String?
@@ -1144,7 +927,7 @@ extension Components {
                 ///   - names:
                 ///   - colors:
                 ///   - limited: True for a scene open only part of the year (冬季限定). The picker offers it while `GET /squads/{squadId}/scene` lists it.
-                ///   - switchId: The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.
+                ///   - switchId: The switch a limited scene follows (the `switches` section): it is open only while that switch is on.
                 ///   - additionalProperties: A container of undocumented properties.
                 public init(
                     id: Swift.String,
@@ -1451,11 +1234,11 @@ extension Components {
                     try encoder.encodeAdditionalProperties(additionalProperties)
                 }
             }
-            /// Every global switch scenes, stores and unlock rules follow.
+            /// Every global switch scenes, stores and pieces follow.
             ///
             /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/switches`.
             public typealias SwitchesPayload = [Components.Schemas.SwitchesCatalog.SwitchesPayloadPayload]
-            /// Every global switch scenes, stores and unlock rules follow.
+            /// Every global switch scenes, stores and pieces follow.
             ///
             /// - Remark: Generated from `#/components/schemas/SwitchesCatalog/switches`.
             public var switches: Components.Schemas.SwitchesCatalog.SwitchesPayload
@@ -1464,7 +1247,7 @@ extension Components {
             /// Creates a new `SwitchesCatalog`.
             ///
             /// - Parameters:
-            ///   - switches: Every global switch scenes, stores and unlock rules follow.
+            ///   - switches: Every global switch scenes, stores and pieces follow.
             ///   - additionalProperties: A container of undocumented properties.
             public init(
                 switches: Components.Schemas.SwitchesCatalog.SwitchesPayload,
@@ -1552,6 +1335,451 @@ extension Components {
                 try container.encode(
                     self.end,
                     forKey: .end
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StoresCatalog`.
+        public struct StoresCatalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoresCatalog/StoresPayload`.
+            public struct StoresPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/StoresCatalog/StoresPayload/id`.
+                public var id: Swift.String
+                /// The switch the store is out with (the `switches` section); none for always.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoresCatalog/StoresPayload/switchId`.
+                public var switchId: Swift.String?
+                /// Open to everyone with no 练了 (no unlock rule), such as WARM-UP; any other store is earned.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoresCatalog/StoresPayload/free`.
+                public var free: Swift.Bool
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `StoresPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                ///   - switchId: The switch the store is out with (the `switches` section); none for always.
+                ///   - free: Open to everyone with no 练了 (no unlock rule), such as WARM-UP; any other store is earned.
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    id: Swift.String,
+                    switchId: Swift.String? = nil,
+                    free: Swift.Bool,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.id = id
+                    self.switchId = switchId
+                    self.free = free
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case switchId
+                    case free
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.id = try container.decode(
+                        Swift.String.self,
+                        forKey: .id
+                    )
+                    self.switchId = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .switchId
+                    )
+                    self.free = try container.decode(
+                        Swift.Bool.self,
+                        forKey: .free
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "id",
+                        "switchId",
+                        "free"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.id,
+                        forKey: .id
+                    )
+                    try container.encodeIfPresent(
+                        self.switchId,
+                        forKey: .switchId
+                    )
+                    try container.encode(
+                        self.free,
+                        forKey: .free
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Every store on the 商店街, in its order; retired ones are left out. A signed-in member’s own street comes from `GET /me/unlocks`; the app has art only for some.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoresCatalog/stores`.
+            public typealias StoresPayload = [Components.Schemas.StoresCatalog.StoresPayloadPayload]
+            /// Every store on the 商店街, in its order; retired ones are left out. A signed-in member’s own street comes from `GET /me/unlocks`; the app has art only for some.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoresCatalog/stores`.
+            public var stores: Components.Schemas.StoresCatalog.StoresPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `StoresCatalog`.
+            ///
+            /// - Parameters:
+            ///   - stores: Every store on the 商店街, in its order; retired ones are left out. A signed-in member’s own street comes from `GET /me/unlocks`; the app has art only for some.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                stores: Components.Schemas.StoresCatalog.StoresPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.stores = stores
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case stores
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.stores = try container.decode(
+                    Components.Schemas.StoresCatalog.StoresPayload.self,
+                    forKey: .stores
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "stores"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.stores,
+                    forKey: .stores
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PiecesCatalog`.
+        public struct PiecesCatalog: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload`.
+            public struct PiecesPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload/id`.
+                public var id: Swift.String
+                /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload/storeId`.
+                public var storeId: Swift.String
+                /// Where it is worn: top, bottom, shoes, hat or acc.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload/slot`.
+                public var slot: Swift.String
+                /// Everyone has it while it is out; any other piece is earned by a rule.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload/starter`.
+                public var starter: Swift.Bool
+                /// The switch the piece, apart from its store, is out with (the `switches` section); none for always.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PiecesCatalog/PiecesPayload/switchId`.
+                public var switchId: Swift.String?
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `PiecesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                ///   - storeId:
+                ///   - slot: Where it is worn: top, bottom, shoes, hat or acc.
+                ///   - starter: Everyone has it while it is out; any other piece is earned by a rule.
+                ///   - switchId: The switch the piece, apart from its store, is out with (the `switches` section); none for always.
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    id: Swift.String,
+                    storeId: Swift.String,
+                    slot: Swift.String,
+                    starter: Swift.Bool,
+                    switchId: Swift.String? = nil,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.id = id
+                    self.storeId = storeId
+                    self.slot = slot
+                    self.starter = starter
+                    self.switchId = switchId
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case id
+                    case storeId
+                    case slot
+                    case starter
+                    case switchId
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.id = try container.decode(
+                        Swift.String.self,
+                        forKey: .id
+                    )
+                    self.storeId = try container.decode(
+                        Swift.String.self,
+                        forKey: .storeId
+                    )
+                    self.slot = try container.decode(
+                        Swift.String.self,
+                        forKey: .slot
+                    )
+                    self.starter = try container.decode(
+                        Swift.Bool.self,
+                        forKey: .starter
+                    )
+                    self.switchId = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .switchId
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "id",
+                        "storeId",
+                        "slot",
+                        "starter",
+                        "switchId"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.id,
+                        forKey: .id
+                    )
+                    try container.encode(
+                        self.storeId,
+                        forKey: .storeId
+                    )
+                    try container.encode(
+                        self.slot,
+                        forKey: .slot
+                    )
+                    try container.encode(
+                        self.starter,
+                        forKey: .starter
+                    )
+                    try container.encodeIfPresent(
+                        self.switchId,
+                        forKey: .switchId
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Every clothing piece in a store; retired ones, and a retired store’s, are left out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PiecesCatalog/pieces`.
+            public typealias PiecesPayload = [Components.Schemas.PiecesCatalog.PiecesPayloadPayload]
+            /// Every clothing piece in a store; retired ones, and a retired store’s, are left out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PiecesCatalog/pieces`.
+            public var pieces: Components.Schemas.PiecesCatalog.PiecesPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `PiecesCatalog`.
+            ///
+            /// - Parameters:
+            ///   - pieces: Every clothing piece in a store; retired ones, and a retired store’s, are left out.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                pieces: Components.Schemas.PiecesCatalog.PiecesPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.pieces = pieces
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case pieces
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.pieces = try container.decode(
+                    Components.Schemas.PiecesCatalog.PiecesPayload.self,
+                    forKey: .pieces
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "pieces"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.pieces,
+                    forKey: .pieces
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ArtCatalog`.
+        public struct ArtCatalog: Codable, Hashable, Sendable {
+            /// The newest change’s number. The app uses a generation only once it has every file of it, and keeps the one it has until then.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ArtCatalog/generation`.
+            public var generation: Swift.Int
+            /// Where each file downloads from: this URL, then `<sha256>.<extension>`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ArtCatalog/baseUrl`.
+            public var baseUrl: Swift.String
+            /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload`.
+            public struct FilesPayloadPayload: Codable, Hashable, Sendable {
+                /// Where the file goes in the app’s art tree (`avatar/…` over the character’s bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home scene pictures, `openings/…` the opening animations), in place of the bundled file there.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload/path`.
+                public var path: Swift.String
+                /// The file’s SHA-256, lowercase hex; also its name.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload/sha256`.
+                public var sha256: Swift.String
+                /// Its size in bytes.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload/size`.
+                public var size: Swift.Int
+                /// The lowest rig version that draws it: a build with an older rig leaves it out.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload/rigVersion`.
+                public var rigVersion: Swift.Int
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `FilesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - path: Where the file goes in the app’s art tree (`avatar/…` over the character’s bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home scene pictures, `openings/…` the opening animations), in place of the bundled file there.
+                ///   - sha256: The file’s SHA-256, lowercase hex; also its name.
+                ///   - size: Its size in bytes.
+                ///   - rigVersion: The lowest rig version that draws it: a build with an older rig leaves it out.
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    path: Swift.String,
+                    sha256: Swift.String,
+                    size: Swift.Int,
+                    rigVersion: Swift.Int,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.path = path
+                    self.sha256 = sha256
+                    self.size = size
+                    self.rigVersion = rigVersion
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case path
+                    case sha256
+                    case size
+                    case rigVersion
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.path = try container.decode(
+                        Swift.String.self,
+                        forKey: .path
+                    )
+                    self.sha256 = try container.decode(
+                        Swift.String.self,
+                        forKey: .sha256
+                    )
+                    self.size = try container.decode(
+                        Swift.Int.self,
+                        forKey: .size
+                    )
+                    self.rigVersion = try container.decode(
+                        Swift.Int.self,
+                        forKey: .rigVersion
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "path",
+                        "sha256",
+                        "size",
+                        "rigVersion"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.path,
+                        forKey: .path
+                    )
+                    try container.encode(
+                        self.sha256,
+                        forKey: .sha256
+                    )
+                    try container.encode(
+                        self.size,
+                        forKey: .size
+                    )
+                    try container.encode(
+                        self.rigVersion,
+                        forKey: .rigVersion
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Every file put over the bundled art. Paths not listed use the bundled file.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ArtCatalog/files`.
+            public typealias FilesPayload = [Components.Schemas.ArtCatalog.FilesPayloadPayload]
+            /// Every file put over the bundled art. Paths not listed use the bundled file.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ArtCatalog/files`.
+            public var files: Components.Schemas.ArtCatalog.FilesPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `ArtCatalog`.
+            ///
+            /// - Parameters:
+            ///   - generation: The newest change’s number. The app uses a generation only once it has every file of it, and keeps the one it has until then.
+            ///   - baseUrl: Where each file downloads from: this URL, then `<sha256>.<extension>`.
+            ///   - files: Every file put over the bundled art. Paths not listed use the bundled file.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                generation: Swift.Int,
+                baseUrl: Swift.String,
+                files: Components.Schemas.ArtCatalog.FilesPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.generation = generation
+                self.baseUrl = baseUrl
+                self.files = files
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case generation
+                case baseUrl
+                case files
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.generation = try container.decode(
+                    Swift.Int.self,
+                    forKey: .generation
+                )
+                self.baseUrl = try container.decode(
+                    Swift.String.self,
+                    forKey: .baseUrl
+                )
+                self.files = try container.decode(
+                    Components.Schemas.ArtCatalog.FilesPayload.self,
+                    forKey: .files
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "generation",
+                    "baseUrl",
+                    "files"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.generation,
+                    forKey: .generation
+                )
+                try container.encode(
+                    self.baseUrl,
+                    forKey: .baseUrl
+                )
+                try container.encode(
+                    self.files,
+                    forKey: .files
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
@@ -5325,260 +5553,6 @@ extension Components {
                 case at
             }
         }
-        /// - Remark: Generated from `#/components/schemas/ChatPage`.
-        public struct ChatPage: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/ChatPage/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/ChatPage/version`.
-            public var version: Components.Schemas.ChatPage.VersionPayload
-            /// Newest first.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatPage/messages`.
-            public var messages: [Components.Schemas.ChatMessage]
-            /// The messages those reply to that aren’t among them, so each reply can show what it replies to.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatPage/quoted`.
-            public var quoted: [Components.Schemas.ChatMessage]
-            /// Whether older messages come before these.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatPage/more`.
-            public var more: Swift.Bool
-            /// How far the caller read (a `seq`), 0 before they read any.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatPage/readThrough`.
-            public var readThrough: Swift.Int
-            /// The caller’s alerts in this squad.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatPage/alerts`.
-            @frozen public enum AlertsPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case mentions = "mentions"
-                case all = "all"
-                case none = "none"
-            }
-            /// The caller’s alerts in this squad.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatPage/alerts`.
-            public var alerts: Components.Schemas.ChatPage.AlertsPayload
-            /// Creates a new `ChatPage`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - messages: Newest first.
-            ///   - quoted: The messages those reply to that aren’t among them, so each reply can show what it replies to.
-            ///   - more: Whether older messages come before these.
-            ///   - readThrough: How far the caller read (a `seq`), 0 before they read any.
-            ///   - alerts: The caller’s alerts in this squad.
-            public init(
-                version: Components.Schemas.ChatPage.VersionPayload,
-                messages: [Components.Schemas.ChatMessage],
-                quoted: [Components.Schemas.ChatMessage],
-                more: Swift.Bool,
-                readThrough: Swift.Int,
-                alerts: Components.Schemas.ChatPage.AlertsPayload
-            ) {
-                self.version = version
-                self.messages = messages
-                self.quoted = quoted
-                self.more = more
-                self.readThrough = readThrough
-                self.alerts = alerts
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case messages
-                case quoted
-                case more
-                case readThrough
-                case alerts
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ChatMessageDraft`.
-        public struct ChatMessageDraft: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/version`.
-            public var version: Components.Schemas.ChatMessageDraft.VersionPayload
-            /// Trimmed, then 1 to 500 characters as people see them; may span lines.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/text`.
-            public var text: Swift.String
-            /// The message it replies to: one the caller can see in this chat.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/replyTo`.
-            public var replyTo: Swift.String?
-            /// The squadmates it @s; anyone not in the squad is left out.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/mentions`.
-            public var mentions: [Swift.String]?
-            /// Whether it @s the coach, who then answers (as it does a reply to it).
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatMessageDraft/mentionsCoach`.
-            public var mentionsCoach: Swift.Bool?
-            /// Creates a new `ChatMessageDraft`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - text: Trimmed, then 1 to 500 characters as people see them; may span lines.
-            ///   - replyTo: The message it replies to: one the caller can see in this chat.
-            ///   - mentions: The squadmates it @s; anyone not in the squad is left out.
-            ///   - mentionsCoach: Whether it @s the coach, who then answers (as it does a reply to it).
-            public init(
-                version: Components.Schemas.ChatMessageDraft.VersionPayload,
-                text: Swift.String,
-                replyTo: Swift.String? = nil,
-                mentions: [Swift.String]? = nil,
-                mentionsCoach: Swift.Bool? = nil
-            ) {
-                self.version = version
-                self.text = text
-                self.replyTo = replyTo
-                self.mentions = mentions
-                self.mentionsCoach = mentionsCoach
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case text
-                case replyTo
-                case mentions
-                case mentionsCoach
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ChatReaction`.
-        public struct ChatReaction: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/ChatReaction/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/ChatReaction/version`.
-            public var version: Components.Schemas.ChatReaction.VersionPayload
-            /// Any one emoji.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatReaction/emoji`.
-            public var emoji: Swift.String
-            /// Creates a new `ChatReaction`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - emoji: Any one emoji.
-            public init(
-                version: Components.Schemas.ChatReaction.VersionPayload,
-                emoji: Swift.String
-            ) {
-                self.version = version
-                self.emoji = emoji
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case emoji
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ChatAlertSettings`.
-        public struct ChatAlertSettings: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/ChatAlertSettings/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/ChatAlertSettings/version`.
-            public var version: Components.Schemas.ChatAlertSettings.VersionPayload
-            /// When the caller gets a push for this squad’s messages: `mentions` (an @ or a reply to them, the default), `all` or `none`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatAlertSettings/alerts`.
-            @frozen public enum AlertsPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case mentions = "mentions"
-                case all = "all"
-                case none = "none"
-            }
-            /// When the caller gets a push for this squad’s messages: `mentions` (an @ or a reply to them, the default), `all` or `none`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatAlertSettings/alerts`.
-            public var alerts: Components.Schemas.ChatAlertSettings.AlertsPayload
-            /// Creates a new `ChatAlertSettings`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - alerts: When the caller gets a push for this squad’s messages: `mentions` (an @ or a reply to them, the default), `all` or `none`.
-            public init(
-                version: Components.Schemas.ChatAlertSettings.VersionPayload,
-                alerts: Components.Schemas.ChatAlertSettings.AlertsPayload
-            ) {
-                self.version = version
-                self.alerts = alerts
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case alerts
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ChatRead`.
-        public struct ChatRead: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/ChatRead/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/ChatRead/version`.
-            public var version: Components.Schemas.ChatRead.VersionPayload
-            /// The newest message the caller has seen.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatRead/seq`.
-            public var seq: Swift.Int
-            /// Creates a new `ChatRead`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - seq: The newest message the caller has seen.
-            public init(
-                version: Components.Schemas.ChatRead.VersionPayload,
-                seq: Swift.Int
-            ) {
-                self.version = version
-                self.seq = seq
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case seq
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/ChatUnread`.
-        public struct ChatUnread: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/ChatUnread/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/ChatUnread/version`.
-            public var version: Components.Schemas.ChatUnread.VersionPayload
-            /// Messages the caller hasn’t read.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatUnread/count`.
-            public var count: Swift.Int
-            /// Those of them that @ the caller or reply to them.
-            ///
-            /// - Remark: Generated from `#/components/schemas/ChatUnread/mentions`.
-            public var mentions: Swift.Int
-            /// Creates a new `ChatUnread`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - count: Messages the caller hasn’t read.
-            ///   - mentions: Those of them that @ the caller or reply to them.
-            public init(
-                version: Components.Schemas.ChatUnread.VersionPayload,
-                count: Swift.Int,
-                mentions: Swift.Int
-            ) {
-                self.version = version
-                self.count = count
-                self.mentions = mentions
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case count
-                case mentions
-            }
-        }
         /// - Remark: Generated from `#/components/schemas/SquadNudges`.
         public struct SquadNudges: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadNudges/version`.
@@ -7988,6 +7962,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/MyUnlocks/gifts`.
             public var gifts: [Components.Schemas.GiftedPiece]
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/shelf`.
+            public var shelf: Components.Schemas.Shelf
             /// Creates a new `MyUnlocks`.
             ///
             /// - Parameters:
@@ -7997,13 +7973,15 @@ extension Components {
             ///   - lockedPieces: Every piece with a rule the member hasn’t unlocked yet, and how far it is.
             ///   - claimed: Every piece the member claimed (领取) into their wardrobe, the earliest first. An unlocked piece waits in its store, marked new, until claimed.
             ///   - gifts: Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe.
+            ///   - shelf:
             public init(
                 version: Components.Schemas.MyUnlocks.VersionPayload,
                 unlocks: [Components.Schemas.Unlock],
                 pieces: [Components.Schemas.PieceUnlock],
                 lockedPieces: [Components.Schemas.LockedPiece],
                 claimed: [Components.Schemas.PieceClaim],
-                gifts: [Components.Schemas.GiftedPiece]
+                gifts: [Components.Schemas.GiftedPiece],
+                shelf: Components.Schemas.Shelf
             ) {
                 self.version = version
                 self.unlocks = unlocks
@@ -8011,6 +7989,7 @@ extension Components {
                 self.lockedPieces = lockedPieces
                 self.claimed = claimed
                 self.gifts = gifts
+                self.shelf = shelf
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -8019,6 +7998,7 @@ extension Components {
                 case lockedPieces
                 case claimed
                 case gifts
+                case shelf
             }
         }
         /// - Remark: Generated from `#/components/schemas/Unlock`.
@@ -8197,6 +8177,129 @@ extension Components {
                 case id
                 case coach
                 case givenAt
+            }
+        }
+        /// The 商店街 as it stands for the member now, worked out by the server from the stores’, pieces’ and switches’ rows: the app draws it as it is.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Shelf`.
+        public struct Shelf: Codable, Hashable, Sendable {
+            /// Every store on the 商店街, in its order, and whether it is open now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Shelf/stores`.
+            public var stores: [Components.Schemas.ShelfStore]
+            /// Every piece the member may see now: what they own, and what is out in an open store they have earned. A piece left out is not shown.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Shelf/pieces`.
+            public var pieces: [Components.Schemas.ShelfPiece]
+            /// Creates a new `Shelf`.
+            ///
+            /// - Parameters:
+            ///   - stores: Every store on the 商店街, in its order, and whether it is open now.
+            ///   - pieces: Every piece the member may see now: what they own, and what is out in an open store they have earned. A piece left out is not shown.
+            public init(
+                stores: [Components.Schemas.ShelfStore],
+                pieces: [Components.Schemas.ShelfPiece]
+            ) {
+                self.stores = stores
+                self.pieces = pieces
+            }
+            public enum CodingKeys: String, CodingKey {
+                case stores
+                case pieces
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ShelfStore`.
+        public struct ShelfStore: Codable, Hashable, Sendable {
+            /// The store’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfStore/id`.
+            public var id: Swift.String
+            /// Whether it is open now (its switch on). A closed store shows only what the member owns.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfStore/open`.
+            public var open: Swift.Bool
+            /// Creates a new `ShelfStore`.
+            ///
+            /// - Parameters:
+            ///   - id: The store’s id in the app’s art.
+            ///   - open: Whether it is open now (its switch on). A closed store shows only what the member owns.
+            public init(
+                id: Swift.String,
+                open: Swift.Bool
+            ) {
+                self.id = id
+                self.open = open
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case open
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ShelfPiece`.
+        public struct ShelfPiece: Codable, Hashable, Sendable {
+            /// The piece’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/id`.
+            public var id: Swift.String
+            /// The store it hangs in.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/storeId`.
+            public var storeId: Swift.String
+            /// `owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box).
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/state`.
+            @frozen public enum StatePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case owned = "owned"
+                case available = "available"
+                case locked = "locked"
+            }
+            /// `owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box).
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/state`.
+            public var state: Components.Schemas.ShelfPiece.StatePayload
+            /// For a locked piece: how many more 练了 check-ins in its sports open it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/checkInsToGo`.
+            public var checkInsToGo: Swift.Int?
+            /// The sports whose 练了 count towards it; empty for any sport.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/sports`.
+            public var sports: [Swift.String]
+            /// How many 练了 check-ins it takes; 0 for a starter.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfPiece/checkIns`.
+            public var checkIns: Swift.Int
+            /// Creates a new `ShelfPiece`.
+            ///
+            /// - Parameters:
+            ///   - id: The piece’s id in the app’s art.
+            ///   - storeId: The store it hangs in.
+            ///   - state: `owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box).
+            ///   - checkInsToGo: For a locked piece: how many more 练了 check-ins in its sports open it.
+            ///   - sports: The sports whose 练了 count towards it; empty for any sport.
+            ///   - checkIns: How many 练了 check-ins it takes; 0 for a starter.
+            public init(
+                id: Swift.String,
+                storeId: Swift.String,
+                state: Components.Schemas.ShelfPiece.StatePayload,
+                checkInsToGo: Swift.Int? = nil,
+                sports: [Swift.String],
+                checkIns: Swift.Int
+            ) {
+                self.id = id
+                self.storeId = storeId
+                self.state = state
+                self.checkInsToGo = checkInsToGo
+                self.sports = sports
+                self.checkIns = checkIns
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case storeId
+                case state
+                case checkInsToGo
+                case sports
+                case checkIns
             }
         }
     }

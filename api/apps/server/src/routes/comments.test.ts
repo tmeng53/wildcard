@@ -136,13 +136,11 @@ const app = createApp({
   notices: createNotices({ store: createPostgresNoticeStore(db) }),
   coachNames: ignoredNotices.coachNames,
   liveEvents: ignoredNotices.liveEvents,
-  chat: ignoredNotices.chat,
   log: createLog(() => undefined),
   jobs: {
     ...noJobs,
     coach: {
       run: () => Promise.reject(new Error('unused')),
-      chat: () => Promise.reject(new Error('unused')),
       answer: (asked) => {
         answersAsked.push(asked);
         return Promise.resolve();

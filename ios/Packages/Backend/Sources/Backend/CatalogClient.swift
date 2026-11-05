@@ -24,15 +24,20 @@ public actor CatalogClient {
         Self.read(saved).map { AppCatalog($0.catalog, otherwise: Self.bundled) } ?? Self.bundled
     }
 
-    /// Reads the API's catalog and keeps it; the catalog, or nil when it is unchanged since the
-    /// last read or the API can't be reached (the kept one stays).
+    /// Reads the API's catalog and keeps it; the catalog, or nil when what screens show is unchanged
+    /// since the last read or the API can't be reached (the kept one stays).
     public func refresh() async -> AppCatalog? {
         let copy = Self.read(saved)
         guard let read = try? await api.catalogWire(ifNoneMatch: copy?.etag) else { return nil }
         let fresh = SavedCatalog(version: 1, etag: read.etag, catalog: read.catalog)
         if let data = try? JSONEncoder().encode(fresh) { try? DeviceJSON.write(data, to: saved) }
         let catalog = AppCatalog(read.catalog, otherwise: Self.bundled)
-        return catalog == (copy.map { AppCatalog($0.catalog, otherwise: Self.bundled) } ?? Self.bundled) ? nil : catalog
+        let before = copy.map { AppCatalog($0.catalog, otherwise: Self.bundled) } ?? Self.bundled
+        // Only what screens show counts; the art goes to `ArtDownloads`, which reads `kept()`.
+        let same =
+            catalog.sports == before.sports && catalog.diceLines == before.diceLines
+            && catalog.starterStock == before.starterStock
+        return same ? nil : catalog
     }
 
     /// The catalog this build ships with.

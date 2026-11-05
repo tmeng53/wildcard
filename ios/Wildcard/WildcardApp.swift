@@ -51,8 +51,6 @@ struct WildcardApp: App {
     /// The sample member's own posts, from the sample squad's 动态.
     @State private var myPosts: any MyPostsSource
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
-    /// The sample squad's chat opens on 今天 (`-chat`, or a tapped chat push).
-    @State private var opensChat = LaunchOptions.opensChat
     @State private var profile: MeModel
     @State private var squad: SquadSettingsModel
     @State private var recap: RecapShelf
@@ -78,7 +76,7 @@ struct WildcardApp: App {
         // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
         SportList.shared.show(CatalogClient.bundled.sports)
         DiceLines.shared.show(CatalogClient.bundled.diceLines)
-        StoreSwitches.shared.show(CatalogClient.bundled.switches)
+        StarterStock.shared.show(CatalogClient.bundled.starterStock)
         LaunchOptions.forgetSeenRecapIfAsked()
         LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
@@ -142,7 +140,7 @@ struct WildcardApp: App {
         MeModel(
             service: InMemoryMeService.sample(
                 failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.unlocked,
-                lockedPieces: LaunchOptions.lockedPieces),
+                stock: LaunchOptions.stock),
             confirm: { .signedInSession }, signOut: {})
     }
 
@@ -257,19 +255,15 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, notices: LaunchOptions.notices, chat: SampleChat.source(for:), selection: $tab,
-                opensChat: $opensChat
+                myPosts: myPosts, notices: LaunchOptions.notices, selection: $tab
             )
             .onAppear {
                 // As on the real backend: the awards push opens 动态, where the 战报 is, a comment's
                 // push its post's page, and any other push 今天, or where the 6pm push's view asked.
-                delegate.opened = { [delegate, today, feed, $tab, $opensChat] opened in
+                delegate.opened = { [delegate, today, feed, $tab] opened in
                     switch opened {
                     case .weeklyAwards:
                         $tab.wrappedValue = .feed
-                    case .chat:
-                        $tab.wrappedValue = .today
-                        $opensChat.wrappedValue = true
                     case .comment(let post):
                         $tab.wrappedValue = .feed
                         feed.openPage(post)

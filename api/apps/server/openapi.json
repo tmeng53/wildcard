@@ -151,188 +151,6 @@
         "additionalProperties": false,
         "description": "As `GET /me/notices` lists it."
       },
-      "LiveChat": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "squadId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "message": {
-            "$ref": "#/components/schemas/ChatMessage"
-          },
-          "quoted": {
-            "$ref": "#/components/schemas/ChatMessage"
-          }
-        },
-        "required": [
-          "version",
-          "squadId",
-          "message"
-        ],
-        "additionalProperties": false,
-        "description": "The `chat` event’s data: a message new to the chat, or whose reactions changed, as `GET /squads/{squadId}/chat/messages` lists it, with `quoted`, the message it replies to when it does and the caller can see it."
-      },
-      "ChatMessage": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The message’s id: the app picks a member’s."
-          },
-          "seq": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "description": "Its place in the squad’s chat, oldest first: what pages, `PUT …/chat/read` and the live `chat` event go by."
-          },
-          "member": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Who wrote it, for a member’s message."
-          },
-          "coachId": {
-            "type": "string",
-            "description": "The coach who wrote it, by id, for the coach’s (with the 教练 tag).",
-            "example": "xiaohun"
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "text",
-              "note"
-            ],
-            "description": "`text` is written; `note` is the coach’s 战术板 line of the day, shown as its card. Skip a kind you don’t know."
-          },
-          "text": {
-            "type": "string",
-            "description": "What it says."
-          },
-          "replyTo": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The message it replies to, while that one is there."
-          },
-          "mentions": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "The squadmates it @s."
-          },
-          "mentionsCoach": {
-            "type": "boolean",
-            "description": "Whether it @s the coach."
-          },
-          "at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When it was sent, in UTC with milliseconds."
-          },
-          "reactions": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "member": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "emoji": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "member",
-                "emoji"
-              ],
-              "additionalProperties": false
-            },
-            "description": "Members’ reactions, one each, the earliest first."
-          }
-        },
-        "required": [
-          "version",
-          "id",
-          "seq",
-          "kind",
-          "text",
-          "mentions",
-          "mentionsCoach",
-          "at",
-          "reactions"
-        ],
-        "additionalProperties": false
-      },
-      "LiveChatDeleted": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "squadId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "messageId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "version",
-          "squadId",
-          "messageId"
-        ],
-        "additionalProperties": false,
-        "description": "The `chatDeleted` event’s data."
-      },
-      "LiveCoachTyping": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "squadId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "coachId": {
-            "type": "string"
-          },
-          "typing": {
-            "type": "boolean",
-            "description": "Whether the coach is writing now. A `chat` event with its message ends it too, and so does a reconnect."
-          }
-        },
-        "required": [
-          "version",
-          "squadId",
-          "coachId",
-          "typing"
-        ],
-        "additionalProperties": false,
-        "description": "The `coachTyping` event’s data: show the coach’s three dots while it is true."
-      },
       "Health": {
         "type": "object",
         "properties": {
@@ -426,6 +244,15 @@
           },
           "switches": {
             "$ref": "#/components/schemas/SwitchesCatalog"
+          },
+          "stores": {
+            "$ref": "#/components/schemas/StoresCatalog"
+          },
+          "pieces": {
+            "$ref": "#/components/schemas/PiecesCatalog"
+          },
+          "art": {
+            "$ref": "#/components/schemas/ArtCatalog"
           }
         },
         "required": [
@@ -592,7 +419,7 @@
                 },
                 "switchId": {
                   "type": "string",
-                  "description": "The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.",
+                  "description": "The switch a limited scene follows (the `switches` section): it is open only while that switch is on.",
                   "example": "winter"
                 }
               },
@@ -677,7 +504,7 @@
               ],
               "additionalProperties": {}
             },
-            "description": "Every global switch scenes, stores and unlock rules follow."
+            "description": "Every global switch scenes, stores and pieces follow."
           }
         },
         "required": [
@@ -705,6 +532,145 @@
         ],
         "additionalProperties": {},
         "description": "A scheduled switch’s days every year, New York time; it may run over New Year. The app never shows them."
+      },
+      "StoresCatalog": {
+        "type": "object",
+        "properties": {
+          "stores": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "powder"
+                },
+                "switchId": {
+                  "type": "string",
+                  "description": "The switch the store is out with (the `switches` section); none for always.",
+                  "example": "winter"
+                },
+                "free": {
+                  "type": "boolean",
+                  "description": "Open to everyone with no 练了 (no unlock rule), such as WARM-UP; any other store is earned."
+                }
+              },
+              "required": [
+                "id",
+                "free"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Every store on the 商店街, in its order; retired ones are left out. A signed-in member’s own street comes from `GET /me/unlocks`; the app has art only for some."
+          }
+        },
+        "required": [
+          "stores"
+        ],
+        "additionalProperties": {}
+      },
+      "PiecesCatalog": {
+        "type": "object",
+        "properties": {
+          "pieces": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "powder-salmon"
+                },
+                "storeId": {
+                  "type": "string",
+                  "example": "powder"
+                },
+                "slot": {
+                  "type": "string",
+                  "description": "Where it is worn: top, bottom, shoes, hat or acc."
+                },
+                "starter": {
+                  "type": "boolean",
+                  "description": "Everyone has it while it is out; any other piece is earned by a rule."
+                },
+                "switchId": {
+                  "type": "string",
+                  "description": "The switch the piece, apart from its store, is out with (the `switches` section); none for always.",
+                  "example": "winter"
+                }
+              },
+              "required": [
+                "id",
+                "storeId",
+                "slot",
+                "starter"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Every clothing piece in a store; retired ones, and a retired store’s, are left out."
+          }
+        },
+        "required": [
+          "pieces"
+        ],
+        "additionalProperties": {}
+      },
+      "ArtCatalog": {
+        "type": "object",
+        "properties": {
+          "generation": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The newest change’s number. The app uses a generation only once it has every file of it, and keeps the one it has until then."
+          },
+          "baseUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Where each file downloads from: this URL, then `<sha256>.<extension>`.",
+            "example": "https://example.supabase.co/storage/v1/object/public/art/"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Where the file goes in the app’s art tree (`avatar/…` over the character’s bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home scene pictures, `openings/…` the opening animations), in place of the bundled file there.",
+                  "example": "avatar/art/top/warmup-tee/torso.svg"
+                },
+                "sha256": {
+                  "type": "string",
+                  "description": "The file’s SHA-256, lowercase hex; also its name."
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Its size in bytes."
+                },
+                "rigVersion": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "The lowest rig version that draws it: a build with an older rig leaves it out."
+                }
+              },
+              "required": [
+                "path",
+                "sha256",
+                "size",
+                "rigVersion"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Every file put over the bundled art. Paths not listed use the bundled file."
+          }
+        },
+        "required": [
+          "generation",
+          "baseUrl",
+          "files"
+        ],
+        "additionalProperties": {}
       },
       "Me": {
         "type": "object",
@@ -3427,194 +3393,6 @@
         ],
         "additionalProperties": false
       },
-      "ChatPage": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "messages": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ChatMessage"
-            },
-            "description": "Newest first."
-          },
-          "quoted": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ChatMessage"
-            },
-            "description": "The messages those reply to that aren’t among them, so each reply can show what it replies to."
-          },
-          "more": {
-            "type": "boolean",
-            "description": "Whether older messages come before these."
-          },
-          "readThrough": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "How far the caller read (a `seq`), 0 before they read any."
-          },
-          "alerts": {
-            "type": "string",
-            "enum": [
-              "mentions",
-              "all",
-              "none"
-            ],
-            "description": "The caller’s alerts in this squad."
-          }
-        },
-        "required": [
-          "version",
-          "messages",
-          "quoted",
-          "more",
-          "readThrough",
-          "alerts"
-        ],
-        "additionalProperties": false
-      },
-      "ChatMessageDraft": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "text": {
-            "type": "string",
-            "maxLength": 1000,
-            "description": "Trimmed, then 1 to 500 characters as people see them; may span lines.",
-            "x-max-characters": 500
-          },
-          "replyTo": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The message it replies to: one the caller can see in this chat."
-          },
-          "mentions": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "maxItems": 8,
-            "default": [],
-            "description": "The squadmates it @s; anyone not in the squad is left out."
-          },
-          "mentionsCoach": {
-            "type": "boolean",
-            "default": false,
-            "description": "Whether it @s the coach, who then answers (as it does a reply to it)."
-          }
-        },
-        "required": [
-          "version",
-          "text"
-        ],
-        "additionalProperties": false
-      },
-      "ChatReaction": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "emoji": {
-            "type": "string",
-            "description": "Any one emoji.",
-            "example": "🔥"
-          }
-        },
-        "required": [
-          "version",
-          "emoji"
-        ],
-        "additionalProperties": false
-      },
-      "ChatAlertSettings": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "alerts": {
-            "type": "string",
-            "enum": [
-              "mentions",
-              "all",
-              "none"
-            ],
-            "description": "When the caller gets a push for this squad’s messages: `mentions` (an @ or a reply to them, the default), `all` or `none`."
-          }
-        },
-        "required": [
-          "version",
-          "alerts"
-        ],
-        "additionalProperties": false
-      },
-      "ChatRead": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "seq": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "description": "The newest message the caller has seen."
-          }
-        },
-        "required": [
-          "version",
-          "seq"
-        ],
-        "additionalProperties": false
-      },
-      "ChatUnread": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "count": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Messages the caller hasn’t read."
-          },
-          "mentions": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Those of them that @ the caller or reply to them."
-          }
-        },
-        "required": [
-          "version",
-          "count",
-          "mentions"
-        ],
-        "additionalProperties": false
-      },
       "SquadNudges": {
         "type": "object",
         "properties": {
@@ -5264,6 +5042,9 @@
               "$ref": "#/components/schemas/GiftedPiece"
             },
             "description": "Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe."
+          },
+          "shelf": {
+            "$ref": "#/components/schemas/Shelf"
           }
         },
         "required": [
@@ -5272,7 +5053,8 @@
           "pieces",
           "lockedPieces",
           "claimed",
-          "gifts"
+          "gifts",
+          "shelf"
         ],
         "additionalProperties": false
       },
@@ -5432,6 +5214,112 @@
           "id",
           "coach",
           "givenAt"
+        ],
+        "additionalProperties": false
+      },
+      "Shelf": {
+        "type": "object",
+        "properties": {
+          "stores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShelfStore"
+            },
+            "description": "Every store on the 商店街, in its order, and whether it is open now."
+          },
+          "pieces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShelfPiece"
+            },
+            "description": "Every piece the member may see now: what they own, and what is out in an open store they have earned. A piece left out is not shown."
+          }
+        },
+        "required": [
+          "stores",
+          "pieces"
+        ],
+        "additionalProperties": false,
+        "description": "The 商店街 as it stands for the member now, worked out by the server from the stores’, pieces’ and switches’ rows: the app draws it as it is."
+      },
+      "ShelfStore": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+            "description": "The store’s id in the app’s art.",
+            "example": "powder"
+          },
+          "open": {
+            "type": "boolean",
+            "description": "Whether it is open now (its switch on). A closed store shows only what the member owns."
+          }
+        },
+        "required": [
+          "id",
+          "open"
+        ],
+        "additionalProperties": false
+      },
+      "ShelfPiece": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "powder-tuna"
+          },
+          "storeId": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+            "description": "The store it hangs in.",
+            "example": "powder"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "owned",
+              "available",
+              "locked"
+            ],
+            "description": "`owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box)."
+          },
+          "checkInsToGo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "For a locked piece: how many more 练了 check-ins in its sports open it.",
+            "example": 2
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][A-Za-z0-9]{0,39}$"
+            },
+            "description": "The sports whose 练了 count towards it; empty for any sport.",
+            "example": [
+              "ski",
+              "snowboard"
+            ]
+          },
+          "checkIns": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "How many 练了 check-ins it takes; 0 for a starter.",
+            "example": 1
+          }
+        },
+        "required": [
+          "id",
+          "storeId",
+          "state",
+          "sports",
+          "checkIns"
         ],
         "additionalProperties": false
       }
@@ -8729,941 +8617,6 @@
         }
       }
     },
-    "/squads/{squadId}/chat/messages": {
-      "get": {
-        "operationId": "listSquadChat",
-        "summary": "A page of the squad’s chat (群聊)",
-        "description": "Newest first, only what was sent since the caller joined. Pass the oldest `seq` you have as `before` for the page before it.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "exclusiveMinimum": 0
-            },
-            "required": false,
-            "name": "before",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 50,
-              "default": 50
-            },
-            "required": false,
-            "name": "limit",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The page",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatPage"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a valid squad id, `before` or `limit`",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/squads/{squadId}/chat/messages/{messageId}": {
-      "put": {
-        "operationId": "sendChatMessage",
-        "summary": "Send a message to the squad’s chat",
-        "description": "The app names the message, so the same one again changes nothing and is safe to repeat. Messages are never edited. The squad hears it at once (`GET /me/events`), and members are pushed by their alerts. A message that @s the coach, or replies to it, is answered soon after: members see the coach typing (`coachTyping`), then its message.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "messageId",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChatMessageDraft"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Sent already",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatMessage"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Sent",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatMessage"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a valid message",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such message the caller can see here: deleted, or sent before they joined (`CHAT_MESSAGE_NOT_FOUND`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The id holds a different message (`MESSAGE_ID_TAKEN`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "operationId": "deleteChatMessage",
-        "summary": "Delete your message",
-        "description": "It is gone for everyone; a reply to it stays, without what it replied to.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "messageId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Deleted"
-          },
-          "400": {
-            "description": "Not a valid id",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`), or it isn’t theirs (`NOT_YOUR_MESSAGE`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such message the caller can see here: deleted, or sent before they joined (`CHAT_MESSAGE_NOT_FOUND`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/squads/{squadId}/chat/messages/{messageId}/reaction": {
-      "put": {
-        "operationId": "reactToChatMessage",
-        "summary": "React to a message",
-        "description": "One emoji per member a message; another one takes its place.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "messageId",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChatReaction"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The message now",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatMessage"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not one emoji",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such message the caller can see here: deleted, or sent before they joined (`CHAT_MESSAGE_NOT_FOUND`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "operationId": "unreactToChatMessage",
-        "summary": "Take your reaction off a message",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "messageId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The message now",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatMessage"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a valid id",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such message the caller can see here: deleted, or sent before they joined (`CHAT_MESSAGE_NOT_FOUND`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/squads/{squadId}/chat/messages/{messageId}/report": {
-      "post": {
-        "operationId": "reportChatMessage",
-        "summary": "Report someone’s message (举报)",
-        "description": "The admins see what it said even if it is deleted later. Reporting it again changes nothing.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "messageId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Reported"
-          },
-          "400": {
-            "description": "Not a valid id, or the caller’s own message (`OWN_MESSAGE`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such message the caller can see here: deleted, or sent before they joined (`CHAT_MESSAGE_NOT_FOUND`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/squads/{squadId}/chat/alerts": {
-      "get": {
-        "operationId": "getChatAlerts",
-        "summary": "When the caller gets a push for this squad’s chat",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The caller’s alerts",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatAlertSettings"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a valid squad id",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "operationId": "setChatAlerts",
-        "summary": "Change when the caller gets a push for this squad’s chat",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChatAlertSettings"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Saved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatAlertSettings"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not valid alerts",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/squads/{squadId}/chat/read": {
-      "put": {
-        "operationId": "markChatRead",
-        "summary": "Mark the squad’s chat read up to a message",
-        "description": "Never moves back, so a stale call is harmless.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChatRead"
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "Marked"
-          },
-          "400": {
-            "description": "Not a valid `seq`",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/squads/{squadId}/chat/unread": {
-      "get": {
-        "operationId": "getChatUnread",
-        "summary": "How much of the squad’s chat the caller hasn’t read",
-        "description": "The count on the chat’s button beside 打卡.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The counts",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChatUnread"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a valid squad id",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/squads/{squadId}/nudges": {
       "get": {
         "operationId": "listSquadNudges",
@@ -10032,7 +8985,7 @@
       "get": {
         "operationId": "streamMyEvents",
         "summary": "The caller’s live events (Server-Sent Events)",
-        "description": "A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` and the open chat again, since events sent while it was closed are not replayed.",
+        "description": "A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.",
         "security": [
           {
             "bearer": []
@@ -11115,7 +10068,7 @@
       "get": {
         "operationId": "getMyUnlocks",
         "summary": "The stores, props and pieces the signed-in member unlocked",
-        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.",
+        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
         "security": [
           {
             "bearer": []

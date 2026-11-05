@@ -101,7 +101,8 @@ enum EditorNames {
         "deuce-ball": "网球毛线帽",
         "dumbbell": "哑铃", "bottle": "外卡水杯",
         "kettlebell": "壶铃", "yogamat": "瑜伽垫", "racket": "网球拍", "pickleball": "匹克球拍", "badminton": "羽毛球拍",
-        "pingpong": "乒乓球拍", "chalkbag": "镁粉袋", "goggles": "泳镜",
+        "pingpong": "乒乓球拍", "chalkbag": "镁粉袋", "goggles": "泳镜", "helmet": "骑行头盔", "gloves": "拳套",
+        "basketball": "篮球", "soccerball": "足球", "skis": "双板滑雪板", "snowboard": "单板",
     ]
 
     private static let faces = [

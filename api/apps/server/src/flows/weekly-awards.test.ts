@@ -190,7 +190,6 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     notices: createNotices({ store: createPostgresNoticeStore(db) }),
     coachNames: () => Promise.reject(new Error('unused')),
     liveEvents: ignoredNotices.liveEvents,
-    chat: ignoredNotices.chat,
     aiConsent,
     nudges: nudgesOn(db),
     log: createLog(() => undefined),

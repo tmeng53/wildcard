@@ -19,7 +19,7 @@ export interface WakeDraft {
   reply: string | undefined;
   /** The emoji the run reacted to the check-in with, on its wake. */
   reaction: CoachEmoji | undefined;
-  /** What the run answered a member's reply to it, or their chat message, on its wake. */
+  /** What the run answered a member's reply to it, on that reply's wake. */
   answer: string | undefined;
   /** Every tool call of the run, in order. */
   readonly steps: WakeStep[];
@@ -213,13 +213,11 @@ export function toolbox({
       }),
     );
   }
-  if (kind === 'comment' || kind === 'chat') {
-    const where =
-      kind === 'comment' ? '回复这位队员回你的这句：显示在评论里' : '在小队群聊里回这一句';
+  if (kind === 'comment') {
     tools.push(
       defineTool(draft.steps, {
         name: 'answer',
-        description: `${where}，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
+        description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
         parameters: z.object({ text: z.string().describe('回的这一句') }),
         run: ({ text }) => {
           const line = text.trim();
