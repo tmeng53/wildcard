@@ -6,6 +6,7 @@ extension Comment {
             id: try CommentID(wire: wire.id), member: try MemberID(wire: wire.member),
             text: try CommentText(wire.text),
             replyTo: try ReplyTarget(member: wire.replyTo, coach: wire.replyToCoach),
+            mentions: try Mentions(members: wire.mentions, coach: wire.mentionsCoach),
             commentedAt: Timestamp(wire: wire.commentedAt))
     }
 
@@ -14,6 +15,7 @@ extension Comment {
             id: try CommentID(wire: wire.id), member: try MemberID(wire: wire.member),
             text: try CommentText(wire.text),
             replyTo: try ReplyTarget(member: wire.replyTo, coach: wire.replyToCoach),
+            mentions: try Mentions(members: wire.mentions, coach: wire.mentionsCoach),
             commentedAt: Timestamp(wire: wire.commentedAt))
     }
 }
@@ -32,13 +34,33 @@ extension ReplyTarget {
     }
 }
 
+extension Mentions {
+    /// From a comment's `mentions` and `mentionsCoach`.
+    init(members: [String]?, coach: String?) throws(ContractsError) {
+        var ids: [MemberID] = []
+        for member in members ?? [] { ids.append(try MemberID(wire: member)) }
+        var coachID: CoachID?
+        if let coach {
+            guard let id = CoachID(rawValue: coach) else { throw .invalidCoachID(coach) }
+            coachID = id
+        }
+        self.init(members: ids, coach: coachID)
+    }
+}
+
 extension CommentText {
     /// The body of `PUT /check-ins/{checkInId}/comments/{commentId}`.
-    public func draft(replyingTo target: ReplyTarget?) -> Components.Schemas.CommentDraft {
+    public func draft(replyingTo target: ReplyTarget?, mentioning mentions: Mentions = .none)
+        -> Components.Schemas.CommentDraft
+    {
+        var draft = Components.Schemas.CommentDraft(version: ._1, text: text)
         switch target {
-        case .member(let member): .init(version: ._1, text: text, replyTo: member.description)
-        case .coach(let coach): .init(version: ._1, text: text, replyToCoach: coach.rawValue)
-        case nil: .init(version: ._1, text: text)
+        case .member(let member): draft.replyTo = member.description
+        case .coach(let coach): draft.replyToCoach = coach.rawValue
+        case nil: break
         }
+        if !mentions.members.isEmpty { draft.mentions = mentions.members.map(\.description) }
+        draft.mentionsCoach = mentions.coach?.rawValue
+        return draft
     }
 }

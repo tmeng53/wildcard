@@ -56,18 +56,36 @@ public final class MeModel {
         overview?.dailyPushOn ?? false
     }
 
+    /// The coach's pushes (教练消息): its morning note and its replies, all silent.
+    public var coachPushOn: Bool {
+        overview?.coachPushOn ?? false
+    }
+
     /// Flips the daily push and saves it; flips back if saving fails.
     public func setDailyPush(_ isOn: Bool) async {
-        guard case .loaded(var overview) = load, overview.dailyPushOn != isOn else { return }
+        await flip(\.dailyPushOn, to: isOn) { isOn throws(MeError) in try await service.setDailyPush(isOn) }
+    }
+
+    /// Flips the coach's pushes and saves it; flips back if saving fails.
+    public func setCoachPush(_ isOn: Bool) async {
+        await flip(\.coachPushOn, to: isOn) { isOn throws(MeError) in try await service.setCoachPush(isOn) }
+    }
+
+    /// Shows a push switch flipped at once and saves it; flips it back if saving fails.
+    private func flip(
+        _ push: WritableKeyPath<MeOverview, Bool>, to isOn: Bool,
+        save: (Bool) async throws(MeError) -> Void
+    ) async {
+        guard case .loaded(var overview) = load, overview[keyPath: push] != isOn else { return }
         saveFailed = false
-        overview.dailyPushOn = isOn
+        overview[keyPath: push] = isOn
         load = .loaded(overview)
         do {
-            try await service.setDailyPush(isOn)
+            try await save(isOn)
         } catch {
             // Flip back only the switch: anything saved meanwhile (an edited character) stays.
             if case .loaded(var latest) = load {
-                latest.dailyPushOn = !isOn
+                latest[keyPath: push] = !isOn
                 load = .loaded(latest)
             }
             saveFailed = true

@@ -55,6 +55,13 @@ public final class TodayStore {
     /// The squad's coach on the sideline as last loaded, and the squad it was loaded for.
     /// Set only by `loadCoach()`.
     var loadedCoach: (squad: SquadID, coach: SidelineCoach?)?
+    /// The coaches' morning notes (便条) waiting on 今天, as last loaded, the one to show first;
+    /// one at a time, each until it is put away (`putAwayNote()`).
+    public internal(set) var coachNotes: [CoachMemberNote] = []
+    /// A note shown again from 通知, before any waiting.
+    var noteAgain: CoachMemberNote?
+    /// Notes put away on this phone since launch, kept out of a load that crossed the put-away.
+    var putAway: Set<Int> = []
     /// What changed in the squad since the home shown before, not yet told (`takeNews()`).
     public internal(set) var news = SquadNews()
     /// The squad the member was in when the server last said they are in none: they left it, or
@@ -173,20 +180,20 @@ public final class TodayStore {
 
     // MARK: - Posting
 
-    /// Posts a check-in, shared to `squads` (every squad the member is in when left out; none
-    /// keeps it to the member), for `chosen`, today or one of the `backfillDays` before it
+    /// Posts a check-in, shared to the member's squad unless `shared` is false (which keeps it
+    /// to the member), for `chosen`, today or one of the `backfillDays` before it
     /// (补打卡; today when left out): saved by the server now or, offline, later. Today's post
     /// counts on the home at once; a past day's once the server has it and the home is read again. Throws when it can never be saved: a 请假条 on a day with a 练了, a day
     /// out of reach, or a refusal from the server.
     @discardableResult
-    public func post(_ draft: CheckInDraft, sharedTo squads: [SquadID]? = nil, on chosen: LocalDay? = nil)
+    public func post(_ draft: CheckInDraft, shared: Bool = true, on chosen: LocalDay? = nil)
         async throws(CheckInError) -> PostOutcome
     {
         if let chosen, !postableDays.contains(chosen) { throw .refused }
         try await check(draft, on: chosen)
         guard let home, let day else { throw .notSent }
         let audience: Audience
-        do { audience = try Audience(squads ?? home.squads.map(\.id)) } catch { throw .refused }
+        do { audience = try Audience(shared ? [home.squad.id] : []) } catch { throw .refused }
         let post = PendingCheckIn(
             id: CheckInID(newID()), member: home.member, day: chosen ?? day, postedDay: day,
             createdAt: Timestamp(now()), audience: audience, draft: draft)

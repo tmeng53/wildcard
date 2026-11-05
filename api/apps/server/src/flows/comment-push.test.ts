@@ -14,19 +14,37 @@ const [writer, author, other] = [
 describe('who hears of a comment', () => {
   it('is the author, and the member it replies to as a reply, never the writer', () => {
     expect(recipients({ commenter: writer, author })).toStrictEqual([
-      { member: author, reply: false },
+      { member: author, news: 'comment' },
     ]);
     expect(recipients({ commenter: writer, author, replyTo: other })).toStrictEqual([
-      { member: other, reply: true },
-      { member: author, reply: false },
+      { member: other, news: 'reply' },
+      { member: author, news: 'comment' },
     ]);
     expect(recipients({ commenter: writer, author, replyTo: author })).toStrictEqual([
-      { member: author, reply: true },
+      { member: author, news: 'reply' },
     ]);
     expect(recipients({ commenter: author, author, replyTo: other })).toStrictEqual([
-      { member: other, reply: true },
+      { member: other, news: 'reply' },
     ]);
     expect(recipients({ commenter: author, author })).toStrictEqual([]);
+  });
+
+  it('tells each member it @s of the @, once, unless it replies to them', () => {
+    const fourth = '00000000-0000-4000-8000-00000000000d';
+    expect(
+      recipients({ commenter: writer, author, mentions: [other, author, fourth, writer] }),
+    ).toStrictEqual([
+      { member: other, news: 'mention' },
+      { member: author, news: 'mention' },
+      { member: fourth, news: 'mention' },
+    ]);
+    expect(
+      recipients({ commenter: writer, author, replyTo: other, mentions: [other, fourth] }),
+    ).toStrictEqual([
+      { member: other, news: 'reply' },
+      { member: fourth, news: 'mention' },
+      { member: author, news: 'comment' },
+    ]);
   });
 });
 
@@ -55,7 +73,7 @@ describe('a comment push', () => {
         ),
     };
     const push = {
-      settingsOf: () => Promise.resolve({ dailyProgress: true }),
+      settingsOf: () => Promise.resolve({ dailyProgress: true, coach: true }),
       // Never answers, as a hung connection wouldn't.
       notifyMembers: () => new Promise<never>(() => undefined),
     };
@@ -77,11 +95,13 @@ describe('a comment push', () => {
 });
 
 describe('a coach’s line pushed', () => {
-  it('reads as a teammate’s comment or reply, and never reaches a member who turned push off', async () => {
+  it('reads as a teammate’s comment or reply, silently, and never reaches a member who turned the coach’s push off', async () => {
     const sent: { members: readonly string[]; notification: PushNotification }[] = [];
     const on = new Set([author]);
     const push = {
-      settingsOf: (member: string) => Promise.resolve({ dailyProgress: on.has(member) }),
+      // The coach's own switch: off for `writer`, whose daily push stays on.
+      settingsOf: (member: string) =>
+        Promise.resolve({ dailyProgress: true, coach: on.has(member) }),
       notifyMembers: (input: { members: readonly string[]; notification: PushNotification }) => {
         sent.push(input);
         return Promise.resolve({ sent: 1, gone: 0, off: 0, failures: [] });
@@ -120,7 +140,7 @@ describe('a coach’s line pushed', () => {
           category: 'comment',
           thread: `comments-${other}`,
           collapseId: `coach-${other}`,
-          interruption: 'active',
+          interruption: 'passive',
           event: { kind: 'comment', checkIn: other },
         },
       },
@@ -131,7 +151,7 @@ describe('a coach’s line pushed', () => {
           category: 'comment',
           thread: `comments-${other}`,
           collapseId: `coach-${writer}`,
-          interruption: 'active',
+          interruption: 'passive',
           event: { kind: 'comment', checkIn: other },
         },
       },

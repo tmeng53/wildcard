@@ -28,8 +28,8 @@ struct DisclaimerComposer: View {
     @State private var isWriting = false
     /// Counts lines that landed in the hero, for their haptic.
     @State private var landed = 0
-    /// The squads it goes to: all of them until the member unticks one.
-    @State private var shared: Set<SquadID>
+    /// Whether the squad sees it: on until the member turns it off.
+    @State private var isShared = true
     /// The past day it counts for (补打卡); nil is today, whatever day it is when it posts. It
     /// opens on today, or on the latest day before it without a 练了 when today can't take one.
     @State private var day: LocalDay?
@@ -37,7 +37,6 @@ struct DisclaimerComposer: View {
 
     init(model: TodayModel) {
         self.model = model
-        _shared = State(initialValue: Set(model.shareSquads.map(\.id)))
         let blocked = model.blockedForDisclaimer
         let today = model.disclaimerDays.last
         let latest = model.disclaimerDays.last { !blocked.contains($0) }
@@ -64,10 +63,12 @@ struct DisclaimerComposer: View {
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .padding(.bottom, Space.xs)
             }
-            ShareRow(squads: model.shareSquads, shared: $shared)
-                .padding(.bottom, Space.xs)
+            if let squad = model.shareSquad {
+                ShareRow(squad: squad, isShared: $isShared)
+                    .padding(.bottom, Space.xs)
+            }
             // The page's last line, over nothing else: it floats, in glass.
-            PostButton(model: model, disclaimer: entry.disclaimer, shared: shared, day: day)
+            PostButton(model: model, disclaimer: entry.disclaimer, isShared: isShared, day: day)
                 .controlPlacement(.floating)
         }
         .padding(.horizontal, Space.l)
@@ -347,13 +348,13 @@ private struct PostButton: View {
     let model: TodayModel
     /// The excuse to post, or nil while it can't be.
     let disclaimer: Disclaimer?
-    let shared: Set<SquadID>
+    let isShared: Bool
     let day: LocalDay?
 
     var body: some View {
         Button {
             guard let disclaimer, !model.isSending else { return }
-            Task { await model.post(.disclaimer(disclaimer), sharedTo: shared, on: day) }
+            Task { await model.post(.disclaimer(disclaimer), shared: isShared, on: day) }
         } label: {
             Text("发布请假条", bundle: .module)
                 .loadingLabel(model.isSending)

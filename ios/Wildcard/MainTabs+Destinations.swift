@@ -44,6 +44,12 @@ extension MainTabs {
             }
         case .today:
             selection = .today
+            todayPages = []
+        case .coachNote(let note):
+            // On the home itself, where the coach stands.
+            selection = .today
+            todayPages = []
+            today.showAgain(note)
         case .schedule:
             selection = .profile
             closeProfilePages()

@@ -128,7 +128,7 @@ public struct Caption: Hashable, Sendable {
 /// The squads a check-in is shared to: at most `maxSquads`, no repeats. A post is the
 /// member's own; one shared to no squad only they see.
 public struct Audience: Hashable, Sendable {
-    /// A member is in at most this many squads.
+    /// The most squads one post can be shared to, as the API allows; a member is in one at a time.
     public static let maxSquads = 3
 
     /// In the order the member picked them.

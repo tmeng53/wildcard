@@ -26,9 +26,11 @@ import {
   createCoachHiring,
   createCoachActivity,
   createCoachSettings,
+  createCoachNoteDelivery,
   createCoachWakes,
   createPostgresCoachActivity,
   createPostgresCoachCatalog,
+  createPostgresCoachNoteDelivery,
   createPostgresCoachHiring,
   createPostgresCoachReport,
   createPostgresCoachSettings,
@@ -289,6 +291,13 @@ const checkIns = createCheckIns({
       checkIn,
       coach,
     }),
+  coachHired: async ({ squads: through, coach }) => {
+    const hiring = createPostgresCoachHiring(db);
+    for (const squad of through) {
+      if ((await hiring.coachOf(CoachSquadId.parse(squad)))?.coach === coach) return true;
+    }
+    return false;
+  },
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),
@@ -560,6 +569,12 @@ const app = createApp({
     interactions: [checkInInteractions(checkIns), nudgeInteractions(nudges)],
     clock: () => new Date(),
     ...(coachWakes === undefined ? {} : { coach: coachWakes }),
+    coachNotes: {
+      notes: createCoachNoteDelivery({ store: createPostgresCoachNoteDelivery(db) }),
+      noteHour: async () => (await createPostgresCoachSettings(db).current()).noteHour,
+      tell: (told) => tellAfter(db, { told, what: 'a coach note' }),
+      clock: () => new Date(),
+    },
   },
   admin: {
     admins: adminsOn,

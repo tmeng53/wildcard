@@ -3,6 +3,7 @@ import {
   CheckInId,
   CommentId,
   CommentText,
+  MAX_MENTIONS,
   MemberId,
   type CheckIns,
   type Comment as CommentRecord,
@@ -30,6 +31,22 @@ const replyToCoach = CoachId.meta({
   example: 'xiaohun',
 });
 
+const mentions = z
+  .array(MemberId)
+  .max(MAX_MENTIONS)
+  .meta({
+    description:
+      'Whom the comment @s, in the order written: up to 8 who can see the check-in (its author ' +
+      'or a teammate). Each is told by push. Anyone else, or the writer, is left out.',
+  });
+
+const mentionsCoach = CoachId.meta({
+  description:
+    'The coach the comment @s (@毛头), by id: the coach of a squad the caller sees the check-in ' +
+    'through. The coach answers it soon after. Left out for any other coach.',
+  example: 'xiaohun',
+});
+
 const commentFields = {
   id: CommentId.meta({ description: 'The comment’s id, which the app picks.' }),
   member: z.uuid().meta({ description: 'Who wrote it.' }),
@@ -39,6 +56,13 @@ const commentFields = {
   }),
   replyToCoach: z.string().optional().meta({
     description: 'The coach it replies to, by id, when it does (回复 毛头：…).',
+  }),
+  mentions: z.array(z.uuid()).optional().meta({
+    description:
+      'Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone.',
+  }),
+  mentionsCoach: z.string().optional().meta({
+    description: 'The coach it @s, by id, when it does (@毛头).',
   }),
   commentedAt: z.iso.datetime().meta({
     description: 'When it was written, in UTC with milliseconds.',
@@ -52,6 +76,8 @@ export const CommentDraft = z
     text: CommentText,
     replyTo: replyTo.optional(),
     replyToCoach: replyToCoach.optional(),
+    mentions: mentions.optional(),
+    mentionsCoach: mentionsCoach.optional(),
   })
   .openapi('CommentDraft');
 export const Comment = z
@@ -69,6 +95,8 @@ export const wireComment = ({
   text,
   replyTo: to,
   replyToCoach: toCoach,
+  mentions: mentioned,
+  mentionsCoach: atCoach,
   commentedAt,
 }: CommentRecord) => ({
   id,
@@ -76,6 +104,8 @@ export const wireComment = ({
   text,
   ...(to === undefined ? {} : { replyTo: to }),
   ...(toCoach === undefined ? {} : { replyToCoach: toCoach }),
+  ...(mentioned === undefined || mentioned.length === 0 ? {} : { mentions: [...mentioned] }),
+  ...(atCoach === undefined ? {} : { mentionsCoach: atCoach }),
   commentedAt: commentedAt.toISOString(),
 });
 
@@ -179,6 +209,8 @@ export function comments(
         text: draft.text,
         replyTo: draft.replyTo,
         replyToCoach: draft.replyToCoach,
+        mentions: draft.mentions,
+        mentionsCoach: draft.mentionsCoach,
       });
       const body = { version: 1 as const, ...wireComment(written.comment) };
       // Sent before answering: Cloud Run gives the server CPU only while a request runs.
@@ -190,14 +222,15 @@ export function comments(
           text: written.comment.text,
           author: written.author,
           replyTo: written.comment.replyTo,
+          mentions: written.comment.mentions,
         });
-        // The coach answers while the request runs, for the same reason; a slow answer is the
-        // coach job's to finish.
-        const toCoach = written.comment.replyToCoach;
+        // The coach answers a reply to it or an @ of it while the request runs, for the same
+        // reason; a slow answer is the coach job's to finish.
+        const toCoach = written.comment.replyToCoach ?? written.comment.mentionsCoach;
         if (toCoach !== undefined && deps.coachAnswer !== undefined) {
           await answerCoachReply(
             { answer: deps.coachAnswer, log: deps.log },
-            { checkIn: checkInId, comment: commentId, coach: toCoach },
+            { checkIn: checkInId, comment: commentId, coach: toCoach, squads: written.squads },
           );
         }
       }

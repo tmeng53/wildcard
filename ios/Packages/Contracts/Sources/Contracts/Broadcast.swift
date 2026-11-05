@@ -73,6 +73,8 @@ public enum AppDestination: Hashable, Sendable {
     case post(CheckInID)
     /// 今天.
     case today
+    /// 今天, with the coach's morning note (便条) slid up over it again.
+    case coachNote(CoachMemberNote)
     /// 我.
     case profile
     /// 通知, behind the bell on 动态.
@@ -89,6 +91,7 @@ extension Notice {
         case .coachReply(let checkIn, _, _, _, _): .post(checkIn)
         case .unlocked(let kind, let item): .unlock(kind, item: item)
         case .comment(_, let checkIn): .post(checkIn)
+        case .coachNote(let note): .coachNote(note)
         case .broadcast(let broadcast): broadcast.action?.destination
         }
     }

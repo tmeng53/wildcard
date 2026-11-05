@@ -17,7 +17,12 @@ export { LocalDay, type DailyCandidate, type DuePush } from './domain/daily.js';
 export { DailyPushSettings, DailyPushSettingsChange } from './domain/daily-push-settings.js';
 export { DeviceToken, MemberId, PushEnvironment, type Device } from './domain/device.js';
 export { apnsPayload, type EventValue, type PushNotification } from './domain/notification.js';
-export { DEFAULT_PUSH_SETTINGS, PushTopic, type PushSettings } from './domain/topic.js';
+export {
+  DEFAULT_PUSH_SETTINGS,
+  PushTopic,
+  type PushSettings,
+  type PushSettingsChange,
+} from './domain/topic.js';
 export { PushRejectedError, PushUnavailableError } from './errors.js';
 export type {
   DailyPushStore,

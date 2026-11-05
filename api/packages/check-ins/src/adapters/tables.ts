@@ -29,11 +29,18 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface CheckInCommentMentions {
+  comment_id: string;
+  member_id: string;
+  position: number;
+}
+
 export interface CheckInComments {
   check_in_id: string;
   commented_at: Timestamp;
   id: string;
   member_id: string;
+  mentions_coach: string | null;
   reply_to: string | null;
   reply_to_coach: string | null;
   text: string;
@@ -128,6 +135,7 @@ export interface WeekSummaryWords {
 }
 
 export interface DB {
+  check_in_comment_mentions: CheckInCommentMentions;
   check_in_comments: CheckInComments;
   check_in_events: CheckInEvents;
   check_in_photos: CheckInPhotos;

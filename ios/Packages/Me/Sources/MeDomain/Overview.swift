@@ -96,6 +96,8 @@ public struct MeOverview: Hashable, Sendable {
     public var squadName: String?
     /// The one daily push at 6pm with the squad's progress.
     public var dailyPushOn: Bool
+    /// The coach's pushes (教练消息): its morning note and its replies, all silent.
+    public var coachPushOn: Bool
     /// The number the member picked for their card; nil until they pick one.
     public var jerseyNumber: JerseyNumber?
     /// Their place in their squad, the first to join being 1; nil before they are in one.
@@ -113,7 +115,8 @@ public struct MeOverview: Hashable, Sendable {
 
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
-        dailyPushOn: Bool, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil, board: TitleBoard = .empty,
+        dailyPushOn: Bool, coachPushOn: Bool = true, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil,
+        board: TitleBoard = .empty,
         unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], weekGlance: WeekGlance? = nil
     ) {
         self.weekGlance = weekGlance
@@ -123,6 +126,7 @@ public struct MeOverview: Hashable, Sendable {
         self.week = week
         self.squadName = squadName
         self.dailyPushOn = dailyPushOn
+        self.coachPushOn = coachPushOn
         self.jerseyNumber = jerseyNumber
         self.squadPlace = squadPlace
         self.board = board

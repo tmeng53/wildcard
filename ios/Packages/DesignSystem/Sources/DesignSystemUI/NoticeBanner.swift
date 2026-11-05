@@ -5,7 +5,8 @@ import SwiftUI
 /// News that nobody on the scene can tell (the squad moved to another scene, a store opened, a
 /// prop unlocked): a brand capsule that drops from the top of the screen like the Dynamic Island
 /// opening (approved 2026-11-02, design A). A round icon on the left, one line of title, an
-/// optional muted second line, and a chevron when a tap goes somewhere, or the button's words in a
+/// optional muted line under it (up to two, so a broadcast's message mostly reads whole; 通知 shows
+/// all of it), and a chevron when a tap goes somewhere, or the button's words in a
 /// white pill when it has one (a broadcast's 去商店街看看; approved 2026-11-04). Teammates' own news
 /// (who joined, who is captain) stays in their speech bubbles on the scene.
 ///
@@ -54,6 +55,8 @@ public struct NoticeBanner<Icon: View>: View {
                     detail
                         .typeStyle(TypeRamp.caption)
                         .foregroundStyle(ink.opacity(0.62))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .lineLimit(1)
