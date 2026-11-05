@@ -1,11 +1,12 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import AvatarArt
 import AvatarDomain
+import SportsUI
 import SwiftUI
 
 /// Display names for what the editor offers. The art names variants by folder (`bob`,
-/// `tuxedo`); people see these, from the String Catalog. A variant added to the art without a
-/// name here shows its folder name until one is added.
+/// `tuxedo`); people see these, from the uploaded `names.json` or else the String Catalog. A
+/// variant with neither shows its folder name.
 enum EditorNames {
     static func tab(_ tab: EditorTab) -> Text {
         switch tab {
@@ -33,8 +34,12 @@ enum EditorNames {
         return Text(LocalizedStringKey(key), bundle: .module)
     }
 
-    /// A face part's name goes by its slot too, since a mouth and a body are both `cat`.
+    /// A face part's name goes by its slot too, since a mouth and a body are both `cat`. An
+    /// uploaded name (`ArtNames`) stands in front of the catalog's.
     static func variant(_ variant: String, in slot: Slot) -> Text {
+        if let uploaded = PlaceholderCharacter.names().variant(variant, in: slot) {
+            return Text(verbatim: uploaded.localized)
+        }
         guard let key = faces["\(slot)/\(variant)"] ?? variants[variant] else { return Text(verbatim: variant) }
         return Text(LocalizedStringKey(key), bundle: .module)
     }
@@ -45,7 +50,7 @@ enum EditorNames {
         case "top": Text("上衣", bundle: .module)
         case "bottom": Text("下装", bundle: .module)
         case "shoes": Text("鞋子", bundle: .module)
-        case "hat": Text("帽子", bundle: .module)
+        case "hat": Text("头饰", bundle: .module)
         case "acc": Text("配饰", bundle: .module)
         default: Text(verbatim: slot.rawValue)
         }

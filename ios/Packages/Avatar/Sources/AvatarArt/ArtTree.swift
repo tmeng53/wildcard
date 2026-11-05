@@ -8,8 +8,9 @@ import Foundation
 /// anything draws exactly what it shipped with.
 public enum ArtTree {
     /// The rig this build draws. Downloaded art that needs a newer one is left out
-    /// (`rigVersion` in the catalog), so new rig parts never break an older build.
-    public static let rigVersion = 1
+    /// (`rigVersion` in the catalog), so new rig parts never break an older build. 2: the coaches'
+    /// rigs gained the parts their shared moves play (the whistle, its cord, the front left arm).
+    public static let rigVersion = 2
 
     /// Where the downloaded files stand, mirroring the tree's paths: Application Support's
     /// `Art/current`, swapped whole for a newer generation once all of it is downloaded.
@@ -44,7 +45,7 @@ public enum ArtTree {
     /// Whether `data` is art this build reads at `path` (`avatar/…`, `coaches/…`, `scenes/…`,
     /// `openings/…`, whose JSON this build doesn't read yet),
     /// read the way the screens will: SVG through the parser, each JSON file through its own
-    /// decoder (the rig, clips, tones, holds, `editor.json`, `kits.json`), a PNG by its signature.
+    /// decoder (the rig, clips, tones, holds, `editor.json`, `kits.json`, `names.json`), a PNG by its signature.
     /// A downloaded file that fails is left out, so its path keeps the bundled file.
     public static func reads(_ data: Data, at path: String) -> Bool {
         let name = path.split(separator: "/").last.map(String.init) ?? ""
@@ -57,13 +58,21 @@ public enum ArtTree {
         let parts = path.split(separator: "/").map(String.init)
         switch name {
         case "rig.json": return (try? Rig.decode(data)) != nil
-        case "editor.json": return parts == ["avatar", "editor.json"] && (try? EditorChoices.decode(data)) != nil
-        case "kits.json": return parts == ["avatar", "kits.json"] && (try? SportKits.decode(data)) != nil
+        case "editor.json", "kits.json", "names.json": return parts == ["avatar", name] && readsTopLevel(data, name)
         case "tones.json": return (try? Tones.decode(data)) != nil
         case "hold.json": return Figure.readsHold(data)
         default:
             let clipFolders: Set<String> = ["clips", "moves", "accents"]
             return parts.contains { clipFolders.contains($0) } && (try? Clip.decode(data)) != nil
+        }
+    }
+
+    /// The files that stand once, at the top of `avatar/`.
+    private static func readsTopLevel(_ data: Data, _ name: String) -> Bool {
+        switch name {
+        case "editor.json": (try? EditorChoices.decode(data)) != nil
+        case "kits.json": (try? SportKits.decode(data)) != nil
+        default: (try? ArtNames.decode(data)) != nil
         }
     }
 }

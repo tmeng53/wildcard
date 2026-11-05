@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "name": "pep-talk",
+  "duration": 2.4,
+  "loops": false,
+  "tracks": [
+    { "part": "armR", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.25, "v": -4, "ease": "easeOut" }, { "t": 0.33, "v": 17, "ease": "easeOut" }, { "t": 0.45, "v": 6, "ease": "easeIn" },
+      { "t": 0.73, "v": 17, "ease": "easeOut" }, { "t": 0.85, "v": 6, "ease": "easeIn" }, { "t": 1.13, "v": 17, "ease": "easeOut" }, { "t": 1.25, "v": 6, "ease": "easeIn" },
+      { "t": 1.5, "v": -6, "ease": "easeOut" }, { "t": 1.68, "v": 19, "ease": "backOut" }, { "t": 2, "v": 16 }, { "t": 2.35, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "armL", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.3, "v": 18, "ease": "easeOut" }, { "t": 0.85, "v": 30, "ease": "easeInOut" }, { "t": 1.5, "v": 14, "ease": "easeInOut" },
+      { "t": 1.68, "v": 34, "ease": "backOut" }, { "t": 2, "v": 30 }, { "t": 2.35, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "torso", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.3, "v": -4, "ease": "easeOut" }, { "t": 1.4, "v": -4 }, { "t": 1.68, "v": 3, "ease": "backOut" },
+      { "t": 2, "v": 2 }, { "t": 2.35, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "head", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.3, "v": 4, "ease": "easeOut" }, { "t": 0.35, "v": 6, "ease": "easeOut" }, { "t": 0.45, "v": -2, "ease": "easeIn" },
+      { "t": 0.75, "v": 6, "ease": "easeOut" }, { "t": 0.85, "v": -2, "ease": "easeIn" }, { "t": 1.15, "v": 6, "ease": "easeOut" }, { "t": 1.25, "v": -2, "ease": "easeIn" },
+      { "t": 1.5, "v": 4, "ease": "easeOut" }, { "t": 1.68, "v": -6, "ease": "backOut" }, { "t": 2, "v": -5 }, { "t": 2.35, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "head", "channel": "y", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.3, "v": 0 }, { "t": 0.35, "v": -1, "ease": "easeOut" }, { "t": 0.45, "v": 4, "ease": "easeIn" },
+      { "t": 0.75, "v": -1, "ease": "easeOut" }, { "t": 0.85, "v": 4, "ease": "easeIn" }, { "t": 1.15, "v": -1, "ease": "easeOut" }, { "t": 1.25, "v": 4, "ease": "easeIn" },
+      { "t": 1.5, "v": 0, "ease": "easeOut" } ] },
+    { "part": "root", "channel": "y", "keys": [
+      { "t": 0, "v": 0 }, { "t": 1.5, "v": 0 }, { "t": 1.58, "v": 3, "ease": "easeOut" }, { "t": 1.72, "v": -9, "ease": "easeOut" },
+      { "t": 1.88, "v": 0, "ease": "easeIn" }, { "t": 1.94, "v": 1.5, "ease": "easeOut" }, { "t": 2.02, "v": 0, "ease": "easeInOut" } ] },
+    { "part": "root", "channel": "scaleY", "keys": [
+      { "t": 0, "v": 1 }, { "t": 1.5, "v": 1 }, { "t": 1.58, "v": 0.94, "ease": "easeOut" }, { "t": 1.72, "v": 1.04, "ease": "easeOut" },
+      { "t": 1.88, "v": 1, "ease": "easeIn" }, { "t": 1.94, "v": 0.96, "ease": "easeOut" }, { "t": 2.04, "v": 1, "ease": "easeOut" } ] },
+    { "part": "blink", "channel": "opacity", "keys": [
+      { "t": 0, "v": 0 }, { "t": 1.66, "v": 0 }, { "t": 1.69, "v": 1, "ease": "linear" }, { "t": 1.9, "v": 1 },
+      { "t": 1.94, "v": 0, "ease": "linear" } ] },
+    { "part": "tail", "channel": "rotation", "keys": [
+      { "t": 0, "v": 0 }, { "t": 0.5, "v": 10, "ease": "easeInOut" }, { "t": 1, "v": -5, "ease": "easeInOut" }, { "t": 1.5, "v": 8, "ease": "easeInOut" },
+      { "t": 1.72, "v": 18, "ease": "backOut" }, { "t": 2.4, "v": 0, "ease": "easeInOut" } ] }
+  ]
+}

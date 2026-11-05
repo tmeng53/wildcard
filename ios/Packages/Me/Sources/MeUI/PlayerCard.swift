@@ -15,8 +15,11 @@ struct PlayerCard: View {
     let face: PlayerCardFace
     /// Wears a title (nil: the latest again); nil on a squadmate's card, which shows no 装备.
     var equip: ((String) -> Void)?
-    /// The colour of the 轻点翻面 line under the card: muted on a page, on-ink over a dim.
-    var hint: ColorRole = .fgMuted
+    /// The colour of the 轻点翻面 line under the card: muted on a page, on-ink over a dim; nil
+    /// leaves the line out (我, where tiles follow the card).
+    var hint: ColorRole? = .fgMuted
+    /// Spans the width it is given at the card's proportions (我), instead of its own 300 points.
+    var fillsWidth = false
     @State private var showsBack = false
     /// How far the card has turned on its vertical axis, in degrees: it turns edge-on, swaps sides
     /// out of sight and turns back.
@@ -47,10 +50,12 @@ struct PlayerCard: View {
             }
             .rotation3DEffect(.degrees(turn), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
             // It turns over rather than swipes, so it says so.
-            Text("轻点翻面", bundle: .module)
-                .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: hint, in: theme))
-                .accessibilityHidden(true)
+            if let hint {
+                Text("轻点翻面", bundle: .module)
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: hint, in: theme))
+                    .accessibilityHidden(true)
+            }
         }
         .sheet(item: $opened) { title in
             BadgeCard(
@@ -70,7 +75,9 @@ struct PlayerCard: View {
     private func sided(_ side: some View) -> some View {
         side
             .padding(Space.xs)
-            .frame(width: Self.size.width, height: Self.size.height)
+            .frame(width: fillsWidth ? nil : Self.size.width, height: fillsWidth ? nil : Self.size.height)
+            .frame(maxWidth: fillsWidth ? .infinity : nil)
+            .aspectRatio(Self.size.width / Self.size.height, contentMode: .fit)
             .background(Color(role: .bgInk, in: theme), in: Self.shape)
             .contentShape(Self.shape)
     }

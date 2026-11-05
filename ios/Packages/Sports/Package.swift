@@ -23,6 +23,9 @@ let package = Package(
         // The String Catalog read as a file; runs on Linux too.
         .testTarget(
             name: "SportsUITests",
-            dependencies: ["SportsUI", .product(name: "Contracts", package: "Contracts")]),
+            dependencies: [
+                "SportsUI", .product(name: "Contracts", package: "Contracts"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+            ]),
     ]
 )
