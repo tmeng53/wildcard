@@ -43,6 +43,12 @@ export interface Unlocks {
    * in their wardrobe; claiming it again keeps the first claim.
    */
   claim(member: MemberId, piece: PieceId): Promise<Claim>;
+  /**
+   * Claims what `member`'s saved look wears that is theirs to claim and isn't claimed yet, so a
+   * piece put on without 领取 (on a build from before it, or before a limited store needed it)
+   * stays in their wardrobe after its store closes. Ids that aren't such a piece are skipped.
+   */
+  keepWorn(member: MemberId, worn: readonly string[]): Promise<void>;
 }
 
 /** The rules, for admins. */
@@ -164,6 +170,16 @@ export function createUnlocks(deps: {
       const theirs = street.pieces.some(({ id, state }) => id === piece && state === 'owned');
       if (!theirs) throw new PieceNotUnlockedError(piece);
       return deps.store.claim(member, piece);
+    },
+
+    async keepWorn(member, worn) {
+      const wears = new Set(worn);
+      const { shelf: street } = await standing(member);
+      const claimed = new Set((await deps.store.claimsOf(member)).map(({ piece }) => piece));
+      const toKeep = street.pieces.filter(
+        ({ id, state }) => wears.has(id) && state === 'owned' && !claimed.has(id),
+      );
+      for (const { id } of toKeep) await deps.store.claim(member, id);
     },
 
     rules: () => deps.store.rules(),

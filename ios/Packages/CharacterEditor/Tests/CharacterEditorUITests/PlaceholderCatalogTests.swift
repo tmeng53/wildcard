@@ -135,6 +135,22 @@ private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", 
     }
 }
 
+/// A limited store's starter the server sends as the member's while it is out has come in, so it
+/// waits to be claimed, and a random look never puts it on until then.
+@Test func aLimitedStarterOutComesInAndWaitsToBeClaimed() throws {
+    let starters = try PlaceholderCharacter.editorChoices().wear.values.joined().filter { $0.store == "powder" }
+    let starter = try #require(starters.first).id
+    let stock = try stock(earned: ["warmup"], owned: [starter])
+    let arrived = Catalog.arrived(unlocks: [], stock: stock)
+    #expect(arrived == [starter])
+    let catalog = try Catalog.placeholder(stock: stock)
+    var generator = SystemRandomNumberGenerator()
+    for _ in 0..<40 {
+        let look = CharacterDraft.randomLook(from: catalog, using: &generator, leavingOut: arrived)
+        #expect(!look.variants.values.contains(starter))
+    }
+}
+
 /// A store the member unlocked opens on the street with its rack, and an unlocked prop joins
 /// the starters; the rest stay shut.
 @Test func unlocksOpenTheirStoresAndProps() throws {

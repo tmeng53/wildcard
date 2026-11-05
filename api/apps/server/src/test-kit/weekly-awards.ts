@@ -38,7 +38,14 @@ export const unusedCoachHiring = {
 export const unusedCoachActivity = { squad: unused, spoke: unused };
 
 /** What members unlocked, for an app whose test never reads it. */
-export const unusedUnlocks = { of: unused, standing: unused, claimsOf: unused, claim: unused };
+export const unusedUnlocks = {
+  of: unused,
+  standing: unused,
+  claimsOf: unused,
+  claim: unused,
+  // Every profile save keeps what the look wears; a test without unlocks has nothing to keep.
+  keepWorn: async () => {},
+};
 
 /** What coaches gave members, for an app whose test never reads it. */
 export const unusedGifts = { of: unused };

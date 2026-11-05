@@ -200,6 +200,12 @@ describe('unlocks', () => {
       [starter, 'owned'],
     ]);
     await switched.claim(me, PieceId.parse(starter));
+    // A member whose saved look wears the starter keeps it as claimed; ids that aren't a piece
+    // of theirs are skipped, and one who only saw it keeps nothing.
+    const wearer = await newMember();
+    const passerby = await newMember();
+    await switched.keepWorn(wearer, [starter, 'peach', board]);
+    expect((await switched.claimsOf(wearer)).map(({ piece }) => piece)).toStrictEqual([starter]);
 
     // Retired, the store leaves the street and its pieces are boxed for nobody, even one still
     // offered, so other tests count only the seeded ones.
@@ -221,6 +227,10 @@ describe('unlocks', () => {
       [board, 'owned'],
       [starter, 'owned'],
     ]);
+    const worn = await switched.standing(wearer);
+    expect(worn.shelf.pieces.find(({ id }) => id === starter)?.state).toBe('owned');
+    const seen = await switched.standing(passerby);
+    expect(seen.shelf.pieces.some(({ id }) => id === starter)).toBe(false);
   });
 
   it('refuses a store or piece that follows a switch nobody made', async () => {

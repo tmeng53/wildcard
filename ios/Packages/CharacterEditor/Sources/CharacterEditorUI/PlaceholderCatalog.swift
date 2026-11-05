@@ -64,7 +64,7 @@ extension Catalog {
     /// The pieces that came to the member and wait on 商店街 until claimed (领取): the ones they
     /// unlocked, and the ones the street holds as theirs without an unlock (a limited store's
     /// starters while it is open, or anything already claimed).
-    static func arrived(unlocks: [Unlock], stock: StreetStock?) -> Set<String> {
+    public static func arrived(unlocks: [Unlock], stock: StreetStock?) -> Set<String> {
         let unlocked = unlocks.filter { $0.kind == .piece }.map(\.id)
         let owned = (stock?.pieces ?? []).filter { $0.state == .owned }.map(\.id)
         return Set(unlocked).union(owned)

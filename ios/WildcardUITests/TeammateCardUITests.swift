@@ -60,6 +60,34 @@ final class TeammateCardUITests: XCTestCase {
         XCTAssertTrue(row.isHittable, "小队 isn't back under the card")
     }
 
+    func testTapsOffTheCardNeverReachWhatIsUnderIt() {
+        let app = launch(["-tab", "squad"])
+        let row = app.buttons.matching(identifier: "squad.member.card").firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: Self.wait), "no teammate row opens a card")
+        let feedTab = app.buttons["tab.feed"]
+        XCTAssertTrue(feedTab.waitForExistence(timeout: Self.wait), "no 动态 tab")
+        let card = app.buttons["me.card"]
+        let window = app.windows.firstMatch.frame
+
+        // A tap on the status bar's strip, over the dim, closes the card.
+        row.tap()
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "the teammate's card didn't open")
+        Thread.sleep(forTimeInterval: 0.6)
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.03)).tap()
+        XCTAssertTrue(card.waitForNonExistence(timeout: 5), "a tap on the status bar's strip didn't close the card")
+
+        // A tap where the tab bar is closes it too, and never switches the tab under the dim.
+        row.tap()
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "the teammate's card didn't open again")
+        Thread.sleep(forTimeInterval: 0.6)
+        let tab = feedTab.frame
+        app.coordinate(withNormalizedOffset: CGVector(dx: tab.midX / window.width, dy: tab.midY / window.height))
+            .tap()
+        XCTAssertTrue(card.waitForNonExistence(timeout: 5), "a tap on the tab bar didn't close the card")
+        XCTAssertFalse(feedTab.isSelected, "a tap meant for the dim switched to 动态 under the card")
+        XCTAssertTrue(row.isHittable, "小队 isn't back under the card")
+    }
+
     private func launch(_ extra: [String]) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()

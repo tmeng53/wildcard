@@ -22,27 +22,31 @@ private struct CardPopup<Card: View>: ViewModifier {
 
     func body(content: Content) -> some View {
         content.overlay {
-            ZStack {
-                if isPresented {
-                    Color(role: .bgInk, in: theme)
-                        .opacity(Scrim.dimOpacity)
-                        .contentShape(Rectangle())
-                        .onTapGesture { isPresented = false }
-                        .accessibilityElement()
-                        .accessibilityAddTraits(.isButton)
-                        .accessibilityLabel(Text("关闭", bundle: .module))
-                        .accessibilityIdentifier("cardPopup.close")
-                        .transition(.opacity)
-                    card()
-                        .transition(reduceMotion ? .opacity : .scale(scale: 0.92).combined(with: .opacity))
-                        .accessibilityAddTraits(.isModal)
-                        .accessibilityAction(.escape) { isPresented = false }
+            // Read before the dim leaves the safe area, so the card stays centred inside it.
+            GeometryReader { proxy in
+                ZStack {
+                    if isPresented {
+                        Color(role: .bgInk, in: theme)
+                            .opacity(Scrim.dimOpacity)
+                            .contentShape(Rectangle())
+                            .onTapGesture { isPresented = false }
+                            .accessibilityElement()
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityLabel(Text("关闭", bundle: .module))
+                            .accessibilityIdentifier("cardPopup.close")
+                            .transition(.opacity)
+                        card()
+                            .padding(proxy.safeAreaInsets)
+                            .transition(reduceMotion ? .opacity : .scale(scale: 0.92).combined(with: .opacity))
+                            .accessibilityAddTraits(.isModal)
+                            .accessibilityAction(.escape) { isPresented = false }
+                    }
                 }
+                // The dim spans the whole window, status bar and tab bar included, so a tap anywhere
+                // off the card closes it and nothing under it can be tapped while it is open.
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea()
             }
-            // The dim spans the whole window, status bar and tab bar included, so a tap anywhere
-            // off the card closes it and nothing under it can be tapped while it is open.
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .ignoresSafeArea()
             .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: isPresented)
         }
     }
