@@ -36,7 +36,10 @@ export interface Comment {
 /** How many people one comment may @ (Tracy, 2026-11-05). */
 export const MAX_MENTIONS = 8;
 
-type Said = Pick<Comment, 'member' | 'text' | 'replyTo' | 'replyToCoach' | 'mentions' | 'mentionsCoach'>;
+type Said = Pick<
+  Comment,
+  'member' | 'text' | 'replyTo' | 'replyToCoach' | 'mentions' | 'mentionsCoach'
+>;
 
 /** Whether two writes of one comment id say the same thing, so the second is a retry. */
 export function sameComment(a: Said, b: Said): boolean {

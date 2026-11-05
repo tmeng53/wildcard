@@ -40,7 +40,9 @@ export interface WeekComment {
 }
 
 /** The coach a comment talks to, by replying to it or @-ing it, if any. */
-export function saidTo(comment: Pick<WeekComment, 'toCoach' | 'mentionsCoach'>): string | undefined {
+export function saidTo(
+  comment: Pick<WeekComment, 'toCoach' | 'mentionsCoach'>,
+): string | undefined {
   return comment.toCoach ?? comment.mentionsCoach;
 }
 

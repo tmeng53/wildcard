@@ -11,13 +11,7 @@ import { instructionsOf, taskOf, type CoachThread, type DayTalk } from '../domai
 import type { CoachEmoji } from '../domain/reply.js';
 import { SquadId, type CoachSettings } from '../domain/settings.js';
 import { factsText } from '../domain/member-facts.js';
-import {
-  consentedOnly,
-  rosterOf,
-  saidTo,
-  weekText,
-  type SquadWeek,
-} from '../domain/squad-week.js';
+import { consentedOnly, rosterOf, saidTo, weekText, type SquadWeek } from '../domain/squad-week.js';
 import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
 import type {
   AiConsented,

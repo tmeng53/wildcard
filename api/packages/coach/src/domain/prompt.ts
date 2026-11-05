@@ -1,13 +1,7 @@
 import type { Coach } from './coach.js';
 import { REPLY_LIMIT } from './reply.js';
 import type { CoachSettings } from './settings.js';
-import {
-  checkInLine,
-  rosterOf,
-  saidTo,
-  type SquadWeek,
-  type WeekCheckIn,
-} from './squad-week.js';
+import { checkInLine, rosterOf, saidTo, type SquadWeek, type WeekCheckIn } from './squad-week.js';
 import type { WakeReason } from './wake.js';
 
 // What the model reads: the standing instructions (the rules every coach follows, this coach's

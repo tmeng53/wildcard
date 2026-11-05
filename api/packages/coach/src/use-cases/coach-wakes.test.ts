@@ -574,7 +574,10 @@ describe('the coach', () => {
         ...fixture.week,
         checkIns: fixture.week.checkIns.map((each) => ({ ...each, comments: [asked] })),
       };
-      const coach = wakes({ ...fixture, week: withAsk }, { agent, answered, at: new Date(now.getTime() + 2 * 60_000) });
+      const coach = wakes(
+        { ...fixture, week: withAsk },
+        { agent, answered, at: new Date(now.getTime() + 2 * 60_000) },
+      );
       // Not in a squad that isn't the post's, nor for another coach.
       await coach.answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [] });
       await coach.answer({ checkIn, comment: asked.id, coach: 'maotou', squads: [squad] });
@@ -586,7 +589,14 @@ describe('the coach', () => {
         '你们在下面的对话：\n- 队员2：「@小混 下雨还练吗」（要回的这句）',
       );
       expect(told).toStrictEqual([
-        { squad, checkIn, comment: asked.id, commenter: leo, coach: 'xiaohun', text: '下雨就练核心' },
+        {
+          squad,
+          checkIn,
+          comment: asked.id,
+          commenter: leo,
+          coach: 'xiaohun',
+          text: '下雨就练核心',
+        },
       ]);
     });
   });

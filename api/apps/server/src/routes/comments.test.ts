@@ -551,10 +551,11 @@ describe('/check-ins/{checkInId}/comments', () => {
     expect(answersAsked.filter(({ checkIn: at }) => at === run)).toStrictEqual([
       { checkIn: run, comment: id, coach: 'xiaohun', squads: [squad] },
     ]);
-    const keys = sentTo(tracy.phone, ann.phone, bo.phone).map((pushes) =>
-      pushes.map((each) => (each as { aps: { alert: { 'loc-key': string } } }).aps.alert['loc-key']),
-    );
-    expect(keys).toStrictEqual([['push.comment'], [], ['push.comment.mention']]);
+    expect(sentTo(tracy.phone, ann.phone, bo.phone)).toMatchObject([
+      [{ aps: { alert: { 'loc-key': 'push.comment' } } }],
+      [],
+      [{ aps: { alert: { 'loc-key': 'push.comment.mention' } } }],
+    ]);
     expect(await noticesOf(bo.token)).toMatchObject([
       {
         kind: 'comment',

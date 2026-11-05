@@ -64,6 +64,42 @@ final class CoachFeedUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.8)
         keepScreenshot(named: "66-coach-post-page")
         replyToTheCoach(row, under: comments, in: app)
+        mentionTheSquad(under: comments, in: app)
+    }
+
+    /// @ in a comment: typing `@` opens the list with 毛头 first, a pick puts 「@名字」 in, the
+    /// 「@毛头」 button adds the coach, and 毛头 answers the @ as he answers a reply.
+    private func mentionTheSquad(under comments: XCUIElementQuery, in app: XCUIApplication) {
+        let window = app.windows.firstMatch.frame
+        let box = element("post.field", in: app)
+        box.tap()
+        box.typeText("@")
+        let coach = element("post.mention.0", in: app)
+        XCTAssertTrue(coach.waitForExistence(timeout: Self.wait), "typing @ didn't open the list")
+        XCTAssertTrue(coach.label.contains("毛头"), "the coach isn't first in the list: \(coach.label)")
+        let mate = element("post.mention.1", in: app)
+        XCTAssertTrue(mate.exists, "the list has no teammate")
+        let composer = element("post.composer", in: app)
+        XCTAssertTrue(window.contains(coach.frame), "the list is cut off: \(coach.frame)")
+        XCTAssertLessThanOrEqual(mate.frame.maxY, composer.frame.minY, "the list covers the box")
+        Thread.sleep(forTimeInterval: 0.8)
+        keepScreenshot(named: "141-post-mention-list")
+        mate.tap()
+        box.typeText("周六爬山")
+        app.buttons["post.mentionCoach"].tap()
+        XCTAssertTrue(
+            (box.value as? String)?.contains("@毛头") == true, "「@毛头」 didn't go in: \(String(describing: box.value))")
+        Thread.sleep(forTimeInterval: 0.8)
+        keepScreenshot(named: "142-post-mention-typed")
+        let answers = app.descendants(matching: .any).matching(identifier: "post.coachAnswer")
+        let answered = answers.count
+        app.buttons["post.send"].tap()
+        let sent = comments.matching(NSPredicate(format: "label CONTAINS '周六爬山'")).firstMatch
+        XCTAssertTrue(sent.waitForExistence(timeout: Self.wait), "the comment with @ isn't on the page")
+        XCTAssertTrue(
+            answers.element(boundBy: answered).waitForExistence(timeout: Self.wait), "毛头 didn't answer the @")
+        Thread.sleep(forTimeInterval: 0.8)
+        keepScreenshot(named: "143-post-mention-answered")
     }
 
     /// Replying to 毛头 is replying to a teammate: tap his word, write, send, and he answers.
