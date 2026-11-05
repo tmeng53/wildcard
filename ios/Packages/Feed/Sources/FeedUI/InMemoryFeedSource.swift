@@ -30,6 +30,11 @@ public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
             answers: coach?.answers.filter { checkIns.contains($0.checkIn) } ?? [])
     }
 
+    /// The sample squad's coach: the one that wrote its 战术板 line or a reply.
+    public func hiredCoach(in squad: SquadID) async throws(FeedError) -> CoachSpeaker? {
+        coach?.note?.coach ?? coach?.replies.first?.coach
+    }
+
     public func posts(in squad: SquadID, from first: LocalDay, through last: LocalDay) async throws(FeedError)
         -> [FeedPost]
     {
@@ -54,22 +59,31 @@ public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
         return post
     }
 
-    public func comment(_ text: CommentText, id: CommentID, replyingTo target: ReplyTarget?, on checkIn: CheckInID)
+    public func comment(
+        _ text: CommentText, id: CommentID, replyingTo target: ReplyTarget?, mentioning mentions: Mentions,
+        on checkIn: CheckInID
+    )
         async throws(FeedError) -> Comment
     {
         guard let index = posts.firstIndex(where: { $0.id == checkIn }) else { throw .postGone }
         if let saved = posts[index].comments.first(where: { $0.id == id }) { return saved }
-        let comment = Comment(id: id, member: viewer, text: text, replyTo: target, commentedAt: Timestamp(Date()))
+        let comment = Comment(
+            id: id, member: viewer, text: text, replyTo: target, mentions: mentions, commentedAt: Timestamp(Date()))
         let post = posts[index]
         posts[index] = FeedPost(checkIn: post.checkIn, reactions: post.reactions, comments: post.comments + [comment])
-        if case .coach(let id) = target { answer(comment, on: checkIn, by: id) }
+        if case .coach(let id) = target {
+            answer(comment, on: checkIn, by: id)
+        } else if let id = mentions.coach {
+            answer(comment, on: checkIn, by: id)
+        }
         return comment
     }
 
-    /// The sample coach answers a reply to it at once, as the API has it answer before the reply
-    /// is saved.
+    /// The sample coach answers a reply to it, or an @ of it, at once, as the API has it answer
+    /// before the comment is saved.
     private func answer(_ comment: Comment, on checkIn: CheckInID, by id: CoachID) {
-        guard let coach, let speaker = coach.replies.first(where: { $0.coach.id == id })?.coach else { return }
+        let speakers = (coach?.replies.map(\.coach) ?? []) + [coach?.note?.coach].compactMap(\.self)
+        guard let coach, let speaker = speakers.first(where: { $0.id == id }) else { return }
         let answer = CoachAnswer(
             checkIn: checkIn, comment: comment.id, coach: speaker, text: Self.localized("收到，下次带你一起练"),
             writtenAt: Date())

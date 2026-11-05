@@ -8,6 +8,8 @@ public protocol CoachSource: Sendable {
     /// The squad's newest 战术板 line and the coach's replies to `checkIns`, up to
     /// `FeedCoach.askLimit` of them.
     func activity(in squad: SquadID, about checkIns: [CheckInID]) async throws(FeedError) -> CoachActivity
+    /// The coach the squad has hired now, which members may @; nil while it has none.
+    func hiredCoach(in squad: SquadID) async throws(FeedError) -> CoachSpeaker?
 }
 
 /// What the squad's coach said on 动态: its 战术板 line, at the top of today while its day lasts,
@@ -18,6 +20,9 @@ public protocol CoachSource: Sendable {
 public final class FeedCoach {
     /// The newest line the server sent, whatever its day.
     public private(set) var note: CoachNote?
+    /// The coach the squad has hired now, first in the @ list; nil while it has none (or before
+    /// the first read).
+    public private(set) var hired: CoachSpeaker?
     private var replies: [CheckInID: CoachReply] = [:]
     private var answers: [CheckInID: [CoachAnswer]] = [:]
     /// The posts already asked about, so the week before asks only for its own.
@@ -55,10 +60,14 @@ public final class FeedCoach {
         return all.first { $0.id == coach }
     }
 
-    /// Reads the line again and the replies to `posts`, newest first: the first `askLimit`.
+    /// Reads the line again, the squad's coach now and the replies to `posts`, newest first: the
+    /// first `askLimit`.
     public func load(about posts: [CheckInID]) async {
         let asking = Array(posts.prefix(Self.askLimit))
+        async let hiring = hiredNow()
         guard let activity = try? await source.activity(in: squad, about: asking) else { return }
+        // Offline, the coach read before stays.
+        if case .some(let read) = await hiring { hired = read }
         note = activity.note
         for reply in activity.replies where asking.contains(reply.checkIn) {
             replies[reply.checkIn] = reply
@@ -68,6 +77,15 @@ public final class FeedCoach {
             answers[post] = activity.answers.filter { $0.checkIn == post }
         }
         asked.formUnion(asking)
+    }
+
+    /// The squad's coach now, `.some(nil)` for none, or nil when it couldn't be read.
+    private func hiredNow() async -> CoachSpeaker?? {
+        do throws(FeedError) {
+            return .some(try await source.hiredCoach(in: squad))
+        } catch {
+            return nil
+        }
     }
 
     /// Reads the replies to those of `posts` not asked about yet: the week before, once shown.

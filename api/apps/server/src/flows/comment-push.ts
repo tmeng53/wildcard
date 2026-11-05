@@ -29,11 +29,16 @@ export interface NewComment {
   readonly author: string;
   /** Whom it replies to, when it does. */
   readonly replyTo?: string | undefined;
+  /** Whom it @s, in the order written. */
+  readonly mentions?: readonly string[] | undefined;
 }
 
+/** Why a member hears of a comment: it is on their post, replies to them, or @s them. */
+export type CommentNews = 'comment' | 'reply' | 'mention';
+
 /**
- * Tells the check-in's author about a new comment on it, and the member it replies to about the
- * reply, never the commenter: in their 通知 (the bell), and by one push per comment unless they
+ * Tells the check-in's author about a new comment on it, the member it replies to about the
+ * reply and each member it @s about the @, never the commenter: in their 通知 (the bell), and by one push per comment unless they
  * turned off push (the app's one 通知 switch, `dailyProgress`), which only stops the phone. Never
  * throws, and waits at most `PUSH_WAIT_MS`: a comment is saved whether or not anyone hears of it.
  */
@@ -56,9 +61,9 @@ async function send(deps: CommentPushDependencies, comment: NewComment): Promise
     const nickname = profiles.get(ProfileMember.parse(comment.commenter))?.character?.nickname;
     // A member without a name yet is still mid-sign-up, and can't have commented; say nothing.
     if (nickname === undefined) return;
-    const notifications = told.map(({ member, reply }) => ({
+    const notifications = told.map(({ member, news }) => ({
       member,
-      notification: commentNotification({ ...comment, nickname, reply }),
+      notification: commentNotification({ ...comment, nickname, news }),
     }));
     await tellNotices(deps, { ...comment, notifications });
     await Promise.all(
@@ -107,44 +112,53 @@ async function tellNotices(
 }
 
 /**
- * Who hears of the comment: the author (as a reply when it replies to them) and the member it
- * replies to, each once, never the commenter.
+ * Who hears of the comment, each once and never the commenter: the member it replies to, then
+ * those it @s, then the author; each by the first reason that holds (a reply to the author
+ * tells them of the reply).
  */
 export function recipients({
   commenter,
   author,
   replyTo,
-}: Pick<NewComment, 'commenter' | 'author' | 'replyTo'>): {
+  mentions = [],
+}: Pick<NewComment, 'commenter' | 'author' | 'replyTo' | 'mentions'>): {
   readonly member: string;
-  readonly reply: boolean;
+  readonly news: CommentNews;
 }[] {
-  const told = new Map<string, boolean>();
-  if (replyTo !== undefined) told.set(replyTo, true);
-  if (!told.has(author)) told.set(author, false);
+  const told = new Map<string, CommentNews>();
+  if (replyTo !== undefined) told.set(replyTo, 'reply');
+  for (const member of mentions) if (!told.has(member)) told.set(member, 'mention');
+  if (!told.has(author)) told.set(author, 'comment');
   told.delete(commenter);
-  return [...told].map(([member, reply]) => ({ member, reply }));
+  return [...told].map(([member, news]) => ({ member, news }));
 }
+
+const NEWS_KEY = {
+  comment: 'push.comment',
+  reply: 'push.comment.reply',
+  mention: 'push.comment.mention',
+} as const;
 
 /**
  * The push about a comment: a String Catalog key filled with the commenter's nickname and the
- * comment's own words, 「小美评论了你：加油」, or 「小美回复了你：加油」
- * for a reply to them. A tap opens the post's page.
+ * comment's own words, 「小美评论了你：加油」, 「小美回复了你：加油」 for a reply to them or
+ * 「小美@了你：加油」 for an @ of them. A tap opens the post's page.
  */
 export function commentNotification({
   checkIn,
   comment,
   nickname,
   text,
-  reply,
+  news,
 }: {
   readonly checkIn: string;
   readonly comment: string;
   readonly nickname: string;
   readonly text: string;
-  readonly reply: boolean;
+  readonly news: CommentNews;
 }): PushNotification {
   return {
-    alert: pushAlert(reply ? 'push.comment.reply' : 'push.comment', [nickname, text]),
+    alert: pushAlert(NEWS_KEY[news], [nickname, text]),
     category: 'comment',
     thread: `comments-${checkIn}`,
     collapseId: `comment-${comment}`,

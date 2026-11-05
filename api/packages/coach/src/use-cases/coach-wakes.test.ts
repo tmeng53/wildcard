@@ -207,17 +207,28 @@ async function commentOn(
     text,
     at,
     toCoach,
+    mentionsCoach,
   }: {
     readonly member: string;
     readonly text: string;
     readonly at: Date;
     readonly toCoach?: string;
+    readonly mentionsCoach?: string;
   },
 ) {
   const id = randomUUID();
-  await sql`insert into public.check_in_comments (id, check_in_id, member_id, text, reply_to_coach, commented_at)
-    values (${id}, ${checkIn}, ${member}, ${text}, ${toCoach ?? null}, ${at})`.execute(trx);
-  return { id, member, text, at, ...(toCoach === undefined ? {} : { toCoach }) };
+  await sql`insert into public.check_in_comments (id, check_in_id, member_id, text, reply_to_coach, mentions_coach, commented_at)
+    values (${id}, ${checkIn}, ${member}, ${text}, ${toCoach ?? null}, ${mentionsCoach ?? null}, ${at})`.execute(
+    trx,
+  );
+  return {
+    id,
+    member,
+    text,
+    at,
+    ...(toCoach === undefined ? {} : { toCoach }),
+    ...(mentionsCoach === undefined ? {} : { mentionsCoach }),
+  };
 }
 
 describe('the coach', () => {
@@ -635,6 +646,54 @@ describe('the coach', () => {
     });
   });
 
+  it('answers an @ of it at once, even where it said nothing yet, and the job catches a missed one', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, leo, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('要回的这句') ? [{ tool: 'answer', input: { text: '下雨就练核心' } }] : [],
+      );
+      const told: Parameters<CoachAnswered>[0][] = [];
+      const answered: CoachAnswered = (answer) => {
+        told.push(answer);
+        return Promise.resolve();
+      };
+      const asked = await commentOn(fixture, {
+        member: leo,
+        text: '@小混 下雨还练吗',
+        at: new Date(now.getTime() + 60_000),
+        mentionsCoach: 'xiaohun',
+      });
+      const withAsk: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, comments: [asked] })),
+      };
+      const coach = wakes(
+        { ...fixture, week: withAsk },
+        { agent, answered, at: new Date(now.getTime() + 2 * 60_000) },
+      );
+      // Not in a squad that isn't the post's, nor for another coach.
+      await coach.answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [] });
+      await coach.answer({ checkIn, comment: asked.id, coach: 'maotou', squads: [squad] });
+      expect(runs).toHaveLength(0);
+      await coach.answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
+      const answering = runs.find(({ task }) => task.includes('要回的这句'));
+      expect(answering?.task).toContain('有人在评论里 @ 你。');
+      expect(answering?.task).toContain(
+        '你们在下面的对话：\n- 队员2：「@小混 下雨还练吗」（要回的这句）',
+      );
+      expect(told).toStrictEqual([
+        {
+          squad,
+          checkIn,
+          comment: asked.id,
+          commenter: leo,
+          coach: 'xiaohun',
+          text: '下雨就练核心',
+        },
+      ]);
+    });
+  });
+
   it('answers each reply to it at once, with the talk so far, and tells who wrote it', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, mia, leo, checkIn } = fixture;
@@ -669,6 +728,7 @@ describe('the coach', () => {
         checkIn,
         comment: early.id,
         coach: 'xiaohun',
+        squads: [fixture.squad],
       });
       expect(runs).toHaveLength(0);
       await sql`delete from public.check_in_comments where id = ${early.id}`.execute(trx);
@@ -689,12 +749,14 @@ describe('the coach', () => {
         checkIn,
         comment: first.id,
         coach: 'xiaohun',
+        squads: [fixture.squad],
       });
       // Another coach, or one the squad didn't hire, has nothing to answer.
       await wakes({ ...fixture, week: withFirst }, { agent, answered, at: later }).answer({
         checkIn,
         comment: first.id,
         coach: 'maotou',
+        squads: [fixture.squad],
       });
       // Nor one in a squad the writer isn't in, which shares the check-in with theirs.
       const ran = runs.length;
@@ -713,6 +775,7 @@ describe('the coach', () => {
         checkIn,
         comment: outside.id,
         coach: 'xiaohun',
+        squads: [fixture.squad],
       });
       expect(runs).toHaveLength(ran);
       await sql`delete from public.check_in_comments where id = ${outside.id}`.execute(trx);
@@ -730,9 +793,9 @@ describe('the coach', () => {
         { ...fixture, week: withBoth },
         { agent, answered, at: new Date(now.getTime() + 4 * 60_000) },
       );
-      await coach.answer({ checkIn, comment: second.id, coach: 'xiaohun' });
+      await coach.answer({ checkIn, comment: second.id, coach: 'xiaohun', squads: [squad] });
       // Answered once: the next run, or the same reply again, finds it answered.
-      await coach.answer({ checkIn, comment: second.id, coach: 'xiaohun' });
+      await coach.answer({ checkIn, comment: second.id, coach: 'xiaohun', squads: [squad] });
       await coach.run();
 
       // The check-in's wake, the day's, then one for each reply.

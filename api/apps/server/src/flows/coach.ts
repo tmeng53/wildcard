@@ -69,12 +69,13 @@ export function coachSquadWeek(deps: {
         photos: photosOf(record).map(({ path }) => path),
         reactions: week.reactions.get(record.id)?.length ?? 0,
         comments: (week.comments.get(record.id) ?? []).map(
-          ({ id, member, text, commentedAt, replyToCoach }) => ({
+          ({ id, member, text, commentedAt, replyToCoach, mentionsCoach }) => ({
             id,
             member,
             text,
             at: commentedAt,
             ...(replyToCoach === undefined ? {} : { toCoach: replyToCoach }),
+            ...(mentionsCoach === undefined ? {} : { mentionsCoach }),
           }),
         ),
       }));

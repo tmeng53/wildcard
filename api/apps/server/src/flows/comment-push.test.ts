@@ -14,19 +14,37 @@ const [writer, author, other] = [
 describe('who hears of a comment', () => {
   it('is the author, and the member it replies to as a reply, never the writer', () => {
     expect(recipients({ commenter: writer, author })).toStrictEqual([
-      { member: author, reply: false },
+      { member: author, news: 'comment' },
     ]);
     expect(recipients({ commenter: writer, author, replyTo: other })).toStrictEqual([
-      { member: other, reply: true },
-      { member: author, reply: false },
+      { member: other, news: 'reply' },
+      { member: author, news: 'comment' },
     ]);
     expect(recipients({ commenter: writer, author, replyTo: author })).toStrictEqual([
-      { member: author, reply: true },
+      { member: author, news: 'reply' },
     ]);
     expect(recipients({ commenter: author, author, replyTo: other })).toStrictEqual([
-      { member: other, reply: true },
+      { member: other, news: 'reply' },
     ]);
     expect(recipients({ commenter: author, author })).toStrictEqual([]);
+  });
+
+  it('tells each member it @s of the @, once, unless it replies to them', () => {
+    const fourth = '00000000-0000-4000-8000-00000000000d';
+    expect(
+      recipients({ commenter: writer, author, mentions: [other, author, fourth, writer] }),
+    ).toStrictEqual([
+      { member: other, news: 'mention' },
+      { member: author, news: 'mention' },
+      { member: fourth, news: 'mention' },
+    ]);
+    expect(
+      recipients({ commenter: writer, author, replyTo: other, mentions: [other, fourth] }),
+    ).toStrictEqual([
+      { member: other, news: 'reply' },
+      { member: fourth, news: 'mention' },
+      { member: author, news: 'comment' },
+    ]);
   });
 });
 

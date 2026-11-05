@@ -224,12 +224,11 @@ public struct PostDetailView: View {
 
     /// 回复 Mia：the words, with 回复 and the name in grey.
     private func words(of comment: Comment) -> Text {
-        guard let recipient = comment.replyTo.map({ model.displayName(of: $0) }) else {
-            return Text(verbatim: comment.text.text)
-        }
+        let words = Text(model.words(of: comment))
+        guard let recipient = comment.replyTo.map({ model.displayName(of: $0) }) else { return words }
         let reply = Text("回复 \(recipient)：", bundle: .module)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
-        return Text("\(reply)\(comment.text.text)", bundle: .module)
+        return Text("\(reply)\(words)", bundle: .module)
     }
 
     /// The post was deleted, or the member can't see it any more.

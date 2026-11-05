@@ -291,6 +291,13 @@ const checkIns = createCheckIns({
       checkIn,
       coach,
     }),
+  coachHired: async ({ squads: through, coach }) => {
+    const hiring = createPostgresCoachHiring(db);
+    for (const squad of through) {
+      if ((await hiring.coachOf(CoachSquadId.parse(squad)))?.coach === coach) return true;
+    }
+    return false;
+  },
   plans: createPostgresWeeklyPlanStore(db),
   photos,
   calendarOf: memberCalendar(members),

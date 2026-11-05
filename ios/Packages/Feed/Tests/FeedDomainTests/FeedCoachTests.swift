@@ -7,6 +7,7 @@ import Testing
 private actor FakeCoach: CoachSource {
     var activity: CoachActivity
     var failure: FeedError?
+    var hired: CoachSpeaker?
     private(set) var asked: [[CheckInID]] = []
 
     init(_ activity: CoachActivity) { self.activity = activity }
@@ -20,6 +21,13 @@ private actor FakeCoach: CoachSource {
         return CoachActivity(
             note: activity.note, replies: activity.replies.filter { checkIns.contains($0.checkIn) },
             answers: activity.answers.filter { checkIns.contains($0.checkIn) })
+    }
+
+    func hire(_ coach: CoachSpeaker?) { hired = coach }
+
+    func hiredCoach(in squad: SquadID) async throws(FeedError) -> CoachSpeaker? {
+        if let failure { throw failure }
+        return hired
     }
 }
 
@@ -114,4 +122,21 @@ private let note = CoachNote(day: day("2026-10-20"), text: "今天谁先动，�
     await source.set(CoachActivity(note: nil, replies: [reply(1, "稳", nil)]))
     await coach.load(about: [checkInID(1)])
     #expect(coach.answers(on: checkInID(1)).isEmpty)
+}
+
+@MainActor @Test func knowsTheSquadsCoachNowAndKeepsItOffline() async {
+    let source = FakeCoach(CoachActivity(note: nil, replies: []))
+    let coach = FeedCoach(source: source, squad: squad) { sevenAM }
+    await coach.load(about: [])
+    #expect(coach.hired == nil)
+    await source.hire(maotou)
+    await coach.load(about: [])
+    #expect(coach.hired == maotou)
+    await source.fail(with: .notSent)
+    await coach.load(about: [])
+    #expect(coach.hired == maotou)
+    await source.fail(with: nil)
+    await source.hire(nil)
+    await coach.load(about: [])
+    #expect(coach.hired == nil)
 }
