@@ -43,6 +43,13 @@ extension LocalDay {
         return max(days / 7, 0) + 1
     }
 
+    /// This day counted from `first` as 1, as in 「带队 1 天」 on the day a coach was hired. A day
+    /// before `first` counts 1 too.
+    public func dayNumber(since first: LocalDay) -> Int {
+        let days = Self.utc.dateComponents([.day], from: first.midnight, to: midnight).day ?? 0
+        return max(days, 0) + 1
+    }
+
     /// The day's start in UTC, where the calendar arithmetic above runs.
     private var midnight: Date {
         guard let date = Self.utc.date(from: DateComponents(year: year, month: month, day: day)) else {

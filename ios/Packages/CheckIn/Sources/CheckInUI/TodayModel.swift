@@ -143,7 +143,7 @@ public final class TodayModel {
     /// Opens a member's player card with their today over it, from a tap on them on the scene
     /// (me too); the app sets it.
     @ObservationIgnored public var openTeammate: (MemberID) -> Void = { _ in }
-    /// Opens the squad's coach's 简历, from a tap on it on the sideline; the app sets it.
+    /// Opens the squad's coach's card, from a tap on it on the sideline; the app sets it.
     @ObservationIgnored public var openCoach: () -> Void = {}
 
     /// The squad dropping onto a newly picked scene, until everyone settles (`TodayModel+DropIn.swift`).
