@@ -173,20 +173,20 @@ public final class TodayStore {
 
     // MARK: - Posting
 
-    /// Posts a check-in, shared to `squads` (every squad the member is in when left out; none
-    /// keeps it to the member), for `chosen`, today or one of the `backfillDays` before it
+    /// Posts a check-in, shared to the member's squad unless `shared` is false (which keeps it
+    /// to the member), for `chosen`, today or one of the `backfillDays` before it
     /// (补打卡; today when left out): saved by the server now or, offline, later. Today's post
     /// counts on the home at once; a past day's once the server has it and the home is read again. Throws when it can never be saved: a 请假条 on a day with a 练了, a day
     /// out of reach, or a refusal from the server.
     @discardableResult
-    public func post(_ draft: CheckInDraft, sharedTo squads: [SquadID]? = nil, on chosen: LocalDay? = nil)
+    public func post(_ draft: CheckInDraft, shared: Bool = true, on chosen: LocalDay? = nil)
         async throws(CheckInError) -> PostOutcome
     {
         if let chosen, !postableDays.contains(chosen) { throw .refused }
         try await check(draft, on: chosen)
         guard let home, let day else { throw .notSent }
         let audience: Audience
-        do { audience = try Audience(squads ?? home.squads.map(\.id)) } catch { throw .refused }
+        do { audience = try Audience(shared ? [home.squad.id] : []) } catch { throw .refused }
         let post = PendingCheckIn(
             id: CheckInID(newID()), member: home.member, day: chosen ?? day, postedDay: day,
             createdAt: Timestamp(now()), audience: audience, draft: draft)

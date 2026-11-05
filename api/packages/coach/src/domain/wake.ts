@@ -1,5 +1,5 @@
 import type { CoachSettings, SquadId } from './settings.js';
-import type { SquadWeek } from './squad-week.js';
+import { saidTo, type SquadWeek } from './squad-week.js';
 
 // When a coach wakes: for each check-in shared to its squad, to learn from it, for each reply a
 // member writes to it under a check-in, to answer, and once a day for the squad's 战术板 line.
@@ -81,7 +81,7 @@ export function wakesDue({
     .map(({ id }) => ({ squad, reason: { kind: 'checkIn', checkIn: id } }));
   for (const checkIn of week.checkIns) {
     for (const comment of checkIn.comments) {
-      if (comment.toCoach === undefined) continue;
+      if (saidTo(comment) === undefined) continue;
       if (comment.at.getTime() <= since || comment.at > now) continue;
       wakes.push({ squad, reason: { kind: 'comment', checkIn: checkIn.id, comment: comment.id } });
     }

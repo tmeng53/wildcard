@@ -92,6 +92,15 @@ export type CoachSpoke = (input: {
   readonly coach: string;
 }) => Promise<boolean>;
 
+/**
+ * Whether one of these squads, the squads a commenter sees a check-in through, has `coach` (a
+ * coach's id) hired now, so they may @ it. The coach module keeps that.
+ */
+export type CoachHired = (input: {
+  readonly squads: readonly SquadId[];
+  readonly coach: string;
+}) => Promise<boolean>;
+
 /** The sports list. The sports module keeps it; check-ins only ask whether a sport is in it. */
 export interface SportList {
   /** Whether `id` names a listed sport (`custom` never does). */

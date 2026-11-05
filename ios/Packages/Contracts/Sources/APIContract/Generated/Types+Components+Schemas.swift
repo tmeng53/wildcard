@@ -3582,6 +3582,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CommentEntry/replyToCoach`.
             public var replyToCoach: Swift.String?
+            /// Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/mentions`.
+            public var mentions: [Swift.String]?
+            /// The coach it @s, by id, when it does (@毛头).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/mentionsCoach`.
+            public var mentionsCoach: Swift.String?
             /// When it was written, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/CommentEntry/commentedAt`.
@@ -3594,6 +3602,8 @@ extension Components {
             ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
             ///   - replyTo: Whom it replies to, when it does. Gone once their account is deleted.
             ///   - replyToCoach: The coach it replies to, by id, when it does (回复 毛头：…).
+            ///   - mentions: Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone.
+            ///   - mentionsCoach: The coach it @s, by id, when it does (@毛头).
             ///   - commentedAt: When it was written, in UTC with milliseconds.
             public init(
                 id: Swift.String,
@@ -3601,6 +3611,8 @@ extension Components {
                 text: Swift.String,
                 replyTo: Swift.String? = nil,
                 replyToCoach: Swift.String? = nil,
+                mentions: [Swift.String]? = nil,
+                mentionsCoach: Swift.String? = nil,
                 commentedAt: Foundation.Date
             ) {
                 self.id = id
@@ -3608,6 +3620,8 @@ extension Components {
                 self.text = text
                 self.replyTo = replyTo
                 self.replyToCoach = replyToCoach
+                self.mentions = mentions
+                self.mentionsCoach = mentionsCoach
                 self.commentedAt = commentedAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -3616,6 +3630,8 @@ extension Components {
                 case text
                 case replyTo
                 case replyToCoach
+                case mentions
+                case mentionsCoach
                 case commentedAt
             }
         }
@@ -4021,6 +4037,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Comment/replyToCoach`.
             public var replyToCoach: Swift.String?
+            /// Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/mentions`.
+            public var mentions: [Swift.String]?
+            /// The coach it @s, by id, when it does (@毛头).
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/mentionsCoach`.
+            public var mentionsCoach: Swift.String?
             /// When it was written, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/Comment/commentedAt`.
@@ -4034,6 +4058,8 @@ extension Components {
             ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
             ///   - replyTo: Whom it replies to, when it does. Gone once their account is deleted.
             ///   - replyToCoach: The coach it replies to, by id, when it does (回复 毛头：…).
+            ///   - mentions: Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone.
+            ///   - mentionsCoach: The coach it @s, by id, when it does (@毛头).
             ///   - commentedAt: When it was written, in UTC with milliseconds.
             public init(
                 version: Components.Schemas.Comment.VersionPayload,
@@ -4042,6 +4068,8 @@ extension Components {
                 text: Swift.String,
                 replyTo: Swift.String? = nil,
                 replyToCoach: Swift.String? = nil,
+                mentions: [Swift.String]? = nil,
+                mentionsCoach: Swift.String? = nil,
                 commentedAt: Foundation.Date
             ) {
                 self.version = version
@@ -4050,6 +4078,8 @@ extension Components {
                 self.text = text
                 self.replyTo = replyTo
                 self.replyToCoach = replyToCoach
+                self.mentions = mentions
+                self.mentionsCoach = mentionsCoach
                 self.commentedAt = commentedAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -4059,6 +4089,8 @@ extension Components {
                 case text
                 case replyTo
                 case replyToCoach
+                case mentions
+                case mentionsCoach
                 case commentedAt
             }
         }
@@ -4082,6 +4114,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CommentDraft/replyToCoach`.
             public var replyToCoach: Swift.String?
+            /// Whom the comment @s, in the order written: up to 8 who can see the check-in (its author or a teammate). Each is told by push. Anyone else, or the writer, is left out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/mentions`.
+            public var mentions: [Swift.String]?
+            /// The coach the comment @s (@毛头), by id: the coach of a squad the caller sees the check-in through. The coach answers it soon after. Left out for any other coach.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/mentionsCoach`.
+            public var mentionsCoach: Swift.String?
             /// Creates a new `CommentDraft`.
             ///
             /// - Parameters:
@@ -4089,22 +4129,30 @@ extension Components {
             ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
             ///   - replyTo: Whom the comment replies to (回复 Mia：…): the check-in’s author, or a teammate who can see it.
             ///   - replyToCoach: The coach it replies to (回复 毛头：…), by the coach’s id: one that said something under the check-in for a squad the caller sees it through. Never with `replyTo`. The coach answers it soon after.
+            ///   - mentions: Whom the comment @s, in the order written: up to 8 who can see the check-in (its author or a teammate). Each is told by push. Anyone else, or the writer, is left out.
+            ///   - mentionsCoach: The coach the comment @s (@毛头), by id: the coach of a squad the caller sees the check-in through. The coach answers it soon after. Left out for any other coach.
             public init(
                 version: Components.Schemas.CommentDraft.VersionPayload,
                 text: Swift.String,
                 replyTo: Swift.String? = nil,
-                replyToCoach: Swift.String? = nil
+                replyToCoach: Swift.String? = nil,
+                mentions: [Swift.String]? = nil,
+                mentionsCoach: Swift.String? = nil
             ) {
                 self.version = version
                 self.text = text
                 self.replyTo = replyTo
                 self.replyToCoach = replyToCoach
+                self.mentions = mentions
+                self.mentionsCoach = mentionsCoach
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case text
                 case replyTo
                 case replyToCoach
+                case mentions
+                case mentionsCoach
             }
         }
         /// - Remark: Generated from `#/components/schemas/CommentList`.
@@ -4261,7 +4309,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/SquadList/version`.
             public var version: Components.Schemas.SquadList.VersionPayload
-            /// The member’s squads, the earliest joined first: at most 3.
+            /// The member’s squads, the earliest joined first: at most 1.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadList/squads`.
             public var squads: [Components.Schemas.Squad]
@@ -4269,7 +4317,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - squads: The member’s squads, the earliest joined first: at most 3.
+            ///   - squads: The member’s squads, the earliest joined first: at most 1.
             public init(
                 version: Components.Schemas.SquadList.VersionPayload,
                 squads: [Components.Schemas.Squad]

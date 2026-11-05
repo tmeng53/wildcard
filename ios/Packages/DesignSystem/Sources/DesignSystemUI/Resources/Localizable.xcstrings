@@ -33,6 +33,22 @@
         }
       }
     },
+    "提到谁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mention someone"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提到誰"
+          }
+        }
+      }
+    },
     "整页加载：两张票": {
       "localizations": {
         "en": {

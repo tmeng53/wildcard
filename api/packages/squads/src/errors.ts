@@ -50,14 +50,18 @@ export class SquadFullError extends AppError {
   }
 }
 
-/** Thrown when a member in 3 squads creates or joins another. Leave one first. */
+/** Thrown when a member already in `SQUADS_PER_MEMBER` squads creates or joins another. Leave first. */
 export class SquadLimitReachedError extends AppError {
   override readonly name = 'SquadLimitReachedError';
   readonly reason = 'SQUAD_LIMIT_REACHED';
   readonly status = 'FAILED_PRECONDITION';
 
   constructor(readonly limit: number) {
-    super(`You are already in ${String(limit)} squads. Leave one to join another.`);
+    super(
+      limit === 1
+        ? 'You are already in a squad. Leave it to join another.'
+        : `You are already in ${String(limit)} squads. Leave one to join another.`,
+    );
   }
 }
 

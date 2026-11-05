@@ -12,8 +12,11 @@ export type MemberId = z.infer<typeof MemberId>;
 /** A squad holds 1 to 8 members: a squad of one is fine, friends join later. */
 export const SQUAD_MEMBER_LIMIT = 8;
 
-/** A member is in at most 3 squads. The first app shows only one; the API allows three. */
-export const SQUADS_PER_MEMBER = 3;
+/**
+ * A member is in one squad at a time (the product owner, 2026-11-05: more is confusing). Joining or
+ * making another means leaving it first. Memberships stay a list, so the limit can be raised.
+ */
+export const SQUADS_PER_MEMBER = 1;
 
 /** A squad's name, as its creator types it: trimmed, then 1 to 20 characters, on one line. */
 export const SquadName = nameText({

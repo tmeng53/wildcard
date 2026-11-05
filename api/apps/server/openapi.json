@@ -1977,6 +1977,18 @@
             "type": "string",
             "description": "The coach it replies to, by id, when it does (回复 毛头：…)."
           },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone."
+          },
+          "mentionsCoach": {
+            "type": "string",
+            "description": "The coach it @s, by id, when it does (@毛头)."
+          },
           "commentedAt": {
             "type": "string",
             "format": "date-time",
@@ -2303,6 +2315,18 @@
             "type": "string",
             "description": "The coach it replies to, by id, when it does (回复 毛头：…)."
           },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone."
+          },
+          "mentionsCoach": {
+            "type": "string",
+            "description": "The coach it @s, by id, when it does (@毛头)."
+          },
           "commentedAt": {
             "type": "string",
             "format": "date-time",
@@ -2343,6 +2367,21 @@
             "type": "string",
             "pattern": "^[a-z][a-z0-9-]{1,39}$",
             "description": "The coach it replies to (回复 毛头：…), by the coach’s id: one that said something under the check-in for a squad the caller sees it through. Never with `replyTo`. The coach answers it soon after.",
+            "example": "xiaohun"
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 8,
+            "description": "Whom the comment @s, in the order written: up to 8 who can see the check-in (its author or a teammate). Each is told by push. Anyone else, or the writer, is left out."
+          },
+          "mentionsCoach": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$",
+            "description": "The coach the comment @s (@毛头), by id: the coach of a squad the caller sees the check-in through. The coach answers it soon after. Left out for any other coach.",
             "example": "xiaohun"
           }
         },
@@ -2469,7 +2508,7 @@
             "items": {
               "$ref": "#/components/schemas/Squad"
             },
-            "description": "The member’s squads, the earliest joined first: at most 3."
+            "description": "The member’s squads, the earliest joined first: at most 1."
           }
         },
         "required": [
@@ -7441,7 +7480,7 @@
             }
           },
           "400": {
-            "description": "Not a valid name, the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
+            "description": "Not a valid name, the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7951,7 +7990,7 @@
             }
           },
           "400": {
-            "description": "The squad has 8 members (`SQUAD_FULL`), the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
+            "description": "The squad has 8 members (`SQUAD_FULL`), the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
