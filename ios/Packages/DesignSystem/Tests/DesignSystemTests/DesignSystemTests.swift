@@ -27,14 +27,14 @@ struct NeutralTests {
             ])
     }
 
-    /// A theme swaps only the accent group; neutrals never change.
+    /// A theme swaps only the accent group (ski's navy takes ice blue text); neutrals never change.
     @Test func onlyTheAccentGroupFollowsTheScene() {
         let themed = ColorRole.allCases.filter { role in
             Set(SceneTheme.allCases.map { role.color(in: $0) }).count > 1
         }
         #expect(
             themed.map(\.rawValue) == [
-                "bgAccent", "bgAccentSubtle", "fgAccent", "bgScene", "ring", "bgKind", "fgKind",
+                "bgAccent", "bgAccentSubtle", "fgOnAccent", "fgAccent", "bgScene", "ring", "bgKind", "fgKind",
             ])
     }
 
@@ -307,7 +307,7 @@ struct TypographyTests {
         }
         let names = [
             "scoreStory", "scoreEnding", "scoreHero", "scoreCard", "scoreInline", "scoreSmall", "scoreCaption",
-            "ticketDate", "posterWeek",
+            "ticketDate", "posterWeek", "launchWord",
         ]
         #expect(scoreboard.map(\.name) == names)
         #expect(TypeRamp.scoreCaption.size == 14 && TypeRamp.scoreCaption.face == .scoreboard(.semibold))

@@ -9,6 +9,7 @@ import {
   storedBody,
   storedPathOf,
 } from './memory.js';
+import { factsText } from './member-facts.js';
 import { taskOf } from './prompt.js';
 import { lineProblem } from './reply.js';
 import { SquadId } from './settings.js';
@@ -267,8 +268,10 @@ describe('when the coach wakes', () => {
     expect(task).toBe(
       [
         '有人回复你。这条打卡：10-27 周二 队员1 练了 跑步 30 分钟 「腿废了」 · 2 个表情',
+        // The rest of the post's comments, so the coach knows what was said around it.
+        '这条下面别人的评论（先后顺序）：\n- 队员2：「强」',
         '你们在下面的对话：\n- 你：「腿废了也算练」\n- 队员2：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1：「那你喊大声点」（要回的这句）',
-        '你的文件：memory.md（空）。',
+        '你的记性（你只记得这些）：\n还是空的：memory.md',
       ].join('\n\n'),
     );
     // Without the talk, or once the check-in left the week, there is nothing to answer.
@@ -323,9 +326,34 @@ describe('when the coach wakes', () => {
     expect(task).toBe(
       [
         '新的一天：2026-11-01。',
-        '你的文件：memory.md（5 字），squad.md（空）。',
+        '过去一天没人在打卡下面和你说话。',
+        // What it remembers, in full: it forgets everything else between wakes.
+        '你的记性（你只记得这些）：\n【memory.md】\n米亚爱跑步\n还是空的：squad.md',
         '你最近写过：\n- 2026-10-31：周末也要动一动',
       ].join('\n\n'),
+    );
+    // The last day's talk under check-ins, for it to remember from.
+    const [first] = week.checkIns;
+    if (first === undefined) throw new Error('no check-in');
+    expect(
+      taskOf({
+        reason: { kind: 'daily', day: '2026-11-01' },
+        week,
+        files: new Map([['memory.md', undefined]]),
+        recentNotes: [],
+        talks: [
+          {
+            checkIn: first,
+            reply: '腿废了也算练',
+            said: [
+              { member: leo, text: '我下周膝盖手术' },
+              { member: undefined, text: '那这周先歇着' },
+            ],
+          },
+        ],
+      })?.split('\n\n')[1],
+    ).toBe(
+      '过去一天打卡下面的对话（先后顺序）：\n- 10-27 周二 队员1 练了 跑步 30 分钟 「腿废了」 · 2 个表情\n  你：「腿废了也算练」\n  队员2：「我下周膝盖手术」\n  你：「那这周先歇着」',
     );
     expect(
       taskOf({
@@ -335,7 +363,7 @@ describe('when the coach wakes', () => {
         recentNotes: [],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n你的文件：memory.md（空）。',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
     // The emoji it reacted with lately, so it varies them.
     expect(
@@ -347,7 +375,7 @@ describe('when the coach wakes', () => {
         recentEmoji: ['🔥', '🔥', '💪'],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n你的文件：memory.md（空）。',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
   });
 
@@ -367,6 +395,60 @@ describe('when the coach wakes', () => {
         recentNotes: [{ day: '2026-10-31', text: '周末也要动一动' }],
       }),
     ).toContain('- 2026-10-31：周末也要动一动');
+  });
+});
+
+describe('what the coach looks up', () => {
+  it('reads each member’s counts, titles and this week’s plan, and how many photos a post has', () => {
+    const rest = { kind: 'rest' } as const;
+    expect(
+      factsText(
+        [
+          {
+            member: mia,
+            trainedDays: 50,
+            healthyMeals: 3,
+            cheatMeals: 1,
+            disclaimers: 2,
+            topSport: { name: '跑步', checkIns: 31 },
+            titles: 2,
+            latestTitle: '早起之王',
+            plan: [
+              { kind: 'train', sport: '跑步' },
+              rest,
+              { kind: 'train' },
+              rest,
+              rest,
+              rest,
+              rest,
+            ],
+          },
+          {
+            member: leo,
+            trainedDays: 0,
+            healthyMeals: 0,
+            cheatMeals: 0,
+            disclaimers: 0,
+            titles: 0,
+            plan: [rest, rest, rest, rest, rest, rest, rest],
+          },
+        ],
+        rosterOf(week),
+      ),
+    ).toBe(
+      [
+        '队员1：一共练了 50 天，健康餐 3 次，坦白放纵餐 1 次，请假条 2 次。最常练跑步（31 次）。拿过 2 个周奖，最近一个是「早起之王」。',
+        '本周出赛表：周一跑步，周二休息，周三练，周四休息，周五休息，周六休息，周日休息。',
+        '队员2：一共练了 0 天，健康餐 0 次，坦白放纵餐 0 次，请假条 0 次。还没拿过周奖。',
+        '本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日休息。',
+      ].join('\n'),
+    );
+    expect(factsText([], rosterOf(week))).toBe('还没有队员的数据。');
+    const [first] = week.checkIns;
+    if (first === undefined) throw new Error('no check-in');
+    expect(
+      checkInLine({ ...first, photos: ['a.jpg', 'b.jpg'], comments: [] }, rosterOf(week)),
+    ).toBe('10-27 周二 队员1 练了 跑步 30 分钟 「腿废了」 （2 张照片） · 2 个表情');
   });
 });
 

@@ -6,6 +6,8 @@ public enum SceneTheme: String, CaseIterable, Sendable {
     case gym
     case tennis
     case climbing
+    /// The winter 雪场, open only part of the year (冬季限定).
+    case ski
 
     public var colors: SceneColors {
         switch self {
@@ -29,6 +31,10 @@ public enum SceneTheme: String, CaseIterable, Sendable {
             .light(
                 accent: Palette.climbingSignature, subtle: Palette.climbingWash, text: Palette.climbingText,
                 floor: Palette.climbingFloor)
+        case .ski:
+            .light(
+                accent: Palette.skiSignature, subtle: Palette.skiWash, text: Palette.skiText,
+                floor: Palette.skiFloor, onAccent: Palette.skiOnSignature)
         }
     }
 }
@@ -57,9 +63,11 @@ public struct SceneColors: Sendable, Hashable {
     public let kindInk: SRGBColor
 
     /// A light scene: white on the accent, the accent as the ring, kinds on the wash or white.
-    static func light(accent: SRGBColor, subtle: SRGBColor, text: SRGBColor, floor: SRGBColor) -> SceneColors {
+    static func light(
+        accent: SRGBColor, subtle: SRGBColor, text: SRGBColor, floor: SRGBColor, onAccent: SRGBColor = Palette.white
+    ) -> SceneColors {
         SceneColors(
-            accent: accent, accentSubtle: subtle, onAccent: Palette.white, accentText: text, floor: floor,
+            accent: accent, accentSubtle: subtle, onAccent: onAccent, accentText: text, floor: floor,
             onFloor: Palette.ink, ring: accent, kindFill: subtle,
             kindFillOnFloor: Palette.white, kindInk: text)
     }

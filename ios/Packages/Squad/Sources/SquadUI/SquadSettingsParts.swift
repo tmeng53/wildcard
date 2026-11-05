@@ -74,8 +74,7 @@ struct ScenePickerGrid: View {
             .disabled(!picker.canConfirm)
             .accessibilityIdentifier("squad.scene.confirm")
             if case .failed(.unavailable) = picker.phase {
-                Text("网络开小差了，没存上", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
+                InlineFailure()
             }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: picker.selection)
@@ -117,10 +116,7 @@ struct InviteCard: View {
             .buttonStyle(.plain)
             .accessibilityLabel(Text("复制邀请码 \(squad.inviteCode)", bundle: .module))
             .accessibilityIdentifier("squad.copyInvite")
-            ShareLink(
-                item: String(
-                    localized: "来外卡和我一起练！小队「\(squad.name)」的邀请码：\(squad.inviteCode)", bundle: .module.inAppLanguage)
-            ) {
+            ShareLink(item: Self.message(for: squad)) {
                 Label {
                     Text("分享", bundle: .module)
                 } icon: {
@@ -132,6 +128,12 @@ struct InviteCard: View {
             .accessibilityIdentifier("squad.share")
         }
         .card()
+    }
+
+    /// What 分享 sends: the squad's name and its invite code.
+    static func message(for squad: Squad) -> String {
+        String(
+            localized: "来外卡和我一起练！小队「\(squad.name)」的邀请码：\(squad.inviteCode)", bundle: .module.inAppLanguage)
     }
 
     private func copy() {
@@ -160,7 +162,10 @@ struct MemberRow: View {
     @Environment(\.sceneTheme) private var theme
     @State private var isManaging = false
 
-    private var name: String {
+    private var name: String { Self.name(of: member) }
+
+    /// The member's nickname, or 新队友 until they make their character.
+    static func name(of member: SquadMemberRow) -> String {
         member.character?.nickname.text ?? String(localized: "新队友", bundle: .module.inAppLanguage)
     }
 
@@ -230,9 +235,7 @@ struct MemberRow: View {
         .frame(minHeight: SquadSettingsMetrics.row)
         .overlay(alignment: .top) {
             if showsDivider {
-                Rectangle()
-                    .fill(Color(role: .borderDefault, in: theme))
-                    .frame(height: Sizing.hairline)
+                Hairline()
             }
         }
         // Contain, so the row's identifier doesn't replace its ··· button's.
@@ -243,7 +246,7 @@ struct MemberRow: View {
     /// Their face, nickname and 我.
     private var who: some View {
         HStack(spacing: Space.s) {
-            MemberHead(character: member.character)
+            LookHead(character: member.character)
             HStack(spacing: Space.xs) {
                 Text(verbatim: name)
                     .typeStyle(TypeRamp.body)
@@ -262,52 +265,56 @@ struct MemberRow: View {
     }
 }
 
-/// A member's face, still, in a circle; an empty circle until they make their character.
-struct MemberHead: View {
+/// A member's face, still, in a `MemberHead`; an empty circle until they make their character.
+struct LookHead: View {
     let character: MemberCharacter?
-    @State private var drawing: (drawing: FigureDrawing, placements: [Placement])?
-    @Environment(\.sceneTheme) private var theme
-
-    /// The face on the rig's 240 by 320 canvas.
-    private static let face = CGRect(x: 40, y: 74, width: 160, height: 160)
+    var size = SquadSettingsMetrics.head
+    @State private var player: CharacterPlayer?
 
     var body: some View {
-        ZStack {
-            Circle().fill(Color(role: .bgSubtle, in: theme))
-            if let drawing {
-                CharacterCanvas(drawing: drawing.drawing, placements: drawing.placements, crop: Self.face)
-                    .clipShape(Circle())
+        MemberHead(player: player, size: size)
+            .task(id: character) {
+                guard let character else { return }
+                let outfit = Outfit(character.look)
+                player = try? CharacterPlayer(
+                    figure: PlaceholderCharacter.figure(wearing: outfit),
+                    idle: PlaceholderCharacter.clip(
+                        "idle", persona: Persona(character.look), species: PlaceholderCharacter.species(of: outfit)))
             }
-        }
-        .frame(width: SquadSettingsMetrics.head, height: SquadSettingsMetrics.head)
-        .accessibilityHidden(true)
-        .task(id: character) {
-            guard let character else { return }
-            let outfit = Outfit(character.look)
-            drawing = try? CharacterPlayer(
-                figure: PlaceholderCharacter.figure(wearing: outfit),
-                idle: PlaceholderCharacter.clip(
-                    "idle", persona: Persona(character.look), species: PlaceholderCharacter.species(of: outfit))
-            ).restFrame
-        }
     }
 }
 
 /// 小队设置 couldn't be read: one line and a way to try again.
 struct SquadFailed: View {
     let retry: () -> Void
-    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        VStack(spacing: Space.m) {
-            Text("网络开小差了", bundle: .module)
-                .typeStyle(TypeRamp.headline)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-            Button(action: retry) { Text("再试一次", bundle: .module) }
-                .buttonStyle(PrimaryButtonStyle(.regular))
-                .accessibilityIdentifier("squad.retry")
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        StateView.offline(retryIdentifier: "squad.retry", retry: retry)
+            .frame(maxHeight: .infinity)
     }
+}
+
+/// What the captain is about to do to a member, asked first in the glass menu.
+enum MemberAction: Hashable {
+    case handCaptaincy(MemberID, name: String)
+    case remove(MemberID, name: String)
+
+    var title: Text {
+        switch self {
+        case .handCaptaincy(_, let name): Text("把队长转给 \(name)？", bundle: .module)
+        case .remove(_, let name): Text("把 \(name) 移出小队？", bundle: .module)
+        }
+    }
+}
+
+enum SquadSettingsMetrics {
+    /// The scene's thumbnail on 本周场地.
+    static let thumbnail = CGSize(width: 56, height: 72)
+    /// A member's row.
+    static let row = 56.0
+    /// A member's head.
+    static let head = 36.0
+    /// A scene tile's face in the picker.
+    static let tile = 64.0
 }
 #endif

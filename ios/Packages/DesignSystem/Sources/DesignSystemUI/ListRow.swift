@@ -74,9 +74,7 @@ struct RowShell<Trailing: View>: View {
         .frame(minHeight: Sizing.pickRow)
         .overlay(alignment: .bottom) {
             if showsDivider {
-                Rectangle()
-                    .fill(Color(role: .borderDefault, in: theme))
-                    .frame(height: Sizing.hairline)
+                Hairline()
             }
         }
         .contentShape(Rectangle())

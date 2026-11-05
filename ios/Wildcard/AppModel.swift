@@ -1,6 +1,7 @@
 import AccountDomain
 import AccountUI
 import Backend
+import CharacterEditorUI
 import CheckInDomain
 import CheckInUI
 import Contracts
@@ -35,14 +36,18 @@ final class AppModel {
             recap: RecapShelf)
     }
 
-    private(set) var screen = Screen.starting
-    /// Whether the launch cover is up: until the first screen, with its scene, is ready.
-    var isStarting: Bool {
-        if case .starting = screen { return true }
-        return false
+    private(set) var screen = Screen.starting {
+        // The cover came up again; a sign-in's cover is already up and counting.
+        didSet { if isStarting, !oldValue.isStarting, !isSigningIn { coverSince = .now } }
     }
+    /// When the launch cover last came up, so it stays until its word has landed.
+    @ObservationIgnored var coverSince = Date.now
+    /// Whether the launch cover is up: until the first screen, with its scene, is ready.
+    var isStarting: Bool { screen.isStarting }
     /// Signing in on the open screen, until the screen after it opens.
-    private(set) var isSigningIn = false
+    private(set) var isSigningIn = false {
+        didSet { if isSigningIn, !oldValue { coverSince = .now } }
+    }
     /// The squad the member is no longer in (removed, or left on another phone), said once.
     var lostSquadName: String?
     /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
@@ -185,6 +190,7 @@ final class AppModel {
     private static func show(_ catalog: AppCatalog) {
         SportList.shared.show(catalog.sports)
         DiceLines.shared.show(catalog.diceLines)
+        StoreSwitches.shared.show(catalog.switches)
     }
 
     /// Back in the app: 今天 reads the squad's scene again, which a teammate may have picked
@@ -281,6 +287,7 @@ final class AppModel {
             today.scene = KeptScene.scene(of: home.squad.id) ?? .gym
             Task { await readScene(of: home.squad.id, into: today) }
         }
+        await letLaunchWordLand()
         screen = .tabs(
             today: today, profile: profile, schedule: schedule, feed: Self.feed(api: api, home: home, editor: store),
             squad: squad,

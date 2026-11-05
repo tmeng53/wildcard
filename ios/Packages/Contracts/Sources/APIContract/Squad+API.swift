@@ -17,33 +17,32 @@ extension SquadScene {
     public init(_ wire: Components.Schemas.SquadScene) throws(ContractsError) {
         let pickers = try wire.pickers.members.map { member throws(ContractsError) in try MemberID(wire: member) }
         self.init(
-            week: try LocalDay(wire.week), scene: try SceneID(wire: wire.scene.rawValue),
+            week: try LocalDay(wire.week), scene: SceneID(id: wire.sceneId, legacy: wire.scene.rawValue),
             pickers: wire.pickers.by == .crown ? .crown(pickers) : .captain(pickers.first),
             picked: try wire.picked.map { picked throws(ContractsError) in
                 SquadScene.Pick(
-                    scene: try SceneID(wire: picked.scene.rawValue),
+                    scene: SceneID(id: picked.sceneId, legacy: picked.scene.rawValue),
                     picker: try picked.by.map { picker throws(ContractsError) in try MemberID(wire: picker) })
             },
             canPick: wire.canPick,
-            history: try wire.scenes.map { scene throws(ContractsError) in
-                SceneHistory(scene: try SceneID(wire: scene.scene.rawValue), weeksAgo: scene.weeksAgo)
+            // The scenes open this week (the winter one only in winter); one this build has no
+            // art for isn't offered.
+            history: wire.options.compactMap { option in
+                SceneID(rawValue: option.sceneId).map { SceneHistory(scene: $0, weeksAgo: option.weeksAgo) }
             })
     }
 }
 
 extension SceneID {
-    init(wire: String) throws(ContractsError) {
-        guard let scene = SceneID(rawValue: wire) else { throw .unknownScene(wire) }
-        self = scene
+    /// The scene by its id, else by the five-scene field older builds read, else the gym: a
+    /// scene this build has no art for shows as the gym.
+    init(id: String, legacy: String) {
+        self = SceneID(rawValue: id) ?? SceneID(rawValue: legacy) ?? .gym
     }
 
-    /// The body of `PUT /squads/{squadId}/weeks/{weekStart}/scene`; a scene the API doesn't know
-    /// is refused here rather than sent as another one.
-    public func pick() throws(ContractsError) -> Components.Schemas.ScenePick {
-        guard let scene = Components.Schemas.ScenePick.ScenePayload(rawValue: rawValue) else {
-            throw .unknownScene(rawValue)
-        }
-        return .init(version: ._1, scene: scene)
+    /// The body of `PUT /squads/{squadId}/weeks/{weekStart}/scene`.
+    public func pick() -> Components.Schemas.ScenePick {
+        .init(version: ._1, scene: rawValue)
     }
 }
 

@@ -2,8 +2,8 @@
 import DesignSystem
 import SwiftUI
 
-/// The logo's two tickets rocking apart and back on a beat (`TicketRock`): the app's launch
-/// cover and any whole-page load. On `.brand` (graphite) the front ticket is white; on `.page`
+/// The logo's two tickets rocking apart and back on a beat (`TicketRock`): any whole-page load.
+/// On `.brand` (graphite) the front ticket is white; on `.page`
 /// (the brand's light page) the colours swap, the back ticket only an outline, as on the
 /// website's header. On `.light(role)` they are graphite on that light role of the screen's scene
 /// (a page's white, a card's mist), for a load inside a screen.
@@ -51,7 +51,7 @@ public struct TicketSpinner: View {
 /// The logo drawn on its 100 × 100 grid (brand-logo `b6-mark`): an outlined ticket behind, turned
 /// 12°, and a filled one in front, turned −10°, with notches, a perforation and a W, both turning
 /// about a point below them.
-private enum TicketMark {
+enum TicketMark {
     /// The logo's ticket corners, on its 100-point canvas.
     private static let corner: Double = 8
 

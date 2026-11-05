@@ -64,8 +64,6 @@ public enum ContractsError: Error, Equatable, Sendable {
     case invalidTimestamp(String)
     /// A reaction that isn't exactly one emoji.
     case notAnEmoji(String)
-    /// A scene this build doesn't draw.
-    case unknownScene(String)
     /// A coach id that isn't one: lowercase letters, digits and dashes, starting with a letter.
     case invalidCoachID(String)
 }

@@ -12543,7 +12543,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid squad id, week or scene, or a week that isn’t open for picking (`SCENE_WEEK_CLOSED`)
+            /// Not a valid squad id, week or scene, a week that isn’t open for picking (`SCENE_WEEK_CLOSED`), or a scene that isn’t open this week (`SCENE_NOT_OPEN`)
             ///
             /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/scene/put(pickSquadScene)/responses/400`.
             ///

@@ -38,6 +38,7 @@ import {
   adminOn,
   aiConsentOn,
   config,
+  scenesOn,
   noJobs,
   nudgesOn,
   pushOn,
@@ -100,6 +101,7 @@ const app = createApp({
     inviteCodes: randomInviteCodes,
     aiConsent: () => Promise.resolve(true),
   }),
+  scenes: scenesOn(db),
   push: pushOn(db),
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
@@ -364,6 +366,24 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       body: { version: 1, title: '冷面杀手' },
     });
 
+    // A 练了 sent only to the other squad still counts in their own week.
+    const createdAt = new Date(Date.now() - 60_000);
+    const trained = await call({
+      method: 'PUT',
+      path: `/check-ins/${randomUUID()}`,
+      token: mate.token,
+      body: {
+        version: 1,
+        // Their zone is UTC, and a day starts at 3am.
+        day: new Date(createdAt.getTime() - 3 * 3_600_000).toISOString().slice(0, 10),
+        createdAt: createdAt.toISOString(),
+        audience: [elsewhere],
+        kind: 'trained',
+        training: { sport: 'run' },
+      },
+    });
+    expect(trained.status).toBe(201);
+
     const path = `/squads/${squad}/members/${mate.userId}/card`;
     const card = await call({ method: 'GET', path, token: me.token });
     expect(card.status).toBe(200);
@@ -373,7 +393,7 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       character: { nickname: '阿杰', look },
       jerseyNumber: 7,
       squadPlace: 2,
-      trainedDays: 0,
+      trainedDays: 1,
       healthyMeals: 0,
       cheatMeals: 0,
       disclaimers: 0,
@@ -390,6 +410,17 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       worn: '冷面杀手',
     });
     expect(JSON.stringify(card.body)).not.toContain('别的小队');
+    // Their week on the card is the one their own home counts.
+    const theirToday = await call({
+      method: 'GET',
+      path: `/squads/${elsewhere}/today`,
+      token: mate.token,
+    });
+    const own = z
+      .object({ me: z.object({ week: z.object({ trainedDays: z.int(), plannedDays: z.int() }) }) })
+      .parse(theirToday.body).me.week;
+    expect(own.trainedDays).toBe(1);
+    expect(z.object({ week: z.unknown() }).parse(card.body).week).toStrictEqual(own);
     expect(z.object({ joinedAt: z.iso.datetime() }).safeParse(card.body).success).toBe(true);
 
     // The squad's today shows the title beside the name.

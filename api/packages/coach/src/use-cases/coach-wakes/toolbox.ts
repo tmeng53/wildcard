@@ -5,7 +5,7 @@ import { NOTE_LIMIT } from '../../domain/prompt.js';
 import { CoachEmoji, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
 import { weekText, type SquadWeek } from '../../domain/squad-week.js';
 import type { WakeReason, WakeStep } from '../../domain/wake.js';
-import type { CoachTool } from '../../ports.js';
+import type { CoachTool, ToolAnswer } from '../../ports.js';
 
 /** What a wake's tools change, kept in memory until the run ends and saved together then. */
 export interface WakeDraft {
@@ -40,30 +40,30 @@ function defineTool<Shape extends z.ZodObject>(
     readonly reads?: boolean;
     /** What of its arguments is kept, when not all of them: they may hold members' words. */
     readonly kept?: (input: z.infer<Shape>) => unknown;
-    run(input: z.infer<Shape>): string;
+    run(input: z.infer<Shape>): string | Promise<string>;
   },
 ): CoachTool {
   return {
     name: tool.name,
     description: tool.description,
     parameters: tool.parameters,
-    run: (input) => {
+    run: async (input) => {
       const parsed = tool.parameters.safeParse(input);
       const output = parsed.success
-        ? tool.run(parsed.data)
+        ? await tool.run(parsed.data)
         : `参数不对：${z.prettifyError(parsed.error)}`;
       steps.push({
         tool: tool.name,
         input: parsed.success && tool.kept !== undefined ? tool.kept(parsed.data) : input,
         output: tool.reads === true && parsed.success ? `（${String(output.length)} 字）` : output,
       });
-      return Promise.resolve(output);
+      return output;
     },
   };
 }
 
 /**
- * The tools a coach has on a wake: reading the squad's week and its files, editing the files,
+ * The tools a coach has on a wake: reading the squad's week, remembering and tidying its files,
  * on a daily wake posting the 战术板 line, on a check-in's wake replying and reacting to it, and
  * on a reply's wake answering it. Nothing is saved until the run ends.
  */
@@ -72,42 +72,66 @@ export function toolbox({
   roster,
   draft,
   kind,
+  photos,
+  facts,
+  pastWeek,
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
   readonly draft: WakeDraft;
   readonly kind: WakeReason['kind'];
+  /** The URLs of the photos of the check-in this wake is about, when it has any to look at. */
+  readonly photos?: () => Promise<readonly string[]>;
+  /** The members' stats and this week's plans, as the model reads them. */
+  readonly facts?: () => Promise<string>;
+  /** A week before this one, as the model reads it. */
+  readonly pastWeek?: (weeksAgo: number) => Promise<string>;
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
   const tools = [
     defineTool(draft.steps, {
       name: 'squad_week',
       reads: true,
-      description: '这周小队的情况：队员和外号，每个人的打卡、表情和评论。',
-      parameters: z.object({}),
-      run: () => weekText(week),
+      description:
+        '小队一周的情况：队员和外号，每个人的打卡、表情和评论。默认这周；weeks_ago 填 1 到 4 看前几周，想知道以前的事（比如上次跑步是什么时候）才用。',
+      parameters: z.object({
+        weeks_ago: z.number().int().min(0).max(4).optional().describe('看几周前，0 或不填是这周'),
+      }),
+      run: async ({ weeks_ago: weeksAgo = 0 }) =>
+        weeksAgo === 0 || pastWeek === undefined ? weekText(week) : await pastWeek(weeksAgo),
     }),
     defineTool(draft.steps, {
-      name: 'read_file',
-      reads: true,
-      description: '读一个文件的全部内容。',
+      name: 'remember',
+      description:
+        '把一件以后还用得着的事记进你的记性。你每次醒来都会忘掉以前的一切，只有记性里的留得住，没记的下次就不知道了。听到外号、小队的梗、长期的习惯和偏好、伤病、里程碑、队员纠正你的事、你答应过的事，就马上记，一次记一件，一句话。',
       parameters: z.object({
-        path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
+        path: z
+          .string()
+          .describe(
+            '记到哪：people/队员N.md 记这个人，squad.md 记小队，memory.md 记你和大家之间的事',
+          ),
+        fact: z.string().describe('要记的这件事，一句话，用队员N称呼人'),
       }),
-      run: ({ path }) => {
+      kept: ({ path, fact }) => ({ path, fact: `（${String(fact.length)} 字）` }),
+      run: ({ path, fact }) => {
         const stored = storedPathOf(path, roster);
         if (stored === undefined) return unknownPath(path);
-        const body = draft.files.get(stored) ?? '';
-        return body === '' ? '（空文件）' : body;
+        const line = fact.trim();
+        if (line === '') return 'fact 是空的，写上要记的事。';
+        const edited = editBody(draft.files.get(stored) ?? '', { find: '', replace: `- ${line}` });
+        if (!edited.ok) return edited.why;
+        draft.files.set(stored, edited.body);
+        draft.changed.add(stored);
+        return `记下了，在 ${path}。`;
       },
     }),
     defineTool(draft.steps, {
       name: 'edit_file',
       description:
-        '改一个文件：把 find 的原文换成 replace。find 必须在文件里正好出现一次；find 为空时，把 replace 加到文件末尾。删掉一段就让 replace 为空。',
+        '整理记性：把一个文件里 find 的原文换成 replace，用来合并重复的、改掉记错的、删掉过时的（replace 为空就是删）。find 照抄任务里「你的记性」的原文，必须正好出现一次。记新的事用 remember。',
       parameters: z.object({
         path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
-        find: z.string().describe('要换掉的原文，照抄；为空就是加到末尾'),
+        find: z.string().describe('要换掉的原文，照抄'),
         replace: z.string().describe('换成的新内容'),
       }),
       // A file's text may be a member's words, kept in the file only as long as the file has it.
@@ -127,6 +151,24 @@ export function toolbox({
       },
     }),
   ];
+  if (facts !== undefined) {
+    tools.push(
+      defineTool(draft.steps, {
+        name: 'member_stats',
+        reads: true,
+        description:
+          '每个队员的数据：从加入到现在一共练了几天、健康餐、放纵餐、请假条各几次，最常练的运动，拿过几个周奖，还有这周的出赛表（每天计划练什么）。想说「这是你第几次」「你最爱的运动」或者对照计划时才用。',
+        parameters: z.object({}),
+        run: async () => {
+          try {
+            return await facts();
+          } catch {
+            return '数据现在查不到，先不提。';
+          }
+        },
+      }),
+    );
+  }
   if (kind === 'daily') {
     tools.push(
       defineTool(draft.steps, {
@@ -188,5 +230,43 @@ export function toolbox({
       }),
     );
   }
+  if (photos !== undefined && (kind === 'checkIn' || kind === 'comment')) {
+    tools.push(lookAtPhotos(draft.steps, photos));
+  }
   return tools;
+}
+
+/**
+ * Looks at the photos of the check-in this wake is about. Only on demand: pictures cost far
+ * more than words, so the model is told to call it only when someone asks about a photo or the
+ * talk is clearly about one. The step keeps how many it looked at, never the pictures.
+ */
+function lookAtPhotos(steps: WakeStep[], photos: () => Promise<readonly string[]>): CoachTool {
+  const name = 'look_at_photos';
+  return {
+    name,
+    description:
+      '看这条打卡的照片。看照片很贵：只在队员问到照片、或者话里明显在说照片时才用，平时不用，不看照片也能照常回。一次wake最多用一次。',
+    parameters: z.object({}),
+    run: async (): Promise<ToolAnswer> => {
+      const looked = steps.some(({ tool }) => tool === name);
+      if (looked) {
+        steps.push({ tool: name, input: {}, output: '已经看过了。' });
+        return '照片你已经看过了，不用再看。';
+      }
+      let urls: readonly string[];
+      try {
+        urls = await photos();
+      } catch {
+        steps.push({ tool: name, input: {}, output: '照片打不开。' });
+        return '照片现在打不开，就当没看见，照常回。';
+      }
+      if (urls.length === 0) {
+        steps.push({ tool: name, input: {}, output: '没有照片。' });
+        return '这条打卡没有照片。';
+      }
+      steps.push({ tool: name, input: {}, output: `（${String(urls.length)} 张照片）` });
+      return { text: `这条打卡的 ${String(urls.length)} 张照片，第一张是封面：`, images: urls };
+    },
+  };
 }

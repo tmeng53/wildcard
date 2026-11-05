@@ -43,6 +43,7 @@ import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import { PhotoPath } from '../ports.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -178,6 +179,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     squads,
     push,
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
+    scenes: scenesOn(db),
     weeklyAwards: { awards, clock },
     unlocks: unusedUnlocks,
     weekSummaryWords: () => Promise.reject(new Error('unused')),

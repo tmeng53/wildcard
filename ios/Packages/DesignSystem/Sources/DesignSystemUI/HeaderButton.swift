@@ -55,6 +55,66 @@ public struct HeaderButton: View {
     }
 }
 
+/// A word in a header (取消, 保存, 发布), in the same interactive Liquid Glass as `HeaderButton`:
+/// a 44-point capsule as tall as the round buttons beside it. `prominent` is the header's one
+/// action that finishes the page (发布, 保存): glass tinted in the accent tone's colour with its
+/// words in the tone's ink, as iOS draws a toolbar's prominent button. Disabled, a prominent one
+/// turns clear with quiet words. `isWorking` swaps the words for the loading dots while its call
+/// is under way, keeping the button's width.
+public struct HeaderTextButton: View {
+    @Environment(\.sceneTheme) private var theme
+    @Environment(\.accentTone) private var tone
+    @Environment(\.isEnabled) private var isEnabled
+    private let title: Text
+    private let prominent: Bool
+    private let isWorking: Bool
+    private let surface: HeaderButton.Surface
+    private let action: () -> Void
+
+    public init(
+        _ title: Text, prominent: Bool = false, isWorking: Bool = false, on surface: HeaderButton.Surface = .page,
+        action: @escaping () -> Void
+    ) {
+        self.title = title
+        self.prominent = prominent
+        self.isWorking = isWorking
+        self.surface = surface
+        self.action = action
+    }
+
+    public var body: some View {
+        Button(action: action) {
+            title
+                .typeStyle(TypeRamp.calloutEmphasis)
+                .lineLimit(1)
+                .loadingLabel(isWorking)
+                .foregroundStyle(Color(role: wordsRole, in: theme))
+                .padding(.horizontal, Space.m)
+                .frame(minWidth: Sizing.control, minHeight: Sizing.control)
+                .contentShape(Capsule())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .glassEffect(glass, in: Capsule())
+    }
+
+    // Stays tinted while its call runs, so it doesn't flash clear under the dots.
+    private var tinted: Bool { prominent && (isEnabled || isWorking) }
+
+    private var glass: Glass {
+        tinted ? .regular.tint(Color(role: tone.fill, in: theme)).interactive() : .regular.interactive()
+    }
+
+    private var wordsRole: ColorRole {
+        switch (surface, isEnabled) {
+        case _ where tinted: tone.onFill
+        case (.ink, true): .fgOnInk
+        case (.ink, false): .fgOnInkMuted
+        case (_, true): .fgDefault
+        case (_, false): .fgSubtle
+        }
+    }
+}
+
 /// `HeaderButton`'s look for a button that opens a glass menu (the 「…」 on the member's own
 /// post): the same 44-point Liquid Glass circle and glyph, the menu growing out of it. `.ink` is
 /// for a button over any photo or post face, light or dark: a white glyph on glass darkened as

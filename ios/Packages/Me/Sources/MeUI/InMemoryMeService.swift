@@ -32,7 +32,7 @@ public actor InMemoryMeService: MeService {
                 dailyPushOn: true,
                 jerseyNumber: try? JerseyNumber(22), squadPlace: 2,
                 board: .sample,
-                templateDays: 5, unlocks: unlocks, lockedPieces: lockedPieces),
+                unlocks: unlocks, lockedPieces: lockedPieces),
             failsSaving: failsSaving)
     }
 
@@ -84,7 +84,8 @@ public struct InMemorySquadmateCards: SquadmateCards {
                     outfit: PlaceholderCharacter.lifter, persona: .deadpan),
             number: try? JerseyNumber(7), squadName: nil,
             joinedAt: Date(timeIntervalSince1970: 1_792_756_800),
-            counts: LifetimeCounts(trainedDays: 42, healthyMeals: 18, cheatMeals: 5, disclaimers: 4), week: nil,
+            counts: LifetimeCounts(trainedDays: 42, healthyMeals: 18, cheatMeals: 5, disclaimers: 4),
+            week: WeekCount(trainedDays: 2, plannedDays: 4),
             board: .sample)
     }
 }

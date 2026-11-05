@@ -86,6 +86,8 @@ struct ButtonSection: View {
                     .buttonStyle(AppleButtonStyle())
                 }
             }
+            FloatingGuide()
+            StateGuide()
             LoadingGuide()
             GuideGroup(Text("页头：44 的圆，右边最多一个", bundle: .module)) {
                 VStack(alignment: .leading, spacing: Space.m) {
@@ -113,7 +115,6 @@ struct ButtonSection: View {
                 .frame(height: Self.tabsHeight)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             }
-            GuideGroup(Text("菜单：液态玻璃，从「···」或长按打开", bundle: .module)) { GlassMenuSample() }
         }
     }
 }

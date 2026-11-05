@@ -211,7 +211,18 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     public func save(_ checkIn: CheckIn) async throws(CheckInError) -> CheckIn {
         guard var home = current else { throw .notInSquad }
         if let saved = home.checkIns.first(where: { $0.id == checkIn.id }) { return saved }
-        if case .disclaimer = checkIn.entry, home.mine?.training == .trained { throw .alreadyTrained }
+        // As the API: no 请假条 on a day the member has a 练了 (补打卡 can pick a past day).
+        if case .disclaimer = checkIn.entry {
+            let trainedThatDay = home.checkIns.contains { saved in
+                guard saved.member == home.member, saved.day == checkIn.day, case .trained = saved.entry else {
+                    return false
+                }
+                return true
+            }
+            if trainedThatDay || (checkIn.day == home.mine?.day && home.mine?.training == .trained) {
+                throw .alreadyTrained
+            }
+        }
         home.today = home.today.countingMine(checkIn, squadSaw: home.squadSees(on: checkIn.day))
         home.checkIns.append(checkIn)
         current = home

@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -18,13 +19,14 @@ public struct PostDetailView: View {
     private let model: FeedModel
     private let id: CheckInID
     private let close: () -> Void
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var isTyping: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The comment held, lifted under its glass menu.
     @State private var holding: Comment.ID?
 
     private static let faceSize: Double = 32
-    private static let liftScale: Double = 1.03
+    /// A held comment's lift.
+    private static let liftScale = 1.03
 
     public init(model: FeedModel, post: CheckInID, close: @escaping () -> Void) {
         self.model = model
@@ -153,7 +155,7 @@ public struct PostDetailView: View {
         let isMine = comment.member == model.viewer
         let items = menu(for: comment, on: post)
         return HStack(alignment: .top, spacing: Space.s) {
-            Face(player: model.head(of: comment.member), size: Self.faceSize)
+            MemberHead(player: model.head(of: comment.member), size: Self.faceSize)
             VStack(alignment: .leading, spacing: Space.xxs / 2) {
                 HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
                     Text(verbatim: model.displayName(of: comment.member))

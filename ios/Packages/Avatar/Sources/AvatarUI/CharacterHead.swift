@@ -6,14 +6,17 @@ import SwiftUI
 /// Size it with a frame; it fills a square.
 public struct CharacterHead: View {
     let player: CharacterPlayer
+    let crop: CGRect
 
-    public init(player: CharacterPlayer) {
+    /// A coach's figure is drawn on its own canvas, so its face sits elsewhere.
+    public init(player: CharacterPlayer, figure: MemberHead.Figure = .member) {
         self.player = player
+        self.crop = figure == .coach ? MemberHead.coachFace : Self.face
     }
 
     public var body: some View {
         let frame = player.restFrame
-        CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.face)
+        CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: crop)
             .aspectRatio(1, contentMode: .fit)
             // The figure is decoration; who it is is said by the screen around it.
             .accessibilityHidden(true)

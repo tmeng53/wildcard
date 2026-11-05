@@ -19,6 +19,8 @@ export interface WeekCheckIn {
   readonly minutes?: number;
   /** The member's line: a caption, or a 请假条's text. */
   readonly text?: string;
+  /** Its photos' storage paths, the cover first; the model sees only how many. */
+  readonly photos?: readonly string[];
   /** How many teammates reacted to it. */
   readonly reactions: number;
   /** Teammates' comments, oldest first. */
@@ -75,6 +77,9 @@ export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, st
   if (checkIn.sport !== undefined) parts.push(checkIn.sport);
   if (checkIn.minutes !== undefined) parts.push(`${String(checkIn.minutes)} 分钟`);
   if (checkIn.text !== undefined) parts.push(`「${checkIn.text}」`);
+  if (checkIn.photos !== undefined && checkIn.photos.length > 0) {
+    parts.push(`（${String(checkIn.photos.length)} 张照片）`);
+  }
   const line = [parts.join(' ')];
   if (checkIn.reactions > 0) line.push(`${String(checkIn.reactions)} 个表情`);
   if (checkIn.comments.length > 0) {
