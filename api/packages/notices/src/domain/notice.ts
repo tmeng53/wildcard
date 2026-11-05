@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { BroadcastId } from './broadcast.js';
+
 export const MemberId = z.uuid().brand<'MemberId'>();
 export type MemberId = z.infer<typeof MemberId>;
 
@@ -70,6 +72,8 @@ export const NoticeSubjects = {
     checkIn: z.uuid(),
     comment: z.uuid(),
   }),
+  /** A broadcast every member is told (`broadcast.ts`); its words are read when shown. */
+  broadcast: z.strictObject({ version: z.literal(1), broadcast: BroadcastId }),
   /** A store opened or a prop unlocked for the member, by training or as a gift. */
   unlocked: z.strictObject({
     version: z.literal(1),
@@ -87,6 +91,7 @@ const KindAndSubject = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('coachNote'), subject: NoticeSubjects.coachNote }),
   z.object({ kind: z.literal('unlocked'), subject: NoticeSubjects.unlocked }),
   z.object({ kind: z.literal('comment'), subject: NoticeSubjects.comment }),
+  z.object({ kind: z.literal('broadcast'), subject: NoticeSubjects.broadcast }),
 ]);
 type KindAndSubject = z.infer<typeof KindAndSubject>;
 

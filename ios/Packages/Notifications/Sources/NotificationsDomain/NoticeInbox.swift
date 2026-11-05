@@ -129,6 +129,17 @@ public final class NoticeInbox {
         self.source = source
     }
 
+    /// The broadcasts (群发通知) on the loaded page that the member hasn't seen in 通知, the
+    /// earliest told first: for the home's banner, which tells each once.
+    public var unseenBroadcasts: [Broadcast] {
+        notices.reversed().compactMap { notice in
+            guard seenThrough.map({ notice.id > $0 }) ?? true, case .broadcast(let broadcast) = notice.subject else {
+                return nil
+            }
+            return broadcast
+        }
+    }
+
     /// Whether `notice` is new to the member on the page as it is open now.
     public func isUnread(_ notice: Notice) -> Bool {
         seenWhenOpened.map { notice.id > $0 } ?? true
@@ -152,7 +163,9 @@ public final class NoticeInbox {
                 read += 1
             }
             guard mine == generation else { return }
-            notices = found
+            // A notice heard live while the page was on its way is newer than all of it: kept.
+            let live = notices.filter { notice in found.first.map { notice.id > $0.id } ?? false }
+            notices = live + found
             next = page.next
             seenThrough = page.seenThrough
             moreFailed = false
@@ -253,36 +266,6 @@ public final class NoticeInbox {
         } catch {
             guard mine == generation else { return }
             moreFailed = true
-        }
-    }
-}
-
-/// Where a tapped notice goes.
-public enum NoticeTarget: Hashable, Sendable {
-    /// 动态: the 6pm push's squad news.
-    case feed
-    /// The squad's 战报 for the week starting `week`.
-    case recap(squad: SquadID?, week: LocalDay)
-    /// 今天, on the squad's new scene.
-    case home
-    /// The member's check-in the coach answered, on its own page.
-    case post(CheckInID)
-    /// The character editor, where the store or prop opened.
-    case wardrobe(Unlock.Kind, item: String)
-    /// 今天, where the coach's morning note shows again.
-    case coachNote(CoachMemberNote)
-}
-
-extension Notice {
-    public var target: NoticeTarget {
-        switch subject {
-        case .dailyProgress: .feed
-        case .weeklyAwards(_, let week): .recap(squad: squad, week: week)
-        case .sceneMoved: .home
-        case .coachReply(let checkIn, _, _, _, _): .post(checkIn)
-        case .coachNote(let note): .coachNote(note)
-        case .unlocked(let kind, let item): .wardrobe(kind, item: item)
-        case .comment(_, let checkIn): .post(checkIn)
         }
     }
 }

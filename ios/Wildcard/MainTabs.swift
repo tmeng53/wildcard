@@ -36,21 +36,23 @@ struct MainTabs: View {
     /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
     let squadmateCards: (any SquadmateCards)?
     @Binding var selection: Tab
+    /// A place a tapped push asked for, opened once the tabs are up (`open(_:)`), then cleared.
+    @Binding var destination: AppDestination?
     /// The member left the squad on its page.
     var leftSquad: () -> Void = {}
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
-    @State private var inbox: NoticeInbox
+    @State var inbox: NoticeInbox
     /// 通知's page, open over 动态.
-    @State private var showsNotices = false
+    @State var showsNotices = false
     /// A post opened from 通知 (the one the coach answered), over its page.
-    @State private var noticePost: OpenedPost?
+    @State var noticePost: OpenedPost?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// 商店街 and the character editor, open from 我.
-    @State private var wardrobe: Wardrobe
+    @State var wardrobe: Wardrobe
     /// 出赛表, open from 我 in its place.
-    @State private var showsSchedule = LaunchOptions.opensSchedule
+    @State var showsSchedule = LaunchOptions.opensSchedule
     /// 小队, open from the home's squad card in 今天's place.
-    @State private var showsSquad = LaunchOptions.opensSquad
+    @State var showsSquad = LaunchOptions.opensSquad
     /// The coach's card, opened from a tap on the coach on the home, popped up like a player's.
     @State private var showsCoachCard = false
     /// 小队's scene pick is playing its reveal, which fills the screen.
@@ -71,12 +73,14 @@ struct MainTabs: View {
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
         recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
-        squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>, leftSquad: @escaping () -> Void = {}
+        squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
+        destination: Binding<AppDestination?> = .constant(nil), leftSquad: @escaping () -> Void = {}
     ) {
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
         self.squadmateCards = squadmateCards
         _selection = selection
+        _destination = destination
         self.leftSquad = leftSquad
         _inbox = State(initialValue: NoticeInbox(source: notices))
         _newestPosts = State(initialValue: PostWallStore(source: myPosts))
@@ -91,7 +95,26 @@ struct MainTabs: View {
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
-        .task { today.tellUnlocks(with: UnlockNotices(banner: { UnlockBanner(unlock: $0) }, open: openUnlock)) }
+        .task {
+            // 「还有新通知」 and a broadcast's button on 今天 open here too.
+            today.openDestination = { open($0) }
+            today.tellUnlocks(
+                with: UnlockNotices(
+                    banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },
+                    badge: { WardrobeBadge($0, item: $1) })
+            )
+        }
+        // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the
+        // home says whose it is; its button opens what its 通知 row opens.
+        .onChange(of: inbox.unseenBroadcasts.map(\.id) + [today.home?.member.description ?? ""], initial: true) {
+            tellBroadcasts()
+        }
+        // A tapped push's place.
+        .onChange(of: destination, initial: true) { _, asked in
+            guard let asked else { return }
+            destination = nil
+            open(asked)
+        }
         // Read once at the start too, so the 战报 tile is in 动态 before it first opens and a post
         // 今天 opens 动态 on doesn't move down under it.
         .task { await recap.refresh() }
@@ -157,12 +180,6 @@ struct MainTabs: View {
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
     }
 
-    /// A tap on the home's notice that a store, piece or prop opened.
-    private func openUnlock(_ unlock: Unlock) {
-        selection = .profile
-        Task { await wardrobe.open(unlock.kind, item: unlock.id) }
-    }
-
     /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page, a scene
     /// pick's reveal) hides the bar.
     private var showsTabBar: Bool {
@@ -220,33 +237,6 @@ struct MainTabs: View {
         .environment(\.sceneTheme, today.scene)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsNotices)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: noticePost?.id)
-    }
-
-    /// Where a tapped notice goes. 通知 stays under a post or the wardrobe it opens, so back
-    /// returns to it; elsewhere it closes.
-    private func open(_ target: NoticeTarget) {
-        switch target {
-        case .feed:
-            showsNotices = false
-        case .recap(_, let week):
-            showsNotices = false
-            if recap.latest?.week.monday == week { recap.openLatest() }
-        case .home:
-            showsNotices = false
-            selection = .today
-        case .coachNote(let note):
-            // 今天, where the morning note slides up again.
-            showsNotices = false
-            selection = .today
-            today.showAgain(note)
-        case .post(let id):
-            noticePost = OpenedPost(id: id, model: feed.page(of: id))
-        case .wardrobe(let kind, let item):
-            // As the home's banner does.
-            showsNotices = false
-            selection = .profile
-            Task { await wardrobe.open(kind, item: item) }
-        }
     }
 
     /// The member's own character, on the empty 通知.
@@ -394,7 +384,7 @@ extension MainTabs {
 }
 
 /// A post opened from 我的动态, with the page's own model of it.
-private struct OpenedPost {
+struct OpenedPost {
     let id: CheckInID
     let model: FeedModel
 }

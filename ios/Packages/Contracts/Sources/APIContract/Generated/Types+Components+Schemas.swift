@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -166,11 +166,122 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/item`.
             public var item: Swift.String?
+            /// The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/broadcast`.
+            public var broadcast: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/title`.
+            public var title: Components.Schemas.LocalizedWords?
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/body`.
+            public var body: Components.Schemas.LocalizedWords?
+            /// A button that opens a place in the app (`broadcast`), if any: its `label`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/action`.
+            public struct ActionPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/action/label`.
+                public var label: Components.Schemas.LocalizedWords
+                /// Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` (小队), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show no button for one you don’t know.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/action/destination`.
+                public var destination: Swift.String
+                /// Creates a new `ActionPayload`.
+                ///
+                /// - Parameters:
+                ///   - label:
+                ///   - destination: Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` (小队), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show no button for one you don’t know.
+                public init(
+                    label: Components.Schemas.LocalizedWords,
+                    destination: Swift.String
+                ) {
+                    self.label = label
+                    self.destination = destination
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case label
+                    case destination
+                }
+            }
+            /// A button that opens a place in the app (`broadcast`), if any: its `label`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/action`.
+            public var action: Components.Schemas.NoticeEntry.ActionPayload?
+            /// How the app first shows it (`broadcast`): `banner` (the home’s notice banner) or `celebration` (full screen). Show another as `banner`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/style`.
+            public var style: Swift.String?
+            /// The picture beside its words (`broadcast`): a store’s sign, a prop or a piece the app draws; left out, or one this build doesn’t draw, shows its own symbol.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/icon`.
+            public struct IconPayload: Codable, Hashable, Sendable {
+                /// `store`, `prop` or `piece`. Skip another.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/icon/kind`.
+                public var kind: Swift.String
+                /// Its id in the app’s art.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/icon/id`.
+                public var id: Swift.String
+                /// Creates a new `IconPayload`.
+                ///
+                /// - Parameters:
+                ///   - kind: `store`, `prop` or `piece`. Skip another.
+                ///   - id: Its id in the app’s art.
+                public init(
+                    kind: Swift.String,
+                    id: Swift.String
+                ) {
+                    self.kind = kind
+                    self.id = id
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case kind
+                    case id
+                }
+            }
+            /// The picture beside its words (`broadcast`): a store’s sign, a prop or a piece the app draws; left out, or one this build doesn’t draw, shows its own symbol.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/icon`.
+            public var icon: Components.Schemas.NoticeEntry.IconPayload?
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/GiftsPayload`.
+            public struct GiftsPayloadPayload: Codable, Hashable, Sendable {
+                /// `store`, `prop` or `piece`. Skip another.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/GiftsPayload/kind`.
+                public var kind: Swift.String
+                /// Its id in the app’s art.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/GiftsPayload/id`.
+                public var id: Swift.String
+                /// Creates a new `GiftsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - kind: `store`, `prop` or `piece`. Skip another.
+                ///   - id: Its id in the app’s art.
+                public init(
+                    kind: Swift.String,
+                    id: Swift.String
+                ) {
+                    self.kind = kind
+                    self.id = id
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case kind
+                    case id
+                }
+            }
+            /// What it gave the caller when they were told (`broadcast`), already among their unlocks; left out when it gave nothing.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/gifts`.
+            public typealias GiftsPayload = [Components.Schemas.NoticeEntry.GiftsPayloadPayload]
+            /// What it gave the caller when they were told (`broadcast`), already among their unlocks; left out when it gave nothing.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/gifts`.
+            public var gifts: Components.Schemas.NoticeEntry.GiftsPayload?
             /// Creates a new `NoticeEntry`.
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened) or `comment` (a teammate commented on the caller’s check-in or replied to them). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - squadId: The squad it is about, if any.
             ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
@@ -188,6 +299,13 @@ extension Components {
             ///   - text: The morning note’s words (`coachNote`).
             ///   - unlockKind: What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.
             ///   - item: The store’s, prop’s or piece’s id (`unlocked`).
+            ///   - broadcast: The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now.
+            ///   - title:
+            ///   - body:
+            ///   - action: A button that opens a place in the app (`broadcast`), if any: its `label`.
+            ///   - style: How the app first shows it (`broadcast`): `banner` (the home’s notice banner) or `celebration` (full screen). Show another as `banner`.
+            ///   - icon: The picture beside its words (`broadcast`): a store’s sign, a prop or a piece the app draws; left out, or one this build doesn’t draw, shows its own symbol.
+            ///   - gifts: What it gave the caller when they were told (`broadcast`), already among their unlocks; left out when it gave nothing.
             public init(
                 id: Swift.Int,
                 kind: Swift.String,
@@ -207,7 +325,14 @@ extension Components {
                 day: Swift.String? = nil,
                 text: Swift.String? = nil,
                 unlockKind: Swift.String? = nil,
-                item: Swift.String? = nil
+                item: Swift.String? = nil,
+                broadcast: Swift.String? = nil,
+                title: Components.Schemas.LocalizedWords? = nil,
+                body: Components.Schemas.LocalizedWords? = nil,
+                action: Components.Schemas.NoticeEntry.ActionPayload? = nil,
+                style: Swift.String? = nil,
+                icon: Components.Schemas.NoticeEntry.IconPayload? = nil,
+                gifts: Components.Schemas.NoticeEntry.GiftsPayload? = nil
             ) {
                 self.id = id
                 self.kind = kind
@@ -228,6 +353,13 @@ extension Components {
                 self.text = text
                 self.unlockKind = unlockKind
                 self.item = item
+                self.broadcast = broadcast
+                self.title = title
+                self.body = body
+                self.action = action
+                self.style = style
+                self.icon = icon
+                self.gifts = gifts
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -249,6 +381,42 @@ extension Components {
                 case text
                 case unlockKind
                 case item
+                case broadcast
+                case title
+                case body
+                case action
+                case style
+                case icon
+                case gifts
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/LocalizedWords`.
+        public struct LocalizedWords: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/LocalizedWords/zhHans`.
+            public var zhHans: Swift.String
+            /// - Remark: Generated from `#/components/schemas/LocalizedWords/en`.
+            public var en: Swift.String
+            /// - Remark: Generated from `#/components/schemas/LocalizedWords/zhHant`.
+            public var zhHant: Swift.String
+            /// Creates a new `LocalizedWords`.
+            ///
+            /// - Parameters:
+            ///   - zhHans:
+            ///   - en:
+            ///   - zhHant:
+            public init(
+                zhHans: Swift.String,
+                en: Swift.String,
+                zhHant: Swift.String
+            ) {
+                self.zhHans = zhHans
+                self.en = en
+                self.zhHant = zhHant
+            }
+            public enum CodingKeys: String, CodingKey {
+                case zhHans
+                case en
+                case zhHant
             }
         }
         /// - Remark: Generated from `#/components/schemas/Health`.

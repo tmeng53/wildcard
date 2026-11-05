@@ -12,7 +12,10 @@ struct HomeNotices: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .noticeBanner(item: $model.notice, hold: model.noticeHold, onTap: tap) { notice in banner(for: notice) }
+            .noticeBanner(item: $model.notice, hold: model.hold, onTap: tap) { notice in
+                // An edge under it for each still to come, at most two.
+                banner(for: notice).noticesWaiting(model.waitingNotices)
+            }
             // Only an unlock: something the member earned arrives.
             .haptic(.appear, trigger: model.notice?.id) { _, id in id != nil && isUnlock(model.notice) }
             .onChange(of: model.notice == nil && model.step == .scene && !model.isBurstOpen) { _, free in
@@ -35,11 +38,34 @@ struct HomeNotices: ViewModifier {
             ) { SceneBadge(scene) }
         case .unlocked(let unlock):
             if let unlocks { unlocks.banner(unlock) }
+        case .broadcast(let broadcast):
+            let language = [AppLanguage.current.rawValue]
+            NoticeBanner(
+                Text(verbatim: broadcast.title.localized(in: language)),
+                detail: broadcast.body.map { Text(verbatim: $0.localized(in: language)) },
+                action: broadcast.action.map { Text(verbatim: $0.label.localized(in: language)) }
+            ) {
+                if let icon = broadcast.icon, let unlocks {
+                    unlocks.badge(icon.kind, icon.id)
+                } else {
+                    NoticeSymbol(systemImage: "sparkles")
+                }
+            }
+        case .more:
+            NoticeBanner(Text("还有新通知 · 去看看", bundle: .module), showsChevron: true) {
+                NoticeSymbol(systemImage: "bell.fill")
+            }
         }
     }
 
     private func tap(_ notice: TodayModel.Notice) {
-        if case .unlocked(let unlock) = notice.news { unlocks?.open(unlock) }
+        switch notice.news {
+        case .unlocked(let unlock): unlocks?.open(unlock)
+        case .broadcast(let broadcast):
+            if let action = broadcast.action { model.openDestination?(action.destination) }
+        case .more: model.openDestination?(.notices)
+        case .moved: break
+        }
     }
 
     private func isUnlock(_ notice: TodayModel.Notice?) -> Bool {
@@ -52,13 +78,19 @@ struct HomeNotices: ViewModifier {
 public struct UnlockNotices {
     let banner: (Unlock) -> AnyView
     let open: (Unlock) -> Void
+    let badge: (Unlock.Kind, String) -> AnyView
 
     /// - Parameters:
     ///   - banner: the `NoticeBanner` that says what opened.
     ///   - open: a tap on it: the editor, at that store or prop.
-    public init<Banner: View>(banner: @escaping (Unlock) -> Banner, open: @escaping (Unlock) -> Void) {
+    ///   - badge: a store's sign or a piece's or prop's picture, as a broadcast's icon.
+    public init<Banner: View, Badge: View>(
+        banner: @escaping (Unlock) -> Banner, open: @escaping (Unlock) -> Void,
+        badge: @escaping (Unlock.Kind, String) -> Badge
+    ) {
         self.banner = { AnyView(banner($0)) }
         self.open = open
+        self.badge = { AnyView(badge($0, $1)) }
     }
 }
 #endif

@@ -1816,6 +1816,22 @@
         }
       }
     },
+    "还有新通知 · 去看看": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More new notices · Take a look"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還有新通知 · 去看看"
+          }
+        }
+      }
+    },
     "收下": {
       "localizations": {
         "en": {
