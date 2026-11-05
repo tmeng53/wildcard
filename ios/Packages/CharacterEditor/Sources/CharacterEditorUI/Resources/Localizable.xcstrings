@@ -4034,6 +4034,22 @@
           }
         }
       }
+    },
+    "网络开小差了，没领上": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't claim it. Check your connection"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網路開小差了，沒領上"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

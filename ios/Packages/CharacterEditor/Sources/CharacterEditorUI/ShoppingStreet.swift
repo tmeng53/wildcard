@@ -38,6 +38,13 @@ public struct ShoppingStreetPage: View {
             .padding(.vertical, Space.xs)
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.xs) {
+                    // A 领取 that didn't save: the piece is back to NEW, so say why.
+                    if model.claimFailed {
+                        Text("网络开小差了，没领上", bundle: .module)
+                            .typeStyle(TypeRamp.footnote)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .accessibilityIdentifier("street.claimFailed")
+                    }
                     if let store {
                         StoreRack(model: model, store: store)
                     } else {
