@@ -106,7 +106,11 @@ export interface Broadcast {
 
 /** Whether `broadcast` is for `member`: everyone, unless it names its members. */
 export function isFor(broadcast: BroadcastValue, member: string): boolean {
-  return broadcast.members === undefined || broadcast.members.includes(member);
+  // Member ids are uuids, which an admin may paste in either case.
+  const id = member.toLowerCase();
+  return (
+    broadcast.members === undefined || broadcast.members.some((named) => named.toLowerCase() === id)
+  );
 }
 
 /** Whether `broadcast` is told to members who open the app at `now`. */

@@ -242,7 +242,7 @@ describe('broadcasts', () => {
       );
     await box.put({
       id,
-      value: value({ members: [me], icon: { kind: 'store', id: 'powder' } }),
+      value: value({ members: [me.toUpperCase()], icon: { kind: 'store', id: 'powder' } }),
       by: admin,
     });
     expect(await told(other)).toEqual([]);

@@ -125,6 +125,8 @@ extension TodayModel {
         let plain = pendingNotices.filter { !$0.hasButton && $0.news != .more }
         guard plain.count >= 2 else { return }
         pendingNotices = pendingNotices.filter(\.hasButton) + [Notice(news: .more)]
+        // A broadcast folded in is told on this phone too: 通知 has it.
+        for case .broadcast(let broadcast) in plain.map(\.news) { broadcastShown?(broadcast) }
     }
 }
 #endif
