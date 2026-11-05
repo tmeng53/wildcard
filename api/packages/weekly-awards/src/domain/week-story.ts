@@ -60,6 +60,11 @@ export const StoredStoryMember = z.discriminatedUnion('version', [
     healthyMeals: Count,
     cheatMeals: Count,
     reactionsReceived: Count,
+    /**
+     * When they finished their week's plan, if they did: breaks a tie on the podium in favour of
+     * whoever finished first. Missing in the first stories frozen (the join order breaks ties).
+     */
+    planFinishedAt: z.iso.datetime().optional(),
   }),
 ]);
 export type StoredStoryMember = z.infer<typeof StoredStoryMember>;

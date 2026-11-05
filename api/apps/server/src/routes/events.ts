@@ -39,7 +39,7 @@ export const LiveNotice = z
 
 /**
  * `GET /me/events`: the caller's live events as Server-Sent Events, while the app is open, so the
- * bell's dot (and later the coach's chat) changes at once instead of on the next read.
+ * bell's dot changes at once instead of on the next read.
  */
 export function events(deps: {
   readonly verifyToken: VerifyToken;

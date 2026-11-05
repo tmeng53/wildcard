@@ -412,6 +412,7 @@ async function frozenStory(
         healthyMeals: page.healthyMeals,
         cheatMeals: page.cheatMeals,
         reactionsReceived: page.reactionsReceived,
+        ...(page.planFinishedAt === undefined ? {} : { planFinishedAt: page.planFinishedAt }),
         ...(hottest === undefined ? {} : { hottest }),
         ...(best?.author === member
           ? {
