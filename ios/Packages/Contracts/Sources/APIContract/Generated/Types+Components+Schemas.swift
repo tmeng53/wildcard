@@ -4341,7 +4341,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/SquadList/version`.
             public var version: Components.Schemas.SquadList.VersionPayload
-            /// The member’s squads, the earliest joined first: at most 3.
+            /// The member’s squads, the earliest joined first: at most 1.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadList/squads`.
             public var squads: [Components.Schemas.Squad]
@@ -4349,7 +4349,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - squads: The member’s squads, the earliest joined first: at most 3.
+            ///   - squads: The member’s squads, the earliest joined first: at most 1.
             public init(
                 version: Components.Schemas.SquadList.VersionPayload,
                 squads: [Components.Schemas.Squad]

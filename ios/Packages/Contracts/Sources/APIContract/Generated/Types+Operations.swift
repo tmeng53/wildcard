@@ -9267,7 +9267,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid name, the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)
+            /// Not a valid name, the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)
             ///
             /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)/responses/400`.
             ///
@@ -11174,7 +11174,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// The squad has 8 members (`SQUAD_FULL`), the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)
+            /// The squad has 8 members (`SQUAD_FULL`), the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)
             ///
             /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/accept/post(joinSquad)/responses/400`.
             ///

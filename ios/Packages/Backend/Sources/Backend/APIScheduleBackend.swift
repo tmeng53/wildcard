@@ -34,7 +34,7 @@ public struct APIScheduleBackend: ScheduleBackend {
             let wire = try await api.weeklyPlanWire(weekStart: weekStart)
             let plan = try api.read { () throws(ContractsError) in try WeeklyPlan(wire) }
             let checkIns = try await api.myCheckIns(from: weekStart, through: weekStart.adding(days: 6))
-            let squad = try await api.mySquads().first
+            let squad = try await api.mySquad()
             // The squad's count shows on this week; the titles on a week that is over.
             let squadCount =
                 if let squad, weekStart == thisWeek {

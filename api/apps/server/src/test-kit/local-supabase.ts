@@ -142,3 +142,19 @@ export const noJobs = {
   clock: () => new Date(),
   coachNotes: noCoachNotes,
 };
+
+/**
+ * Puts `member` in `squad` as well, straight in the database: a member who joined a second squad
+ * before the one-squad limit, since the API no longer lets anyone in two. A post shared to more
+ * than one squad, and what each squad sees of it, still have to hold for them.
+ */
+export async function alsoJoinedEarlier(
+  db: Database,
+  { squad, member }: { readonly squad: string; readonly member: string },
+) {
+  await db.insertInto('squad_members').values({ squad_id: squad, member_id: member }).execute();
+  await db
+    .insertInto('squad_membership_events')
+    .values({ squad_id: squad, member_id: member, kind: 'joined', actor_id: member })
+    .execute();
+}

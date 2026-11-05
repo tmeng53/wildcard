@@ -27,7 +27,7 @@ public struct APIMeService: MeService {
             let member = try await api.me()
             let character = member.profile?.character
             let totals = try await api.checkInTotals()
-            let squad = try await api.mySquads().first
+            let squad = try await api.mySquad()
             // 本周 is counted against the plan the squad's today carries; no squad, no week. A today
             // that doesn't load leaves the week out rather than the whole page.
             var week: WeekCount?

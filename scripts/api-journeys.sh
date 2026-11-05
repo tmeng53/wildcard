@@ -791,7 +791,9 @@ if want account; then
   jq -e '.profile.joinedAt | test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$")' <<<"$body" >/dev/null || fail "the profile should say when they joined: $body"
   echo "account: a new member has no profile, an unknown zone is refused (400 TIME_ZONE_UNKNOWN), America/Toronto saved, joined $(jq -r .profile.joinedAt <<<"$body")"
 
-  squad_of "$leaver_token" "$mate_token"
+  # Mate is in the shared squad already, and a member is in one at a time: a new teammate.
+  read -r _ keeper_token <<<"$(sign_up)"
+  squad_of "$leaver_token" "$keeper_token"
   call POST /photo-uploads "$leaver_token"
   expect 201
   path="$(jq -r .path <<<"$body")"
@@ -802,7 +804,7 @@ if want account; then
   toronto_day="$(node -p "new Date(Date.parse(new Date('$now').toLocaleString('sv-SE', { timeZone: 'America/Toronto' }) + 'Z') - 3 * 3_600_000).toISOString().slice(0, 10)")"
   call PUT "/check-ins/$(new_id)" "$leaver_token" "$(check_in_of "$squad" "$toronto_day" healthyMeal "\"meal\":{\"photos\":[{\"path\":\"$path\"}]}")"
   expect 201
-  echo "account: leaver made a squad with mate and posted a meal with a photo"
+  echo "account: leaver made a squad with keeper and posted a meal with a photo"
 
   call DELETE /me "$leaver_token" '{"version":1}'
   expect 204
@@ -816,8 +818,8 @@ if want account; then
       (select count(*) from public.ai_consents where member_id = '$leaver') || ' ' ||
       (select count(*) from storage.objects where name like '$leaver/%') || ' ' ||
       (select count(*) from public.squad_members where squad_id = '$squad')")"
-  [ "$left" = "0 0 0 0 0 0 0 0 1" ] || fail "user, profile and its log, membership log, check-ins, memberships, AI consent, photos should be gone and the squad left to mate: $left"
-  echo "account: deleted (204): no user, profile, profile or membership log, check-in, membership, AI consent or photo left; the squad stays with mate"
+  [ "$left" = "0 0 0 0 0 0 0 0 1" ] || fail "user, profile and its log, membership log, check-ins, memberships, AI consent, photos should be gone and the squad left to keeper: $left"
+  echo "account: deleted (204): no user, profile, profile or membership log, check-in, membership, AI consent or photo left; the squad stays with keeper"
 
   call DELETE /me "$leaver_token" '{"version":1}'
   expect 401

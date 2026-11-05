@@ -99,7 +99,7 @@ struct FailureLine: View {
         switch failure {
         case .unknownInvite: Text("没找到这个邀请码", bundle: .module)
         case .squadFull: Text("这个小队满 8 人了", bundle: .module)
-        case .tooManySquads: Text("你已经在 3 个小队里了", bundle: .module)
+        case .tooManySquads: Text("你已经有小队了，先退出才能加入新的", bundle: .module)
         case .rejected: Text("没存上，换个写法试试", bundle: .module)
         case .unavailable: Text("网络开小差了，再试一次", bundle: .module)
         }
