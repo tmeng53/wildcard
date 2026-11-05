@@ -26,8 +26,9 @@ public final class ComposeModel {
     /// The sport picked; the suggestion until the member picks one.
     var activity: Activity?
     var minutes: WorkoutMinutes?
-    /// Whether a new post goes to the squad; off keeps it to the member.
-    var isShared: Bool
+    /// Whether a new post goes to the squad; off keeps it to the member. An edit keeps its squads
+    /// as posted and never reads it.
+    var isShared = true
     /// The days a new post can count for (补打卡), today last; none for an edit, whose day stays.
     let postableDays: [LocalDay]
     /// The past day a new post counts for, once the member picks one; nil is today, whatever
@@ -67,13 +68,9 @@ public final class ComposeModel {
         self.close = close
         // Locals first: an @Observable model can't read its own properties until all are set.
         var start = Snapshot(photos: Array(photos.prefix(Photos.maxCount)), line: "", activity: nil, minutes: nil)
-        switch purpose {
-        case .new:
-            isShared = true
-        case .edit(let checkIn):
+        if case .edit(let checkIn) = purpose {
             start.photos = ComposedPhoto.of(checkIn)
             start.line = checkIn.entry.line ?? ""
-            isShared = !checkIn.audience.squads.isEmpty
             if case .trained(let training) = checkIn.entry {
                 start.activity = training.activity
                 start.minutes = training.minutes
