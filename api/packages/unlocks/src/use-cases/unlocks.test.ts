@@ -50,12 +50,18 @@ describe('unlocks', () => {
     const rules = all.filter(({ kind }) => kind !== 'piece');
     expect(rules.map(({ kind, id, sports, after }) => [kind, id, sports, after])).toStrictEqual([
       ['prop', 'badminton', ['badminton'], 1],
+      ['prop', 'basketball', ['basketball'], 1],
       ['prop', 'chalkbag', ['climb'], 1],
+      ['prop', 'gloves', ['boxing', 'kickboxing', 'jiuJitsu', 'martialArts'], 1],
       ['prop', 'goggles', ['swim'], 1],
+      ['prop', 'helmet', ['roadCycling', 'mountainBiking', 'spin', 'bikeCommute'], 1],
       ['prop', 'kettlebell', ['kettlebell', 'crossfit', 'hyrox'], 1],
       ['prop', 'pickleball', ['pickleball'], 1],
       ['prop', 'pingpong', ['tableTennis'], 1],
       ['prop', 'racket', ['tennis', 'squash'], 1],
+      ['prop', 'skis', ['ski', 'crossCountrySki'], 1],
+      ['prop', 'snowboard', ['snowboard'], 1],
+      ['prop', 'soccerball', ['soccer'], 1],
       ['prop', 'yogamat', ['yoga', 'matPilates', 'reformerPilates', 'barre', 'stretching'], 1],
       ['store', 'deuce', ['tennis', 'pickleball', 'squash'], 3],
       ['store', 'halfmoon', [], 3],
