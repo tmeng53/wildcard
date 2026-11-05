@@ -9,7 +9,8 @@ import SwiftUI
 
 /// 穿搭, 我的衣橱 (the approved wardrobe design, 2026-11-04): the clothes the member owns, one slot
 /// at a time (上衣, 下装, 鞋子, 头饰, 配饰 on a bar of their own, Tracy 2026-11-05, since all of them in
-/// one list was too many to look through), three a row with their names. The bar follows the piece
+/// one list was too many to look through; a slot with nothing in it yet keeps its tab and says
+/// 还是空的), three a row with their names. The bar follows the piece
 /// last put on, so 穿上看看 opens on its slot. A piece claimed on 商店街 wears NEW until it is first
 /// tapped. The colors of the piece just put on stay put above the rack, as the skin swatches do on
 /// 长相. Locked and unclaimed pieces aren't here: they wait on 商店街.
@@ -43,18 +44,25 @@ struct WardrobePanel: View {
                     .padding(.top, Space.s)
             }
             ScrollView {
-                LazyVGrid(
-                    columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 3),
-                    spacing: Space.xs
-                ) {
-                    if let group = wardrobe.first(where: { $0.slot == shown }) {
-                        ForEach(group.pieces, id: \.self) { piece in
-                            WardrobePiece(model: model, slot: group.slot, variant: piece)
+                let pieces = wardrobe.first { $0.slot == shown }?.pieces ?? []
+                if let shown, !pieces.isEmpty {
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 3),
+                        spacing: Space.xs
+                    ) {
+                        ForEach(pieces, id: \.self) { piece in
+                            WardrobePiece(model: model, slot: shown, variant: piece)
                         }
                     }
+                    .padding(.horizontal, Space.pageMargin)
+                    .padding(.vertical, Space.s)
+                } else {
+                    // A slot the member owns nothing in yet still has its tab.
+                    StateView(Text("还是空的", bundle: .module))
+                        .padding(.horizontal, Space.pageMargin)
+                        .padding(.vertical, Space.xl)
+                        .accessibilityIdentifier("editor.wardrobe.empty")
                 }
-                .padding(.horizontal, Space.pageMargin)
-                .padding(.vertical, Space.s)
             }
             .scrollIndicators(.hidden)
             .accessibilityIdentifier("editor.wardrobe")

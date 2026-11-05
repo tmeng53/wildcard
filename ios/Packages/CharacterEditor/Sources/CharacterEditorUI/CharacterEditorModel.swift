@@ -168,15 +168,15 @@ public final class CharacterEditorModel {
         wear(piece, for: slot)
     }
 
-    /// 我的衣橱: what the member owns, by slot in the art's order: every piece of the open stores but
+    /// 我的衣橱: what the member owns, by slot in the art's order, every slot even when empty: every piece of the open stores but
     /// the unlocked ones not claimed yet, which wait on 商店街.
     var wardrobe: [(slot: Slot, pieces: [String])] {
         let catalog = draft.catalog
         let open = catalog.stores.filter(\.isOpen).map(\.id)
         let racks = open.flatMap { catalog.rack(of: $0) }.filter { owns($0.variant) }
-        return Catalog.clothingSlots.compactMap { slot in
-            let pieces = racks.filter { $0.slot == slot }.map(\.variant)
-            return pieces.isEmpty ? nil : (slot, pieces)
+        // Every slot, an empty one too: its tab says it's still empty (Tracy 2026-11-05).
+        return Catalog.clothingSlots.map { slot in
+            (slot, racks.filter { $0.slot == slot }.map(\.variant))
         }
     }
 
