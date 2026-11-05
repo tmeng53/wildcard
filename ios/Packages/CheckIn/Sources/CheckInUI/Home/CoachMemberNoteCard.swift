@@ -1,4 +1,6 @@
 #if os(iOS)
+import AvatarArt
+import AvatarDomain
 import AvatarUI
 import Contracts
 import DesignSystem
@@ -16,6 +18,7 @@ struct CoachMemberNoteOverlay: View {
     /// The member's nickname, for 「给 小美 的」; nil before they have one.
     let reader: String?
     let putAway: () -> Void
+    @State private var head: CharacterPlayer?
 
     private static let faceSize: Double = 40
 
@@ -29,14 +32,8 @@ struct CoachMemberNoteOverlay: View {
             ClipboardCard {
                 VStack(alignment: .leading, spacing: Space.s) {
                     HStack(spacing: Space.s) {
-                        CoachFigure(coach: note.coach.id.rawValue, pose: .still, crop: CoachCanvas.full) {
-                            Color(role: .bgSubtle, in: theme)
-                        }
-                        .frame(width: Self.faceSize, height: Self.faceSize)
-                        .background(Color(role: .bgSubtle, in: theme), in: Circle())
-                        .clipShape(Circle())
-                        .overlay { Circle().strokeBorder(Color(role: .fgDefault, in: theme), lineWidth: 1.5) }
-                        .accessibilityHidden(true)
+                        MemberHead(player: head, size: Self.faceSize, figure: .coach)
+                            .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: Space.xxs / 2) {
                             HStack(spacing: Space.xs) {
                                 Text(verbatim: note.coach.name)
@@ -68,6 +65,11 @@ struct CoachMemberNoteOverlay: View {
             .padding(.horizontal, Space.pageMargin)
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("today.coachNote")
+        }
+        .task(id: note.coach.id) {
+            let id = note.coach.id.rawValue
+            guard CoachCharacter.exists(id) else { return }
+            head = try? CharacterPlayer(figure: CoachCharacter.figure(id), idle: CoachCharacter.clip(.idle, coach: id))
         }
     }
 

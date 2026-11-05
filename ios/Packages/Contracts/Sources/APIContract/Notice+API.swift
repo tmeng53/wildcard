@@ -41,10 +41,7 @@ extension Notice {
         case "coachNote":
             return coachNote(wire)
         case "unlocked":
-            guard let kind = wire.unlockKind.flatMap(Unlock.Kind.init(rawValue:)), let item = wire.item else {
-                return nil
-            }
-            return .unlocked(kind, item: item)
+            return unlocked(wire)
         case "comment":
             guard let alert, let checkIn else { return nil }
             return .comment(alert, checkIn: checkIn)
@@ -62,6 +59,11 @@ extension Notice {
 }
 
 extension Notice {
+    fileprivate static func unlocked(_ wire: Components.Schemas.NoticeEntry) -> Subject? {
+        guard let kind = wire.unlockKind.flatMap(Unlock.Kind.init(rawValue:)), let item = wire.item else { return nil }
+        return .unlocked(kind, item: item)
+    }
+
     /// The morning note as 今天 shows it again from 通知; the coach's name is as it is now.
     fileprivate static func coachNote(_ wire: Components.Schemas.NoticeEntry) -> Subject? {
         guard let note = wire.note, let coach = wire.coach.flatMap(CoachID.init(rawValue:)),

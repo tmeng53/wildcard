@@ -20,10 +20,8 @@ final class NoticeBellUITests: XCTestCase {
         keepScreenshot(named: "100-notices-bell")
 
         bell.tap()
-        let note = app.buttons["notices.row.9"]
-        XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "通知 didn't open on its newest row")
-        XCTAssertTrue(note.label.contains("教练 毛头 给你写了张便条"), "the note row says \(note.label)")
         let comment = app.buttons["notices.row.8"]
+        XCTAssertTrue(comment.waitForExistence(timeout: Self.wait), "通知 didn't open")
         XCTAssertTrue(comment.label.contains("Coco 评论了你：这组深蹲太稳了"), "the comment row says \(comment.label)")
         let moved = app.buttons["notices.row.7"]
         XCTAssertTrue(moved.label.contains("阿杰 把小队搬到了跑道"), "the scene row says \(moved.label)")
@@ -63,12 +61,18 @@ final class NoticeBellUITests: XCTestCase {
         XCTAssertTrue(
             tabButton("tab.today", in: app).waitForExistence(timeout: Self.wait), "the scene row didn't go home")
         waitFor(tabButton("tab.today", in: app), "selected == true", "the scene row didn't open 今天")
+    }
 
-        // The morning note's row opens it again on 今天, where 收下 puts it away.
-        tabButton("tab.feed", in: app).tap()
-        XCTAssertTrue(bell.waitForExistence(timeout: Self.wait))
+    /// The coach's morning note's row opens it again on 今天, where 收下 puts it away.
+    func testTheNoteRowShowsTheNoteAgain() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        let bell = app.buttons["notices.bell"]
+        XCTAssertTrue(bell.waitForExistence(timeout: Self.wait), "no bell on 动态")
         bell.tap()
-        XCTAssertTrue(note.waitForExistence(timeout: Self.wait))
+        let note = app.buttons["notices.row.9"]
+        XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "通知 didn't open on its newest row")
+        XCTAssertTrue(note.label.contains("教练 毛头 给你写了张便条"), "the note row says \(note.label)")
         note.tap()
         let putAway = app.buttons["today.coachNote.putAway"]
         XCTAssertTrue(putAway.waitForExistence(timeout: Self.wait), "the note row didn't show the note on 今天")

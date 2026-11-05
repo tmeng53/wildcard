@@ -89,17 +89,19 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     plan: plan, checkIns: checkIns)
             },
             pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none,
-            coach: coach || coachNote ? sampleCoach(now: now) : nil,
-            notes: coachNote ? [sampleNote(now: now, squad: squadID)] : [])
+            coach: coach || coachNote ? sampleCoach(now: now) : nil, notes: sampleNotes(coachNote, now, squadID))
     }
 
-    /// 毛头's morning note to me, as the approved 便条 shows it.
-    private static func sampleNote(now: Date, squad: SquadID) -> CoachMemberNote {
+    /// 毛头's morning note to me, as the approved 便条 shows it, when `shown`.
+    private static func sampleNotes(_ shown: Bool, _ now: Date, _ squad: SquadID) -> [CoachMemberNote] {
+        guard shown else { return [] }
         let words = Bundle.module.inAppLanguage
-        return CoachMemberNote(
-            id: 1, squad: squad, day: LocalDay(at: now, in: CoachNote.timeZone),
-            text: words.localizedString(forKey: "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。", value: nil, table: nil),
-            coach: CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil)))
+        return [
+            CoachMemberNote(
+                id: 1, squad: squad, day: LocalDay(at: now, in: CoachNote.timeZone),
+                text: words.localizedString(forKey: "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。", value: nil, table: nil),
+                coach: CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil)))
+        ]
     }
 
     /// 毛头 with today's line, as the approved home shows it.
