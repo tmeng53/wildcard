@@ -41,22 +41,20 @@ public struct NoticesView: View {
     private let unlocked: (Unlock.Kind, String) -> UnlockWords
     private let now: () -> Date
     private let open: (NoticeTarget) -> Void
-    private let close: () -> Void
 
     /// - Parameters:
     ///   - unlocked: a store's or prop's words and badge, by its id in the art.
     ///   - now: the time the rows' groups and times are told against.
-    ///   - open: a row was tapped; the page stays until the caller closes it.
+    ///   - open: a row was tapped; the page stays until the caller pops it.
     public init(
         inbox: NoticeInbox, viewer: NoticeViewer?, unlocked: @escaping (Unlock.Kind, String) -> UnlockWords,
-        now: @escaping () -> Date = Date.init, open: @escaping (NoticeTarget) -> Void, close: @escaping () -> Void
+        now: @escaping () -> Date = Date.init, open: @escaping (NoticeTarget) -> Void
     ) {
         self.inbox = inbox
         self.viewer = viewer
         self.unlocked = unlocked
         self.now = now
         self.open = open
-        self.close = close
     }
 
     public var body: some View {
@@ -64,8 +62,6 @@ public struct NoticesView: View {
             Color(role: .bgCanvas, in: .gym).ignoresSafeArea()
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Space.xs) {
-                    HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
-                        .accessibilityIdentifier("notices.back")
                     Text("通知", bundle: .module)
                         .typeStyle(TypeRamp.largeTitle)
                         .foregroundStyle(Color(role: .fgDefault, in: .gym))
@@ -77,6 +73,7 @@ public struct NoticesView: View {
                 .padding(.top, Space.xs)
                 .padding(.bottom, Space.l)
             }
+            .barTitleOnScroll(Text("通知", bundle: .module))
             .refreshable { await inbox.refresh() }
         }
         .loadingCover(inbox.phase == .loading && inbox.notices.isEmpty) {
@@ -84,7 +81,7 @@ public struct NoticesView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(role: .bgCanvas, in: .gym))
         }
-        .swipesBack(perform: close)
+        .pushedPage()
         .task { await inbox.open() }
         .onDisappear { inbox.close() }
         .accessibilityIdentifier("notices.page")

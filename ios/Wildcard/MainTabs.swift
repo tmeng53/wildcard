@@ -19,7 +19,8 @@ import SwiftUI
 /// system's Liquid Glass tab bar (`AppTabs`), with 小队 opened inside 今天 from the home's squad
 /// card (Tracy took 小队's own tab away on 2026-11-04).
 /// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
-/// them draws the bar itself.
+/// them draws the bar itself. Each tab is a NavigationStack: every page that opens over a tab's
+/// screen is pushed on it, so going back (the back button, a swipe right) is the system's.
 struct MainTabs: View {
     enum Tab: Hashable {
         case today, feed, profile
@@ -40,26 +41,25 @@ struct MainTabs: View {
     var leftSquad: () -> Void = {}
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
     @State private var inbox: NoticeInbox
-    /// 通知's page, open over 动态.
+    /// 通知's page, pushed over 动态.
     @State private var showsNotices = false
-    /// A post opened from 通知 (the one the coach answered), over its page.
+    /// A post opened from 通知 (the one the coach answered), pushed over its page.
     @State private var noticePost: OpenedPost?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// 商店街 and the character editor, open from 我.
     @State private var wardrobe: Wardrobe
-    /// 出赛表, open from 我 in its place.
+    /// 出赛表, pushed over 我.
     @State private var showsSchedule = LaunchOptions.opensSchedule
-    /// 小队, open from the home's squad card in 今天's place.
-    @State private var showsSquad = LaunchOptions.opensSquad
-    /// 小队 opens on its coach's 简历, from a tap on the coach on the home.
-    @State private var squadOpensCoach = false
+    /// The pages pushed over 今天: 小队, from the home's squad card, and the coach's pages over it,
+    /// or the squad's coach's 简历 alone, from a tap on the coach on the home.
+    @State private var todayPages: [TodayPage] = LaunchOptions.opensSquad ? [.squad] : []
     /// 小队's scene pick is playing its reveal, which fills the screen.
     @State private var squadRevealing = false
-    /// 我的动态, open from 我 in its place.
+    /// 我的动态, pushed over 我.
     @State private var wall: PostWallStore?
     /// 我的动态's tile on 我: the wall's first page, read again each time 我 shows.
     @State private var newestPosts: PostWallStore
-    /// A post opened from 我的动态: 动态's post page, over the wall.
+    /// A post opened from 我的动态: 动态's post page, pushed over the wall.
     @State private var post: OpenedPost?
     /// A player's card, opened from a tap on them on the home or their row on 小队,
     /// popped up over every tab and the tab bar.
@@ -144,8 +144,7 @@ struct MainTabs: View {
         instant.disablesAnimations = true
         withTransaction(instant) {
             squadRevealing = false
-            showsSquad = false
-            squadOpensCoach = false
+            todayPages = []
             selection = .today
         }
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
@@ -153,17 +152,23 @@ struct MainTabs: View {
 
     /// A tap on the home's notice that a store, piece or prop opened.
     private func openUnlock(_ unlock: Unlock) {
-        selection = .profile
-        Task { await wardrobe.open(unlock.kind, item: unlock.id) }
+        openWardrobe(unlock.kind, item: unlock.id)
     }
 
-    /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page, a scene
-    /// pick's reveal) hides the bar.
+    /// 我 with the wardrobe pushed over it, in place of any other page 我 had open.
+    private func openWardrobe(_ kind: Unlock.Kind, item: String) {
+        selection = .profile
+        showsSchedule = false
+        wall = nil
+        Task { await wardrobe.open(kind, item: item) }
+    }
+
+    /// A tab's full-screen step (writing a check-in, a scene pick's reveal) hides the bar. A
+    /// pushed page with a bar of its own (a post's page, 注销账号) hides it itself, as it slides in.
     private var showsTabBar: Bool {
         switch selection {
-        case .today: showsSquad ? !squadRevealing : today.showsTabBar
-        case .profile: !profile.isDeletionOpen && post == nil
-        case .feed: feed.opened == nil && !showsNotices && noticePost == nil
+        case .today: todayPages.isEmpty ? today.showsTabBar : !squadRevealing
+        case .profile, .feed: true
         }
     }
 
@@ -180,16 +185,15 @@ struct MainTabs: View {
         }
     }
 
-    /// 动态 with the bell at its title, and 通知 over it once the bell is tapped, with a post it
-    /// opens over that.
+    /// 动态 with the bell at its title, and 通知 pushed over it once the bell is tapped, with a post
+    /// it opens pushed over that.
     private var feedPage: some View {
-        ZStack {
+        NavigationStack {
             FeedView(
                 model: feed, header: AnyView(RecapTile(recap: recap)),
                 accessory: AnyView(NoticeBell(inbox: inbox) { showsNotices = true })
             ) { selection = .today }
-            .allowsHitTesting(!showsNotices)
-            .accessibilityHidden(showsNotices)
+            .navigationRoot()
             .task { await recap.refresh() }
             // The bell's dot, read each time 动态 opens, and the member 通知 shows: their character
             // when it is empty and their unlocks for how a store opened.
@@ -197,23 +201,16 @@ struct MainTabs: View {
                 await inbox.load()
                 if profile.overview == nil { await profile.reload() }
             }
-            if showsNotices {
+            .navigationDestination(isPresented: $showsNotices) {
                 NoticesView(
-                    inbox: inbox, viewer: noticeViewer, unlocked: unlockWords, now: LaunchOptions.now,
-                    open: open, close: { showsNotices = false }
+                    inbox: inbox, viewer: noticeViewer, unlocked: unlockWords, now: LaunchOptions.now, open: open
                 )
-                .allowsHitTesting(noticePost == nil)
-                .accessibilityHidden(noticePost != nil)
-                .transition(.move(edge: .trailing))
-            }
-            if let noticePost {
-                PostDetailView(model: noticePost.model, post: noticePost.id) { self.noticePost = nil }
-                    .transition(.move(edge: .trailing))
+                .navigationDestination(item: $noticePost) { opened in
+                    PostDetailView(model: opened.model, post: opened.id) { noticePost = nil }
+                }
             }
         }
         .environment(\.sceneTheme, today.scene)
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsNotices)
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: noticePost?.id)
     }
 
     /// Where a tapped notice goes. 通知 stays under a post or the wardrobe it opens, so back
@@ -233,8 +230,7 @@ struct MainTabs: View {
         case .wardrobe(let kind, let item):
             // As the home's banner does.
             showsNotices = false
-            selection = .profile
-            Task { await wardrobe.open(kind, item: item) }
+            openWardrobe(kind, item: item)
         }
     }
 
@@ -253,131 +249,128 @@ struct MainTabs: View {
             icon: AnyView(WardrobeBadge(kind, item: item)))
     }
 
-    /// 我, or 出赛表 or 我的动态 in its place, with a post opened from the wall over it.
+    /// 我, with 出赛表, 商店街 or 我的动态 pushed over it, and a post opened from the wall pushed over
+    /// that.
     private var profilePage: some View {
-        ZStack {
-            if showsSchedule {
-                ScheduleView(model: schedule) { showsSchedule = false }
+        NavigationStack {
+            MeView(
+                model: profile,
+                destinations: MeDestinations(
+                    editCharacter: wardrobe.editCharacter,
+                    schedule: { showsSchedule = true },
+                    street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
+                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+            ) {
+                MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
+            }
+            .navigationRoot()
+            .navigationDestination(isPresented: $showsSchedule) {
+                ScheduleView(model: schedule)
                     .environment(\.sceneTheme, today.scene)
                     // Its buttons keep the scene's colour, as its poster does; 我's own are brand.
                     .accentTone(.scene)
-                    .transition(.move(edge: .trailing))
-            } else if wardrobe.showsShop, let shop = wardrobe.shop {
-                ShoppingStreetPage(model: shop) { wardrobe.showsShop = false }
-                    .transition(.move(edge: .trailing))
-            } else if let wall {
-                PostWallView(
-                    store: wall, back: { self.wall = nil },
-                    open: { post = OpenedPost(id: $0.id, model: postPage($0.id, over: wall)) },
-                    checkIn: { selection = .today }
-                )
-                .allowsHitTesting(post == nil)
-                .accessibilityHidden(post != nil)
-                .transition(.move(edge: .trailing))
-                if let post {
-                    PostDetailView(model: post.model, post: post.id) { self.post = nil }
-                        .environment(\.sceneTheme, today.scene)
-                        .transition(.move(edge: .trailing))
-                }
-            } else {
-                MeView(
-                    model: profile,
-                    destinations: MeDestinations(
-                        editCharacter: wardrobe.editCharacter,
-                        schedule: { showsSchedule = true },
-                        street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
-                        privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
-                ) {
-                    MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
+            }
+            .navigationDestination(isPresented: showsShop) {
+                if let shop = wardrobe.shop { ShoppingStreetPage(model: shop) }
+            }
+            .navigationDestination(isPresented: showsWall) {
+                if let wall {
+                    PostWallView(
+                        store: wall,
+                        open: { post = OpenedPost(id: $0.id, model: postPage($0.id, over: wall)) },
+                        checkIn: { selection = .today }
+                    )
+                    .navigationDestination(item: $post) { opened in
+                        PostDetailView(model: opened.model, post: opened.id) { post = nil }
+                            .environment(\.sceneTheme, today.scene)
+                    }
                 }
             }
         }
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wall != nil)
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsSchedule)
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wardrobe.showsShop)
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: post?.id)
         // 商店街 follows what 我 reads, made again only while it is closed so an open one keeps its place.
         .task(id: wardrobe.key) { wardrobe.refresh() }
         .accentTone(.brand)
     }
 
-    /// The tabs as home opens with them, around `content` on 今天, for 上场, whose end hands over
-    /// to home: the bar rises once `showsBar`.
-    static func entranceTabs(showsBar: Bool, content: AnyView) -> some View {
-        AppTabs(tabs, selection: .constant(Tab.today), showsBar: showsBar) { tab in
-            if tab == .today { content }
-        }
+    /// 我的动态 is pushed; the system's back closes it.
+    private var showsWall: Binding<Bool> {
+        Binding(get: { wall != nil }, set: { if !$0 { wall = nil } })
     }
 
-    private static let tabs: [TabBarItem<Tab>] = [
-        TabBarItem(id: .today, title: Text("今天"), systemImage: "sun.max", accessibilityIdentifier: "tab.today"),
-        TabBarItem(
-            id: .feed, title: Text("动态"), systemImage: "bubble.left.and.bubble.right",
-            accessibilityIdentifier: "tab.feed"
-        ),
-        TabBarItem(
-            id: .profile, title: Text("我"), systemImage: "person.crop.circle", accessibilityIdentifier: "tab.me"),
-    ]
-}
-
-/// The squad's newest 战报, once there is one, opening it.
-private struct RecapTile: View {
-    let recap: RecapShelf
-
-    var body: some View {
-        if let story = recap.latest {
-            RecapEntryTile(
-                story: story, viewer: recap.cast?.reader, seen: recap.latestIsSeen, action: recap.openLatest)
-        }
+    /// 商店街 is pushed; the system's back closes it.
+    private var showsShop: Binding<Bool> {
+        Binding(
+            get: { wardrobe.showsShop && wardrobe.shop != nil },
+            set: { if !$0 { wardrobe.showsShop = false } })
     }
 }
 
 extension MainTabs {
-    /// 今天, or 小队 in its place, opened from the home's squad card, or on its coach's 简历 from
-    /// a tap on the coach on the sideline.
+    /// 今天, with 小队 pushed over it from the home's squad card and the coach's pages over that, or
+    /// the squad's coach's 简历 pushed straight over it from a tap on the coach on the sideline.
     private var todayPage: some View {
-        ZStack {
-            if showsSquad {
-                SquadSettingsView(
-                    model: squad, picked: land(on:coveredAt:),
-                    close: {
-                        showsSquad = false
-                        squadOpensCoach = false
-                    },
-                    revealing: $squadRevealing,
-                    openTeammate: {
-                        teammateOnHome = false
-                        teammate = squadCard(of: $0)
-                    },
-                    coachNote: today.coachLine, opensCoach: squadOpensCoach
-                )
-                .environment(\.sceneTheme, squad.scene)
-                .transition(.move(edge: .trailing))
-            } else {
-                TodayView(
-                    model: today,
-                    openSquad: {
-                        squadOpensCoach = false
-                        showsSquad = true
-                    },
-                    openPost: { post in
-                        feed.open(post)
-                        selection = .feed
-                    }
-                )
-                .onAppear {
-                    today.openTeammate = {
-                        teammateOnHome = true
-                        teammate = homeCard(of: $0)
-                    }
-                    today.openCoach = {
-                        squadOpensCoach = true
-                        showsSquad = true
-                    }
+        NavigationStack(path: $todayPages) {
+            TodayView(
+                model: today,
+                openSquad: { todayPages = [.squad] },
+                openPost: { post in
+                    feed.open(post)
+                    selection = .feed
+                }
+            )
+            .navigationRoot()
+            .onAppear {
+                today.openTeammate = {
+                    teammateOnHome = true
+                    teammate = homeCard(of: $0)
+                }
+                today.openCoach = openCoach
+            }
+            .navigationDestination(for: TodayPage.self) { page in
+                switch page {
+                case .squad:
+                    SquadSettingsView(
+                        model: squad, picked: land(on:coveredAt:),
+                        openCoach: { todayPages.append(.coach($0)) },
+                        revealing: $squadRevealing,
+                        openTeammate: {
+                            teammateOnHome = false
+                            teammate = squadCard(of: $0)
+                        }
+                    )
+                    .environment(\.sceneTheme, squad.scene)
+                case .coach(let route):
+                    CoachPage(route: route, model: squad, pages: coachPages, note: today.coachLine)
+                        .environment(\.sceneTheme, squad.scene)
                 }
             }
         }
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsSquad)
+        // 小队 opens on what was read last, and the coach's 简历 from the home knows its coach.
+        .task { if squad.load == .loading { await squad.reload() } }
+    }
+
+    /// The coach's pages on 今天's stack; taking them away goes back to 小队, or to the home when
+    /// the 简历 was opened from there.
+    private var coachPages: Binding<[CoachRoute]> {
+        Binding(
+            get: {
+                todayPages.compactMap { page -> CoachRoute? in
+                    guard case .coach(let route) = page else { return nil }
+                    return route
+                }
+            },
+            set: { routes in
+                todayPages = todayPages.filter { $0 == .squad } + routes.map(TodayPage.coach)
+            })
+    }
+
+    /// A tap on the coach on the home: its 简历, once 小队 has read who it is.
+    private func openCoach() {
+        Task {
+            if squad.coach == nil { await squad.reload() }
+            guard let coach = squad.coach?.coach else { return }
+            todayPages = [.coach(.resume(coach))]
+        }
     }
 
     /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.
@@ -390,10 +383,4 @@ extension MainTabs {
         }
         return page
     }
-}
-
-/// A post opened from 我的动态, with the page's own model of it.
-private struct OpenedPost {
-    let id: CheckInID
-    let model: FeedModel
 }

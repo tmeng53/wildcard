@@ -12,7 +12,7 @@ final class SquadSettingsUITests: XCTestCase {
         XCTAssertTrue(app.buttons["squad.rename"].exists, "the captain can't rename")
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the captain can pick though Coco won")
         XCTAssertEqual(app.buttons.matching(identifier: "squad.member.more").count, 4, "not one ··· per other member")
-        XCTAssertTrue(app.buttons["squad.back"].exists, "the page has no way back")
+        XCTAssertTrue(backButton(in: app).exists, "the page has no way back")
         XCTAssertEqual(
             app.descendants(matching: .any).matching(identifier: "squad.head").count, 5, "not one head per member")
         XCTAssertTrue(app.descendants(matching: .any)["squad.head.coach"].exists, "no coach in the row of heads")

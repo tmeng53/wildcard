@@ -86,7 +86,9 @@ private struct TabBarVisibility: ViewModifier {
 
     func body(content: Content) -> some View {
         #if os(iOS)
-        content.toolbarVisibility(isVisible ? .visible : .hidden, for: .tabBar)
+        // Automatic, not visible, so a page pushed inside can still put the bar away
+        // (`pushedPage(hidesTabBar:)`).
+        content.toolbarVisibility(isVisible ? .automatic : .hidden, for: .tabBar)
         #else
         content
         #endif

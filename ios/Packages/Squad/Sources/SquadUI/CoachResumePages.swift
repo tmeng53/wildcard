@@ -5,40 +5,37 @@ import DesignSystemUI
 import SquadDomain
 import SwiftUI
 
-/// The coach's pages over 小队设置, the last on top, each swiping back to the one under it.
-/// 招聘, 换教练 and 确认解雇 all end back on 小队设置, the change on its 教练 card.
-struct CoachPageStack: View {
-    @Bindable var model: SquadSettingsModel
-    @Binding var pages: [CoachRoute]
+/// One of the coach's pages (教练招聘会, a 简历, 解雇), pushed on the NavigationStack over 小队, or over
+/// the home for the squad's coach's 简历 from a tap on the sideline. `pages` are the coach's pages
+/// on the stack, this one among them: a page pushes the next by adding it, and 招聘, 换教练 and
+/// 确认解雇 end by taking them all away, back on 小队 (or the home), the change on its 教练 card.
+public struct CoachPage: View {
+    @Bindable private var model: SquadSettingsModel
+    private let route: CoachRoute
+    @Binding private var pages: [CoachRoute]
     /// The coach's 战术板 line of the day, pinned on its own 简历.
-    var note: CoachNote?
-    /// Back from the last page.
-    var emptied: () -> Void = {}
-    /// The page whose change didn't get through, which says so until the member moves on.
-    @State private var failed: CoachRoute?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let note: CoachNote?
+    /// This page's change didn't get through: it says so until the member moves on.
+    @State private var failed = false
 
-    var body: some View {
-        ForEach(Array(pages.enumerated()), id: \.offset) { index, route in
-            page(route)
-                .swipesBack(isEnabled: index == pages.count - 1, perform: back)
-                .transition(.move(edge: .trailing))
-                .zIndex(Double(index + 1))
-        }
+    public init(route: CoachRoute, model: SquadSettingsModel, pages: Binding<[CoachRoute]>, note: CoachNote?) {
+        self.route = route
+        self.model = model
+        _pages = pages
+        self.note = note
     }
 
-    @ViewBuilder private func page(_ route: CoachRoute) -> some View {
+    public var body: some View {
+        page.pushedPage()
+    }
+
+    @ViewBuilder private var page: some View {
         switch route {
         case .market:
             CoachMarketPage(
-                market: model.market, current: model.coach?.coach.id, back: back,
+                market: model.market, current: model.coach?.coach.id,
                 retry: { Task { await model.loadMarket() } },
-                open: { coach in
-                    withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) {
-                        failed = nil
-                        pages.append(.resume(coach))
-                    }
-                }
+                open: { coach in push(.resume(coach)) }
             )
             .task { await model.loadMarket() }
         case .resume(let coach):
@@ -46,36 +43,35 @@ struct CoachPageStack: View {
                 coach: coach, isCurrent: model.coach?.coach.id == coach.id,
                 note: model.coach?.coach.id == coach.id && note?.coach.id == coach.id ? note : nil,
                 canHire: model.canHireCoach,
-                isSaving: model.isSaving, failed: failed == route, back: back,
-                hire: { Task { finish(route, await model.hire(coach.id)) } },
+                isSaving: model.isSaving, failed: failed,
+                hire: { Task { finish(await model.hire(coach.id)) } },
                 change: { push(.market) }, fire: { push(.fire(coach)) })
         case .fire(let coach):
             FireCoachPage(
-                coach: coach, isSaving: model.isSaving, failed: failed == route, back: back,
-                fire: { Task { finish(route, await model.fireCoach()) } })
+                coach: coach, isSaving: model.isSaving, failed: failed, back: back,
+                fire: { Task { finish(await model.fireCoach()) } })
         }
     }
 
-    private func push(_ route: CoachRoute) {
-        failed = nil
-        withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { pages.append(route) }
+    private func push(_ next: CoachRoute) {
+        failed = false
+        pages.append(next)
     }
 
     private func back() {
         guard !pages.isEmpty else { return }
-        failed = nil
-        withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { _ = pages.removeLast() }
-        if pages.isEmpty { emptied() }
+        failed = false
+        pages.removeLast()
     }
 
-    /// A change that landed, or that the squad has moved past, ends on 小队设置.
-    private func finish(_ route: CoachRoute, _ change: CoachChange) {
+    /// A change that landed, or that the squad has moved past, ends off the coach's pages.
+    private func finish(_ change: CoachChange) {
         guard change != .unavailable else {
-            failed = route
+            failed = true
             return
         }
-        failed = nil
-        withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { pages = [] }
+        failed = false
+        pages = []
     }
 }
 
@@ -91,7 +87,6 @@ struct CoachResumePage: View {
     let canHire: Bool
     let isSaving: Bool
     let failed: Bool
-    let back: () -> Void
     let hire: () -> Void
     /// 教练招聘会, to hire another coach in this one's place.
     let change: () -> Void
@@ -113,12 +108,6 @@ struct CoachResumePage: View {
             }
             .scrollIndicators(.hidden)
             .ignoresSafeArea(edges: .top)
-            .overlay(alignment: .topLeading) {
-                HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", on: .scene, action: back)
-                    .padding(.leading, Space.pageMargin)
-                    .padding(.top, Space.xs)
-                    .accessibilityIdentifier("coach.resume.back")
-            }
             .actionBar { action }
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
@@ -250,8 +239,6 @@ struct FireCoachPage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.l) {
-                HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: back)
-                    .accessibilityIdentifier("coach.fire.back")
                 Text("解雇\(coach.name)", bundle: .module)
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))

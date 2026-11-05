@@ -14,18 +14,17 @@ import SwiftUI
 public struct PostWallView: View {
     @Environment(\.sceneTheme) private var theme
     @State private var store: PostWallStore
-    private let back: () -> Void
+    @State private var loaded = false
     private let open: ((FeedPost) -> Void)?
     private let checkIn: () -> Void
 
     /// `open` shows a tapped post (tiles don't open while it's nil); `checkIn` goes to 今天 from
     /// the empty wall.
     public init(
-        store: PostWallStore, back: @escaping () -> Void, open: ((FeedPost) -> Void)?,
+        store: PostWallStore, open: ((FeedPost) -> Void)?,
         checkIn: @escaping () -> Void
     ) {
         _store = State(initialValue: store)
-        self.back = back
         self.open = open
         self.checkIn = checkIn
     }
@@ -33,8 +32,6 @@ public struct PostWallView: View {
     public var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Space.s, pinnedViews: []) {
-                HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: back)
-                    .accessibilityIdentifier("wall.back")
                 VStack(alignment: .leading, spacing: Space.xxs) {
                     Text("我的动态", bundle: .module)
                         .typeStyle(TypeRamp.largeTitle)
@@ -47,7 +44,6 @@ public struct PostWallView: View {
                             .accessibilityIdentifier("wall.counts")
                     }
                 }
-                .padding(.top, Space.s)
                 CategoryBar(Self.filters, selection: kind)
                     .padding(.horizontal, -Space.pageMargin)
                     .padding(.vertical, Space.xs)
@@ -58,10 +54,17 @@ public struct PostWallView: View {
             .padding(.bottom, Space.l)
         }
         .scrollIndicators(.hidden)
+        .barTitleOnScroll(Text("我的动态", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
         .refreshable { await store.load() }
-        .swipesBack(perform: back)
-        .task { await store.load() }
+        .pushedPage()
+        // Once, not on every return from a post pushed over it: that would drop the pages read
+        // further down and move the wall.
+        .task {
+            guard !loaded else { return }
+            loaded = true
+            await store.load()
+        }
         .accessibilityIdentifier("wall.page")
     }
 

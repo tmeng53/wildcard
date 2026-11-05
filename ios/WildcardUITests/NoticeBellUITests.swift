@@ -50,7 +50,7 @@ final class NoticeBellUITests: XCTestCase {
         app.swipeDown()
 
         // Back on 动态, everything is read: the dot is gone.
-        app.buttons["notices.back"].tap()
+        backButton(in: app).tap()
         waitFor(bell, "value != '有新通知'", "the bell kept its dot after 通知 was opened")
         XCTAssertTrue(tabButton("tab.feed", in: app).waitForExistence(timeout: Self.wait))
 

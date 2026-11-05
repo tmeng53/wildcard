@@ -10,8 +10,8 @@ import SwiftUI
 // and reads the 简历, with nothing to do there (Tracy, 2026-11-03).
 // Coaches have no character of their own yet, so each stands as an ink silhouette.
 
-/// A page the 教练 card opens, over 小队设置.
-enum CoachRoute: Hashable {
+/// A page the 教练 card pushes over 小队 (`CoachPage`).
+public enum CoachRoute: Hashable {
     case market
     case resume(Coach)
     case fire(Coach)
@@ -121,7 +121,6 @@ struct CoachMarketPage: View {
     let market: CoachMarketLoad
     /// The squad's coach now, which the market marks instead of 求职中.
     let current: CoachID?
-    let back: () -> Void
     let retry: () -> Void
     let open: (Coach) -> Void
     @Environment(\.sceneTheme) private var theme
@@ -152,8 +151,6 @@ struct CoachMarketPage: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Space.m + Space.xxs) {
-            HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", on: .ink, action: back)
-                .accessibilityIdentifier("coach.market.back")
             VStack(alignment: .leading, spacing: Space.xxs) {
                 Text(verbatim: "JOB FAIR")
                     .typeStyle(TypeRamp.ticketDate)

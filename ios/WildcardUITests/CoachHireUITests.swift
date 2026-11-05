@@ -91,7 +91,7 @@ final class CoachHireUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["1 coach looking for a squad"].waitForExistence(timeout: 30),
             "教练招聘会 doesn't count one coach in the singular")
-        app.buttons["coach.market.back"].tap()
+        backButton(in: app).tap()
         XCTAssertTrue(open.waitForExistence(timeout: 30), "教练招聘会 didn't go back to 小队设置")
         open.tap()
         XCTAssertTrue(app.staticTexts["Expected pay"].waitForExistence(timeout: 30), "the 简历 isn't in English")

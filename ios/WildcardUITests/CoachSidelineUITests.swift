@@ -37,7 +37,7 @@ final class CoachSidelineUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "62-coach-resume-board")
 
-        app.buttons["coach.resume.back"].tap()
+        backButton(in: app).tap()
         XCTAssertTrue(resume.waitForNonExistence(timeout: Self.wait), "返回 didn't close the 简历")
         XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: Self.wait), "返回 didn't go back home")
         XCTAssertFalse(

@@ -16,4 +16,10 @@ extension XCTestCase {
         XCTAssertTrue(button.waitForExistence(timeout: 30), "no \(identifier) in the tab bar")
         return button
     }
+
+    /// The system's back button on a pushed page, in its navigation bar: pages open over another
+    /// on the tab's NavigationStack, so none draws a back button of its own.
+    func backButton(in app: XCUIApplication) -> XCUIElement {
+        app.navigationBars.buttons.element(boundBy: 0)
+    }
 }

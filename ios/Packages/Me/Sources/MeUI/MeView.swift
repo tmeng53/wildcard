@@ -36,15 +36,14 @@ public struct MeDestinations {
 
 /// 我: 换装, 商店街 and 设置 at the top right, the member's player card across the page (tap it
 /// to turn it over), and under it the 出赛表 tile and the 我的动态 tile the app passes in, as wide
-/// as the card. 设置 opens the settings menu, and from there 注销账号; each page replaces the last
-/// in place. These pages keep out of the scene's colours: ink, graphite and white only.
+/// as the card. 设置 pushes the settings menu, and from there 注销账号, on the NavigationStack 我
+/// is the root of. These pages keep out of the scene's colours: ink, graphite and white only.
 public struct MeView<PostsTile: View>: View {
     @Bindable private var model: MeModel
     private let destinations: MeDestinations
     private let postsTile: PostsTile
     @State private var isSettingsOpen = false
     @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// `postsTile` is 我的动态's tile, which the feed draws (`GlanceTile` with the newest posts).
     public init(model: MeModel, destinations: MeDestinations, @ViewBuilder postsTile: () -> PostsTile) {
@@ -54,24 +53,13 @@ public struct MeView<PostsTile: View>: View {
     }
 
     public var body: some View {
-        ZStack {
-            if model.isDeletionOpen {
-                DeleteAccountView(model: model) { model.closeDeletion() }
-                    .swipesBack(isEnabled: model.deletion != .deleting) { model.closeDeletion() }
+        content
+            .loadingCover(model.load == .loading) { MeLoading() }
+            .navigationDestination(isPresented: $isSettingsOpen) {
+                SettingsView(model: model, destinations: destinations)
                     .accentTone(.ink)
-                    .transition(.move(edge: .trailing))
-            } else if isSettingsOpen {
-                SettingsView(model: model, destinations: destinations) { isSettingsOpen = false }
-                    .accentTone(.ink)
-                    .transition(.move(edge: .trailing))
-            } else {
-                content
-                    .loadingCover(model.load == .loading) { MeLoading() }
             }
-        }
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.isDeletionOpen)
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isSettingsOpen)
-        .task { await model.reload() }
+            .task { await model.reload() }
     }
 
     /// 换装, 商店街 (with its dot while a piece waits there unseen) and 设置: the system's round

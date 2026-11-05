@@ -62,7 +62,7 @@ final class MeUITests: XCTestCase {
 
         // A tile opens 动态's own post page, without the tab bar, and 返回 comes back to the wall.
         tile.tap()
-        let back = app.buttons["post.back"]
+        let back = backButton(in: app)
         XCTAssertTrue(back.waitForExistence(timeout: 30), "a tile didn't open the post's page")
         XCTAssertFalse(app.buttons["tab.feed"].exists, "the tab bar stayed over the post's page")
         settle()
@@ -77,7 +77,7 @@ final class MeUITests: XCTestCase {
         settle()
         keepScreenshot(named: "93-my-posts-empty-kind")
 
-        app.buttons["wall.back"].tap()
+        backButton(in: app).tap()
         XCTAssertTrue(entry.waitForExistence(timeout: 30), "返回 didn't go back to 我")
     }
 
@@ -165,7 +165,7 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 30))
         XCTAssertTrue(card.label.contains("07号"), "the card doesn't wear the new number: \(card.label)")
         app.buttons["me.settings"].tap()
-        XCTAssertTrue(app.buttons["settings.back"].waitForExistence(timeout: 30), "设置 never opened")
+        XCTAssertTrue(backButton(in: app).waitForExistence(timeout: 30), "设置 never opened")
         XCTAssertFalse(app.buttons["me.jerseyNumber"].exists, "设置 still has 球衣号码")
     }
 
@@ -187,7 +187,7 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(note.waitForExistence(timeout: 30), "the 每周模板 chip didn't open the template")
         settle()
         keepScreenshot(named: "48-me-schedule-template")
-        app.buttons["schedule.back"].tap()
+        backButton(in: app).tap()
         XCTAssertTrue(row.waitForExistence(timeout: 30), "返回 didn't go back to 我")
     }
 

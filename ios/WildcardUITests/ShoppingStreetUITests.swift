@@ -36,7 +36,7 @@ final class ShoppingStreetUITests: XCTestCase {
         settle()
         keepScreenshot(named: "22-street-store")
         // The first tap may only put the tip away.
-        let back = app.buttons["street.back"].firstMatch
+        let back = backButton(in: app)
         for _ in 0..<3 where !warmup.exists {
             back.tap()
             _ = warmup.waitForExistence(timeout: 3)

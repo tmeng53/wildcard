@@ -11,9 +11,10 @@ import UIKit
 /// coach's answers among them, and the box to write one at the bottom. Tapping a teammate's
 /// comment replies to them (回复 Mia), and tapping the coach's line or answer replies to the
 /// coach (回复 毛头), which answers; holding a comment copies it, or deletes it when it is the
-/// member's own. 返回 or a
-/// swipe right goes back. 动态 opens it from a card, and any screen with a `FeedModel` over a
-/// store of one post (the member's past posts) shows the same page.
+/// member's own. It is pushed on a NavigationStack, so the system's back button and swipe go back;
+/// the tab bar is away while it is up. 动态 opens it from a card, and any screen with a
+/// `FeedModel` over a store of one post (the member's past posts) shows the same page. `close`
+/// goes back once the post is deleted here.
 public struct PostDetailView: View {
     @Environment(\.sceneTheme) private var theme
     private let model: FeedModel
@@ -42,11 +43,11 @@ public struct PostDetailView: View {
                     .safeAreaInset(edge: .bottom, spacing: 0) {
                         CommentComposer(model: model, post: post, isTyping: $isTyping)
                     }
-                    .swipesBack(perform: close)
             } else if model.store.phase != .loading {
-                gone.swipesBack(perform: close)
+                gone
             }
         }
+        .pushedPage(hidesTabBar: true)
         .feedSurface(model)
         // Deleted from its own page, the page goes back.
         .managesPosts(model) { if $0 == id { close() } }
@@ -61,16 +62,10 @@ public struct PostDetailView: View {
         .onDisappear { if model.opened == id { model.opened = nil } }
     }
 
-    private var backButton: some View {
-        HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
-            .accessibilityIdentifier("post.back")
-    }
-
     private func page(_ post: FeedPost) -> some View {
         ScrollViewReader { reader in
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.m) {
-                    backButton
                     PostCard(model: model, post: post)
                     comments(post)
                 }
@@ -235,7 +230,6 @@ public struct PostDetailView: View {
     /// The post was deleted, or the member can't see it any more.
     private var gone: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            backButton
             Text("这条动态不见了", bundle: .module)
                 .typeStyle(TypeRamp.callout)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))

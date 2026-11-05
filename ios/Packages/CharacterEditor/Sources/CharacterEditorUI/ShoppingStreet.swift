@@ -10,71 +10,82 @@ import SportsUI
 import SwiftUI
 
 /// 商店街, its own page from 我 (approved 2026-11-04): each store a card, WARM-UP across the top
-/// and the rest two a row, greyed while closed; then the open store's rack. A piece that came in
-/// wears NEW until the member claims it (领取) from a sheet; the 「已放进衣橱」 notice then offers to
-/// try it on. Boxes that came in open from a pop-up over the page.
+/// and the rest two a row, greyed while closed; a store's rack is pushed over it, and the system's
+/// back button and swipe go back, from a store to the street and from the street to 我. A piece
+/// that came in wears NEW until the member claims it (领取) from a sheet; the 「已放进衣橱」 notice
+/// then offers to try it on. Boxes that came in open from a pop-up over the page.
 public struct ShoppingStreetPage: View {
     let model: StreetModel
-    let back: () -> Void
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(model: StreetModel, back: @escaping () -> Void) {
-        (self.model, self.back) = (model, back)
+    public init(model: StreetModel) {
+        self.model = model
     }
 
     public var body: some View {
-        @Bindable var model = model
-        let store = model.store.flatMap { id in model.catalog.stores.first(where: { $0.id == id }) }
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: Space.xs) {
-                HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left") {
-                    if store != nil { model.leaveStore() } else { back() }
+        page(nil)
+            .pushedPage()
+            .navigationDestination(item: openStore) { id in
+                if let store = model.catalog.stores.first(where: { $0.id == id }) {
+                    page(store).pushedPage()
                 }
-                .accessibilityIdentifier("street.back")
-                if let store { RackHeader(model: model, store: store) }
+            }
+            .onAppear { model.didOpen() }
+    }
+
+    /// The store whose rack is pushed; the system's back leaves it.
+    private var openStore: Binding<String?> {
+        Binding(get: { model.store }, set: { if $0 == nil { model.leaveStore() } })
+    }
+
+    /// The street (`store` nil) or a store's rack. The pop-up, the 领取 sheet and the notice
+    /// belong to whichever page is on top, so the street under a rack doesn't show them twice.
+    private func page(_ store: EditorChoices.Store?) -> some View {
+        let isOnTop = store != nil || model.store == nil
+        return ScrollView {
+            VStack(alignment: .leading, spacing: Space.xs) {
+                if let store {
+                    HStack(spacing: Space.xs) { RackHeader(model: model, store: store) }
+                }
+                // A 领取 that didn't save: the piece is back to NEW, so say why.
+                if model.claimFailed {
+                    Text("网络开小差了，没领上", bundle: .module)
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .accessibilityIdentifier("street.claimFailed")
+                }
+                if let store {
+                    StoreRack(model: model, store: store)
+                } else {
+                    street
+                }
             }
             .padding(.horizontal, Space.pageMargin)
-            .padding(.vertical, Space.xs)
-            ScrollView {
-                VStack(alignment: .leading, spacing: Space.xs) {
-                    // A 领取 that didn't save: the piece is back to NEW, so say why.
-                    if model.claimFailed {
-                        Text("网络开小差了，没领上", bundle: .module)
-                            .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
-                            .accessibilityIdentifier("street.claimFailed")
-                    }
-                    if let store {
-                        StoreRack(model: model, store: store)
-                    } else {
-                        street
-                    }
-                }
-                .padding(.horizontal, Space.pageMargin)
-                .padding(.bottom, Space.l)
-            }
-            .scrollIndicators(.hidden)
+            .padding(.bottom, Space.l)
         }
+        .scrollIndicators(.hidden)
+        .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text("商店街", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
-        .swipesBack { if store != nil { model.leaveStore() } else { back() } }
         .overlay {
-            if let arrival = model.arrival {
+            if isOnTop, let arrival = model.arrival {
                 ArrivalPopup(model: model, arrival: arrival).transition(.opacity)
             }
         }
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.arrival)
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.store)
-        .sheet(item: Binding(get: { model.sheet.map(ClaimSheet.Piece.init) }, set: { model.sheet = $0?.id })) { piece in
+        .sheet(
+            item: Binding(
+                get: { isOnTop ? model.sheet.map(ClaimSheet.Piece.init) : nil }, set: { model.sheet = $0?.id })
+        ) { piece in
             ClaimSheet(model: model, piece: piece.id)
                 .presentationDetents([.height(ClaimSheet.height)])
                 .presentationDragIndicator(.visible)
         }
         .noticeBanner(
-            item: $model.claimedNotice, onTap: { model.tryOn($0.id) },
+            item: Binding(get: { isOnTop ? model.claimedNotice : nil }, set: { model.claimedNotice = $0 }),
+            onTap: { model.tryOn($0.id) },
             content: { claimed in ClaimedBanner(model: model, piece: claimed.id) }
         )
-        .onAppear { model.didOpen() }
         .accessibilityIdentifier("street.page")
     }
 
