@@ -80,13 +80,21 @@ public struct SavePictureSheet: View {
         let image = image
         Task {
             do {
-                try await PHPhotoLibrary.shared().performChanges {
-                    PHAssetChangeRequest.creationRequestForAsset(from: image)
-                }
+                try await Self.add(image)
                 saving = .saved
             } catch {
                 saving = .failed
             }
+        }
+    }
+}
+
+extension SavePictureSheet {
+    /// Photos runs the change block on its own queue, so it is built here, outside the view's
+    /// main-actor isolation: a block that inherited it would trap Swift 6's isolation check.
+    fileprivate nonisolated static func add(_ image: UIImage) async throws {
+        try await PHPhotoLibrary.shared().performChanges {
+            PHAssetChangeRequest.creationRequestForAsset(from: image)
         }
     }
 }

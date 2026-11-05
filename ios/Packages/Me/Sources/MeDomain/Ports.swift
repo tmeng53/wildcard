@@ -12,6 +12,8 @@ public protocol MeService: Sendable {
     /// Wears one of the member's titles on their card (nil: the latest won again); answers the
     /// board as it now stands.
     func equip(_ title: String?) async throws(MeError) -> TitleBoard
+    /// 领取: puts an unlocked piece in the member's wardrobe. Safe to repeat.
+    func claim(piece: String) async throws(MeError)
     /// Deletes the account and everything that is the member's, for good. Signing out on this phone
     /// is the app's to do after.
     func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError)

@@ -27,8 +27,8 @@ struct UnlockBanner: View {
 
     private var symbol: String {
         switch unlock.kind {
-        case .store: "storefront.fill"
-        case .piece: "shippingbox.fill"
+        // A store opening and new pieces in one both show the 商店街 storefront.
+        case .store, .piece: "storefront.fill"
         case .prop: unlock.sports.first?.symbol ?? "gift.fill"
         }
     }

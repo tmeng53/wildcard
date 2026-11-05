@@ -61,6 +61,11 @@ public actor InMemoryMeService: MeService {
         return current.board
     }
 
+    public func claim(piece: String) async throws(MeError) {
+        if failsSaving { throw .unavailable }
+        current.claimed.insert(piece)
+    }
+
     public func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {
         if failsSaving { throw .unavailable }
     }

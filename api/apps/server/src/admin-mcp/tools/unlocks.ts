@@ -1,6 +1,9 @@
 import {
+  GiftPieceEdit,
   MemberId,
   UnlockGift,
+  type GiftPiece,
+  type GiftsAdmin,
   UnlockRuleEdit,
   type UnlocksAdmin,
   type UnlockRule,
@@ -15,6 +18,7 @@ import { adminTool } from '../admin-tool.js';
 
 interface UnlockToolDependencies {
   readonly unlocks: UnlocksAdmin;
+  readonly gifts: GiftsAdmin;
 }
 
 const shown = (rules: readonly UnlockRule[]) => ({
@@ -82,8 +86,43 @@ export function giveUnlocks({ unlocks }: UnlockToolDependencies) {
   });
 }
 
+const pool = (pieces: readonly GiftPiece[]) => ({ version: 1, pieces });
+
+/** `get_gift_pieces`: the pieces a squad's coach may give. */
+export function getGiftPieces({ gifts }: UnlockToolDependencies) {
+  return adminTool({
+    name: 'get_gift_pieces',
+    title: 'Read the coach gift pool',
+    description:
+      'Shows the clothing pieces a squad’s coach may give a member: pieces no store sells, each ' +
+      'by its id in the app’s art and whether it is offered now. A member given one keeps it in ' +
+      'their wardrobe, never in a store.',
+    changes: false,
+    input: z.strictObject({}),
+    run: async () => pool(await gifts.pieces()),
+  });
+}
+
+/** `put_gift_piece`: adds a piece to the coach gift pool, or offers or withdraws one. */
+export function putGiftPiece({ gifts }: UnlockToolDependencies) {
+  return adminTool({
+    name: 'put_gift_piece',
+    title: 'Add or change a coach gift piece',
+    description:
+      'Adds a clothing piece a squad’s coach may give, or offers or withdraws one (offered = ' +
+      'false stops new gifts; members who have it keep it). A piece is never deleted. Only the ' +
+      'id’s shape is checked, so use an id the app’s art has and no store sells. Returns the ' +
+      'pool now.',
+    changes: true,
+    input: GiftPieceEdit,
+    run: async (edit) => pool(await gifts.putPiece(edit)),
+  });
+}
+
 export const unlockTools = (deps: UnlockToolDependencies) => [
   getUnlockRules(deps),
   putUnlockRule(deps),
   giveUnlocks(deps),
+  getGiftPieces(deps),
+  putGiftPiece(deps),
 ];

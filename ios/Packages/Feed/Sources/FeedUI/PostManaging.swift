@@ -8,7 +8,7 @@ import FeedDomain
 import SwiftUI
 
 /// What the member's 「…」 on their own post opens, around the feed or a post's own page: the
-/// compose page to edit it, full screen, and the question before deleting it. Only the surface
+/// compose page to edit it, full screen, and deleting it once the menu's question was answered. Only the surface
 /// on top (`isActive`) presents them, as with the emoji bar.
 struct PostManaging: ViewModifier {
     @Environment(\.sceneTheme) private var theme
@@ -26,24 +26,12 @@ struct PostManaging: ViewModifier {
                         .accentTone(.brand)
                 }
             }
-            // An alert, not a confirmation dialog: iOS 26 drops a dialog's 取消.
-            .alert(
-                Text("删掉这条动态？", bundle: .module), isPresented: confirming, presenting: model.confirmingDelete
-            ) { post in
-                Button(role: .destructive) {
-                    Task {
-                        if await model.delete(post) { deleted(post) }
-                    }
-                } label: {
-                    Text("删除", bundle: .module)
+            .onChange(of: model.deleting) { _, post in
+                guard isActive, let post else { return }
+                model.deleting = nil
+                Task {
+                    if await model.delete(post) { deleted(post) }
                 }
-                .accessibilityIdentifier("post.delete.confirm")
-                Button(role: .cancel) {
-                } label: {
-                    Text("取消", bundle: .module)
-                }
-            } message: { _ in
-                Text("队友的回应和评论也会一起删掉", bundle: .module)
             }
             .alert(Text("没删掉，再试一次", bundle: .module), isPresented: deleteFailed) {
                 Button(role: .cancel) {
@@ -58,14 +46,6 @@ struct PostManaging: ViewModifier {
             isActive && model.editing != nil
         } set: {
             if !$0 { model.editing = nil }
-        }
-    }
-
-    private var confirming: Binding<Bool> {
-        Binding {
-            isActive && model.confirmingDelete != nil
-        } set: {
-            if !$0 { model.confirmingDelete = nil }
         }
     }
 

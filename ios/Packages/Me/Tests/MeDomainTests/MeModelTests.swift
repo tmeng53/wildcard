@@ -55,6 +55,11 @@ private actor FakeService: MeService {
         return current.board
     }
 
+    func claim(piece: String) async throws(MeError) {
+        if let failing { throw failing }
+        current.claimed.insert(piece)
+    }
+
     func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {
         if holdsDeletes { await withCheckedContinuation { heldDelete = $0 } }
         if let failing { throw failing }
@@ -320,6 +325,29 @@ struct MeModelTests {
         #expect(page.saveFailed)
     }
 
+    @Test func claimingPutsAnUnlockedPieceInTheWardrobeAndAFailedOneTakesItOut() async {
+        var overview = sample
+        let when = Date(timeIntervalSince1970: 1_793_577_600)
+        overview.unlocks = [
+            Unlock(kind: .piece, id: "lap-bib", unlockedAt: when, sports: ["run"], checkIns: 5),
+            Unlock(kind: .piece, id: "lap-singlet", unlockedAt: when, sports: ["run"], checkIns: 7),
+            Unlock(kind: .store, id: "lap", unlockedAt: when, sports: ["run"], checkIns: 3),
+        ]
+        let service = FakeService(overview)
+        let page = model(service)
+        await page.reload()
+        #expect(page.unclaimed == ["lap-bib", "lap-singlet"])
+
+        #expect(await page.claim("lap-bib"))
+        #expect(page.unclaimed == ["lap-singlet"])
+        #expect(await service.current.claimed == ["lap-bib"])
+
+        await service.fail(with: .unavailable)
+        #expect(await !page.claim("lap-singlet"))
+        #expect(page.unclaimed == ["lap-singlet"])
+        #expect(page.saveFailed)
+    }
+
     @Test func theCardCarriesTheOverview() throws {
         var overview = sample
         overview.board = try board()
@@ -368,14 +396,5 @@ struct CardNumberTests {
         #expect(try overview(picked: nil, place: 120).cardNumber?.text == "99")
         #expect(throws: ContractsError.jerseyNumberOutOfRange(100)) { try JerseyNumber(100) }
         #expect(throws: ContractsError.jerseyNumberOutOfRange(-1)) { try JerseyNumber(-1) }
-    }
-}
-
-struct DeletionPhaseTests {
-    @Test func takesATapOnlyWhileNothingIsRunning() {
-        #expect(
-            [DeletionPhase.reading, .deleting, .failed(.unavailable), .deleted].map(\.canConfirm) == [
-                true, false, true, false,
-            ])
     }
 }

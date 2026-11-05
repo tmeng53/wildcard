@@ -29,9 +29,11 @@ public struct LockedPiece: Hashable, Sendable {
     public let id: String
     /// How many more 练了 in its sports open it, 1 or more.
     public let checkInsToGo: Int
+    /// The sports whose 练了 count towards it; empty for any sport.
+    public let sports: [Sport]
 
-    public init(id: String, checkInsToGo: Int) {
-        (self.id, self.checkInsToGo) = (id, checkInsToGo)
+    public init(id: String, checkInsToGo: Int, sports: [Sport] = []) {
+        (self.id, self.checkInsToGo, self.sports) = (id, checkInsToGo, sports)
     }
 }
 
@@ -40,8 +42,10 @@ public struct UnlockStanding: Hashable, Sendable {
     /// The stores, props and pieces unlocked, the earliest first.
     public let unlocks: [Unlock]
     public let lockedPieces: [LockedPiece]
+    /// The unlocked pieces the member claimed (领取) into their wardrobe.
+    public let claimed: Set<String>
 
-    public init(unlocks: [Unlock], lockedPieces: [LockedPiece]) {
-        (self.unlocks, self.lockedPieces) = (unlocks, lockedPieces)
+    public init(unlocks: [Unlock], lockedPieces: [LockedPiece], claimed: Set<String> = []) {
+        (self.unlocks, self.lockedPieces, self.claimed) = (unlocks, lockedPieces, claimed)
     }
 }
