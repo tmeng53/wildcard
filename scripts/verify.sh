@@ -54,7 +54,9 @@ elif want swift && compgen -G "ios/Packages/*/Package.swift" >/dev/null; then
       continue
     fi
     echo "==> swift test $pkg"
-    swift test --package-path "$pkg"
+    # Optimized, with testing on: the art's tests play every clip on every look, frame by frame,
+    # which a debug build takes many times longer to do (Avatar alone ran past CI's timeout).
+    swift test --package-path "$pkg" -c release -Xswiftc -enable-testing
     ran=1
   done
 fi

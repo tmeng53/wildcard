@@ -228,20 +228,26 @@ func expectOnCanvas(
     _ figure: Figure, _ bound: BoundClip, for seconds: Double, _ label: String, sideways: Double = 0, above: Double = 0,
     below: Double = 0
 ) {
+    // Each unbent shape's outline is the same every frame, so it is sampled once.
+    let shapes = figure.parts.map { $0.art.flatMap(\.shapes) }
+    let outlines = shapes.map { $0.map { outline($0.path) } }
     for frame in 0...Int(seconds * 50) {
         let time = Double(frame) / 50
-        for (part, placement) in zip(figure.parts, figure.layout(figure.pose(bound, at: time)))
+        for (index, (part, placement)) in zip(figure.parts, figure.layout(figure.pose(bound, at: time))).enumerated()
         where placement.opacity > 0 {
-            for shape in part.art.flatMap(\.shapes) {
+            for (number, shape) in shapes[index].enumerated() {
                 let margin = (shape.stroke?.width ?? 0) / 2
-                for point in outline(placement.bend?.apply(to: shape.path) ?? shape.path).map(
-                    placement.transform.apply(to:))
-                {
+                let points = placement.bend.map { outline($0.apply(to: shape.path)) } ?? outlines[index][number]
+                for local in points {
+                    let point = placement.transform.apply(to: local)
                     let bottom = part.id == "shadow" || point.y + margin <= figure.height + below
-                    #expect(
-                        point.x - margin >= -sideways && point.x + margin <= figure.width + sideways
-                            && point.y - margin >= -above && bottom,
-                        "\(label) at \(time)s: \(part.id) reaches (\(point.x), \(point.y))")
+                    // A plain check, recording only a miss: an `#expect` per point is millions of
+                    // them across the wardrobe.
+                    if !(point.x - margin >= -sideways && point.x + margin <= figure.width + sideways
+                        && point.y - margin >= -above && bottom)
+                    {
+                        Issue.record("\(label) at \(time)s: \(part.id) reaches (\(point.x), \(point.y))")
+                    }
                 }
             }
         }
