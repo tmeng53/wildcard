@@ -12,7 +12,10 @@ struct HomeNotices: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .noticeBanner(item: $model.notice, hold: model.hold, onTap: tap) { notice in banner(for: notice) }
+            .noticeBanner(item: $model.notice, hold: model.hold, onTap: tap) { notice in
+                // An edge under it for each still to come, at most two.
+                banner(for: notice).noticesWaiting(model.waitingNotices)
+            }
             // Only an unlock: something the member earned arrives.
             .haptic(.appear, trigger: model.notice?.id) { _, id in id != nil && isUnlock(model.notice) }
             .onChange(of: model.notice == nil && model.step == .scene && !model.isBurstOpen) { _, free in
@@ -48,6 +51,10 @@ struct HomeNotices: ViewModifier {
                     NoticeSymbol(systemImage: "sparkles")
                 }
             }
+        case .more:
+            NoticeBanner(Text("还有新通知 · 去看看", bundle: .module), showsChevron: true) {
+                NoticeSymbol(systemImage: "bell.fill")
+            }
         }
     }
 
@@ -56,6 +63,7 @@ struct HomeNotices: ViewModifier {
         case .unlocked(let unlock): unlocks?.open(unlock)
         case .broadcast(let broadcast):
             if let action = broadcast.action { model.openDestination?(action.destination) }
+        case .more: model.openDestination?(.notices)
         case .moved: break
         }
     }

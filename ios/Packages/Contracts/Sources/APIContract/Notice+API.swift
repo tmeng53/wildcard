@@ -95,6 +95,7 @@ extension AppDestination {
     init?(path: String) {
         switch path {
         case "stores": self = .stores
+        case "notices": self = .notices
         case "schedule": self = .schedule
         case "squad": self = .squad
         case "feed": self = .feed

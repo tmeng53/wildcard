@@ -157,6 +157,39 @@ extension View {
     }
 }
 
+extension View {
+    /// Under a `NoticeBanner`, an edge of a capsule for each banner still to come, at most two,
+    /// as iOS stacks its notifications (approved C, 2026-11-05); nothing when none waits.
+    public func noticesWaiting(_ count: Int) -> some View {
+        modifier(NoticesWaiting(count: min(max(count, 0), 2)))
+    }
+}
+
+private struct NoticesWaiting: ViewModifier {
+    let count: Int
+    /// How far each edge shows under the one above it, and how much narrower it is at each end.
+    private static var peek: Double { 5 }
+    private static var narrowing: Double { 10 }
+
+    func body(content: Content) -> some View {
+        content
+            .background(alignment: .bottom) {
+                ZStack(alignment: .bottom) {
+                    ForEach((1...max(count, 1)).reversed(), id: \.self) { edge in
+                        if edge <= count {
+                            Capsule(style: .continuous)
+                                .fill(Color(role: .bgBrand, in: .gym).opacity(edge == 1 ? 0.55 : 0.3))
+                                .frame(height: 2 * Self.peek * Double(edge))
+                                .padding(.horizontal, Self.narrowing * Double(edge))
+                                .offset(y: Self.peek * Double(edge))
+                        }
+                    }
+                }
+                .accessibilityHidden(true)
+            }
+    }
+}
+
 private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var item: Item?

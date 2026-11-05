@@ -46,6 +46,7 @@ private func entry(
     #expect(try entry(action: "post/\(post)")?.destination == .post(CheckInID(try #require(UUID(uuidString: post)))))
     #expect(try entry(action: "schedule")?.destination == .schedule)
     #expect(try entry(action: "me")?.destination == .profile)
+    #expect(try entry(action: "notices")?.destination == .notices)
 }
 
 @Test func aPlaceThisBuildDoesntKnowShowsNoButtonAndAnUnknownStyleIsABanner() throws {

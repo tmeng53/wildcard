@@ -27,7 +27,7 @@ const words = (max: number) =>
 export const Destination = z
   .string()
   .regex(
-    /^(stores|store\/[a-z][A-Za-z0-9]{0,39}|schedule|squad|feed|post\/[0-9a-f-]{36}|today|me)$/,
+    /^(stores|notices|store\/[a-z][A-Za-z0-9]{0,39}|schedule|squad|feed|post\/[0-9a-f-]{36}|today|me)$/,
   );
 export type Destination = z.infer<typeof Destination>;
 
@@ -52,7 +52,7 @@ export const BroadcastValue = z
       .strictObject({
         label: words(16).describe('The button’s words, a few characters, in each language.'),
         destination: Destination.describe(
-          'Where it opens: `stores`, `store/<storeId>`, `schedule`, `squad`, `feed`, ' +
+          'Where it opens: `stores`, `store/<storeId>`, `notices` (通知), `schedule`, `squad`, `feed`, ' +
             '`post/<checkInId>`, `today` or `me`.',
         ),
       })

@@ -17,6 +17,8 @@ extension TodayModel {
         case unlocked(Unlock)
         /// A notice we sent every member, told on this phone once.
         case broadcast(Broadcast)
+        /// What waited after two in a row, in one banner that opens 通知 (approved C, 2026-11-05).
+        case more
     }
 
     /// One notice on the home.
@@ -24,6 +26,12 @@ extension TodayModel {
         let news: NoticeNews
         /// New for each notice, so the same news told twice drops in again.
         let id = UUID()
+
+        /// A broadcast's button never folds into 「还有新通知」, so it can still be tapped on 今天.
+        var hasButton: Bool {
+            if case .broadcast(let broadcast) = news { return broadcast.action != nil }
+            return false
+        }
     }
 
     /// Puts the home on the squad's `scene` as read from the server, telling `move` if a
@@ -98,9 +106,25 @@ extension TodayModel {
     func showNextNotice() async {
         await untilArrived()
         guard notice == nil, step == .scene, !isBurstOpen, !pendingNotices.isEmpty else { return }
+        // Two in a row, then whatever else waits without a button in one banner.
+        if shownInRow >= Self.shownBeforeMore { foldTheRest() }
         let next = pendingNotices.removeFirst()
+        shownInRow = pendingNotices.isEmpty ? 0 : shownInRow + 1
         notice = next
         if case .broadcast(let broadcast) = next.news { broadcastShown?(broadcast) }
+    }
+
+    /// How many banners drop in one after another before the rest fold into 「还有新通知」.
+    static let shownBeforeMore = 2
+
+    /// The banners still to come after the one on screen, for the edges under it.
+    var waitingNotices: Int { pendingNotices.count }
+
+    /// Two or more waiting without a button become one 「还有新通知」; those with one keep theirs.
+    private func foldTheRest() {
+        let plain = pendingNotices.filter { !$0.hasButton && $0.news != .more }
+        guard plain.count >= 2 else { return }
+        pendingNotices = pendingNotices.filter(\.hasButton) + [Notice(news: .more)]
     }
 }
 #endif

@@ -75,6 +75,8 @@ public enum AppDestination: Hashable, Sendable {
     case today
     /// 我.
     case profile
+    /// 通知, behind the bell on 动态.
+    case notices
 }
 
 extension Notice {

@@ -93,6 +93,8 @@ struct MainTabs: View {
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
         .task {
+            // 「还有新通知」 and a broadcast's button on 今天 open here too.
+            today.openDestination = { open($0) }
             today.tellUnlocks(
                 with: UnlockNotices(
                     banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },

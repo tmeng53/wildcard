@@ -30,7 +30,7 @@ extension MainTabs {
         }
     }
 
-    /// A place that is a tab, or on one: 通知 closes.
+    /// A place that is a tab, or on one: 通知 closes, unless it is the place.
     private func openTab(for destination: AppDestination) {
         switch destination {
         case .feed:
@@ -51,6 +51,9 @@ extension MainTabs {
             showsSquad = true
         case .profile:
             selection = .profile
+        case .notices:
+            selection = .feed
+            showsNotices = true
         case .post, .unlock, .stores, .store:
             break
         }
