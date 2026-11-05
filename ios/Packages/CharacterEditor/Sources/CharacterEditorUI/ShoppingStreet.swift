@@ -118,7 +118,7 @@ private struct StoreCard: View {
                 if store.isOpen, let limited = StoreCopy.limited(store.id) {
                     limited
                         .typeStyle(TypeRamp.label)
-                        .foregroundStyle(Color(role: .fgAccent, in: theme))
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
                         .padding(Space.s)
                 } else if store.isOpen {
                     Text("营业中", bundle: .module)
