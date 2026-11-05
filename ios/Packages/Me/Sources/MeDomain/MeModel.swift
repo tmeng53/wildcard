@@ -105,10 +105,15 @@ public final class MeModel {
         load = .loaded(overview)
     }
 
-    /// The unlocked pieces not yet claimed: they wait in their stores on 商店街, marked NEW.
+    /// The pieces that came to the member and aren't claimed yet: the unlocked ones and the ones
+    /// the street holds as theirs (a limited store's starters while it is open). They wait in
+    /// their stores on 商店街, marked NEW.
     public var unclaimed: [String] {
         guard let overview else { return [] }
-        return overview.unlocks.filter { $0.kind == .piece && !overview.claimed.contains($0.id) }.map(\.id)
+        let unlocked = overview.unlocks.filter { $0.kind == .piece }.map(\.id)
+        let owned = (overview.stock?.pieces ?? []).filter { $0.state == .owned }.map(\.id)
+        var seen: Set<String> = []
+        return (unlocked + owned).filter { !overview.claimed.contains($0) && seen.insert($0).inserted }
     }
 
     /// 领取: puts `piece` in the wardrobe at once and saves it; takes it out again if saving fails.

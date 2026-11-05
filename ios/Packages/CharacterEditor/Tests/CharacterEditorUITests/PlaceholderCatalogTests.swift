@@ -121,6 +121,20 @@ private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", 
     }
 }
 
+/// 随机 never puts on a piece that came in but isn't claimed yet: it waits on 商店街.
+@Test func aRandomLookLeavesOutWhatIsntClaimed() throws {
+    let catalog = try Catalog.placeholder(
+        stock: try stock(earned: ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce", "powder"]))
+    let tops = catalog.variants["top"] ?? []
+    #expect(tops.count > 1)
+    let unclaimed = Set(tops.dropFirst())
+    var generator = SystemRandomNumberGenerator()
+    for _ in 0..<40 {
+        let look = CharacterDraft.randomLook(from: catalog, using: &generator, leavingOut: unclaimed)
+        #expect(look.variants.values.allSatisfy { !unclaimed.contains($0) })
+    }
+}
+
 /// A store the member unlocked opens on the street with its rack, and an unlocked prop joins
 /// the starters; the rest stay shut.
 @Test func unlocksOpenTheirStoresAndProps() throws {

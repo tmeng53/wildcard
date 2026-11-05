@@ -26,7 +26,6 @@ private struct CardPopup<Card: View>: ViewModifier {
                 if isPresented {
                     Color(role: .bgInk, in: theme)
                         .opacity(Scrim.dimOpacity)
-                        .ignoresSafeArea()
                         .contentShape(Rectangle())
                         .onTapGesture { isPresented = false }
                         .accessibilityElement()
@@ -40,6 +39,10 @@ private struct CardPopup<Card: View>: ViewModifier {
                         .accessibilityAction(.escape) { isPresented = false }
                 }
             }
+            // The dim spans the whole window, status bar and tab bar included, so a tap anywhere
+            // off the card closes it and nothing under it can be tapped while it is open.
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
             .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: isPresented)
         }
     }

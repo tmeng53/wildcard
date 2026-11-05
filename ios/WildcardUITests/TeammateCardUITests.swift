@@ -54,7 +54,7 @@ final class TeammateCardUITests: XCTestCase {
         let card = app.buttons["me.card"]
         XCTAssertTrue(app.windows.firstMatch.frame.contains(card.frame), "the card runs off the screen: \(card.frame)")
         // It pops up over the dimmed page, and a tap off it, above it, closes it.
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
         XCTAssertTrue(
             card.waitForNonExistence(timeout: 5), "a tap off the card didn't close it:\n\(app.debugDescription)")
         XCTAssertTrue(row.isHittable, "小队 isn't back under the card")

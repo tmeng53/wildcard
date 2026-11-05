@@ -6,11 +6,12 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createPostgresUnlockStore, type UnlockTables } from '../adapters/postgres-unlock-store.js';
-import { MemberId, type Trained } from '../domain/unlocks.js';
+import { MemberId, PieceId, type Trained } from '../domain/unlocks.js';
 import {
   UnlockItemMissingError,
   UnlockSportNotListedError,
   UnlockStoreMissingError,
+  UnlockSwitchMissingError,
 } from '../errors.js';
 import { createUnlocks } from './unlocks.js';
 
@@ -40,6 +41,7 @@ function unlocksWith(trained: Map<MemberId, Trained[]>, told: string[] = []) {
     sportListed: (id) => Promise.resolve(id !== 'quidditch'),
     // Every switch is off in July (UTC), so a test can train while one is off.
     switches: () => Promise.resolve((_id, at) => at.getUTCMonth() !== 6),
+    switchListed: (id) => Promise.resolve(id === 'winter'),
     unlocked: (_member, unlocks) => {
       told.push(...unlocks.map(({ kind, id }) => `${kind}:${id}`));
       return Promise.resolve();
@@ -194,8 +196,10 @@ describe('unlocks', () => {
         .map(({ id, state }) => [id, state]),
     ).toStrictEqual([
       [board, 'owned'],
-      [starter, 'available'],
+      // A limited store's starter is the member's while it is out, to claim (领取) and keep.
+      [starter, 'owned'],
     ]);
+    await switched.claim(me, PieceId.parse(starter));
 
     // Retired, the store leaves the street and its pieces are boxed for nobody, even one still
     // offered, so other tests count only the seeded ones.
@@ -203,6 +207,39 @@ describe('unlocks', () => {
     const retired = await unlocksWith(new Map()).standing(await newMember());
     expect(retired.shelf.stores.some(({ id }) => id === store)).toBe(false);
     expect(retired.locked.some(({ id }) => id === board)).toBe(false);
+    // What a member unlocked or claimed there stays theirs, the store listed closed.
+    const mine = await switched.standing(me);
+    expect(mine.shelf.stores.find(({ id }) => id === store)).toStrictEqual({
+      id: store,
+      open: false,
+    });
+    expect(
+      mine.shelf.pieces
+        .filter(({ storeId }) => storeId === store)
+        .map(({ id, state }) => [id, state]),
+    ).toStrictEqual([
+      [board, 'owned'],
+      [starter, 'owned'],
+    ]);
+  });
+
+  it('refuses a store or piece that follows a switch nobody made', async () => {
+    const unlocks = unlocksWith(new Map());
+    const store = `testx${randomUUID().slice(0, 8)}`;
+    await expect(
+      unlocks.putStore({ id: store, position: 99, switchId: 'summer', offered: true }),
+    ).rejects.toBeInstanceOf(UnlockSwitchMissingError);
+    await unlocks.putStore({ id: store, position: 99, switchId: null, offered: false });
+    await expect(
+      unlocks.putPiece({
+        id: `${store}-cap`,
+        storeId: store,
+        slot: 'hat',
+        starter: true,
+        switchId: 'summer',
+        offered: false,
+      }),
+    ).rejects.toBeInstanceOf(UnlockSwitchMissingError);
   });
 
   it('keeps what a member earned, even once the check-in that earned it is gone', async () => {

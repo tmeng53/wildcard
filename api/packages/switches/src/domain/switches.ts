@@ -46,6 +46,39 @@ export function isOn(of: Switch, day: string): boolean {
   return of.mode === 'on';
 }
 
+/** A switch as it was set from `at` on, from its log. */
+export interface SwitchSetting {
+  readonly at: Date;
+  readonly value: Switch;
+}
+
+/**
+ * Whether a switch was on at `at`, on `day` (`YYYY-MM-DD`, New York), as it was set then:
+ * `history` (the oldest first) says how it was set from each change on, so a switch turned on or
+ * off by hand decides only what came after. Before its first change it counts as that first
+ * setting; with no history at all, as `current`.
+ */
+export function wasOn(
+  history: readonly SwitchSetting[],
+  current: readonly Switch[],
+): (id: string, at: Date, day: string) => boolean {
+  const byId = new Map<string, SwitchSetting[]>();
+  for (const setting of history) {
+    const list = byId.get(setting.value.id) ?? [];
+    list.push(setting);
+    byId.set(setting.value.id, list);
+  }
+  const now = new Map(current.map((each) => [each.id, each]));
+  return (id, at, day) => {
+    const settings = byId.get(id);
+    const setting =
+      settings === undefined
+        ? now.get(id)
+        : (settings.findLast((each) => each.at.getTime() <= at.getTime()) ?? settings[0])?.value;
+    return setting !== undefined && isOn(setting, day);
+  };
+}
+
 /** Adds a switch, or replaces every field of one. */
 export const SwitchEdit = z
   .strictObject({

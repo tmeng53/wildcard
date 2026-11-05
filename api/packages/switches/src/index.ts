@@ -11,12 +11,15 @@ export {
   SwitchId,
   SwitchMode,
   type Switch,
+  type SwitchSetting,
   type SwitchWindow,
+  wasOn,
 } from './domain/switches.js';
 export type { SwitchStore } from './ports.js';
 export {
   createSwitches,
   type SwitchOn,
+  type SwitchWasOn,
   type Switches,
   type SwitchesAdmin,
 } from './use-cases/switches.js';

@@ -17,28 +17,52 @@ public actor ArtDownloads {
     private let root: URL
     private let fetch: @Sendable (URL) async throws -> Data
     private let digest: @Sendable (Data) -> String
+    /// Which build reads the tree: art this build couldn't read (a newer rig, a kind it doesn't
+    /// know) is tried again once the app is updated.
+    private let reader: String
+    /// The update running now, which later calls wait on, so two never swap the tree at once.
+    private var running: (id: UUID, task: Task<Bool, Never>)?
 
     /// - Parameters:
     ///   - root: the folder whose `current` `ArtTree` reads (Application Support's `Art`).
     ///   - fetch: downloads one file.
     ///   - digest: a file's SHA-256 in lowercase hex.
+    ///   - build: this app's build, which art left out as unreadable is tried again after.
     public init(
         root: URL = ArtTree.downloaded.deletingLastPathComponent(),
         fetch: @escaping @Sendable (URL) async throws -> Data,
-        digest: (@Sendable (Data) -> String)? = nil
+        digest: (@Sendable (Data) -> String)? = nil,
+        build: String = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
     ) {
         self.root = root
         self.fetch = fetch
         self.digest = digest ?? Self.sha256
+        reader = "\(ArtTree.rigVersion)/\(build)"
     }
 
     /// Brings the art on this phone to `manifest`: downloads the files it lacks, checks them,
     /// and swaps the tree. Leaves out files a newer rig draws, and pieces this build can't read in
     /// full (their folders keep the bundled art). Answers whether the art changed; false when it was
     /// current or a file couldn't be downloaded whole, which the next call tries again.
+    /// Calls made while one runs (launch and a return to the app at once) wait for it, then
+    /// find the tree current; a manifest older than the tree's generation changes nothing.
     @discardableResult
     public func update(to manifest: ArtManifest) async -> Bool {
-        guard manifest.generation != kept() else { return false }
+        while let other = running {
+            _ = await other.task.value
+            // Whoever sees it finish first clears it, so a waiter never spins on a finished task.
+            if running?.id == other.id { running = nil }
+        }
+        let id = UUID()
+        let task = Task { await self.bring(to: manifest) }
+        running = (id, task)
+        let changed = await task.value
+        if running?.id == id { running = nil }
+        return changed
+    }
+
+    private func bring(to manifest: ArtManifest) async -> Bool {
+        if let kept = kept(), kept.generation > manifest.generation || kept == holding(manifest) { return false }
         let files = manifest.files.filter { $0.rigVersion <= ArtTree.rigVersion && Self.isInTree($0.path) }
         var blobs: [(file: ArtManifest.File, at: URL)] = []
         var unreadable: Set<String> = []
@@ -69,7 +93,7 @@ public actor ArtDownloads {
                 try FileManager.default.moveItem(at: current, to: old)
             }
             try FileManager.default.moveItem(at: next, to: current)
-            try JSONEncoder().encode(Kept(version: 1, generation: manifest.generation))
+            try JSONEncoder().encode(holding(manifest))
                 .write(to: root.appending(path: "generation.json"), options: .atomic)
         } catch {
             try? FileManager.default.removeItem(at: next)
@@ -79,20 +103,25 @@ public actor ArtDownloads {
         return true
     }
 
-    /// The generation the tree holds; nil before the first.
-    private func kept() -> Int? {
+    /// What the tree holds; nil before the first.
+    private func kept() -> Kept? {
         guard FileManager.default.fileExists(atPath: root.appending(path: "current").path(percentEncoded: false)),
             let data = try? Data(contentsOf: root.appending(path: "generation.json")),
-            let kept = try? JSONDecoder().decode(Kept.self, from: data), kept.version == 1
+            let kept = try? JSONDecoder().decode(Kept.self, from: data), kept.version == Kept.current
         else { return nil }
-        return kept.generation
+        return kept
+    }
+
+    /// What the tree holds once it is brought to `manifest` by this build.
+    private func holding(_ manifest: ArtManifest) -> Kept {
+        Kept(version: Kept.current, generation: manifest.generation, reader: reader)
     }
 
     /// `file` on the phone, downloaded if it wasn't, and read the way the screens will.
     private func blob(_ file: ArtManifest.File, from base: URL?) async -> Blob {
         let blobs = root.appending(path: "blobs")
         let place = blobs.appending(path: file.name)
-        if let data = try? Data(contentsOf: place), data.count == file.size {
+        if let data = try? Data(contentsOf: place), data.count == file.size, digest(data) == file.sha256 {
             return ArtTree.reads(data, at: file.path) ? .here(place) : .unreadable
         }
         guard let base, let data = try? await fetch(base.appending(path: file.name)),
@@ -160,8 +189,11 @@ private enum Blob {
     case unavailable
 }
 
-/// Which generation the downloaded tree holds. Stored JSON, so it carries a `version`.
-private struct Kept: Codable {
+/// Which generation the downloaded tree holds, and which build read it. Stored JSON, so it
+/// carries a `version`.
+private struct Kept: Codable, Equatable {
+    static let current = 2
     let version: Int
     let generation: Int
+    let reader: String
 }

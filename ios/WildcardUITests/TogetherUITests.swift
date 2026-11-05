@@ -39,7 +39,8 @@ final class TogetherUITests: XCTestCase {
         for frame in 0..<16 {
             let after = Int(Date().timeIntervalSince(opened) * 1000)
             keepScreenshot(named: String(format: "\(name)-%02d-%05dms", frame, after))
-            if walks, frame < 8 {
+            // Every frame is sampled: on a slow simulator the walk-over can start late.
+            if walks {
                 let frames = figures.allElementsBoundByIndex.map { "\(Int($0.frame.midX)),\(Int($0.frame.maxY))" }
                 places.insert(frames.sorted().joined(separator: " "))
             }

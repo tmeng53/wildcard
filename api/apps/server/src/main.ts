@@ -316,10 +316,12 @@ const unlocksOn = (scope: Database) =>
     trainedSince: ({ member, since }) =>
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
-    // A rule counts only 练了 made while its store's and piece's switches were on, by the New York day.
+    switchListed: async (id) => (await switchesOn(scope).list()).some((each) => each.id === id),
+    // A rule counts only 练了 made while its store's and piece's switches were on, by the New York
+    // day and as each switch was set then, so turning one on or off by hand changes only what follows.
     switches: async () => {
-      const on = await switchesOn(scope).states();
-      return (id, at) => on(id, newYorkDays.format(at));
+      const was = await switchesOn(scope).history();
+      return (id, at) => was(id, at, newYorkDays.format(at));
     },
     unlocked: (member, unlocks) =>
       tellAfter(scope, {

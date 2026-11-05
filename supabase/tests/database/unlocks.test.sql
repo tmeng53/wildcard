@@ -94,8 +94,8 @@ values ('e0000000-0000-0000-0000-000000000001', 'piece', 'lap-bib', '{run,walk}'
   'e0000000-0000-0000-0000-000000000001', now());
 insert into public.piece_claims (member_id, piece_id) values ('e0000000-0000-0000-0000-000000000001', 'lap-bib');
 select throws_ok(
-  $$insert into public.piece_claims (member_id, piece_id) values ('e0000000-0000-0000-0000-000000000001', 'lap-vest')$$,
-  '23503', null, 'a claim is of a piece the member unlocked'
+  $$insert into public.piece_claims (member_id, piece_id) values ('e0000000-0000-0000-0000-000000000001', 'no-such-piece')$$,
+  '23503', null, 'a claim is of a listed piece'
 );
 select throws_ok($$delete from public.piece_claims$$, '42501', null, 'a claim is never taken back');
 select throws_ok(

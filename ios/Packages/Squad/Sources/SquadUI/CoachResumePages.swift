@@ -229,9 +229,17 @@ struct CoachResumePage: View {
                 .accentTone(.ink)
                 .disabled(isSaving)
                 .accessibilityIdentifier("coach.resume.hire")
+            } else {
+                HStack(spacing: Space.l) {
+                    Button(action: change) { Text("换教练", bundle: .module) }
+                        .buttonStyle(TextButtonStyle(.muted))
+                        .accessibilityIdentifier("coach.resume.change")
+                    Button(action: fire) { Text("解雇", bundle: .module) }
+                        .buttonStyle(TextButtonStyle(.danger))
+                        .accessibilityIdentifier("coach.resume.fire")
+                }
+                .disabled(isSaving)
             }
-            // The squad's own coach offers nothing here for now: 换教练 and 解雇 are off the UI
-            // (Tracy, 2026-11-04); `change` and `fire` stay wired for when they come back.
         }
         .frame(maxWidth: .infinity)
     }

@@ -244,8 +244,14 @@ final class CharacterEditorUITests: XCTestCase {
         let done = app.buttons["editor.done"]
         func inView() -> Bool { element.exists && element.isHittable && element.frame.maxY < done.frame.minY }
         // The rack holds every store's pieces now, so the hat row can sit a long way down.
+        // A tile scrolled past, above the view, comes back with a drag the other way.
+        func isAbove() -> Bool { element.exists && element.frame.maxY < app.frame.midY }
         for _ in 0..<24 where !inView() {
-            start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
+            if isAbove() {
+                end.press(forDuration: 0.05, thenDragTo: start, withVelocity: .slow, thenHoldForDuration: 0.3)
+            } else {
+                start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
+            }
         }
         XCTAssertTrue(inView(), "\(element.identifier) never scrolled into view")
     }

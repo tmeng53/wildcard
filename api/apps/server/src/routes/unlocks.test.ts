@@ -106,6 +106,7 @@ const app = createApp({
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
     switches: () => Promise.resolve(() => true),
+    switchListed: () => Promise.resolve(true),
   }),
   gifts,
   weekSummaryWords: unusedWeekSummaryWords,

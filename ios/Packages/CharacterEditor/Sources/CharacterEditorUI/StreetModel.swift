@@ -86,7 +86,7 @@ public final class StreetModel {
         self.marks = marks
         (claimPiece, tryOnPiece) = (claim, tryOn)
         let pieces = unlocks.filter { $0.kind == .piece }
-        arrived = Set(pieces.map(\.id)).filter { draft.catalog.storeOf[$0] != nil }
+        arrived = Catalog.arrived(unlocks: unlocks, stock: stock).filter { draft.catalog.storeOf[$0] != nil }
         var sports: [String: [Sport]] = [:]
         for piece in pieces { sports[piece.id] = piece.sports }
         for piece in stock.pieces {

@@ -1,6 +1,12 @@
-import type { Kysely } from 'kysely';
+import { sql, type Kysely } from 'kysely';
 
-import { MonthDay, SwitchId, SwitchMode, type Switch } from '../domain/switches.js';
+import {
+  MonthDay,
+  SwitchId,
+  SwitchMode,
+  type Switch,
+  type SwitchSetting,
+} from '../domain/switches.js';
 import type { SwitchStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -15,18 +21,17 @@ export function createPostgresSwitchStore(db: Kysely<SwitchTables>): SwitchStore
   return {
     async list() {
       const rows = await db.selectFrom('switches').selectAll().orderBy('id').execute();
-      return rows.map((row): Switch => ({
-        id: SwitchId.parse(row.id),
-        label: row.label,
-        mode: SwitchMode.parse(row.mode),
-        ...(row.window_start === null || row.window_end === null
-          ? {}
-          : {
-              window: {
-                start: MonthDay.parse(row.window_start),
-                end: MonthDay.parse(row.window_end),
-              },
-            }),
+      return rows.map(switchOf);
+    },
+
+    async history() {
+      // switch_events is the switches' own log: each row the full new value as it was set.
+      const { rows } = await sql<{ at: Date | string; value: SwitchRow }>`
+        select at, value from public.switch_events order by id
+      `.execute(db);
+      return rows.map((row): SwitchSetting => ({
+        at: new Date(row.at),
+        value: switchOf(row.value),
       }));
     },
 
@@ -43,5 +48,26 @@ export function createPostgresSwitchStore(db: Kysely<SwitchTables>): SwitchStore
         .onConflict((conflict) => conflict.column('id').doUpdateSet(columns))
         .execute();
     },
+  };
+}
+
+interface SwitchRow {
+  id: string;
+  label: string;
+  mode: string;
+  window_start: string | null;
+  window_end: string | null;
+}
+
+function switchOf(row: SwitchRow): Switch {
+  return {
+    id: SwitchId.parse(row.id),
+    label: row.label,
+    mode: SwitchMode.parse(row.mode),
+    ...(row.window_start === null || row.window_end === null
+      ? {}
+      : {
+          window: { start: MonthDay.parse(row.window_start), end: MonthDay.parse(row.window_end) },
+        }),
   };
 }
