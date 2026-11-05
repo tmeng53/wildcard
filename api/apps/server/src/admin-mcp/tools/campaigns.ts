@@ -1,6 +1,7 @@
 import {
   CampaignId,
   CampaignStatus,
+  CampaignSwitchTakenError,
   SWITCH_MODE_OF,
   type Campaign,
   type Campaigns,
@@ -200,12 +201,12 @@ export function putCampaign(deps: CampaignToolDependencies) {
     title: 'Add or change a campaign',
     description:
       'Bundles a holiday or any other moment from generic pieces, in one call: its switches ' +
-      '(each with the days it is on), the scenes that follow them (a scene with takeover true ' +
+      '(new ids, or ones it already owns; never winter or another campaign’s, each with the days it is on), the scenes that follow them (a scene with takeover true ' +
       'is what every squad’s home shows while its switch is on; one without may be picked), the ' +
       'limited stores and pieces on them (a store or piece whose switchId is one of the ' +
       'campaign’s switches, or a piece in such a store) and the unlock rules of those pieces: ' +
       'only 练了 on its days count, and a piece stays the member’s all year. A piece without a ' +
-      'rule opens only as a broadcast’s gift; a starter is out for everyone. A new campaign is a draft nobody sees; a changed ' +
+      'rule opens only as a broadcast’s gift; a starter is out for everyone. A new campaign is a draft no member can open (its names and colours are in the public catalog, as every limited scene’s and store’s are); a changed ' +
       'one keeps its status. Each is put whole, as put_scene, put_store, put_piece and ' +
       'put_unlock_rule do; art goes up first with put_art. Broadcast notices (the 「快到了」 notice, the holiday-day ' +
       'opening) go in with put_broadcast. Then try it with set_campaign_status preview and ' +
@@ -248,6 +249,13 @@ export function putCampaign(deps: CampaignToolDependencies) {
     run: async ({ id, label, switches, scenes, stores, pieces, unlockRules }, { admin }) => {
       const current = await deps.campaigns.find(id);
       const mode = SWITCH_MODE_OF[current?.status ?? 'draft'];
+      // A campaign makes its switches: one already there that isn't its own (winter, or another
+      // campaign's) would be set to this campaign's mode for everyone.
+      const existing = new Set((await deps.switches.list()).map((each) => each.id));
+      const taken = switches.find(
+        (each) => existing.has(each.id) && !(current?.switches ?? []).includes(each.id),
+      );
+      if (taken !== undefined) throw new CampaignSwitchTakenError(id, taken.id);
       for (const each of switches) await deps.switches.put({ ...each, mode });
       for (const each of scenes) await deps.scenes.putScene(each);
       for (const each of stores) await deps.unlocks.putStore(each);

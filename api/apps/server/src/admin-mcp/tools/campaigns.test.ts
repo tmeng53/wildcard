@@ -228,8 +228,8 @@ describe('a campaign', () => {
       expect(await takeover(admin)).toBeUndefined();
 
       const { rows } = await sql<{ status: string }>`
-        select value->>'status' as status from public.events
-        where event_id = 'thanksgivingTest' order by id
+        select value->>'status' as status from public.campaigns
+        where campaign_id = 'thanksgivingTest' order by id
       `.execute(trx);
       expect(rows.map(({ status }) => status)).toEqual(['draft', 'preview', 'live', 'stopped']);
     });
@@ -248,6 +248,26 @@ describe('a campaign', () => {
           admin,
         }),
       ).rejects.toThrow(/follows one of the campaign’s switches/);
+    });
+  });
+
+  it('refuses a switch that is already there and not its own', async () => {
+    await rolledBack(async (trx) => {
+      const { run, switches } = toolsOn(trx);
+      const admin = await member(trx);
+      const before = (await switches.list()).find(({ id }) => id === 'winter');
+      await expect(
+        run('put_campaign', {
+          // The store on winter too, so only the switch's owner is wrong.
+          input: {
+            ...thanksgiving,
+            switches: [{ ...thanksgiving.switches[0], id: 'winter' }, thanksgiving.switches[1]],
+            stores: [{ ...thanksgiving.stores[0], switchId: 'winter' }],
+          },
+          admin,
+        }),
+      ).rejects.toThrow(/already there and not campaign thanksgivingTest’s/);
+      expect((await switches.list()).find(({ id }) => id === 'winter')).toEqual(before);
     });
   });
 

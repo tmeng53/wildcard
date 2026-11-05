@@ -14,6 +14,6 @@ export {
   SWITCH_MODE_OF,
   type Campaign,
 } from './domain/campaigns.js';
-export { CampaignNotFoundError } from './errors.js';
+export { CampaignNotFoundError, CampaignSwitchTakenError } from './errors.js';
 export type { CampaignStore } from './ports.js';
 export { createCampaigns, type Campaigns } from './use-cases/campaigns.js';

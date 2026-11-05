@@ -25,14 +25,14 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
-export interface Events {
+export interface Campaigns {
   at: Generated<Timestamp>;
+  campaign_id: string;
   changed_by: string | null;
-  event_id: string;
   id: Generated<Int8>;
   value: Json;
 }
 
 export interface DB {
-  events: Events;
+  campaigns: Campaigns;
 }

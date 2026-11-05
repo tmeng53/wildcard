@@ -14,8 +14,6 @@ export type SwitchOn = (id: string, day: string) => boolean;
 export interface MemberSwitches {
   /** Whether a switch is on on a (real) New York `day`, shifted by the member's pretend days. */
   readonly on: SwitchOn;
-  /** `at` as the member's switches see it: moved by their pretend days. */
-  readonly shift: (at: Date) => Date;
 }
 
 /** The switches, read by whatever follows them. */
@@ -66,10 +64,7 @@ export function createSwitches({
     states: () => lookup({ previewer: false, dayOffset: 0 }),
     async statesFor(member) {
       const view = await store.viewOf(member);
-      return {
-        on: await lookup(view),
-        shift: (at) => (view.dayOffset === 0 ? at : new Date(at.getTime() + view.dayOffset * DAY)),
-      };
+      return { on: await lookup(view) };
     },
     async put({ window, ...fields }) {
       await store.put({ ...fields, ...(window === undefined ? {} : { window }) });

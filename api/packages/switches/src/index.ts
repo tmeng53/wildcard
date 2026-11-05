@@ -19,7 +19,6 @@ export {
 } from './domain/switches.js';
 export type { SwitchStore } from './ports.js';
 export {
-  addDays,
   createSwitches,
   type MemberSwitches,
   type SwitchOn,

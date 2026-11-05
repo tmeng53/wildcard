@@ -112,9 +112,6 @@ describe('the switches', () => {
       // 11-06 plus 18 days is 11-24, the first day of the window.
       expect(seen.on('thanksgiving', '2026-11-06')).toBe(true);
       expect(seen.on('thanksgiving', '2026-11-05')).toBe(false);
-      expect(seen.shift(new Date('2026-11-06T15:00:00Z')).toISOString()).toBe(
-        '2026-11-24T15:00:00.000Z',
-      );
       expect((await switches.statesFor(other)).on('thanksgiving', '2026-11-24')).toBe(false);
       expect((await switches.states())('thanksgiving', '2026-11-24')).toBe(false);
 

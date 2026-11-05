@@ -4,7 +4,7 @@ import { z } from 'zod';
 // code. An admin bundles the generic pieces (global switches with their windows, and the scenes,
 // unlock rules and broadcast notices that follow them), tries it on their own phone, then
 // publishes it. A campaign only names the switches it owns and how far along it is: its status
-// sets their mode. Kept in the database (supabase/migrations, `events`).
+// sets their mode. Kept in the database (supabase/migrations, `campaigns`).
 
 /** A campaign's id, camelCase, such as `thanksgiving`. Never changes. */
 export const CampaignId = z.string().regex(/^[a-z][A-Za-z0-9]{0,39}$/);
