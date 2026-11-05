@@ -117,9 +117,22 @@ const thanksgiving = {
       takeover: true,
     },
   ],
+  stores: [{ id: 'trot', position: 90, switchId: 'tgWeek', offered: true }],
+  pieces: [
+    { id: 'trot-bib', storeId: 'trot', slot: 'acc', starter: false, switchId: null, offered: true },
+    {
+      id: 'trot-cranberry',
+      storeId: 'trot',
+      slot: 'bottom',
+      starter: false,
+      switchId: null,
+      offered: true,
+    },
+    { id: 'trot-pie', storeId: 'trot', slot: 'top', starter: false, switchId: null, offered: true },
+  ],
   unlockRules: [
-    { kind: 'piece', id: 'trot-cranberry', sports: [], after: 1, switchId: 'tgWeek' },
-    { kind: 'piece', id: 'trot-pie', sports: [], after: 2, switchId: 'tgWeek' },
+    { kind: 'piece', id: 'trot-cranberry', sports: [], after: 1 },
+    { kind: 'piece', id: 'trot-pie', sports: [], after: 2 },
   ],
 };
 
@@ -139,6 +152,8 @@ describe('a campaign', () => {
             { id: 'tgWeek', mode: 'off', window: { start: '11-24', end: '11-26' } },
           ],
           scenes: [{ id: 'tgTown', takeover: true }],
+          stores: [{ id: 'trot' }],
+          pieces: [{ id: 'trot-bib' }, { id: 'trot-cranberry' }, { id: 'trot-pie' }],
           unlockRules: [{ id: 'trot-cranberry' }, { id: 'trot-pie' }],
           missingArt: ['scenes/tgTown-day@3x.png', 'scenes/tgTown-night@3x.png'],
         },
@@ -160,7 +175,9 @@ describe('a campaign', () => {
       });
       expect(asked).toMatchObject({ changed: false });
       expect(asked.plan).toContain('every squad’s home shows the tgTown scene');
+      expect(asked.plan).toContain('store trot opens on the 商店街');
       expect(asked.plan).toContain('piece trot-pie unlocks after 2 练了 on these days');
+      expect(asked.plan).toContain('piece trot-bib opens only as a gift');
       expect(asked.plan).toContain('Warning, art not uploaded yet');
       expect(await modes()).toEqual({ tgDay: 'off', tgWeek: 'off' });
 
@@ -218,7 +235,7 @@ describe('a campaign', () => {
     });
   });
 
-  it('refuses a scene or rule that follows a switch the campaign doesn’t own', async () => {
+  it('refuses a scene or store that follows a switch the campaign doesn’t own', async () => {
     await rolledBack(async (trx) => {
       const { run } = toolsOn(trx);
       const admin = await member(trx);
@@ -226,7 +243,7 @@ describe('a campaign', () => {
         run('put_campaign', {
           input: {
             ...thanksgiving,
-            unlockRules: [{ ...thanksgiving.unlockRules[0], switchId: 'winter' }],
+            stores: [{ ...thanksgiving.stores[0], switchId: 'winter' }],
           },
           admin,
         }),

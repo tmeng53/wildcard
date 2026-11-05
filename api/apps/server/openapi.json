@@ -3045,33 +3045,6 @@
         ],
         "additionalProperties": false
       },
-      "MySwitches": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "on": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^[a-z][A-Za-z0-9]{0,39}$"
-            },
-            "description": "The global switches on for the signed-in member today, by id: what the public catalog’s `switches` say, plus, for a member who previews switches, those in preview, on the day they pretend it is. A signed-in app follows this list over the catalog’s.",
-            "example": [
-              "winter"
-            ]
-          }
-        },
-        "required": [
-          "version",
-          "on"
-        ],
-        "additionalProperties": false
-      },
       "CoachMarket": {
         "type": "object",
         "properties": {
@@ -8254,50 +8227,6 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/me/switches": {
-      "get": {
-        "operationId": "getMySwitches",
-        "summary": "The global switches on for the signed-in member today",
-        "description": "Limited stores and scenes follow global switches. Most members see them as the public catalog says; a member who previews switches (an admin trying an event before it goes live) also sees those in preview, on the day they pretend it is.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The switches on",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MySwitches"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {

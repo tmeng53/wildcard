@@ -15,7 +15,13 @@ import {
   type Switches,
   type SwitchesAdmin,
 } from '@wildcard/switches';
-import { UnlockRuleEdit, type Unlocks, type UnlocksAdmin } from '@wildcard/unlocks';
+import {
+  PieceEdit,
+  StoreEdit,
+  UnlockRuleEdit,
+  type Unlocks,
+  type UnlocksAdmin,
+} from '@wildcard/unlocks';
 import { z } from 'zod';
 
 import { newYorkDay } from '../../new-york-day.js';
@@ -24,7 +30,7 @@ import { adminTool } from '../admin-tool.js';
 // Campaigns (Tracy, 2026-11-04): a holiday, an anniversary or a race day is a bundle of generic
 // pieces an admin puts together, never a concept in code: global switches with their days, the
 // scenes that follow them (a takeover scene every home shows while its switch is on), and the
-// unlock rules of a limited store's pieces. A new campaign is a draft nobody sees; in preview
+// limited stores and pieces on them with the rules that open them. A new campaign is a draft nobody sees; in preview
 // only the members on the preview list see it, on the day each pretends it is
 // (set_switch_preview), in the App Store build; live, everyone sees it on its days; stopped,
 // nobody. Pieces members unlocked are never taken back.
@@ -33,7 +39,10 @@ interface CampaignToolDependencies {
   readonly campaigns: Campaigns;
   readonly switches: Switches & SwitchesAdmin;
   readonly scenes: Scenes & ScenesAdmin;
-  readonly unlocks: Pick<Unlocks & UnlocksAdmin, 'rules' | 'putRule'>;
+  readonly unlocks: Pick<
+    Unlocks & UnlocksAdmin,
+    'rules' | 'putRule' | 'stores' | 'putStore' | 'pieces' | 'putPiece'
+  >;
   readonly art: Pick<Art, 'manifest'>;
   readonly clock: () => Date;
 }
@@ -53,12 +62,14 @@ const CampaignSwitch = z.strictObject({
     }),
 });
 
-/** What one campaign bundles now: its switches, the scenes and rules that follow them. */
+/** What one campaign bundles now: its switches and the scenes, stores, pieces and rules on them. */
 async function bundleOf(campaign: Campaign, deps: CampaignToolDependencies) {
   const owned = new Set(campaign.switches);
-  const [switches, scenes, rules, art] = await Promise.all([
+  const [switches, scenes, stores, pieces, rules, art] = await Promise.all([
     deps.switches.list(),
     deps.scenes.list(),
+    deps.unlocks.stores(),
+    deps.unlocks.pieces(),
     deps.unlocks.rules(),
     deps.art.manifest(),
   ]);
@@ -66,10 +77,21 @@ async function bundleOf(campaign: Campaign, deps: CampaignToolDependencies) {
   const following = <T extends { readonly switchId?: string | null }>(items: readonly T[]) =>
     items.filter(({ switchId }) => typeof switchId === 'string' && owned.has(switchId));
   const ownScenes = following(scenes);
+  const ownStores = following(stores);
+  const storeIds = new Set(ownStores.map(({ id }) => id));
+  const ownPieces = pieces.filter(
+    (piece) => storeIds.has(piece.storeId) || following([piece]).length > 0,
+  );
+  const ids = new Set([
+    ...ownStores.map(({ id }) => `store:${id}`),
+    ...ownPieces.map(({ id }) => `piece:${id}`),
+  ]);
   return {
     switches: switches.filter(({ id }) => owned.has(id)),
     scenes: ownScenes,
-    unlockRules: following(rules),
+    stores: ownStores,
+    pieces: ownPieces,
+    unlockRules: rules.filter(({ kind, id }) => ids.has(`${kind}:${id}`)),
     // A scene new to this campaign has no art in older builds: its pictures must be uploaded.
     missingArt: ownScenes.flatMap(({ id }) =>
       ['day', 'night']
@@ -93,7 +115,19 @@ async function plan(
   { campaign, status }: { readonly campaign: Campaign; readonly status: CampaignStatus },
   deps: CampaignToolDependencies,
 ) {
-  const { switches, scenes, unlockRules, missingArt } = await bundleOf(campaign, deps);
+  const { switches, scenes, stores, pieces, unlockRules, missingArt } = await bundleOf(
+    campaign,
+    deps,
+  );
+  const ruleOf = (id: string) =>
+    unlockRules.find((rule) => rule.kind === 'piece' && rule.id === id);
+  const opens = ({ id, starter }: { readonly id: string; readonly starter: boolean }) => {
+    if (starter) return 'is out for everyone';
+    const rule = ruleOf(id);
+    if (rule === undefined) return 'opens only as a gift (a broadcast’s gifts)';
+    const sports = rule.sports.length === 0 ? '' : ` in ${rule.sports.join(', ')}`;
+    return `unlocks after ${String(rule.after)} 练了${sports} on these days`;
+  };
   const who = {
     draft: 'Nobody sees it.',
     preview:
@@ -114,15 +148,20 @@ async function plan(
       const picks = scenes.filter(
         ({ switchId, takeover }) => switchId === each.id && takeover !== true,
       );
-      const pieces = unlockRules.filter(({ switchId }) => switchId === each.id);
+      const open = stores.filter(({ switchId }) => switchId === each.id);
       return [
         `Switch ${each.id} (${each.label}), ${days(each)}:`,
         ...takeovers.map(({ id }) => `  every squad’s home shows the ${id} scene`),
         ...picks.map(({ id }) => `  squads may pick the ${id} scene`),
-        ...pieces.map(
-          ({ kind, id, after, sports }) =>
-            `  ${kind} ${id} unlocks after ${String(after)} 练了${sports.length === 0 ? '' : ` in ${sports.join(', ')}`} on these days`,
-        ),
+        ...open.flatMap(({ id }) => [
+          `  store ${id} opens on the 商店街`,
+          ...pieces
+            .filter(({ storeId, switchId }) => storeId === id && switchId === undefined)
+            .map((piece) => `    piece ${piece.id} ${opens(piece)}`),
+        ]),
+        ...pieces
+          .filter(({ switchId }) => switchId === each.id)
+          .map((piece) => `  piece ${piece.id} (store ${piece.storeId}) ${opens(piece)}`),
       ].join('\n');
     }),
     ...(missingArt.length === 0
@@ -141,7 +180,8 @@ export function getCampaigns(deps: CampaignToolDependencies) {
     description:
       'Shows every campaign (a holiday, an anniversary, any moment an admin bundles), newest ' +
       'change first: id, label, status (draft, preview, live, stopped), its switches with their ' +
-      'days, the scenes and unlock rules that follow them, and any scene art not uploaded yet. ' +
+      'days, the scenes, stores and pieces on them with the rules that open the pieces, and any ' +
+      'scene art not uploaded yet. ' +
       'Also lists who is on the preview list and the day each pretends it is.',
     changes: false,
     input: z.strictObject({}),
@@ -161,11 +201,13 @@ export function putCampaign(deps: CampaignToolDependencies) {
     description:
       'Bundles a holiday or any other moment from generic pieces, in one call: its switches ' +
       '(each with the days it is on), the scenes that follow them (a scene with takeover true ' +
-      'is what every squad’s home shows while its switch is on; one without may be picked) and ' +
-      'the unlock rules of a limited store’s pieces (switchId one of the campaign’s switches: ' +
-      'only 练了 on its days count, and a piece stays the member’s all year). A new campaign is ' +
-      'a draft nobody sees; a changed one keeps its status. Scenes and rules are put whole, as ' +
-      'put_scene and put_unlock_rule do. Broadcast notices (the 「快到了」 notice, the holiday-day ' +
+      'is what every squad’s home shows while its switch is on; one without may be picked), the ' +
+      'limited stores and pieces on them (a store or piece whose switchId is one of the ' +
+      'campaign’s switches, or a piece in such a store) and the unlock rules of those pieces: ' +
+      'only 练了 on its days count, and a piece stays the member’s all year. A piece without a ' +
+      'rule opens only as a broadcast’s gift; a starter is out for everyone. A new campaign is a draft nobody sees; a changed ' +
+      'one keeps its status. Each is put whole, as put_scene, put_store, put_piece and ' +
+      'put_unlock_rule do; art goes up first with put_art. Broadcast notices (the 「快到了」 notice, the holiday-day ' +
       'opening) go in with put_broadcast. Then try it with set_campaign_status preview and ' +
       'set_switch_preview, and publish with set_campaign_status live. Returns the campaign.',
     changes: true,
@@ -177,22 +219,39 @@ export function putCampaign(deps: CampaignToolDependencies) {
         label: z.string().trim().min(1).max(80).meta({ description: 'What it is, for admins.' }),
         switches: z.array(CampaignSwitch).min(1).max(10),
         scenes: z.array(SceneEdit).max(10).default([]),
-        unlockRules: z.array(UnlockRuleEdit).max(40).default([]),
+        stores: z.array(StoreEdit).max(10).default([]),
+        pieces: z.array(PieceEdit).max(60).default([]),
+        unlockRules: z.array(UnlockRuleEdit).max(60).default([]),
       })
       .refine(
-        ({ switches, scenes, unlockRules }) => {
+        ({ switches, scenes, stores, pieces, unlockRules }) => {
           const owned = new Set(switches.map(({ id }) => id));
-          return [...scenes, ...unlockRules].every(
-            ({ switchId }) => typeof switchId === 'string' && owned.has(switchId),
+          const follows = ({ switchId }: { readonly switchId?: string | null }) =>
+            typeof switchId === 'string' && owned.has(switchId);
+          const ownStores = new Set(stores.map(({ id }) => id));
+          const ownPieces = new Set(pieces.map(({ id }) => id));
+          return (
+            scenes.every(follows) &&
+            stores.every(follows) &&
+            pieces.every((piece) => follows(piece) || ownStores.has(piece.storeId)) &&
+            unlockRules.every(({ kind, id }) =>
+              kind === 'piece' ? ownPieces.has(id) : kind === 'store' && ownStores.has(id),
+            )
           );
         },
-        { message: 'every scene and unlock rule follows one of the campaign’s switches' },
+        {
+          message:
+            'every scene and store follows one of the campaign’s switches, every piece does or ' +
+            'hangs in one of its stores, and every rule opens one of its stores or pieces',
+        },
       ),
-    run: async ({ id, label, switches, scenes, unlockRules }, { admin }) => {
+    run: async ({ id, label, switches, scenes, stores, pieces, unlockRules }, { admin }) => {
       const current = await deps.campaigns.find(id);
       const mode = SWITCH_MODE_OF[current?.status ?? 'draft'];
       for (const each of switches) await deps.switches.put({ ...each, mode });
       for (const each of scenes) await deps.scenes.putScene(each);
+      for (const each of stores) await deps.unlocks.putStore(each);
+      for (const each of pieces) await deps.unlocks.putPiece(each);
       for (const each of unlockRules) await deps.unlocks.putRule(each);
       const campaign = await deps.campaigns.put({
         id,

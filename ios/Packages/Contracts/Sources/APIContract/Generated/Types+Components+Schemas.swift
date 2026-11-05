@@ -5051,35 +5051,6 @@ extension Components {
                 case scene
             }
         }
-        /// - Remark: Generated from `#/components/schemas/MySwitches`.
-        public struct MySwitches: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/MySwitches/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/MySwitches/version`.
-            public var version: Components.Schemas.MySwitches.VersionPayload
-            /// The global switches on for the signed-in member today, by id: what the public catalog’s `switches` say, plus, for a member who previews switches, those in preview, on the day they pretend it is. A signed-in app follows this list over the catalog’s.
-            ///
-            /// - Remark: Generated from `#/components/schemas/MySwitches/on`.
-            public var on: [Swift.String]
-            /// Creates a new `MySwitches`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - on: The global switches on for the signed-in member today, by id: what the public catalog’s `switches` say, plus, for a member who previews switches, those in preview, on the day they pretend it is. A signed-in app follows this list over the catalog’s.
-            public init(
-                version: Components.Schemas.MySwitches.VersionPayload,
-                on: [Swift.String]
-            ) {
-                self.version = version
-                self.on = on
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case on
-            }
-        }
         /// - Remark: Generated from `#/components/schemas/CoachMarket`.
         public struct CoachMarket: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CoachMarket/version`.
