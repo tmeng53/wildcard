@@ -82,5 +82,5 @@ public actor InMemorySignUpService: SignUpService {
     }
 
     /// The sample has no unlock rules: every piece shows.
-    public func shelf() async -> Shelf? { nil }
+    public func stock() async -> StreetStock? { nil }
 }

@@ -4,26 +4,26 @@ import CharacterEditorDomain
 import Contracts
 
 extension Catalog {
-    /// What the placeholder character's bundled art offers a member whose 商店街 is `shelf` (the
+    /// What the placeholder character's bundled art offers a member whose 商店街 is `stock` (the
     /// server's, or the starter street while it isn't known yet) and who unlocked `unlocks`: the
-    /// species in its `editor.json`, the stores the shelf lists that the art has, in the shelf's
+    /// species in its `editor.json`, the stores the stock lists that the art has, in the stock's
     /// order, the pieces the member owns or may take, the locked ones hanging as 「？」 boxes, the
     /// props they hold (the starters, with nothing unlocked), every bundled hair and face part,
     /// and their preset colors. A closed store (its switch off) stays on the street only as the
     /// member's own rack, when they own something there.
-    public static func placeholder(unlocks: [Unlock] = [], shelf: Shelf? = nil) throws(AvatarError) -> Catalog {
-        let shelf = shelf ?? StarterShelf.shared.current
+    public static func placeholder(unlocks: [Unlock] = [], stock: StreetStock? = nil) throws(AvatarError) -> Catalog {
+        let stock = stock ?? StarterStock.shared.current
         let choices = try PlaceholderCharacter.editorChoices()
         let unlockedProps = Set(unlocks.filter { $0.kind == .prop }.map(\.id))
         let props = choices.props.filter { $0.isOpen || unlockedProps.contains($0.id) }.map(\.id)
-        let owned = Set(shelf.pieces.filter { $0.state == .owned }.map(\.id))
-        let boxed: [(String, Int)] = shelf.pieces.compactMap { piece in
+        let owned = Set(stock.pieces.filter { $0.state == .owned }.map(\.id))
+        let boxed: [(String, Int)] = stock.pieces.compactMap { piece in
             guard case .locked(let left) = piece.state, !owned.contains(piece.id) else { return nil }
             return (piece.id, left)
         }
         let toGo = Dictionary(boxed, uniquingKeysWith: min)
-        let out = Set(shelf.pieces.filter { $0.state == .available || $0.state == .owned }.map(\.id))
-        let stores = street(shelf, art: Set(choices.stores.map(\.id)), owned: owned)
+        let out = Set(stock.pieces.filter { $0.state == .available || $0.state == .owned }.map(\.id))
+        let stores = street(stock, art: Set(choices.stores.map(\.id)), owned: owned)
         var variants = choices.wear.mapValues { pieces in pieces.filter { out.contains($0.id) }.map(\.id) }
         let stillLocked = choices.wear.mapValues { pieces -> [String: Int] in
             let onRack: [(String, Int)] = pieces.compactMap { piece in toGo[piece.id].map { (piece.id, $0) } }
@@ -61,12 +61,12 @@ extension Catalog {
             stores: stores, storeOf: storeOf, locked: stillLocked)
     }
 
-    /// The stores the shelf lists that the art has, in its order: an open one, walked into once
+    /// The stores the stock lists that the art has, in its order: an open one, walked into once
     /// earned (the server lists a store's starters and boxes only then), and a closed one only as
     /// the rack of what the member owns there.
-    private static func street(_ shelf: Shelf, art: Set<String>, owned: Set<String>) -> [EditorChoices.Store] {
-        shelf.stores.filter { art.contains($0.id) }.compactMap { store in
-            let pieces = shelf.pieces.filter { $0.store == store.id }
+    private static func street(_ stock: StreetStock, art: Set<String>, owned: Set<String>) -> [EditorChoices.Store] {
+        stock.stores.filter { art.contains($0.id) }.compactMap { store in
+            let pieces = stock.pieces.filter { $0.store == store.id }
             let ownsSome = pieces.contains { owned.contains($0.id) }
             guard store.isOpen || ownsSome else { return nil }
             return EditorChoices.Store(id: store.id, isOpen: ownsSome || pieces.contains { !owned.contains($0.id) })

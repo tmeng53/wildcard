@@ -1,8 +1,8 @@
 /// The character editor's 商店街 as it stands for a member now: which stores are open and which
 /// pieces they may see. The server works it out from the stores', pieces' and switches' rows
-/// (`GET /me/unlocks`, `shelf`), so a limited store such as POWDER DAY opens and closes as data,
+/// (`GET /me/unlocks`, `stock`), so a limited store such as POWDER DAY opens and closes as data,
 /// and the app only draws it.
-public struct Shelf: Hashable, Sendable {
+public struct StreetStock: Hashable, Sendable {
     /// A store on the street, in its order.
     public struct Store: Hashable, Sendable {
         /// Its id in the art, such as `powder`.
@@ -32,9 +32,11 @@ public struct Shelf: Hashable, Sendable {
         /// The store it hangs in.
         public let store: String
         public let state: State
+        /// The sports whose 练了 count towards it; empty for any sport.
+        public let sports: [Sport]
 
-        public init(id: String, store: String, state: State) {
-            (self.id, self.store, self.state) = (id, store, state)
+        public init(id: String, store: String, state: State, sports: [Sport] = []) {
+            (self.id, self.store, self.state, self.sports) = (id, store, state, sports)
         }
     }
 
@@ -47,5 +49,5 @@ public struct Shelf: Hashable, Sendable {
     }
 
     /// Nothing on the street.
-    public static let empty = Shelf(stores: [], pieces: [])
+    public static let empty = StreetStock(stores: [], pieces: [])
 }

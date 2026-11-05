@@ -190,7 +190,7 @@ final class AppModel {
     private static func show(_ catalog: AppCatalog) {
         SportList.shared.show(catalog.sports)
         DiceLines.shared.show(catalog.diceLines)
-        StarterShelf.shared.show(catalog.starterShelf)
+        StarterStock.shared.show(catalog.starterStock)
     }
 
     /// Back in the app: 今天 reads the squad's scene again, which a teammate may have picked

@@ -28,7 +28,7 @@ public protocol SignUpService: Sendable {
     /// The member's 商店街 as the server works it out, so the character editor offers what is
     /// out for them from the first screen; nil when it can't be read, which keeps the starter
     /// street rather than stops sign-up.
-    func shelf() async -> Shelf?
+    func stock() async -> StreetStock?
 }
 
 /// What a sign-up the app was closed during had saved: the squad, and the character if it was

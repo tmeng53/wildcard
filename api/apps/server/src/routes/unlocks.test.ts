@@ -13,7 +13,15 @@ import {
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
-import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
+import {
+  CoachId,
+  MemberId,
+  PieceId,
+  createCoachGifts,
+  createPostgresGiftStore,
+  createPostgresUnlockStore,
+  createUnlocks,
+} from '@wildcard/unlocks';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -48,6 +56,7 @@ const photos = createSupabasePhotoStorage({
   secretKey: config.supabaseSecretKey,
 });
 const sports = createSports({ store: createPostgresSportStore(db) });
+const gifts = createCoachGifts({ store: createPostgresGiftStore(db) });
 const checkIns = createCheckIns({
   sports,
   store: createPostgresCheckInStore(db),
@@ -98,6 +107,7 @@ const app = createApp({
     sportListed: (id) => sports.isListed(id),
     switches: () => Promise.resolve(() => true),
   }),
+  gifts,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
@@ -200,7 +210,7 @@ describe('GET /me/unlocks', () => {
     const locked = z
       .object({ lockedPieces: z.array(z.object({ id: z.string(), checkInsToGo: z.int() })) })
       .parse(fresh.body).lockedPieces;
-    expect(locked).toHaveLength(52);
+    expect(locked).toHaveLength(57);
     expect(locked.find(({ id }) => id === 'powder-salmonhelmet')?.checkInsToGo).toBe(13);
     expect(locked.find(({ id }) => id === 'warmup-headphones')?.checkInsToGo).toBe(2);
     expect(locked.find(({ id }) => id === 'deuce-sweater')?.checkInsToGo).toBe(5);
@@ -290,5 +300,73 @@ describe('GET /me/unlocks', () => {
 
     expect((await unlocked(friend)).body).toMatchObject({ version: 1, unlocks: [], pieces: [] });
     expect((await call({ method: 'GET', path: '/me/unlocks' })).status).toBe(401);
+  });
+
+  it('claims an unlocked piece into the wardrobe once, and only one the member unlocked', async () => {
+    const me = await signUp();
+    const squad = await squadOf(me);
+    const mine = async () =>
+      z
+        .object({
+          claimed: z.array(z.object({ id: z.string(), claimedAt: z.string() })),
+          lockedPieces: z.array(z.object({ id: z.string(), sports: z.array(z.string()) })),
+        })
+        .parse((await call({ method: 'GET', path: '/me/unlocks', token: me.token })).body);
+    const claim = (piece: string) =>
+      call({ method: 'PUT', path: `/me/pieces/${piece}/claim`, token: me.token });
+
+    const before = await mine();
+    expect(before.claimed).toStrictEqual([]);
+    // Each locked piece says which sports count, as its store's 「练这些运动解锁」 shows.
+    expect(before.lockedPieces.find(({ id }) => id === 'lap-bib')?.sports).toStrictEqual([
+      'run',
+      'walk',
+    ]);
+    expect(before.lockedPieces.find(({ id }) => id === 'warmup-headphones')?.sports).toStrictEqual(
+      [],
+    );
+
+    expect(await claim('warmup-headphones')).toMatchObject({
+      status: 400,
+      body: { reason: 'PIECE_NOT_UNLOCKED' },
+    });
+    await train({ member: me, squad, sport: 'run' });
+    // The second 练了 opens the headphones, and the claim counts it without a read first.
+    await train({ member: me, squad, sport: 'yoga' });
+    const first = await claim('warmup-headphones');
+    expect(first).toMatchObject({
+      status: 200,
+      body: { version: 1, claim: { id: 'warmup-headphones' } },
+    });
+    const again = await claim('warmup-headphones');
+    expect(again.body).toStrictEqual(first.body);
+    expect((await mine()).claimed).toStrictEqual([
+      z.object({ claim: z.object({ id: z.string(), claimedAt: z.string() }) }).parse(first.body)
+        .claim,
+    ]);
+    expect((await call({ method: 'PUT', path: '/me/pieces/warmup-headphones/claim' })).status).toBe(
+      401,
+    );
+  });
+
+  it('lists the pieces a coach gave apart from what training unlocked', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const piece = PieceId.parse(`gift-${randomUUID().slice(0, 8)}`);
+    await gifts.putPiece({ id: piece, offered: true });
+    const { gift } = await gifts.give({
+      member: MemberId.parse(me.userId),
+      piece,
+      coach: CoachId.parse('xiaohun'),
+      squad: randomUUID(),
+    });
+    const mine = await call({ method: 'GET', path: '/me/unlocks', token: me.token });
+    expect(mine.body).toMatchObject({
+      version: 1,
+      unlocks: [],
+      pieces: [],
+      gifts: [{ id: piece, coach: 'xiaohun', givenAt: gift.givenAt.toISOString() }],
+    });
+    const theirs = await call({ method: 'GET', path: '/me/unlocks', token: friend.token });
+    expect(theirs.body).toMatchObject({ gifts: [] });
   });
 });

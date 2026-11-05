@@ -242,6 +242,14 @@ insert into public.pieces (id, store_id, slot) values
   ('powder-scarf', 'powder', 'acc');
 
 -- A piece with no rule of its own is a starter: out with its store (WARM-UP's, POWDER DAY's four).
+-- Each store's special, earned after 30 练了 in its sports.
+insert into public.pieces (id, store_id, slot) values
+  ('lap-baguette', 'lap', 'hat'),
+  ('nolook-ball', 'nolook', 'hat'),
+  ('moss-mushroom', 'moss', 'hat'),
+  ('halfmoon-mintchip', 'halfmoon', 'top'),
+  ('deuce-ball', 'deuce', 'hat');
+
 update public.pieces p set starter = true
 where not exists (
   select 1 from public.unlock_rules r where r.kind = 'piece' and r.item_id = p.id

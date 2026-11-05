@@ -55,12 +55,14 @@ public struct MeOverview: Hashable, Sendable {
     public var unlocks: [Unlock]
     /// The 商店街 as the server works it out for the member, which the editor draws; nil for the
     /// starter street.
-    public var shelf: Shelf?
+    public var stock: StreetStock?
+    /// The unlocked pieces the member claimed (领取) into their wardrobe.
+    public var claimed: Set<String>
 
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
         dailyPushOn: Bool, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil, board: TitleBoard = .empty,
-        unlocks: [Unlock] = [], shelf: Shelf? = nil
+        unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = []
     ) {
         self.character = character
         self.joinedAt = joinedAt
@@ -72,7 +74,8 @@ public struct MeOverview: Hashable, Sendable {
         self.squadPlace = squadPlace
         self.board = board
         self.unlocks = unlocks
-        self.shelf = shelf
+        self.stock = stock
+        self.claimed = claimed
     }
 
     /// The number on the member's card.

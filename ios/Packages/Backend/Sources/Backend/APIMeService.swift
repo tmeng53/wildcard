@@ -46,7 +46,7 @@ public struct APIMeService: MeService {
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
                 board: board,
                 unlocks: standing.unlocks,
-                shelf: standing.shelf)
+                stock: standing.stock, claimed: standing.claimed)
         }
     }
 
@@ -83,6 +83,10 @@ public struct APIMeService: MeService {
     /// Wears one of the member's titles (nil: the latest won again).
     public func equip(_ title: String?) async throws(MeError) -> TitleBoard {
         try await me { () throws(APIError) in try await api.equip(title: title) }
+    }
+
+    public func claim(piece: String) async throws(MeError) {
+        try await me { () throws(APIError) in try await api.claim(piece: piece) }
     }
 
     public func setDailyPush(_ isOn: Bool) async throws(MeError) {

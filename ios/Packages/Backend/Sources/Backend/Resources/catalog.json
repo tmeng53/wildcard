@@ -966,6 +966,12 @@
   "pieces": {
     "pieces": [
       {
+        "id": "deuce-ball",
+        "storeId": "deuce",
+        "slot": "hat",
+        "starter": false
+      },
+      {
         "id": "deuce-cable",
         "storeId": "deuce",
         "slot": "top",
@@ -1056,6 +1062,12 @@
         "starter": false
       },
       {
+        "id": "halfmoon-mintchip",
+        "storeId": "halfmoon",
+        "slot": "top",
+        "starter": false
+      },
+      {
         "id": "halfmoon-studio",
         "storeId": "halfmoon",
         "slot": "shoes",
@@ -1095,6 +1107,12 @@
         "id": "halfmoon-zip",
         "storeId": "halfmoon",
         "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "lap-baguette",
+        "storeId": "lap",
+        "slot": "hat",
         "starter": false
       },
       {
@@ -1200,6 +1218,12 @@
         "starter": false
       },
       {
+        "id": "moss-mushroom",
+        "storeId": "moss",
+        "slot": "hat",
+        "starter": false
+      },
+      {
         "id": "moss-puffer",
         "storeId": "moss",
         "slot": "top",
@@ -1228,6 +1252,12 @@
         "storeId": "nolook",
         "slot": "hat",
         "starter": true
+      },
+      {
+        "id": "nolook-ball",
+        "storeId": "nolook",
+        "slot": "hat",
+        "starter": false
       },
       {
         "id": "nolook-headband",

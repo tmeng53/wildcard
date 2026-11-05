@@ -47,8 +47,8 @@ private let newer = #"""
         contentsOf: URL(filePath: #filePath).deletingLastPathComponent()
             .appending(path: "../../../Backend/Sources/Backend/Resources/catalog.json"), encoding: .utf8)
     let wire = try JSONDecoder().decode(Components.Schemas.Catalog.self, from: Data(text.utf8))
-    let shelf = AppCatalog(wire, otherwise: .empty).starterShelf
-    #expect(shelf.stores == [Shelf.Store(id: "warmup", isOpen: true)])
-    #expect(!shelf.pieces.isEmpty)
-    #expect(shelf.pieces.allSatisfy { $0.store == "warmup" && $0.state == .available })
+    let stock = AppCatalog(wire, otherwise: .empty).starterStock
+    #expect(stock.stores == [StreetStock.Store(id: "warmup", isOpen: true)])
+    #expect(!stock.pieces.isEmpty)
+    #expect(stock.pieces.allSatisfy { $0.store == "warmup" && $0.state == .available })
 }

@@ -91,30 +91,25 @@ struct PostCard: View {
         .accessibilityIdentifier("feed.post")
     }
 
-    /// 「…」 on the member's own post: 编辑 opens the compose page on it, 删除 asks first.
+    /// 「…」 on the member's own post: 编辑 opens the compose page on it, 删除 asks first, in the menu.
     private var manageMenu: some View {
-        HeaderMenu(Text("编辑或删除", bundle: .module), on: .ink) {
-            Button {
-                model.edit(post)
-            } label: {
-                Label {
-                    Text("编辑", bundle: .module)
-                } icon: {
-                    Image(systemName: "pencil")
-                }
-            }
-            .accessibilityIdentifier("post.edit")
-            Button(role: .destructive) {
-                model.confirmingDelete = post.id
-            } label: {
-                Label {
-                    Text("删除", bundle: .module)
-                } icon: {
-                    Image(systemName: "trash")
-                }
-            }
-            .accessibilityIdentifier("post.delete")
-        }
+        HeaderMenu(
+            Text("编辑或删除", bundle: .module), on: .ink,
+            items: [
+                GlassMenuItem(Text("编辑", bundle: .module), systemImage: "pencil", id: "post.edit") {
+                    model.edit(post)
+                },
+                GlassMenuItem(
+                    Text("删除", bundle: .module), systemImage: "trash", role: .destructive, id: "post.delete",
+                    confirm: .init(
+                        Text("删掉这条动态？", bundle: .module),
+                        message: Text("队友的回应和评论也会一起删掉", bundle: .module),
+                        label: Text("删除", bundle: .module), id: "post.delete.confirm")
+                ) {
+                    model.deleting = post.id
+                },
+            ]
+        )
         .accessibilityIdentifier("post.manage")
     }
 

@@ -82,17 +82,25 @@ extension WildcardAPI {
         return UnlockStanding(
             // Both lists are the earliest first; so is the whole.
             unlocks: (stores + pieces).sorted { $0.unlockedAt < $1.unlockedAt },
-            shelf: Shelf(
-                stores: body.shelf.stores.map { Shelf.Store(id: $0.id, isOpen: $0.open) },
+            claimed: Set(body.claimed.map(\.id)),
+            stock: StreetStock(
+                stores: body.shelf.stores.map { StreetStock.Store(id: $0.id, isOpen: $0.open) },
                 pieces: body.shelf.pieces.map { piece in
-                    let state: Shelf.State =
+                    let state: StreetStock.State =
                         switch piece.state {
                         case .owned: .owned
                         case .available: .available
                         case .locked: .locked(toGo: piece.checkInsToGo ?? 1)
                         }
-                    return Shelf.Piece(id: piece.id, store: piece.storeId, state: state)
+                    return StreetStock.Piece(
+                        id: piece.id, store: piece.storeId, state: state,
+                        sports: piece.sports.compactMap(Sport.init(rawValue:)))
                 }))
+    }
+
+    /// 领取: puts an unlocked piece in the member's wardrobe, on every phone. Safe to repeat.
+    public func claim(piece: String) async throws(APIError) {
+        _ = try await call { try await client.claimPiece(path: .init(pieceId: piece)).ok }
     }
 
     /// Whether the one daily push at 6pm is on; it is until the member turns it off.

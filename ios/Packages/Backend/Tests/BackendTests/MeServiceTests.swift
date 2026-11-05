@@ -29,10 +29,10 @@ import Testing
     var overview = try await service.overview()
     // WARM-UP is out for a newcomer, its headphones boxed 2 练了 away; a store still to earn shows
     // no piece.
-    let shelf = try #require(overview.shelf)
-    #expect(shelf.pieces.first { $0.id == "warmup-headphones" }?.state == .locked(toGo: 2))
-    #expect(!shelf.pieces.contains { $0.store == "deuce" })
-    overview.shelf = nil
+    let stock = try #require(overview.stock)
+    #expect(stock.pieces.first { $0.id == "warmup-headphones" }?.state == .locked(toGo: 2))
+    #expect(!stock.pieces.contains { $0.store == "deuce" })
+    overview.stock = nil
     #expect(
         overview
             == MeOverview(

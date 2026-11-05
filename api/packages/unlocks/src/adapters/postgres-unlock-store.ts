@@ -3,9 +3,11 @@ import type { Kysely } from 'kysely';
 
 import {
   MemberId,
+  PieceId,
   SLOTS,
   UnlockKind,
   idFits,
+  type Claim,
   type Piece,
   type Store,
   type Unlock,
@@ -136,7 +138,45 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
       const fresh = new Set(inserted.map(({ kind, item_id }) => `${kind}:${item_id}`));
       return unlocks.filter(({ kind, id }) => fresh.has(`${kind}:${id}`));
     },
+
+    async claimsOf(member) {
+      const rows = await db
+        .selectFrom('piece_claims')
+        .select(['piece_id', 'claimed_at'])
+        .where('member_id', '=', member)
+        .orderBy('claimed_at')
+        .orderBy('piece_id')
+        .execute();
+      return rows.map(claimOf);
+    },
+
+    async claim(member, piece) {
+      const unlocked = await db
+        .selectFrom('member_unlocks')
+        .select('item_id')
+        .where('member_id', '=', member)
+        .where('kind', '=', 'piece')
+        .where('item_id', '=', piece)
+        .executeTakeFirst();
+      if (unlocked === undefined) return undefined;
+      await db
+        .insertInto('piece_claims')
+        .values({ member_id: member, piece_id: piece })
+        .onConflict((conflict) => conflict.columns(['member_id', 'piece_id']).doNothing())
+        .execute();
+      const kept = await db
+        .selectFrom('piece_claims')
+        .select(['piece_id', 'claimed_at'])
+        .where('member_id', '=', member)
+        .where('piece_id', '=', piece)
+        .executeTakeFirstOrThrow();
+      return claimOf(kept);
+    },
   };
+}
+
+function claimOf(row: { piece_id: string; claimed_at: Date | string }): Claim {
+  return { piece: PieceId.parse(row.piece_id), claimedAt: new Date(row.claimed_at) };
 }
 
 /** A row's id, checked against its kind's shape (the database checks it too). */

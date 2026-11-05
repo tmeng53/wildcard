@@ -24,7 +24,7 @@ public struct EditorChoices: Hashable, Sendable {
     public struct Store: Hashable, Sendable, Identifiable {
         /// `warmup`, `lap`, ...: the prefix of its pieces' ids.
         public let id: String
-        /// Whether the member can walk in: the server's street (`Shelf`) says, never the art.
+        /// Whether the member can walk in: the server's street (`StreetStock`) says, never the art.
         public let isOpen: Bool
 
         public init(id: String, isOpen: Bool = false) {
@@ -78,7 +78,7 @@ public struct EditorChoices: Hashable, Sendable {
     /// "wear": {"top": [{"id": "warmup-tee", "store": "warmup", "swatches": ["#F4F6FA", "#1F2128"]}]},
     /// "props": [{"id": "dumbbell", "open": true}, {"id": "racket"}]}`. Every piece hangs in a
     /// store the list has. Which stores are open and which pieces are out is data on the server
-    /// (`Shelf`), so the art only lists them.
+    /// (`StreetStock`), so the art only lists them.
     public static func decode(_ data: Data) throws(AvatarError) -> EditorChoices {
         let file: File = try decodeJSON(data, version: currentVersion, shape: File.shape)
         let stores = file.stores.map { Store(id: $0.id) }

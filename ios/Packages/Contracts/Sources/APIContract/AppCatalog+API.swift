@@ -9,20 +9,20 @@ extension AppCatalog {
         self.init(
             sports: wire.sports.map(SportCatalog.init) ?? fallback.sports,
             diceLines: dice.isEmpty ? fallback.diceLines : dice,
-            starterShelf: Self.starterShelf(stores: wire.stores, pieces: wire.pieces) ?? fallback.starterShelf)
+            starterStock: Self.starterStock(stores: wire.stores, pieces: wire.pieces) ?? fallback.starterStock)
     }
 
     /// The free stores without a switch, open, and their starters without a switch, available; nil
     /// when the server sent neither section.
-    static func starterShelf(
+    static func starterStock(
         stores: Components.Schemas.StoresCatalog?, pieces: Components.Schemas.PiecesCatalog?
-    ) -> Shelf? {
+    ) -> StreetStock? {
         guard let stores, let pieces else { return nil }
         let open = stores.stores.filter { $0.free && $0.switchId == nil }.map(\.id)
-        return Shelf(
-            stores: open.map { Shelf.Store(id: $0, isOpen: true) },
+        return StreetStock(
+            stores: open.map { StreetStock.Store(id: $0, isOpen: true) },
             pieces: pieces.pieces.filter { $0.starter && $0.switchId == nil && open.contains($0.storeId) }.map {
-                Shelf.Piece(id: $0.id, store: $0.storeId, state: .available)
+                StreetStock.Piece(id: $0.id, store: $0.storeId, state: .available)
             })
     }
 }

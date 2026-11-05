@@ -8,7 +8,8 @@ extension Looks {
             ("runWalk", ["run", "walk", "hike"]), ("strength", ["strength", "kettlebell"]), ("cardio", ["spin"]),
             ("mindBody", ["yoga", "matPilates"]), ("water", ["swim", "surf"]),
             ("racket", ["tennis", "squash", "badminton", "pickleball", "tableTennis"]),
-            ("ball", ["basketball"]), ("outdoorWinter", ["climb", "ski"]), ("combat", ["boxing"]),
+            ("ball", ["basketball", "soccer"]), ("outdoorWinter", ["climb", "ski", "snowboard"]),
+            ("combat", ["boxing"]), ("cycling", ["roadCycling"]),
             ("dance", ["dance"]), ("everyday", ["dogWalk"]),
         ]
         let names = CatalogNames(simplifiedChinese: "", english: "", traditionalChinese: "")

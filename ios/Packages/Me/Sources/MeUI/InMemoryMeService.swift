@@ -18,7 +18,7 @@ public actor InMemoryMeService: MeService {
     /// The member the screens are reviewed against: 小林 of 周三不练腿俱乐部, number 22 since 2026,
     /// 128 days trained, 3 of 5 this week and the approved board's seven titles, ten won in all.
     public static func sample(
-        failsSaving: Bool = false, unlocks: [Unlock] = [], shelf: Shelf? = nil
+        failsSaving: Bool = false, unlocks: [Unlock] = [], stock: StreetStock? = nil
     ) -> InMemoryMeService {
         InMemoryMeService(
             overview: MeOverview(
@@ -32,7 +32,7 @@ public actor InMemoryMeService: MeService {
                 dailyPushOn: true,
                 jerseyNumber: try? JerseyNumber(22), squadPlace: 2,
                 board: .sample,
-                unlocks: unlocks, shelf: shelf),
+                unlocks: unlocks, stock: stock),
             failsSaving: failsSaving)
     }
 
@@ -59,6 +59,11 @@ public actor InMemoryMeService: MeService {
         if failsSaving { throw .unavailable }
         current.board.worn = title ?? current.board.titles.first?.title
         return current.board
+    }
+
+    public func claim(piece: String) async throws(MeError) {
+        if failsSaving { throw .unavailable }
+        current.claimed.insert(piece)
     }
 
     public func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {

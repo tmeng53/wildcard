@@ -78,8 +78,8 @@ public struct APISignUpService: SignUpService {
         return ResumedSignUp(squad: try await joined(found), character: character)
     }
 
-    public func shelf() async -> Shelf? {
-        try? await api.unlockStanding().shelf
+    public func stock() async -> StreetStock? {
+        try? await api.unlockStanding().stock
     }
 
     /// The squad as 上场 shows it: the teammates who have made their character, and the squad's

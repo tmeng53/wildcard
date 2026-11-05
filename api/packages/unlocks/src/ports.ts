@@ -1,9 +1,12 @@
 import type { SportId } from '@wildcard/sport-ids';
 
+import type { CoachGift, GiftPiece, GiftPieceEdit } from './domain/gifts.js';
 import type {
+  Claim,
   MemberId,
   Piece,
   PieceEdit,
+  PieceId,
   Store,
   StoreEdit,
   Trained,
@@ -32,6 +35,13 @@ export interface UnlockStore {
    * call kept, so two at once never both count the same unlock as new.
    */
   grant(member: MemberId, unlocks: readonly Unlock[]): Promise<Unlock[]>;
+  /** The pieces `member` claimed, the earliest first. */
+  claimsOf(member: MemberId): Promise<Claim[]>;
+  /**
+   * Keeps `member`'s claim of `piece`, which they unlocked, unless they claimed it already, and
+   * answers with the claim as kept; undefined when they haven't unlocked it.
+   */
+  claim(member: MemberId, piece: PieceId): Promise<Claim | undefined>;
 }
 
 /**
@@ -48,3 +58,21 @@ export type TrainedSince = (query: {
 
 /** Whether `id` is on the sports list. */
 export type SportListed = (id: SportId) => Promise<boolean>;
+
+/** Where the gift pool and members' gifts are kept. */
+export interface GiftStore {
+  /** Every piece in the pool, offered or not, by id. */
+  pieces(): Promise<GiftPiece[]>;
+  /** Adds a piece to the pool or changes whether it is offered. */
+  putPiece(edit: GiftPieceEdit): Promise<void>;
+  /** What `member` was given, the earliest first. */
+  giftsOf(member: MemberId): Promise<CoachGift[]>;
+  /**
+   * Keeps `gift` for `member` unless they already have that piece. Answers with the gift as
+   * kept: this one when it is new, or the earlier one.
+   */
+  give(
+    member: MemberId,
+    gift: Omit<CoachGift, 'givenAt'>,
+  ): Promise<{ gift: CoachGift; fresh: boolean }>;
+}

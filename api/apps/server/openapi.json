@@ -4897,6 +4897,48 @@
         ],
         "additionalProperties": false
       },
+      "ClaimedPiece": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "claim": {
+            "$ref": "#/components/schemas/PieceClaim"
+          }
+        },
+        "required": [
+          "version",
+          "claim"
+        ],
+        "additionalProperties": false
+      },
+      "PieceClaim": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "lap-bib"
+          },
+          "claimedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the member claimed it (领取) into their wardrobe.",
+            "example": "2026-11-04T18:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "claimedAt"
+        ],
+        "additionalProperties": false
+      },
       "MyUnlocks": {
         "type": "object",
         "properties": {
@@ -4927,6 +4969,20 @@
             },
             "description": "Every piece with a rule the member hasn’t unlocked yet, and how far it is."
           },
+          "claimed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PieceClaim"
+            },
+            "description": "Every piece the member claimed (领取) into their wardrobe, the earliest first. An unlocked piece waits in its store, marked new, until claimed."
+          },
+          "gifts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiftedPiece"
+            },
+            "description": "Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe."
+          },
           "shelf": {
             "$ref": "#/components/schemas/Shelf"
           }
@@ -4936,6 +4992,8 @@
           "unlocks",
           "pieces",
           "lockedPieces",
+          "claimed",
+          "gifts",
           "shelf"
         ],
         "additionalProperties": false
@@ -5042,6 +5100,18 @@
             "description": "The piece’s id in the app’s art.",
             "example": "lap-singlet"
           },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][A-Za-z0-9]{0,39}$"
+            },
+            "description": "The sports whose 练了 count towards it; empty for any sport.",
+            "example": [
+              "run",
+              "walk"
+            ]
+          },
           "checkInsToGo": {
             "type": "integer",
             "minimum": 1,
@@ -5052,7 +5122,38 @@
         },
         "required": [
           "id",
+          "sports",
           "checkInsToGo"
+        ],
+        "additionalProperties": false
+      },
+      "GiftedPiece": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "gift-scarf"
+          },
+          "coach": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$",
+            "description": "The coach who gave it.",
+            "example": "xiaohun"
+          },
+          "givenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the coach gave it.",
+            "example": "2026-11-04T18:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "coach",
+          "givenAt"
         ],
         "additionalProperties": false
       },
@@ -9837,11 +9938,77 @@
         }
       }
     },
+    "/me/pieces/{pieceId}/claim": {
+      "put": {
+        "operationId": "claimPiece",
+        "summary": "Claim an unlocked piece into the signed-in member’s wardrobe",
+        "description": "领取: puts a piece the member unlocked in their wardrobe (我的衣橱), on every phone. Nothing is bought. Claiming it again answers with the first claim.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 48,
+              "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$"
+            },
+            "required": true,
+            "name": "pieceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The claim",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimedPiece"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a piece id, or a piece the member hasn’t unlocked (`PIECE_NOT_UNLOCKED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/me/unlocks": {
       "get": {
         "operationId": "getMyUnlocks",
         "summary": "The stores, props and pieces the signed-in member unlocked",
-        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
+        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
         "security": [
           {
             "bearer": []

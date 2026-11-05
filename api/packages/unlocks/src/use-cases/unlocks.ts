@@ -3,8 +3,10 @@ import {
   shelf,
   toGo,
   type CountedRule,
+  type Claim,
   type SwitchOn,
   type Locked,
+  type PieceId,
   type MemberId,
   type Piece,
   type Shelf,
@@ -14,6 +16,7 @@ import {
 } from '../domain/unlocks.js';
 import type { PieceEdit, StoreEdit, UnlockGift, UnlockRuleEdit } from '../domain/unlocks.js';
 import {
+  PieceNotUnlockedError,
   UnlockItemMissingError,
   UnlockSportNotListedError,
   UnlockStoreMissingError,
@@ -32,6 +35,13 @@ export interface Unlocks {
    * 商店街 as it stands for them now.
    */
   standing(member: MemberId): Promise<{ unlocks: Unlock[]; locked: Locked[]; shelf: Shelf }>;
+  /** The pieces `member` claimed into their wardrobe, the earliest first. */
+  claimsOf(member: MemberId): Promise<Claim[]>;
+  /**
+   * 领取: puts `piece`, which `member` unlocked, in their wardrobe; claiming it again keeps the
+   * first claim.
+   */
+  claim(member: MemberId, piece: PieceId): Promise<Claim>;
 }
 
 /** The rules, for admins. */
@@ -126,6 +136,16 @@ export function createUnlocks(deps: {
   return {
     of: async (member) => (await standing(member)).unlocks,
     standing,
+
+    claimsOf: (member) => deps.store.claimsOf(member),
+
+    async claim(member, piece) {
+      // What their training earned since the last read counts, so a piece just reached can be claimed.
+      await standing(member);
+      const claim = await deps.store.claim(member, piece);
+      if (claim === undefined) throw new PieceNotUnlockedError(piece);
+      return claim;
+    },
 
     rules: () => deps.store.rules(),
 

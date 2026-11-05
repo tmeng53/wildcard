@@ -300,8 +300,16 @@ private struct RefusedTokens: AuthProvider {
     #expect(unlocked.first { $0.id == "warmup-headphones" }?.kind == .piece)
     // The street as the server works it out: DEUCE CLUB earned, its sweater 2 练了 away.
     #expect(
-        standing.shelf.pieces.first { $0.id == "deuce-sweater" }
-            == Shelf.Piece(id: "deuce-sweater", store: "deuce", state: .locked(toGo: 2)))
-    #expect(standing.shelf.pieces.first { $0.id == "warmup-headphones" }?.state == .owned)
-    #expect(standing.shelf.stores.map(\.id).first == "warmup")
+        standing.stock.pieces.first { $0.id == "deuce-sweater" }
+            == StreetStock.Piece(
+                id: "deuce-sweater", store: "deuce", state: .locked(toGo: 2),
+                sports: ["tennis", "pickleball", "squash"]))
+    #expect(standing.stock.pieces.first { $0.id == "warmup-headphones" }?.state == .owned)
+    #expect(standing.stock.stores.map(\.id).first == "warmup")
+    #expect(standing.claimed.isEmpty)
+
+    // 领取 puts the headphones in the wardrobe, once however often it is asked.
+    try await member.api.claim(piece: "warmup-headphones")
+    try await member.api.claim(piece: "warmup-headphones")
+    #expect(try await member.api.unlockStanding().claimed == ["warmup-headphones"])
 }

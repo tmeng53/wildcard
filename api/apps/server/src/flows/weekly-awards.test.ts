@@ -57,6 +57,7 @@ import {
   unusedCoachHiring,
   unusedCoachActivity,
   unusedUnlocks,
+  unusedGifts,
   ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
@@ -182,6 +183,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     scenes: scenesOn(db),
     weeklyAwards: { awards, clock },
     unlocks: unusedUnlocks,
+    gifts: unusedGifts,
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,

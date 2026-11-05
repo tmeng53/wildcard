@@ -134,7 +134,7 @@ describe('toGo', () => {
       { id: 'd', sport: 'tennis', madeAt: at(3) },
     ];
     expect(toGo({ rules: [bib, racket, halfmoon], trained, switchOn: allYear })).toStrictEqual([
-      { kind: 'piece', id: 'lap-bib', toGo: 3 },
+      { kind: 'piece', id: 'lap-bib', toGo: 3, sports: ['run', 'walk'] },
       // The racket and HALF MOON are reached, so they aren't listed.
     ]);
   });
@@ -159,7 +159,7 @@ describe('a rule with switches', () => {
     ];
     expect(earned({ rules: [tuna], trained, has: [], switchOn })).toStrictEqual([]);
     expect(toGo({ rules: [tuna], trained, switchOn })).toStrictEqual([
-      { kind: 'piece', id: 'powder-tuna', toGo: 1 },
+      { kind: 'piece', id: 'powder-tuna', toGo: 1, sports: ['ski'] },
     ]);
     const more = [...trained, { id: 'd', sport: 'ski', madeAt: at(240) }];
     expect(earned({ rules: [tuna], trained: more, has: [], switchOn })).toMatchObject([

@@ -22,13 +22,15 @@ public struct Unlock: Hashable, Sendable {
     }
 }
 
-/// Everything the member unlocked, and the 商店街 as it stands for them.
+/// Everything the member unlocked, what they claimed, and the 商店街 as it stands for them.
 public struct UnlockStanding: Hashable, Sendable {
     /// The stores, props and pieces unlocked, the earliest first.
     public let unlocks: [Unlock]
-    public let shelf: Shelf
+    /// The unlocked pieces the member claimed (领取) into their wardrobe.
+    public let claimed: Set<String>
+    public let stock: StreetStock
 
-    public init(unlocks: [Unlock], shelf: Shelf) {
-        (self.unlocks, self.shelf) = (unlocks, shelf)
+    public init(unlocks: [Unlock], claimed: Set<String> = [], stock: StreetStock) {
+        (self.unlocks, self.claimed, self.stock) = (unlocks, claimed, stock)
     }
 }

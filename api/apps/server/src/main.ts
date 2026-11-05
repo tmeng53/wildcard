@@ -81,7 +81,12 @@ import {
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
-import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
+import {
+  createCoachGifts,
+  createPostgresGiftStore,
+  createPostgresUnlockStore,
+  createUnlocks,
+} from '@wildcard/unlocks';
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { byProvider } from './adapters/language-models.js';
@@ -495,6 +500,7 @@ const app = createApp({
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
   unlocks: unlocksOn(db),
+  gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
   log,
   jobs: {
     isScheduler,
@@ -532,7 +538,10 @@ const app = createApp({
           switches: () => switchesOn(scope).states(),
         }),
       }),
-      ...unlockTools({ unlocks: unlocksOn(scope) }),
+      ...unlockTools({
+        unlocks: unlocksOn(scope),
+        gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
+      }),
       ...coachTools({
         settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
         coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),

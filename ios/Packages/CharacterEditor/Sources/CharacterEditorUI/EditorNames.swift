@@ -39,6 +39,18 @@ enum EditorNames {
         return Text(LocalizedStringKey(key), bundle: .module)
     }
 
+    /// A clothing slot's name, over its pieces in 我的衣橱.
+    static func slot(_ slot: Slot) -> Text {
+        switch slot.rawValue {
+        case "top": Text("上衣", bundle: .module)
+        case "bottom": Text("下装", bundle: .module)
+        case "shoes": Text("鞋子", bundle: .module)
+        case "hat": Text("帽子", bundle: .module)
+        case "acc": Text("配饰", bundle: .module)
+        default: Text(verbatim: slot.rawValue)
+        }
+    }
+
     /// The tile that takes a piece off, for VoiceOver: 不戴 for a hat, 不拿 for a prop.
     static func nothing(in slot: Slot) -> Text {
         switch slot.rawValue {
@@ -85,9 +97,12 @@ enum EditorNames {
         "powder-helmet": "雪盔", "powder-saba": "青花鱼雪靴", "powder-temaki": "手卷雪靴", "powder-edamame": "毛豆雪靴",
         "powder-ebifry": "炸虾雪靴", "powder-scarf": "海苔围巾",
         "warmup-overalls": "工装背带裤", "warmup-hightop": "高帮帆布鞋", "warmup-beanie": "毛球针织帽", "warmup-headphones": "头戴耳机",
+        "lap-baguette": "法棍发带", "nolook-ball": "篮球毛线帽", "moss-mushroom": "蘑菇渔夫帽", "halfmoon-mintchip": "薄荷巧克力背心",
+        "deuce-ball": "网球毛线帽",
         "dumbbell": "哑铃", "bottle": "外卡水杯",
         "kettlebell": "壶铃", "yogamat": "瑜伽垫", "racket": "网球拍", "pickleball": "匹克球拍", "badminton": "羽毛球拍",
-        "pingpong": "乒乓球拍", "chalkbag": "镁粉袋", "goggles": "泳镜",
+        "pingpong": "乒乓球拍", "chalkbag": "镁粉袋", "goggles": "泳镜", "helmet": "骑行头盔", "gloves": "拳套",
+        "basketball": "篮球", "soccerball": "足球", "skis": "双板滑雪板", "snowboard": "单板",
     ]
 
     private static let faces = [

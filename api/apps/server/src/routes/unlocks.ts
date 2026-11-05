@@ -1,6 +1,15 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { SportId } from '@wildcard/sport-ids';
-import { AFTER_MAX, ItemId, MemberId, PieceId, UnlockKind, type Unlocks } from '@wildcard/unlocks';
+import {
+  AFTER_MAX,
+  CoachId,
+  ItemId,
+  MemberId,
+  PieceId,
+  UnlockKind,
+  type CoachGifts,
+  type Unlocks,
+} from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
@@ -49,6 +58,10 @@ const PieceUnlock = z
 const LockedPiece = z
   .strictObject({
     id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'lap-singlet' }),
+    sports: z.array(SportId).meta({
+      description: 'The sports whose 练了 count towards it; empty for any sport.',
+      example: ['run', 'walk'],
+    }),
     checkInsToGo: z
       .int()
       .min(1)
@@ -90,6 +103,30 @@ const ShelfPiece = z
       .meta({ description: 'How many 练了 check-ins it takes; 0 for a starter.', example: 1 }),
   })
   .openapi('ShelfPiece');
+const GiftedPiece = z
+  .strictObject({
+    id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'gift-scarf' }),
+    coach: CoachId.meta({ description: 'The coach who gave it.', example: 'xiaohun' }),
+    givenAt: z.iso.datetime({ offset: true }).meta({
+      description: 'When the coach gave it.',
+      example: '2026-11-04T18:30:00.000Z',
+    }),
+  })
+  .openapi('GiftedPiece');
+
+const PieceClaim = z
+  .strictObject({
+    id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'lap-bib' }),
+    claimedAt: z.iso.datetime({ offset: true }).meta({
+      description: 'When the member claimed it (领取) into their wardrobe.',
+      example: '2026-11-04T18:30:00.000Z',
+    }),
+  })
+  .openapi('PieceClaim');
+
+const ClaimedPiece = z
+  .strictObject({ version: bodyVersion(1), claim: PieceClaim })
+  .openapi('ClaimedPiece');
 
 const MyUnlocks = z
   .strictObject({
@@ -104,6 +141,16 @@ const MyUnlocks = z
     }),
     lockedPieces: z.array(LockedPiece).meta({
       description: 'Every piece with a rule the member hasn’t unlocked yet, and how far it is.',
+    }),
+    claimed: z.array(PieceClaim).meta({
+      description:
+        'Every piece the member claimed (领取) into their wardrobe, the earliest first. An ' +
+        'unlocked piece waits in its store, marked new, until claimed.',
+    }),
+    gifts: z.array(GiftedPiece).meta({
+      description:
+        'Every piece a squad’s coach gave the member, the earliest first. No store sells these: ' +
+        'they belong in the member’s wardrobe.',
     }),
     shelf: z
       .strictObject({
@@ -126,7 +173,11 @@ const MyUnlocks = z
   .openapi('MyUnlocks');
 
 /** `GET /me/unlocks`: the stores, props and pieces the signed-in member unlocked by training. */
-export function unlocks(deps: { readonly verifyToken: VerifyToken; readonly unlocks: Unlocks }) {
+export function unlocks(deps: {
+  readonly verifyToken: VerifyToken;
+  readonly unlocks: Unlocks;
+  readonly gifts: Pick<CoachGifts, 'of'>;
+}) {
   const route = createRoute({
     method: 'get',
     path: '/me/unlocks',
@@ -134,7 +185,8 @@ export function unlocks(deps: { readonly verifyToken: VerifyToken; readonly unlo
     summary: 'The stores, props and pieces the signed-in member unlocked',
     description:
       'Stores on the character editor’s 商店街, props and clothing pieces open by 练了 ' +
-      'check-ins in their sports, counting only those made since the rule was added. Starters ' +
+      'check-ins in their sports, counting only those made since the rule was added; pieces a ' +
+      'squad’s coach gave come apart, in `gifts`. Starters ' +
       '(WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and ' +
       'never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the ' +
       '商店街 as the member sees it now, each store and switch applied.',
@@ -147,36 +199,77 @@ export function unlocks(deps: { readonly verifyToken: VerifyToken; readonly unlo
     },
   });
 
-  return new OpenAPIHono<SignedIn>().openapi(route, async (c) => {
-    const { unlocks, locked, shelf } = await deps.unlocks.standing(
-      MemberId.parse(c.var.caller.userId),
-    );
-    const shown = (unlock: (typeof unlocks)[number]) => ({
-      id: unlock.id,
-      unlockedAt: unlock.unlockedAt.toISOString(),
-      reason: { sports: [...unlock.sports], checkIns: unlock.after },
-    });
-    return c.json(
-      {
-        version: 1 as const,
-        unlocks: unlocks.flatMap((unlock) =>
-          unlock.kind === 'piece' ? [] : [{ kind: unlock.kind, ...shown(unlock) }],
-        ),
-        pieces: unlocks.filter(({ kind }) => kind === 'piece').map(shown),
-        lockedPieces: locked
-          .filter(({ kind }) => kind === 'piece')
-          .map(({ id, toGo }) => ({ id, checkInsToGo: toGo })),
-        shelf: {
-          stores: [...shelf.stores],
-          pieces: shelf.pieces.map(({ toGo, sports, after, ...piece }) => ({
-            ...piece,
-            ...(toGo === undefined ? {} : { checkInsToGo: toGo }),
-            sports: [...sports],
-            checkIns: after,
-          })),
-        },
-      },
-      200,
-    );
+  const claim = createRoute({
+    method: 'put',
+    path: '/me/pieces/{pieceId}/claim',
+    operationId: 'claimPiece',
+    summary: 'Claim an unlocked piece into the signed-in member’s wardrobe',
+    description:
+      '领取: puts a piece the member unlocked in their wardrobe (我的衣橱), on every phone. Nothing ' +
+      'is bought. Claiming it again answers with the first claim.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params: z.strictObject({ pieceId: PieceId }) },
+    responses: {
+      200: { description: 'The claim', content: { 'application/json': { schema: ClaimedPiece } } },
+      400: problem('Not a piece id, or a piece the member hasn’t unlocked (`PIECE_NOT_UNLOCKED`)'),
+      401: problem('No bearer token, or not a valid one'),
+      503: problem('Sign-in can’t be checked right now'),
+    },
   });
+
+  const shownClaim = ({ piece, claimedAt }: { piece: string; claimedAt: Date }) => ({
+    id: piece,
+    claimedAt: claimedAt.toISOString(),
+  });
+
+  return new OpenAPIHono<SignedIn>()
+    .openapi(claim, async (c) => {
+      const kept = await deps.unlocks.claim(
+        MemberId.parse(c.var.caller.userId),
+        PieceId.parse(c.req.valid('param').pieceId),
+      );
+      return c.json({ version: 1 as const, claim: shownClaim(kept) }, 200);
+    })
+    .openapi(route, async (c) => {
+      const member = MemberId.parse(c.var.caller.userId);
+      const [{ unlocks, locked, shelf }, claims, gifts] = await Promise.all([
+        deps.unlocks.standing(member),
+        deps.unlocks.claimsOf(member),
+        deps.gifts.of(member),
+      ]);
+      const shown = (unlock: (typeof unlocks)[number]) => ({
+        id: unlock.id,
+        unlockedAt: unlock.unlockedAt.toISOString(),
+        reason: { sports: [...unlock.sports], checkIns: unlock.after },
+      });
+      return c.json(
+        {
+          version: 1 as const,
+          unlocks: unlocks.flatMap((unlock) =>
+            unlock.kind === 'piece' ? [] : [{ kind: unlock.kind, ...shown(unlock) }],
+          ),
+          pieces: unlocks.filter(({ kind }) => kind === 'piece').map(shown),
+          lockedPieces: locked
+            .filter(({ kind }) => kind === 'piece')
+            .map(({ id, toGo, sports }) => ({ id, sports: [...sports], checkInsToGo: toGo })),
+          claimed: claims.map(shownClaim),
+          gifts: gifts.map(({ piece, coach, givenAt }) => ({
+            id: piece,
+            coach,
+            givenAt: givenAt.toISOString(),
+          })),
+          shelf: {
+            stores: [...shelf.stores],
+            pieces: shelf.pieces.map(({ toGo, sports, after, ...piece }) => ({
+              ...piece,
+              ...(toGo === undefined ? {} : { checkInsToGo: toGo }),
+              sports: [...sports],
+              checkIns: after,
+            })),
+          },
+        },
+        200,
+      );
+    });
 }
