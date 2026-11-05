@@ -74,9 +74,7 @@ struct WildcardApp: App {
         // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
         AppLanguage.current.share(in: AppGroup.defaults)
         // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
-        SportList.shared.show(CatalogClient.bundled.sports)
-        DiceLines.shared.show(CatalogClient.bundled.diceLines)
-        StarterStock.shared.show(CatalogClient.bundled.starterStock)
+        AppModel.show(CatalogClient.bundled)
         LaunchOptions.forgetSeenRecapIfAsked()
         LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.

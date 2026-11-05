@@ -17,7 +17,7 @@ import SwiftUI
 
 /// The app once the member is signed in and in a squad: the three tabs (今天, 动态, 我) in the
 /// system's Liquid Glass tab bar (`AppTabs`), with 小队 opened inside 今天 from the home's squad
-/// card (Tracy took 小队's own tab away on 2026-11-04; the coach chat opens from home too).
+/// card (Tracy took 小队's own tab away on 2026-11-04).
 /// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
 /// them draws the bar itself.
 struct MainTabs: View {
@@ -51,12 +51,14 @@ struct MainTabs: View {
     @State private var showsSchedule = LaunchOptions.opensSchedule
     /// 小队, open from the home's squad card in 今天's place.
     @State private var showsSquad = LaunchOptions.opensSquad
-    /// 小队 opens on its coach's 简历, from a tap on the coach on the home.
-    @State private var squadOpensCoach = false
+    /// The coach's card, opened from a tap on the coach on the home, popped up like a player's.
+    @State private var showsCoachCard = false
     /// 小队's scene pick is playing its reveal, which fills the screen.
     @State private var squadRevealing = false
     /// 我的动态, open from 我 in its place.
     @State private var wall: PostWallStore?
+    /// 我的动态's tile on 我: the wall's first page, read again each time 我 shows.
+    @State private var newestPosts: PostWallStore
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
     /// A player's card, opened from a tap on them on the home or their row on 小队,
@@ -77,6 +79,7 @@ struct MainTabs: View {
         _selection = selection
         self.leftSquad = leftSquad
         _inbox = State(initialValue: NoticeInbox(source: notices))
+        _newestPosts = State(initialValue: PostWallStore(source: myPosts))
         _wardrobe = State(initialValue: Wardrobe(profile: profile) { today.home?.member.description })
     }
 
@@ -127,6 +130,13 @@ struct MainTabs: View {
                 .environment(\.sceneTheme, today.scene)
             }
         }
+        .cardPopup(isPresented: $showsCoachCard) {
+            CoachCardPopup(note: today.coachLine, squad: squad) { opensFeed in
+                showsCoachCard = false
+                if opensFeed { selection = .feed }
+            }
+            .environment(\.sceneTheme, today.scene)
+        }
         .onChange(of: squad.hasLeft) { _, left in
             guard left else { return }
             leftSquad()
@@ -142,7 +152,6 @@ struct MainTabs: View {
         withTransaction(instant) {
             squadRevealing = false
             showsSquad = false
-            squadOpensCoach = false
             selection = .today
         }
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
@@ -282,10 +291,11 @@ struct MainTabs: View {
                     destinations: MeDestinations(
                         editCharacter: wardrobe.editCharacter,
                         schedule: { showsSchedule = true },
-                        myPosts: { wall = PostWallStore(source: myPosts) },
                         street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                         privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
-                )
+                ) {
+                    MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
+                }
             }
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wall != nil)
@@ -329,33 +339,26 @@ private struct RecapTile: View {
 }
 
 extension MainTabs {
-    /// 今天, or 小队 in its place, opened from the home's squad card, or on its coach's 简历 from
-    /// a tap on the coach on the sideline.
+    /// 今天, or 小队 in its place, opened from the home's squad card.
     private var todayPage: some View {
         ZStack {
             if showsSquad {
                 SquadSettingsView(
                     model: squad, picked: land(on:coveredAt:),
-                    close: {
-                        showsSquad = false
-                        squadOpensCoach = false
-                    },
+                    close: { showsSquad = false },
                     revealing: $squadRevealing,
                     openTeammate: {
                         teammateOnHome = false
                         teammate = squadCard(of: $0)
                     },
-                    coachNote: today.coachLine, opensCoach: squadOpensCoach
+                    coachNote: today.coachLine
                 )
                 .environment(\.sceneTheme, squad.scene)
                 .transition(.move(edge: .trailing))
             } else {
                 TodayView(
                     model: today,
-                    openSquad: {
-                        squadOpensCoach = false
-                        showsSquad = true
-                    },
+                    openSquad: { showsSquad = true },
                     openPost: { post in
                         feed.open(post)
                         selection = .feed
@@ -366,10 +369,7 @@ extension MainTabs {
                         teammateOnHome = true
                         teammate = homeCard(of: $0)
                     }
-                    today.openCoach = {
-                        squadOpensCoach = true
-                        showsSquad = true
-                    }
+                    today.openCoach = { showsCoachCard = true }
                 }
             }
         }

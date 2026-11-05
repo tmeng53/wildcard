@@ -32,7 +32,12 @@ public actor InMemoryMeService: MeService {
                 dailyPushOn: true,
                 jerseyNumber: try? JerseyNumber(22), squadPlace: 2,
                 board: .sample,
-                unlocks: unlocks, stock: stock),
+                unlocks: unlocks, stock: stock,
+                // 3 of 5: Monday, Wednesday and today (Thursday) trained, Tuesday and Sunday off.
+                weekGlance: WeekGlance(
+                    number: 3,
+                    plan: [.train(nil), .rest, .train(nil), .train(nil), .train(nil), .train(nil), .rest],
+                    trainedDays: [0, 2, 3], today: 3)),
             failsSaving: failsSaving)
     }
 

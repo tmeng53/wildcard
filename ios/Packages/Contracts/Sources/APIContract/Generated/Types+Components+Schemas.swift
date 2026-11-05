@@ -7156,7 +7156,7 @@ extension Components {
                 case character
             }
         }
-        /// 领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene; the earliest to join on a tie) in the middle, up to 2 next beside, left then right. Missing when nobody trained.
+        /// 领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene) in the middle, up to 2 next beside, left then right. A tie goes to whoever finished their own weekly plan first, then to the earliest to join. Missing when nobody trained.
         ///
         /// - Remark: Generated from `#/components/schemas/StoryPodium`.
         public struct StoryPodium: Codable, Hashable, Sendable {
@@ -7168,25 +7168,33 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/StoryPodium/planDone`.
             public var planDone: [Swift.String]
+            /// Present when finishing the weekly plan first decided a place on the podium (or the last place just off it), so the page can say why.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/tieBrokenByPlan`.
+            public var tieBrokenByPlan: Swift.Bool?
             /// Creates a new `StoryPodium`.
             ///
             /// - Parameters:
             ///   - champion:
             ///   - sides:
             ///   - planDone: Those on the podium who trained at least as many days as they planned (练够计划), for a small mark on their step. Empty when none did.
+            ///   - tieBrokenByPlan: Present when finishing the weekly plan first decided a place on the podium (or the last place just off it), so the page can say why.
             public init(
                 champion: Swift.String,
                 sides: [Swift.String],
-                planDone: [Swift.String]
+                planDone: [Swift.String],
+                tieBrokenByPlan: Swift.Bool? = nil
             ) {
                 self.champion = champion
                 self.sides = sides
                 self.planDone = planDone
+                self.tieBrokenByPlan = tieBrokenByPlan
             }
             public enum CodingKeys: String, CodingKey {
                 case champion
                 case sides
                 case planDone
+                case tieBrokenByPlan
             }
         }
         /// 你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards.

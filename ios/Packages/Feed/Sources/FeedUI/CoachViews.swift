@@ -8,20 +8,28 @@ import SwiftUI
 
 /// 战术板: the coach's line for the day, pinned at the top of today like a sheet on a clipboard
 /// (the approved 教练发言 design): the coach standing at the left, 教练 and its name and time,
-/// then the line.
-struct CoachBoard: View {
+/// then the line. Over the coach's card, where the coach already stands, it leaves the figure out
+/// (`showsCoach`).
+public struct CoachBoard: View {
     @Environment(\.sceneTheme) private var theme
-    let model: FeedModel
-    let note: CoachNote
+    private let note: CoachNote
+    private let showsCoach: Bool
+
+    public init(note: CoachNote, showsCoach: Bool = true) {
+        self.note = note
+        self.showsCoach = showsCoach
+    }
 
     private static let figure = CGSize(width: 66, height: 88)
 
-    var body: some View {
+    public var body: some View {
         ClipboardCard {
             HStack(alignment: .bottom, spacing: Space.s) {
-                CoachFigure(coach: note.coach.id.rawValue, pose: .still, crop: CoachCanvas.full) { EmptyView() }
-                    .frame(maxHeight: .infinity, alignment: .bottom)
-                    .frame(width: Self.figure.width, height: Self.figure.height)
+                if showsCoach {
+                    CoachFigure(coach: note.coach.id.rawValue, pose: .still, crop: CoachCanvas.full) { EmptyView() }
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                        .frame(width: Self.figure.width, height: Self.figure.height)
+                }
                 VStack(alignment: .leading, spacing: Space.xs) {
                     HStack(spacing: Space.xxs) {
                         CoachTag().padding(.trailing, Space.xxs)

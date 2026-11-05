@@ -158,14 +158,23 @@ const storyFields = {
             'Those on the podium who trained at least as many days as they planned (练够计划), ' +
             'for a small mark on their step. Empty when none did.',
         }),
+      tieBrokenByPlan: z
+        .literal(true)
+        .optional()
+        .meta({
+          description:
+            'Present when finishing the weekly plan first decided a place on the podium (or the ' +
+            'last place just off it), so the page can say why.',
+        }),
     })
     .openapi('StoryPodium')
     .optional()
     .meta({
       description:
         '领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who ' +
-        'picks next week’s scene; the earliest to join on a tie) in the middle, up to 2 next ' +
-        'beside, left then right. Missing when nobody trained.',
+        'picks next week’s scene) in the middle, up to 2 next beside, left then right. A tie ' +
+        'goes to whoever finished their own weekly plan first, then to the earliest to join. ' +
+        'Missing when nobody trained.',
     }),
   myWeek: z
     .strictObject({
@@ -384,6 +393,7 @@ export function weekStory(
                 champion: story.podium.champion,
                 sides: [...story.podium.sides],
                 planDone: [...story.podium.planDone],
+                ...(story.podium.tieBrokenByPlan ? { tieBrokenByPlan: true as const } : {}),
               },
             }),
         ...(mine?.checkedIn !== true

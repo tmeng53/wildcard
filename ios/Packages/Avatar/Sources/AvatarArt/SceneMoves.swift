@@ -5,7 +5,7 @@ import DesignSystem
 extension SceneTheme {
     /// The sport the scene is for: what a character there trains at.
     public var sport: Sport {
-        switch self {
+        switch base {
         case .pool: "swim"
         case .track: "run"
         case .gym: "strength"

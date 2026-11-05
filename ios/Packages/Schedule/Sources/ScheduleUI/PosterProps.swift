@@ -30,7 +30,7 @@ enum PosterProps {
     }
 
     static func props(for theme: SceneTheme) -> [Prop] {
-        switch theme {
+        switch theme.base {
         case .gym: [dumbbell, kettlebell, plate]
         case .tennis:
             [racket, ball(at: CGPoint(x: 302, y: 204), scale: 1), ball(at: CGPoint(x: 250, y: 240), scale: 0.62)]

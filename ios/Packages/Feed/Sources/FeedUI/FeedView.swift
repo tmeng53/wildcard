@@ -135,13 +135,13 @@ public struct FeedView: View {
             if let note = model.coachNote, sections.first?.heading != .today {
                 SectionLabel(DayHeading.today.title)
                     .blur(radius: model.lifted ? Scrim.blurRadius : 0)
-                CoachBoard(model: model, note: note)
+                CoachBoard(note: note)
                     .blur(radius: model.lifted ? Scrim.blurRadius : 0)
             }
             ForEach(sections) { section in
                 Section {
                     if section.heading == .today, let note = model.coachNote {
-                        CoachBoard(model: model, note: note)
+                        CoachBoard(note: note)
                             .blur(radius: model.lifted ? Scrim.blurRadius : 0)
                     }
                     ForEach(section.posts) { post in

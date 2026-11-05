@@ -19,7 +19,9 @@ export const ArtPath = z
     description:
       'Where the file sits in the app’s art tree, the path the app bundles it at: avatar/… ' +
       'mirrors the character’s Placeholder folder (art/<slot>/<variant>/<part>.svg, moves/…, ' +
-      'editor.json, kits.json), coaches/… the coaches’ characters (<coach id>/…), scenes/… the ' +
+      'editor.json, kits.json, and names.json: names in three languages for uploaded pieces and ' +
+      'stores, {"version":1,"variants":{"<id>":{"zhHans","en","zhHant"}},"stores":{"<id>":{"name",' +
+      '"local","sports"?,"tagline"?,"unlock"?,"limited"?}}}, never bundled), coaches/… the coaches’ characters (<coach id>/…), scenes/… the ' +
       'home scene pictures (<scene>-day@3x.png), openings/… the opening animations (<opening id>/…: SVG ' +
       'layers and a timeline JSON).',
     example: 'avatar/art/top/warmup-tee/torso.svg',

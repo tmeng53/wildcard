@@ -753,6 +753,22 @@
         }
       }
     },
+    "带队 %lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day %lld coaching"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "帶隊 %lld 天"
+          }
+        }
+      }
+    },
     "执教第 %lld 周": {
       "localizations": {
         "en": {

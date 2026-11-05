@@ -44,3 +44,11 @@ func theDayLastsUntilThreeOnTheWallClock(moment: String, zone: String, day: Stri
     #expect(try LocalDay("2027-01-04").weekNumber(since: joined) == 12)
     #expect(try LocalDay("2026-10-12").weekNumber(since: joined) == 1)
 }
+
+@Test func numbersTheDayFromTheFirstOne() throws {
+    let hired = try LocalDay("2026-11-03")
+    #expect(hired.dayNumber(since: hired) == 1)
+    #expect(try LocalDay("2026-11-05").dayNumber(since: hired) == 3)
+    #expect(try LocalDay("2027-01-01").dayNumber(since: hired) == 60)
+    #expect(try LocalDay("2026-11-01").dayNumber(since: hired) == 1)
+}
