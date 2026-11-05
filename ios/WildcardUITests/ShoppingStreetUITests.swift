@@ -41,6 +41,17 @@ final class ShoppingStreetUITests: XCTestCase {
             _ = warmup.waitForExistence(timeout: 3)
         }
         XCTAssertTrue(warmup.exists, "back didn't walk out to the street")
+        // Swiping back out of a store leaves the street where it was, not shifted half off screen
+        // with its 返回 out of reach (2026-11-05).
+        let backX = back.frame.minX
+        warmup.tap()
+        XCTAssertTrue(info.waitForExistence(timeout: 30), "WARM-UP didn't open again")
+        let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5))
+        from.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)))
+        XCTAssertTrue(warmup.waitForExistence(timeout: 30), "a swipe right didn't leave the store")
+        settle()
+        XCTAssertEqual(back.frame.minX, backX, accuracy: 2, "the street stayed shifted after a swipe back")
+        XCTAssertTrue(back.isHittable, "返回 out of reach after a swipe back")
         back.tap()
         XCTAssertTrue(shopfront.waitForExistence(timeout: 30), "back didn't return to 我")
     }
