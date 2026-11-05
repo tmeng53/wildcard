@@ -207,23 +207,21 @@ describe('commenting on a check-in', () => {
     expect(written.comment.mentionsCoach).toBeUndefined();
     const [saved] = await checkIns.listComments({ checkIn: run.id, viewer: tracy });
     expect(saved?.mentions).toStrictEqual([bo, tracy]);
-    // A retry with the same @s is the same comment; other @s are another.
+    // A retry is the same comment, even once someone it @s has left (the server saw other @s).
+    await sql`delete from public.squad_members where squad_id = ${squad} and member_id = ${bo}`.execute(
+      db,
+    );
     const again = await checkIns.comment({
       checkIn: run.id,
       id,
       member: ann,
       text: text('@波波 @翠西 一起'),
-      mentions: [bo, tracy],
+      mentions: [bo, ann, stranger, tracy, bo],
+      mentionsCoach: 'xiaohun',
     });
-    expect(again.created).toBe(false);
+    expect([again.created, again.comment.mentions]).toStrictEqual([false, [bo, tracy]]);
     await expect(
-      checkIns.comment({
-        checkIn: run.id,
-        id,
-        member: ann,
-        text: text('@波波 @翠西 一起'),
-        mentions: [tracy],
-      }),
+      checkIns.comment({ checkIn: run.id, id, member: ann, text: text('换了') }),
     ).rejects.toStrictEqual(new CommentIdConflictError(id));
 
     // A mentioned account deleted takes only its @ with it.

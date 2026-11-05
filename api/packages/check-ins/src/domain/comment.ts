@@ -36,22 +36,19 @@ export interface Comment {
 /** How many people one comment may @ (Tracy, 2026-11-05). */
 export const MAX_MENTIONS = 8;
 
-type Said = Pick<
-  Comment,
-  'member' | 'text' | 'replyTo' | 'replyToCoach' | 'mentions' | 'mentionsCoach'
->;
-
-/** Whether two writes of one comment id say the same thing, so the second is a retry. */
-export function sameComment(a: Said, b: Said): boolean {
-  const aMentions = a.mentions ?? [];
-  const bMentions = b.mentions ?? [];
+/**
+ * Whether two writes of one comment id say the same thing, so the second is a retry. Whom it @s
+ * is left out: the server keeps only those who can see the post when it is first written, and a
+ * retry after someone left (or the coach was fired) is still the same comment.
+ */
+export function sameComment(
+  a: Pick<Comment, 'member' | 'text' | 'replyTo' | 'replyToCoach'>,
+  b: Pick<Comment, 'member' | 'text' | 'replyTo' | 'replyToCoach'>,
+): boolean {
   return (
     a.member === b.member &&
     a.text === b.text &&
     a.replyTo === b.replyTo &&
-    a.replyToCoach === b.replyToCoach &&
-    a.mentionsCoach === b.mentionsCoach &&
-    aMentions.length === bMentions.length &&
-    aMentions.every((member, index) => member === bMentions[index])
+    a.replyToCoach === b.replyToCoach
   );
 }
