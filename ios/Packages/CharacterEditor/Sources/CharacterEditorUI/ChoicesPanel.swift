@@ -57,7 +57,7 @@ struct ChoicesPanel: View {
                 }
             }
         case .outfit:
-            ShoppingStreet(model: model)
+            WardrobePanel(model: model)
         case .prop:
             scroll {
                 ChoiceSection(label: nil) {

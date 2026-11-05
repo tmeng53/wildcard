@@ -42,20 +42,6 @@ struct PhotoTiles: View {
         }
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.photos)
         .photoViewer(isPresented: $isViewing, count: model.photos.count, page: $page, load: jpeg)
-        .confirmationDialog(Text("加照片", bundle: .module), isPresented: $isChoosingSource) {
-            Button {
-                isTakingPhoto = true
-            } label: {
-                Text("拍照", bundle: .module)
-            }
-            .accessibilityIdentifier("compose.addPhoto.camera")
-            Button {
-                isPickingFromLibrary = true
-            } label: {
-                Text("从相册选", bundle: .module)
-            }
-            .accessibilityIdentifier("compose.addPhoto.library")
-        }
         .photosPicker(
             isPresented: $isPickingFromLibrary, selection: $picked,
             maxSelectionCount: Photos.maxCount - model.photos.count, selectionBehavior: .ordered, matching: .images,
@@ -102,6 +88,18 @@ struct PhotoTiles: View {
         .disabled(model.isPreparingPhotos)
         .accessibilityLabel(Text("加照片", bundle: .module))
         .accessibilityIdentifier("compose.addPhoto")
+        .glassMenu(
+            isPresented: $isChoosingSource, title: Text("加照片", bundle: .module),
+            items: [
+                GlassMenuItem(Text("拍照", bundle: .module), systemImage: "camera", id: "compose.addPhoto.camera") {
+                    isTakingPhoto = true
+                },
+                GlassMenuItem(
+                    Text("从相册选", bundle: .module), systemImage: "photo.on.rectangle", id: "compose.addPhoto.library"
+                ) {
+                    isPickingFromLibrary = true
+                },
+            ])
     }
 
     /// Photo `index` as it will be posted, while it's still one of them.

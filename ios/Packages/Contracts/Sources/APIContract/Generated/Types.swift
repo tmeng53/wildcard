@@ -489,9 +489,16 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/members/{memberId}/card`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/members/{memberId}/card/get(getSquadmateCard)`.
     func getSquadmateCard(_ input: Operations.GetSquadmateCard.Input) async throws -> Operations.GetSquadmateCard.Output
+    /// Claim an unlocked piece into the signed-in member’s wardrobe
+    ///
+    /// 领取: puts a piece the member unlocked in their wardrobe (我的衣橱), on every phone. Nothing is bought. Claiming it again answers with the first claim.
+    ///
+    /// - Remark: HTTP `PUT /me/pieces/{pieceId}/claim`.
+    /// - Remark: Generated from `#/paths//me/pieces/{pieceId}/claim/put(claimPiece)`.
+    func claimPiece(_ input: Operations.ClaimPiece.Input) async throws -> Operations.ClaimPiece.Output
     /// The stores, props and pieces the signed-in member unlocked
     ///
-    /// Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.
+    /// Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.
     ///
     /// - Remark: HTTP `GET /me/unlocks`.
     /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.
@@ -1513,9 +1520,24 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// Claim an unlocked piece into the signed-in member’s wardrobe
+    ///
+    /// 领取: puts a piece the member unlocked in their wardrobe (我的衣橱), on every phone. Nothing is bought. Claiming it again answers with the first claim.
+    ///
+    /// - Remark: HTTP `PUT /me/pieces/{pieceId}/claim`.
+    /// - Remark: Generated from `#/paths//me/pieces/{pieceId}/claim/put(claimPiece)`.
+    public func claimPiece(
+        path: Operations.ClaimPiece.Input.Path,
+        headers: Operations.ClaimPiece.Input.Headers = .init()
+    ) async throws -> Operations.ClaimPiece.Output {
+        try await claimPiece(Operations.ClaimPiece.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// The stores, props and pieces the signed-in member unlocked
     ///
-    /// Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.
+    /// Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.
     ///
     /// - Remark: HTTP `GET /me/unlocks`.
     /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.
