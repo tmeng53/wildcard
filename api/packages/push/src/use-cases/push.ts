@@ -2,7 +2,7 @@ import type { DailyCandidate, DuePush, LocalDay } from '../domain/daily.js';
 import type { DailyPushSettings } from '../domain/daily-push-settings.js';
 import type { Device, DeviceToken, MemberId } from '../domain/device.js';
 import type { PushNotification } from '../domain/notification.js';
-import type { PushSettings } from '../domain/topic.js';
+import type { PushSettings, PushSettingsChange } from '../domain/topic.js';
 import type {
   DailyPushSettingsStore,
   DailyPushStore,
@@ -33,7 +33,8 @@ export interface Push {
   settingsOf(member: MemberId): Promise<PushSettings>;
   saveSettings(input: {
     readonly member: MemberId;
-    readonly settings: PushSettings;
+    /** The switches to change; one left out keeps what it was (an older app knows fewer). */
+    readonly settings: PushSettingsChange;
   }): Promise<PushSettings>;
   /**
    * Of these members, each on their own today, those whose daily push is due: they haven't
@@ -68,8 +69,9 @@ export function createPush(deps: {
     notifyMembers: (input) => notifyMembers(deps, input),
     settingsOf: (member) => pushSettings(deps, member),
     saveSettings: async ({ member, settings }) => {
-      await deps.settings.save(member, settings);
-      return settings;
+      const merged = { ...(await pushSettings(deps, member)), ...settings };
+      await deps.settings.save(member, merged);
+      return merged;
     },
     dailyDue: (candidates) => deps.daily.due(candidates),
     dailySettings: () => deps.dailySettings.current(),

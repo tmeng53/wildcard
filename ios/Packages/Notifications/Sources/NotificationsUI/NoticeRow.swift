@@ -9,6 +9,7 @@ import SwiftUI
 
 /// One row of 通知: a round icon (the same set the notice banner uses), one line of title, an
 /// optional muted line under it, and when it was told. A row that was new is bold, with a dot.
+/// A broadcast's words are an admin's message, written for this, so its row shows them whole.
 struct NoticeRow: View {
     @Environment(\.locale) private var locale
     let notice: Notice
@@ -41,7 +42,8 @@ struct NoticeRow: View {
                         .padding(.top, Space.xxs)
                 }
             }
-            .lineLimit(1)
+            .lineLimit(words.wraps ? nil : 1)
+            .fixedSize(horizontal: false, vertical: words.wraps)
             .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: Space.xxs) {
                 when
@@ -86,6 +88,8 @@ struct NoticeRow: View {
         let detail: Text?
         let icon: AnyView
         var action: Text?
+        /// Shown whole, on as many lines as it takes.
+        var wraps = false
     }
 
     private var words: Words {
@@ -114,6 +118,14 @@ struct NoticeRow: View {
             return Words(
                 title: Self.coachTitle(name: coachName, replied: replied, emoji: emoji), detail: nil,
                 icon: AnyView(CoachIcon(coach: coach)))
+        case .coachNote(let note):
+            // 「毛头：…」, as its push says it.
+            return Words(
+                title: note.coach.name.isEmpty
+                    ? Text("教练：\(note.text)", bundle: .module)
+                    : Text("\(note.coach.name)：\(note.text)", bundle: .module),
+                detail: nil,
+                icon: AnyView(CoachIcon(coach: note.coach.id)))
         case .unlocked(let kind, let item):
             let unlock = unlocked(kind, item)
             return Words(title: unlock.title, detail: unlock.detail, icon: unlock.icon)
@@ -128,7 +140,8 @@ struct NoticeRow: View {
                 detail: broadcast.body.map { Text(verbatim: $0.localized(in: [AppLanguage.current.rawValue])) },
                 icon: broadcast.icon.map { unlocked($0.kind, $0.id).icon }
                     ?? AnyView(NoticeSymbol(systemImage: "sparkles")),
-                action: broadcast.action.map { Text(verbatim: $0.label.localized(in: [AppLanguage.current.rawValue])) })
+                action: broadcast.action.map { Text(verbatim: $0.label.localized(in: [AppLanguage.current.rawValue])) },
+                wraps: true)
         }
     }
 

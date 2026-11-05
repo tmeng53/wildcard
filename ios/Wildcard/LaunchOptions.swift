@@ -217,6 +217,12 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-coach")
     }
 
+    /// `-uitest-coach-note`: 毛头 also left me today's morning note (便条), which 今天 shows on
+    /// opening until 收下.
+    static var coachNote: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-coach-note")
+    }
+
     /// `-uitest-together wave|stack|bump`: the sample squad's home opens on that celebration
     /// (人浪, 叠罗汉, 撞头). Without it the sample squad never celebrates together, so other UI
     /// tests meet a home that holds still.
@@ -234,7 +240,8 @@ enum LaunchOptions {
     /// `-uitest-coach` or `-uitest-together` a suite emptied at launch.
     static var todayDefaults: UserDefaults {
         let suite = "uitest-today"
-        guard pattedMe || sidelineCoach || together != nil, let defaults = UserDefaults(suiteName: suite) else {
+        guard pattedMe || sidelineCoach || coachNote || together != nil, let defaults = UserDefaults(suiteName: suite)
+        else {
             return .standard
         }
         defaults.removePersistentDomain(forName: suite)

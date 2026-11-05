@@ -43,3 +43,14 @@ export class CoachSquadNotFoundError extends AppError {
     super('No such squad.');
   }
 }
+
+/** Thrown when a member puts away a morning note that isn't theirs in that squad, or isn't there. */
+export class CoachNoteNotFoundError extends AppError {
+  override readonly name = 'CoachNoteNotFoundError';
+  readonly reason = 'COACH_NOTE_NOT_FOUND';
+  readonly status = 'NOT_FOUND';
+
+  constructor() {
+    super('No such morning note for the member in this squad.');
+  }
+}

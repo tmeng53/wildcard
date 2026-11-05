@@ -23,10 +23,24 @@ export interface Comment {
    * something under the check-in. Never with `replyTo`.
    */
   readonly replyToCoach?: string | undefined;
+  /**
+   * Whom it @s, in the order written (feedback #58): up to `MAX_MENTIONS` people who can see the
+   * check-in, never its writer. Left out when it @s no one.
+   */
+  readonly mentions?: readonly MemberId[] | undefined;
+  /** The coach it @s (@毛头), by the coach's id, when it does: the coach answers it. */
+  readonly mentionsCoach?: string | undefined;
   readonly commentedAt: Date;
 }
 
-/** Whether two writes of one comment id say the same thing, so the second is a retry. */
+/** How many people one comment may @ (Tracy, 2026-11-05). */
+export const MAX_MENTIONS = 8;
+
+/**
+ * Whether two writes of one comment id say the same thing, so the second is a retry. Whom it @s
+ * is left out: the server keeps only those who can see the post when it is first written, and a
+ * retry after someone left (or the coach was fired) is still the same comment.
+ */
 export function sameComment(
   a: Pick<Comment, 'member' | 'text' | 'replyTo' | 'replyToCoach'>,
   b: Pick<Comment, 'member' | 'text' | 'replyTo' | 'replyToCoach'>,

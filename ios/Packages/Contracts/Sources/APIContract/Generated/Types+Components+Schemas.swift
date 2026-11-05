@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -130,11 +130,11 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/checkIn`.
             public var checkIn: Swift.String?
-            /// The coach who answered (`coachReply`).
+            /// The coach who answered (`coachReply`) or wrote (`coachNote`).
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/coach`.
             public var coach: Swift.String?
-            /// Its name now (`coachReply`).
+            /// Its name now (`coachReply`, `coachNote`).
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/coachName`.
             public var coachName: Swift.String?
@@ -146,6 +146,18 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/emoji`.
             public var emoji: Swift.String?
+            /// The morning note’s id (`coachNote`): the same as the coach activity’s.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/note`.
+            public var note: Swift.Int?
+            /// The New York day the morning note was written for (`coachNote`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/day`.
+            public var day: Swift.String?
+            /// The morning note’s words (`coachNote`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/text`.
+            public var text: Swift.String?
             /// What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/unlockKind`.
@@ -269,7 +281,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - squadId: The squad it is about, if any.
             ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
@@ -278,10 +290,13 @@ extension Components {
             ///   - by: Who moved it (`sceneMoved`); left out once they deleted their account.
             ///   - byName: Their nickname now (`sceneMoved`), when they have one.
             ///   - checkIn: The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`).
-            ///   - coach: The coach who answered (`coachReply`).
-            ///   - coachName: Its name now (`coachReply`).
+            ///   - coach: The coach who answered (`coachReply`) or wrote (`coachNote`).
+            ///   - coachName: Its name now (`coachReply`, `coachNote`).
             ///   - replied: Whether the coach wrote a line (`coachReply`); else only its emoji.
             ///   - emoji: The coach’s emoji (`coachReply`), if any.
+            ///   - note: The morning note’s id (`coachNote`): the same as the coach activity’s.
+            ///   - day: The New York day the morning note was written for (`coachNote`).
+            ///   - text: The morning note’s words (`coachNote`).
             ///   - unlockKind: What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.
             ///   - item: The store’s, prop’s or piece’s id (`unlocked`).
             ///   - broadcast: The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now.
@@ -306,6 +321,9 @@ extension Components {
                 coachName: Swift.String? = nil,
                 replied: Swift.Bool? = nil,
                 emoji: Swift.String? = nil,
+                note: Swift.Int? = nil,
+                day: Swift.String? = nil,
+                text: Swift.String? = nil,
                 unlockKind: Swift.String? = nil,
                 item: Swift.String? = nil,
                 broadcast: Swift.String? = nil,
@@ -330,6 +348,9 @@ extension Components {
                 self.coachName = coachName
                 self.replied = replied
                 self.emoji = emoji
+                self.note = note
+                self.day = day
+                self.text = text
                 self.unlockKind = unlockKind
                 self.item = item
                 self.broadcast = broadcast
@@ -355,6 +376,9 @@ extension Components {
                 case coachName
                 case replied
                 case emoji
+                case note
+                case day
+                case text
                 case unlockKind
                 case item
                 case broadcast
@@ -3582,6 +3606,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CommentEntry/replyToCoach`.
             public var replyToCoach: Swift.String?
+            /// Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/mentions`.
+            public var mentions: [Swift.String]?
+            /// The coach it @s, by id, when it does (@毛头).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentEntry/mentionsCoach`.
+            public var mentionsCoach: Swift.String?
             /// When it was written, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/CommentEntry/commentedAt`.
@@ -3594,6 +3626,8 @@ extension Components {
             ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
             ///   - replyTo: Whom it replies to, when it does. Gone once their account is deleted.
             ///   - replyToCoach: The coach it replies to, by id, when it does (回复 毛头：…).
+            ///   - mentions: Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone.
+            ///   - mentionsCoach: The coach it @s, by id, when it does (@毛头).
             ///   - commentedAt: When it was written, in UTC with milliseconds.
             public init(
                 id: Swift.String,
@@ -3601,6 +3635,8 @@ extension Components {
                 text: Swift.String,
                 replyTo: Swift.String? = nil,
                 replyToCoach: Swift.String? = nil,
+                mentions: [Swift.String]? = nil,
+                mentionsCoach: Swift.String? = nil,
                 commentedAt: Foundation.Date
             ) {
                 self.id = id
@@ -3608,6 +3644,8 @@ extension Components {
                 self.text = text
                 self.replyTo = replyTo
                 self.replyToCoach = replyToCoach
+                self.mentions = mentions
+                self.mentionsCoach = mentionsCoach
                 self.commentedAt = commentedAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -3616,6 +3654,8 @@ extension Components {
                 case text
                 case replyTo
                 case replyToCoach
+                case mentions
+                case mentionsCoach
                 case commentedAt
             }
         }
@@ -4021,6 +4061,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Comment/replyToCoach`.
             public var replyToCoach: Swift.String?
+            /// Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/mentions`.
+            public var mentions: [Swift.String]?
+            /// The coach it @s, by id, when it does (@毛头).
+            ///
+            /// - Remark: Generated from `#/components/schemas/Comment/mentionsCoach`.
+            public var mentionsCoach: Swift.String?
             /// When it was written, in UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/Comment/commentedAt`.
@@ -4034,6 +4082,8 @@ extension Components {
             ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
             ///   - replyTo: Whom it replies to, when it does. Gone once their account is deleted.
             ///   - replyToCoach: The coach it replies to, by id, when it does (回复 毛头：…).
+            ///   - mentions: Whom it @s, in the order written, when it @s anyone. One whose account is deleted is gone.
+            ///   - mentionsCoach: The coach it @s, by id, when it does (@毛头).
             ///   - commentedAt: When it was written, in UTC with milliseconds.
             public init(
                 version: Components.Schemas.Comment.VersionPayload,
@@ -4042,6 +4092,8 @@ extension Components {
                 text: Swift.String,
                 replyTo: Swift.String? = nil,
                 replyToCoach: Swift.String? = nil,
+                mentions: [Swift.String]? = nil,
+                mentionsCoach: Swift.String? = nil,
                 commentedAt: Foundation.Date
             ) {
                 self.version = version
@@ -4050,6 +4102,8 @@ extension Components {
                 self.text = text
                 self.replyTo = replyTo
                 self.replyToCoach = replyToCoach
+                self.mentions = mentions
+                self.mentionsCoach = mentionsCoach
                 self.commentedAt = commentedAt
             }
             public enum CodingKeys: String, CodingKey {
@@ -4059,6 +4113,8 @@ extension Components {
                 case text
                 case replyTo
                 case replyToCoach
+                case mentions
+                case mentionsCoach
                 case commentedAt
             }
         }
@@ -4082,6 +4138,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CommentDraft/replyToCoach`.
             public var replyToCoach: Swift.String?
+            /// Whom the comment @s, in the order written: up to 8 who can see the check-in (its author or a teammate). Each is told by push. Anyone else, or the writer, is left out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/mentions`.
+            public var mentions: [Swift.String]?
+            /// The coach the comment @s (@毛头), by id: the coach of a squad the caller sees the check-in through. The coach answers it soon after. Left out for any other coach.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CommentDraft/mentionsCoach`.
+            public var mentionsCoach: Swift.String?
             /// Creates a new `CommentDraft`.
             ///
             /// - Parameters:
@@ -4089,22 +4153,30 @@ extension Components {
             ///   - text: Trimmed, then 1 to 100 characters as people see them; may span lines.
             ///   - replyTo: Whom the comment replies to (回复 Mia：…): the check-in’s author, or a teammate who can see it.
             ///   - replyToCoach: The coach it replies to (回复 毛头：…), by the coach’s id: one that said something under the check-in for a squad the caller sees it through. Never with `replyTo`. The coach answers it soon after.
+            ///   - mentions: Whom the comment @s, in the order written: up to 8 who can see the check-in (its author or a teammate). Each is told by push. Anyone else, or the writer, is left out.
+            ///   - mentionsCoach: The coach the comment @s (@毛头), by id: the coach of a squad the caller sees the check-in through. The coach answers it soon after. Left out for any other coach.
             public init(
                 version: Components.Schemas.CommentDraft.VersionPayload,
                 text: Swift.String,
                 replyTo: Swift.String? = nil,
-                replyToCoach: Swift.String? = nil
+                replyToCoach: Swift.String? = nil,
+                mentions: [Swift.String]? = nil,
+                mentionsCoach: Swift.String? = nil
             ) {
                 self.version = version
                 self.text = text
                 self.replyTo = replyTo
                 self.replyToCoach = replyToCoach
+                self.mentions = mentions
+                self.mentionsCoach = mentionsCoach
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case text
                 case replyTo
                 case replyToCoach
+                case mentions
+                case mentionsCoach
             }
         }
         /// - Remark: Generated from `#/components/schemas/CommentList`.
@@ -4215,24 +4287,32 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/PushSettings/version`.
             public var version: Components.Schemas.PushSettings.VersionPayload
-            /// Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
             ///
             /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
             public struct SettingsPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/PushSettings/settings/dailyProgress`.
                 public var dailyProgress: Swift.Bool?
+                /// - Remark: Generated from `#/components/schemas/PushSettings/settings/coach`.
+                public var coach: Swift.Bool?
                 /// Creates a new `SettingsPayload`.
                 ///
                 /// - Parameters:
                 ///   - dailyProgress:
-                public init(dailyProgress: Swift.Bool? = nil) {
+                ///   - coach:
+                public init(
+                    dailyProgress: Swift.Bool? = nil,
+                    coach: Swift.Bool? = nil
+                ) {
                     self.dailyProgress = dailyProgress
+                    self.coach = coach
                 }
                 public enum CodingKeys: String, CodingKey {
                     case dailyProgress
+                    case coach
                 }
             }
-            /// Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
             ///
             /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
             public var settings: Components.Schemas.PushSettings.SettingsPayload
@@ -4240,7 +4320,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - settings: Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            ///   - settings: Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
             public init(
                 version: Components.Schemas.PushSettings.VersionPayload,
                 settings: Components.Schemas.PushSettings.SettingsPayload
@@ -4261,7 +4341,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/SquadList/version`.
             public var version: Components.Schemas.SquadList.VersionPayload
-            /// The member’s squads, the earliest joined first: at most 3.
+            /// The member’s squads, the earliest joined first: at most 1.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadList/squads`.
             public var squads: [Components.Schemas.Squad]
@@ -4269,7 +4349,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - squads: The member’s squads, the earliest joined first: at most 3.
+            ///   - squads: The member’s squads, the earliest joined first: at most 1.
             public init(
                 version: Components.Schemas.SquadList.VersionPayload,
                 squads: [Components.Schemas.Squad]
@@ -5454,6 +5534,33 @@ extension Components {
                 case coach
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CoachNotePutAway`.
+        public struct CoachNotePutAway: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachNotePutAway/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachNotePutAway/version`.
+            public var version: Components.Schemas.CoachNotePutAway.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CoachNotePutAway/noteId`.
+            public var noteId: Swift.Int
+            /// Creates a new `CoachNotePutAway`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - noteId:
+            public init(
+                version: Components.Schemas.CoachNotePutAway.VersionPayload,
+                noteId: Swift.Int
+            ) {
+                self.version = version
+                self.noteId = noteId
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case noteId
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CoachActivity`.
         public struct CoachActivity: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CoachActivity/version`.
@@ -5472,6 +5579,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachActivity/answers`.
             public var answers: [Components.Schemas.CoachAnswer]
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/memberNote`.
+            public var memberNote: Components.Schemas.CoachMemberNote?
             /// Creates a new `CoachActivity`.
             ///
             /// - Parameters:
@@ -5479,22 +5588,26 @@ extension Components {
             ///   - note:
             ///   - replies: The coach’s replies to the check-ins asked about; one with none is left out.
             ///   - answers: The coach’s answers to members’ replies to it under the check-ins asked about, oldest first.
+            ///   - memberNote:
             public init(
                 version: Components.Schemas.CoachActivity.VersionPayload,
                 note: Components.Schemas.CoachNote? = nil,
                 replies: [Components.Schemas.CoachReply],
-                answers: [Components.Schemas.CoachAnswer]
+                answers: [Components.Schemas.CoachAnswer],
+                memberNote: Components.Schemas.CoachMemberNote? = nil
             ) {
                 self.version = version
                 self.note = note
                 self.replies = replies
                 self.answers = answers
+                self.memberNote = memberNote
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case note
                 case replies
                 case answers
+                case memberNote
             }
         }
         /// The squad’s newest 战术板 line (the app shows it while its day is today), or null.
@@ -5718,6 +5831,57 @@ extension Components {
                 case commentId
                 case coach
                 case text
+                case at
+            }
+        }
+        /// The caller’s own newest morning note (便条) from the squad’s coach, for 今天 to show on the first open after it arrived; only the caller sees it. Left out when there is none from the last day and a half.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CoachMemberNote`.
+        public struct CoachMemberNote: Codable, Hashable, Sendable {
+            /// The note’s id, which putting it away (收下) and `coachNote` notices name.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMemberNote/id`.
+            public var id: Swift.Int
+            /// The day (New York) the note was written for.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMemberNote/day`.
+            public var day: Swift.String
+            /// The note’s words.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMemberNote/text`.
+            public var text: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachMemberNote/coach`.
+            public var coach: Components.Schemas.CoachSpeaker
+            /// When it was written.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMemberNote/at`.
+            public var at: Foundation.Date
+            /// Creates a new `CoachMemberNote`.
+            ///
+            /// - Parameters:
+            ///   - id: The note’s id, which putting it away (收下) and `coachNote` notices name.
+            ///   - day: The day (New York) the note was written for.
+            ///   - text: The note’s words.
+            ///   - coach:
+            ///   - at: When it was written.
+            public init(
+                id: Swift.Int,
+                day: Swift.String,
+                text: Swift.String,
+                coach: Components.Schemas.CoachSpeaker,
+                at: Foundation.Date
+            ) {
+                self.id = id
+                self.day = day
+                self.text = text
+                self.coach = coach
+                self.at = at
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case day
+                case text
+                case coach
                 case at
             }
         }

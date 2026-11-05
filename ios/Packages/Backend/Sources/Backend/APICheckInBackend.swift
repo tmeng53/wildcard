@@ -45,8 +45,7 @@ public struct APICheckInBackend: CheckInBackend {
                 _ = try await api.save(Profile(timeZone: zone))
                 signedIn = try await api.meWire()
             }
-            let squads = try await api.mySquadsWire().squads
-            guard let squad = squads.first else {
+            guard let squad = try await api.mySquadWire() else {
                 try? FileManager.default.removeItem(at: saved)
                 shared?.forget()
                 return nil
@@ -58,7 +57,7 @@ public struct APICheckInBackend: CheckInBackend {
             async let checkIns = api.checkInsWire(of: squadID, from: day.adding(days: -2), through: day.adding(days: 2))
             async let week = api.myCheckInsWire(from: day.weekStart, through: day)
             let copy = SavedHome(
-                version: 1, member: signedIn, squad: squad, squads: squads, today: try await today,
+                version: 1, member: signedIn, squad: squad, today: try await today,
                 plan: try await plan,
                 checkIns: try await checkIns, week: try await week)
             let home = try copy.home(api: api)
@@ -133,6 +132,20 @@ public struct APICheckInBackend: CheckInBackend {
                 note: try await api.coachActivity(of: squad).note)
         } catch { throw CheckInError(error) }
     }
+
+    public func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote] {
+        var notes: [CoachMemberNote] = []
+        for squad in squads {
+            do {
+                if let note = try await api.coachActivity(of: squad).memberNote { notes.append(note) }
+            } catch { throw CheckInError(error) }
+        }
+        return notes
+    }
+
+    public func putAway(_ note: CoachMemberNote) async throws(CheckInError) {
+        do { try await api.putAway(note) } catch { throw CheckInError(error) }
+    }
 }
 
 /// The home as the API sent it. Stored JSON, so it carries a `version`.
@@ -140,9 +153,6 @@ struct SavedHome: Codable {
     let version: Int
     let member: Components.Schemas.Me
     let squad: Components.Schemas.Squad
-    /// Every squad the member is in, `squad` first; missing from a copy kept before posts could
-    /// be shared to more than one.
-    let squads: [Components.Schemas.Squad]?
     let today: Components.Schemas.SquadToday
     let plan: Components.Schemas.WeeklyPlan
     /// The squad's, from two days before the member's day to two days after.
@@ -156,7 +166,6 @@ struct SavedHome: Codable {
         return try api.read { () throws(ContractsError) in
             Home(
                 member: MemberID(id), timeZone: zone, squad: try Squad(squad),
-                squads: try squads?.map { wire throws(ContractsError) in try Squad(wire) },
                 today: try SquadToday(today),
                 plan: try WeeklyPlan(plan), checkIns: try Self.merged(checkIns, week))
         }

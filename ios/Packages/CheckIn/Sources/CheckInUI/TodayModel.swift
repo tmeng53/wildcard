@@ -171,8 +171,8 @@ public final class TodayModel {
     /// The sport a new 练了 starts with, until it is picked from the cover photo.
     var suggestedActivity: Activity { store.suggestedActivity ?? .sport("run") }
     var recentActivities: [Activity] { store.recentActivities }
-    /// The squads a post can be shared to, the earliest joined first.
-    var shareSquads: [Squad] { store.home?.squads ?? [] }
+    /// The squad a post is shared to, unless the member keeps it to themselves.
+    var shareSquad: Squad? { store.home?.squad }
 
     /// Day or night on the scene, on the member's own clock.
     var phase: DayPhase {
@@ -295,11 +295,11 @@ public final class TodayModel {
             // Straight to the page: photos are added there, with its 「+ 照片」.
             let given: [PreparedPhoto] = if case .provided(let photos) = photoSource { photos } else { [] }
             compose = ComposeModel(
-                kind: kind, purpose: .new(shareSquads: shareSquads), photos: given.map(ComposedPhoto.new),
+                kind: kind, purpose: .new(shareSquad: shareSquad), photos: given.map(ComposedPhoto.new),
                 postableDays: store.postableDays, suggestedActivity: suggestedActivity,
                 recentActivities: recentActivities,
                 save: { [weak self] model in
-                    await self?.post(model.draft, sharedTo: model.shared, on: model.day) ?? false
+                    await self?.post(model.draft, shared: model.isShared, on: model.day) ?? false
                 },
                 close: { [weak self] in self?.cancel() })
             step = .composing(kind)
@@ -316,10 +316,10 @@ public final class TodayModel {
         await writer.suggestions(for: reason, style: style)
     }
 
-    /// Posts `draft` to the squads in `shared` (none keeps it to the member), for `day` (today
+    /// Posts `draft` to the member's squad, or only to them when not `shared`, for `day` (today
     /// when left out). False when it can't be posted; the open page says so.
     @discardableResult
-    func post(_ draft: CheckInDraft, sharedTo shared: Set<SquadID>, on day: LocalDay? = nil) async -> Bool {
+    func post(_ draft: CheckInDraft, shared: Bool, on day: LocalDay? = nil) async -> Bool {
         guard !isSending else { return false }
         isSending = true
         sendFailed = false
@@ -327,10 +327,9 @@ public final class TodayModel {
         let before = cardWeek
         do {
             // Posted or waiting to go out, it counts on the scene now.
-            let audience = shareSquads.map(\.id).filter(shared.contains)
             // A past day's post (补打卡) leaves today's ring and kit as they are.
             let isBackfill = day.map { $0 != store.postableDays.last } ?? false
-            let outcome = try await store.post(draft, sharedTo: audience, on: day)
+            let outcome = try await store.post(draft, shared: shared, on: day)
             // A 练了's kit goes on after its cheer.
             if draft.kind == .trained, !isBackfill {
                 dressHolds += 1

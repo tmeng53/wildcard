@@ -39,11 +39,14 @@ public struct APIFeedSource: FeedSource {
         }
     }
 
-    public func comment(_ text: CommentText, id: CommentID, replyingTo target: ReplyTarget?, on checkIn: CheckInID)
+    public func comment(
+        _ text: CommentText, id: CommentID, replyingTo target: ReplyTarget?, mentioning mentions: Mentions,
+        on checkIn: CheckInID
+    )
         async throws(FeedError) -> Comment
     {
         do throws(APIError) {
-            return try await api.comment(text, id: id, replyingTo: target, on: checkIn)
+            return try await api.comment(text, id: id, replyingTo: target, mentioning: mentions, on: checkIn)
         } catch {
             throw FeedError(error)
         }
@@ -125,6 +128,14 @@ extension APIFeedSource: CoachSource {
     public func activity(in squad: SquadID, about checkIns: [CheckInID]) async throws(FeedError) -> CoachActivity {
         do throws(APIError) {
             return try await api.coachActivity(of: squad, about: checkIns)
+        } catch {
+            throw FeedError(error)
+        }
+    }
+
+    public func hiredCoach(in squad: SquadID) async throws(FeedError) -> CoachSpeaker? {
+        do throws(APIError) {
+            return try await api.coach(of: squad).hire.map { CoachSpeaker(id: $0.coach.id, name: $0.coach.name) }
         } catch {
             throw FeedError(error)
         }

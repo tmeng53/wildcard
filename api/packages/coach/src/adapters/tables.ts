@@ -71,6 +71,27 @@ export interface CoachFiles {
   wake_id: Int8 | null;
 }
 
+export interface CoachMemberNoteDeliveries {
+  at: Generated<Timestamp>;
+  note_id: Int8;
+}
+
+export interface CoachMemberNoteReads {
+  at: Generated<Timestamp>;
+  note_id: Int8;
+}
+
+export interface CoachMemberNotes {
+  at: Generated<Timestamp>;
+  coach_id: string;
+  day: string;
+  id: Generated<Int8>;
+  member_id: string;
+  squad_id: string;
+  text: string;
+  wake_id: Int8 | null;
+}
+
 export interface CoachNotes {
   at: Generated<Timestamp>;
   coach_id: string;
@@ -104,6 +125,7 @@ export interface CoachSettings {
   coaching: boolean;
   input_micros_per_million: number;
   model: string;
+  note_hour: Generated<number>;
   only_row: Generated<boolean>;
   output_micros_per_million: number;
   rules: string;
@@ -168,6 +190,9 @@ export interface DB {
   coach_answers: CoachAnswers;
   coach_catalog_events: CoachCatalogEvents;
   coach_files: CoachFiles;
+  coach_member_note_deliveries: CoachMemberNoteDeliveries;
+  coach_member_note_reads: CoachMemberNoteReads;
+  coach_member_notes: CoachMemberNotes;
   coach_notes: CoachNotes;
   coach_replies: CoachReplies;
   coach_setting_events: CoachSettingEvents;

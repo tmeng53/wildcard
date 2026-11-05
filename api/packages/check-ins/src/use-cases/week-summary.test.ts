@@ -143,9 +143,16 @@ async function checkedIn(
   return CheckInId.parse(id);
 }
 
-/** A teammate's reaction, written straight to the table; left now unless `at` says when. */
+/** The last default reaction time, so reactions left in a row never share a millisecond. */
+let lastReactedAt = 0;
+
+/**
+ * A teammate's reaction, written straight to the table; left now unless `at` says when. Each one
+ * left now comes strictly after the one before, since a tie would order them by member id.
+ */
 async function reacted(member: MemberId, [checkIn, emoji, at]: [CheckInId, string, Date?]) {
-  const reactedAt = (at ?? new Date()).toISOString();
+  if (at === undefined) lastReactedAt = Math.max(Date.now(), lastReactedAt + 1);
+  const reactedAt = (at ?? new Date(lastReactedAt)).toISOString();
   await sql`insert into public.check_in_reactions (check_in_id, member_id, emoji, reacted_at)
     values (${checkIn}, ${member}, ${emoji}, ${reactedAt})`.execute(db);
 }

@@ -13,6 +13,7 @@ import type { Reaction } from '../domain/reaction.js';
 import type {
   CheckInStore,
   Clock,
+  CoachHired,
   CoachSpoke,
   CommentStore,
   MemberCalendar,
@@ -151,6 +152,8 @@ export function createCheckIns(deps: {
   readonly comments: CommentStore;
   /** Whether a coach spoke under a check-in, so members may reply to it. */
   readonly coachSpoke?: CoachSpoke;
+  /** Whether a squad has a coach hired now, so members may @ it. */
+  readonly coachHired?: CoachHired;
   readonly photos: PhotoFiles;
   /** Which sports a 练了 may name. */
   readonly sports: SportList;

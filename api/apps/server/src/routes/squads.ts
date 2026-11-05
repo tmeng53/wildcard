@@ -141,7 +141,7 @@ const signedInFailures = {
   401: problem('No bearer token, or not a valid one'),
   503: problem('Sign-in can’t be checked right now'),
 };
-const limitReached = `the member is in ${String(SQUADS_PER_MEMBER)} squads already (\`SQUAD_LIMIT_REACHED\`)`;
+const limitReached = 'the member is in a squad already (`SQUAD_LIMIT_REACHED`)';
 const noConsent = 'the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)';
 
 /** What routes anyone can call without signing in need: a rate limit per client. */

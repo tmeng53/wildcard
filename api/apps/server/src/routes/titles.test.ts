@@ -41,6 +41,7 @@ import { memberCalendar } from '../member-calendar.js';
 import {
   adminOn,
   aiConsentOn,
+  alsoJoinedEarlier,
   config,
   scenesOn,
   noJobs,
@@ -360,7 +361,8 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     await profileOf(me, { nickname: '小米' });
     await profileOf(mate, { nickname: '阿杰', jerseyNumber: 7 });
     const squad = await squadOf(me, mate);
-    const elsewhere = await squadOf(mate);
+    const elsewhere = await squadOf(await signUp());
+    await alsoJoinedEarlier(db, { squad: elsewhere, member: mate.userId });
     await award({ squad: squad, weekStart: '2026-10-19', member: mate.userId }, [
       { title: '冷面杀手', speech: '一句话不说', badge: hexagon },
     ]);

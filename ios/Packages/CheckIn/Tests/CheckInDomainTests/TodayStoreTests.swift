@@ -66,7 +66,7 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     let today = store(backend)
     await today.load()
 
-    let outcome = try await today.post(run, sharedTo: [])
+    let outcome = try await today.post(run, shared: false)
     guard case .posted(let saved) = outcome else {
         Issue.record("expected posted, got \(outcome)")
         return
@@ -78,7 +78,7 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(today.home?.today.squadWeek == WeekCount(trainedDays: 14, plannedDays: 22))
     // A 请假条 after it is refused at once, as the server would.
     await #expect(throws: CheckInError.alreadyTrained) {
-        try await today.post(.disclaimer(try Disclaimer("累")), sharedTo: [])
+        try await today.post(.disclaimer(try Disclaimer("累")), shared: false)
     }
 }
 
@@ -87,7 +87,7 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     let today = store(backend)
     await today.load()
 
-    _ = try await today.post(.disclaimer(try Disclaimer("累")), sharedTo: [])
+    _ = try await today.post(.disclaimer(try Disclaimer("累")), shared: false)
     _ = try await today.post(run)
     #expect(today.myStatus == .trained)
     #expect(today.home?.today.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true))
@@ -101,7 +101,7 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     await today.load()
     await backend.set(failure: .notSent)
 
-    #expect(try await today.post(run, sharedTo: []) == .queued)
+    #expect(try await today.post(run, shared: false) == .queued)
     #expect(today.home?.today.squadWeek.trainedDays == 14)
     #expect(today.home?.today.today.everyoneTrained == false)
     #expect(try await today.post(run) == .queued)

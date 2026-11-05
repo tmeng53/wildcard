@@ -41,7 +41,8 @@ export const NoticeEntry = z
       description:
         'What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is ' +
         'in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the ' +
-        'squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened), ' +
+        'squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the ' +
+        'caller its morning note, 便条), `unlocked` (a store, prop or piece opened), ' +
         '`comment` (a teammate commented on the caller’s check-in or replied to them) or ' +
         '`broadcast` (a notice we sent everyone). ' +
         'More kinds may come: skip one you don’t know.',
@@ -77,13 +78,27 @@ export const NoticeEntry = z
           'The caller’s check-in the coach answered (`coachReply`), or the check-in commented ' +
           'on (`comment`).',
       }),
-    coach: z.string().optional().meta({ description: 'The coach who answered (`coachReply`).' }),
-    coachName: z.string().optional().meta({ description: 'Its name now (`coachReply`).' }),
+    coach: z
+      .string()
+      .optional()
+      .meta({ description: 'The coach who answered (`coachReply`) or wrote (`coachNote`).' }),
+    coachName: z
+      .string()
+      .optional()
+      .meta({ description: 'Its name now (`coachReply`, `coachNote`).' }),
     replied: z
       .boolean()
       .optional()
       .meta({ description: 'Whether the coach wrote a line (`coachReply`); else only its emoji.' }),
     emoji: z.string().optional().meta({ description: 'The coach’s emoji (`coachReply`), if any.' }),
+    note: WireNoticeId.optional().meta({
+      description: 'The morning note’s id (`coachNote`): the same as the coach activity’s.',
+    }),
+    day: z.iso
+      .date()
+      .optional()
+      .meta({ description: 'The New York day the morning note was written for (`coachNote`).' }),
+    text: z.string().optional().meta({ description: 'The morning note’s words (`coachNote`).' }),
     unlockKind: z
       .string()
       .optional()
@@ -294,7 +309,9 @@ export async function noticeEntries(
     movers.length === 0
       ? undefined
       : deps.members.squadmates(movers.map((each) => ProfileMember.parse(each))),
-    told.some(({ kind }) => kind === 'coachReply') ? deps.coachNames() : undefined,
+    told.some(({ kind }) => kind === 'coachReply' || kind === 'coachNote')
+      ? deps.coachNames()
+      : undefined,
   ]);
   const names = {
     member: (id: string) => profiles?.get(ProfileMember.parse(id))?.character?.nickname,
@@ -347,6 +364,18 @@ function wireNotice(
         replied,
         ...(coachName === undefined ? {} : { coachName }),
         ...(emoji === null ? {} : { emoji }),
+      };
+    }
+    case 'coachNote': {
+      const { note, coach, day, text } = notice.subject;
+      const coachName = names.coach(coach);
+      return {
+        ...common,
+        note,
+        coach,
+        day,
+        text,
+        ...(coachName === undefined ? {} : { coachName }),
       };
     }
     case 'unlocked':

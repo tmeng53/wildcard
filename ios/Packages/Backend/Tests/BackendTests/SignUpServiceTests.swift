@@ -34,7 +34,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     #expect(squad.name == "周三不练腿")
     #expect(squad.teammates.isEmpty)
     #expect(squad.weekDone == 0)
-    #expect(try await member.api.mySquads().map(\.id) == [squad.id])
+    #expect(try await member.api.mySquad()?.id == squad.id)
     let profile = try #require(try await member.api.me().profile)
     #expect(
         profile.character
@@ -59,7 +59,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     try await APISignUpService(api: creator.api).save(try character("阿杰", body: "shiba", persona: .energetic))
     try await APISignUpService(api: creator.api).agreeToAI()
     let made = try await APISignUpService(api: creator.api).create(named: try SquadName("早八健身"))
-    let code = try InviteCode(try await creator.api.mySquads()[0].inviteCode)
+    let code = try InviteCode(try #require(await creator.api.mySquad()).inviteCode)
     let friend = try await stack.signedInMember()
     let signUp = APISignUpService(api: friend.api)
 
@@ -85,7 +85,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
         ])
     // Joining again, after a lost answer, is the same squad.
     #expect(try await signUp.join(code).id == made.id)
-    #expect(try await friend.api.mySquads().map(\.id) == [made.id])
+    #expect(try await friend.api.mySquad()?.id == made.id)
 }
 
 @Test func savingTheCharacterKeepsTheRestOfTheProfile() async throws {
@@ -112,13 +112,19 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     await #expect(throws: SignUpError.unknownInvite) { try await signUp.join(code) }
 }
 
-@Test func aFourthSquadIsOneTooMany() async throws {
+@Test func aSecondSquadIsOneTooMany() async throws {
     let stack = try LocalStack()
     let signUp = APISignUpService(api: try await stack.signedInMember().api)
     try await signUp.agreeToAI()
-    for name in ["一队", "二队", "三队"] { _ = try await signUp.create(named: try SquadName(name)) }
+    _ = try await signUp.create(named: try SquadName("一队"))
+    let creator = try await stack.signedInMember()
+    let other = APISignUpService(api: creator.api)
+    try await other.agreeToAI()
+    _ = try await other.create(named: try SquadName("二队"))
+    let code = try InviteCode(try #require(await creator.api.mySquad()).inviteCode)
 
-    await #expect(throws: SignUpError.tooManySquads) { try await signUp.create(named: try SquadName("四队")) }
+    await #expect(throws: SignUpError.tooManySquads) { try await signUp.create(named: try SquadName("三队")) }
+    await #expect(throws: SignUpError.tooManySquads) { try await signUp.join(code) }
 }
 
 @Test func noSquadWithoutAgreeingToAI() async throws {
@@ -192,7 +198,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     try await APISignUpService(api: creator.api).save(try character("阿杰", body: "shiba", persona: .energetic))
     try await APISignUpService(api: creator.api).agreeToAI()
     _ = try await APISignUpService(api: creator.api).create(named: try SquadName("早八健身"))
-    let code = try InviteCode(try await creator.api.mySquads()[0].inviteCode)
+    let code = try InviteCode(try #require(await creator.api.mySquad()).inviteCode)
     let friend = try await stack.signedInMember()
     let saved = try character("小林", body: "calico", persona: .shy)
     try await APISignUpService(api: friend.api).save(saved)

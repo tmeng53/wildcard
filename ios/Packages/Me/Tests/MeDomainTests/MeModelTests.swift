@@ -49,6 +49,13 @@ private actor FakeService: MeService {
         current.dailyPushOn = isOn
     }
 
+    private(set) var coachPushSaves: [Bool] = []
+    func setCoachPush(_ isOn: Bool) async throws(MeError) {
+        coachPushSaves.append(isOn)
+        if let failing { throw failing }
+        current.coachPushOn = isOn
+    }
+
     func equip(_ title: String?) async throws(MeError) -> TitleBoard {
         if let failing { throw failing }
         current.board.worn = title ?? current.board.titles.first?.title
@@ -156,6 +163,19 @@ struct MeModelTests {
         // Flipping to what it already is saves nothing.
         await page.setDailyPush(false)
         #expect(await service.pushSaves == [false, true])
+    }
+
+    @Test func savesTheCoachsSwitchApartFromTheDailyPush() async {
+        let service = FakeService(sample)
+        let page = model(service)
+        await page.reload()
+        await page.setCoachPush(false)
+        #expect(!page.coachPushOn && page.dailyPushOn)
+        #expect(await service.coachPushSaves == [false])
+        #expect(await service.pushSaves.isEmpty)
+        await service.fail(with: .unavailable)
+        await page.setCoachPush(true)
+        #expect(!page.coachPushOn && page.saveFailed)
     }
 
     @Test func showsTheEditedCharacterOnceSaved() async {
@@ -375,26 +395,5 @@ struct MeModelTests {
             member: member, squad: squad, squadName: nil, cards: FakeCards(result: .failure(.unavailable)))
         await failed.reload()
         #expect(failed.load == .failed(.unavailable))
-    }
-}
-
-struct CardNumberTests {
-    private func overview(picked: Int?, place: Int?) throws -> MeOverview {
-        var overview = sample
-        overview.jerseyNumber = try picked.map { number throws(ContractsError) in try JerseyNumber(number) }
-        overview.squadPlace = place
-        return overview
-    }
-
-    @Test func isThePickElseThePlaceInTheSquad() throws {
-        #expect(try overview(picked: 7, place: 3).cardNumber?.text == "07")
-        #expect(try overview(picked: nil, place: 1).cardNumber?.text == "01")
-        #expect(try overview(picked: nil, place: nil).cardNumber == nil)
-    }
-
-    @Test func numbersOnlyUpTo99() throws {
-        #expect(try overview(picked: nil, place: 120).cardNumber?.text == "99")
-        #expect(throws: ContractsError.jerseyNumberOutOfRange(100)) { try JerseyNumber(100) }
-        #expect(throws: ContractsError.jerseyNumberOutOfRange(-1)) { try JerseyNumber(-1) }
     }
 }

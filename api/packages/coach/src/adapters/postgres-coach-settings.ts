@@ -24,6 +24,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
         inputMicrosPerMillion: row.input_micros_per_million,
         cachedInputMicrosPerMillion: row.cached_input_micros_per_million,
         outputMicrosPerMillion: row.output_micros_per_million,
+        noteHour: row.note_hour,
       });
     },
 
@@ -35,6 +36,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
         input_micros_per_million: settings.inputMicrosPerMillion,
         cached_input_micros_per_million: settings.cachedInputMicrosPerMillion,
         output_micros_per_million: settings.outputMicrosPerMillion,
+        note_hour: settings.noteHour,
       };
       // One statement: the row changes only when something differs, and the log gets the whole
       // new value exactly when it does.
@@ -44,7 +46,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
             .updateTable('coach_settings')
             .set(columns)
             .where(
-              sql<boolean>`(coaching, model, rules, input_micros_per_million, cached_input_micros_per_million, output_micros_per_million) is distinct from (${columns.coaching}, ${columns.model}, ${columns.rules}, ${columns.input_micros_per_million}::integer, ${columns.cached_input_micros_per_million}::integer, ${columns.output_micros_per_million}::integer)`,
+              sql<boolean>`(coaching, model, rules, input_micros_per_million, cached_input_micros_per_million, output_micros_per_million, note_hour) is distinct from (${columns.coaching}, ${columns.model}, ${columns.rules}, ${columns.input_micros_per_million}::integer, ${columns.cached_input_micros_per_million}::integer, ${columns.output_micros_per_million}::integer, ${columns.note_hour}::integer)`,
             )
             .returning('only_row'),
         )
