@@ -76,6 +76,11 @@ export interface CoachMemberNoteDeliveries {
   note_id: Int8;
 }
 
+export interface CoachMemberNoteReads {
+  at: Generated<Timestamp>;
+  note_id: Int8;
+}
+
 export interface CoachMemberNotes {
   at: Generated<Timestamp>;
   coach_id: string;
@@ -186,6 +191,7 @@ export interface DB {
   coach_catalog_events: CoachCatalogEvents;
   coach_files: CoachFiles;
   coach_member_note_deliveries: CoachMemberNoteDeliveries;
+  coach_member_note_reads: CoachMemberNoteReads;
   coach_member_notes: CoachMemberNotes;
   coach_notes: CoachNotes;
   coach_replies: CoachReplies;

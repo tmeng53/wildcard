@@ -228,12 +228,21 @@ export interface CoachNoteDeliveryStore {
 export interface CoachActivityStore {
   /** The squad's newest 战术板 line, if it has one. */
   latestNote(squad: SquadId): Promise<CoachNoteShown | undefined>;
-  /** The member's newest morning note in the squad delivered since `since`, if any. */
+  /**
+   * The member's newest morning note in the squad delivered since `since` that they haven't put
+   * away yet, if any.
+   */
   memberNote(input: {
     readonly squad: SquadId;
     readonly member: string;
     readonly since: Date;
   }): Promise<CoachMemberNoteShown | undefined>;
+  /** The member put their note away (收下); false when it isn't theirs in the squad. Once. */
+  putAway(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly note: number;
+  }): Promise<boolean>;
   /** The squad's replies to these check-ins, in no order; a check-in with none is left out. */
   replies(squad: SquadId, checkIns: readonly string[]): Promise<readonly CoachReply[]>;
   /** The squad's answers to replies under these check-ins, oldest first. */

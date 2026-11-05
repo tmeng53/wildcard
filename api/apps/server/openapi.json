@@ -3231,6 +3231,26 @@
         ],
         "additionalProperties": false
       },
+      "CoachNotePutAway": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "noteId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "version",
+          "noteId"
+        ],
+        "additionalProperties": false
+      },
       "CoachActivity": {
         "type": "object",
         "properties": {
@@ -8575,6 +8595,99 @@
           },
           "403": {
             "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/coach/notes/{noteId}/put-away": {
+      "put": {
+        "operationId": "putAwayCoachMemberNote",
+        "summary": "Put the caller’s morning note away (收下)",
+        "description": "The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "name": "noteId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Put away",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachNotePutAway"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad or note id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not one of the caller’s notes in this squad (`COACH_NOTE_NOT_FOUND`)",
             "content": {
               "application/problem+json": {
                 "schema": {

@@ -35,3 +35,11 @@ create trigger coach_member_notes_no_truncate
 
 alter table public.coach_member_notes enable row level security;
 alter table public.coach_member_note_deliveries enable row level security;
+
+-- When the member put each note away on 今天 (收下): once a note, so it shows once on any phone.
+create table public.coach_member_note_reads (
+  note_id bigint primary key references public.coach_member_notes (id) on delete cascade,
+  at timestamptz not null default now()
+);
+
+alter table public.coach_member_note_reads enable row level security;

@@ -122,7 +122,7 @@ const app = createApp({
     currentAmong: unused,
   },
   coachHiring: { hire: unused, fire: unused, change: unused, current: unused, offered: unused },
-  coachActivity: { squad: unused, spoke: unused },
+  coachActivity: { squad: unused, putAway: unused, spoke: unused },
   weekSummaryWords: () => Promise.reject(new Error('unused')),
   scenes: createScenes({
     store: createPostgresSceneStore(db),

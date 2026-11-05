@@ -5318,6 +5318,33 @@ extension Components {
                 case coach
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CoachNotePutAway`.
+        public struct CoachNotePutAway: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachNotePutAway/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachNotePutAway/version`.
+            public var version: Components.Schemas.CoachNotePutAway.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CoachNotePutAway/noteId`.
+            public var noteId: Swift.Int
+            /// Creates a new `CoachNotePutAway`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - noteId:
+            public init(
+                version: Components.Schemas.CoachNotePutAway.VersionPayload,
+                noteId: Swift.Int
+            ) {
+                self.version = version
+                self.noteId = noteId
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case noteId
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CoachActivity`.
         public struct CoachActivity: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CoachActivity/version`.

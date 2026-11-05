@@ -21,6 +21,7 @@ import { CoachId } from '../domain/coach.js';
 import { MemberId, SquadId } from '../domain/settings.js';
 import {
   CoachAlreadyHiredError,
+  CoachNoteNotFoundError,
   CoachNotOfferedError,
   CoachSquadNotFoundError,
   NoCoachHiredError,
@@ -454,14 +455,29 @@ describe('the coach', () => {
       expect(
         (await activity.squad({ squad, checkIns: [], reader: leo })).memberNote,
       ).toBeUndefined();
-      // A day and a half later it is gone from 今天 (the bell keeps it).
+      // Put away on one phone, it shows on none; only its own member can.
+      await expect(
+        activity.putAway({ squad, member: leo, note: miaNote.id }),
+      ).rejects.toBeInstanceOf(CoachNoteNotFoundError);
+      await activity.putAway({ squad, member: fixture.mia, note: miaNote.id });
+      await activity.putAway({ squad, member: fixture.mia, note: miaNote.id });
+      expect(
+        (await activity.squad({ squad, checkIns: [], reader: fixture.mia })).memberNote,
+      ).toBeUndefined();
+      // Never put away, it is gone from 今天 once its day is over (the bell keeps it).
+      const leoNote = waiting.find(({ member }) => member === leo);
+      if (leoNote === undefined) throw new Error('no note for leo');
+      await delivery.delivered(leoNote.id);
+      expect((await activity.squad({ squad, checkIns: [], reader: leo })).memberNote?.text).toBe(
+        '今天动一动？走走也算',
+      );
       expect(
         (
           await activity.squad({
             squad,
             checkIns: [],
-            reader: fixture.mia,
-            now: new Date(Date.now() + 37 * 60 * 60_000),
+            reader: leo,
+            now: new Date(Date.now() + 19 * 60 * 60_000),
           })
         ).memberNote,
       ).toBeUndefined();

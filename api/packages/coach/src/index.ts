@@ -54,6 +54,7 @@ export type {
 export {
   CoachAlreadyHiredError,
   CoachNotOfferedError,
+  CoachNoteNotFoundError,
   CoachSquadNotFoundError,
   NoCoachHiredError,
 } from './errors.js';

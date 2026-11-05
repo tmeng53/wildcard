@@ -432,6 +432,15 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         .where('coach_member_notes.squad_id', '=', squad)
         .where('coach_member_notes.member_id', '=', member)
         .where('coach_member_note_deliveries.at', '>=', since)
+        .where(({ not, exists, selectFrom }) =>
+          not(
+            exists(
+              selectFrom('coach_member_note_reads')
+                .select('coach_member_note_reads.note_id')
+                .whereRef('coach_member_note_reads.note_id', '=', 'coach_member_notes.id'),
+            ),
+          ),
+        )
         .orderBy('coach_member_notes.id', 'desc')
         .limit(1)
         .executeTakeFirst();
@@ -443,6 +452,23 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         coach: { id: row.coach_id, name: row.name, look: row.look },
         at: new Date(row.at),
       };
+    },
+
+    async putAway({ squad, member, note }) {
+      // Only the member's own note in that squad; a second time is the first's.
+      await sql`
+        insert into public.coach_member_note_reads (note_id)
+        select id from public.coach_member_notes
+        where id = ${String(note)}::bigint and squad_id = ${squad}::uuid and member_id = ${member}::uuid
+        on conflict (note_id) do nothing`.execute(db);
+      const mine = await db
+        .selectFrom('coach_member_notes')
+        .select('id')
+        .where('id', '=', String(note))
+        .where('squad_id', '=', squad)
+        .where('member_id', '=', member)
+        .executeTakeFirst();
+      return mine !== undefined;
     },
 
     async replies(squad, checkIns) {

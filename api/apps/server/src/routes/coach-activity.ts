@@ -115,6 +115,10 @@ const CoachActivityBody = z
   })
   .openapi('CoachActivity');
 
+const CoachNotePutAway = z
+  .strictObject({ version: bodyVersion(1), noteId: z.int().positive() })
+  .openapi('CoachNotePutAway');
+
 const checkInIds = z
   .string()
   .optional()
@@ -180,54 +184,95 @@ export function coachActivity(deps: {
     },
   });
 
-  return new OpenAPIHono<SignedIn>().openapi(read, async (c) => {
-    const { squadId } = c.req.valid('param');
-    // Throws `SquadNotJoinedError` for anyone not in the squad.
-    await deps.squads.find({ squad: squadId, viewer: MemberId.parse(c.var.caller.userId) });
-    const { note, replies, answers, memberNote } = await deps.coachActivity.squad({
-      squad: CoachSquadId.parse(squadId),
-      checkIns: c.req.valid('query').checkIns,
-      reader: c.var.caller.userId,
-    });
-    return c.json(
-      {
-        version: 1 as const,
-        note:
-          note === undefined
-            ? null
-            : {
-                day: note.day,
-                text: note.text,
-                coach: speaker(note.coach),
-                at: note.at.toISOString(),
-              },
-        replies: replies.map((reply) => ({
-          checkInId: reply.checkIn,
-          coach: speaker(reply.coach),
-          text: reply.text ?? null,
-          emoji: reply.emoji ?? null,
-          at: reply.at.toISOString(),
-        })),
-        answers: answers.map((answer) => ({
-          checkInId: answer.checkIn,
-          commentId: answer.comment,
-          coach: speaker(answer.coach),
-          text: answer.text,
-          at: answer.at.toISOString(),
-        })),
-        ...(memberNote === undefined
-          ? {}
-          : {
-              memberNote: {
-                id: memberNote.id,
-                day: memberNote.day,
-                text: memberNote.text,
-                coach: speaker(memberNote.coach),
-                at: memberNote.at.toISOString(),
-              },
-            }),
+  const putAway = createRoute({
+    method: 'put',
+    path: '/squads/{squadId}/coach/notes/{noteId}/put-away',
+    operationId: 'putAwayCoachMemberNote',
+    summary: 'Put the caller’s morning note away (收下)',
+    description:
+      'The caller read their morning note (便条) on 今天 and put it away, so it no longer comes ' +
+      'back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      params: z.strictObject({
+        squadId: SquadId,
+        noteId: z.coerce.number().int().positive().openapi({ type: 'integer' }),
+      }),
+    },
+    responses: {
+      200: {
+        description: 'Put away',
+        content: { 'application/json': { schema: CoachNotePutAway } },
       },
-      200,
-    );
+      400: problem('Not a valid squad or note id'),
+      401: problem('No bearer token, or not a valid one'),
+      403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
+      404: problem('Not one of the caller’s notes in this squad (`COACH_NOTE_NOT_FOUND`)'),
+      503: problem('Sign-in can’t be checked right now'),
+    },
   });
+
+  return new OpenAPIHono<SignedIn>()
+    .openapi(putAway, async (c) => {
+      const { squadId, noteId } = c.req.valid('param');
+      const member = c.var.caller.userId;
+      await deps.squads.find({ squad: squadId, viewer: MemberId.parse(member) });
+      await deps.coachActivity.putAway({
+        squad: CoachSquadId.parse(squadId),
+        member,
+        note: noteId,
+      });
+      return c.json({ version: 1 as const, noteId }, 200);
+    })
+    .openapi(read, async (c) => {
+      const { squadId } = c.req.valid('param');
+      // Throws `SquadNotJoinedError` for anyone not in the squad.
+      await deps.squads.find({ squad: squadId, viewer: MemberId.parse(c.var.caller.userId) });
+      const { note, replies, answers, memberNote } = await deps.coachActivity.squad({
+        squad: CoachSquadId.parse(squadId),
+        checkIns: c.req.valid('query').checkIns,
+        reader: c.var.caller.userId,
+      });
+      return c.json(
+        {
+          version: 1 as const,
+          note:
+            note === undefined
+              ? null
+              : {
+                  day: note.day,
+                  text: note.text,
+                  coach: speaker(note.coach),
+                  at: note.at.toISOString(),
+                },
+          replies: replies.map((reply) => ({
+            checkInId: reply.checkIn,
+            coach: speaker(reply.coach),
+            text: reply.text ?? null,
+            emoji: reply.emoji ?? null,
+            at: reply.at.toISOString(),
+          })),
+          answers: answers.map((answer) => ({
+            checkInId: answer.checkIn,
+            commentId: answer.comment,
+            coach: speaker(answer.coach),
+            text: answer.text,
+            at: answer.at.toISOString(),
+          })),
+          ...(memberNote === undefined
+            ? {}
+            : {
+                memberNote: {
+                  id: memberNote.id,
+                  day: memberNote.day,
+                  text: memberNote.text,
+                  coach: speaker(memberNote.coach),
+                  at: memberNote.at.toISOString(),
+                },
+              }),
+        },
+        200,
+      );
+    });
 }

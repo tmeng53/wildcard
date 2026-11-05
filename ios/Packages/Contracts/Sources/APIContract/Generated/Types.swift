@@ -292,6 +292,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /squads/{squadId}/coach`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/delete(fireSquadCoach)`.
     func fireSquadCoach(_ input: Operations.FireSquadCoach.Input) async throws -> Operations.FireSquadCoach.Output
+    /// Put the caller’s morning note away (收下)
+    ///
+    /// The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/put-away`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/put-away/put(putAwayCoachMemberNote)`.
+    func putAwayCoachMemberNote(_ input: Operations.PutAwayCoachMemberNote.Input) async throws -> Operations.PutAwayCoachMemberNote.Output
     /// What the squad’s coach said (战术板, replies and reactions)
     ///
     /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note. Only for the squad’s members. They stay after the squad fires its coach.
@@ -1027,6 +1034,21 @@ extension APIProtocol {
         headers: Operations.FireSquadCoach.Input.Headers = .init()
     ) async throws -> Operations.FireSquadCoach.Output {
         try await fireSquadCoach(Operations.FireSquadCoach.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Put the caller’s morning note away (收下)
+    ///
+    /// The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/put-away`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/put-away/put(putAwayCoachMemberNote)`.
+    public func putAwayCoachMemberNote(
+        path: Operations.PutAwayCoachMemberNote.Input.Path,
+        headers: Operations.PutAwayCoachMemberNote.Input.Headers = .init()
+    ) async throws -> Operations.PutAwayCoachMemberNote.Output {
+        try await putAwayCoachMemberNote(Operations.PutAwayCoachMemberNote.Input(
             path: path,
             headers: headers
         ))
