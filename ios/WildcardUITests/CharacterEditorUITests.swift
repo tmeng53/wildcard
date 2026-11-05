@@ -40,8 +40,8 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "21-editor-hair")
     }
 
-    /// 穿搭 is 我的衣橱: what the member owns by slot (WARM-UP's starters here), no stores and no
-    /// locks; a hoodie in the third color, a cap and the belt bag, then the cap off again.
+    /// 穿搭 is 我的衣橱: what the member owns, one slot at a time (WARM-UP's starters here), no stores
+    /// and no locks; a hoodie in the third color, a cap and the belt bag, then the cap off again.
     func testDressingFromTheWardrobe() {
         let app = launch(language: "zh-Hans")
         XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: Self.wait), "the editor never appeared")
@@ -60,20 +60,26 @@ final class CharacterEditorUITests: XCTestCase {
         waitUntilSelected(app.buttons["editor.swatch.top.2"], "the top swatch didn't select")
         settle()
         keepScreenshot(named: "22-editor-store")
-        // Hats and accessories come after the tops, bottoms and shoes, below the fold; a second
-        // tap on a hat takes it off.
+        // One slot shows at a time: 上衣 only, until 头饰 is picked on the wardrobe's bar.
         let cap = app.buttons["editor.tile.hat.warmup-cap"]
+        XCTAssertFalse(cap.exists, "头饰 shows with 上衣")
+        app.buttons["editor.wardrobe.hat"].tap()
+        XCTAssertTrue(cap.waitForExistence(timeout: Self.wait), "no 棒球帽 under 头饰")
+        XCTAssertFalse(hoodie.exists, "上衣 still shows under 头饰")
         scrollUntilHittable(cap, in: app)
         cap.tap()
         waitUntilSelected(cap, "picking 棒球帽 didn't select it")
-        // Its colors stay pinned above the wardrobe, though it has scrolled down to it.
-        XCTAssertTrue(app.buttons["editor.swatch.hat.0"].isHittable, "the hat's colors scrolled out of view")
+        XCTAssertTrue(app.buttons["editor.swatch.hat.0"].isHittable, "the hat's colors aren't above the wardrobe")
         let waistbag = app.buttons["editor.tile.acc.warmup-waistbag"]
+        app.buttons["editor.wardrobe.acc"].tap()
+        XCTAssertTrue(waistbag.waitForExistence(timeout: Self.wait), "no 运动腰包 under 配饰")
         scrollUntilHittable(waistbag, in: app)
         waistbag.tap()
         waitUntilSelected(waistbag, "picking 运动腰包 didn't select it")
         settle()
         keepScreenshot(named: "22-editor-outfit")
+        // A second tap on the cap takes it off.
+        app.buttons["editor.wardrobe.hat"].tap()
         scrollUntilHittable(cap, in: app)
         cap.tap()
         waitFor(cap, "isSelected == false", "a second tap didn't take the cap off")
