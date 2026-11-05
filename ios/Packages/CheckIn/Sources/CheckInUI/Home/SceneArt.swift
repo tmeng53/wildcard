@@ -48,15 +48,18 @@ public struct SceneArt: View {
 
 extension SceneArt {
     /// The picture for `scene` and `layer`: the one an admin put (`scenes/<scene>-<layer>@3x.png`,
-    /// downloaded by `Backend`'s `ArtDownloads`), else the one this build ships. Read from disk
-    /// once per launch, so a newer download shows from the next launch.
+    /// downloaded by `Backend`'s `ArtDownloads`), else the one this build ships (the gym's, for a
+    /// scene added since). Read from disk once per launch, so a newer download shows from the
+    /// next launch.
     static func picture(_ scene: SceneTheme, _ layer: Layer) -> UIImage {
         let name = "\(scene.rawValue)-\(layer.name)"
         if let kept = pictures.withLock({ $0[name] }) { return kept }
         let downloaded = ArtTree.downloadedFile("\(name)@3x.png", in: "scenes")
             .flatMap { try? Data(contentsOf: $0) }
             .flatMap { UIImage(data: $0, scale: 3) }
-        let picture = downloaded ?? UIImage(named: name, in: .module, with: nil) ?? UIImage()
+        // A scene added since this build, with no picture put yet, stands on the gym's.
+        let bundled = UIImage(named: "\(scene.base.rawValue)-\(layer.name)", in: .module, with: nil)
+        let picture = downloaded ?? bundled ?? UIImage()
         pictures.withLock { $0[name] = picture }
         return picture
     }

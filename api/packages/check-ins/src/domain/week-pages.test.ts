@@ -2,11 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { podiumOf } from './week-pages.js';
 
-/** A member who trained `days[0]` days of a plan of `days[1]` (5 unless given). */
+/** A member who trained `days[0]` days of a plan of `days[1]` (5 unless given), finishing it at `days[2]`. */
 const member = (
   id: string,
-  [trainedDays, plannedDays = 5]: readonly [number, number?],
-  planFinishedAt?: string,
+  [trainedDays, plannedDays = 5, planFinishedAt]: readonly [number, number?, string?],
 ) => ({
   member: id,
   trainedDays,
@@ -62,10 +61,10 @@ describe('the podium', () => {
   it('gives a tie to whoever finished their own plan first, not whoever joined first', () => {
     expect(
       podiumOf([
-        member('captain', [3, 3], '2026-10-23T18:00:00.000Z'),
-        member('second', [3, 3], '2026-10-21T09:00:00.000Z'),
+        member('captain', [3, 3, '2026-10-23T18:00:00.000Z']),
+        member('second', [3, 3, '2026-10-21T09:00:00.000Z']),
         member('third', [3, 5]),
-        member('fourth', [3, 3], '2026-10-22T09:00:00.000Z'),
+        member('fourth', [3, 3, '2026-10-22T09:00:00.000Z']),
       ]),
     ).toStrictEqual({
       champion: 'second',
@@ -79,8 +78,8 @@ describe('the podium', () => {
     // The champion trained more days: no tie to break.
     expect(
       podiumOf([
-        member('a', [4, 3], '2026-10-23T18:00:00.000Z'),
-        member('b', [3, 3], '2026-10-20T09:00:00.000Z'),
+        member('a', [4, 3, '2026-10-23T18:00:00.000Z']),
+        member('b', [3, 3, '2026-10-20T09:00:00.000Z']),
       ]),
     ).toMatchObject({ champion: 'a', sides: ['b'], tieBrokenByPlan: false });
     // Nobody finished: join order, and nothing to say about the plan.
@@ -95,7 +94,7 @@ describe('the podium', () => {
         member('a', [3, 5]),
         member('b', [3, 5]),
         member('c', [3, 5]),
-        member('d', [3, 3], '2026-10-22T09:00:00.000Z'),
+        member('d', [3, 3, '2026-10-22T09:00:00.000Z']),
       ]),
     ).toMatchObject({ champion: 'd', sides: ['a', 'b'], tieBrokenByPlan: true });
   });

@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    "customConditions": ["@wildcard/source"]
+  },
+  "include": ["packages/*/src", "apps/*/src", "apps/*/scripts"]
+}
