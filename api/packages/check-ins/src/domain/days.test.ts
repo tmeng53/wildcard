@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CheckInId, Disclaimer, Meal, MemberId, Training, type CheckInRecord } from './check-in.js';
-import { latestMealOn, trainedDays, trainingOn, weekOf } from './days.js';
+import { latestMealOn, planFinishedAt, trainedDays, trainingOn, weekOf } from './days.js';
 
 const at = (iso: string) => new Date(iso);
 const member = MemberId.parse('00000000-0000-4000-8000-000000000001');
@@ -86,5 +86,33 @@ describe('a day’s check-ins', () => {
       checkIn('trained', { day: '2026-10-18' }),
     ];
     expect(trainedDays(checkIns, week)).toBe(2);
+  });
+});
+
+describe('when a plan was finished', () => {
+  const { days } = weekOf('2026-10-21');
+
+  it('is the moment the last planned day got its first 练了', () => {
+    const checkIns = [
+      checkIn('trained', { day: '2026-10-19' }),
+      checkIn('trained', { day: '2026-10-19', createdAt: '2026-10-19T08:00:00.000Z' }),
+      checkIn('disclaimer', { day: '2026-10-20' }),
+      checkIn('trained', { day: '2026-10-21' }),
+      checkIn('trained', { day: '2026-10-23' }),
+    ];
+    // Three planned days: the 19th (first made 08:00), the 21st and the 23rd.
+    expect(planFinishedAt(checkIns, days, 3)).toStrictEqual(at('2026-10-23T18:00:00.000Z'));
+    // Two planned: done once the 21st was.
+    expect(planFinishedAt(checkIns, days, 2)).toStrictEqual(at('2026-10-21T18:00:00.000Z'));
+  });
+
+  it('counts a day made up later by when it was posted, and is missing while short or without a plan', () => {
+    const checkIns = [
+      checkIn('trained', { day: '2026-10-19' }),
+      checkIn('trained', { day: '2026-10-20', createdAt: '2026-10-22T07:00:00.000Z' }),
+    ];
+    expect(planFinishedAt(checkIns, days, 2)).toStrictEqual(at('2026-10-22T07:00:00.000Z'));
+    expect(planFinishedAt(checkIns, days, 3)).toBeUndefined();
+    expect(planFinishedAt(checkIns, days, 0)).toBeUndefined();
   });
 });

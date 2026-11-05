@@ -122,7 +122,8 @@ extension WeekStory {
                 planDone.count == wire.planDone.count
             else { return nil }
             podium = Podium(
-                champion: champion, sides: sides, planDone: Set(planDone), speech: first(champion)?.speech,
+                champion: champion, sides: sides, planDone: Set(planDone), tieBrokenByPlan: wire.tieBrokenByPlan ?? false,
+                speech: first(champion)?.speech,
                 championMove: first(champion)?.move, sideMove: sides.first.flatMap(first)?.move)
         }
         var bestDisclaimer: BestDisclaimer?

@@ -1,4 +1,5 @@
 import type { CheckInId, CheckInRecord, LocalDay, MemberId } from './check-in.js';
+import { byTrainedThenFinished, planFinishedAt } from './days.js';
 import {
   statsOf,
   weekAwards,
@@ -35,6 +36,8 @@ export interface MemberPage {
   readonly reactionsReceived: number;
   /** Whether they checked in anything that week. */
   readonly checkedIn: boolean;
+  /** When they finished their plan (ISO time), if they did: it breaks ties on the podium. */
+  readonly planFinishedAt?: string;
 }
 
 export interface WeekPages {
@@ -62,12 +65,14 @@ const PODIUM_MAX = 3;
 
 /** 领奖台: who stands on it, and which of them trained every day they planned. */
 export interface Podium<Member> {
-  /** The most days trained, in the middle with the crown; the earliest to join on a tie. */
+  /** The most days trained, in the middle with the crown; on a tie whoever finished their plan first. */
   readonly champion: Member;
-  /** Up to 2 next by days trained (the earliest to join on a tie), left then right. */
+  /** Up to 2 next by days trained (ties as for the champion), left then right. */
   readonly sides: readonly Member[];
   /** Those on it who trained at least as many days as they planned (练够计划). */
   readonly planDone: readonly Member[];
+  /** Whether finishing the plan first decided a place on it or the last place just off it. */
+  readonly tieBrokenByPlan: boolean;
 }
 
 /**
@@ -80,15 +85,30 @@ export function podiumOf<Member>(
     readonly member: Member;
     readonly trainedDays: number;
     readonly plannedDays: number;
+    /** When they finished their plan (an ISO time), if they did. */
+    readonly planFinishedAt?: string | undefined;
   }[],
 ): Podium<Member> | undefined {
-  const top = members
+  const ranked = members
     .filter(({ trainedDays }) => trainedDays > 0)
-    .toSorted((a, b) => b.trainedDays - a.trainedDays)
-    .slice(0, PODIUM_MAX);
+    .toSorted(byTrainedThenFinished);
+  const top = ranked.slice(0, PODIUM_MAX);
   const [champion, ...sides] = top;
   if (champion === undefined) return undefined;
+  // A place was decided by the plan when two neighbours trained as many days and the higher one
+  // finished its plan first (or the lower one never did).
+  const tieBrokenByPlan = ranked.slice(0, PODIUM_MAX + 1).some((each, index) => {
+    const next = ranked[index + 1];
+    return (
+      index < PODIUM_MAX &&
+      next !== undefined &&
+      each.trainedDays === next.trainedDays &&
+      each.planFinishedAt !== undefined &&
+      byTrainedThenFinished(each, next) < 0
+    );
+  });
   return {
+    tieBrokenByPlan,
     champion: champion.member,
     sides: sides.map(({ member }) => member),
     planDone: top
@@ -113,6 +133,7 @@ export function weekPagesOf(
     const stats = statsOf(facts, [each]);
     const stat = (kind: StatKind) => count(stats, kind);
     const plan = plans.get(member) ?? [];
+    const finished = planFinishedAt(checkIns, facts.week.days, stat('plannedDays'));
     return {
       member,
       plannedDays: stat('plannedDays'),
@@ -122,6 +143,7 @@ export function weekPagesOf(
       cheatMeals: stat('cheatMeals'),
       reactionsReceived: stat('reactionsReceived'),
       checkedIn: checkIns.length > 0,
+      ...(finished === undefined ? {} : { planFinishedAt: finished.toISOString() }),
     };
   });
 
