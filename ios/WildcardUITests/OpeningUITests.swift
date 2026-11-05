@@ -16,9 +16,9 @@ final class OpeningUITests: XCTestCase {
             "-today.cardPage", "0", "-uitest-takeover", "trot", "-opening.played.trot", "never",
         ]
         app.launch()
-        let opening = app.descendants(matching: .any).matching(identifier: "today.opening").firstMatch
-        XCTAssertTrue(opening.waitForExistence(timeout: Self.wait), "the opening never played")
-        XCTAssertTrue(app.staticTexts["感恩节快乐"].waitForExistence(timeout: Self.wait), "no title")
+        // The overlay itself isn't an accessibility element; its words are.
+        let title = app.staticTexts["感恩节快乐"]
+        XCTAssertTrue(title.waitForExistence(timeout: Self.wait), "the opening never played")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "81-opening-thanksgiving-playing")
         let enter = app.buttons["进场"]
@@ -32,7 +32,7 @@ final class OpeningUITests: XCTestCase {
         enter.tap()
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "今天 never came back after 进场")
-        XCTAssertFalse(opening.exists, "the opening stayed up after 进场")
+        XCTAssertFalse(title.exists, "the opening stayed up after 进场")
         Thread.sleep(forTimeInterval: 2.5)
         keepScreenshot(named: "83-opening-thanksgiving-entered")
     }
