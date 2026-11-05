@@ -57,6 +57,8 @@ struct MainTabs: View {
     @State private var squadRevealing = false
     /// 我的动态, open from 我 in its place.
     @State private var wall: PostWallStore?
+    /// 我的动态's tile on 我: the wall's first page, read again each time 我 shows.
+    @State private var newestPosts: PostWallStore
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
     /// A player's card, opened from a tap on them on the home or their row on 小队,
@@ -77,6 +79,7 @@ struct MainTabs: View {
         _selection = selection
         self.leftSquad = leftSquad
         _inbox = State(initialValue: NoticeInbox(source: notices))
+        _newestPosts = State(initialValue: PostWallStore(source: myPosts))
         _wardrobe = State(initialValue: Wardrobe(profile: profile) { today.home?.member.description })
     }
 
@@ -282,10 +285,11 @@ struct MainTabs: View {
                     destinations: MeDestinations(
                         editCharacter: wardrobe.editCharacter,
                         schedule: { showsSchedule = true },
-                        myPosts: { wall = PostWallStore(source: myPosts) },
                         street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                         privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
-                )
+                ) {
+                    MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
+                }
             }
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wall != nil)

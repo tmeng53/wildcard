@@ -1,3 +1,4 @@
+import APIContract
 import AvatarArt
 import AvatarDomain
 import Contracts
@@ -9,11 +10,16 @@ import MeDomain
 public struct APIMeService: MeService {
     private let api: WildcardAPI
     private let beforeDeleting: @Sendable () async -> Void
+    private let now: @Sendable () -> Date
 
     /// `beforeDeleting` runs once the member has confirmed, before the account goes: the app
-    /// unregisters the phone from push there, while its session still works.
-    public init(api: WildcardAPI, beforeDeleting: @escaping @Sendable () async -> Void = {}) {
-        (self.api, self.beforeDeleting) = (api, beforeDeleting)
+    /// unregisters the phone from push there, while its session still works. `now` says which
+    /// week is this week, on the member's own clock.
+    public init(
+        api: WildcardAPI, beforeDeleting: @escaping @Sendable () async -> Void = {},
+        now: @escaping @Sendable () -> Date = Date.init
+    ) {
+        (self.api, self.beforeDeleting, self.now) = (api, beforeDeleting, now)
     }
 
     public func overview() async throws(MeError) -> MeOverview {
@@ -31,6 +37,8 @@ public struct APIMeService: MeService {
             // Unlocks must load: an empty list would lock away stores and props the member earned.
             let standing = try await api.unlockStanding()
             let dailyPushOn = try await api.dailyPushOn()
+            // The 出赛表 tile's days: the tile shows the count alone when they don't load.
+            let glance = try? await weekGlance(in: member.profile?.timeZone ?? .current)
             return MeOverview(
                 character: MeCharacter(
                     nickname: character?.nickname.text ?? "",
@@ -46,8 +54,28 @@ public struct APIMeService: MeService {
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
                 board: board,
                 unlocks: standing.unlocks,
-                stock: standing.stock, claimed: standing.claimed)
+                stock: standing.stock, claimed: standing.claimed, weekGlance: glance)
         }
+    }
+
+    /// This week's plan and the days with a 练了, numbered as the 出赛表 numbers weeks.
+    private func weekGlance(in timeZone: TimeZone) async throws(APIError) -> WeekGlance {
+        let today = LocalDay(at: now(), in: timeZone)
+        let monday = today.weekStart
+        let wire = try await api.weeklyPlanWire(weekStart: monday)
+        let plan = try api.read { () throws(ContractsError) in try WeeklyPlan(wire) }
+        let firstWeek = try wire.firstWeek.map { text throws(APIError) in
+            try api.read { () throws(ContractsError) in try LocalDay(text) }
+        }
+        let checkIns = try await api.myCheckIns(from: monday, through: monday.adding(days: 6))
+        let trained = Set(
+            checkIns.compactMap { checkIn -> Int? in
+                guard case .trained = checkIn.entry else { return nil }
+                return checkIn.day.weekday - 1
+            })
+        return WeekGlance(
+            number: monday.weekNumber(since: firstWeek ?? monday), plan: plan.days, trainedDays: trained,
+            today: today.weekday - 1)
     }
 
     /// Saves the card's number on the profile, keeping the rest of it.

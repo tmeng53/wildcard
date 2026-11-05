@@ -30,6 +30,55 @@ public struct MeCharacter: Hashable, Sendable {
     }
 }
 
+/// This week at a glance, for 我's 出赛表 tile: the week's number and each day's mark.
+public struct WeekGlance: Hashable, Sendable {
+    /// How a day of the week looks on the tile.
+    public enum Mark: Hashable, Sendable {
+        /// A 练了 was posted that day.
+        case trained
+        /// A training day in the plan with no 练了 (yet, or not that day: never marked as missed).
+        case planned
+        /// A rest day in the plan.
+        case rest
+    }
+
+    /// One day, Monday first.
+    public struct Day: Hashable, Sendable {
+        public var mark: Mark
+        public var isToday: Bool
+
+        public init(mark: Mark, isToday: Bool) {
+            (self.mark, self.isToday) = (mark, isToday)
+        }
+    }
+
+    /// The week's number on the 出赛表, the week the member joined being 1 (W45).
+    public var number: Int
+    /// Seven days, Monday first.
+    public var days: [Day]
+
+    public init(number: Int, days: [Day]) {
+        (self.number, self.days) = (number, days)
+    }
+
+    /// The week as the plan has it and the days that had a 练了: a 练了 marks its day whatever
+    /// the plan said.
+    public init(number: Int, plan: [PlanDay], trainedDays: Set<Int>, today: Int?) {
+        self.number = number
+        days = plan.enumerated().map { index, day in
+            let mark: Mark =
+                if trainedDays.contains(index) {
+                    .trained
+                } else if case .rest = day {
+                    .rest
+                } else {
+                    .planned
+                }
+            return Day(mark: mark, isToday: index == today)
+        }
+    }
+}
+
 /// What 我 shows: the character, the player card's records, this week, the squad and the
 /// notification switch.
 public struct MeOverview: Hashable, Sendable {
@@ -40,6 +89,9 @@ public struct MeOverview: Hashable, Sendable {
     public var counts: LifetimeCounts
     /// 本周 x/y; nil while the member has no plan for the week.
     public var week: WeekCount?
+    /// This week's days for the 出赛表 tile; nil when they couldn't be read (the tile then shows
+    /// the count alone).
+    public var weekGlance: WeekGlance?
     /// Nil before the member is in a squad. The app shows one squad, though the API allows three.
     public var squadName: String?
     /// The one daily push at 6pm with the squad's progress.
@@ -62,8 +114,9 @@ public struct MeOverview: Hashable, Sendable {
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
         dailyPushOn: Bool, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil, board: TitleBoard = .empty,
-        unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = []
+        unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], weekGlance: WeekGlance? = nil
     ) {
+        self.weekGlance = weekGlance
         self.character = character
         self.joinedAt = joinedAt
         self.counts = counts

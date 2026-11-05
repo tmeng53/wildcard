@@ -100,6 +100,10 @@ public enum TypeRamp {
     public static let scoreHero = TypeStyle(face: .scoreboard(.extraBold), size: 60, anchor: .largeTitle)
     /// A number on a card.
     public static let scoreCard = TypeStyle(face: .scoreboard(.extraBold), size: 32, anchor: .title)
+    /// A week's number on a `GlanceTile` (W45): `scoreCard`'s size, italic and a little tight, as
+    /// the 出赛表 poster writes it.
+    public static let scoreWeek = TypeStyle(
+        face: .scoreboard(.extraBoldItalic), size: 32, tracking: -1, anchor: .title)
     /// A number in a row.
     public static let scoreInline = TypeStyle(face: .scoreboard(.extraBold), size: 22, anchor: .title3)
     /// A count beside its label in a row of counts (健康餐 3): 18.
@@ -140,7 +144,7 @@ public enum TypeRamp {
         ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("caption", caption),
         ("scoreStory", scoreStory), ("scoreEnding", scoreEnding),
         ("scoreHero", scoreHero),
-        ("scoreCard", scoreCard),
+        ("scoreCard", scoreCard), ("scoreWeek", scoreWeek),
         ("scoreInline", scoreInline), ("scoreSmall", scoreSmall), ("scoreCaption", scoreCaption),
         ("ticketDate", ticketDate), ("posterWeek", posterWeek), ("launchWord", launchWord), ("cardTitle", cardTitle),
         ("badgeTitle", badgeTitle),
