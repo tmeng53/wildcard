@@ -87,7 +87,10 @@ const AWARDS: Record<AwardKind, AwardRule> = {
         member,
         value,
         trainedDays: value,
-        planFinishedAt: planFinishedAt(member.checkIns, facts.week.days, member.plannedDays),
+        planFinishedAt: planFinishedAt(member.checkIns, {
+          days: facts.week.days,
+          plannedDays: member.plannedDays,
+        }),
       }))
       .toSorted(byTrainedThenFinished);
     return first === undefined ? [] : [{ member: first.member.member, value: first.value }];
