@@ -23,24 +23,37 @@ public struct MemberHead: View {
         case none
     }
 
+    /// Whose canvas the player draws on, which sets where the face is: a member's rig or a
+    /// coach's own flat one. A coach also takes the coach's rim unless another is given.
+    public enum Figure: Sendable {
+        case member
+        case coach
+    }
+
     @Environment(\.sceneTheme) private var theme
     private let player: CharacterPlayer?
     private let size: Double
+    private let figure: Figure
     private let rim: Rim
     private let status: RingStatus?
     private let emoji: String?
     private let showsCoachTag: Bool
 
+    /// The face on a member's 240 by 320 canvas.
+    static let memberFace = CharacterHead.face
+    /// The head on a coach's 240 by 320 canvas.
+    static let coachFace = CGRect(x: 50, y: 46, width: 140, height: 140)
     /// The coach's graphite ring.
     private static let coachRing: Double = 1.5
 
     public init(
-        player: CharacterPlayer?, size: Double, rim: Rim = .mist, status: RingStatus? = nil,
+        player: CharacterPlayer?, size: Double, figure: Figure = .member, rim: Rim? = nil, status: RingStatus? = nil,
         emoji: String? = nil, showsCoachTag: Bool = false
     ) {
         self.player = player
         self.size = size
-        self.rim = rim
+        self.figure = figure
+        self.rim = rim ?? (figure == .coach ? .coach : .mist)
         self.status = status
         self.emoji = emoji
         self.showsCoachTag = showsCoachTag
@@ -87,7 +100,7 @@ public struct MemberHead: View {
             let frame = player.restFrame
             CharacterCanvas(
                 drawing: frame.drawing, placements: frame.placements,
-                crop: CharacterHead.face
+                crop: figure == .coach ? Self.coachFace : Self.memberFace
             )
             .aspectRatio(1, contentMode: .fit)
         }

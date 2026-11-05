@@ -23,7 +23,7 @@ struct AppRoot: View {
         ZStack {
             switch app.screen {
             case .starting:
-                LaunchCover()
+                LaunchCover(start: app.coverSince)
                     // Over the screen that replaces it while it fades.
                     .zIndex(1)
                     .transition(.opacity)
@@ -62,7 +62,7 @@ struct AppRoot: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(.easeOut(duration: TicketRock.fadeOut), value: app.isStarting)
         // Signing in on the open screen: the tickets rock over it until the next screen opens.
-        .loadingCover(app.isSigningIn) { LaunchCover() }
+        .loadingCover(app.isSigningIn) { LaunchCover(start: app.coverSince) }
         .alert(
             Text("你已不在 \(app.lostSquadName ?? "") 小队"),
             isPresented: Binding(

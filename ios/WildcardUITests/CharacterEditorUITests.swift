@@ -257,7 +257,8 @@ final class CharacterEditorUITests: XCTestCase {
         // Clear of 确认 too: a tile under the bottom bar is "hittable" but the tap lands on the button.
         let done = app.buttons["editor.done"]
         func inView() -> Bool { element.exists && element.isHittable && element.frame.maxY < done.frame.minY }
-        for _ in 0..<12 where !inView() {
+        // The rack holds every store's pieces now, so the hat row can sit a long way down.
+        for _ in 0..<24 where !inView() {
             start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
         XCTAssertTrue(inView(), "\(element.identifier) never scrolled into view")

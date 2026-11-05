@@ -7,7 +7,13 @@ import {
   storedPathOf,
   type StoredPath,
 } from '../domain/memory.js';
-import { instructionsOf, taskOf, type CoachChatTalk, type CoachThread } from '../domain/prompt.js';
+import {
+  instructionsOf,
+  taskOf,
+  type CoachChatTalk,
+  type CoachThread,
+  type DayTalk,
+} from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
 import type { CoachSettings, SquadId } from '../domain/settings.js';
 import { factsText } from '../domain/member-facts.js';
@@ -49,6 +55,9 @@ const RECENT_NOTES = 7;
 
 /** How many of its last reactions a coach sees on a check-in's wake, so it varies them. */
 const RECENT_EMOJI = 8;
+
+/** How far back the daily wake reads the talk under check-ins, to remember from it. */
+const TALK_WINDOW_MS = 24 * 60 * 60_000;
 
 /** The file a squad's coach starts from: its name and who is in it. */
 const SEEDED = 'squad.md';
@@ -381,6 +390,7 @@ async function runWake(
         wake.reason.kind === 'checkIn'
           ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
           : [],
+      talks: daily ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
     });
     if (task === undefined) {
       await deps.stores.wakes.finish(wake.id);
@@ -571,6 +581,57 @@ async function saveDraft(
     if (await stores.answers.save({ ...answer, wake: wake.id })) return { answer };
   }
   return {};
+}
+
+/**
+ * On a daily wake, what was said under check-ins over the last day (members' comments, and the
+ * coach's reply and answers), so the coach can remember what it missed while talking. Looks at
+ * this week and the one before, since Monday's wake looks back at Sunday.
+ */
+async function talksOf(
+  deps: CoachWakesDependencies,
+  {
+    squad,
+    week,
+    coach,
+    now,
+  }: {
+    readonly squad: SquadId;
+    readonly week: SquadWeek;
+    readonly coach: Coach;
+    readonly now: Date;
+  },
+): Promise<readonly DayTalk[]> {
+  const since = now.getTime() - TALK_WINDOW_MS;
+  const before = await weekOf(deps, {
+    squad,
+    weekStart: weekStartOf(dayBefore(week.weekStart, 7)),
+  });
+  const talks: DayTalk[] = [];
+  const checkIns = new Map([...before.checkIns, ...week.checkIns].map((each) => [each.id, each]));
+  for (const checkIn of checkIns.values()) {
+    const lately = checkIn.comments.filter(({ at }) => at.getTime() >= since);
+    if (lately.length === 0) continue;
+    const reply = await deps.stores.replies.find(squad, checkIn.id);
+    const answers = new Map(
+      (await deps.stores.answers.ofCheckIn(squad, checkIn.id)).map(({ comment, text }) => [
+        comment,
+        text,
+      ]),
+    );
+    talks.push({
+      checkIn,
+      ...(reply?.coach === coach.id && reply.text !== undefined ? { reply: reply.text } : {}),
+      said: lately.flatMap(({ id, member, text }) => {
+        const answer = answers.get(id);
+        return [
+          { member, text },
+          ...(answer === undefined ? [] : [{ member: undefined, text: answer }]),
+        ];
+      }),
+    });
+  }
+  return talks;
 }
 
 /**
