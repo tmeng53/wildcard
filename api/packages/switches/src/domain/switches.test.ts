@@ -55,14 +55,16 @@ describe('a switch as it was set', () => {
   const was = wasOn(history, [{ ...scheduled, mode: 'off' }]);
 
   it('counts what came before a change by hand as it was set then', () => {
-    expect(was('winter', new Date('2026-11-20T12:00:00Z'), '2026-11-20')).toBe(true);
-    expect(was('winter', new Date('2026-12-16T12:00:00Z'), '2026-12-16')).toBe(false);
+    expect(was('winter', { at: new Date('2026-11-20T12:00:00Z'), day: '2026-11-20' })).toBe(true);
+    expect(was('winter', { at: new Date('2026-12-16T12:00:00Z'), day: '2026-12-16' })).toBe(false);
   });
 
   it('counts before its first change as its first setting, and with no log as it is now', () => {
-    expect(was('winter', new Date('2026-01-10T12:00:00Z'), '2026-01-10')).toBe(true);
-    expect(was('summer', new Date('2026-07-10T12:00:00Z'), '2026-07-10')).toBe(false);
+    expect(was('winter', { at: new Date('2026-01-10T12:00:00Z'), day: '2026-01-10' })).toBe(true);
+    expect(was('summer', { at: new Date('2026-07-10T12:00:00Z'), day: '2026-07-10' })).toBe(false);
     const unlogged = wasOn([], [{ id: 'summer', label: 'Summer', mode: 'on' }]);
-    expect(unlogged('summer', new Date('2026-07-10T12:00:00Z'), '2026-07-10')).toBe(true);
+    expect(unlogged('summer', { at: new Date('2026-07-10T12:00:00Z'), day: '2026-07-10' })).toBe(
+      true,
+    );
   });
 });

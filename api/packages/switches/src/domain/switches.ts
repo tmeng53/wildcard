@@ -53,7 +53,7 @@ export interface SwitchSetting {
 }
 
 /**
- * Whether a switch was on at `at`, on `day` (`YYYY-MM-DD`, New York), as it was set then:
+ * Whether a switch was on at `when.at`, on `when.day` (`YYYY-MM-DD`, New York), as it was set then:
  * `history` (the oldest first) says how it was set from each change on, so a switch turned on or
  * off by hand decides only what came after. Before its first change it counts as that first
  * setting; with no history at all, as `current`.
@@ -61,7 +61,7 @@ export interface SwitchSetting {
 export function wasOn(
   history: readonly SwitchSetting[],
   current: readonly Switch[],
-): (id: string, at: Date, day: string) => boolean {
+): (id: string, when: { readonly at: Date; readonly day: string }) => boolean {
   const byId = new Map<string, SwitchSetting[]>();
   for (const setting of history) {
     const list = byId.get(setting.value.id) ?? [];
@@ -69,7 +69,7 @@ export function wasOn(
     byId.set(setting.value.id, list);
   }
   const now = new Map(current.map((each) => [each.id, each]));
-  return (id, at, day) => {
+  return (id, { at, day }) => {
     const settings = byId.get(id);
     const setting =
       settings === undefined

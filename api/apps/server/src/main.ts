@@ -307,7 +307,7 @@ const unlockSources = (scope: Database) => ({
   // day and as each switch was set then, so turning one on or off by hand changes only what follows.
   switches: async () => {
     const was = await switchesOn(scope).history();
-    return (id: string, at: Date) => was(id, at, newYorkDays.format(at));
+    return (id: string, at: Date) => was(id, { at, day: newYorkDays.format(at) });
   },
 });
 /**

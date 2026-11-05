@@ -44,7 +44,7 @@ export const unusedUnlocks = {
   claimsOf: unused,
   claim: unused,
   // Every profile save keeps what the look wears; a test without unlocks has nothing to keep.
-  keepWorn: async () => {},
+  keepWorn: () => Promise.resolve(),
 };
 
 /** What coaches gave members, for an app whose test never reads it. */

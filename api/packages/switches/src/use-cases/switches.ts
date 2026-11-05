@@ -5,7 +5,10 @@ import type { SwitchStore } from '../ports.js';
 export type SwitchOn = (id: string, day: string) => boolean;
 
 /** Whether the switch `id` was on at `at`, on `day` (New York), as it was set then. */
-export type SwitchWasOn = (id: string, at: Date, day: string) => boolean;
+export type SwitchWasOn = (
+  id: string,
+  when: { readonly at: Date; readonly day: string },
+) => boolean;
 
 /** The switches, read by whatever follows them. */
 export interface Switches {
