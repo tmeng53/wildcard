@@ -48,6 +48,7 @@ import {
   ignoredNotices,
   unusedCoachActivity,
   unusedUnlocks,
+  unusedGifts,
   unusedWeekSummaryWords,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
@@ -119,6 +120,7 @@ const app = createApp({
   },
   weekSummaryWords: unusedWeekSummaryWords,
   unlocks: unusedUnlocks,
+  gifts: unusedGifts,
   coachActivity: unusedCoachActivity,
   notices: createNotices({ store: createPostgresNoticeStore(db) }),
   coachNames: () => Promise.reject(new Error('unused')),

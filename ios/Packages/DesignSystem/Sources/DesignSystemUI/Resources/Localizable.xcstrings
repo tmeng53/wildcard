@@ -3211,6 +3211,22 @@
         }
       }
     },
+    "NEW": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEW"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEW"
+          }
+        }
+      }
+    },
     "菜单：液态玻璃，从「···」或长按打开": {
       "localizations": {
         "en": {

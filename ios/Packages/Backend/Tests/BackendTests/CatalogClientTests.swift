@@ -11,7 +11,7 @@ import Testing
 @Test func theBuildShipsTheWholeSportsList() throws {
     let sports = CatalogClient.bundled.sports
     #expect(sports.categories.count == 12)
-    #expect(sports.categories.flatMap(\.entries).count == 52)
+    #expect(sports.categories.flatMap(\.entries).count == 57)
     #expect(
         sports.entry(for: "strength")?.names
             == .init(simplifiedChinese: "力量训练", english: "Strength", traditionalChinese: "重訓"))
