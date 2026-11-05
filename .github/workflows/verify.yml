@@ -132,7 +132,8 @@ jobs:
     runs-on: >-
       ${{ (needs.changes.outputs.mac == 'true' && needs.changes.outputs.app == 'true')
       && 'macos-26' || 'ubuntu-24.04' }}
-    # `swift test` for every package takes about 25 minutes on Linux, so 30 cut runs off.
+    # `swift test` for every package, built optimized, takes about 10 minutes on Linux; the limit
+    # leaves room for a cold build.
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
