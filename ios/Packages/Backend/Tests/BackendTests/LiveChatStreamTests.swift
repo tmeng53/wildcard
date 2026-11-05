@@ -14,8 +14,11 @@ private actor HeardChat {
     func add(_ heard: ChatLive) { all.append(heard) }
 }
 
-@Test func theChatStreamTellsMessagesDeletionsAndTheCoachTyping() async throws {
-    let squad = "6f1c1d2e-0000-4000-8000-000000000001"
+private let squad = "6f1c1d2e-0000-4000-8000-000000000001"
+
+/// What the server writes: ready, a notice for the bell, the dots, a message, a deletion and one
+/// message this build can't read.
+private func chatStream() -> String {
     let ana = "6f1c1d2e-0000-4000-8000-0000000000a1"
     let message = """
         {"version":1,"id":"6f1c1d2e-0000-4000-8000-0000000000m2","seq":7,"member":"\(ana)","kind":"text",\
@@ -47,8 +50,12 @@ private actor HeardChat {
 
 
         """
+    return stream
+}
+
+@Test func theChatStreamTellsMessagesDeletionsAndTheCoachTyping() async throws {
     let heard = HeardChat()
-    try await WildcardAPI.readChat(HTTPBody(stream)) { await heard.add($0) }
+    try await WildcardAPI.readChat(HTTPBody(chatStream())) { await heard.add($0) }
 
     let all = await heard.all
     #expect(all.count == 4)

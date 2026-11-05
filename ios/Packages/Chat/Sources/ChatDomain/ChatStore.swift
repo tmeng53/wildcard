@@ -238,7 +238,9 @@ public final class ChatStore {
             if error == .messageGone {
                 loaded[id] = nil
             } else {
-                loaded[id] = loaded[id].map { $0.reacting(before.reactions.first { $0.member == viewer }?.emoji, by: viewer) }
+                loaded[id] = loaded[id].map {
+                    $0.reacting(before.reactions.first { $0.member == viewer }?.emoji, by: viewer)
+                }
                 failure = error
             }
             rebuild()

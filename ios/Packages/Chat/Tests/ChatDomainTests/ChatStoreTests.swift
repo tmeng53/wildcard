@@ -18,7 +18,8 @@ private func character(_ name: String) throws -> MemberCharacter {
     MemberCharacter(nickname: try Nickname(name), look: CharacterLook(persona: "sunny", variants: [:]))
 }
 
-private func message(_ number: Int, by author: ChatAuthor, _ text: String, replyTo: ChatMessageID? = nil) -> ChatMessage {
+private func message(_ number: Int, by author: ChatAuthor, _ text: String, replyTo: ChatMessageID? = nil) -> ChatMessage
+{
     ChatMessage(
         id: id(number), seq: number, author: author, kind: .text, text: text, replyTo: replyTo, mentions: [],
         mentionsCoach: false, sentAt: start.addingTimeInterval(Double(number) * 60), reactions: [])
@@ -44,7 +45,8 @@ private func source(
     _ messages: [ChatMessage] = [], coaches: ChatCoaches = ChatCoaches(current: coach, names: [:])
 ) throws -> InMemoryChatSource {
     InMemoryChatSource(
-        viewer: viewer, squad: squad, messages: messages, characters: [viewer: try character("我"), mia: try character("Mia")],
+        viewer: viewer, squad: squad, messages: messages,
+        characters: [viewer: try character("我"), mia: try character("Mia")],
         coaches: coaches, now: { start })
 }
 
@@ -122,7 +124,8 @@ struct ChatStoreTests {
         #expect(chat.lines.first?.message.reactions.count == 1)
         await chat.heard(
             .message(
-                squad, message(2, by: .member(mia), "回你", replyTo: id(9)), quoted: message(9, by: .member(viewer), "老的")))
+                squad, message(2, by: .member(mia), "回你", replyTo: id(9)), quoted: message(9, by: .member(viewer), "老的")
+            ))
         #expect(chat.message(id(9))?.text == "老的")
         await chat.heard(.deleted(squad, id(1)))
         #expect(chat.lines.map(\.message.text) == ["回你"])
@@ -220,8 +223,12 @@ struct ChatComposerTests {
     @Test func theCoachComesFirstAndNeverMe() {
         let names = ChatComposer.candidates(for: "", coach: coach, characters: characters, viewer: viewer).map(\.name)
         #expect(names == ["毛头", "Mia"])
-        #expect(ChatComposer.candidates(for: "", coach: nil, characters: characters, viewer: viewer).map(\.name) == ["Mia"])
-        #expect(ChatComposer.candidates(for: "mi", coach: coach, characters: characters, viewer: viewer).map(\.name) == ["Mia"])
+        #expect(
+            ChatComposer.candidates(for: "", coach: nil, characters: characters, viewer: viewer).map(\.name) == ["Mia"])
+        #expect(
+            ChatComposer.candidates(for: "mi", coach: coach, characters: characters, viewer: viewer).map(\.name) == [
+                "Mia"
+            ])
     }
 
     @Test func pickingReplacesWhatWasTyped() throws {
