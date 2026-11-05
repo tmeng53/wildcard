@@ -89,7 +89,7 @@ public enum SignUpError: Error, Equatable, Sendable {
     case unknownInvite
     /// The squad has its 8 members.
     case squadFull
-    /// The member is in as many squads as they may be.
+    /// The member is in a squad already: one at a time, so they leave it first.
     case tooManySquads
     /// What was sent was refused: a name or plan the API won't take.
     case rejected

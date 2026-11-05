@@ -50,12 +50,11 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
 }
 
 @MainActor @Test func theHomeHasTheMembersOwnCheckInsForTheirWeek() async throws {
-    // The member's own week comes from their check-ins wherever they posted them: one posted to
-    // a second squad shows up on the home of the first, which the squad's list alone would miss.
+    // The member's own week comes from their check-ins wherever they went: one kept to themselves
+    // shows up on their home, which the squad's list alone would miss.
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
     let shown = try await stack.squad(of: author)
-    let other = try await stack.squad(of: author)
     let directory = scratch()
     let today = store(author, directory: directory)
     await today.load()
@@ -63,7 +62,7 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     let day = try #require(today.day)
     let elsewhere = CheckIn(
         id: CheckInID(UUID()), member: author.id, day: day, createdAt: Timestamp(Date()),
-        audience: try Audience([other]), entry: .healthyMeal(Meal(caption: try Caption("沙拉"))))
+        audience: try Audience([]), entry: .healthyMeal(Meal(caption: try Caption("沙拉"))))
     _ = try await author.api.save(elsewhere)
 
     await today.load()
