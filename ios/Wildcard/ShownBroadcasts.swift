@@ -8,13 +8,13 @@ enum ShownBroadcasts {
     /// Ids kept per member: far more than ever run at once, so the list never grows without end.
     private static let kept = 50
 
-    /// Whether `id`'s banner was shown to `member` on this phone (nil: the sample squad).
-    static func contains(_ id: String, for member: String?) -> Bool {
+    /// Whether `id`'s banner was shown to `member` on this phone.
+    static func contains(_ id: String, for member: String) -> Bool {
         UserDefaults.standard.stringArray(forKey: key(member))?.contains(id) ?? false
     }
 
     /// `id`'s banner is on screen for `member`.
-    static func mark(_ id: String, for member: String?) {
+    static func mark(_ id: String, for member: String) {
         let defaults = UserDefaults.standard
         var shown = defaults.stringArray(forKey: key(member)) ?? []
         guard !shown.contains(id) else { return }
@@ -22,5 +22,5 @@ enum ShownBroadcasts {
         defaults.set(Array(shown.suffix(kept)), forKey: key(member))
     }
 
-    private static func key(_ member: String?) -> String { "shownBroadcasts.\(member ?? "sample")" }
+    private static func key(_ member: String) -> String { "shownBroadcasts.\(member)" }
 }

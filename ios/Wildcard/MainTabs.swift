@@ -97,9 +97,11 @@ struct MainTabs: View {
                 with: UnlockNotices(banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) })
             )
         }
-        // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone; its
-        // button opens what its 通知 row opens.
-        .onChange(of: inbox.unseenBroadcasts.map(\.id), initial: true) { tellBroadcasts() }
+        // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the
+        // home says whose it is; its button opens what its 通知 row opens.
+        .onChange(of: inbox.unseenBroadcasts.map(\.id) + [today.home?.member.description ?? ""], initial: true) {
+            tellBroadcasts()
+        }
         // A tapped push's place.
         .onChange(of: destination, initial: true) { _, asked in
             guard let asked else { return }
