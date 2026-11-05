@@ -19,11 +19,9 @@ extension TodayStore {
         await loadCoachNotes(in: home)
     }
 
-    /// The coaches' morning notes waiting for the member, from every squad they are in: the
-    /// home's own squad's first, then the others', one after another (Tracy, 2026-11-05).
+    /// The coach's morning notes waiting for the member, from their squad (one squad a member).
     private func loadCoachNotes(in home: Home) async {
-        let squads = [home.squad.id] + home.squads.map(\.id).filter { $0 != home.squad.id }
-        guard let found = try? await backend.coachNotes(in: squads) else { return }
+        guard let found = try? await backend.coachNotes(in: [home.squad.id]) else { return }
         coachNotes = found.filter { !putAway.contains($0.id) }
     }
 
