@@ -318,6 +318,7 @@ async function runWake(
       files: new Map(stored),
       changed: new Set(),
       note: undefined,
+      memberNotes: new Map(),
       reply: undefined,
       reaction: undefined,
       answer: undefined,
@@ -330,6 +331,8 @@ async function runWake(
       draft.changed.add(SEEDED);
     }
     const daily = wake.reason.kind === 'daily';
+    // Who the daily wake writes a morning note to: every member who agreed to AI use.
+    const noteTo = daily ? await deps.aiConsented(week.members.map(({ member }) => member)) : [];
     const files = new Map(
       shownPaths(roster).map((path) => {
         const at = storedPathOf(path, roster);
@@ -347,6 +350,7 @@ async function runWake(
           ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
           : [],
       talks: daily ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
+      noteTo: noteTo.map((member) => roster.get(member) ?? '').filter((name) => name !== ''),
     });
     if (task === undefined) {
       await deps.stores.wakes.finish(wake.id);
@@ -363,6 +367,7 @@ async function runWake(
         kind: wake.reason.kind,
         ...photosOf(deps.photoUrls, { week, wake }),
         ...factsFor(deps, { week, roster }),
+        noteTo,
         pastWeek: async (weeksAgo) =>
           weekText(
             await weekOf(deps, {
@@ -494,6 +499,18 @@ async function saveDraft(
       text: draft.note,
       wake: wake.id,
     });
+  }
+  if (wake.reason.kind === 'daily') {
+    for (const [member, text] of draft.memberNotes) {
+      await stores.memberNotes.save({
+        squad,
+        member,
+        coach: coach.id,
+        day: wake.reason.day,
+        text,
+        wake: wake.id,
+      });
+    }
   }
   if (
     wake.reason.kind === 'checkIn' &&

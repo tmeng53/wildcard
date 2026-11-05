@@ -10,12 +10,14 @@ import { requireCaller, type SignedIn } from '../require-caller.js';
 export const PushSettings = z
   .strictObject({
     version: bodyVersion(1),
-    settings: z.record(PushTopic, z.boolean()).meta({
+    settings: z.partialRecord(PushTopic, z.boolean()).meta({
       description:
-        'Each kind of push, on or off; all on until the member turns one off. ' +
+        'Each kind of push, on or off; all on until the member turns one off. A save may leave ' +
+        'switches out, which keep what they were; a read has every one. ' +
         '`dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates ' +
-        'sent them.',
-      example: { dailyProgress: true },
+        'sent them. `coach`: what the squad’s coach says to the member (its replies, answers ' +
+        'and morning note), sent silently; the bell keeps them whatever this is.',
+      example: { dailyProgress: true, coach: true },
     }),
   })
   .openapi('PushSettings');
@@ -55,7 +57,7 @@ export function pushSettings(deps: { readonly verifyToken: VerifyToken; readonly
     },
     responses: {
       200: { description: 'Saved', content: { 'application/json': { schema: PushSettings } } },
-      400: problem('Not a valid body, or a switch missing'),
+      400: problem('Not a valid body'),
       ...unauthorized,
       ...jsonBodyFailures,
     },

@@ -30,6 +30,19 @@ const CoachNoteBody = z
   })
   .openapi('CoachNote');
 
+const CoachMemberNoteBody = z
+  .strictObject({
+    id: z.int().positive().meta({
+      description:
+        'The note’s id: the app shows each note once on this phone, and `coachNote` notices name it.',
+    }),
+    day: z.iso.date().meta({ description: 'The day (New York) the note was written for.' }),
+    text: z.string().meta({ description: 'The note’s words.', example: '昨天那组深蹲我看见了' }),
+    coach: CoachSpeakerBody,
+    at: z.iso.datetime().meta({ description: 'When it was written.' }),
+  })
+  .openapi('CoachMemberNote');
+
 const CoachReplyBody = z
   .strictObject({
     checkInId: z.uuid(),
@@ -93,6 +106,12 @@ const CoachActivityBody = z
         'The coach’s answers to members’ replies to it under the check-ins asked about, oldest ' +
         'first.',
     }),
+    memberNote: CoachMemberNoteBody.optional().meta({
+      description:
+        'The caller’s own newest morning note (便条) from the squad’s coach, for 今天 to show on ' +
+        'the first open after it arrived; only the caller sees it. Left out when there is none ' +
+        'from the last day and a half.',
+    }),
   })
   .openapi('CoachActivity');
 
@@ -140,7 +159,8 @@ export function coachActivity(deps: {
     summary: 'What the squad’s coach said (战术板, replies and reactions)',
     description:
       'The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the ' +
-      'check-ins asked about that has one, and its answers to members’ replies to it there. ' +
+      'check-ins asked about that has one, its answers to members’ replies to it there, and the ' +
+      'caller’s own morning note. ' +
       'Only for the squad’s members. They stay after the squad fires its coach.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -164,9 +184,10 @@ export function coachActivity(deps: {
     const { squadId } = c.req.valid('param');
     // Throws `SquadNotJoinedError` for anyone not in the squad.
     await deps.squads.find({ squad: squadId, viewer: MemberId.parse(c.var.caller.userId) });
-    const { note, replies, answers } = await deps.coachActivity.squad({
+    const { note, replies, answers, memberNote } = await deps.coachActivity.squad({
       squad: CoachSquadId.parse(squadId),
       checkIns: c.req.valid('query').checkIns,
+      reader: c.var.caller.userId,
     });
     return c.json(
       {
@@ -194,6 +215,17 @@ export function coachActivity(deps: {
           text: answer.text,
           at: answer.at.toISOString(),
         })),
+        ...(memberNote === undefined
+          ? {}
+          : {
+              memberNote: {
+                id: memberNote.id,
+                day: memberNote.day,
+                text: memberNote.text,
+                coach: speaker(memberNote.coach),
+                at: memberNote.at.toISOString(),
+              },
+            }),
       },
       200,
     );

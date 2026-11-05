@@ -8,6 +8,7 @@ import { SquadId } from '../domain/settings.js';
 import type { NewWake, Wake } from '../domain/wake.js';
 import type {
   CoachActivityStore,
+  CoachNoteDeliveryStore,
   CoachReportStore,
   CoachStores,
   CoachTransaction,
@@ -255,6 +256,19 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
       },
     },
 
+    memberNotes: {
+      async save({ squad, member, coach, day, text, wake }) {
+        // Nothing when the member left the squad or deleted their account while the run thought.
+        const saved = await sql<{ id: string }>`
+          insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, wake_id)
+          select ${squad}::uuid, ${member}::uuid, ${coach}, ${day}::date, ${text}, ${String(wake)}::bigint
+          where exists (select 1 from auth.users where id = ${member}::uuid)
+          on conflict (squad_id, member_id, day) do nothing
+          returning id`.execute(db);
+        return saved.rows.length > 0;
+      },
+    },
+
     replies: {
       async save({ squad, checkIn, coach, text, emoji, wake }) {
         // Nothing when the check-in went while the run was thinking: a failed insert would undo
@@ -396,6 +410,41 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
       };
     },
 
+    async memberNote({ squad, member, since }) {
+      const row = await db
+        .selectFrom('coach_member_notes')
+        .innerJoin('coaches', 'coaches.id', 'coach_member_notes.coach_id')
+        // Only once it reached the member, at the morning hour on their clock.
+        .innerJoin(
+          'coach_member_note_deliveries',
+          'coach_member_note_deliveries.note_id',
+          'coach_member_notes.id',
+        )
+        .select([
+          'coach_member_notes.id',
+          sql<string>`to_char(coach_member_notes.day, 'YYYY-MM-DD')`.as('day'),
+          'coach_member_notes.text',
+          'coach_member_notes.at',
+          'coaches.id as coach_id',
+          'coaches.name',
+          'coaches.look',
+        ])
+        .where('coach_member_notes.squad_id', '=', squad)
+        .where('coach_member_notes.member_id', '=', member)
+        .where('coach_member_note_deliveries.at', '>=', since)
+        .orderBy('coach_member_notes.id', 'desc')
+        .limit(1)
+        .executeTakeFirst();
+      if (row === undefined) return undefined;
+      return {
+        id: Number(row.id),
+        day: row.day,
+        text: row.text,
+        coach: { id: row.coach_id, name: row.name, look: row.look },
+        at: new Date(row.at),
+      };
+    },
+
     async replies(squad, checkIns) {
       if (checkIns.length === 0) return [];
       const rows = await db
@@ -453,6 +502,56 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
 }
 
 /** Runs work on the coach's stores in one Postgres transaction. */
+/** The morning notes still to deliver, and marking them delivered, on Postgres. */
+export function createPostgresCoachNoteDelivery(db: Kysely<DB>): CoachNoteDeliveryStore {
+  return {
+    async undelivered(since) {
+      const rows = await db
+        .selectFrom('coach_member_notes')
+        .innerJoin('coaches', 'coaches.id', 'coach_member_notes.coach_id')
+        .leftJoin(
+          'coach_member_note_deliveries',
+          'coach_member_note_deliveries.note_id',
+          'coach_member_notes.id',
+        )
+        .select([
+          'coach_member_notes.id',
+          'coach_member_notes.squad_id',
+          'coach_member_notes.member_id',
+          'coach_member_notes.coach_id',
+          sql<string>`to_char(coach_member_notes.day, 'YYYY-MM-DD')`.as('day'),
+          'coach_member_notes.text',
+          'coach_member_notes.at',
+          'coaches.name',
+        ])
+        .where('coach_member_notes.at', '>=', since)
+        .where('coach_member_note_deliveries.note_id', 'is', null)
+        .orderBy('coach_member_notes.id')
+        .execute();
+      return rows.map((row) => ({
+        id: Number(row.id),
+        squad: SquadId.parse(row.squad_id),
+        member: row.member_id,
+        coach: CoachId.parse(row.coach_id),
+        day: row.day,
+        text: row.text,
+        at: new Date(row.at),
+        coachName: row.name,
+      }));
+    },
+
+    async delivered(note) {
+      const saved = await db
+        .insertInto('coach_member_note_deliveries')
+        .values({ note_id: String(note) })
+        .onConflict((conflict) => conflict.column('note_id').doNothing())
+        .returning('note_id')
+        .execute();
+      return saved.length > 0;
+    },
+  };
+}
+
 export function postgresCoachTransaction(db: Kysely<DB>): CoachTransaction {
   return (work) => db.transaction().execute((trx) => work(createPostgresCoachStores(trx)));
 }

@@ -133,6 +133,31 @@ export interface CoachNoteStore {
   ): Promise<readonly { readonly day: string; readonly text: string }[]>;
 }
 
+/** A coach's morning note (便条) to one member, as written. */
+export interface MemberNote {
+  readonly id: number;
+  readonly squad: SquadId;
+  readonly member: string;
+  readonly coach: CoachId;
+  /** The squad's day it was written for, `YYYY-MM-DD` (New York). */
+  readonly day: string;
+  readonly text: string;
+  readonly at: Date;
+}
+
+/** The coach's morning notes to each member: one a member a squad a day. */
+export interface CoachMemberNoteStore {
+  /** Saves the member's note for the day unless they have one; says whether this one was saved. */
+  save(note: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly coach: CoachId;
+    readonly day: string;
+    readonly text: string;
+    readonly wake: number;
+  }): Promise<boolean>;
+}
+
 /** What coaches said to check-ins: a line, an emoji or both, one a squad a check-in. */
 export interface CoachReplyStore {
   /** Saves the reply unless the check-in has one in the squad; says whether this one was saved. */
@@ -182,10 +207,33 @@ export interface CoachNoteShown {
   readonly at: Date;
 }
 
+/** A morning note as its member reads it, with the coach who wrote it. */
+export interface CoachMemberNoteShown {
+  readonly id: number;
+  readonly day: string;
+  readonly text: string;
+  readonly coach: CoachReply['coach'];
+  readonly at: Date;
+}
+
+/** The morning notes to deliver: pushed and told in the bell, at 8am on each member's clock. */
+export interface CoachNoteDeliveryStore {
+  /** Notes written since `since` and not delivered yet, oldest first, with the coach's name. */
+  undelivered(since: Date): Promise<readonly (MemberNote & { readonly coachName: string })[]>;
+  /** Marks a note delivered; says whether this call did (a second one finds it done). */
+  delivered(note: number): Promise<boolean>;
+}
+
 /** What a squad's coaches have said, as its members read it. */
 export interface CoachActivityStore {
   /** The squad's newest 战术板 line, if it has one. */
   latestNote(squad: SquadId): Promise<CoachNoteShown | undefined>;
+  /** The member's newest morning note in the squad delivered since `since`, if any. */
+  memberNote(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly since: Date;
+  }): Promise<CoachMemberNoteShown | undefined>;
   /** The squad's replies to these check-ins, in no order; a check-in with none is left out. */
   replies(squad: SquadId, checkIns: readonly string[]): Promise<readonly CoachReply[]>;
   /** The squad's answers to replies under these check-ins, oldest first. */
@@ -222,6 +270,7 @@ export interface CoachStores {
   readonly wakes: CoachWakeStore;
   readonly memory: CoachMemoryStore;
   readonly notes: CoachNoteStore;
+  readonly memberNotes: CoachMemberNoteStore;
   readonly replies: CoachReplyStore;
   readonly answers: CoachAnswerStore;
   readonly usage: CoachUsageStore;

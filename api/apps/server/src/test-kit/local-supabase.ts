@@ -129,4 +129,16 @@ export function scenesOn(db: Database) {
 }
 
 /** Jobs as a server without a scheduler has them: no token, so none runs. */
-export const noJobs = { isScheduler: undefined, interactions: [], clock: () => new Date() };
+/** No morning notes waiting: the coach job delivers none. */
+export const noCoachNotes = {
+  notes: { waiting: () => Promise.resolve([]), delivered: () => Promise.resolve(false) },
+  noteHour: () => Promise.resolve(8),
+  tell: () => Promise.resolve(),
+  clock: () => new Date(),
+};
+export const noJobs = {
+  isScheduler: undefined,
+  interactions: [],
+  clock: () => new Date(),
+  coachNotes: noCoachNotes,
+};

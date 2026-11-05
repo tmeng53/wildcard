@@ -55,7 +55,7 @@ describe('a comment push', () => {
         ),
     };
     const push = {
-      settingsOf: () => Promise.resolve({ dailyProgress: true }),
+      settingsOf: () => Promise.resolve({ dailyProgress: true, coach: true }),
       // Never answers, as a hung connection wouldn't.
       notifyMembers: () => new Promise<never>(() => undefined),
     };
@@ -77,11 +77,13 @@ describe('a comment push', () => {
 });
 
 describe('a coach’s line pushed', () => {
-  it('reads as a teammate’s comment or reply, and never reaches a member who turned push off', async () => {
+  it('reads as a teammate’s comment or reply, silently, and never reaches a member who turned the coach’s push off', async () => {
     const sent: { members: readonly string[]; notification: PushNotification }[] = [];
     const on = new Set([author]);
     const push = {
-      settingsOf: (member: string) => Promise.resolve({ dailyProgress: on.has(member) }),
+      // The coach's own switch: off for `writer`, whose daily push stays on.
+      settingsOf: (member: string) =>
+        Promise.resolve({ dailyProgress: true, coach: on.has(member) }),
       notifyMembers: (input: { members: readonly string[]; notification: PushNotification }) => {
         sent.push(input);
         return Promise.resolve({ sent: 1, gone: 0, off: 0, failures: [] });
@@ -120,7 +122,7 @@ describe('a coach’s line pushed', () => {
           category: 'comment',
           thread: `comments-${other}`,
           collapseId: `coach-${other}`,
-          interruption: 'active',
+          interruption: 'passive',
           event: { kind: 'comment', checkIn: other },
         },
       },
@@ -131,7 +133,7 @@ describe('a coach’s line pushed', () => {
           category: 'comment',
           thread: `comments-${other}`,
           collapseId: `coach-${writer}`,
-          interruption: 'active',
+          interruption: 'passive',
           event: { kind: 'comment', checkIn: other },
         },
       },

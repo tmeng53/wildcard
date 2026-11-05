@@ -13,6 +13,7 @@ import {
 } from '../adapters/postgres-coach-settings.js';
 import {
   createPostgresCoachActivity,
+  createPostgresCoachNoteDelivery,
   createPostgresCoachReport,
   createPostgresCoachStores,
 } from '../adapters/postgres-coach-stores.js';
@@ -33,6 +34,7 @@ import type {
   CoachTool,
 } from '../ports.js';
 import { createCoachActivity } from './coach-activity.js';
+import { createCoachNoteDelivery } from './coach-note-delivery.js';
 import { createCoachHiring } from './coach-hiring.js';
 import { createCoachSettings } from './coach-settings.js';
 import { createCoachWakes, type CoachAnswered, type CoachReplied } from './coach-wakes.js';
@@ -244,6 +246,11 @@ describe('the coach', () => {
               { tool: 'squad_week', input: {} },
               { tool: 'post_note', input: { text: '队员1 周日也跑了' } },
               { tool: 'post_note', input: { text: '  周日也跑了，米亚是认真的  ' } },
+              { tool: 'note_to', input: { member: '队员1', text: '周日那趟我看见了' } },
+              { tool: 'note_to', input: { member: '队员3', text: '你好' } },
+              { tool: 'note_to', input: { member: '队员2', text: '队员2 今天动一动？' } },
+              { tool: 'note_to', input: { member: '队员2', text: '今天动一动？走走也算' } },
+              { tool: 'note_to', input: { member: '队员1', text: ' 周日那趟跑得真稳 ' } },
             ]
           : [
               { tool: 'remember', input: { path: 'memory.md', fact: ' 队员1 周日跑步 ' } },
@@ -293,7 +300,7 @@ describe('the coach', () => {
       // not post on the 战术板; the daily wake posts but replies to nothing.
       expect(runs.map(({ tools }) => tools)).toStrictEqual([
         ['squad_week', 'remember', 'edit_file', 'reply', 'react'],
-        ['squad_week', 'remember', 'edit_file', 'post_note'],
+        ['squad_week', 'remember', 'edit_file', 'post_note', 'note_to'],
       ]);
       expect(runs[0]?.task).toContain('队员1 练了 跑步');
       expect(runs[0]?.answers).toStrictEqual([
@@ -311,7 +318,15 @@ describe('the coach', () => {
       expect(runs[1]?.answers.slice(1)).toStrictEqual([
         '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
         '已写上战术板。',
+        '便条写好了，给 队员1。',
+        '不能给 队员3 写便条；能写的是：队员1、队员2。',
+        '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
+        '便条写好了，给 队员2。',
+        '已换成这张，给 队员1。',
       ]);
+      // Every member who agreed to AI use gets a note, whether or not they checked in.
+      expect(runs[1]?.task).toContain('今天给这些人各写一张便条：队员1、队员2。');
+      expect(runs[0]?.task).not.toContain('便条');
       // The daily wake sees what the first one remembered, and the instructions are 小混's.
       expect(runs[1]?.task).toContain('【memory.md】\n- 队员1 周日跑步');
       expect(runs[1]?.task).toContain('过去一天没人在打卡下面和你说话。');
@@ -395,6 +410,61 @@ describe('the coach', () => {
         ],
       });
       expect(await activity.squad({ squad, checkIns: [] })).toMatchObject({ replies: [] });
+
+      // One morning note a member, each only for them, waiting for their morning.
+      const memberNotes = await sql<{ member_id: string; day: string; text: string }>`
+        select member_id, to_char(day, 'YYYY-MM-DD') as day, text from public.coach_member_notes
+        where squad_id = ${squad} order by member_id`.execute(trx);
+      expect(memberNotes.rows).toStrictEqual(
+        [
+          { member_id: fixture.mia, day: '2026-11-01', text: '周日那趟跑得真稳' },
+          { member_id: leo, day: '2026-11-01', text: '今天动一动？走走也算' },
+        ].toSorted((a, b) => a.member_id.localeCompare(b.member_id)),
+      );
+      // Not on 今天 before it reached them; then only the reader's own.
+      expect(
+        (await activity.squad({ squad, checkIns: [], reader: fixture.mia })).memberNote,
+      ).toBeUndefined();
+      const delivery = createCoachNoteDelivery({ store: createPostgresCoachNoteDelivery(trx) });
+      const waiting = await delivery.waiting(now);
+      expect(
+        waiting
+          .map(({ member, text, coachName, day }) => ({ member, text, coachName, day }))
+          .toSorted((a, b) => a.member.localeCompare(b.member)),
+      ).toStrictEqual(
+        [
+          { member: fixture.mia, text: '周日那趟跑得真稳', coachName: '小混', day: '2026-11-01' },
+          { member: leo, text: '今天动一动？走走也算', coachName: '小混', day: '2026-11-01' },
+        ].toSorted((a, b) => a.member.localeCompare(b.member)),
+      );
+      const miaNote = waiting.find(({ member }) => member === fixture.mia);
+      expect(miaNote).toBeDefined();
+      if (miaNote === undefined) return;
+      expect(await delivery.delivered(miaNote.id)).toBe(true);
+      expect(await delivery.delivered(miaNote.id)).toBe(false);
+      expect((await delivery.waiting(now)).map(({ member }) => member)).toStrictEqual([leo]);
+      const mine = await activity.squad({ squad, checkIns: [], reader: fixture.mia });
+      expect({ ...mine.memberNote, at: 'at' }).toStrictEqual({
+        id: miaNote.id,
+        day: '2026-11-01',
+        text: '周日那趟跑得真稳',
+        coach: xiaohun,
+        at: 'at',
+      });
+      expect(
+        (await activity.squad({ squad, checkIns: [], reader: leo })).memberNote,
+      ).toBeUndefined();
+      // A day and a half later it is gone from 今天 (the bell keeps it).
+      expect(
+        (
+          await activity.squad({
+            squad,
+            checkIns: [],
+            reader: fixture.mia,
+            now: new Date(Date.now() + 37 * 60 * 60_000),
+          })
+        ).memberNote,
+      ).toBeUndefined();
       // 12,000 in at $0.25 and 800 out at $2 per million tokens: 4,600 millionths a wake.
       const usage = await sql<{ requests: number; input_tokens: string; cost_micros: string }>`
         select requests, input_tokens, cost_micros from public.coach_usage where squad_id = ${squad} order by id`.execute(
@@ -645,7 +715,7 @@ describe('the coach', () => {
       // The check-in's wake, the day's, then one for each reply.
       expect(runs.map(({ tools }) => tools.at(-1))).toStrictEqual([
         'react',
-        'post_note',
+        'note_to',
         'answer',
         'answer',
       ]);

@@ -50,6 +50,17 @@ export const NoticeSubjects = {
     emoji: z.string().min(1).nullable(),
   }),
   /**
+   * The squad's coach left the member its morning note (便条): its words as written, since only
+   * the member sees them and the note never changes.
+   */
+  coachNote: z.strictObject({
+    version: z.literal(1),
+    note: z.int().positive(),
+    coach: z.string().min(1),
+    day: z.iso.date(),
+    text: z.string().min(1),
+  }),
+  /**
    * A teammate commented on the member's check-in, or replied to them: the push's words as it was
    * put (sent or not, by the member's switch), and the post to open.
    */
@@ -73,6 +84,7 @@ const KindAndSubject = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('weeklyAwards'), subject: NoticeSubjects.weeklyAwards }),
   z.object({ kind: z.literal('sceneMoved'), subject: NoticeSubjects.sceneMoved }),
   z.object({ kind: z.literal('coachReply'), subject: NoticeSubjects.coachReply }),
+  z.object({ kind: z.literal('coachNote'), subject: NoticeSubjects.coachNote }),
   z.object({ kind: z.literal('unlocked'), subject: NoticeSubjects.unlocked }),
   z.object({ kind: z.literal('comment'), subject: NoticeSubjects.comment }),
 ]);

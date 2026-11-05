@@ -330,8 +330,21 @@ describe('when the coach wakes', () => {
         // What it remembers, in full: it forgets everything else between wakes.
         '你的记性（你只记得这些）：\n【memory.md】\n米亚爱跑步\n还是空的：squad.md',
         '你最近写过：\n- 2026-10-31：周末也要动一动',
+        '今天没有要写便条的人。',
       ].join('\n\n'),
     );
+    // Whom it writes a morning note to, by the names it knows them by.
+    expect(
+      taskOf({
+        reason: { kind: 'daily', day: '2026-11-01' },
+        week,
+        files: new Map(),
+        recentNotes: [],
+        noteTo: ['队员1', '队员2'],
+      })
+        ?.split('\n\n')
+        .at(-1),
+    ).toBe('今天给这些人各写一张便条：队员1、队员2。');
     // The last day's talk under check-ins, for it to remember from.
     const [first] = week.checkIns;
     if (first === undefined) throw new Error('no check-in');

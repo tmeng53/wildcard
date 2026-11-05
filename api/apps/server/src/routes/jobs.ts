@@ -2,6 +2,7 @@ import type { CoachWakes } from '@wildcard/coach';
 import { Hono } from 'hono';
 
 import { JobTokenInvalidError, JobsOffError } from '../errors.js';
+import { deliverCoachNotes, type CoachNotesDependencies } from '../flows/coach-notes.js';
 import { sendDailyProgress, type DailyProgressDependencies } from '../flows/daily-progress-push.js';
 import { giveWeeklyAwards, type WeeklyAwardsDependencies } from '../flows/weekly-awards.js';
 import { logAlso } from '../log.js';
@@ -11,7 +12,7 @@ import { bearerToken } from '../require-caller.js';
 /**
  * Work a scheduler starts, not the app: `POST /jobs/daily-progress-push`, meant to run every 15
  * minutes or so, `POST /jobs/weekly-awards`, meant to run every hour, and `POST /jobs/coach`,
- * meant to run every 10 minutes. Each call takes the
+ * meant to run every 10 minutes, which also delivers the coach's morning notes. Each call takes the
  * scheduler's bearer token: Cloud Scheduler's OIDC token on the hosted server, `JOBS_TOKEN`
  * on a local one. Not part of the app's contract, so not in openapi.json. Every entry a run logs
  * carries `job`, which the alerts `scripts/gcp-setup.sh` makes look for.
@@ -22,6 +23,8 @@ export function jobs(deps: {
   readonly weeklyAwards: WeeklyAwardsDependencies;
   /** The AI coach's wakes; undefined without an OpenAI key, and then the coach never wakes. */
   readonly coach?: CoachWakes;
+  /** Delivers the coach's morning notes once each member's morning comes, after the wakes run. */
+  readonly coachNotes: CoachNotesDependencies;
 }) {
   return new Hono()
     .use('/jobs/*', async (c, next) => {
@@ -49,9 +52,12 @@ export function jobs(deps: {
         deps.coach === undefined
           ? { coaching: false, squads: 0, queued: 0, done: 0, failed: 0 }
           : await deps.coach.run();
+      // Notes the daily wake just wrote reach members already past their morning hour at once.
+      const notes = await deliverCoachNotes(deps.coachNotes);
       // A failed wake keeps why on its row (get_squad_coaching shows it) and is tried again.
       if (run.failed > 0) deps.weeklyAwards.log.warn('some coach wakes failed', { ...run });
       else deps.weeklyAwards.log.info('coach run', { ...run });
-      return c.json({ version: 1, ...run }, 200);
+      deps.weeklyAwards.log.info('coach notes run', { ...notes });
+      return c.json({ version: 1, ...run, notes }, 200);
     });
 }

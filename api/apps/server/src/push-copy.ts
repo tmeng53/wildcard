@@ -11,6 +11,7 @@ export const PUSH_COPY = {
   'push.dailyProgress.poke.more': ['trainedDays', 'plannedDays', 'poker', 'otherPokers'],
   'push.comment': ['commenter', 'text'],
   'push.comment.reply': ['commenter', 'text'],
+  'push.coach.note': ['coach', 'text'],
   'push.weeklyAwards.ready': [],
   'push.weeklyAwards.stuck': ['squad', 'failures', 'lastError'],
 } as const satisfies Record<string, readonly string[]>;

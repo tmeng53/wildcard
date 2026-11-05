@@ -178,7 +178,8 @@ export async function pushCoachLine(
 ): Promise<void> {
   try {
     const to = PushMember.parse(line.member);
-    if (!(await deps.push.settingsOf(to)).dailyProgress) return;
+    // The coach's own switch; its words are in the member's bell whatever it is.
+    if (!(await deps.push.settingsOf(to)).coach) return;
     const notification: PushNotification = {
       alert: pushAlert(line.answer ? 'push.comment.reply' : 'push.comment', [
         line.coachName,
@@ -187,7 +188,8 @@ export async function pushCoachLine(
       category: 'comment',
       thread: `comments-${line.checkIn}`,
       collapseId: `coach-${line.about}`,
-      interruption: 'active',
+      // Silent: the coach talks a lot, so it never rings or lights up the phone.
+      interruption: 'passive',
       event: { kind: 'comment', checkIn: line.checkIn },
     };
     const outcome = await deps.push.notifyMembers({ members: [to], notification });
