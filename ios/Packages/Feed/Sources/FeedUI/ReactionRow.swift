@@ -80,7 +80,7 @@ struct ReactionRow: View {
             HStack(spacing: Space.xxs) {
                 if let coach {
                     MemberHead(
-                        player: model.coachPlayer(coach.coach.id), size: Self.headSize, rim: .coach,
+                        player: model.coachPlayer(coach.coach.id), size: Self.headSize, figure: .coach,
                         emoji: coach.emoji?.text)
                 }
                 ForEach(reactions.newest(Self.teammateHeads(beside: coach)), id: \.member) { response in

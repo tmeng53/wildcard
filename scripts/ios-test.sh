@@ -43,9 +43,14 @@ fi
 # A UI test that fails runs once more: a busy CI simulator sometimes times out a screenshot, a UI
 # query or stopping the app. A test that fails twice fails the run; one that passed only on its
 # second run is listed at the end of the log, so it stays visible.
+# ONLY_TESTING (space separated xcodebuild test ids, e.g. WildcardUITests/PushLongPressUITests)
+# runs just those, to reproduce one bug without the whole hour.
+only=()
+for test in ${ONLY_TESTING:-}; do only+=("-only-testing:$test"); done
 echo "==> xcodebuild test on $sim"
 status=0
 xcodebuild test \
+  ${only[@]+"${only[@]}"} \
   -project ios/Wildcard.xcodeproj \
   -scheme Wildcard \
   -destination "id=$udid" \
@@ -98,6 +103,31 @@ if [ "${PRINT_PREVIEWS:-}" = "1" ]; then
     echo "----- preview end -----"
   done
 fi
+
+# Crashes of the app or its extensions during the run, in the log: the exception, why it ended
+# and the crashed thread's frames, since a crash in an extension (the push's views) shows in a UI
+# test only as a blank card.
+for report in "$HOME"/Library/Logs/DiagnosticReports/Wildcard*.ips "$out"/attachments/*.ips; do
+  [ -e "$report" ] || continue
+  echo "----- crash: $(basename "$report") -----"
+  python3 - "$report" <<'PY2' || head -c 6000 "$report"
+import json, sys
+text = open(sys.argv[1]).read()
+header, _, body = text.partition("\n")
+crash = json.loads(body)
+print("process:", crash.get("procName"), "| exception:", json.dumps(crash.get("exception")))
+print("termination:", json.dumps(crash.get("termination")))
+for info in (crash.get("asi") or {}).values():
+    print("info:", " ".join(info) if isinstance(info, list) else info)
+images = crash.get("usedImages", [])
+for thread in crash.get("threads", []):
+    if not thread.get("triggered"):
+        continue
+    for frame in thread.get("frames", [])[:40]:
+        image = images[frame["imageIndex"]].get("name", "?") if frame.get("imageIndex", -1) < len(images) else "?"
+        print(f"  {image}  {frame.get('symbol', hex(frame.get('imageOffset', 0)))}  {frame.get('sourceFile', '')}:{frame.get('sourceLine', '')}")
+PY2
+done
 
 # Failed tests last, so they're in the log's tail after the previews.
 if [ "$status" -ne 0 ] && [ -d "$out/Wildcard.xcresult" ]; then

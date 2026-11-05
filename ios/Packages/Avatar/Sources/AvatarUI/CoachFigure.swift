@@ -7,8 +7,9 @@ import SwiftUI
 public enum CoachCanvas {
     /// The whole canvas, feet on its bottom edge (a still on a card).
     public static let full = CGRect(x: 0, y: 0, width: 240, height: 320)
-    /// The figure with room above for its hop and swaying head (a stage).
-    public static let stage = CGRect(x: 36, y: 24, width: 168, height: 296)
+    /// The figure with room above for its hop and swaying head (a stage), and the full width: a
+    /// coach's tail and elbows reach past the body.
+    public static let stage = CGRect(x: 0, y: 24, width: 240, height: 296)
 }
 
 /// The one way the app draws an AI coach standing (招聘会, 简历, 解雇, 动态's 战术板): its

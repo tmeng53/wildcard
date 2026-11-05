@@ -63,7 +63,7 @@ function defineTool<Shape extends z.ZodObject>(
 }
 
 /**
- * The tools a coach has on a wake: reading the squad's week and its files, editing the files,
+ * The tools a coach has on a wake: reading the squad's week, remembering and tidying its files,
  * on a daily wake posting the 战术板 line, on a check-in's wake replying and reacting to it, and
  * on a reply's wake answering it. Nothing is saved until the run ends.
  */
@@ -101,26 +101,37 @@ export function toolbox({
         weeksAgo === 0 || pastWeek === undefined ? weekText(week) : await pastWeek(weeksAgo),
     }),
     defineTool(draft.steps, {
-      name: 'read_file',
-      reads: true,
-      description: '读一个文件的全部内容。',
+      name: 'remember',
+      description:
+        '把一件以后还用得着的事记进你的记性。你每次醒来都会忘掉以前的一切，只有记性里的留得住，没记的下次就不知道了。听到外号、小队的梗、长期的习惯和偏好、伤病、里程碑、队员纠正你的事、你答应过的事，就马上记，一次记一件，一句话。',
       parameters: z.object({
-        path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
+        path: z
+          .string()
+          .describe(
+            '记到哪：people/队员N.md 记这个人，squad.md 记小队，memory.md 记你和大家之间的事',
+          ),
+        fact: z.string().describe('要记的这件事，一句话，用队员N称呼人'),
       }),
-      run: ({ path }) => {
+      kept: ({ path, fact }) => ({ path, fact: `（${String(fact.length)} 字）` }),
+      run: ({ path, fact }) => {
         const stored = storedPathOf(path, roster);
         if (stored === undefined) return unknownPath(path);
-        const body = draft.files.get(stored) ?? '';
-        return body === '' ? '（空文件）' : body;
+        const line = fact.trim();
+        if (line === '') return 'fact 是空的，写上要记的事。';
+        const edited = editBody(draft.files.get(stored) ?? '', { find: '', replace: `- ${line}` });
+        if (!edited.ok) return edited.why;
+        draft.files.set(stored, edited.body);
+        draft.changed.add(stored);
+        return `记下了，在 ${path}。`;
       },
     }),
     defineTool(draft.steps, {
       name: 'edit_file',
       description:
-        '改一个文件：把 find 的原文换成 replace。find 必须在文件里正好出现一次；find 为空时，把 replace 加到文件末尾。删掉一段就让 replace 为空。',
+        '整理记性：把一个文件里 find 的原文换成 replace，用来合并重复的、改掉记错的、删掉过时的（replace 为空就是删）。find 照抄任务里「你的记性」的原文，必须正好出现一次。记新的事用 remember。',
       parameters: z.object({
         path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
-        find: z.string().describe('要换掉的原文，照抄；为空就是加到末尾'),
+        find: z.string().describe('要换掉的原文，照抄'),
         replace: z.string().describe('换成的新内容'),
       }),
       // A file's text may be a member's words, kept in the file only as long as the file has it.
