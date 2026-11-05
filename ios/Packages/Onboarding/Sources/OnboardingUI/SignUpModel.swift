@@ -24,7 +24,8 @@ public final class SignUpModel {
     var welcomeLook: Outfit?
     private(set) var editor: CharacterEditorModel?
     /// The pieces still locked for the member, read once they are signed in.
-    private var lockedPieces: [LockedPiece] = []
+    /// The member's 商店街, once read; the editor offers the starter street until then.
+    private var stock: StreetStock?
     private(set) var character: NewCharacter?
     /// The character just made, beside each step's title and on the stage at 上场.
     private(set) var myCharacter: CastMember?
@@ -101,7 +102,7 @@ public final class SignUpModel {
         failure = nil
         if let name, !name.isEmpty, editor == nil { nickname = name }
         show(.character)
-        Task { await readLockedPieces() }
+        Task { await readStock() }
     }
 
     /// Carries on a sign-up closed after 你的小队, at 平时练什么？ with its saved character; false if not.
@@ -111,9 +112,9 @@ public final class SignUpModel {
         teammates = resumed.squad.teammates.map { CastMember(outfit: $0.outfit, persona: $0.persona) }
         if let made = resumed.character {
             (nickname, myCharacter) = (made.nickname.text, CastMember(outfit: made.outfit, persona: made.persona))
-            lockedPieces = await service.lockedPieces()
+            stock = await service.stock()
             editor = try? CharacterEditorModel.placeholder(
-                look: made.outfit, persona: made.persona, nickname: nickname, locked: lockedPieces)
+                look: made.outfit, persona: made.persona, nickname: nickname, stock: stock)
             await myCharacter?.load(idle: false)
         }
         show(.sports)
@@ -136,7 +137,7 @@ public final class SignUpModel {
     private func show(_ next: SignUpStep, forward: Bool = true) {
         isGoingForward = forward
         if next == .character, editor == nil {
-            editor = try? CharacterEditorModel.placeholder(look: welcomeLook, nickname: nickname, locked: lockedPieces)
+            editor = try? CharacterEditorModel.placeholder(look: welcomeLook, nickname: nickname, stock: stock)
         }
         if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked).choices {
             week = WeekDraft(sports: sports.picked)
@@ -373,10 +374,12 @@ public final class SignUpModel {
 }
 
 extension SignUpModel {
-    /// The locked pieces become boxes in the editor, which may have opened before they arrived.
-    fileprivate func readLockedPieces() async {
-        lockedPieces = await service.lockedPieces()
-        if let editor, editor.draft.catalog.locked.isEmpty { try? editor.lock(lockedPieces) }
+    /// The member's own street goes into the editor, which may have opened on the starter street
+    /// before it arrived.
+    fileprivate func readStock() async {
+        let known = stock != nil
+        stock = await service.stock()
+        if let editor, let stock, !known { try? editor.stock(stock) }
     }
 
     /// The squad's planned days this week, with the member's own once their plan is in.

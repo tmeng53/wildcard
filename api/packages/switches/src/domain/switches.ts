@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// Switches: one global, scheduled on/off that many things follow at once (a limited scene, the
-// unlock rules of its store, anything later), so a limited theme is a row of data, never a
+// Switches: one global, scheduled on/off that many things follow at once (a limited scene, a
+// store and its pieces, anything later), so a limited theme is a row of data, never a
 // concept in code (Tracy, 2026-11-04). Kept in the database (supabase/migrations, `switches`).
 
 /** A switch's id, camelCase, such as `winter`. Never changes. */

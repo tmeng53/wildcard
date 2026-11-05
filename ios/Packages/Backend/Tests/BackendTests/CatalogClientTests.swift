@@ -66,7 +66,7 @@ import Testing
     #expect(FileManager.default.fileExists(atPath: directory.appending(path: "catalog.json").path))
     let kept = CatalogClient(api: api, directory: directory).kept()
     #expect(kept.sports == CatalogClient.bundled.sports && kept.diceLines == CatalogClient.bundled.diceLines)
-    #expect(kept.switches == CatalogClient.bundled.switches)
+    #expect(kept.starterStock == CatalogClient.bundled.starterStock)
     // Asked again with the kept ETag: 304, still nothing new.
     #expect(await client.refresh() == nil)
 }

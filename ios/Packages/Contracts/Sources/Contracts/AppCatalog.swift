@@ -7,16 +7,18 @@ public struct AppCatalog: Hashable, Sendable {
     public let sports: SportCatalog
     /// The ready-made 请假条 lines rolled when the AI can't write.
     public let diceLines: [CatalogNames]
-    /// The global switches limited stores follow, by id.
-    public let switches: [String: CatalogSwitch]
+    /// The 商店街 of a member who hasn't trained yet, for an editor opened before the member's own
+    /// street is read (signing up, the sample squad): the free stores and their starters. A store
+    /// or piece on a switch is left out, since only the server says whether a switch is on.
+    public let starterStock: StreetStock
     /// The art files put over the ones this build bundles.
     public let art: ArtManifest
 
     public init(
-        sports: SportCatalog, diceLines: [CatalogNames], switches: [String: CatalogSwitch] = [:],
+        sports: SportCatalog, diceLines: [CatalogNames], starterStock: StreetStock = .empty,
         art: ArtManifest = .none
     ) {
-        (self.sports, self.diceLines, self.switches, self.art) = (sports, diceLines, switches, art)
+        (self.sports, self.diceLines, self.starterStock, self.art) = (sports, diceLines, starterStock, art)
     }
 
     /// Nothing at all.

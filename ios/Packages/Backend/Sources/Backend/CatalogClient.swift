@@ -36,7 +36,7 @@ public actor CatalogClient {
         // Only what screens show counts; the art goes to `ArtDownloads`, which reads `kept()`.
         let same =
             catalog.sports == before.sports && catalog.diceLines == before.diceLines
-            && catalog.switches == before.switches
+            && catalog.starterStock == before.starterStock
         return same ? nil : catalog
     }
 

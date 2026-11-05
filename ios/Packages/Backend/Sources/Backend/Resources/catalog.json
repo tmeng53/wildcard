@@ -929,5 +929,606 @@
         }
       }
     ]
+  },
+  "stores": {
+    "stores": [
+      {
+        "id": "warmup",
+        "free": true
+      },
+      {
+        "id": "lap",
+        "free": false
+      },
+      {
+        "id": "nolook",
+        "free": false
+      },
+      {
+        "id": "moss",
+        "free": false
+      },
+      {
+        "id": "halfmoon",
+        "free": false
+      },
+      {
+        "id": "deuce",
+        "free": false
+      },
+      {
+        "id": "powder",
+        "switchId": "winter",
+        "free": true
+      }
+    ]
+  },
+  "pieces": {
+    "pieces": [
+      {
+        "id": "deuce-ball",
+        "storeId": "deuce",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "deuce-cable",
+        "storeId": "deuce",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "deuce-court",
+        "storeId": "deuce",
+        "slot": "shoes",
+        "starter": true
+      },
+      {
+        "id": "deuce-dress",
+        "storeId": "deuce",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "deuce-pants",
+        "storeId": "deuce",
+        "slot": "bottom",
+        "starter": false
+      },
+      {
+        "id": "deuce-polo",
+        "storeId": "deuce",
+        "slot": "top",
+        "starter": true
+      },
+      {
+        "id": "deuce-shorts",
+        "storeId": "deuce",
+        "slot": "bottom",
+        "starter": true
+      },
+      {
+        "id": "deuce-skirt",
+        "storeId": "deuce",
+        "slot": "bottom",
+        "starter": true
+      },
+      {
+        "id": "deuce-socks",
+        "storeId": "deuce",
+        "slot": "shoes",
+        "starter": false
+      },
+      {
+        "id": "deuce-sweater",
+        "storeId": "deuce",
+        "slot": "acc",
+        "starter": false
+      },
+      {
+        "id": "deuce-terry",
+        "storeId": "deuce",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "deuce-visor",
+        "storeId": "deuce",
+        "slot": "hat",
+        "starter": true
+      },
+      {
+        "id": "halfmoon-biker",
+        "storeId": "halfmoon",
+        "slot": "bottom",
+        "starter": false
+      },
+      {
+        "id": "halfmoon-clip",
+        "storeId": "halfmoon",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "halfmoon-flare",
+        "storeId": "halfmoon",
+        "slot": "bottom",
+        "starter": true
+      },
+      {
+        "id": "halfmoon-grip",
+        "storeId": "halfmoon",
+        "slot": "shoes",
+        "starter": false
+      },
+      {
+        "id": "halfmoon-mintchip",
+        "storeId": "halfmoon",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "halfmoon-studio",
+        "storeId": "halfmoon",
+        "slot": "shoes",
+        "starter": true
+      },
+      {
+        "id": "halfmoon-tank",
+        "storeId": "halfmoon",
+        "slot": "top",
+        "starter": true
+      },
+      {
+        "id": "halfmoon-tied",
+        "storeId": "halfmoon",
+        "slot": "acc",
+        "starter": true
+      },
+      {
+        "id": "halfmoon-tote",
+        "storeId": "halfmoon",
+        "slot": "acc",
+        "starter": false
+      },
+      {
+        "id": "halfmoon-wide",
+        "storeId": "halfmoon",
+        "slot": "bottom",
+        "starter": false
+      },
+      {
+        "id": "halfmoon-wrap",
+        "storeId": "halfmoon",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "halfmoon-zip",
+        "storeId": "halfmoon",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "lap-baguette",
+        "storeId": "lap",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "lap-bib",
+        "storeId": "lap",
+        "slot": "acc",
+        "starter": false
+      },
+      {
+        "id": "lap-jacket",
+        "storeId": "lap",
+        "slot": "top",
+        "starter": true
+      },
+      {
+        "id": "lap-pants",
+        "storeId": "lap",
+        "slot": "bottom",
+        "starter": true
+      },
+      {
+        "id": "lap-runcap",
+        "storeId": "lap",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "lap-runner",
+        "storeId": "lap",
+        "slot": "shoes",
+        "starter": true
+      },
+      {
+        "id": "lap-singlet",
+        "storeId": "lap",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "lap-spikes",
+        "storeId": "lap",
+        "slot": "shoes",
+        "starter": false
+      },
+      {
+        "id": "lap-split",
+        "storeId": "lap",
+        "slot": "bottom",
+        "starter": false
+      },
+      {
+        "id": "lap-vest",
+        "storeId": "lap",
+        "slot": "acc",
+        "starter": false
+      },
+      {
+        "id": "lap-wind",
+        "storeId": "lap",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "moss-anorak",
+        "storeId": "moss",
+        "slot": "top",
+        "starter": true
+      },
+      {
+        "id": "moss-boots",
+        "storeId": "moss",
+        "slot": "shoes",
+        "starter": false
+      },
+      {
+        "id": "moss-bucket",
+        "storeId": "moss",
+        "slot": "hat",
+        "starter": true
+      },
+      {
+        "id": "moss-cargo",
+        "storeId": "moss",
+        "slot": "bottom",
+        "starter": true
+      },
+      {
+        "id": "moss-climb",
+        "storeId": "moss",
+        "slot": "bottom",
+        "starter": false
+      },
+      {
+        "id": "moss-flannel",
+        "storeId": "moss",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "moss-fleece",
+        "storeId": "moss",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "moss-mushroom",
+        "storeId": "moss",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "moss-puffer",
+        "storeId": "moss",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "moss-sahara",
+        "storeId": "moss",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "moss-sling",
+        "storeId": "moss",
+        "slot": "acc",
+        "starter": true
+      },
+      {
+        "id": "moss-trail",
+        "storeId": "moss",
+        "slot": "shoes",
+        "starter": true
+      },
+      {
+        "id": "nolook-backcap",
+        "storeId": "nolook",
+        "slot": "hat",
+        "starter": true
+      },
+      {
+        "id": "nolook-ball",
+        "storeId": "nolook",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "nolook-headband",
+        "storeId": "nolook",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "nolook-hightop",
+        "storeId": "nolook",
+        "slot": "shoes",
+        "starter": true
+      },
+      {
+        "id": "nolook-jersey",
+        "storeId": "nolook",
+        "slot": "top",
+        "starter": true
+      },
+      {
+        "id": "nolook-mesh",
+        "storeId": "nolook",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "nolook-shooter",
+        "storeId": "nolook",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "nolook-shorts",
+        "storeId": "nolook",
+        "slot": "bottom",
+        "starter": true
+      },
+      {
+        "id": "nolook-slides",
+        "storeId": "nolook",
+        "slot": "shoes",
+        "starter": false
+      },
+      {
+        "id": "nolook-snap",
+        "storeId": "nolook",
+        "slot": "bottom",
+        "starter": false
+      },
+      {
+        "id": "nolook-tee",
+        "storeId": "nolook",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "powder-ebi",
+        "storeId": "powder",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "powder-ebifry",
+        "storeId": "powder",
+        "slot": "shoes",
+        "starter": false
+      },
+      {
+        "id": "powder-edamame",
+        "storeId": "powder",
+        "slot": "shoes",
+        "starter": false
+      },
+      {
+        "id": "powder-helmet",
+        "storeId": "powder",
+        "slot": "hat",
+        "starter": true
+      },
+      {
+        "id": "powder-ikura",
+        "storeId": "powder",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "powder-maki",
+        "storeId": "powder",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "powder-nori",
+        "storeId": "powder",
+        "slot": "bottom",
+        "starter": false
+      },
+      {
+        "id": "powder-pants",
+        "storeId": "powder",
+        "slot": "bottom",
+        "starter": false
+      },
+      {
+        "id": "powder-rice",
+        "storeId": "powder",
+        "slot": "bottom",
+        "starter": true
+      },
+      {
+        "id": "powder-saba",
+        "storeId": "powder",
+        "slot": "shoes",
+        "starter": true
+      },
+      {
+        "id": "powder-salmon",
+        "storeId": "powder",
+        "slot": "top",
+        "starter": true
+      },
+      {
+        "id": "powder-salmonhelmet",
+        "storeId": "powder",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "powder-scarf",
+        "storeId": "powder",
+        "slot": "acc",
+        "starter": false
+      },
+      {
+        "id": "powder-tamago",
+        "storeId": "powder",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "powder-temaki",
+        "storeId": "powder",
+        "slot": "shoes",
+        "starter": false
+      },
+      {
+        "id": "powder-tuna",
+        "storeId": "powder",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "powder-uni",
+        "storeId": "powder",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "warmup-beanie",
+        "storeId": "warmup",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "warmup-canvas",
+        "storeId": "warmup",
+        "slot": "shoes",
+        "starter": true
+      },
+      {
+        "id": "warmup-cap",
+        "storeId": "warmup",
+        "slot": "hat",
+        "starter": true
+      },
+      {
+        "id": "warmup-headband",
+        "storeId": "warmup",
+        "slot": "hat",
+        "starter": true
+      },
+      {
+        "id": "warmup-headphones",
+        "storeId": "warmup",
+        "slot": "hat",
+        "starter": false
+      },
+      {
+        "id": "warmup-hightop",
+        "storeId": "warmup",
+        "slot": "shoes",
+        "starter": false
+      },
+      {
+        "id": "warmup-hoodie",
+        "storeId": "warmup",
+        "slot": "top",
+        "starter": true
+      },
+      {
+        "id": "warmup-joggers",
+        "storeId": "warmup",
+        "slot": "bottom",
+        "starter": true
+      },
+      {
+        "id": "warmup-leggings",
+        "storeId": "warmup",
+        "slot": "bottom",
+        "starter": true
+      },
+      {
+        "id": "warmup-long",
+        "storeId": "warmup",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "warmup-overalls",
+        "storeId": "warmup",
+        "slot": "bottom",
+        "starter": false
+      },
+      {
+        "id": "warmup-raglan",
+        "storeId": "warmup",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "warmup-runner",
+        "storeId": "warmup",
+        "slot": "shoes",
+        "starter": true
+      },
+      {
+        "id": "warmup-shorts",
+        "storeId": "warmup",
+        "slot": "bottom",
+        "starter": true
+      },
+      {
+        "id": "warmup-stripe",
+        "storeId": "warmup",
+        "slot": "top",
+        "starter": false
+      },
+      {
+        "id": "warmup-tank",
+        "storeId": "warmup",
+        "slot": "top",
+        "starter": true
+      },
+      {
+        "id": "warmup-tee",
+        "storeId": "warmup",
+        "slot": "top",
+        "starter": true
+      },
+      {
+        "id": "warmup-towel",
+        "storeId": "warmup",
+        "slot": "acc",
+        "starter": true
+      },
+      {
+        "id": "warmup-waistbag",
+        "storeId": "warmup",
+        "slot": "acc",
+        "starter": true
+      }
+    ]
   }
 }
