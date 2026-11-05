@@ -12,8 +12,6 @@ struct CoachPageStack: View {
     @Binding var pages: [CoachRoute]
     /// The coach's 战术板 line of the day, pinned on its own 简历.
     var note: CoachNote?
-    /// Back from the last page.
-    var emptied: () -> Void = {}
     /// The page whose change didn't get through, which says so until the member moves on.
     @State private var failed: CoachRoute?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -65,7 +63,6 @@ struct CoachPageStack: View {
         guard !pages.isEmpty else { return }
         failed = nil
         withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { _ = pages.removeLast() }
-        if pages.isEmpty { emptied() }
     }
 
     /// A change that landed, or that the squad has moved past, ends on 小队设置.

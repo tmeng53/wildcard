@@ -179,17 +179,18 @@ private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", 
         ])
 }
 
-/// A piece still locked hangs on its store's rack only as a box, nearest to opening first, and
-/// never in what a look can wear; one the member unlocked hangs as any other. A store not earned
-/// yet shows no rack.
+/// A piece still locked hangs on its store's rack only as a box, nearest to opening first across
+/// slots, and never in what a look can wear; one the member unlocked hangs as any other. A store
+/// not earned yet shows no rack.
 @Test func lockedPiecesHangAsBoxes() throws {
     let catalog = try Catalog.placeholder(
         stock: try stock(
             earned: ["warmup", "powder"],
             locked: ["warmup-beanie": 4, "warmup-stripe": 2, "warmup-long": 18].merging(powderLocked) { $1 },
             owned: ["warmup-headphones"]))
-    #expect(catalog.lockedRack(of: "warmup").map(\.variant) == ["warmup-stripe", "warmup-long", "warmup-beanie"])
-    #expect(catalog.lockedRack(of: "warmup").map(\.toGo) == [2, 18, 4])
+    // Fewest 练了 to go first, whatever the slot: the beanie (a hat) before the long sleeve (a top).
+    #expect(catalog.lockedRack(of: "warmup").map(\.variant) == ["warmup-stripe", "warmup-beanie", "warmup-long"])
+    #expect(catalog.lockedRack(of: "warmup").map(\.toGo) == [2, 4, 18])
     #expect(catalog.lockedRack(of: "deuce").isEmpty && catalog.rack(of: "deuce").isEmpty)
     #expect(
         !catalog.rack(of: "warmup").contains { ["warmup-stripe", "warmup-long", "warmup-beanie"].contains($0.variant) })

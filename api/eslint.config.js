@@ -22,9 +22,9 @@ export default defineConfig(
     languageOptions: {
       globals: globals.node,
       parserOptions: {
-        // Each package has a src project (tsconfig.json) and a test project
-        // (tsconfig.test.json); typed linting needs both.
-        project: ['./{packages,apps}/*/tsconfig.json', './{packages,apps}/*/tsconfig.test.json'],
+        // One program over every package's source and tests (each package's own tsconfig.json
+        // and tsconfig.test.json would be two programs a package, which ran out of memory).
+        project: './tsconfig.eslint.json',
         tsconfigRootDir: import.meta.dirname,
       },
     },

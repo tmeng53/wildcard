@@ -32,9 +32,6 @@ public struct SquadSettingsView: View {
     private let openTeammate: ((MemberID) -> Void)?
     /// The coach's 战术板 line of the day, pinned on its 简历.
     private let coachNote: CoachNote?
-    /// Opens straight on the squad's coach's 简历, as a tap on the coach on the home does: back
-    /// from it closes the page, until the member goes on past that 简历.
-    @State private var opensCoach: Bool
     @State private var renaming: String?
     @State private var isLeaving = false
     @State private var reveal: Reveal?
@@ -48,10 +45,9 @@ public struct SquadSettingsView: View {
     public init(
         model: SquadSettingsModel, picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void,
         close: @escaping () -> Void, revealing: Binding<Bool>,
-        openTeammate: ((MemberID) -> Void)? = nil, coachNote: CoachNote? = nil, opensCoach: Bool = false
+        openTeammate: ((MemberID) -> Void)? = nil, coachNote: CoachNote? = nil
     ) {
         self.coachNote = coachNote
-        _opensCoach = State(initialValue: opensCoach)
         self.model = model
         self.picked = picked
         self.close = close
@@ -83,10 +79,7 @@ public struct SquadSettingsView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
             }
-            CoachPageStack(model: model, pages: $coachPages, note: coachNote) {
-                // Back from the 简历 the home opened goes back to the home.
-                if opensCoach { close() }
-            }
+            CoachPageStack(model: model, pages: $coachPages, note: coachNote)
             if let reveal {
                 UnboxRevealView(
                     reveal.unboxing, scene: reveal.scene, startedAt: reveal.startedAt,
@@ -100,17 +93,6 @@ public struct SquadSettingsView: View {
             }
         }
         .task { await model.reload() }
-        .task(id: model.coach?.coach.id) {
-            guard opensCoach, coachPages.isEmpty, let coach = model.coach?.coach else { return }
-            var instant = Transaction()
-            instant.disablesAnimations = true
-            withTransaction(instant) { coachPages = [.resume(coach)] }
-        }
-        .onChange(of: coachPages.count) { _, count in
-            // Past the 简历 the home opened (教练招聘会, 解雇, or a change that ends on 小队设置), the
-            // coach's pages work as they do on 小队.
-            if count != 1 { opensCoach = false }
-        }
         .onChange(of: reveal != nil) { _, playing in revealing = playing }
     }
 

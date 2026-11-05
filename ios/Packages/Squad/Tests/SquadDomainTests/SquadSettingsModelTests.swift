@@ -242,6 +242,7 @@ private actor Squad3: SquadSettingsService {
         #expect(model.canHireCoach)
         #expect(model.coach == nil)
         #expect(model.coachWeek == nil)
+        #expect(model.coachDay == nil)
 
         await model.loadMarket()
         #expect(model.market == .loaded([maotou, nuannuan]))
@@ -316,6 +317,17 @@ private actor Squad3: SquadSettingsService {
                 coach: .init(coach: maotou, since: tuesday), today: today))
         await model.reload()
         #expect(model.coachWeek == week)
+    }
+
+    /// The day it was hired counts 1, on the member's clock.
+    @Test(arguments: [("2026-10-27", 1), ("2026-10-28", 2), ("2026-11-02", 7)])
+    func theCoachsDaysCountFromTheHire(today: String, day: Int) async throws {
+        let model = SquadSettingsModel(
+            service: try Squad3(
+                viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false),
+                coach: .init(coach: maotou, since: tuesday), today: today))
+        await model.reload()
+        #expect(model.coachDay == day)
     }
 
     @Test func aMarketThatCantBeReadSaysSo() async throws {

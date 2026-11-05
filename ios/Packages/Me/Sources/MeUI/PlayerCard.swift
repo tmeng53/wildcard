@@ -28,7 +28,7 @@ struct PlayerCard: View {
     @State private var opened: BoardTitle?
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    static let size = CGSize(width: 300, height: 460)
+    static var size: CGSize { TradingCard.size }
 
     var body: some View {
         VStack(spacing: Space.s) {
@@ -69,17 +69,9 @@ struct PlayerCard: View {
         }
     }
 
-    private static let shape = RoundedRectangle(cornerRadius: Radius.card + Space.xxs, style: .continuous)
-
     /// A side on the card's stock, at the card's size.
     private func sided(_ side: some View) -> some View {
-        side
-            .padding(Space.xs)
-            .frame(width: fillsWidth ? nil : Self.size.width, height: fillsWidth ? nil : Self.size.height)
-            .frame(maxWidth: fillsWidth ? .infinity : nil)
-            .aspectRatio(Self.size.width / Self.size.height, contentMode: .fit)
-            .background(Color(role: .bgInk, in: theme), in: Self.shape)
-            .contentShape(Self.shape)
+        side.tradingCardStock(fillsWidth: fillsWidth)
     }
 
     /// Half a turn each way on the page spring's time; with Reduce Motion on, the sides swap with
@@ -137,7 +129,7 @@ private struct CardFront: View {
                                 .accessibilityHidden(true)
                         }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
+                .clipShape(TradingCard.window)
             HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
                 nameAndSquad
                 if let year = face.joinedAt.map({ String(Calendar.current.component(.year, from: $0)) }) {

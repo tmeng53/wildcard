@@ -214,7 +214,7 @@ describe('shelf', () => {
     unlockedAt: at(1),
   };
   const rules = [deuce, tuna, ikura];
-  const locked = [{ kind: 'piece' as const, id: 'powder-ikura', toGo: 1 }];
+  const locked = [{ kind: 'piece' as const, id: 'powder-ikura', toGo: 1, sports: ['ski'] }];
 
   it('shows a closed store’s starters and locked pieces to nobody, and what a member owns all year', () => {
     const off = shelf({ stores, pieces, rules, has: [ownedTuna], locked, on: () => false });

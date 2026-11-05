@@ -127,7 +127,10 @@ export function weekPagesOf(
     const stats = statsOf(facts, [each]);
     const stat = (kind: StatKind) => count(stats, kind);
     const plan = plans.get(member) ?? [];
-    const finished = planFinishedAt(checkIns, facts.week.days, stat('plannedDays'));
+    const finished = planFinishedAt(checkIns, {
+      days: facts.week.days,
+      plannedDays: stat('plannedDays'),
+    });
     return {
       member,
       plannedDays: stat('plannedDays'),
