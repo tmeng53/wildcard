@@ -237,7 +237,8 @@ describe('GET /me/unlocks', () => {
       open: true,
     });
     const powder = shelf.pieces.filter(({ storeId }) => storeId === 'powder');
-    expect(powder.filter(({ state }) => state === 'available')).toHaveLength(4);
+    // POWDER DAY's starters are the member's while it is out, waiting to be claimed (领取).
+    expect(powder.filter(({ state }) => state === 'owned')).toHaveLength(4);
     expect(powder.filter(({ state }) => state === 'locked')).toHaveLength(13);
     expect(powder.find(({ id }) => id === 'powder-tuna')).toMatchObject({
       state: 'locked',
