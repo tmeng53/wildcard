@@ -262,6 +262,36 @@ const checkIns = createCheckIns({
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
 });
+/**
+ * A broadcast's gifts, unlocked for the member from the admin who saved it, like `give_unlocks`
+ * but quietly: the broadcast itself says the 商店街 has something new, so no unlock notice is
+ * told for them.
+ */
+const giveBroadcastGifts =
+  (scope: Database): GiveGifts =>
+  async (member, broadcast) => {
+    if (broadcast.value.gifts.length === 0) return true;
+    if (broadcast.by === null) {
+      // Its admin deleted their account: told without the gifts, which nobody can give now.
+      log.warn('a broadcast’s gifts have no admin to give them', { broadcast: broadcast.id });
+      return true;
+    }
+    try {
+      await createUnlocks({
+        store: createPostgresUnlockStore(scope),
+        trainedSince: ({ member: who, since }) =>
+          checkIns.trainedSince({ member: CheckInMember.parse(who), since }),
+        sportListed: (id) => sports.isListed(id),
+      }).give(
+        { member: UnlockMember.parse(member), items: broadcast.value.gifts },
+        UnlockMember.parse(broadcast.by),
+      );
+      return true;
+    } catch (error) {
+      log.warn('a broadcast’s gifts not given', { broadcast: broadcast.id, error });
+      return false;
+    }
+  };
 // What each member was told (通知, the bell on 动态): pushes and in-app notices, kept forever.
 const noticesOn = (scope: Database) =>
   createNotices({
@@ -303,36 +333,6 @@ const unlocksOn = (scope: Database) =>
         what: 'an unlock',
       }),
   });
-/**
- * A broadcast's gifts, unlocked for the member from the admin who saved it, like `give_unlocks`
- * but quietly: the broadcast itself says the 商店街 has something new, so no unlock notice is
- * told for them.
- */
-const giveBroadcastGifts =
-  (scope: Database): GiveGifts =>
-  async (member, broadcast) => {
-    if (broadcast.value.gifts.length === 0) return true;
-    if (broadcast.by === null) {
-      // Its admin deleted their account: told without the gifts, which nobody can give now.
-      log.warn('a broadcast’s gifts have no admin to give them', { broadcast: broadcast.id });
-      return true;
-    }
-    try {
-      await createUnlocks({
-        store: createPostgresUnlockStore(scope),
-        trainedSince: ({ member: who, since }) =>
-          checkIns.trainedSince({ member: CheckInMember.parse(who), since }),
-        sportListed: (id) => sports.isListed(id),
-      }).give(
-        { member: UnlockMember.parse(member), items: broadcast.value.gifts },
-        UnlockMember.parse(broadcast.by),
-      );
-      return true;
-    } catch (error) {
-      log.warn('a broadcast’s gifts not given', { broadcast: broadcast.id, error });
-      return false;
-    }
-  };
 const nudges = createNudges({
   store: createPostgresNudgeStore(db),
   // Who is in which squad is the squads module's to keep: nudges ask it.
