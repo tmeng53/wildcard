@@ -39,7 +39,7 @@ public struct SquadmateCardPopup: View {
             .frame(width: PlayerCard.size.width, height: PlayerCard.size.height)
             .background(
                 Color(role: .bgCanvas, in: theme),
-                in: RoundedRectangle(cornerRadius: Radius.card + Space.xxs, style: .continuous))
+                in: TradingCard.shape)
     }
 }
 #endif
