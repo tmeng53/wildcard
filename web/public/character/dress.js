@@ -75,17 +75,20 @@ function held(svg, skin, body) {
 
 /**
  * The parts of `variants`' look that keep level in a hand, as indices into `wardrobe.parts`: the
- * parts hanging from the arm a worn variant's hold.json names that draw that variant's slot, as
- * the app's `Figure.level` finds them. The site never plays a prop's own move, so they always
- * hang level.
+ * parts hanging from the arm (or both arms, for ski poles) a worn variant's hold.json names that
+ * draw that variant's slot, as the app's `Figure.level` finds them. The site never plays a prop's
+ * own move, so they always hang level.
  */
 export function leveled(wardrobe, variants) {
   const look = { ...wardrobe.defaults, ...variants };
   for (const slot of Object.keys(look).sort()) {
-    const arm = wardrobe.holds?.[`${slot}/${look[slot]}`];
-    if (arm === undefined) continue;
+    const held = wardrobe.holds?.[`${slot}/${look[slot]}`];
+    if (held === undefined) continue;
+    const arms = [held].flat();
     return wardrobe.parts.flatMap((part, i) =>
-      part.parent === arm && (part.layers ?? []).some((layer) => layer.slot === slot) ? [i] : [],
+      arms.includes(part.parent) && (part.layers ?? []).some((layer) => layer.slot === slot)
+        ? [i]
+        : [],
     );
   }
   return [];

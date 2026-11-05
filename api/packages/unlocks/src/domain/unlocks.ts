@@ -122,6 +122,14 @@ export interface Locked {
   readonly id: string;
   /** 练了 check-ins still to go, 1 or more. */
   readonly toGo: number;
+  /** The sports whose 练了 count; empty for any sport. */
+  readonly sports: readonly SportId[];
+}
+
+/** A piece the member claimed (领取) into their wardrobe. Never taken back. */
+export interface Claim {
+  readonly piece: PieceId;
+  readonly claimedAt: Date;
 }
 
 /** How far `trained` (the earliest made first) is from each of `rules` it hasn't reached. */
@@ -136,7 +144,7 @@ export function toGo({
 }): Locked[] {
   return rules.flatMap((rule) => {
     const left = rule.after - counting(rule, { trained, switchOn }).length;
-    return left > 0 ? [{ kind: rule.kind, id: rule.id, toGo: left }] : [];
+    return left > 0 ? [{ kind: rule.kind, id: rule.id, toGo: left, sports: rule.sports }] : [];
   });
 }
 

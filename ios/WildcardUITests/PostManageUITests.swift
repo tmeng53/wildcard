@@ -40,11 +40,13 @@ final class PostManageUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         let manage = openMenuOnMyPost(in: app)
         app.buttons["post.delete"].tap()
-        // iOS 26 lists an alert's button twice (a Button inside a PopUpButton).
+        // The menu asks in place: its header reads the question and what goes as one element.
         let confirm = app.buttons["post.delete.confirm"].firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: Self.wait), "删除 didn't ask first")
-        XCTAssertTrue(app.staticTexts["删掉这条动态？"].exists, "the question isn't 删掉这条动态？")
-        XCTAssertTrue(app.staticTexts["队友的回应和评论也会一起删掉"].exists, "the question doesn't say what goes")
+        let question = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS '删掉这条动态？' AND label CONTAINS '队友的回应和评论也会一起删掉'"))
+            .firstMatch
+        XCTAssertTrue(question.exists, "the menu doesn't ask 删掉这条动态？ and say what goes")
         settle()
         keepScreenshot(named: "56-feed-delete-confirm")
         confirm.tap()

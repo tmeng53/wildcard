@@ -50,12 +50,18 @@ describe('unlocks', () => {
     const rules = all.filter(({ kind }) => kind !== 'piece');
     expect(rules.map(({ kind, id, sports, after }) => [kind, id, sports, after])).toStrictEqual([
       ['prop', 'badminton', ['badminton'], 1],
+      ['prop', 'basketball', ['basketball'], 1],
       ['prop', 'chalkbag', ['climb'], 1],
+      ['prop', 'gloves', ['boxing', 'kickboxing', 'jiuJitsu', 'martialArts'], 1],
       ['prop', 'goggles', ['swim'], 1],
+      ['prop', 'helmet', ['roadCycling', 'mountainBiking', 'spin', 'bikeCommute'], 1],
       ['prop', 'kettlebell', ['kettlebell', 'crossfit', 'hyrox'], 1],
       ['prop', 'pickleball', ['pickleball'], 1],
       ['prop', 'pingpong', ['tableTennis'], 1],
       ['prop', 'racket', ['tennis', 'squash'], 1],
+      ['prop', 'skis', ['ski', 'crossCountrySki'], 1],
+      ['prop', 'snowboard', ['snowboard'], 1],
+      ['prop', 'soccerball', ['soccer'], 1],
       ['prop', 'yogamat', ['yoga', 'matPilates', 'reformerPilates', 'barre', 'stretching'], 1],
       ['store', 'deuce', ['tennis', 'pickleball', 'squash'], 3],
       ['store', 'halfmoon', [], 3],
@@ -65,12 +71,13 @@ describe('unlocks', () => {
     ]);
     // Each piece of the second wardrobe opens on its own, in its store's sports.
     const pieces = all.filter(({ kind }) => kind === 'piece');
-    expect(pieces).toHaveLength(52);
+    expect(pieces).toHaveLength(57);
     expect(
       pieces
         .filter(({ id }) => id.startsWith('lap-'))
         .map(({ id, sports, after }) => [id, sports, after]),
     ).toStrictEqual([
+      ['lap-baguette', ['run', 'walk'], 30],
       ['lap-bib', ['run', 'walk'], 5],
       ['lap-runcap', ['run', 'walk'], 20],
       ['lap-singlet', ['run', 'walk'], 7],
@@ -153,6 +160,7 @@ describe('unlocks', () => {
       kind: 'piece',
       id: 'warmup-stripe',
       toGo: 2,
+      sports: [],
     });
     expect(locked.find(({ id }) => id === 'deuce-sweater')?.toGo).toBe(3);
     expect(locked.find(({ id }) => id === 'lap-bib')?.toGo).toBe(5);

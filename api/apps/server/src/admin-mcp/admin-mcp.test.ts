@@ -41,7 +41,12 @@ import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { createArt, createPostgresArtStore } from '@wildcard/art';
-import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
+import {
+  createCoachGifts,
+  createPostgresGiftStore,
+  createPostgresUnlockStore,
+  createUnlocks,
+} from '@wildcard/unlocks';
 import { createAwardSettings, createPostgresAwardSettings } from '@wildcard/weekly-awards';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -78,6 +83,7 @@ import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
   unusedUnlocks,
+  unusedGifts,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
@@ -159,6 +165,7 @@ beforeAll(async () => {
           scenes: scenesOn(db),
           weeklyAwards: unusedWeeklyAwards,
           unlocks: unusedUnlocks,
+          gifts: unusedGifts,
           weekSummaryWords: unusedWeekSummaryWords,
           coachHiring: unusedCoachHiring,
           coachActivity: unusedCoachActivity,
@@ -213,6 +220,7 @@ beforeAll(async () => {
                     createSports({ store: createPostgresSportStore(scope) }).isListed(id),
                   switches: () => Promise.resolve(() => true),
                 }),
+                gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
               }),
               ...artTools({
                 art: createArt({
@@ -408,6 +416,8 @@ describe('the admin MCP server', () => {
       ['art_upload_url', true],
       ['put_art', false],
       ['retire_art', false],
+      ['get_gift_pieces', true],
+      ['put_gift_piece', false],
       ['get_coach_settings', true],
       ['change_coach_settings', false],
       ['list_coaches', true],
@@ -1068,6 +1078,28 @@ describe('the admin MCP server', () => {
     `.execute(db);
     expect(rows.rows.map(({ action }) => action)).toStrictEqual([
       { version: 1, tool: 'give_unlocks', arguments: gift },
+    ]);
+    await client.close();
+  });
+
+  it('adds a piece to the coach gift pool and logs it', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const edit = { id: `gift-${randomUUID().slice(0, 8)}`, offered: true };
+    const put = await client.callTool({ name: 'put_gift_piece', arguments: edit });
+    expect(put.isError).not.toBe(true);
+    expect(
+      z.object({ pieces: z.array(z.unknown()) }).parse(JSON.parse(textOf(put))).pieces,
+    ).toContainEqual(edit);
+    const read = await client.callTool({ name: 'get_gift_pieces', arguments: {} });
+    expect(
+      z.object({ pieces: z.array(z.unknown()) }).parse(JSON.parse(textOf(read))).pieces,
+    ).toContainEqual(edit);
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      { version: 1, tool: 'put_gift_piece', arguments: edit },
     ]);
     await client.close();
   });

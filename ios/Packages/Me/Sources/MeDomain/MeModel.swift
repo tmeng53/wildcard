@@ -105,6 +105,34 @@ public final class MeModel {
         load = .loaded(overview)
     }
 
+    /// The unlocked pieces not yet claimed: they wait in their stores on 商店街, marked NEW.
+    public var unclaimed: [String] {
+        guard let overview else { return [] }
+        return overview.unlocks.filter { $0.kind == .piece && !overview.claimed.contains($0.id) }.map(\.id)
+    }
+
+    /// 领取: puts `piece` in the wardrobe at once and saves it; takes it out again if saving fails.
+    /// Answers whether it was kept.
+    @discardableResult
+    public func claim(_ piece: String) async -> Bool {
+        guard case .loaded(var overview) = load, !overview.claimed.contains(piece) else { return true }
+        saveFailed = false
+        overview.claimed.insert(piece)
+        load = .loaded(overview)
+        do {
+            try await service.claim(piece: piece)
+            return true
+        } catch {
+            if case .loaded(var latest) = load {
+                latest.claimed.remove(piece)
+                load = .loaded(latest)
+            }
+            saveFailed = true
+            await signOutIfEnded(error)
+            return false
+        }
+    }
+
     /// Wears `title` on the card's front at once (nil: the latest won again) and saves it; puts
     /// the one worn before back if saving fails.
     public func equip(_ title: String?) async {

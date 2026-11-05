@@ -7578,6 +7578,60 @@ extension Components {
                 case worn
             }
         }
+        /// - Remark: Generated from `#/components/schemas/ClaimedPiece`.
+        public struct ClaimedPiece: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ClaimedPiece/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ClaimedPiece/version`.
+            public var version: Components.Schemas.ClaimedPiece.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/ClaimedPiece/claim`.
+            public var claim: Components.Schemas.PieceClaim
+            /// Creates a new `ClaimedPiece`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - claim:
+            public init(
+                version: Components.Schemas.ClaimedPiece.VersionPayload,
+                claim: Components.Schemas.PieceClaim
+            ) {
+                self.version = version
+                self.claim = claim
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case claim
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PieceClaim`.
+        public struct PieceClaim: Codable, Hashable, Sendable {
+            /// The piece’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PieceClaim/id`.
+            public var id: Swift.String
+            /// When the member claimed it (领取) into their wardrobe.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PieceClaim/claimedAt`.
+            public var claimedAt: Foundation.Date
+            /// Creates a new `PieceClaim`.
+            ///
+            /// - Parameters:
+            ///   - id: The piece’s id in the app’s art.
+            ///   - claimedAt: When the member claimed it (领取) into their wardrobe.
+            public init(
+                id: Swift.String,
+                claimedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.claimedAt = claimedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case claimedAt
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/MyUnlocks`.
         public struct MyUnlocks: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/MyUnlocks/version`.
@@ -7598,6 +7652,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/MyUnlocks/lockedPieces`.
             public var lockedPieces: [Components.Schemas.LockedPiece]
+            /// Every piece the member claimed (领取) into their wardrobe, the earliest first. An unlocked piece waits in its store, marked new, until claimed.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/claimed`.
+            public var claimed: [Components.Schemas.PieceClaim]
+            /// Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/gifts`.
+            public var gifts: [Components.Schemas.GiftedPiece]
             /// Creates a new `MyUnlocks`.
             ///
             /// - Parameters:
@@ -7605,22 +7667,30 @@ extension Components {
             ///   - unlocks: Every store and prop the member unlocked, the earliest first.
             ///   - pieces: Every clothing piece the member unlocked, the earliest first. A piece with a rule stays locked in its store, even an open one, until then.
             ///   - lockedPieces: Every piece with a rule the member hasn’t unlocked yet, and how far it is.
+            ///   - claimed: Every piece the member claimed (领取) into their wardrobe, the earliest first. An unlocked piece waits in its store, marked new, until claimed.
+            ///   - gifts: Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe.
             public init(
                 version: Components.Schemas.MyUnlocks.VersionPayload,
                 unlocks: [Components.Schemas.Unlock],
                 pieces: [Components.Schemas.PieceUnlock],
-                lockedPieces: [Components.Schemas.LockedPiece]
+                lockedPieces: [Components.Schemas.LockedPiece],
+                claimed: [Components.Schemas.PieceClaim],
+                gifts: [Components.Schemas.GiftedPiece]
             ) {
                 self.version = version
                 self.unlocks = unlocks
                 self.pieces = pieces
                 self.lockedPieces = lockedPieces
+                self.claimed = claimed
+                self.gifts = gifts
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case unlocks
                 case pieces
                 case lockedPieces
+                case claimed
+                case gifts
             }
         }
         /// - Remark: Generated from `#/components/schemas/Unlock`.
@@ -7737,6 +7807,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/LockedPiece/id`.
             public var id: Swift.String
+            /// The sports whose 练了 count towards it; empty for any sport.
+            ///
+            /// - Remark: Generated from `#/components/schemas/LockedPiece/sports`.
+            public var sports: [Swift.String]
             /// How many more 练了 check-ins in its sports open it.
             ///
             /// - Remark: Generated from `#/components/schemas/LockedPiece/checkInsToGo`.
@@ -7745,17 +7819,56 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The piece’s id in the app’s art.
+            ///   - sports: The sports whose 练了 count towards it; empty for any sport.
             ///   - checkInsToGo: How many more 练了 check-ins in its sports open it.
             public init(
                 id: Swift.String,
+                sports: [Swift.String],
                 checkInsToGo: Swift.Int
             ) {
                 self.id = id
+                self.sports = sports
                 self.checkInsToGo = checkInsToGo
             }
             public enum CodingKeys: String, CodingKey {
                 case id
+                case sports
                 case checkInsToGo
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/GiftedPiece`.
+        public struct GiftedPiece: Codable, Hashable, Sendable {
+            /// The piece’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/GiftedPiece/id`.
+            public var id: Swift.String
+            /// The coach who gave it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/GiftedPiece/coach`.
+            public var coach: Swift.String
+            /// When the coach gave it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/GiftedPiece/givenAt`.
+            public var givenAt: Foundation.Date
+            /// Creates a new `GiftedPiece`.
+            ///
+            /// - Parameters:
+            ///   - id: The piece’s id in the app’s art.
+            ///   - coach: The coach who gave it.
+            ///   - givenAt: When the coach gave it.
+            public init(
+                id: Swift.String,
+                coach: Swift.String,
+                givenAt: Foundation.Date
+            ) {
+                self.id = id
+                self.coach = coach
+                self.givenAt = givenAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case coach
+                case givenAt
             }
         }
     }

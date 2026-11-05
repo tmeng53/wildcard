@@ -91,8 +91,8 @@ public final class FeedModel {
     public var changed: ((PostChange) -> Void)?
     /// The compose page open on one of the member's posts, to edit it.
     var editing: ComposeModel?
-    /// The member's post they asked to delete, waiting for them to confirm.
-    var confirmingDelete: CheckInID?
+    /// The member's post they confirmed deleting, for the surface on top to delete.
+    var deleting: CheckInID?
     /// The last delete didn't go through.
     var deleteFailed = false
 

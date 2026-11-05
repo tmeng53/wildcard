@@ -10,19 +10,12 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "dustL", "dustR", "root", "propBack", "tail", "legL", "legR", "torso", "medal", "acc", "earL",
-            "earR", "head",
-            "flapL",
-            "flapR", "crown", "award",
-            "nose",
-            "eyes", "brows", "browsSad", "browsMad", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad",
-            "mouthGasp", "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL",
-            "heartR", "sparkle",
-            "tearL", "tearR",
-            "food0", "food1", "food2",
-            "armL", "armR", "chin", "propR", "gripR", "flexL", "muscleL", "flexR", "muscleR", "heart", "propFront",
-            "propOver",
-            "desk",
+            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "torso", "medal", "acc",
+            "earL", "earR", "head", "flapL", "flapR", "crown", "award", "nose", "eyes", "brows", "browsSad", "browsMad",
+            "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp", "drool", "vein", "steamL", "steamR",
+            "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR", "sparkle", "tearL", "tearR", "food0",
+            "food1", "food2", "armL", "propL", "gripL", "armR", "chin", "propR", "gripR", "flexL", "muscleL", "flexR",
+            "muscleR", "heart", "propFront", "propOver", "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
     #expect(try figure.part("acc").art.count == (outfit == Looks.bear ? 1 : 0))
@@ -76,7 +69,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 59)
+    #expect(figure.parts.count == 62)
 }
 
 @Test(arguments: Persona.allCases)
@@ -317,8 +310,8 @@ func outline(_ path: [PathElement]) -> [Point] {
         ])
     #expect(
         choices.wear.values.joined().filter { $0.store == "deuce" }.map(\.id).sorted() == [
-            "deuce-cable", "deuce-court", "deuce-dress", "deuce-pants", "deuce-polo", "deuce-shorts", "deuce-skirt",
-            "deuce-socks", "deuce-sweater", "deuce-terry", "deuce-visor",
+            "deuce-ball", "deuce-cable", "deuce-court", "deuce-dress", "deuce-pants", "deuce-polo", "deuce-shorts",
+            "deuce-skirt", "deuce-socks", "deuce-sweater", "deuce-terry", "deuce-visor",
         ])
     for (slot, pieces) in choices.wear {
         #expect(Set(pieces.map(\.id)).isSubset(of: PlaceholderCharacter.variants(for: slot)))
