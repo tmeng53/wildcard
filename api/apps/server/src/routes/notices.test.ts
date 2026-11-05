@@ -83,6 +83,7 @@ const unlocks = createUnlocks({
     checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
   sportListed: (id) => sports.isListed(id),
   switches: () => Promise.resolve(() => true),
+  switchListed: () => Promise.resolve(true),
 });
 // A year of this run's own, so broadcasts other runs left in the database never run with these.
 const year = 2100 + randomInt(7800);
