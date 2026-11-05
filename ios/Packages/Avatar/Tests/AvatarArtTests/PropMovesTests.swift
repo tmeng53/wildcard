@@ -3,10 +3,10 @@ import AvatarDomain
 import AvatarLooks
 import Testing
 
-/// The props a hand can hold, each with a move of its own: the first batch.
+/// The props a character can hold or stand on, each with a move of its own.
 let heldProps = [
-    "badminton", "bottle", "chalkbag", "dumbbell", "goggles", "kettlebell", "pickleball", "pingpong", "racket",
-    "yogamat",
+    "badminton", "basketball", "bottle", "chalkbag", "dumbbell", "gloves", "goggles", "helmet", "kettlebell",
+    "pickleball", "pingpong", "racket", "skis", "snowboard", "soccerball", "yogamat",
 ]
 
 /// Every held prop has a move of its own that plays once, ends at rest and stays on the canvas
@@ -80,10 +80,27 @@ func theGripIsTheWearersHand(look: Outfit, fill: String, stroke: String?) throws
 }
 
 /// Every held prop is drawn in a fist: a missing grip would leave the prop floating by the hand.
+/// Boxing gloves are the fists themselves, and a snowboard is stood on, not held.
 @Test(arguments: heldProps)
 func everyPropIsHeldInAFist(prop: String) throws {
     let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "prop": prop]))
-    #expect(try #require(figure.part("gripR").art.first).shapes.isEmpty == false)
+    let gripped = try figure.part("gripR").art.flatMap(\.shapes).isEmpty == false
+    #expect(gripped == !["gloves", "snowboard"].contains(prop))
+}
+
+/// Skis and a snowboard stay under the feet when nothing moves, and only they draw there; the
+/// skis' poles are held in both fists, the gloves worn on both hands.
+@Test func gearUnderTheFeetAndInTheLeftHand() throws {
+    for prop in heldProps {
+        let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "prop": prop]))
+        let feet = try figure.part("propFeet")
+        #expect(feet.restOpacity == 1)
+        #expect(feet.art.flatMap(\.shapes).isEmpty == !["skis", "snowboard"].contains(prop), "\(prop)")
+        let left = try figure.part("propL").art.flatMap(\.shapes)
+        #expect(left.isEmpty == !["skis", "gloves"].contains(prop), "\(prop)")
+        let fist = try figure.part("gripL").art.flatMap(\.shapes)
+        #expect(fist.isEmpty == (prop != "skis"), "\(prop)")
+    }
 }
 
 /// Tapping my character on the home plays the move of the prop it holds, once, at my persona's

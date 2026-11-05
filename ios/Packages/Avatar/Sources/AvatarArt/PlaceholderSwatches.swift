@@ -8,7 +8,7 @@ extension PlaceholderCharacter {
     /// own colors from `editor.json`. Empty for slots that keep their art's colors (props,
     /// mouths, cheeks, glasses) and for a variant without `tones.json`.
     public static func swatches(for slot: Slot, wearing variant: String) -> [RGBAColor] {
-        guard BundledArt().text(at: "\(slot)/\(variant)/tones.json") != nil else { return [] }
+        guard PlaceholderArt().text(at: "\(slot)/\(variant)/tones.json") != nil else { return [] }
         return switch slot.description {
         case "body": bodySpecies[variant].flatMap { coats[$0] } ?? []
         case "hair", "brows": hair

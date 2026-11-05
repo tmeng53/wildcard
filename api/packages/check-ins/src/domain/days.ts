@@ -47,3 +47,44 @@ export function latestMealOn(
 export function trainedDays(checkIns: readonly CheckInRecord[], days: readonly LocalDay[]): number {
   return days.filter((day) => trainingOn(checkIns, day) === 'trained').length;
 }
+
+/**
+ * When a member finished their week's plan: the moment the 练了 that made their trained days
+ * reach the days they planned was checked in (the first 练了 of each day counts, the planned
+ * count-th earliest of them). `undefined` without a plan, or while they are still short of it.
+ */
+export function planFinishedAt(
+  checkIns: readonly CheckInRecord[],
+  days: readonly LocalDay[],
+  plannedDays: number,
+): Date | undefined {
+  if (plannedDays < 1) return undefined;
+  const firsts = days
+    .flatMap((day) => {
+      const times = checkIns
+        .filter((each) => each.day === day && each.kind === 'trained')
+        .map(({ createdAt }) => createdAt.getTime());
+      return times.length === 0 ? [] : [Math.min(...times)];
+    })
+    .toSorted((a, b) => a - b);
+  const at = firsts[plannedDays - 1];
+  return at === undefined ? undefined : new Date(at);
+}
+
+/**
+ * Orders members by days trained, most first. A tie goes to whoever finished their own plan
+ * first (`planFinishedAt`); someone who hasn't finished it comes after anyone who has, and the
+ * rest keep the order they came in (the order they joined).
+ */
+export function byTrainedThenFinished<
+  Member extends { readonly trainedDays: number; readonly planFinishedAt?: Date | string },
+>(a: Member, b: Member): number {
+  if (a.trainedDays !== b.trainedDays) return b.trainedDays - a.trainedDays;
+  const at = (member: Member) =>
+    member.planFinishedAt === undefined
+      ? Number.POSITIVE_INFINITY
+      : new Date(member.planFinishedAt).getTime();
+  const [x, y] = [at(a), at(b)];
+  if (x === y) return 0;
+  return x < y ? -1 : 1;
+}

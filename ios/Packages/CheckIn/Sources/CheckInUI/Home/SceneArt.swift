@@ -1,8 +1,10 @@
 #if os(iOS)
+import AvatarArt
 import CheckInDomain
 import DesignSystem
 import DesignSystemUI
 import SwiftUI
+import Synchronization
 
 /// The venue's art, exported from the approved home design (`SceneArt/render.mjs`). The home
 /// draws it full screen; 动态's empty state shows a window onto it, and 上场 plays on it.
@@ -38,10 +40,28 @@ public struct SceneArt: View {
     public static var designHeight: Double { Stage.height }
 
     public var body: some View {
-        Image(uiImage: UIImage(named: "\(scene.rawValue)-\(layer.name)", in: .module, with: nil) ?? UIImage())
+        Image(uiImage: Self.picture(scene, layer))
             .resizable()
             .accessibilityHidden(true)
     }
+}
+
+extension SceneArt {
+    /// The picture for `scene` and `layer`: the one an admin put (`scenes/<scene>-<layer>@3x.png`,
+    /// downloaded by `Backend`'s `ArtDownloads`), else the one this build ships. Read from disk
+    /// once per launch, so a newer download shows from the next launch.
+    static func picture(_ scene: SceneTheme, _ layer: Layer) -> UIImage {
+        let name = "\(scene.rawValue)-\(layer.name)"
+        if let kept = pictures.withLock({ $0[name] }) { return kept }
+        let downloaded = ArtTree.downloadedFile("\(name)@3x.png", in: "scenes")
+            .flatMap { try? Data(contentsOf: $0) }
+            .flatMap { UIImage(data: $0, scale: 3) }
+        let picture = downloaded ?? UIImage(named: name, in: .module, with: nil) ?? UIImage()
+        pictures.withLock { $0[name] = picture }
+        return picture
+    }
+
+    private static let pictures = Mutex<[String: UIImage]>([:])
 }
 
 /// A scene's venue as home draws it, filling the screen with nobody on it: what the scene pick's

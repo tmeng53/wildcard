@@ -8,13 +8,13 @@
     { "id": "bear", "bodies": ["bear"] }
   ],
   "stores": [
-    { "id": "warmup", "open": true },
+    { "id": "warmup" },
     { "id": "lap" },
     { "id": "nolook" },
     { "id": "moss" },
     { "id": "halfmoon" },
     { "id": "deuce" },
-    { "id": "powder", "open": true, "switch": "winter" }
+    { "id": "powder" }
   ],
   "wear": {
     "top": [
@@ -132,6 +132,12 @@
     { "id": "kettlebell" },
     { "id": "yogamat" },
     { "id": "chalkbag" },
-    { "id": "goggles" }
+    { "id": "goggles" },
+    { "id": "helmet" },
+    { "id": "gloves" },
+    { "id": "basketball" },
+    { "id": "soccerball" },
+    { "id": "skis" },
+    { "id": "snowboard" }
   ]
 }

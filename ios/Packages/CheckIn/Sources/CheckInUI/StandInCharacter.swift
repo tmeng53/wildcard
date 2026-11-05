@@ -10,9 +10,12 @@ enum StandInCharacter {
         Persona.allCases[seed(member, 0) % Persona.allCases.count]
     }
 
-    /// A look per member, the same on every launch, in clothes every member starts with.
+    /// A look per member, the same on every launch, in clothes from the street's first store
+    /// (WARM-UP), the one every member starts in.
     static func look(of member: MemberID) -> Outfit {
-        let racks = (try? PlaceholderCharacter.editorChoices().starterWear) ?? [:]
+        let choices = try? PlaceholderCharacter.editorChoices()
+        let first = choices?.stores.first?.id
+        let racks = (choices?.wear ?? [:]).mapValues { pieces in pieces.filter { $0.store == first } }
         func pick(_ slot: Slot, _ salt: Int) -> String? {
             let variants = racks[slot]?.map(\.id) ?? PlaceholderCharacter.variants(for: slot)
             return variants.isEmpty ? nil : variants[seed(member, salt) % variants.count]

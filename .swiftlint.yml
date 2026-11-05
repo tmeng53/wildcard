@@ -46,6 +46,11 @@ custom_rules:
     message: "AGENTS.md: name shared code after its topic, never Utils, Shared, Common or Helpers."
     regex: '^\s*import\s+(Utils|Shared|Common|Helpers)\b'
     severity: error
+  system_menu:
+    name: "System menu"
+    message: "Popups use DesignSystemUI's glassMenu or glassConfirm, never the system Menu, contextMenu or confirmationDialog."
+    regex: '(\.contextMenu\s*[({]|\.confirmationDialog\s*\(|(^|[^.\w])Menu\s*[({])'
+    severity: error
   # Screens take their look from DesignSystem by name (AGENTS.md, Architecture). A view of its
   # own is fine in a screen; a raw color, radius, font, spacing or haptic is not.
   raw_color:

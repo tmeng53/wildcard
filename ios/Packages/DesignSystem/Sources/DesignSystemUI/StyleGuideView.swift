@@ -18,6 +18,8 @@ public struct StyleGuideView: View {
                 TypeSection()
                 LayoutSection()
                 ButtonSection()
+                // Section 4 goes on: the glass menu.
+                GuideGroup(Text("菜单：液态玻璃，从「···」或长按打开", bundle: .module)) { GlassMenuSample() }
                 PickSection()
                 ScenePickGuide()
                 KindSection()

@@ -244,6 +244,15 @@
           },
           "switches": {
             "$ref": "#/components/schemas/SwitchesCatalog"
+          },
+          "stores": {
+            "$ref": "#/components/schemas/StoresCatalog"
+          },
+          "pieces": {
+            "$ref": "#/components/schemas/PiecesCatalog"
+          },
+          "art": {
+            "$ref": "#/components/schemas/ArtCatalog"
           }
         },
         "required": [
@@ -410,7 +419,7 @@
                 },
                 "switchId": {
                   "type": "string",
-                  "description": "The switch a limited scene follows (the `switches` section): it is open, and its store unlocks, only while that switch is on.",
+                  "description": "The switch a limited scene follows (the `switches` section): it is open only while that switch is on.",
                   "example": "winter"
                 }
               },
@@ -495,7 +504,7 @@
               ],
               "additionalProperties": {}
             },
-            "description": "Every global switch scenes, stores and unlock rules follow."
+            "description": "Every global switch scenes, stores and pieces follow."
           }
         },
         "required": [
@@ -523,6 +532,145 @@
         ],
         "additionalProperties": {},
         "description": "A scheduled switch’s days every year, New York time; it may run over New Year. The app never shows them."
+      },
+      "StoresCatalog": {
+        "type": "object",
+        "properties": {
+          "stores": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "powder"
+                },
+                "switchId": {
+                  "type": "string",
+                  "description": "The switch the store is out with (the `switches` section); none for always.",
+                  "example": "winter"
+                },
+                "free": {
+                  "type": "boolean",
+                  "description": "Open to everyone with no 练了 (no unlock rule), such as WARM-UP; any other store is earned."
+                }
+              },
+              "required": [
+                "id",
+                "free"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Every store on the 商店街, in its order; retired ones are left out. A signed-in member’s own street comes from `GET /me/unlocks`; the app has art only for some."
+          }
+        },
+        "required": [
+          "stores"
+        ],
+        "additionalProperties": {}
+      },
+      "PiecesCatalog": {
+        "type": "object",
+        "properties": {
+          "pieces": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "powder-salmon"
+                },
+                "storeId": {
+                  "type": "string",
+                  "example": "powder"
+                },
+                "slot": {
+                  "type": "string",
+                  "description": "Where it is worn: top, bottom, shoes, hat or acc."
+                },
+                "starter": {
+                  "type": "boolean",
+                  "description": "Everyone has it while it is out; any other piece is earned by a rule."
+                },
+                "switchId": {
+                  "type": "string",
+                  "description": "The switch the piece, apart from its store, is out with (the `switches` section); none for always.",
+                  "example": "winter"
+                }
+              },
+              "required": [
+                "id",
+                "storeId",
+                "slot",
+                "starter"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Every clothing piece in a store; retired ones, and a retired store’s, are left out."
+          }
+        },
+        "required": [
+          "pieces"
+        ],
+        "additionalProperties": {}
+      },
+      "ArtCatalog": {
+        "type": "object",
+        "properties": {
+          "generation": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The newest change’s number. The app uses a generation only once it has every file of it, and keeps the one it has until then."
+          },
+          "baseUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Where each file downloads from: this URL, then `<sha256>.<extension>`.",
+            "example": "https://example.supabase.co/storage/v1/object/public/art/"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Where the file goes in the app’s art tree (`avatar/…` over the character’s bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home scene pictures, `openings/…` the opening animations), in place of the bundled file there.",
+                  "example": "avatar/art/top/warmup-tee/torso.svg"
+                },
+                "sha256": {
+                  "type": "string",
+                  "description": "The file’s SHA-256, lowercase hex; also its name."
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Its size in bytes."
+                },
+                "rigVersion": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "The lowest rig version that draws it: a build with an older rig leaves it out."
+                }
+              },
+              "required": [
+                "path",
+                "sha256",
+                "size",
+                "rigVersion"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Every file put over the bundled art. Paths not listed use the bundled file."
+          }
+        },
+        "required": [
+          "generation",
+          "baseUrl",
+          "files"
+        ],
+        "additionalProperties": {}
       },
       "Me": {
         "type": "object",
@@ -4268,6 +4416,13 @@
             },
             "maxItems": 3,
             "description": "Those on the podium who trained at least as many days as they planned (练够计划), for a small mark on their step. Empty when none did."
+          },
+          "tieBrokenByPlan": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Present when finishing the weekly plan first decided a place on the podium (or the last place just off it), so the page can say why."
           }
         },
         "required": [
@@ -4276,7 +4431,7 @@
           "planDone"
         ],
         "additionalProperties": false,
-        "description": "领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene; the earliest to join on a tie) in the middle, up to 2 next beside, left then right. Missing when nobody trained."
+        "description": "领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene) in the middle, up to 2 next beside, left then right. A tie goes to whoever finished their own weekly plan first, then to the earliest to join. Missing when nobody trained."
       },
       "StoryMyWeek": {
         "type": "object",
@@ -4894,6 +5049,9 @@
               "$ref": "#/components/schemas/GiftedPiece"
             },
             "description": "Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe."
+          },
+          "shelf": {
+            "$ref": "#/components/schemas/Shelf"
           }
         },
         "required": [
@@ -4902,7 +5060,8 @@
           "pieces",
           "lockedPieces",
           "claimed",
-          "gifts"
+          "gifts",
+          "shelf"
         ],
         "additionalProperties": false
       },
@@ -5062,6 +5221,112 @@
           "id",
           "coach",
           "givenAt"
+        ],
+        "additionalProperties": false
+      },
+      "Shelf": {
+        "type": "object",
+        "properties": {
+          "stores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShelfStore"
+            },
+            "description": "Every store on the 商店街, in its order, and whether it is open now."
+          },
+          "pieces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShelfPiece"
+            },
+            "description": "Every piece the member may see now: what they own, and what is out in an open store they have earned. A piece left out is not shown."
+          }
+        },
+        "required": [
+          "stores",
+          "pieces"
+        ],
+        "additionalProperties": false,
+        "description": "The 商店街 as it stands for the member now, worked out by the server from the stores’, pieces’ and switches’ rows: the app draws it as it is."
+      },
+      "ShelfStore": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+            "description": "The store’s id in the app’s art.",
+            "example": "powder"
+          },
+          "open": {
+            "type": "boolean",
+            "description": "Whether it is open now (its switch on). A closed store shows only what the member owns."
+          }
+        },
+        "required": [
+          "id",
+          "open"
+        ],
+        "additionalProperties": false
+      },
+      "ShelfPiece": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "powder-tuna"
+          },
+          "storeId": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+            "description": "The store it hangs in.",
+            "example": "powder"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "owned",
+              "available",
+              "locked"
+            ],
+            "description": "`owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box)."
+          },
+          "checkInsToGo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "For a locked piece: how many more 练了 check-ins in its sports open it.",
+            "example": 2
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][A-Za-z0-9]{0,39}$"
+            },
+            "description": "The sports whose 练了 count towards it; empty for any sport.",
+            "example": [
+              "ski",
+              "snowboard"
+            ]
+          },
+          "checkIns": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "How many 练了 check-ins it takes; 0 for a starter.",
+            "example": 1
+          }
+        },
+        "required": [
+          "id",
+          "storeId",
+          "state",
+          "sports",
+          "checkIns"
         ],
         "additionalProperties": false
       }
@@ -9810,7 +10075,7 @@
       "get": {
         "operationId": "getMyUnlocks",
         "summary": "The stores, props and pieces the signed-in member unlocked",
-        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed. An unlock is never taken back.",
+        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
         "security": [
           {
             "bearer": []

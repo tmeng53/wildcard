@@ -8,6 +8,7 @@ import {
   createAiConsent,
   createPostgresConsentStore,
 } from '@wildcard/ai-consent';
+import { createArt, createPostgresArtStore } from '@wildcard/art';
 import {
   MemberId as CheckInMember,
   PhotoPath,
@@ -117,15 +118,20 @@ import { sceneTools } from './admin-mcp/tools/scenes.js';
 import { switchTools } from './admin-mcp/tools/switches.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
+import { artTools } from './admin-mcp/tools/art.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
+import { createSupabaseArtStorage } from './adapters/supabase-art-storage.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import {
+  artSection,
   disclaimerDiceSection,
   scenesSection,
   sportsSection,
   switchesSection,
+  storesSection,
+  piecesSection,
 } from './routes/catalog.js';
 import { readConfig } from './config.js';
 import { createLog, redactText, reportingErrors } from './log.js';
@@ -159,6 +165,14 @@ const liveEvents = createPostgresLiveEvents(config.liveEventsDatabaseUrl, {
     log.warn('lost the live events connection; open streams end and reconnect', { error });
   },
 });
+
+// The art apps download: the list in the database, the files in Storage's public bucket.
+const artFiles = createSupabaseArtStorage({
+  supabaseUrl: config.supabaseUrl,
+  secretKey: config.supabaseSecretKey,
+});
+const artOn = (scope: Database) =>
+  createArt({ store: createPostgresArtStore(scope), blobs: artFiles });
 const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
@@ -248,7 +262,7 @@ const squads = createSquads({
 });
 // The sports list every picker shows, kept in the database.
 const sports = createSports({ store: createPostgresSportStore(db) });
-// Global on/off switches (a winter theme, a holiday) that limited scenes and unlock rules follow.
+// Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
 const switches = switchesOn(db);
 const scenes = createScenes({
@@ -302,7 +316,7 @@ const unlocksOn = (scope: Database) =>
     trainedSince: ({ member, since }) =>
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
-    // A rule on a switch counts only 练了 made while it was on, by the New York day.
+    // A rule counts only 练了 made while its store's and piece's switches were on, by the New York day.
     switches: async () => {
       const on = await switchesOn(scope).states();
       return (id, at) => on(id, newYorkDays.format(at));
@@ -450,7 +464,10 @@ const app = createApp({
       sportsSection(sports),
       scenesSection(scenes),
       switchesSection(switches),
+      storesSection(unlocksOn(db)),
+      piecesSection(unlocksOn(db)),
       disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+      artSection(artOn(db)),
     ],
     clock: () => new Date(),
   },
@@ -538,6 +555,7 @@ const app = createApp({
         unlocks: unlocksOn(scope),
         gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
       }),
+      ...artTools({ art: artOn(scope) }),
       ...coachTools({
         settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
         coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),

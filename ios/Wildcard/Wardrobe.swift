@@ -36,7 +36,7 @@ final class Wardrobe {
         let character = overview.character
         editor = try? CharacterEditorModel.placeholder(
             look: character.outfit, persona: character.persona, nickname: character.nickname,
-            unlocks: overview.unlocks, locked: overview.lockedPieces, claimed: overview.claimed, marks: marks)
+            unlocks: overview.unlocks, stock: overview.stock, claimed: overview.claimed, marks: marks)
     }
 
     /// 我's shopfront: the street as it was last made.
@@ -51,7 +51,7 @@ final class Wardrobe {
             Key(
                 character: $0.character,
                 standing: UnlockStanding(
-                    unlocks: $0.unlocks, lockedPieces: $0.lockedPieces, claimed: $0.claimed),
+                    unlocks: $0.unlocks, claimed: $0.claimed, stock: $0.stock ?? StarterStock.shared.current),
                 open: showsShop)
         }
     }
@@ -90,7 +90,8 @@ final class Wardrobe {
         return try? StreetModel.placeholder(
             look: overview.character.outfit,
             standing: UnlockStanding(
-                unlocks: overview.unlocks, lockedPieces: overview.lockedPieces, claimed: overview.claimed),
+                unlocks: overview.unlocks, claimed: overview.claimed,
+                stock: overview.stock ?? StarterStock.shared.current),
             marks: marks,
             claim: { await profile.claim($0) },
             tryOn: { [weak self] piece in

@@ -18,6 +18,7 @@
     "@sentry/node": "11.8.0",
     "@wildcard/admins": "workspace:*",
     "@wildcard/ai-consent": "workspace:*",
+    "@wildcard/art": "workspace:*",
     "@wildcard/check-ins": "workspace:*",
     "@wildcard/coach": "workspace:*",
     "@wildcard/disclaimer-drafts": "workspace:*",

@@ -22,6 +22,7 @@ import {
 } from '@wildcard/push';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import { createPostgresUnlockStore } from '@wildcard/unlocks';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 
@@ -30,10 +31,13 @@ import { createApp } from '../src/app.js';
 import { createLog } from '../src/log.js';
 import { openApiJson } from '../src/openapi.js';
 import {
+  artSection,
   disclaimerDiceSection,
   scenesSection,
   sportsSection,
   switchesSection,
+  storesSection,
+  piecesSection,
 } from '../src/routes/catalog.js';
 
 const unused = (): never => {
@@ -64,6 +68,9 @@ const app = createApp({
         }),
       ),
       switchesSection(createSwitches({ store: createPostgresSwitchStore(db) })),
+      storesSection(createPostgresUnlockStore(db)),
+      piecesSection(createPostgresUnlockStore(db)),
+      artSection({ manifest: unused }),
     ],
     clock: unused,
   },

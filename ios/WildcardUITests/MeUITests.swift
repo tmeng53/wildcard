@@ -41,7 +41,13 @@ final class MeUITests: XCTestCase {
     func testMyPostsWall() {
         let app = launch(language: "zh-Hans")
         let entry = app.buttons["me.myPosts"]
-        XCTAssertTrue(entry.waitForExistence(timeout: 30), "我 has no 我的动态 button")
+        XCTAssertTrue(entry.waitForExistence(timeout: 30), "我 has no 我的动态 tile")
+        // The tiles sit under the card, which spans the page: scroll them clear of the tab bar.
+        app.swipeUp()
+        assertClearOfTabBar(entry, in: app)
+        waitFor(entry, "label CONTAINS '我的动态'", "the tile isn't 我的动态")
+        settle()
+        keepScreenshot(named: "40-me-tiles")
         entry.tap()
         let wall = app.descendants(matching: .any).matching(identifier: "wall.page").firstMatch
         XCTAssertTrue(wall.waitForExistence(timeout: 30), "我的动态 never opened")
@@ -101,7 +107,6 @@ final class MeUITests: XCTestCase {
 
         // 退出登录 asks first; the in-memory member has nothing to sign out of, so 设置 stays.
         app.buttons["me.signOut"].tap()
-        // The system sheet nests the button, so the identifier matches twice.
         let signOut = app.buttons.matching(identifier: "me.signOut.confirm").firstMatch
         XCTAssertTrue(signOut.waitForExistence(timeout: 30), "退出登录 didn't ask first")
         signOut.tap()
@@ -164,13 +169,15 @@ final class MeUITests: XCTestCase {
         XCTAssertFalse(app.buttons["me.jerseyNumber"].exists, "设置 still has 球衣号码")
     }
 
-    /// 出赛表 opens inside 我 from the row under the card, with this week's count, and its
+    /// 出赛表 opens inside 我 from the tile under the card, with this week's number and count, and its
     /// 每周模板 is one of its own chips; 返回 goes back to 我 with the tab bar there all along.
     func testScheduleOpensInsideMe() {
         let app = launch(language: "zh-Hans")
         let row = app.buttons["me.schedule"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 出赛表 row on 我")
-        XCTAssertTrue(row.label.contains("3/5"), "the row doesn't count this week: \(row.label)")
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 出赛表 tile on 我")
+        XCTAssertTrue(row.label.contains("3/5"), "the tile doesn't count this week: \(row.label)")
+        XCTAssertTrue(row.label.contains("W3"), "the tile doesn't number this week: \(row.label)")
+        app.swipeUp()
         assertClearOfTabBar(row, in: app)
         row.tap()
         XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "出赛表 didn't open")
@@ -240,7 +247,7 @@ final class MeUITests: XCTestCase {
         let card = app.buttons["me.card"]
         XCTAssertTrue(card.waitForExistence(timeout: 30))
         XCTAssertTrue(card.label.contains("練了"), "the card isn't in Traditional Chinese: \(card.label)")
-        XCTAssertTrue(app.buttons["編輯外卡運動員"].exists)
+        XCTAssertEqual(app.buttons["me.editCharacter"].label, "換裝")
         settle()
         keepScreenshot(named: "49-me-zh-hant")
         app.buttons["me.settings"].tap()

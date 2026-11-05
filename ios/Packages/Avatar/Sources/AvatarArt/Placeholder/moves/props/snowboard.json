@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "name": "snowboard",
+  "duration": 3.6,
+  "loops": false,
+  "holds": "snowboard",
+  "tracks": [
+    {"part": "root", "channel": "scaleY", "keys": [{"t": 0, "v": 1}, {"t": 0.35, "v": 0.9, "ease": "easeInOut"}, {"t": 2, "v": 0.9}, {"t": 2.15, "v": 0.84, "ease": "easeInOut"}, {"t": 2.32, "v": 1.04, "ease": "easeOut"}, {"t": 2.62, "v": 0.86, "ease": "easeIn"}, {"t": 2.82, "v": 0.9, "ease": "easeInOut"}, {"t": 3.4, "v": 1, "ease": "easeInOut"}]},
+    {"part": "root", "channel": "y", "keys": [{"t": 0, "v": 0}, {"t": 0.4, "v": -3, "ease": "easeInOut"}, {"t": 0.8, "v": 0, "ease": "easeInOut"}, {"t": 1.2, "v": -3, "ease": "easeInOut"}, {"t": 1.6, "v": 0, "ease": "easeInOut"}, {"t": 2.15, "v": 0}, {"t": 2.4, "v": -24, "ease": "easeOut"}, {"t": 2.62, "v": 0, "ease": "easeIn"}, {"t": 3.4, "v": 0}]},
+    {"part": "torso", "channel": "rotation", "keys": [{"t": 0, "v": 0}, {"t": 0.5, "v": -6, "ease": "easeInOut"}, {"t": 1.2, "v": 6, "ease": "easeInOut"}, {"t": 1.9, "v": -4, "ease": "easeInOut"}, {"t": 2.15, "v": 0, "ease": "easeInOut"}, {"t": 3.4, "v": 0}]},
+    {"part": "propFeet", "channel": "rotation", "keys": [{"t": 0, "v": 0}, {"t": 2.15, "v": 0}, {"t": 2.32, "v": -8, "ease": "easeOut"}, {"t": 2.5, "v": 3, "ease": "easeInOut"}, {"t": 2.62, "v": 0, "ease": "easeIn"}]},
+    {"part": "armR", "channel": "rotation", "keys": [{"t": 0, "v": 0}, {"t": 0.35, "v": -55, "ease": "easeInOut"}, {"t": 2.15, "v": -55}, {"t": 2.4, "v": -80, "ease": "easeOut"}, {"t": 2.8, "v": -55, "ease": "easeInOut"}, {"t": 3.4, "v": 0, "ease": "easeInOut"}]},
+    {"part": "armR", "channel": "bend", "keys": [{"t": 0, "v": 0}, {"t": 0.35, "v": 30, "ease": "easeInOut"}, {"t": 3, "v": 30}, {"t": 3.4, "v": 0, "ease": "easeInOut"}]},
+    {"part": "armL", "channel": "rotation", "keys": [{"t": 0, "v": 0}, {"t": 0.35, "v": 55, "ease": "easeInOut"}, {"t": 2.15, "v": 55}, {"t": 2.4, "v": 80, "ease": "easeOut"}, {"t": 2.8, "v": 55, "ease": "easeInOut"}, {"t": 3.4, "v": 0, "ease": "easeInOut"}]},
+    {"part": "armL", "channel": "bend", "keys": [{"t": 0, "v": 0}, {"t": 0.35, "v": -30, "ease": "easeInOut"}, {"t": 3, "v": -30}, {"t": 3.4, "v": 0, "ease": "easeInOut"}]},
+    {"part": "dustL", "channel": "opacity", "keys": [{"t": 0, "v": 0}, {"t": 2.6, "v": 0}, {"t": 2.62, "v": 1}, {"t": 2.95, "v": 0}]},
+    {"part": "dustR", "channel": "opacity", "keys": [{"t": 0, "v": 0}, {"t": 2.6, "v": 0}, {"t": 2.62, "v": 1}, {"t": 2.95, "v": 0}]},
+    {"part": "head", "channel": "rotation", "keys": [{"t": 0, "v": 0}, {"t": 0.5, "v": 4, "ease": "easeInOut"}, {"t": 1.2, "v": -4, "ease": "easeInOut"}, {"t": 1.9, "v": 0, "ease": "easeInOut"}]},
+    {"part": "mouthOpen", "channel": "opacity", "keys": [{"t": 0, "v": 0}, {"t": 2.3200000000000003, "v": 0}, {"t": 2.35, "v": 1}, {"t": 2.95, "v": 1}, {"t": 3, "v": 0}]},
+    {"part": "mouthSmile", "channel": "opacity", "keys": [{"t": 0, "v": 1}, {"t": 2.3200000000000003, "v": 1}, {"t": 2.35, "v": 0}, {"t": 2.95, "v": 0}, {"t": 3, "v": 1}]}
+  ]
+}

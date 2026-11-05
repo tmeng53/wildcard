@@ -13,23 +13,20 @@ public struct MeDestinations {
     public var editCharacter: () -> Void
     /// 出赛表, opened inside 我.
     public var schedule: () -> Void
-    /// 我的动态: everything the member posted.
-    public var myPosts: () -> Void
-    /// 商店街, opened inside 我 from its shopfront.
+    /// 商店街, opened inside 我 from its button.
     public var street: () -> Void
-    /// Whether a piece came in that 商店街 hasn't shown yet: the shopfront's dot.
+    /// Whether a piece came in that 商店街 hasn't shown yet: the dot on its button.
     public var streetHasNews: Bool
     /// The published policy pages.
     public var privacyPolicy: URL
     public var terms: URL
 
     public init(
-        editCharacter: @escaping () -> Void, schedule: @escaping () -> Void, myPosts: @escaping () -> Void,
+        editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
         street: @escaping () -> Void = {}, streetHasNews: Bool = false, privacyPolicy: URL, terms: URL
     ) {
         self.editCharacter = editCharacter
         self.schedule = schedule
-        self.myPosts = myPosts
         self.street = street
         self.streetHasNews = streetHasNews
         self.privacyPolicy = privacyPolicy
@@ -37,19 +34,23 @@ public struct MeDestinations {
     }
 }
 
-/// 我: the member's player card (tap it to turn it over), the 出赛表 row, 我的动态 and 编辑外卡运动员, with a small 设置 button that opens the settings menu,
-/// and from there 注销账号. Each page replaces the last in place. These pages keep out of the
-/// scene's colours: ink and white only.
-public struct MeView: View {
+/// 我: 换装, 商店街 and 设置 at the top right, the member's player card across the page (tap it
+/// to turn it over), and under it the 出赛表 tile and the 我的动态 tile the app passes in, as wide
+/// as the card. 设置 opens the settings menu, and from there 注销账号; each page replaces the last
+/// in place. These pages keep out of the scene's colours: ink, graphite and white only.
+public struct MeView<PostsTile: View>: View {
     @Bindable private var model: MeModel
     private let destinations: MeDestinations
+    private let postsTile: PostsTile
     @State private var isSettingsOpen = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(model: MeModel, destinations: MeDestinations) {
+    /// `postsTile` is 我的动态's tile, which the feed draws (`GlanceTile` with the newest posts).
+    public init(model: MeModel, destinations: MeDestinations, @ViewBuilder postsTile: () -> PostsTile) {
         self.model = model
         self.destinations = destinations
+        self.postsTile = postsTile()
     }
 
     public var body: some View {
@@ -73,23 +74,32 @@ public struct MeView: View {
         .task { await model.reload() }
     }
 
-    /// 我的动态 and 编辑外卡运动员: side by side, stacked where the words don't fit in a row.
-    @ViewBuilder private var actions: some View {
-        Button(action: destinations.myPosts) {
-            Label {
-                Text("我的动态", bundle: .module)
-            } icon: {
-                Image(systemName: "square.grid.2x2.fill")
-            }
+    /// 换装, 商店街 (with its dot while a piece waits there unseen) and 设置: the system's round
+    /// header buttons, icons only.
+    private var header: some View {
+        HStack(spacing: Space.xs) {
+            Spacer()
+            HeaderButton(Text("换装", bundle: .module), systemImage: "tshirt", action: destinations.editCharacter)
+                .accessibilityIdentifier("me.editCharacter")
+            HeaderButton(Text("商店街", bundle: .module), systemImage: "bag", action: destinations.street)
+                .overlay(alignment: .topTrailing) {
+                    if destinations.streetHasNews {
+                        Circle()
+                            .fill(Color(role: .bgBrand, in: theme))
+                            .overlay(Circle().stroke(Color(role: .bgCanvas, in: theme), lineWidth: 2))
+                            .frame(width: Self.dot, height: Self.dot)
+                            .accessibilityIdentifier("me.street.dot")
+                    }
+                }
+                .accessibilityValue(destinations.streetHasNews ? Text("有新货", bundle: .module) : Text(verbatim: ""))
+                .accessibilityIdentifier("me.street")
+            HeaderButton(Text("设置", bundle: .module), systemImage: "gearshape") { isSettingsOpen = true }
+                .accessibilityIdentifier("me.settings")
         }
-        .buttonStyle(PrimaryButtonStyle(.regular))
-        .accessibilityIdentifier("me.myPosts")
-        Button(action: destinations.editCharacter) {
-            Text("编辑外卡运动员", bundle: .module)
-        }
-        .buttonStyle(SecondaryButtonStyle())
-        .accessibilityIdentifier("me.editCharacter")
     }
+
+    /// The 商店街 dot.
+    private static var dot: Double { 12 }
 
     @ViewBuilder private var content: some View {
         switch model.load {
@@ -99,30 +109,15 @@ public struct MeView: View {
             MeFailed { Task { await model.reload() } }
         case .loaded(let overview):
             ScrollView {
-                // Space.m between pieces, so the card, 出赛表 and the buttons all clear the tab bar
-                // on the smallest phone without scrolling.
-                VStack(spacing: Space.m) {
-                    HStack(alignment: .top) {
-                        Shopfront(hasNews: destinations.streetHasNews, open: destinations.street)
-                        Spacer()
-                        Button {
-                            isSettingsOpen = true
-                        } label: {
-                            Text("设置", bundle: .module)
-                        }
-                        .buttonStyle(SecondaryButtonStyle())
-                        .accessibilityIdentifier("me.settings")
-                    }
-                    PlayerCard(face: overview.card, equip: { title in Task { await model.equip(title) } })
-                    ScheduleRow(week: overview.week, open: destinations.schedule)
-                    VStack(spacing: Space.xs) {
-                        ViewThatFits(in: .horizontal) {
-                            HStack(spacing: Space.s) { actions }
-                            VStack(spacing: Space.xs) { actions }
-                        }
-                        if model.saveFailed {
-                            SaveFailed()
-                        }
+                VStack(spacing: Space.s) {
+                    header
+                    PlayerCard(
+                        face: overview.card, equip: { title in Task { await model.equip(title) } }, hint: nil,
+                        fillsWidth: true)
+                    ScheduleTile(week: overview.week, glance: overview.weekGlance, open: destinations.schedule)
+                    postsTile
+                    if model.saveFailed {
+                        SaveFailed()
                     }
                 }
                 .padding(.horizontal, Space.pageMargin)
@@ -138,115 +133,47 @@ public struct MeView: View {
     }
 }
 
-/// 商店街's door at the top left of 我, opposite 设置 (the approved wardrobe design, 2026-11-04): a
-/// graphite and white shopfront over its name, with a dot while a piece waits there unseen.
-struct Shopfront: View {
-    let hasNews: Bool
-    let open: () -> Void
-    @Environment(\.sceneTheme) private var theme
-    private let door = CGSize(width: 40, height: 38)
-    private let dot: Double = 12
-
-    var body: some View {
-        Button(action: open) {
-            VStack(spacing: Space.xxs / 2) {
-                Canvas { context, size in draw(in: &context, size: size) }
-                    .frame(width: door.width, height: door.height)
-                    .overlay(alignment: .topTrailing) {
-                        if hasNews {
-                            Circle()
-                                .fill(Color(role: .bgInk, in: theme))
-                                .overlay(Circle().stroke(Color(role: .bgCanvas, in: theme), lineWidth: 2))
-                                .frame(width: dot, height: dot)
-                                .offset(x: Space.xxs, y: -Space.xxs)
-                                .accessibilityIdentifier("me.street.dot")
-                        }
-                    }
-                Text("商店街", bundle: .module)
-                    .typeStyle(TypeRamp.label)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .lineLimit(1)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityElement(children: .combine)
-        .accessibilityValue(hasNews ? Text("有新货", bundle: .module) : Text(verbatim: ""))
-        .accessibilityIdentifier("me.street")
-    }
-
-    /// The shop in the design's 64 × 60 drawing: a white front, the graphite awning with its three
-    /// white seams and scalloped edge, a graphite door and a window.
-    private func draw(in context: inout GraphicsContext, size: CGSize) {
-        let ink = Color(role: .bgInk, in: theme)
-        let white = Color(role: .bgCanvas, in: theme)
-        let line = StrokeStyle(lineWidth: 2.5, lineCap: .round)
-        context.scaleBy(x: size.width / 64, y: size.height / 60)
-        let front = Path(roundedRect: CGRect(x: 10, y: 20, width: 44, height: 36), cornerRadius: 4)
-        context.fill(front, with: .color(white))
-        context.stroke(front, with: .color(ink), style: line)
-        var awning = Path()
-        awning.move(to: CGPoint(x: 6, y: 8))
-        awning.addArc(
-            center: CGPoint(x: 10, y: 8), radius: 4, startAngle: .degrees(180), endAngle: .degrees(270),
-            clockwise: false)
-        awning.addLine(to: CGPoint(x: 54, y: 4))
-        awning.addArc(
-            center: CGPoint(x: 54, y: 8), radius: 4, startAngle: .degrees(270), endAngle: .degrees(360),
-            clockwise: false)
-        awning.addLine(to: CGPoint(x: 58, y: 18))
-        for center in [51.5, 38.5, 25.5, 12.5] {
-            awning.addArc(
-                center: CGPoint(x: center, y: 18), radius: 6.5, startAngle: .degrees(0), endAngle: .degrees(180),
-                clockwise: false)
-        }
-        awning.closeSubpath()
-        context.fill(awning, with: .color(ink))
-        var seams = Path()
-        for seam in [19.0, 32, 45] {
-            seams.move(to: CGPoint(x: seam, y: 6))
-            seams.addLine(to: CGPoint(x: seam, y: 18))
-        }
-        context.stroke(seams, with: .color(white), style: line)
-        context.fill(Path(roundedRect: CGRect(x: 17, y: 32, width: 12, height: 24), cornerRadius: 2), with: .color(ink))
-        context.stroke(
-            Path(roundedRect: CGRect(x: 35, y: 32, width: 12, height: 10), cornerRadius: 2), with: .color(ink),
-            style: line)
-    }
-}
-
-/// 出赛表 under the card, with this week's count, opening it inside 我.
-struct ScheduleRow: View {
+/// 出赛表 under the card: this week's number, 出赛表 with 本周 x/y, and the week's seven days
+/// (a white disc with a tick for a day with a 练了, a ring for a training day still to come or
+/// gone by, a moon for a rest day, today's mark heavier), opening it inside 我. Without the days
+/// it shows the count alone.
+struct ScheduleTile: View {
     let week: WeekCount?
+    let glance: WeekGlance?
     let open: () -> Void
-    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        Button(action: open) {
-            HStack(spacing: Space.s) {
-                VStack(alignment: .leading, spacing: Space.xxs / 2) {
-                    Text("出赛表", bundle: .module)
-                        .typeStyle(TypeRamp.headline)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    if let week {
-                        Text("本周 \(week.trainedDays)/\(week.plannedDays)", bundle: .module)
-                            .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+        GlanceTile(
+            figure: glance.map { Text(verbatim: "W\($0.number)") } ?? Text("出赛表", bundle: .module),
+            figureStyle: glance == nil ? TypeRamp.headline : TypeRamp.scoreWeek,
+            caption: caption, action: open
+        ) {
+            if let glance {
+                GlanceWeekDays(
+                    glance.days.map { day in
+                        let status: WeekDayStatus =
+                            switch day.mark {
+                            case .trained: .trained(symbol: nil)
+                            case .planned: .open
+                            case .rest: .restDay
+                            }
+                        return GlanceWeekDays.Day(status: status, isToday: day.isToday)
                     }
-                }
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
-                    .accessibilityHidden(true)
+                )
+                .accessibilityHidden(true)
             }
-            .card()
-            .contentShape(Rectangle())
         }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityElement(children: .combine)
         .accessibilityIdentifier("me.schedule")
+    }
+
+    /// 出赛表 · 3/5, or 出赛表 alone with no plan this week; 本周 3/5 when the week has no number.
+    private var caption: Text {
+        switch (glance, week) {
+        case (.some, .some(let week)): Text("出赛表 · \(week.trainedDays)/\(week.plannedDays)", bundle: .module)
+        case (.some, .none): Text("出赛表", bundle: .module)
+        case (.none, .some(let week)): Text("本周 \(week.trainedDays)/\(week.plannedDays)", bundle: .module)
+        case (.none, .none): Text(verbatim: "")
+        }
     }
 }
 

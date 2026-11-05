@@ -17,7 +17,7 @@ import SwiftUI
 
 /// The app once the member is signed in and in a squad: the three tabs (今天, 动态, 我) in the
 /// system's Liquid Glass tab bar (`AppTabs`), with 小队 opened inside 今天 from the home's squad
-/// card (Tracy took 小队's own tab away on 2026-11-04; the coach chat opens from home too).
+/// card (Tracy took 小队's own tab away on 2026-11-04).
 /// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
 /// them draws the bar itself.
 struct MainTabs: View {
@@ -57,6 +57,8 @@ struct MainTabs: View {
     @State private var squadRevealing = false
     /// 我的动态, open from 我 in its place.
     @State private var wall: PostWallStore?
+    /// 我的动态's tile on 我: the wall's first page, read again each time 我 shows.
+    @State private var newestPosts: PostWallStore
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
     /// A player's card, opened from a tap on them on the home or their row on 小队,
@@ -77,6 +79,7 @@ struct MainTabs: View {
         _selection = selection
         self.leftSquad = leftSquad
         _inbox = State(initialValue: NoticeInbox(source: notices))
+        _newestPosts = State(initialValue: PostWallStore(source: myPosts))
         _wardrobe = State(initialValue: Wardrobe(profile: profile) { today.home?.member.description })
     }
 
@@ -283,9 +286,10 @@ struct MainTabs: View {
                         editCharacter: wardrobe.editCharacter,
                         schedule: { showsSchedule = true },
                         street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
-                        myPosts: { wall = PostWallStore(source: myPosts) },
                         privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
-                )
+                ) {
+                    MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
+                }
             }
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wall != nil)
