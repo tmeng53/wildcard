@@ -49,7 +49,7 @@ Check at the source, with the ids from the log:
 Each must be refused with a problem naming its reason, and nothing may change:
 
 - A ninth member joining (`SQUAD_FULL`), including nine at once: never more than 8 rows.
-- A member already in 3 squads creating or joining another (`SQUAD_LIMIT_REACHED`), including several at once.
+- A member already in a squad creating or joining another (`SQUAD_LIMIT_REACHED`), including several at once.
 - `PUT /squads/{id}` again with another name, or by another member (`SQUAD_ID_CONFLICT`); the same body again answers 200.
 - More than 30 public previews from one client address in 10 minutes (429 `REQUESTS_TOO_FREQUENT`, with `Retry-After`); the server counts the last `X-Forwarded-For` entry, so a client's own entries before it change nothing.
 - Consent to a version other than the current one (400 `AI_CONSENT_COPY_OUTDATED`), or `copyVersion` 0 or a string (400 `REQUEST_INVALID`): no row. There is no route to withdraw it (`DELETE /me/ai-consent` is 404).

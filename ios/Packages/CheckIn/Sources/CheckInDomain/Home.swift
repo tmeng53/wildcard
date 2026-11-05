@@ -8,10 +8,8 @@ public struct Home: Hashable, Sendable {
     public let member: MemberID
     /// The member's profile time zone, where their day and week run.
     public let timeZone: TimeZone
-    /// The squad the app shows: the earliest joined.
+    /// The member's squad: a member is in one at most.
     public let squad: Squad
-    /// Every squad the member is in, the earliest joined first: where a post can be shared.
-    public let squads: [Squad]
     public var today: SquadToday
     /// The member's plan for this week.
     public let plan: WeeklyPlan
@@ -21,16 +19,14 @@ public struct Home: Hashable, Sendable {
     /// they went to; oldest first.
     public var checkIns: [CheckIn]
 
-    /// `squads` lists every squad the member is in; left out, just `squad`. The member's own
-    /// posts today not shared to `squad` show in their row (`showingMine`).
+    /// The member's own posts today kept to themselves show in their row (`showingMine`).
     public init(
-        member: MemberID, timeZone: TimeZone, squad: Squad, squads: [Squad]? = nil, today: SquadToday,
+        member: MemberID, timeZone: TimeZone, squad: Squad, today: SquadToday,
         plan: WeeklyPlan, checkIns: [CheckIn]
     ) {
         self.member = member
         self.timeZone = timeZone
         self.squad = squad
-        self.squads = squads ?? [squad]
         self.today = checkIns.filter { $0.member == member }.reduce(today) { $0.showingMine($1) }
         self.plan = plan
         self.checkIns = checkIns

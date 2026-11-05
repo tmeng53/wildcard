@@ -2469,7 +2469,7 @@
             "items": {
               "$ref": "#/components/schemas/Squad"
             },
-            "description": "The member’s squads, the earliest joined first: at most 3."
+            "description": "The member’s squads, the earliest joined first: at most 1."
           }
         },
         "required": [
@@ -7441,7 +7441,7 @@
             }
           },
           "400": {
-            "description": "Not a valid name, the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
+            "description": "Not a valid name, the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7951,7 +7951,7 @@
             }
           },
           "400": {
-            "description": "The squad has 8 members (`SQUAD_FULL`), the member is in 3 squads already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
+            "description": "The squad has 8 members (`SQUAD_FULL`), the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {

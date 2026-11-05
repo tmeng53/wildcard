@@ -7,12 +7,13 @@ import Observation
 
 /// The compose page's state, for a new post (from 打卡) or an edit of a saved one (from its
 /// 「…」): the photos with their cover, the sport and minutes for a 练了, the line, and for a new
-/// post the squads it goes to. The caller saves it.
+/// post whether the squad sees it. The caller saves it.
 @MainActor @Observable
 public final class ComposeModel {
     public enum Purpose: Equatable {
-        /// A new post, shared to these squads unless the member unticks one.
-        case new(shareSquads: [Squad])
+        /// A new post, shared to this squad (none when the member is in none) unless the member
+        /// turns it off.
+        case new(shareSquad: Squad?)
         /// An edit of this saved post; its squads stay as posted.
         case edit(CheckIn)
     }
@@ -25,8 +26,8 @@ public final class ComposeModel {
     /// The sport picked; the suggestion until the member picks one.
     var activity: Activity?
     var minutes: WorkoutMinutes?
-    /// The squads a new post goes to.
-    var shared: Set<SquadID>
+    /// Whether a new post goes to the squad; off keeps it to the member.
+    var isShared: Bool
     /// The days a new post can count for (补打卡), today last; none for an edit, whose day stays.
     let postableDays: [LocalDay]
     /// The past day a new post counts for, once the member picks one; nil is today, whatever
@@ -67,12 +68,12 @@ public final class ComposeModel {
         // Locals first: an @Observable model can't read its own properties until all are set.
         var start = Snapshot(photos: Array(photos.prefix(Photos.maxCount)), line: "", activity: nil, minutes: nil)
         switch purpose {
-        case .new(let squads):
-            shared = Set(squads.map(\.id))
+        case .new:
+            isShared = true
         case .edit(let checkIn):
             start.photos = ComposedPhoto.of(checkIn)
             start.line = checkIn.entry.line ?? ""
-            shared = Set(checkIn.audience.squads)
+            isShared = !checkIn.audience.squads.isEmpty
             if case .trained(let training) = checkIn.entry {
                 start.activity = training.activity
                 start.minutes = training.minutes
@@ -109,7 +110,7 @@ public final class ComposeModel {
 
     var isEditing: Bool { if case .edit = purpose { true } else { false } }
 
-    var shareSquads: [Squad] { if case .new(let squads) = purpose { squads } else { [] } }
+    var shareSquad: Squad? { if case .new(let squad) = purpose { squad } else { nil } }
 
     var currentActivity: Activity { activity ?? suggestedActivity }
 
