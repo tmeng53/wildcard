@@ -3715,22 +3715,6 @@
         }
       }
     },
-    "盒子里是什么，开了才知道": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What's inside? Open it to find out"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "盒子裡是什麼，開了才知道"
-          }
-        }
-      }
-    },
     "先不了": {
       "localizations": {
         "en": {
