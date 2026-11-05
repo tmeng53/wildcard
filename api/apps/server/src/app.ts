@@ -15,6 +15,7 @@ import type { Notices } from '@wildcard/notices';
 import type { Nudges } from '@wildcard/nudges';
 import type { Push } from '@wildcard/push';
 import type { Scenes } from '@wildcard/scenes';
+import type { Switches } from '@wildcard/switches';
 import type { Squads } from '@wildcard/squads';
 import type { WeeklyAwards } from '@wildcard/weekly-awards';
 import type { CoachGifts, Unlocks } from '@wildcard/unlocks';
@@ -61,6 +62,8 @@ import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadCoach } from './routes/squad-coach.js';
 import { coachActivity } from './routes/coach-activity.js';
 import { squadScene } from './routes/squad-scene.js';
+import { mySwitches } from './routes/my-switches.js';
+import { newYorkDay } from './new-york-day.js';
 import { squadToday } from './routes/squad-today.js';
 import { titles } from './routes/titles.js';
 import { weekStory } from './routes/week-story.js';
@@ -79,6 +82,8 @@ export interface AppDependencies {
   readonly squads: Squads;
   /** The scenes squads train on, and which are open in a week. */
   readonly scenes: Scenes;
+  /** Global switches (limited scenes and stores follow them), as each member sees them. */
+  readonly switches: Pick<Switches, 'list' | 'statesFor'>;
   /** Each squad's coach, and the coaches it can hire (教练招聘会). */
   readonly coachHiring: CoachHiring;
   /** What each squad's coach said: its 战术板 line and its replies to check-ins. */
@@ -185,7 +190,18 @@ export function createApp(deps: AppDependencies) {
   app.route('/', pushSettings(deps));
   app.route('/', squads(deps));
   app.route('/', squadToday({ ...deps, awards: deps.weeklyAwards.awards }));
-  app.route('/', squadScene({ ...deps, clock: deps.weeklyAwards.clock }));
+  app.route(
+    '/',
+    squadScene({
+      ...deps,
+      clock: deps.weeklyAwards.clock,
+      takeoverFor: async (member) => {
+        const { on } = await deps.switches.statesFor(member);
+        return deps.scenes.takeover({ day: newYorkDay(deps.weeklyAwards.clock()), switchOn: on });
+      },
+    }),
+  );
+  app.route('/', mySwitches({ ...deps, clock: deps.weeklyAwards.clock }));
   app.route('/', squadCoach(deps));
   app.route('/', coachActivity(deps));
   app.route('/', nudges(deps));

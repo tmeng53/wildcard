@@ -279,7 +279,8 @@ export function switchesSection(
     load: async () => ({
       switches: (await switches.list()).map(({ id, mode, window }) => ({
         id,
-        mode,
+        // A switch in preview is on only for previewers, who read GET /me/switches: off here.
+        mode: mode === 'preview' ? 'off' : mode,
         ...(window === undefined ? {} : { window: { ...window } }),
       })),
     }),

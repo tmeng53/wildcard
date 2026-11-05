@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isOpen, type ListedScene } from './catalog.js';
+import { isOpen, takeoverOn, type ListedScene } from './catalog.js';
 
 const ski: ListedScene = {
   id: 'ski',
@@ -32,5 +32,21 @@ describe('a scene’s switch', () => {
     expect(isOpen({ ...ski, offered: false }, { day: '2026-12-01', switchOn: winterOn })).toBe(
       false,
     );
+  });
+});
+
+describe('a takeover scene', () => {
+  const town = { ...ski, id: 'town', switchId: 'winter', takeover: true };
+
+  it('shows on every home while its switch is on, and is never picked', () => {
+    expect(takeoverOn([ski, town], { day: '2026-12-01', switchOn: winterOn })).toBe('town');
+    expect(takeoverOn([ski, town], { day: '2026-11-14', switchOn: winterOn })).toBeUndefined();
+    expect(isOpen(town, { day: '2026-12-01', switchOn: winterOn })).toBe(false);
+  });
+
+  it('stops when it is retired', () => {
+    expect(
+      takeoverOn([{ ...town, offered: false }], { day: '2026-12-01', switchOn: winterOn }),
+    ).toBeUndefined();
   });
 });

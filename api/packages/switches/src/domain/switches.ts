@@ -12,7 +12,7 @@ export type SwitchId = z.infer<typeof SwitchId>;
 export const MonthDay = z.string().regex(/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/);
 export type MonthDay = z.infer<typeof MonthDay>;
 
-export const SWITCH_MODES = ['on', 'off', 'schedule'] as const;
+export const SWITCH_MODES = ['on', 'off', 'schedule', 'preview'] as const;
 export const SwitchMode = z.enum(SWITCH_MODES);
 export type SwitchMode = z.infer<typeof SwitchMode>;
 
@@ -26,7 +26,10 @@ export interface Switch {
   readonly id: SwitchId;
   /** What it is for, for admins. */
   readonly label: string;
-  /** On, off, or on only in `window`. */
+  /**
+   * On, off, on only in `window`, or `preview`: on only for members who preview switches (in
+   * `window` when it has one), off for everyone else.
+   */
   readonly mode: SwitchMode;
   /** Its schedule; always there for one in `schedule` mode. */
   readonly window?: SwitchWindow;
@@ -40,11 +43,40 @@ export function inWindow(window: SwitchWindow, day: string): boolean {
     : md >= window.start || md <= window.end;
 }
 
-/** Whether `of` is on on `day` (`YYYY-MM-DD`, New York). */
+/** Whether `of` is on on `day` (`YYYY-MM-DD`, New York) for everyone: one in preview is off. */
 export function isOn(of: Switch, day: string): boolean {
-  if (of.mode === 'schedule') return of.window === undefined || inWindow(of.window, day);
-  return of.mode === 'on';
+  switch (of.mode) {
+    case 'schedule':
+      return of.window === undefined || inWindow(of.window, day);
+    case 'on':
+      return true;
+    case 'off':
+    case 'preview':
+      return false;
+  }
 }
+
+/** Whether `of` is on on `day` for a member who previews switches: one in preview follows its window. */
+export function isOnForPreviewer(of: Switch, day: string): boolean {
+  return of.mode === 'preview'
+    ? of.window === undefined || inWindow(of.window, day)
+    : isOn(of, day);
+}
+
+/**
+ * How one member sees the switches: whether they preview them (see the `preview` mode) and how
+ * many days from New York's today they pretend it is, for switches only.
+ */
+export interface SwitchView {
+  readonly previewer: boolean;
+  readonly dayOffset: number;
+}
+
+/** Everyone who doesn't preview: the real day, no switch in preview. */
+export const PLAIN_VIEW: SwitchView = { previewer: false, dayOffset: 0 };
+
+/** A day offset as an admin sets it: whole days, at most a bit over a year either way. */
+export const DayOffset = z.int().min(-400).max(400);
 
 /** Adds a switch, or replaces every field of one. */
 export const SwitchEdit = z
@@ -52,7 +84,9 @@ export const SwitchEdit = z
     id: SwitchId.meta({ description: 'Its id, camelCase, such as `winter`. Never changes.' }),
     label: z.string().trim().min(1).max(80).meta({ description: 'What it is for, for admins.' }),
     mode: SwitchMode.meta({
-      description: '`on` or `off` by hand, or `schedule`: on only in its window, every year.',
+      description:
+        '`on` or `off` by hand, `schedule`: on only in its window, every year, or `preview`: ' +
+        'on (in its window, if any) only for members who preview switches (set_switch_preview).',
     }),
     window: z
       .strictObject({

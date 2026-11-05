@@ -1,4 +1,4 @@
-import { isOpen, type ListedScene } from '../domain/catalog.js';
+import { isOpen, takeoverOn, type ListedScene, type SwitchOn } from '../domain/catalog.js';
 import type { SceneEdit } from '../domain/edits.js';
 import type { SceneStore, SwitchStates } from '../ports.js';
 
@@ -8,6 +8,14 @@ export interface Scenes {
   list(): Promise<readonly ListedScene[]>;
   /** The ids of the scenes a squad may train on on `day` (`YYYY-MM-DD`), in the picker's order. */
   openOn(day: string): Promise<readonly string[]>;
+  /**
+   * The takeover scene every home shows on `day` with the switches as one member sees them
+   * (`switchOn`), if one is on.
+   */
+  takeover(options: {
+    readonly day: string;
+    readonly switchOn: SwitchOn;
+  }): Promise<string | undefined>;
 }
 
 /** Changing the scenes, for admins. Each change answers with the list as it now is. */
@@ -30,7 +38,9 @@ export function createScenes({
       return scenes.filter((scene) => isOpen(scene, { day, switchOn })).map(({ id }) => id);
     },
 
-    async putScene({ position, switchId, ...fields }) {
+    takeover: async (options) => takeoverOn(await store.list(), options),
+
+    async putScene({ position, switchId, takeover, ...fields }) {
       const scenes = await store.list();
       const current = scenes.findIndex(({ id }) => id === fields.id);
       const others = scenes.map(({ id }) => id).filter((id) => id !== fields.id);
@@ -38,11 +48,12 @@ export function createScenes({
         (position ?? (current === -1 ? Infinity : current + 1)) - 1,
         others.length,
       );
-      await store.save({ ...fields, ...(switchId === undefined ? {} : { switchId }) }, [
-        ...others.slice(0, at),
-        fields.id,
-        ...others.slice(at),
-      ]);
+      const scene = {
+        ...fields,
+        ...(switchId === undefined ? {} : { switchId }),
+        ...(takeover === true ? { takeover } : {}),
+      };
+      await store.save(scene, [...others.slice(0, at), fields.id, ...others.slice(at)]);
       return store.list();
     },
   };

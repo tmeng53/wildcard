@@ -81,6 +81,7 @@ import {
 } from '@wildcard/weekly-awards';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import { createCampaigns, createPostgresCampaignStore } from '@wildcard/campaigns';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import {
   createCoachGifts,
@@ -116,6 +117,8 @@ import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-p
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sceneTools } from './admin-mcp/tools/scenes.js';
 import { switchTools } from './admin-mcp/tools/switches.js';
+import { campaignTools } from './admin-mcp/tools/campaigns.js';
+import { newYorkDay } from './new-york-day.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { artTools } from './admin-mcp/tools/art.js';
@@ -307,7 +310,6 @@ const tellAfter = async (
     log.warn(`${what} not kept in notices`, { error });
   }
 };
-const newYorkDays = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' });
 // What members unlock by training: the unlocks module keeps the rules and who earned what, and
 // asks check-ins for the 练了 that count and the sports module which sports exist.
 const unlocksOn = (scope: Database) =>
@@ -316,10 +318,12 @@ const unlocksOn = (scope: Database) =>
     trainedSince: ({ member, since }) =>
       checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
     sportListed: (id) => sports.isListed(id),
-    // A rule counts only 练了 made while its store's and piece's switches were on, by the New York day.
-    switches: async () => {
-      const on = await switchesOn(scope).states();
-      return (id, at) => on(id, newYorkDays.format(at));
+    // A rule counts only 练了 made while its store's and piece's switches were on, by the New
+    // York day, as the member sees them (a previewer also counts those in preview, on their
+    // pretend day).
+    switches: async (member) => {
+      const { on } = await switchesOn(scope).statesFor(member);
+      return (id, at) => on(id, newYorkDay(at));
     },
     unlocked: (member, unlocks) =>
       tellAfter(scope, {
@@ -453,6 +457,7 @@ const app = createApp({
   members,
   squads,
   scenes,
+  switches,
   nudges,
   notices,
   liveEvents,
@@ -556,6 +561,17 @@ const app = createApp({
         gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
       }),
       ...artTools({ art: artOn(scope) }),
+      ...campaignTools({
+        campaigns: createCampaigns({ store: createPostgresCampaignStore(scope) }),
+        switches: switchesOn(scope),
+        scenes: createScenes({
+          store: createPostgresSceneStore(scope),
+          switches: () => switchesOn(scope).states(),
+        }),
+        unlocks: unlocksOn(scope),
+        art: artOn(scope),
+        clock: () => new Date(),
+      }),
       ...coachTools({
         settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
         coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),

@@ -44,6 +44,7 @@ import { memberCalendar } from '../member-calendar.js';
 import { PhotoPath } from '../ports.js';
 import {
   scenesOn,
+  switchesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -181,6 +182,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     push,
     disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
     scenes: scenesOn(db),
+    switches: switchesOn(db),
     weeklyAwards: { awards, clock },
     unlocks: unusedUnlocks,
     gifts: unusedGifts,

@@ -46,7 +46,11 @@ const SquadSceneBody = z
       example: '2026-10-26',
     }),
     scene: sceneField.meta({ description: 'The squad’s scene this week (see `sceneId`).' }),
-    sceneId: sceneIdField.meta({ description: 'The squad’s scene this week.' }),
+    sceneId: sceneIdField.meta({
+      description:
+        'The scene the squad’s home shows now: its scene this week, or, while a takeover scene ' +
+        '(a holiday’s, say) is on, that one for every squad. `picked` is still the squad’s own.',
+    }),
     pickers: z
       .strictObject({
         by: z.enum(['crown', 'captain']).meta({
@@ -125,12 +129,13 @@ const ScenePickBody = z
   })
   .openapi('ScenePick');
 
-function wire(scene: SquadScene) {
+/** The reply; `shown` is a takeover scene every home shows in place of the squad's, if one is on. */
+function wire(scene: SquadScene, shown: string = scene.scene) {
   return {
     version: 1 as const,
     week: scene.week,
-    scene: legacyScene(scene.scene),
-    sceneId: scene.scene,
+    scene: legacyScene(shown),
+    sceneId: shown,
     pickers: { by: scene.pickers.by, members: [...scene.pickers.members] },
     picked:
       scene.picked === undefined
@@ -173,6 +178,11 @@ export function squadScene(deps: {
   readonly checkIns: CheckIns;
   /** Which scenes are open in a week. */
   readonly scenes: Pick<Scenes, 'openOn'>;
+  /**
+   * The takeover scene `member`'s home shows now in place of the squad's (a scene on a switch,
+   * as that member sees the switches), if one is on.
+   */
+  readonly takeoverFor: (member: string) => Promise<string | undefined>;
   /** Where the move is kept for the squadmates' 通知. */
   readonly notices: Notices;
   readonly clock: () => Date;
@@ -260,11 +270,12 @@ export function squadScene(deps: {
 
   return new OpenAPIHono<SignedIn>()
     .openapi(read, async (c) => {
-      const scene = await scenes.scene({
-        squad: c.req.valid('param').squadId,
-        viewer: MemberId.parse(c.var.caller.userId),
-      });
-      return c.json(wire(scene), 200);
+      const viewer = MemberId.parse(c.var.caller.userId);
+      const [scene, takeover] = await Promise.all([
+        scenes.scene({ squad: c.req.valid('param').squadId, viewer }),
+        deps.takeoverFor(viewer),
+      ]);
+      return c.json(wire(scene, takeover), 200);
     })
     .openapi(pick, async (c) => {
       const { squadId, weekStart } = c.req.valid('param');
