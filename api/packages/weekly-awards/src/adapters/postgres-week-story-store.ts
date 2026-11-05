@@ -159,5 +159,6 @@ function pageOf(part: StoryMember): StoredStoryMember {
     healthyMeals: part.healthyMeals,
     cheatMeals: part.cheatMeals,
     reactionsReceived: part.reactionsReceived,
+    ...(part.planFinishedAt === undefined ? {} : { planFinishedAt: part.planFinishedAt }),
   };
 }

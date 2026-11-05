@@ -70,7 +70,8 @@ struct PodiumPage: View {
         .overlay(alignment: .top) {
             PageTitle(
                 label: Text("本周", bundle: .module), systemImage: "checkmark.seal.fill",
-                title: Text("领奖台", bundle: .module))
+                title: Text("领奖台", bundle: .module),
+                note: podium.tieBrokenByPlan ? Text("天数一样，先练完计划的排前面", bundle: .module) : nil)
         }
         .haptic(.crown, trigger: page.time >= Self.crownLands) { old, new in !old && new }
     }
