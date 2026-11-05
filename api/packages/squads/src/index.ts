@@ -3,7 +3,7 @@
 export { createPostgresSquadStore, type SquadTables } from './adapters/postgres-squad-store.js';
 export { randomInviteCodes } from './adapters/random-invite-codes.js';
 export { InviteCode, type InviteCodes } from './domain/invite-code.js';
-export { FIRST_SCENE, Scene, SceneWeek, type ScenePick } from './domain/scene.js';
+export { FIRST_SCENE, Scene, SceneWeek, type OpenScenes, type ScenePick } from './domain/scene.js';
 export {
   MemberId,
   SQUAD_MEMBER_LIMIT,
@@ -18,6 +18,7 @@ export {
   InviteCodeUnknownError,
   NotScenePickerError,
   NotSquadCaptainError,
+  SceneNotOpenError,
   ScenePickedError,
   SceneWeekClosedError,
   SquadFullError,

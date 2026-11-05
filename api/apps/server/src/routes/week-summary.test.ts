@@ -22,6 +22,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import {
+  scenesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -88,6 +89,7 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  scenes: scenesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),

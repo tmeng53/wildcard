@@ -1048,22 +1048,6 @@
         }
       }
     },
-    "%@ · %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ · %2$@"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ · %2$@"
-          }
-        }
-      }
-    },
     "睡着了": {
       "localizations": {
         "en": {
@@ -1300,6 +1284,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "阿傑"
+          }
+        }
+      }
+    },
+    "日期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日期"
           }
         }
       }
@@ -1796,6 +1796,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "假單藝術家"
+          }
+        }
+      }
+    },
+    "今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天"
           }
         }
       }

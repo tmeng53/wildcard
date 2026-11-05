@@ -271,7 +271,7 @@ describe('when the coach wakes', () => {
         // The rest of the post's comments, so the coach knows what was said around it.
         '这条下面别人的评论（先后顺序）：\n- 队员2：「强」',
         '你们在下面的对话：\n- 你：「腿废了也算练」\n- 队员2：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1：「那你喊大声点」（要回的这句）',
-        '你的文件：memory.md（空）。',
+        '你的记性（你只记得这些）：\n还是空的：memory.md',
       ].join('\n\n'),
     );
     // Without the talk, or once the check-in left the week, there is nothing to answer.
@@ -326,9 +326,34 @@ describe('when the coach wakes', () => {
     expect(task).toBe(
       [
         '新的一天：2026-11-01。',
-        '你的文件：memory.md（5 字），squad.md（空）。',
+        '过去一天没人在打卡下面和你说话。',
+        // What it remembers, in full: it forgets everything else between wakes.
+        '你的记性（你只记得这些）：\n【memory.md】\n米亚爱跑步\n还是空的：squad.md',
         '你最近写过：\n- 2026-10-31：周末也要动一动',
       ].join('\n\n'),
+    );
+    // The last day's talk under check-ins, for it to remember from.
+    const [first] = week.checkIns;
+    if (first === undefined) throw new Error('no check-in');
+    expect(
+      taskOf({
+        reason: { kind: 'daily', day: '2026-11-01' },
+        week,
+        files: new Map([['memory.md', undefined]]),
+        recentNotes: [],
+        talks: [
+          {
+            checkIn: first,
+            reply: '腿废了也算练',
+            said: [
+              { member: leo, text: '我下周膝盖手术' },
+              { member: undefined, text: '那这周先歇着' },
+            ],
+          },
+        ],
+      })?.split('\n\n')[1],
+    ).toBe(
+      '过去一天打卡下面的对话（先后顺序）：\n- 10-27 周二 队员1 练了 跑步 30 分钟 「腿废了」 · 2 个表情\n  你：「腿废了也算练」\n  队员2：「我下周膝盖手术」\n  你：「那这周先歇着」',
     );
     expect(
       taskOf({
@@ -338,7 +363,7 @@ describe('when the coach wakes', () => {
         recentNotes: [],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n你的文件：memory.md（空）。',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
     // The emoji it reacted with lately, so it varies them.
     expect(
@@ -350,7 +375,7 @@ describe('when the coach wakes', () => {
         recentEmoji: ['🔥', '🔥', '💪'],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n你的文件：memory.md（空）。',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
   });
 

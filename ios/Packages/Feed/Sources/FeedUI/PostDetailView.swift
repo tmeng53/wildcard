@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -153,7 +154,7 @@ public struct PostDetailView: View {
             isTyping = true
         } label: {
             HStack(alignment: .top, spacing: Space.s) {
-                Face(player: model.head(of: comment.member), size: Self.faceSize)
+                MemberHead(player: model.head(of: comment.member), size: Self.faceSize)
                 VStack(alignment: .leading, spacing: Space.xxs / 2) {
                     HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
                         Text(verbatim: model.displayName(of: comment.member))

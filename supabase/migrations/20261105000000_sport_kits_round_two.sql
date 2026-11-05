@@ -1,5 +1,5 @@
 -- Six more sport kits (Tracy, 2026-11-04): cycling (the helmet and bike), boxing (gloves),
--- basketball, soccer, ski (skis and poles) and snowboard. Each prop opens on the member's first
+-- basketball, soccer, ski (skis and poles, cross-country too) and snowboard. Each prop opens on the member's first
 -- 练了 in its sports, as the first props do, and each kit's move becomes one the weekly awards
 -- may pick, so it gets a description here.
 
@@ -8,7 +8,7 @@ insert into public.unlock_rules (kind, item_id, sports, after) values
   ('prop', 'gloves', '{boxing,kickboxing,jiuJitsu,martialArts}', 1),
   ('prop', 'basketball', '{basketball}', 1),
   ('prop', 'soccerball', '{soccer}', 1),
-  ('prop', 'skis', '{ski}', 1),
+  ('prop', 'skis', '{ski,crossCountrySki}', 1),
   ('prop', 'snowboard', '{snowboard}', 1)
 on conflict (kind, item_id) do nothing;
 

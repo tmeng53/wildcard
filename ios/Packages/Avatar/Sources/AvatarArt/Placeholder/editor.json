@@ -13,7 +13,8 @@
     { "id": "nolook" },
     { "id": "moss" },
     { "id": "halfmoon" },
-    { "id": "deuce" }
+    { "id": "deuce" },
+    { "id": "powder", "open": true, "switch": "winter" }
   ],
   "wear": {
     "top": [
@@ -39,7 +40,12 @@
       { "id": "halfmoon-zip", "store": "halfmoon", "swatches": ["#1F2128", "#F4F6FA", "#8FA0BF", "#C29595", "#7E8B6A"] },
       { "id": "deuce-polo", "store": "deuce", "swatches": ["#F4F6FA", "#24396B", "#2E6B4F", "#8FB3D9", "#1F2128"] },
       { "id": "deuce-cable", "store": "deuce", "swatches": ["#24396B", "#2E6B4F", "#8FB3D9", "#1F2128"] },
-      { "id": "deuce-dress", "store": "deuce", "swatches": ["#F4F6FA", "#24396B", "#2E6B4F", "#8FB3D9", "#1F2128"] }
+      { "id": "deuce-dress", "store": "deuce", "swatches": ["#F4F6FA", "#24396B", "#2E6B4F", "#8FB3D9", "#1F2128"] },
+      { "id": "powder-salmon", "store": "powder" },
+      { "id": "powder-tuna", "store": "powder" },
+      { "id": "powder-tamago", "store": "powder" },
+      { "id": "powder-ebi", "store": "powder" },
+      { "id": "powder-maki", "store": "powder" }
     ],
     "bottom": [
       { "id": "warmup-shorts", "store": "warmup", "swatches": ["#1F2128", "#6B7080", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
@@ -57,7 +63,10 @@
       { "id": "halfmoon-wide", "store": "halfmoon", "swatches": ["#C9CDD4", "#1F2128", "#6B7080", "#3B4A6B", "#7E8B6A", "#8A6F86"] },
       { "id": "deuce-shorts", "store": "deuce", "swatches": ["#F4F6FA", "#24396B", "#2E6B4F", "#1F2128"] },
       { "id": "deuce-skirt", "store": "deuce", "swatches": ["#24396B", "#F4F6FA", "#2E6B4F", "#8FB3D9", "#1F2128"] },
-      { "id": "deuce-pants", "store": "deuce", "swatches": ["#24396B", "#F4F6FA", "#2E6B4F", "#8FB3D9", "#1F2128"] }
+      { "id": "deuce-pants", "store": "deuce", "swatches": ["#24396B", "#F4F6FA", "#2E6B4F", "#8FB3D9", "#1F2128"] },
+      { "id": "powder-rice", "store": "powder" },
+      { "id": "powder-nori", "store": "powder" },
+      { "id": "powder-pants", "store": "powder" }
     ],
     "shoes": [
       { "id": "warmup-canvas", "store": "warmup", "swatches": ["#F4F6FA", "#1F2128", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
@@ -72,7 +81,11 @@
       { "id": "halfmoon-studio", "store": "halfmoon" },
       { "id": "halfmoon-grip", "store": "halfmoon" },
       { "id": "deuce-court", "store": "deuce" },
-      { "id": "deuce-socks", "store": "deuce" }
+      { "id": "deuce-socks", "store": "deuce" },
+      { "id": "powder-saba", "store": "powder" },
+      { "id": "powder-temaki", "store": "powder" },
+      { "id": "powder-edamame", "store": "powder" },
+      { "id": "powder-ebifry", "store": "powder" }
     ],
     "hat": [
       { "id": "warmup-cap", "store": "warmup", "swatches": ["#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#9062DE", "#E65345"] },
@@ -86,7 +99,11 @@
       { "id": "moss-sahara", "store": "moss" },
       { "id": "halfmoon-clip", "store": "halfmoon" },
       { "id": "deuce-visor", "store": "deuce" },
-      { "id": "deuce-terry", "store": "deuce" }
+      { "id": "deuce-terry", "store": "deuce" },
+      { "id": "powder-salmonhelmet", "store": "powder" },
+      { "id": "powder-ikura", "store": "powder" },
+      { "id": "powder-uni", "store": "powder" },
+      { "id": "powder-helmet", "store": "powder" }
     ],
     "acc": [
       { "id": "warmup-towel", "store": "warmup", "swatches": ["#9062DE", "#1F2128", "#F4F6FA", "#2D5BA0", "#278C5E", "#E65345"] },
@@ -96,7 +113,8 @@
       { "id": "moss-sling", "store": "moss" },
       { "id": "halfmoon-tied", "store": "halfmoon" },
       { "id": "halfmoon-tote", "store": "halfmoon" },
-      { "id": "deuce-sweater", "store": "deuce" }
+      { "id": "deuce-sweater", "store": "deuce" },
+      { "id": "powder-scarf", "store": "powder" }
     ]
   },
   "props": [

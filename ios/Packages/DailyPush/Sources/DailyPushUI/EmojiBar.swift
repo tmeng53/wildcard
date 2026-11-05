@@ -6,11 +6,17 @@ import DesignSystemUI
 import FeedDomain
 import SwiftUI
 
-/// The emoji bar over the push while it is open, over its post's smiley (under it near the
-/// top): a tap anywhere else closes it. ＋ lays every emoji over the push's bottom instead.
+/// The shared reaction bar over the push while it is open, over its post's smiley (under it near
+/// the top): a tap anywhere else closes it. ＋ lays the shared emoji picker over the push's bottom
+/// instead, without a search, since a push has no keyboard.
 struct EmojiBarLayer: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: DailyPushModel
+    /// Where the open bar and panel are in `DailyPushView.space`, for the emoji to fly from.
+    @State private var bar: CGRect?
+    @State private var panel: CGRect?
+
+    private static let panelHeight: Double = 250
 
     var body: some View {
         GeometryReader { proxy in
@@ -19,28 +25,48 @@ struct EmojiBarLayer: View {
                     .contentShape(Rectangle())
                     .onTapGesture { close() }
                     .accessibilityHidden(true)
-                let below = button.minY - Space.xs - EmojiBar.height < Space.xxl * 2
+                let height = ReactionBarMetrics.height
+                let width = ReactionBarMetrics.width(count: Emoji.quick.count)
+                let below = button.minY - Space.xs - height < Space.xxl * 2
                 if model.browsing {
-                    EmojiPanel(mine: model.store.mine(on: open)) { emoji, point in
-                        model.pick(emoji, on: open, from: point)
+                    EmojiPicker(
+                        recent: [], all: Emoji.all, text: \.text, mine: model.store.mine(on: open),
+                        identifier: "dailyPush.emoji"
+                    ) { emoji in
+                        let from =
+                            panel.map { CGPoint(x: $0.midX, y: $0.minY) } ?? CGPoint(x: button.midX, y: button.midY)
+                        model.pick(emoji, on: open, from: from)
+                    }
+                    .frame(height: Self.panelHeight)
+                    .onGeometryChange(for: CGRect.self) {
+                        $0.frame(in: .named(DailyPushView.space))
+                    } action: {
+                        panel = $0
                     }
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .padding(Space.xs)
                     .transition(.move(edge: .bottom))
                 } else {
-                    EmojiBar(mine: model.store.mine(on: open)) { emoji, point in
-                        model.pick(emoji, on: open, from: point)
+                    ReactionBar(
+                        Emoji.quick, text: \.text, mine: model.store.mine(on: open), identifier: "dailyPush.emoji"
+                    ) { index in
+                        let from =
+                            bar.map { ReactionBarMetrics.slotCenter(index, in: $0) }
+                            ?? CGPoint(x: button.midX, y: button.midY)
+                        model.pick(Emoji.quick[index], on: open, from: from)
                     } more: {
                         withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { model.browsing = true }
                     }
                     .fixedSize()
+                    .accessibilityIdentifier("dailyPush.emojiBar")
+                    .onGeometryChange(for: CGRect.self) {
+                        $0.frame(in: .named(DailyPushView.space))
+                    } action: {
+                        bar = $0
+                    }
                     .position(
-                        x: max(
-                            min(button.maxX, proxy.size.width - Space.xs) - EmojiBar.width / 2,
-                            Space.xs + EmojiBar.width / 2),
-                        y: below
-                            ? button.maxY + Space.xxs + 2 + EmojiBar.height / 2
-                            : button.minY - Space.xs - EmojiBar.height / 2
+                        x: max(min(button.maxX, proxy.size.width - Space.xs) - width / 2, Space.xs + width / 2),
+                        y: below ? button.maxY + Space.xxs + 2 + height / 2 : button.minY - Space.xs - height / 2
                     )
                     .transition(
                         .scale(scale: 0.4, anchor: below ? .topTrailing : .bottomTrailing).combined(with: .opacity))
@@ -56,124 +82,6 @@ struct EmojiBarLayer: View {
             model.picking = nil
             model.browsing = false
         }
-    }
-}
-
-/// The six common emoji and ＋, as on 动态: a white capsule over the post. Mine is ringed;
-/// picking it again takes it back.
-private struct EmojiBar: View {
-    let mine: Emoji?
-    /// The emoji, and where it was in `DailyPushView.space`, for it to fly from.
-    let pick: (Emoji, CGPoint) -> Void
-    let more: () -> Void
-
-    static let height: Double = 52
-    private static let emojiSize: Double = 28
-    private static let inset = Space.xxs
-    static var width: Double { Double(Emoji.quick.count) * Sizing.minimumTapTarget + Sizing.compactControl + 4 * inset }
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(Emoji.quick, id: \.self) { emoji in
-                EmojiButton(emoji: emoji, size: Self.emojiSize, selected: emoji == mine, pick: pick)
-                    .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
-            }
-            Button(action: more) {
-                Image(systemName: "plus")
-                    .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                    .foregroundStyle(Color(role: .fgMuted, in: .gym))
-                    .frame(width: Sizing.compactControl, height: Sizing.compactControl)
-                    .background(Color(role: .bgSubtle, in: .gym), in: Circle())
-            }
-            .buttonStyle(PressableButtonStyle())
-            .padding(.horizontal, Self.inset)
-            .accessibilityLabel(Text("更多表情", bundle: .module))
-        }
-        .padding(.horizontal, Self.inset)
-        .frame(height: Self.height)
-        .background(Color(role: .bgCanvas, in: .gym), in: Capsule())
-        .overlay { Capsule().stroke(Color(role: .borderDefault, in: .gym), lineWidth: Sizing.hairline) }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("选一个回应", bundle: .module))
-        .accessibilityIdentifier("dailyPush.emojiBar")
-    }
-}
-
-/// Every emoji 动态's ＋ offers, laid over the push's bottom, since a push has no keyboard.
-private struct EmojiPanel: View {
-    let mine: Emoji?
-    let pick: (Emoji, CGPoint) -> Void
-
-    private static let height: Double = 250
-    private static let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 8)
-    private static let cell: Double = 40
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Space.xxs) {
-                SectionLabel(Text("全部", bundle: .module))
-                    .padding(.horizontal, Space.xs - 2)
-                LazyVGrid(columns: Self.columns, spacing: 0) {
-                    ForEach(Emoji.all, id: \.self) { emoji in
-                        EmojiButton(emoji: emoji, size: Self.cell * 0.65, selected: emoji == mine, pick: pick)
-                            .frame(height: Self.cell)
-                    }
-                }
-            }
-            .padding(.horizontal, Space.xxs)
-        }
-        .padding(.top, Space.s)
-        .padding(.horizontal, Space.xs)
-        .padding(.bottom, Space.xs)
-        .frame(height: Self.height)
-        .background(
-            Color(role: .bgCanvas, in: .gym), in: RoundedRectangle(cornerRadius: Radius.card + 8, style: .continuous)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: Radius.card + 8, style: .continuous)
-                .stroke(Color(role: .borderDefault, in: .gym), lineWidth: Sizing.hairline)
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("全部表情", bundle: .module))
-    }
-}
-
-/// One emoji to pick, which knows where it is so the emoji can fly from there.
-private struct EmojiButton: View {
-    let emoji: Emoji
-    let size: Double
-    let selected: Bool
-    let pick: (Emoji, CGPoint) -> Void
-    @State private var center = CGPoint.zero
-
-    var body: some View {
-        Button {
-            pick(emoji, center)
-        } label: {
-            Text(verbatim: emoji.text)
-                .font(.system(size: size))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background {
-                    if selected {
-                        Circle()
-                            .fill(Color(role: .bgSubtle, in: .gym))
-                            .overlay {
-                                Circle().stroke(Color(role: .fgDefault, in: .gym), lineWidth: Sizing.selectionStroke)
-                            }
-                    }
-                }
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .onGeometryChange(for: CGPoint.self) {
-            let frame = $0.frame(in: .named(DailyPushView.space))
-            return CGPoint(x: frame.midX, y: frame.midY)
-        } action: { point in
-            center = point
-        }
-        .accessibilityLabel(Text(verbatim: emoji.text))
-        .accessibilityAddTraits(selected ? .isSelected : [])
-        .accessibilityIdentifier("dailyPush.emoji.\(emoji.text)")
     }
 }
 

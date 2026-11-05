@@ -94,7 +94,7 @@ public struct PlayerCardFace: Hashable, Sendable {
     /// When they signed up: the year on the card.
     public var joinedAt: Date?
     public var counts: LifetimeCounts
-    /// 本周 x/y; nil when it isn't known (a squadmate's, or no plan this week).
+    /// 本周 x/y, theirs for a squadmate; nil when it isn't known (an older server, or no plan this week).
     public var week: WeekCount?
     public var board: TitleBoard
 

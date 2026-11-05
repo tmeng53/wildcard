@@ -26,7 +26,7 @@
   "sports": {
     "climb": "climb", "kettlebell": "kettlebell", "badminton": "badminton", "pickleball": "pickleball",
     "tableTennis": "pingpong", "spin": "cycling", "bikeCommute": "cycling", "basketball": "basketball",
-    "soccer": "soccer", "ski": "ski", "snowboard": "snowboard"
+    "soccer": "soccer", "ski": "ski", "crossCountrySki": "ski", "snowboard": "snowboard"
   },
   "otherwise": "warmup"
 }

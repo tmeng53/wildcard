@@ -356,15 +356,21 @@ private func pickADayNotToday(in app: XCUIApplication) {
 }
 
 extension TodayUITests {
-    /// The cheer over, I hop into the sport's kit and train at it; a tap on me plays my prop's
-    /// own move.
+    /// The cheer over, I hop into the sport's kit and train at it; a tap on me opens my own card
+    /// with my today over it and nothing to pat, and a tap off it closes it.
     fileprivate func tapMeInMyKit(in app: XCUIApplication) {
         Thread.sleep(forTimeInterval: 2)
         keepScreenshot(named: "16b-today-in-kit")
         let myCharacter = app.buttons["today.me"]
         XCTAssertTrue(myCharacter.waitForExistence(timeout: Self.wait), "my character isn't on the scene")
         myCharacter.tap()
+        let today = app.descendants(matching: .any).matching(identifier: "today.mateToday").firstMatch
+        XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "tapping me didn't open my today")
+        XCTAssertTrue(app.buttons["me.card"].waitForExistence(timeout: Self.wait), "tapping me didn't open my card")
+        XCTAssertFalse(app.buttons["today.pat"].exists, "my own today offers 拍一拍")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "16c-today-tapped-me")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap()
+        XCTAssertTrue(today.waitForNonExistence(timeout: Self.wait), "a tap off my card left it open")
     }
 }

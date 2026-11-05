@@ -11,6 +11,7 @@ extension SceneTheme {
         case .gym: "strength"
         case .tennis: "tennis"
         case .climbing: "climb"
+        case .ski: "ski"
         }
     }
 }
