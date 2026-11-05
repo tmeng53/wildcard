@@ -83,8 +83,12 @@ public struct NoticesView: View {
                 .background(Color(role: .bgCanvas, in: .gym))
         }
         .pushedPage()
-        .task { await inbox.open() }
-        .onDisappear { inbox.close() }
+        // Opened once while the page is on the stack: a post pushed over it and back keeps what
+        // was new and the pages read further down. The app closes the inbox when it pops the page.
+        .task {
+            guard !inbox.isOpen else { return }
+            await inbox.open()
+        }
         .accessibilityIdentifier("notices.page")
     }
 

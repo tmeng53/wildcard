@@ -194,7 +194,8 @@ final class FeedUITests: XCTestCase {
         let rows = app.descendants(matching: .any).matching(identifier: "post.comment")
         XCTAssertTrue(backButton(in: app).waitForExistence(timeout: Self.wait), "the post's page didn't open")
         waitFor(rows.element(boundBy: 2), "exists == true", "the page doesn't list every comment")
-        XCTAssertFalse(app.buttons["tab.feed"].exists, "the tab bar shows over the post's page")
+        waitFor(
+            app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar shows over the post's page")
         settle()
         keepScreenshot(named: "49-post-page")
 

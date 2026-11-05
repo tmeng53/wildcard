@@ -42,12 +42,17 @@ public struct MeView<PostsTile: View>: View {
     @Bindable private var model: MeModel
     private let destinations: MeDestinations
     private let postsTile: PostsTile
-    @State private var isSettingsOpen = false
+    /// 设置 is pushed; the app keeps it, so a notice that opens another place on 我 closes it.
+    @Binding private var isSettingsOpen: Bool
     @Environment(\.sceneTheme) private var theme
 
     /// `postsTile` is 我的动态's tile, which the feed draws (`GlanceTile` with the newest posts).
-    public init(model: MeModel, destinations: MeDestinations, @ViewBuilder postsTile: () -> PostsTile) {
+    public init(
+        model: MeModel, destinations: MeDestinations, isSettingsOpen: Binding<Bool>,
+        @ViewBuilder postsTile: () -> PostsTile
+    ) {
         self.model = model
+        _isSettingsOpen = isSettingsOpen
         self.destinations = destinations
         self.postsTile = postsTile()
     }

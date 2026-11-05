@@ -63,6 +63,8 @@ struct MainTabs: View {
     @State private var newestPosts: PostWallStore
     /// A post opened from 我的动态: 动态's post page, pushed over the wall.
     @State var post: OpenedPost?
+    /// 设置, pushed over 我.
+    @State var showsSettings = false
     /// A player's card, opened from a tap on them on the home or their row on 小队,
     /// popped up over every tab and the tab bar.
     @State private var teammate: SquadmateCardModel?
@@ -239,6 +241,9 @@ struct MainTabs: View {
             }
         }
         .environment(\.sceneTheme, today.scene)
+        // 通知 popped, or 动态 left with it open: what is told from now on lights the bell again.
+        .onChange(of: showsNotices) { _, shown in if !shown { inbox.close() } }
+        .onDisappear { inbox.close() }
     }
 
     /// The member's own character, on the empty 通知.
@@ -266,7 +271,8 @@ struct MainTabs: View {
                     editCharacter: wardrobe.editCharacter,
                     schedule: { showsSchedule = true },
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
-                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms),
+                isSettingsOpen: $showsSettings
             ) {
                 MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
             }
@@ -325,6 +331,8 @@ extension MainTabs {
                 model: today,
                 openSquad: { todayPages = [.squad] },
                 openPost: { post in
+                    // 动态 opens on the post itself, not on 通知 left open there.
+                    feedPages = []
                     feed.open(post)
                     selection = .feed
                 }

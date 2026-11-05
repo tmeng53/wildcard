@@ -61,8 +61,11 @@ extension MainTabs {
         }
     }
 
-    /// 我 back on its own page: 出赛表, 商店街, 我的动态 and a post over it all closed.
+    /// 我 back on its own page: 设置, 出赛表, 商店街, 我的动态 and a post over it all closed. 设置
+    /// stays while an account is being deleted, which can't be left.
     func closeProfilePages() {
+        profile.closeDeletion()
+        if !profile.isDeletionOpen { showsSettings = false }
         showsSchedule = false
         wardrobe.showsShop = false
         (wall, post) = (nil, nil)

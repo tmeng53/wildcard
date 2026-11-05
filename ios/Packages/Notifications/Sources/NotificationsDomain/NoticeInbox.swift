@@ -111,8 +111,8 @@ public final class NoticeInbox {
     private var seenThrough: NoticeID?
     /// What had been seen when the page last opened: newer ones show as new until it opens again.
     private var seenWhenOpened: NoticeID?
-    /// Whether 通知 is on screen.
-    private var isOpen = false
+    /// 通知 is open on screen, from `open()` until `close()`.
+    public private(set) var isOpen = false
     /// Whether the stream being heard got as far as `.ready`.
     private var heardReady = false
     private var next: NoticeID?

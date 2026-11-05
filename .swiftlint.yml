@@ -98,5 +98,5 @@ custom_rules:
     name: "Hand-made back"
     message: "Push the page on a NavigationStack with .pushedPage(); never draw a back button or a swipe-back of its own."
     excluded: '.*/(Packages/Onboarding/Sources/OnboardingUI/|Packages/DesignSystem/Sources/DesignSystemUI/(HeaderButton|SwipeBack)\.swift|Packages/CharacterEditor/Sources/CharacterEditorUI/CharacterEditorView\.swift|Tests/|WildcardUITests/).*'
-    regex: '(\.swipesBack\(|systemImage:\s*"chevron\.(left|backward)")'
+    regex: '(\.swipesBack\b|systemImage:\s*"chevron\.(left|backward)")'
     severity: error
