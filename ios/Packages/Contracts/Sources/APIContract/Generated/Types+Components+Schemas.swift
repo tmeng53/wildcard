@@ -5622,7 +5622,7 @@ extension Components {
         ///
         /// - Remark: Generated from `#/components/schemas/CoachMemberNote`.
         public struct CoachMemberNote: Codable, Hashable, Sendable {
-            /// The note’s id: the app shows each note once on this phone, and `coachNote` notices name it.
+            /// The note’s id, which putting it away (收下) and `coachNote` notices name.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachMemberNote/id`.
             public var id: Swift.Int
@@ -5643,7 +5643,7 @@ extension Components {
             /// Creates a new `CoachMemberNote`.
             ///
             /// - Parameters:
-            ///   - id: The note’s id: the app shows each note once on this phone, and `coachNote` notices name it.
+            ///   - id: The note’s id, which putting it away (收下) and `coachNote` notices name.
             ///   - day: The day (New York) the note was written for.
             ///   - text: The note’s words.
             ///   - coach:

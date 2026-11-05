@@ -3440,7 +3440,7 @@
           "id": {
             "type": "integer",
             "exclusiveMinimum": 0,
-            "description": "The note’s id: the app shows each note once on this phone, and `coachNote` notices name it."
+            "description": "The note’s id, which putting it away (收下) and `coachNote` notices name."
           },
           "day": {
             "type": "string",
