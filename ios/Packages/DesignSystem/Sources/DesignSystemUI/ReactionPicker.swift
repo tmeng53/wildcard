@@ -22,7 +22,7 @@ public enum ReactionBarMetrics {
     }
 }
 
-/// Picking a reaction (动态, the 6pm push, the squad chat): the quick emoji and ＋ in a glass
+/// Picking a reaction (动态, the 6pm push): the quick emoji and ＋ in a glass
 /// capsule over the post. Mine sits on a grey circle; picking it again takes it back. The slot
 /// under a finger sliding along it (`hovered`) grows. Its emoji pop in one after another.
 /// Each emoji's identifier is `identifier` + `.` + the emoji; ＋'s is `identifier.more`.
