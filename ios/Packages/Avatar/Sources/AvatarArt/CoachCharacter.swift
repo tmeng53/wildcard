@@ -6,11 +6,24 @@ import Foundation
 /// unlike members, so a coach never shares members' parts or clothes. A coach the API lists without a folder here has no
 /// character in this build; the screens show a stand-in for it.
 public enum CoachCharacter {
-    /// What a coach plays: `idle` loops, `cheer` plays once, `crying` loops (being fired).
+    /// What a coach plays: `idle` loops, `cheer` plays once, `crying` loops (being fired), each
+    /// the coach's own. The coaches' shared moves play once, from `Coaches/moves/`, unless a coach
+    /// has its own of the same name: `whistle` when someone checks in, `clap` when a week's goal
+    /// is reached, `pepTalk` when it gives its 战术板 line. They move the parts every coach's rig
+    /// has (the whistle, its cord, a left arm in front of the body), hidden or still at rest.
     public enum Move: String, CaseIterable, Sendable {
         case idle
         case cheer
         case crying
+        case whistle
+        case clap
+        case pepTalk = "pep-talk"
+
+        /// Whether the move loops until another starts.
+        public var loops: Bool { self == .idle || self == .crying }
+
+        /// Whether every coach plays the same one, from `Coaches/moves/`.
+        var isShared: Bool { self == .whistle || self == .clap || self == .pepTalk }
     }
 
     /// Whether this build has the coach's character.
@@ -29,8 +42,19 @@ public enum CoachCharacter {
     }
 
     public static func clip(_ move: Move, coach: String) throws(AvatarError) -> Clip {
-        try Clip.decode(file(coach, "clips/\(move.rawValue).json"))
+        let own = "clips/\(move.rawValue).json"
+        if !move.isShared || FileManager.default.fileExists(atPath: url(coach, own).path(percentEncoded: false)) {
+            return try Clip.decode(file(coach, own))
+        }
+        let path = "\(sharedMoves)/\(move.rawValue).json"
+        guard let data = try? Data(contentsOf: ArtTree.url(path, in: tree, bundled: root)) else {
+            throw .missingFile(path)
+        }
+        return try Clip.decode(data)
     }
+
+    /// The folder of the moves every coach shares; no coach is named after it.
+    private static let sharedMoves = "moves"
 
     private static func file(_ coach: String, _ path: String) throws(AvatarError) -> Data {
         guard let data = try? Data(contentsOf: url(coach, path)) else {

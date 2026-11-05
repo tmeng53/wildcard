@@ -9,9 +9,15 @@
     { "id": "legR", "parent": "root", "pivot": [143.31, 273.15], "layers": [{ "art": "legR" }] },
     { "id": "armL", "parent": "torso", "pivot": [60.06, 169.98], "layers": [{ "art": "armL" }] },
     { "id": "torso", "parent": "root", "pivot": [120, 280.7], "layers": [{ "art": "torso" }] },
+    { "id": "cord", "parent": "torso", "pivot": [108.81, 163.48], "layers": [{ "art": "cord" }] },
+    { "id": "collar", "parent": "torso", "pivot": [120, 160], "layers": [{ "art": "collar" }] },
+    { "id": "armLFront", "parent": "torso", "pivot": [60.06, 169.98], "opacity": 0, "layers": [{ "art": "armL" }] },
     { "id": "armR", "parent": "torso", "pivot": [182.16, 172.2], "layers": [{ "art": "armR" }] },
     { "id": "head", "parent": "torso", "pivot": [120, 164.15], "layers": [{ "art": "head" }] },
     { "id": "blink", "parent": "head", "pivot": [120, 119.75], "opacity": 0, "layers": [{ "art": "blink" }] },
-    { "id": "cry", "parent": "head", "pivot": [120, 119.75], "opacity": 0, "layers": [{ "art": "cry" }] }
+    { "id": "cry", "parent": "head", "pivot": [120, 119.75], "opacity": 0, "layers": [{ "art": "cry" }] },
+    { "id": "whistle", "parent": "torso", "pivot": [106, 216.7], "layers": [{ "art": "whistle" }] },
+    { "id": "toot", "parent": "torso", "pivot": [30, 147], "opacity": 0, "layers": [{ "art": "toot" }] },
+    { "id": "burst", "parent": "root", "pivot": [120, 60], "opacity": 0, "layers": [{ "art": "burst" }] }
   ]
 }
