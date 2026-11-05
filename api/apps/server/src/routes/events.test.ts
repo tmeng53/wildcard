@@ -1,6 +1,11 @@
 // GET /me/events over the real database's notifications, notices and sign-in.
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { MemberId, createNotices, createPostgresNoticeStore } from '@wildcard/notices';
+import {
+  MemberId,
+  createNotices,
+  createPostgresNoticeStore,
+  createPostgresBroadcastStore,
+} from '@wildcard/notices';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -18,7 +23,11 @@ afterAll(async () => {
   await liveEvents.close();
   await db.destroy();
 });
-const notices = createNotices({ store: createPostgresNoticeStore(db) });
+const notices = createNotices({
+  store: createPostgresNoticeStore(db),
+  broadcasts: createPostgresBroadcastStore(db),
+  clock: () => new Date(),
+});
 
 function appWith(timing: StreamTiming) {
   return events({

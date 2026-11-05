@@ -58,6 +58,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         self?.opened($0)
     }
 
+    /// Whether the last tapped notification's view asked to go somewhere of its own.
+    var hasDestination: Bool { destination != nil }
+
     /// Where the last tapped notification asked to go, once.
     func takeDestination() -> PushDestination? {
         defer { destination = nil }

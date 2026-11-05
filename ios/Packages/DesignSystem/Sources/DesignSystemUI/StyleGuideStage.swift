@@ -89,6 +89,10 @@ struct StageSection: View {
                         Text("DEUCE CLUB 开门了", bundle: .module), detail: Text("网球练满 3 次", bundle: .module),
                         showsChevron: true
                     ) { SceneBadge(.tennis) }
+                    NoticeBanner(
+                        Text("商店街上新了", bundle: .module), detail: Text("快去看看吧！", bundle: .module),
+                        action: Text("去商店街看看", bundle: .module)
+                    ) { NoticeSymbol(systemImage: "sparkles") }
                 }
             }
             GuideGroup(Text("开灯的拉绳：关着是白的，开着是暖黄", bundle: .module)) {

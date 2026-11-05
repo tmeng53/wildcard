@@ -40,16 +40,17 @@ public struct NoticesView: View {
     private let viewer: NoticeViewer?
     private let unlocked: (Unlock.Kind, String) -> UnlockWords
     private let now: () -> Date
-    private let open: (NoticeTarget) -> Void
+    private let open: (AppDestination) -> Void
     private let close: () -> Void
 
     /// - Parameters:
     ///   - unlocked: a store's or prop's words and badge, by its id in the art.
     ///   - now: the time the rows' groups and times are told against.
-    ///   - open: a row was tapped; the page stays until the caller closes it.
+    ///   - open: a row was tapped, for where it goes (`Notice.destination`); the page stays until
+    ///     the caller closes it.
     public init(
         inbox: NoticeInbox, viewer: NoticeViewer?, unlocked: @escaping (Unlock.Kind, String) -> UnlockWords,
-        now: @escaping () -> Date = Date.init, open: @escaping (NoticeTarget) -> Void, close: @escaping () -> Void
+        now: @escaping () -> Date = Date.init, open: @escaping (AppDestination) -> Void, close: @escaping () -> Void
     ) {
         self.inbox = inbox
         self.viewer = viewer
@@ -110,7 +111,8 @@ public struct NoticesView: View {
                     .padding(.top, Space.s)
                 ForEach(section.notices) { notice in
                     Button {
-                        open(notice.target)
+                        // The same place its banner and its push open.
+                        if let destination = notice.destination { open(destination) }
                     } label: {
                         NoticeRow(
                             notice: notice, heading: section.heading, isUnread: inbox.isUnread(notice), now: shownAt,
