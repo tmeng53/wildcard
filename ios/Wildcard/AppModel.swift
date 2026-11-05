@@ -180,9 +180,8 @@ final class AppModel {
         if showsTabs { await openHome(lost: squad) }
     }
 
-    /// Reads the catalog again, as the app comes back to the front: a sport or dice line added on
-    /// the server shows without an app update. The art it lists downloads in the background and
-    /// swaps in once all of it is here; art read after that (the next launch at the latest) is new.
+    /// Reads the catalog again, as the app comes back to the front: a sport, dice line or art
+    /// added on the server shows without an app update (the art once all of it is downloaded).
     func refreshCatalog() async {
         let fresh = await catalog.refresh()
         if let fresh { Self.show(fresh) }
