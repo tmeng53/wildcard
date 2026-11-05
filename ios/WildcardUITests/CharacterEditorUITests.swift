@@ -213,7 +213,8 @@ final class CharacterEditorUITests: XCTestCase {
         let hoodie = app.buttons["editor.tile.top.warmup-hoodie"]
         XCTAssertTrue(hoodie.waitForExistence(timeout: Self.wait), "no hoodie in the wardrobe")
         XCTAssertEqual(hoodie.label, "Hoodie")
-        XCTAssertTrue(app.staticTexts["Tops"].exists, "the wardrobe has no Tops section")
+        // The wardrobe's bar names each slot in the app's language.
+        XCTAssertEqual(app.buttons["editor.wardrobe.top"].label, "Tops")
         settle()
         keepScreenshot(named: "28-editor-profile-en")
     }
