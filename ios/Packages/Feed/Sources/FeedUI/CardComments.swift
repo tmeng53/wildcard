@@ -72,7 +72,7 @@ struct CommentLine: View {
 
     private var line: Text {
         let name = Text(verbatim: model.displayName(of: comment.member)).fontWeight(.semibold)
-        let words = comment.text.text
+        let words = Text(model.words(of: comment))
         guard let recipient = comment.replyTo.map({ model.displayName(of: $0) }) else {
             return Text("\(name)  \(words)", bundle: .module)
         }

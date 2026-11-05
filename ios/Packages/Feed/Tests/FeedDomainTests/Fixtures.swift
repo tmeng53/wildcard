@@ -67,6 +67,8 @@ actor FakeSource: FeedSource {
     }
 
     private(set) var calls: [Call] = []
+    /// Whom each comment sent @-ed, in order.
+    private(set) var mentioned: [Mentions] = []
     var posts: [FeedPost]
     var failure: FeedError?
     var characters: [MemberID: MemberCharacter] = [:]
@@ -116,14 +118,18 @@ actor FakeSource: FeedSource {
         return post
     }
 
-    func comment(_ text: CommentText, id: CommentID, replyingTo target: ReplyTarget?, on checkIn: CheckInID)
+    func comment(
+        _ text: CommentText, id: CommentID, replyingTo target: ReplyTarget?, mentioning mentions: Mentions,
+        on checkIn: CheckInID
+    )
         async throws(FeedError) -> Comment
     {
         calls.append(.comment(id, text.text, target, checkIn))
+        mentioned.append(mentions)
         await wait()
         if let failure { throw failure }
         guard posts.contains(where: { $0.id == checkIn }) else { throw .postGone }
-        return Comment(id: id, member: coco, text: text, replyTo: target, commentedAt: at(900))
+        return Comment(id: id, member: coco, text: text, replyTo: target, mentions: mentions, commentedAt: at(900))
     }
 
     func deleteComment(_ id: CommentID, on checkIn: CheckInID) async throws(FeedError) {

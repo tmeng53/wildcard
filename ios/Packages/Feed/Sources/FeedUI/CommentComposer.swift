@@ -1,19 +1,22 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import SwiftUI
 
-/// The box at the bottom of a post's own page: 回复 Mia with × when replying to someone, the
-/// words (up to four lines, with the count near the limit) and the send button. Sent words leave
-/// the box at once; if they couldn't go out they come back with a line saying so.
+/// The box at the bottom of a post's own page, floating in Liquid Glass over the comments as
+/// the approved chat composer does: 回复 Mia with × when replying to someone, 「@毛头」 while the
+/// squad has a coach, the words (up to four lines, with the count near the limit) and the send
+/// button; typing `@` opens the @ list over it, the coach first. Sent words leave the box at
+/// once; if they couldn't go out they come back with a line saying so.
 struct CommentComposer: View {
     @Environment(\.sceneTheme) private var theme
     let model: FeedModel
     let post: FeedPost
     var isTyping: FocusState<Bool>.Binding
-    @State private var draft = ""
+    @State private var draft = CommentDraft()
     @State private var isSending = false
     /// The words that couldn't go out, back in the box; the line saying so shows until they change.
     @State private var unsent: String?
@@ -23,47 +26,93 @@ struct CommentComposer: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xs) {
-            if let recipient = model.replyingTo.map({ model.displayName(of: $0) }) {
-                HStack(spacing: Space.xs) {
-                    Text("回复 \(recipient)", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .lineLimit(1)
-                    Spacer(minLength: 0)
-                    Button {
-                        model.replyingTo = nil
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
-                            .frame(width: Sizing.minimumTapTarget, height: Space.l)
-                            .contentShape(Rectangle())
+            let candidates = model.mentionCandidates(for: draft, on: post)
+            if !candidates.isEmpty {
+                PersonPicker(
+                    candidates, name: \.name, isCoach: \.isCoach, identifier: "post.mention",
+                    head: { person in head(of: person) },
+                    pick: { person in
+                        draft.pick(person)
+                        isTyping.wrappedValue = true
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("不回复了", bundle: .module))
-                    .accessibilityIdentifier("post.cancelReply")
-                }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            if let unsent, unsent == draft {
+            if let unsent, unsent == draft.text {
                 InlineFailure(Text("网络开小差了，没发出去", bundle: .module))
                     .accessibilityIdentifier("post.sendFailed")
             }
-            HStack(alignment: .bottom, spacing: Space.xs) {
-                field
-                sendButton
+            VStack(alignment: .leading, spacing: Space.xxs) {
+                if let recipient = model.replyingTo.map({ model.displayName(of: $0) }) {
+                    replying(to: recipient)
+                }
+                HStack(alignment: .bottom, spacing: Space.xs) {
+                    if let coach = model.mentionableCoach { mentionCoach(coach) }
+                    field
+                    sendButton
+                }
             }
+            .padding(Space.xs - 2)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.card + 12, style: .continuous))
+            .accessibilityIdentifier("post.composer")
         }
         .padding(.horizontal, Space.pageMargin)
-        .padding(.vertical, Space.xs)
-        .background(Color(role: .bgCanvas, in: theme))
-        .overlay(alignment: .top) {
-            Hairline()
+        .padding(.bottom, Space.xs)
+    }
+
+    private func replying(to recipient: String) -> some View {
+        HStack(spacing: Space.xs) {
+            Text("回复 \(recipient)", bundle: .module)
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .lineLimit(1)
+            Spacer(minLength: 0)
+            Button {
+                model.replyingTo = nil
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .frame(width: Sizing.minimumTapTarget, height: Space.l)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("不回复了", bundle: .module))
+            .accessibilityIdentifier("post.cancelReply")
+        }
+        .padding(.leading, Space.s)
+    }
+
+    /// 「@毛头」: puts the coach in the words, as picking it from the @ list does.
+    private func mentionCoach(_ coach: CoachSpeaker) -> some View {
+        Button {
+            draft.pick(.coach(coach))
+            isTyping.wrappedValue = true
+        } label: {
+            Text(verbatim: "@\(coach.name)")
+                .typeStyle(TypeRamp.calloutEmphasis)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .lineLimit(1)
+                .padding(.horizontal, Space.s)
+                .frame(height: Sizing.compactControl)
+                .background(Color(role: .bgSubtle, in: theme), in: Capsule())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityIdentifier("post.mentionCoach")
+    }
+
+    private func head(of person: Mentionable) -> some View {
+        switch person {
+        case .coach(let coach):
+            MemberHead(player: model.coachPlayer(coach.id), size: Sizing.characterHead, figure: .coach)
+        case .member(let member, _):
+            MemberHead(player: model.head(of: member), size: Sizing.characterHead)
         }
     }
 
     private var field: some View {
         HStack(alignment: .bottom, spacing: Space.xs) {
-            TextField(text: $draft, axis: .vertical) {
+            TextField(text: $draft.text, axis: .vertical) {
                 if let recipient = model.replyingTo.map({ model.displayName(of: $0) }) {
                     Text("回复 \(recipient)…", bundle: .module)
                 } else if post.author == model.viewer {
@@ -78,11 +127,11 @@ struct CommentComposer: View {
             .lineLimit(1...4)
             .focused(isTyping)
             .accessibilityIdentifier("post.field")
-            .onChange(of: draft) { _, typed in
-                if typed.count > CommentText.maxLength { draft = String(typed.prefix(CommentText.maxLength)) }
+            .onChange(of: draft.text) { _, typed in
+                if typed.count > CommentText.maxLength { draft.text = String(typed.prefix(CommentText.maxLength)) }
             }
-            if draft.count > Self.countFrom {
-                Text(verbatim: "\(draft.count)/\(CommentText.maxLength)")
+            if draft.text.count > Self.countFrom {
+                Text(verbatim: "\(draft.text.count)/\(CommentText.maxLength)")
                     .typeStyle(TypeRamp.caption)
                     .foregroundStyle(Color(role: .fgSubtle, in: theme))
                     .monospacedDigit()
@@ -97,7 +146,7 @@ struct CommentComposer: View {
     }
 
     private var sendButton: some View {
-        let text = try? CommentText(draft)
+        let text = try? CommentText(draft.text)
         return Button {
             guard let text else { return }
             send(text, on: post.id)
@@ -121,16 +170,16 @@ struct CommentComposer: View {
     /// back to try again.
     private func send(_ text: CommentText, on post: CheckInID) {
         let typed = draft
-        draft = ""
+        draft.clear()
         unsent = nil
         isSending = true
         Task {
-            let sent = await model.comment(text, on: post)
+            let sent = await model.comment(text, mentioning: typed.mentions, on: post)
             isSending = false
             // Words typed meanwhile stay: the unsent ones come back only to an empty box.
-            if !sent, draft.isEmpty {
+            if !sent, draft.text.isEmpty {
                 draft = typed
-                unsent = typed
+                unsent = typed.text
             }
         }
     }

@@ -8,11 +8,15 @@ import type { Log } from '../log.js';
  */
 const COACH_WAIT_MS = 8_000;
 
-/** Has the coach answer a member's reply to it now (the coach module's `answer`). */
+/**
+ * Has the coach answer a member's reply to it, or @ of it, now (the coach module's `answer`), in
+ * the squads the member sees the check-in through.
+ */
 export type CoachAnswerer = (input: {
   readonly checkIn: string;
   readonly comment: string;
   readonly coach: string;
+  readonly squads: readonly string[];
 }) => Promise<void>;
 
 /** Has the coaches of the squads a check-in went to look at it now (the coach module's `checkedIn`). */
