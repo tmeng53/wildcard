@@ -12,11 +12,15 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private var photoCount = 0
     private var squadPokes: SquadPokes
     private let sidelineCoach: SidelineCoach?
+    private var memberNotes: [CoachMemberNote]
 
-    public init(home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil) {
+    public init(
+        home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, notes: [CoachMemberNote] = []
+    ) {
         current = home
         squadPokes = pokes
         sidelineCoach = coach
+        memberNotes = notes
     }
 
     /// The squad the screens are reviewed against: 本周小队 14/22, eight members on the scene in
@@ -31,7 +35,8 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// run like 小米, and `.bump` has me trained too.
     public static func sampleSquad(
         now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID()),
-        patted: Bool = false, coach: Bool = false, together: SquadCelebration.Kind? = nil, meals: Bool = false
+        patted: Bool = false, coach: Bool = false, coachNote: Bool = false,
+        together: SquadCelebration.Kind? = nil, meals: Bool = false
     ) -> InMemoryCheckInBackend {
         let (zone, day) = (TimeZone.current, LocalDay(at: now, in: TimeZone.current))
         let everyone = (0..<7).map { _ in MemberID(UUID()) }
@@ -84,7 +89,19 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     plan: plan, checkIns: checkIns)
             },
             pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none,
-            coach: coach ? sampleCoach(now: now) : nil)
+            coach: coach || coachNote ? sampleCoach(now: now) : nil, notes: sampleNotes(coachNote, now, squadID))
+    }
+
+    /// 毛头's morning note to me, as the approved 便条 shows it, when `shown`.
+    private static func sampleNotes(_ shown: Bool, _ now: Date, _ squad: SquadID) -> [CoachMemberNote] {
+        guard shown else { return [] }
+        let words = Bundle.module.inAppLanguage
+        return [
+            CoachMemberNote(
+                id: 1, squad: squad, day: LocalDay(at: now, in: CoachNote.timeZone),
+                text: words.localizedString(forKey: "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。", value: nil, table: nil),
+                coach: CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil)))
+        ]
     }
 
     /// 毛头 with today's line, as the approved home shows it.
@@ -271,6 +288,14 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     }
 
     public func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? { sidelineCoach }
+
+    public func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote] {
+        squads.compactMap { squad in memberNotes.first { $0.squad == squad } }
+    }
+
+    public func putAway(_ note: CoachMemberNote) async throws(CheckInError) {
+        memberNotes.removeAll { $0.id == note.id }
+    }
 }
 
 /// Posts waiting to go out, kept in memory: for previews, UI tests and tests.

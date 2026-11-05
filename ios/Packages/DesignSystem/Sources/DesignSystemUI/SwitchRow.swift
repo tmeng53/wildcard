@@ -2,8 +2,9 @@
 import DesignSystem
 import SwiftUI
 
-/// A 52-point row that turns a setting on or off (每日提醒): an icon, the title and a switch, in
-/// the same list as `ListRow`. The whole row is the tap target. On, the switch fills with the
+/// A 52-point row that turns a setting on or off (每日提醒): an icon, the title (and, when it needs
+/// one, a muted line under it) and a switch, in the same list as `ListRow`. The whole row is the
+/// tap target. On, the switch fills with the
 /// accent tone's colour; off, the hairline grey (muted ink with Increase Contrast on, so it stands
 /// out on a white card); the knob is white with no shadow. VoiceOver reads it as a switch.
 public struct SwitchRow: View {
@@ -13,9 +14,15 @@ public struct SwitchRow: View {
     @Binding private var isOn: Bool
     @State private var taps = 0
     private let showsDivider: Bool
+    private let detail: Text?
 
-    public init(_ title: Text, systemImage: String? = nil, isOn: Binding<Bool>, showsDivider: Bool = true) {
+    /// - Parameter detail: a line under the title saying what the switch does, when the title
+    ///   alone doesn't.
+    public init(
+        _ title: Text, detail: Text? = nil, systemImage: String? = nil, isOn: Binding<Bool>, showsDivider: Bool = true
+    ) {
         self.title = title
+        self.detail = detail
         self.systemImage = systemImage
         _isOn = isOn
         self.showsDivider = showsDivider
@@ -26,7 +33,7 @@ public struct SwitchRow: View {
             taps += 1
             withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { isOn.toggle() }
         } label: {
-            RowShell(title: title, systemImage: systemImage, showsDivider: showsDivider) {
+            RowShell(title: title, systemImage: systemImage, showsDivider: showsDivider, detail: detail) {
                 SwitchTrack(isOn: isOn)
             }
         }
@@ -34,7 +41,10 @@ public struct SwitchRow: View {
         // On taps only: a setting loaded or synced from elsewhere changes quietly.
         .haptic(.pick, trigger: taps)
         .accessibilityRepresentation {
-            Toggle(isOn: $isOn) { title }
+            Toggle(isOn: $isOn) {
+                title
+                if let detail { detail }
+            }
         }
     }
 }

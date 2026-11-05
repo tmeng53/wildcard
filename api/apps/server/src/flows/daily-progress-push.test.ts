@@ -38,6 +38,7 @@ import {
   adminOn,
   aiConsentOn,
   config,
+  noJobs,
   nudgesOn,
   pushOn,
   signUp,
@@ -135,7 +136,7 @@ const deps = {
   coachNames: () => Promise.reject(new Error('unused')),
   liveEvents: ignoredNotices.liveEvents,
   log,
-  jobs: { isScheduler: jobsTokenScheduler(JOBS_TOKEN), interactions, clock: () => new Date() },
+  jobs: { ...noJobs, isScheduler: jobsTokenScheduler(JOBS_TOKEN), interactions },
   admin: adminOn(),
   catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
@@ -696,15 +697,17 @@ describe('the daily progress push', () => {
     await trained(eve, squad);
     expect(await call('GET', { path: '/me/push-settings', token: eve.token })).toStrictEqual({
       status: 200,
-      body: { version: 1, settings: { dailyProgress: true } },
+      body: { version: 1, settings: { dailyProgress: true, coach: true } },
     });
+    // An older build sends only its own switch; the coach's stays as it was.
     const off = { version: 1, settings: { dailyProgress: false } };
+    const saved = { version: 1, settings: { dailyProgress: false, coach: true } };
     expect(
       await call('PUT', { path: '/me/push-settings', token: eve.token, body: off }),
-    ).toStrictEqual({ status: 200, body: off });
+    ).toStrictEqual({ status: 200, body: saved });
     expect(await call('GET', { path: '/me/push-settings', token: eve.token })).toStrictEqual({
       status: 200,
-      body: off,
+      body: saved,
     });
     await run();
     expect(sentTo.get(eve.phone)).toBeUndefined();

@@ -59,11 +59,22 @@ extension CoachAnswer {
     }
 }
 
+extension CoachMemberNote {
+    public init(_ wire: Components.Schemas.CoachMemberNote, squad: SquadID) throws(ContractsError) {
+        self.init(
+            id: wire.id, squad: squad, day: try LocalDay(wire.day), text: wire.text,
+            coach: try CoachSpeaker(wire.coach))
+    }
+}
+
 extension CoachActivity {
-    public init(_ wire: Components.Schemas.CoachActivity) throws(ContractsError) {
+    /// - Parameter squad: the squad it is of, which the reader's morning note names.
+    public init(_ wire: Components.Schemas.CoachActivity, squad: SquadID) throws(ContractsError) {
         self.init(
             note: try wire.note.map { note throws(ContractsError) in try CoachNote(note) },
             replies: try wire.replies.map { reply throws(ContractsError) in try CoachReply(reply) },
-            answers: try wire.answers.map { answer throws(ContractsError) in try CoachAnswer(answer) })
+            answers: try wire.answers.map { answer throws(ContractsError) in try CoachAnswer(answer) },
+            // A note this build can't read is left out, not the coach's other words.
+            memberNote: wire.memberNote.flatMap { try? CoachMemberNote($0, squad: squad) })
     }
 }

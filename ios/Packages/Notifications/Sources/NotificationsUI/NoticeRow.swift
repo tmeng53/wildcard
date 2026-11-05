@@ -118,6 +118,14 @@ struct NoticeRow: View {
             return Words(
                 title: Self.coachTitle(name: coachName, replied: replied, emoji: emoji), detail: nil,
                 icon: AnyView(CoachIcon(coach: coach)))
+        case .coachNote(let note):
+            // 「毛头：…」, as its push says it.
+            return Words(
+                title: note.coach.name.isEmpty
+                    ? Text("教练：\(note.text)", bundle: .module)
+                    : Text("\(note.coach.name)：\(note.text)", bundle: .module),
+                detail: nil,
+                icon: AnyView(CoachIcon(coach: note.coach.id)))
         case .unlocked(let kind, let item):
             let unlock = unlocked(kind, item)
             return Words(title: unlock.title, detail: unlock.detail, icon: unlock.icon)

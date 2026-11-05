@@ -30,14 +30,15 @@ extension Notice {
         case "dailyProgress":
             return alert.map(Subject.dailyProgress)
         case "weeklyAwards":
-            guard let alert, let week = wire.weekStart.flatMap({ try? LocalDay($0) }) else { return nil }
-            return .weeklyAwards(alert, week: week)
+            return alert.flatMap { weeklyAwards(wire, alert: $0) }
         case "sceneMoved":
             return wire.scene.map {
                 .sceneMoved(scene: $0, mover: wire.by.flatMap { try? MemberID(wire: $0) }, moverName: wire.byName)
             }
         case "coachReply":
             return checkIn.flatMap { coachReply(wire, checkIn: $0) }
+        case "coachNote":
+            return coachNote(wire)
         case "unlocked":
             return unlocked(wire)
         case "comment":
@@ -50,6 +51,10 @@ extension Notice {
         }
     }
 
+    private static func weeklyAwards(_ wire: Components.Schemas.NoticeEntry, alert: PushAlert) -> Subject? {
+        wire.weekStart.flatMap { try? LocalDay($0) }.map { .weeklyAwards(alert, week: $0) }
+    }
+
     private static func coachReply(_ wire: Components.Schemas.NoticeEntry, checkIn: CheckInID) -> Subject? {
         guard let coach = wire.coach.flatMap(CoachID.init(rawValue:)), let replied = wire.replied else { return nil }
         return .coachReply(
@@ -59,12 +64,24 @@ extension Notice {
 }
 
 extension Notice {
-    private static func unlocked(_ wire: Components.Schemas.NoticeEntry) -> Subject? {
+    fileprivate static func unlocked(_ wire: Components.Schemas.NoticeEntry) -> Subject? {
         guard let kind = wire.unlockKind.flatMap(Unlock.Kind.init(rawValue:)), let item = wire.item else { return nil }
         return .unlocked(kind, item: item)
     }
 
-    private static func broadcast(_ wire: Components.Schemas.NoticeEntry) -> Broadcast? {
+    /// The morning note as 今天 shows it again from 通知; the coach's name is as it is now.
+    fileprivate static func coachNote(_ wire: Components.Schemas.NoticeEntry) -> Subject? {
+        guard let note = wire.note, let coach = wire.coach.flatMap(CoachID.init(rawValue:)),
+            let day = wire.day.flatMap({ try? LocalDay($0) }), let text = wire.text,
+            let squad = wire.squadId.flatMap({ try? SquadID(wire: $0) })
+        else { return nil }
+        return .coachNote(
+            CoachMemberNote(
+                id: note, squad: squad, day: day, text: text,
+                coach: CoachSpeaker(id: coach, name: wire.coachName ?? "")))
+    }
+
+    fileprivate static func broadcast(_ wire: Components.Schemas.NoticeEntry) -> Broadcast? {
         guard let id = wire.broadcast, let title = wire.title.map(CatalogNames.init) else { return nil }
         let action = wire.action.flatMap { action in
             AppDestination(path: action.destination).map {
