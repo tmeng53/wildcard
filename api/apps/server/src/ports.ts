@@ -13,6 +13,7 @@ import type { SceneTables } from '@wildcard/scenes';
 import type { SportTables } from '@wildcard/sports';
 import type { SwitchTables } from '@wildcard/switches';
 import type { UnlockTables } from '@wildcard/unlocks';
+import type { ArtTables } from '@wildcard/art';
 import type { WeeklyAwardTables } from '@wildcard/weekly-awards';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
@@ -170,7 +171,8 @@ export type Tables = CheckInTables &
   SwitchTables &
   UnlockTables &
   CoachTables &
-  NoticeTables;
+  NoticeTables &
+  ArtTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;

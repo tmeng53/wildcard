@@ -244,6 +244,9 @@
           },
           "switches": {
             "$ref": "#/components/schemas/SwitchesCatalog"
+          },
+          "art": {
+            "$ref": "#/components/schemas/ArtCatalog"
           }
         },
         "required": [
@@ -523,6 +526,63 @@
         ],
         "additionalProperties": {},
         "description": "A scheduled switch’s days every year, New York time; it may run over New Year. The app never shows them."
+      },
+      "ArtCatalog": {
+        "type": "object",
+        "properties": {
+          "generation": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The newest change’s number. The app uses a generation only once it has every file of it, and keeps the one it has until then."
+          },
+          "baseUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Where each file downloads from: this URL, then `<sha256>.<extension>`.",
+            "example": "https://example.supabase.co/storage/v1/object/public/art/"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Where the file goes in the app’s art tree (`avatar/…` over the character’s bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home scene pictures, `openings/…` the opening animations), in place of the bundled file there.",
+                  "example": "avatar/art/top/warmup-tee/torso.svg"
+                },
+                "sha256": {
+                  "type": "string",
+                  "description": "The file’s SHA-256, lowercase hex; also its name."
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Its size in bytes."
+                },
+                "rigVersion": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "The lowest rig version that draws it: a build with an older rig leaves it out."
+                }
+              },
+              "required": [
+                "path",
+                "sha256",
+                "size",
+                "rigVersion"
+              ],
+              "additionalProperties": {}
+            },
+            "description": "Every file put over the bundled art. Paths not listed use the bundled file."
+          }
+        },
+        "required": [
+          "generation",
+          "baseUrl",
+          "files"
+        ],
+        "additionalProperties": {}
       },
       "Me": {
         "type": "object",

@@ -30,6 +30,7 @@ import { createApp } from '../src/app.js';
 import { createLog } from '../src/log.js';
 import { openApiJson } from '../src/openapi.js';
 import {
+  artSection,
   disclaimerDiceSection,
   scenesSection,
   sportsSection,
@@ -64,6 +65,7 @@ const app = createApp({
         }),
       ),
       switchesSection(createSwitches({ store: createPostgresSwitchStore(db) })),
+      artSection({ manifest: unused }),
     ],
     clock: unused,
   },

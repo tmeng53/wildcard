@@ -166,7 +166,7 @@ extension PlaceholderCharacter {
     /// The colors `variant` lets a look change in `slot`: its `tones.json`, or nil when its art
     /// keeps its own colors. The base is what the editor's 原色 swatch shows.
     public static func tones(for slot: Slot, wearing variant: String) -> Tones? {
-        guard let text = BundledArt().text(at: "\(slot)/\(variant)/tones.json") else { return nil }
+        guard let text = PlaceholderArt().text(at: "\(slot)/\(variant)/tones.json") else { return nil }
         return try? Tones.decode(Data(text.utf8))
     }
 }

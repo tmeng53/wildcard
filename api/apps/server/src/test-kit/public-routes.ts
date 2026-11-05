@@ -1,3 +1,4 @@
+import { createPostgresArtStore } from '@wildcard/art';
 import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-drafts';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
@@ -5,6 +6,7 @@ import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
 
 import type { Database } from '../ports.js';
 import {
+  artSection,
   disclaimerDiceSection,
   scenesSection,
   sportsSection,
@@ -12,6 +14,7 @@ import {
   type CatalogSection,
 } from '../routes/catalog.js';
 import type { PublicRoutes } from '../routes/squads.js';
+import { config } from './local-supabase.js';
 
 /** Public routes with no rate limit, for tests about something else. */
 export const unlimitedPublicRoutes: PublicRoutes = {
@@ -35,6 +38,13 @@ export const catalogOn = (
       }),
     ),
     switchesSection(createSwitches({ store: createPostgresSwitchStore(db) })),
+    // The art as main.ts serves it: the database's list, downloaded from local Storage.
+    artSection({
+      manifest: async () => ({
+        ...(await createPostgresArtStore(db).manifest()),
+        baseUrl: new URL(`${config.supabaseUrl}/storage/v1/object/public/art/`),
+      }),
+    }),
   ],
   clock,
 });
