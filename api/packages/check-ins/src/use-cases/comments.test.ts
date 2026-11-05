@@ -123,6 +123,7 @@ describe('commenting on a check-in', () => {
       },
       created: true,
       author: tracy,
+      squads: [squad],
     });
     now = new Date('2026-10-18T20:06:00.000Z');
     await checkIns.comment({
@@ -177,6 +178,101 @@ describe('commenting on a check-in', () => {
       checkIns.comment({ checkIn: run.id, id, member: tracy, text: text('加油') }),
     ).rejects.toStrictEqual(new CommentIdConflictError(id));
     expect(await checkIns.listComments({ checkIn: run.id, viewer: tracy })).toHaveLength(1);
+  });
+
+  it('keeps whom a comment @s who can see the check-in, in order, up to 8, and no one else', async () => {
+    const [tracy, ann, bo, stranger] = [
+      await newMember(),
+      await newMember(),
+      await newMember(),
+      await newMember(),
+    ];
+    const squad = await newSquad(tracy, ann, bo);
+    await newSquad(ann, stranger);
+    const run = await trained(tracy, squad);
+    const id = newId();
+
+    now = new Date('2026-10-18T20:05:00.000Z');
+    const written = await checkIns.comment({
+      checkIn: run.id,
+      id,
+      member: ann,
+      text: text('@波波 @翠西 一起'),
+      // The writer, a stranger and a repeat are left out; the author may be @'d.
+      mentions: [bo, ann, stranger, tracy, bo],
+      // No coach is hired, so the coach @ is left out too.
+      mentionsCoach: 'xiaohun',
+    });
+    expect(written.comment.mentions).toStrictEqual([bo, tracy]);
+    expect(written.comment.mentionsCoach).toBeUndefined();
+    const [saved] = await checkIns.listComments({ checkIn: run.id, viewer: tracy });
+    expect(saved?.mentions).toStrictEqual([bo, tracy]);
+    // A retry with the same @s is the same comment; other @s are another.
+    const again = await checkIns.comment({
+      checkIn: run.id,
+      id,
+      member: ann,
+      text: text('@波波 @翠西 一起'),
+      mentions: [bo, tracy],
+    });
+    expect(again.created).toBe(false);
+    await expect(
+      checkIns.comment({
+        checkIn: run.id,
+        id,
+        member: ann,
+        text: text('@波波 @翠西 一起'),
+        mentions: [tracy],
+      }),
+    ).rejects.toStrictEqual(new CommentIdConflictError(id));
+
+    // A mentioned account deleted takes only its @ with it.
+    await sql`delete from auth.users where id = ${bo}`.execute(db);
+    const [kept] = await checkIns.listComments({ checkIn: run.id, viewer: tracy });
+    expect(kept?.mentions).toStrictEqual([tracy]);
+  });
+
+  it('keeps an @ of a coach only one of the post’s squads has hired', async () => {
+    const [tracy, ann] = [await newMember(), await newMember()];
+    const squad = await newSquad(tracy, ann);
+    const run = await trained(tracy, squad);
+    const hiredIn: SquadId[][] = [];
+    const withCoach = createCheckIns({
+      sports: createSports({ store: createPostgresSportStore(db) }),
+      store: createPostgresCheckInStore(db),
+      membership,
+      reactions: createPostgresReactionStore(db),
+      comments: createPostgresCommentStore(db),
+      coachHired: ({ squads, coach }) => {
+        hiredIn.push([...squads]);
+        return Promise.resolve(coach === 'xiaohun');
+      },
+      plans: createPostgresWeeklyPlanStore(db),
+      photos: { exists: () => Promise.resolve(true), delete: () => Promise.resolve() },
+      calendarOf: () => Promise.resolve(undefined),
+      clock: () => now,
+    });
+    now = new Date('2026-10-18T20:05:00.000Z');
+    const atCoach = await withCoach.comment({
+      checkIn: run.id,
+      id: newId(),
+      member: ann,
+      text: text('@毛头 腿还在吗'),
+      mentionsCoach: 'xiaohun',
+    });
+    expect(atCoach.comment.mentionsCoach).toBe('xiaohun');
+    expect(hiredIn).toStrictEqual([[squad]]);
+    now = new Date('2026-10-18T20:06:00.000Z');
+    const other = await withCoach.comment({
+      checkIn: run.id,
+      id: newId(),
+      member: ann,
+      text: text('@别人'),
+      mentionsCoach: 'someone-else',
+    });
+    expect(other.comment.mentionsCoach).toBeUndefined();
+    const listed = await checkIns.listComments({ checkIn: run.id, viewer: tracy });
+    expect(listed.map(({ mentionsCoach }) => mentionsCoach)).toStrictEqual(['xiaohun', undefined]);
   });
 
   it('refuses a reply to someone who can’t see the check-in', async () => {

@@ -23,18 +23,32 @@ export interface Comment {
    * something under the check-in. Never with `replyTo`.
    */
   readonly replyToCoach?: string | undefined;
+  /**
+   * Whom it @s, in the order written (feedback #58): up to `MAX_MENTIONS` people who can see the
+   * check-in, never its writer. Left out when it @s no one.
+   */
+  readonly mentions?: readonly MemberId[] | undefined;
+  /** The coach it @s (@毛头), by the coach's id, when it does: the coach answers it. */
+  readonly mentionsCoach?: string | undefined;
   readonly commentedAt: Date;
 }
 
+/** How many people one comment may @ (Tracy, 2026-11-05). */
+export const MAX_MENTIONS = 8;
+
+type Said = Pick<Comment, 'member' | 'text' | 'replyTo' | 'replyToCoach' | 'mentions' | 'mentionsCoach'>;
+
 /** Whether two writes of one comment id say the same thing, so the second is a retry. */
-export function sameComment(
-  a: Pick<Comment, 'member' | 'text' | 'replyTo' | 'replyToCoach'>,
-  b: Pick<Comment, 'member' | 'text' | 'replyTo' | 'replyToCoach'>,
-): boolean {
+export function sameComment(a: Said, b: Said): boolean {
+  const aMentions = a.mentions ?? [];
+  const bMentions = b.mentions ?? [];
   return (
     a.member === b.member &&
     a.text === b.text &&
     a.replyTo === b.replyTo &&
-    a.replyToCoach === b.replyToCoach
+    a.replyToCoach === b.replyToCoach &&
+    a.mentionsCoach === b.mentionsCoach &&
+    aMentions.length === bMentions.length &&
+    aMentions.every((member, index) => member === bMentions[index])
   );
 }

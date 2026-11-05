@@ -35,6 +35,13 @@ export interface WeekComment {
   readonly at: Date;
   /** The coach it replies to (回复 毛头：…), when it does. */
   readonly toCoach?: string;
+  /** The coach it @s (@毛头), when it does. */
+  readonly mentionsCoach?: string;
+}
+
+/** The coach a comment talks to, by replying to it or @-ing it, if any. */
+export function saidTo(comment: Pick<WeekComment, 'toCoach' | 'mentionsCoach'>): string | undefined {
+  return comment.toCoach ?? comment.mentionsCoach;
 }
 
 export interface SquadWeek {
@@ -84,8 +91,8 @@ export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, st
   if (checkIn.reactions > 0) line.push(`${String(checkIn.reactions)} 个表情`);
   if (checkIn.comments.length > 0) {
     const comments = checkIn.comments.map(
-      ({ member, text, toCoach }) =>
-        `${roster.get(member) ?? '队员'}${toCoach === undefined ? '' : '回复教练'}「${text}」`,
+      ({ member, text, toCoach, mentionsCoach }) =>
+        `${roster.get(member) ?? '队员'}${toCoach === undefined ? (mentionsCoach === undefined ? '' : '@教练') : '回复教练'}「${text}」`,
     );
     line.push(`评论：${comments.join('；')}`);
   }
