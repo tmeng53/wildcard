@@ -1,6 +1,22 @@
-/// A scene a squad trains on. The raw values are the API's ids.
-public enum SceneID: String, CaseIterable, Hashable, Sendable {
-    case track, pool, gym, tennis, climbing, ski
+/// A scene a squad trains on, by the API's id. Open: a scene added through the admin tools after
+/// this build shipped is one too.
+public struct SceneID: RawRepresentable, Hashable, Sendable {
+    public let rawValue: String
+
+    /// Nil for a string that can't be a scene id (camelCase, up to 40 characters, as the API's).
+    public init?(rawValue: String) {
+        guard rawValue.wholeMatch(of: /[a-z][A-Za-z0-9]{0,39}/) != nil else { return nil }
+        self.rawValue = rawValue
+    }
+
+    private init(known: String) { rawValue = known }
+
+    public static let track = SceneID(known: "track")
+    public static let pool = SceneID(known: "pool")
+    public static let gym = SceneID(known: "gym")
+    public static let tennis = SceneID(known: "tennis")
+    public static let climbing = SceneID(known: "climbing")
+    public static let ski = SceneID(known: "ski")
 }
 
 /// A squad's scene this week (小队设置): last week's crown winners pick it once a week, or the

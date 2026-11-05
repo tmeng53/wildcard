@@ -13,12 +13,16 @@ public struct AppCatalog: Hashable, Sendable {
     public let starterStock: StreetStock
     /// The art files put over the ones this build bundles.
     public let art: ArtManifest
+    /// Every scene, in the picker's order: a scene added since this build takes its names and
+    /// colours from here.
+    public let scenes: [CatalogScene]
 
     public init(
         sports: SportCatalog, diceLines: [CatalogNames], starterStock: StreetStock = .empty,
-        art: ArtManifest = .none
+        art: ArtManifest = .none, scenes: [CatalogScene] = []
     ) {
         (self.sports, self.diceLines, self.starterStock, self.art) = (sports, diceLines, starterStock, art)
+        self.scenes = scenes
     }
 
     /// Nothing at all.
@@ -56,4 +60,30 @@ public struct ArtManifest: Hashable, Sendable {
 
     /// Nothing put: the bundled art alone.
     public static let none = ArtManifest(generation: 0, baseURL: nil, files: [])
+}
+
+/// A scene as the catalog lists it (its `scenes` section).
+public struct CatalogScene: Hashable, Sendable {
+    /// Its colours, `#RRGGBB`.
+    public struct Colors: Hashable, Sendable {
+        public let signature: String
+        public let onSignature: String
+        public let wash: String
+        public let text: String
+        public let floor: String
+
+        public init(signature: String, onSignature: String, wash: String, text: String, floor: String) {
+            (self.signature, self.onSignature, self.wash, self.text, self.floor) = (
+                signature, onSignature, wash, text, floor
+            )
+        }
+    }
+
+    public let id: SceneID
+    public let names: CatalogNames
+    public let colors: Colors
+
+    public init(id: SceneID, names: CatalogNames, colors: Colors) {
+        (self.id, self.names, self.colors) = (id, names, colors)
+    }
 }

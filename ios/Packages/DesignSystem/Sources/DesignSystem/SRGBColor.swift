@@ -13,6 +13,12 @@ public struct SRGBColor: Sendable, Hashable {
         self.blue = blue
     }
 
+    /// The colour `#RRGGBB` names (either case), as the catalog sends it; nil for anything else.
+    public init?(hex: String) {
+        guard hex.count == 7, hex.first == "#", let value = UInt32(hex.dropFirst(), radix: 16) else { return nil }
+        self.init(red: UInt8(value >> 16), green: UInt8((value >> 8) & 0xFF), blue: UInt8(value & 0xFF))
+    }
+
     /// `#RRGGBB`, uppercase, as designers write it.
     public var hex: String {
         "#" + [red, green, blue].map(Self.twoDigitHex).joined()

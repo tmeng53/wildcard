@@ -101,9 +101,13 @@ describe('when a plan was finished', () => {
       checkIn('trained', { day: '2026-10-23' }),
     ];
     // Three planned days: the 19th (first made 08:00), the 21st and the 23rd.
-    expect(planFinishedAt(checkIns, days, 3)).toStrictEqual(at('2026-10-23T18:00:00.000Z'));
+    expect(planFinishedAt(checkIns, { days, plannedDays: 3 })).toStrictEqual(
+      at('2026-10-23T18:00:00.000Z'),
+    );
     // Two planned: done once the 21st was.
-    expect(planFinishedAt(checkIns, days, 2)).toStrictEqual(at('2026-10-21T18:00:00.000Z'));
+    expect(planFinishedAt(checkIns, { days, plannedDays: 2 })).toStrictEqual(
+      at('2026-10-21T18:00:00.000Z'),
+    );
   });
 
   it('counts a day made up later by when it was posted, and is missing while short or without a plan', () => {
@@ -111,8 +115,10 @@ describe('when a plan was finished', () => {
       checkIn('trained', { day: '2026-10-19' }),
       checkIn('trained', { day: '2026-10-20', createdAt: '2026-10-22T07:00:00.000Z' }),
     ];
-    expect(planFinishedAt(checkIns, days, 2)).toStrictEqual(at('2026-10-22T07:00:00.000Z'));
-    expect(planFinishedAt(checkIns, days, 3)).toBeUndefined();
-    expect(planFinishedAt(checkIns, days, 0)).toBeUndefined();
+    expect(planFinishedAt(checkIns, { days, plannedDays: 2 })).toStrictEqual(
+      at('2026-10-22T07:00:00.000Z'),
+    );
+    expect(planFinishedAt(checkIns, { days, plannedDays: 3 })).toBeUndefined();
+    expect(planFinishedAt(checkIns, { days, plannedDays: 0 })).toBeUndefined();
   });
 });
