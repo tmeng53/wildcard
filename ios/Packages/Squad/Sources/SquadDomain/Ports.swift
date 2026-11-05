@@ -31,7 +31,7 @@ public struct SquadSettings: Hashable, Sendable {
 /// How 小队设置 reaches the squad. An adapter talks to the API; previews and UI tests use one in
 /// memory.
 public protocol SquadSettingsService: Sendable {
-    /// The member's squad (the app shows the earliest joined), with its members and scene.
+    /// The member's squad (one at most), with its members and scene.
     func settings() async throws(SquadError) -> SquadSettings
     func rename(_ squad: SquadID, to name: SquadName) async throws(SquadError) -> Squad
     func handCaptaincy(of squad: SquadID, to member: MemberID) async throws(SquadError) -> Squad

@@ -1545,24 +1545,24 @@
         }
       }
     },
-    "你已经在 3 个小队里了": {
+    "你已经有小队了，先退出才能加入新的": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You're already in 3 squads"
+            "value": "You're already in a squad. Leave it to join a new one"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你已经在 3 个小队里了"
+            "value": "你已经有小队了，先退出才能加入新的"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "你已經在 3 個小隊裡了"
+            "value": "你已經有小隊了，先退出才能加入新的"
           }
         }
       }

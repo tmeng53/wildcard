@@ -119,19 +119,19 @@ describe('creating a squad', () => {
     await expect(newSquad(creator)).rejects.toMatchObject({ reason: 'AI_CONSENT_REQUIRED' });
   });
 
-  it('refuses a fourth squad, and allows one again after leaving', async () => {
+  it('refuses a second squad, and allows one again after leaving', async () => {
     const member = await newMember();
-    const [first] = [await newSquad(member), await newSquad(member), await newSquad(member)];
+    const first = await newSquad(member);
     await expect(newSquad(member)).rejects.toMatchObject({ reason: 'SQUAD_LIMIT_REACHED' });
     await squads.leave({ squad: first.id, member });
     await expect(newSquad(member)).resolves.toMatchObject({ name: '早八跑团' });
   });
 
-  it('never lets a member past 3 squads, however many creates arrive at once', async () => {
+  it('never lets a member past one squad, however many creates arrive at once', async () => {
     const member = await newMember();
     const results = await Promise.allSettled(Array.from({ length: 6 }, () => newSquad(member)));
-    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(3);
-    expect(await squads.listMine(member)).toHaveLength(3);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(await squads.listMine(member)).toHaveLength(1);
   });
 });
 
@@ -190,12 +190,16 @@ describe('joining by invite code', () => {
     expect(full.members).toHaveLength(8);
   });
 
-  it('refuses a member already in 3 squads', async () => {
+  it('refuses a member already in a squad, and lets them in once they leave it', async () => {
     const member = await newMember();
-    for (let i = 0; i < 3; i += 1) await newSquad(member);
+    const own = await newSquad(member);
     const other = await newSquad(await newMember());
     await expect(squads.join({ inviteCode: other.inviteCode, member })).rejects.toMatchObject({
       reason: 'SQUAD_LIMIT_REACHED',
+    });
+    await squads.leave({ squad: own.id, member });
+    await expect(squads.join({ inviteCode: other.inviteCode, member })).resolves.toMatchObject({
+      joined: true,
     });
   });
 
@@ -233,14 +237,15 @@ describe('joining by invite code', () => {
 });
 
 describe('leaving and listing', () => {
-  it('lists my squads in the order I joined, and leaving takes one out', async () => {
+  it('lists my squad, and leaving takes it out', async () => {
     const [ann, bo] = [await newMember(), await newMember()];
     const first = await newSquad(ann, '一');
     const second = await newSquad(bo, '二');
+    expect((await squads.listMine(ann)).map((squad) => squad.name)).toStrictEqual(['一']);
+    await squads.leave({ squad: first.id, member: ann });
+    await squads.leave({ squad: first.id, member: ann });
+    expect(await squads.listMine(ann)).toStrictEqual([]);
     await squads.join({ inviteCode: second.inviteCode, member: ann });
-    expect((await squads.listMine(ann)).map((squad) => squad.name)).toStrictEqual(['一', '二']);
-    await squads.leave({ squad: first.id, member: ann });
-    await squads.leave({ squad: first.id, member: ann });
     expect((await squads.listMine(ann)).map((squad) => squad.name)).toStrictEqual(['二']);
   });
 
