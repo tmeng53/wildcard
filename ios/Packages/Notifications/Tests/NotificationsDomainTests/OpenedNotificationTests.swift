@@ -25,12 +25,8 @@ import Testing
 
 @Test func anyOtherOrUnreadablePushOpensToday() {
     #expect(OpenedNotification(category: "comment", event: ["checkIn": "nope"]) == .other)
+    #expect(OpenedNotification(category: "dailyProgress", event: [:]) == .other)
     #expect(
         OpenedNotification(category: "weeklyAwards", event: ["squad": "nope", "weekStart": "2026-10-19"]) == .other)
     #expect(OpenedNotification(category: nil, event: [:]) == .other)
-}
-
-@Test func theDailyPushOpensTodayWithItsPats() {
-    #expect(OpenedNotification(category: "dailyProgress", event: [:]) == .dailyProgress)
-    #expect(OpenedNotification(category: "dailyProgress", event: ["kind": "dailyProgress"]) == .dailyProgress)
 }

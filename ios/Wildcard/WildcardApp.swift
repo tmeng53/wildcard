@@ -177,12 +177,7 @@ struct WildcardApp: App {
 
     /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with
     /// the check-in kinds open).
-    /// - Parameter dailyPush: whether the tap was on the 6pm push itself: a plain tap (no
-    ///   destination from its view) also plays the day's pats on the member again.
-    static func open(
-        _ destination: PushDestination?, dailyPush: Bool = false, today: TodayModel, tab: Binding<MainTabs.Tab>
-    ) {
-        if dailyPush, destination == nil { today.replayPatsOnMe() }
+    static func open(_ destination: PushDestination?, today: TodayModel, tab: Binding<MainTabs.Tab>) {
         switch destination {
         case .feed:
             tab.wrappedValue = .feed
@@ -271,18 +266,13 @@ struct WildcardApp: App {
                     case .comment(let post):
                         $tab.wrappedValue = .feed
                         feed.openPage(post)
-                    case .dailyProgress, .other:
-                        Self.open(
-                            delegate.takeDestination(), dailyPush: delegate.takeDailyPushTap(), today: today,
-                            tab: $tab)
+                    case .other:
+                        Self.open(delegate.takeDestination(), today: today, tab: $tab)
                         Task { await today.load() }
                     }
                 }
-                let dailyPush = delegate.takeDailyPushTap()
                 if let destination = delegate.takeDestination() {
                     Self.open(destination, today: today, tab: $tab)
-                } else if dailyPush {
-                    today.replayPatsOnMe()
                 }
             }
             .task { await Self.moveSampleSquad(today: today) }

@@ -8,8 +8,6 @@ public enum OpenedNotification: Hashable, Sendable {
     case weeklyAwards(squad: SquadID, week: LocalDay)
     /// Someone commented on the member's post, or replied to them: the app opens the post's page.
     case comment(checkIn: CheckInID)
-    /// The 6pm push: the app opens 今天, where the day's pats on the member play again.
-    case dailyProgress
     /// Anything else: the app opens 今天.
     case other
 
@@ -32,8 +30,6 @@ public enum OpenedNotification: Hashable, Sendable {
                 return
             }
             self = .comment(checkIn: CheckInID(checkIn))
-        case "dailyProgress":
-            self = .dailyProgress
         default:
             self = .other
         }
