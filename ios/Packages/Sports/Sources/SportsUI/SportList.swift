@@ -32,14 +32,4 @@ extension CatalogNames {
     /// The words in the language the app speaks now (`AppLanguage`, which a pick in the app
     /// changes at once).
     public var localized: String { localized(in: [AppLanguage.current.rawValue]) }
-
-    /// The words in the first of `languages` the catalog has words in, else Simplified Chinese.
-    public func localized(in languages: [String]) -> String {
-        for language in languages {
-            if language.hasPrefix("zh-Hant") || language == "zh-TW" || language == "zh-HK" { return traditionalChinese }
-            if language.hasPrefix("zh") { return simplifiedChinese }
-            if language.hasPrefix("en") { return english }
-        }
-        return simplifiedChinese
-    }
 }
