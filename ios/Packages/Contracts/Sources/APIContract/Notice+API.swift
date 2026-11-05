@@ -30,8 +30,7 @@ extension Notice {
         case "dailyProgress":
             return alert.map(Subject.dailyProgress)
         case "weeklyAwards":
-            guard let alert, let week = wire.weekStart.flatMap({ try? LocalDay($0) }) else { return nil }
-            return .weeklyAwards(alert, week: week)
+            return alert.flatMap { weeklyAwards(wire, alert: $0) }
         case "sceneMoved":
             return wire.scene.map {
                 .sceneMoved(scene: $0, mover: wire.by.flatMap { try? MemberID(wire: $0) }, moverName: wire.byName)
@@ -50,6 +49,10 @@ extension Notice {
         default:
             return nil
         }
+    }
+
+    private static func weeklyAwards(_ wire: Components.Schemas.NoticeEntry, alert: PushAlert) -> Subject? {
+        wire.weekStart.flatMap { try? LocalDay($0) }.map { .weeklyAwards(alert, week: $0) }
     }
 
     private static func coachReply(_ wire: Components.Schemas.NoticeEntry, checkIn: CheckInID) -> Subject? {
