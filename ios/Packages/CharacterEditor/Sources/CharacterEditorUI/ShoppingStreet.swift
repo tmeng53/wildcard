@@ -75,6 +75,8 @@ public struct ShoppingStreetPage: View {
             content: { claimed in ClaimedBanner(model: model, piece: claimed.id) }
         )
         .onAppear { model.didOpen() }
+        // A container, so its identifier doesn't replace the pop-up's (editor.arrival) and the rest.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("street.page")
     }
 
