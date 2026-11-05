@@ -111,10 +111,14 @@ export function createUnlocks(deps: {
     const now = new Date();
     const on = (id: string) => switchOn(id, now);
     const held = new Set(has.map(({ kind, id }) => `${kind}:${id}`));
-    // A retired store or piece is neither earned nor boxed any more; what was earned stays.
+    // A retired store or piece, or a piece in a retired store, is neither earned nor boxed any
+    // more; what was earned stays.
+    const retiredStores = new Set(stores.filter(({ offered }) => !offered).map(({ id }) => id));
     const retired = new Set([
-      ...stores.filter(({ offered }) => !offered).map(({ id }) => `store:${id}`),
-      ...pieces.filter(({ offered }) => !offered).map(({ id }) => `piece:${id}`),
+      ...[...retiredStores].map((id) => `store:${id}`),
+      ...pieces
+        .filter(({ offered, storeId }) => !offered || retiredStores.has(storeId))
+        .map(({ id }) => `piece:${id}`),
     ]);
     const open = counted(
       rules.filter(({ kind, id }) => !held.has(`${kind}:${id}`) && !retired.has(`${kind}:${id}`)),

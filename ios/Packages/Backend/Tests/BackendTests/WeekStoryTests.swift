@@ -84,7 +84,7 @@ private let lateStory = """
     {"version":1,"status":"pending",
      "squad":{"id":"3f6c1a52-8a0e-4c39-9d43-6b2f3f0b1a11","name":"晨跑五人组"},
      "week":{"from":"2026-10-12","to":"2026-10-18"},
-     "scene":"pool","sceneId":"pool",
+     "scene":"pool", "sceneId":"pool",
      "members":[
        {"member":"00000000-0000-0000-0000-000000000001",
         "character":{"nickname":"Coco","look":{"persona":"energetic","variants":{"body":"peach"},"colors":{}}}},

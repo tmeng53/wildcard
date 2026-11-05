@@ -8,6 +8,7 @@ import {
   createAiConsent,
   createPostgresConsentStore,
 } from '@wildcard/ai-consent';
+import { createArt, createPostgresArtStore } from '@wildcard/art';
 import {
   MemberId as CheckInMember,
   PhotoPath,
@@ -117,11 +118,14 @@ import { sceneTools } from './admin-mcp/tools/scenes.js';
 import { switchTools } from './admin-mcp/tools/switches.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
+import { artTools } from './admin-mcp/tools/art.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
+import { createSupabaseArtStorage } from './adapters/supabase-art-storage.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import {
+  artSection,
   disclaimerDiceSection,
   scenesSection,
   sportsSection,
@@ -161,6 +165,14 @@ const liveEvents = createPostgresLiveEvents(config.liveEventsDatabaseUrl, {
     log.warn('lost the live events connection; open streams end and reconnect', { error });
   },
 });
+
+// The art apps download: the list in the database, the files in Storage's public bucket.
+const artFiles = createSupabaseArtStorage({
+  supabaseUrl: config.supabaseUrl,
+  secretKey: config.supabaseSecretKey,
+});
+const artOn = (scope: Database) =>
+  createArt({ store: createPostgresArtStore(scope), blobs: artFiles });
 const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
@@ -455,6 +467,7 @@ const app = createApp({
       storesSection(unlocksOn(db)),
       piecesSection(unlocksOn(db)),
       disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+      artSection(artOn(db)),
     ],
     clock: () => new Date(),
   },
@@ -542,6 +555,7 @@ const app = createApp({
         unlocks: unlocksOn(scope),
         gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
       }),
+      ...artTools({ art: artOn(scope) }),
       ...coachTools({
         settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
         coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),

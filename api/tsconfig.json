@@ -63,6 +63,9 @@
     },
     {
       "path": "apps/server"
+    },
+    {
+      "path": "packages/art"
     }
   ]
 }

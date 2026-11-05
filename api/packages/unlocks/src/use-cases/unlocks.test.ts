@@ -197,25 +197,12 @@ describe('unlocks', () => {
       [starter, 'available'],
     ]);
 
-    // Retired, the store leaves the street and its pieces are boxed for nobody, so other tests
-    // count only the seeded ones.
+    // Retired, the store leaves the street and its pieces are boxed for nobody, even one still
+    // offered, so other tests count only the seeded ones.
     await unlocks.putStore({ id: store, position: 99, switchId: 'winter', offered: false });
     const retired = await unlocksWith(new Map()).standing(await newMember());
     expect(retired.shelf.stores.some(({ id }) => id === store)).toBe(false);
-    expect(retired.locked.some(({ id }) => id === board)).toBe(true);
-    await unlocks.putPiece({
-      id: board,
-      storeId: store,
-      slot: 'acc',
-      starter: false,
-      switchId: null,
-      offered: false,
-    });
-    expect(
-      (await unlocksWith(new Map()).standing(await newMember())).locked.some(
-        ({ id }) => id === board,
-      ),
-    ).toBe(false);
+    expect(retired.locked.some(({ id }) => id === board)).toBe(false);
   });
 
   it('keeps what a member earned, even once the check-in that earned it is gone', async () => {

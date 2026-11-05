@@ -143,7 +143,8 @@ export function putPiece({ unlocks }: UnlockToolDependencies) {
     description:
       'Adds a piece to a store, or replaces every field of one (read it with get_pieces first). ' +
       'A piece that is not a starter also needs an unlock rule (put_unlock_rule), or it never ' +
-      'shows. A piece needs its art in the app. Set offered to false to retire one: nobody can ' +
+      'shows; a starter has no unlock rule (a rule left on one would still unlock it, and old ' +
+      'builds would show it boxed). A piece needs its art in the app. Set offered to false to retire one: nobody can ' +
       'earn it any more and only those who own it see it. Returns every piece now.',
     changes: true,
     input: PieceEdit,
