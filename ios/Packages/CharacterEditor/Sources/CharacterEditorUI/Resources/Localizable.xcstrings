@@ -3907,18 +3907,18 @@
         }
       }
     },
-    "帽子": {
+    "头饰": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hats"
+            "value": "Headwear"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "帽子"
+            "value": "頭飾"
           }
         }
       }

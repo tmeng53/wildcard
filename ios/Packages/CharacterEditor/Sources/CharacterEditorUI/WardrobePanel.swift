@@ -7,34 +7,49 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// 穿搭, 我的衣橱 (the approved wardrobe design, 2026-11-04): the clothes the member owns, by slot,
-/// three a row with their names. A piece claimed on 商店街 wears NEW until it is first tapped. The
-/// colors of the piece just put on stay put above the rack while it scrolls, as the skin swatches
-/// do on 长相. Locked and unclaimed pieces aren't here: they wait on 商店街.
+/// 穿搭, 我的衣橱 (the approved wardrobe design, 2026-11-04): the clothes the member owns, one slot
+/// at a time (上衣, 下装, 鞋子, 头饰, 配饰 on a bar of their own, Tracy 2026-11-05, since all of them in
+/// one list was too many to look through), three a row with their names. The bar follows the piece
+/// last put on, so 穿上看看 opens on its slot. A piece claimed on 商店街 wears NEW until it is first
+/// tapped. The colors of the piece just put on stay put above the rack, as the skin swatches do on
+/// 长相. Locked and unclaimed pieces aren't here: they wait on 商店街.
 struct WardrobePanel: View {
     let model: CharacterEditorModel
-    @Environment(\.sceneTheme) private var theme
+    /// The slot the member tapped on the bar; nil follows the piece last put on.
+    @State private var chosen: Slot?
 
     var body: some View {
+        let wardrobe = model.wardrobe
+        let shown = shownSlot(in: wardrobe)
         VStack(alignment: .leading, spacing: 0) {
-            if let slot = model.picked {
+            if let shown {
+                CategoryBar(
+                    wardrobe.map {
+                        CategoryBarItem(
+                            id: $0.slot, title: EditorNames.slot($0.slot),
+                            accessibilityIdentifier: "editor.wardrobe.\($0.slot.rawValue)")
+                    },
+                    selection: Binding {
+                        shown
+                    } set: {
+                        chosen = $0
+                    }
+                )
+                .padding(.top, Space.xs)
+            }
+            if let slot = model.picked, slot == shown {
                 SwatchRow(model: model, slot: slot, named: true)
                     .padding(.horizontal, Space.pageMargin)
                     .padding(.top, Space.s)
             }
             ScrollView {
-                VStack(alignment: .leading, spacing: Space.l) {
-                    ForEach(model.wardrobe, id: \.slot) { group in
-                        VStack(alignment: .leading, spacing: Space.s) {
-                            SectionLabel(EditorNames.slot(group.slot))
-                            LazyVGrid(
-                                columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 3),
-                                spacing: Space.xs
-                            ) {
-                                ForEach(group.pieces, id: \.self) { piece in
-                                    WardrobePiece(model: model, slot: group.slot, variant: piece)
-                                }
-                            }
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 3),
+                    spacing: Space.xs
+                ) {
+                    if let group = wardrobe.first(where: { $0.slot == shown }) {
+                        ForEach(group.pieces, id: \.self) { piece in
+                            WardrobePiece(model: model, slot: group.slot, variant: piece)
                         }
                     }
                 }
@@ -44,6 +59,19 @@ struct WardrobePanel: View {
             .scrollIndicators(.hidden)
             .accessibilityIdentifier("editor.wardrobe")
         }
+        // A piece put on from elsewhere (穿上看看) brings its slot up.
+        .onChange(of: model.picked) { _, picked in
+            if let picked { chosen = picked }
+        }
+    }
+
+    /// The slot on show: the one tapped on the bar, else the piece last put on's, else the first.
+    private func shownSlot(in wardrobe: [(slot: Slot, pieces: [String])]) -> Slot? {
+        let slots = wardrobe.map(\.slot)
+        for slot in [chosen, model.picked] {
+            if let slot, slots.contains(slot) { return slot }
+        }
+        return slots.first
     }
 }
 
