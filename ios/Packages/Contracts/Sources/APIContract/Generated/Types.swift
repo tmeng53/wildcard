@@ -264,6 +264,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/weeks/{weekStart}/scene`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/scene/put(pickSquadScene)`.
     func pickSquadScene(_ input: Operations.PickSquadScene.Input) async throws -> Operations.PickSquadScene.Output
+    /// The global switches on for the signed-in member today
+    ///
+    /// Limited stores and scenes follow global switches. Most members see them as the public catalog says; a member who previews switches (an admin trying an event before it goes live) also sees those in preview, on the day they pretend it is.
+    ///
+    /// - Remark: HTTP `GET /me/switches`.
+    /// - Remark: Generated from `#/paths//me/switches/get(getMySwitches)`.
+    func getMySwitches(_ input: Operations.GetMySwitches.Input) async throws -> Operations.GetMySwitches.Output
     /// The coaches a squad can hire (教练市场)
     ///
     /// Every coach offered now, with its 简历. The same coaches for every squad.
@@ -974,6 +981,15 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// The global switches on for the signed-in member today
+    ///
+    /// Limited stores and scenes follow global switches. Most members see them as the public catalog says; a member who previews switches (an admin trying an event before it goes live) also sees those in preview, on the day they pretend it is.
+    ///
+    /// - Remark: HTTP `GET /me/switches`.
+    /// - Remark: Generated from `#/paths//me/switches/get(getMySwitches)`.
+    public func getMySwitches(headers: Operations.GetMySwitches.Input.Headers = .init()) async throws -> Operations.GetMySwitches.Output {
+        try await getMySwitches(Operations.GetMySwitches.Input(headers: headers))
     }
     /// The coaches a squad can hire (教练市场)
     ///

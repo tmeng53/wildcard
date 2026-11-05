@@ -14,8 +14,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createDatabase } from '../../adapters/postgres.js';
-import { UserId, type Database } from '../../ports.js';
-import { mySwitches } from '../../routes/my-switches.js';
+import type { Database } from '../../ports.js';
 import { config } from '../../test-kit/local-supabase.js';
 import { newYorkDay } from '../../new-york-day.js';
 import type { AdminTool } from '../admin-tool.js';
@@ -184,21 +183,14 @@ describe('a campaign', () => {
       expect(await takeover(admin)).toBe('tgTown');
       expect(await takeover(other)).toBeUndefined();
 
-      const route = mySwitches({
-        verifyToken: (token) =>
-          Promise.resolve({ userId: UserId.parse(token), oauthClient: undefined }),
-        switches,
-        clock: () => now,
-      });
-      const on = async (who: string) =>
-        Answer.parse(
-          await (
-            await route.request('/me/switches', { headers: { authorization: `Bearer ${who}` } })
-          ).json(),
-        );
-      expect(await on(admin)).toEqual({ version: 1, on: ['tgDay', 'tgWeek', 'winter'] });
+      // The street counts a store's switch as each member sees it.
+      const shown = async (who: string) => {
+        const { on } = await switches.statesFor(who);
+        return (await switches.list()).map(({ id }) => id).filter((id) => on(id, today));
+      };
+      expect(await shown(admin)).toEqual(['tgDay', 'tgWeek', 'winter']);
       // Winter opens on 11-15: only the admin's pretend day is in it.
-      expect(await on(other)).toEqual({ version: 1, on: [] });
+      expect(await shown(other)).toEqual([]);
 
       // Live: everyone, on its days only.
       await run('set_campaign_status', {

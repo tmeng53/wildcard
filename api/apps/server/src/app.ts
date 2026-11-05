@@ -62,7 +62,6 @@ import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadCoach } from './routes/squad-coach.js';
 import { coachActivity } from './routes/coach-activity.js';
 import { squadScene } from './routes/squad-scene.js';
-import { mySwitches } from './routes/my-switches.js';
 import { newYorkDay } from './new-york-day.js';
 import { squadToday } from './routes/squad-today.js';
 import { titles } from './routes/titles.js';
@@ -201,7 +200,6 @@ export function createApp(deps: AppDependencies) {
       },
     }),
   );
-  app.route('/', mySwitches({ ...deps, clock: deps.weeklyAwards.clock }));
   app.route('/', squadCoach(deps));
   app.route('/', coachActivity(deps));
   app.route('/', nudges(deps));

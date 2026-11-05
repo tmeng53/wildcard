@@ -51,6 +51,12 @@ const SquadSceneBody = z
         'The scene the squad’s home shows now: its scene this week, or, while a takeover scene ' +
         '(a holiday’s, say) is on, that one for every squad. `picked` is still the squad’s own.',
     }),
+    takeover: z.boolean().meta({
+      description:
+        'True while `sceneId` is a takeover scene standing in for the squad’s own: the app plays ' +
+        'its opening (the art at `openings/<sceneId>/`, if there is one) the first time it shows ' +
+        'it each day, then drops the squad onto it.',
+    }),
     pickers: z
       .strictObject({
         by: z.enum(['crown', 'captain']).meta({
@@ -136,6 +142,7 @@ function wire(scene: SquadScene, shown: string = scene.scene) {
     week: scene.week,
     scene: legacyScene(shown),
     sceneId: shown,
+    takeover: shown !== scene.scene,
     pickers: { by: scene.pickers.by, members: [...scene.pickers.members] },
     picked:
       scene.picked === undefined
@@ -288,7 +295,8 @@ export function squadScene(deps: {
       });
       if (picked)
         await tellMoved({ ...deps, squad: squadId, by: member, scene: c.req.valid('json').scene });
-      return picked ? c.json(wire(scene), 201) : c.json(wire(scene), 200);
+      const shown = wire(scene, await deps.takeoverFor(member));
+      return picked ? c.json(shown, 201) : c.json(shown, 200);
     });
 }
 

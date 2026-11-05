@@ -63,7 +63,7 @@ final class AppModel {
     @ObservationIgnored private var openingUnderCover = false
 
     @ObservationIgnored private let account: AccountSession
-    @ObservationIgnored private let api: WildcardAPI
+    @ObservationIgnored let api: WildcardAPI
     /// The API for one member's own home and outbox: it stops calling once someone else signs in,
     /// so posts queued for one account never go out under the next.
     @ObservationIgnored private let memberAPI: (MemberID) -> WildcardAPI
@@ -284,7 +284,7 @@ final class AppModel {
             // The loading screen stays up until the squad's scene is known, so 今天 never shows
             // the gym first and then switches; a teammate's move drops the squad onto it.
             let kept = ReadScene.keep(read, of: home.squad.id, member: home.member)
-            await today.land(on: kept.scene, move: kept.move)
+            await today.land(on: kept.scene, move: kept.move, takeover: read.takeover)
         } else {
             // Slow or offline: the scene this phone kept, read again once the tabs are up.
             today.scene = KeptScene.scene(of: home.squad.id) ?? .gym
@@ -361,29 +361,6 @@ final class AppModel {
 
 /// The squad's scene, which 今天 must open on rather than switch to.
 extension AppModel {
-    /// Puts 今天 on the squad's scene this week, dropping the squad onto it when a teammate moved
-    /// it. Offline, it stays where it is.
-    private func readScene(of squad: SquadID?, into today: TodayModel) async {
-        guard let squad, let read = try? await api.scene(of: squad) else { return }
-        let kept = ReadScene.keep(read, of: squad, member: today.home?.member)
-        await today.land(on: kept.scene, move: kept.move)
-    }
-
-    /// The squad's scene this week from the server, unless it takes longer than `Self.sceneWait`.
-    private func openingScene(of squad: SquadID) async -> SquadScene? {
-        let wait = Self.sceneWait
-        return await withTaskGroup(of: SquadScene?.self) { group in
-            group.addTask { try? await self.api.scene(of: squad) }
-            group.addTask {
-                try? await Task.sleep(for: wait)
-                return nil
-            }
-            let first = await group.next() ?? nil
-            group.cancelAll()
-            return first
-        }
-    }
-
     /// Runs `work` under the launch cover: signing in on the open screen waits here too, for a
     /// member whose squad is already set up, rather than sitting on a button that seems to do
     /// nothing.
@@ -396,5 +373,5 @@ extension AppModel {
     }
 
     /// How long the loading screen waits for the squad's scene before opening on the kept one.
-    private static let sceneWait = Duration.seconds(3)
+    static let sceneWait = Duration.seconds(3)
 }

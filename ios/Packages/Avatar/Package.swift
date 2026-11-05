@@ -23,7 +23,7 @@ let package = Package(
                 "AvatarDomain", .product(name: "Contracts", package: "Contracts"),
                 .product(name: "DesignSystem", package: "DesignSystem"),
             ],
-            resources: [.copy("Placeholder"), .copy("Coaches")]),
+            resources: [.copy("Placeholder"), .copy("Coaches"), .copy("Openings")]),
         .target(
             name: "AvatarUI",
             dependencies: ["AvatarDomain", "AvatarArt", .product(name: "DesignSystemUI", package: "DesignSystem")]),

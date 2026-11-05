@@ -1,0 +1,517 @@
+{
+  "version": 1,
+  "name": "Christmas",
+  "stage": {
+    "width": 390,
+    "height": 844
+  },
+  "background": "#1F5A3A",
+  "button": {
+    "background": "#1F5A3A",
+    "text": "#FFFFFF"
+  },
+  "layers": [
+    {
+      "id": "fallBack",
+      "x": 0,
+      "y": -422,
+      "width": 390,
+      "height": 1266,
+      "art": "fall-back.svg"
+    },
+    {
+      "id": "ground",
+      "x": 0,
+      "y": 610,
+      "width": 390,
+      "height": 234,
+      "art": "ground.svg"
+    },
+    {
+      "id": "decor",
+      "x": 0,
+      "y": 54,
+      "width": 390,
+      "height": 80,
+      "art": "decor.svg"
+    },
+    {
+      "id": "glow",
+      "x": 0,
+      "y": 54,
+      "width": 390,
+      "height": 80,
+      "art": "glow.svg"
+    },
+    {
+      "id": "ribbon",
+      "x": 45,
+      "y": 262,
+      "width": 300,
+      "height": 32,
+      "art": "ribbon.svg"
+    },
+    {
+      "id": "ribbonWords",
+      "x": 63,
+      "y": 262,
+      "width": 264,
+      "height": 30,
+      "text": {
+        "words": {
+          "zh-Hans": "MERRY CHRISTMAS",
+          "en": "MERRY CHRISTMAS",
+          "zh-Hant": "MERRY CHRISTMAS"
+        },
+        "color": "#1F5A3A",
+        "size": 18,
+        "font": "display"
+      }
+    },
+    {
+      "id": "title",
+      "x": 20,
+      "y": 306,
+      "width": 350,
+      "height": 72,
+      "text": {
+        "words": {
+          "zh-Hans": "圣诞快乐",
+          "en": "Merry Christmas",
+          "zh-Hant": "聖誕快樂"
+        },
+        "color": "#FFFFFF",
+        "size": 48
+      }
+    },
+    {
+      "id": "sub",
+      "x": 20,
+      "y": 382,
+      "width": 350,
+      "height": 28,
+      "text": {
+        "words": {
+          "zh-Hans": "今天全队在圣诞市集",
+          "en": "The whole squad is at the Christmas Market today",
+          "zh-Hant": "今天全隊在聖誕市集"
+        },
+        "color": "#E6F0EA",
+        "size": 17
+      }
+    },
+    {
+      "id": "squad",
+      "x": 10,
+      "y": 520,
+      "width": 370,
+      "height": 190,
+      "squad": true
+    },
+    {
+      "id": "fallFront",
+      "x": 0,
+      "y": -844,
+      "width": 390,
+      "height": 1688,
+      "art": "fall-front.svg"
+    }
+  ],
+  "clip": {
+    "version": 1,
+    "name": "jingle-opening",
+    "duration": 3,
+    "loops": false,
+    "tracks": [
+      {
+        "part": "decor",
+        "channel": "y",
+        "keys": [
+          {
+            "t": 0,
+            "v": -140
+          },
+          {
+            "t": 0.2,
+            "v": -140
+          },
+          {
+            "t": 0.9,
+            "v": 0,
+            "ease": "backOut"
+          }
+        ]
+      },
+      {
+        "part": "glow",
+        "channel": "y",
+        "keys": [
+          {
+            "t": 0,
+            "v": -140
+          },
+          {
+            "t": 0.2,
+            "v": -140
+          },
+          {
+            "t": 0.9,
+            "v": 0,
+            "ease": "backOut"
+          }
+        ]
+      },
+      {
+        "part": "ground",
+        "channel": "y",
+        "keys": [
+          {
+            "t": 0,
+            "v": 240
+          },
+          {
+            "t": 0.5,
+            "v": 240
+          },
+          {
+            "t": 1.2,
+            "v": 0,
+            "ease": "easeOut"
+          }
+        ]
+      },
+      {
+        "part": "ribbon",
+        "channel": "opacity",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0
+          },
+          {
+            "t": 0.9,
+            "v": 0
+          },
+          {
+            "t": 1.1,
+            "v": 1
+          }
+        ]
+      },
+      {
+        "part": "ribbon",
+        "channel": "scaleX",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0.2
+          },
+          {
+            "t": 0.9,
+            "v": 0.2
+          },
+          {
+            "t": 1.4,
+            "v": 1,
+            "ease": "backOut"
+          }
+        ]
+      },
+      {
+        "part": "ribbonWords",
+        "channel": "opacity",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0
+          },
+          {
+            "t": 1.2,
+            "v": 0
+          },
+          {
+            "t": 1.5,
+            "v": 1
+          }
+        ]
+      },
+      {
+        "part": "title",
+        "channel": "opacity",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0
+          },
+          {
+            "t": 1.2,
+            "v": 0
+          },
+          {
+            "t": 1.4,
+            "v": 1
+          }
+        ]
+      },
+      {
+        "part": "title",
+        "channel": "scaleX",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0.4
+          },
+          {
+            "t": 1.2,
+            "v": 0.4
+          },
+          {
+            "t": 1.8,
+            "v": 1,
+            "ease": "backOut"
+          }
+        ]
+      },
+      {
+        "part": "title",
+        "channel": "scaleY",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0.4
+          },
+          {
+            "t": 1.2,
+            "v": 0.4
+          },
+          {
+            "t": 1.8,
+            "v": 1,
+            "ease": "backOut"
+          }
+        ]
+      },
+      {
+        "part": "sub",
+        "channel": "opacity",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0
+          },
+          {
+            "t": 1.8,
+            "v": 0
+          },
+          {
+            "t": 2.2,
+            "v": 1
+          }
+        ]
+      },
+      {
+        "part": "squad",
+        "channel": "y",
+        "keys": [
+          {
+            "t": 0,
+            "v": 300
+          },
+          {
+            "t": 1.6,
+            "v": 300
+          },
+          {
+            "t": 2.4,
+            "v": 0,
+            "ease": "backOut"
+          }
+        ]
+      },
+      {
+        "part": "fallBack",
+        "channel": "opacity",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0
+          },
+          {
+            "t": 0.8,
+            "v": 1
+          }
+        ]
+      },
+      {
+        "part": "fallFront",
+        "channel": "opacity",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0
+          },
+          {
+            "t": 0.8,
+            "v": 1
+          }
+        ]
+      }
+    ]
+  },
+  "loop": {
+    "version": 1,
+    "name": "jingle-loop",
+    "duration": 8,
+    "loops": true,
+    "tracks": [
+      {
+        "part": "fallBack",
+        "channel": "y",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0
+          },
+          {
+            "t": 8,
+            "v": 422
+          }
+        ]
+      },
+      {
+        "part": "fallFront",
+        "channel": "y",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0
+          },
+          {
+            "t": 8,
+            "v": 844
+          }
+        ]
+      },
+      {
+        "part": "fallFront",
+        "channel": "x",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0
+          },
+          {
+            "t": 2,
+            "v": 8,
+            "ease": "easeInOut"
+          },
+          {
+            "t": 4,
+            "v": 0,
+            "ease": "easeInOut"
+          },
+          {
+            "t": 6,
+            "v": -8,
+            "ease": "easeInOut"
+          },
+          {
+            "t": 8,
+            "v": 0,
+            "ease": "easeInOut"
+          }
+        ]
+      },
+      {
+        "part": "glow",
+        "channel": "opacity",
+        "keys": [
+          {
+            "t": 0,
+            "v": 1
+          },
+          {
+            "t": 0.5,
+            "v": 0.35,
+            "ease": "hold"
+          },
+          {
+            "t": 1,
+            "v": 1,
+            "ease": "hold"
+          },
+          {
+            "t": 1.5,
+            "v": 0.35,
+            "ease": "hold"
+          },
+          {
+            "t": 2,
+            "v": 1,
+            "ease": "hold"
+          },
+          {
+            "t": 2.5,
+            "v": 0.35,
+            "ease": "hold"
+          },
+          {
+            "t": 3,
+            "v": 1,
+            "ease": "hold"
+          },
+          {
+            "t": 3.5,
+            "v": 0.35,
+            "ease": "hold"
+          },
+          {
+            "t": 4,
+            "v": 1,
+            "ease": "hold"
+          },
+          {
+            "t": 4.5,
+            "v": 0.35,
+            "ease": "hold"
+          },
+          {
+            "t": 5,
+            "v": 1,
+            "ease": "hold"
+          },
+          {
+            "t": 5.5,
+            "v": 0.35,
+            "ease": "hold"
+          },
+          {
+            "t": 6,
+            "v": 1,
+            "ease": "hold"
+          },
+          {
+            "t": 6.5,
+            "v": 0.35,
+            "ease": "hold"
+          },
+          {
+            "t": 7,
+            "v": 1,
+            "ease": "hold"
+          },
+          {
+            "t": 7.5,
+            "v": 0.35,
+            "ease": "hold"
+          },
+          {
+            "t": 8,
+            "v": 1,
+            "ease": "hold"
+          }
+        ]
+      }
+    ]
+  }
+}

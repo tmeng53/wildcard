@@ -66,7 +66,7 @@ public final class TodayModel {
     /// anywhere outside its capsules closes it), a check-in is being written (the compose and
     /// 请假条 pages take the whole screen) or the squad is dropping in, until 打卡 is back.
     public var showsTabBar: Bool {
-        guard !holdsTabBar else { return false }
+        guard !holdsTabBar, opening == nil else { return false }
         return switch step {
         case .scene: !isBurstOpen
         case .composing, .disclaimer: false
@@ -150,6 +150,8 @@ public final class TodayModel {
     var arrival: Arrival?
     /// Keeps the tab bar hidden while the squad drops in, until 打卡 is back.
     var holdsTabBar = false
+    /// A takeover scene's opening, over the whole screen until 进场 (`TodayModel+Opening.swift`).
+    var opening: OpeningArt.Loaded?
     /// The `NoticeBanner` showing at the top, and those waiting for it (`TodayModel+Notices.swift`).
     var notice: Notice?
     var pendingNotices: [Notice] = []

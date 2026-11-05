@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarArt
 import AvatarUI
 import CheckInDomain
 import DesignSystem
@@ -71,6 +72,18 @@ public struct TodayView: View {
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.home)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.payoff)
         .modifier(HomeNotices(model: model))
+        // A holiday's opening, over everything until 进场.
+        .overlay {
+            if let opening = model.opening {
+                OpeningView(
+                    opening, squad: model.openingSquad, language: AppLanguage.current.rawValue,
+                    onPlayed: { model.cheerInOpening() }, onEnter: { model.enterFromOpening() },
+                    label: { Text("进场", bundle: .module) }
+                )
+                .transition(.move(edge: .top))
+            }
+        }
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.opening == nil)
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
         // 拍一拍 landing: mine on a teammate, or a teammate's on me.

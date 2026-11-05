@@ -4784,10 +4784,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/scene`.
             public var scene: Components.Schemas.SquadScene.ScenePayload
-            /// The squad’s scene this week.
+            /// The scene the squad’s home shows now: its scene this week, or, while a takeover scene (a holiday’s, say) is on, that one for every squad. `picked` is still the squad’s own.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/sceneId`.
             public var sceneId: Swift.String
+            /// True while `sceneId` is a takeover scene standing in for the squad’s own: the app plays its opening (the art at `openings/<sceneId>/`, if there is one) the first time it shows it each day, then drops the squad onto it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/takeover`.
+            public var takeover: Swift.Bool
             /// Who picks this week’s scene, once.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/pickers`.
@@ -4975,7 +4979,8 @@ extension Components {
             ///   - version:
             ///   - week: The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s awards are given, the week after it.
             ///   - scene: The squad’s scene this week (see `sceneId`).
-            ///   - sceneId: The squad’s scene this week.
+            ///   - sceneId: The scene the squad’s home shows now: its scene this week, or, while a takeover scene (a holiday’s, say) is on, that one for every squad. `picked` is still the squad’s own.
+            ///   - takeover: True while `sceneId` is a takeover scene standing in for the squad’s own: the app plays its opening (the art at `openings/<sceneId>/`, if there is one) the first time it shows it each day, then drops the squad onto it.
             ///   - pickers: Who picks this week’s scene, once.
             ///   - picked: This week’s pick, once made; it can’t be changed.
             ///   - canPick: True when the caller may pick now: one of the pickers, and nothing picked yet.
@@ -4986,6 +4991,7 @@ extension Components {
                 week: Swift.String,
                 scene: Components.Schemas.SquadScene.ScenePayload,
                 sceneId: Swift.String,
+                takeover: Swift.Bool,
                 pickers: Components.Schemas.SquadScene.PickersPayload,
                 picked: Components.Schemas.SquadScene.PickedPayload? = nil,
                 canPick: Swift.Bool,
@@ -4996,6 +5002,7 @@ extension Components {
                 self.week = week
                 self.scene = scene
                 self.sceneId = sceneId
+                self.takeover = takeover
                 self.pickers = pickers
                 self.picked = picked
                 self.canPick = canPick
@@ -5007,6 +5014,7 @@ extension Components {
                 case week
                 case scene
                 case sceneId
+                case takeover
                 case pickers
                 case picked
                 case canPick
@@ -5041,6 +5049,35 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case scene
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/MySwitches`.
+        public struct MySwitches: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/MySwitches/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/MySwitches/version`.
+            public var version: Components.Schemas.MySwitches.VersionPayload
+            /// The global switches on for the signed-in member today, by id: what the public catalog’s `switches` say, plus, for a member who previews switches, those in preview, on the day they pretend it is. A signed-in app follows this list over the catalog’s.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MySwitches/on`.
+            public var on: [Swift.String]
+            /// Creates a new `MySwitches`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - on: The global switches on for the signed-in member today, by id: what the public catalog’s `switches` say, plus, for a member who previews switches, those in preview, on the day they pretend it is. A signed-in app follows this list over the catalog’s.
+            public init(
+                version: Components.Schemas.MySwitches.VersionPayload,
+                on: [Swift.String]
+            ) {
+                self.version = version
+                self.on = on
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case on
             }
         }
         /// - Remark: Generated from `#/components/schemas/CoachMarket`.

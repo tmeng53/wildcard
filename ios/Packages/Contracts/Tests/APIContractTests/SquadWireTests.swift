@@ -120,7 +120,8 @@ private let squad = "33333333-3333-3333-3333-333333333333"
 @Test func aSquadsSceneReads() throws {
     let ann = "a0000000-0000-4000-8000-000000000001"
     let wire = Components.Schemas.SquadScene(
-        version: ._1, week: "2026-12-07", scene: .gym, sceneId: "ski", pickers: .init(by: .crown, members: [ann]),
+        version: ._1, week: "2026-12-07", scene: .gym, sceneId: "ski", takeover: false,
+        pickers: .init(by: .crown, members: [ann]),
         picked: .init(scene: .gym, sceneId: "ski", by: ann, at: Date(timeIntervalSince1970: 0)), canPick: false,
         scenes: [
             .init(scene: .track, weeksAgo: 1), .init(scene: .pool, weeksAgo: nil), .init(scene: .gym, weeksAgo: nil),
@@ -147,13 +148,24 @@ private let squad = "33333333-3333-3333-3333-333333333333"
     func scene(_ id: String) throws -> SceneID {
         try SquadScene(
             Components.Schemas.SquadScene(
-                version: ._1, week: "2026-12-07", scene: .pool, sceneId: id, pickers: .init(by: .captain, members: []),
-                picked: nil, canPick: true, scenes: [], options: [])
+                version: ._1, week: "2026-12-07", scene: .pool, sceneId: id, takeover: false,
+                pickers: .init(by: .captain, members: []), picked: nil, canPick: true, scenes: [], options: [])
         ).scene
     }
     #expect(try scene("trot").rawValue == "trot")
     #expect(try scene("Not-An-Id") == .pool)
+    let plain = Components.Schemas.SquadScene(
+        version: ._1, week: "2026-12-07", scene: .pool, sceneId: "pool", takeover: false,
+        pickers: .init(by: .captain, members: []), picked: nil, canPick: true, scenes: [], options: [])
+    #expect(try SquadScene(plain).takeover == nil)
     #expect(SceneID.ski.pick() == .init(version: ._1, scene: "ski"))
+}
+
+@Test func aTakeoverSceneIsNamedEvenWhenThisBuildCantDrawIt() throws {
+    let wire = Components.Schemas.SquadScene(
+        version: ._1, week: "2026-11-23", scene: .gym, sceneId: "trot", takeover: true,
+        pickers: .init(by: .captain, members: []), picked: nil, canPick: false, scenes: [], options: [])
+    #expect(try SquadScene(wire).takeover == "trot")
 }
 
 /// A build already on phones keeps reading replies after the API adds a field to them.
