@@ -1,4 +1,4 @@
-import { sql, type Kysely } from 'kysely';
+import { sql, type ExpressionBuilder, type Kysely } from 'kysely';
 
 import { CheckInId, MemberId, SquadId } from '../domain/check-in.js';
 import { CommentId, sameComment, type Comment } from '../domain/comment.js';
@@ -12,6 +12,8 @@ interface Row {
   readonly text: string;
   readonly reply_to: string | null;
   readonly reply_to_coach: string | null;
+  readonly mentions_coach: string | null;
+  readonly mentions: string[] | null;
   readonly commented_at: Date;
 }
 
@@ -21,43 +23,82 @@ const fromRow = (row: Row): Comment => ({
   text: CommentText.parse(row.text),
   ...(row.reply_to === null ? {} : { replyTo: MemberId.parse(row.reply_to) }),
   ...(row.reply_to_coach === null ? {} : { replyToCoach: row.reply_to_coach }),
+  ...(row.mentions === null || row.mentions.length === 0
+    ? {}
+    : { mentions: row.mentions.map((id) => MemberId.parse(id)) }),
+  ...(row.mentions_coach === null ? {} : { mentionsCoach: row.mentions_coach }),
   commentedAt: row.commented_at,
 });
 
-const COLUMNS = ['id', 'member_id', 'text', 'reply_to', 'reply_to_coach', 'commented_at'] as const;
+/** Whom each comment @s, in the order written. */
+const mentionsOf = (eb: ExpressionBuilder<DB, 'check_in_comments'>) =>
+  eb
+    .selectFrom('check_in_comment_mentions')
+    .select(
+      sql<string[]>`array_agg(check_in_comment_mentions.member_id order by position)`.as('ids'),
+    )
+    .whereRef('check_in_comment_mentions.comment_id', '=', 'check_in_comments.id')
+    .as('mentions');
+
+const COLUMNS = [
+  'check_in_comments.id',
+  'check_in_comments.member_id',
+  'check_in_comments.text',
+  'check_in_comments.reply_to',
+  'check_in_comments.reply_to_coach',
+  'check_in_comments.mentions_coach',
+  'check_in_comments.commented_at',
+  mentionsOf,
+] as const;
 
 /** The comment store on Postgres (`supabase/migrations`). */
 export function createPostgresCommentStore(db: Kysely<DB>): CommentStore {
   const store: CommentStore = {
-    async insert(checkIn, { id, member, text, replyTo, replyToCoach, commentedAt }) {
-      // One statement, so two saves of one id at once can't both count as new.
-      const row = await db
-        .insertInto('check_in_comments')
-        .values({
-          id,
-          check_in_id: checkIn,
-          member_id: member,
-          text,
-          reply_to: replyTo ?? null,
-          reply_to_coach: replyToCoach ?? null,
-          commented_at: commentedAt,
-        })
-        .onConflict((conflict) => conflict.column('id').doNothing())
-        .returning('id')
-        .executeTakeFirst();
-      if (row !== undefined) return 'created';
+    async insert(checkIn, said) {
+      const { id, member, text, replyTo, replyToCoach, mentions = [], mentionsCoach } = said;
+      // The comment and whom it @s together; its insert is one statement, so two saves of one id
+      // at once can't both count as new.
+      const created = await db.transaction().execute(async (tx) => {
+        const row = await tx
+          .insertInto('check_in_comments')
+          .values({
+            id,
+            check_in_id: checkIn,
+            member_id: member,
+            text,
+            reply_to: replyTo ?? null,
+            reply_to_coach: replyToCoach ?? null,
+            mentions_coach: mentionsCoach ?? null,
+            commented_at: said.commentedAt,
+          })
+          .onConflict((conflict) => conflict.column('id').doNothing())
+          .returning('id')
+          .executeTakeFirst();
+        if (row === undefined) return false;
+        if (mentions.length > 0) {
+          await tx
+            .insertInto('check_in_comment_mentions')
+            .values(
+              mentions.map((mentioned, position) => ({
+                comment_id: id,
+                member_id: mentioned,
+                position,
+              })),
+            )
+            .execute();
+        }
+        return true;
+      });
+      if (created) return 'created';
       const saved = await store.find(id);
-      return saved?.checkIn === checkIn &&
-        sameComment(saved, { member, text, replyTo, replyToCoach })
-        ? 'unchanged'
-        : 'conflict';
+      return saved?.checkIn === checkIn && sameComment(saved, said) ? 'unchanged' : 'conflict';
     },
 
     async find(id) {
       const row = await db
         .selectFrom('check_in_comments')
-        .select([...COLUMNS, 'check_in_id'])
-        .where('id', '=', id)
+        .select([...COLUMNS, 'check_in_comments.check_in_id'])
+        .where('check_in_comments.id', '=', id)
         .executeTakeFirst();
       return row === undefined
         ? undefined
@@ -72,9 +113,9 @@ export function createPostgresCommentStore(db: Kysely<DB>): CommentStore {
       const rows = await db
         .selectFrom('check_in_comments')
         .select(COLUMNS)
-        .where('check_in_id', '=', checkIn)
-        .orderBy('commented_at')
-        .orderBy('id')
+        .where('check_in_comments.check_in_id', '=', checkIn)
+        .orderBy('check_in_comments.commented_at')
+        .orderBy('check_in_comments.id')
         .execute();
       return rows.map(fromRow);
     },
@@ -84,10 +125,10 @@ export function createPostgresCommentStore(db: Kysely<DB>): CommentStore {
       if (checkIns.length === 0) return byCheckIn;
       const rows = await db
         .selectFrom('check_in_comments')
-        .select([...COLUMNS, 'check_in_id'])
-        .where('check_in_id', 'in', checkIns)
-        .orderBy('commented_at')
-        .orderBy('id')
+        .select([...COLUMNS, 'check_in_comments.check_in_id'])
+        .where('check_in_comments.check_in_id', 'in', checkIns)
+        .orderBy('check_in_comments.commented_at')
+        .orderBy('check_in_comments.id')
         .execute();
       for (const row of rows) {
         const checkIn = CheckInId.parse(row.check_in_id);
@@ -102,22 +143,14 @@ export function createPostgresCommentStore(db: Kysely<DB>): CommentStore {
       const rows = await db
         .selectFrom('check_in_comments')
         .innerJoin('check_ins', 'check_ins.id', 'check_in_comments.check_in_id')
-        .select([
-          'check_in_comments.id',
-          'check_in_comments.member_id',
-          'check_in_comments.text',
-          'check_in_comments.reply_to',
-          'check_in_comments.reply_to_coach',
-          'check_in_comments.commented_at',
-          (eb) =>
-            eb
-              .selectFrom('check_in_squads')
-              .select(
-                sql<string[]>`array_agg(check_in_squads.squad_id order by position)`.as('ids'),
-              )
-              .whereRef('check_in_squads.check_in_id', '=', 'check_ins.id')
-              .as('audience'),
-        ])
+        .select(COLUMNS)
+        .select((eb) =>
+          eb
+            .selectFrom('check_in_squads')
+            .select(sql<string[]>`array_agg(check_in_squads.squad_id order by position)`.as('ids'))
+            .whereRef('check_in_squads.check_in_id', '=', 'check_ins.id')
+            .as('audience'),
+        )
         .where('check_ins.member_id', '=', member)
         .where('check_in_comments.member_id', '<>', member)
         .where('check_in_comments.commented_at', '>=', since)

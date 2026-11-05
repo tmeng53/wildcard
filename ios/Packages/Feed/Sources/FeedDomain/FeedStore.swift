@@ -273,62 +273,6 @@ public final class FeedStore {
 
     public func dismissFailure() { failure = nil }
 
-    // MARK: - Comments
-
-    /// The member writes a comment under a post, replying to someone or not: shown at once and
-    /// sent. False when it couldn't go out, so the member's words stay in the box to try again;
-    /// `failure` says why.
-    @discardableResult
-    public func comment(_ text: CommentText, replyingTo target: ReplyTarget?, on id: CheckInID) async -> Bool {
-        guard loaded[id] != nil else {
-            failure = .postGone
-            return false
-        }
-        let comment =
-            unsentComments[id].flatMap { $0.text == text && $0.replyTo == target ? $0 : nil }
-            ?? Comment(id: newCommentID(), member: viewer, text: text, replyTo: target, commentedAt: now())
-        unsentComments[id] = nil
-        pendingComments[id, default: []].append(comment)
-        defer { pendingComments[id]?.removeAll { $0.id == comment.id } }
-        do {
-            let saved = try await source.comment(text, id: comment.id, replyingTo: target, on: id)
-            if var post = loaded[id], !post.comments.contains(where: { $0.id == saved.id }) {
-                post.comments.append(saved)
-                loaded[id] = post
-            }
-            return true
-        } catch {
-            // The member's own post the server hasn't saved yet takes comments once it has.
-            let error = error == .postGone && ownNotYetListed[id] != nil ? FeedError.notSent : error
-            if error == .postGone { forget(id) } else { unsentComments[id] = comment }
-            failure = error
-            return false
-        }
-    }
-
-    /// The member deletes their own comment: gone at once, and back if the server says no.
-    public func deleteComment(_ comment: CommentID, on id: CheckInID) async {
-        // One still going out can't be deleted yet: the delete could reach the server first.
-        guard !isSending(comment, on: id) else { return }
-        deleting.insert(comment)
-        defer { deleting.remove(comment) }
-        do {
-            try await source.deleteComment(comment, on: id)
-            if var post = loaded[id] {
-                post.comments.removeAll { $0.id == comment }
-                loaded[id] = post
-            }
-        } catch {
-            if error == .postGone { forget(id) }
-            failure = error
-        }
-    }
-
-    /// True while the member's comment is still going out.
-    public func isSending(_ comment: CommentID, on id: CheckInID) -> Bool {
-        pendingComments[id]?.contains { $0.id == comment } ?? false
-    }
-
     private func send(_ key: CheckInID) async {
         guard !sending.contains(key) else { return }
         sending.insert(key)
@@ -381,4 +325,66 @@ public struct Arrival: Hashable, Sendable {
     public let member: MemberID
     public let emoji: Emoji
     public let moment: Timestamp
+}
+
+// MARK: - Comments
+
+extension FeedStore {
+    /// The member writes a comment under a post, replying to someone or not and @-ing `mentions`:
+    /// shown at once and sent. False when it couldn't go out, so the member's words stay in the box to try again;
+    /// `failure` says why.
+    @discardableResult
+    public func comment(
+        _ text: CommentText, replyingTo target: ReplyTarget?, mentioning mentions: Mentions = .none, on id: CheckInID
+    ) async -> Bool {
+        guard loaded[id] != nil else {
+            failure = .postGone
+            return false
+        }
+        let comment =
+            unsentComments[id].flatMap { $0.text == text && $0.replyTo == target && $0.mentions == mentions ? $0 : nil }
+            ?? Comment(
+                id: newCommentID(), member: viewer, text: text, replyTo: target, mentions: mentions,
+                commentedAt: now())
+        unsentComments[id] = nil
+        pendingComments[id, default: []].append(comment)
+        defer { pendingComments[id]?.removeAll { $0.id == comment.id } }
+        do {
+            let saved = try await source.comment(text, id: comment.id, replyingTo: target, mentioning: mentions, on: id)
+            if var post = loaded[id], !post.comments.contains(where: { $0.id == saved.id }) {
+                post.comments.append(saved)
+                loaded[id] = post
+            }
+            return true
+        } catch {
+            // The member's own post the server hasn't saved yet takes comments once it has.
+            let error = error == .postGone && ownNotYetListed[id] != nil ? FeedError.notSent : error
+            if error == .postGone { forget(id) } else { unsentComments[id] = comment }
+            failure = error
+            return false
+        }
+    }
+
+    /// The member deletes their own comment: gone at once, and back if the server says no.
+    public func deleteComment(_ comment: CommentID, on id: CheckInID) async {
+        // One still going out can't be deleted yet: the delete could reach the server first.
+        guard !isSending(comment, on: id) else { return }
+        deleting.insert(comment)
+        defer { deleting.remove(comment) }
+        do {
+            try await source.deleteComment(comment, on: id)
+            if var post = loaded[id] {
+                post.comments.removeAll { $0.id == comment }
+                loaded[id] = post
+            }
+        } catch {
+            if error == .postGone { forget(id) }
+            failure = error
+        }
+    }
+
+    /// True while the member's comment is still going out.
+    public func isSending(_ comment: CommentID, on id: CheckInID) -> Bool {
+        pendingComments[id]?.contains { $0.id == comment } ?? false
+    }
 }

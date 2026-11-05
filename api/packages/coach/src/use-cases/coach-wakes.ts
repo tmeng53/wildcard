@@ -9,9 +9,9 @@ import {
 } from '../domain/memory.js';
 import { instructionsOf, taskOf, type CoachThread, type DayTalk } from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
-import type { CoachSettings, SquadId } from '../domain/settings.js';
+import { SquadId, type CoachSettings } from '../domain/settings.js';
 import { factsText } from '../domain/member-facts.js';
-import { consentedOnly, rosterOf, weekText, type SquadWeek } from '../domain/squad-week.js';
+import { consentedOnly, rosterOf, saidTo, weekText, type SquadWeek } from '../domain/squad-week.js';
 import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
 import type {
   AiConsented,
@@ -69,14 +69,16 @@ export interface CoachWakes {
    */
   run(): Promise<CoachRun>;
   /**
-   * Answers a member's reply to a coach under a check-in at once: for each squad whose coach it
-   * is and who spoke to that check-in, queues the reply's wake and runs the squad's waiting
-   * wakes. Does nothing while coaching is off. What doesn't finish now, the next `run` does.
+   * Answers a member's reply to a coach, or @ of it, under a check-in at once: for each of
+   * `squads` (those the member sees the check-in through) whose coach it is, queues the
+   * comment's wake and runs the squad's waiting wakes. Does nothing while coaching is off. What
+   * doesn't finish now, the next `run` does.
    */
   answer(input: {
     readonly checkIn: string;
     readonly comment: string;
     readonly coach: string;
+    readonly squads: readonly string[];
   }): Promise<void>;
   /**
    * Has the coach of each of these squads that hired one look at a check-in just made, now:
@@ -158,24 +160,21 @@ export function createCoachWakes(deps: CoachWakesDependencies): CoachWakes {
       return { coaching: true, squads: squads.length, queued, done, failed };
     },
 
-    answer: async ({ checkIn, comment, coach }) => {
+    answer: async ({ checkIn, comment, coach, squads: through }) => {
       const now = deps.clock();
       const settings = await deps.settings.current();
       if (!settings.coaching) return;
       const hired = await deps.hiring.hired();
-      const squads: SquadId[] = [];
-      for (const [squad, hiredCoach] of hired) {
-        if (hiredCoach !== coach) continue;
-        // Only where this coach said something to the check-in is there anything to reply to.
-        const reply = await deps.stores.replies.find(squad, checkIn);
-        if (reply?.coach !== coach) continue;
-        await deps.stores.wakes.enqueue(
-          [{ squad, reason: { kind: 'comment', checkIn, comment } }],
-          now,
-        );
-        squads.push(squad);
-      }
+      // The wake itself skips a squad with nothing to answer (a reply to what the coach never
+      // said there, or a comment from outside it).
+      const squads = through
+        .map((squad) => SquadId.parse(squad))
+        .filter((squad) => hired.get(squad) === coach);
       if (squads.length === 0) return;
+      await deps.stores.wakes.enqueue(
+        squads.map((squad) => ({ squad, reason: { kind: 'comment', checkIn, comment } })),
+        now,
+      );
       const coaches = new Map((await deps.catalog.list()).map((each) => [each.id, each]));
       await drain(deps, { squads, hired, coaches, settings, now });
     },
@@ -573,11 +572,12 @@ async function talksOf(
 }
 
 /**
- * On a reply's wake, what was said under its check-in for the coach to go on: its own reply,
- * then members' replies to it and its answers, up to the one to answer; with who wrote that.
- * `undefined` on another wake, or when there is nothing to answer: the reply went (or its writer
- * withdrew their AI consent), was answered already, isn't to this coach or from this squad, or
- * the coach said nothing to the check-in in this squad.
+ * On a comment's wake (a reply to the coach or an @ of it), what was said under its check-in for
+ * the coach to go on: its own reply, when it wrote one, then members' replies and @s to it and
+ * its answers, up to the one to answer; with who wrote that. `undefined` on another wake, or
+ * when there is nothing to answer: the comment went (or its writer withdrew their AI consent),
+ * was answered already, isn't to this coach or from this squad, or replies to what the coach
+ * never said to the check-in in this squad.
  */
 async function threadOf(
   deps: CoachWakesDependencies,
@@ -587,17 +587,19 @@ async function threadOf(
   if (reason.kind !== 'comment') return undefined;
   const comments = week.checkIns.find(({ id }) => id === reason.checkIn)?.comments ?? [];
   const answering = comments.find(({ id }) => id === reason.comment);
-  if (answering?.toCoach !== coach.id) return undefined;
+  if (answering === undefined || saidTo(answering) !== coach.id) return undefined;
   // A check-in shared to several squads is answered only in the writer's own.
   if (!week.members.some(({ member }) => member === answering.member)) return undefined;
-  const reply = await deps.stores.replies.find(wake.squad, reason.checkIn);
-  if (reply?.coach !== coach.id || reply.text === undefined) return undefined;
+  const found = await deps.stores.replies.find(wake.squad, reason.checkIn);
+  const reply = found?.coach === coach.id ? found.text : undefined;
+  // A reply to the coach needs something it said; an @ doesn't.
+  if (answering.toCoach !== undefined && reply === undefined) return undefined;
   const answers = await deps.stores.answers.ofCheckIn(wake.squad, reason.checkIn);
   if (answers.some(({ comment }) => comment === reason.comment)) return undefined;
   // Each answer right after the reply it answers.
   const answerOf = new Map(answers.map(({ comment, text }) => [comment, text]));
   const said = comments
-    .filter(({ toCoach, at }) => toCoach === coach.id && at <= answering.at)
+    .filter((each) => saidTo(each) === coach.id && each.at <= answering.at)
     .flatMap(({ id, member, text }) => {
       const answer = answerOf.get(id);
       return [
@@ -605,5 +607,8 @@ async function threadOf(
         ...(answer === undefined ? [] : [{ member: undefined, text: answer }]),
       ];
     });
-  return { thread: { reply: reply.text, said }, commenter: answering.member };
+  return {
+    thread: { ...(reply === undefined ? {} : { reply }), said },
+    commenter: answering.member,
+  };
 }

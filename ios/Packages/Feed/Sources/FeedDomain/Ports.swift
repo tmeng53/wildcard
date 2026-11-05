@@ -17,9 +17,12 @@ public protocol FeedSource: Sendable {
     /// One post as the feed shows it, with its reactions and comments: a post's own page. The
     /// member's own posts load even from a squad they left.
     func post(_ id: CheckInID) async throws(FeedError) -> FeedPost
-    /// Writes the member's comment under a post, under the id given: the same again is a retry,
-    /// and answers the comment as the server keeps it.
-    func comment(_ text: CommentText, id: CommentID, replyingTo target: ReplyTarget?, on checkIn: CheckInID)
+    /// Writes the member's comment under a post, @-ing `mentions`, under the id given: the same
+    /// again is a retry, and answers the comment as the server keeps it.
+    func comment(
+        _ text: CommentText, id: CommentID, replyingTo target: ReplyTarget?, mentioning mentions: Mentions,
+        on checkIn: CheckInID
+    )
         async throws(FeedError) -> Comment
     /// Deletes the member's own comment. Safe to repeat.
     func deleteComment(_ id: CommentID, on checkIn: CheckInID) async throws(FeedError)
