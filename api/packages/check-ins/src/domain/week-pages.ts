@@ -95,18 +95,12 @@ export function podiumOf<Member>(
   const top = ranked.slice(0, PODIUM_MAX);
   const [champion, ...sides] = top;
   if (champion === undefined) return undefined;
-  // A place was decided by the plan when two neighbours trained as many days and the higher one
-  // finished its plan first (or the lower one never did).
-  const tieBrokenByPlan = ranked.slice(0, PODIUM_MAX + 1).some((each, index) => {
-    const next = ranked[index + 1];
-    return (
-      index < PODIUM_MAX &&
-      next !== undefined &&
-      each.trainedDays === next.trainedDays &&
-      each.planFinishedAt !== undefined &&
-      byTrainedThenFinished(each, next) < 0
-    );
-  });
+  // The plan decided a place when, without it, join order would put someone else on the podium
+  // or in another place on it.
+  const byDays = members
+    .filter(({ trainedDays }) => trainedDays > 0)
+    .toSorted((a, b) => b.trainedDays - a.trainedDays);
+  const tieBrokenByPlan = top.some((each, index) => each !== byDays[index]);
   return {
     tieBrokenByPlan,
     champion: champion.member,
