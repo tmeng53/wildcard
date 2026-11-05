@@ -72,7 +72,7 @@ final class NoticeBellUITests: XCTestCase {
         bell.tap()
         let note = app.buttons["notices.row.9"]
         XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "通知 didn't open on its newest row")
-        XCTAssertTrue(note.label.contains("教练 毛头 给你写了张便条"), "the note row says \(note.label)")
+        XCTAssertTrue(note.label.contains("毛头：今天出赛表写的是力量"), "the note row says \(note.label)")
         note.tap()
         let putAway = app.buttons["today.coachNote.putAway"]
         XCTAssertTrue(putAway.waitForExistence(timeout: Self.wait), "the note row didn't show the note on 今天")

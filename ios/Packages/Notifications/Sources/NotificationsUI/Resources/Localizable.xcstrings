@@ -337,34 +337,34 @@
         }
       }
     },
-    "教练 %@ 给你写了张便条": {
+    "%@：%@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Coach %@ left you a note"
+            "value": "%1$@: %2$@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "教練 %@ 給你寫了張便條"
+            "value": "%1$@：%2$@"
           }
         }
       }
     },
-    "教练给你写了张便条": {
+    "教练：%@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your coach left you a note"
+            "value": "Coach: %@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "教練給你寫了張便條"
+            "value": "教練：%@"
           }
         }
       }
