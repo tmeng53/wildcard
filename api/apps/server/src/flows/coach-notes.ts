@@ -6,6 +6,7 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { MemberId as PushMember, type Push, type PushNotification } from '@wildcard/push';
+import { SquadId, type Squads } from '@wildcard/squads';
 
 import type { Log } from '../log.js';
 import { pushAlert } from '../push-copy.js';
@@ -15,6 +16,8 @@ export interface CoachNotesDependencies {
   /** The hour on each member's clock when their note reaches them, from the coach settings. */
   readonly noteHour: () => Promise<number>;
   readonly members: Pick<Members, 'pastLocalHour'>;
+  /** Who is in each squad now: a member who left gets no note from it. */
+  readonly squads: Pick<Squads, 'membersOf'>;
   readonly push: Pick<Push, 'settingsOf' | 'notifyMembers'>;
   /** Keeps notices in the members' bells; never throws. */
   readonly tell: (told: readonly NewNotice[]) => Promise<void>;
@@ -47,10 +50,19 @@ export async function deliverCoachNotes(deps: CoachNotesDependencies): Promise<C
         ({ member }) => member,
       ),
     );
+    const inSquad = new Map<string, ReadonlySet<string>>();
+    const stillIn = async (note: NoteToDeliver) => {
+      let members = inSquad.get(note.squad);
+      if (members === undefined) {
+        members = new Set<string>(await deps.squads.membersOf(SquadId.parse(note.squad)));
+        inSquad.set(note.squad, members);
+      }
+      return members.has(note.member);
+    };
     let delivered = 0;
     let pushed = 0;
     for (const note of waiting) {
-      if (!morning.has(note.member)) continue;
+      if (!morning.has(note.member) || !(await stillIn(note))) continue;
       if (!(await deps.notes.delivered(note.id))) continue;
       delivered += 1;
       await deps.tell([

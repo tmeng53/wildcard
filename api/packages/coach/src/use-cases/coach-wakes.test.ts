@@ -501,6 +501,14 @@ describe('the coach', () => {
         failed: 0,
       });
       expect(runs).toHaveLength(2);
+      // Once the coach is fired, its note leaves 今天 too (the bell keeps it).
+      await createCoachHiring({
+        hiring: createPostgresCoachHiring(trx),
+        catalog: createPostgresCoachCatalog(trx),
+      }).fire({ squad, by: MemberId.parse(fixture.mia) });
+      expect(
+        (await activity.squad({ squad, checkIns: [], reader: leo })).memberNote,
+      ).toBeUndefined();
     });
   });
 

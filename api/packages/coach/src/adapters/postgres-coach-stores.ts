@@ -414,6 +414,12 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
       const row = await db
         .selectFrom('coach_member_notes')
         .innerJoin('coaches', 'coaches.id', 'coach_member_notes.coach_id')
+        // Only from the coach the squad has now: a fired coach's notes stop.
+        .innerJoin('squad_coaches', (join) =>
+          join
+            .onRef('squad_coaches.squad_id', '=', 'coach_member_notes.squad_id')
+            .onRef('squad_coaches.coach_id', '=', 'coach_member_notes.coach_id'),
+        )
         // Only once it reached the member, at the morning hour on their clock.
         .innerJoin(
           'coach_member_note_deliveries',
@@ -536,6 +542,12 @@ export function createPostgresCoachNoteDelivery(db: Kysely<DB>): CoachNoteDelive
       const rows = await db
         .selectFrom('coach_member_notes')
         .innerJoin('coaches', 'coaches.id', 'coach_member_notes.coach_id')
+        // Only from the coach the squad has now: a fired coach's notes stop.
+        .innerJoin('squad_coaches', (join) =>
+          join
+            .onRef('squad_coaches.squad_id', '=', 'coach_member_notes.squad_id')
+            .onRef('squad_coaches.coach_id', '=', 'coach_member_notes.coach_id'),
+        )
         .leftJoin(
           'coach_member_note_deliveries',
           'coach_member_note_deliveries.note_id',

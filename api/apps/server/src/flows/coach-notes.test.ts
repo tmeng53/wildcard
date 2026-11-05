@@ -2,6 +2,7 @@ import { CoachId, type NoteToDeliver, SquadId } from '@wildcard/coach';
 import { MemberId as ProfileMember } from '@wildcard/members';
 import type { NewNotice } from '@wildcard/notices';
 import type { PushNotification } from '@wildcard/push';
+import { MemberId as SquadMember } from '@wildcard/squads';
 import { describe, expect, it } from 'vitest';
 
 import { createLog } from '../log.js';
@@ -53,6 +54,11 @@ function setUp(waiting: readonly NoteToDeliver[]) {
           })),
         );
       },
+    },
+    // Everyone is still in the squad, until a test says otherwise.
+    squads: {
+      membersOf: () =>
+        Promise.resolve([east, west, quiet].map((member) => SquadMember.parse(member))),
     },
     // `quiet` turned the coach's push off.
     push: {
@@ -119,6 +125,17 @@ describe('the coach’s morning notes delivered', () => {
         },
       },
     ]);
+  });
+
+  it('leaves out a member who has left the squad since the note was written', async () => {
+    const { deps, told, sent } = setUp([note({ id: 1, member: east, text: '早' })]);
+    const run = await deliverCoachNotes({
+      ...deps,
+      squads: { membersOf: () => Promise.resolve([SquadMember.parse(quiet)]) },
+    });
+    expect(run).toStrictEqual({ waiting: 1, delivered: 0, pushed: 0 });
+    expect(told).toStrictEqual([]);
+    expect(sent).toStrictEqual([]);
   });
 
   it('tells a note another run already claimed no more', async () => {

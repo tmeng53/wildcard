@@ -212,6 +212,7 @@ export function createApp(deps: AppDependencies) {
       coachNotes: {
         ...deps.jobs.coachNotes,
         members: deps.members,
+        squads: deps.squads,
         push: deps.push,
         log: deps.log,
       },
