@@ -241,12 +241,13 @@ func expectOnCanvas(
                 for local in points {
                     let point = placement.transform.apply(to: local)
                     let bottom = part.id == "shadow" || point.y + margin <= figure.height + below
-                    // A plain check, recording only a miss: an `#expect` per point is millions of
-                    // them across the wardrobe.
+                    // A plain check, recording the first miss and stopping: an `#expect` per point
+                    // is millions of them across the wardrobe.
                     if !(point.x - margin >= -sideways && point.x + margin <= figure.width + sideways
                         && point.y - margin >= -above && bottom)
                     {
                         Issue.record("\(label) at \(time)s: \(part.id) reaches (\(point.x), \(point.y))")
+                        return
                     }
                 }
             }
