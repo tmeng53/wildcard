@@ -1,19 +1,25 @@
 import {
   earned,
+  shelf,
   toGo,
+  type CountedRule,
   type Claim,
   type SwitchOn,
   type Locked,
   type PieceId,
   type MemberId,
+  type Piece,
+  type Shelf,
+  type Store,
   type Unlock,
   type UnlockRule,
 } from '../domain/unlocks.js';
-import type { UnlockGift, UnlockRuleEdit } from '../domain/unlocks.js';
+import type { PieceEdit, StoreEdit, UnlockGift, UnlockRuleEdit } from '../domain/unlocks.js';
 import {
   PieceNotUnlockedError,
   UnlockItemMissingError,
   UnlockSportNotListedError,
+  UnlockStoreMissingError,
 } from '../errors.js';
 import type { SportListed, TrainedSince, UnlockStore, Unlocked } from '../ports.js';
 
@@ -24,8 +30,11 @@ export interface Unlocks {
    * read is kept first, so an unlock never goes back, even when its check-in is deleted.
    */
   of(member: MemberId): Promise<Unlock[]>;
-  /** What `member` unlocked, as `of` keeps it, and how far they are from everything else. */
-  standing(member: MemberId): Promise<{ unlocks: Unlock[]; locked: Locked[] }>;
+  /**
+   * What `member` unlocked, as `of` keeps it, how far they are from everything else, and the
+   * 商店街 as it stands for them now.
+   */
+  standing(member: MemberId): Promise<{ unlocks: Unlock[]; locked: Locked[]; shelf: Shelf }>;
   /** The pieces `member` claimed into their wardrobe, the earliest first. */
   claimsOf(member: MemberId): Promise<Claim[]>;
   /**
@@ -45,6 +54,37 @@ export interface UnlocksAdmin {
    * from `admin`, now; what they already hold stays as it was. Answers with all they hold.
    */
   give(gift: UnlockGift, admin: MemberId): Promise<Unlock[]>;
+  /** Every store, retired ones too, in the street's order. */
+  stores(): Promise<Store[]>;
+  /** Adds or replaces a store and answers with every store now. */
+  putStore(edit: StoreEdit): Promise<Store[]>;
+  /** Every piece, retired ones too. */
+  pieces(): Promise<Piece[]>;
+  /** Adds or replaces a piece in a store that exists and answers with every piece now. */
+  putPiece(edit: PieceEdit): Promise<Piece[]>;
+}
+
+/**
+ * Each rule with the switches it counts under: a piece's rule under the piece's own and its
+ * store's, a store's rule under the store's, a prop's under none.
+ */
+function counted(
+  rules: readonly UnlockRule[],
+  { stores, pieces }: { readonly stores: readonly Store[]; readonly pieces: readonly Piece[] },
+): CountedRule[] {
+  const storeSwitch = new Map(stores.map(({ id, switchId }) => [id, switchId]));
+  const pieceSwitches = new Map(
+    pieces.map(({ id, storeId, switchId }) => [id, [switchId, storeSwitch.get(storeId)]]),
+  );
+  return rules.map((rule) => {
+    const named =
+      rule.kind === 'piece'
+        ? (pieceSwitches.get(rule.id) ?? [])
+        : rule.kind === 'store'
+          ? [storeSwitch.get(rule.id)]
+          : [];
+    return { ...rule, switchIds: named.filter((id) => id !== undefined) };
+  });
 }
 
 export function createUnlocks(deps: {
@@ -61,20 +101,41 @@ export function createUnlocks(deps: {
     if (kept.length > 0) await deps.unlocked?.(member, kept);
   };
   const standing = async (member: MemberId) => {
-    const [rules, has] = await Promise.all([deps.store.rules(), deps.store.unlocksOf(member)]);
-    const held = new Set(has.map(({ kind, id }) => `${kind}:${id}`));
-    const open = rules.filter(({ kind, id }) => !held.has(`${kind}:${id}`));
-    if (open.length === 0) return { unlocks: has, locked: [] };
-    const since = new Date(Math.min(...open.map(({ countsFrom }) => countsFrom.getTime())));
-    const [trained, switchOn] = await Promise.all([
-      deps.trainedSince({ member, since }),
+    const [rules, has, stores, pieces, switchOn] = await Promise.all([
+      deps.store.rules(),
+      deps.store.unlocksOf(member),
+      deps.store.stores(),
+      deps.store.pieces(),
       deps.switches(),
     ]);
+    const now = new Date();
+    const on = (id: string) => switchOn(id, now);
+    const held = new Set(has.map(({ kind, id }) => `${kind}:${id}`));
+    // A retired store or piece, or a piece in a retired store, is neither earned nor boxed any
+    // more; what was earned stays.
+    const retiredStores = new Set(stores.filter(({ offered }) => !offered).map(({ id }) => id));
+    const retired = new Set([
+      ...[...retiredStores].map((id) => `store:${id}`),
+      ...pieces
+        .filter(({ offered, storeId }) => !offered || retiredStores.has(storeId))
+        .map(({ id }) => `piece:${id}`),
+    ]);
+    const open = counted(
+      rules.filter(({ kind, id }) => !held.has(`${kind}:${id}`) && !retired.has(`${kind}:${id}`)),
+      { stores, pieces },
+    );
+    const trained =
+      open.length === 0
+        ? []
+        : await deps.trainedSince({
+            member,
+            since: new Date(Math.min(...open.map(({ countsFrom }) => countsFrom.getTime()))),
+          });
     const fresh = earned({ rules: open, trained, has, switchOn });
     const locked = toGo({ rules: open, trained, switchOn });
-    if (fresh.length === 0) return { unlocks: has, locked };
-    await grant(member, fresh);
-    return { unlocks: await deps.store.unlocksOf(member), locked };
+    if (fresh.length > 0) await grant(member, fresh);
+    const unlocks = fresh.length === 0 ? has : await deps.store.unlocksOf(member);
+    return { unlocks, locked, shelf: shelf({ stores, pieces, rules, has: unlocks, locked, on }) };
   };
   return {
     of: async (member) => (await standing(member)).unlocks,
@@ -123,6 +184,23 @@ export function createUnlocks(deps: {
         })),
       );
       return deps.store.unlocksOf(member);
+    },
+
+    stores: () => deps.store.stores(),
+
+    async putStore(edit) {
+      await deps.store.putStore(edit);
+      return deps.store.stores();
+    },
+
+    pieces: () => deps.store.pieces(),
+
+    async putPiece(edit) {
+      if (!(await deps.store.stores()).some(({ id }) => id === edit.storeId)) {
+        throw new UnlockStoreMissingError(edit.storeId);
+      }
+      await deps.store.putPiece(edit);
+      return deps.store.pieces();
     },
   };
 }

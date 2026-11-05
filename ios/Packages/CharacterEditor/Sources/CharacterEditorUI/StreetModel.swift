@@ -64,22 +64,22 @@ public final class StreetModel {
     /// The pieces waiting when the street last opened, so 我's dot clears at once.
     private var noticed: Set<String>
 
-    /// The street for a member with `standing` (what they unlocked, what is still locked, what they
-    /// claimed), dressed in `look`. `claim` saves a 领取 and answers whether it was kept; `tryOn`
+    /// The street for a member with `standing` (what they unlocked and claimed, and their 商店街 as
+    /// the server works it out), dressed in `look`. `claim` saves a 领取 and answers whether it was kept; `tryOn`
     /// opens the editor wearing a piece.
     public static func placeholder(
         look: Outfit, standing: UnlockStanding, marks: any WardrobeMarks = MemoryWardrobeMarks(),
         claim: @escaping (String) async -> Bool, tryOn: @escaping (String) -> Void
     ) throws(AvatarError) -> StreetModel {
-        let catalog = try Catalog.placeholder(unlocks: standing.unlocks, locked: standing.lockedPieces)
+        let catalog = try Catalog.placeholder(unlocks: standing.unlocks, stock: standing.stock)
         return StreetModel(
             draft: CharacterDraft(catalog: catalog, look: look, persona: .energetic, nickname: ""),
-            unlocks: standing.unlocks, locked: standing.lockedPieces, claimed: standing.claimed, marks: marks,
+            unlocks: standing.unlocks, stock: standing.stock, claimed: standing.claimed, marks: marks,
             claim: claim, tryOn: tryOn)
     }
 
     init(
-        draft: CharacterDraft, unlocks: [Unlock], locked: [LockedPiece], claimed: Set<String>,
+        draft: CharacterDraft, unlocks: [Unlock], stock: StreetStock, claimed: Set<String>,
         marks: any WardrobeMarks, claim: @escaping (String) async -> Bool, tryOn: @escaping (String) -> Void
     ) {
         self.draft = draft
@@ -89,7 +89,9 @@ public final class StreetModel {
         arrived = Set(pieces.map(\.id)).filter { draft.catalog.storeOf[$0] != nil }
         var sports: [String: [Sport]] = [:]
         for piece in pieces { sports[piece.id] = piece.sports }
-        for piece in locked { sports[piece.id] = piece.sports }
+        for piece in stock.pieces {
+            if case .locked = piece.state { sports[piece.id] = piece.sports }
+        }
         sportsOf = sports
         // A piece the member already wears was found before boxes came in: it is theirs.
         let worn = Set(draft.picks.variants.values)

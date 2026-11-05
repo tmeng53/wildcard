@@ -138,7 +138,7 @@ struct WildcardApp: App {
         MeModel(
             service: InMemoryMeService.sample(
                 failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.unlocked,
-                lockedPieces: LaunchOptions.lockedPieces),
+                stock: LaunchOptions.stock),
             confirm: { .signedInSession }, signOut: {})
     }
 

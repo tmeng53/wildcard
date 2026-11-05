@@ -1,4 +1,4 @@
-// @wildcard/switches: global, scheduled on/off switches that limited scenes, unlock rules and
+// @wildcard/switches: global, scheduled on/off switches that limited scenes, stores, pieces and
 // anything later follow, kept in the database so a theme turns on or off without a release.
 
 export { createPostgresSwitchStore, type SwitchTables } from './adapters/postgres-switch-store.js';

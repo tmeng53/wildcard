@@ -193,7 +193,7 @@ final class AppModel {
         SportList.shared.show(catalog.sports)
         SceneTheme.list(catalog.scenes)
         DiceLines.shared.show(catalog.diceLines)
-        StoreSwitches.shared.show(catalog.switches)
+        StarterStock.shared.show(catalog.starterStock)
     }
 
     /// Back in the app: 今天 reads the squad's scene again, which a teammate may have picked

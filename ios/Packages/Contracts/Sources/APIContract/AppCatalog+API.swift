@@ -10,7 +10,7 @@ extension AppCatalog {
         self.init(
             sports: wire.sports.map(SportCatalog.init) ?? fallback.sports,
             diceLines: dice.isEmpty ? fallback.diceLines : dice,
-            switches: wire.switches.map(Self.switches) ?? fallback.switches,
+            starterStock: Self.starterStock(stores: wire.stores, pieces: wire.pieces) ?? fallback.starterStock,
             art: wire.art.map(ArtManifest.init) ?? fallback.art,
             scenes: wire.scenes.map(Self.scenes) ?? fallback.scenes)
     }
@@ -28,23 +28,18 @@ extension AppCatalog {
         }
     }
 
-    /// Each switch by id; a mode this build doesn't know, or a schedule whose days can't be read,
-    /// reads as off.
-    static func switches(_ wire: Components.Schemas.SwitchesCatalog) -> [String: CatalogSwitch] {
-        var switches: [String: CatalogSwitch] = [:]
-        for each in wire.switches {
-            switch each.mode {
-            case "on": switches[each.id] = .alwaysOn
-            case "schedule":
-                if let window = each.window, let start = MonthDay(window.start), let end = MonthDay(window.end) {
-                    switches[each.id] = .schedule(start: start, end: end)
-                } else {
-                    switches[each.id] = .alwaysOff
-                }
-            default: switches[each.id] = .alwaysOff
-            }
-        }
-        return switches
+    /// The free stores without a switch, open, and their starters without a switch, available; nil
+    /// when the server sent neither section.
+    static func starterStock(
+        stores: Components.Schemas.StoresCatalog?, pieces: Components.Schemas.PiecesCatalog?
+    ) -> StreetStock? {
+        guard let stores, let pieces else { return nil }
+        let open = stores.stores.filter { $0.free && $0.switchId == nil }.map(\.id)
+        return StreetStock(
+            stores: open.map { StreetStock.Store(id: $0, isOpen: true) },
+            pieces: pieces.pieces.filter { $0.starter && $0.switchId == nil && open.contains($0.storeId) }.map {
+                StreetStock.Piece(id: $0.id, store: $0.storeId, state: .available)
+            })
     }
 }
 

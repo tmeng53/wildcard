@@ -70,6 +70,39 @@ const LockedPiece = z
   })
   .openapi('LockedPiece');
 
+const ShelfStore = z
+  .strictObject({
+    id: ItemId.meta({ description: 'The store’s id in the app’s art.', example: 'powder' }),
+    open: z.boolean().meta({
+      description:
+        'Whether it is open now (its switch on). A closed store shows only what the member owns.',
+    }),
+  })
+  .openapi('ShelfStore');
+
+const ShelfPiece = z
+  .strictObject({
+    id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'powder-tuna' }),
+    storeId: ItemId.meta({ description: 'The store it hangs in.', example: 'powder' }),
+    state: z.enum(['owned', 'available', 'locked']).meta({
+      description:
+        '`owned` once unlocked (worn all year, whatever the switches), `available` for a ' +
+        'starter that is out now, `locked` for one still to earn (a 「？」 box).',
+    }),
+    checkInsToGo: LockedPiece.shape.checkInsToGo.optional().meta({
+      description: 'For a locked piece: how many more 练了 check-ins in its sports open it.',
+    }),
+    sports: z.array(SportId).meta({
+      description: 'The sports whose 练了 count towards it; empty for any sport.',
+      example: ['ski', 'snowboard'],
+    }),
+    checkIns: z
+      .int()
+      .min(0)
+      .max(AFTER_MAX)
+      .meta({ description: 'How many 练了 check-ins it takes; 0 for a starter.', example: 1 }),
+  })
+  .openapi('ShelfPiece');
 const GiftedPiece = z
   .strictObject({
     id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'gift-scarf' }),
@@ -119,6 +152,23 @@ const MyUnlocks = z
         'Every piece a squad’s coach gave the member, the earliest first. No store sells these: ' +
         'they belong in the member’s wardrobe.',
     }),
+    shelf: z
+      .strictObject({
+        stores: z.array(ShelfStore).meta({
+          description: 'Every store on the 商店街, in its order, and whether it is open now.',
+        }),
+        pieces: z.array(ShelfPiece).meta({
+          description:
+            'Every piece the member may see now: what they own, and what is out in an open ' +
+            'store they have earned. A piece left out is not shown.',
+        }),
+      })
+      .meta({
+        description:
+          'The 商店街 as it stands for the member now, worked out by the server from the stores’, ' +
+          'pieces’ and switches’ rows: the app draws it as it is.',
+      })
+      .openapi('Shelf'),
   })
   .openapi('MyUnlocks');
 
@@ -138,7 +188,8 @@ export function unlocks(deps: {
       'check-ins in their sports, counting only those made since the rule was added; pieces a ' +
       'squad’s coach gave come apart, in `gifts`. Starters ' +
       '(WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and ' +
-      'never listed. An unlock is never taken back.',
+      'never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the ' +
+      '商店街 as the member sees it now, each store and switch applied.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     responses: {
@@ -182,7 +233,7 @@ export function unlocks(deps: {
     })
     .openapi(route, async (c) => {
       const member = MemberId.parse(c.var.caller.userId);
-      const [{ unlocks, locked }, claims, gifts] = await Promise.all([
+      const [{ unlocks, locked, shelf }, claims, gifts] = await Promise.all([
         deps.unlocks.standing(member),
         deps.unlocks.claimsOf(member),
         deps.gifts.of(member),
@@ -208,6 +259,15 @@ export function unlocks(deps: {
             coach,
             givenAt: givenAt.toISOString(),
           })),
+          shelf: {
+            stores: [...shelf.stores],
+            pieces: shelf.pieces.map(({ toGo, sports, after, ...piece }) => ({
+              ...piece,
+              ...(toGo === undefined ? {} : { checkInsToGo: toGo }),
+              sports: [...sports],
+              checkIns: after,
+            })),
+          },
         },
         200,
       );

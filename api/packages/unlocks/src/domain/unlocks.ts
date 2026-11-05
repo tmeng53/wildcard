@@ -40,15 +40,139 @@ export interface UnlockRule {
   readonly after: number;
   /** Only check-ins made from then on count: when the rule was added. */
   readonly countsFrom: Date;
-  /**
-   * The switch a limited piece follows (such as `winter`): only 练了 made while it is on count,
-   * and what a member unlocked stays theirs all year. None for a rule that counts all year.
-   */
-  readonly switchId?: string;
 }
 
 /** Whether the switch `id` was on when a check-in was made at `at`. */
 export type SwitchOn = (id: string, at: Date) => boolean;
+
+/**
+ * A rule with the switches it counts under: a piece's own and its store's, a store's own. Only
+ * 练了 made while all of them are on count, so progress waits for the next time they are on.
+ */
+export interface CountedRule extends UnlockRule {
+  readonly switchIds: readonly string[];
+}
+
+/** A store on the 商店街: open while its switch is on (always, without one). */
+export interface Store {
+  readonly id: string;
+  readonly position: number;
+  readonly switchId?: string;
+  readonly offered: boolean;
+}
+
+export const SLOTS = ['top', 'bottom', 'shoes', 'hat', 'acc'] as const;
+
+/**
+ * A piece of clothing in a store: out while its own switch is on (always, without one) and its
+ * store is open. A starter needs no earning; any other has a rule.
+ */
+export interface Piece {
+  readonly id: string;
+  readonly storeId: string;
+  readonly slot: (typeof SLOTS)[number];
+  readonly starter: boolean;
+  readonly switchId?: string;
+  readonly offered: boolean;
+}
+
+/** A switch id, as `switches` keeps them. */
+const SwitchRef = z.string().regex(/^[a-z][A-Za-z0-9]{0,39}$/);
+
+/** A store as an admin adds or changes it, whole. */
+export const StoreEdit = z.strictObject({
+  id: ItemId.describe('The store’s id in the app’s art, such as `powder`.'),
+  position: z.int().min(1).max(1000).describe('Its place on the 商店街, from 1.'),
+  switchId: SwitchRef.nullable().describe(
+    'The switch it is open with (get_switches), such as `winter`; null for always open.',
+  ),
+  offered: z.boolean().describe('False retires it: it leaves the street for good.'),
+});
+export type StoreEdit = z.infer<typeof StoreEdit>;
+
+/** A piece as an admin adds or changes it, whole. */
+export const PieceEdit = z.strictObject({
+  id: PieceId.describe('The piece’s id in the app’s art, such as `powder-tuna`.'),
+  storeId: ItemId.describe('The store it hangs in.'),
+  slot: z.enum(SLOTS).describe('Where it is worn.'),
+  starter: z
+    .boolean()
+    .describe('True for a piece everyone has while it is out; false for one earned by a rule.'),
+  switchId: SwitchRef.nullable().describe(
+    'Its own switch (get_switches), apart from its store’s; null for none.',
+  ),
+  offered: z.boolean().describe('False retires it.'),
+});
+export type PieceEdit = z.infer<typeof PieceEdit>;
+
+/** Where a piece stands for a member. */
+export type PieceState = 'owned' | 'available' | 'locked';
+
+/** What the 商店街 shows a member: each store open or not, each piece out for them and how. */
+export interface Shelf {
+  readonly stores: readonly { readonly id: string; readonly open: boolean }[];
+  readonly pieces: readonly {
+    readonly id: string;
+    readonly storeId: string;
+    readonly state: PieceState;
+    /** For a locked piece. */
+    readonly toGo?: number;
+    /** What counts towards it: its rule's, else its store's (empty for any sport). */
+    readonly sports: readonly SportId[];
+    /** 练了 it takes; 0 for a starter. */
+    readonly after: number;
+  }[];
+}
+
+/**
+ * The 商店街 for a member who holds `has`, with `locked` still to go, while `on` says which
+ * switches are on now. A piece is owned once unlocked, whatever the switches; available when it is
+ * a starter, offered, out (its switch on, its store open) and its store earned; locked when it is
+ * all that with a rule still to reach. Anything else, and every piece of a retired store, is not
+ * shown.
+ */
+export function shelf({
+  stores,
+  pieces,
+  rules,
+  has,
+  locked,
+  on,
+}: {
+  readonly stores: readonly Store[];
+  readonly pieces: readonly Piece[];
+  readonly rules: readonly UnlockRule[];
+  readonly has: readonly Unlock[];
+  readonly locked: readonly Locked[];
+  readonly on: (id: string) => boolean;
+}): Shelf {
+  const key = (kind: UnlockKind, id: string) => `${kind}:${id}`;
+  const held = new Set(has.map(({ kind, id }) => key(kind, id)));
+  const ruleOf = new Map(rules.map((rule) => [key(rule.kind, rule.id), rule]));
+  const toGoOf = new Map(locked.map(({ kind, id, toGo: left }) => [key(kind, id), left]));
+  const switchOn = (id: string | undefined) => id === undefined || on(id);
+  const offered = stores.filter((store) => store.offered);
+  const open = new Map(offered.map((store) => [store.id, switchOn(store.switchId)]));
+  const earnedStore = (id: string) => !ruleOf.has(key('store', id)) || held.has(key('store', id));
+  return {
+    stores: offered.map(({ id }) => ({ id, open: open.get(id) ?? false })),
+    pieces: pieces.flatMap((piece): Shelf['pieces'][number][] => {
+      if (!open.has(piece.storeId)) return [];
+      const rule = ruleOf.get(key('piece', piece.id));
+      const fromStore = ruleOf.get(key('store', piece.storeId));
+      const counted = { sports: rule?.sports ?? fromStore?.sports ?? [], after: rule?.after ?? 0 };
+      const base = { id: piece.id, storeId: piece.storeId, ...counted };
+      // Owned stays on the member's rack, even once retired or switched off.
+      if (held.has(key('piece', piece.id))) return [{ ...base, state: 'owned' }];
+      if (!piece.offered) return [];
+      const out = (open.get(piece.storeId) ?? false) && switchOn(piece.switchId);
+      if (!out || !earnedStore(piece.storeId)) return [];
+      if (piece.starter) return [{ ...base, state: 'available' }];
+      const left = toGoOf.get(key('piece', piece.id));
+      return left === undefined ? [] : [{ ...base, state: 'locked', toGo: left }];
+    }),
+  };
+}
 
 /** A store, prop or piece a member unlocked, with the rule as it was then. Never taken back. */
 export interface Unlock {
@@ -80,7 +204,7 @@ export function earned({
   has,
   switchOn,
 }: {
-  readonly rules: readonly UnlockRule[];
+  readonly rules: readonly CountedRule[];
   readonly trained: readonly Trained[];
   readonly has: readonly Unlock[];
   readonly switchOn: SwitchOn;
@@ -105,14 +229,14 @@ export function earned({
 
 /** The check-ins in `trained` that count towards `rule`, the earliest first. */
 function counting(
-  rule: UnlockRule,
+  rule: CountedRule,
   { trained, switchOn }: { readonly trained: readonly Trained[]; readonly switchOn: SwitchOn },
 ): Trained[] {
   return trained.filter(
     ({ sport, madeAt }) =>
       madeAt >= rule.countsFrom &&
       (rule.sports.length === 0 || rule.sports.includes(sport)) &&
-      (rule.switchId === undefined || switchOn(rule.switchId, madeAt)),
+      rule.switchIds.every((id) => switchOn(id, madeAt)),
   );
 }
 
@@ -138,7 +262,7 @@ export function toGo({
   trained,
   switchOn,
 }: {
-  readonly rules: readonly UnlockRule[];
+  readonly rules: readonly CountedRule[];
   readonly trained: readonly Trained[];
   readonly switchOn: SwitchOn;
 }): Locked[] {
@@ -187,16 +311,6 @@ export const UnlockRuleEdit = z
       .min(1)
       .max(AFTER_MAX)
       .describe('How many 练了 check-ins in those sports open it.'),
-    switchId: z
-      .string()
-      .regex(/^[a-z][A-Za-z0-9]{0,39}$/)
-      .nullable()
-      .optional()
-      .describe(
-        'The switch a limited piece follows (get_switches), such as `winter`: only 练了 made ' +
-          'while it is on count, and the piece stays the member’s all year once unlocked. null ' +
-          'counts all year; leave out to keep what the rule has.',
-      ),
   })
   .refine(({ kind, id }) => idFits(kind, id), {
     message: 'the id doesn’t fit its kind',

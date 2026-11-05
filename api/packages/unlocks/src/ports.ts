@@ -4,7 +4,11 @@ import type { CoachGift, GiftPiece, GiftPieceEdit } from './domain/gifts.js';
 import type {
   Claim,
   MemberId,
+  Piece,
+  PieceEdit,
   PieceId,
+  Store,
+  StoreEdit,
   Trained,
   Unlock,
   UnlockRule,
@@ -16,6 +20,14 @@ export interface UnlockStore {
   rules(): Promise<UnlockRule[]>;
   /** Adds a rule counting from now, or changes one, keeping when it counts from. */
   putRule(edit: UnlockRuleEdit): Promise<void>;
+  /** Every store, retired ones too, in the street's order. */
+  stores(): Promise<Store[]>;
+  /** Every piece, retired ones too. */
+  pieces(): Promise<Piece[]>;
+  /** Adds a store or replaces it whole. */
+  putStore(edit: StoreEdit): Promise<void>;
+  /** Adds a piece or replaces it whole. */
+  putPiece(edit: PieceEdit): Promise<void>;
   /** What `member` unlocked, the earliest first. */
   unlocksOf(member: MemberId): Promise<Unlock[]>;
   /**

@@ -41,15 +41,16 @@ private let newer = #"""
     #expect(AppCatalog(wire, otherwise: own) == own)
 }
 
-/// The bundled catalog carries the winter switch the 雪场 and its store follow.
-@Test func theBundledCatalogHasTheWinterSwitch() throws {
+/// The bundled catalog's starter street: WARM-UP and its starters, never a store on a switch.
+@Test func theBundledCatalogsStarterShelfLeavesOutTheWinterStore() throws {
     let text = try String(
         contentsOf: URL(filePath: #filePath).deletingLastPathComponent()
             .appending(path: "../../../Backend/Sources/Backend/Resources/catalog.json"), encoding: .utf8)
     let wire = try JSONDecoder().decode(Components.Schemas.Catalog.self, from: Data(text.utf8))
-    let switches = AppCatalog(wire, otherwise: .empty).switches
-    #expect(Array(switches.keys) == ["winter"])
-    #expect(switches["winter"] == .schedule(start: MonthDay(month: 11, day: 15), end: MonthDay(month: 3, day: 31)))
+    let stock = AppCatalog(wire, otherwise: .empty).starterStock
+    #expect(stock.stores == [StreetStock.Store(id: "warmup", isOpen: true)])
+    #expect(!stock.pieces.isEmpty)
+    #expect(stock.pieces.allSatisfy { $0.store == "warmup" && $0.state == .available })
 }
 
 /// A scene added through the admin tools (TURKEY TROT's `trot`) is read with its names and

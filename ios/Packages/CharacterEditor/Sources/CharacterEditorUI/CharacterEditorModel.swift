@@ -81,16 +81,17 @@ public final class CharacterEditorModel {
         self.claimed = claimed
     }
 
-    /// The placeholder character's catalog, with the stores and props the member unlocked open,
-    /// and a look to start from: the one given, or a random one until sign-up hands over the last
-    /// look its first screen showed. The wardrobe (穿搭) holds the pieces of open stores that came
-    /// with them and the unlocked pieces in `claimed`.
+    /// The placeholder character's catalog on the member's 商店街 (`stock`; the starter street
+    /// while it isn't known) with the props they unlocked, and a look to start from: the one
+    /// given, or a random one until sign-up hands over the last look its first screen showed. The
+    /// wardrobe (穿搭) holds the pieces of open stores that came with them and the unlocked pieces
+    /// in `claimed`.
     public static func placeholder(
         look: Outfit? = nil, persona: Persona = .energetic, nickname: String, tab: EditorTab = .look,
-        unlocks: [Unlock] = [], locked: [LockedPiece] = [], claimed: Set<String> = [],
+        unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [],
         marks: any WardrobeMarks = MemoryWardrobeMarks()
     ) throws(AvatarError) -> CharacterEditorModel {
-        let catalog = try Catalog.placeholder(unlocks: unlocks, locked: locked)
+        let catalog = try Catalog.placeholder(unlocks: unlocks, stock: stock)
         var generator = SystemRandomNumberGenerator()
         let start = look ?? CharacterDraft.randomLook(from: catalog, using: &generator)
         return CharacterEditorModel(
@@ -98,15 +99,16 @@ public final class CharacterEditorModel {
             arrived: Set(unlocks.filter { $0.kind == .piece }.map(\.id)), claimed: claimed, marks: marks)
     }
 
-    /// Locks `pieces` in an editor opened before they were known, as sign-up's first screen is,
-    /// for a member who has unlocked nothing yet: they become boxes, and a locked piece the look
-    /// wears goes back to what the rig draws there. Undo starts over.
-    public func lock(_ pieces: [LockedPiece]) throws(AvatarError) {
-        guard !pieces.isEmpty else { return }
-        let catalog = try Catalog.placeholder(locked: pieces)
+    /// Puts the member's own 商店街 in an editor opened before it was known, as sign-up's first
+    /// screen is, for a member who has unlocked nothing yet: a piece the look wears that the street
+    /// doesn't offer goes back to what the rig draws there. Undo starts over.
+    public func stock(_ stock: StreetStock) throws(AvatarError) {
+        let catalog = try Catalog.placeholder(stock: stock)
         var look = draft.picks
-        for (slot, locked) in catalog.locked {
-            guard let worn = look.variants[slot], locked[worn] != nil else { continue }
+        for slot in Catalog.clothingSlots {
+            guard let worn = look.variants[slot], worn != catalog.defaults[slot],
+                !(catalog.variants[slot] ?? []).contains(worn)
+            else { continue }
             look.variants[slot] = catalog.defaults[slot]
             look.colors[slot] = nil
         }
