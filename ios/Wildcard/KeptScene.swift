@@ -85,3 +85,13 @@ extension AppModel {
         }
     }
 }
+
+extension LaunchOptions {
+    /// `-uitest-takeover trot`: a takeover scene stands in for the sample squad's once 今天 is up,
+    /// so UI tests see its opening (the bundled art at `openings/trot/`), 进场 and the drop.
+    static var takeover: String? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-uitest-takeover"), flag + 1 < arguments.count else { return nil }
+        return arguments[flag + 1]
+    }
+}
