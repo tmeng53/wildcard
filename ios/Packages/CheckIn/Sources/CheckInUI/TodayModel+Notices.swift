@@ -73,11 +73,17 @@ extension TodayModel {
         Task { await showNextNotice() }
     }
 
-    /// Tells `broadcast` in a banner, after any notice already waiting; a tap opens its button's
-    /// place through `open`, as its 通知 row does.
-    public func tell(_ broadcast: Broadcast, open: @escaping (AppDestination) -> Void) {
+    /// Tells `broadcast` in a banner, after any notice already waiting, unless it is already
+    /// waiting or on screen; a tap opens its button's place through `open`, as its 通知 row does,
+    /// and `shown` hears once it is on screen.
+    public func tell(
+        _ broadcast: Broadcast, open: @escaping (AppDestination) -> Void, shown: @escaping (Broadcast) -> Void
+    ) {
+        let news = NoticeNews.broadcast(broadcast)
+        guard notice?.news != news, !pendingNotices.contains(where: { $0.news == news }) else { return }
         openDestination = open
-        pendingNotices.append(Notice(news: .broadcast(broadcast)))
+        broadcastShown = shown
+        pendingNotices.append(Notice(news: news))
         Task { await showNextNotice() }
     }
 
@@ -92,7 +98,9 @@ extension TodayModel {
     func showNextNotice() async {
         await untilArrived()
         guard notice == nil, step == .scene, !isBurstOpen, !pendingNotices.isEmpty else { return }
-        notice = pendingNotices.removeFirst()
+        let next = pendingNotices.removeFirst()
+        notice = next
+        if case .broadcast(let broadcast) = next.news { broadcastShown?(broadcast) }
     }
 }
 #endif

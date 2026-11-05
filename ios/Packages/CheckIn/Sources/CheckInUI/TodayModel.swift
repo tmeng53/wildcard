@@ -157,6 +157,8 @@ public final class TodayModel {
     @ObservationIgnored var unlockNotices: UnlockNotices?
     /// Where a broadcast's banner opens its place, as the app routes every notice.
     @ObservationIgnored var openDestination: ((AppDestination) -> Void)?
+    /// Hears a broadcast's banner come on screen, so the app tells it only once on this phone.
+    @ObservationIgnored var broadcastShown: ((Broadcast) -> Void)?
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.

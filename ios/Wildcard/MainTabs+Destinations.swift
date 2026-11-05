@@ -58,8 +58,9 @@ extension MainTabs {
 
     /// The broadcasts not yet seen in 通知 that this phone hasn't shown, each in a banner on 今天.
     func tellBroadcasts() {
-        for broadcast in inbox.unseenBroadcasts where ShownBroadcasts.first(broadcast.id) {
-            today.tell(broadcast, open: open)
+        let member = today.home?.member.description
+        for broadcast in inbox.unseenBroadcasts where !ShownBroadcasts.contains(broadcast.id, for: member) {
+            today.tell(broadcast, open: open) { ShownBroadcasts.mark($0.id, for: member) }
         }
     }
 }

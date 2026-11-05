@@ -476,6 +476,8 @@ extension Components {
             public var scenes: Components.Schemas.ScenesCatalog?
             /// - Remark: Generated from `#/components/schemas/Catalog/switches`.
             public var switches: Components.Schemas.SwitchesCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/art`.
+            public var art: Components.Schemas.ArtCatalog?
             /// A container of undocumented properties.
             public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
             /// Creates a new `Catalog`.
@@ -486,6 +488,7 @@ extension Components {
             ///   - disclaimerDice:
             ///   - scenes:
             ///   - switches:
+            ///   - art:
             ///   - additionalProperties: A container of undocumented properties.
             public init(
                 version: Components.Schemas.Catalog.VersionPayload,
@@ -493,6 +496,7 @@ extension Components {
                 disclaimerDice: Components.Schemas.DisclaimerDiceCatalog? = nil,
                 scenes: Components.Schemas.ScenesCatalog? = nil,
                 switches: Components.Schemas.SwitchesCatalog? = nil,
+                art: Components.Schemas.ArtCatalog? = nil,
                 additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
             ) {
                 self.version = version
@@ -500,6 +504,7 @@ extension Components {
                 self.disclaimerDice = disclaimerDice
                 self.scenes = scenes
                 self.switches = switches
+                self.art = art
                 self.additionalProperties = additionalProperties
             }
             public enum CodingKeys: String, CodingKey {
@@ -508,6 +513,7 @@ extension Components {
                 case disclaimerDice
                 case scenes
                 case switches
+                case art
             }
             public init(from decoder: any Swift.Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -531,12 +537,17 @@ extension Components {
                     Components.Schemas.SwitchesCatalog.self,
                     forKey: .switches
                 )
+                self.art = try container.decodeIfPresent(
+                    Components.Schemas.ArtCatalog.self,
+                    forKey: .art
+                )
                 additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                     "version",
                     "sports",
                     "disclaimerDice",
                     "scenes",
-                    "switches"
+                    "switches",
+                    "art"
                 ])
             }
             public func encode(to encoder: any Swift.Encoder) throws {
@@ -560,6 +571,10 @@ extension Components {
                 try container.encodeIfPresent(
                     self.switches,
                     forKey: .switches
+                )
+                try container.encodeIfPresent(
+                    self.art,
+                    forKey: .art
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
@@ -1421,6 +1436,179 @@ extension Components {
                 try container.encode(
                     self.end,
                     forKey: .end
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ArtCatalog`.
+        public struct ArtCatalog: Codable, Hashable, Sendable {
+            /// The newest change’s number. The app uses a generation only once it has every file of it, and keeps the one it has until then.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ArtCatalog/generation`.
+            public var generation: Swift.Int
+            /// Where each file downloads from: this URL, then `<sha256>.<extension>`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ArtCatalog/baseUrl`.
+            public var baseUrl: Swift.String
+            /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload`.
+            public struct FilesPayloadPayload: Codable, Hashable, Sendable {
+                /// Where the file goes in the app’s art tree (`avatar/…` over the character’s bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home scene pictures, `openings/…` the opening animations), in place of the bundled file there.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload/path`.
+                public var path: Swift.String
+                /// The file’s SHA-256, lowercase hex; also its name.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload/sha256`.
+                public var sha256: Swift.String
+                /// Its size in bytes.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload/size`.
+                public var size: Swift.Int
+                /// The lowest rig version that draws it: a build with an older rig leaves it out.
+                ///
+                /// - Remark: Generated from `#/components/schemas/ArtCatalog/FilesPayload/rigVersion`.
+                public var rigVersion: Swift.Int
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+                /// Creates a new `FilesPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - path: Where the file goes in the app’s art tree (`avatar/…` over the character’s bundled folder, `coaches/…` over the coaches’ characters, `scenes/…` over the home scene pictures, `openings/…` the opening animations), in place of the bundled file there.
+                ///   - sha256: The file’s SHA-256, lowercase hex; also its name.
+                ///   - size: Its size in bytes.
+                ///   - rigVersion: The lowest rig version that draws it: a build with an older rig leaves it out.
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(
+                    path: Swift.String,
+                    sha256: Swift.String,
+                    size: Swift.Int,
+                    rigVersion: Swift.Int,
+                    additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+                ) {
+                    self.path = path
+                    self.sha256 = sha256
+                    self.size = size
+                    self.rigVersion = rigVersion
+                    self.additionalProperties = additionalProperties
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case path
+                    case sha256
+                    case size
+                    case rigVersion
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    self.path = try container.decode(
+                        Swift.String.self,
+                        forKey: .path
+                    )
+                    self.sha256 = try container.decode(
+                        Swift.String.self,
+                        forKey: .sha256
+                    )
+                    self.size = try container.decode(
+                        Swift.Int.self,
+                        forKey: .size
+                    )
+                    self.rigVersion = try container.decode(
+                        Swift.Int.self,
+                        forKey: .rigVersion
+                    )
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                        "path",
+                        "sha256",
+                        "size",
+                        "rigVersion"
+                    ])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(
+                        self.path,
+                        forKey: .path
+                    )
+                    try container.encode(
+                        self.sha256,
+                        forKey: .sha256
+                    )
+                    try container.encode(
+                        self.size,
+                        forKey: .size
+                    )
+                    try container.encode(
+                        self.rigVersion,
+                        forKey: .rigVersion
+                    )
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Every file put over the bundled art. Paths not listed use the bundled file.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ArtCatalog/files`.
+            public typealias FilesPayload = [Components.Schemas.ArtCatalog.FilesPayloadPayload]
+            /// Every file put over the bundled art. Paths not listed use the bundled file.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ArtCatalog/files`.
+            public var files: Components.Schemas.ArtCatalog.FilesPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `ArtCatalog`.
+            ///
+            /// - Parameters:
+            ///   - generation: The newest change’s number. The app uses a generation only once it has every file of it, and keeps the one it has until then.
+            ///   - baseUrl: Where each file downloads from: this URL, then `<sha256>.<extension>`.
+            ///   - files: Every file put over the bundled art. Paths not listed use the bundled file.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                generation: Swift.Int,
+                baseUrl: Swift.String,
+                files: Components.Schemas.ArtCatalog.FilesPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.generation = generation
+                self.baseUrl = baseUrl
+                self.files = files
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case generation
+                case baseUrl
+                case files
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.generation = try container.decode(
+                    Swift.Int.self,
+                    forKey: .generation
+                )
+                self.baseUrl = try container.decode(
+                    Swift.String.self,
+                    forKey: .baseUrl
+                )
+                self.files = try container.decode(
+                    Components.Schemas.ArtCatalog.FilesPayload.self,
+                    forKey: .files
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "generation",
+                    "baseUrl",
+                    "files"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.generation,
+                    forKey: .generation
+                )
+                try container.encode(
+                    self.baseUrl,
+                    forKey: .baseUrl
+                )
+                try container.encode(
+                    self.files,
+                    forKey: .files
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }

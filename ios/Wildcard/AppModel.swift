@@ -72,6 +72,7 @@ final class AppModel {
     @ObservationIgnored private let folders: MemberFolders
     /// The lists the app shows that live in the database, such as every sport.
     @ObservationIgnored private let catalog: CatalogClient
+    @ObservationIgnored private let art = ArtDownloads(fetch: { try await URLSession.wildcard.data(from: $0).0 })
     /// The squad's looks, kept for the 6pm push view.
     @ObservationIgnored private let shared = AppGroup.directory.map(SharedSquad.init)
     /// How a member confirms deleting their account: with Apple, or for a Debug test member,
@@ -162,13 +163,6 @@ final class AppModel {
         if case .tabs(let today, _, _, _, _, _) = screen { await today.load() }
     }
 
-    /// A tapped awards push: 动态 reads the 战报 again, so its tile shows the new one for the
-    /// member to open. Tabs not up yet read it as they open.
-    func readRecapAgain() async {
-        guard case .tabs(_, _, _, _, _, let recap) = screen else { return }
-        await recap.refresh()
-    }
-
     /// The member left their squad on 小队设置: sign-up's squad step, as for a member in none.
     func leftSquad() async {
         await openHome(saysLost: false)
@@ -179,10 +173,12 @@ final class AppModel {
         if showsTabs { await openHome(lost: squad) }
     }
 
-    /// Reads the catalog again, as the app comes back to the front: a sport or dice line added on
-    /// the server shows without an app update.
+    /// Reads the catalog again, as the app comes back to the front: a sport, dice line or art
+    /// added on the server shows without an app update (the art once all of it is downloaded).
     func refreshCatalog() async {
-        if let fresh = await catalog.refresh() { Self.show(fresh) }
+        let fresh = await catalog.refresh()
+        if let fresh { Self.show(fresh) }
+        await art.update(to: (fresh ?? catalog.kept()).art)
     }
 
     /// Hands each part of the catalog to the screens that read it. Static, since `init` calls it
