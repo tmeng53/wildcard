@@ -115,33 +115,34 @@ public struct HeaderTextButton: View {
     }
 }
 
-/// `HeaderButton`'s look for a button that opens a menu (the 「…」 on the member's own post):
-/// the same 44-point Liquid Glass circle and glyph, the system's menu over it. `.ink` is for a
-/// button over any photo or post face, light or dark: a white glyph on glass darkened as the
-/// photo tiles' × is, so it reads on both.
-public struct HeaderMenu<Items: View>: View {
+/// `HeaderButton`'s look for a button that opens a glass menu (the 「…」 on the member's own
+/// post): the same 44-point Liquid Glass circle and glyph, the menu growing out of it. `.ink` is
+/// for a button over any photo or post face, light or dark: a white glyph on glass darkened as
+/// the photo tiles' × is, so it reads on both.
+public struct HeaderMenu: View {
     @Environment(\.sceneTheme) private var theme
     private let label: Text
     private let systemImage: String
     private let surface: HeaderButton.Surface
-    private let items: Items
+    private let items: [GlassMenuItem]
+    @State private var isOpen = false
     private let glyph: Double = 17
     /// How dark the glass is on a dark or photo face.
     private let inkTint: Double = 0.5
 
     public init(
         _ label: Text, systemImage: String = "ellipsis", on surface: HeaderButton.Surface = .page,
-        @ViewBuilder items: () -> Items
+        items: [GlassMenuItem]
     ) {
         self.label = label
         self.systemImage = systemImage
         self.surface = surface
-        self.items = items()
+        self.items = items
     }
 
     public var body: some View {
-        Menu {
-            items
+        Button {
+            isOpen = true
         } label: {
             Image(systemName: systemImage)
                 .font(.system(size: glyph, weight: .semibold))
@@ -149,8 +150,10 @@ public struct HeaderMenu<Items: View>: View {
                 .frame(width: Sizing.control, height: Sizing.control)
                 .contentShape(Circle())
         }
+        .buttonStyle(.plain)
         .glassEffect(glass, in: Circle())
         .accessibilityLabel(label)
+        .glassMenu(isPresented: $isOpen, items: items)
     }
 
     private var glass: Glass {
