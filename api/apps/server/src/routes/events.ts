@@ -174,7 +174,7 @@ export function events(deps: {
     });
     const notice = page.notices.find((each) => each.id === id);
     if (notice === undefined) return undefined;
-    const [entry] = await noticeEntries(deps, [notice]);
+    const [entry] = await noticeEntries(deps, { notices: [notice], broadcasts: page.broadcasts });
     return entry;
   }
 }

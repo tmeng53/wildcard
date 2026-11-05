@@ -19,7 +19,11 @@ import {
   createMembers,
   createPostgresProfileStore,
 } from '@wildcard/members';
-import { createNotices, createPostgresNoticeStore } from '@wildcard/notices';
+import {
+  createNotices,
+  createPostgresNoticeStore,
+  createPostgresBroadcastStore,
+} from '@wildcard/notices';
 import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import {
@@ -187,7 +191,11 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
-    notices: createNotices({ store: createPostgresNoticeStore(db) }),
+    notices: createNotices({
+      store: createPostgresNoticeStore(db),
+      broadcasts: createPostgresBroadcastStore(db),
+      clock: () => new Date(),
+    }),
     coachNames: () => Promise.reject(new Error('unused')),
     liveEvents: ignoredNotices.liveEvents,
     aiConsent,

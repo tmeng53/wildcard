@@ -25,6 +25,14 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface Broadcasts {
+  at: Generated<Timestamp>;
+  broadcast: Json;
+  broadcast_id: string;
+  changed_by: string | null;
+  id: Generated<Int8>;
+}
+
 export interface NoticeReads {
   at: Generated<Timestamp>;
   id: Generated<Int8>;
@@ -42,6 +50,7 @@ export interface Notices {
 }
 
 export interface DB {
+  broadcasts: Broadcasts;
   notice_reads: NoticeReads;
   notices: Notices;
 }

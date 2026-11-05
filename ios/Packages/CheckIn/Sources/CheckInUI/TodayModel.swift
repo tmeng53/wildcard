@@ -155,6 +155,12 @@ public final class TodayModel {
     var pendingNotices: [Notice] = []
     /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
     @ObservationIgnored var unlockNotices: UnlockNotices?
+    /// Where a broadcast's banner, or 「还有新通知」, opens its place, as the app routes every notice.
+    @ObservationIgnored public var openDestination: ((AppDestination) -> Void)?
+    /// Banners shown one after another since the queue was last empty.
+    @ObservationIgnored var shownInRow = 0
+    /// Hears a broadcast's banner come on screen, so the app tells it only once on this phone.
+    @ObservationIgnored var broadcastShown: ((Broadcast) -> Void)?
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.

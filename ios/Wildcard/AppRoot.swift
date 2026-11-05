@@ -12,8 +12,8 @@ struct AppRoot: View {
     let app: AppModel
     @Binding var tab: MainTabs.Tab
     let delegate: AppDelegate
-    /// A post a comment's push asked to open before the tabs were up.
-    @State private var postToOpen: CheckInID?
+    /// Where a tapped push goes (its notice's place), kept until the tabs open it.
+    @State private var pushDestination: AppDestination?
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -40,7 +40,8 @@ struct AppRoot: View {
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(
                     today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                    myPosts: app.myPosts, notices: app.notices, squadmateCards: app.squadmateCards, selection: $tab
+                    myPosts: app.myPosts, notices: app.notices, squadmateCards: app.squadmateCards, selection: $tab,
+                    destination: $pushDestination
                 ) {
                     Task { await app.leftSquad() }
                 }
@@ -48,11 +49,6 @@ struct AppRoot: View {
                     // A tap that launched the app came before the tabs.
                     if let destination = delegate.takeDestination() {
                         WildcardApp.open(destination, today: today, tab: $tab)
-                    }
-                    if let post = postToOpen {
-                        postToOpen = nil
-                        tab = .feed
-                        feed.openPage(post)
                     }
                 }
             }
@@ -85,23 +81,13 @@ struct AppRoot: View {
             }
         }
         .onAppear {
-            delegate.opened = { [app, delegate, $tab, $postToOpen] opened in
+            delegate.opened = { [app, delegate, $tab, $pushDestination] opened in
                 switch opened {
-                // 动态, where the member sees the new 战报's tile and opens it themselves.
-                case .weeklyAwards:
-                    $tab.wrappedValue = .feed
-                    Task { await app.readRecapAgain() }
-                // The post's own page, over 动态, with the new comment.
-                case .comment(let post):
-                    if case .tabs(_, _, _, let feed, _, _) = app.screen {
-                        $tab.wrappedValue = .feed
-                        feed.openPage(post)
-                    } else {
-                        // A tap that launched the app comes before the tabs, which open it.
-                        $postToOpen.wrappedValue = post
-                    }
-                case .other:
-                    // Before the tabs are up, they take the 6pm push's destination when they appear.
+                // Where its notice in 通知 goes (MainTabs' `open`), unless the 6pm push's view
+                // asked for 动态 or 打卡; before the tabs are up, they open it as they appear.
+                case .open(let place) where !delegate.hasDestination:
+                    $pushDestination.wrappedValue = place
+                case .open, .other:
                     if case .tabs(let today, _, _, _, _, _) = app.screen {
                         WildcardApp.open(delegate.takeDestination(), today: today, tab: $tab)
                     }
