@@ -11,7 +11,21 @@ extension AppCatalog {
             sports: wire.sports.map(SportCatalog.init) ?? fallback.sports,
             diceLines: dice.isEmpty ? fallback.diceLines : dice,
             switches: wire.switches.map(Self.switches) ?? fallback.switches,
-            art: wire.art.map(ArtManifest.init) ?? fallback.art)
+            art: wire.art.map(ArtManifest.init) ?? fallback.art,
+            scenes: wire.scenes.map(Self.scenes) ?? fallback.scenes)
+    }
+
+    /// The scenes, leaving out one whose id can't be one.
+    static func scenes(_ wire: Components.Schemas.ScenesCatalog) -> [CatalogScene] {
+        wire.scenes.compactMap { scene in
+            SceneID(rawValue: scene.id).map {
+                CatalogScene(
+                    id: $0, names: CatalogNames(scene.names),
+                    colors: CatalogScene.Colors(
+                        signature: scene.colors.signature, onSignature: scene.colors.onSignature,
+                        wash: scene.colors.wash, text: scene.colors.text, floor: scene.colors.floor))
+            }
+        }
     }
 
     /// Each switch by id; a mode this build doesn't know, or a schedule whose days can't be read,

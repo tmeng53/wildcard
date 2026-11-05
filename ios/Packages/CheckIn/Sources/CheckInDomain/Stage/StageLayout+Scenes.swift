@@ -6,7 +6,7 @@ import DesignSystem
 // climbing 10) to make room for the 打卡 button; the floors are drawn in screen coordinates.
 extension StageLayout {
     public static func of(_ scene: SceneTheme) -> StageLayout {
-        switch scene {
+        switch scene.base {
         case .track: track
         case .pool: pool
         case .gym: gym

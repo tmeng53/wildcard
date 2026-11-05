@@ -251,15 +251,22 @@ struct StoreBadge: View {
 /// A store's copy, from the String Catalog: its name (a wordmark, the same in every language),
 /// its Chinese name, its sports, its line, and how a closed one unlocks.
 enum StoreCopy {
-    static func name(_ store: String) -> Text { text(names[store], or: store) }
-    static func local(_ store: String) -> Text { text(locals[store], or: store) }
-    static func sports(_ store: String) -> Text { text(sportLines[store], or: "") }
-    static func tagline(_ store: String) -> Text { text(taglines[store], or: "") }
-    static func unlock(_ store: String) -> Text { text(unlocks[store], or: "") }
+    static func name(_ store: String) -> Text { text(uploaded(store)?.name, names[store], or: store) }
+    static func local(_ store: String) -> Text { text(uploaded(store)?.local, locals[store], or: store) }
+    static func sports(_ store: String) -> Text { text(uploaded(store)?.sports, sportLines[store], or: "") }
+    static func tagline(_ store: String) -> Text { text(uploaded(store)?.tagline, taglines[store], or: "") }
+    static func unlock(_ store: String) -> Text { text(uploaded(store)?.unlock, unlocks[store], or: "") }
     /// The tag a limited store wears, such as 冬季限定; nil for one without.
-    static func limited(_ store: String) -> Text? { limits[store].map { text($0, or: "") } }
+    static func limited(_ store: String) -> Text? {
+        if let words = uploaded(store)?.limited { return Text(verbatim: words.localized) }
+        return limits[store].map { text(nil, $0, or: "") }
+    }
 
-    private static func text(_ key: String?, or fallback: String) -> Text {
+    /// A store added by upload carries its words in `names.json`, in front of the catalog's.
+    private static func uploaded(_ store: String) -> ArtNames.Store? { PlaceholderCharacter.names().stores[store] }
+
+    private static func text(_ words: CatalogNames?, _ key: String?, or fallback: String) -> Text {
+        if let words { return Text(verbatim: words.localized) }
         guard let key else { return Text(verbatim: fallback) }
         return Text(LocalizedStringKey(key), bundle: .module)
     }

@@ -109,21 +109,12 @@ struct TilePattern: View {
     }
 
     /// The card's colour: the scene's signature, the gym's graphite.
-    static func base(of scene: SceneTheme) -> SRGBColor {
-        switch scene {
-        case .track: Palette.trackSignature
-        case .pool: Palette.poolSignature
-        case .gym: Palette.gymSignature
-        case .tennis: Palette.tennisSignature
-        case .climbing: Palette.climbingSignature
-        case .ski: Palette.skiSignature
-        }
-    }
+    static func base(of scene: SceneTheme) -> SRGBColor { scene.colors.accent }
 
     /// The prototype's CSS patterns, drawn: lane lines, a dot grid, diagonal stripes, the
     /// court's centre lines and a few climbing holds.
     static func drawPattern(of scene: SceneTheme, in context: inout GraphicsContext, size: CGSize, ink: Color) {
-        switch scene {
+        switch scene.base {
         case .track:
             var lines = Path()
             for top in stride(from: 11.0, to: size.height, by: 12.5) {
@@ -190,7 +181,7 @@ struct TilePattern: View {
     /// The scene's 24-point line icon: lanes, waves, a dumbbell, a ball, a peak.
     static func icon(of scene: SceneTheme) -> Path {
         var path = Path()
-        switch scene {
+        switch scene.base {
         case .track:
             path.addRoundedRect(in: CGRect(x: 1, y: 6, width: 22, height: 12), cornerSize: CGSize(width: 6, height: 6))
             path.addRoundedRect(in: CGRect(x: 5, y: 10, width: 14, height: 4), cornerSize: CGSize(width: 2, height: 2))

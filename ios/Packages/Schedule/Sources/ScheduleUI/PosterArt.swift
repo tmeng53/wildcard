@@ -30,7 +30,7 @@ struct PosterArt: View {
     }
 
     private func lines(in size: CGSize) -> Path {
-        switch theme {
+        switch theme.base {
         case .pool: ripples(in: size)
         case .track: trackLanes(in: size)
         case .tennis: court(in: size)
