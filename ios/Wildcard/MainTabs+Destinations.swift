@@ -10,6 +10,8 @@ extension MainTabs {
         switch destination {
         case .post(let id):
             selection = .feed
+            // One post page at a time on 动态: a card's own post makes way.
+            feed.opened = nil
             noticePost = OpenedPost(id: id, model: feed.page(of: id))
         case .unlock(let kind, let item):
             // A store or pieces on 商店街, a prop on the editor's 道具, read again first.
@@ -21,8 +23,7 @@ extension MainTabs {
         case .stores:
             showsNotices = false
             selection = .profile
-            showsSchedule = false
-            wall = nil
+            closeProfilePages()
             wardrobe.openShop()
         default:
             showsNotices = false
@@ -45,8 +46,7 @@ extension MainTabs {
             selection = .today
         case .schedule:
             selection = .profile
-            wall = nil
-            wardrobe.showsShop = false
+            closeProfilePages()
             showsSchedule = true
         case .squad:
             selection = .today
@@ -59,6 +59,13 @@ extension MainTabs {
         case .post, .unlock, .stores, .store:
             break
         }
+    }
+
+    /// 我 back on its own page: 出赛表, 商店街, 我的动态 and a post over it all closed.
+    func closeProfilePages() {
+        showsSchedule = false
+        wardrobe.showsShop = false
+        (wall, post) = (nil, nil)
     }
 
     /// The broadcasts not yet seen in 通知 that this phone hasn't shown, each in a banner on 今天.

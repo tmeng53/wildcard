@@ -62,7 +62,7 @@ struct MainTabs: View {
     /// 我的动态's tile on 我: the wall's first page, read again each time 我 shows.
     @State private var newestPosts: PostWallStore
     /// A post opened from 我的动态: 动态's post page, pushed over the wall.
-    @State private var post: OpenedPost?
+    @State var post: OpenedPost?
     /// A player's card, opened from a tap on them on the home or their row on 小队,
     /// popped up over every tab and the tab bar.
     @State private var teammate: SquadmateCardModel?
@@ -183,8 +183,7 @@ struct MainTabs: View {
     /// 我 with the wardrobe pushed over it, in place of any other page 我 had open.
     func openWardrobe(_ kind: Unlock.Kind, item: String) {
         selection = .profile
-        showsSchedule = false
-        wall = nil
+        closeProfilePages()
         Task { await wardrobe.open(kind, item: item) }
     }
 
@@ -302,7 +301,12 @@ struct MainTabs: View {
 
     /// 我的动态 is pushed; the system's back closes it.
     private var showsWall: Binding<Bool> {
-        Binding(get: { wall != nil }, set: { if !$0 { wall = nil } })
+        Binding(
+            get: { wall != nil },
+            set: {
+                guard !$0 else { return }
+                (wall, post) = (nil, nil)
+            })
     }
 
     /// 商店街 is pushed; the system's back closes it.

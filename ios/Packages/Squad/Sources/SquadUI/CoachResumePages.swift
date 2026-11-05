@@ -5,10 +5,10 @@ import DesignSystemUI
 import SquadDomain
 import SwiftUI
 
-/// One of the coach's pages (教练招聘会, a 简历, 解雇), pushed on the NavigationStack over 小队, or over
-/// the home for the squad's coach's 简历 from a tap on the sideline. `pages` are the coach's pages
-/// on the stack, this one among them: a page pushes the next by adding it, and 招聘, 换教练 and
-/// 确认解雇 end by taking them all away, back on 小队 (or the home), the change on its 教练 card.
+/// One of the coach's pages (教练招聘会, a 简历, 解雇), pushed on the NavigationStack over 小队.
+/// `pages` are the coach's pages on the stack, this one among them: a page pushes the next by
+/// adding it, and 招聘, 换教练 and 确认解雇 end by taking them all away, back on 小队, the change on
+/// its 教练 card.
 public struct CoachPage: View {
     @Bindable private var model: SquadSettingsModel
     private let route: CoachRoute
