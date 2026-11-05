@@ -175,6 +175,10 @@ struct Shopfront: View {
         .accessibilityIdentifier("me.street")
     }
 
+    /// The front's and the door's and window's corners, in the drawing's 64 × 60 units.
+    private static let doorCorner = 4.0
+    private static let paneCorner = 2.0
+
     /// The shop in the design's 64 × 60 drawing: a white front, the graphite awning with its three
     /// white seams and scalloped edge, a graphite door and a window.
     private func draw(in context: inout GraphicsContext, size: CGSize) {
@@ -182,7 +186,7 @@ struct Shopfront: View {
         let white = Color(role: .bgCanvas, in: theme)
         let line = StrokeStyle(lineWidth: 2.5, lineCap: .round)
         context.scaleBy(x: size.width / 64, y: size.height / 60)
-        let front = Path(roundedRect: CGRect(x: 10, y: 20, width: 44, height: 36), cornerRadius: 4)
+        let front = Path(roundedRect: CGRect(x: 10, y: 20, width: 44, height: 36), cornerRadius: Self.doorCorner)
         context.fill(front, with: .color(white))
         context.stroke(front, with: .color(ink), style: line)
         var awning = Path()
@@ -208,9 +212,12 @@ struct Shopfront: View {
             seams.addLine(to: CGPoint(x: seam, y: 18))
         }
         context.stroke(seams, with: .color(white), style: line)
-        context.fill(Path(roundedRect: CGRect(x: 17, y: 32, width: 12, height: 24), cornerRadius: 2), with: .color(ink))
+        context.fill(
+            Path(roundedRect: CGRect(x: 17, y: 32, width: 12, height: 24), cornerRadius: Self.paneCorner),
+            with: .color(ink))
         context.stroke(
-            Path(roundedRect: CGRect(x: 35, y: 32, width: 12, height: 10), cornerRadius: 2), with: .color(ink),
+            Path(roundedRect: CGRect(x: 35, y: 32, width: 12, height: 10), cornerRadius: Self.paneCorner),
+            with: .color(ink),
             style: line)
     }
 }

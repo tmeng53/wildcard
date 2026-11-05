@@ -208,7 +208,7 @@ private struct RackHeader: View {
         if let limited = StoreCopy.limited(store.id) {
             limited
                 .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgAccent, in: theme))
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .lineLimit(1)
         }
         Spacer(minLength: 0)
