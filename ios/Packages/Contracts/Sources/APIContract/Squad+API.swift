@@ -34,8 +34,8 @@ extension SquadScene {
 }
 
 extension SceneID {
-    /// The scene by its id, else by the five-scene field older builds read, else the gym: a
-    /// scene this build has no art for shows as the gym.
+    /// The scene by its id, else by the five-scene field older builds read, else the gym. A
+    /// scene this build wasn't made with keeps its id (its names, colours and pictures are data).
     init(id: String, legacy: String) {
         self = SceneID(rawValue: id) ?? SceneID(rawValue: legacy) ?? .gym
     }

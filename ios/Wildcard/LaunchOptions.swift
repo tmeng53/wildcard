@@ -115,7 +115,7 @@ enum LaunchOptions {
     /// `-squad-seat winner`: who the member is on the in-memory squad's 小队设置 (`captain`,
     /// `winner`, `member`, `noWinner`, `coached` for the captain of a squad with a coach,
     /// `coachedMember` for a mate in it); the captain by default, of a squad with a coach under
-    /// `-uitest-coach`, so the coach on the home opens its 简历.
+    /// `-uitest-coach`, so the coach on the home opens its card.
     static var squadSeat: InMemorySquadSettingsService.Seat {
         let arguments = ProcessInfo.processInfo.arguments
         let fallback: InMemorySquadSettingsService.Seat = sidelineCoach ? .coached : .captain
@@ -211,7 +211,7 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
     }
 
-    /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, on its 简历
+    /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, over its card
     /// opened from the home and pinned on 动态, and replied to three of its posts.
     static var sidelineCoach: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitest-coach")

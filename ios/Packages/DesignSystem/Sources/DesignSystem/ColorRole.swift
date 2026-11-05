@@ -1,15 +1,82 @@
+import Synchronization
+
 /// The scene a squad picked. A scene swaps only its accent group (primary actions, selection,
 /// the scene's washes and floor, check-in kinds and status rings); neutrals stay fixed.
-public enum SceneTheme: String, CaseIterable, Sendable {
-    case pool
-    case track
-    case gym
-    case tennis
-    case climbing
-    /// The winter 雪场, open only part of the year (冬季限定).
-    case ski
+///
+/// Its id is the API's, and is open: a scene added through the admin tools (`put_scene`) after
+/// this build shipped takes its names and colours from the catalog (`list(_:)`), its pictures
+/// from the art an admin put (`scenes/<id>-day@3x.png`), and everything this build draws in code
+/// for a scene (stations, props, patterns) from the gym, its `base`.
+public struct SceneTheme: RawRepresentable, Hashable, Sendable, CaseIterable {
+    /// The scenes this build was made with, each drawn in its own way.
+    public enum Base: String, CaseIterable, Sendable {
+        case pool, track, gym, tennis, climbing
+        /// The winter 雪场, open only part of the year (冬季限定).
+        case ski
+    }
+
+    public let rawValue: String
+
+    /// Nil for a string that can't be a scene id (the API's: camelCase, up to 40 characters).
+    public init?(rawValue: String) {
+        guard rawValue.wholeMatch(of: /[a-z][A-Za-z0-9]{0,39}/) != nil else { return nil }
+        self.rawValue = rawValue
+    }
+
+    public init(_ base: Base) {
+        rawValue = base.rawValue
+    }
+
+    public static let pool = SceneTheme(.pool)
+    public static let track = SceneTheme(.track)
+    public static let gym = SceneTheme(.gym)
+    public static let tennis = SceneTheme(.tennis)
+    public static let climbing = SceneTheme(.climbing)
+    public static let ski = SceneTheme(.ski)
+
+    /// The scenes this build was made with; the picker offers what the API sends.
+    public static var allCases: [SceneTheme] { Base.allCases.map(SceneTheme.init) }
+
+    /// The scene this build draws it as: itself, or the gym for one added since.
+    public var base: Base { Base(rawValue: rawValue) ?? .gym }
 
     public var colors: SceneColors {
+        if Base(rawValue: rawValue) == nil, let listed = Self.listing(self) { return listed.colors }
+        return base.colors
+    }
+
+    /// What the catalog says of a scene this build wasn't made with.
+    public struct Listing: Hashable, Sendable {
+        public let colors: SceneColors
+        /// Its name in Simplified Chinese, English and Traditional Chinese.
+        public let simplifiedChinese: String
+        public let english: String
+        public let traditionalChinese: String
+
+        public init(colors: SceneColors, simplifiedChinese: String, english: String, traditionalChinese: String) {
+            self.colors = colors
+            (self.simplifiedChinese, self.english, self.traditionalChinese) = (
+                simplifiedChinese, english, traditionalChinese
+            )
+        }
+    }
+
+    /// Takes the catalog's scenes (the app does at launch and whenever it reads the API's). Only
+    /// a scene this build wasn't made with uses its listing; the rest keep the design's tokens.
+    public static func list(_ scenes: [SceneTheme: Listing]) {
+        listed.withLock { $0 = scenes }
+    }
+
+    /// The catalog's listing of `scene`, if it has one.
+    public static func listing(_ scene: SceneTheme) -> Listing? {
+        listed.withLock { $0[scene] }
+    }
+
+    private static let listed = Mutex<[SceneTheme: Listing]>([:])
+}
+
+extension SceneTheme.Base {
+    var colors: SceneColors {
         switch self {
         case .pool:
             .light(
@@ -63,7 +130,8 @@ public struct SceneColors: Sendable, Hashable {
     public let kindInk: SRGBColor
 
     /// A light scene: white on the accent, the accent as the ring, kinds on the wash or white.
-    static func light(
+    /// A scene added through the catalog is one too, from its five colours.
+    public static func light(
         accent: SRGBColor, subtle: SRGBColor, text: SRGBColor, floor: SRGBColor, onAccent: SRGBColor = Palette.white
     ) -> SceneColors {
         SceneColors(

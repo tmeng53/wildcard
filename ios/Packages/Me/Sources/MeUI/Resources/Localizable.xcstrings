@@ -161,22 +161,6 @@
         }
       }
     },
-    "编辑外卡运动员": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit your Wildcard athlete"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "編輯外卡運動員"
-          }
-        }
-      }
-    },
     "Apple 那边没确认上，再试一次": {
       "localizations": {
         "en": {
@@ -521,22 +505,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@號"
-          }
-        }
-      }
-    },
-    "我的动态": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "My posts"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我的動態"
           }
         }
       }
@@ -1001,34 +969,80 @@
         }
       }
     },
-    "教练消息": {
+    "换装": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Coach messages"
+            "value": "Dress up"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "教練訊息"
+            "value": "換裝"
+          }
+        }
+      }
+    },
+    "出赛表 · %lld/%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lineup · %lld/%lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "出賽表 · %lld/%lld"
+          }
+        }
+      }
+    },
+    "教练消息": {
+      "localizations": {
+        "localizations": {
+          "stringUnit": {
+            "state": "translated",
+            "value": {
+              "en": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Coach messages"
+                }
+              },
+              "zh-Hant": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "教練訊息"
+                }
+              }
+            }
           }
         }
       }
     },
     "教练的便条和回复，静默推送。关掉后通知里照样有。": {
       "localizations": {
-        "en": {
+        "localizations": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your coach's notes and replies, delivered quietly. Turned off, they're still in Notifications."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "教練的便條和回覆，靜默推送。關掉後通知裡照樣有。"
+            "value": {
+              "en": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Your coach's notes and replies, delivered quietly. Turned off, they're still in Notifications."
+                }
+              },
+              "zh-Hant": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "教練的便條和回覆，靜默推送。關掉後通知裡照樣有。"
+                }
+              }
+            }
           }
         }
       }

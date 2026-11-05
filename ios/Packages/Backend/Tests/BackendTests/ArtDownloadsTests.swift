@@ -1,3 +1,4 @@
+import AvatarArt
 import Contracts
 import Foundation
 import Synchronization
@@ -108,7 +109,7 @@ private func text(_ root: URL, _ path: String) -> String? {
 @Test func artForANewerRigOrOutsideTheTreeIsLeftOut() async {
     let (art, root) = downloads(from: Bucket([svg]))
     let files = [
-        file("avatar/art/top/elbows/armL.svg", svg, rig: 2),
+        file("avatar/art/top/elbows/armL.svg", svg, rig: ArtTree.rigVersion + 1),
         file("avatar/../../Library/x.svg", svg),
         file("coaches/maotou/art/base/head.svg", svg),
     ]

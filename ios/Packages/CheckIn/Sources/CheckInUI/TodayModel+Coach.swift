@@ -3,10 +3,10 @@ import CheckInDomain
 import Contracts
 import Foundation
 
-/// The coach on the home's sideline: a tap cheers it and opens its 简历, where its 战术板 line
-/// of the day is pinned (Tracy, 2026-11-04: no bubble from a tap).
+/// The coach on the home's sideline: a tap starts its pep talk and pops up its card, with its
+/// 战术板 line of the day over it (Tracy, 2026-11-05; no bubble from a tap).
 extension TodayModel {
-    /// The coach's 战术板 line while its day lasts, for its 简历.
+    /// The coach's 战术板 line while its day lasts, for its card and its 简历.
     public var coachLine: CoachNote? { store.coachLine }
 
     /// The coach's morning note (便条) on 今天 now, once the scene is free for it: not while a
@@ -29,10 +29,10 @@ extension TodayModel {
         store.showAgain(note)
     }
 
-    /// The coach was tapped: it cheers and its 简历 opens.
+    /// The coach was tapped: it gives its pep talk and its card opens.
     func tapCoach() {
         guard arrival == nil else { return }
-        cast.cheerCoach()
+        cast.coachTalks()
         openCoach()
     }
 }

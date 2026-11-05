@@ -34,8 +34,13 @@ private struct SwipeBack: ViewModifier {
                     offset = moved
                 } ended: { moved, speed, width in
                     let goes = moved > width * Self.distance || (speed > Self.fling && moved > 0)
+                    // The offset always settles back to 0, also when it goes back: a page that stays
+                    // on screen (商店街 leaving a store for the street, a 简历 under another) would
+                    // otherwise keep the finger's offset and sit half off screen, its 返回 out of
+                    // reach. A page that leaves takes its own transition either way.
                     withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
-                        if goes { back() } else { offset = 0 }
+                        if goes { back() }
+                        offset = 0
                     }
                 })
     }

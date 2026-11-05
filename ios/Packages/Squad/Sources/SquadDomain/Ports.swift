@@ -10,7 +10,7 @@ public struct SquadSettings: Hashable, Sendable {
     public var characters: [MemberID: MemberCharacter]
     public var scene: SquadScene
     public var coach: SquadCoach
-    /// The member's day and clock when the page was read, for 「执教第 N 周」.
+    /// The member's day and clock when the page was read, for 「执教第 N 周」 and 「带队 N 天」.
     public let today: LocalDay
     public let timeZone: TimeZone
 

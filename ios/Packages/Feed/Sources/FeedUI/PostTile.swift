@@ -45,7 +45,7 @@ struct PostTile: View {
 
     /// The cover cut down to the tile's size off the main actor, so scrolling the wall never
     /// decodes full photos.
-    private nonisolated static func thumbnail(_ jpeg: Data) async -> CGImage? {
+    nonisolated static func thumbnail(_ jpeg: Data) async -> CGImage? {
         guard let source = CGImageSourceCreateWithData(jpeg as CFData, nil) else { return nil }
         let options =
             [

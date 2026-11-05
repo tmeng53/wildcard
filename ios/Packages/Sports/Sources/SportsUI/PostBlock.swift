@@ -18,6 +18,9 @@ public struct PostBlock: View {
         case strip
         /// The 战报's tall card.
         case card
+        /// A small square in a glimpse of the posts (我's 我的动态 tile): the colour or the photo,
+        /// with a 练了's minutes only.
+        case thumbnail
     }
 
     private let kind: CheckInKind
@@ -71,7 +74,7 @@ public struct PostBlock: View {
                 if let photo { photo.resizable().scaledToFill() }
             }
             .overlay(alignment: .topLeading) {
-                if let day {
+                if let day, layout != .thumbnail {
                     Text(verbatim: String(day))
                         .typeStyle(layout == .tile ? TypeRamp.scoreCaption : TypeRamp.scoreSmall)
                         .opacity(layout == .tile ? 1 : 0.75)
@@ -79,17 +82,19 @@ public struct PostBlock: View {
                 }
             }
             .overlay(alignment: .topTrailing) {
-                label
-                    .typeStyle(layout == .tile ? TypeRamp.caption : TypeRamp.label)
-                    .lineLimit(1)
-                    .padding(padding)
+                if layout != .thumbnail {
+                    label
+                        .typeStyle(layout == .tile ? TypeRamp.caption : TypeRamp.label)
+                        .lineLimit(1)
+                        .padding(padding)
+                }
             }
             .overlay(alignment: .bottomLeading) {
                 if let minutes {
                     Text(verbatim: "\(minutes)′")
-                        .typeStyle(layout == .tile ? TypeRamp.scoreSmall : TypeRamp.scoreCard)
+                        .typeStyle(minutesStyle)
                         .padding(.horizontal, padding)
-                        .padding(.bottom, layout == .tile ? Space.xxs : Space.xs)
+                        .padding(.bottom, layout == .card || layout == .strip ? Space.xs : Space.xxs)
                         .accessibilityIdentifier("post.block.minutes")
                 }
             }
@@ -102,7 +107,7 @@ public struct PostBlock: View {
     /// The words, all of them on a strip, which grows to hold them; a tile and a card keep their
     /// size and cut them short.
     @ViewBuilder private var wordsOnBlock: some View {
-        if photo == nil, let words {
+        if photo == nil, layout != .thumbnail, let words {
             Text(verbatim: words)
                 .typeStyle(wordsStyle)
                 .lineLimit(wordsLines)
@@ -134,22 +139,36 @@ public struct PostBlock: View {
     /// Room above the words for the label, and on a card for the day's bigger number too.
     private var wordsTop: Double {
         switch layout {
-        case .tile: 0
+        case .tile, .thumbnail: 0
         case .strip: Space.xl + Space.xxs
         case .card: Space.xxl + Space.xs
         }
     }
 
-    private var padding: Double { layout == .tile ? Space.xs : Space.m }
+    private var padding: Double {
+        switch layout {
+        case .tile: Space.xs
+        case .thumbnail: Space.xxs
+        case .strip, .card: Space.m
+        }
+    }
+
+    private var minutesStyle: TypeStyle {
+        switch layout {
+        case .tile: TypeRamp.scoreSmall
+        case .thumbnail: TypeRamp.scoreCaption
+        case .strip, .card: TypeRamp.scoreCard
+        }
+    }
 
     /// Room kept under the words for the minutes.
-    private var minutesHeight: Double { layout == .tile ? Space.l : Space.xxl }
+    private var minutesHeight: Double { layout == .tile || layout == .thumbnail ? Space.l : Space.xxl }
 
-    private var wordsAlignment: Alignment { layout == .tile ? .leading : .topLeading }
+    private var wordsAlignment: Alignment { layout == .tile || layout == .thumbnail ? .leading : .topLeading }
 
     private var wordsStyle: TypeStyle {
         switch layout {
-        case .tile: TypeRamp.footnoteEmphasis
+        case .tile, .thumbnail: TypeRamp.footnoteEmphasis
         case .strip: TypeRamp.title
         case .card: TypeRamp.action
         }
@@ -157,7 +176,7 @@ public struct PostBlock: View {
 
     private var wordsLines: Int? {
         switch layout {
-        case .tile: 3
+        case .tile, .thumbnail: 3
         case .strip: nil
         case .card: 6
         }

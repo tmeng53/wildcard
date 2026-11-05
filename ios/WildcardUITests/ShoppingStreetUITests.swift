@@ -1,18 +1,19 @@
 import XCTest
 
-/// 商店街 from 我 on the in-memory member: the shopfront, a closed store, WARM-UP's rack and its
+/// 商店街 from 我 on the in-memory member: its header button, a closed store, WARM-UP's rack and its
 /// sports tip, and back. Keeps screenshots for review.
 @MainActor
 final class ShoppingStreetUITests: XCTestCase {
-    /// 商店街 from the shopfront at 我's top left: a closed store's card says how it unlocks and a
+    /// 商店街 from its header button on 我, between 换装 and 设置: a closed store's card says how it unlocks and a
     /// tap keeps it shut; WARM-UP lets the member in, its ⓘ names the sports, and back walks out to
     /// the street and then to 我.
     func testShoppingStreet() {
         let app = launch(language: "zh-Hans")
-        let shopfront = app.buttons["me.street"]
-        XCTAssertTrue(shopfront.waitForExistence(timeout: 30), "我 has no shopfront")
-        XCTAssertLessThan(shopfront.frame.midX, app.buttons["me.settings"].frame.midX, "the shopfront isn't left of 设置")
-        shopfront.tap()
+        let street = app.buttons["me.street"]
+        XCTAssertTrue(street.waitForExistence(timeout: 30), "我 has no 商店街 button")
+        XCTAssertLessThan(app.buttons["me.editCharacter"].frame.midX, street.frame.midX, "换装 isn't left of 商店街")
+        XCTAssertLessThan(street.frame.midX, app.buttons["me.settings"].frame.midX, "商店街 isn't left of 设置")
+        street.tap()
         let page = app.descendants(matching: .any).matching(identifier: "street.page").firstMatch
         XCTAssertTrue(page.waitForExistence(timeout: 30), "商店街 never opened")
         let warmup = app.buttons["street.store.warmup"]
@@ -41,8 +42,19 @@ final class ShoppingStreetUITests: XCTestCase {
             _ = warmup.waitForExistence(timeout: 3)
         }
         XCTAssertTrue(warmup.exists, "back didn't walk out to the street")
+        // Swiping back out of a store leaves the street where it was, not shifted half off screen
+        // with its 返回 out of reach (2026-11-05).
+        let backX = back.frame.minX
+        warmup.tap()
+        XCTAssertTrue(info.waitForExistence(timeout: 30), "WARM-UP didn't open again")
+        let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5))
+        from.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)))
+        XCTAssertTrue(warmup.waitForExistence(timeout: 30), "a swipe right didn't leave the store")
+        settle()
+        XCTAssertEqual(back.frame.minX, backX, accuracy: 2, "the street stayed shifted after a swipe back")
+        XCTAssertTrue(back.isHittable, "返回 out of reach after a swipe back")
         back.tap()
-        XCTAssertTrue(shopfront.waitForExistence(timeout: 30), "back didn't return to 我")
+        XCTAssertTrue(street.waitForExistence(timeout: 30), "back didn't return to 我")
     }
 
     private func launch(language: String) -> XCUIApplication {
