@@ -317,8 +317,8 @@ func outline(_ path: [PathElement]) -> [Point] {
         ])
     #expect(
         choices.wear.values.joined().filter { $0.store == "deuce" }.map(\.id).sorted() == [
-            "deuce-cable", "deuce-court", "deuce-dress", "deuce-pants", "deuce-polo", "deuce-shorts", "deuce-skirt",
-            "deuce-socks", "deuce-sweater", "deuce-terry", "deuce-visor",
+            "deuce-ball", "deuce-cable", "deuce-court", "deuce-dress", "deuce-pants", "deuce-polo", "deuce-shorts",
+            "deuce-skirt", "deuce-socks", "deuce-sweater", "deuce-terry", "deuce-visor",
         ])
     for (slot, pieces) in choices.wear {
         #expect(Set(pieces.map(\.id)).isSubset(of: PlaceholderCharacter.variants(for: slot)))
