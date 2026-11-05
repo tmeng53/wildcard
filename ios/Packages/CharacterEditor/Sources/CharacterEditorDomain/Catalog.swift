@@ -44,14 +44,16 @@ public struct Catalog: Hashable, Sendable {
         }
     }
 
-    /// The pieces still locked on `store`'s rack, in the rack's slot order, the nearest to opening
-    /// first within a slot.
+    /// The pieces still locked on `store`'s rack, the nearest to opening first whatever its slot
+    /// (Tracy, 2026-11-05: 按次数 rank); a tie keeps the rack's slot order, then the variant's id.
     public func lockedRack(of store: String) -> [(slot: Slot, variant: String, toGo: Int)] {
-        Self.clothingSlots.flatMap { slot in
-            (locked[slot] ?? [:]).filter { storeOf[$0.key] == store }
-                .sorted { ($0.value, $0.key) < ($1.value, $1.key) }
-                .map { (slot: slot, variant: $0.key, toGo: $0.value) }
-        }
+        Self.clothingSlots.enumerated()
+            .flatMap { order, slot in
+                (locked[slot] ?? [:]).filter { storeOf[$0.key] == store }
+                    .map { (order: order, slot: slot, variant: $0.key, toGo: $0.value) }
+            }
+            .sorted { ($0.toGo, $0.order, $0.variant) < ($1.toGo, $1.order, $1.variant) }
+            .map { (slot: $0.slot, variant: $0.variant, toGo: $0.toGo) }
     }
 
     /// The preset colors `variant` offers in `slot`; empty when it keeps its art's colors.
