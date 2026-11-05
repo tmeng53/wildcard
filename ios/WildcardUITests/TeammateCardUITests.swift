@@ -69,12 +69,13 @@ final class TeammateCardUITests: XCTestCase {
         let card = app.buttons["me.card"]
         let window = app.windows.firstMatch.frame
 
-        // A tap on the status bar's strip, over the dim, closes the card.
+        // A tap just under the status bar, where the page's own header sits, closes the card. (The
+        // status bar itself takes taps for the system, so a test can't tap there.)
         row.tap()
         XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "the teammate's card didn't open")
         Thread.sleep(forTimeInterval: 0.6)
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.03)).tap()
-        XCTAssertTrue(card.waitForNonExistence(timeout: 5), "a tap on the status bar's strip didn't close the card")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        XCTAssertTrue(card.waitForNonExistence(timeout: 5), "a tap under the status bar didn't close the card")
 
         // A tap where the tab bar is closes it too, and never switches the tab under the dim.
         row.tap()
