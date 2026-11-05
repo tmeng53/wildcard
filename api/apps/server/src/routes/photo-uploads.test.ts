@@ -20,6 +20,7 @@ import { createLog } from '../log.js';
 import { PhotoPath } from '../ports.js';
 import {
   scenesOn,
+  switchesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -90,6 +91,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
       aiConsent: () => Promise.resolve(true),
     }),
     scenes: scenesOn(db),
+    switches: switchesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     unlocks: unusedUnlocks,
     gifts: unusedGifts,

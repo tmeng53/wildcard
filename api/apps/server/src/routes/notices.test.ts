@@ -44,6 +44,7 @@ import {
   nudgesOn,
   pushOn,
   scenesOn,
+  switchesOn,
   signUp,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
@@ -127,6 +128,7 @@ const app = createApp({
   }),
   weeklyAwards: unusedWeeklyAwards,
   scenes: scenesOn(db),
+  switches: switchesOn(db),
   unlocks,
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
   weekSummaryWords: unusedWeekSummaryWords,

@@ -3,19 +3,24 @@
 
 export { createPostgresSwitchStore, type SwitchTables } from './adapters/postgres-switch-store.js';
 export {
+  DayOffset,
   inWindow,
   isOn,
+  isOnForPreviewer,
+  PLAIN_VIEW,
   MonthDay,
   SWITCH_MODES,
   SwitchEdit,
   SwitchId,
   SwitchMode,
   type Switch,
+  type SwitchView,
   type SwitchWindow,
 } from './domain/switches.js';
 export type { SwitchStore } from './ports.js';
 export {
   createSwitches,
+  type MemberSwitches,
   type SwitchOn,
   type Switches,
   type SwitchesAdmin,

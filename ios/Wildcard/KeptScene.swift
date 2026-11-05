@@ -1,4 +1,6 @@
+import Backend
 import CheckInDomain
+import CheckInUI
 import Contracts
 import DesignSystem
 import Foundation
@@ -51,7 +53,45 @@ struct ReadScene: Sendable {
         let scene = SceneTheme(rawValue: read.scene.rawValue) ?? .gym
         guard let member else { return ReadScene(scene: scene, move: nil) }
         let move = SceneMove(from: KeptScene.scene(of: squad), to: read, member: member)
-        KeptScene.save(scene, of: squad)
+        // A takeover (a holiday's) is nobody's pick: the phone keeps the squad's own scene, so the
+        // day after doesn't read as a teammate moving the squad back.
+        if read.takeover == nil { KeptScene.save(scene, of: squad) }
         return ReadScene(scene: scene, move: move)
+    }
+}
+
+/// Reading the squad's scene, which 今天 must open on rather than switch to.
+extension AppModel {
+    /// Puts 今天 on the squad's scene this week, dropping the squad onto it when a teammate moved
+    /// it. Offline, it stays where it is.
+    func readScene(of squad: SquadID?, into today: TodayModel) async {
+        guard let squad, let read = try? await api.scene(of: squad) else { return }
+        let kept = ReadScene.keep(read, of: squad, member: today.home?.member)
+        await today.land(on: kept.scene, move: kept.move, takeover: read.takeover)
+    }
+
+    /// The squad's scene this week from the server, unless it takes longer than `Self.sceneWait`.
+    func openingScene(of squad: SquadID) async -> SquadScene? {
+        let wait = Self.sceneWait
+        return await withTaskGroup(of: SquadScene?.self) { group in
+            group.addTask { try? await self.api.scene(of: squad) }
+            group.addTask {
+                try? await Task.sleep(for: wait)
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+    }
+}
+
+extension LaunchOptions {
+    /// `-uitest-takeover trot`: a takeover scene stands in for the sample squad's once 今天 is up,
+    /// so UI tests see its opening (the bundled art at `openings/trot/`), 进场 and the drop.
+    static var takeover: String? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-uitest-takeover"), flag + 1 < arguments.count else { return nil }
+        return arguments[flag + 1]
     }
 }

@@ -3,6 +3,16 @@
  * Please do not edit it manually.
  */
 
+import type { ColumnType } from "kysely";
+
+export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S, I | undefined, U>
+  : ColumnType<T, T | undefined, T>;
+
+export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
+
+export type Timestamp = ColumnType<Date, Date | string, Date | string>;
+
 export interface Switches {
   id: string;
   label: string;
@@ -11,6 +21,16 @@ export interface Switches {
   window_start: string | null;
 }
 
+export interface SwitchPreviews {
+  at: Generated<Timestamp>;
+  day_offset: Generated<number>;
+  id: Generated<Int8>;
+  member_id: string;
+  previewer: boolean;
+  set_by: string | null;
+}
+
 export interface DB {
+  switch_previews: SwitchPreviews;
   switches: Switches;
 }

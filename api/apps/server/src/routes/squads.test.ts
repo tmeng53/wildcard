@@ -28,6 +28,7 @@ import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import {
   scenesOn,
+  switchesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -108,6 +109,7 @@ const app = createApp({
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
   scenes: scenesOn(db),
+  switches: switchesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
@@ -448,6 +450,7 @@ describe('the squad’s scene', () => {
     week: z.string(),
     scene: z.string(),
     sceneId: z.string(),
+    takeover: z.boolean(),
     pickers: z.object({ by: z.string(), members: z.array(z.uuid()) }),
     picked: z
       .object({ scene: z.string(), sceneId: z.string(), by: z.uuid().nullable() })
@@ -486,6 +489,7 @@ describe('the squad’s scene', () => {
       ],
     });
     expect(scene.sceneId).toBe('gym');
+    expect(scene.takeover).toBe(false);
     // The winter 雪场 joins the options only inside its window, so only the all-year ones are fixed.
     expect(scene.options.filter(({ sceneId }) => sceneId !== 'ski')).toStrictEqual([
       { sceneId: 'track', weeksAgo: null },

@@ -39,6 +39,11 @@ export interface ListedScene {
   readonly offered: boolean;
   /** The switch a limited scene follows (a squad may pick it only while that is on); none for all year. */
   readonly switchId?: string;
+  /**
+   * True for a takeover scene: while its switch is on, every squad's home shows it in place of
+   * the squad's pick, and the picker never offers it.
+   */
+  readonly takeover?: boolean;
 }
 
 /** Whether the switch `id` is on on `day` (`YYYY-MM-DD`, New York). */
@@ -49,5 +54,23 @@ export function isOpen(
   scene: ListedScene,
   { day, switchOn }: { readonly day: string; readonly switchOn: SwitchOn },
 ): boolean {
-  return scene.offered && (scene.switchId === undefined || switchOn(scene.switchId, day));
+  return (
+    scene.offered &&
+    scene.takeover !== true &&
+    (scene.switchId === undefined || switchOn(scene.switchId, day))
+  );
+}
+
+/** The scene taking over every home on `day`: the first takeover whose switch is on, if any. */
+export function takeoverOn(
+  scenes: readonly ListedScene[],
+  { day, switchOn }: { readonly day: string; readonly switchOn: SwitchOn },
+): string | undefined {
+  return scenes.find(
+    (scene) =>
+      scene.takeover === true &&
+      scene.offered &&
+      scene.switchId !== undefined &&
+      switchOn(scene.switchId, day),
+  )?.id;
 }
