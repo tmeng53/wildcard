@@ -12,45 +12,17 @@ import SwiftUI
 /// It pops in from its tail with `.speech(reduceMotion:)`; the caller keeps it `Motion.speechHold`.
 /// Given an `action`, it is a button that opens what it says (a caption opens its post) and
 /// shrinks while held like every other control. `.status` is a teammate's status with one thing
-/// to do about it (拍一拍): the status in 13/600 over a muted detail, centred, and a compact
-/// accent capsule under them; once done, the capsule turns grey and does nothing. My own status
-/// has nothing to do: no capsule. `.coach` is what the AI coach says: `CoachTag` and its name over
-/// its words in `.info`'s type, wrapped whole.
-///
-/// The tail points down from the middle, or, with `tail: .leading`, from near the bubble's
-/// leading corner, for a speaker by the screen's edge.
+/// to do about it (拍一拍): the status in 13/600 over a muted detail, centred, and a small
+/// accent capsule under them; once done, only a muted 「✓ 拍过了」 line. My own status
+/// has nothing to do: no capsule.
 public struct SpeechBubble: View {
-    /// Where the tail leaves the bubble's bottom edge.
-    public enum TailSpot {
-        case center
-        case leading
-    }
-
     public enum Kind {
         case line
         /// A line said in `.line`'s type that must show whole (a coach's catchphrase, which can be
         /// any length): it wraps at `.info`'s width instead of cutting off.
         case quote
         case info(title: Text?)
-        case status(detail: Text?, button: StatusButton?, eyebrow: StatusEyebrow? = nil)
-        case coach(name: Text)
-    }
-
-    /// A small muted line over a `.status` bubble's words: who it is (name · the title they wear,
-    /// its badge before them), which opens their player card.
-    public struct StatusEyebrow {
-        let label: Text
-        /// The worn title's badge.
-        let badge: TitleBadgeLook?
-        let identifier: String?
-        let action: () -> Void
-
-        public init(_ label: Text, badge: TitleBadgeLook?, identifier: String? = nil, action: @escaping () -> Void) {
-            self.label = label
-            self.badge = badge
-            self.identifier = identifier
-            self.action = action
-        }
+        case status(detail: Text?, button: StatusButton?)
     }
 
     /// The capsule under a `.status` bubble's words.
@@ -76,27 +48,20 @@ public struct SpeechBubble: View {
     private let kind: Kind
     private let surface: CardSurface
     private let action: (() -> Void)?
-    private let tail: TailSpot
 
     private static let lineWidth: Double = 160
     private static let infoWidth: Double = 200
-    /// The coach's bubble, narrower than `.info`'s so it leaves room on the home's floor.
-    public static let coachWidth: Double = 170
     private static let tailSize = CGSize(width: 12, height: 6)
     private static let verticalPadding: Double = 6
     private static let horizontalPadding: Double = 10
 
-    /// The tail's middle from the bubble's leading edge, with `tail: .leading`.
-    public static let leadingTail: Double = 32
-
     public init(
-        _ text: Text, kind: Kind = .line, on surface: CardSurface = .scene, tail: TailSpot = .center,
+        _ text: Text, kind: Kind = .line, on surface: CardSurface = .scene,
         action: (() -> Void)? = nil
     ) {
         self.text = text
         self.kind = kind
         self.surface = surface
-        self.tail = tail
         self.action = action
     }
 
@@ -125,10 +90,7 @@ public struct SpeechBubble: View {
     }
 
     private var shape: BubbleShape {
-        BubbleShape(
-            tail: Self.tailSize,
-            tailMid: tail == .leading ? Self.leadingTail : nil,
-            cornerRadius: Radius.pick)
+        BubbleShape(tail: Self.tailSize, cornerRadius: Radius.pick)
     }
 
     /// How much white the glass carries: enough that a coloured scene (the red track) doesn't dye
@@ -176,29 +138,10 @@ public struct SpeechBubble: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-        case .coach(let name):
-            HuggingWidth(max: Self.coachWidth - 2 * Self.horizontalPadding) {
-                VStack(alignment: .leading, spacing: Space.xxs) {
-                    HStack(spacing: Space.xxs + Space.xxs / 2) {
-                        CoachTag()
-                        name
-                            .typeStyle(TypeRamp.label)
-                            .foregroundStyle(muted)
-                            .lineLimit(1)
-                    }
-                    text
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        case .status(let detail, let button, let eyebrow):
+        case .status(let detail, let button):
             HuggingWidth(min: Self.statusMinWidth - 2 * Space.m, max: Self.statusWidth - 2 * Space.m) {
-                // Three groups with room between them: who, what they're up to, the one thing to do.
+                // Two groups with room between them: what they're up to, then the one thing to do.
                 VStack(spacing: 0) {
-                    if let eyebrow {
-                        EyebrowLine(eyebrow: eyebrow)
-                    }
                     VStack(spacing: Space.xxs / 2) {
                         text
                             .typeStyle(TypeRamp.footnoteEmphasis)
@@ -213,7 +156,6 @@ public struct SpeechBubble: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    .padding(.top, eyebrow == nil ? 0 : Space.xxs)
                     if let button {
                         StatusCapsule(button: button)
                             .padding(.top, Space.xs)
@@ -295,51 +237,15 @@ private struct StatusCapsule: View {
     private static let check: Double = 10
 }
 
-/// The muted name line over a `.status` bubble, a button to their card: the worn title's badge
-/// small before the words.
-private struct EyebrowLine: View {
-    @Environment(\.sceneTheme) private var theme
-    let eyebrow: SpeechBubble.StatusEyebrow
-
-    var body: some View {
-        Button(action: eyebrow.action) {
-            HStack(spacing: Space.xxs) {
-                if let badge = eyebrow.badge {
-                    TitleBadgeView(badge, size: Self.badge)
-                }
-                eyebrow.label
-                    .typeStyle(TypeRamp.caption)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: Self.chevron, weight: .semibold))
-                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
-                    .accessibilityHidden(true)
-            }
-            // A taller target than the line, as a tap on a name should land.
-            .frame(minHeight: Sizing.compactControl / 2 + Space.xs)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityIdentifier(eyebrow.identifier ?? "")
-    }
-
-    private static let badge: Double = 16
-    private static let chevron: Double = 9
-}
-
 /// A bubble and its tail as one outline, so glass bends light across both as one piece: a
-/// rounded rectangle above `tail.height`, and a triangle under it pointing down, its middle at
-/// `tailMid` from the leading edge, or at the middle when nil.
+/// rounded rectangle above `tail.height`, and a triangle under it pointing down from its middle.
 private struct BubbleShape: Shape {
     let tail: CGSize
-    let tailMid: Double?
     let cornerRadius: Double
 
     func path(in rect: CGRect) -> Path {
         let body = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height - tail.height)
-        let mid = rect.minX + (tailMid ?? rect.width / 2)
+        let mid = rect.midX
         // The triangle reaches a point into the body so no seam shows where they join.
         let point = Path { path in
             path.move(to: CGPoint(x: mid - tail.width / 2, y: body.maxY - 1))

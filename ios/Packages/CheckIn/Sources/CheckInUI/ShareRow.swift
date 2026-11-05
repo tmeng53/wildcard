@@ -10,6 +10,7 @@ import SwiftUI
 /// in 我的动态 only. The page sets its side margins.
 struct ShareRow: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.controlPlacement) private var placement
     let squads: [Squad]
     @Binding var shared: Set<SquadID>
 
@@ -36,11 +37,7 @@ struct ShareRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, Space.xs)
-        .background(alignment: .top) {
-            Rectangle()
-                .fill(Color(role: .borderDefault, in: theme))
-                .frame(height: Sizing.hairline)
-        }
+        .modifier(ShareRowSurface(placement: placement))
     }
 
     private func hint(_ text: Text) -> some View {
@@ -55,6 +52,22 @@ struct ShareRow: View {
             shared.contains(squad.id)
         } set: { isOn in
             if isOn { shared.insert(squad.id) } else { shared.remove(squad.id) }
+        }
+    }
+}
+/// In a page's content, a hairline above the row; floating in 发动态's action bar, a glass
+/// panel of its own, so the switch and its hint read over the caption scrolling under it.
+private struct ShareRowSurface: ViewModifier {
+    let placement: ControlPlacement
+
+    func body(content: Content) -> some View {
+        switch placement {
+        case .inContent:
+            content.background(alignment: .top) { Hairline() }
+        case .floating:
+            content
+                .padding(.horizontal, Space.m)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
         }
     }
 }

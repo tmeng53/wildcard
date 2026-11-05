@@ -48,6 +48,8 @@ public struct Figure: Hashable, Sendable {
         public let id: PartID
         public let pivot: Point
         public let restOpacity: Double
+        /// Where the part bends, for an arm (`bend`).
+        public let elbow: Rig.Elbow?
         /// Back to front.
         public internal(set) var art: [Artwork]
         /// The slot each of `art` is worn in, nil for the rig's own art.
@@ -97,7 +99,10 @@ public struct Figure: Hashable, Sendable {
                     slots.append(nil)
                 }
             }
-            built.append(Part(id: part.id, pivot: part.pivot, restOpacity: part.opacity, art: artworks, slots: slots))
+            built.append(
+                Part(
+                    id: part.id, pivot: part.pivot, restOpacity: part.opacity, elbow: part.elbow, art: artworks,
+                    slots: slots))
         }
         try Self.paintHands(&built, held: held, bodies: bodies, skin: rig.skin)
         if let (slot, variant) = variants.first(where: { !used.contains($0.key) }) {
@@ -208,8 +213,21 @@ public struct Figure: Hashable, Sendable {
         }
         // A level-held prop is the clip's to turn only when the clip is choreographed for it.
         let leveled = level.map { clip.holds == $0.variant ? [] : $0.parts } ?? []
+        let tracks = try bind(clip.tracks, of: clip.name)
         return BoundClip(
-            clip: clip, tracks: try bind(clip.tracks, of: clip.name), accents: accents, leveled: leveled)
+            clip: clip, tracks: tracks, accents: accents, leveled: leveled, followThrough: followThrough(tracks))
+    }
+
+    /// Arms whose clip turns them without bending them: their forearms trail as they swing.
+    private func followThrough(_ tracks: [BoundClip.Track]) -> [BoundClip.FollowThrough] {
+        parts.indices.compactMap { arm in
+            guard parts[arm].elbow != nil,
+                !tracks.contains(where: { $0.part == arm && $0.track.channel == .bend }),
+                let swing = tracks.first(where: { $0.part == arm && $0.track.channel == .rotation })?.track
+            else { return nil }
+            return BoundClip.FollowThrough(
+                arm: arm, swing: swing, carried: parents.indices.filter { parents[$0] == arm })
+        }
     }
 
     private func bind(_ tracks: [Clip.Track], of clip: String) throws(AvatarError) -> [BoundClip.Track] {
@@ -217,6 +235,9 @@ public struct Figure: Hashable, Sendable {
         for track in tracks {
             guard let part = parts.firstIndex(where: { $0.id == track.part }) else {
                 throw .unknownPart(clip: clip, part: track.part)
+            }
+            if track.channel == .bend, parts[part].elbow == nil {
+                throw .noElbow(clip: clip, part: track.part)
             }
             bound.append((part, track))
         }
@@ -238,6 +259,12 @@ public struct Figure: Hashable, Sendable {
         for (part, track) in bound.tracks {
             pose.parts[part][track.channel] = track.value(at: local)
         }
+        for follow in bound.followThrough {
+            let bend = follow.bend(at: local, of: clip)
+            pose.parts[follow.arm].bend = bend
+            // What the arm holds keeps the angle the move gave it: only the hand carrying it trails.
+            for part in follow.carried { pose.parts[part].rotation -= bend }
+        }
         for (accent, tracks) in bound.accents {
             let length = accent.clip.duration
             let moment: Double
@@ -257,6 +284,7 @@ public struct Figure: Hashable, Sendable {
             var carrier = parents[part]
             while let index = carrier {
                 turned += pose.parts[index].rotation
+                if parts[index].elbow != nil { turned += pose.parts[index].bend }
                 carrier = parents[index]
             }
             pose.parts[part].rotation = -turned
@@ -267,6 +295,8 @@ public struct Figure: Hashable, Sendable {
     /// Where every part lands for a pose, back to front, in canvas coordinates.
     public func layout(_ pose: Pose) -> [Placement] {
         var placements = [Placement](repeating: Placement(transform: .identity, opacity: 1), count: parts.count)
+        /// What each part's children move with: its own placement, past the elbow for an arm.
+        var carriers = [Transform](repeating: .identity, count: parts.count)
         for index in evaluationOrder {
             let part = parts[index]
             let move = pose.parts[index]
@@ -276,11 +306,16 @@ public struct Figure: Hashable, Sendable {
                 .then(.rotation(degrees: move.rotation))
                 .then(.translation(x: part.pivot.x + move.x, y: part.pivot.y + move.y))
             if let parent = parents[index] {
-                let carrier = placements[parent]
                 placements[index] = Placement(
-                    transform: local.then(carrier.transform), opacity: move.opacity * carrier.opacity)
+                    transform: local.then(carriers[parent]), opacity: move.opacity * placements[parent].opacity)
             } else {
                 placements[index] = Placement(transform: local, opacity: move.opacity)
+            }
+            carriers[index] = placements[index].transform
+            if let elbow = part.elbow, move.bend != 0 {
+                let bend = Bend(shoulder: part.pivot, elbow: elbow, degrees: move.bend)
+                placements[index].bend = bend
+                carriers[index] = bend.forearm.then(placements[index].transform)
             }
         }
         return placements
@@ -296,86 +331,6 @@ public struct BoundClip: Sendable {
     let accents: [(accent: Clip.Accent, tracks: [Track])]
     /// Parts that hang level whatever carries them, as `Figure.level` says.
     let leveled: [Int]
-}
+    let followThrough: [FollowThrough]
 
-/// One part's channel values. Unlike a clip, a pose has every channel of every part.
-public struct PartPose: Hashable, Sendable {
-    public var rotation = 0.0
-    // swiftlint:disable:next identifier_name - the channel's name.
-    public var x = 0.0
-    public var y = 0.0
-    public var scaleX = 1.0
-    public var scaleY = 1.0
-    public var opacity = 1.0
-
-    public init(opacity: Double = 1) {
-        self.opacity = opacity
-    }
-
-    /// Applies an accent's value: offsets add, scales multiply, opacity stays within 0...1.
-    mutating func add(_ value: Double, to channel: Channel, strength: Double) {
-        switch channel {
-        case .rotation, .x, .y: self[channel] += value * strength
-        case .scaleX, .scaleY: self[channel] *= max(0, 1 + (value - 1) * strength)
-        case .opacity: opacity = min(max(opacity + value, 0), 1)
-        }
-    }
-
-    public subscript(channel: Channel) -> Double {
-        get {
-            switch channel {
-            case .rotation: rotation
-            case .x: x
-            case .y: y
-            case .scaleX: scaleX
-            case .scaleY: scaleY
-            case .opacity: opacity
-            }
-        }
-        set {
-            switch channel {
-            case .rotation: rotation = newValue
-            case .x: x = newValue
-            case .y: y = newValue
-            case .scaleX: scaleX = newValue
-            case .scaleY: scaleY = newValue
-            case .opacity: opacity = newValue
-            }
-        }
-    }
-}
-
-/// Every part's channel values, in the figure's part order.
-public struct Pose: Hashable, Sendable {
-    public var parts: [PartPose]
-
-    public init(parts: [PartPose]) {
-        self.parts = parts
-    }
-
-    /// Partway from this pose to another: 0 is this one, 1 is `other`. Rotations take the short
-    /// way round, so an arm stopped mid-stroke at -500° swings back 140°, not 500°.
-    public func blended(to other: Pose, amount: Double) -> Pose {
-        Pose(
-            parts: zip(parts, other.parts).map { start, target in
-                var mixed = start
-                for channel in Channel.allCases {
-                    var gap = target[channel] - start[channel]
-                    if channel == .rotation { gap = remainder(gap, 360) }
-                    mixed[channel] = target[channel] - gap * (1 - amount)
-                }
-                return mixed
-            })
-    }
-}
-
-/// Where a part is drawn: its art's transform from canvas to canvas, and its opacity
-/// including its parents'.
-public struct Placement: Hashable, Sendable {
-    public var transform: Transform
-    public var opacity: Double
-
-    public init(transform: Transform, opacity: Double) {
-        (self.transform, self.opacity) = (transform, opacity)
-    }
 }

@@ -61,16 +61,30 @@ final class UnlockNoticeUITests: XCTestCase {
         keepScreenshot(named: "98-notice-piece-came-in")
 
         banner.tap()
+        // The rack holds every piece of the store and its boxes hang last, so a box is far below
+        // the fold, where the lazy grid hasn't drawn it yet.
         let mystery = app.descendants(matching: .any).matching(identifier: "editor.mystery.top").firstMatch
-        XCTAssertTrue(mystery.waitForExistence(timeout: Self.wait), "the store has no locked boxes")
+        XCTAssertTrue(scroll(to: mystery, in: app), "the store has no locked boxes")
         XCTAssertTrue(mystery.label.contains("再练"), "the box says \(mystery.label)")
         let piece = app.buttons["editor.tile.hat.warmup-headphones"]
-        XCTAssertTrue(piece.waitForExistence(timeout: Self.wait), "the headphones aren't on the rack")
+        XCTAssertTrue(scroll(to: piece, in: app), "the headphones aren't on the rack")
         // The box opens, then the piece is put on.
         let worn = NSPredicate(format: "isSelected == true")
         expectation(for: worn, evaluatedWith: piece)
         waitForExpectations(timeout: Self.wait)
         keepScreenshot(named: "99-piece-unboxed")
+    }
+
+    /// Swipes the rack up (then back down) until the lazy grid has drawn `element`.
+    private func scroll(to element: XCUIElement, in app: XCUIApplication) -> Bool {
+        if element.waitForExistence(timeout: 2) { return true }
+        for direction in [true, false] {
+            for _ in 0..<24 where !element.exists {
+                if direction { app.swipeUp(velocity: .fast) } else { app.swipeDown(velocity: .fast) }
+            }
+            if element.exists { return true }
+        }
+        return element.waitForExistence(timeout: Self.wait)
     }
 
     private func keepScreenshot(named name: String) {

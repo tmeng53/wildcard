@@ -201,3 +201,12 @@ func datesKeepEveryMillisecond(millis: Int64) throws {
             of: createdAt.description, with: moment.description))
     #expect(read.createdAt == moment)
 }
+
+@Test func aBackfillReadsTheDayItWasPostedApart() throws {
+    let read = try decode(saved(#""postedDay":"2025-10-19","kind":"healthyMeal","meal":{}"#))
+    #expect(read.day.description == "2025-10-17")
+    #expect(read.postedDay.description == "2025-10-19")
+    #expect(read.isBackfill)
+    // A server from before 补打卡 sends none: the post was made the day it counts for.
+    #expect(try decode(saved(#""kind":"healthyMeal","meal":{}"#)).postedDay.description == "2025-10-17")
+}

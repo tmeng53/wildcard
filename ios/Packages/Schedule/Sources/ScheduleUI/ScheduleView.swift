@@ -10,10 +10,11 @@ import SwiftUI
 /// 出赛表: the week as a poster the member plans on. Chips pick the week (back to the one they
 /// joined, this week, next week) or the 每周模板, on a graphite poster of its own; 存图 saves a
 /// week's poster to Photos; under the poster sit the picks for the day in hand, next week's
-/// 饮食小目标, or the counts. The tab bar is the app's:
-/// this screen keeps to the safe area the app gives it and draws no bar.
+/// 饮食小目标, or the counts. It opens inside 我, whose tab bar stays: this screen keeps to the
+/// safe area the app gives it and draws no bar; 返回 (`back`) and a swipe go back to 我.
 public struct ScheduleView: View {
     let model: ScheduleModel
+    let back: () -> Void
     @Environment(\.sceneTheme) private var theme
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -30,11 +31,12 @@ public struct ScheduleView: View {
     /// How long 没存上 stays before it goes.
     private let failedNoteHold: Duration = .seconds(5)
 
-    public init(model: ScheduleModel) {
+    public init(model: ScheduleModel, back: @escaping () -> Void) {
         self.model = model
+        self.back = back
     }
 
-    private var store: ScheduleStore { model.store }
+    var store: ScheduleStore { model.store }
 
     public var body: some View {
         ScrollViewReader { scroller in
@@ -107,6 +109,7 @@ public struct ScheduleView: View {
             }
             store.dismissTemplateOffer()
         }
+        .swipesBack(perform: back)
         .task { await model.load() }
         // Today's sport changed (a 练了 read in, today's plan saved): the character follows it.
         .onChange(of: store.todaysActivity) { model.followToday() }
@@ -180,7 +183,7 @@ public struct ScheduleView: View {
         .accessibilityIdentifier("schedule.poster")
     }
 
-    @MainActor private func save() {
+    @MainActor func save() {
         guard let sheet = store.sheet else { return }
         let still = SchedulePoster(content: content(sheet).forSaving, player: model.player, still: model.keyPose)
         model.sharePoster { SchedulePoster.picture(of: still, theme: theme, locale: locale) }
@@ -222,22 +225,6 @@ public struct ScheduleView: View {
         case (.past, let sheet?), (nil, let sheet?): WeekAwards(titles: sheet.titles)
         default: EmptyView()
         }
-    }
-
-    /// 常用运动: the sports in the week on the poster, in the order planned.
-    private var recentActivities: [Activity] {
-        var seen: [Activity] = []
-        for case .train(let activity?) in store.board?.days ?? [] where !seen.contains(activity) {
-            seen.append(activity)
-        }
-        return seen
-    }
-
-    private var selectedActivity: Activity {
-        guard let board = store.board, case .selected(let index) = board.focus,
-            case .train(let activity?) = board.days[index]
-        else { return .sport("run") }
-        return activity
     }
 
     private func fuelPicks(_ sheet: WeekSheet) -> some View {
@@ -307,72 +294,20 @@ public struct ScheduleView: View {
 }
 
 extension ScheduleView {
-    // MARK: Top bar
-
-    fileprivate var topBar: some View {
-        HStack(spacing: Space.xs) {
-            CategoryBar(pageChips, selection: pageSelection)
-                .frame(maxWidth: .infinity)
-            // The 每周模板 is no one week's poster to share.
-            if !store.showsTemplate {
-                saveButton
-            }
+    /// 常用运动: the sports in the week on the poster, in the order planned.
+    private var recentActivities: [Activity] {
+        var seen: [Activity] = []
+        for case .train(let activity?) in store.board?.days ?? [] where !seen.contains(activity) {
+            seen.append(activity)
         }
+        return seen
     }
 
-    private var saveButton: some View {
-        Button {
-            save()
-        } label: {
-            Label {
-                Text("存图", bundle: .module)
-            } icon: {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
-            }
-        }
-        .buttonStyle(SecondaryButtonStyle())
-        .disabled(store.sheet == nil || model.saving != .idle && model.saving != .failed)
-        .accessibilityIdentifier("schedule.save")
-    }
-
-    /// The weeks, then the 每周模板 after a hairline.
-    fileprivate var pageChips: [CategoryBarItem<SchedulePage>] {
-        guard !store.weeks.isEmpty else { return [] }
-        return weekChips + [
-            CategoryBarItem(
-                id: .template, title: Text("每周模板", bundle: .module), systemImage: WeekPosterHeading.templateSymbol,
-                startsGroup: true, accessibilityIdentifier: "schedule.template")
-        ]
-    }
-
-    fileprivate var weekChips: [CategoryBarItem<SchedulePage>] {
-        let thisWeek = store.today?.weekStart
-        return store.weeks.map { week in
-            let title: Text =
-                if week == thisWeek {
-                    Text("本周", bundle: .module)
-                } else if let thisWeek, week > thisWeek {
-                    Text("下周", bundle: .module)
-                } else {
-                    Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
-                }
-            return CategoryBarItem(id: .week(week), title: title, accessibilityIdentifier: "schedule.week.\(week)")
-        }
-    }
-
-    private var pageSelection: Binding<SchedulePage> {
-        Binding(
-            get: {
-                store.showsTemplate
-                    ? .template : .week(store.shownWeek ?? store.today?.weekStart ?? LocalDay(at: .now, in: .current))
-            },
-            set: { page in
-                switch page {
-                case .week(let week): model.show(week)
-                case .template: model.showTemplate()
-                }
-            })
+    private var selectedActivity: Activity {
+        guard let board = store.board, case .selected(let index) = board.focus,
+            case .train(let activity?) = board.days[index]
+        else { return .sport("run") }
+        return activity
     }
 
     @ViewBuilder

@@ -73,7 +73,8 @@ extension WeekStory {
             self.init(
                 status: .ready, titles: titles,
                 frozen: Frozen(
-                    squad: ready.squad, week: ready.week, scene: ready.scene.rawValue, members: ready.members,
+                    squad: ready.squad, week: ready.week, scene: ready.scene.rawValue, sceneId: ready.sceneId,
+                    members: ready.members,
                     podium: ready.podium, myWeek: ready.myWeek, hottest: ready.hottest, meals: ready.meals,
                     bestDisclaimer: ready.bestDisclaimer, ending: ready.ending))
         case .case2(let pending):
@@ -81,6 +82,7 @@ extension WeekStory {
                 status: .pending, titles: [],
                 frozen: Frozen(
                     squad: pending.squad, week: pending.week, scene: pending.scene.rawValue,
+                    sceneId: pending.sceneId,
                     members: pending.members, podium: pending.podium, myWeek: pending.myWeek,
                     hottest: pending.hottest, meals: pending.meals, bestDisclaimer: pending.bestDisclaimer,
                     ending: pending.ending))
@@ -92,6 +94,8 @@ extension WeekStory {
         let squad: Components.Schemas.StorySquad
         let week: Components.Schemas.StoryWeek
         let scene: String
+        /// The scene by its id; `scene` is the five-scene field older builds read.
+        let sceneId: String
         let members: [Components.Schemas.StoryMember]
         let podium: Components.Schemas.StoryPodium?
         let myWeek: Components.Schemas.StoryMyWeek?
@@ -103,7 +107,8 @@ extension WeekStory {
 
     private init?(status: Status, titles: [MemberTitles], frozen: Frozen) {
         guard let squad = UUID(uuidString: frozen.squad.id), let monday = try? LocalDay(frozen.week.from),
-            let sunday = try? LocalDay(frozen.week.to), let scene = SceneTheme(rawValue: frozen.scene),
+            let sunday = try? LocalDay(frozen.week.to),
+            let scene = SceneTheme(rawValue: frozen.sceneId) ?? SceneTheme(rawValue: frozen.scene),
             let squadmates = Self.squadmates(frozen.members)
         else { return nil }
         func first(_ member: MemberID) -> MemberTitles.Title? {

@@ -132,3 +132,14 @@ export class SceneWeekClosedError extends AppError {
     super(`The week of ${week} isn’t open for picking.`);
   }
 }
+
+/** Thrown when a pick names a scene that isn't open in the week: unknown, retired or out of season. */
+export class SceneNotOpenError extends AppError {
+  override readonly name = 'SceneNotOpenError';
+  readonly reason = 'SCENE_NOT_OPEN';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(readonly scene: string) {
+    super(`${scene} isn’t a scene squads can train on this week.`);
+  }
+}

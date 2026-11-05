@@ -3345,6 +3345,375 @@
           }
         }
       }
+    },
+    "球衣号码 %@": {
+      "comment": "The button in the character editor opened from 我 that opens the jersey number picker, with the member's number (00 to 99), or no number yet.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jersey number %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "球衣背號 %@"
+          }
+        }
+      }
+    },
+    "POWDER DAY": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "POWDER DAY"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "POWDER DAY"
+          }
+        }
+      }
+    },
+    "粉雪日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Powder day"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粉雪日"
+          }
+        }
+      }
+    },
+    "冬季运动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Winter sports"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬季運動"
+          }
+        }
+      }
+    },
+    "雪道见，压个弯。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See you on the slope. Carve one."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "雪道見，壓個彎。"
+          }
+        }
+      }
+    },
+    "冬季限定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Winter only"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冬季限定"
+          }
+        }
+      }
+    },
+    "三文鱼滑雪服": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salmon ski jacket"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三文魚滑雪服"
+          }
+        }
+      }
+    },
+    "吞拿鱼滑雪服": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuna ski jacket"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "吞拿魚滑雪服"
+          }
+        }
+      }
+    },
+    "玉子烧滑雪服": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tamago ski jacket"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "玉子燒滑雪服"
+          }
+        }
+      }
+    },
+    "甜虾滑雪服": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sweet shrimp ski jacket"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "甜蝦滑雪服"
+          }
+        }
+      }
+    },
+    "紫菜卷滑雪服": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maki ski jacket"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "紫菜捲滑雪服"
+          }
+        }
+      }
+    },
+    "米饭雪裤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rice snow pants"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "米飯雪褲"
+          }
+        }
+      }
+    },
+    "海苔雪裤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nori snow pants"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "海苔雪褲"
+          }
+        }
+      }
+    },
+    "雪裤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snow pants"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "雪褲"
+          }
+        }
+      }
+    },
+    "三文鱼雪盔": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salmon ski helmet"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三文魚雪盔"
+          }
+        }
+      }
+    },
+    "鱼子毛线帽": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ikura beanie"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "魚子毛線帽"
+          }
+        }
+      }
+    },
+    "海胆毛线帽": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uni beanie"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "海膽毛線帽"
+          }
+        }
+      }
+    },
+    "雪盔": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ski helmet"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "雪盔"
+          }
+        }
+      }
+    },
+    "青花鱼雪靴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mackerel snow boots"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "青花魚雪靴"
+          }
+        }
+      }
+    },
+    "手卷雪靴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temaki snow boots"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手捲雪靴"
+          }
+        }
+      }
+    },
+    "毛豆雪靴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edamame snow boots"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毛豆雪靴"
+          }
+        }
+      }
+    },
+    "炸虾雪靴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ebi fry snow boots"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "炸蝦雪靴"
+          }
+        }
+      }
+    },
+    "海苔围巾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nori scarf"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "海苔圍巾"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

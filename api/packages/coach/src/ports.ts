@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import type { Coach, CoachId } from './domain/coach.js';
 import type { StoredPath } from './domain/memory.js';
 import type { CoachModel, CoachSettings, MemberId, SquadId } from './domain/settings.js';
+import type { MemberFacts } from './domain/member-facts.js';
 import type { CoachAnswer, CoachEmoji, CoachReply } from './domain/reply.js';
 import type { SquadWeek } from './domain/squad-week.js';
 import type { NewWake, TokenUsage, Wake, WakeStep } from './domain/wake.js';
@@ -39,9 +40,25 @@ export interface CoachTool {
   readonly description: string;
   /** Its arguments, which the model is held to. */
   readonly parameters: z.ZodObject;
-  /** Runs it with the model's arguments, answering in words the model reads next. */
-  run(input: unknown): Promise<string>;
+  /** Runs it with the model's arguments, answering in words, or words and pictures, the model reads next. */
+  run(input: unknown): Promise<ToolAnswer>;
 }
+
+/** What a tool answers: words, or words with pictures the model looks at, by their URLs. */
+export type ToolAnswer = string | { readonly text: string; readonly images: readonly string[] };
+
+/**
+ * Short-lived URLs the model's provider can fetch a check-in's photos from, by their storage
+ * paths, in the same order.
+ */
+export type CoachPhotoUrls = (paths: readonly string[]) => Promise<readonly string[]>;
+
+/** What the coach can look up about these members: their counts, titles and this week's plan. */
+export type CoachMemberFacts = (input: {
+  readonly members: readonly string[];
+  /** The Monday of the week whose plan to give. */
+  readonly weekStart: string;
+}) => Promise<readonly MemberFacts[]>;
 
 /** How a wake's run ended, with the tokens it used either way. */
 export type AgentRun =

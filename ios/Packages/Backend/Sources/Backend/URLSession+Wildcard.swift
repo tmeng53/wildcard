@@ -16,4 +16,12 @@ extension URLSession {
 
     /// Seconds without an answer before a request fails: `Loading.giveUpAfter` in the design system.
     public static let requestTimeout: TimeInterval = 15
+
+    /// The session for the stream of live events (`GET /me/events`): it hears a heartbeat every
+    /// 25 seconds while nothing happens, so it gives up only after a minute of silence.
+    static let live: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 60
+        return URLSession(configuration: configuration)
+    }()
 }

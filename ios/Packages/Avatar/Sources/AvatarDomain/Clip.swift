@@ -1,16 +1,17 @@
 import Foundation
 
 /// What a track moves. Rotation is in degrees, clockwise; x and y are in canvas points,
-/// added to the rest pose; scales and opacity are factors.
+/// added to the rest pose; scales and opacity are factors. Bend is in degrees, clockwise,
+/// at an arm's elbow (`Rig.Elbow`): only a part with one bends.
 public enum Channel: String, Hashable, Sendable, Codable, CaseIterable {
     // swiftlint:disable:next identifier_name - x and y are the clip files' own channel names.
-    case rotation, x, y, scaleX, scaleY, opacity
+    case rotation, x, y, scaleX, scaleY, opacity, bend
 
     /// An accent's value that leaves a part as it is.
     var rest: Double {
         switch self {
         case .scaleX, .scaleY: 1
-        case .rotation, .x, .y, .opacity: 0
+        case .rotation, .x, .y, .opacity, .bend: 0
         }
     }
 }

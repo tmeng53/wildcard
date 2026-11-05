@@ -82,6 +82,15 @@ public enum Palette {
     public static let climbingText = SRGBColor(red: 0x7A, green: 0x3E, blue: 0x24)
     public static let climbingFloor = SRGBColor(red: 0xEB, green: 0xDD, blue: 0xD5)
 
+    // MARK: Ski scene (deep glacier navy, 冬季限定)
+
+    public static let skiSignature = SRGBColor(red: 0x16, green: 0x38, blue: 0x4D)
+    /// Ice blue, not white: the text on the ski scene's navy.
+    public static let skiOnSignature = SRGBColor(red: 0xD6, green: 0xF1, blue: 0xFB)
+    public static let skiWash = SRGBColor(red: 0xEA, green: 0xF7, blue: 0xFD)
+    public static let skiText = SRGBColor(red: 0x16, green: 0x38, blue: 0x4D)
+    public static let skiFloor = SRGBColor(red: 0xD7, green: 0xEC, blue: 0xF6)
+
     // MARK: Kraft: the carton a scene nobody in the squad has opened comes in (scene pick)
 
     /// The carton's sides.

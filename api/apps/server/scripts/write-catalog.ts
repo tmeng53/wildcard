@@ -4,17 +4,32 @@
 import { writeFileSync } from 'node:fs';
 
 import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-drafts';
+import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
+import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { z } from 'zod';
 
 import { createDatabase } from '../src/adapters/postgres.js';
-import { catalog, disclaimerDiceSection, sportsSection } from '../src/routes/catalog.js';
+import {
+  catalog,
+  disclaimerDiceSection,
+  scenesSection,
+  sportsSection,
+  switchesSection,
+} from '../src/routes/catalog.js';
 
 const db = createDatabase(z.string().parse(process.env.DATABASE_URL));
 const app = catalog({
   sections: [
     sportsSection(createSports({ store: createPostgresSportStore(db) })),
     disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+    scenesSection(
+      createScenes({
+        store: createPostgresSceneStore(db),
+        switches: () => createSwitches({ store: createPostgresSwitchStore(db) }).states(),
+      }),
+    ),
+    switchesSection(createSwitches({ store: createPostgresSwitchStore(db) })),
   ],
   clock: () => new Date(),
   publicRoutes: {

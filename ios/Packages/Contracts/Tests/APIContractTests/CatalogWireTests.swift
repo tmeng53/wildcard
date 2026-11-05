@@ -7,7 +7,7 @@ import Testing
 /// and on a dice line that this build has never heard of. The build still reads what it knows.
 private let newer = #"""
     {"version": 1,
-     "scenes": {"pool": {"icon": "drop"}},
+     "venues": {"pool": {"icon": "drop"}},
      "sports": {
        "categories": [{"id": "racket", "names": {"zhHans": "球拍", "en": "Racket", "zhHant": "球拍"},
          "sports": [{"id": "padel", "names": {"zhHans": "板式网球", "en": "Padel", "zhHant": "板式網球"},
@@ -39,4 +39,15 @@ private let newer = #"""
         sports: SportCatalog(categories: [], signUpCommon: [], checkInQuick: []),
         diceLines: [CatalogNames(simplifiedChinese: "累了", english: "Tired", traditionalChinese: "累了")])
     #expect(AppCatalog(wire, otherwise: own) == own)
+}
+
+/// The bundled catalog carries the winter switch the 雪场 and its store follow.
+@Test func theBundledCatalogHasTheWinterSwitch() throws {
+    let text = try String(
+        contentsOf: URL(filePath: #filePath).deletingLastPathComponent()
+            .appending(path: "../../../Backend/Sources/Backend/Resources/catalog.json"), encoding: .utf8)
+    let wire = try JSONDecoder().decode(Components.Schemas.Catalog.self, from: Data(text.utf8))
+    let switches = AppCatalog(wire, otherwise: .empty).switches
+    #expect(Array(switches.keys) == ["winter"])
+    #expect(switches["winter"] == .schedule(start: MonthDay(month: 11, day: 15), end: MonthDay(month: 3, day: 31)))
 }

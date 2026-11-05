@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -55,7 +56,7 @@ struct WhoPanel: View {
                     }
                     ForEach(shown, id: \.member) { response in
                         HStack(spacing: Space.s) {
-                            Face(player: model.head(of: response.member), size: Self.head)
+                            MemberHead(player: model.head(of: response.member), size: Self.head)
                             Text(verbatim: name(response.member))
                                 .typeStyle(TypeRamp.body)
                                 .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -79,7 +80,7 @@ struct WhoPanel: View {
 
     private func coachRow(_ coach: CoachSpeaker, _ emoji: Emoji) -> some View {
         HStack(spacing: Space.s) {
-            CoachFace(player: model.coachPlayer(coach.id), emoji: nil, size: Self.head)
+            MemberHead(player: model.coachPlayer(coach.id), size: Self.head, figure: .coach)
             Text(verbatim: coach.name)
                 .typeStyle(TypeRamp.body)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
