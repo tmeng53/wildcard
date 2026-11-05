@@ -159,9 +159,12 @@ public final class CharacterEditorModel {
     /// only the draft's, so leaving without saving keeps the look the member had.
     public func tryOn(_ piece: String) {
         tab = .outfit
-        guard let slot = wardrobe.first(where: { $0.pieces.contains(piece) })?.slot,
-            draft.picks.variants[slot] != piece
-        else { return }
+        guard let slot = wardrobe.first(where: { $0.pieces.contains(piece) })?.slot else { return }
+        // Already worn, it isn't put on again (a second tap takes it off), but its slot still shows.
+        guard draft.picks.variants[slot] != piece else {
+            picked = slot
+            return
+        }
         wear(piece, for: slot)
     }
 
