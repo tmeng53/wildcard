@@ -364,16 +364,24 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(today.refused.isEmpty)
 }
 
-@MainActor @Test func aRestDayInThePlanOffersNoLeave() async throws {
+@MainActor @Test func aRestDayInThePlanStillOffersLeaveToday() async throws {
     var today = sampleToday()
     today.members[1] = entry(myID, .notCheckedIn, plannedRest: true)
     let backend = ScriptedBackend()
     await backend.set(server: sampleHome(today: today))
     let resting = store(backend)
     await resting.load()
-    #expect(resting.restsToday)
+    let day = try #require(resting.day)
+    #expect(!resting.disclaimerBlockedDays.contains(day))
+}
 
-    let training = store(ScriptedBackend())
-    await training.load()
-    #expect(!training.restsToday)
+@MainActor @Test func todayIsClosedToLeaveOnceTrained() async throws {
+    var today = sampleToday()
+    today.members[1] = entry(myID, .trained, plannedRest: true)
+    let backend = ScriptedBackend()
+    await backend.set(server: sampleHome(today: today))
+    let trained = store(backend)
+    await trained.load()
+    let day = try #require(trained.day)
+    #expect(trained.disclaimerBlockedDays.contains(day))
 }
