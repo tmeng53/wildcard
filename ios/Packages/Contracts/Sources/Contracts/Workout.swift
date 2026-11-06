@@ -46,10 +46,18 @@ public struct Workout: Hashable, Sendable, Codable {
         return nil
     }
 
+    /// The 成绩条 cell the chart shows over time: 趟数 for a lap chart, 平均心率 for a heart-rate
+    /// one; nil without a chart. Striking it takes the chart off too.
+    public var chartCell: WorkoutCell? {
+        guard tile == .chart else { return nil }
+        return series?.laps?.isEmpty == false ? .laps : .averageHeartRate
+    }
+
     /// As posted: the numbers not `struck`, and the tile's data only where the tile is kept,
-    /// at `tilePosition`.
+    /// at `tilePosition`, and its chart not struck through `chartCell`.
     public func posting(struck: Set<WorkoutCell>, tilePosition: Int?) -> Workout {
-        let keepsTile = tilePosition != nil && tile != nil
+        let chartStruck = chartCell.map(struck.contains) ?? false
+        let keepsTile = tilePosition != nil && tile != nil && !chartStruck
         return Workout(
             source: source, startedAt: startedAt, endedAt: endedAt, summary: summary.without(struck),
             series: keepsTile && tile == .chart ? series : nil,

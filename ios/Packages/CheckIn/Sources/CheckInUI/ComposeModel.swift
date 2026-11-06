@@ -36,6 +36,8 @@ public final class ComposeModel {
     private(set) var workout: Workout?
     /// The workout's numbers struck out on the 成绩条, which aren't posted.
     private(set) var struck: Set<WorkoutCell> = []
+    /// Where the chart was when striking its number took it off, to put it back there.
+    @ObservationIgnored private var chartTakenAt: Int?
     /// Today's workouts from Health, newest first, for a new 训练's chips; empty when Health
     /// isn't connected or has none.
     let healthWorkouts: [TodaysWorkout]
@@ -187,22 +189,27 @@ public final class ComposeModel {
             return
         }
         guard !(healthWorkouts.first { $0.id == imported.id }?.isPosted ?? false) else { return }
-        tiles.removeAll { if case .workout = $0 { true } else { false } }
+        tiles.removeAll(where: \.isWorkout)
         workout = imported.workout
         struck = sharing.struck
+        chartTakenAt = nil
         if let sport = imported.activity { activity = sport }
         minutes = imported.minutes
         if let tile = imported.workout.tile, sharing.keepsTile(of: imported.workout) {
             tiles.insert(.workout(tile), at: 0)
+        } else if imported.workout.chartCell != nil {
+            // 设置 struck what the chart shows; restoring that number brings the chart.
+            chartTakenAt = 0
         }
     }
 
     /// Back to a 训练 made by hand: the sport, the 成绩条 and the tile go, the minutes' pills
     /// come back; the line and photos stay.
     func letGoOfWorkout() {
-        tiles.removeAll { if case .workout = $0 { true } else { false } }
+        tiles.removeAll(where: \.isWorkout)
         workout = nil
         struck = []
+        chartTakenAt = nil
         activity = nil
         minutes = nil
     }
@@ -211,6 +218,15 @@ public final class ComposeModel {
     func toggle(_ cell: WorkoutCell) {
         guard cell != .duration else { return }
         if struck.contains(cell) { struck.remove(cell) } else { struck.insert(cell) }
+        guard cell == workout?.chartCell else { return }
+        // The chart shows the number struck, so it goes with it, and comes back where it was.
+        if struck.contains(cell), let index = tiles.firstIndex(where: \.isWorkout) {
+            tiles.remove(at: index)
+            chartTakenAt = index
+        } else if let index = chartTakenAt, let tile = workout?.tile {
+            tiles.insert(.workout(tile), at: min(index, tiles.count))
+            chartTakenAt = nil
+        }
     }
 
     /// The workout as it is to be posted: the numbers not struck, the tile where the row has it.

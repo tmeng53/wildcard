@@ -43,6 +43,16 @@ final class HealthUITests: XCTestCase {
             "letting go didn't bring the minutes back")
         XCTAssertFalse(map.exists, "the tile stayed after letting go")
 
+        // The yoga's heart-rate chart goes when its 平均心率 is struck, and comes back with it.
+        app.buttons["compose.health.sample-yoga"].tap()
+        let yogaHeart = app.buttons["strip.averageHeartRate"]
+        XCTAssertTrue(yogaHeart.waitForExistence(timeout: Self.wait), "the yoga has no 平均心率")
+        XCTAssertTrue(map.exists, "the yoga's chart isn't in the photo row")
+        yogaHeart.tap()
+        XCTAssertTrue(map.waitForNonExistence(timeout: Self.wait), "striking 平均心率 left the chart")
+        yogaHeart.tap()
+        XCTAssertTrue(map.waitForExistence(timeout: Self.wait), "restoring 平均心率 didn't bring the chart back")
+
         // The run, with its heart rate struck out, posts.
         app.buttons["compose.health.sample-run"].tap()
         let heart = app.buttons["strip.averageHeartRate"]

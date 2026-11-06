@@ -28,6 +28,27 @@ private let run = Workout(
     #expect(posted.tilePosition == nil)
 }
 
+@Test func strikingWhatTheChartShowsTakesTheChartOff() {
+    let beats = [HeartRatePoint(seconds: 0, bpm: 120), HeartRatePoint(seconds: 60, bpm: 150)]
+    let yoga = Workout(
+        source: WorkoutSource(provider: WorkoutSource.appleHealth, id: "Y1"),
+        startedAt: Timestamp(millisecondsSince1970: 0), endedAt: Timestamp(millisecondsSince1970: 60_000),
+        summary: WorkoutSummary(durationSec: 60, avgHr: 135, maxHr: 150), series: WorkoutSeries(heartRate: beats))
+    #expect(yoga.chartCell == .averageHeartRate)
+    #expect(yoga.posting(struck: [.maxHeartRate], tilePosition: 1).series == yoga.series)
+    let struck = yoga.posting(struck: [.averageHeartRate], tilePosition: 1)
+    #expect(struck.series == nil)
+    #expect(struck.tilePosition == nil)
+    let swim = Workout(
+        source: WorkoutSource(provider: WorkoutSource.appleHealth, id: "S1"),
+        startedAt: Timestamp(millisecondsSince1970: 0), endedAt: Timestamp(millisecondsSince1970: 60_000),
+        summary: WorkoutSummary(durationSec: 60, avgHr: 135, laps: 2, poolLengthM: 50),
+        series: WorkoutSeries(heartRate: beats, laps: [30, 30]))
+    #expect(swim.chartCell == .laps)
+    #expect(swim.posting(struck: [.averageHeartRate], tilePosition: 1).series == swim.series)
+    #expect(run.chartCell == nil)
+}
+
 @Test func lapsGoWithTheirPoolLength() {
     let swim = WorkoutSummary(durationSec: 2400, laps: 24, poolLengthM: 50)
     #expect(swim.without([.laps]) == WorkoutSummary(durationSec: 2400))

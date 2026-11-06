@@ -14,6 +14,11 @@ public enum ComposedTile: Hashable, Sendable, Identifiable {
         }
     }
 
+    /// The workout's map or chart, not a photo.
+    public var isWorkout: Bool {
+        if case .workout = self { true } else { false }
+    }
+
     /// A saved 训练's tiles in its order; a meal's, a 请假条's or a manual 训练's photos.
     public static func of(_ checkIn: CheckIn) -> [ComposedTile] {
         guard case .trained(let training) = checkIn.entry else { return ComposedPhoto.of(checkIn).map(Self.photo) }
@@ -34,7 +39,7 @@ extension [ComposedTile] {
 
     /// Where the workout's tile is, 1 being the cover; nil when it was taken off.
     public var workoutTilePosition: Int? {
-        firstIndex { if case .workout = $0 { true } else { false } }.map { $0 + 1 }
+        firstIndex(where: \.isWorkout).map { $0 + 1 }
     }
 
     /// Moves the tile with `id` to where `target` is, as a drag and drop does: dropped on a tile
