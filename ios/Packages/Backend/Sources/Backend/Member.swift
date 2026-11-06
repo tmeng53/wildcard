@@ -9,6 +9,8 @@ public struct Member: Hashable, Sendable {
     public let profile: Profile?
     /// When the profile was first saved, right after signing up. Nil until then.
     public let joinedAt: Timestamp?
+    /// Whether the member is on the admin list: the app shows them tools only admins need.
+    public let isAdmin: Bool
 }
 
 /// What the member tells the API about themselves.

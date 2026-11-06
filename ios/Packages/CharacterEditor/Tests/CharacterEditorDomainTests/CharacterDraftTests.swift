@@ -49,20 +49,43 @@ import Testing
     #expect(editing.outfit.variants["hair"] == "bob")
 }
 
-/// An animal's face comes with its coat, so a person's brows and cheeks stay with the person.
-@Test func animalsWearNoPersonsFace() {
-    var editing = draft(Outfit(["body": "peach", "hair": "bob", "brows": "soft", "cheeks": "rosy"]))
+/// Animals pick a face as people do, and a person's face goes with them into a coat.
+@Test func animalsWearAFace() {
+    var editing = draft(Outfit(["body": "peach", "hair": "bob", "brows": "soft", "cheeks": "freckles"]))
     editing.pick("cat", for: "body")
-    #expect(editing.outfit == Outfit(["body": "cat"]))
-    editing.pick("peach", for: "body")
     #expect(editing.outfit.variants["brows"] == "soft")
+    #expect(editing.outfit.variants["cheeks"] == "freckles")
+    #expect(changed(&editing) { $0.pick("sparkle", for: "eyes") })
+    #expect(changed(&editing) { $0.pick("cat", for: "mouth") })
+    #expect(changed(&editing) { $0.pick(nil, for: "cheeks") })
+    #expect(
+        editing.outfit
+            == Outfit(["body": "cat", "brows": "soft", "eyes": "sparkle", "mouth": "cat"]))
+    editing.pick("shiba", for: "body")
+    #expect(editing.outfit.variants["cheeks"] == nil)
 }
 
-/// A body the editor doesn't list is no person: it wears no hair or face.
+/// A person turned into an animal without cheeks gets an animal's blush, which undo takes back.
+@Test func aPersonTurnedAnimalGetsRosyCheeks() {
+    var editing = draft(Outfit(["body": "peach", "hair": "bob"]))
+    editing.pick("cat", for: "body")
+    #expect(editing.outfit.variants["cheeks"] == "rosy")
+    editing.undo()
+    #expect(editing.outfit.variants["cheeks"] == nil)
+    // A golden's and a lop's coats keep their own blush, so they get none on top.
+    for coat in ["golden", "lop"] {
+        var floppy = draft(Outfit(["body": "peach", "hair": "bob"]))
+        floppy.pick(coat, for: "body")
+        #expect(floppy.outfit.variants["cheeks"] == nil)
+    }
+}
+
+/// A body the editor doesn't list is no person: it wears no hair, and keeps its face.
 @Test func anUnlistedBodyWearsNoHair() {
     let editing = draft(Outfit(["body": "robot", "hair": "buzz", "brows": "bold"]))
     #expect(!editing.wearsHair)
-    #expect(editing.outfit == Outfit(["body": "robot"]))
+    #expect(editing.outfit.variants["hair"] == nil)
+    #expect(editing.outfit.variants["brows"] == "bold")
 }
 
 /// Brows in the hair's color follow it when the hair is dyed; brows of their own color stay.

@@ -61,6 +61,11 @@ public struct WeekGlance: Hashable, Sendable {
         (self.number, self.days) = (number, days)
     }
 
+    /// The days left in the week, today included (这周还有 N 天); nil when no day is today.
+    public var daysLeft: Int? {
+        days.firstIndex(where: \.isToday).map { days.count - $0 }
+    }
+
     /// The week as the plan has it and the days that had a 练了: a 练了 marks its day whatever
     /// the plan said.
     public init(number: Int, plan: [PlanDay], trainedDays: Set<Int>, today: Int?) {
@@ -92,6 +97,9 @@ public struct MeOverview: Hashable, Sendable {
     /// This week's days for the 出赛表 tile; nil when they couldn't be read (the tile then shows
     /// the count alone).
     public var weekGlance: WeekGlance?
+    /// The last weeks of training for 训练记录; nil when they couldn't be read (the heatmap is
+    /// left out).
+    public var record: TrainingRecord?
     /// Nil before the member is in a squad. The app shows one squad, though the API allows three.
     public var squadName: String?
     /// The one daily push at 6pm with the squad's progress.
@@ -117,9 +125,11 @@ public struct MeOverview: Hashable, Sendable {
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
         dailyPushOn: Bool, coachPushOn: Bool = true, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil,
         board: TitleBoard = .empty,
-        unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], weekGlance: WeekGlance? = nil
+        unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], weekGlance: WeekGlance? = nil,
+        record: TrainingRecord? = nil
     ) {
         self.weekGlance = weekGlance
+        self.record = record
         self.character = character
         self.joinedAt = joinedAt
         self.counts = counts

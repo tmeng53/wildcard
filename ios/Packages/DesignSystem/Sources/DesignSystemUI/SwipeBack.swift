@@ -4,11 +4,13 @@ import SwiftUI
 import UIKit
 
 extension View {
-    /// A page with a 返回 button also goes back on a swipe right from anywhere on it, as the
-    /// system's own pages do on iOS 26: the page follows the finger and goes back once it is past
-    /// a third of the way across or flung, else it springs back. Only a rightward, mostly
-    /// horizontal drag starts it; a vertical scroll scrolls as before, and a sideways list that
-    /// can still scroll back takes the drag first.
+    /// A sign-up step, which has no navigation bar, also goes back to the step before on a swipe
+    /// right from anywhere on it: the step follows the finger and goes back once it is past a
+    /// third of the way across or flung, leaving from where the finger let go, else it springs
+    /// back. Only a rightward, mostly horizontal drag starts it; a vertical scroll scrolls as
+    /// before, and a sideways list that can still scroll back takes the drag first. Every other
+    /// page that opens over another is pushed on a NavigationStack (`pushedPage`), whose swipe is
+    /// the system's.
     public func swipesBack(isEnabled: Bool = true, perform back: @escaping () -> Void) -> some View {
         modifier(SwipeBack(isEnabled: isEnabled, back: back))
     }
@@ -34,14 +36,16 @@ private struct SwipeBack: ViewModifier {
                     offset = moved
                 } ended: { moved, speed, width in
                     let goes = moved > width * Self.distance || (speed > Self.fling && moved > 0)
-                    // The offset always settles back to 0, also when it goes back: a page that stays
-                    // on screen (商店街 leaving a store for the street, a 简历 under another) would
-                    // otherwise keep the finger's offset and sit half off screen, its 返回 out of
-                    // reach. A page that leaves takes its own transition either way.
-                    withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
-                        if goes { back() }
-                        offset = 0
+                    let settle = Animation.wildcard(Motion.page, reduceMotion: reduceMotion)
+                    guard goes else {
+                        withAnimation(settle) { offset = 0 }
+                        return
                     }
+                    // A step that goes leaves on its own transition from where the finger let go;
+                    // snapping it back to 0 in the same change would jerk it left before it slides
+                    // out. One that stays (sign-up busy saving) springs back a moment later.
+                    withAnimation(settle) { back() }
+                    Task { @MainActor in withAnimation(settle) { offset = 0 } }
                 })
     }
 }

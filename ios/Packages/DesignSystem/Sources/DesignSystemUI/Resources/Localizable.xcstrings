@@ -923,22 +923,6 @@
         }
       }
     },
-    "场景上：实心白卡片": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On the scene: solid white cards"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "場景上：實心白卡片"
-          }
-        }
-      }
-    },
     "场景底": {
       "localizations": {
         "en": {
@@ -3367,6 +3351,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "天"
+          }
+        }
+      }
+    },
+    "收起小队卡片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fold the squad card"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起小隊卡片"
+          }
+        }
+      }
+    },
+    "展开小队卡片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the squad card"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "展開小隊卡片"
+          }
+        }
+      }
+    },
+    "%@，本周 %lld/%lld 天；我这周 %lld/%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$lld/%3$lld days this week; my week %4$lld/%5$lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@，本週 %lld/%lld 天；我這週 %lld/%lld"
+          }
+        }
+      }
+    },
+    "场景上：毛玻璃卡片，可收起": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On a scene: a glass card that folds"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "場景上：毛玻璃卡片，可收起"
           }
         }
       }

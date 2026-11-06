@@ -11,8 +11,8 @@ import Observation
 public enum EditorTab: String, CaseIterable, Hashable, Sendable {
     case look, hair, face, outfit, prop, persona
 
-    /// Whether the tab dresses a person only: an animal's face and coat come together.
-    var isForPeople: Bool { self == .hair || self == .face }
+    /// Whether the tab dresses a person only: animals wear no hair.
+    var isForPeople: Bool { self == .hair }
 }
 
 /// The one move a change plays: the look's (the held prop's move, else the persona's cheer),

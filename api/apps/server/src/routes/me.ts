@@ -1,4 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { Admins } from '@wildcard/admins';
 import {
   Catchphrase,
   JerseyNumber,
@@ -66,6 +67,11 @@ export const Me = z
       })
       .nullable()
       .meta({ description: 'Null until the member first saves one, right after signing up.' }),
+    isAdmin: z.boolean().meta({
+      description:
+        'Whether the member is on the admin list. The app shows admins tools only they need, ' +
+        'such as previewing sign-up; the admin routes check the list again themselves.',
+    }),
   })
   .openapi('Me');
 
@@ -105,6 +111,7 @@ export function me(
   deps: {
     readonly verifyToken: VerifyToken;
     readonly members: Members;
+    readonly admins: Pick<Admins, 'isAdmin'>;
     readonly unlocks: Pick<Unlocks, 'keepWorn'>;
   } & DeleteAccountDependencies,
 ) {
@@ -187,9 +194,10 @@ export function me(
     .openapi(getMe, async (c) => {
       const userId = c.var.caller.userId;
       const member = MemberId.parse(userId);
-      const [profile, joinedAt] = await Promise.all([
+      const [profile, joinedAt, isAdmin] = await Promise.all([
         deps.members.findProfile(member),
         deps.members.joinedAt(member),
+        deps.admins.isAdmin(member),
       ]);
       return c.json(
         {
@@ -199,6 +207,7 @@ export function me(
             profile === undefined || joinedAt === undefined
               ? null
               : { ...wireProfile(profile), joinedAt: joinedAt.toISOString() },
+          isAdmin,
         } as const,
         200,
       );

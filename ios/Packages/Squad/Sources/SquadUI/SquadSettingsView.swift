@@ -20,38 +20,35 @@ import UIKit
 /// tagged 队长) with the coach and 「+ 邀请」, then graphite cards: the weekly goal, the coach,
 /// this week's scene, the invite code; the members, and leaving. The captain renames the
 /// squad and manages members from each row's ··· menu; last week's crown winner, or the captain
-/// when nobody won, picks the scene once. `close` (返回 or a swipe) goes back; the app follows
-/// `model.hasLeft`. A pick ends where every pick does, on home with the squad dropping in: once
-/// the reveal is over, `picked` hands the scene to the app, which takes over; while the reveal
-/// plays, `revealing` is true, so the app can put away its tab bar.
+/// when nobody won, picks the scene once. It is pushed on 今天's NavigationStack, so the system's
+/// back button and swipe go back, and the coach's pages are pushed over it through `openCoach`;
+/// the app follows `model.hasLeft`. A pick ends where every pick does, on home with the squad
+/// dropping in: once the reveal is over, `picked` hands the scene to the app, which takes over;
+/// while the reveal plays, `revealing` is true, so the app can put away its tab bar.
 public struct SquadSettingsView: View {
     @Bindable private var model: SquadSettingsModel
     private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
-    private let close: () -> Void
+    /// Pushes one of the coach's pages (`CoachPage`) over this one.
+    private let openCoach: (CoachRoute) -> Void
     @Binding private var revealing: Bool
     /// Opens a teammate's player card, from their row; the app pops it up over everything.
     private let openTeammate: ((MemberID) -> Void)?
-    /// The coach's 战术板 line of the day, pinned on its 简历.
-    private let coachNote: CoachNote?
     @State private var renaming: String?
     @State private var isLeaving = false
     @State private var reveal: Reveal?
     /// The change last asked for, so its own control shows the wait while it saves.
     @State private var working: Working?
-    /// The coach's pages open over the page, the last on top.
-    @State private var coachPages: [CoachRoute] = []
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(
         model: SquadSettingsModel, picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void,
-        close: @escaping () -> Void, revealing: Binding<Bool>,
-        openTeammate: ((MemberID) -> Void)? = nil, coachNote: CoachNote? = nil
+        openCoach: @escaping (CoachRoute) -> Void, revealing: Binding<Bool>,
+        openTeammate: ((MemberID) -> Void)? = nil
     ) {
-        self.coachNote = coachNote
         self.model = model
         self.picked = picked
-        self.close = close
+        self.openCoach = openCoach
         _revealing = revealing
         self.openTeammate = openTeammate
     }
@@ -64,23 +61,16 @@ public struct SquadSettingsView: View {
                 case .loading:
                     Color.clear
                 case .failed:
-                    VStack(alignment: .leading, spacing: 0) {
-                        backButton
-                            .padding(.horizontal, Space.pageMargin)
-                            .padding(.top, Space.xs)
-                        SquadFailed { Task { await model.reload() } }
-                    }
+                    SquadFailed { Task { await model.reload() } }
                 case .loaded(let settings):
                     page(settings)
                 }
             }
-            .swipesBack(isEnabled: coachPages.isEmpty && reveal == nil, perform: close)
             .loadingCover(model.load == .loading) {
                 TicketSpinner(on: .light(.bgCanvas))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
             }
-            CoachPageStack(model: model, pages: $coachPages, note: coachNote)
             if let reveal {
                 UnboxRevealView(
                     reveal.unboxing, scene: reveal.scene, startedAt: reveal.startedAt,
@@ -93,6 +83,9 @@ public struct SquadSettingsView: View {
                     backdrop: { SceneBackdrop(scene: reveal.scene) })
             }
         }
+        // While the reveal fills the screen, the bar and the way back are away.
+        .pushedPage(canGoBack: reveal == nil)
+        .toolbarVisibility(reveal == nil ? .automatic : .hidden, for: .navigationBar)
         .task { await model.reload() }
         .onChange(of: reveal != nil) { _, playing in revealing = playing }
     }
@@ -105,6 +98,7 @@ public struct SquadSettingsView: View {
                 .padding(.bottom, Space.xl)
         }
         .scrollIndicators(.hidden)
+        .barTitleOnScroll(Text(verbatim: settings.squad.name))
         .refreshable { await model.reload() }
         .disabled(model.isSaving)
         .accessibilityIdentifier("squad.page")
@@ -115,12 +109,11 @@ public struct SquadSettingsView: View {
 
     private func sections(_ settings: SquadSettings) -> some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            backButton
             VStack(alignment: .leading, spacing: Space.m) {
                 header(settings)
                 SquadHeads(
                     members: model.members, coach: model.coach, canHireCoach: model.canHireCoach,
-                    squad: settings.squad, openSpots: model.openSpots, openCoach: openCoachPage)
+                    squad: settings.squad, openSpots: model.openSpots, openCoach: openCoach)
             }
             if model.changeFailed {
                 InlineFailure()
@@ -251,11 +244,6 @@ extension SquadSettingsView {
         }
     }
 
-    private var backButton: some View {
-        HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
-            .accessibilityIdentifier("squad.back")
-    }
-
     private func section(_ title: Text, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: Space.labelGap) {
             SectionLabel(title)
@@ -313,11 +301,7 @@ extension SquadSettingsView {
     // MARK: 教练
 
     private var coachCard: some View {
-        CoachCard(hire: model.coach, week: model.coachWeek, canHire: model.canHireCoach, open: openCoachPage)
-    }
-
-    private func openCoachPage(_ route: CoachRoute) {
-        withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { coachPages.append(route) }
+        CoachCard(hire: model.coach, week: model.coachWeek, canHire: model.canHireCoach, open: openCoach)
     }
 
     /// Whether `change` is the one saving now.

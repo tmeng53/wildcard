@@ -21,7 +21,9 @@ struct RecapDemo: View {
     }
 
     var body: some View {
-        let story = RecapSample.story(pending: LaunchOptions.recapPending, missed: LaunchOptions.recapMissed)
+        let story = RecapSample.story(
+            pending: LaunchOptions.recapPending || LaunchOptions.recapWaiting, stuck: !LaunchOptions.recapWaiting,
+            missed: LaunchOptions.recapMissed)
         let cast = RecapSample.cast
         VStack {
             RecapEntryTile(story: story, viewer: cast.reader, seen: seen) {
@@ -43,7 +45,9 @@ struct RecapDemo: View {
         heldReveal: (scene: SceneTheme, at: Double)? = nil, close: @escaping @MainActor () -> Void,
         finished: @escaping @MainActor () -> Void
     ) -> RecapModel {
-        let story = RecapSample.story(pending: LaunchOptions.recapPending, missed: LaunchOptions.recapMissed)
+        let story = RecapSample.story(
+            pending: LaunchOptions.recapPending || LaunchOptions.recapWaiting, stuck: !LaunchOptions.recapWaiting,
+            missed: LaunchOptions.recapMissed)
         let picks = LaunchOptions.recapPicker || heldReveal != nil
         return RecapModel(
             story: story, cast: RecapSample.cast, service: nil,

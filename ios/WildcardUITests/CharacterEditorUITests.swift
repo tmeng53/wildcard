@@ -153,7 +153,8 @@ final class CharacterEditorUITests: XCTestCase {
         keepScreenshot(named: "25-editor-persona-showoff")
     }
 
-    /// A cat wears no hair or person's face, so 发型 and 脸 go away; 确认 waits for a nickname.
+    /// A cat wears no hair, so 发型 goes away, but it changes its face on 脸 like a person; 确认
+    /// waits for a nickname.
     func testBecomingACatWithANickname() {
         let app = launch(language: "zh-Hans")
         let done = app.buttons["editor.done"]
@@ -164,9 +165,16 @@ final class CharacterEditorUITests: XCTestCase {
         cat.tap()
         waitUntilSelected(cat, "picking the cat didn't select it")
         XCTAssertFalse(app.buttons["editor.tab.hair"].exists, "a cat still shows 发型")
-        XCTAssertFalse(app.buttons["editor.tab.face"].exists, "a cat still shows 脸")
         settle()
         keepScreenshot(named: "26-editor-cat")
+        app.buttons["editor.tab.face"].tap()
+        let sparkle = app.buttons["editor.tile.eyes.sparkle"]
+        XCTAssertTrue(sparkle.waitForExistence(timeout: Self.wait), "a cat has no 脸 to change")
+        sparkle.tap()
+        waitUntilSelected(sparkle, "picking 星星眼 on a cat didn't select it")
+        settle()
+        keepScreenshot(named: "26-editor-cat-face")
+        app.buttons["editor.tab.look"].tap()
 
         let nickname = app.textFields["editor.nickname"]
         // The name sits on the ticket's stub, under the tear line (44 above the ticket's bottom),

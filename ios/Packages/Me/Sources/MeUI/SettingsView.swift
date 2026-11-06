@@ -12,21 +12,30 @@ import SwiftUI
 struct SettingsView: View {
     @Bindable var model: MeModel
     let destinations: MeDestinations
-    let close: () -> Void
     @State private var isSigningOut = false
     @State private var isPickingLanguage = false
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        menu.swipesBack(perform: close)
+        menu
+            .pushedPage()
+            // 注销账号, pushed over 设置; its back button and swipe wait while the account is deleting.
+            .navigationDestination(isPresented: deletionOpen) {
+                DeleteAccountView(model: model) { model.closeDeletion() }
+                    .pushedPage(canGoBack: model.deletion != .deleting, hidesTabBar: true)
+                    .accentTone(.ink)
+            }
+    }
+
+    /// 注销账号 is open; the system's back closes it as 先不注销 does.
+    private var deletionOpen: Binding<Bool> {
+        Binding(get: { model.isDeletionOpen }, set: { if !$0 { model.closeDeletion() } })
     }
 
     private var menu: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
-                    .accessibilityIdentifier("settings.back")
                 // The character types beside the heading, standing on its line, so the menu starts
                 // right under it.
                 HStack(alignment: .bottom, spacing: Space.s) {
@@ -38,9 +47,11 @@ struct SettingsView: View {
                     MeStage(character: model.overview?.character, mood: .typing, size: CGSize(width: 72, height: 90))
                         .accessibilityHidden(true)
                 }
-                .padding(.top, Space.s)
                 preferencesGroup
                 aboutGroup
+                if let previewSignUp = destinations.previewSignUp {
+                    adminGroup(previewSignUp)
+                }
                 accountGroup
                 if model.saveFailed {
                     SaveFailed().padding(.top, Space.m)
@@ -53,6 +64,7 @@ struct SettingsView: View {
         // Always scrollable: the room left for the tab bar is a safe-area inset, which a size-based
         // bounce doesn't count, so the last rows could fit the page yet sit under the bar.
         .scrollIndicators(.hidden)
+        .barTitleOnScroll(Text("设置", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
         .accessibilityIdentifier("settings.page")
     }
@@ -95,6 +107,14 @@ struct SettingsView: View {
                 openURL(destinations.terms)
             }
             .accessibilityIdentifier("me.terms")
+        }
+    }
+
+    /// Only for admins: tools to try the app as a newcomer would.
+    private func adminGroup(_ previewSignUp: @escaping () -> Void) -> some View {
+        MenuGroup(Text("管理员", bundle: .module)) {
+            ListRow(Text("预览注册", bundle: .module), showsDivider: false, action: previewSignUp)
+                .accessibilityIdentifier("me.previewSignUp")
         }
     }
 

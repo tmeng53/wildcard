@@ -105,6 +105,16 @@ private let lateStory = """
      "ending":{"done":4,"plan":6}}
     """
 
+@Test func titlesAfterAFailedTryAreStuck() throws {
+    let json = lateStory.replacingOccurrences(of: #""status":"pending","#, with: #""status":"pending","stuck":true,"#)
+    let wire = try JSONDecoder().decode(Components.Schemas.WeekStory.self, from: Data(json.utf8))
+
+    let story = try #require(WeekStory(wire))
+
+    #expect(story.status == .pending)
+    #expect(story.stuck == true)
+}
+
 @Test func lateTitlesWaitAndEveryFrozenPageStillPlays() throws {
     let json = lateStory
     let wire = try JSONDecoder().decode(Components.Schemas.WeekStory.self, from: Data(json.utf8))
@@ -114,6 +124,8 @@ private let lateStory = """
     let coco = MemberID(try #require(UUID(uuidString: "00000000-0000-0000-0000-000000000001")))
     let bea = MemberID(try #require(UUID(uuidString: "00000000-0000-0000-0000-000000000002")))
     #expect(story.status == .pending)
+    // No try failed yet: the titles are only on their way.
+    #expect(story.stuck == false)
     #expect(story.squadName == "晨跑五人组")
     #expect(story.week.monday.description == "2026-10-12")
     #expect(story.scene == .pool)

@@ -96,7 +96,7 @@ final class WelcomeCrowd {
         var generator = SystemRandomNumberGenerator()
         var looks: [Outfit] = []
         while looks.count < Self.looks {
-            // What a draft of it wears: an animal leaves out a person's hair and face.
+            // What a draft of it wears: an animal leaves out a person's hair.
             let look = CharacterDraft(
                 catalog: catalog, look: CharacterDraft.randomLook(from: catalog, using: &generator),
                 persona: .energetic, nickname: ""
