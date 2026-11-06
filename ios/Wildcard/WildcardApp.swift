@@ -12,6 +12,7 @@ import DesignSystemUI
 import FeedDomain
 import FeedUI
 import Foundation
+import HealthUI
 import MeDomain
 import MeUI
 import NotificationsUI
@@ -92,6 +93,7 @@ struct WildcardApp: App {
             writer: LaunchOptions.disclaimerWriter,
             photoSource: LaunchOptions.photoSource,
             scene: LaunchOptions.scene,
+            health: Self.sampleHealth(),
             now: LaunchOptions.now,
             defaults: LaunchOptions.todayDefaults,
             bubbleHold: LaunchOptions.bubbleHold,
@@ -126,6 +128,13 @@ struct WildcardApp: App {
     }
 
     /// The sample member's 出赛表.
+    /// Apple Health on the sample squad: the sample day once connected (`-health-sample`).
+    private static func sampleHealth() -> HealthConnection {
+        HealthConnection(
+            library: SampleHealthLibrary(connected: LaunchOptions.healthSample, endingNear: LaunchOptions.now()),
+            defaults: LaunchOptions.todayDefaults, now: LaunchOptions.now)
+    }
+
     private static func sampleSchedule() -> ScheduleModel {
         ScheduleModel(
             store: ScheduleStore(

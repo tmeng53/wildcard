@@ -5,6 +5,7 @@ import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import FeedUI
+import HealthUI
 import MeDomain
 import MeUI
 import NotificationsDomain
@@ -287,7 +288,7 @@ struct MainTabs: View {
                         editCharacter: wardrobe.editCharacter,
                         schedule: { showsSchedule = true },
                         street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
-                        privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+                        privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms, health: today.health)
                 ) {
                     MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
                 }

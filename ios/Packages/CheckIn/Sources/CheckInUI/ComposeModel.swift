@@ -3,11 +3,15 @@ import CheckInDomain
 import Contracts
 import DesignSystem
 import Foundation
+import HealthDomain
 import Observation
+import SportsUI
 
 /// The compose page's state, for a new post (from 打卡) or an edit of a saved one (from its
-/// 「…」): the photos with their cover, the sport and minutes for a 练了, the line, and for a new
-/// post whether the squad sees it. The caller saves it.
+/// 「…」): the photos with their cover, the sport and minutes for a 训练, the line, and for a new
+/// post whether the squad sees it. A 训练 can come from one of today's Apple Health workouts: its
+/// numbers on the 成绩条 (each can be struck out) take the minutes' place, and its map or chart
+/// joins the photos as a tile. The caller saves it.
 @MainActor @Observable
 public final class ComposeModel {
     public enum Purpose: Equatable {
@@ -20,12 +24,23 @@ public final class ComposeModel {
 
     let kind: CheckInKind
     let purpose: Purpose
-    /// At most `Photos.maxCount`, the cover first.
-    var photos: [ComposedPhoto]
+    /// The photo row in the post's order, the cover first: at most `Photos.maxCount` photos and
+    /// the workout's tile, which doesn't count toward them.
+    var tiles: [ComposedTile]
     var line: String
     /// The sport picked; the suggestion until the member picks one.
     var activity: Activity?
     var minutes: WorkoutMinutes?
+    /// The workout the 训练 is posted from, as Health has it (or, for an edit, as it was posted);
+    /// nil for one made by hand.
+    private(set) var workout: Workout?
+    /// The workout's numbers struck out on the 成绩条, which aren't posted.
+    private(set) var struck: Set<WorkoutCell> = []
+    /// Today's workouts from Health, newest first, for a new 训练's chips; empty when Health
+    /// isn't connected or has none.
+    let healthWorkouts: [TodaysWorkout]
+    /// What a workout picked from Health starts with: the numbers and tile 设置 shares.
+    @ObservationIgnored private let sharing: HealthSharing
     /// Whether a new post goes to the squad; off keeps it to the member. An edit keeps its squads
     /// as posted and never reads it.
     var isShared = true
@@ -54,8 +69,9 @@ public final class ComposeModel {
     ///   - close: leaves the page without saving.
     init(
         kind: CheckInKind, purpose: Purpose, photos: [ComposedPhoto] = [], postableDays: [LocalDay] = [],
-        suggestedActivity: Activity,
-        recentActivities: [Activity], loadPhoto: @escaping @Sendable (PhotoRef) async -> Data? = { _ in nil },
+        suggestedActivity: Activity, recentActivities: [Activity], healthWorkouts: [TodaysWorkout] = [],
+        sharing: HealthSharing = HealthSharing(),
+        loadPhoto: @escaping @Sendable (PhotoRef) async -> Data? = { _ in nil },
         save: @escaping @MainActor (ComposeModel) async -> Bool, close: @escaping @MainActor () -> Void
     ) {
         self.kind = kind
@@ -63,23 +79,30 @@ public final class ComposeModel {
         self.postableDays = postableDays
         self.suggestedActivity = suggestedActivity
         self.recentActivities = recentActivities
+        self.healthWorkouts = healthWorkouts
+        self.sharing = sharing
         self.loadPhoto = loadPhoto
         self.save = save
         self.close = close
         // Locals first: an @Observable model can't read its own properties until all are set.
-        var start = Snapshot(photos: Array(photos.prefix(Photos.maxCount)), line: "", activity: nil, minutes: nil)
+        var start = Snapshot(
+            tiles: Array(photos.prefix(Photos.maxCount)).map(ComposedTile.photo), line: "", activity: nil,
+            minutes: nil)
+        var posted: Workout?
         if case .edit(let checkIn) = purpose {
-            start.photos = ComposedPhoto.of(checkIn)
+            start.tiles = ComposedTile.of(checkIn)
             start.line = checkIn.entry.line ?? ""
             if case .trained(let training) = checkIn.entry {
                 start.activity = training.activity
                 start.minutes = training.minutes
+                posted = training.workout
             }
         }
-        self.photos = start.photos
+        tiles = start.tiles
         line = start.line
         activity = start.activity
         minutes = start.minutes
+        workout = posted
         initial = start
     }
 
@@ -111,7 +134,13 @@ public final class ComposeModel {
 
     var currentActivity: Activity { activity ?? suggestedActivity }
 
+    /// The photos in the row, without the workout's tile.
+    var photos: [ComposedPhoto] { tiles.photos }
+
     var canAddPhoto: Bool { photos.count < Photos.maxCount }
+
+    /// The 成绩条's cells: the workout's numbers, 时长 first.
+    var scoreCells: [ScoreCell] { workout.map { ScoreCell.cells(of: $0.summary) } ?? [] }
 
     /// A 请假条 needs its words; the other kinds post with photos or words or neither.
     var canSave: Bool {
@@ -126,24 +155,67 @@ public final class ComposeModel {
     /// What the member would lose by leaving: anything added to a new post, any change to an edit.
     var hasChanges: Bool {
         if isEditing {
-            return Snapshot(photos: photos, line: line, activity: activity, minutes: minutes) != initial
+            return Snapshot(tiles: tiles, line: line, activity: activity, minutes: minutes) != initial
+                || !struck.isEmpty
         }
         return !photos.isEmpty || !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            || day != nil
+            || day != nil || workout != nil
     }
 
     func add(_ picked: [PreparedPhoto]) {
-        photos = Array((photos + picked.map(ComposedPhoto.new)).prefix(Photos.maxCount))
+        let room = Photos.maxCount - photos.count
+        tiles += picked.prefix(max(room, 0)).map { .photo(.new($0)) }
     }
 
-    func remove(_ photo: ComposedPhoto) {
-        photos.removeAll { $0 == photo }
+    /// Takes a tile off the row: a photo, or the workout's map or chart, which then isn't posted.
+    func remove(_ tile: ComposedTile) {
+        tiles.removeAll { $0 == tile }
     }
 
-    /// Moves `photo` to the front, as the cover.
-    func makeCover(_ photo: ComposedPhoto) {
-        guard let index = photos.firstIndex(of: photo) else { return }
-        photos.insert(photos.remove(at: index), at: 0)
+    /// Drag and drop: the tile `id` goes where `target` is; the first is the cover.
+    func move(_ id: String, onto target: String) {
+        tiles.move(id, onto: target)
+    }
+
+    /// Picks one of today's workouts for a new 训练: its sport, its minutes, its numbers on the
+    /// 成绩条 with those 设置 doesn't share struck, and its map or chart first in the row.
+    /// Picking the one already picked lets it go again; a posted one can't be picked.
+    func pick(_ imported: ImportedWorkout) {
+        guard !isEditing else { return }
+        if workout?.source == imported.workout.source {
+            letGoOfWorkout()
+            return
+        }
+        guard !(healthWorkouts.first { $0.id == imported.id }?.isPosted ?? false) else { return }
+        tiles.removeAll { if case .workout = $0 { true } else { false } }
+        workout = imported.workout
+        struck = sharing.struck
+        if let sport = imported.activity { activity = sport }
+        minutes = imported.minutes
+        if let tile = imported.workout.tile, sharing.keepsTile(of: imported.workout) {
+            tiles.insert(.workout(tile), at: 0)
+        }
+    }
+
+    /// Back to a 训练 made by hand: the sport, the 成绩条 and the tile go, the minutes' pills
+    /// come back; the line and photos stay.
+    func letGoOfWorkout() {
+        tiles.removeAll { if case .workout = $0 { true } else { false } }
+        workout = nil
+        struck = []
+        activity = nil
+        minutes = nil
+    }
+
+    /// Strikes a number out of the post, or brings it back. 时长 always goes.
+    func toggle(_ cell: WorkoutCell) {
+        guard cell != .duration else { return }
+        if struck.contains(cell) { struck.remove(cell) } else { struck.insert(cell) }
+    }
+
+    /// The workout as it is to be posted: the numbers not struck, the tile where the row has it.
+    private var postedWorkout: Workout? {
+        workout?.posting(struck: struck, tilePosition: tiles.workoutTilePosition)
     }
 
     /// Fits what is typed: no line breaks, at most `lineLimit` characters.
@@ -163,7 +235,7 @@ public final class ComposeModel {
     /// A new post as drafted, its photos all just picked.
     var draft: CheckInDraft {
         let picked = photos.compactMap { if case .new(let photo) = $0 { photo } else { nil } }
-        let body = PostBody(photos: picked, caption: line)
+        let body = PostBody(photos: picked, caption: line, workout: kind == .trained ? postedWorkout : nil)
         return switch kind {
         case .trained: .trained(currentActivity, minutes, body)
         case .healthyMeal: .healthyMeal(body)
@@ -174,11 +246,13 @@ public final class ComposeModel {
     /// The saved post as edited; nil for a new one.
     var edit: PostEdit? {
         guard case .edit(let checkIn) = purpose else { return nil }
-        return PostEdit(original: checkIn, activity: currentActivity, minutes: minutes, line: line, photos: photos)
+        return PostEdit(
+            original: checkIn, activity: currentActivity, minutes: minutes, line: line, photos: photos,
+            workout: postedWorkout)
     }
 
     private struct Snapshot: Equatable {
-        var photos: [ComposedPhoto]
+        var tiles: [ComposedTile]
         var line: String
         var activity: Activity?
         var minutes: WorkoutMinutes?
@@ -189,7 +263,7 @@ public final class ComposeModel {
 /// the home counts again; previews pass the sample squad.
 @MainActor
 public protocol PostEditing: AnyObject {
-    /// The sports a 练了's picker offers first.
+    /// The sports a 训练's picker offers first.
     var recentActivities: [Activity] { get }
     func save(_ edit: PostEdit) async throws(CheckInError) -> CheckIn
     func delete(_ checkIn: CheckInID) async throws(CheckInError)

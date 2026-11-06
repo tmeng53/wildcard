@@ -1,12 +1,14 @@
 #if os(iOS)
 import DesignSystem
 import DesignSystemUI
+import HealthUI
 import MeDomain
 import SwiftUI
 
 /// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
 /// small group labels (偏好, 关于, 账号), with no icons, a chevron on each row that opens a page,
-/// and an ink switch. Signing out and deleting the account come last. It holds only the app's
+/// and an ink switch; 偏好's Apple 健康 opens its own page in place. Signing out and deleting the
+/// account come last. It holds only the app's
 /// own settings: what belongs to the squad or the week lives with them (2026-11-02), and 球衣号码
 /// with the character editor (2026-11-03).
 struct SettingsView: View {
@@ -15,11 +17,21 @@ struct SettingsView: View {
     let close: () -> Void
     @State private var isSigningOut = false
     @State private var isPickingLanguage = false
+    @State private var isHealthOpen = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        menu.swipesBack(perform: close)
+        ZStack {
+            if isHealthOpen, let health = destinations.health {
+                HealthSettingsView(health: health) { isHealthOpen = false }
+                    .transition(.move(edge: .trailing))
+            } else {
+                menu.swipesBack(perform: close)
+            }
+        }
+        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: isHealthOpen)
     }
 
     private var menu: some View {
@@ -75,6 +87,16 @@ struct SettingsView: View {
                     set: { isOn in Task { await model.setCoachPush(isOn) } })
             )
             .accessibilityIdentifier("me.coachNotifications")
+            if let health = destinations.health, health.isAvailable {
+                ListRow(
+                    Text("Apple 健康", bundle: .module),
+                    value: health.isConnected ? Text("已连接", bundle: .module) : Text("未连接", bundle: .module)
+                ) {
+                    isHealthOpen = true
+                }
+                .accessibilityIdentifier("me.health")
+                .task { await health.refresh() }
+            }
             ListRow(
                 Text("语言", bundle: .module), value: Text(verbatim: AppLanguage.current.name), showsDivider: false
             ) {

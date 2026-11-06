@@ -10,6 +10,7 @@ import DesignSystemUI
 import FeedDomain
 import FeedUI
 import Foundation
+import HealthUI
 import MeDomain
 import NotificationsDomain
 import Observation
@@ -255,7 +256,8 @@ final class AppModel {
     /// 今天 under the tab bar, on the member's squad's home; on a picked scene they drop onto it.
     private func openTabs(on home: Home, store: TodayStore, landingOn scene: SceneTheme?) async {
         let today = TodayModel(
-            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted,
+            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()),
+            health: Self.health, posted: posted,
             noSquad: { [weak self] squad in Task { await self?.removedFromSquad(squad) } })
         let profile = MeModel(
             service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
@@ -367,4 +369,8 @@ extension AppModel {
 
     /// How long the loading screen waits for the squad's scene before opening on the kept one.
     static let sceneWait = Duration.seconds(3)
+
+    /// Apple Health through HealthKit, one for the app: a member signing in again keeps it, and
+    /// what it shares by default is this phone's.
+    static let health = HealthConnection(library: HealthKitLibrary())
 }

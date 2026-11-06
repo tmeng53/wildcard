@@ -158,19 +158,24 @@ public enum WorkoutCell: String, CaseIterable, Hashable, Sendable, Codable {
 /// What a workout's chart draws.
 public struct WorkoutSeries: Hashable, Sendable, Codable {
     /// Heart rate over the workout, earliest first.
-    public let hr: [HeartRatePoint]?
+    public let heartRate: [HeartRatePoint]?
     /// Each lap's time in seconds, in order, for a swim.
     public let laps: [Double]?
 
-    public init(hr: [HeartRatePoint]? = nil, laps: [Double]? = nil) {
-        self.hr = hr
+    public init(heartRate: [HeartRatePoint]? = nil, laps: [Double]? = nil) {
+        self.heartRate = heartRate
         self.laps = laps
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case heartRate = "hr"
+        case laps
     }
 
     /// Laps make the chart when there are any; else heart rate, with two points at least.
     public var isDrawable: Bool {
         if let laps, !laps.isEmpty { return true }
-        return (hr?.count ?? 0) >= 2
+        return (heartRate?.count ?? 0) >= 2
     }
 
     /// The fastest lap's index, which the chart draws in white.

@@ -5,6 +5,7 @@ import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import HealthUI
 import MeDomain
 import SwiftUI
 
@@ -20,10 +21,13 @@ public struct MeDestinations {
     /// The published policy pages.
     public var privacyPolicy: URL
     public var terms: URL
+    /// Apple Health, for 设置 › Apple 健康; nil where the phone has none.
+    public var health: HealthConnection?
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
-        street: @escaping () -> Void = {}, streetHasNews: Bool = false, privacyPolicy: URL, terms: URL
+        street: @escaping () -> Void = {}, streetHasNews: Bool = false, privacyPolicy: URL, terms: URL,
+        health: HealthConnection? = nil
     ) {
         self.editCharacter = editCharacter
         self.schedule = schedule
@@ -31,6 +35,7 @@ public struct MeDestinations {
         self.streetHasNews = streetHasNews
         self.privacyPolicy = privacyPolicy
         self.terms = terms
+        self.health = health
     }
 }
 

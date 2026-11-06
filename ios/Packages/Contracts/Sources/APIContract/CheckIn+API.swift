@@ -130,7 +130,7 @@ extension Workout {
             provider: source.provider, providerWorkoutId: source.id, summary: summary.wire,
             series: series.map { series in
                 .init(
-                    hr: series.hr?.map { Components.Schemas.HeartRatePoint(t: $0.seconds, bpm: $0.bpm) },
+                    hr: series.heartRate?.map { Components.Schemas.HeartRatePoint(t: $0.seconds, bpm: $0.bpm) },
                     laps: series.laps)
             },
             route: route?.map { Components.Schemas.RoutePoint(lat: $0.lat, lon: $0.lon) },
@@ -155,7 +155,7 @@ extension WorkoutSummary {
 
 extension WorkoutSeries {
     init(_ wire: Components.Schemas.WorkoutSeries) {
-        self.init(hr: wire.hr?.map { HeartRatePoint(seconds: $0.t, bpm: $0.bpm) }, laps: wire.laps)
+        self.init(heartRate: wire.hr?.map { HeartRatePoint(seconds: $0.t, bpm: $0.bpm) }, laps: wire.laps)
     }
 }
 

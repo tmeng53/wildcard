@@ -3,7 +3,7 @@ import Foundation
 import HealthDomain
 import Testing
 
-private let newYork = TimeZone(identifier: "America/New_York")!
+private let newYork = TimeZone(identifier: "America/New_York") ?? .gmt
 
 private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920) throws -> ImportedWorkout {
     let end = try Timestamp(moment)

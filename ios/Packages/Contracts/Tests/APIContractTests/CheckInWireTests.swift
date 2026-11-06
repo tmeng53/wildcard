@@ -217,7 +217,7 @@ func datesKeepEveryMillisecond(millis: Int64) throws {
         startedAt: Timestamp(millisecondsSince1970: 1_760_743_680_000),
         endedAt: Timestamp(millisecondsSince1970: 1_760_745_600_000),
         summary: WorkoutSummary(durationSec: 1920, distanceM: 5200.5, avgHr: 148),
-        series: WorkoutSeries(hr: [HeartRatePoint(seconds: 0, bpm: 90), HeartRatePoint(seconds: 60, bpm: 130)]),
+        series: WorkoutSeries(heartRate: [HeartRatePoint(seconds: 0, bpm: 90), HeartRatePoint(seconds: 60, bpm: 130)]),
         tilePosition: 1)
     let training = Training(activity: .sport("run"), minutes: try WorkoutMinutes(32), workout: workout)
     let fields =

@@ -10,7 +10,8 @@ import Testing
 }
 
 @Test func aPoolSwimCountsLapsAndMetres() {
-    let cells = ScoreCell.cells(of: WorkoutSummary(durationSec: 2400, distanceM: 1200, avgHr: 139, laps: 24, poolLengthM: 50))
+    let cells = ScoreCell.cells(
+        of: WorkoutSummary(durationSec: 2400, distanceM: 1200, avgHr: 139, laps: 24, poolLengthM: 50))
     #expect(cells.map(\.value) == ["40", "24", "1200", "139"])
     #expect(cells[1].label == .laps(poolMeters: 50))
     #expect(cells[2].unit == .meters)

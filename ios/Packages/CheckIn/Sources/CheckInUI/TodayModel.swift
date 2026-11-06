@@ -7,6 +7,7 @@ import Contracts
 import DesignSystem
 import DesignSystemUI
 import Foundation
+import HealthUI
 import Observation
 import SwiftUI
 
@@ -99,6 +100,8 @@ public final class TodayModel {
     /// When the hop into my kit is over: a tap before it would stop the change halfway.
     var hopEnds: Date?
     let store: TodayStore
+    /// Apple Health, for the home's card and a 训练's chips; nil where the app has none.
+    public let health: HealthConnection?
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
     private let noSquad: @MainActor (Squad?) -> Void
@@ -116,7 +119,8 @@ public final class TodayModel {
     ///     they were in: the captain removed them, or they left on another phone.
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
-        scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, defaults: UserDefaults = .standard,
+        scene: SceneTheme = .gym, health: HealthConnection? = nil, now: @escaping () -> Date = Date.init,
+        defaults: UserDefaults = .standard,
         bubbleHold: Double? = nil, celebratesTogether: Bool = true, posted: @escaping @MainActor () -> Void,
         noSquad: @escaping @MainActor (Squad?) -> Void = { _ in }
     ) {
@@ -126,6 +130,7 @@ public final class TodayModel {
         self.scene = scene
         self.defaults = defaults
         self.store = store
+        self.health = health
         self.now = now
         self.writer = writer
         self.photoSource = photoSource
@@ -257,6 +262,7 @@ public final class TodayModel {
     public func load() async {
         await store.load()
         showLoaded()
+        await health?.refresh()
     }
 
     /// How often the home is read again while 今天 is on screen, so teammates' check-ins show
@@ -287,7 +293,8 @@ public final class TodayModel {
         if step == .scene { isBurstOpen = true }
     }
 
-    func pick(_ kind: CheckInKind) {
+    /// Opens the page for `kind`; a 训练 from the home's card starts from `workout`.
+    func pick(_ kind: CheckInKind, workout: ImportedWorkout? = nil) {
         sendFailed = false
         payoff = nil
         switch kind {
@@ -295,15 +302,7 @@ public final class TodayModel {
             step = .disclaimer
         case .trained, .healthyMeal, .cheatMeal:
             // Straight to the page: photos are added there, with its 「+ 照片」.
-            let given: [PreparedPhoto] = if case .provided(let photos) = photoSource { photos } else { [] }
-            compose = ComposeModel(
-                kind: kind, purpose: .new(shareSquad: shareSquad), photos: given.map(ComposedPhoto.new),
-                postableDays: store.postableDays, suggestedActivity: suggestedActivity,
-                recentActivities: recentActivities,
-                save: { [weak self] model in
-                    await self?.post(model.draft, shared: model.isShared, on: model.day) ?? false
-                },
-                close: { [weak self] in self?.cancel() })
+            compose = newPost(kind, from: workout)
             step = .composing(kind)
         }
     }

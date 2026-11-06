@@ -61,7 +61,7 @@ public actor SampleHealthLibrary: HealthLibrary {
             var route: [RoutePoint]?
             switch sample.extra {
             case .route(let seed): route = Self.loop(seed: seed)
-            case .heartRate(let seed): series = WorkoutSeries(hr: Self.heartRate(seconds: seconds, seed: seed))
+            case .heartRate(let seed): series = WorkoutSeries(heartRate: Self.heartRate(seconds: seconds, seed: seed))
             case .laps: series = WorkoutSeries(laps: Self.laps)
             }
             return ImportedWorkout(

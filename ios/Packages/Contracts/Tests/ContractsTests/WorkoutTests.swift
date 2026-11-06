@@ -57,7 +57,7 @@ private let run = Workout(
 
 @Test func theFastestLapIsTheShortest() {
     #expect(WorkoutSeries(laps: [52, 49, 55]).fastestLap == 1)
-    #expect(WorkoutSeries(hr: [HeartRatePoint(seconds: 0, bpm: 90)]).isDrawable == false)
+    #expect(WorkoutSeries(heartRate: [HeartRatePoint(seconds: 0, bpm: 90)]).isDrawable == false)
 }
 
 @Test func theTileSitsAtItsPlaceAmongThePhotos() throws {

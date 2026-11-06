@@ -9,8 +9,8 @@ import HealthKit
 /// comes with the numbers Health has for its kind (a run's distance and pace, a ride's speed, a
 /// pool swim's laps, heart rate and effort for all), its route trimmed 200 m at each end and
 /// thinned, or its heart rate or lap times for the chart. Calories, weight and sleep are never
-/// read.
-public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // Both lets are thread-safe (HKHealthStore, UserDefaults per Apple); nothing else is held.
+/// read. Its two lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple.
+public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // only thread-safe lets
     private let store: HKHealthStore
     private let defaults: UserDefaults
 
@@ -83,7 +83,7 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // Bo
         if kind.showsEffort, let effort = await effort(of: workout) { summary.effort = effort }
         let route = kind.hasRoute ? await route(of: workout) : nil
         if route == nil, series == nil, let curve = await heartRate(during: workout) {
-            series = WorkoutSeries(hr: curve)
+            series = WorkoutSeries(heartRate: curve)
         }
         return ImportedWorkout(
             workout: Workout(
@@ -190,46 +190,22 @@ private enum WorkoutKind: Equatable {
 
     /// The sport of the sports list it is; nil when the list has none like it.
     func sport(for type: HKWorkoutActivityType) -> Sport? {
-        let id: String? =
-            switch type {
-            case .running: "run"
-            case .walking: "walk"
-            case .hiking: "hike"
-            case .cycling: "roadCycling"
-            case .swimming: "swim"
-            case .traditionalStrengthTraining, .functionalStrengthTraining, .coreTraining: "strength"
-            case .crossTraining: "crossfit"
-            case .highIntensityIntervalTraining: "hiit"
-            case .rowing: "rowing"
-            case .elliptical: "elliptical"
-            case .jumpRope: "jumpRope"
-            case .mixedCardio, .stepTraining, .stairClimbing: "aerobics"
-            case .yoga: "yoga"
-            case .pilates: "matPilates"
-            case .barre: "barre"
-            case .flexibility, .cooldown: "stretching"
-            case .tennis: "tennis"
-            case .badminton: "badminton"
-            case .pickleball: "pickleball"
-            case .tableTennis: "tableTennis"
-            case .squash: "squash"
-            case .basketball: "basketball"
-            case .soccer: "soccer"
-            case .volleyball: "volleyball"
-            case .golf: "golf"
-            case .climbing: "climb"
-            case .downhillSkiing, .crossCountrySkiing: "ski"
-            case .snowboarding: "snowboard"
-            case .skatingSports: "skate"
-            case .boxing: "boxing"
-            case .kickboxing: "kickboxing"
-            case .martialArts: "martialArts"
-            case .socialDance, .cardioDance: "dance"
-            case .surfingSports: "surf"
-            case .paddleSports: "paddleboard"
-            default: nil
-            }
-        return id.flatMap(Sport.init(rawValue:))
+        Self.sports[type].flatMap(Sport.init(rawValue:))
     }
+
+    /// Health's kinds by the sports list's ids.
+    private static let sports: [HKWorkoutActivityType: String] = [
+        .running: "run", .walking: "walk", .hiking: "hike", .cycling: "roadCycling", .swimming: "swim",
+        .traditionalStrengthTraining: "strength", .functionalStrengthTraining: "strength", .coreTraining: "strength",
+        .crossTraining: "crossfit", .highIntensityIntervalTraining: "hiit", .rowing: "rowing",
+        .elliptical: "elliptical", .jumpRope: "jumpRope", .mixedCardio: "aerobics", .stepTraining: "aerobics",
+        .stairClimbing: "aerobics", .yoga: "yoga", .pilates: "matPilates", .barre: "barre",
+        .flexibility: "stretching", .cooldown: "stretching", .tennis: "tennis", .badminton: "badminton",
+        .pickleball: "pickleball", .tableTennis: "tableTennis", .squash: "squash", .basketball: "basketball",
+        .soccer: "soccer", .volleyball: "volleyball", .golf: "golf", .climbing: "climb",
+        .downhillSkiing: "ski", .crossCountrySkiing: "ski", .snowboarding: "snowboard", .skatingSports: "skate",
+        .boxing: "boxing", .kickboxing: "kickboxing", .martialArts: "martialArts", .socialDance: "dance",
+        .cardioDance: "dance", .surfingSports: "surf", .paddleSports: "paddleboard",
+    ]
 }
 #endif

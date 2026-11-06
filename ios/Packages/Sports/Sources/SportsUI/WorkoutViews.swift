@@ -1,5 +1,6 @@
 import Contracts
 import DesignSystem
+
 #if os(iOS)
 import DesignSystemUI
 import MapKit
@@ -94,7 +95,7 @@ public struct ScoreCell: Hashable, Identifiable, Sendable {
 
 #if os(iOS)
 extension ScoreCell.Unit {
-    var text: Text {
+    public var text: Text {
         switch self {
         case .minutes: Text("分钟", bundle: .module)
         case .laps: Text("趟", bundle: .module)
@@ -163,8 +164,12 @@ public struct ScoreStrip: View {
                         face(cell)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityValue(struck.contains(cell.cell) ? Text("不发", bundle: .module) : Text("发", bundle: .module))
-                    .accessibilityHint(struck.contains(cell.cell) ? Text("点一下恢复", bundle: .module) : Text("点一下划掉", bundle: .module))
+                    .accessibilityValue(
+                        struck.contains(cell.cell) ? Text("不发", bundle: .module) : Text("发", bundle: .module)
+                    )
+                    .accessibilityHint(
+                        struck.contains(cell.cell) ? Text("点一下恢复", bundle: .module) : Text("点一下划掉", bundle: .module)
+                    )
                     .accessibilityIdentifier("strip.\(cell.cell.rawValue)")
                 } else {
                     face(cell)
@@ -273,8 +278,8 @@ public struct WorkoutChart: View {
             let area = CGRect(x: pad, y: top, width: size.width - 2 * pad, height: size.height - top - pad)
             if let laps = series.laps, !laps.isEmpty {
                 Self.drawLaps(laps, fastest: series.fastestLap, in: area, ink: ink, context: context)
-            } else if let hr = series.hr, hr.count >= 2 {
-                Self.drawHeartRate(hr, in: area, ink: ink, lineWidth: size.width > 100 ? 2.5 : 2, context: context)
+            } else if let curve = series.heartRate, curve.count >= 2 {
+                Self.drawHeartRate(curve, in: area, ink: ink, lineWidth: size.width > 100 ? 2.5 : 2, context: context)
             }
         }
         .background(Color(role: colors.fill, in: colors.scene))
