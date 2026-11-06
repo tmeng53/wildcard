@@ -92,8 +92,8 @@ function opening({ id, name, sig, wash, ground, ribbonWords, title, fall, decor,
     { id: 'ribbon', x: 45, y: 262, width: 300, height: 32, art: 'ribbon.svg' },
     { id: 'ribbonWords', x: 63, y: 262, width: 264, height: 30,
       text: { words: words(ribbonWords, ribbonWords, ribbonWords), color: sig, size: 18, font: 'display' } },
-    // A letter from Wildcard: to the squad by name, the greeting, then signed.
-    { id: 'to', x: 20, y: 214, width: 350, height: 34,
+    // A letter from Wildcard: to the squad by name (up to 20 characters, two lines), the greeting, then signed.
+    { id: 'to', x: 20, y: 200, width: 350, height: 60,
       text: { words: words('{squad}，', '{squad},', '{squad}，'), color: '#FFFFFF', size: 22 } },
     { id: 'title', x: 20, y: 306, width: 350, height: 72, text: { words: words(...title), color: '#FFFFFF', size: 48 } },
     { id: 'from', x: 190, y: 384, width: 170, height: 28,

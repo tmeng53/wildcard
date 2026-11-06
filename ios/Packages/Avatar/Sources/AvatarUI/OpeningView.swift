@@ -25,8 +25,8 @@ public struct OpeningView<Label: View>: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// `language` picks each text layer's words (`zh-Hans`, `en`, `zh-Hant`), falling back to
-    /// `zh-Hans`, and `squadName` fills their `{squad}`; `onPlayed` runs once the clip has played (for the squad to cheer), and
-    /// `onEnter` when the button labelled `label` is tapped.
+    /// `zh-Hans`, and `squadName` fills their `{squad}`; `onPlayed` runs once the clip has played
+    /// (for the squad to cheer), and `onEnter` when the button labelled `label` is tapped.
     public init(
         _ loaded: OpeningArt.Loaded, squad: [CharacterPlayer], squadName: String?, language: String,
         onPlayed: @escaping () -> Void = {}, onEnter: @escaping () -> Void, @ViewBuilder label: () -> Label

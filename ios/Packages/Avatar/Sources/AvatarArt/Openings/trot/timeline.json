@@ -63,9 +63,9 @@
     {
       "id": "to",
       "x": 20,
-      "y": 214,
+      "y": 200,
       "width": 350,
-      "height": 34,
+      "height": 60,
       "text": {
         "words": {
           "zh-Hans": "{squad}，",
