@@ -45,6 +45,11 @@ public actor InMemoryMeService: MeService {
         current
     }
 
+    /// The member's 商店街 changes, as a switch or a new store would change it on the server.
+    public func set(stock: StreetStock) {
+        current.stock = stock
+    }
+
     public func save(_ character: MeCharacter) async throws(MeError) {
         if failsSaving { throw .unavailable }
         current.character = character

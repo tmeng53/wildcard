@@ -419,6 +419,27 @@ extension Components {
                 case zhHant
             }
         }
+        /// The `shelf` event’s data: what the caller’s 商店街 shows may have changed, so read `GET /me/unlocks` again.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LiveShelf`.
+        public struct LiveShelf: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/LiveShelf/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/LiveShelf/version`.
+            public var version: Components.Schemas.LiveShelf.VersionPayload
+            /// Creates a new `LiveShelf`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            public init(version: Components.Schemas.LiveShelf.VersionPayload) {
+                self.version = version
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/Health`.
         public struct Health: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Health/version`.

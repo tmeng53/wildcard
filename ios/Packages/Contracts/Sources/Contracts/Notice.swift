@@ -79,4 +79,7 @@ public enum LiveNotice: Hashable, Sendable {
     case ready
     /// A notice just told; nil for a kind this build can't show.
     case told(Notice?)
+    /// What the member's 商店街 shows may have changed (a store, piece, rule or switch, or one of
+    /// their unlocks): its shelf is read again.
+    case shelfChanged
 }

@@ -59,6 +59,29 @@ final class ShoppingStreetUITests: XCTestCase {
         XCTAssertTrue(street.waitForExistence(timeout: 30), "back didn't return to 我")
     }
 
+    /// A store that opens while the app is in the background (the winter switch turned on) is on
+    /// the open street on the way back, without a relaunch (2026-11-06: TURKEY TROT stayed hidden
+    /// until the app was killed).
+    func testAStoreThatOpenedWhileAwayIsOnTheStreetOnReturn() {
+        let app = launch(language: "zh-Hans", also: ["-uitest-winter-on-return"])
+        let street = app.buttons["me.street"]
+        XCTAssertTrue(street.waitForExistence(timeout: 30), "我 has no 商店街 button")
+        street.tap()
+        XCTAssertTrue(app.buttons["street.store.warmup"].waitForExistence(timeout: 30), "商店街 never opened")
+        let powder = app.buttons["street.map.powder"]
+        XCTAssertFalse(powder.exists, "POWDER DAY is on the street before winter")
+
+        XCUIDevice.shared.press(.home)
+        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 30), "the app never went to the background")
+        app.activate()
+        XCTAssertTrue(powder.waitForExistence(timeout: 30), "POWDER DAY didn't open on the way back")
+        powder.tap()
+        settle()
+        XCTAssertTrue(app.buttons["street.store.powder"].isHittable, "the map didn't walk to POWDER DAY")
+        XCTAssertTrue(app.buttons["street.enter"].isEnabled, "POWDER DAY opened shut")
+        keepScreenshot(named: "22-street-on-return")
+    }
+
     /// The street's map walks to a closed store: its shutter and its button say how far it is from opening,
     /// and a tap on it keeps it shut.
     private func walkToClosedStore(_ app: XCUIApplication) {
@@ -73,12 +96,13 @@ final class ShoppingStreetUITests: XCTestCase {
         lap.tap()
     }
 
-    private func launch(language: String) -> XCUIApplication {
+    private func launch(language: String, also: [String] = []) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments += [
-            "-tab", "me", "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push",
-        ]
+        app.launchArguments +=
+            [
+                "-tab", "me", "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push",
+            ] + also
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         return app

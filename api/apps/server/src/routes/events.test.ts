@@ -47,6 +47,12 @@ const unlocked = (member: string, item: string) => ({
   subject: { version: 1 as const, kind: 'store' as const, item },
 });
 
+/** Gives `member` a store, as an admin's `give_unlocks` would. */
+async function unlock(member: string, store: string) {
+  await sql`insert into public.member_unlocks (member_id, kind, item_id, sports, after, unlocked_at)
+    values (${member}, 'store', ${store}, '{}', 0, now())`.execute(db);
+}
+
 /** Reads the stream's events as they come, one at a time. */
 function reader(body: ReadableStream<Uint8Array> | null) {
   if (body === null) throw new Error('no body');
@@ -104,6 +110,20 @@ describe('GET /me/events', () => {
     await stream.cancel();
   });
 
+  it('says when the caller’s 商店街 may have changed, once for changes told together', async () => {
+    const ana = await signUp();
+    const response = await appWith({ heartbeatMs: 60_000, maxAgeMs: 60_000 }).request(
+      '/me/events',
+      { headers: { authorization: `Bearer ${ana.token}` } },
+    );
+    const stream = reader(response.body);
+    expect(await stream.next()).toContain('event: ready');
+
+    await unlock(ana.userId, 'lap');
+    expect(await stream.next()).toBe('event: shelf\ndata: {"version":1}');
+    await stream.cancel();
+  });
+
   it('beats while quiet and ends by itself, so the app reconnects with a fresh token', async () => {
     const ana = await signUp();
     const response = await appWith({ heartbeatMs: 50, maxAgeMs: 400 }).request('/me/events', {
@@ -146,6 +166,29 @@ describe('Postgres live events', () => {
     await sql`select pg_notify('live_events', '{}')`.execute(db);
     await new Promise((resolve) => setTimeout(resolve, 200));
     expect(heard).toHaveLength(1);
+  });
+
+  it('tells a member’s unlock to them and a catalog change to everyone', async () => {
+    const [ana, bea] = await Promise.all([signUp(), signUp()]);
+    const heard: { ana: LiveEvent[]; bea: LiveEvent[] } = { ana: [], bea: [] };
+    const stops = await Promise.all(
+      (['ana', 'bea'] as const).map((who) =>
+        liveEvents.subscribe(UserId.parse((who === 'ana' ? ana : bea).userId), {
+          event: (event) => heard[who].push(event),
+          end: () => undefined,
+        }),
+      ),
+    );
+    await unlock(ana.userId, 'lap');
+    await expect.poll(() => heard.ana).toStrictEqual([{ kind: 'shelf' }]);
+
+    // What the stores', pieces', rules' and switches' logs tell, for every member.
+    await sql`select pg_notify('live_events', '{"version": 1, "kind": "shelf", "member": null}')`.execute(
+      db,
+    );
+    await expect.poll(() => heard.bea).toStrictEqual([{ kind: 'shelf' }]);
+    expect(heard.ana).toStrictEqual([{ kind: 'shelf' }, { kind: 'shelf' }]);
+    for (const stop of stops) stop();
   });
 
   it('ends every subscriber when it closes, and refuses new ones', async () => {
