@@ -1466,6 +1466,13 @@
             "description": "Trimmed, then 1 to 80 characters as people see them; may span lines.",
             "x-max-characters": 80
           },
+          "restDay": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "休息: a rest the member planned, not leave (请假). Left out for leave. A rest makes its day a rest day in their plan, and never counts as a 请假条 in the 战报."
+          },
           "photos": {
             "type": "array",
             "items": {
@@ -1768,6 +1775,13 @@
             "maxLength": 1000,
             "description": "Trimmed, then 1 to 80 characters as people see them; may span lines.",
             "x-max-characters": 80
+          },
+          "restDay": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "休息: a rest the member planned, not leave (请假). Left out for leave. A rest makes its day a rest day in their plan, and never counts as a 请假条 in the 战报."
           },
           "photos": {
             "type": "array",
@@ -2180,7 +2194,7 @@
           "disclaimers": {
             "type": "integer",
             "minimum": 0,
-            "description": "今日请假条 check-ins."
+            "description": "今日请假条 check-ins taken as leave; a 休息 (`restDay`) is not one."
           },
           "topSport": {
             "$ref": "#/components/schemas/TopSport"
@@ -5344,7 +5358,7 @@
           "disclaimers": {
             "type": "integer",
             "minimum": 0,
-            "description": "今日请假条 check-ins."
+            "description": "今日请假条 check-ins taken as leave; a 休息 (`restDay`) is not one."
           },
           "topSport": {
             "$ref": "#/components/schemas/TopSport"

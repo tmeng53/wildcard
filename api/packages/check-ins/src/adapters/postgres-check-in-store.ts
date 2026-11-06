@@ -217,7 +217,10 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
           sql<string>`count(distinct day) filter (where kind = 'trained')`.as('trainedDays'),
           sql<string>`count(*) filter (where kind = 'healthyMeal')`.as('healthyMeals'),
           sql<string>`count(*) filter (where kind = 'cheatMeal')`.as('cheatMeals'),
-          sql<string>`count(*) filter (where kind = 'disclaimer')`.as('disclaimers'),
+          // A 休息 (`restDay`) is a planned rest, not a 请假条.
+          sql<string>`count(*) filter (where kind = 'disclaimer' and payload -> 'restDay' is null)`.as(
+            'disclaimers',
+          ),
         ])
         .where('member_id', '=', member)
         .executeTakeFirstOrThrow();

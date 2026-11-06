@@ -76,7 +76,17 @@ function customSportMatches(
 
 export const storedMealFields = { caption: Caption.optional() };
 const mealFields = { ...storedMealFields, photos: Photos.optional() };
-export const storedDisclaimerFields = { text: DisclaimerText };
+export const storedDisclaimerFields = {
+  text: DisclaimerText,
+  restDay: z
+    .literal(true)
+    .optional()
+    .meta({
+      description:
+        '休息: a rest the member planned, not leave (请假). Left out for leave. A rest makes its day a ' +
+        'rest day in their plan, and never counts as a 请假条 in the 战报.',
+    }),
+};
 const disclaimerFields = { ...storedDisclaimerFields, photos: Photos.optional() };
 
 /** 练了: what was trained, with optional minutes, photos and a line. */
@@ -93,6 +103,11 @@ export type Meal = z.infer<typeof Meal>;
 /** 今日请假条: the member's excuse for resting today, with optional photos. Never a caption. */
 export const Disclaimer = z.strictObject(disclaimerFields).meta({ id: 'Disclaimer' });
 export type Disclaimer = z.infer<typeof Disclaimer>;
+
+/** Whether an entry is a 请假条 taken as leave (请假), not a planned rest (休息). */
+export function isLeave(entry: Entry): boolean {
+  return entry.kind === 'disclaimer' && entry.disclaimer.restDay !== true;
+}
 
 /** What was checked in: the kind, and the kind's own fields under its key. */
 export type Entry =

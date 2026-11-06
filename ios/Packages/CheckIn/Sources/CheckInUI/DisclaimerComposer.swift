@@ -34,6 +34,8 @@ struct DisclaimerComposer: View {
     /// The past day it counts for (补打卡); nil is today, whatever day it is when it posts. It
     /// opens on today, or on the latest day before it without a 练了 when today can't take one.
     @State private var day: LocalDay?
+    /// 休息, a rest the member planned, rather than leave (请假): picked at the top.
+    @State private var restDay = false
     @FocusState private var isEditing: Bool
 
     init(model: TodayModel) {
@@ -46,7 +48,7 @@ struct DisclaimerComposer: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            DisclaimerHeader(model: model, day: $day)
+            DisclaimerHeader(model: model, day: $day, restDay: $restDay)
                 .padding(.bottom, Space.l)
             // The excuse sits in the middle of the room the choices leave.
             Spacer(minLength: 0)
@@ -69,7 +71,7 @@ struct DisclaimerComposer: View {
                     .padding(.bottom, Space.xs)
             }
             // The page's last line, over nothing else: it floats, in glass.
-            PostButton(model: model, disclaimer: entry.disclaimer, isShared: isShared, day: day)
+            PostButton(model: model, disclaimer: entry.disclaimer(restDay: restDay), isShared: isShared, day: day)
                 .controlPlacement(.floating)
         }
         .padding(.horizontal, Space.l)
@@ -93,7 +95,11 @@ struct DisclaimerComposer: View {
     private var hero: some View {
         VStack(alignment: .leading, spacing: Space.xs) {
             TextField(text: $text, axis: .vertical) {
-                Text("为什么没练？", bundle: .module)
+                if restDay {
+                    Text("今天怎么歇？", bundle: .module)
+                } else {
+                    Text("为什么没练？", bundle: .module)
+                }
             }
             .typeStyle(TypeRamp.title)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -296,9 +302,15 @@ private struct PostButton: View {
             guard let disclaimer, !model.isSending else { return }
             Task { await model.post(.disclaimer(disclaimer), shared: isShared, on: day) }
         } label: {
-            Text("发布请假条", bundle: .module)
-                .loadingLabel(model.isSending)
-                .frame(maxWidth: .infinity)
+            Group {
+                if disclaimer?.restDay == true {
+                    Text("发布休息", bundle: .module)
+                } else {
+                    Text("发布请假条", bundle: .module)
+                }
+            }
+            .loadingLabel(model.isSending)
+            .frame(maxWidth: .infinity)
         }
         .buttonStyle(PrimaryButtonStyle())
         // Still enabled while sending, so it stays the brand color under its dots; the action

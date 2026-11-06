@@ -66,6 +66,8 @@ public actor DeviceOutbox: Outbox {
         let minutes: Int?
         let caption: String?
         let text: String?
+        /// A 休息 rather than a 请假条; missing on posts kept before it existed.
+        let restDay: Bool?
         let photos: [StoredPhoto]
 
         init(_ post: PendingCheckIn) {
@@ -84,6 +86,7 @@ public actor DeviceOutbox: Outbox {
             var minutes: Int?
             var caption: String?
             var text: String?
+            var restDay: Bool?
             switch post.draft {
             case .trained(let activity, let workoutMinutes, let body):
                 kind = "trained"
@@ -102,7 +105,9 @@ public actor DeviceOutbox: Outbox {
             case .disclaimer(let disclaimer):
                 kind = "disclaimer"
                 text = disclaimer.text
+                restDay = disclaimer.restDay ? true : nil
             }
+            self.restDay = restDay
             (self.sport, self.customSport, self.minutes, self.caption, self.text) = (
                 sport, customSport, minutes, caption, text
             )
@@ -137,7 +142,7 @@ public actor DeviceOutbox: Outbox {
             case "cheatMeal": draft = .cheatMeal(body)
             case "disclaimer":
                 guard let text else { return nil }
-                draft = .disclaimer(try Disclaimer(text))
+                draft = .disclaimer(try Disclaimer(text, restDay: restDay ?? false))
             default: return nil
             }
             return PendingCheckIn(

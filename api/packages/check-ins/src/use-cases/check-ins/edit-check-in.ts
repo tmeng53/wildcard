@@ -23,7 +23,7 @@ import type {
 } from '../../ports.js';
 import { checkPhotos } from '../check-photos.js';
 import { checkSport } from '../check-sport.js';
-import { planTrainedDay } from '../weekly-plans.js';
+import { planRestDay, planTrainedDay } from '../weekly-plans.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
 
 interface Deps {
@@ -102,6 +102,9 @@ export async function editCheckIn(
       { store: deps.plans },
       { member, day: edited.day, training: edited.training },
     );
+  }
+  if (edited.kind === 'disclaimer' && edited.disclaimer.restDay === true) {
+    await planRestDay({ store: deps.plans }, { member, day: edited.day });
   }
   await deleteDroppedPhotos(deps, edited.id);
   return edited;

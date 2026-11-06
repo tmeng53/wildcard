@@ -47,9 +47,9 @@ struct DisclaimerEntry: Hashable, Sendable {
         blocked != nil && Self.posted(mine) == blocked
     }
 
-    /// The line to post, or nil while it is empty, too long or blocked.
-    var disclaimer: Disclaimer? {
-        isBlocked ? nil : try? Disclaimer(text)
+    /// The line to post, as leave or a 休息, or nil while it is empty, too long or blocked.
+    func disclaimer(restDay: Bool) -> Disclaimer? {
+        isBlocked ? nil : try? Disclaimer(text, restDay: restDay)
     }
 
     private static func posted(_ text: String) -> String? {

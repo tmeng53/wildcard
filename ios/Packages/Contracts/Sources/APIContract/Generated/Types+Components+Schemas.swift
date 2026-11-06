@@ -2913,6 +2913,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerView/text`.
             public var text: Swift.String
+            /// 休息: a rest the member planned, not leave (请假). Left out for leave. A rest makes its day a rest day in their plan, and never counts as a 请假条 in the 战报.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerView/restDay`.
+            public var restDay: Swift.Bool?
             /// 1 to 3 photos, the cover first. Missing when there are none.
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerView/photos`.
@@ -2921,16 +2925,20 @@ extension Components {
             ///
             /// - Parameters:
             ///   - text: Trimmed, then 1 to 80 characters as people see them; may span lines.
+            ///   - restDay: 休息: a rest the member planned, not leave (请假). Left out for leave. A rest makes its day a rest day in their plan, and never counts as a 请假条 in the 战报.
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
             public init(
                 text: Swift.String,
+                restDay: Swift.Bool? = nil,
                 photos: [Components.Schemas.PhotoView]? = nil
             ) {
                 self.text = text
+                self.restDay = restDay
                 self.photos = photos
             }
             public enum CodingKeys: String, CodingKey {
                 case text
+                case restDay
                 case photos
             }
         }
@@ -3308,6 +3316,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Disclaimer/text`.
             public var text: Swift.String
+            /// 休息: a rest the member planned, not leave (请假). Left out for leave. A rest makes its day a rest day in their plan, and never counts as a 请假条 in the 战报.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Disclaimer/restDay`.
+            public var restDay: Swift.Bool?
             /// 1 to 3 photos, the cover first. Leave it out for none.
             ///
             /// - Remark: Generated from `#/components/schemas/Disclaimer/photos`.
@@ -3316,16 +3328,20 @@ extension Components {
             ///
             /// - Parameters:
             ///   - text: Trimmed, then 1 to 80 characters as people see them; may span lines.
+            ///   - restDay: 休息: a rest the member planned, not leave (请假). Left out for leave. A rest makes its day a rest day in their plan, and never counts as a 请假条 in the 战报.
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
             public init(
                 text: Swift.String,
+                restDay: Swift.Bool? = nil,
                 photos: [Components.Schemas.PhotoRef]? = nil
             ) {
                 self.text = text
+                self.restDay = restDay
                 self.photos = photos
             }
             public enum CodingKeys: String, CodingKey {
                 case text
+                case restDay
                 case photos
             }
         }
@@ -3858,7 +3874,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/cheatMeals`.
             public var cheatMeals: Swift.Int
-            /// 今日请假条 check-ins.
+            /// 今日请假条 check-ins taken as leave; a 休息 (`restDay`) is not one.
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/disclaimers`.
             public var disclaimers: Swift.Int
@@ -3871,7 +3887,7 @@ extension Components {
             ///   - trainedDays: Days with a 练了; several 练了 on one day count once.
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
-            ///   - disclaimers: 今日请假条 check-ins.
+            ///   - disclaimers: 今日请假条 check-ins taken as leave; a 休息 (`restDay`) is not one.
             ///   - topSport:
             public init(
                 version: Components.Schemas.CheckInTotals.VersionPayload,
@@ -8390,7 +8406,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/cheatMeals`.
             public var cheatMeals: Swift.Int
-            /// 今日请假条 check-ins.
+            /// 今日请假条 check-ins taken as leave; a 休息 (`restDay`) is not one.
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/disclaimers`.
             public var disclaimers: Swift.Int
@@ -8449,7 +8465,7 @@ extension Components {
             ///   - trainedDays: Days with a 练了; several 练了 on one day count once.
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
-            ///   - disclaimers: 今日请假条 check-ins.
+            ///   - disclaimers: 今日请假条 check-ins taken as leave; a 休息 (`restDay`) is not one.
             ///   - topSport:
             ///   - week: Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.
             ///   - titles: Every title won, in all the member’s squads, one per title by its words, the latest won first.

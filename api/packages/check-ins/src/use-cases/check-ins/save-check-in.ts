@@ -25,7 +25,7 @@ import type {
 } from '../../ports.js';
 import { checkPhotos } from '../check-photos.js';
 import { checkSport } from '../check-sport.js';
-import { planTrainedDay } from '../weekly-plans.js';
+import { planRestDay, planTrainedDay } from '../weekly-plans.js';
 
 export interface SaveCheckInInput {
   readonly id: CheckInId;
@@ -44,7 +44,8 @@ export interface SavedCheckIn {
  * again is a success, different contents under a saved id are refused. A retry is recognised
  * before the time checks, so a late retry of a saved check-in still succeeds. A 练了 on a day the
  * member's plan has as a rest day makes it a training day of that sport, on a retry too, so a
- * save that stopped between the two still ends with both.
+ * save that stopped between the two still ends with both. A 休息 makes its day a rest day the
+ * same way.
  */
 export async function saveCheckIn(
   {
@@ -76,6 +77,9 @@ export async function saveCheckIn(
       { store: plans },
       { member, day: saved.checkIn.day, training: saved.checkIn.training },
     );
+  }
+  if (saved.checkIn.kind === 'disclaimer' && saved.checkIn.disclaimer.restDay === true) {
+    await planRestDay({ store: plans }, { member, day: saved.checkIn.day });
   }
   return saved;
 }
