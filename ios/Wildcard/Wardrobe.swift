@@ -8,8 +8,12 @@ import Observation
 /// alike.
 @MainActor @Observable
 final class Wardrobe {
-    /// 商店街 for the member as 我 last read them; made again while it is closed when that changes.
+    /// 商店街 for the member as 我 last read them; made again when that changes (while it is open,
+    /// only when the street itself did).
     private(set) var shop: StreetModel?
+    /// The street `shop` was made from, so an open one is made again only when the street changed,
+    /// not when a claim on it saved.
+    @ObservationIgnored private var madeFrom: Street?
     var showsShop = false
     var editor: CharacterEditorModel?
     @ObservationIgnored private let profile: MeModel
@@ -39,10 +43,12 @@ final class Wardrobe {
             unlocks: overview.unlocks, stock: overview.stock, claimed: overview.claimed, marks: marks)
     }
 
-    /// 我's shopfront: the street as it was last made.
+    /// 我's shopfront: the street as it was last made at once, then read again, so a store that
+    /// opened since shows without waiting for the next launch.
     func openShop() {
         if shop == nil { shop = makeShop() }
         showsShop = shop != nil
+        Task { await profile.reload() }
     }
 
     /// What 商店街 is made from, and whether it is open, for `refresh`.
@@ -62,10 +68,27 @@ final class Wardrobe {
         let open: Bool
     }
 
-    /// Makes 商店街 again from what 我 read, unless it is open, so an open one keeps its place.
+    /// Makes 商店街 again from what 我 read. An open one is made again only when the street changed
+    /// (a store opened or closed, a piece came in), keeping the store it is in.
     func refresh() {
-        guard !showsShop else { return }
+        guard showsShop else {
+            shop = makeShop()
+            return
+        }
+        guard let overview = profile.overview, Street(overview) != madeFrom else { return }
+        let inside = shop?.store
         shop = makeShop()
+        if let inside { shop?.show(.store, item: inside) }
+    }
+
+    /// What a street is made from, apart from what the member claimed on it.
+    private struct Street: Equatable {
+        let unlocks: [Unlock]
+        let stock: StreetStock?
+
+        init(_ overview: MeOverview) {
+            (unlocks, stock) = (overview.unlocks, overview.stock)
+        }
     }
 
     /// Where an unlock opens, read again first so what just opened is open there: a store on its
@@ -86,6 +109,7 @@ final class Wardrobe {
     /// returns to it.
     private func makeShop() -> StreetModel? {
         guard let overview = profile.overview else { return nil }
+        madeFrom = Street(overview)
         let profile = profile
         return try? StreetModel.placeholder(
             look: overview.character.outfit,

@@ -70,4 +70,23 @@ extension MainTabs {
             today.tell(broadcast, open: open) { ShownBroadcasts.mark($0.id, for: member) }
         }
     }
+
+    /// What drops in on 今天 from 通知, with whose phone it is: told again when any changes.
+    var bannerNotices: [String] {
+        inbox.unseenBroadcasts.map(\.id) + inbox.unseenGoalSuggestions.map(\.id.rawValue.description)
+            + [today.home?.member.description ?? ""]
+    }
+
+    /// The higher squad goals suggested to the captain not yet seen in 通知 that this phone hasn't
+    /// shown, each in a banner on 今天, kept with the broadcasts shown by the notice's id.
+    func tellGoalSuggestions() {
+        guard let member = today.home?.member.description else { return }
+        for notice in inbox.unseenGoalSuggestions {
+            let shown = "goalSuggestion-\(notice.id.rawValue)"
+            guard case .goalSuggestion(let suggestion) = notice.subject,
+                !ShownBroadcasts.contains(shown, for: member)
+            else { continue }
+            today.tell(suggestion, open: open) { ShownBroadcasts.mark(shown, for: member) }
+        }
+    }
 }

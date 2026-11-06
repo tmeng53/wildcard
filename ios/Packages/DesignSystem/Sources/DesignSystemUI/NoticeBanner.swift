@@ -174,18 +174,25 @@ private struct NoticesWaiting: ViewModifier {
     private static var peek: Double { 5 }
     private static var narrowing: Double { 10 }
 
-    func body(content: Content) -> some View {
+    @ViewBuilder func body(content: Content) -> some View {
+        // With none waiting the banner stays exactly as it was, nothing behind it.
+        if count == 0 {
+            content
+        } else {
+            edges(behind: content)
+        }
+    }
+
+    private func edges(behind content: Content) -> some View {
         content
             .background(alignment: .bottom) {
                 ZStack(alignment: .bottom) {
-                    ForEach((1...max(count, 1)).reversed(), id: \.self) { edge in
-                        if edge <= count {
-                            Capsule(style: .continuous)
-                                .fill(Color(role: .bgBrand, in: .gym).opacity(edge == 1 ? 0.55 : 0.3))
-                                .frame(height: 2 * Self.peek * Double(edge))
-                                .padding(.horizontal, Self.narrowing * Double(edge))
-                                .offset(y: Self.peek * Double(edge))
-                        }
+                    ForEach((1...count).reversed(), id: \.self) { edge in
+                        Capsule(style: .continuous)
+                            .fill(Color(role: .bgBrand, in: .gym).opacity(edge == 1 ? 0.55 : 0.3))
+                            .frame(height: 2 * Self.peek * Double(edge))
+                            .padding(.horizontal, Self.narrowing * Double(edge))
+                            .offset(y: Self.peek * Double(edge))
                     }
                 }
                 .accessibilityHidden(true)
@@ -236,6 +243,9 @@ private struct NoticePresenter<Item: Identifiable, Banner: View>: View {
                         put(away: shown)
                     }
                     .transition(transition)
+                    // One element whatever the banner wears behind it (the edges of notices
+                    // waiting), so VoiceOver and UI tests read its words as one label.
+                    .accessibilityElement(children: .combine)
                     .accessibilityAddTraits(.isButton)
                     .accessibilityIdentifier("notice.banner")
             }

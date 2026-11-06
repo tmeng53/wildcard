@@ -251,7 +251,7 @@
         }
       }
     },
-    "今天 3 人练了": {
+    "今天 3 人训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -262,7 +262,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天 3 人練了"
+            "value": "今天 3 人訓練"
           }
         }
       }
@@ -2059,7 +2059,7 @@
         }
       }
     },
-    "练了": {
+    "训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2070,7 +2070,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "練了"
+            "value": "訓練"
           }
         }
       }
@@ -2491,7 +2491,7 @@
         }
       }
     },
-    "今天练了": {
+    "今天训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2502,7 +2502,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天練了"
+            "value": "今天訓練"
           }
         }
       }
@@ -3335,6 +3335,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "去商店街看看"
+          }
+        }
+      }
+    },
+    "小队本周目标 · 人均 %lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad goal · %lld days each"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊本週目標 · 人均 %lld 天"
+          }
+        }
+      }
+    },
+    "天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "days"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "天"
           }
         }
       }

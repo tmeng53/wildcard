@@ -64,34 +64,6 @@ struct MysteryBox: View {
     }
 }
 
-/// A piece that came in but whose box this phone hasn't opened: the same 「？」 box, 「可以开了」
-/// under it. A tap puts the pop-up up again with every box waiting.
-struct ReadyBox: View {
-    let model: StreetModel
-    let slot: Slot
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        Button(action: model.showArrivals) {
-            VStack(spacing: Space.xxs) {
-                MysteryFace()
-                    .aspectRatio(1, contentMode: .fit)
-                Text("可以开了", bundle: .module)
-                    .typeStyle(TypeRamp.caption)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("新货，可以开了", bundle: .module))
-        .accessibilityAddTraits(.isButton)
-        .accessibilityIdentifier("editor.ready.\(slot.rawValue)")
-    }
-}
-
 /// The face of a locked piece's box: a big 「？」 on the subtle fill, in the tile's shape.
 struct MysteryFace: View {
     @Environment(\.sceneTheme) private var theme
@@ -110,7 +82,8 @@ struct MysteryFace: View {
 }
 
 /// One piece on a rack: its picture on its own, as a shop shows it, over its name. One that came
-/// in wears NEW and offers 领取; one in the wardrobe says 已拥有 and is tried on in the editor.
+/// in shows as itself, never a box, wears NEW and offers 领取; one in the wardrobe is dimmed, says
+/// 已拥有 and is tried on in the editor (Tracy, 2026-11-06).
 struct RackPiece: View {
     let model: StreetModel
     let slot: Slot
@@ -119,37 +92,36 @@ struct RackPiece: View {
 
     var body: some View {
         let shelf = model.shelf(variant)
-        if shelf == .boxed {
-            ReadyBox(model: model, slot: slot)
-        } else {
-            VStack(spacing: Space.xxs) {
-                PickTile(
-                    EditorNames.variant(variant, in: slot), isSelected: false,
-                    action: { model.tap(variant) },
-                    picture: { picture }
-                )
-                .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant)")
-                .overlay(alignment: .topLeading) {
-                    if shelf == .new {
-                        InkTag.new
-                            .padding(Space.xxs)
-                            .allowsHitTesting(false)
-                            .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant).new")
-                    }
+        let isNew = shelf == .new || shelf == .boxed
+        VStack(spacing: Space.xxs) {
+            PickTile(
+                EditorNames.variant(variant, in: slot), isSelected: false,
+                action: { model.tap(variant) },
+                picture: { picture }
+            )
+            // Already in the wardrobe: dimmed, so what is still to take stands out.
+            .opacity(shelf == .owned ? 0.45 : 1)
+            .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant)")
+            .overlay(alignment: .topLeading) {
+                if isNew {
+                    InkTag.new
+                        .padding(Space.xxs)
+                        .allowsHitTesting(false)
+                        .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant).new")
                 }
-                EditorNames.variant(variant, in: slot)
-                    .typeStyle(TypeRamp.caption)
-                    .foregroundStyle(Color(role: shelf == .owned ? .fgMuted : .fgDefault, in: theme))
+            }
+            EditorNames.variant(variant, in: slot)
+                .typeStyle(TypeRamp.caption)
+                .foregroundStyle(Color(role: shelf == .owned ? .fgMuted : .fgDefault, in: theme))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .accessibilityHidden(true)
+            if shelf == .owned {
+                Text("已拥有", bundle: .module)
+                    .typeStyle(TypeRamp.label)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .accessibilityHidden(true)
-                if shelf == .owned {
-                    Text("已拥有", bundle: .module)
-                        .typeStyle(TypeRamp.label)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .lineLimit(1)
-                        .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant).owned")
-                }
+                    .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant).owned")
             }
         }
     }

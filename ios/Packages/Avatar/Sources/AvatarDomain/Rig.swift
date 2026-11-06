@@ -87,13 +87,36 @@ public struct Rig: Hashable, Sendable {
         /// Where an arm bends, for a part drawn as one whole arm from its pivot (the shoulder)
         /// to its hand. Nil for a part that never bends.
         public var elbow: Elbow?
+        /// The arm whose raising fades this part out, if any.
+        public var hides: Hides?
 
         public init(
             id: PartID, parent: PartID? = nil, pivot: Point, opacity: Double = 1, layers: [Layer] = [],
-            elbow: Elbow? = nil
+            elbow: Elbow? = nil, hides: Hides? = nil
         ) {
             (self.id, self.parent, self.pivot, self.opacity, self.layers) = (id, parent, pivot, opacity, layers)
-            self.elbow = elbow
+            (self.elbow, self.hides) = (elbow, hides)
+        }
+    }
+
+    /// A part that gives way to an arm: it fades out as that arm turns (either way) from `start`
+    /// to `end` degrees, so a raised arm is drawn over what hangs over it, such as a bichon's
+    /// chin fluff, which covers the shoulders of hanging arms and must not cover raised ones.
+    public struct Hides: Hashable, Sendable {
+        public var part: PartID
+        public var start: Double
+        public var end: Double
+
+        public init(part: PartID, start: Double, end: Double) {
+            (self.part, self.start, self.end) = (part, start, end)
+        }
+
+        /// How much of the part shows with the arm turned `degrees`: 1 at rest, 0 once raised.
+        public func shown(arm degrees: Double) -> Double {
+            let turned = abs(degrees)
+            guard end > start else { return turned < end ? 1 : 0 }
+            let along = min(max((turned - start) / (end - start), 0), 1)
+            return 1 - along * along * (3 - 2 * along)
         }
     }
 
@@ -140,7 +163,8 @@ public struct Rig: Hashable, Sendable {
                 Part(
                     id: part.id, parent: part.parent, pivot: part.pivot.point,
                     opacity: part.opacity ?? 1, layers: part.layers ?? [],
-                    elbow: part.elbow.map { Elbow(point: $0.point.point, hand: $0.hand.point) })
+                    elbow: part.elbow.map { Elbow(point: $0.point.point, hand: $0.hand.point) },
+                    hides: part.hides.map { Hides(part: $0.part, start: $0.start, end: $0.end) })
             },
             defaults: Dictionary(uniqueKeysWithValues: (file.defaults ?? [:]).map { (Slot($0.key), $0.value) }),
             skin: try file.skin.map { skin throws(AvatarError) in
@@ -169,6 +193,7 @@ private struct RigFile: Decodable {
                 "id": .value, "parent": .value, "pivot": .value, "opacity": .value,
                 "layers": .array(.object(["slot": .value, "art": .value, "hand": .value])),
                 "elbow": .object(["at": .value, "hand": .value]),
+                "hides": .object(["part": .value, "start": .value, "end": .value]),
             ])),
     ])
 
@@ -189,6 +214,13 @@ private struct RigFile: Decodable {
         let opacity: Double?
         let layers: [Rig.Layer]?
         let elbow: ElbowFile?
+        let hides: HidesFile?
+    }
+
+    struct HidesFile: Decodable {
+        let part: PartID
+        let start: Double
+        let end: Double
     }
 }
 

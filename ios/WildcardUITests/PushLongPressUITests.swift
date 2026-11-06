@@ -27,10 +27,12 @@ final class PushLongPressUITests: XCTestCase {
     func testAPushWithoutTheDayShowsItsWords() throws {
         continueAfterFailure = false
         let expanded = try longPress(Self.payload(today: nil), shot: "91-push-long-press-words")
+        // The system's own banner shows the same words, so the check is on the extension's view.
+        let plain = expanded.descendants(matching: .any).matching(identifier: "pushReact.plain").firstMatch
         XCTAssertTrue(
-            expanded.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "测试队友")).firstMatch
-                .waitForExistence(timeout: Self.wait),
-            "the long-pressed push doesn't show its words:\n\(springboard.debugDescription.prefix(4000))")
+            plain.waitForExistence(timeout: Self.wait),
+            "the long-pressed push doesn't draw its words:\n\(springboard.debugDescription.prefix(4000))")
+        XCTAssertTrue(plain.label.contains("测试队友"), "the extension's words aren't the push's: \(plain.label)")
     }
 
     /// Launches the app with the push, goes home, long-presses its banner and keeps a screenshot

@@ -37,15 +37,26 @@ extension Notice {
             }
         case "coachReply":
             return checkIn.flatMap { coachReply(wire, checkIn: $0) }
+        case "comment":
+            guard let alert, let checkIn else { return nil }
+            return .comment(alert, checkIn: checkIn)
+        default:
+            return toldInApp(wire)
+        }
+    }
+
+    /// The other kinds, apart to keep each switch small; nil for a kind this build doesn't know.
+    private static func toldInApp(_ wire: Components.Schemas.NoticeEntry) -> Subject? {
+        switch wire.kind {
         case "coachNote":
             return coachNote(wire)
         case "unlocked":
             return unlocked(wire)
-        case "comment":
-            guard let alert, let checkIn else { return nil }
-            return .comment(alert, checkIn: checkIn)
         case "broadcast":
             return broadcast(wire).map(Subject.broadcast)
+        case "goalSuggestion":
+            guard let weeks = wire.weeks, let days = wire.daysPerMember else { return nil }
+            return .goalSuggestion(GoalSuggestion(weeks: weeks, daysPerMember: days))
         default:
             return nil
         }

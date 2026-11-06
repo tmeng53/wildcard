@@ -38,10 +38,10 @@ export interface UnlockStore {
   /** The pieces `member` claimed, the earliest first. */
   claimsOf(member: MemberId): Promise<Claim[]>;
   /**
-   * Keeps `member`'s claim of `piece`, which they unlocked, unless they claimed it already, and
-   * answers with the claim as kept; undefined when they haven't unlocked it.
+   * Keeps `member`'s claim of `piece` unless they claimed it already, and answers with the claim
+   * as kept. Whether they may claim it is the caller's to check.
    */
-  claim(member: MemberId, piece: PieceId): Promise<Claim | undefined>;
+  claim(member: MemberId, piece: PieceId): Promise<Claim>;
 }
 
 /**

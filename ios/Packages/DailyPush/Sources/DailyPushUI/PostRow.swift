@@ -112,13 +112,13 @@ struct PostRow: View {
     @ViewBuilder private var kindTag: some View {
         switch post.entry {
         case .trained(let activity?, let minutes?):
-            Tag(Text("练了 · \(activity.name) · \(minutes.value) 分钟", bundle: .module))
+            Tag(Text("训练 · \(activity.name) · \(minutes.value) 分钟", bundle: .module))
         case .trained(let activity?, nil):
-            Tag(Text("练了 · \(activity.name)", bundle: .module))
+            Tag(Text("训练 · \(activity.name)", bundle: .module))
         case .trained(nil, let minutes?):
-            Tag(Text("练了 · \(minutes.value) 分钟", bundle: .module))
+            Tag(Text("训练 · \(minutes.value) 分钟", bundle: .module))
         case .trained(nil, nil):
-            Tag(Text("练了", bundle: .module))
+            Tag(Text("训练", bundle: .module))
         case .healthyMeal:
             Tag(Text("健康餐", bundle: .module))
         case .cheatMeal:

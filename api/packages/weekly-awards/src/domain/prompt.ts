@@ -13,7 +13,7 @@ import type { WeekStart } from './schedule.js';
 // the badge catalog, for the model to pick each title's badge from.
 
 const KIND_NAMES: Record<WeekCheckIn['kind'], string> = {
-  trained: '练了',
+  trained: '训练',
   healthyMeal: '健康餐',
   cheatMeal: '放纵餐',
   disclaimer: '请假条',

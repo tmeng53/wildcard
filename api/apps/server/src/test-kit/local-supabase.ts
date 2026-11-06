@@ -146,6 +146,8 @@ export const noJobs = {
   interactions: [],
   clock: () => new Date(),
   coachNotes: noCoachNotes,
+  // No squad is suggested a higher goal: every week reads as told already.
+  suggestGoal: () => Promise.resolve('taken' as const),
 };
 
 /**

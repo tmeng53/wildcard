@@ -70,6 +70,10 @@ struct AppRoot: View {
             }
         }
         .task { await app.run() }
+        // An invite link: universal links come here in a SwiftUI app.
+        .onOpenURL { url in
+            if let code = InviteLink.code(in: url) { app.open(invite: code) }
+        }
         // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
         .onChange(of: app.showsTabs) { _, shows in
             if !shows { tab = .today }

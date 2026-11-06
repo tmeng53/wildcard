@@ -54,12 +54,13 @@ for (const slot of list(join(art, 'art')).filter((s) => s !== 'base')) {
   }
 }
 
-const rigParts = rig.parts.map(({ id, parent, pivot, opacity, elbow }) => ({
+const rigParts = rig.parts.map(({ id, parent, pivot, opacity, elbow, hides }) => ({
   id,
   parent: parent ?? null,
   pivot,
   opacity: opacity ?? 1,
   ...(elbow ? { elbow } : {}),
+  ...(hides ? { hides } : {}),
 }));
 const idles = (personas) =>
   Object.fromEntries(personas.map((p) => [p, json(join(art, 'clips', p, 'idle.json'))]));
@@ -96,6 +97,8 @@ const joinBundle = {
   parts: rig.parts.map((part, i) => ({ ...rigParts[i], layers: part.layers ?? [] })),
   personas: allPersonas,
   idle: idles(allPersonas),
+  cheer: Object.fromEntries(allPersonas.map((p) => [p, clip(join(art, 'clips', p, 'cheer.json'))])),
+  moves: { wave: clip(join(web, 'character', 'moves', 'wave.json')) },
 };
 
 // Apple's logo on the button that opens the App Store (the same glyph the invite page draws).
