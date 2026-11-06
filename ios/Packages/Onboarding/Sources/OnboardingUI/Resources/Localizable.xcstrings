@@ -39,28 +39,6 @@
         }
       }
     },
-    "%lld 人": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld members"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld 人"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld 人"
-          }
-        }
-      }
-    },
     "%lld 人 · 满员了": {
       "localizations": {
         "en": {
@@ -2097,6 +2075,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "這週在哪練？"
+          }
+        }
+      }
+    },
+    "%lld 人 · 人均每周 %lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld members · %2$lld days a week each"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld 人 · 人均每周 %2$lld 天"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld 人 · 人均每週 %2$lld 天"
+          }
+        }
+      }
+    },
+    "小队目标 · 每人每周练几天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad goal · days a week each"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小队目标 · 每人每周练几天"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊目標 · 每人每週練幾天"
+          }
+        }
+      }
+    },
+    "人均 %lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days each"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "人均 %lld 天"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "人均 %lld 天"
           }
         }
       }

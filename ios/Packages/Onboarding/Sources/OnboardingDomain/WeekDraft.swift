@@ -1,6 +1,6 @@
 import Contracts
 
-/// The member's typical week, their 每周模板, drawn on sign-up's poster: what each day is, a
+/// The member's typical week, their 我的每周计划 (每周模板 in code), drawn on sign-up's poster: what each day is, a
 /// sport picked in the step before, a training day with no sport named, or 休息. This week and
 /// every later one follow it until it is changed (this week counting only from the day the
 /// member joined), so every day can change here, those already over this week too. Tapping a
@@ -15,16 +15,19 @@ public struct WeekDraft: Hashable, Sendable {
     public let choices: [PlanDay]
 
     /// The training days for each number of them, spread out over the week; five rest on
-    /// Wednesday and Sunday, as the approved design shows.
-    static let trainingDays: [[Int]] = [[2], [1, 3], [0, 2, 4], [0, 1, 3, 4], [0, 1, 3, 4, 5]]
+    /// Wednesday and Sunday, as the approved design shows, and six on Sunday.
+    static let trainingDays: [[Int]] = [
+        [2], [1, 3], [0, 2, 4], [0, 1, 3, 4], [0, 1, 3, 4, 5], [0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5, 6],
+    ]
 
-    /// One training day for each sport picked, at most five, in the order picked; a training
-    /// day with no sport named if none was. Monday starts selected.
-    public init(sports: [Activity]) {
+    /// `days` training days, the squad's 人均 N 天 (1 to 7), going through the sports picked in
+    /// the order picked; with no sport picked, training days with no sport named. Monday starts
+    /// selected.
+    public init(sports: [Activity], days count: Int) {
         let trainings: [PlanDay] = sports.isEmpty ? [.train(nil)] : sports.map { .train($0) }
-        let planned = Self.trainingDays[min(trainings.count, Self.trainingDays.count) - 1]
+        let planned = Self.trainingDays[min(max(count, 1), Self.trainingDays.count) - 1]
         days = (0..<WeeklyPlan.dayCount).map { index in
-            planned.firstIndex(of: index).map { trainings[$0] } ?? .rest
+            planned.firstIndex(of: index).map { trainings[$0 % trainings.count] } ?? .rest
         }
         selected = 0
         choices = trainings + [.rest]

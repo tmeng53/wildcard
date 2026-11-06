@@ -139,8 +139,9 @@ public final class SignUpModel {
         if next == .character, editor == nil {
             editor = try? CharacterEditorModel.placeholder(look: welcomeLook, nickname: nickname, stock: stock)
         }
-        if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked).choices {
-            week = WeekDraft(sports: sports.picked)
+        let days = joined?.daysPerMember ?? squad.daysPerMember
+        if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked, days: days).choices {
+            week = WeekDraft(sports: sports.picked, days: days)
         }
         if step == .week, next == .sports {
             // Back to the sports: the character wears the one picked last again, not the
@@ -213,6 +214,12 @@ public final class SignUpModel {
     /// account's, given once: an account that already gave it never sees the line.
     let asksForAIConsent: Bool
 
+    /// 小队目标 · 每人每周练几天, for the squad being made.
+    func pickDaysPerMember(_ days: Int) {
+        guard SquadWeeklyGoal.choices.contains(days) else { return }
+        squad.daysPerMember = days
+    }
+
     func typeName(_ text: String) {
         squad.typedName = text
         failure = nil
@@ -242,6 +249,7 @@ public final class SignUpModel {
         let choice = squad.choice
         let code = squad.code
         let name = squad.name
+        let daysPerMember = squad.daysPerMember
         perform { () async throws(SignUpError) in
             if self.asksForAIConsent { try await self.service.agreeToAI() }
             let squad: JoinedSquad
@@ -251,7 +259,7 @@ public final class SignUpModel {
                 squad = try await self.service.join(code)
             case .create:
                 guard let name else { return }
-                squad = try await self.service.create(named: name)
+                squad = try await self.service.create(named: name, daysPerMember: daysPerMember)
             }
             self.joined = squad
             self.madeTheSquad = choice == .create

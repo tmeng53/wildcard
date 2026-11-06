@@ -13,8 +13,8 @@ public protocol SignUpService: Sendable {
     func agreeToAI() async throws(SignUpError)
     /// Joins the squad by its code. Safe to repeat.
     func join(_ code: InviteCode) async throws(SignUpError) -> JoinedSquad
-    /// Makes a squad with the member in it.
-    func create(named name: SquadName) async throws(SignUpError) -> JoinedSquad
+    /// Makes a squad with the member in it, and its goal, 人均 `daysPerMember` 天.
+    func create(named name: SquadName, daysPerMember: Int) async throws(SignUpError) -> JoinedSquad
     /// Saves the character made in 角色和昵称.
     func save(_ character: NewCharacter) async throws(SignUpError)
     /// Saves the member's typical week, which this week and every later one follow.

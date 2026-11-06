@@ -19,7 +19,8 @@ public struct APISignUpService: SignUpService {
     public func preview(_ code: InviteCode) async throws(SignUpError) -> SquadPreview {
         let invite = try await signUp { () throws(APIError) in try await api.invite(code) }
         return SquadPreview(
-            code: code, name: invite.name, memberCount: invite.memberCount, isFull: invite.isFull, looks: invite.looks)
+            code: code, name: invite.name, memberCount: invite.memberCount, isFull: invite.isFull,
+            daysPerMember: invite.daysPerMember, looks: invite.looks)
     }
 
     /// Agrees to the copy this build's 你的小队 step shows. Its version moves with that copy, and
@@ -34,9 +35,12 @@ public struct APISignUpService: SignUpService {
         try await joined(try await signUp { () throws(APIError) in try await api.join(code) })
     }
 
-    public func create(named name: SquadName) async throws(SignUpError) -> JoinedSquad {
+    public func create(named name: SquadName, daysPerMember: Int) async throws(SignUpError) -> JoinedSquad {
         let id = SquadID(newID())
-        return try await joined(try await signUp { () throws(APIError) in try await api.createSquad(id, named: name) })
+        return try await joined(
+            try await signUp { () throws(APIError) in
+                try await api.createSquad(id, named: name, daysPerMember: daysPerMember)
+            })
     }
 
     /// Saves the character on the profile, keeping the rest of it: the profile is saved whole.

@@ -42,6 +42,7 @@ public actor InMemorySignUpService: SignUpService {
     public func preview(_ code: InviteCode) async throws(SignUpError) -> SquadPreview {
         SquadPreview(
             code: code, name: sample.name, memberCount: sample.teammates.count, isFull: false,
+            daysPerMember: sample.daysPerMember,
             looks: sample.teammates.map { CharacterLook(outfit: $0.outfit, persona: $0.persona) })
     }
 
@@ -55,9 +56,10 @@ public actor InMemorySignUpService: SignUpService {
         return sample
     }
 
-    public func create(named name: SquadName) async throws(SignUpError) -> JoinedSquad {
-        guard agreedToAI else { throw .rejected }
-        let made = JoinedSquad(id: SquadID(UUID()), name: name.text, teammates: [], weekGoal: 0, weekDone: 0)
+    public func create(named name: SquadName, daysPerMember: Int) async throws(SignUpError) -> JoinedSquad {
+        guard agreedToAI, SquadWeeklyGoal.choices.contains(daysPerMember) else { throw .rejected }
+        let made = JoinedSquad(
+            id: SquadID(UUID()), name: name.text, teammates: [], weekGoal: 0, weekDone: 0, daysPerMember: daysPerMember)
         squad = made
         return made
     }
