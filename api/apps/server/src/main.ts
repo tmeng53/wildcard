@@ -654,7 +654,7 @@ const app = createApp({
         report: createPostgresCoachReport(scope),
         clock: () => new Date(),
       }),
-      ...testPushTools({ push, squads, clock: () => new Date() }),
+      ...testPushTools({ push, squads, checkIns, members, clock: () => new Date() }),
     ],
     publicUrl: config.publicUrl,
     authorizationServer: supabaseAuthIssuer(config.supabaseUrl),
