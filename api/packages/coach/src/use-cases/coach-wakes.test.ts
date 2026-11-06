@@ -1110,6 +1110,44 @@ describe('the coach', () => {
     });
   });
 
+  it('reads yesterday from last week on a Monday, with only consented members’ posts', async () => {
+    await rolledBack(async (fixture) => {
+      const { mia, leo } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      const sunday = (member: string, text: string) => ({
+        id: randomUUID(),
+        member,
+        day: '2026-11-01',
+        createdAt: new Date('2026-11-01T20:00:00Z'),
+        kind: 'healthyMeal' as const,
+        text,
+        reactions: 0,
+        comments: [],
+      });
+      // 10:00 in New York on Monday 2026-11-02, past the daily wake's hour.
+      await wakes(fixture, {
+        agent,
+        at: new Date('2026-11-02T15:00:00Z'),
+        consented: [mia],
+        weeks: {
+          '2026-10-26': {
+            ...fixture.week,
+            checkIns: [sunday(mia, '米亚的饭'), sunday(leo, '没同意的人')],
+          },
+          '2026-11-02': { weekStart: '2026-11-02', members: fixture.week.members, checkIns: [] },
+        },
+      }).run();
+      const daily = runs.find(({ task }) => task.includes('新的一天：2026-11-02'));
+      expect(daily?.task).toContain(
+        '昨天（周日）小队的动态：\n- 11-01 周日 队员1 健康餐 「米亚的饭」',
+      );
+      expect(daily?.task).not.toContain('没同意的人');
+      // Only the consented member gets a note.
+      expect(daily?.task).toContain('今天给这些人各写一张便条：\n- 队员1：这周已经练了 0 天。');
+      expect(daily?.task).not.toContain('- 队员2：');
+    });
+  });
+
   it('has no photo tool for a check-in without photos', async () => {
     await rolledBack(async (fixture) => {
       const { squad, checkIn } = fixture;
