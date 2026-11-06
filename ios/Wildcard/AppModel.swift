@@ -38,7 +38,11 @@ final class AppModel {
 
     private(set) var screen = Screen.starting {
         // The cover came up again; a sign-in's cover is already up and counting.
-        didSet { if isStarting, !oldValue.isStarting, !isSigningIn { coverSince = .now } }
+        didSet {
+            if isStarting, !oldValue.isStarting, !isSigningIn { coverSince = .now }
+            // The app started on a member's home: a link that came while it started is spent.
+            if showsTabs { invite = nil }
+        }
     }
     /// When the launch cover last came up, so it stays until its word has landed.
     @ObservationIgnored var coverSince = Date.now
@@ -56,8 +60,9 @@ final class AppModel {
         if case .tabs = screen { return true }
         return false
     }
-    /// The code of the invite link that last opened the app, for the sign-up it opens on.
-    @ObservationIgnored private var invite: InviteCode?
+    /// The code of an invite link that opened the app while it was starting, for the sign-up it
+    /// opens on; used once.
+    @ObservationIgnored fileprivate var invite: InviteCode?
     /// The squad 今天 is on, whose scene it reads again each time the app comes back.
     @ObservationIgnored private var homeSquad: SquadID?
     /// A home opening under the launch cover after a sign-in on the open screen, so the account's
@@ -344,23 +349,35 @@ final class AppModel {
     /// The sign-up the app was closed during, carried on, when it had joined or made `squad`.
     private func resumedSignUp(in squad: SquadID) async -> SignUpModel? {
         guard let progress = SignUpProgress.saved, progress.squad == squad else { return nil }
-        let model = newSignUp(hasAgreedToAI: true)
+        let model = newSignUp(hasAgreedToAI: true, takesInvite: false)
         return await model.resume(in: squad, madeIt: progress.madeIt) ? model : nil
     }
 
-    private func newSignUp(hasAgreedToAI: Bool) -> SignUpModel {
+}
+
+/// Invite links.
+extension AppModel {
+    /// `takesInvite`: the sign-up starts from the invite link that opened the app, if one is
+    /// waiting, and uses it up; a resumed sign-up is already in its squad and leaves it.
+    fileprivate func newSignUp(hasAgreedToAI: Bool, takesInvite: Bool = true) -> SignUpModel {
         let model = SignUpModel(
             service: APISignUpService(api: api), invite: nil, nickname: "", now: Date(), hasAgreedToAI: hasAgreedToAI)
-        if let invite { model.open(invite: invite) }
+        if takesInvite, let code = invite {
+            invite = nil
+            model.open(invite: code)
+        }
         return model
     }
 
     /// An invite link (wildcardsquad.com/join/<code>) opened the app: sign-up's 你的小队 starts on
-    /// 加入小队 with its code, now or once sign-up opens. A member already in a squad just gets the
-    /// app (one squad each).
+    /// 加入小队 with its code, now, or once sign-up opens if the app is still starting. A member
+    /// already in a squad just gets the app (one squad each), and the link is forgotten.
     func open(invite code: InviteCode) {
-        invite = code
-        if case .signUp(let model) = screen { model.open(invite: code) }
+        switch screen {
+        case .starting: invite = code
+        case .signUp(let model): model.open(invite: code)
+        case .tabs: invite = nil
+        }
     }
 }
 

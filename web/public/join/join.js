@@ -162,6 +162,8 @@ $('copy').addEventListener('click', async () => {
 // waves again. A tap on a figure
 // makes it cheer, and copying the code makes the whole row cheer, left to right.
 const ENTER = { delay: 0.35, stagger: 0.16, walk: 0.95 };
+// How long a move takes to blend in from idle and back.
+const FADE = 0.18;
 let cheerAll = () => {};
 
 function play(looks) {
@@ -224,10 +226,12 @@ function play(looks) {
         }
       }
       actor.svg.style.transform = `translate(${left.toFixed(1)}px, ${(-lift).toFixed(1)}px)`;
-      const busy = actor.move && t >= actor.start && t < actor.start + actor.move.duration;
-      if (actor.move && t >= actor.start + actor.move.duration) actor.move = null;
+      // A move plays, then blends back to idle over FADE before it's dropped.
+      const end = actor.move ? actor.start + actor.move.duration + FADE : 0;
+      const busy = actor.move && t >= actor.start && t < end;
+      if (actor.move && t >= end) actor.move = null;
       const poses = busy
-        ? A.perform(actor.member.idle, actor.move, actor.start, t, 0.18)
+        ? A.perform(actor.member.idle, actor.move, actor.start, t, FADE)
         : A.pose(actor.member.idle, t);
       actor.svg.firstChild.innerHTML = A.figure(actor.member, poses);
     });
