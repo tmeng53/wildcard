@@ -90,7 +90,9 @@ final class UnlockNoticeUITests: XCTestCase {
         XCTAssertTrue(claimed.waitForExistence(timeout: Self.wait), "「已放进衣橱」 never dropped in")
         keepScreenshot(named: "102-piece-claimed")
         claimed.tap()
-        let worn = app.buttons["editor.tile.hat.warmup-headphones"]
+        // The editor's own tile: the rack under the editor has a tile of the same name.
+        let worn = app.descendants(matching: .any).matching(identifier: "editor.wardrobe").firstMatch
+            .buttons["editor.tile.hat.warmup-headphones"]
         XCTAssertTrue(app.buttons["editor.done"].waitForExistence(timeout: Self.wait), "穿上看看 didn't open the editor")
         XCTAssertTrue(worn.waitForExistence(timeout: Self.wait), "the headphones aren't in the wardrobe")
         waitFor(worn, "isSelected == true", "穿上看看 didn't put the headphones on")
@@ -107,10 +109,10 @@ final class UnlockNoticeUITests: XCTestCase {
         XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "the notice never dropped in")
         banner.tap()
         let popup = waitForArrival(in: app)
-        // 商店街 is still sliding in under the pop-up; a tap before it settles can be lost.
-        Thread.sleep(forTimeInterval: 1)
         app.buttons["editor.arrival.leave"].tap()
-        XCTAssertTrue(popup.waitForNonExistence(timeout: Self.wait), "the pop-up stayed up")
+        XCTAssertTrue(
+            popup.waitForNonExistence(timeout: Self.wait),
+            "the pop-up stayed up (\(arrivals(in: app)) on screen)")
         let piece = app.buttons["editor.tile.hat.warmup-headphones"]
         XCTAssertTrue(piece.waitForExistence(timeout: Self.wait), "the piece isn't waiting on the rack")
         let tag = app.descendants(matching: .any).matching(identifier: "editor.tile.hat.warmup-headphones.new")
@@ -138,10 +140,18 @@ final class UnlockNoticeUITests: XCTestCase {
         return app
     }
 
+    /// How many pop-ups there are: one page at a time shows it.
+    private func arrivals(in app: XCUIApplication) -> Int {
+        app.descendants(matching: .any).matching(identifier: "editor.arrival").count
+    }
+
     /// The pop-up 商店街 opens with: the box and its store, never the piece.
     private func waitForArrival(in app: XCUIApplication) -> XCUIElement {
         let popup = app.descendants(matching: .any).matching(identifier: "editor.arrival").firstMatch
         XCTAssertTrue(popup.waitForExistence(timeout: Self.wait), "商店街 opened without the pop-up")
+        // 商店街 and the store's rack are pushed together; once the rack is up, only it shows it.
+        Thread.sleep(forTimeInterval: 1)
+        XCTAssertEqual(arrivals(in: app), 1, "the pop-up shows on more than one page")
         let words = popup.staticTexts.allElementsBoundByIndex.map(\.label).joined(separator: " ")
         XCTAssertTrue(words.contains("WARM-UP 到新货了"), "the pop-up says \(words)")
         XCTAssertFalse(words.contains("耳机"), "the pop-up gave the piece away: \(words)")
