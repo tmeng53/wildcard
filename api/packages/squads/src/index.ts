@@ -14,6 +14,13 @@ export {
   type SquadMember,
 } from './domain/squad.js';
 export {
+  DaysPerMember,
+  DEFAULT_DAYS_PER_MEMBER,
+  goalFor,
+  weekAfter,
+  type WeeklyGoalSetting,
+} from './domain/weekly-goal.js';
+export {
   AiConsentRequiredError,
   InviteCodeUnknownError,
   NotScenePickerError,
@@ -44,3 +51,4 @@ export {
 } from './use-cases/squad-scenes.js';
 export { createSquads, type SquadAt, type Squads } from './use-cases/squads.js';
 export type { InvitePreview, PublicInvitePreview } from './use-cases/squads/preview-invite.js';
+export type { WeeklyGoal } from './use-cases/squads/weekly-goal.js';

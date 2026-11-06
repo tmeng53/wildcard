@@ -196,7 +196,7 @@ public protocol APIProtocol: Sendable {
     func getSquad(_ input: Operations.GetSquad.Input) async throws -> Operations.GetSquad.Output
     /// Create a squad
     ///
-    /// With only a name; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    /// With a name and, optionally, its weekly goal; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
@@ -292,6 +292,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /squads/{squadId}/coach`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/delete(fireSquadCoach)`.
     func fireSquadCoach(_ input: Operations.FireSquadCoach.Input) async throws -> Operations.FireSquadCoach.Output
+    /// The squad’s weekly goal and its recent average
+    ///
+    /// For its members, in the caller’s week.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weekly-goal`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weekly-goal/get(getSquadWeeklyGoal)`.
+    func getSquadWeeklyGoal(_ input: Operations.GetSquadWeeklyGoal.Input) async throws -> Operations.GetSquadWeeklyGoal.Output
+    /// Set the squad’s weekly goal
+    ///
+    /// For the captain. It counts from next week (the captain’s), so a week’s goal never moves while the squad trains towards it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/weekly-goal`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weekly-goal/put(setSquadWeeklyGoal)`.
+    func setSquadWeeklyGoal(_ input: Operations.SetSquadWeeklyGoal.Input) async throws -> Operations.SetSquadWeeklyGoal.Output
     /// Put the caller’s morning note away (收下)
     ///
     /// The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.
@@ -826,7 +840,7 @@ extension APIProtocol {
     }
     /// Create a squad
     ///
-    /// With only a name; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    /// With a name and, optionally, its weekly goal; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
@@ -1036,6 +1050,38 @@ extension APIProtocol {
         try await fireSquadCoach(Operations.FireSquadCoach.Input(
             path: path,
             headers: headers
+        ))
+    }
+    /// The squad’s weekly goal and its recent average
+    ///
+    /// For its members, in the caller’s week.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weekly-goal`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weekly-goal/get(getSquadWeeklyGoal)`.
+    public func getSquadWeeklyGoal(
+        path: Operations.GetSquadWeeklyGoal.Input.Path,
+        headers: Operations.GetSquadWeeklyGoal.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadWeeklyGoal.Output {
+        try await getSquadWeeklyGoal(Operations.GetSquadWeeklyGoal.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Set the squad’s weekly goal
+    ///
+    /// For the captain. It counts from next week (the captain’s), so a week’s goal never moves while the squad trains towards it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/weekly-goal`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weekly-goal/put(setSquadWeeklyGoal)`.
+    public func setSquadWeeklyGoal(
+        path: Operations.SetSquadWeeklyGoal.Input.Path,
+        headers: Operations.SetSquadWeeklyGoal.Input.Headers = .init(),
+        body: Operations.SetSquadWeeklyGoal.Input.Body
+    ) async throws -> Operations.SetSquadWeeklyGoal.Output {
+        try await setSquadWeeklyGoal(Operations.SetSquadWeeklyGoal.Input(
+            path: path,
+            headers: headers,
+            body: body
         ))
     }
     /// Put the caller’s morning note away (收下)

@@ -11,11 +11,11 @@ import Testing
         newID: { UUID() })
 }
 
-// The squad the UI tests and screenshots run on: 14/22, 3 trained, as the UI tests expect.
+// The squad the UI tests and screenshots run on: 14/24, 3 trained, as the UI tests expect.
 @MainActor @Test func theSampleSquadTicksOnceForTheFirstTraining() async throws {
     let store = sampleStore()
     await store.load()
-    #expect(store.home?.today.squadWeek == WeekCount(trainedDays: 14, plannedDays: 22))
+    #expect(store.home?.today.squadWeek == WeekCount(trainedDays: 14, plannedDays: 24))
     #expect(store.home?.today.today.trained == 3)
 
     try await store.post(.trained(.sport("yoga"), nil, PostBody(photos: [], caption: "")))

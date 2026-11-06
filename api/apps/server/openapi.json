@@ -2620,6 +2620,13 @@
             "maxLength": 1000,
             "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
             "x-max-characters": 20
+          },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.",
+            "example": 3
           }
         },
         "required": [
@@ -2696,6 +2703,13 @@
             "type": "boolean",
             "description": "True when the caller is in it already."
           },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "The squad’s weekly goal (人均 N 天) as its captain last set it.",
+            "example": 3
+          },
           "looks": {
             "type": "array",
             "items": {
@@ -2710,6 +2724,7 @@
           "memberCount",
           "full",
           "joined",
+          "daysPerMember",
           "looks"
         ],
         "additionalProperties": false
@@ -2735,6 +2750,13 @@
             "type": "boolean",
             "description": "True when it has 8 members and can’t take more."
           },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "The squad’s weekly goal (人均 N 天) as its captain last set it.",
+            "example": 3
+          },
           "looks": {
             "type": "array",
             "items": {
@@ -2748,6 +2770,7 @@
           "name",
           "memberCount",
           "full",
+          "daysPerMember",
           "looks"
         ],
         "additionalProperties": false
@@ -2912,17 +2935,25 @@
               "trainedDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad."
+                "description": "Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad; a day counts once however many times they trained."
               },
               "plannedDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Training days planned this week, added up over the members’ plans, each in their own week."
+                "description": "The squad’s weekly goal (小队每周目标) in days: `daysPerMember` times the members now. Anyone’s trained days count towards it."
+              },
+              "daysPerMember": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 7,
+                "description": "The weekly goal its captain set (人均 N 天), in the caller’s week: how many days each member trains on average.",
+                "example": 3
               }
             },
             "required": [
               "trainedDays",
-              "plannedDays"
+              "plannedDays",
+              "daysPerMember"
             ],
             "additionalProperties": false
           }
@@ -3365,6 +3396,93 @@
         "required": [
           "version",
           "coach"
+        ],
+        "additionalProperties": false
+      },
+      "SquadWeeklyGoal": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "This week’s goal (人均 N 天).",
+            "example": 3
+          },
+          "nextDaysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "Next week’s goal: a change counts from the next week, so it differs from `daysPerMember` only after the captain changed it this week.",
+            "example": 3
+          },
+          "canChange": {
+            "type": "boolean",
+            "description": "True for the captain, the only one who sets it."
+          },
+          "recent": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "weeks": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4,
+                "description": "How many finished weeks it averages: up to 4."
+              },
+              "daysPerMember": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 7,
+                "description": "The days each member trained on average in those weeks, to one decimal: each week’s trained days (from check-ins sent to the squad) over its members then.",
+                "example": 3.4
+              }
+            },
+            "required": [
+              "weeks",
+              "daysPerMember"
+            ],
+            "additionalProperties": false,
+            "description": "Null until the squad has a finished week."
+          }
+        },
+        "required": [
+          "version",
+          "daysPerMember",
+          "nextDaysPerMember",
+          "canChange",
+          "recent"
+        ],
+        "additionalProperties": false
+      },
+      "SquadWeeklyGoalChange": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "How many days each member trains a week on average (人均 N 天), 1 to 7. The squad’s goal for a week is this times its members; anyone’s trained days count towards it.",
+            "example": 3
+          }
+        },
+        "required": [
+          "version",
+          "daysPerMember"
         ],
         "additionalProperties": false
       },
@@ -7514,7 +7632,7 @@
       "put": {
         "operationId": "createSquad",
         "summary": "Create a squad",
-        "description": "With only a name; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.",
+        "description": "With a name and, optionally, its weekly goal; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.",
         "security": [
           {
             "bearer": []
@@ -8732,6 +8850,174 @@
           },
           "403": {
             "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/weekly-goal": {
+      "get": {
+        "operationId": "getSquadWeeklyGoal",
+        "summary": "The squad’s weekly goal and its recent average",
+        "description": "For its members, in the caller’s week.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The goal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadWeeklyGoal"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "setSquadWeeklyGoal",
+        "summary": "Set the squad’s weekly goal",
+        "description": "For the captain. It counts from next week (the captain’s), so a week’s goal never moves while the squad trains towards it. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SquadWeeklyGoalChange"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The goal, with next week’s changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadWeeklyGoal"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id or goal",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {

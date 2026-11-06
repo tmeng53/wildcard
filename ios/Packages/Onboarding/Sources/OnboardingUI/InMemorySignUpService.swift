@@ -36,7 +36,7 @@ public actor InMemorySignUpService: SignUpService {
                         outfit: Outfit(["body": body, "top": "warmup-tee", "bottom": "warmup-shorts"]), persona: persona
                     )
                 },
-                weekGoal: 22, weekDone: 14))
+                weekGoal: 3 * teammates.count, weekDone: 9, daysPerMember: 3))
     }
 
     public func preview(_ code: InviteCode) async throws(SignUpError) -> SquadPreview {

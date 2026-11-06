@@ -22,6 +22,7 @@ public struct APISquadSettingsService: SquadSettingsService {
             let today = try await api.today(of: first.id)
             let scene = try await api.scene(of: first.id)
             let coach = try await api.coach(of: first.id)
+            let goal = try await api.weeklyGoal(of: first.id)
             var characters: [MemberID: MemberCharacter] = [:]
             for mate in today.members {
                 if let character = mate.character { characters[mate.member] = character }
@@ -29,7 +30,7 @@ public struct APISquadSettingsService: SquadSettingsService {
             let timeZone = member.profile?.timeZone ?? .current
             return SquadSettings(
                 squad: first, viewer: member.id, characters: characters, scene: scene, coach: coach,
-                today: LocalDay(at: now(), in: timeZone), timeZone: timeZone)
+                today: LocalDay(at: now(), in: timeZone), timeZone: timeZone, goal: goal)
         }
     }
 
@@ -59,6 +60,10 @@ public struct APISquadSettingsService: SquadSettingsService {
 
     public func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach {
         try await self.squad { () throws(APIError) in try await api.fireCoach(of: squad) }
+    }
+
+    public func setWeeklyGoal(of squad: SquadID, to daysPerMember: Int) async throws(SquadError) -> SquadWeeklyGoal {
+        try await self.squad { () throws(APIError) in try await api.setWeeklyGoal(of: squad, to: daysPerMember) }
     }
 
     private func squad<T>(_ call: () async throws(APIError) -> T) async throws(SquadError) -> T {
