@@ -14,6 +14,8 @@ struct AppRoot: View {
     let delegate: AppDelegate
     /// Where a tapped push goes (its notice's place), kept until the tabs open it.
     @State private var pushDestination: AppDestination?
+    /// 预览注册, which an admin opened from 设置: sign-up on the sample squad, saving nothing.
+    @State private var signUpPreview: SignUpModel?
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -48,7 +50,8 @@ struct AppRoot: View {
                 MainTabs(
                     today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
                     myPosts: app.myPosts, notices: app.notices, squadmateCards: app.squadmateCards, selection: $tab,
-                    destination: $pushDestination
+                    destination: $pushDestination,
+                    previewSignUp: app.isAdmin ? { signUpPreview = SignUpPreview.model() } : nil
                 ) {
                     Task { await app.leftSquad() }
                 }
@@ -61,6 +64,15 @@ struct AppRoot: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .fullScreenCover(
+            isPresented: Binding(
+                get: { signUpPreview != nil },
+                set: { shown in if !shown { signUpPreview = nil } })
+        ) {
+            if let signUpPreview {
+                SignUpPreview(model: signUpPreview) { self.signUpPreview = nil }
+            }
+        }
         .animation(.easeOut(duration: TicketRock.fadeOut), value: app.isStarting)
         // Signing in on the open screen: the tickets rock over it until the next screen opens.
         .loadingCover(app.isSigningIn) { LaunchCover(start: app.coverSince) }

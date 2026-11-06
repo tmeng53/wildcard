@@ -869,12 +869,17 @@
             ],
             "additionalProperties": false,
             "description": "Null until the member first saves one, right after signing up."
+          },
+          "isAdmin": {
+            "type": "boolean",
+            "description": "Whether the member is on the admin list. The app shows admins tools only they need, such as previewing sign-up; the admin routes check the list again themselves."
           }
         },
         "required": [
           "version",
           "userId",
-          "profile"
+          "profile",
+          "isAdmin"
         ],
         "additionalProperties": false
       },

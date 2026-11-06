@@ -55,6 +55,8 @@ final class AppModel {
     }
     /// The squad the member is no longer in (removed, or left on another phone), said once.
     var lostSquadName: String?
+    /// Whether the signed-in member is an admin, read as the tabs open: 设置 then offers 预览注册.
+    private(set) var isAdmin = false
     /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
     /// squad) puts the next tabs back on 今天.
     var showsTabs: Bool {
@@ -296,7 +298,7 @@ final class AppModel {
         // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
         // from now rather than from when the scene covered the screen.
         if let scene {
-            await today.dropIn(on: scene, coveredAt: .now)
+            await landNewSquad(on: scene, home: home, today: today)
         } else if let read = await withLaunchCover({ await openingScene(of: home.squad.id) }) {
             // The loading screen stays up until the squad's scene is known, so 今天 never shows
             // the gym first and then switches; a teammate's move drops the squad onto it.
@@ -313,6 +315,18 @@ final class AppModel {
             squad: squad,
             recap: recap)
         homeSquad = home.squad.id
+        isAdmin = (try? await api.me())?.isAdmin ?? false
+    }
+
+    /// Runs `work` under the launch cover: signing in on the open screen waits here too, for a
+    /// member whose squad is already set up, rather than sitting on a button that seems to do
+    /// nothing.
+    private func withLaunchCover<Value>(_ work: () async -> Value) async -> Value {
+        guard case .signUp = screen else { return await work() }
+        screen = .starting
+        openingUnderCover = true
+        defer { openingUnderCover = false }
+        return await work()
     }
 
     /// The member's home, from what the phone kept for them alone.
@@ -355,6 +369,8 @@ final class AppModel {
     }
 
     private func signedOut() async {
+        // The next account on this phone reads its own; until then it is no admin.
+        isAdmin = false
         SignUpProgress.clear()
         KeptScene.forgetAll()
         folders.forgetAll()
@@ -387,4 +403,3 @@ extension AppModel {
 
     /// How long the loading screen waits for the squad's scene before opening on the kept one.
     static let sceneWait = Duration.seconds(3)
-}

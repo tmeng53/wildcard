@@ -23,7 +23,8 @@ final class OpeningUITests: XCTestCase {
         keepScreenshot(named: "81-opening-thanksgiving-playing")
         let enter = app.buttons["进场"]
         XCTAssertTrue(enter.waitForExistence(timeout: Self.wait), "no 进场 once the opening played")
-        XCTAssertTrue(app.staticTexts["— 外卡"].exists, "the letter isn't signed")
+        // The letter (#465): to the squad by name, signed by 外卡.
+        XCTAssertTrue(app.staticTexts["— 外卡"].exists, "no signature under the letter")
         // The button whole on screen, above the home indicator.
         XCTAssertTrue(app.windows.firstMatch.frame.contains(enter.frame), "进场 runs off the screen")
         Thread.sleep(forTimeInterval: 1)

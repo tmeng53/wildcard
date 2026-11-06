@@ -747,18 +747,18 @@
         }
       }
     },
-    "也改到模板": {
+    "也改到我的每周计划": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Update template too"
+            "value": "Update my weekly plan too"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "也改到模板"
+            "value": "也改到我的每週計畫"
           }
         }
       }
@@ -795,18 +795,18 @@
         }
       }
     },
-    "每周模板": {
+    "我的每周计划": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Weekly template"
+            "value": "My weekly plan"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "每週模板"
+            "value": "我的每週計畫"
           }
         }
       }

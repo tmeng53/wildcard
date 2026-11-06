@@ -51,7 +51,7 @@ extension ScheduleView {
         guard !store.weeks.isEmpty else { return [] }
         return weekChips + [
             CategoryBarItem(
-                id: .template, title: Text("每周模板", bundle: .module), systemImage: WeekPosterHeading.templateSymbol,
+                id: .template, title: Text("我的每周计划", bundle: .module), systemImage: WeekPosterHeading.templateSymbol,
                 startsGroup: true, accessibilityIdentifier: "schedule.template")
         ]
     }

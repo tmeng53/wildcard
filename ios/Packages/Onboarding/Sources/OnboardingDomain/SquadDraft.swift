@@ -13,6 +13,12 @@ public struct SquadDraft: Hashable, Sendable {
     public var typedCode: String
     /// The name as typed; `name` reads it.
     public var typedName: String
+    /// 小队目标 for a squad being made: each member's days a week, 人均 N 天. The captain
+    /// changes it later on 小队.
+    public var daysPerMember = SquadDraft.defaultDaysPerMember
+
+    /// What a new squad starts from, as the API's.
+    public static let defaultDaysPerMember = 3
 
     /// `invite`: the code an invite link carried, if sign-up opened from one. `suggestedName`:
     /// what 建一个小队 starts from, such as 「Tracy 的小队」.
@@ -42,11 +48,16 @@ public struct SquadPreview: Hashable, Sendable {
     public let memberCount: Int
     /// The squad has its 8 members and can't take more.
     public let isFull: Bool
+    /// The squad's goal, 人均 N 天 a week.
+    public let daysPerMember: Int
     /// The members' characters, the earliest to join first, for their heads under the name.
     /// Members who haven't made theirs yet are left out.
     public let looks: [CharacterLook]
 
-    public init(code: InviteCode, name: String, memberCount: Int, isFull: Bool, looks: [CharacterLook]) {
-        (self.code, self.name, self.memberCount, self.isFull, self.looks) = (code, name, memberCount, isFull, looks)
+    public init(
+        code: InviteCode, name: String, memberCount: Int, isFull: Bool, daysPerMember: Int, looks: [CharacterLook]
+    ) {
+        (self.code, self.name, self.memberCount, self.isFull) = (code, name, memberCount, isFull)
+        (self.daysPerMember, self.looks) = (daysPerMember, looks)
     }
 }

@@ -40,6 +40,8 @@ struct MainTabs: View {
     @Binding var destination: AppDestination?
     /// The member left the squad on its page.
     var leftSquad: () -> Void = {}
+    /// 设置's 预览注册, for admins; nil for everyone else.
+    var previewSignUp: (() -> Void)?
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
     @State var inbox: NoticeInbox
     /// 通知's page, open over 动态.
@@ -75,8 +77,10 @@ struct MainTabs: View {
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
         recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
-        destination: Binding<AppDestination?> = .constant(nil), leftSquad: @escaping () -> Void = {}
+        destination: Binding<AppDestination?> = .constant(nil), previewSignUp: (() -> Void)? = nil,
+        leftSquad: @escaping () -> Void = {}
     ) {
+        self.previewSignUp = previewSignUp
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
         self.squadmateCards = squadmateCards
@@ -278,7 +282,8 @@ struct MainTabs: View {
                         schedule: { showsSchedule = true },
                         street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                         openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
-                        privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+                        privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
+                        previewSignUp: previewSignUp)
                 ) {
                     MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
                 }
@@ -373,21 +378,4 @@ extension MainTabs {
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: showsSquad)
     }
-
-    /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.
-    private func postPage(_ id: CheckInID, over wall: PostWallStore) -> FeedModel {
-        let page = feed.page(of: id)
-        let parent = page.changed
-        page.changed = { change in
-            parent?(change)
-            wall.apply(change)
-        }
-        return page
-    }
-}
-
-/// A post opened from 我的动态, with the page's own model of it.
-struct OpenedPost {
-    let id: CheckInID
-    let model: FeedModel
 }
