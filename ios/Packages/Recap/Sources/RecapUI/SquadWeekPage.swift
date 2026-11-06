@@ -7,54 +7,21 @@ import SportsUI
 import SwiftUI
 
 /// 全队运动总结: the squad's days trained, the week's fun numbers on up to six cards (训练最多的一天,
-/// 坚持运动最久, 互相加油, 一共训练了, 吃得健康, 请假条) and the mix of sports it trained; everyone standing on the
-/// ground's edge doing their own top sport, smaller and closer in a big squad. Nothing staged but a quick pop-in.
+/// 坚持运动最久, 互相加油, 一共训练了, 吃得健康, 请假条) and the mix of sports it trained. Nothing staged
+/// but a quick pop-in.
 struct SquadWeekPage: View {
     let week: SquadWeek
     let page: PageContext
     @Environment(\.sceneTheme) private var theme
 
-    /// Those the page can draw, in the order they joined, at most a row's worth.
-    private var lineup: [SquadWeek.Member] {
-        Array(week.members.filter { page.cast[$0.member] != nil }.prefix(Self.most))
-    }
-
     var body: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
-            let floor = proxy.size.height - StoryLayout.groundSquadWeek
-            let lineup = lineup
-            let spacing = (width - 2 * Space.l) / Double(max(lineup.count, 1))
-            let scale = min(Self.scale, spacing / Self.figureWidth)
-            ZStack(alignment: .topLeading) {
-                Ground(height: StoryLayout.groundSquadWeek)
-                ForEach(Array(lineup.enumerated()), id: \.element.member) { index, member in
-                    let spot = Space.l + spacing * (Double(index) + 0.5)
-                    page.character(
-                        member.member,
-                        act: Act(
-                            clip: member.topSport.weekClip, start: 0.3 + Double(index) * 0.06,
-                            seed: Double(index) * 0.41)
-                    )
-                    .standing(feetAt: CGPoint(x: spot, y: floor), scale: scale)
-                    // Neighbours overlap in a big squad: every other one stands in front.
-                    .zIndex(index.isMultiple(of: 2) ? 1 : 0)
-                }
-            }
+        // All the cards when they fit, fewer on a short phone.
+        ViewThatFits(in: .vertical) {
+            summary(cards: 6)
+            summary(cards: 4)
+            summary(cards: 2)
         }
-        .overlay(alignment: .top) {
-            // Above the squad's heads: all the cards when they fit, fewer on a short phone.
-            GeometryReader { proxy in
-                ViewThatFits(in: .vertical) {
-                    summary(cards: 6)
-                    summary(cards: 4)
-                    summary(cards: 2)
-                }
-                .frame(
-                    height: max(proxy.size.height - StoryLayout.groundSquadWeek - Self.figureHeight, 0),
-                    alignment: .top)
-            }
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private func summary(cards: Int) -> some View {
@@ -84,7 +51,7 @@ struct SquadWeekPage: View {
                         .opacity(page.ramp(Double(index) * 0.04, 0.12 + Double(index) * 0.04))
                     }
                 }
-                SportsMix(sports: week.sports)
+                SportsCard(sports: week.sports)
             }
         }
         .padding(.horizontal, Space.l)
@@ -109,15 +76,6 @@ struct SquadWeekPage: View {
         if let disclaimers = week.disclaimers { facts.append(.disclaimers(disclaimers)) }
         return facts
     }
-
-    /// The most the ground holds side by side.
-    private static let most = 8
-    private static let scale = 0.42
-    /// How tall a character stands at the page's scale, with a little room over its head.
-    private static let figureHeight = 320 * scale + Space.s
-    /// How much room a character needs at scale 1, for fitting a big squad (neighbours may
-    /// overlap a little).
-    private static let figureWidth = 125.0
 }
 
 /// One of the week's fun numbers.
@@ -263,69 +221,102 @@ private struct Number: View {
     }
 }
 
-/// The squad's sports as one bar split by days, the top three in the accent from strong to
-/// light and the rest together as 其他, with a legend of each and its days under it.
-private struct SportsMix: View {
+/// 全队练了什么: the squad's sports on a card, a row each for the top four with its symbol, a
+/// bar against the most-trained one and its days, and the rest together as 其他.
+private struct SportsCard: View {
     let sports: [SquadWeek.SportDays]
     @Environment(\.sceneTheme) private var theme
 
-    private struct Part: Identifiable {
-        let id: Int
-        let name: Text
-        let days: Int
+    var body: some View {
+        let most = max(sports.first?.days ?? 1, 1)
+        let rest = sports.dropFirst(Self.named)
+        VStack(alignment: .leading, spacing: Space.s) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("全队练了什么", bundle: .module)
+                    .typeStyle(TypeRamp.label)
+                    .foregroundStyle(Color(role: .fgAccent, in: theme))
+                Spacer(minLength: Space.s)
+                Text("\(sports.count) 种运动", bundle: .module)
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+            }
+            ForEach(Array(sports.prefix(Self.named).enumerated()), id: \.element.sport) { index, sport in
+                SportRow(
+                    symbol: sport.sport.symbol, name: sport.sport.cardName, days: sport.days,
+                    fraction: Double(sport.days) / Double(most), isRest: false, start: Double(index) * 0.04)
+            }
+            if !rest.isEmpty {
+                SportRow(
+                    symbol: "ellipsis", name: Text("其他 \(rest.count) 种", bundle: .module),
+                    days: rest.reduce(0) { $0 + $1.days },
+                    fraction: Double(rest.reduce(0) { $0 + $1.days }) / Double(most), isRest: true,
+                    start: Double(Self.named) * 0.04)
+            }
+        }
+        .padding(.horizontal, Space.m)
+        .padding(.vertical, Space.s)
+        .background(
+            Color(role: .bgCanvas, in: theme).opacity(0.6),
+            in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+        )
     }
 
-    private var parts: [Part] {
-        var parts = sports.prefix(Self.named).enumerated().map { Part(id: $0, name: $1.sport.cardName, days: $1.days) }
-        let rest = sports.dropFirst(Self.named).reduce(0) { $0 + $1.days }
-        if rest > 0 { parts.append(Part(id: Self.named, name: Text("其他", bundle: .module), days: rest)) }
-        return parts
-    }
+    /// Sports with a row of their own; the rest go together.
+    private static let named = 4
+}
+
+/// One sport on 全队练了什么: its symbol in a circle, its name, a bar and its days.
+private struct SportRow: View {
+    let symbol: String
+    let name: Text
+    let days: Int
+    /// Against the most-trained sport, 0 to 1 (其他 may pass it).
+    let fraction: Double
+    let isRest: Bool
+    let start: Double
+    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        let parts = parts
-        let total = max(parts.reduce(0) { $0 + $1.days }, 1)
-        VStack(alignment: .leading, spacing: Space.xs) {
-            GeometryReader { proxy in
-                let room = proxy.size.width - Self.gap * Double(max(parts.count - 1, 0))
-                HStack(spacing: Self.gap) {
-                    ForEach(parts) { part in
-                        Rectangle()
-                            .fill(color(part.id))
-                            .frame(width: room * Double(part.days) / Double(total))
+        let fill = Color(role: isRest ? .fgMuted : .bgAccent, in: theme)
+        HStack(spacing: Space.s) {
+            Image(systemName: symbol)
+                .font(.system(size: Self.glyph, weight: .semibold))
+                .foregroundStyle(Color(role: .fgOnAccent, in: theme))
+                .frame(width: Self.icon, height: Self.icon)
+                .background(fill, in: Circle())
+                .accessibilityHidden(true)
+            name
+                .typeStyle(TypeRamp.calloutEmphasis)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .frame(width: Self.nameWidth, alignment: .leading)
+            Capsule()
+                .fill(Color(role: .bgCanvas, in: theme).opacity(0.8))
+                .overlay(alignment: .leading) {
+                    GeometryReader { proxy in
+                        Capsule()
+                            .fill(fill)
+                            .frame(width: max(proxy.size.width * min(fraction, 1), Self.bar))
                     }
                 }
+                .frame(height: Self.bar)
+            HStack(alignment: .firstTextBaseline, spacing: 1) {
+                Text(verbatim: "\(days)").typeStyle(TypeRamp.scoreInline).monospacedDigit()
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                Text("天", bundle: .module).typeStyle(TypeRamp.caption)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
             }
-            .frame(height: Self.height)
-            .clipShape(Capsule())
-            HStack(spacing: Space.s) {
-                ForEach(parts) { part in
-                    HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                        Circle().fill(color(part.id)).frame(width: Self.dot, height: Self.dot)
-                        part.name.typeStyle(TypeRamp.caption)
-                        Text(verbatim: "\(part.days)").typeStyle(TypeRamp.scoreSmall).monospacedDigit()
-                        Text("天", bundle: .module).typeStyle(TypeRamp.caption)
-                    }
-                    .lineLimit(1)
-                    .accessibilityElement(children: .combine)
-                }
-            }
-            .minimumScaleFactor(0.8)
+            .frame(width: Self.daysWidth, alignment: .trailing)
         }
+        .accessibilityElement(children: .combine)
     }
 
-    /// The top sports in the accent, each lighter than the last; 其他 in the ground's white.
-    private func color(_ index: Int) -> Color {
-        index < Self.named
-            ? Color(role: .bgAccent, in: theme).opacity([1, 0.6, 0.35][index])
-            : Color(role: .bgCanvas, in: theme).opacity(0.75)
-    }
-
-    /// Sports named on their own; the rest go together.
-    private static let named = 3
-    private static let height: Double = 16
-    private static let gap: Double = 3
-    private static let dot: Double = 8
+    private static let icon: Double = 28
+    private static let glyph: Double = 14
+    private static let nameWidth: Double = 72
+    private static let bar: Double = 12
+    private static let daysWidth: Double = 44
 }
 
 #endif

@@ -221,7 +221,6 @@ enum StoryLayout {
     static let groundMeals: Double = 190
     static let groundEnding: Double = 214
     static let groundWeek: Double = 224
-    static let groundSquadWeek: Double = 80
 }
 
 extension Week {

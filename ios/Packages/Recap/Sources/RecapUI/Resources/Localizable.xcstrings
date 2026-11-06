@@ -967,22 +967,6 @@
         }
       }
     },
-    "其他": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Others"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "其他"
-          }
-        }
-      }
-    },
     "吃得健康": {
       "localizations": {
         "en": {
@@ -1075,6 +1059,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "最會請假 %@"
+          }
+        }
+      }
+    },
+    "全队练了什么": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What the squad trained"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全隊練了什麼"
+          }
+        }
+      }
+    },
+    "%lld 种运动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sports"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 種運動"
+          }
+        }
+      }
+    },
+    "其他 %lld 种": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld more"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "其他 %lld 種"
           }
         }
       }
