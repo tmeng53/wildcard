@@ -284,9 +284,9 @@ enum StoreCopy {
         "halfmoon": "练什么都算", "deuce": "网球 匹克球 壁球", "powder": "冬季运动",
     ]
     private static let taglines = [
-        "warmup": "先热身，再上场。", "lap": "操场第九圈，才是今天真正开始的地方。", "nolook": "眼睛看左边，球已经到右边了。",
-        "moss": "路不在地图上，在苔藓上。", "halfmoon": "做完半月式，再去喝一杯燕麦拿铁。", "deuce": "平分之后，才是真的比赛。",
-        "powder": "雪道见，压个弯。",
+        "warmup": "热身做好，事半功倍。", "lap": "操场第九圈，才是今天真正开始的地方。", "nolook": "传丢了，就说是战术。",
+        "moss": "路不在地图上，在苔藓上。", "halfmoon": "动作做不到位，表情要到位。", "deuce": "平分？那就接着打。",
+        "powder": "粉雪，摔了也不疼。",
     ]
     private static let unlocks = [
         "lap": "跑步 3 次解锁", "nolook": "篮球 3 次解锁", "moss": "攀岩或徒步 3 次解锁", "halfmoon": "随便练 3 次解锁",

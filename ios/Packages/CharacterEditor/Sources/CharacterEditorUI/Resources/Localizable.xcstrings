@@ -290,34 +290,34 @@
         }
       }
     },
-    "做完半月式，再去喝一杯燕麦拿铁。": {
+    "动作做不到位，表情要到位。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Half moon pose first, oat latte after."
+            "value": "If the pose won't land, the face must."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "做完半月式，再去喝一杯燕麥拿鐵。"
+            "value": "動作做不到位，表情要到位。"
           }
         }
       }
     },
-    "先热身，再上场。": {
+    "热身做好，事半功倍。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Warm up, then step up."
+            "value": "Warm up right, and the rest gets easy."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "先熱身，再上場。"
+            "value": "熱身做好，事半功倍。"
           }
         }
       }
@@ -850,18 +850,18 @@
         }
       }
     },
-    "平分之后，才是真的比赛。": {
+    "平分？那就接着打。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "After deuce, the real match begins."
+            "value": "Deuce? Then keep playing."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "平分之後，才是真正的比賽。"
+            "value": "平分？那就接著打。"
           }
         }
       }
@@ -1490,18 +1490,18 @@
         }
       }
     },
-    "眼睛看左边，球已经到右边了。": {
+    "传丢了，就说是战术。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eyes left, ball already right."
+            "value": "Bad pass? Call it strategy."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "眼睛看左邊，球已經到右邊了。"
+            "value": "傳丟了，就說是戰術。"
           }
         }
       }
@@ -3411,18 +3411,18 @@
         }
       }
     },
-    "雪道见，压个弯。": {
+    "粉雪，摔了也不疼。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "See you on the slope. Carve one."
+            "value": "Powder snow. Falling doesn't even hurt."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "雪道見，壓個彎。"
+            "value": "粉雪，摔了也不疼。"
           }
         }
       }
