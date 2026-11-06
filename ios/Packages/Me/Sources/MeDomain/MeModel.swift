@@ -40,12 +40,17 @@ public final class MeModel {
         if case .loaded(let overview) = load { overview } else { nil }
     }
 
-    /// Reads the overview, again after a failure or when the tab comes back.
+    /// Reads the overview, again after a failure or when the tab comes back. A try after a
+    /// failure shows the loader again, never the failure while it waits.
     public func reload() async {
+        if case .failed = load { load = .loading }
         do {
             let overview = try await service.overview()
             load = .loaded(overview)
         } catch {
+            // A read cut short (the tab left, the app went to the background) didn't fail: the
+            // next one runs when the page is back.
+            guard !Task.isCancelled else { return }
             // Keep what is on screen when a refresh fails; say so only when there is nothing.
             if overview == nil { load = .failed(error) }
             await signOutIfEnded(error)

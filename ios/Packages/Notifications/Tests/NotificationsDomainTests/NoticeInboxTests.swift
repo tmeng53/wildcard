@@ -155,6 +155,16 @@ private var utc: Calendar {
     #expect(!inbox.hasMore)
 }
 
+@Test @MainActor func aReadCutShortIsNotAFailure() async {
+    let server = FakeNotices((1...3).map { notice($0) }, size: 2)
+    let inbox = NoticeInbox(source: server)
+    await server.set(unreachable: true)
+    let cut = Task { await inbox.load() }
+    cut.cancel()
+    await cut.value
+    #expect(inbox.phase == .loading)
+}
+
 @Test @MainActor func offlineKeepsWhatWasLoadedAndAFailedPageCanBeTriedAgain() async {
     let server = FakeNotices((1...3).map { notice($0) }, size: 2)
     let inbox = NoticeInbox(source: server)

@@ -130,6 +130,8 @@ public final class PostWallStore {
     public func load() async {
         generation += 1
         let mine = generation
+        // A try after a failure shows the loader again, never the failure while it waits.
+        if phase == .offline { phase = .loading }
         do {
             let page = try await source.myPosts(kind: kind, after: nil)
             guard mine == generation else { return }
@@ -139,7 +141,8 @@ public final class PostWallStore {
             if let counts = page.counts { self.counts = counts }
             phase = .current
         } catch {
-            guard mine == generation else { return }
+            // A read cut short (the page closed, the app went to the background) didn't fail.
+            guard mine == generation, !Task.isCancelled else { return }
             phase = error == .signedOut ? .signedOut : (phase == .current ? .current : .offline)
         }
     }

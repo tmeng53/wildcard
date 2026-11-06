@@ -157,6 +157,8 @@ public final class FeedStore {
             ownNotYetListed[id] = nil
             phase = .current
         } catch {
+            // A read cut short (the page closed, the app went to the background) didn't fail.
+            guard !Task.isCancelled else { return }
             switch error {
             case .signedOut: phase = .signedOut
             case .postGone:
@@ -195,6 +197,7 @@ public final class FeedStore {
             phase = .current
             return true
         } catch {
+            guard !Task.isCancelled else { return false }
             switch error {
             case .signedOut: phase = .signedOut
             case .notInSquad: phase = .notInSquad

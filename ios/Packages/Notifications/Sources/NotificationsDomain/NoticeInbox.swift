@@ -171,7 +171,8 @@ public final class NoticeInbox {
             moreFailed = false
             phase = .current
         } catch {
-            guard mine == generation else { return }
+            // A read cut short (the page closed, the app went to the background) didn't fail.
+            guard mine == generation, !Task.isCancelled else { return }
             phase = error == .signedOut ? .signedOut : (phase == .current ? .current : .offline)
         }
     }
