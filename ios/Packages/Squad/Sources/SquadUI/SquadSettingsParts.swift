@@ -81,7 +81,8 @@ struct ScenePickerGrid: View {
     }
 }
 
-/// The invite code in scoreboard digits (tap to copy), how many more can join, and 分享.
+/// The invite code in scoreboard digits (a tap copies its invite link), how many more can join,
+/// and 分享.
 struct InviteCard: View {
     let squad: Squad
     let openSpots: Int
@@ -114,7 +115,7 @@ struct InviteCard: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("复制邀请码 \(squad.inviteCode)", bundle: .module))
+            .accessibilityLabel(Text("复制邀请链接 \(squad.inviteCode)", bundle: .module))
             .accessibilityIdentifier("squad.copyInvite")
             InviteShareLink(squad: squad) {
                 Label {
@@ -132,7 +133,8 @@ struct InviteCard: View {
 
     private func copy() {
         #if canImport(UIKit)
-        UIPasteboard.general.string = squad.inviteCode
+        // The invite link, like 分享, so a paste in a chat opens the invite page (or the app).
+        UIPasteboard.general.string = squad.inviteLink?.absoluteString ?? squad.inviteCode
         #endif
         copied = true
         Task {
@@ -323,12 +325,18 @@ struct InviteShareLink<ShareLabel: View>: View {
         // Looked up in the app's language, which the share sheet doesn't know.
         let message = Text(
             verbatim: String(localized: "来外卡和我一起训练！小队「\(squad.name)」", bundle: .module.inAppLanguage))
-        if let code = try? InviteCode(squad.inviteCode) {
-            ShareLink(item: InviteLink.url(for: code), message: message, label: label)
+        if let link = squad.inviteLink {
+            ShareLink(item: link, message: message, label: label)
         } else {
             // A code the app can't read (never sent by the API): the code itself, as before links.
             ShareLink(item: squad.inviteCode, message: message, label: label)
         }
     }
+}
+
+extension Squad {
+    /// What 分享 sends and the code's tap copies: wildcardsquad.com/join/<code>. Nil for a code the
+    /// app can't read (the API never sends one).
+    var inviteLink: URL? { (try? InviteCode(inviteCode)).map(InviteLink.url(for:)) }
 }
 #endif

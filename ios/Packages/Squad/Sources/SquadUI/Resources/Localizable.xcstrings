@@ -209,18 +209,18 @@
         }
       }
     },
-    "复制邀请码 %@": {
+    "复制邀请链接 %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copy invite code %@"
+            "value": "Copy invite link %@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "複製邀請碼 %@"
+            "value": "複製邀請連結 %@"
           }
         }
       }
