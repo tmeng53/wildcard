@@ -167,14 +167,21 @@ private struct SamplePosts {
         let source = WorkoutSource(provider: WorkoutSource.appleHealth, id: "sample-\(sport)-\(minutes)")
         let start = Timestamp(ended.addingTimeInterval(-Double(minutes) * 60))
         if sport == "swim" {
-            let laps = (0..<24).map { $0 == 16 ? 44 : 50 + Double(($0 * 7) % 9) }
+            let laps: [Double] = (0..<24).map { (lap: Int) -> Double in
+                guard lap != 16 else { return 44 }
+                let spread: Int = (lap * 7) % 9
+                return 50 + Double(spread)
+            }
             return Workout(
                 source: source, startedAt: start, endedAt: Timestamp(ended), summary: summary,
                 series: WorkoutSeries(laps: laps), tilePosition: tile)
         }
-        let route = (0...80).map { step in
-            let angle = Double(step) / 80 * 1.7 * .pi + Double(minutes) * 0.1
-            return RoutePoint(lat: 40.7812 + 0.006 * sin(angle), lon: -73.9665 + 0.009 * cos(angle))
+        let route: [RoutePoint] = (0...80).map { (step: Int) -> RoutePoint in
+            let turn: Double = Double(step) / 80 * 1.7 * Double.pi
+            let angle: Double = turn + Double(minutes) * 0.1
+            let lat: Double = 40.7812 + 0.006 * sin(angle)
+            let lon: Double = -73.9665 + 0.009 * cos(angle)
+            return RoutePoint(lat: lat, lon: lon)
         }
         return Workout(
             source: source, startedAt: start, endedAt: Timestamp(ended), summary: summary, route: route,
