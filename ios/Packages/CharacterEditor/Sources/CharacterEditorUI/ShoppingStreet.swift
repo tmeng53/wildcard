@@ -99,12 +99,7 @@ public struct ShoppingStreetPage: View {
         .accessibilityIdentifier("street.page")
     }
 
-    @ViewBuilder
     private var street: some View {
-        Text("商店街", bundle: .module)
-            .typeStyle(TypeRamp.taskTitle)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .accessibilityAddTraits(.isHeader)
         StoreStreet(model: model)
             .padding(.top, Space.s)
     }
@@ -127,12 +122,7 @@ private struct RackHeader: View {
             .typeStyle(TypeRamp.footnote)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
             .lineLimit(1)
-        if let limited = StoreCopy.limited(store.id) {
-            limited
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .lineLimit(1)
-        }
+        if let tag = LimitedTag(store: store.id) { tag }
         Spacer(minLength: 0)
         if let sports = model.sports(of: store.id) {
             Button {
@@ -175,7 +165,24 @@ struct StoreBadge: View {
 enum StoreCopy {
     static func name(_ store: String) -> Text { text(uploaded(store)?.name, names[store], or: store) }
     static func local(_ store: String) -> Text { text(uploaded(store)?.local, locals[store], or: store) }
-    static func sports(_ store: String) -> Text { text(uploaded(store)?.sports, sportLines[store], or: "") }
+    /// Its sports line as one word a sport, for the street's pills: split at commas where the
+    /// language lists with them (English), at spaces in Chinese.
+    static func sports(_ store: String) -> [String] {
+        let line =
+            uploaded(store)?.sports?.localized
+            ?? sportLines[store].map { Bundle.module.inAppLanguage.localizedString(forKey: $0, value: nil, table: nil) }
+            ?? ""
+        let commas = CharacterSet(charactersIn: ",，")
+        // A Latin line without commas is one phrase (Any sport counts, Winter sports); Chinese
+        // lists its sports with spaces.
+        let latin = line.unicodeScalars.contains { $0.isASCII && CharacterSet.letters.contains($0) }
+        let separators: CharacterSet =
+            line.unicodeScalars.contains(where: commas.contains) ? commas : latin ? CharacterSet() : .whitespaces
+        return line.components(separatedBy: separators)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .map { $0.prefix(1).uppercased() + $0.dropFirst() }
+    }
     static func tagline(_ store: String) -> Text { text(uploaded(store)?.tagline, taglines[store], or: "") }
     static func unlock(_ store: String) -> Text { text(uploaded(store)?.unlock, unlocks[store], or: "") }
     /// How far a closed store is from opening: 「还有 2 次开门」 once the server says, else how it unlocks.
@@ -220,5 +227,8 @@ enum StoreCopy {
         "deuce": "网球类 3 次解锁",
     ]
     private static let limits = ["powder": "冬季限定"]
+    /// Each bundled limit's tag colour (冬季限定: glacier blue); an uploaded store names its own
+    /// in `names.json`.
+    static let limitColors = ["powder": RGBAColor(red: 0x1E, green: 0x6A, blue: 0x9E)]
 }
 #endif
