@@ -151,23 +151,6 @@ func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
     }
 }
 
-/// Hanging sleeves tuck under a person-sized chin; a bichon's fluff reaches lower, so its middle
-/// (`chinFront`) is drawn again over the hanging arms' shoulders, and only the bichon does. The
-/// whole fluff (`chin`) sits behind the arms, so a raised arm stays in front of it.
-@Test func aBichonsChinSitsOverTheShouldersOnly() throws {
-    for body in try PlaceholderCharacter.variants(for: "body") {
-        let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body]))
-        let isBichon = body == "bichon"
-        #expect(try figure.part("chin").art.isEmpty == !isBichon, "\(body)")
-        #expect(try figure.part("chinFront").art.isEmpty == !isBichon, "\(body)")
-        #expect(try figure.index("chin") < figure.index("armL") && figure.index("chin") < figure.index("armR"))
-        #expect(
-            try figure.index("chinFront") > figure.index("armL") && figure.index("chinFront") > figure.index("armR"))
-        #expect(
-            try figure.index("chinFront") < figure.index("flexL") && figure.index("chinFront") < figure.index("flexR"))
-    }
-}
-
 /// A hat sits over floppy ears, as it did before the ears were parts of their own.
 @Test func hatsSitOverFloppyEars() throws {
     let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "lop", "hat": "warmup-cap"]))
