@@ -351,6 +351,7 @@ async function uploadedPhoto(owner: { readonly userId: string }) {
 
 const Story = z.object({
   status: z.string(),
+  stuck: z.literal(true).optional(),
   squad: z.object({ id: z.string(), name: z.string() }),
   week: z.object({ from: z.string(), to: z.string() }),
   scene: z.string(),
@@ -619,8 +620,12 @@ describe('weekly awards', () => {
     expect(await nudge({ token: ana.token, squad })).toBe(404);
 
     at(new Date(AWARDS_AT.getTime() + HOUR));
+    // Before the hourly run reaches the squad, the titles are only on their way.
+    const waiting = Story.parse((await read({ token: ana.token, squad })).body);
+    expect([waiting.status, waiting.stuck]).toStrictEqual(['pending', undefined]);
     expect((await run()).failed).toBeGreaterThanOrEqual(1);
     const pending = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(pending.stuck).toBe(true);
     // The page's words wait with the titles: the app says how far the squad got meanwhile.
     expect(pending.ending).toStrictEqual({ done: 1, plan: 0 });
     expect([pending.status, pending.titles, pending.hottest?.checkIn]).toStrictEqual([

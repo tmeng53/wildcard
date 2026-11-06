@@ -79,8 +79,7 @@ struct WildcardApp: App {
         AppModel.show(CatalogClient.bundled)
         // Only now: the editor's street is the catalog's starter street, which `show` just put out.
         _editor = State(initialValue: CharacterEditorDemo.model())
-        LaunchOptions.forgetSeenRecapIfAsked()
-        LaunchOptions.forgetLightsIfAsked()
+        LaunchOptions.forgetTodayStateIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
         let today = TodayModel(
@@ -161,10 +160,11 @@ struct WildcardApp: App {
             scenePicked: { scene in today.scene = scene })
     }
 
-    /// The sample squad's week, or no posts at all (`-uitest-empty-feed`).
+    /// The sample squad's week, no posts at all (`-uitest-empty-feed`) or none that can be read
+    /// (`-uitest-offline-feed`).
     private static func feedSource(viewer: MemberID, squad: SquadID) -> InMemoryFeedSource {
-        LaunchOptions.showsEmptyFeed
-            ? InMemoryFeedSource(viewer: viewer, posts: [], characters: [:])
+        LaunchOptions.showsEmptyFeed || LaunchOptions.feedIsOffline
+            ? InMemoryFeedSource(viewer: viewer, posts: [], characters: [:], offline: LaunchOptions.feedIsOffline)
             : InMemoryFeedSource.sample(
                 viewer: viewer, squad: squad, now: LaunchOptions.now(), zone: .current,
                 photos: InMemoryFeedSource.renderSamplePhotos(), coach: LaunchOptions.sidelineCoach)

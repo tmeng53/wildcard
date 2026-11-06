@@ -109,6 +109,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/check-in-totals`.
     /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
     func getMyCheckInTotals(_ input: Operations.GetMyCheckInTotals.Input) async throws -> Operations.GetMyCheckInTotals.Output
+    /// The signed-in member’s 练了 for a range of days, for their training record
+    ///
+    /// 训练记录 on 我: each 练了 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.
+    ///
+    /// - Remark: HTTP `GET /me/trainings`.
+    /// - Remark: Generated from `#/paths//me/trainings/get(listMyTrainings)`.
+    func listMyTrainings(_ input: Operations.ListMyTrainings.Input) async throws -> Operations.ListMyTrainings.Output
     /// A signed URL to upload one check-in photo to
     ///
     /// - Remark: HTTP `POST /photo-uploads`.
@@ -662,6 +669,21 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
     public func getMyCheckInTotals(headers: Operations.GetMyCheckInTotals.Input.Headers = .init()) async throws -> Operations.GetMyCheckInTotals.Output {
         try await getMyCheckInTotals(Operations.GetMyCheckInTotals.Input(headers: headers))
+    }
+    /// The signed-in member’s 练了 for a range of days, for their training record
+    ///
+    /// 训练记录 on 我: each 练了 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.
+    ///
+    /// - Remark: HTTP `GET /me/trainings`.
+    /// - Remark: Generated from `#/paths//me/trainings/get(listMyTrainings)`.
+    public func listMyTrainings(
+        query: Operations.ListMyTrainings.Input.Query,
+        headers: Operations.ListMyTrainings.Input.Headers = .init()
+    ) async throws -> Operations.ListMyTrainings.Output {
+        try await listMyTrainings(Operations.ListMyTrainings.Input(
+            query: query,
+            headers: headers
+        ))
     }
     /// A signed URL to upload one check-in photo to
     ///

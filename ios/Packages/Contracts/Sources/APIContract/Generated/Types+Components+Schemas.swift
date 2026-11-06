@@ -2080,25 +2080,33 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Me/profile`.
             public var profile: Components.Schemas.Me.ProfilePayload?
+            /// Whether the member is on the admin list. The app shows admins tools only they need, such as previewing sign-up; the admin routes check the list again themselves.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Me/isAdmin`.
+            public var isAdmin: Swift.Bool
             /// Creates a new `Me`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - userId: The signed-in member’s Supabase Auth user id.
             ///   - profile: Null until the member first saves one, right after signing up.
+            ///   - isAdmin: Whether the member is on the admin list. The app shows admins tools only they need, such as previewing sign-up; the admin routes check the list again themselves.
             public init(
                 version: Components.Schemas.Me.VersionPayload,
                 userId: Swift.String,
-                profile: Components.Schemas.Me.ProfilePayload? = nil
+                profile: Components.Schemas.Me.ProfilePayload? = nil,
+                isAdmin: Swift.Bool
             ) {
                 self.version = version
                 self.userId = userId
                 self.profile = profile
+                self.isAdmin = isAdmin
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case userId
                 case profile
+                case isAdmin
             }
         }
         /// The member’s character, made in the character editor right after signing in: the nickname squadmates call them and its look. Missing until then.
@@ -3930,6 +3938,80 @@ extension Components {
                 case sport
                 case customSport
                 case checkIns
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/TrainingRecord`.
+        public struct TrainingRecord: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/TrainingRecord/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/TrainingRecord/version`.
+            public var version: Components.Schemas.TrainingRecord.VersionPayload
+            /// Each 练了 in the range, by day, the earliest made first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainingRecord/trainings`.
+            public var trainings: [Components.Schemas.TrainingDay]
+            /// Creates a new `TrainingRecord`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - trainings: Each 练了 in the range, by day, the earliest made first.
+            public init(
+                version: Components.Schemas.TrainingRecord.VersionPayload,
+                trainings: [Components.Schemas.TrainingDay]
+            ) {
+                self.version = version
+                self.trainings = trainings
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case trainings
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/TrainingDay`.
+        public struct TrainingDay: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/TrainingDay/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/TrainingDay/day`.
+            public var day: Swift.String
+            /// - Remark: Generated from `#/components/schemas/TrainingDay/sport`.
+            public var sport: Components.Schemas.Sport
+            /// The name of a `custom` sport; a listed sport has none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainingDay/customSport`.
+            public var customSport: Swift.String?
+            /// How long it took, when the member said.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainingDay/minutes`.
+            public var minutes: Swift.Int?
+            /// Creates a new `TrainingDay`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - day:
+            ///   - sport:
+            ///   - customSport: The name of a `custom` sport; a listed sport has none.
+            ///   - minutes: How long it took, when the member said.
+            public init(
+                id: Swift.String,
+                day: Swift.String,
+                sport: Components.Schemas.Sport,
+                customSport: Swift.String? = nil,
+                minutes: Swift.Int? = nil
+            ) {
+                self.id = id
+                self.day = day
+                self.sport = sport
+                self.customSport = customSport
+                self.minutes = minutes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case day
+                case sport
+                case customSport
+                case minutes
             }
         }
         /// - Remark: Generated from `#/components/schemas/PhotoUpload`.
@@ -7415,7 +7497,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case1`.
             case case1(Components.Schemas.WeekStory.Case1Payload)
-            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page is frozen and shows as usual. Read again later.
+            /// The titles are due but not written yet (the run hasn’t reached the squad, or the AI failed: `stuck`): only the titles page waits; every other page is frozen and shows as usual. Read again later.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case2`.
             public struct Case2Payload: Codable, Hashable, Sendable {
@@ -7471,6 +7553,10 @@ extension Components {
                 }
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/status`.
                 public var status: Components.Schemas.WeekStory.Case2Payload.StatusPayload
+                /// Present when a try at the titles has failed since the awards: the titles page then says the organisers are out of funds, with a button that nudges them (`POST …/story/nudge`). Left out while the titles are only waiting for the hourly run to reach the squad: the page just says they are on their way.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/stuck`.
+                public var stuck: Swift.Bool?
                 /// Creates a new `Case2Payload`.
                 ///
                 /// - Parameters:
@@ -7488,6 +7574,7 @@ extension Components {
                 ///   - bestDisclaimer:
                 ///   - ending:
                 ///   - status:
+                ///   - stuck: Present when a try at the titles has failed since the awards: the titles page then says the organisers are out of funds, with a button that nudges them (`POST …/story/nudge`). Left out while the titles are only waiting for the hourly run to reach the squad: the page just says they are on their way.
                 public init(
                     version: Components.Schemas.WeekStory.Case2Payload.VersionPayload,
                     squad: Components.Schemas.StorySquad,
@@ -7502,7 +7589,8 @@ extension Components {
                     meals: Components.Schemas.StoryMeals? = nil,
                     bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
                     ending: Components.Schemas.StoryEnding? = nil,
-                    status: Components.Schemas.WeekStory.Case2Payload.StatusPayload
+                    status: Components.Schemas.WeekStory.Case2Payload.StatusPayload,
+                    stuck: Swift.Bool? = nil
                 ) {
                     self.version = version
                     self.squad = squad
@@ -7518,6 +7606,7 @@ extension Components {
                     self.bestDisclaimer = bestDisclaimer
                     self.ending = ending
                     self.status = status
+                    self.stuck = stuck
                 }
                 public enum CodingKeys: String, CodingKey {
                     case version
@@ -7534,9 +7623,10 @@ extension Components {
                     case bestDisclaimer
                     case ending
                     case status
+                    case stuck
                 }
             }
-            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page is frozen and shows as usual. Read again later.
+            /// The titles are due but not written yet (the run hasn’t reached the squad, or the AI failed: `stuck`): only the titles page waits; every other page is frozen and shows as usual. Read again later.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case2`.
             case case2(Components.Schemas.WeekStory.Case2Payload)

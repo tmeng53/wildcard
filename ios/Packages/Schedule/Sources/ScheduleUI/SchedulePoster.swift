@@ -63,7 +63,7 @@ struct SchedulePoster: View {
                 ? content.nickname
                 : "\(content.nickname) · \(ScheduleLabels.dates(content.weekStart, content.weekEnd))",
             heading: content.isTemplate
-                ? .named(Text("每周模板", bundle: .module), systemImage: WeekPosterHeading.templateSymbol)
+                ? .named(Text("我的每周计划", bundle: .module), systemImage: WeekPosterHeading.templateSymbol)
                 : .week(content.weekNumber),
             layout: Self.layout, fill: colors.fill, ink: colors.ink
         ) {

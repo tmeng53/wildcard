@@ -81,7 +81,9 @@ final class UnlockNoticeUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.8)
         keepScreenshot(named: "101-piece-claim-sheet")
         claim.tap()
-        let claimed = app.descendants(matching: .any).matching(identifier: "street.claimed").firstMatch
+        // Every notice banner is one element named notice.banner (#463); this one says 已放进衣橱.
+        let claimed = app.descendants(matching: .any).matching(identifier: "notice.banner")
+            .matching(NSPredicate(format: "label CONTAINS %@", "已放进衣橱")).firstMatch
         XCTAssertTrue(claimed.waitForExistence(timeout: Self.wait), "「已放进衣橱」 never dropped in")
         let owned = app.descendants(matching: .any).matching(identifier: "editor.tile.hat.warmup-headphones.owned")
             .firstMatch

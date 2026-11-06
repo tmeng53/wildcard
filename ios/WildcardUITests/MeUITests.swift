@@ -18,7 +18,7 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(card.label.contains("SINCE 2026"), "the card has no join year: \(card.label)")
         XCTAssertTrue(card.label.contains("早八战神"), "the card doesn't wear the latest title: \(card.label)")
         XCTAssertTrue(card.label.contains("徽章"), "the card has no 徽章 count: \(card.label)")
-        XCTAssertTrue(app.buttons["tab.me"].isSelected, "the 我 tab isn't the selected one")
+        XCTAssertTrue(tabButton("tab.me", in: app).isSelected, "the 我 tab isn't the selected one")
         assertClearOfTabBar(app.buttons["me.editCharacter"], in: app)
         settle()
         keepScreenshot(named: "40-me")
@@ -62,9 +62,10 @@ final class MeUITests: XCTestCase {
 
         // A tile opens 动态's own post page, without the tab bar, and 返回 comes back to the wall.
         tile.tap()
-        let back = app.buttons["post.back"]
+        let back = backButton(in: app)
         XCTAssertTrue(back.waitForExistence(timeout: 30), "a tile didn't open the post's page")
-        XCTAssertFalse(app.buttons["tab.feed"].exists, "the tab bar stayed over the post's page")
+        waitFor(
+            app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar stayed over the post's page")
         settle()
         keepScreenshot(named: "94-my-posts-post")
         back.tap()
@@ -77,7 +78,7 @@ final class MeUITests: XCTestCase {
         settle()
         keepScreenshot(named: "93-my-posts-empty-kind")
 
-        app.buttons["wall.back"].tap()
+        backButton(in: app).tap()
         XCTAssertTrue(entry.waitForExistence(timeout: 30), "返回 didn't go back to 我")
     }
 
@@ -117,7 +118,8 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(delete.waitForExistence(timeout: 30), "the 注销账号 page never opened")
         XCTAssertTrue(app.staticTexts["你会离开周三不练腿俱乐部"].exists)
         XCTAssertTrue(app.staticTexts["给 AI 的同意也一起撤回"].exists)
-        XCTAssertFalse(app.buttons["tab.me"].exists, "the tab bar stayed over the 注销账号 page")
+        waitFor(
+            app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar stayed over the 注销账号 page")
         let lastLine = app.staticTexts["删了就找不回来了。"]
         XCTAssertLessThanOrEqual(
             lastLine.frame.maxY, app.buttons["delete.cancel"].frame.minY, "the buttons cover what is deleted")
@@ -126,7 +128,7 @@ final class MeUITests: XCTestCase {
 
         app.buttons["delete.cancel"].tap()
         XCTAssertTrue(settings.waitForExistence(timeout: 30), "先不注销 didn't go back to 设置")
-        XCTAssertTrue(app.buttons["tab.me"].waitForExistence(timeout: 30), "the tab bar didn't come back")
+        XCTAssertTrue(tabButton("tab.me", in: app).waitForExistence(timeout: 30), "the tab bar didn't come back")
 
         app.buttons["me.deleteAccount"].tap()
         let confirm = app.buttons["delete.confirm"]
@@ -165,7 +167,7 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 30))
         XCTAssertTrue(card.label.contains("07号"), "the card doesn't wear the new number: \(card.label)")
         app.buttons["me.settings"].tap()
-        XCTAssertTrue(app.buttons["settings.back"].waitForExistence(timeout: 30), "设置 never opened")
+        XCTAssertTrue(backButton(in: app).waitForExistence(timeout: 30), "设置 never opened")
         XCTAssertFalse(app.buttons["me.jerseyNumber"].exists, "设置 still has 球衣号码")
     }
 
@@ -175,19 +177,19 @@ final class MeUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         let row = app.buttons["me.schedule"]
         XCTAssertTrue(row.waitForExistence(timeout: 30), "no 出赛表 tile on 我")
-        XCTAssertTrue(row.label.contains("3/5"), "the tile doesn't count this week: \(row.label)")
+        XCTAssertTrue(row.label.contains("这周还有 4 天"), "the tile doesn't count the days left: \(row.label)")
         XCTAssertTrue(row.label.contains("W3"), "the tile doesn't number this week: \(row.label)")
         app.swipeUp()
         assertClearOfTabBar(row, in: app)
         row.tap()
         XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "出赛表 didn't open")
-        XCTAssertTrue(app.buttons["tab.me"].isSelected, "出赛表 left 我")
+        XCTAssertTrue(tabButton("tab.me", in: app).isSelected, "出赛表 left 我")
         app.buttons["schedule.template"].tap()
         let note = app.descendants(matching: .any)["schedule.template.note"]
         XCTAssertTrue(note.waitForExistence(timeout: 30), "the 每周模板 chip didn't open the template")
         settle()
         keepScreenshot(named: "48-me-schedule-template")
-        app.buttons["schedule.back"].tap()
+        backButton(in: app).tap()
         XCTAssertTrue(row.waitForExistence(timeout: 30), "返回 didn't go back to 我")
     }
 
@@ -219,8 +221,8 @@ final class MeUITests: XCTestCase {
         let card = app.buttons["me.card"]
         XCTAssertTrue(card.waitForExistence(timeout: 30))
         XCTAssertTrue(card.label.contains("Workouts"), "the card isn't in English: \(card.label)")
-        XCTAssertEqual(app.buttons["me.editCharacter"].label, "Dress up")
-        XCTAssertTrue(app.buttons["tab.me"].label.contains("Me"))
+        XCTAssertEqual(app.buttons["me.editCharacter"].label, "Dress up", "换装 isn't in English")
+        XCTAssertTrue(tabButton("tab.me", in: app).label.contains("Me"))
         settle()
         keepScreenshot(named: "46-me-en")
         card.tap()
@@ -235,7 +237,7 @@ final class MeUITests: XCTestCase {
     }
 
     /// What must stay tappable sits above the floating tab bar.
-    private func assertClearOfTabBar(_ element: XCUIElement, in app: XCUIApplication) {
+    func assertClearOfTabBar(_ element: XCUIElement, in app: XCUIApplication) {
         XCTAssertTrue(element.waitForExistence(timeout: 30), "\(element) never showed")
         let bar = tabButton("tab.today", in: app).frame
         XCTAssertLessThanOrEqual(element.frame.maxY, bar.minY, "\(element) sits under the tab bar")
@@ -262,7 +264,7 @@ final class MeUITests: XCTestCase {
         keepScreenshot(named: "50-settings-zh-hant")
     }
 
-    private func launch(language: String, extra: [String] = []) -> XCUIApplication {
+    func launch(language: String, extra: [String] = []) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments +=
@@ -273,11 +275,11 @@ final class MeUITests: XCTestCase {
     }
 
     /// The character's idle and springs settle before a screenshot.
-    private func settle() {
+    func settle() {
         Thread.sleep(forTimeInterval: 1)
     }
 
-    private func keepScreenshot(named name: String) {
+    func keepScreenshot(named name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
         attachment.lifetime = .keepAlways
