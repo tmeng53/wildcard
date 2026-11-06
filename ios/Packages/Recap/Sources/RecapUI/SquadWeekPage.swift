@@ -10,7 +10,7 @@ import SwiftUI
 /// 坚持运动最久, 互相加油, 一共训练了, 吃得健康, 请假条) and the mix of sports it trained. Nothing staged
 /// but a quick pop-in.
 struct SquadWeekPage: View {
-    let week: SquadWeek
+    let week: RecapDomain.SquadWeek
     let page: PageContext
     @Environment(\.sceneTheme) private var theme
 
@@ -86,7 +86,7 @@ struct SquadWeekPage: View {
 /// 全队练了什么: the squad's sports on a card, a row each for the top four with its symbol, a
 /// bar against the most-trained one and its days, and the rest together as 其他.
 private struct SportsCard: View {
-    let sports: [SquadWeek.SportDays]
+    let sports: [RecapDomain.SquadWeek.SportDays]
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {

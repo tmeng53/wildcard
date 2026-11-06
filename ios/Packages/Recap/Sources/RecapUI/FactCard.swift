@@ -8,7 +8,7 @@ import SwiftUI
 
 /// One of the week's fun numbers.
 enum Fact {
-    case bestDay(SquadWeek.BestDay)
+    case bestDay(RecapDomain.SquadWeek.BestDay)
     /// Days in a row from a weekday (0 for Monday), and whose run it was on the squad's page.
     case streak(days: Int, from: Int, member: MemberID?)
     case reactions(Int)
@@ -16,9 +16,9 @@ enum Fact {
     case cheers(Int)
     /// The minutes logged and the longest day's, with whose or which day it was.
     case time(minutes: Int, longest: Int, longestOn: Longest)
-    case topSport(SquadWeek.SportDays)
+    case topSport(RecapDomain.SquadWeek.SportDays)
     case meals(healthy: Int, cheat: Int)
-    case disclaimers(SquadWeek.Disclaimers)
+    case disclaimers(RecapDomain.SquadWeek.Disclaimers)
 
     /// Who logged the longest day on the squad's page; on 你的一周, which day it was.
     enum Longest {
