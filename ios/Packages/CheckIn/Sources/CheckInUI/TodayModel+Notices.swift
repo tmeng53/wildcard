@@ -30,10 +30,11 @@ extension TodayModel {
         /// New for each notice, so the same news told twice drops in again.
         let id = UUID()
 
-        /// A broadcast's button never folds into 「还有新通知」, so it can still be tapped on 今天.
+        /// A broadcast's button never folds into 「还有新通知」, so it can still be tapped on 今天;
+        /// nor does a celebration, which is its own card.
         var hasButton: Bool {
             switch news {
-            case .broadcast(let broadcast): broadcast.action != nil
+            case .broadcast(let broadcast): broadcast.action != nil || broadcast.style == .celebration
             case .goalSuggestion: true
             case .moved, .unlocked, .more: false
             }
@@ -94,7 +95,8 @@ extension TodayModel {
         _ broadcast: Broadcast, open: @escaping (AppDestination) -> Void, shown: @escaping (Broadcast) -> Void
     ) {
         let news = NoticeNews.broadcast(broadcast)
-        guard notice?.news != news, !pendingNotices.contains(where: { $0.news == news }) else { return }
+        guard notice?.news != news, celebration != broadcast, !pendingNotices.contains(where: { $0.news == news })
+        else { return }
         openDestination = open
         let next = Notice(news: news)
         bannerShown[next.id] = { shown(broadcast) }
@@ -126,13 +128,36 @@ extension TodayModel {
     /// check-in is being written or the burst is open, when it waits for the next load.
     func showNextNotice() async {
         await untilArrived()
-        guard notice == nil, step == .scene, !isBurstOpen, !pendingNotices.isEmpty else { return }
+        guard isFreeForNotices, !pendingNotices.isEmpty else { return }
         // Two in a row, then whatever else waits without a button in one banner.
         if shownInRow >= Self.shownBeforeMore { foldTheRest() }
         let next = pendingNotices.removeFirst()
         shownInRow = pendingNotices.isEmpty ? 0 : shownInRow + 1
-        notice = next
+        if case .broadcast(let broadcast) = next.news, broadcast.style == .celebration {
+            celebration = broadcast
+        } else {
+            notice = next
+        }
         bannerShown.removeValue(forKey: next.id)?()
+    }
+
+    /// Whether the home can tell the next notice: nothing told is on screen, the scene is in
+    /// view and settled, and no check-in, burst, opening or other screen is over it.
+    var isFreeForNotices: Bool {
+        notice == nil && celebration == nil && opening == nil && step == .scene && !isBurstOpen && isHomeInFront
+    }
+
+    /// The member answered the celebration's card: its button (`opening`) opens its place and
+    /// reads its 通知 row, as the banner's does; 先不了, or a tap off the card, just puts it away.
+    /// The next notice follows once the home is free again (`HomeNotices`), so a place it opened
+    /// is never covered.
+    public func closeCelebration(opening: Bool) {
+        guard let shown = celebration else { return }
+        celebration = nil
+        if opening, let action = shown.action {
+            broadcastOpened?(shown)
+            openDestination?(action.destination)
+        }
     }
 
     /// How many banners drop in one after another before the rest fold into 「还有新通知」.
