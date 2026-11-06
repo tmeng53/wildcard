@@ -7,6 +7,7 @@ import Contracts
 import DesignSystem
 import DesignSystemUI
 import Foundation
+import HealthDomain
 import HealthUI
 import Observation
 import SwiftUI

@@ -1,6 +1,7 @@
 #if os(iOS)
 import CheckInDomain
 import Contracts
+import DesignSystem
 import HealthDomain
 
 /// Apple Health on 今天: the home's card and a new 训练's chips.
