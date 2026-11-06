@@ -35,6 +35,8 @@ public struct ShopperView: View {
                 let moves = try? await Task.detached(operation: { try ShopperMoves(look: look, persona: persona) })
                     .value
             else { return }
+            // A newer look's task replaced this one while it parsed.
+            guard !Task.isCancelled else { return }
             shopper = try? Shopper(moves, walking: walking)
         }
         .task(id: walking) {
