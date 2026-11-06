@@ -33,7 +33,7 @@ export interface Switch {
   readonly mode: SwitchMode;
   /** Its schedule; always there for one in `schedule` mode. */
   readonly window?: SwitchWindow;
-  /** What the AI coach is told while it is on, such as 「今天是感恩节」; never shown in the app. */
+  /** What the AI coach is told while it is on, such as 「TURKEY TROT 限时开张」; never shown in the app. */
   readonly coachNote?: string;
 }
 
@@ -123,7 +123,8 @@ export const CoachNote = z
   .meta({
     description:
       'What the AI coach is told while the switch is on (for everyone, not in preview), in ' +
-      'Chinese, such as 「今天是感恩节，TURKEY TROT 开张了」. Never shown in the app. Left out, the ' +
+      'Chinese, a plain fact such as 「TURKEY TROT 限时开张」, never how to say it; holidays go in ' +
+      'the coach’s calendar (change_coach_settings). Never shown in the app. Left out, the ' +
       'coach is told nothing.',
   });
 
