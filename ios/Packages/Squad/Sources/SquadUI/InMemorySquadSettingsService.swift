@@ -164,7 +164,7 @@ private let sampleLooks: [CharacterLook] = [
         variants: ["body": "peach", "hair": "long", "top": "warmup-tank", "bottom": "warmup-shorts"]),
     CharacterLook(
         persona: "drama",
-        variants: ["body": "lop", "cheeks": "rosy", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
+        variants: ["body": "lop", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
     CharacterLook(
         persona: "deadpan", variants: ["body": "calico", "cheeks": "rosy", "top": "warmup-tee", "bottom": "moss-cargo"]),
     CharacterLook(

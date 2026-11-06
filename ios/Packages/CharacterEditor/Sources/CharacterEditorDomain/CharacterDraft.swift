@@ -66,7 +66,7 @@ public struct CharacterDraft: Hashable, Sendable {
     /// colors are what picking it means, and an animal's coat starts from its own colors.
     /// A piece put on an empty slot wears the color the slot showed when it was emptied.
     /// Brows put on without a color take the hair's. A person turned into an animal without
-    /// cheeks gets an animal's (`PlaceholderCharacter.animalCheeks`).
+    /// cheeks gets an animal's (`PlaceholderCharacter.animalCheeks`), unless its coat draws its own.
     @discardableResult
     public mutating func pick(_ variant: String?, for slot: Slot) -> Bool {
         let worn = picks.variants[slot]
@@ -90,7 +90,7 @@ public struct CharacterDraft: Hashable, Sendable {
         }
         if slot == "brows", variant != nil, next.colors["brows"] == nil { next.colors["brows"] = picks.colors["hair"] }
         if slot == "body", wearsHair, let variant, catalog.species(of: variant)?.wearsHair == false,
-            next.variants["cheeks"] == nil
+            !PlaceholderCharacter.blushingCoats.contains(variant), next.variants["cheeks"] == nil
         {
             next.variants["cheeks"] = PlaceholderCharacter.animalCheeks
         }

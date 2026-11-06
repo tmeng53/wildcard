@@ -72,6 +72,9 @@ import Testing
     #expect(editing.outfit.variants["cheeks"] == "rosy")
     editing.undo()
     #expect(editing.outfit.variants["cheeks"] == nil)
+    // A lop's coat keeps its own blush, so it gets none on top.
+    editing.pick("lop", for: "body")
+    #expect(editing.outfit.variants["cheeks"] == nil)
 }
 
 /// A body the editor doesn't list is no person: it wears no hair, and keeps its face.

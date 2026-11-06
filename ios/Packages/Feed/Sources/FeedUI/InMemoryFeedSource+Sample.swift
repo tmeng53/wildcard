@@ -82,7 +82,7 @@ extension InMemoryFeedSource {
                 colors: ["body": "#C68A5E"]),
             "Coco": CharacterLook(
                 persona: "drama",
-                variants: ["body": "lop", "cheeks": "rosy", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
+                variants: ["body": "lop", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
             "Mia": CharacterLook(
                 persona: "deadpan",
                 variants: ["body": "calico", "cheeks": "rosy", "top": "warmup-tee", "bottom": "moss-cargo"]),
