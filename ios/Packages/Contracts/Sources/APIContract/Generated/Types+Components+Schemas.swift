@@ -419,6 +419,27 @@ extension Components {
                 case zhHant
             }
         }
+        /// The `shelf` event’s data: what the caller’s 商店街 shows may have changed, so read `GET /me/unlocks` again.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LiveShelf`.
+        public struct LiveShelf: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/LiveShelf/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/LiveShelf/version`.
+            public var version: Components.Schemas.LiveShelf.VersionPayload
+            /// Creates a new `LiveShelf`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            public init(version: Components.Schemas.LiveShelf.VersionPayload) {
+                self.version = version
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/Health`.
         public struct Health: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Health/version`.
@@ -8566,21 +8587,29 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfStore/open`.
             public var open: Swift.Bool
+            /// For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins in its sports open it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfStore/checkInsToGo`.
+            public var checkInsToGo: Swift.Int?
             /// Creates a new `ShelfStore`.
             ///
             /// - Parameters:
             ///   - id: The store’s id in the app’s art.
             ///   - open: Whether it is open now (its switch on). A closed store shows only what the member owns.
+            ///   - checkInsToGo: For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins in its sports open it.
             public init(
                 id: Swift.String,
-                open: Swift.Bool
+                open: Swift.Bool,
+                checkInsToGo: Swift.Int? = nil
             ) {
                 self.id = id
                 self.open = open
+                self.checkInsToGo = checkInsToGo
             }
             public enum CodingKeys: String, CodingKey {
                 case id
                 case open
+                case checkInsToGo
             }
         }
         /// - Remark: Generated from `#/components/schemas/ShelfPiece`.

@@ -47,6 +47,7 @@ struct MainTabs: View {
     /// A post opened from 通知 (the one the coach answered), over its page.
     @State var noticePost: OpenedPost?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     /// 商店街 and the character editor, open from 我.
     @State var wardrobe: Wardrobe
     /// 出赛表, open from 我 in its place.
@@ -126,6 +127,12 @@ struct MainTabs: View {
             }
         }
         .followsNotices(inbox)
+        // 商店街 read again when the server says it changed and on each return to the front (a
+        // switch's day starting tells nothing), so a store that opened shows without a relaunch.
+        .onChange(of: inbox.shelfChanges) { Task { await profile.reload() } }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await profile.reload() } }
+        }
         .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }

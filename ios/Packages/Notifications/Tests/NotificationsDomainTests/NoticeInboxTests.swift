@@ -286,6 +286,31 @@ private var utc: Calendar {
     await following.value
 }
 
+@Test @MainActor func aShelfChangeOrAStreamHeardAgainSaysToReadTheShelfAgain() async {
+    let server = FakeNotices([notice(1)])
+    // The first stream's ready reads nothing more; its shelf change does, and so does the next
+    // stream's ready, which may have missed one.
+    await server.set(streams: [[.ready, .shelfChanged], [.ready]])
+    let inbox = NoticeInbox(source: server)
+    let (paused, pause) = AsyncStream.makeStream(of: Void.self)
+    let following = Task { await inbox.follow(pause: { _ in pause.yield() }) }
+    var pauses = paused.makeAsyncIterator()
+    _ = await pauses.next()
+    #expect(inbox.shelfChanges == 1)
+    _ = await pauses.next()
+    #expect(inbox.shelfChanges == 2)
+    following.cancel()
+    await following.value
+
+    // Back in front, the app reads the shelf itself: the first ready says nothing.
+    await server.set(streams: [[.ready]])
+    let again = Task { await inbox.follow(pause: { _ in pause.yield() }) }
+    _ = await pauses.next()
+    #expect(inbox.shelfChanges == 2)
+    again.cancel()
+    await again.value
+}
+
 @Test @MainActor func aNoticeToldWhileTheBellIsOpenIsReadButShowsBold() async {
     let server = FakeNotices([notice(1)], seen: NoticeID(rawValue: 1))
     let told = Notice(
