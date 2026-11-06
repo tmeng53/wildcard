@@ -31,7 +31,7 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
     #expect(posts.count == 8)
     #expect(posts.contains { $0.author == viewer })
     // Three 训练 come from Apple Health: two with their map, the swim with its laps.
-    let tiles = posts.compactMap { post -> [PostTile]? in
+    let tiles = posts.compactMap { post -> [Contracts.PostTile]? in
         guard case .trained(let training) = post.checkIn.entry, training.workout != nil else { return nil }
         return training.tiles
     }

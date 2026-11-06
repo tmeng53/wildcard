@@ -16,7 +16,7 @@ struct PostPhotos: View {
     @Environment(\.sceneTheme) private var theme
     let model: FeedModel
     let post: FeedPost
-    let tiles: [PostTile]
+    let tiles: [Contracts.PostTile]
     @State private var page = 0
     @State private var isViewing = false
     /// The photo the viewer shows, which follows the page it opened on.
@@ -80,7 +80,7 @@ struct PostPhotos: View {
         }
     }
 
-    @ViewBuilder private func face(_ tile: PostTile) -> some View {
+    @ViewBuilder private func face(_ tile: Contracts.PostTile) -> some View {
         switch tile {
         case .photo(let ref):
             FeedPhoto(model: model, ref: ref)
@@ -96,7 +96,7 @@ struct PostPhotos: View {
         }
     }
 
-    private func isPhoto(_ tile: PostTile) -> Bool { if case .photo = tile { true } else { false } }
+    private func isPhoto(_ tile: Contracts.PostTile) -> Bool { if case .photo = tile { true } else { false } }
 
     /// Opens the photo on page `index` full screen; the map and chart stay where they are.
     private func open(_ index: Int) {
@@ -107,7 +107,7 @@ struct PostPhotos: View {
         isViewing = true
     }
 
-    private func label(_ tile: PostTile, index: Int) -> Text {
+    private func label(_ tile: Contracts.PostTile, index: Int) -> Text {
         switch tile {
         case .photo: Text("第 \(index + 1) 张，共 \(tiles.count) 张", bundle: .module)
         case .workout(.map): Text("路线地图，第 \(index + 1) 张，共 \(tiles.count) 张", bundle: .module)

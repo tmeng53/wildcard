@@ -35,9 +35,9 @@ struct PostCard: View {
 
     private var canRespond: Bool { post.canRespond(model.viewer) }
     /// The cover's pages: the photos, and a 训练's map or chart where the member put it.
-    private var tiles: [PostTile] {
+    private var tiles: [Contracts.PostTile] {
         if case .trained(let training) = post.checkIn.entry { return training.tiles }
-        return (post.checkIn.photos?.all ?? []).map(PostTile.photo)
+        return (post.checkIn.photos?.all ?? []).map(Contracts.PostTile.photo)
     }
     /// Teammates' emoji, or the coach's.
     private var hasReactions: Bool {
