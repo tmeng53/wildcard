@@ -14,7 +14,7 @@ struct SignUpPreview: View {
 
     /// A new sign-up on the sample squad, as a newcomer meets it now.
     static func model() -> SignUpModel {
-        SignUpModel(service: InMemorySignUpService.sampleSquad(), invite: nil, nickname: "", now: Date())
+        SignUpModel(service: InMemorySignUpService.sampleSquad(), nickname: "", now: Date())
     }
 
     var body: some View {
