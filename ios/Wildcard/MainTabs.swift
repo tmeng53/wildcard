@@ -99,6 +99,7 @@ struct MainTabs: View {
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.
             today.openDestination = { open($0) }
+            today.broadcastOpened = { broadcast in Task { await inbox.opened(broadcast) } }
             today.tellUnlocks(
                 with: UnlockNotices(
                     banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },
