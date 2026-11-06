@@ -63,7 +63,12 @@ describe('createSupabasePhotoStorage', () => {
 
   it('signs the photos that are there and leaves out one that is not', async () => {
     const [path, missing] = [newPath(), newPath()];
-    await fetch(await photos.createUploadUrl(path), { method: 'PUT', body: 'RIFF' });
+    const uploaded = await fetch(await photos.createUploadUrl(path), {
+      method: 'PUT',
+      headers: { 'content-type': 'image/webp' },
+      body: 'RIFF',
+    });
+    expect(uploaded.ok).toBe(true);
     const urls = await photos.createViewUrls([missing, path], 60);
     expect([...urls.keys()]).toStrictEqual([path]);
   });
