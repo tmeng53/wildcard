@@ -200,7 +200,6 @@ public final class TodayModel {
         guard let today = home?.today else { return nil }
         return (today.squadWeek, today.myWeek.week)
     }
-
     private var heldWeek: (squad: WeekCount, mine: WeekCount)?
 
     /// The night the lights are on for, as `lightsKey` keeps it (`TodayModel+Lights.swift`).
@@ -231,6 +230,24 @@ public final class TodayModel {
         }
         if !holdsDress || player == nil { dressMe(hop: false) }
         cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach)
+    }
+
+    /// A 请假条 is on offer while some day it can count for is free of a 练了 (补打卡).
+    var unavailable: Set<CheckInKind> {
+        let blocked = blockedForDisclaimer
+        return disclaimerDays.contains { !blocked.contains($0) } ? [] : [.disclaimer]
+    }
+
+    /// The days a 请假条 can count for, today last.
+    var disclaimerDays: [LocalDay] { store.postableDays }
+
+    /// The days a 请假条 can't go on: one with a 练了, and today when it rules one out.
+    var blockedForDisclaimer: Set<LocalDay> {
+        var blocked = store.trainedDays
+        if let today = store.postableDays.last, !store.myStatus.allowsDisclaimer || store.restsToday {
+            blocked.insert(today)
+        }
+        return blocked
     }
 
     /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member

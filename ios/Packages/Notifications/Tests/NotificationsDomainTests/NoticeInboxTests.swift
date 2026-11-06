@@ -4,7 +4,7 @@ import NotificationsDomain
 import Testing
 
 /// A member's notices on the server, a page of `size` at a time, newest first.
-actor FakeNotices: NoticeSource {
+private actor FakeNotices: NoticeSource {
     var all: [Notice]
     var seen: NoticeID?
     var size: Int
@@ -54,20 +54,6 @@ actor FakeNotices: NoticeSource {
     func set(refusals: [NotificationsError]) { self.refusals = refusals }
     func hide(_ ids: Set<NoticeID>) { unknown = ids }
     func add(_ notice: Notice) { all.append(notice) }
-}
-
-let monday = Date(timeIntervalSince1970: 1_793_577_600)  // 2026-11-02 00:00 UTC, a Monday
-
-func notice(_ id: Int, hoursAfterMonday hours: Double = 0) -> Notice {
-    Notice(
-        id: NoticeID(rawValue: id), toldAt: monday.addingTimeInterval(hours * 3600), squad: nil,
-        subject: .unlocked(.store, item: "deuce"))
-}
-
-private var utc: Calendar {
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
-    return calendar
 }
 
 @Test @MainActor func theBellShowsItsDotOnlyForANoticeNewerThanTheSeenOne() async {
@@ -197,73 +183,6 @@ private var utc: Calendar {
     #expect(inbox.notices.map(\.id.rawValue) == [3, 2, 1])
 }
 
-@Test func noticesGroupIntoTodayThisWeekAndEarlierOnAWeekFromMonday() {
-    // Wednesday 2026-11-04 at 10:00.
-    let now = monday.addingTimeInterval((48 + 10) * 3600)
-    let notices = [
-        notice(1, hoursAfterMonday: -1),  // Sunday night: last week
-        notice(2, hoursAfterMonday: 1),  // Monday
-        notice(3, hoursAfterMonday: 47),  // Tuesday, 23:00
-        notice(4, hoursAfterMonday: 49),  // Wednesday, 1:00
-        notice(5, hoursAfterMonday: 57),  // Wednesday, 9:00
-    ]
-    let sections = NoticeSection.sections(notices.shuffled(), now: now, calendar: utc)
-    #expect(sections.map(\.heading) == [.today, .thisWeek, .earlier])
-    #expect(sections.map { $0.notices.map(\.id.rawValue) } == [[5, 4], [3, 2], [1]])
-
-    // Nothing today: the group is left out.
-    #expect(
-        NoticeSection.sections([notice(1, hoursAfterMonday: -1)], now: now, calendar: utc).map(\.heading) == [.earlier])
-}
-
-@Test func piecesThatCameToOneStoreTogetherAreOneRow() {
-    let now = monday.addingTimeInterval(12 * 3600)
-    let piece = { (id: Int, item: String, seconds: Double) in
-        Notice(
-            id: NoticeID(rawValue: id), toldAt: monday.addingTimeInterval(3600 + seconds), squad: nil,
-            subject: .unlocked(.piece, item: item))
-    }
-    let notices = [
-        piece(1, "lap-bib", 0),
-        piece(2, "lap-singlet", 1),
-        piece(3, "deuce-ball", 2),
-        piece(4, "deuce-socks", 2),
-        // The same store again, but later: its own arrival.
-        piece(5, "lap-spikes", 600),
-        notice(6, hoursAfterMonday: 2),
-    ]
-    let rows = NoticeSection.sections(notices.shuffled(), now: now, calendar: utc).flatMap(\.notices)
-    #expect(rows.map(\.id.rawValue) == [6, 5, 4, 2])
-}
-
-@Test func aPushLineSplitsIntoATitleAndWhatFollows() {
-    let poke = PushAlertWords(PushAlert(key: "push.dailyProgress.poke", args: ["3", "12", "小林"]))
-    let parts = poke.parts("%3$@拍了拍你 · 本周小队已练 %1$@/%2$@ 次")
-    // The week comes first, as the approved bell design shows it, whatever order the push says it in.
-    #expect(parts.title == "本周小队已练 3/12 次")
-    #expect(parts.detail == "小林拍了拍你")
-
-    let received = PushAlertWords(key: "push.dailyProgress.received", args: ["3", "12", "2"])
-        .parts("本周小队已练 %1$@/%2$@ 次 · 今天 %3$@ 位队友给你打了气")
-    #expect(received.title == "本周小队已练 3/12 次")
-    #expect(received.detail == "今天 2 位队友给你打了气")
-
-    let plain = PushAlertWords(key: "push.dailyProgress", args: ["3", "12"]).parts("本周小队已练 %1$@/%2$@ 次")
-    #expect(plain.title == "本周小队已练 3/12 次")
-    #expect(plain.detail == nil)
-}
-
-@Test func aCommentOpensThePostAndReadsAsItsPushPutIt() throws {
-    let checkIn = CheckInID(try #require(UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")))
-    let alert = PushAlert(key: "push.comment", args: ["Coco", "这组深蹲太稳了"])
-    let comment = Notice(
-        id: NoticeID(rawValue: 1), toldAt: monday, squad: nil, subject: .comment(alert, checkIn: checkIn))
-    #expect(comment.destination == .post(checkIn))
-    let parts = PushAlertWords(alert).parts("%1$@ 评论了你：%2$@")
-    #expect(parts.title == "Coco 评论了你：这组深蹲太稳了")
-    #expect(parts.detail == nil)
-}
-
 @Test @MainActor func aNoticeToldLiveLightsTheBellAndAReconnectReadsTheNewestPageAgain() async {
     let server = FakeNotices([notice(1), notice(2)], seen: NoticeID(rawValue: 2))
     let told = Notice(
@@ -381,4 +300,60 @@ private var utc: Calendar {
     await inbox.load()
 
     #expect(inbox.notices.map(\.id.rawValue) == [3, 2, 1])
+}
+
+@Test @MainActor func theHomeTellsTheBroadcastsNotYetSeenIn通知TheEarliestFirst() async {
+    let words = { (line: String) in CatalogNames(simplifiedChinese: line, english: line, traditionalChinese: line) }
+    let broadcast = { (id: String) in
+        Broadcast(
+            id: id, title: words(id), body: nil,
+            action: Broadcast.Action(label: words("去商店街看看"), destination: .stores), style: .banner, gifts: [])
+    }
+    let told = { (id: Int, name: String) in
+        Notice(id: NoticeID(rawValue: id), toldAt: monday, squad: nil, subject: .broadcast(broadcast(name)))
+    }
+    let server = FakeNotices(
+        [told(1, "seen-already"), notice(2), told(3, "soon"), told(4, "today")], seen: NoticeID(rawValue: 2))
+    let inbox = NoticeInbox(source: server)
+
+    await inbox.load()
+
+    #expect(inbox.unseenBroadcasts.map(\.id) == ["soon", "today"])
+    #expect(inbox.notices.first?.destination == .stores)
+    await inbox.open()
+    #expect(inbox.unseenBroadcasts.isEmpty)
+}
+
+@Test @MainActor func aBroadcastOpenedFromItsBannerIsNoLongerNew() async {
+    let words = { (line: String) in CatalogNames(simplifiedChinese: line, english: line, traditionalChinese: line) }
+    let broadcast = { (id: String) in
+        Broadcast(
+            id: id, title: words(id), body: nil,
+            action: Broadcast.Action(label: words("去商店街看看"), destination: .stores), style: .banner, gifts: [])
+    }
+    let told = { (id: Int, name: String) in
+        Notice(id: NoticeID(rawValue: id), toldAt: monday, squad: nil, subject: .broadcast(broadcast(name)))
+    }
+
+    // Another notice still waits unread: the bell's dot stays and nothing is marked, but in 通知
+    // only that one shows as new.
+    let busy = FakeNotices([notice(1), notice(2), told(3, "winter")], seen: NoticeID(rawValue: 1))
+    let waiting = NoticeInbox(source: busy)
+    await waiting.load()
+    await waiting.opened(broadcast("winter"))
+    #expect(waiting.hasUnread)
+    #expect(await busy.marked.isEmpty)
+    await waiting.open()
+    #expect(waiting.notices.map { waiting.isUnread($0) } == [false, true, false])
+
+    // It was the only one: the server marks it read, so it stays read on the next launch.
+    let quiet = FakeNotices([notice(1), told(2, "winter")], seen: NoticeID(rawValue: 1))
+    let inbox = NoticeInbox(source: quiet)
+    await inbox.load()
+    #expect(inbox.hasUnread)
+    await inbox.opened(broadcast("winter"))
+    #expect(!inbox.hasUnread)
+    #expect(await quiet.marked == [NoticeID(rawValue: 2)])
+    await inbox.open()
+    #expect(inbox.notices.map { inbox.isUnread($0) } == [false, false])
 }

@@ -99,19 +99,27 @@ public struct SquadWeek: Hashable, Sendable {
     public var longestStreak: Streak? {
         var best: Streak?
         for member in members {
-            var start = 0
-            var length = 0
-            for (index, day) in member.days.prefix(7).enumerated() {
-                if day.isTrained {
-                    if length == 0 { start = index }
-                    length += 1
-                    if length > (best?.days ?? 1) {
-                        best = Streak(member: member.member, days: length, from: start)
-                    }
-                } else {
-                    length = 0
-                }
+            if let run = Self.longestRun(member.days), run.days > (best?.days ?? 1) {
+                best = Streak(member: member.member, days: run.days, from: run.from)
             }
+        }
+        return best
+    }
+
+    /// The longest run of trained days in a week (Monday first), the earliest on a tie; nil when
+    /// no day was trained.
+    static func longestRun(_ days: [DayKind]) -> (from: Int, days: Int)? {
+        var best: (from: Int, days: Int)?
+        var start = 0
+        var length = 0
+        for (index, day) in days.prefix(7).enumerated() {
+            guard day.isTrained else {
+                length = 0
+                continue
+            }
+            if length == 0 { start = index }
+            length += 1
+            if length > (best?.days ?? 0) { best = (start, length) }
         }
         return best
     }
