@@ -22,7 +22,7 @@ struct HealthChips: View {
                         chip(today)
                     }
                 }
-                .padding(.vertical, Space.xxs / 2)
+                .padding(.vertical, Space.xxs / 4)
             }
             .scrollIndicators(.hidden)
             .horizontalScrollFade()
@@ -101,7 +101,7 @@ struct ScoreRow: View {
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .padding(.horizontal, Space.xs)
-                .padding(.vertical, Space.xxs / 2)
+                .padding(.vertical, Space.xxs / 4)
                 .background(Color(role: .bgSubtle, in: theme), in: Capsule())
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Text("Apple 健康", bundle: .module))
