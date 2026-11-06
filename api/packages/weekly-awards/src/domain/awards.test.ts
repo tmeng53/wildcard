@@ -313,6 +313,34 @@ describe('promptFor', () => {
     expect(prompt.memes).toBeUndefined();
   });
 
+  it('calls a planned rest 计划休息, not a 请假条', () => {
+    const prompt = Prompt.parse(
+      JSON.parse(
+        promptFor({
+          weekStart: WeekStart.parse('2026-10-19'),
+          moves,
+          badges: catalog,
+          memes: [],
+          members: [
+            {
+              member: ana,
+              timeZone: 'UTC',
+              checkIns: [
+                checkIn({ kind: 'disclaimer', sport: undefined, text: '歇一天', restDay: true }),
+              ],
+            },
+          ],
+        }),
+      ),
+    );
+    expect(prompt.members).toStrictEqual([
+      {
+        member: 'A',
+        checkIns: [{ day: '2026-10-21 周三', time: '12:00', kind: '计划休息', reason: '歇一天' }],
+      },
+    ]);
+  });
+
   it('brings the memes in use, with what each means', () => {
     const prompt = Prompt.parse(
       JSON.parse(
