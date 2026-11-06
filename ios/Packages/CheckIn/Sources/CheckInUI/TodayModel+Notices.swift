@@ -124,18 +124,18 @@ extension TodayModel {
     }
 
     /// Whether the home can tell the next notice: nothing told is on screen, the scene is in
-    /// view and settled, and no check-in, burst or opening is over it.
+    /// view and settled, and no check-in, burst, opening or other screen is over it.
     var isFreeForNotices: Bool {
-        notice == nil && celebration == nil && opening == nil && step == .scene && !isBurstOpen
+        notice == nil && celebration == nil && opening == nil && step == .scene && !isBurstOpen && isHomeInFront
     }
 
     /// The member answered the celebration's card: its button (`opening`) opens its place, as its
-    /// 通知 row does; 先不了, or a tap off the card, just puts it away. The next notice follows.
+    /// 通知 row does; 先不了, or a tap off the card, just puts it away. The next notice follows once
+    /// the home is free again (`HomeNotices`), so a place it opened is never covered.
     public func closeCelebration(opening: Bool) {
         guard let shown = celebration else { return }
         celebration = nil
         if opening, let action = shown.action { openDestination?(action.destination) }
-        Task { await showNextNotice() }
     }
 
     /// How many banners drop in one after another before the rest fold into 「还有新通知」.

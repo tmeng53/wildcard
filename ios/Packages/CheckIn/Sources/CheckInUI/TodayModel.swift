@@ -152,11 +152,11 @@ public final class TodayModel {
     var holdsTabBar = false
     /// A takeover scene's opening, over the whole screen until 进场 (`TodayModel+Opening.swift`).
     var opening: OpeningArt.Loaded?
-    /// The `NoticeBanner` showing at the top, and those waiting for it (`TodayModel+Notices.swift`).
+    /// The banner on top or a celebration's card, those waiting, told only while 今天 is in front.
     var notice: Notice?
     var pendingNotices: [Notice] = []
-    /// A broadcast told in its celebration style, its card up in the banner's turn until answered.
     public internal(set) var celebration: Broadcast?
+    public var isHomeInFront = true
     /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
     @ObservationIgnored var unlockNotices: UnlockNotices?
     /// Where a broadcast's banner, or 「还有新通知」, opens its place, as the app routes every notice.

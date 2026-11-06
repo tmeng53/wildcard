@@ -154,15 +154,9 @@ struct MainTabs: View {
             }
         }
         // A celebration broadcast (「感恩节快到了」) over everything, until its button or 先不了.
-        .cardPopup(
-            isPresented: Binding(
-                get: { today.celebration != nil }, set: { if !$0 { today.closeCelebration(opening: false) } })
-        ) {
-            if let celebration = today.celebration {
-                BroadcastCelebration(model: today, broadcast: celebration)
-            }
-        }
-        .haptic(.appear, trigger: today.celebration?.id) { _, id in id != nil }
+        .celebrationPopup(today)
+        // 今天 tells nothing while another tab, the squad page or a cover is over it.
+        .onChange(of: homeInFront, initial: true) { today.isHomeInFront = $1 }
         .cardPopup(isPresented: $showsCoachCard) {
             CoachCardPopup(note: today.coachLine, squad: squad) { opensFeed in
                 showsCoachCard = false
@@ -188,6 +182,12 @@ struct MainTabs: View {
             selection = .today
         }
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
+    }
+
+    /// 今天 on screen with nothing over it: no other tab, the squad page, a card, the 战报 or the editor.
+    private var homeInFront: Bool {
+        selection == .today && !showsSquad && teammate == nil && !showsCoachCard && recap.open == nil
+            && wardrobe.editor == nil
     }
 
     /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page, a scene

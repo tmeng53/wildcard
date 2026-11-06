@@ -21,6 +21,7 @@ final class BroadcastCelebrationUITests: XCTestCase {
         XCTAssertTrue(open.exists && later.exists, "the card has no 去商店街看看 or 先不了")
         XCTAssertTrue(open.label.contains("去商店街看看"), open.label)
         assertWhole(card, open, later, in: app)
+        assertHolidayArt(in: app)
         // The card grows in and the member waves.
         Thread.sleep(forTimeInterval: 1.2)
         keepScreenshot(named: "97-celebration-thanksgiving")
@@ -41,6 +42,7 @@ final class BroadcastCelebrationUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["圣诞节快到了"].exists, "no title on the card")
         let open = app.buttons["broadcast.celebration.open"]
         assertWhole(card, open, app.buttons["broadcast.celebration.later"], in: app)
+        assertHolidayArt(in: app)
         Thread.sleep(forTimeInterval: 1.2)
         keepScreenshot(named: "98-celebration-christmas")
 
@@ -67,6 +69,12 @@ final class BroadcastCelebrationUITests: XCTestCase {
         XCTAssertTrue(card.frame.contains(open.frame), "去商店街看看 sticks out of the card: \(open.frame)")
         XCTAssertTrue(card.frame.contains(later.frame), "先不了 sticks out of the card: \(later.frame)")
         XCTAssertLessThan(open.frame.maxY, later.frame.minY + 1, "先不了 isn't under 去商店街看看")
+    }
+
+    /// The holiday's own header art, not the plain wash a card without it gets.
+    private func assertHolidayArt(in app: XCUIApplication) {
+        let art = app.descendants(matching: .any).matching(identifier: "broadcast.celebration.art").firstMatch
+        XCTAssertTrue(art.exists, "the card has no holiday header art")
     }
 
     private func keepScreenshot(named name: String) {

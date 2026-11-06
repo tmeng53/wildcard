@@ -66,11 +66,10 @@ public struct BroadcastCelebration: View {
 
     /// The header art, the member standing on it.
     private func header(_ theme: SceneTheme) -> some View {
-        Color(role: .bgAccentSubtle, in: theme)
+        let picture = Self.headerPicture(of: broadcast, else: theme)
+        return Color(role: .bgAccentSubtle, in: theme)
             .overlay {
-                if let picture = Self.headerPicture(theme) {
-                    Image(uiImage: picture).resizable()
-                }
+                if let picture { Image(uiImage: picture).resizable() }
             }
             .aspectRatio(Header.width / Header.height, contentMode: .fit)
             .overlay {
@@ -88,7 +87,10 @@ public struct BroadcastCelebration: View {
                     }
                 }
             }
-            .accessibilityHidden(true)
+            // Decorative; named only so a test can tell the holiday's art is drawn.
+            .accessibilityElement(children: .ignore)
+            .accessibilityAddTraits(.isImage)
+            .accessibilityIdentifier(picture == nil ? "broadcast.celebration.header" : "broadcast.celebration.art")
     }
 
     /// What it gives, each in a tile of the scene's wash with its corner in the scene's colour;
@@ -180,10 +182,17 @@ public struct BroadcastCelebration: View {
         return scene
     }
 
-    /// The scene's notice art: the one an admin put (`scenes/<scene>-notice@3x.png`), else the
-    /// one this build ships; nil without either. Read once per launch.
-    static func headerPicture(_ scene: SceneTheme) -> UIImage? {
-        let name = "\(scene.rawValue)-notice"
+    /// The notice art named like the store its icon shows, else like the scene it is drawn in:
+    /// the one an admin put (`scenes/<name>-notice@3x.png`), else the one this build ships; nil
+    /// without any, so a holiday's art shows even before the catalog lists its scene.
+    static func headerPicture(of broadcast: Broadcast, else scene: SceneTheme) -> UIImage? {
+        let store = broadcast.icon.flatMap { $0.kind == .store ? $0.id : nil }
+        return store.flatMap(notice(named:)) ?? notice(named: scene.rawValue)
+    }
+
+    /// One notice picture, read once per launch.
+    private static func notice(named id: String) -> UIImage? {
+        let name = "\(id)-notice"
         if let kept = pictures.withLock({ $0[name] }) { return kept }
         let downloaded = ArtTree.downloadedFile("\(name)@3x.png", in: "scenes")
             .flatMap { try? Data(contentsOf: $0) }
@@ -194,6 +203,22 @@ public struct BroadcastCelebration: View {
     }
 
     private static let pictures = Mutex<[String: UIImage]>([:])
+}
+
+extension View {
+    /// The model's celebration broadcast as a card over everything this view holds, until its
+    /// button or 先不了 (a tap off it too); each card anew, with its own member.
+    public func celebrationPopup(_ model: TodayModel) -> some View {
+        cardPopup(
+            isPresented: Binding(
+                get: { model.celebration != nil }, set: { if !$0 { model.closeCelebration(opening: false) } })
+        ) {
+            if let celebration = model.celebration {
+                BroadcastCelebration(model: model, broadcast: celebration).id(celebration.id)
+            }
+        }
+        .haptic(.appear, trigger: model.celebration?.id) { _, id in id != nil }
+    }
 }
 
 /// The header's design, in its own 346 × 176 points: where the member stands (the character's
