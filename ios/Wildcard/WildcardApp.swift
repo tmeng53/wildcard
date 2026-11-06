@@ -117,7 +117,7 @@ struct WildcardApp: App {
         if LaunchOptions.showsOnboarding {
             _signUp = State(
                 initialValue: SignUpModel(
-                    service: InMemorySignUpService.sampleSquad(), invite: nil, nickname: "",
+                    service: InMemorySignUpService.sampleSquad(), nickname: "",
                     now: LaunchOptions.signUpTime))
         }
         let feedSource = Self.feedSource(viewer: member, squad: squad)
