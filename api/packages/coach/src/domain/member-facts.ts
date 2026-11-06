@@ -1,6 +1,6 @@
 // What the coach can look up about each member beyond this week: their counts since they joined,
-// the sport they train most, the weekly titles they won and this week's plan (出赛表). The model
-// sees each member as 队员N.
+// the sport they train most, the weekly titles they won, this week's plan (出赛表) and its
+// 饮食小目标. The model sees each member as 队员N.
 
 /** One day of a member's plan: a sport by its name (or any sport), or rest. */
 export type PlanDayFacts =
@@ -20,9 +20,21 @@ export interface MemberFacts {
   readonly latestTitle?: string;
   /** This week's plan, Monday first. */
   readonly plan: readonly PlanDayFacts[];
+  /** This week's 饮食小目标 in words, in the order picked: eating habits, never a number. */
+  readonly fuelGoals: readonly string[];
 }
 
 const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+
+/** A plan day in words: `游泳`, `练` (any sport) or `休息`. */
+function planDayWords(day: PlanDayFacts): string {
+  return day.kind === 'rest' ? '休息' : (day.sport ?? '练');
+}
+
+/** This week's 饮食小目标 as a sentence. */
+function fuelWords(goals: readonly string[]): string {
+  return goals.length === 0 ? '这周没定饮食小目标' : `这周的饮食小目标：${goals.join('、')}`;
+}
 
 /** The `member_stats` tool's answer: a few lines a member. */
 export function factsText(
@@ -43,13 +55,39 @@ export function factsText(
           ? '还没拿过周奖。'
           : `拿过 ${String(each.titles)} 个周奖${each.latestTitle === undefined ? '' : `，最近一个是「${each.latestTitle}」`}。`;
       const plan = each.plan
-        .map((day, index) => {
-          const name = WEEKDAYS[index] ?? '';
-          if (day.kind === 'rest') return `${name}休息`;
-          return `${name}${day.sport ?? '练'}`;
-        })
+        .map((day, index) => `${WEEKDAYS[index] ?? ''}${planDayWords(day)}`)
         .join('，');
-      return `${counts}${top}${titles}\n本周出赛表：${plan}。`;
+      return `${counts}${top}${titles}\n本周出赛表：${plan}。${fuelWords(each.fuelGoals)}。`;
     })
     .join('\n');
+}
+
+/** What the daily wake tells the coach about one member it writes a morning note to. */
+export interface NoteBrief {
+  /** The member as the model knows them: 队员N. */
+  readonly name: string;
+  /** Days this week with a 练了 so far. */
+  readonly trainedDays: number;
+  /** Today's plan and this week's 饮食小目标, when they could be read. */
+  readonly plan?: { readonly today: PlanDayFacts; readonly fuelGoals: readonly string[] };
+}
+
+/** The weekday of a `YYYY-MM-DD` day, Monday 0, as the plan counts it. */
+export function planIndexOf(day: string): number {
+  return (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
+}
+
+/** `周四`, for a `YYYY-MM-DD` day. */
+export function weekdayOf(day: string): string {
+  return WEEKDAYS[planIndexOf(day)] ?? '';
+}
+
+/** One member's line in the daily task, for their morning note. */
+export function briefLine(brief: NoteBrief): string {
+  const trained = `这周已经练了 ${String(brief.trainedDays)} 天`;
+  if (brief.plan === undefined) return `- ${brief.name}：${trained}。`;
+  const { today, fuelGoals } = brief.plan;
+  const plan =
+    today.kind === 'rest' ? '今天出赛表是休息日' : `今天出赛表排了${planDayWords(today)}`;
+  return `- ${brief.name}：${plan}；${fuelWords(fuelGoals)}；${trained}。`;
 }
