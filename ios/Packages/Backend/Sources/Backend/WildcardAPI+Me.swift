@@ -18,6 +18,15 @@ extension WildcardAPI {
             disclaimers: totals.disclaimers, topSport: topSport)
     }
 
+    /// The member's 练了 for days `from` through `last` (at most 371), by day, the earliest made
+    /// first: 我's training record.
+    public func trainings(from: LocalDay, through last: LocalDay) async throws(APIError) -> [TrainingDay] {
+        let record = try await call {
+            try await client.listMyTrainings(query: .init(from: from.description, to: last.description)).ok.body.json
+        }
+        return try read { () throws(ContractsError) in try record.trainings.map(TrainingDay.init) }
+    }
+
     /// The member's badge board (徽章板): every weekly title they won, with its badge, and the one
     /// they wear.
     public func titleBoard() async throws(APIError) -> TitleBoard {

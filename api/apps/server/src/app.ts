@@ -166,7 +166,7 @@ export function createApp(deps: AppDependencies) {
 
   app.route('/', health(deps));
   app.route('/', catalog({ ...deps.catalog, publicRoutes: deps.publicRoutes }));
-  app.route('/', me(deps));
+  app.route('/', me({ ...deps, admins: deps.admin.admins(deps.db) }));
   app.route('/', aiConsent(deps));
   const { coach } = deps.jobs;
   app.route(

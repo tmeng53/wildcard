@@ -71,7 +71,7 @@ extension WeekStory {
                         }))
             }
             self.init(
-                status: .ready, titles: titles,
+                status: .ready, stuck: false, titles: titles,
                 frozen: Frozen(
                     squad: ready.squad, week: ready.week, scene: ready.scene.rawValue, sceneId: ready.sceneId,
                     members: ready.members,
@@ -80,7 +80,7 @@ extension WeekStory {
                     bestDisclaimer: ready.bestDisclaimer, ending: ready.ending))
         case .case2(let pending):
             self.init(
-                status: .pending, titles: [],
+                status: .pending, stuck: pending.stuck == true, titles: [],
                 frozen: Frozen(
                     squad: pending.squad, week: pending.week, scene: pending.scene.rawValue,
                     sceneId: pending.sceneId,
@@ -108,7 +108,7 @@ extension WeekStory {
         let ending: Components.Schemas.StoryEnding?
     }
 
-    private init?(status: Status, titles: [MemberTitles], frozen: Frozen) {
+    private init?(status: Status, stuck: Bool, titles: [MemberTitles], frozen: Frozen) {
         guard let squad = UUID(uuidString: frozen.squad.id), let monday = try? LocalDay(frozen.week.from),
             let sunday = try? LocalDay(frozen.week.to),
             let scene = SceneTheme(rawValue: frozen.sceneId) ?? SceneTheme(rawValue: frozen.scene),
@@ -147,11 +147,12 @@ extension WeekStory {
             return nil
         }
         self.init(
-            status: status, squad: SquadID(squad), squadName: frozen.squad.name,
+            status: status, stuck: stuck, squad: SquadID(squad), squadName: frozen.squad.name,
             week: Week(monday: monday, sunday: sunday), scene: scene, squadmates: squadmates, podium: podium,
             titles: titles, myWeek: myWeek ?? nil, squadWeek: squadWeek ?? nil, hottest: hottest ?? nil,
             meals: meals ?? nil,
-            bestDisclaimer: bestDisclaimer, ending: frozen.ending.map { Ending(done: $0.done, plan: $0.plan) })
+            bestDisclaimer: bestDisclaimer,
+            ending: frozen.ending.map { Ending(done: $0.done, plan: $0.plan, headline: $0.headline, line: $0.line) })
     }
 
     private static func member(_ id: String) -> MemberID? {

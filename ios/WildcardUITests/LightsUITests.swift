@@ -1,6 +1,6 @@
 import XCTest
 
-/// 开灯 on the home at 23:30, on the sample squad: the cord hangs under the card, clear of it and
+/// 开灯 on the home at 23:30, on the sample squad: the cord hangs under the folded card, clear of it and
 /// of 打卡; tapping Coco opens her card, whose today says she's asleep; a tap on the cord switches the lights on, the
 /// sleepers wake and Coco's status is her rest day; another tap switches them off. Screenshots of
 /// each are kept for review.
@@ -14,11 +14,13 @@ final class LightsUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-night",
-            "-today.cardPage", "0",
+            "-today.cardPage", "0", "-uitest-card-folded",
         ]
         app.launch()
-        let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
-        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "今天 never appeared")
+        // The capsule's glass, not `today.card`, whose frame also takes in the 今日赛况 tag hanging
+        // under the capsule's left end, beside the cord.
+        let card = app.descendants(matching: .any).matching(identifier: "squadcard.capsule").firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "今天 never appeared folded")
         let cord = app.buttons["today.lights"]
         XCTAssertTrue(cord.waitForExistence(timeout: Self.wait), "no light cord at 23:30")
         XCTAssertEqual(cord.label, "开灯")
@@ -61,6 +63,10 @@ final class LightsUITests: XCTestCase {
         let window = app.windows.firstMatch.frame
         XCTAssertTrue(window.contains(cord.frame), "the cord runs off the screen: \(cord.frame)")
         XCTAssertGreaterThanOrEqual(cord.frame.minY, card.frame.maxY - 1, "the cord covers the card: \(cord.frame)")
+        let tag = app.descendants(matching: .any).matching(identifier: "today.recap.tag").firstMatch
+        if tag.exists {
+            XCTAssertFalse(tag.frame.intersects(cord.frame), "the cord covers 今日赛况: \(cord.frame)")
+        }
         let checkIn = app.buttons["today.checkin"]
         XCTAssertTrue(checkIn.exists, "no 打卡 button")
         XCTAssertLessThan(cord.frame.maxY, checkIn.frame.minY, "the cord reaches 打卡: \(cord.frame)")

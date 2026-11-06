@@ -67,6 +67,8 @@ public struct PersonPicker<Person: Identifiable, Head: View>: View {
             .padding(Self.inset)
         }
         .scrollBounceBehavior(.basedOnSize)
+        // The list belongs to the box being typed in: touching or scrolling it keeps the keyboard up.
+        .scrollDismissesKeyboard(.never)
         .frame(maxHeight: Self.row * Self.visibleRows + 2 * Self.inset)
         .fixedSize(horizontal: false, vertical: true)
         .background(Color(role: .bgCanvas, in: theme), in: Self.shape)

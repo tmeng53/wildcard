@@ -14,8 +14,6 @@ struct DeleteAccountView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
-                .disabled(model.deletion == .deleting)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     MeStage(character: model.overview?.character, mood: .teary, size: CGSize(width: 96, height: 120))

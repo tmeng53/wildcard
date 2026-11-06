@@ -257,7 +257,29 @@ const storyFields = {
         '最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted.',
     }),
   ending: z
-    .strictObject({ done: count, plan: count })
+    .strictObject({
+      done: count,
+      plan: count,
+      headline: z
+        .string()
+        .min(1)
+        .optional()
+        .meta({
+          description:
+            'The headline over the page, such as 稳了 or 差一点, written with the awards. Missing ' +
+            'until they are, when the model didn’t write one, and for older weeks.',
+        }),
+      line: z
+        .string()
+        .min(1)
+        .optional()
+        .meta({
+          description:
+            'The line under the days against the plans, written with the awards. Missing until ' +
+            'they are, when the model didn’t write one, and for older weeks: the app then says ' +
+            'how many days are missing, or that the squad made it.',
+        }),
+    })
     .openapi('StoryEnding')
     .optional()
     .meta({
@@ -292,13 +314,27 @@ export const WeekStoryBody = z
           }),
       })
       .meta({ description: 'The week’s titles are written.' }),
-    z.strictObject({ ...storyFields, status: z.literal('pending') }).meta({
-      description:
-        'The titles are due but not written yet (the AI failed, or hasn’t reached the squad): ' +
-        'only the titles page waits, showing that the organisers are out of funds with a ' +
-        'button that nudges them (`POST …/story/nudge`); every other page is frozen and shows ' +
-        'as usual. Read again later.',
-    }),
+    z
+      .strictObject({
+        ...storyFields,
+        status: z.literal('pending'),
+        stuck: z
+          .literal(true)
+          .optional()
+          .meta({
+            description:
+              'Present when a try at the titles has failed since the awards: the titles page ' +
+              'then says the organisers are out of funds, with a button that nudges them ' +
+              '(`POST …/story/nudge`). Left out while the titles are only waiting for the ' +
+              'hourly run to reach the squad: the page just says they are on their way.',
+          }),
+      })
+      .meta({
+        description:
+          'The titles are due but not written yet (the run hasn’t reached the squad, or the AI ' +
+          'failed: `stuck`): only the titles page waits; every other page is frozen and shows ' +
+          'as usual. Read again later.',
+      }),
   ])
   .openapi('WeekStory');
 
@@ -392,10 +428,10 @@ export function weekStory(
       );
       const hottestView = (top: TopCheckIn) => ({
         ...top,
-        photos: top.photos.map((path) => {
+        // A photo whose file is gone is left out, so the story still opens.
+        photos: top.photos.flatMap((path) => {
           const url = urls.get(PhotoPath.parse(path));
-          if (url === undefined) throw new Error(`No view URL was signed for ${path}.`);
-          return { path, url: url.href };
+          return url === undefined ? [] : [{ path, url: url.href }];
         }),
         reactions: Object.entries(top.reactions)
           .sort(([, a], [, b]) => b - a)
@@ -471,7 +507,11 @@ export function weekStory(
                 titles: titles.map(({ title, speech, move }) => ({ title, speech, move })),
               })),
             }
-          : { ...fields, status: 'pending' as const },
+          : {
+              ...fields,
+              status: 'pending' as const,
+              ...(story.stuck ? { stuck: true as const } : {}),
+            },
         200,
       );
     });

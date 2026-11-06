@@ -9,7 +9,8 @@ import SwiftUI
 /// The 动态 tab: the squad's posts by day, newest first, each a card with the author's character
 /// and the teammates' emoji (the approved feed, version 20, with the approved reaction bar). The app's tab bar floats over it;
 /// the safe area the app gives it already leaves room. Pull to load again; the end loads the
-/// week before. A card's comments or comment button opens its own page (`PostDetailView`).
+/// week before. A card's comments or comment button opens its own page (`PostDetailView`), which the app
+/// pushes.
 public struct FeedView: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -39,19 +40,11 @@ public struct FeedView: View {
         self.checkIn = checkIn
     }
 
+    /// The root of 动态's NavigationStack. A card's comments set the model's `opened`, and the
+    /// app pushes that post's page (`PostDetailView`) on the stack's own path, so every page over
+    /// 动态 goes the one way and the feed keeps its place underneath.
     public var body: some View {
-        // A post's own page slides in over the feed, which keeps its place underneath.
-        ZStack {
-            feed
-                .allowsHitTesting(model.opened == nil)
-                .accessibilityHidden(model.opened != nil)
-            if let opened = model.opened {
-                PostDetailView(model: model, post: opened) {
-                    withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { model.opened = nil }
-                }
-                .transition(.move(edge: .trailing))
-            }
-        }
+        feed
     }
 
     private var feed: some View {
@@ -125,9 +118,16 @@ public struct FeedView: View {
     @ViewBuilder private var content: some View {
         let sections = model.store.sections
         if sections.isEmpty {
-            // Only a squad the server says never posted is empty; offline, pull to try again.
-            if model.store.phase == .current {
+            // Only a squad the server says never posted is empty; offline, nothing was ever read,
+            // so say so, with a way to try again (pulling down tries again too).
+            switch model.store.phase {
+            case .current:
                 EmptyFeed(model: model, checkIn: checkIn)
+            case .offline:
+                StateView.offline(retryIdentifier: "feed.retry") { Task { await model.load() } }
+                    .padding(.top, Space.xxl)
+            case .loading, .notInSquad, .signedOut:
+                EmptyView()
             }
         } else {
             // 战术板 tops today, even before anyone posted today (a squad that never posted

@@ -139,8 +139,9 @@ public final class SignUpModel {
         if next == .character, editor == nil {
             editor = try? CharacterEditorModel.placeholder(look: welcomeLook, nickname: nickname, stock: stock)
         }
-        if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked).choices {
-            week = WeekDraft(sports: sports.picked)
+        let days = joined?.daysPerMember ?? squad.daysPerMember
+        if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked, days: days).choices {
+            week = WeekDraft(sports: sports.picked, days: days)
         }
         if step == .week, next == .sports {
             // Back to the sports: the character wears the one picked last again, not the
@@ -242,6 +243,7 @@ public final class SignUpModel {
         let choice = squad.choice
         let code = squad.code
         let name = squad.name
+        let daysPerMember = squad.daysPerMember
         perform { () async throws(SignUpError) in
             if self.asksForAIConsent { try await self.service.agreeToAI() }
             let squad: JoinedSquad
@@ -251,7 +253,7 @@ public final class SignUpModel {
                 squad = try await self.service.join(code)
             case .create:
                 guard let name else { return }
-                squad = try await self.service.create(named: name)
+                squad = try await self.service.create(named: name, daysPerMember: daysPerMember)
             }
             self.joined = squad
             self.madeTheSquad = choice == .create
@@ -380,12 +382,6 @@ extension SignUpModel {
         let known = stock != nil
         stock = await service.stock()
         if let editor, let stock, !known { try? editor.stock(stock) }
-    }
-
-    /// The squad's goal this week, before and after the member's 人均 N 天 adds to it.
-    var squadGoal: (before: Int, after: Int) {
-        let before = joined?.weekGoal ?? 0
-        return (before, before + (joined?.daysPerMember ?? 0))
     }
 
     /// The template's training days from today on: what this week plans, since the first week

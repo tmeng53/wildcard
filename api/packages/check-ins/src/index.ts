@@ -29,7 +29,7 @@ export {
 } from './domain/check-in.js';
 export { PhotoPath, PhotoRef, PhotoSize, Photos, isOwnPhoto } from './domain/photos.js';
 export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-store.js';
-export { DayRange, MyDayRange, Unshared } from './domain/day-range.js';
+export { DayRange, MyDayRange, RecordRange, Unshared } from './domain/day-range.js';
 export {
   CheckInKind,
   DEFAULT_PAGE,
@@ -38,7 +38,7 @@ export {
   encodeCursor,
   type PostCursor,
 } from './domain/post-cursor.js';
-export type { CheckInTotals, TopSport, TrainedCheckIn } from './domain/totals.js';
+export type { CheckInTotals, TopSport, TrainedCheckIn, TrainingDay } from './domain/totals.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
 export { CommentId, MAX_MENTIONS, type Comment } from './domain/comment.js';
 export { COMMENT_MAX_CHARACTERS, CommentText } from './domain/text.js';

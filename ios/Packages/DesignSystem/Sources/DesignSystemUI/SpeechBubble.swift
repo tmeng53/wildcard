@@ -83,7 +83,7 @@ public struct SpeechBubble: View {
             .padding(.bottom, Self.tailSize.height)
         switch surface {
         case .scene:
-            padded.glassEffect(.regular.tint(Color(role: .bgCanvas, in: theme).opacity(Self.glassTint)), in: shape)
+            padded.sceneGlass(in: shape, theme: theme)
         case .page:
             padded.background(Color(role: .bgSubtle, in: theme), in: shape)
         }
@@ -92,10 +92,6 @@ public struct SpeechBubble: View {
     private var shape: BubbleShape {
         BubbleShape(tail: Self.tailSize, cornerRadius: Radius.pick)
     }
-
-    /// How much white the glass carries: enough that a coloured scene (the red track) doesn't dye
-    /// it and ink words read at night, little enough that the scene still shows through.
-    private static let glassTint = 0.72
 
     /// A title or detail's colour: on glass, ink at `glassMuted`, which takes on the scene's hue
     /// through the glass where a fixed grey would look dirty on a coloured scene; on a page, muted.

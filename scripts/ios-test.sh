@@ -60,8 +60,10 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO \
   2>&1 | tee "$out/xcodebuild.log" || status=$?
 
-# Export screenshots even when a test failed: they show what went wrong.
-if [ -d "$out/Wildcard.xcresult" ]; then
+# Export screenshots even when a test failed: they show what went wrong. EXPORT_SCREENSHOTS=0
+# (main's scheduled run) runs the tests and keeps no screenshots: only the combined PR runs do.
+export_shots="${EXPORT_SCREENSHOTS:-1}"
+if [ "$export_shots" != 0 ] && [ -d "$out/Wildcard.xcresult" ]; then
   raw="$out/attachments"
   xcrun xcresulttool export attachments --path "$out/Wildcard.xcresult" --output-path "$raw"
   # Name each file after its XCTAttachment name; the manifest maps exported files to names.
@@ -84,7 +86,7 @@ fi
 
 shots=$(find "$out/screenshots" -name '*.png' | wc -l | tr -d ' ')
 echo "ios-test: $shots screenshots"
-if [ "$status" -eq 0 ] && [ "$shots" -eq 0 ]; then
+if [ "$export_shots" != 0 ] && [ "$status" -eq 0 ] && [ "$shots" -eq 0 ]; then
   echo "the UI tests passed but no screenshots were exported" >&2
   status=1
 fi

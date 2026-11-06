@@ -11,7 +11,7 @@ import SwiftUI
 extension MainTabs {
     /// 今天 on screen with nothing over it: no other tab, the squad page, a card, the 战报 or the editor.
     var homeInFront: Bool {
-        selection == .today && !showsSquad && teammate == nil && !showsCoachCard && recap.open == nil
+        selection == .today && todayPages.isEmpty && teammate == nil && !showsCoachCard && recap.open == nil
             && wardrobe.editor == nil
     }
 

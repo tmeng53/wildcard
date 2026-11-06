@@ -134,6 +134,7 @@ const titlesFor = (letters: readonly string[]) => ({
       },
     ],
   })),
+  ending: { headline: '稳了', line: '三天全拿下，计划都不够用。' },
 });
 
 function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) {
@@ -350,6 +351,7 @@ async function uploadedPhoto(owner: { readonly userId: string }) {
 
 const Story = z.object({
   status: z.string(),
+  stuck: z.literal(true).optional(),
   squad: z.object({ id: z.string(), name: z.string() }),
   week: z.object({ from: z.string(), to: z.string() }),
   scene: z.string(),
@@ -385,7 +387,14 @@ const Story = z.object({
     .optional(),
   meals: z.unknown().optional(),
   bestDisclaimer: z.unknown().optional(),
-  ending: z.object({ done: z.int(), plan: z.int() }).optional(),
+  ending: z
+    .object({
+      done: z.int(),
+      plan: z.int(),
+      headline: z.string().optional(),
+      line: z.string().optional(),
+    })
+    .optional(),
   titles: z
     .array(
       z.object({
@@ -611,8 +620,14 @@ describe('weekly awards', () => {
     expect(await nudge({ token: ana.token, squad })).toBe(404);
 
     at(new Date(AWARDS_AT.getTime() + HOUR));
+    // Before the hourly run reaches the squad, the titles are only on their way.
+    const waiting = Story.parse((await read({ token: ana.token, squad })).body);
+    expect([waiting.status, waiting.stuck]).toStrictEqual(['pending', undefined]);
     expect((await run()).failed).toBeGreaterThanOrEqual(1);
     const pending = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(pending.stuck).toBe(true);
+    // The page's words wait with the titles: the app says how far the squad got meanwhile.
+    expect(pending.ending).toStrictEqual({ done: 1, plan: 0 });
     expect([pending.status, pending.titles, pending.hottest?.checkIn]).toStrictEqual([
       'pending',
       undefined,
@@ -695,7 +710,7 @@ describe('weekly awards', () => {
   });
 
   it('is frozen at the awards: later joins, leaves, check-ins and scenes don’t change it', async () => {
-    const { run, read, at } = setup();
+    const { run, read, at, prompts } = setup();
     const [ana, bo, cy] = [await member(), await member(), await member()];
     const squad = await squadOf(ana, bo);
     const top = await trained(ana, { squad, day: '2026-10-20', minutes: 45 });
@@ -711,7 +726,14 @@ describe('weekly awards', () => {
     expect(first.scene).toBe('gym');
     expect(first.members.map(({ member: id }) => id)).toStrictEqual([ana.userId, bo.userId]);
     expect(first.titles).toHaveLength(2);
-    expect(first.ending?.done).toBe(3);
+    expect(first.ending).toStrictEqual({
+      done: 3,
+      plan: 0,
+      headline: '稳了',
+      line: '三天全拿下，计划都不够用。',
+    });
+    // The run reads every squad that checked in that week; this one's prompt brings its days.
+    expect(prompts.some((prompt) => prompt.includes('"squad":{"trainedDays":3,'))).toBe(true);
     // Ana trained the most days, so she stands in the middle; neither planned a day this week,
     // so both carry the plan-done mark.
     expect(first.podium).toStrictEqual({

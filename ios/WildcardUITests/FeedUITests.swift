@@ -195,9 +195,10 @@ final class FeedUITests: XCTestCase {
         comments.tap()
 
         let rows = app.descendants(matching: .any).matching(identifier: "post.comment")
-        XCTAssertTrue(app.buttons["post.back"].waitForExistence(timeout: Self.wait), "the post's page didn't open")
+        XCTAssertTrue(backButton(in: app).waitForExistence(timeout: Self.wait), "the post's page didn't open")
         waitFor(rows.element(boundBy: 2), "exists == true", "the page doesn't list every comment")
-        XCTAssertFalse(app.buttons["tab.feed"].exists, "the tab bar shows over the post's page")
+        waitFor(
+            app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar shows over the post's page")
         settle()
         keepScreenshot(named: "49-post-page")
 
@@ -213,7 +214,7 @@ final class FeedUITests: XCTestCase {
         waitFor(rows.element(boundBy: 3), "exists == true", "the sent comment didn't show")
         XCTAssertFalse(app.buttons["post.cancelReply"].exists, "still replying after sending")
 
-        app.buttons["post.back"].tap()
+        backButton(in: app).tap()
         XCTAssertTrue(app.buttons["tab.feed"].waitForExistence(timeout: Self.wait), "the tab bar didn't come back")
         waitFor(comments, "label CONTAINS '全部 4 条评论'", "the card doesn't count the new comment")
         settle()
@@ -240,6 +241,19 @@ final class FeedUITests: XCTestCase {
         keepScreenshot(named: "47-feed-empty")
         checkIn.tap()
         waitFor(app.buttons["tab.today"], "isSelected == true", "去打卡 didn't open 今天")
+    }
+
+    /// 动态 opened with no server and nothing read before: 网络开小差了 with 再试一次, not a
+    /// blank page.
+    func testOfflineFeedSaysSo() {
+        let app = launch(language: "zh-Hans", extra: ["-uitest-offline-feed"])
+        let retry = app.buttons["feed.retry"]
+        XCTAssertTrue(retry.waitForExistence(timeout: Self.wait), "no 再试一次 on an offline feed")
+        XCTAssertTrue(app.staticTexts["网络开小差了"].exists, "no 网络开小差了 on an offline feed")
+        XCTAssertFalse(app.buttons["feed.checkIn"].exists, "the empty scene on a feed that wasn't read")
+        settle()
+        assertClearOfTheTabBar(retry, in: app)
+        keepScreenshot(named: "47-feed-offline")
     }
 
     private func launch(language: String, extra: [String] = []) -> XCUIApplication {

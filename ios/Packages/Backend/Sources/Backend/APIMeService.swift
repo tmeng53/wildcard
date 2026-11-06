@@ -38,7 +38,10 @@ public struct APIMeService: MeService {
             let standing = try await api.unlockStanding()
             let push = try await api.pushSwitches()
             // The 出赛表 tile's days: the tile shows the count alone when they don't load.
-            let glance = try? await weekGlance(in: member.profile?.timeZone ?? .current)
+            let timeZone = member.profile?.timeZone ?? .current
+            let glance = try? await weekGlance(in: timeZone)
+            // 训练记录: the page leaves the heatmap out when it doesn't load.
+            let record = try? await trainingRecord(in: timeZone)
             return MeOverview(
                 character: MeCharacter(
                     nickname: character?.nickname.text ?? "",
@@ -54,7 +57,8 @@ public struct APIMeService: MeService {
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
                 board: board,
                 unlocks: standing.unlocks,
-                stock: standing.stock, claimed: standing.claimed, weekGlance: glance)
+                stock: standing.stock, claimed: standing.claimed, weekGlance: glance,
+                record: record)
         }
     }
 
@@ -76,6 +80,13 @@ public struct APIMeService: MeService {
         return WeekGlance(
             number: monday.weekNumber(since: firstWeek ?? monday), plan: plan.days, trainedDays: trained,
             today: today.weekday - 1)
+    }
+
+    /// The member's last weeks of 练了, ending with this week on their own clock.
+    private func trainingRecord(in timeZone: TimeZone) async throws(APIError) -> TrainingRecord {
+        let today = LocalDay(at: now(), in: timeZone)
+        let trainings = try await api.trainings(from: TrainingRecord.firstDay(today: today), through: today)
+        return TrainingRecord(today: today, trainings: trainings)
     }
 
     /// Saves the card's number on the profile, keeping the rest of it.

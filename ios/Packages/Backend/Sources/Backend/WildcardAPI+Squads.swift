@@ -3,12 +3,15 @@ import Foundation
 
 // Making and joining squads, the squad step of sign-up, and pats between squadmates.
 extension WildcardAPI {
-    /// Makes a squad under its own id with the member in it. Safe to retry with the same id: the
-    /// squad already made answers.
-    public func createSquad(_ id: SquadID, named name: SquadName) async throws(APIError) -> Squad {
+    /// Makes a squad under its own id with the member in it, and its goal, 人均 `daysPerMember`
+    /// 天 (the API's 3 when nil). Safe to retry with the same id: the squad already made answers.
+    public func createSquad(
+        _ id: SquadID, named name: SquadName, daysPerMember: Int? = nil
+    ) async throws(APIError) -> Squad {
         let wire = try await call {
             switch try await client.createSquad(
-                path: .init(squadId: id.description), body: .json(.init(version: ._1, name: name.text)))
+                path: .init(squadId: id.description),
+                body: .json(.init(version: ._1, name: name.text, daysPerMember: daysPerMember)))
             {
             case .created(let created): try created.body.json
             case .ok(let retried): try retried.body.json
@@ -25,7 +28,7 @@ extension WildcardAPI {
         }
         return SquadInvite(
             name: wire.name, memberCount: wire.memberCount, isFull: wire.full, joined: wire.joined,
-            looks: wire.looks.map(CharacterLook.init))
+            daysPerMember: wire.daysPerMember, looks: wire.looks.map(CharacterLook.init))
     }
 
     /// Joins the squad an invite code belongs to. Safe to repeat: a member already in it gets
@@ -74,6 +77,8 @@ public struct SquadInvite: Hashable, Sendable {
     public let isFull: Bool
     /// The member is in it already.
     public let joined: Bool
+    /// Its goal, 人均 N 天 a week.
+    public let daysPerMember: Int
     /// The members' characters, the earliest to join first; members without one are left out.
     public let looks: [CharacterLook]
 }

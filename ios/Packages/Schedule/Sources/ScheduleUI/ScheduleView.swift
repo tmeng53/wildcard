@@ -10,11 +10,10 @@ import SwiftUI
 /// 出赛表: the week as a poster the member plans on. Chips pick the week (back to the one they
 /// joined, this week, next week) or the 每周模板, on a graphite poster of its own; 存图 saves a
 /// week's poster to Photos; under the poster sit the picks for the day in hand, next week's
-/// 饮食小目标, or the counts. It opens inside 我, whose tab bar stays: this screen keeps to the
-/// safe area the app gives it and draws no bar; 返回 (`back`) and a swipe go back to 我.
+/// 饮食小目标, or the counts. It is pushed over 我, whose tab bar stays: this screen keeps to the
+/// safe area the app gives it, and the system's back button and swipe go back to 我.
 public struct ScheduleView: View {
     let model: ScheduleModel
-    let back: () -> Void
     @Environment(\.sceneTheme) private var theme
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -31,9 +30,8 @@ public struct ScheduleView: View {
     /// How long 没存上 stays before it goes.
     private let failedNoteHold: Duration = .seconds(5)
 
-    public init(model: ScheduleModel, back: @escaping () -> Void) {
+    public init(model: ScheduleModel) {
         self.model = model
-        self.back = back
     }
 
     var store: ScheduleStore { model.store }
@@ -109,7 +107,7 @@ public struct ScheduleView: View {
             }
             store.dismissTemplateOffer()
         }
-        .swipesBack(perform: back)
+        .pushedPage()
         .task { await model.load() }
         // Today's sport changed (a 练了 read in, today's plan saved): the character follows it.
         .onChange(of: store.todaysActivity) { model.followToday() }
