@@ -124,12 +124,6 @@ final class StoryWardrobe {
         idle(member, tilt: 8)
     }
 
-    /// The reader standing on their step of the uncovered podium, on the tile of a story they
-    /// watched.
-    static func standing(_ member: StoryMember) -> (drawing: FigureDrawing, placements: [Placement])? {
-        idle(member, tilt: 0)
-    }
-
     private static func idle(_ member: StoryMember, tilt: Double) -> (
         drawing: FigureDrawing, placements: [Placement]
     )? {

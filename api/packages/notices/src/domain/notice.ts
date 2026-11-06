@@ -72,6 +72,15 @@ export const NoticeSubjects = {
     checkIn: z.uuid(),
     comment: z.uuid(),
   }),
+  /**
+   * The squad trained over its weekly goal `weeks` finished weeks in a row: its captain is
+   * suggested a higher goal, 人均 `daysPerMember` 天, which they may set on 小队.
+   */
+  goalSuggestion: z.strictObject({
+    version: z.literal(1),
+    weeks: z.int().positive(),
+    daysPerMember: z.int().min(1).max(7),
+  }),
   /** A broadcast every member is told (`broadcast.ts`); its words are read when shown. */
   broadcast: z.strictObject({ version: z.literal(1), broadcast: BroadcastId }),
   /** A store opened or a prop unlocked for the member, by training or as a gift. */
@@ -92,6 +101,7 @@ const KindAndSubject = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('unlocked'), subject: NoticeSubjects.unlocked }),
   z.object({ kind: z.literal('comment'), subject: NoticeSubjects.comment }),
   z.object({ kind: z.literal('broadcast'), subject: NoticeSubjects.broadcast }),
+  z.object({ kind: z.literal('goalSuggestion'), subject: NoticeSubjects.goalSuggestion }),
 ]);
 type KindAndSubject = z.infer<typeof KindAndSubject>;
 

@@ -38,6 +38,8 @@ public struct WildcardAPI: Sendable {
         let middlewares: [any ClientMiddleware] =
             [Problems(), BearerToken(accessToken: accessToken, refused: refused)]
             + (language.map { [AcceptLanguage(language: $0)] } ?? [])
+            // Last, next to the network, so a read sent again goes out as it did the first time.
+            + [ResendDroppedRead()]
         client = Client(
             serverURL: url, configuration: .api, transport: URLSessionTransport(configuration: .init(session: http)),
             middlewares: middlewares)

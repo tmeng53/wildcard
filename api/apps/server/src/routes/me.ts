@@ -8,6 +8,7 @@ import {
   type Members,
   type Profile,
 } from '@wildcard/members';
+import type { Unlocks } from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
 import { deleteAccount, type DeleteAccountDependencies } from '../flows/delete-account.js';
@@ -111,6 +112,7 @@ export function me(
     readonly verifyToken: VerifyToken;
     readonly members: Members;
     readonly admins: Pick<Admins, 'isAdmin'>;
+    readonly unlocks: Pick<Unlocks, 'keepWorn'>;
   } & DeleteAccountDependencies,
 ) {
   const getMe = createRoute({
@@ -218,6 +220,9 @@ export function me(
         member,
         profile: { timeZone, catchphrase, character: character ?? null, jerseyNumber },
       });
+      // A piece the look wears without 领取 (a build from before it) is kept as claimed, so it
+      // stays in the wardrobe after its store closes.
+      if (character) await deps.unlocks.keepWorn(member, Object.values(character.look.variants));
       return c.json({ version: 1, ...wireProfile(saved) } as const, 200);
     })
     .openapi(deleteMe, async (c) => {

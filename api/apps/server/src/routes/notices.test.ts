@@ -84,6 +84,7 @@ const unlocks = createUnlocks({
     checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
   sportListed: (id) => sports.isListed(id),
   switches: () => Promise.resolve(() => true),
+  switchListed: () => Promise.resolve(true),
 });
 // A year of this run's own, so broadcasts other runs left in the database never run with these.
 const year = 2100 + randomInt(7800);
@@ -203,5 +204,23 @@ describe('GET /me/notices: broadcasts', () => {
       .parse((await get('/me/notices', me.token)).body)
       .notices.filter(({ kind }) => kind === 'broadcast');
     expect(again).toHaveLength(1);
+  });
+});
+
+describe('GET /me/notices: goal suggestions', () => {
+  it('reads a captain’s suggested goal with how many weeks the squad was over', async () => {
+    const captain = await signUp();
+    await notices.tell([
+      {
+        member: NoticeMember.parse(captain.userId),
+        kind: 'goalSuggestion',
+        subject: { version: 1, weeks: 3, daysPerMember: 4 },
+      },
+    ]);
+    const page = await get('/me/notices', captain.token);
+    expect(page.status).toBe(200);
+    expect(page.body).toMatchObject({
+      notices: [{ kind: 'goalSuggestion', weeks: 3, daysPerMember: 4 }],
+    });
   });
 });

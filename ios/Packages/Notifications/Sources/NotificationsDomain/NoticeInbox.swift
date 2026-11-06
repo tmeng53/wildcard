@@ -101,16 +101,18 @@ public final class NoticeInbox {
     public var nextPage: NoticeID? { next }
     /// Whether the last try at the next page didn't reach the server.
     public private(set) var moreFailed = false
-    /// The bell's dot: a notice newer than the newest the member has seen.
+    /// The bell's dot: a notice newer than the newest the member has seen that they haven't
+    /// already opened from its banner.
     public var hasUnread: Bool {
-        guard let newest = notices.first?.id else { return false }
-        return seenThrough.map { newest > $0 } ?? true
+        notices.contains { isNewerThanSeen($0) && !opened.contains($0.id) }
     }
 
     /// The newest notice the member has seen, as the server last said or as this page marked.
     private var seenThrough: NoticeID?
     /// What had been seen when the page last opened: newer ones show as new until it opens again.
     private var seenWhenOpened: NoticeID?
+    /// Notices the member opened from the home's banner (its button), read without 通知.
+    private var opened: Set<NoticeID> = []
     /// Whether 通知 is on screen.
     private var isOpen = false
     /// Whether the stream being heard got as far as `.ready`.
@@ -118,6 +120,11 @@ public final class NoticeInbox {
     private var next: NoticeID?
     /// Bumped by every fresh load, so an older page that comes back after it is dropped.
     private var generation = 0
+    /// How many times the server said the member's 商店街 may have changed while the app was in
+    /// front, or a stream heard again may have missed it: the app reads the shelf again on each.
+    public private(set) var shelfChanges = 0
+    /// Whether a stream was ready since `follow` started.
+    private var listened = false
     private var loadingMore: Int?
     private let source: any NoticeSource
 
@@ -140,9 +147,34 @@ public final class NoticeInbox {
         }
     }
 
+    /// The higher squad goals suggested to the member as captain on the loaded page that they
+    /// haven't seen in 通知, the earliest told first: for the home's banner, which tells each once.
+    public var unseenGoalSuggestions: [Notice] {
+        notices.reversed().filter { notice in
+            guard case .goalSuggestion = notice.subject else { return false }
+            return isNewerThanSeen(notice)
+        }
+    }
+
     /// Whether `notice` is new to the member on the page as it is open now.
     public func isUnread(_ notice: Notice) -> Bool {
-        seenWhenOpened.map { notice.id > $0 } ?? true
+        !opened.contains(notice.id) && (seenWhenOpened.map { notice.id > $0 } ?? true)
+    }
+
+    /// The member opened `broadcast` from the home's banner: its 通知 row isn't new any more, and
+    /// once nothing else waits unread, the server marks everything up to the newest read.
+    public func opened(_ broadcast: Broadcast) async {
+        let told = notices.filter { notice in
+            if case .broadcast(let other) = notice.subject { other.id == broadcast.id } else { false }
+        }
+        guard !told.isEmpty else { return }
+        opened.formUnion(told.map(\.id))
+        guard !hasUnread else { return }
+        await markNewestSeen()
+    }
+
+    private func isNewerThanSeen(_ notice: Notice) -> Bool {
+        seenThrough.map { notice.id > $0 } ?? true
     }
 
     /// Loads the newest page, in place of what was loaded: for the bell's dot, and when the page
@@ -171,7 +203,8 @@ public final class NoticeInbox {
             moreFailed = false
             phase = .current
         } catch {
-            guard mine == generation else { return }
+            // A read cut short (the page closed, the app went to the background) didn't fail.
+            guard mine == generation, !Task.isCancelled else { return }
             phase = error == .signedOut ? .signedOut : (phase == .current ? .current : .offline)
         }
     }
@@ -197,6 +230,8 @@ public final class NoticeInbox {
     /// that never got that far waits twice as long as the last, up to `longestWait`.
     public func follow(pause: @escaping @Sendable (Duration) async -> Void) async {
         var misses = 0
+        // On the way back to the front the app reads 商店街 itself.
+        listened = false
         while !Task.isCancelled {
             heardReady = false
             do {
@@ -217,8 +252,12 @@ public final class NoticeInbox {
 
     func hear(_ heard: LiveNotice) async {
         switch heard {
+        case .shelfChanged:
+            shelfChanges += 1
         case .ready:
-            heardReady = true
+            // A stream heard again after one ended may have missed a change to 商店街 meanwhile.
+            if listened { shelfChanges += 1 }
+            (heardReady, listened) = (true, true)
             // Whatever was told while nobody listened is on the newest page.
             if isOpen { await refresh() } else { await load() }
         case .told(let notice):
@@ -237,7 +276,7 @@ public final class NoticeInbox {
     }
 
     private func markNewestSeen() async {
-        guard let newest = notices.first?.id, hasUnread else { return }
+        guard let newest = notices.first?.id, seenThrough.map({ newest > $0 }) ?? true else { return }
         seenThrough = newest
         try? await source.markSeen(through: newest)
     }
@@ -264,7 +303,8 @@ public final class NoticeInbox {
             let shown = Set(notices.map(\.id))
             notices += found.filter { !shown.contains($0.id) }
         } catch {
-            guard mine == generation else { return }
+            // Cut short (the list changed under it, the page closed), it didn't fail.
+            guard mine == generation, !Task.isCancelled else { return }
             moreFailed = true
         }
     }

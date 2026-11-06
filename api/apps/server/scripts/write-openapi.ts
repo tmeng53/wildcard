@@ -143,13 +143,14 @@ const app = createApp({
     },
     clock: unused,
   },
-  unlocks: { of: unused, standing: unused, claimsOf: unused, claim: unused },
+  unlocks: { of: unused, standing: unused, claimsOf: unused, claim: unused, keepWorn: unused },
   gifts: { of: unused },
   log: createLog(unused),
   jobs: {
     isScheduler: undefined,
     interactions: [],
     clock: unused,
+    suggestGoal: unused,
     coachNotes: {
       notes: { waiting: unused, delivered: unused },
       noteHour: unused,

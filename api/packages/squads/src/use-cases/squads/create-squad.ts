@@ -1,4 +1,5 @@
 import type { InviteCodes } from '../../domain/invite-code.js';
+import type { SceneWeek } from '../../domain/scene.js';
 import {
   isMemberOf,
   SQUADS_PER_MEMBER,
@@ -7,6 +8,7 @@ import {
   type SquadId,
   type SquadName,
 } from '../../domain/squad.js';
+import { DEFAULT_DAYS_PER_MEMBER, type DaysPerMember } from '../../domain/weekly-goal.js';
 import {
   AiConsentRequiredError,
   SquadIdConflictError,
@@ -18,6 +20,10 @@ export interface CreateSquadInput {
   readonly id: SquadId;
   readonly creator: MemberId;
   readonly name: SquadName;
+  /** The squad's weekly goal, 人均 N 天; the default when the creator didn't pick one. */
+  readonly daysPerMember?: DaysPerMember | undefined;
+  /** The creator's week now (its Monday): the goal counts from it. */
+  readonly week: SceneWeek;
 }
 
 export interface CreatedSquad {
@@ -48,14 +54,20 @@ export async function createSquad(
     readonly inviteCodes: InviteCodes;
     readonly aiConsent: AiConsentCheck;
   },
-  { id, creator, name }: CreateSquadInput,
+  { id, creator, name, daysPerMember, week }: CreateSquadInput,
 ): Promise<CreatedSquad> {
   // A retry of a squad already made is answered as before, whatever the consent is now.
   if ((await store.find(id)) !== undefined)
     return { squad: await asRetry(store, { id, creator, name }), created: false };
   if (!(await aiConsent(creator))) throw new AiConsentRequiredError();
   for (let attempt = 0; attempt < INVITE_CODE_ATTEMPTS; attempt += 1) {
-    const outcome = await store.create({ id, name, creator, inviteCode: inviteCodes() });
+    const outcome = await store.create({
+      id,
+      name,
+      creator,
+      inviteCode: inviteCodes(),
+      goal: { daysPerMember: daysPerMember ?? DEFAULT_DAYS_PER_MEMBER, week },
+    });
     if (outcome.created) return { squad: await found(store, id), created: true };
     if (outcome.refused === 'idTaken')
       return { squad: await asRetry(store, { id, creator, name }), created: false };
@@ -65,7 +77,10 @@ export async function createSquad(
 }
 
 /** The squad saved under the id, when it is this same squad made again by its creator. */
-async function asRetry(store: SquadStore, { id, creator, name }: CreateSquadInput): Promise<Squad> {
+async function asRetry(
+  store: SquadStore,
+  { id, creator, name }: Pick<CreateSquadInput, 'id' | 'creator' | 'name'>,
+): Promise<Squad> {
   const squad = await found(store, id);
   if (squad.createdBy !== creator || squad.name !== name || !isMemberOf(squad, creator)) {
     throw new SquadIdConflictError(id);

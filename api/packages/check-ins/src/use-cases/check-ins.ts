@@ -48,6 +48,7 @@ import {
   type Commented,
 } from './check-ins/comments.js';
 import { squadWeekSummary, type SquadWeekSummary } from './check-ins/week-summary.js';
+import { squadTrainedDays, weekStartNow } from './check-ins/squad-goal-weeks.js';
 import {
   squadWeekCheckIns,
   squadsCheckedInto,
@@ -122,6 +123,17 @@ export interface CheckIns {
   squadToday(input: { readonly viewer: MemberId; readonly squad: SquadId }): Promise<SquadToday>;
   /** A member's own 本周 x/y, for a squadmate's view of their card, in the member's time zone. */
   memberWeek(input: { readonly member: MemberId; readonly viewer: MemberId }): Promise<MemberWeek>;
+  /** The Monday of the member's week now, in their time zone. */
+  weekStartNow(member: MemberId): Promise<WeekStart>;
+  /**
+   * The days these members trained in a week, added up, from check-ins sent to the squad, a day
+   * counting once: what the squad's weekly goal (小队每周目标) counts.
+   */
+  squadTrainedDays(input: {
+    readonly squad: SquadId;
+    readonly members: readonly MemberId[];
+    readonly weekStart: WeekStart;
+  }): Promise<number>;
   /** A squad's week (周日战报): its awards and counts, for one of its members. */
   weekSummary(input: {
     readonly viewer: MemberId;
@@ -190,6 +202,8 @@ export function createCheckIns(deps: {
       listResponses({ ...deps, list: (checkIn) => deps.comments.list(checkIn) }, input),
     squadToday: (input) => squadToday(deps, input),
     memberWeek: (input) => memberWeek(deps, input),
+    weekStartNow: (member) => weekStartNow(deps, member),
+    squadTrainedDays: (input) => squadTrainedDays(deps, input),
     weekSummary: (input) => squadWeekSummary(deps, input),
     squadsCheckedInto: (input) => squadsCheckedInto(deps, input),
     squadWeekCheckIns: (input) => squadWeekCheckIns(deps, input),

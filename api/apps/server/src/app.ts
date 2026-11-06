@@ -29,6 +29,7 @@ import { consentPage } from './admin-mcp/consent-page.js';
 import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } from './errors.js';
 import type { CoachNotesDependencies } from './flows/coach-notes.js';
 import type { InteractionSource } from './flows/daily-progress-push.js';
+import type { SuggestGoal } from './flows/squad-goal-suggestion.js';
 import type { Log } from './log.js';
 import type {
   Accounts,
@@ -61,6 +62,7 @@ import { comments } from './routes/comments.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadCoach } from './routes/squad-coach.js';
+import { squadWeeklyGoal } from './routes/squad-weekly-goal.js';
 import { coachActivity } from './routes/coach-activity.js';
 import { squadScene } from './routes/squad-scene.js';
 import { newYorkDay } from './new-york-day.js';
@@ -123,6 +125,8 @@ export interface AppDependencies {
     readonly clock: () => Date;
     /** The AI coach's wakes; left out without an OpenAI key, and then the coach never wakes. */
     readonly coach?: CoachWakes;
+    /** Keeps a higher squad goal suggested to a captain and its notice together. */
+    readonly suggestGoal: SuggestGoal;
     /** The coach's morning notes to deliver, and how to tell them in the bell. */
     readonly coachNotes: Pick<CoachNotesDependencies, 'notes' | 'noteHour' | 'tell' | 'clock'>;
   };
@@ -204,6 +208,7 @@ export function createApp(deps: AppDependencies) {
     }),
   );
   app.route('/', squadCoach(deps));
+  app.route('/', squadWeeklyGoal(deps));
   app.route('/', coachActivity(deps));
   app.route('/', nudges(deps));
   app.route('/', notices(deps));
@@ -222,6 +227,7 @@ export function createApp(deps: AppDependencies) {
       isScheduler: deps.jobs.isScheduler,
       dailyProgress: { ...deps, interactions: deps.jobs.interactions, clock: deps.jobs.clock },
       weeklyAwards: { ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) },
+      suggestGoal: deps.jobs.suggestGoal,
       ...(deps.jobs.coach === undefined ? {} : { coach: deps.jobs.coach }),
       coachNotes: {
         ...deps.jobs.coachNotes,

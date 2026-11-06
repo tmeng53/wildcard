@@ -141,27 +141,27 @@
         }
       }
     },
-    "本周小队已练 %lld/%lld 次": {
+    "本周小队已练 %lld/%lld 天": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Squad this week: %1$lld of %2$lld"
+            "value": "Squad this week: %1$lld of %2$lld days"
           }
         }
       }
     },
-    "次": {
+    "天": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "times"
+            "value": "days"
           }
         }
       }
     },
-    "练了": {
+    "训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -171,7 +171,7 @@
         }
       }
     },
-    "练了 · %@": {
+    "训练 · %@": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -181,7 +181,7 @@
         }
       }
     },
-    "练了 · %@ · %lld 分钟": {
+    "训练 · %@ · %lld 分钟": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -191,7 +191,7 @@
         }
       }
     },
-    "练了 · %lld 分钟": {
+    "训练 · %lld 分钟": {
       "localizations": {
         "en": {
           "stringUnit": {

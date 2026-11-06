@@ -237,16 +237,17 @@ if want squad; then
   typed="$(tr '[:upper:]' '[:lower:]' <<<"${invite_code:0:4}")-${invite_code:4}"
   call GET "/squad-invites/$typed" "$newcomer_token"
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"joined":false,"looks":[]}' ] ||
-    fail "preview should show the name and 2 members only: $body"
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"joined":false,"daysPerMember":3,"looks":[]}' ] ||
+    fail "preview should show the name, 2 members and the goal only: $body"
   echo "squad: newcomer previews $typed: 早八跑团, 2 members"
 
-  # The web invite page, before anyone signs in: no token, only the name, size, whether full
-  # and the members' looks (none here: neither has made a character), never names or ids.
+  # The web invite page, before anyone signs in: no token, only the name, size, whether full,
+  # the weekly goal and the members' looks (none here: neither has made a character), never names
+  # or ids.
   call GET "/public/squad-invites/$typed" ""
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"looks":[]}' ] ||
-    fail "public preview should show the name, size, full and looks only: $body"
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"daysPerMember":3,"looks":[]}' ] ||
+    fail "public preview should show the name, size, full, goal and looks only: $body"
   call GET "/public/squad-invites/ZZZZZZZZ" ""
   expect 404 INVITE_CODE_UNKNOWN
   echo "squad: anyone previews $typed without signing in; an unknown code answers 404"
@@ -484,9 +485,9 @@ if want squad-today; then
       '[[$b,$d,"disclaimer",null,false,true],[$a,$d,"trained","healthyMeal",false,true],[$c,$d,"notCheckedIn",null,true,false]]')" ] ||
     fail "members should be napper (first check-in), runner, then rester (planned rest): $body"
   [ "$(jq -c '[.today, .me.week.trainedDays, .me.week.plannedDays, .me.lifetimeTrainedDays, .squadWeek]' <<<"$body")" = \
-    '[{"trained":1,"disclaimer":1,"resting":1,"everyoneTrained":false},0,7,0,{"trainedDays":1,"plannedDays":14}]' ] ||
-    fail "counts should be 1 trained, 1 disclaimer, 1 resting; napper 0/7; squad 1/14: $body"
-  echo "squad-today: napper sees self first, then runner, then rester; 1 trained, 1 disclaimer, 1 resting; 本周 0/7, squad 1/14"
+    '[{"trained":1,"disclaimer":1,"resting":1,"everyoneTrained":false},0,7,0,{"trainedDays":1,"plannedDays":9,"daysPerMember":3}]' ] ||
+    fail "counts should be 1 trained, 1 disclaimer, 1 resting; napper 0/7; squad 1/9 (3 members × 3 days): $body"
+  echo "squad-today: napper sees self first, then runner, then rester; 1 trained, 1 disclaimer, 1 resting; 本周 0/7, squad 1/9"
   [ "$(jq -c '[.members[] | .catchphrase]' <<<"$body")" = '[null,"冲就完了🔥",null]' ] ||
     fail "squadmates should see the runner's catchphrase, and null for the others: $body"
   echo "squad-today: napper sees runner's catchphrase 冲就完了🔥, null for self and rester"
@@ -499,7 +500,7 @@ if want squad-today; then
   call GET "/squads/$squad/today" "$napper_token"
   expect 200
   [ "$(jq -c '[.members[0].training, .today, .me.week.trainedDays, .squadWeek]' <<<"$body")" = \
-    '["trained",{"trained":2,"disclaimer":0,"resting":1,"everyoneTrained":true},1,{"trainedDays":2,"plannedDays":14}]' ] ||
+    '["trained",{"trained":2,"disclaimer":0,"resting":1,"everyoneTrained":true},1,{"trainedDays":2,"plannedDays":9,"daysPerMember":3}]' ] ||
     fail "napper's 练了 should win over the disclaimer, and the rester's rest day count toward everyone: $body"
   echo "squad-today: napper trained after all, so 练了 wins over the disclaimer; with rester resting, everyone trained"
 

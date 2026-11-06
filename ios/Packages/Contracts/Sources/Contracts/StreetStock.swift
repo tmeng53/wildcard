@@ -9,15 +9,19 @@ public struct StreetStock: Hashable, Sendable {
         public let id: String
         /// Whether it is open now (its switch on). A closed store shows only what the member owns.
         public let isOpen: Bool
+        /// For a store the member hasn't earned yet: how many more 练了 open it. Nil once earned,
+        /// for a store without a rule, and from a server that doesn't say.
+        public let toGo: Int?
 
-        public init(id: String, isOpen: Bool) {
-            (self.id, self.isOpen) = (id, isOpen)
+        public init(id: String, isOpen: Bool, toGo: Int? = nil) {
+            (self.id, self.isOpen, self.toGo) = (id, isOpen, toGo)
         }
     }
 
     /// Where a piece stands for the member.
     public enum State: Hashable, Sendable {
-        /// Unlocked: worn all year, whatever the switches.
+        /// The member's: unlocked or claimed, worn all year whatever the switches, or a limited
+        /// store's starter while it is open (it waits on 商店街 to be claimed and kept).
         case owned
         /// A starter that is out now.
         case available

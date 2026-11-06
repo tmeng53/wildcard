@@ -37,6 +37,12 @@ export const LiveNotice = z
   })
   .openapi('LiveNotice', { description: 'The `notice` event’s data.' });
 
+export const LiveShelf = z.strictObject({ version: bodyVersion(1) }).openapi('LiveShelf', {
+  description:
+    'The `shelf` event’s data: what the caller’s 商店街 shows may have changed, so read ' +
+    '`GET /me/unlocks` again.',
+});
+
 /**
  * `GET /me/events`: the caller's live events as Server-Sent Events, while the app is open, so the
  * bell's dot changes at once instead of on the next read.
@@ -60,11 +66,14 @@ export function events(deps: {
     description:
       'A `text/event-stream` that stays open while the app is. It starts with a `ready` event ' +
       '(data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s ' +
-      'id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting ' +
+      'id) is a notice just told to the caller, as `GET /me/notices` will list it, and each ' +
+      '`shelf` event (data `LiveShelf`) says the caller’s 商店街 may have changed (a store, piece, ' +
+      'rule or switch, or one of their unlocks), so read `GET /me/unlocks` again. A line starting ' +
       'with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t ' +
       `know. The server ends the stream after at most ${String(TIMING.maxAgeMs / 60_000)} ` +
       'minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page ' +
-      'of `GET /me/notices` again, since events sent while it was closed are not replayed.',
+      'of `GET /me/notices` and `GET /me/unlocks` again, since events sent while it was closed ' +
+      'are not replayed.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     responses: {
@@ -88,9 +97,12 @@ export function events(deps: {
   // The events' data, which no route's body names, so the app's generated types have them.
   app.openAPIRegistry.register('LiveReady', LiveReady);
   app.openAPIRegistry.register('LiveNotice', LiveNotice);
+  app.openAPIRegistry.register('LiveShelf', LiveShelf);
   return app.openapi(route, async (c) => {
     const member = c.var.caller.userId;
     const told: number[] = [];
+    // Several shelf changes before the stream writes are one read for the app.
+    let shelfChanged = false;
     let ended = false;
     // Read through a function, since the listener and timers change it while the loop awaits.
     const isEnded = () => ended;
@@ -101,8 +113,9 @@ export function events(deps: {
     };
     // Subscribed before the stream opens, so a failure answers as a problem (503).
     const stop = await deps.liveEvents.subscribe(member, {
-      event: ({ id }) => {
-        told.push(id);
+      event: (event) => {
+        if (event.kind === 'notice') told.push(event.id);
+        else shelfChanged = true;
         nudge();
       },
       end: () => {
@@ -129,6 +142,11 @@ export function events(deps: {
             retry: RETRY_MS,
           });
           while (!isEnded()) {
+            if (shelfChanged) {
+              shelfChanged = false;
+              await stream.writeSSE({ event: 'shelf', data: JSON.stringify({ version: 1 }) });
+              continue;
+            }
             const id = told.shift();
             if (id === undefined) {
               const beat = await new Promise<boolean>((resolve) => {

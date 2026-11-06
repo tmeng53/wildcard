@@ -13,7 +13,7 @@ actor Heard {
     func add(_ heard: LiveNotice) { all.append(heard) }
 }
 
-@Test func theStreamIsReadyThenTellsEachNoticeAndSkipsWhatItDoesNotKnow() async throws {
+@Test func theStreamIsReadyThenTellsEachNoticeAndShelfChangeAndSkipsWhatItDoesNotKnow() async throws {
     let stream = """
         event: ready
         data: {"version":1}
@@ -28,6 +28,9 @@ actor Heard {
         event: confetti
         data: {"version":1}
 
+        event: shelf
+        data: {"version":1}
+
         event: notice
         data: {"version":1,"notice":{"id":43,"kind":"somethingNew","at":"2026-11-04T01:02:04.000Z"}}
         id: 43
@@ -38,7 +41,7 @@ actor Heard {
     try await WildcardAPI.read(HTTPBody(stream)) { await heard.add($0) }
 
     let all = await heard.all
-    #expect(all.count == 3)
+    #expect(all.count == 4)
     #expect(all.first == .ready)
     guard case .told(let notice?) = all.dropFirst().first else {
         Issue.record("no notice: \(all)")
@@ -46,5 +49,6 @@ actor Heard {
     }
     #expect(notice.id == NoticeID(rawValue: 42))
     #expect(notice.subject == .unlocked(.store, item: "no-look"))
+    #expect(all.dropFirst(2).first == .shelfChanged)
     #expect(all.last == .told(nil))
 }

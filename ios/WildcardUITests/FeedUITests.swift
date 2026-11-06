@@ -85,15 +85,18 @@ final class FeedUITests: XCTestCase {
         keepScreenshot(named: "48-feed-photo-viewer-zoomed")
         viewer.doubleTap()
         settle()
+        close.tap()
+        XCTAssertTrue(viewer.waitForNonExistence(timeout: Self.wait), "关闭 didn't close the photo")
 
+        // Swipe-to-close starts from a freshly opened photo, so a pinch the simulator missed
+        // can't leave it zoomed in and turn the swipe into a pan.
+        XCTAssertTrue(photos.waitForExistence(timeout: Self.wait), "动态 didn't come back")
+        photos.tap()
+        XCTAssertTrue(close.waitForExistence(timeout: Self.wait), "the photo didn't open again")
+        settle()
         viewer.swipeDown(velocity: .fast)
         XCTAssertTrue(viewer.waitForNonExistence(timeout: Self.wait), "swiping down didn't close the photo")
         XCTAssertTrue(photos.waitForExistence(timeout: Self.wait), "动态 didn't come back")
-
-        photos.tap()
-        XCTAssertTrue(close.waitForExistence(timeout: Self.wait), "the photo didn't open again")
-        close.tap()
-        XCTAssertTrue(viewer.waitForNonExistence(timeout: Self.wait), "关闭 didn't close the photo")
     }
 
     /// A 练了 with its minutes shows them as the card's big number. The newest posts on top are a
@@ -111,7 +114,7 @@ final class FeedUITests: XCTestCase {
             from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
             drags += 1
         }
-        XCTAssertTrue(minutes.exists, "no minutes on a 练了")
+        XCTAssertTrue(minutes.exists, "no minutes on a 训练")
         settle()
         // Kept before the check, so a failure shows where the list stopped.
         keepScreenshot(named: "44-feed-minutes")

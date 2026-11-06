@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { inWindow, isOn, isOnForPreviewer, SwitchEdit, type Switch } from './switches.js';
+import { inWindow, isOn, isOnForPreviewer, SwitchEdit, wasOn, type Switch } from './switches.js';
 
 const winter = { start: '11-15', end: '03-31' };
 
@@ -50,5 +50,29 @@ describe('a switch', () => {
       false,
     );
     expect(SwitchEdit.safeParse({ id: 'winter', label: 'Winter', mode: 'off' }).success).toBe(true);
+  });
+});
+
+describe('a switch as it was set', () => {
+  const scheduled: Switch = { id: 'winter', label: 'Winter', mode: 'schedule', window: winter };
+  const history = [
+    { at: new Date('2026-11-01T00:00:00Z'), value: scheduled },
+    // Closed early by hand in mid-December.
+    { at: new Date('2026-12-15T00:00:00Z'), value: { ...scheduled, mode: 'off' as const } },
+  ];
+  const was = wasOn(history, [{ ...scheduled, mode: 'off' }]);
+
+  it('counts what came before a change by hand as it was set then', () => {
+    expect(was('winter', { at: new Date('2026-11-20T12:00:00Z'), day: '2026-11-20' })).toBe(true);
+    expect(was('winter', { at: new Date('2026-12-16T12:00:00Z'), day: '2026-12-16' })).toBe(false);
+  });
+
+  it('counts before its first change as its first setting, and with no log as it is now', () => {
+    expect(was('winter', { at: new Date('2026-01-10T12:00:00Z'), day: '2026-01-10' })).toBe(true);
+    expect(was('summer', { at: new Date('2026-07-10T12:00:00Z'), day: '2026-07-10' })).toBe(false);
+    const unlogged = wasOn([], [{ id: 'summer', label: 'Summer', mode: 'on' }]);
+    expect(unlogged('summer', { at: new Date('2026-07-10T12:00:00Z'), day: '2026-07-10' })).toBe(
+      true,
+    );
   });
 });

@@ -49,6 +49,7 @@ struct MainTabs: View {
     /// A post opened from 通知 (the one the coach answered), over its page.
     @State var noticePost: OpenedPost?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     /// 商店街 and the character editor, open from 我.
     @State var wardrobe: Wardrobe
     /// 出赛表, open from 我 in its place.
@@ -102,6 +103,7 @@ struct MainTabs: View {
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.
             today.openDestination = { open($0) }
+            today.broadcastOpened = { broadcast in Task { await inbox.opened(broadcast) } }
             today.tellUnlocks(
                 with: UnlockNotices(
                     banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },
@@ -110,8 +112,10 @@ struct MainTabs: View {
         }
         // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the
         // home says whose it is; its button opens what its 通知 row opens.
-        .onChange(of: inbox.unseenBroadcasts.map(\.id) + [today.home?.member.description ?? ""], initial: true) {
+        // So does a higher squad goal suggested to the captain, whose button opens 小队.
+        .onChange(of: bannerNotices, initial: true) {
             tellBroadcasts()
+            tellGoalSuggestions()
         }
         // A tapped push's place.
         .onChange(of: destination, initial: true) { _, asked in
@@ -130,6 +134,12 @@ struct MainTabs: View {
             }
         }
         .followsNotices(inbox)
+        // 商店街 read again when the server says it changed and on each return to the front (a
+        // switch's day starting tells nothing), so a store that opened shows without a relaunch.
+        .onChange(of: inbox.shelfChanges) { Task { await profile.reload() } }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await profile.reload() } }
+        }
         .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }

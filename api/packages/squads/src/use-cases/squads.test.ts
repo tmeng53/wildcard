@@ -47,6 +47,7 @@ const name = (text: string) => SquadName.parse(text);
 
 async function newSquad(creator: MemberId, text = '早八跑团') {
   const { squad } = await squads.create({
+    week: '2026-11-02',
     id: SquadId.parse(randomUUID()),
     creator,
     name: name(text),
@@ -58,7 +59,12 @@ describe('creating a squad', () => {
   it('saves it with only a name and the creator as its one member', async () => {
     const creator = await newMember();
     const id = SquadId.parse(randomUUID());
-    const { squad, created } = await squads.create({ id, creator, name: name(' 早八跑团 ') });
+    const { squad, created } = await squads.create({
+      week: '2026-11-02',
+      id,
+      creator,
+      name: name(' 早八跑团 '),
+    });
     expect(created).toBe(true);
     expect({ ...squad, inviteCode: undefined, createdAt: undefined }).toStrictEqual({
       id,
@@ -75,14 +81,16 @@ describe('creating a squad', () => {
   it('answers a retry with the squad already made, and refuses another name or member', async () => {
     const creator = await newMember();
     const id = SquadId.parse(randomUUID());
-    const first = await squads.create({ id, creator, name: name('早八跑团') });
-    const retry = await squads.create({ id, creator, name: name('早八跑团') });
+    const first = await squads.create({ week: '2026-11-02', id, creator, name: name('早八跑团') });
+    const retry = await squads.create({ week: '2026-11-02', id, creator, name: name('早八跑团') });
     expect([retry.created, retry.squad]).toStrictEqual([false, first.squad]);
-    await expect(squads.create({ id, creator, name: name('夜跑团') })).rejects.toMatchObject({
+    await expect(
+      squads.create({ week: '2026-11-02', id, creator, name: name('夜跑团') }),
+    ).rejects.toMatchObject({
       reason: 'SQUAD_ID_CONFLICT',
     });
     await expect(
-      squads.create({ id, creator: await newMember(), name: name('早八跑团') }),
+      squads.create({ week: '2026-11-02', id, creator: await newMember(), name: name('早八跑团') }),
     ).rejects.toMatchObject({ reason: 'SQUAD_ID_CONFLICT' });
   });
 
@@ -97,6 +105,7 @@ describe('creating a squad', () => {
       aiConsent,
     });
     const { squad } = await retrying.create({
+      week: '2026-11-02',
       id: SquadId.parse(randomUUID()),
       creator: await newMember(),
       name: name('夜跑团'),
@@ -114,7 +123,12 @@ describe('creating a squad', () => {
     const creator = await newMember();
     const squad = await newSquad(creator);
     consented.delete(creator);
-    const again = await squads.create({ id: squad.id, creator, name: squad.name });
+    const again = await squads.create({
+      week: '2026-11-02',
+      id: squad.id,
+      creator,
+      name: squad.name,
+    });
     expect([again.created, again.squad]).toStrictEqual([false, squad]);
     await expect(newSquad(creator)).rejects.toMatchObject({ reason: 'AI_CONSENT_REQUIRED' });
   });
@@ -210,6 +224,7 @@ describe('joining by invite code', () => {
       name: '周末网球',
       memberCount: 1,
       full: false,
+      daysPerMember: 3,
       members: [ann],
       joined: false,
     });
@@ -228,6 +243,7 @@ describe('joining by invite code', () => {
       name: '周末网球',
       memberCount: 2,
       full: false,
+      daysPerMember: 3,
       members: [ann, bo],
     });
     await expect(squads.previewPublicInvite(InviteCode.parse('ZZZZZZZZ'))).rejects.toMatchObject({
@@ -425,6 +441,89 @@ describe('the captain', () => {
     ).rejects.toMatchObject({ code: '42501' });
     await expect(
       sql`delete from public.squad_events where squad_id = ${squad.id}`.execute(db),
+    ).rejects.toMatchObject({ code: '42501' });
+  });
+});
+
+describe('the weekly goal', () => {
+  const thisWeek = '2026-11-02';
+
+  it('starts at 3 a member, or what the creator picked, from the week the squad is made', async () => {
+    const ann = await newMember();
+    const plain = await newSquad(ann, '默认');
+    expect(await squads.weeklyGoal({ squad: plain.id, viewer: ann, week: thisWeek })).toStrictEqual(
+      {
+        daysPerMember: 3,
+        nextDaysPerMember: 3,
+      },
+    );
+    const bo = await newMember();
+    const { squad: picked } = await squads.create({
+      week: thisWeek,
+      id: SquadId.parse(randomUUID()),
+      creator: bo,
+      name: name('练得多'),
+      daysPerMember: 5,
+    });
+    expect(await squads.weeklyGoal({ squad: picked.id, viewer: bo, week: thisWeek })).toStrictEqual(
+      { daysPerMember: 5, nextDaysPerMember: 5 },
+    );
+    expect(await squads.daysPerMember(picked.id, thisWeek)).toBe(5);
+    // Before the squad's first week, nobody set one: the default.
+    expect(await squads.daysPerMember(picked.id, '2026-10-26')).toBe(3);
+    expect(await squads.previewPublicInvite(picked.inviteCode)).toMatchObject({ daysPerMember: 5 });
+  });
+
+  it('lets only the captain change it, from next week, logged with who set it', async () => {
+    const [ann, bo] = [await newMember(), await newMember()];
+    const squad = await newSquad(ann);
+    await squads.join({ inviteCode: squad.inviteCode, member: bo });
+    await expect(
+      squads.setWeeklyGoal({ squad: squad.id, member: bo, daysPerMember: 4, week: thisWeek }),
+    ).rejects.toMatchObject({ reason: 'NOT_SQUAD_CAPTAIN' });
+    expect(
+      await squads.setWeeklyGoal({
+        squad: squad.id,
+        member: ann,
+        daysPerMember: 4,
+        week: thisWeek,
+      }),
+    ).toStrictEqual({ daysPerMember: 3, nextDaysPerMember: 4 });
+    // The same again changes nothing; changing back is one more entry.
+    await squads.setWeeklyGoal({ squad: squad.id, member: ann, daysPerMember: 4, week: thisWeek });
+    expect(
+      await squads.setWeeklyGoal({
+        squad: squad.id,
+        member: ann,
+        daysPerMember: 3,
+        week: thisWeek,
+      }),
+    ).toStrictEqual({ daysPerMember: 3, nextDaysPerMember: 3 });
+    expect(await squads.daysPerMember(squad.id, '2026-11-16')).toBe(3);
+    expect(
+      (await squads.weeklyGoals(squad.id)).map(({ week, daysPerMember, by }) => ({
+        week,
+        daysPerMember,
+        by,
+      })),
+    ).toStrictEqual([
+      { week: thisWeek, daysPerMember: 3, by: ann },
+      { week: '2026-11-09', daysPerMember: 4, by: ann },
+      { week: '2026-11-09', daysPerMember: 3, by: ann },
+    ]);
+    expect(await squads.previewPublicInvite(squad.inviteCode)).toMatchObject({ daysPerMember: 3 });
+  });
+
+  it('keeps the goal log append-only', async () => {
+    const ann = await newMember();
+    const squad = await newSquad(ann);
+    await expect(
+      sql`update squad_weekly_goals set days_per_member = 7 where squad_id = ${squad.id}`.execute(
+        db,
+      ),
+    ).rejects.toMatchObject({ code: '42501' });
+    await expect(
+      sql`delete from squad_weekly_goals where squad_id = ${squad.id}`.execute(db),
     ).rejects.toMatchObject({ code: '42501' });
   });
 });
