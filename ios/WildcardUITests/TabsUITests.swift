@@ -18,7 +18,7 @@ final class TabsUITests: XCTestCase {
         XCTAssertTrue(today.isSelected, "the app didn't open on 今天")
         XCTAssertEqual(
             ["tab.today", "tab.feed", "tab.me"].map { app.buttons[$0].label },
-            ["今天", "动态", "我"])
+            ["小队", "动态", "我"])
         XCTAssertFalse(app.buttons["tab.schedule"].exists, "出赛表 is still a tab")
         XCTAssertFalse(app.buttons["tab.squad"].exists, "小队 is still a tab")
         // 打卡 sits above the bar, not under it.
