@@ -82,11 +82,7 @@ const TrainingView = z
   .strictObject({
     ...storedTrainingFields,
     ...photoViews,
-    workout: WorkoutView.optional().meta({
-      description:
-        'The workout it was posted from (Apple Health), with only the numbers the member kept. ' +
-        'Missing on a 训练 posted by hand. Builds from before it read the post without it.',
-    }),
+    workout: WorkoutView.optional(),
   })
   .openapi('TrainingView');
 const MealView = z.strictObject({ ...storedMealFields, ...photoViews }).openapi('MealView');

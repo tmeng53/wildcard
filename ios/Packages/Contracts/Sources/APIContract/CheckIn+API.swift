@@ -95,7 +95,7 @@ extension Training {
     var wire: Components.Schemas.Training {
         .init(
             sport: activity.wireSport, customSport: activity.wireCustomSport, minutes: minutes?.value,
-            caption: caption?.text, photos: photos?.wire)
+            caption: caption?.text, photos: photos?.wire, workout: workout?.wire)
     }
 }
 
@@ -112,7 +112,50 @@ extension Training {
         self.init(
             activity: try Activity(sport: wire.sport, customSport: wire.customSport),
             minutes: try wire.minutes.map(WorkoutMinutes.init), photos: try Photos(wire: wire.photos),
-            caption: try wire.caption.map(Caption.init))
+            caption: try wire.caption.map(Caption.init), workout: wire.workout.map(Workout.init))
+    }
+}
+
+extension Workout {
+    init(_ wire: Components.Schemas.WorkoutView) {
+        self.init(
+            source: WorkoutSource(provider: wire.provider, id: wire.providerWorkoutId),
+            startedAt: Timestamp(wire: wire.startedAt), endedAt: Timestamp(wire: wire.endedAt),
+            summary: WorkoutSummary(wire.summary), series: wire.series.map(WorkoutSeries.init),
+            route: wire.route?.map { RoutePoint(lat: $0.lat, lon: $0.lon) }, tilePosition: wire.tilePosition)
+    }
+
+    var wire: Components.Schemas.Workout {
+        .init(
+            provider: source.provider, providerWorkoutId: source.id, summary: summary.wire,
+            series: series.map { series in
+                .init(
+                    hr: series.hr?.map { Components.Schemas.HeartRatePoint(t: $0.seconds, bpm: $0.bpm) },
+                    laps: series.laps)
+            },
+            route: route?.map { Components.Schemas.RoutePoint(lat: $0.lat, lon: $0.lon) },
+            tilePosition: tilePosition, startedAt: startedAt.date, endedAt: endedAt.date)
+    }
+}
+
+extension WorkoutSummary {
+    init(_ wire: Components.Schemas.WorkoutSummary) {
+        self.init(
+            durationSec: wire.durationSec, distanceM: wire.distanceM, paceSecPerKm: wire.paceSecPerKm,
+            speedKmh: wire.speedKmh, avgHr: wire.avgHr, maxHr: wire.maxHr, effort: wire.effort, laps: wire.laps,
+            poolLengthM: wire.poolLengthM)
+    }
+
+    var wire: Components.Schemas.WorkoutSummary {
+        .init(
+            durationSec: durationSec, distanceM: distanceM, paceSecPerKm: paceSecPerKm, speedKmh: speedKmh,
+            avgHr: avgHr, maxHr: maxHr, effort: effort, laps: laps, poolLengthM: poolLengthM)
+    }
+}
+
+extension WorkoutSeries {
+    init(_ wire: Components.Schemas.WorkoutSeries) {
+        self.init(hr: wire.hr?.map { HeartRatePoint(seconds: $0.t, bpm: $0.bpm) }, laps: wire.laps)
     }
 }
 

@@ -2503,83 +2503,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/photos`.
             public var photos: [Components.Schemas.PhotoView]?
-            /// The workout it was posted from (Apple Health), with only the numbers the member kept. Missing on a 训练 posted by hand. Builds from before it read the post without it.
-            ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/workout`.
-            public struct WorkoutPayload: Codable, Hashable, Sendable {
-                /// Where it came from: `apple_health` for now.
-                ///
-                /// - Remark: Generated from `#/components/schemas/TrainingView/workout/provider`.
-                public var provider: Swift.String
-                /// The provider’s own id for it (an HKWorkout’s UUID). Posted once per member.
-                ///
-                /// - Remark: Generated from `#/components/schemas/TrainingView/workout/providerWorkoutId`.
-                public var providerWorkoutId: Swift.String
-                /// - Remark: Generated from `#/components/schemas/TrainingView/workout/summary`.
-                public var summary: Components.Schemas.WorkoutSummary
-                /// - Remark: Generated from `#/components/schemas/TrainingView/workout/series`.
-                public var series: Components.Schemas.WorkoutSeries?
-                /// The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept.
-                ///
-                /// - Remark: Generated from `#/components/schemas/TrainingView/workout/route`.
-                public var route: [Components.Schemas.RoutePoint]?
-                /// Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
-                ///
-                /// - Remark: Generated from `#/components/schemas/TrainingView/workout/tilePosition`.
-                public var tilePosition: Swift.Int?
-                /// In UTC with milliseconds.
-                ///
-                /// - Remark: Generated from `#/components/schemas/TrainingView/workout/startedAt`.
-                public var startedAt: Foundation.Date
-                /// In UTC with milliseconds.
-                ///
-                /// - Remark: Generated from `#/components/schemas/TrainingView/workout/endedAt`.
-                public var endedAt: Foundation.Date
-                /// Creates a new `WorkoutPayload`.
-                ///
-                /// - Parameters:
-                ///   - provider: Where it came from: `apple_health` for now.
-                ///   - providerWorkoutId: The provider’s own id for it (an HKWorkout’s UUID). Posted once per member.
-                ///   - summary:
-                ///   - series:
-                ///   - route: The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept.
-                ///   - tilePosition: Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
-                ///   - startedAt: In UTC with milliseconds.
-                ///   - endedAt: In UTC with milliseconds.
-                public init(
-                    provider: Swift.String,
-                    providerWorkoutId: Swift.String,
-                    summary: Components.Schemas.WorkoutSummary,
-                    series: Components.Schemas.WorkoutSeries? = nil,
-                    route: [Components.Schemas.RoutePoint]? = nil,
-                    tilePosition: Swift.Int? = nil,
-                    startedAt: Foundation.Date,
-                    endedAt: Foundation.Date
-                ) {
-                    self.provider = provider
-                    self.providerWorkoutId = providerWorkoutId
-                    self.summary = summary
-                    self.series = series
-                    self.route = route
-                    self.tilePosition = tilePosition
-                    self.startedAt = startedAt
-                    self.endedAt = endedAt
-                }
-                public enum CodingKeys: String, CodingKey {
-                    case provider
-                    case providerWorkoutId
-                    case summary
-                    case series
-                    case route
-                    case tilePosition
-                    case startedAt
-                    case endedAt
-                }
-            }
-            /// The workout it was posted from (Apple Health), with only the numbers the member kept. Missing on a 训练 posted by hand. Builds from before it read the post without it.
-            ///
-            /// - Remark: Generated from `#/components/schemas/TrainingView/workout`.
-            public var workout: Components.Schemas.TrainingView.WorkoutPayload?
+            public var workout: Components.Schemas.WorkoutView?
             /// Creates a new `TrainingView`.
             ///
             /// - Parameters:
@@ -2588,14 +2513,14 @@ extension Components {
             ///   - minutes: How long the workout took, in whole minutes.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
-            ///   - workout: The workout it was posted from (Apple Health), with only the numbers the member kept. Missing on a 训练 posted by hand. Builds from before it read the post without it.
+            ///   - workout:
             public init(
                 sport: Components.Schemas.Sport,
                 customSport: Swift.String? = nil,
                 minutes: Swift.Int? = nil,
                 caption: Swift.String? = nil,
                 photos: [Components.Schemas.PhotoView]? = nil,
-                workout: Components.Schemas.TrainingView.WorkoutPayload? = nil
+                workout: Components.Schemas.WorkoutView? = nil
             ) {
                 self.sport = sport
                 self.customSport = customSport
@@ -2673,6 +2598,79 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case width
                 case height
+            }
+        }
+        /// The workout a 训练 was posted from (Apple Health), with only the numbers the member kept. Missing on a 训练 posted by hand; builds from before it read the post without it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/WorkoutView`.
+        public struct WorkoutView: Codable, Hashable, Sendable {
+            /// Where it came from: `apple_health` for now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/provider`.
+            public var provider: Swift.String
+            /// The provider’s own id for it (an HKWorkout’s UUID). Posted once per member.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/providerWorkoutId`.
+            public var providerWorkoutId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/summary`.
+            public var summary: Components.Schemas.WorkoutSummary
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/series`.
+            public var series: Components.Schemas.WorkoutSeries?
+            /// The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/route`.
+            public var route: [Components.Schemas.RoutePoint]?
+            /// Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/tilePosition`.
+            public var tilePosition: Swift.Int?
+            /// In UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/startedAt`.
+            public var startedAt: Foundation.Date
+            /// In UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/endedAt`.
+            public var endedAt: Foundation.Date
+            /// Creates a new `WorkoutView`.
+            ///
+            /// - Parameters:
+            ///   - provider: Where it came from: `apple_health` for now.
+            ///   - providerWorkoutId: The provider’s own id for it (an HKWorkout’s UUID). Posted once per member.
+            ///   - summary:
+            ///   - series:
+            ///   - route: The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept.
+            ///   - tilePosition: Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
+            ///   - startedAt: In UTC with milliseconds.
+            ///   - endedAt: In UTC with milliseconds.
+            public init(
+                provider: Swift.String,
+                providerWorkoutId: Swift.String,
+                summary: Components.Schemas.WorkoutSummary,
+                series: Components.Schemas.WorkoutSeries? = nil,
+                route: [Components.Schemas.RoutePoint]? = nil,
+                tilePosition: Swift.Int? = nil,
+                startedAt: Foundation.Date,
+                endedAt: Foundation.Date
+            ) {
+                self.provider = provider
+                self.providerWorkoutId = providerWorkoutId
+                self.summary = summary
+                self.series = series
+                self.route = route
+                self.tilePosition = tilePosition
+                self.startedAt = startedAt
+                self.endedAt = endedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case provider
+                case providerWorkoutId
+                case summary
+                case series
+                case route
+                case tilePosition
+                case startedAt
+                case endedAt
             }
         }
         /// The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim).

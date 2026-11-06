@@ -87,13 +87,9 @@ const workoutFields = {
     .string()
     .regex(/^[a-z][a-z_]{1,30}$/)
     .meta({ description: 'Where it came from: `apple_health` for now.', example: 'apple_health' }),
-  providerWorkoutId: z
-    .string()
-    .min(1)
-    .max(100)
-    .meta({
-      description: 'The provider’s own id for it (an HKWorkout’s UUID). Posted once per member.',
-    }),
+  providerWorkoutId: z.string().min(1).max(100).meta({
+    description: 'The provider’s own id for it (an HKWorkout’s UUID). Posted once per member.',
+  }),
   summary: WorkoutSummary,
   series: WorkoutSeries.optional(),
   route: z
@@ -166,7 +162,12 @@ export const WorkoutView = z
     startedAt: z.iso.datetime().meta({ description: 'In UTC with milliseconds.' }),
     endedAt: z.iso.datetime().meta({ description: 'In UTC with milliseconds.' }),
   })
-  .meta({ id: 'WorkoutView' });
+  .meta({
+    id: 'WorkoutView',
+    description:
+      'The workout a 训练 was posted from (Apple Health), with only the numbers the member kept. ' +
+      'Missing on a 训练 posted by hand; builds from before it read the post without it.',
+  });
 
 /** The workout as the API sends it. */
 export function workoutView(workout: Workout): z.infer<typeof WorkoutView> {

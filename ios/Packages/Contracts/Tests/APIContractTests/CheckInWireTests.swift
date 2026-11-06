@@ -210,3 +210,22 @@ func datesKeepEveryMillisecond(millis: Int64) throws {
     // A server from before 补打卡 sends none: the post was made the day it counts for.
     #expect(try decode(saved(#""kind":"healthyMeal","meal":{}"#)).postedDay.description == "2025-10-17")
 }
+
+@Test func aWorkoutGoesWithItsTrainingBothWays() throws {
+    let workout = Workout(
+        source: WorkoutSource(provider: WorkoutSource.appleHealth, id: "A1"),
+        startedAt: Timestamp(millisecondsSince1970: 1_760_743_680_000),
+        endedAt: Timestamp(millisecondsSince1970: 1_760_745_600_000),
+        summary: WorkoutSummary(durationSec: 1920, distanceM: 5200.5, avgHr: 148),
+        series: WorkoutSeries(hr: [HeartRatePoint(seconds: 0, bpm: 90), HeartRatePoint(seconds: 60, bpm: 130)]),
+        tilePosition: 1)
+    let training = Training(activity: .sport("run"), minutes: try WorkoutMinutes(32), workout: workout)
+    let fields =
+        #""workout":{"endedAt":"2025-10-18T00:00:00.000Z","provider":"apple_health","providerWorkoutId":"A1","series":{"hr":[{"bpm":90,"t":0},{"bpm":130,"t":60}]},"startedAt":"2025-10-17T23:28:00.000Z","summary":{"avgHr":148,"distanceM":5200.5,"durationSec":1920},"tilePosition":1}"#
+    #expect(
+        try encode(try checkIn(.trained(training)).draft)
+            .hasSuffix(#""training":{"minutes":32,"sport":"run",\#(fields)},"version":1}"#))
+    #expect(
+        try decode(saved(#""kind":"trained","training":{"sport":"run","minutes":32,\#(fields)}"#))
+            == checkIn(.trained(training)))
+}

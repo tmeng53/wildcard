@@ -1166,61 +1166,7 @@
             "description": "1 to 3 photos, the cover first. Missing when there are none."
           },
           "workout": {
-            "type": "object",
-            "properties": {
-              "provider": {
-                "type": "string",
-                "pattern": "^[a-z][a-z_]{1,30}$",
-                "description": "Where it came from: `apple_health` for now.",
-                "example": "apple_health"
-              },
-              "providerWorkoutId": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 100,
-                "description": "The provider’s own id for it (an HKWorkout’s UUID). Posted once per member."
-              },
-              "summary": {
-                "$ref": "#/components/schemas/WorkoutSummary"
-              },
-              "series": {
-                "$ref": "#/components/schemas/WorkoutSeries"
-              },
-              "route": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/RoutePoint"
-                },
-                "minItems": 2,
-                "maxItems": 2000,
-                "description": "The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept."
-              },
-              "tilePosition": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 4,
-                "description": "Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is."
-              },
-              "startedAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "In UTC with milliseconds."
-              },
-              "endedAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "In UTC with milliseconds."
-              }
-            },
-            "required": [
-              "provider",
-              "providerWorkoutId",
-              "summary",
-              "startedAt",
-              "endedAt"
-            ],
-            "additionalProperties": false,
-            "description": "The workout it was posted from (Apple Health), with only the numbers the member kept. Missing on a 训练 posted by hand. Builds from before it read the post without it."
+            "$ref": "#/components/schemas/WorkoutView"
           }
         },
         "required": [
@@ -1275,6 +1221,63 @@
         ],
         "additionalProperties": false,
         "description": "Its width and height in pixels. Missing on photos saved without one."
+      },
+      "WorkoutView": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "pattern": "^[a-z][a-z_]{1,30}$",
+            "description": "Where it came from: `apple_health` for now.",
+            "example": "apple_health"
+          },
+          "providerWorkoutId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The provider’s own id for it (an HKWorkout’s UUID). Posted once per member."
+          },
+          "summary": {
+            "$ref": "#/components/schemas/WorkoutSummary"
+          },
+          "series": {
+            "$ref": "#/components/schemas/WorkoutSeries"
+          },
+          "route": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoutePoint"
+            },
+            "minItems": 2,
+            "maxItems": 2000,
+            "description": "The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept."
+          },
+          "tilePosition": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is."
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "In UTC with milliseconds."
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "In UTC with milliseconds."
+          }
+        },
+        "required": [
+          "provider",
+          "providerWorkoutId",
+          "summary",
+          "startedAt",
+          "endedAt"
+        ],
+        "additionalProperties": false,
+        "description": "The workout a 训练 was posted from (Apple Health), with only the numbers the member kept. Missing on a 训练 posted by hand; builds from before it read the post without it."
       },
       "WorkoutSummary": {
         "type": "object",
