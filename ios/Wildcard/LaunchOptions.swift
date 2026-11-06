@@ -32,6 +32,12 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-recap-pending")
     }
 
+    /// `-recap-waiting`: the sample story with its titles on their way, before the AI run reached
+    /// the squad (no try failed yet).
+    static var recapWaiting: Bool {
+        ProcessInfo.processInfo.arguments.contains("-recap-waiting")
+    }
+
     /// `-recap-missed`: the sample story where the squad fell short of its plans.
     static var recapMissed: Bool {
         ProcessInfo.processInfo.arguments.contains("-recap-missed")
@@ -105,6 +111,11 @@ enum LaunchOptions {
     static var notices: any NoticeSource {
         ProcessInfo.processInfo.arguments.contains("-uitest-no-notices")
             ? InMemoryNoticeSource.empty : InMemoryNoticeSource.sample(now: now())
+    }
+
+    /// `-uitest-offline-feed`: 动态 whose posts can't be read, as with no server.
+    static var feedIsOffline: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-offline-feed")
     }
 
     /// `-uitest-empty-feed`: 动态 with no posts, to see its empty scene.

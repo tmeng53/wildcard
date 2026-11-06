@@ -20,6 +20,13 @@ struct AppRoot: View {
         // A ZStack, not a Group, so the task below starts once and outlives screen changes.
         ZStack {
             switch app.screen {
+            case .starting where app.startsOffline:
+                // Nothing kept on the phone to show and no server: say so, and keep trying.
+                StateView.offline(retryIdentifier: "launch.retry") { app.retryStart() }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(role: .bgCanvas, in: .gym))
+                    .zIndex(1)
+                    .transition(.opacity)
             case .starting:
                 LaunchCover(start: app.coverSince)
                     // Over the screen that replaces it while it fades.
