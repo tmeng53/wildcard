@@ -5476,6 +5476,13 @@
           "open": {
             "type": "boolean",
             "description": "Whether it is open now (its switch on). A closed store shows only what the member owns."
+          },
+          "checkInsToGo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins in its sports open it.",
+            "example": 2
           }
         },
         "required": [

@@ -8566,21 +8566,29 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfStore/open`.
             public var open: Swift.Bool
+            /// For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins in its sports open it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfStore/checkInsToGo`.
+            public var checkInsToGo: Swift.Int?
             /// Creates a new `ShelfStore`.
             ///
             /// - Parameters:
             ///   - id: The store’s id in the app’s art.
             ///   - open: Whether it is open now (its switch on). A closed store shows only what the member owns.
+            ///   - checkInsToGo: For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins in its sports open it.
             public init(
                 id: Swift.String,
-                open: Swift.Bool
+                open: Swift.Bool,
+                checkInsToGo: Swift.Int? = nil
             ) {
                 self.id = id
                 self.open = open
+                self.checkInsToGo = checkInsToGo
             }
             public enum CodingKeys: String, CodingKey {
                 case id
                 case open
+                case checkInsToGo
             }
         }
         /// - Remark: Generated from `#/components/schemas/ShelfPiece`.

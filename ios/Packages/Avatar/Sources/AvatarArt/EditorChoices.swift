@@ -26,9 +26,12 @@ public struct EditorChoices: Hashable, Sendable {
         public let id: String
         /// Whether the member can walk in: the server's street (`StreetStock`) says, never the art.
         public let isOpen: Bool
+        /// For a store the member hasn't earned yet: how many more 练了 open it, from the server's
+        /// street; nil when it doesn't say.
+        public let toGo: Int?
 
-        public init(id: String, isOpen: Bool = false) {
-            (self.id, self.isOpen) = (id, isOpen)
+        public init(id: String, isOpen: Bool = false, toGo: Int? = nil) {
+            (self.id, self.isOpen, self.toGo) = (id, isOpen, toGo)
         }
     }
 

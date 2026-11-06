@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarArt
 import DesignSystem
 import DesignSystemUI
 import SwiftUI
@@ -98,7 +99,7 @@ struct DoorView: View {
 
 /// A closed store's rolling shutter, with a lock and how it unlocks.
 struct Shutter: View {
-    let store: String
+    let store: EditorChoices.Store
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -121,7 +122,7 @@ struct Shutter: View {
                     .frame(width: Space.xl, height: Space.xl)
                     .background(Color(role: .bgCanvas, in: theme), in: Circle())
                     .accessibilityHidden(true)
-                StoreCopy.unlock(store)
+                StoreCopy.opens(store)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .padding(.horizontal, Space.s)

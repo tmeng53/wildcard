@@ -157,6 +157,11 @@ enum StoreCopy {
     static func sports(_ store: String) -> Text { text(uploaded(store)?.sports, sportLines[store], or: "") }
     static func tagline(_ store: String) -> Text { text(uploaded(store)?.tagline, taglines[store], or: "") }
     static func unlock(_ store: String) -> Text { text(uploaded(store)?.unlock, unlocks[store], or: "") }
+    /// How far a closed store is from opening: 「还有 2 次开门」 once the server says, else how it unlocks.
+    static func opens(_ store: EditorChoices.Store) -> Text {
+        guard let toGo = store.toGo else { return unlock(store.id) }
+        return Text("还有 \(toGo) 次开门", bundle: .module)
+    }
     /// The tag a limited store wears, such as 冬季限定; nil for one without.
     static func limited(_ store: String) -> Text? {
         if let words = uploaded(store)?.limited { return Text(verbatim: words.localized) }

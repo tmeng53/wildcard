@@ -59,7 +59,7 @@ final class ShoppingStreetUITests: XCTestCase {
         XCTAssertTrue(street.waitForExistence(timeout: 30), "back didn't return to 我")
     }
 
-    /// The street's map walks to a closed store: its shutter and its button say how it unlocks,
+    /// The street's map walks to a closed store: its shutter and its button say how far it is from opening,
     /// and a tap on it keeps it shut.
     private func walkToClosedStore(_ app: XCUIApplication) {
         app.buttons["street.map.lap"].tap()
@@ -67,7 +67,7 @@ final class ShoppingStreetUITests: XCTestCase {
         XCTAssertTrue(lap.waitForExistence(timeout: 30), "the map didn't walk to LAP NINE")
         settle()
         XCTAssertTrue(lap.isHittable, "LAP NINE isn't in the middle of the street")
-        XCTAssertTrue(lap.label.contains("跑步 3 次解锁"), lap.label)
+        XCTAssertTrue(lap.label.contains("还有 3 次开门"), lap.label)
         XCTAssertFalse(app.buttons["street.enter"].isEnabled, "a closed store's button lets the member in")
         keepScreenshot(named: "22-street-closed")
         lap.tap()

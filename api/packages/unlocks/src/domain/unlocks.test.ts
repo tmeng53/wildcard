@@ -246,6 +246,23 @@ describe('shelf', () => {
       after: 2,
     });
   });
+
+  it('says how far a store not yet earned is, and nothing for one earned or without a rule', () => {
+    const toDeuce = { kind: 'store' as const, id: 'deuce', toGo: 2, sports: deuce.sports };
+    const street = shelf({
+      stores,
+      pieces,
+      rules,
+      has: [],
+      locked: [...locked, toDeuce],
+      on: () => true,
+    });
+    expect(street.stores).toStrictEqual([
+      { id: 'warmup', open: true },
+      { id: 'deuce', open: true, toGo: 2 },
+      { id: 'powder', open: true },
+    ]);
+  });
 });
 
 describe('piece ids', () => {

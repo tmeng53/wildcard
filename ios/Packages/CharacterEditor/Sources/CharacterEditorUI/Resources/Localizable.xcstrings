@@ -3875,6 +3875,22 @@
         }
       }
     },
+    "还有 %lld 次开门": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens in %lld more"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還有 %lld 次開門"
+          }
+        }
+      }
+    },
     "还是空的": {
       "localizations": {
         "en": {

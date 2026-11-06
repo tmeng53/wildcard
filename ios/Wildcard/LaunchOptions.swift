@@ -301,8 +301,9 @@ enum LaunchOptions {
                 held.contains(piece.id) ? .owned : toGo.map { .locked(toGo: $0) } ?? .available
             return StreetStock.Piece(id: piece.id, store: piece.store, state: state)
         }
+        // A store still to earn takes 3 练了 in its sports, none of them made yet.
         let stores = ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce"].map {
-            StreetStock.Store(id: $0, isOpen: true)
+            StreetStock.Store(id: $0, isOpen: true, toGo: earned.contains($0) ? nil : 3)
         }
         return StreetStock(stores: stores + [StreetStock.Store(id: "powder", isOpen: false)], pieces: pieces)
     }

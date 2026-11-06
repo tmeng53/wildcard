@@ -69,7 +69,8 @@ extension Catalog {
             let pieces = stock.pieces.filter { $0.store == store.id }
             let ownsSome = pieces.contains { owned.contains($0.id) }
             guard store.isOpen || ownsSome else { return nil }
-            return EditorChoices.Store(id: store.id, isOpen: ownsSome || pieces.contains { !owned.contains($0.id) })
+            return EditorChoices.Store(
+                id: store.id, isOpen: ownsSome || pieces.contains { !owned.contains($0.id) }, toGo: store.toGo)
         }
     }
 }

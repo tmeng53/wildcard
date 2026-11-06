@@ -98,7 +98,7 @@ struct StoreStreet: View {
             } else {
                 Button {
                 } label: {
-                    StoreCopy.unlock(store.id).frame(maxWidth: .infinity)
+                    StoreCopy.opens(store).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(true)
@@ -138,7 +138,7 @@ private struct Storefront: View {
     private let awning: Double = 34
     private let window: Double = 220
     private let frame: Double = 6
-    private let door: Double = 50
+    private let door = CGSize(width: 50, height: 176)
     private let badge: Double = 48
 
     var body: some View {
@@ -180,7 +180,7 @@ private struct Storefront: View {
     private func wall(_ color: Color) -> some View {
         HStack(alignment: .bottom, spacing: Space.s) {
             glass(color)
-            DoorView(height: window, width: door)
+            DoorView(height: door.height, width: door.width)
         }
         .padding(.horizontal, Space.s + Space.xxs / 2)
         .padding(.top, Space.m)
@@ -193,7 +193,7 @@ private struct Storefront: View {
         }
         .overlay {
             if !store.isOpen {
-                Shutter(store: store.id)
+                Shutter(store: store)
                     .padding(.horizontal, Space.s + Space.xxs / 2)
                     .padding(.top, Space.m)
                     .padding(.bottom, frame)

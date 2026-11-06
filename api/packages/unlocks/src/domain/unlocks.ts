@@ -110,7 +110,12 @@ export type PieceState = 'owned' | 'available' | 'locked';
 
 /** What the 商店街 shows a member: each store open or not, each piece out for them and how. */
 export interface Shelf {
-  readonly stores: readonly { readonly id: string; readonly open: boolean }[];
+  readonly stores: readonly {
+    readonly id: string;
+    readonly open: boolean;
+    /** For a store whose rule the member hasn't reached: 练了 still to go. */
+    readonly toGo?: number;
+  }[];
   readonly pieces: readonly {
     readonly id: string;
     readonly storeId: string;
@@ -155,7 +160,10 @@ export function shelf({
   const open = new Map(offered.map((store) => [store.id, switchOn(store.switchId)]));
   const earnedStore = (id: string) => !ruleOf.has(key('store', id)) || held.has(key('store', id));
   return {
-    stores: offered.map(({ id }) => ({ id, open: open.get(id) ?? false })),
+    stores: offered.map(({ id }) => {
+      const left = earnedStore(id) ? undefined : toGoOf.get(key('store', id));
+      return { id, open: open.get(id) ?? false, ...(left === undefined ? {} : { toGo: left }) };
+    }),
     pieces: pieces.flatMap((piece): Shelf['pieces'][number][] => {
       if (!open.has(piece.storeId)) return [];
       const rule = ruleOf.get(key('piece', piece.id));
