@@ -1,22 +1,23 @@
-# Runs scripts/verify.sh for ready PRs and pushes to main, and the Mac jobs on manual runs only
-# (AGENTS.md, CI).
+# Runs scripts/verify.sh for ready PRs and pushes to main (AGENTS.md, CI).
 # GitHub-hosted runners are free while the repo is public. macos-26 ships Xcode 26, which the
 # App Store requires since 2026-04-28 and Liquid Glass needs. Never use a self-hosted
 # runner here: on a public repo a fork's PR could run code on that machine.
 # macOS runners have no Docker, so the database and API checks run in a Linux job.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
-# Free macOS runners are few and shared, and one iOS run takes about 30 minutes, so no PR books a
-# Mac alone (Tracy, 2026-11-06): the merge queue batches the ready PRs into one branch every few
-# hours and runs this by hand on it (Actions -> verify -> Run workflow), and that run's `ios`
-# screenshots are each PR's evidence; the macOS `verify` and `avatar-preview` (GIFs for
-# reviewers, no checks of its own) run then too. PRs run the Linux checks only (`verify` on
-# Linux builds and tests the Swift packages), and nothing merges red. Pushes to main run the Linux
-# checks too; no Mac runs on main, since the TestFlight build is main's build check.
+# Free macOS runners are few and shared by every PR, and one iOS run takes about 30 minutes, so
+# no PR books a Mac on its own (Tracy, 2026-11-06). `ios` runs on a schedule, every 3 hours,
+# for what main changed since the last scheduled run (nothing when main didn't change), and on a
+# manual run (Actions -> verify -> Run workflow), which the merge queue starts every few hours on
+# one branch merging the ready PRs' heads, so its screenshots are each PR's evidence; the macOS
+# `verify` and `avatar-preview` (GIFs for reviewers, no checks of its own) on manual runs only.
+# Pushes to main and every PR run the Linux checks only (`verify` on Linux builds and tests the
+# Swift packages).
 # Every job runs only when the files a change touches can break what it checks: `verify` for the
 # app's Swift (and the OpenAPI file its generated types come from), `supabase` for the database,
 # the API and the app's Backend adapters, `web` for the site; `ios` and `avatar-preview` only
 # when the change touches what they build. A skipped job counts as passing for branch protection.
-# Pushes to main diff against the commit before the push; a manual run checks everything.
+# Pushes to main diff against the commit before the push (the PR already ran the full merge);
+# a scheduled run diffs against the commit the last scheduled run checked.
 name: verify
 
 on:
@@ -24,6 +25,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
+  # The macOS jobs for main (UTC). GitHub may start a scheduled run some minutes late.
+  schedule:
+    - cron: "23 */3 * * *"
   workflow_dispatch:
     inputs:
       only_testing:
@@ -35,11 +39,17 @@ on:
 
 permissions:
   contents: read
+  # The `changes` job reads which commit the last scheduled run checked.
+  actions: read
 
 concurrency:
-  # A PR's newer push cancels its older run. A run for main or a manual run has a group of its
-  # own (its commit), so it is never cancelled and never replaces a waiting one.
-  group: verify-${{ github.event.pull_request.number || github.sha }}
+  # A PR's newer push cancels its older run. A run for main has a group of its own (its commit),
+  # so it is never cancelled and never replaces a waiting one: GitHub keeps only one pending run
+  # per group, which dropped every main run but the newest while the few Macs were busy.
+  # A scheduled run has its own group too, so it never replaces the push run for the same commit.
+  group: >-
+    verify-${{ github.event.pull_request.number || github.sha }}${{
+    github.event_name == 'schedule' && '-schedule' || '' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -63,16 +73,30 @@ jobs:
           fetch-depth: 0
       - id: diff
         env:
+          EVENT: ${{ github.event_name }}
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-          MAC: ${{ github.event_name == 'workflow_dispatch' }}
+          MAC: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # A manual run, or a push with no usable "before" (a force push), checks everything.
+          # A scheduled run checks what main changed since the commit the last scheduled run
+          # checked (a cancelled one doesn't count), and nothing when that is this commit.
+          if [ "$EVENT" = schedule ]; then
+            BASE="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow verify.yml --event schedule \
+              --branch main --status completed --limit 20 --json headSha,conclusion \
+              --jq '[.[] | select(.conclusion != "cancelled" and .conclusion != "skipped")][0].headSha // ""')"
+            echo "last scheduled run checked ${BASE:-nothing yet}"
+            if [ "$BASE" = "$HEAD" ]; then
+              echo "main hasn't changed since; nothing to run"
+              MAC=false
+            fi
+          fi
+          # A push with no usable "before" (a new branch, a force push) checks everything.
           if ! files="$(git diff --name-only "$(git merge-base "$BASE" "$HEAD")" "$HEAD" 2>/dev/null)"; then
             files="$(git ls-files)"
           fi
           printf '%s\n' "$files"
-          # The Mac is for manual runs only.
+          # The Mac is for scheduled and manual runs only.
           echo "mac=${MAC}" >> "$GITHUB_OUTPUT"
           touches() { grep -qE "$1" <<<"$files" && echo true || echo false; }
           # swift: the app's Swift checks, and the OpenAPI file its generated types must match.
@@ -89,13 +113,15 @@ jobs:
   verify:
     needs: changes
     # If `changes` failed, run rather than skip; a draft PR skips `changes`, and so this.
+    # A scheduled run is for `ios` and `avatar-preview`: the push to main already ran this.
     if: >-
       !inputs.only_testing && (
       !cancelled() && !github.event.pull_request.draft && needs.changes.result != 'skipped' &&
+      github.event_name != 'schedule' &&
       (needs.changes.result != 'success' || needs.changes.outputs.swift == 'true'))
     # macOS also compiles the SwiftUI code (which Linux compiles out) and runs SwiftLint's custom
     # rules (which need SourceKit); a PR that changes neither the app nor its build and lint
-    # setup can't break those. If `changes` failed, stay on Linux.
+    # setup can't break those. If `changes` failed, stay on Linux; main's run covers the Mac.
     runs-on: >-
       ${{ (needs.changes.outputs.mac == 'true' && needs.changes.outputs.app == 'true')
       && 'macos-26' || 'ubuntu-24.04' }}
@@ -121,7 +147,7 @@ jobs:
     needs: changes
     if: >-
       !inputs.only_testing && (
-      !cancelled() && !github.event.pull_request.draft &&
+      !cancelled() && !github.event.pull_request.draft && github.event_name != 'schedule' &&
       (needs.changes.result != 'success' || needs.changes.outputs.web == 'true'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -139,7 +165,7 @@ jobs:
     needs: changes
     if: >-
       !inputs.only_testing && (
-      !cancelled() && !github.event.pull_request.draft &&
+      !cancelled() && !github.event.pull_request.draft && github.event_name != 'schedule' &&
       (needs.changes.result != 'success' || needs.changes.outputs.backend == 'true'))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -158,7 +184,7 @@ jobs:
       - run: scripts/verify.sh supabase api backend
         env:
           # What scripts/api-compat.sh compares openapi.json with: the PR's base, or main before
-          # the push (a manual run compares with where its branch left main).
+          # the push.
           API_COMPAT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
       # The verify-wildcard API journeys, over HTTP against the built server.
       - run: scripts/api-journeys.sh

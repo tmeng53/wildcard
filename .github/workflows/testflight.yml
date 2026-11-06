@@ -5,8 +5,7 @@
 # when a build is needed now.
 # Each build makes a new Apple Development certificate (see below), so builds are kept few and the
 # last step revokes the certificate the build made, or the account's limit fills up and archiving
-# fails. It is main's Mac build check (verify runs only Linux on main), shares the few free
-# Macs with verify's manual runs and runs one at a time.
+# fails. It shares the one free Mac with verify's scheduled `ios` job and runs one at a time.
 # Signing is automatic and Apple-managed: xcodebuild signs in to App Store Connect with an API key
 # and Apple's cloud-managed distribution certificate signs the export, so no certificate or
 # profile is kept anywhere (cloud signing still makes an Apple Development certificate on each
