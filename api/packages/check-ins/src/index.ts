@@ -28,6 +28,7 @@ export {
   type Entry,
 } from './domain/check-in.js';
 export { PhotoPath, PhotoRef, PhotoSize, Photos, isOwnPhoto } from './domain/photos.js';
+export { Workout, WorkoutView, workoutView } from './domain/workout.js';
 export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-store.js';
 export { DayRange, MyDayRange, Unshared } from './domain/day-range.js';
 export {
@@ -76,6 +77,7 @@ export {
   WeekNotStartedError,
   WeekOverError,
   WeekTooFarAheadError,
+  WorkoutAlreadyPostedError,
 } from './errors.js';
 export type {
   CheckInStore,

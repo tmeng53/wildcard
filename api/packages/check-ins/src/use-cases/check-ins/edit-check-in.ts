@@ -13,6 +13,7 @@ import {
   CheckInNotFoundError,
   NotYourCheckInError,
   PhotoInUseError,
+  WorkoutAlreadyPostedError,
 } from '../../errors.js';
 import type {
   CheckInStore,
@@ -96,7 +97,9 @@ export async function editCheckIn(
     await checkSport(deps.sports, edited.training.sport);
   }
   const outcome = await deps.store.update(edited);
-  if (!outcome.saved) throw new PhotoInUseError();
+  if (!outcome.saved) {
+    throw outcome.taken === 'workout' ? new WorkoutAlreadyPostedError() : new PhotoInUseError();
+  }
   if (edited.kind === 'trained') {
     await planTrainedDay(
       { store: deps.plans },

@@ -126,6 +126,20 @@ export class PhotoInUseError extends AppError {
 }
 
 /**
+ * Thrown for a 训练 from a workout the member already posted: each workout goes out once. The app
+ * shows that workout as posted: read the member's check-ins again.
+ */
+export class WorkoutAlreadyPostedError extends AppError {
+  override readonly name = 'WorkoutAlreadyPostedError';
+  readonly reason = 'WORKOUT_ALREADY_POSTED';
+  readonly status = 'ALREADY_EXISTS';
+
+  constructor() {
+    super('The member already posted this workout.');
+  }
+}
+
+/**
  * Thrown for a check-in the caller can't see: it doesn't exist, or it went to no squad they share
  * with its author. The same answer either way, so it reveals nothing.
  */
