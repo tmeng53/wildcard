@@ -8,7 +8,7 @@ import SwiftUI
 
 /// 今日请假条 (spec rev 186, section 1, made calmer 2026-11-06): the excuse is the page's one
 /// line, in the middle of the page, and tapping it edits it. Above the button, one row: the four
-/// styles and 编一句, which puts a line from the member's own words in the picked style in its
+/// styles (a segmented control) and 编一句, which puts a line from the member's own words in the picked style in its
 /// place; then 换一句 shows the next. The writer answers three lines at a time, so only every
 /// third 换一句 (or a new style or new words) asks it again, and typing and picking a style cost
 /// nothing. Up to `Disclaimer.maxLength` characters.
@@ -79,6 +79,7 @@ struct DisclaimerComposer: View {
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: entry)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: drafts)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isEditing)
+        .haptic(.pick, trigger: style)
         .haptic(.appear, trigger: landed)
         .task {
             // Before the member types, 编一句 shows dice lines.
@@ -143,8 +144,8 @@ struct DisclaimerComposer: View {
         }
     }
 
-    /// The styles and the button that puts a line up, on one row where it fits (else the button
-    /// goes under the styles). Hidden while the member types, so the keyboard leaves room.
+    /// The styles and the button that puts a line up, on one row where it fits (else, at large
+    /// text sizes, the button goes under the styles). Hidden while the member types, so the keyboard leaves room.
     @ViewBuilder private var choices: some View {
         if !isEditing {
             ViewThatFits(in: .horizontal) {
@@ -163,17 +164,20 @@ struct DisclaimerComposer: View {
         }
     }
 
-    /// The four styles as pills, the picked one marked. Picking only picks: it asks nothing.
+    /// The four styles as the system's segmented control, which stays narrow enough to share
+    /// the row with 编一句. Picking only picks: it asks nothing.
     private var styles: some View {
-        HStack(spacing: Space.xs) {
+        Picker(selection: $style) {
             ForEach(DisclaimerStyle.allCases, id: \.self) { option in
-                PickPill(option.label, isSelected: option == style) {
-                    style = option
-                }
-                .disabled(isWriting)
-                .accessibilityIdentifier("disclaimer.style.\(option.rawValue)")
+                option.label.tag(option)
             }
+        } label: {
+            Text("风格", bundle: .module)
         }
+        .pickerStyle(.segmented)
+        .fixedSize()
+        .disabled(isWriting)
+        .accessibilityIdentifier("disclaimer.style")
     }
 
     private var write: some View {

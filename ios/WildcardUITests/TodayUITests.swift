@@ -179,7 +179,7 @@ final class TodayUITests: XCTestCase {
         let field = openDisclaimer(in: app)
         field.typeText("不想活了")
         dismissKeyboard(in: app)
-        app.buttons["disclaimer.style.funny"].tap()
+        app.segmentedControls["disclaimer.style"].buttons["搞笑"].tap()
         app.buttons["disclaimer.write"].tap()
 
         XCTAssertTrue(app.buttons["disclaimer.care.call"].waitForExistence(timeout: Self.wait), "no care line")
@@ -187,7 +187,7 @@ final class TodayUITests: XCTestCase {
         XCTAssertEqual(app.buttons["disclaimer.care.text"].label, "发短信给 988")
         XCTAssertTrue(app.staticTexts["有紧急危险请直接打 911。"].exists)
         XCTAssertEqual(field.value as? String, "不想活了", "the writer put a joke in anyway")
-        XCTAssertFalse(app.buttons["disclaimer.style.funny"].exists, "the styles still show beside the care line")
+        XCTAssertFalse(app.segmentedControls["disclaimer.style"].exists, "the styles still show beside the care line")
         XCTAssertFalse(app.buttons["disclaimer.write"].exists, "the writer offered jokes anyway")
         XCTAssertFalse(app.buttons["disclaimer.post"].isEnabled, "a blocked reason can be posted")
         settle()
@@ -366,8 +366,12 @@ extension TodayUITests {
         let write = app.buttons["disclaimer.write"]
         XCTAssertTrue(write.waitForExistence(timeout: Self.wait), "no 编一句 once the keyboard went away")
         let typed = field.value as? String
-        app.buttons["disclaimer.style.heroic"].tap()
-        let funny = app.buttons["disclaimer.style.funny"]
+        let styles = app.segmentedControls["disclaimer.style"]
+        // The styles share one row with 编一句 on every phone.
+        XCTAssertEqual(styles.frame.midY, write.frame.midY, accuracy: 4, "编一句 dropped under the styles")
+        XCTAssertLessThanOrEqual(write.frame.maxX, app.frame.maxX, "编一句 runs off the screen")
+        styles.buttons["中二"].tap()
+        let funny = styles.buttons["搞笑"]
         funny.tap()
         settle()
         XCTAssertTrue(funny.isSelected, "the picked style isn't marked")
