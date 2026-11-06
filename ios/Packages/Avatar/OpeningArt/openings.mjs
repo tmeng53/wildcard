@@ -98,7 +98,7 @@ function opening({ id, name, sig, wash, ground, ribbonWords, title, fall, decor,
     { id: 'title', x: 20, y: 306, width: 350, height: 72, text: { words: words(...title), color: '#FFFFFF', size: 48 } },
     { id: 'from', x: 190, y: 384, width: 170, height: 28,
       text: { words: words('— 外卡', '— Wildcard', '— 外卡'), color: '#FFFFFF', size: 18 } },
-    { id: 'squad', x: 10, y: 520, width: 370, height: 190, squad: true },
+    { id: 'squad', x: 10, y: 450, width: 370, height: 260, squad: true },
     { id: 'fallFront', x: 0, y: -H, width: W, height: H * 2, art: 'fall-front.svg' },
   ];
   const clip = {
