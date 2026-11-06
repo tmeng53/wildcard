@@ -76,7 +76,6 @@ extension AppModel {
         if !today.isShowingOpening { await today.dropIn(on: shown, coveredAt: .now) }
     }
 
-    /// The member's home, from what the phone kept for them alone.
     /// Puts 今天 on the squad's scene this week, dropping the squad onto it when a teammate moved
     /// it. Offline, it stays where it is.
     func readScene(of squad: SquadID?, into today: TodayModel) async {

@@ -243,7 +243,6 @@ final class SignUpUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter().wait(for: [met], timeout: Self.wait), .completed, message)
     }
 
-    /// Lets the characters build and their moves finish before a screenshot.
     /// Signs in on the open screen and names the character on 角色和昵称.
     private func makeCharacter(named name: String, in app: XCUIApplication) {
         let signIn = app.buttons["signup.signIn"]
@@ -269,6 +268,7 @@ final class SignUpUITests: XCTestCase {
         keepScreenshot(named: "42b-signup-squad-goal")
     }
 
+    /// Lets the characters build and their moves finish before a screenshot.
     private func settle() {
         Thread.sleep(forTimeInterval: 2)
     }

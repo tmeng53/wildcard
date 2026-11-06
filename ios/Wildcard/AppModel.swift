@@ -301,6 +301,7 @@ final class AppModel {
         isAdmin = (try? await api.me())?.isAdmin ?? false
     }
 
+    /// The member's home, from what the phone kept for them alone.
     private func todayStore(of member: MemberID) -> TodayStore {
         let (directory, api) = (folders.folder(for: member), memberAPI(member))
         return TodayStore(
@@ -340,6 +341,8 @@ final class AppModel {
     }
 
     private func signedOut() async {
+        // The next account on this phone reads its own; until then it is no admin.
+        isAdmin = false
         SignUpProgress.clear()
         KeptScene.forgetAll()
         folders.forgetAll()
