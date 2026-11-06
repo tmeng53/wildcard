@@ -199,7 +199,7 @@
     let quad = null;
     const num = () => +tokens[k++];
     while (k < tokens.length) {
-      if (/[a-z]/i.test(tokens[k])) letter = tokens[k++];
+      if (/^[a-z]$/i.test(tokens[k])) letter = tokens[k++];
       const relative = letter === letter.toLowerCase();
       const point = () => {
         const [x, y] = [num(), num()];
