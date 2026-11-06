@@ -215,52 +215,6 @@ public struct MemberTitles: Hashable, Sendable {
     }
 }
 
-/// 你的一周: the reader's own week, Monday first.
-public struct MyWeek: Hashable, Sendable {
-    public let plan: Int
-    public let days: [Day]
-    public let line: String?
-    public let healthyMeals: Int
-    public let cheatMeals: Int
-    public let reactionsReceived: Int
-
-    public struct Day: Hashable, Sendable {
-        public let day: LocalDay
-        public let kind: DayKind
-
-        public init(day: LocalDay, kind: DayKind) {
-            self.day = day
-            self.kind = kind
-        }
-    }
-
-    public init(
-        plan: Int, days: [Day], line: String? = nil, healthyMeals: Int, cheatMeals: Int, reactionsReceived: Int
-    ) {
-        self.plan = plan
-        self.days = days
-        self.line = line
-        self.healthyMeals = healthyMeals
-        self.cheatMeals = cheatMeals
-        self.reactionsReceived = reactionsReceived
-    }
-
-    /// Days trained: the big number.
-    public var trainedDays: Int { days.count { $0.kind.isTrained } }
-
-    /// The sport they trained most days, the earliest on a tie; nil when they didn't train a
-    /// listed sport.
-    public var topSport: Sport? { SquadWeek.ranked(days.map(\.kind)).first?.sport }
-
-    /// Which day the character stands over, Monday 0: the last day of their top sport, else the
-    /// last day they trained, else midweek.
-    public var standsOn: Int {
-        let kinds = days.map(\.kind)
-        if let sport = topSport, let last = kinds.lastIndex(of: .trained(sport)) { return last }
-        return kinds.lastIndex { $0.isTrained } ?? 3
-    }
-}
-
 /// What a day of the week was.
 public enum DayKind: Hashable, Sendable {
     /// Trained; the sport is that day's main one, nil for 其他.

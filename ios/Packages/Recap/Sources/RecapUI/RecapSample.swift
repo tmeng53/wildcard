@@ -53,8 +53,9 @@ public enum RecapSample {
             myWeek: RecapDomain.MyWeek(
                 plan: 5,
                 days: [
-                    .init(day: day(12), kind: .trained("run")), .init(day: day(13), kind: .trained("tennis")),
-                    .init(day: day(14), kind: .rest), .init(day: day(15), kind: .trained("strength")),
+                    .init(day: day(12), kind: .trained("run"), minutes: 35),
+                    .init(day: day(13), kind: .trained("tennis"), minutes: 90),
+                    .init(day: day(14), kind: .rest), .init(day: day(15), kind: .trained("strength"), minutes: 50),
                     .init(day: day(16), kind: .disclaimer), .init(day: day(17), kind: .trained("yoga")),
                     .init(day: day(18), kind: .rest),
                 ], line: ready ? "周二那场网球最有灵魂" : nil, healthyMeals: 3, cheatMeals: 1, reactionsReceived: 12),

@@ -9,7 +9,8 @@ import SwiftUI
 /// 你的一周: the count and the AI's line, and on the ground's edge the whole week at once,
 /// Monday to Sunday, each day's dot with what it was under it. Nothing staged: the page reads the
 /// moment it opens. The reader's character stands over the last day of the sport they trained
-/// most and does its move, in its kit; the meals and reactions sit under the week.
+/// most and does its move, in its kit; its fun numbers sit on cards under the week (two on a
+/// short phone, four on a tall one).
 struct MyWeekPage: View {
     let week: RecapDomain.MyWeek
     let page: PageContext
@@ -18,11 +19,13 @@ struct MyWeekPage: View {
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
-            let row = proxy.size.height - StoryLayout.groundWeek
+            let rows = proxy.size.height >= Self.twoRowsFrom ? 2 : 1
+            let ground = rows == 2 ? Self.groundTwoRows : StoryLayout.groundWeek
+            let row = proxy.size.height - ground
             let spacing = (width - 2 * Space.l) / 7
             let spots = (0..<7).map { Space.l + spacing * (Double($0) + 0.5) }
             ZStack(alignment: .topLeading) {
-                Ground(height: StoryLayout.groundWeek)
+                Ground(height: ground)
                 page.character(page.cast.viewer, act: Act(clip: week.topSport.weekClip, start: 0.3))
                     .standing(
                         feetAt: CGPoint(x: spots[min(week.standsOn, 6)], y: row - DayDot.size / 2 - Space.xxs),
@@ -43,10 +46,23 @@ struct MyWeekPage: View {
                     .accessibilityElement(children: .combine)
                     .position(x: spots[index], y: row + Space.xs + Space.xxs)
                 }
-                stats
-                    .padding(.horizontal, Space.l)
-                    .frame(width: width, alignment: .leading)
-                    .position(x: width / 2, y: row + StoryLayout.groundWeek - Self.statsAboveBottom)
+                LazyVGrid(
+                    columns: [GridItem(.flexible(), spacing: Space.s), GridItem(.flexible(), spacing: Space.s)],
+                    spacing: Space.s
+                ) {
+                    ForEach(Array(facts.prefix(rows * 2).enumerated()), id: \.offset) { index, fact in
+                        let start = 0.2 + Double(index) * 0.04
+                        FactCard(
+                            fact: fact, monday: page.story.week.monday, everyone: 1, nickname: { _ in "" },
+                            onGround: true
+                        )
+                        .scaleEffect(0.9 + 0.1 * page.pop(start, start + 0.32))
+                        .opacity(page.ramp(start, start + 0.12))
+                    }
+                }
+                .padding(.horizontal, Space.l)
+                .frame(width: width)
+                .padding(.top, row + Self.cardsBelowRow)
             }
         }
         .overlay(alignment: .top) {
@@ -70,25 +86,29 @@ struct MyWeekPage: View {
     }
 
     private static let scale = 0.5
-    /// Where the meals and reactions sit: their centre this far over the bottom of the page.
-    private static let statsAboveBottom = 88.0
+    /// The page's height from which the cards take two rows (four cards) under the week, with
+    /// the ground raised to hold them; a shorter phone gets one row.
+    private static let twoRowsFrom = 720.0
+    private static let groundTwoRows = 320.0
+    /// The cards' top under the ground's edge, clear of the days' names.
+    private static let cardsBelowRow = 56.0
 
-    private var stats: some View {
-        HStack(alignment: .top) {
-            stat(week.healthyMeals, Text("健康餐", bundle: .module))
-            stat(week.cheatMeals, Text("放纵餐", bundle: .module))
-            stat(week.reactionsReceived, Text("收到的回应", bundle: .module))
+    /// The reader's fun numbers: 坚持运动最久, 一共训练了 once half the days logged minutes (else
+    /// the sport they trained most), 收到加油 and 吃得健康, each left out when the week doesn't
+    /// have it.
+    private var facts: [Fact] {
+        var facts: [Fact] = []
+        if let streak = week.longestStreak { facts.append(.streak(days: streak.days, from: streak.from, member: nil)) }
+        if let time = week.time {
+            facts.append(.time(minutes: time.minutes, longest: time.longestMinutes, longestOn: .day(time.longestDay)))
+        } else if let top = week.topSportDays {
+            facts.append(.topSport(top))
         }
-        .foregroundStyle(Color(role: .fgDefault, in: theme))
-    }
-
-    private func stat(_ count: Int, _ label: Text) -> some View {
-        VStack(alignment: .leading, spacing: Space.xxs) {
-            Score(count: count, size: .card)
-            label.typeStyle(TypeRamp.footnote).foregroundStyle(Color(role: .fgMuted, in: theme))
+        if week.reactionsReceived > 0 { facts.append(.cheers(week.reactionsReceived)) }
+        if week.healthyMeals > 0 || week.cheatMeals > 0 {
+            facts.append(.meals(healthy: week.healthyMeals, cheat: week.cheatMeals))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
+        return facts
     }
 }
 

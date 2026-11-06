@@ -433,18 +433,34 @@
         }
       }
     },
-    "收到的回应": {
+    "收到加油": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reactions received"
+            "value": "Cheers received"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "收到的回應"
+            "value": "收到加油"
+          }
+        }
+      }
+    },
+    "%@到%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@–%2$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@到%2$@"
           }
         }
       }
