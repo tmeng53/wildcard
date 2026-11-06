@@ -636,6 +636,66 @@ describe('GET /me/posts', () => {
   });
 });
 
+describe('GET /me/trainings', () => {
+  it('lists the member’s 练了 by day with sport and minutes, wherever they went', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me);
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.parse(today) - 24 * 60 * 60_000).toISOString().slice(0, 10);
+    // Made a few minutes ago, in order, so the day's 练了 list the earliest made first.
+    const put = async (
+      made: { minutesAgo: number; day: string; audience: string[] },
+      fields: object,
+    ) => {
+      const id = randomUUID();
+      const createdAt = new Date(Date.now() - made.minutesAgo * 60_000).toISOString();
+      const body = { version: 1, day: made.day, createdAt, audience: made.audience, ...fields };
+      const { status } = await call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body,
+      });
+      expect(status).toBe(201);
+      return id;
+    };
+    const run = await put(
+      { minutesAgo: 3, day: today, audience: [squad] },
+      { kind: 'trained', training: { sport: 'run', minutes: 45 } },
+    );
+    const swim = await put(
+      { minutesAgo: 4, day: yesterday, audience: [] },
+      { kind: 'trained', training: { sport: 'swim' } },
+    );
+    const frisbee = await put(
+      { minutesAgo: 2, day: today, audience: [squad] },
+      { kind: 'trained', training: { sport: 'custom', customSport: '飞盘', minutes: 30 } },
+    );
+    await put({ minutesAgo: 1, day: today, audience: [squad] }, { kind: 'healthyMeal', meal: {} });
+
+    const path = `/me/trainings?from=${yesterday}&to=${today}`;
+    expect(await call({ method: 'GET', path, token: me.token })).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: {
+        version: 1,
+        trainings: [
+          { id: swim, day: yesterday, sport: 'swim' },
+          { id: run, day: today, sport: 'run', minutes: 45 },
+          { id: frisbee, day: today, sport: 'custom', customSport: '飞盘', minutes: 30 },
+        ],
+      },
+    });
+    expect((await call({ method: 'GET', path, token: friend.token })).body).toStrictEqual({
+      version: 1,
+      trainings: [],
+    });
+    expect((await call({ method: 'GET', path })).status).toBe(401);
+    const tooLong = '/me/trainings?from=2025-01-01&to=2026-01-07';
+    expect((await call({ method: 'GET', path: tooLong, token: me.token })).status).toBe(400);
+  });
+});
+
 describe('GET /me/check-in-totals', () => {
   it('counts everything the member ever checked in by kind, 练了 by day', async () => {
     const [me, friend] = [await signUp(), await signUp()];

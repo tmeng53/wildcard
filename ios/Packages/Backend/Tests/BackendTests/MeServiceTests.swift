@@ -40,6 +40,11 @@ import Testing
     #expect(glance.days.count == 7 && !glance.days.contains { $0.mark == .trained })
     #expect(glance.days.filter(\.isToday).count == 1)
     overview.weekGlance = nil
+    // 训练记录: the weeks ending with this one, empty so far.
+    let record = try #require(overview.record)
+    #expect(record.columns.count == TrainingRecord.weeks)
+    #expect(record.columns.joined().allSatisfy { $0.level == .none })
+    overview.record = nil
     #expect(
         overview
             == MeOverview(

@@ -39,3 +39,16 @@ export const MyDayRange = z
   .refine(inOrder, inOrderIssue)
   .refine(withinMonth, withinMonthIssue);
 export type MyDayRange = z.infer<typeof MyDayRange>;
+
+/** The most days the training record (训练记录) reads at once: a year and a week. */
+const MAX_RECORD_DAYS = 371;
+
+/** Days `from` to `to`, both included, at most 371 of them: 我's training record. */
+export const RecordRange = z
+  .strictObject({ from: LocalDay, to: LocalDay })
+  .refine(inOrder, inOrderIssue)
+  .refine(({ from, to }) => (Date.parse(to) - Date.parse(from)) / DAY < MAX_RECORD_DAYS, {
+    message: `At most ${String(MAX_RECORD_DAYS)} days at a time`,
+    path: ['to'],
+  });
+export type RecordRange = z.infer<typeof RecordRange>;
