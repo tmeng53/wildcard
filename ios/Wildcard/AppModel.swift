@@ -143,6 +143,8 @@ final class AppModel {
 
     /// 再试一次 on a launch with no server: tries again now rather than at the next try.
     func retryStart() {
+        // The cover rocks while this try runs, so the tap shows it was taken.
+        startsOffline = false
         nextStartTry?.cancel()
     }
 

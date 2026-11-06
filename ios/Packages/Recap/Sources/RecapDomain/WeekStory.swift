@@ -153,7 +153,8 @@ public enum PageID: String, CaseIterable, Hashable, Sendable {
 
 /// One full-screen page of the story.
 public enum StoryPage: Hashable, Sendable {
-    /// The titles while the AI run is late: the organizers are out of money, nudge them.
+    /// The titles while the AI run hasn't written them: on their way, or, once a try failed
+    /// (`WeekStory.stuck`), the organizers are out of money and the reader can nudge them.
     case pending
     case podium(Podium)
     case titles([MemberTitles])
