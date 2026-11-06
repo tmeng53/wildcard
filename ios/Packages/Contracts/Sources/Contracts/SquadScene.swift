@@ -58,10 +58,15 @@ public struct SquadScene: Hashable, Sendable {
     public var canPick: Bool
     /// Every scene, in the picker's order, and when the squad last trained on it.
     public var history: [SceneHistory]
+    /// The id of a takeover scene (a holiday's) every squad's home shows now in place of this
+    /// one, which `scene` then is when this build has its art; nil on any other day.
+    public var takeover: String?
 
     public init(
-        week: LocalDay, scene: SceneID, pickers: Pickers, picked: Pick?, canPick: Bool, history: [SceneHistory]
+        week: LocalDay, scene: SceneID, pickers: Pickers, picked: Pick?, canPick: Bool, history: [SceneHistory],
+        takeover: String? = nil
     ) {
+        self.takeover = takeover
         self.week = week
         self.scene = scene
         self.pickers = pickers

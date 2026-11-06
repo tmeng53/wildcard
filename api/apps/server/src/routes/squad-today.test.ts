@@ -22,6 +22,7 @@ import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import {
   scenesOn,
+  switchesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -91,6 +92,7 @@ const app = createApp({
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
   scenes: scenesOn(db),
+  switches: switchesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,

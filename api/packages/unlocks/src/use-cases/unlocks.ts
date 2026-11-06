@@ -92,7 +92,7 @@ export function createUnlocks(deps: {
   readonly trainedSince: TrainedSince;
   readonly sportListed: SportListed;
   /** Every switch as it is now, as one lookup. */
-  readonly switches: () => Promise<SwitchOn>;
+  readonly switches: (member: MemberId) => Promise<SwitchOn>;
   /** Told what each grant kept new; left out where nobody needs telling. */
   readonly unlocked?: Unlocked;
 }): Unlocks & UnlocksAdmin {
@@ -106,7 +106,7 @@ export function createUnlocks(deps: {
       deps.store.unlocksOf(member),
       deps.store.stores(),
       deps.store.pieces(),
-      deps.switches(),
+      deps.switches(member),
     ]);
     const now = new Date();
     const on = (id: string) => switchOn(id, now);

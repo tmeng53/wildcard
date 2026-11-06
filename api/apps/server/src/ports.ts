@@ -12,6 +12,7 @@ import type { SquadTables } from '@wildcard/squads';
 import type { SceneTables } from '@wildcard/scenes';
 import type { SportTables } from '@wildcard/sports';
 import type { SwitchTables } from '@wildcard/switches';
+import type { CampaignTables } from '@wildcard/campaigns';
 import type { UnlockTables } from '@wildcard/unlocks';
 import type { ArtTables } from '@wildcard/art';
 import type { WeeklyAwardTables } from '@wildcard/weekly-awards';
@@ -172,7 +173,8 @@ export type Tables = CheckInTables &
   UnlockTables &
   CoachTables &
   NoticeTables &
-  ArtTables;
+  ArtTables &
+  CampaignTables;
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;

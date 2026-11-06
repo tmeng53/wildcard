@@ -30,3 +30,9 @@ private func squadScene(_ scene: SceneID, picked: SquadScene.Pick?) -> SquadScen
     #expect(SceneMove(from: .gym, to: unpicked, member: myID) == SceneMove(scene: .pool, picker: nil))
     #expect(SceneMove(from: .gym, to: gone, member: myID) == SceneMove(scene: .pool, picker: nil))
 }
+
+@Test func aTakeoverSceneIsNobodysMove() {
+    var holiday = squadScene(.ski, picked: .init(scene: .ski, picker: mate))
+    holiday.takeover = "ski"
+    #expect(SceneMove(from: .gym, to: holiday, member: myID) == nil)
+}

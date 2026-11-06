@@ -32,6 +32,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import {
   scenesOn,
+  switchesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -99,6 +100,7 @@ const app = createApp({
     aiConsent: () => Promise.resolve(true),
   }),
   scenes: scenesOn(db),
+  switches: switchesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: createUnlocks({
     store: createPostgresUnlockStore(db),
