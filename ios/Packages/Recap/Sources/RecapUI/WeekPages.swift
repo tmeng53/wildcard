@@ -6,36 +6,47 @@ import RecapDomain
 import SportsUI
 import SwiftUI
 
-/// 你的一周: your character hops Monday to Sunday and does each day: that day's sport, a doze on
-/// a rest day, lying flat (躺平) on a 请假条 day. The count goes up as each trained day lights.
+/// 你的一周: the count and the AI's line, and on the ground's edge the whole week at once,
+/// Monday to Sunday, each day's dot with what it was under it. Nothing staged: the page reads the
+/// moment it opens. The reader's character stands over the last day of the sport they trained
+/// most and does its move, in its kit; the meals and reactions sit under the week.
 struct MyWeekPage: View {
     let week: RecapDomain.MyWeek
     let page: PageContext
     @Environment(\.sceneTheme) private var theme
-    /// Where the title and the count end, which the day's bubble keeps clear of.
-    @State private var titleBottom = 0.0
-
-    private var beats: MyWeekBeats { MyWeekBeats(days: week.days) }
 
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
             let row = proxy.size.height - StoryLayout.groundWeek
-            let spacing = (width - 2 * Space.xl) / 7
-            let xs = (0..<7).map { Space.xl + spacing * (Double($0) + 0.5) }
-            let beat = page.moves ? beats.beat(at: page.time) : nil
+            let spacing = (width - 2 * Space.l) / 7
+            let spots = (0..<7).map { Space.l + spacing * (Double($0) + 0.5) }
             ZStack(alignment: .topLeading) {
                 Ground(height: StoryLayout.groundWeek)
-                ForEach(Array(week.days.enumerated()), id: \.offset) { index, day in
-                    DayDot(index: index, kind: day.kind, isLit: isLit(index))
-                        .scaleEffect(1 + 0.16 * bump(index))
-                        .position(x: xs[min(index, 6)], y: row)
+                page.character(page.cast.viewer, act: Act(clip: week.topSport.weekClip, start: 0.3))
+                    .standing(
+                        feetAt: CGPoint(x: spots[min(week.standsOn, 6)], y: row - DayDot.size / 2 - Space.xxs),
+                        scale: Self.scale)
+                ForEach(Array(week.days.prefix(7).enumerated()), id: \.offset) { index, day in
+                    let start = Double(index) * 0.04
+                    VStack(spacing: Space.xs) {
+                        DayDot(index: index, kind: day.kind)
+                        DayName(kind: day.kind)
+                            .typeStyle(TypeRamp.caption)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                    }
+                    .frame(width: spacing)
+                    .scaleEffect(0.9 + 0.1 * page.pop(start, start + 0.32))
+                    .opacity(page.ramp(start, start + 0.12))
+                    .accessibilityElement(children: .combine)
+                    .position(x: spots[index], y: row + Space.xs + Space.xxs)
                 }
-                walker(beat: beat, xs: xs, row: row, width: width)
                 stats
                     .padding(.horizontal, Space.l)
                     .frame(width: width, alignment: .leading)
-                    .position(x: width / 2, y: row + StoryLayout.groundWeek / 2)
+                    .position(x: width / 2, y: row + StoryLayout.groundWeek - Self.statsAboveBottom)
             }
         }
         .overlay(alignment: .top) {
@@ -43,7 +54,7 @@ struct MyWeekPage: View {
                 PageTitle(label: Text("本周", bundle: .module), title: Text("你的一周", bundle: .module))
                 HStack(alignment: .top, spacing: Space.l) {
                     VStack(alignment: .leading, spacing: Space.xxs) {
-                        Score(count: litCount, goal: week.plan, size: .story)
+                        Score(count: week.trainedDays, goal: week.plan, size: .story)
                         Text("训练天数", bundle: .module).typeStyle(TypeRamp.footnote)
                     }
                     if let line = week.line {
@@ -52,35 +63,15 @@ struct MyWeekPage: View {
                             .padding(.top, Space.xl)
                     }
                 }
-                .foregroundStyle(Color(role: .fgOnScene, in: theme))
                 .padding(.horizontal, Space.l)
             }
-            .onGeometryChange(for: Double.self) {
-                $0.size.height
-            } action: {
-                titleBottom = $0
-            }
+            .foregroundStyle(Color(role: .fgOnScene, in: theme))
         }
     }
 
-    private func isLit(_ index: Int) -> Bool {
-        guard page.moves else { return true }
-        return beats.beats.indices.contains(index) && page.time >= beats.beats[index].land
-    }
-
-    /// The day's dot swells as the character lands on it.
-    private func bump(_ index: Int) -> Double {
-        guard page.moves, beats.beats.indices.contains(index) else { return 0 }
-        let land = beats.beats[index].land
-        return sin(page.ramp(land, land + 0.22) * .pi)
-    }
-
-    private var litCount: Int {
-        week.days.indices.filter { index in
-            if case .trained = week.days[index].kind { return isLit(index) }
-            return false
-        }.count
-    }
+    private static let scale = 0.5
+    /// Where the meals and reactions sit: their centre this far over the bottom of the page.
+    private static let statsAboveBottom = 88.0
 
     private var stats: some View {
         HStack(alignment: .top) {
@@ -99,87 +90,31 @@ struct MyWeekPage: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
-
-    /// The reader's character: on a day while its move plays, hopping to the next one after.
-    @ViewBuilder
-    private func walker(beat: MyWeekBeats.Beat?, xs: [Double], row: Double, width: Double) -> some View {
-        let feet = row - DayDot.size / 2
-        if let beat {
-            let day = min(beat.day, 6)
-            let hop = page.ramp(beat.end, beat.end + MyWeekBeats.hop)
-            let next = min(day + 1, 6)
-            let hopping = page.time >= beat.end && beat.day < week.days.count - 1
-            let across = hopping ? xs[day] + (xs[next] - xs[day]) * hop : xs[day]
-            let y = feet - (hopping ? 34 * sin(hop * .pi) : 0)
-            let playing = page.time < beat.end
-            ZStack {
-                page.character(
-                    page.cast.viewer, act: Act(clip: beat.clip, start: beat.land, hold: beat.end - beat.land),
-                    kit: playing ? page.wardrobe.kit(for: beat.clip) : nil
-                )
-                .standing(feetAt: CGPoint(x: across, y: y), scale: 0.56)
-                if playing, beat.clip != nil {
-                    DayBubble(kind: week.days[beat.day].kind)
-                        .opacity(page.ramp(beat.land, beat.land + 0.12) * (1 - page.ramp(beat.end - 0.12, beat.end)))
-                        .position(bubbleSpot(feet: CGPoint(x: across, y: y), width: width))
-                }
-            }
-        } else {
-            page.character(page.cast.viewer).standing(feetAt: CGPoint(x: xs[0], y: feet), scale: 0.56)
-        }
-    }
 }
 
-extension MyWeekPage {
-    /// Over the character's head, just clear of it. Where that would reach the count, the bubble
-    /// comes down to just under the count, still over the head, and only where even that would
-    /// cover the face (a short screen) does it go beside the head, on the side with more room,
-    /// there too just under the count.
-    fileprivate func bubbleSpot(feet: CGPoint, width: Double) -> CGPoint {
-        let highest = titleBottom + Space.s + Self.bubbleHalfHeight
-        let over = feet.y - Self.bubbleOverHead
-        if over >= highest { return CGPoint(x: feet.x, y: over) }
-        if highest <= feet.y - Self.lowestOverHead { return CGPoint(x: feet.x, y: highest) }
-        let side = feet.x < width / 2 ? 1.0 : -1.0
-        return CGPoint(x: feet.x + side * Self.bubbleBeside, y: highest)
-    }
-
-    /// The bubble's centre above the feet: just over the head (the character stands about 130
-    /// points tall at the page's scale), and the lowest it may come and still read as over the head.
-    private static let bubbleOverHead = 160.0
-    private static let lowestOverHead = 150.0
-    /// How far beside the character the bubble's centre sits.
-    private static let bubbleBeside = 76.0
-    private static let bubbleHalfHeight = 20.0
-}
-
-/// One day of the week under the character: lit in the accent when trained or on leave, grey on
-/// a rest day, an outline when nothing was checked in.
+/// One day of the week on the ground's edge: filled in the accent when trained, grey on a rest
+/// day or a 请假条, an outline when nothing was checked in.
 private struct DayDot: View {
     static let size: Double = 30
     let index: Int
     let kind: DayKind
-    let isLit: Bool
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        let filled: Bool = {
-            switch kind {
-            case .trained, .disclaimer: isLit
-            case .rest, .none: false
-            }
-        }()
         Text(Self.weekday(index), bundle: .module)
             .typeStyle(TypeRamp.footnoteEmphasis)
-            .foregroundStyle(Color(role: filled ? .fgOnAccent : .fgMuted, in: theme))
+            .foregroundStyle(Color(role: kind.isTrained ? .fgOnAccent : .fgMuted, in: theme))
             .frame(width: Self.size, height: Self.size)
             .background {
-                if filled {
-                    Circle().fill(Color(role: .bgAccent, in: theme))
-                } else if kind == .rest, isLit {
-                    Circle().fill(Color(role: .bgSubtle, in: theme))
-                } else {
-                    Circle().strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.selectionStroke)
+                switch kind {
+                case .trained: Circle().fill(Color(role: .bgAccent, in: theme))
+                case .rest, .disclaimer: Circle().fill(Color(role: .bgSubtle, in: theme))
+                case .none:
+                    ZStack {
+                        Circle().fill(Color(role: .bgCanvas, in: theme))
+                        Circle().strokeBorder(
+                            Color(role: .borderDefault, in: theme), lineWidth: Sizing.selectionStroke)
+                    }
                 }
             }
     }
@@ -189,21 +124,17 @@ private struct DayDot: View {
     }
 }
 
-/// What the day was, in a bubble over the character: the sport, 休息, or 请假条.
-private struct DayBubble: View {
+/// What a day was, in a word: the sport, 休息 or 请假; blank with nothing checked in.
+private struct DayName: View {
     let kind: DayKind
 
     var body: some View {
-        SpeechBubble(text, kind: .line, on: .scene)
-    }
-
-    private var text: Text {
         switch kind {
-        case .trained(let sport?): sport.name
-        case .trained(nil): Text("练了", bundle: .module)
+        case .trained(let sport?): sport.cardName
+        case .trained(nil): Text("训练", bundle: .module)
         case .rest: Text("休息", bundle: .module)
-        case .disclaimer: Text("请假条", bundle: .module)
-        case .none: Text(verbatim: "")
+        case .disclaimer: Text("请假", bundle: .module)
+        case .none: Text(verbatim: " ").accessibilityHidden(true)
         }
     }
 }

@@ -7113,6 +7113,8 @@ extension Components {
                 public var podium: Components.Schemas.StoryPodium?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek`.
                 public var myWeek: Components.Schemas.StoryMyWeek?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squadWeek`.
+                public var squadWeek: Components.Schemas.StorySquadWeek?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/hottest`.
                 public var hottest: Components.Schemas.StoryHottest?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals`.
@@ -7171,6 +7173,7 @@ extension Components {
                 ///   - members: Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
                 ///   - podium:
                 ///   - myWeek:
+                ///   - squadWeek:
                 ///   - hottest:
                 ///   - meals:
                 ///   - bestDisclaimer:
@@ -7186,6 +7189,7 @@ extension Components {
                     members: [Components.Schemas.StoryMember],
                     podium: Components.Schemas.StoryPodium? = nil,
                     myWeek: Components.Schemas.StoryMyWeek? = nil,
+                    squadWeek: Components.Schemas.StorySquadWeek? = nil,
                     hottest: Components.Schemas.StoryHottest? = nil,
                     meals: Components.Schemas.StoryMeals? = nil,
                     bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
@@ -7201,6 +7205,7 @@ extension Components {
                     self.members = members
                     self.podium = podium
                     self.myWeek = myWeek
+                    self.squadWeek = squadWeek
                     self.hottest = hottest
                     self.meals = meals
                     self.bestDisclaimer = bestDisclaimer
@@ -7217,6 +7222,7 @@ extension Components {
                     case members
                     case podium
                     case myWeek
+                    case squadWeek
                     case hottest
                     case meals
                     case bestDisclaimer
@@ -7269,6 +7275,8 @@ extension Components {
                 public var podium: Components.Schemas.StoryPodium?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek`.
                 public var myWeek: Components.Schemas.StoryMyWeek?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squadWeek`.
+                public var squadWeek: Components.Schemas.StorySquadWeek?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/hottest`.
                 public var hottest: Components.Schemas.StoryHottest?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals`.
@@ -7294,6 +7302,7 @@ extension Components {
                 ///   - members: Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
                 ///   - podium:
                 ///   - myWeek:
+                ///   - squadWeek:
                 ///   - hottest:
                 ///   - meals:
                 ///   - bestDisclaimer:
@@ -7308,6 +7317,7 @@ extension Components {
                     members: [Components.Schemas.StoryMember],
                     podium: Components.Schemas.StoryPodium? = nil,
                     myWeek: Components.Schemas.StoryMyWeek? = nil,
+                    squadWeek: Components.Schemas.StorySquadWeek? = nil,
                     hottest: Components.Schemas.StoryHottest? = nil,
                     meals: Components.Schemas.StoryMeals? = nil,
                     bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
@@ -7322,6 +7332,7 @@ extension Components {
                     self.members = members
                     self.podium = podium
                     self.myWeek = myWeek
+                    self.squadWeek = squadWeek
                     self.hottest = hottest
                     self.meals = meals
                     self.bestDisclaimer = bestDisclaimer
@@ -7337,6 +7348,7 @@ extension Components {
                     case members
                     case podium
                     case myWeek
+                    case squadWeek
                     case hottest
                     case meals
                     case bestDisclaimer
@@ -7561,25 +7573,91 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/StoryDay/sport`.
             public var sport: Swift.String?
+            /// For a trained day: the minutes its 练了 logged, summed; missing when none did (minutes are optional) or in a week frozen before they were kept.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryDay/minutes`.
+            public var minutes: Swift.Int?
             /// Creates a new `StoryDay`.
             ///
             /// - Parameters:
             ///   - day:
             ///   - kind: A 练了 wins over a 请假条, which wins over a planned rest day.
             ///   - sport: For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own.
+            ///   - minutes: For a trained day: the minutes its 练了 logged, summed; missing when none did (minutes are optional) or in a week frozen before they were kept.
             public init(
                 day: Swift.String,
                 kind: Components.Schemas.StoryDay.KindPayload,
-                sport: Swift.String? = nil
+                sport: Swift.String? = nil,
+                minutes: Swift.Int? = nil
             ) {
                 self.day = day
                 self.kind = kind
                 self.sport = sport
+                self.minutes = minutes
             }
             public enum CodingKeys: String, CodingKey {
                 case day
                 case kind
                 case sport
+                case minutes
+            }
+        }
+        /// 全队运动总结: every member’s week, for the squad’s days trained, the sports it trained most and the week’s fun numbers. Missing when nobody trained.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StorySquadWeek`.
+        public struct StorySquadWeek: Codable, Hashable, Sendable {
+            /// Everyone in `members`, in the same order.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StorySquadWeek/members`.
+            public var members: [Components.Schemas.StorySquadWeekMember]
+            /// Creates a new `StorySquadWeek`.
+            ///
+            /// - Parameters:
+            ///   - members: Everyone in `members`, in the same order.
+            public init(members: [Components.Schemas.StorySquadWeekMember]) {
+                self.members = members
+            }
+            public enum CodingKeys: String, CodingKey {
+                case members
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StorySquadWeekMember`.
+        public struct StorySquadWeekMember: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StorySquadWeekMember/member`.
+            public var member: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StorySquadWeekMember/trainedDays`.
+            public var trainedDays: Swift.Int
+            /// Monday first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StorySquadWeekMember/days`.
+            public var days: [Components.Schemas.StoryDay]
+            /// Reactions on their posts that week, for 互相加油.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StorySquadWeekMember/reactionsReceived`.
+            public var reactionsReceived: Swift.Int
+            /// Creates a new `StorySquadWeekMember`.
+            ///
+            /// - Parameters:
+            ///   - member:
+            ///   - trainedDays:
+            ///   - days: Monday first.
+            ///   - reactionsReceived: Reactions on their posts that week, for 互相加油.
+            public init(
+                member: Swift.String,
+                trainedDays: Swift.Int,
+                days: [Components.Schemas.StoryDay],
+                reactionsReceived: Swift.Int
+            ) {
+                self.member = member
+                self.trainedDays = trainedDays
+                self.days = days
+                self.reactionsReceived = reactionsReceived
+            }
+            public enum CodingKeys: String, CodingKey {
+                case member
+                case trainedDays
+                case days
+                case reactionsReceived
             }
         }
         /// The signed-in member’s check-in with the most reactions at the awards, the latest on a tie. No AI writes it. Missing when none of theirs had any, or it was deleted since.

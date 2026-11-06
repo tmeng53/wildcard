@@ -17,7 +17,7 @@ private let checkIn = CheckInID(UUID())
 
 private func story(
     _ status: WeekStory.Status = .ready, order: [PageID]? = nil, podium: Bool = true, titles: Bool = true,
-    meals: Bool = true, disclaimer: Bool = true
+    meals: Bool = true, disclaimer: Bool = true, squadWeek: Bool = true
 ) throws -> WeekStory {
     WeekStory(
         status: status, squad: SquadID(UUID()), squadName: "晨跑五人组",
@@ -26,6 +26,7 @@ private func story(
         podium: podium ? Podium(champion: id(1), sides: [id(2), id(3), id(4)]) : nil,
         titles: titles ? [MemberTitles(member: id(1), titles: [.init(title: "早八战神")])] : [],
         myWeek: MyWeek(plan: 5, days: [], healthyMeals: 3, cheatMeals: 1, reactionsReceived: 12),
+        squadWeek: squadWeek ? SquadWeek(members: [.init(member: id(1), days: [.trained("run")])]) : nil,
         hottest: Hottest(checkIn: checkIn, day: try day(16), kind: .trained, reactions: []),
         meals: meals ? Meals(healthy: 14, cheat: 5, eaters: []) : nil,
         bestDisclaimer: disclaimer
@@ -40,6 +41,7 @@ private func ids(_ pages: [StoryPage]) -> [String] {
         case .podium: "podium"
         case .titles: "titles"
         case .myWeek: "myWeek"
+        case .squadWeek: "squadWeek"
         case .hottest: "hottest"
         case .meals: "meals"
         case .bestDisclaimer: "bestDisclaimer"
@@ -50,18 +52,78 @@ private func ids(_ pages: [StoryPage]) -> [String] {
 
 @Test func aReadyStoryPlaysTheAwardsFirstAndTheEndingLast() throws {
     #expect(
-        ids(try story().pages) == ["podium", "titles", "myWeek", "hottest", "meals", "bestDisclaimer", "ending"])
+        ids(try story().pages) == [
+            "podium", "titles", "myWeek", "squadWeek", "hottest", "meals", "bestDisclaimer", "ending",
+        ])
 }
 
 @Test func theAIOrdersTheMiddleButTheEndingStaysLastAndNothingPlaysTwice() throws {
     let order: [PageID] = [.podium, .titles, .ending, .meals, .hottest, .meals, .myWeek]
-    #expect(ids(try story(order: order).pages) == ["podium", "titles", "meals", "hottest", "myWeek", "ending"])
+    #expect(
+        ids(try story(order: order).pages) == [
+            "podium", "titles", "meals", "hottest", "myWeek", "squadWeek", "ending",
+        ])
+}
+
+@Test func theSquadsWeekFollowsYourWeekWhereverItGoes() throws {
+    let order: [PageID] = [.myWeek, .podium, .ending]
+    #expect(ids(try story(order: order).pages) == ["myWeek", "squadWeek", "podium", "ending"])
+    let withoutYours: [PageID] = [.podium, .meals]
+    #expect(ids(try story(order: withoutYours).pages) == ["podium", "meals", "squadWeek", "ending"])
+    #expect(ids(try story(squadWeek: false).pages).contains("squadWeek") == false)
+}
+
+@Test func theSquadsWeekAddsUpDaysAndRanksSports() {
+    let week = SquadWeek(members: [
+        .init(member: id(1), days: [.trained("run"), .rest, .trained("yoga"), .trained("run"), .none]),
+        .init(member: id(2), days: [.trained("yoga"), .trained(nil), .disclaimer, .trained("yoga")]),
+        .init(member: id(3), days: [.rest, .none]),
+    ])
+    #expect(week.trainedDays == 6)
+    #expect(week.sports.map(\.sport) == ["yoga", "run"])
+    #expect(week.sports.map(\.days) == [3, 2])
+    #expect(week.disclaimers == SquadWeek.Disclaimers(days: 1, most: id(2)))
+    #expect(week.members.map(\.topSport) == ["run", "yoga", nil])
+    #expect(week.members.map(\.topSport.weekClip) == [.sport("run"), .sport("yoga"), .award(.cheer)])
+}
+
+@Test func theSquadsWeekFindsItsFunNumbers() {
+    let week = SquadWeek(members: [
+        .init(
+            member: id(1),
+            days: [.trained("run"), .trained("run"), .trained("yoga"), .rest, .trained("run"), .none, .none],
+            minutes: [30, nil, 45, nil, 60, nil, nil], reactionsReceived: 3),
+        .init(
+            member: id(2),
+            days: [.none, .trained("run"), .trained(nil), .trained("run"), .trained("run"), .none, .none],
+            minutes: [nil, 90, nil, nil, nil, nil, nil], reactionsReceived: 5),
+        .init(
+            member: id(3), days: [.none, .none, .trained("yoga"), .none, .none, .none, .none],
+            minutes: [nil, nil, 20, nil, nil, nil, nil]),
+    ])
+    #expect(week.bestDay == SquadWeek.BestDay(weekday: 2, members: 3))
+    #expect(week.longestStreak == SquadWeek.Streak(member: id(2), days: 4, from: 1))
+    #expect(week.longestStreak?.through == 4)
+    #expect(week.reactions == 8)
+    #expect(week.disclaimers == nil)
+    #expect(week.time == SquadWeek.TrainingTime(minutes: 245, longest: .init(member: id(2), minutes: 90)))
+}
+
+@Test func aFewMinutesOrOneDayInARowAreNoFunNumber() {
+    let week = SquadWeek(members: [
+        .init(member: id(1), days: [.trained("run"), .rest, .trained("run"), .none], minutes: [40]),
+        .init(member: id(2), days: [.none, .trained("yoga"), .none, .trained("yoga")]),
+    ])
+    #expect(week.bestDay == SquadWeek.BestDay(weekday: 0, members: 1))
+    #expect(week.longestStreak == nil)
+    #expect(week.reactions == 0)
+    #expect(week.time == nil)
 }
 
 @Test func aPageWithNoDataIsLeftOut() throws {
     #expect(
         ids(try story(podium: false, meals: false, disclaimer: false).pages) == [
-            "titles", "myWeek", "hottest", "ending",
+            "titles", "myWeek", "squadWeek", "hottest", "ending",
         ])
     #expect(ids(try story(titles: false).pages).contains("titles") == false)
 }
@@ -69,7 +131,7 @@ private func ids(_ pages: [StoryPage]) -> [String] {
 @Test func aPendingStoryWaitsOnlyOnItsTitles() throws {
     #expect(
         ids(try story(.pending).pages) == [
-            "podium", "pending", "myWeek", "hottest", "meals", "bestDisclaimer", "ending",
+            "podium", "pending", "myWeek", "squadWeek", "hottest", "meals", "bestDisclaimer", "ending",
         ])
 }
 
@@ -107,12 +169,19 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(meal.clip == .award(.cheer))
 }
 
-@Test func eachDayPlaysItsSportRestOrDisclaimerMove() throws {
-    #expect(DayKind.trained("tennis").clip == .sport("tennis"))
-    #expect(DayKind.trained(nil).clip == .sport(nil))
-    #expect(DayKind.rest.clip?.name == "doze")
-    #expect(DayKind.disclaimer.clip?.name == "flat")
-    #expect(DayKind.none.clip == nil)
+@Test func yourWeekPlaysTheSportYouTrainedMost() throws {
+    let days: [DayKind] = [.trained("tennis"), .rest, .trained("run"), .trained("run"), .disclaimer]
+    let week = MyWeek(
+        plan: 4, days: try days.enumerated().map { .init(day: try day(13 + $0.offset), kind: $0.element) },
+        healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)
+    #expect(week.trainedDays == 3)
+    #expect(week.topSport.weekClip == .sport("run"))
+    #expect(week.standsOn == 3)
+    let rested = MyWeek(
+        plan: 4, days: [.init(day: try day(13), kind: .rest), .init(day: try day(14), kind: .trained(nil))],
+        healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)
+    #expect(rested.topSport.weekClip == .award(.cheer))
+    #expect(rested.standsOn == 1)
     #expect(StoryClip.eat(.cheat).name == "eat-treat")
     #expect(StoryClip.tossFlyer.name == "toss-flyer")
 }

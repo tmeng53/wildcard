@@ -21,6 +21,8 @@ export interface StoryDay {
   readonly kind: 'trained' | 'rest' | 'disclaimer' | 'none';
   /** For a trained day: its first 练了's listed sport; missing for a sport of the member's own. */
   readonly sport?: string;
+  /** For a trained day: the minutes its 练了 logged, when any did (minutes are never asked for). */
+  readonly minutes?: number;
 }
 
 /** One member's week, for 你的一周. */
@@ -192,7 +194,16 @@ function dayOf(
   if (trained?.kind === 'trained') {
     // A sport of the member's own is their words, which the frozen 战报 keeps only with the post.
     const { sport } = trained.training;
-    return sport === 'custom' ? { day, kind: 'trained' } : { day, kind: 'trained', sport };
+    const minutes = posts.reduce(
+      (sum, each) => sum + (each.kind === 'trained' ? (each.training.minutes ?? 0) : 0),
+      0,
+    );
+    return {
+      day,
+      kind: 'trained',
+      ...(sport === 'custom' ? {} : { sport }),
+      ...(minutes === 0 ? {} : { minutes }),
+    };
   }
   if (posts.some(({ kind }) => kind === 'disclaimer')) return { day, kind: 'disclaimer' };
   if (planned?.kind === 'rest') return { day, kind: 'rest' };
