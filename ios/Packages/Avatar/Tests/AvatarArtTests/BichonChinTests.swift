@@ -21,7 +21,9 @@ import Testing
     }
 }
 
-/// Each half stays whole while its arm hangs or swings in idle, and is gone once the arm is up.
+/// Each half stays whole while its arm hangs or swings in idle (24 degrees at most), and is gone once the
+/// arm is past 26.5: a switch, not a slow fade, since reactions hold arms at every angle from 25 up and a
+/// half-faded fluff would show the sleeve through it.
 @Test func aBichonsFrontFluffFollowsItsArm() throws {
     let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "bichon"]))
     let left = try figure.index("chinFrontL")
@@ -34,9 +36,10 @@ import Testing
     }
     #expect(try shown(left, armL: 0, armR: 0) == 1)
     #expect(try shown(left, armL: 24, armR: -24) == 1)
+    #expect(try shown(left, armL: 30, armR: 0) == 0)
     #expect(try shown(left, armL: 90, armR: 0) == 0)
     #expect(try shown(right, armL: 90, armR: 0) == 1)
     #expect(try shown(right, armL: 0, armR: -90) == 0)
-    let half = try shown(left, armL: 42.5, armR: 0)
+    let half = try shown(left, armL: 26.25, armR: 0)
     #expect(half > 0.4 && half < 0.6)
 }
