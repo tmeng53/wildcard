@@ -101,7 +101,7 @@ struct MainTabs: View {
             today.tellUnlocks(
                 with: UnlockNotices(
                     banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },
-                    badge: { WardrobeBadge($0, item: $1) })
+                    badge: { WardrobeBadge($0, item: $1) }, picture: { WardrobePicture($0, item: $1) })
             )
         }
         // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the
@@ -153,6 +153,16 @@ struct MainTabs: View {
                 .environment(\.sceneTheme, today.scene)
             }
         }
+        // A celebration broadcast (「感恩节快到了」) over everything, until its button or 先不了.
+        .cardPopup(
+            isPresented: Binding(
+                get: { today.celebration != nil }, set: { if !$0 { today.closeCelebration(opening: false) } })
+        ) {
+            if let celebration = today.celebration {
+                BroadcastCelebration(model: today, broadcast: celebration)
+            }
+        }
+        .haptic(.appear, trigger: today.celebration?.id) { _, id in id != nil }
         .cardPopup(isPresented: $showsCoachCard) {
             CoachCardPopup(note: today.coachLine, squad: squad) { opensFeed in
                 showsCoachCard = false

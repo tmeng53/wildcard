@@ -101,10 +101,15 @@ enum LaunchOptions {
     }
 
     /// The sample member's 通知: the sample squad's last two weeks, or none with
-    /// `-uitest-no-notices`, to see the page empty.
+    /// `-uitest-no-notices`, to see the page empty. `-uitest-broadcast trot|jingle` adds that
+    /// holiday's pre-holiday broadcast, told just now, which 今天 shows on its celebration card.
     static var notices: any NoticeSource {
-        ProcessInfo.processInfo.arguments.contains("-uitest-no-notices")
-            ? InMemoryNoticeSource.empty : InMemoryNoticeSource.sample(now: now())
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-uitest-no-notices") { return InMemoryNoticeSource.empty }
+        guard let flag = arguments.firstIndex(of: "-uitest-broadcast"), flag + 1 < arguments.count else {
+            return InMemoryNoticeSource.sample(now: now())
+        }
+        return InMemoryNoticeSource.sample(now: now(), latest: [InMemoryNoticeSource.celebration(arguments[flag + 1])])
     }
 
     /// `-uitest-empty-feed`: 动态 with no posts, to see its empty scene.

@@ -70,6 +70,13 @@ public struct EditorChoices: Hashable, Sendable {
         (self.species, self.stores, self.wear, self.props) = (species, stores, wear, props)
     }
 
+    /// The slot `piece` is worn in: a clothing slot for a piece on a rack, `prop` for a prop; nil
+    /// for one this art doesn't have.
+    public func slot(of piece: String) -> Slot? {
+        if let worn = wear.first(where: { $0.value.contains { $0.id == piece } }) { return worn.key }
+        return props.contains { $0.id == piece } ? Slot("prop") : nil
+    }
+
     /// The only `version` of `editor.json` this build reads.
     public static let currentVersion = 4
 

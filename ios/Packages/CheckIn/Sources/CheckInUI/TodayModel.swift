@@ -155,6 +155,8 @@ public final class TodayModel {
     /// The `NoticeBanner` showing at the top, and those waiting for it (`TodayModel+Notices.swift`).
     var notice: Notice?
     var pendingNotices: [Notice] = []
+    /// A broadcast told in its celebration style, its card up in the banner's turn until answered.
+    public internal(set) var celebration: Broadcast?
     /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
     @ObservationIgnored var unlockNotices: UnlockNotices?
     /// Where a broadcast's banner, or 「还有新通知」, opens its place, as the app routes every notice.
