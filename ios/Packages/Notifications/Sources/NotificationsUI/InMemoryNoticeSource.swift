@@ -28,8 +28,10 @@ public actor InMemoryNoticeSource: NoticeSource {
         seen = max(seen ?? through, through)
     }
 
-    /// Nothing is told live here: it listens until the app stops.
+    /// Nothing is told live here: it says it is ready, as the server's stream does on connecting,
+    /// so the inbox reads its newest page at launch, then listens until the app stops.
     public func listen(_ heard: @escaping @Sendable (LiveNotice) async -> Void) async throws(NotificationsError) {
+        await heard(.ready)
         let (quiet, open) = AsyncStream.makeStream(of: Never.self)
         // Ends only when the listening task is cancelled.
         for await _ in quiet {}
