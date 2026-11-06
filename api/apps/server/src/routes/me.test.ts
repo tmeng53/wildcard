@@ -147,7 +147,12 @@ describe('GET /me', () => {
 
   it('says whether the member is on the admin list', async () => {
     const { token, userId } = await signUp();
-    await sql`insert into public.admins (member_id) values (${userId})`.execute(db);
+    const db = createDatabase(config.databaseUrl);
+    try {
+      await sql`insert into public.admins (member_id) values (${userId})`.execute(db);
+    } finally {
+      await db.destroy();
+    }
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
       { version: 1, userId, profile: null, isAdmin: true },
