@@ -57,7 +57,7 @@ struct NeutralTests {
         (.fgDefault, .bgSubtle),
         (.fgMuted, .bgCanvas),
         (.fgMuted, .bgSubtle),
-        (.fgDanger, .bgCanvas), (.fgDanger, .bgSubtle), (.fgOnLimited, .bgLimited),
+        (.fgDanger, .bgCanvas), (.fgDanger, .bgSubtle), (.fgLimited, .bgCanvas),
     ])
     func neutralTextIsReadable(text: ColorRole, background: ColorRole) {
         #expect(text.color(in: .pool).contrastRatio(with: background.color(in: .pool)) >= 4.5)

@@ -157,7 +157,6 @@ struct SportsTip: View {
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("street.tip")
     }
-
 }
 
 /// A sport as a mist pill, in 「练这些运动解锁」 and under the street's storefront.

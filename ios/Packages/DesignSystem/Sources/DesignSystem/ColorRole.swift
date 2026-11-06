@@ -179,11 +179,9 @@ public enum ColorRole: String, CaseIterable, Sendable {
     /// The words of an action that can't be taken back, such as 解雇 and 确认解雇. The button
     /// keeps its shape; only its words turn red. Never a fill, never for errors.
     case fgDanger
-    /// The tag a limited store wears (冬季限定), the same for every limit unless its data names
-    /// another. Never changes with the scene.
-    case bgLimited
-    /// The words on `bgLimited`.
-    case fgOnLimited
+    /// The words of the tag a limited store wears (冬季限定), on a wash of the same colour; the
+    /// same for every limit unless its data names another. Never changes with the scene.
+    case fgLimited
 
     /// The brand's colour: primary buttons and selection on brand screens. Never changes with the scene.
     case bgBrand
@@ -252,8 +250,7 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .fgOnInkMuted: .fixed(Palette.inkTertiary)
         case .borderOnInk: .fixed(Palette.inkLine)
         case .fgDanger: .fixed(Palette.danger)
-        case .bgLimited: .fixed(Palette.limited)
-        case .fgOnLimited: .fixed(Palette.white)
+        case .fgLimited: .fixed(Palette.limited)
         case .bgBrand: .fixed(Palette.brand)
         case .fgOnBrand: .fixed(Palette.onBrand)
         case .bgAccent: .scene(\.accent)

@@ -108,7 +108,7 @@ private struct RackHeader: View {
             .typeStyle(TypeRamp.footnote)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
             .lineLimit(1)
-        LimitedTag(store: store.id)
+        if let tag = LimitedTag(store: store.id) { tag }
         Spacer(minLength: 0)
         if let sports = model.sports(of: store.id) {
             Button {
@@ -196,8 +196,8 @@ enum StoreCopy {
         "deuce": "网球类 3 次解锁",
     ]
     private static let limits = ["powder": "冬季限定"]
-    /// Each bundled limit's tag colour (冬季限定: ice blue); an uploaded store names its own in
-    /// `names.json`.
-    static let limitColors = ["powder": RGBAColor(red: 0xCD, green: 0xEB, blue: 0xF8)]
+    /// Each bundled limit's tag colour (冬季限定: glacier blue); an uploaded store names its own
+    /// in `names.json`.
+    static let limitColors = ["powder": RGBAColor(red: 0x1E, green: 0x6A, blue: 0x9E)]
 }
 #endif

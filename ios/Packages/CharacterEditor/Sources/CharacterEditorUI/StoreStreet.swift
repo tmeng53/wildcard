@@ -123,7 +123,6 @@ struct StoreStreet: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
-
 }
 
 /// One store's front: a graphite cap and its striped awning in the store's colour, then the wall
@@ -315,20 +314,20 @@ enum StoreLook {
         return isLight(rgba) ? Color(role: .fgDefault, in: theme) : Color(rgba)
     }
 
-    /// The colour of a limited store's tag, so each kind of limit wears its own (冬季限定 ice
-    /// blue, 感恩节 orange, 圣诞 green): `names.json`'s, else the bundled one's, else nil for the
+    /// The colour of a limited store's tag, so each kind of limit wears its own (冬季限定 blue,
+    /// 感恩节 orange, 圣诞 green): `names.json`'s, else the bundled one's, else nil for the
     /// limited colour.
     static func limited(_ store: String) -> RGBAColor? {
         PlaceholderCharacter.names().stores[store]?.limitedColor ?? StoreCopy.limitColors[store]
     }
 
-    static func isLight(_ rgba: RGBAColor) -> Bool {
+    private static func isLight(_ rgba: RGBAColor) -> Bool {
         0.299 * Double(rgba.red) + 0.587 * Double(rgba.green) + 0.114 * Double(rgba.blue) > 160
     }
 }
 
-/// A limited store's tag (冬季限定), in the limited colour, or the colour `names.json` gives its
-/// limit, with ink words where that colour is too light for white.
+/// A limited store's tag (冬季限定): its words in the limit's colour on a wash of the same
+/// colour, the limited colour unless the limit names its own.
 struct LimitedTag: View {
     let word: Text
     let color: RGBAColor?
@@ -340,17 +339,15 @@ struct LimitedTag: View {
     }
 
     var body: some View {
-        let light = color.map(StoreLook.isLight) ?? false
+        let ink = color.map { Color($0) } ?? Color(role: .fgLimited, in: theme)
         word
             .typeStyle(TypeRamp.label)
-            .foregroundStyle(Color(role: light ? .fgDefault : .fgOnLimited, in: theme))
+            .foregroundStyle(ink)
             .lineLimit(1)
             .fixedSize()
             .padding(.horizontal, Space.xs - Space.xxs / 2)
             .frame(height: CoachTag.Size.small.height)
-            .background(
-                color.map { Color($0) } ?? Color(role: .bgLimited, in: theme),
-                in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
+            .background(ink.opacity(0.12), in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
     }
 }
 #endif
