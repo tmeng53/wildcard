@@ -237,3 +237,36 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     // Awards given to nobody (no one had agreed to AI use) still leave the week's facts.
     #expect(try story(titles: false).isPublished)
 }
+
+@Test func myWeekFindsItsStreakTimeAndTopSport() throws {
+    let kinds: [(DayKind, Int?)] = [
+        (.trained("run"), 30), (.rest, 99), (.trained("strength"), 80), (.trained("run"), 80),
+        (.disclaimer, nil), (.trained("yoga"), nil), (.none, nil),
+    ]
+    let week = MyWeek(
+        plan: 5,
+        days: try kinds.enumerated().map {
+            .init(day: try day(13 + $0.offset), kind: $0.element.0, minutes: $0.element.1)
+        }, healthyMeals: 3, cheatMeals: 1, reactionsReceived: 9)
+    #expect(week.days[1].minutes == nil)
+    #expect(week.longestStreak == MyWeek.Streak(days: 2, from: 2))
+    #expect(week.longestStreak?.through == 3)
+    #expect(week.time == MyWeek.TrainingTime(minutes: 190, longestDay: 2, longestMinutes: 80))
+    #expect(week.topSportDays == SquadWeek.SportDays(sport: "run", days: 2))
+}
+
+@Test func myWeekLeavesOutAStreakOfOneAndTooFewMinutes() throws {
+    let kinds: [(DayKind, Int?)] = [(.trained("run"), 45), (.rest, nil), (.trained("run"), nil), (.trained(nil), nil)]
+    let week = MyWeek(
+        plan: 3,
+        days: try kinds.enumerated().map {
+            .init(day: try day(13 + $0.offset), kind: $0.element.0, minutes: $0.element.1)
+        }, healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)
+    #expect(week.longestStreak == MyWeek.Streak(days: 2, from: 2))
+    #expect(week.time == nil)
+    let single = MyWeek(
+        plan: 3, days: [.init(day: try day(13), kind: .trained("run"), minutes: 20)],
+        healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)
+    #expect(single.longestStreak == nil)
+    #expect(single.time == MyWeek.TrainingTime(minutes: 20, longestDay: 0, longestMinutes: 20))
+}
