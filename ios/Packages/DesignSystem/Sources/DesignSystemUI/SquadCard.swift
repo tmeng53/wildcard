@@ -121,10 +121,10 @@ public enum SquadCardPage: Int, CaseIterable, Sendable, Hashable {
 /// picked day's line: what I trained and my meals; tapping a day picks it, today until then).
 /// One card of scene glass straight on the scene, no shadow: a swipe moves only what is inside it,
 /// and two dots at its foot say which page shows; tapping one goes there. Given `collapses`, a
-/// grabber under the dots, or a swipe up, folds it into `SquadCapsule`. The caller keeps `page`, so the card reopens on
-/// the page it was left on, and `pickedDay` (an index in `MyWeek.days`; nil for today). A
-/// `footer` (the evening's 今日赛况 tag) is the squad page's last row;
-/// the page keeps its height by drawing its rows closer.
+/// grabber under the dots, or a swipe up, folds it into `SquadCapsule`. The caller keeps `page`,
+/// so the card reopens showing the page it was left on, and `pickedDay` (an index in
+/// `MyWeek.days`; nil for today). A `footer` (the evening's 今日赛况 tag) is the squad page's last
+/// row; the page keeps its height by drawing its rows closer.
 public struct SquadCard<Avatar: View, Footer: View>: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -153,6 +153,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     }
 
     public var body: some View {
+        let anchor: UnitPoint = page == .squad ? .leading : .trailing
         VStack(spacing: 0) {
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
@@ -163,12 +164,13 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
                         .squadCardPage()
                         .id(SquadCardPage.mine)
                 }
-                // Both pages as tall as the taller one.
-                .fixedSize(horizontal: false, vertical: true)
+                .fixedSize(horizontal: false, vertical: true)  // Both pages as tall as the taller.
                 .scrollTargetLayout()
             }
             .scrollTargetBehavior(.paging)
             .scrollPosition(id: pagePosition)
+            .defaultScrollAnchor(anchor, for: .initialOffset)  // Reopened, it shows `page`,
+            .defaultScrollAnchor(anchor, for: .sizeChanges)  // also while its glass grows.
             .scrollIndicators(.hidden)
             PageDots(page: $page)
                 .padding(.bottom, Space.xs)
