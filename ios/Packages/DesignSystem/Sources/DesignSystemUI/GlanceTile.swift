@@ -48,6 +48,7 @@ public struct GlanceTile<Glimpse: View>: View {
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                         .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 Spacer(minLength: 0)
                 glimpse

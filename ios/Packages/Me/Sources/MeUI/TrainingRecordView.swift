@@ -34,14 +34,18 @@ struct TrainingRecordView: View {
                 ForEach(Array(record.columns.enumerated()), id: \.offset) { _, week in
                     VStack(spacing: Self.gap) {
                         ForEach(week) { day in
-                            cell(day)
+                            // The selected day's ring reaches past the gap: drawn over its neighbours.
+                            cell(day).zIndex(selected == day.day ? 1 : 0)
                         }
                     }
                     .frame(maxWidth: .infinity)
+                    .zIndex(week.contains { $0.day == selected } ? 1 : 0)
                 }
             }
             months
         }
+        // A container, so the id doesn't replace the days' own.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("me.record")
     }
 

@@ -154,7 +154,7 @@ struct ScheduleTile: View {
 
     var body: some View {
         GlanceTile(
-            figure: Text(verbatim: glance.map { "W\($0.number)" } ?? "W"),
+            figure: Text(verbatim: glance.map { "W\($0.number)" } ?? "–"),
             figureStyle: TypeRamp.scoreWeek, title: Text("出赛表", bundle: .module),
             caption: glance?.daysLeft.map { Text("这周还有 \($0) 天", bundle: .module) }, action: open
         ) {
