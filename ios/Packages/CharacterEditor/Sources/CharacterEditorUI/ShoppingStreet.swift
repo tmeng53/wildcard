@@ -64,6 +64,8 @@ public struct ShoppingStreetPage: View {
             .scrollIndicators(.hidden)
         }
         .background(Color(role: .bgCanvas, in: theme))
+        // The pop-up is modal: VoiceOver (and a UI test) reaches only it, not the rack under it.
+        .accessibilityHidden(model.arrival != nil)
         .swipesBack { if store != nil { model.leaveStore() } else { back() } }
         .overlay {
             if let arrival = model.arrival {
@@ -82,6 +84,8 @@ public struct ShoppingStreetPage: View {
             content: { claimed in ClaimedBanner(model: model, piece: claimed.id) }
         )
         .onAppear { model.didOpen() }
+        // A container, so its identifier doesn't replace the pop-up's (editor.arrival) and the rest.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("street.page")
     }
 

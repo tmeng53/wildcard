@@ -220,7 +220,8 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 30))
         XCTAssertTrue(card.label.contains("Workouts"), "the card isn't in English: \(card.label)")
         XCTAssertEqual(app.buttons["me.editCharacter"].label, "Dress up")
-        XCTAssertTrue(app.buttons["tab.me"].label.contains("Me"))
+        // In English the system tab bar's buttons come without the tab's identifier, so 我 is found by its words.
+        XCTAssertTrue(app.buttons["Me"].exists, "the 我 tab isn't in English")
         settle()
         keepScreenshot(named: "46-me-en")
         card.tap()
