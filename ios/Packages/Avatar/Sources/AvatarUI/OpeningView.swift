@@ -7,15 +7,17 @@ import Foundation
 import SwiftUI
 
 /// A full-screen opening an admin drew (a holiday's 「感恩节快乐」): its layers on the stage,
-/// moved by its clip once and its loop for as long as it shows, with the squad cheering where
-/// the timeline puts them and, once the clip has played, the button that enters. The stage
-/// fills the screen, cropping its edges on a phone of another shape. With Reduce Motion on, it
-/// opens on the clip's last frame, standing still, with the button already there.
+/// moved by its clip once and its loop for as long as it shows, with the squad where the
+/// timeline puts them, posed for a group photo so everyone shows whole, and, once the clip has
+/// played, the button that enters. The stage fills the screen, cropping its edges on a phone of
+/// another shape. With Reduce Motion on, it opens on the clip's last frame, standing still, with
+/// the button already there.
 public struct OpeningView<Label: View>: View {
     let opening: Opening
     let art: [String: ArtworkView]
     let squad: [CharacterPlayer]
     let language: String
+    let squadName: String?
     let label: Label
     let onPlayed: () -> Void
     let onEnter: () -> Void
@@ -24,16 +26,17 @@ public struct OpeningView<Label: View>: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// `language` picks each text layer's words (`zh-Hans`, `en`, `zh-Hant`), falling back to
-    /// `zh-Hans`; `onPlayed` runs once the clip has played (for the squad to cheer), and
-    /// `onEnter` when the button labelled `label` is tapped.
+    /// `zh-Hans`, and `squadName` fills their `{squad}`; `onPlayed` runs once the clip has played
+    /// (for the squad to cheer), and `onEnter` when the button labelled `label` is tapped.
     public init(
-        _ loaded: OpeningArt.Loaded, squad: [CharacterPlayer], language: String,
+        _ loaded: OpeningArt.Loaded, squad: [CharacterPlayer], squadName: String?, language: String,
         onPlayed: @escaping () -> Void = {}, onEnter: @escaping () -> Void, @ViewBuilder label: () -> Label
     ) {
         opening = loaded.opening
         art = loaded.art.mapValues(ArtworkView.init)
         self.squad = squad
         self.language = language
+        self.squadName = squadName
         self.onPlayed = onPlayed
         self.onEnter = onEnter
         self.label = label()
@@ -98,14 +101,14 @@ public struct OpeningView<Label: View>: View {
         case .art(let file):
             art[file].accessibilityHidden(true)
         case .text(let words, let color, let size, let font):
-            Text(verbatim: words[language] ?? words["zh-Hans"] ?? "")
+            Text(verbatim: Opening.words(words, language: language, squad: squadName))
                 .font(Self.font(font, size: size))
                 .foregroundStyle(Color(color))
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.5)
                 .lineLimit(2)
         case .squad:
-            SquadLineup(players: squad)
+            SquadPhotoView(players: squad)
         }
     }
 

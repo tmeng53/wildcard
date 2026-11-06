@@ -93,6 +93,8 @@ extension Notice {
         case .comment(_, let checkIn): .post(checkIn)
         case .coachNote(let note): .coachNote(note)
         case .broadcast(let broadcast): broadcast.action?.destination
+        // 小队, whose first card is the weekly goal.
+        case .goalSuggestion: .squad
         }
     }
 }

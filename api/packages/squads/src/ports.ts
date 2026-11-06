@@ -1,6 +1,8 @@
 import type { InviteCode } from './domain/invite-code.js';
 import type { Scene, ScenePick, SceneWeek } from './domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from './domain/squad.js';
+import type { GoalSuggestion } from './domain/goal-suggestion.js';
+import type { DaysPerMember, WeeklyGoalSetting } from './domain/weekly-goal.js';
 
 /**
  * Whether the member has consented to the current AI terms. Being in a squad needs it: the
@@ -13,6 +15,8 @@ export interface NewSquad {
   readonly name: SquadName;
   readonly inviteCode: InviteCode;
   readonly creator: MemberId;
+  /** The squad's weekly goal, counting from the week it is made: the creator's week. */
+  readonly goal: { readonly daysPerMember: DaysPerMember; readonly week: SceneWeek };
 }
 
 /**
@@ -103,6 +107,28 @@ export interface SquadStore {
     readonly actor: MemberId;
     readonly member: MemberId;
   }): Promise<CaptainOutcome>;
+  /**
+   * The squad's weekly goal settings, the earliest week first, a week's later settings after its
+   * earlier ones.
+   */
+  weeklyGoals(squad: SquadId): Promise<WeeklyGoalSetting[]>;
+  /**
+   * Sets the squad's weekly goal from `week` on, if `actor` is its captain; `unchanged` when that
+   * week's goal is that already.
+   */
+  setWeeklyGoal(change: {
+    readonly squad: SquadId;
+    readonly actor: MemberId;
+    readonly daysPerMember: DaysPerMember;
+    readonly week: SceneWeek;
+  }): Promise<CaptainOutcome>;
+  /** The higher goals suggested to the squad's captains, the earliest week first. */
+  goalSuggestions(squad: SquadId): Promise<GoalSuggestion[]>;
+  /**
+   * Keeps that `suggestion` was told to the squad's captain for its week, unless one already was
+   * that week: `taken` then, so a rerun tells nobody twice.
+   */
+  suggestGoal(squad: SquadId, suggestion: GoalSuggestion): Promise<'suggested' | 'taken'>;
   /** The squad's scene picks, every week's, the earliest first. */
   scenePicks(squad: SquadId): Promise<ScenePick[]>;
   /** Saves the week's scene, unless the week has one already. */

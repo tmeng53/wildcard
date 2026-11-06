@@ -26,9 +26,12 @@ public struct EditorChoices: Hashable, Sendable {
         public let id: String
         /// Whether the member can walk in: the server's street (`StreetStock`) says, never the art.
         public let isOpen: Bool
+        /// For a store the member hasn't earned yet: how many more 练了 open it, from the server's
+        /// street; nil when it doesn't say.
+        public let toGo: Int?
 
-        public init(id: String, isOpen: Bool = false) {
-            (self.id, self.isOpen) = (id, isOpen)
+        public init(id: String, isOpen: Bool = false, toGo: Int? = nil) {
+            (self.id, self.isOpen, self.toGo) = (id, isOpen, toGo)
         }
     }
 
@@ -155,6 +158,17 @@ extension PlaceholderCharacter {
         let path = "stores/\(store).svg"
         guard let svg = String(bytes: try file(path), encoding: .utf8) else { throw .missingFile(path) }
         return try Artwork.read(svg: svg, path: path)
+    }
+
+    /// A store's own colour, for its awning and name on 商店街: the first fill in its badge that
+    /// isn't a grey (white, mist or graphite), so a store uploaded with its badge brings its colour.
+    /// Nil for a badge drawn only in greys.
+    public static func storeColor(_ store: String) -> RGBAColor? {
+        guard let badge = try? storeBadge(store) else { return nil }
+        return badge.shapes.lazy.compactMap(\.fill).first { fill in
+            let channels = [fill.red, fill.green, fill.blue].map(Int.init)
+            return (channels.max() ?? 0) - (channels.min() ?? 0) > 40
+        }
     }
 
     /// The colors `variant` lets a look change in `slot`: its `tones.json`, or nil when its art

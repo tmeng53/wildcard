@@ -640,27 +640,31 @@ describe('GET /me/check-in-totals', () => {
   it('counts everything the member ever checked in by kind, 练了 by day', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me);
-    const yesterday = new Date(Date.now() - 24 * 60 * 60_000);
-    const twoDaysAgo = new Date(Date.now() - 47 * 60 * 60_000);
-    const put = async (when: Date, fields: Record<string, unknown>): Promise<number> => {
+    // Made a minute ago, for today or a day before it (补打卡): the days are UTC dates, so each
+    // stays its own day whatever hour the test runs.
+    const madeAt = new Date(Date.now() - 60_000);
+    const today = new Date().toISOString().slice(0, 10);
+    const daysBefore = (count: number) =>
+      new Date(Date.parse(today) - count * 24 * 60 * 60_000).toISOString().slice(0, 10);
+    const put = async (day: string, fields: Record<string, unknown>): Promise<number> => {
       const body = {
         version: 1,
-        day: when.toISOString().slice(0, 10),
-        createdAt: when.toISOString(),
+        day,
+        createdAt: madeAt.toISOString(),
         audience: [squad],
         ...fields,
       };
       const path = `/check-ins/${randomUUID()}`;
       return (await call({ method: 'PUT', path, token: me.token, body })).status;
     };
-    const now = new Date(Date.now() - 60_000);
+    const [yesterday, twoDaysAgo] = [daysBefore(1), daysBefore(2)];
     const statuses = [
-      await put(now, { kind: 'trained', training: { sport: 'run' } }),
-      await put(now, { kind: 'trained', training: { sport: 'swim' } }),
+      await put(today, { kind: 'trained', training: { sport: 'run' } }),
+      await put(today, { kind: 'trained', training: { sport: 'swim' } }),
       await put(yesterday, { kind: 'trained', training: { sport: 'run' } }),
-      await put(now, { kind: 'healthyMeal', meal: { caption: '沙拉' } }),
+      await put(today, { kind: 'healthyMeal', meal: { caption: '沙拉' } }),
       await put(yesterday, { kind: 'healthyMeal', meal: {} }),
-      await put(now, { kind: 'cheatMeal', meal: {} }),
+      await put(today, { kind: 'cheatMeal', meal: {} }),
       // A 请假条 never goes on a day with a 练了.
       await put(twoDaysAgo, { kind: 'disclaimer', disclaimer: { text: '下雨了' } }),
     ];

@@ -8,12 +8,12 @@ final class TodayUITests: XCTestCase {
     private static let wait: TimeInterval = 30
 
     /// 练了 with three photos: pick a cover, write a caption, post, and land back on the scene
-    /// with the squad bar ticked up. Afterwards 请假 is greyed out for the day.
+    /// with the squad bar ticked up. (请假 stays offered after: it can still go to a day before.)
     func testTrainedCheckIn() {
         let app = launch(language: "zh-Hans", photos: 3)
         _ = topCard(in: app)
         XCTAssertTrue(labeled("周三不练腿俱乐部", in: app).exists)
-        XCTAssertTrue(labeled("14/22", in: app).exists)
+        XCTAssertTrue(labeled("14/24", in: app).exists)
         settle()
         keepScreenshot(named: "13-today")
 
@@ -21,7 +21,7 @@ final class TodayUITests: XCTestCase {
         XCTAssertEqual(checkIn.label, "打卡")
         checkIn.tap()
         waitForLabel(of: checkIn, "label == %@", "收起", "the check-in button didn't turn into 收起")
-        for (kind, label) in [("trained", "练了"), ("healthyMeal", "健康餐"), ("cheatMeal", "放纵餐"), ("disclaimer", "请假")] {
+        for (kind, label) in [("trained", "训练"), ("healthyMeal", "健康餐"), ("cheatMeal", "放纵餐"), ("disclaimer", "请假")] {
             let capsule = app.buttons["today.capsule.\(kind)"]
             XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no \(label) capsule")
             XCTAssertEqual(capsule.label, label)
@@ -57,7 +57,7 @@ final class TodayUITests: XCTestCase {
         XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after posting")
         XCTAssertTrue(bubble.label.contains("晨跑 5 公里，腿还在"))
         XCTAssertTrue(
-            labeled("15/22", in: app).waitForExistence(timeout: Self.wait), "the squad's score didn't tick up to 15/22")
+            labeled("15/24", in: app).waitForExistence(timeout: Self.wait), "the squad's score didn't tick up to 15/24")
         // Let the cheer play out before the shot.
         Thread.sleep(forTimeInterval: 1.2)
         keepScreenshot(named: "16-today-trained-payoff")
@@ -65,9 +65,8 @@ final class TodayUITests: XCTestCase {
 
         checkIn.tap()
         XCTAssertTrue(app.buttons["today.capsule.trained"].waitForExistence(timeout: Self.wait))
-        XCTAssertFalse(app.buttons["today.capsule.disclaimer"].exists, "请假 offered after training")
         settle()
-        keepScreenshot(named: "17-today-disclaimer-unavailable")
+        keepScreenshot(named: "17-today-burst-after-training")
     }
 
     /// 请假: pick a line on offer, type a reason, pick a style for lines from it, take another
@@ -130,7 +129,7 @@ final class TodayUITests: XCTestCase {
         let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
         XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after the 请假条")
         XCTAssertTrue(bubble.label.contains(line))
-        XCTAssertTrue(labeled("14/22", in: app).exists, "a 请假条 moved the squad's score")
+        XCTAssertTrue(labeled("14/24", in: app).exists, "a 请假条 moved the squad's score")
         settle()
         keepScreenshot(named: "19-today-disclaimer-posted")
 
@@ -370,7 +369,7 @@ extension TodayUITests {
         XCTAssertFalse(app.buttons["today.pat"].exists, "my own today offers 拍一拍")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "16c-today-tapped-me")
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
         XCTAssertTrue(today.waitForNonExistence(timeout: Self.wait), "a tap off my card left it open")
     }
 }

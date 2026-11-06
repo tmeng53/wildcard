@@ -14,14 +14,17 @@ func aBundledOpeningLoadsWithAllItsArt(id: String) throws {
     #expect(loaded.opening.clip.duration == 3)
 }
 
-@Test func theThanksgivingOpeningSaysItInEachLanguage() throws {
+// A letter from Wildcard to the squad (Tracy, 2026-11-06): 「<squad>，」 / 「感恩节快乐！」 / 「— 外卡」.
+@Test func theThanksgivingOpeningIsALetterToTheSquad() throws {
     let opening = try #require(OpeningArt.load("trot")).opening
-    let title = try #require(opening.layers.first { $0.id == "title" })
-    guard case .text(let words, _, _, _) = title.content else {
-        Issue.record("the title is words")
-        return
+    func line(_ id: PartID, _ language: String) throws -> String {
+        let layer = try #require(opening.layers.first { $0.id == id })
+        guard case .text(let words, _, _, _) = layer.content else { return "" }
+        return Opening.words(words, language: language, squad: "快乐小队")
     }
-    #expect(words == ["zh-Hans": "感恩节快乐", "en": "Happy Thanksgiving", "zh-Hant": "感恩節快樂"])
+    #expect(try ["to", "title", "from"].map { try line($0, "zh-Hans") } == ["快乐小队，", "感恩节快乐！", "— 外卡"])
+    #expect(try ["to", "title", "from"].map { try line($0, "en") } == ["快乐小队,", "Happy Thanksgiving!", "— Wildcard"])
+    #expect(try ["to", "title", "from"].map { try line($0, "zh-Hant") } == ["快乐小队，", "感恩節快樂！", "— 外卡"])
 }
 
 @Test func anIdThatIsNotOneLoadsNothing() {

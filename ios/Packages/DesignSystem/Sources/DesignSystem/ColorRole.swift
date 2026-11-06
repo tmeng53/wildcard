@@ -176,8 +176,6 @@ public enum ColorRole: String, CaseIterable, Sendable {
     case fgOnInkMuted
     /// Dividers on `bgInk`.
     case borderOnInk
-    /// Text saying something is open, such as a store's 营业中 on the editor's shopping street.
-    case fgPositive
     /// The words of an action that can't be taken back, such as 解雇 and 确认解雇. The button
     /// keeps its shape; only its words turn red. Never a fill, never for errors.
     case fgDanger
@@ -248,7 +246,6 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .fgOnInk: .fixed(Palette.white)
         case .fgOnInkMuted: .fixed(Palette.inkTertiary)
         case .borderOnInk: .fixed(Palette.inkLine)
-        case .fgPositive: .fixed(Palette.positive)
         case .fgDanger: .fixed(Palette.danger)
         case .bgBrand: .fixed(Palette.brand)
         case .fgOnBrand: .fixed(Palette.onBrand)

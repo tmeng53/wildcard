@@ -6,6 +6,7 @@ import {
   type Squad,
   type SquadName,
 } from '../../domain/squad.js';
+import { DEFAULT_DAYS_PER_MEMBER, type DaysPerMember } from '../../domain/weekly-goal.js';
 import { InviteCodeUnknownError } from '../../errors.js';
 import type { SquadStore } from '../../ports.js';
 
@@ -14,6 +15,8 @@ interface InviteSummary {
   readonly name: SquadName;
   readonly memberCount: number;
   readonly full: boolean;
+  /** The squad's weekly goal (人均 N 天) as its captain last set it: what a new member joins. */
+  readonly daysPerMember: DaysPerMember;
 }
 
 /**
@@ -41,7 +44,7 @@ export async function previewInvite(
 ): Promise<InvitePreview> {
   const squad = await store.findByInviteCode(inviteCode);
   if (squad === undefined) throw new InviteCodeUnknownError();
-  return { ...withMembers(squad), joined: isMemberOf(squad, viewer) };
+  return { ...(await withMembers(store, squad)), joined: isMemberOf(squad, viewer) };
 }
 
 /** The squad an invite code belongs to, as the web invite page shows it to anyone. */
@@ -51,17 +54,19 @@ export async function previewPublicInvite(
 ): Promise<PublicInvitePreview> {
   const squad = await store.findByInviteCode(inviteCode);
   if (squad === undefined) throw new InviteCodeUnknownError();
-  return withMembers(squad);
+  return withMembers(store, squad);
 }
 
-function withMembers(squad: Squad): PublicInvitePreview {
-  return { ...summary(squad), members: squad.members.map(({ member }) => member) };
+async function withMembers(store: SquadStore, squad: Squad): Promise<PublicInvitePreview> {
+  return { ...(await summary(store, squad)), members: squad.members.map(({ member }) => member) };
 }
 
-function summary(squad: Squad): InviteSummary {
+async function summary(store: SquadStore, squad: Squad): Promise<InviteSummary> {
+  const goals = await store.weeklyGoals(squad.id);
   return {
     name: squad.name,
     memberCount: squad.members.length,
     full: squad.members.length >= SQUAD_MEMBER_LIMIT,
+    daysPerMember: goals.at(-1)?.daysPerMember ?? DEFAULT_DAYS_PER_MEMBER,
   };
 }

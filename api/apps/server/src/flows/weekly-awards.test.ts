@@ -105,6 +105,7 @@ const RunBody = z.strictObject({
   given: z.number(),
   failed: z.number(),
   told: z.number(),
+  goals: z.object({ week: z.string(), suggested: z.number(), failed: z.number() }),
 });
 
 // The week of Monday 2026-10-19; its awards are on Sunday 10-25 at 8pm in New York.
@@ -313,6 +314,7 @@ async function trained(
     createdAt?: Date;
     caption?: string;
     photos?: string[];
+    minutes?: number;
   },
 ) {
   const record: CheckInRecord = {
@@ -324,6 +326,7 @@ async function trained(
     kind: 'trained',
     training: {
       sport: 'run',
+      ...(options.minutes === undefined ? {} : { minutes: options.minutes }),
       ...(options.caption === undefined ? {} : { caption: options.caption }),
       ...(options.photos === undefined
         ? {}
@@ -360,6 +363,24 @@ const Story = z.object({
       trainedDays: z.int(),
       days: z.array(z.object({ day: z.string(), kind: z.string(), sport: z.string().optional() })),
       reactionsReceived: z.int(),
+    })
+    .optional(),
+  squadWeek: z
+    .object({
+      members: z.array(
+        z.object({
+          member: z.string(),
+          trainedDays: z.int(),
+          days: z.array(
+            z.object({
+              kind: z.string(),
+              sport: z.string().optional(),
+              minutes: z.int().optional(),
+            }),
+          ),
+          reactionsReceived: z.int(),
+        }),
+      ),
     })
     .optional(),
   meals: z.unknown().optional(),
@@ -651,6 +672,7 @@ describe('weekly awards', () => {
     const squad = await squadOf(ana);
     const empty = Story.parse((await read({ token: ana.token, squad })).body);
     expect([empty.status, empty.titles]).toStrictEqual(['ready', []]);
+    expect(empty.squadWeek).toBeUndefined();
     const refused = await read({ token: stranger.token, squad });
     expect([refused.status, refused.body.reason]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
     expect((await read({ token: ana.token, squad, week: '2026-10-20' })).status).toBe(400);
@@ -676,7 +698,7 @@ describe('weekly awards', () => {
     const { run, read, at } = setup();
     const [ana, bo, cy] = [await member(), await member(), await member()];
     const squad = await squadOf(ana, bo);
-    const top = await trained(ana, { squad, day: '2026-10-20' });
+    const top = await trained(ana, { squad, day: '2026-10-20', minutes: 45 });
     await trained(ana, { squad, day: '2026-10-21' });
     await trained(bo, { squad });
     await reactions.save(top, {
@@ -704,6 +726,17 @@ describe('weekly awards', () => {
       'trained',
     ]);
     expect(first.hottest?.reactions).toStrictEqual([{ emoji: '💪', count: 1 }]);
+    expect(
+      first.squadWeek?.members.map(({ member: id, trainedDays, days, reactionsReceived }) => [
+        id,
+        trainedDays,
+        days.map(({ minutes }) => minutes ?? 0),
+        reactionsReceived,
+      ]),
+    ).toStrictEqual([
+      [ana.userId, 2, [0, 45, 0, 0, 0, 0, 0], 1],
+      [bo.userId, 1, [0, 0, 0, 0, 0, 0, 0], 0],
+    ]);
 
     // After the awards: Cy joins, Bo leaves, Ana posts late, a reaction comes and the scene changes.
     at(new Date(AWARDS_AT.getTime() + 3 * HOUR));

@@ -1,8 +1,8 @@
 import Foundation
 
-/// The broadcasts (群发通知) each member on this phone has seen drop in on 今天, so each shows
-/// here once, by its id; marked once its banner is on screen, so one still waiting when the app
-/// closes shows next time. Opening 通知 on any phone sees them too, so another phone shows only
+/// The broadcasts (群发通知) and goal suggestions each member on this phone has seen drop in on
+/// 今天, so each shows here once, by its id; marked once its banner is on screen, so one still
+/// waiting when the app closes shows next time. Opening 通知 on any phone sees them too, so another phone shows only
 /// those still unseen.
 enum ShownBroadcasts {
     /// Ids kept per member: far more than ever run at once, so the list never grows without end.

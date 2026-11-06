@@ -21,7 +21,7 @@ public final class ScheduleStore {
         case loading
         /// The weeks shown are the server's.
         case ready
-        /// The server couldn't be reached; whatever was loaded before still shows.
+        /// The server couldn't be reached (a read cut short isn't this); what was loaded still shows.
         case offline
         case signedOut
     }
@@ -131,7 +131,7 @@ public final class ScheduleStore {
             phase = .signedOut
             return
         } catch {
-            phase = .offline
+            if !Task.isCancelled { phase = .offline }
             return
         }
         if showsTemplate {
@@ -168,7 +168,7 @@ public final class ScheduleStore {
         } catch .signedOut {
             phase = .signedOut
         } catch {
-            phase = .offline
+            if !Task.isCancelled { phase = .offline }
         }
     }
 
@@ -193,7 +193,7 @@ public final class ScheduleStore {
         } catch .signedOut {
             phase = .signedOut
         } catch {
-            phase = .offline
+            if !Task.isCancelled { phase = .offline }
         }
     }
 

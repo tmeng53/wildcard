@@ -8,7 +8,7 @@ import SquadDomain
 import SwiftUI
 
 /// 小队's row of heads under the squad's name (approved 2026-11-02): every member's face,
-/// still, with their name, then the coach's circle (「招聘」 until the squad hires one; once hired,
+/// still, with their name (the captain's tagged 「队长」, 2026-11-06), then the coach's circle (「招聘」 until the squad hires one; once hired,
 /// an ink 「教练」 tag on its lower edge and named 「毛头教练」, so no teammate nicknamed 教练
 /// passes for it, as Tracy picked on 2026-11-02) and, while
 /// the squad has room, 「+ 邀请」, which shares the invite at once. Nothing here moves: the scene
@@ -26,13 +26,21 @@ struct SquadHeads: View {
             ForEach(members) { member in
                 HeadSpot(name: Text(verbatim: MemberRow.name(of: member))) {
                     LookHead(character: member.character, size: SquadHeadsMetrics.circle)
+                        .overlay(alignment: .bottom) {
+                            // 「队长」 hangs on the captain's head as 「教练」 does on the coach's.
+                            if member.isCaptain {
+                                InkTag(Text("队长", bundle: .module))
+                                    .offset(y: SquadHeadsMetrics.tagDrop)
+                                    .accessibilityIdentifier("squad.head.captain")
+                            }
+                        }
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("squad.head")
             }
             coachSpot
             if openSpots > 0 {
-                ShareLink(item: InviteCard.message(for: squad)) {
+                InviteShareLink(squad: squad) {
                     HeadSpot(name: Text("邀请", bundle: .module)) {
                         DashedCircle(Image(systemName: "plus").font(.system(size: Sizing.icon, weight: .regular)))
                     }
@@ -125,14 +133,14 @@ private struct DashedCircle<Mark: View>: View {
     }
 }
 
-/// The squad's coach in a circle with an ink 「教练」 tag on its lower edge: its still head, as
-/// 教练's thumbnail crops it (an ink silhouette for a coach this build has no character for).
+/// The squad's coach in a circle with an ink 「教练」 tag on its lower edge: its still head and
+/// shoulders (an ink silhouette for a coach this build has no character for).
 private struct CoachHead: View {
     let coach: CoachID
     @State private var head: CharacterPlayer?
     @Environment(\.sceneTheme) private var theme
 
-    /// The head and shoulders on the coaches' 240 × 320 canvas, as `CoachThumbnail` crops them.
+    /// The head and shoulders on the coaches' 240 × 320 canvas.
     private static let face = CGRect(x: 44, y: 44, width: 152, height: 152)
 
     var body: some View {

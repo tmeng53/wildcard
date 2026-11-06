@@ -1778,22 +1778,6 @@
         }
       }
     },
-    "营业中": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "營業中"
-          }
-        }
-      }
-    },
     "豆豆眼": {
       "localizations": {
         "en": {
@@ -2126,22 +2110,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "高能量"
-          }
-        }
-      }
-    },
-    "进店挑衣服。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pick clothes in a store."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "進店挑衣服。"
           }
         }
       }
@@ -3827,38 +3795,6 @@
         }
       }
     },
-    "可以开了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ready to open"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可以開了"
-          }
-        }
-      }
-    },
-    "新货，可以开了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New arrival, ready to open"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "新貨，可以開了"
-          }
-        }
-      }
-    },
     "上衣": {
       "localizations": {
         "en": {
@@ -3903,6 +3839,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "鞋子"
+          }
+        }
+      }
+    },
+    "还有 %lld 次开门": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens in %lld more"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還有 %lld 次開門"
           }
         }
       }

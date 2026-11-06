@@ -50,7 +50,7 @@ final class PatUITests: XCTestCase {
         let today = app.descendants(matching: .any).matching(identifier: "today.mateToday").firstMatch
         XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "tapping 豆豆 didn't open her today")
         XCTAssertTrue(app.buttons["me.card"].waitForExistence(timeout: Self.wait), "her card didn't open under it")
-        XCTAssertTrue(labeled("今天练了", in: app).exists, "豆豆's today doesn't say she trained")
+        XCTAssertTrue(labeled("今天训练", in: app).exists, "豆豆's today doesn't say she trained")
         XCTAssertFalse(bubble.exists, "a tap still raises a bubble over her head")
         expectOnScreen(today, pat, in: app)
         XCTAssertEqual(pat.label, "拍一拍")
@@ -117,7 +117,7 @@ final class PatUITests: XCTestCase {
 
     /// A tap off the card, above it, closes the card and its today.
     private func closePopup(_ today: XCUIElement, in app: XCUIApplication) {
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
         XCTAssertTrue(today.waitForNonExistence(timeout: Self.wait), "a tap off the card left it open")
     }
 

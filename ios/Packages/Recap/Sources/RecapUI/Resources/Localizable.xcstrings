@@ -305,12 +305,18 @@
         }
       }
     },
-    "已看完 · 再看一遍": {
+    "再看一遍": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Watched · Watch again"
+            "value": "Watch again"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再看一遍"
           }
         }
       }
@@ -427,18 +433,34 @@
         }
       }
     },
-    "收到的回应": {
+    "收到加油": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reactions received"
+            "value": "Cheers received"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "收到的回應"
+            "value": "收到加油"
+          }
+        }
+      }
+    },
+    "%@到%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@–%2$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@到%2$@"
           }
         }
       }
@@ -559,7 +581,7 @@
         }
       }
     },
-    "练了": {
+    "训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -570,7 +592,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "練了"
+            "value": "訓練"
           }
         }
       }
@@ -591,18 +613,18 @@
         }
       }
     },
-    "请假条": {
+    "请假": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Day-off note"
+            "value": "Off"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "假單"
+            "value": "請假"
           }
         }
       }
@@ -685,6 +707,422 @@
           "stringUnit": {
             "state": "translated",
             "value": "頒獎台"
+          }
+        }
+      }
+    },
+    "天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "d"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "天"
+          }
+        }
+      }
+    },
+    "%lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 天"
+          }
+        }
+      }
+    },
+    "运动总结": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad sports"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "運動總結"
+          }
+        }
+      }
+    },
+    "%lld 人 · %lld 种运动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld people · %2$lld sports"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld 人 · %2$lld 種運動"
+          }
+        }
+      }
+    },
+    "天训练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "days trained"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "天訓練"
+          }
+        }
+      }
+    },
+    "训练最多的一天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Busiest day"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "訓練最多的一天"
+          }
+        }
+      }
+    },
+    "坚持运动最久": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Longest streak"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "堅持運動最久"
+          }
+        }
+      }
+    },
+    "互相加油": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cheers"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "互相加油"
+          }
+        }
+      }
+    },
+    "一共训练了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time trained"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一共訓練了"
+          }
+        }
+      }
+    },
+    "练得最多": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top sport"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "練得最多"
+          }
+        }
+      }
+    },
+    "小时": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hr"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小時"
+          }
+        }
+      }
+    },
+    "分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "min"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分鐘"
+          }
+        }
+      }
+    },
+    "%lld 人训练了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld trained"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 人訓練了"
+          }
+        }
+      }
+    },
+    "全员都训练了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everyone trained"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全員都訓練了"
+          }
+        }
+      }
+    },
+    "%@ %@到%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@–%3$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@到%3$@"
+          }
+        }
+      }
+    },
+    "个回应": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "reactions"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "個回應"
+          }
+        }
+      }
+    },
+    "最久一天 %@ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Longest: %1$@ %2$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最久一天 %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "吃得健康": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Healthy meals"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "吃得健康"
+          }
+        }
+      }
+    },
+    "请假条": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Days off"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請假條"
+          }
+        }
+      }
+    },
+    "顿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "meals"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "頓"
+          }
+        }
+      }
+    },
+    "张": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "days"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "張"
+          }
+        }
+      }
+    },
+    "坦白放纵 %lld 顿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld cheat meals"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "坦白放縱 %lld 頓"
+          }
+        }
+      }
+    },
+    "最会请假 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Most days off: %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最會請假 %@"
+          }
+        }
+      }
+    },
+    "全队训练了什么": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What the squad trained"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全隊訓練了什麼"
+          }
+        }
+      }
+    },
+    "%lld 种运动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sports"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 種運動"
+          }
+        }
+      }
+    },
+    "其他 %lld 种": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld more"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "其他 %lld 種"
           }
         }
       }

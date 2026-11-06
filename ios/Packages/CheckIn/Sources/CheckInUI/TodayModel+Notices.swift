@@ -17,6 +17,9 @@ extension TodayModel {
         case unlocked(Unlock)
         /// A notice we sent every member, told on this phone once.
         case broadcast(Broadcast)
+        /// The squad trained over its goal weeks in a row: the captain is suggested a higher one,
+        /// told on this phone once; its button opens 小队.
+        case goalSuggestion(GoalSuggestion)
         /// What waited after two in a row, in one banner that opens 通知 (approved C, 2026-11-05).
         case more
     }
@@ -30,8 +33,11 @@ extension TodayModel {
         /// A broadcast's button never folds into 「还有新通知」, so it can still be tapped on 今天;
         /// nor does a celebration, which is its own card.
         var hasButton: Bool {
-            guard case .broadcast(let broadcast) = news else { return false }
-            return broadcast.action != nil || broadcast.style == .celebration
+            switch news {
+            case .broadcast(let broadcast): broadcast.action != nil || broadcast.style == .celebration
+            case .goalSuggestion: true
+            case .moved, .unlocked, .more: false
+            }
         }
     }
 
@@ -89,17 +95,33 @@ extension TodayModel {
         _ broadcast: Broadcast, open: @escaping (AppDestination) -> Void, shown: @escaping (Broadcast) -> Void
     ) {
         let news = NoticeNews.broadcast(broadcast)
+        guard notice?.news != news, celebration != broadcast, !pendingNotices.contains(where: { $0.news == news })
+        else { return }
+        openDestination = open
+        let next = Notice(news: news)
+        bannerShown[next.id] = { shown(broadcast) }
+        pendingNotices.append(next)
+        Task { await showNextNotice() }
+    }
+
+    /// Tells the captain `suggestion` in a banner, after any notice already waiting, unless it is
+    /// already waiting or on screen; a tap opens 小队 through `open`, as its 通知 row does, and
+    /// `shown` hears once it is on screen.
+    public func tell(
+        _ suggestion: GoalSuggestion, open: @escaping (AppDestination) -> Void, shown: @escaping () -> Void
+    ) {
+        let news = NoticeNews.goalSuggestion(suggestion)
         guard notice?.news != news, !pendingNotices.contains(where: { $0.news == news }) else { return }
         openDestination = open
-        broadcastShown = shown
-        pendingNotices.append(Notice(news: news))
+        let next = Notice(news: news)
+        bannerShown[next.id] = shown
+        pendingNotices.append(next)
         Task { await showNextNotice() }
     }
 
     /// How long `notice` stays: one with a button stays until it is tapped or swiped away.
     func hold(_ notice: Notice) -> Double? {
-        if case .broadcast(let broadcast) = notice.news, broadcast.action != nil { return nil }
-        return noticeHold
+        notice.hasButton ? nil : noticeHold
     }
 
     /// The next notice waiting, once the squad has landed and the scene is in view: not while a
@@ -111,16 +133,12 @@ extension TodayModel {
         if shownInRow >= Self.shownBeforeMore { foldTheRest() }
         let next = pendingNotices.removeFirst()
         shownInRow = pendingNotices.isEmpty ? 0 : shownInRow + 1
-        if case .broadcast(let broadcast) = next.news {
-            if broadcast.style == .celebration {
-                celebration = broadcast
-            } else {
-                notice = next
-            }
-            broadcastShown?(broadcast)
+        if case .broadcast(let broadcast) = next.news, broadcast.style == .celebration {
+            celebration = broadcast
         } else {
             notice = next
         }
+        bannerShown.removeValue(forKey: next.id)?()
     }
 
     /// Whether the home can tell the next notice: nothing told is on screen, the scene is in
@@ -129,13 +147,17 @@ extension TodayModel {
         notice == nil && celebration == nil && opening == nil && step == .scene && !isBurstOpen && isHomeInFront
     }
 
-    /// The member answered the celebration's card: its button (`opening`) opens its place, as its
-    /// 通知 row does; 先不了, or a tap off the card, just puts it away. The next notice follows once
-    /// the home is free again (`HomeNotices`), so a place it opened is never covered.
+    /// The member answered the celebration's card: its button (`opening`) opens its place and
+    /// reads its 通知 row, as the banner's does; 先不了, or a tap off the card, just puts it away.
+    /// The next notice follows once the home is free again (`HomeNotices`), so a place it opened
+    /// is never covered.
     public func closeCelebration(opening: Bool) {
         guard let shown = celebration else { return }
         celebration = nil
-        if opening, let action = shown.action { openDestination?(action.destination) }
+        if opening, let action = shown.action {
+            broadcastOpened?(shown)
+            openDestination?(action.destination)
+        }
     }
 
     /// How many banners drop in one after another before the rest fold into 「还有新通知」.
@@ -150,7 +172,7 @@ extension TodayModel {
         guard plain.count >= 2 else { return }
         pendingNotices = pendingNotices.filter(\.hasButton) + [Notice(news: .more)]
         // A broadcast folded in is told on this phone too: 通知 has it.
-        for case .broadcast(let broadcast) in plain.map(\.news) { broadcastShown?(broadcast) }
+        for folded in plain { bannerShown.removeValue(forKey: folded.id)?() }
     }
 }
 #endif

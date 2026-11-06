@@ -17,7 +17,7 @@ final class RecapUITests: XCTestCase {
         tile.tap()
 
         let pages = [
-            ("podium", 4.0), ("titles", 2.5), ("myWeek", 11.0), ("hottest", 2.5), ("meals", 3.0),
+            ("podium", 4.0), ("titles", 2.5), ("myWeek", 1.5), ("squadWeek", 1.5), ("hottest", 2.5), ("meals", 3.0),
             ("bestDisclaimer", 3.5), ("ending", 3.0),
         ]
         for (index, (page, settle)) in pages.enumerated() {
@@ -62,7 +62,7 @@ final class RecapUITests: XCTestCase {
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no recap tile")
         XCTAssertTrue(tile.label.contains("Weekly recap"))
         tile.tap()
-        for page in ["podium", "titles", "myWeek", "hottest", "meals", "bestDisclaimer"] {
+        for page in ["podium", "titles", "myWeek", "squadWeek", "hottest", "meals", "bestDisclaimer"] {
             show(page, in: app)
             next(in: app)
         }

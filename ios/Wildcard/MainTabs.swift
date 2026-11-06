@@ -18,8 +18,7 @@ import SwiftUI
 /// The app once the member is signed in and in a squad: the three tabs (今天, 动态, 我) in the
 /// system's Liquid Glass tab bar (`AppTabs`), with 小队 opened inside 今天 from the home's squad
 /// card (Tracy took 小队's own tab away on 2026-11-04).
-/// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
-/// them draws the bar itself.
+/// Each tab screen keeps to the safe area, which the system raises above the bar.
 struct MainTabs: View {
     enum Tab: Hashable {
         case today, feed, profile
@@ -47,6 +46,7 @@ struct MainTabs: View {
     /// A post opened from 通知 (the one the coach answered), over its page.
     @State var noticePost: OpenedPost?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     /// 商店街 and the character editor, open from 我.
     @State var wardrobe: Wardrobe
     /// 出赛表, open from 我 in its place.
@@ -54,7 +54,7 @@ struct MainTabs: View {
     /// 小队, open from the home's squad card in 今天's place.
     @State var showsSquad = LaunchOptions.opensSquad
     /// The coach's card, opened from a tap on the coach on the home, popped up like a player's.
-    @State private var showsCoachCard = false
+    @State var showsCoachCard = false
     /// 小队's scene pick is playing its reveal, which fills the screen.
     @State private var squadRevealing = false
     /// 我的动态, open from 我 in its place.
@@ -63,11 +63,9 @@ struct MainTabs: View {
     @State private var newestPosts: PostWallStore
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
-    /// A player's card, opened from a tap on them on the home or their row on 小队,
-    /// popped up over every tab and the tab bar.
-    @State private var teammate: SquadmateCardModel?
-    /// The card was opened from the home, so 今天 and 拍一拍 go over it; from 小队 the scene isn't
-    /// in view to play a pat on.
+    /// A player's card, opened from a tap on them on the home or 小队, over every tab and the bar.
+    @State var teammate: SquadmateCardModel?
+    /// The card was opened from the home, so 今天 and 拍一拍 go over it (not from 小队).
     @State private var teammateOnHome = false
 
     init(
@@ -98,6 +96,7 @@ struct MainTabs: View {
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.
             today.openDestination = { open($0) }
+            today.broadcastOpened = { broadcast in Task { await inbox.opened(broadcast) } }
             today.tellUnlocks(
                 with: UnlockNotices(
                     banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },
@@ -106,8 +105,10 @@ struct MainTabs: View {
         }
         // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the
         // home says whose it is; its button opens what its 通知 row opens.
-        .onChange(of: inbox.unseenBroadcasts.map(\.id) + [today.home?.member.description ?? ""], initial: true) {
+        // So does a higher squad goal suggested to the captain, whose button opens 小队.
+        .onChange(of: bannerNotices, initial: true) {
             tellBroadcasts()
+            tellGoalSuggestions()
         }
         // A tapped push's place.
         .onChange(of: destination, initial: true) { _, asked in
@@ -126,6 +127,12 @@ struct MainTabs: View {
             }
         }
         .followsNotices(inbox)
+        // 商店街 read again when the server says it changed and on each return to the front (a
+        // switch's day starting tells nothing), so a store that opened shows without a relaunch.
+        .onChange(of: inbox.shelfChanges) { Task { await profile.reload() } }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await profile.reload() } }
+        }
         .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
@@ -153,9 +160,8 @@ struct MainTabs: View {
                 .environment(\.sceneTheme, today.scene)
             }
         }
-        // A celebration broadcast (「感恩节快到了」) over everything, until its button or 先不了.
+        // A celebration broadcast (「感恩节快到了」) over everything, told only while 今天 is in front.
         .celebrationPopup(today)
-        // 今天 tells nothing while another tab, the squad page or a cover is over it.
         .onChange(of: homeInFront, initial: true) { today.isHomeInFront = $1 }
         .cardPopup(isPresented: $showsCoachCard) {
             CoachCardPopup(note: today.coachLine, squad: squad) { opensFeed in
@@ -182,12 +188,6 @@ struct MainTabs: View {
             selection = .today
         }
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
-    }
-
-    /// 今天 on screen with nothing over it: no other tab, the squad page, a card, the 战报 or the editor.
-    private var homeInFront: Bool {
-        selection == .today && !showsSquad && teammate == nil && !showsCoachCard && recap.open == nil
-            && wardrobe.editor == nil
     }
 
     /// A tab's full-screen step (writing a check-in, a post's own page, the 注销账号 page, a scene

@@ -15,7 +15,8 @@ struct HolidayOpening: ViewModifier {
             .overlay {
                 if let opening = model.opening {
                     OpeningView(
-                        opening, squad: model.openingSquad, language: AppLanguage.current.rawValue,
+                        opening, squad: model.openingSquad, squadName: model.home?.squad.name,
+                        language: AppLanguage.current.rawValue,
                         onPlayed: { model.cheerInOpening() }, onEnter: { model.enterFromOpening() },
                         label: { Text("进场", bundle: .module) }
                     )
