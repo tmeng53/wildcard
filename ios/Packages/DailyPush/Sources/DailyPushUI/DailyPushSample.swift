@@ -17,9 +17,11 @@ public enum DailyPushSample {
             variants: ["body": "peach", "hair": "curls", "top": "warmup-tee", "bottom": "warmup-shorts"],
             colors: ["body": "#C68A5E"]),
         member(2): CharacterLook(
-            persona: "drama", variants: ["body": "shiba", "top": "warmup-hoodie", "bottom": "warmup-shorts"]),
+            persona: "drama",
+            variants: ["body": "shiba", "cheeks": "rosy", "top": "warmup-hoodie", "bottom": "warmup-shorts"]),
         member(3): CharacterLook(
-            persona: "deadpan", variants: ["body": "calico", "top": "warmup-tee", "bottom": "moss-cargo"]),
+            persona: "deadpan",
+            variants: ["body": "calico", "cheeks": "rosy", "top": "warmup-tee", "bottom": "moss-cargo"]),
         member(4): CharacterLook(
             persona: "showoff",
             variants: ["body": "peach", "hair": "ponytail", "top": "warmup-tank", "bottom": "warmup-leggings"]),
