@@ -35,20 +35,31 @@ extension TodayModel {
     var openingSquad: [CharacterPlayer] { openingCast.map(\.player) }
 
     /// The opening has played: the squad does the 人浪 across its group photo, each jumping a
-    /// moment after the one on their left, as the home's 人浪 does.
+    /// moment after the one on their left, as the home's 人浪 does, and again after a breath for
+    /// as long as the opening shows, so it's there whenever the member looks.
     func cheerInOpening() {
-        let squad = openingCast
-        for (step, member) in SquadPhoto.leftToRight(count: squad.count).enumerated() {
-            let (player, persona) = squad[member]
-            guard let wave = try? PlaceholderCharacter.clip(for: .wave, persona: persona) else { continue }
-            Task { @MainActor [weak self] in
-                try? await Task.sleep(for: .seconds(Double(step) * TogetherStage.waveStagger))
-                // 进场 before their turn: they're already dropping onto the scene.
-                guard self?.opening != nil else { return }
-                try? player.play(wave)
+        let squad = openingCast.map { member in
+            (player: member.player, wave: try? PlaceholderCharacter.clip(for: .wave, persona: member.persona))
+        }
+        let longest = squad.compactMap(\.wave?.duration).max() ?? 0
+        guard longest > 0 else { return }
+        Task { @MainActor [weak self] in
+            // 进场 ends it: the squad is dropping onto the scene.
+            while self?.opening != nil {
+                // Each jumps in turn, from the idle they stand in until then.
+                for member in SquadPhoto.leftToRight(count: squad.count) {
+                    guard self?.opening != nil else { return }
+                    if let wave = squad[member].wave { try? squad[member].player.play(wave) }
+                    try? await Task.sleep(for: .seconds(TogetherStage.waveStagger))
+                }
+                // The last one lands, then a breath.
+                try? await Task.sleep(for: .seconds(longest + TodayModel.openingWaveBreath))
             }
         }
     }
+
+    /// The pause between one 人浪 in the opening and the next, in seconds.
+    static let openingWaveBreath = 1.5
 
     /// 进场: the opening lifts and the squad drops onto the scene.
     func enterFromOpening() {
