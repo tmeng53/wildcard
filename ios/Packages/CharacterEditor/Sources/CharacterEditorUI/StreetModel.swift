@@ -16,7 +16,8 @@ public final class StreetModel {
     enum Shelf: Equatable {
         /// Still locked: a 「？」 box and how many 练了 open it.
         case locked(toGo: Int)
-        /// Unlocked, its box not opened on this phone: 「可以开了」.
+        /// Unlocked, its box not opened on this phone: in the pop-up's boxes; on its rack it shows
+        /// as itself with NEW, and a tap opens it and offers 领取.
         case boxed
         /// Unlocked and opened, not claimed: NEW, and a tap offers 领取.
         case new
@@ -200,17 +201,21 @@ public final class StreetModel {
         if arrival.store == nil { store = nil }
     }
 
-    /// 先不了: the boxes stay on their racks, 「可以开了」, and open the pop-up again when tapped.
+    /// 先不了: the pieces wait on their racks with NEW, each offering 领取 when tapped.
     func leaveArrival() {
         arrival = nil
     }
 
-    /// A tap on a piece: NEW offers 领取, one in the wardrobe is tried on in the editor.
+    /// A tap on a piece: one that came in offers 领取 (its box, if this phone hadn't opened it,
+    /// opens on the way), one in the wardrobe is tried on in the editor.
     func tap(_ piece: String) {
         switch shelf(piece) {
         case .new: sheet = piece
         case .owned: tryOnPiece(piece)
-        case .boxed: showArrivals()
+        case .boxed:
+            marks.open([piece])
+            opened.insert(piece)
+            sheet = piece
         case .locked: tip = catalog.storeOf[piece]
         }
     }

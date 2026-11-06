@@ -3795,38 +3795,6 @@
         }
       }
     },
-    "可以开了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ready to open"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可以開了"
-          }
-        }
-      }
-    },
-    "新货，可以开了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New arrival, ready to open"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "新貨，可以開了"
-          }
-        }
-      }
-    },
     "上衣": {
       "localizations": {
         "en": {
