@@ -3,6 +3,14 @@
 export { createPostgresSquadStore, type SquadTables } from './adapters/postgres-squad-store.js';
 export { randomInviteCodes } from './adapters/random-invite-codes.js';
 export { InviteCode, type InviteCodes } from './domain/invite-code.js';
+export {
+  SUGGESTION_WEEKS,
+  overGoal,
+  suggestedGoal,
+  weeksBefore,
+  type GoalSuggestion,
+  type GoalWeek,
+} from './domain/goal-suggestion.js';
 export { FIRST_SCENE, Scene, SceneWeek, type OpenScenes, type ScenePick } from './domain/scene.js';
 export {
   MemberId,

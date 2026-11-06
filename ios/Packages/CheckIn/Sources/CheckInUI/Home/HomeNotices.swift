@@ -51,6 +51,12 @@ struct HomeNotices: ViewModifier {
                     NoticeSymbol(systemImage: "sparkles")
                 }
             }
+        case .goalSuggestion(let suggestion):
+            NoticeBanner(
+                Text("连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
+                detail: Text("改成人均 \(suggestion.daysPerMember) 天？", bundle: .module),
+                action: Text("去改目标", bundle: .module)
+            ) { NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis") }
         case .more:
             NoticeBanner(Text("还有新通知 · 去看看", bundle: .module), showsChevron: true) {
                 NoticeSymbol(systemImage: "bell.fill")
@@ -66,6 +72,7 @@ struct HomeNotices: ViewModifier {
                 model.broadcastOpened?(broadcast)
                 model.openDestination?(action.destination)
             }
+        case .goalSuggestion: model.openDestination?(.squad)
         case .more: model.openDestination?(.notices)
         case .moved: break
         }
