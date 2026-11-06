@@ -57,6 +57,8 @@ public struct ShoppingStreetPage: View {
             .scrollIndicators(.hidden)
         }
         .background(Color(role: .bgCanvas, in: theme))
+        // The pop-up is modal: VoiceOver (and a UI test) reaches only it, not the rack under it.
+        .accessibilityHidden(model.arrival != nil)
         .swipesBack { if store != nil { model.leaveStore() } else { back() } }
         .overlay {
             if let arrival = model.arrival {

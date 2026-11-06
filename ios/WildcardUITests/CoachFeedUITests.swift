@@ -85,6 +85,11 @@ final class CoachFeedUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.8)
         keepScreenshot(named: "141-post-mention-list")
         mate.tap()
+        XCTAssertTrue(
+            (box.value as? String)?.hasPrefix("@") == true, "the pick didn't go in: \(String(describing: box.value))")
+        // The simulator's hardware keyboard can leave the field once the list closes; a person
+        // taps back into the box, so the test does too rather than typing into nothing.
+        if (box.value(forKey: "hasKeyboardFocus") as? Bool) != true { box.tap() }
         box.typeText("周六爬山")
         app.buttons["post.mentionCoach"].tap()
         XCTAssertTrue(
