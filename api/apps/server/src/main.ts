@@ -85,6 +85,7 @@ import {
 } from '@wildcard/weekly-awards';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import { createCampaigns, createPostgresCampaignStore } from '@wildcard/campaigns';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import {
   MemberId as UnlockMember,
@@ -121,6 +122,8 @@ import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-p
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sceneTools } from './admin-mcp/tools/scenes.js';
 import { switchTools } from './admin-mcp/tools/switches.js';
+import { campaignTools } from './admin-mcp/tools/campaigns.js';
+import { newYorkDay } from './new-york-day.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
@@ -303,7 +306,6 @@ const checkIns = createCheckIns({
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
 });
-const newYorkDays = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' });
 /** What the unlocks module asks other modules, for `unlocksOn` and a broadcast's gifts. */
 const unlockSources = (scope: Database) => ({
   store: createPostgresUnlockStore(scope),
@@ -313,10 +315,11 @@ const unlockSources = (scope: Database) => ({
   switchListed: async (id: string) =>
     (await switchesOn(scope).list()).some((each) => each.id === id),
   // A rule counts only 练了 made while its store's and piece's switches were on, by the New York
-  // day and as each switch was set then, so turning one on or off by hand changes only what follows.
-  switches: async () => {
-    const was = await switchesOn(scope).history();
-    return (id: string, at: Date) => was(id, { at, day: newYorkDays.format(at) });
+  // day and as each switch was set then, so turning one on or off by hand changes only what
+  // follows; a previewer also counts those in preview, on their pretend day.
+  switches: async (member: string) => {
+    const was = await switchesOn(scope).historyFor(member);
+    return (id: string, at: Date) => was(id, { at, day: newYorkDay(at) });
   },
 });
 /**
@@ -504,6 +507,7 @@ const app = createApp({
   members,
   squads,
   scenes,
+  switches,
   nudges,
   notices,
   liveEvents,
@@ -618,6 +622,17 @@ const app = createApp({
         clock: () => new Date(),
       }),
       ...artTools({ art: artOn(scope) }),
+      ...campaignTools({
+        campaigns: createCampaigns({ store: createPostgresCampaignStore(scope) }),
+        switches: switchesOn(scope),
+        scenes: createScenes({
+          store: createPostgresSceneStore(scope),
+          switches: () => switchesOn(scope).states(),
+        }),
+        unlocks: unlocksOn(scope),
+        art: artOn(scope),
+        clock: () => new Date(),
+      }),
       ...coachTools({
         settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
         coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),

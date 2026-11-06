@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+  <rect x="97" y="219" width="46" height="38" rx="4" fill="#FFFFFF" stroke="#AEB2BC" stroke-width="1.8"/>
+  <rect x="97" y="219" width="46" height="6" rx="3" fill="#E2783A"/>
+  <circle cx="101" cy="222" r="1.6" fill="#FFFFFF"/>
+  <circle cx="139" cy="222" r="1.6" fill="#FFFFFF"/>
+  <path d="M 100.6 248.6 Q 120 254 139.4 248.6 Q 138 252.8 120 253.6 Q 102 252.8 100.6 248.6 Z" fill="#E9ECF1" stroke="#AEB2BC" stroke-width="1"/>
+  <path d="M 111 240 Q 105 236 104.4 231.6" fill="none" stroke="#8E4E1C" stroke-width="5.4" stroke-linecap="round"/>
+  <path d="M 111 240 Q 105 236 104.4 231.6" fill="none" stroke="#C9772E" stroke-width="3.6" stroke-linecap="round"/>
+  <circle cx="103.6" cy="229.4" r="1.9" fill="#FBF7EE" stroke="#C9C3B6" stroke-width=".7"/>
+  <circle cx="105.6" cy="228.6" r="1.7" fill="#FBF7EE" stroke="#C9C3B6" stroke-width=".7"/>
+  <path d="M 129 240 Q 135 236 135.6 231.6" fill="none" stroke="#8E4E1C" stroke-width="5.4" stroke-linecap="round"/>
+  <path d="M 129 240 Q 135 236 135.6 231.6" fill="none" stroke="#C9772E" stroke-width="3.6" stroke-linecap="round"/>
+  <circle cx="136.4" cy="229.4" r="1.9" fill="#FBF7EE" stroke="#C9C3B6" stroke-width=".7"/>
+  <circle cx="134.4" cy="228.6" r="1.7" fill="#FBF7EE" stroke="#C9C3B6" stroke-width=".7"/>
+  <path d="M 104.6 247.4 Q 103 236 112 233.4 Q 120 231.4 128 233.4 Q 137 236 135.4 247.4 Q 120 250.6 104.6 247.4 Z" fill="#C9772E" stroke="#8E4E1C" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M 110 237 Q 116 234.4 122 235.2" fill="none" stroke="#E3A15A" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M 113.4 241.6 Q 120 244 126.6 241.6 M 110.4 245 Q 120 247.4 129.6 245" fill="none" stroke="#8E4E1C" stroke-width="1" stroke-linecap="round" stroke-opacity=".6"/>
+  <circle cx="106" cy="249.4" r="1.6" fill="#4E8A3A"/>
+  <circle cx="134" cy="249.4" r="1.6" fill="#4E8A3A"/>
+  <circle cx="108.6" cy="250.2" r="1.2" fill="#A3324A"/>
+  <circle cx="131.4" cy="250.2" r="1.2" fill="#A3324A"/>
+</svg>

@@ -122,6 +122,11 @@ export function pushOn(db: Database, sender: PushSender = createOffSender()) {
   });
 }
 
+/** The global switches on local Supabase, as seeded (winter on its schedule). */
+export function switchesOn(db: Database) {
+  return createSwitches({ store: createPostgresSwitchStore(db) });
+}
+
 /** The scenes on local Supabase, as seeded: the five all year and the winter 雪场 on its switch. */
 export function scenesOn(db: Database) {
   const switches = createSwitches({ store: createPostgresSwitchStore(db) });

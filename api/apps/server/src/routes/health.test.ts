@@ -18,6 +18,7 @@ import { createLog } from '../log.js';
 import type { Database } from '../ports.js';
 import {
   scenesOn,
+  switchesOn,
   adminOn,
   aiConsentOn,
   noJobs,
@@ -87,6 +88,7 @@ async function getHealth(db: Database) {
       aiConsent: () => Promise.resolve(true),
     }),
     scenes: scenesOn(db),
+    switches: switchesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     unlocks: unusedUnlocks,
     gifts: unusedGifts,
@@ -187,6 +189,7 @@ describe('an unknown route', () => {
       coachHiring: unusedCoachHiring,
       coachActivity: unusedCoachActivity,
       scenes: scenesOn(db),
+      switches: switchesOn(db),
       ...ignoredNotices,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),

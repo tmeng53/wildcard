@@ -2,6 +2,7 @@ import { sql, type Kysely } from 'kysely';
 
 import {
   MonthDay,
+  PLAIN_VIEW,
   SwitchId,
   SwitchMode,
   type Switch,
@@ -47,6 +48,55 @@ export function createPostgresSwitchStore(db: Kysely<SwitchTables>): SwitchStore
         .values({ id: of.id, ...columns })
         .onConflict((conflict) => conflict.column('id').doUpdateSet(columns))
         .execute();
+    },
+
+    async viewOf(member) {
+      const row = await db
+        .selectFrom('switch_previews')
+        .select(['previewer', 'day_offset'])
+        .where('member_id', '=', member)
+        .orderBy('id', 'desc')
+        .limit(1)
+        .executeTakeFirst();
+      return row === undefined
+        ? PLAIN_VIEW
+        : { previewer: row.previewer, dayOffset: row.day_offset };
+    },
+
+    async setView({ member, view, by }) {
+      const now = await this.viewOf(member);
+      if (now.previewer === view.previewer && now.dayOffset === view.dayOffset) return;
+      await db
+        .insertInto('switch_previews')
+        .values({
+          member_id: member,
+          previewer: view.previewer,
+          day_offset: view.dayOffset,
+          set_by: by,
+        })
+        .execute();
+    },
+
+    async previewers() {
+      const rows = await db
+        .selectFrom('switch_previews as p')
+        .select(['p.member_id', 'p.previewer', 'p.day_offset'])
+        .where((eb) =>
+          eb.not(
+            eb.exists(
+              eb
+                .selectFrom('switch_previews as newer')
+                .select('newer.id')
+                .whereRef('newer.member_id', '=', 'p.member_id')
+                .whereRef('newer.id', '>', 'p.id'),
+            ),
+          ),
+        )
+        .orderBy('p.id')
+        .execute();
+      return rows
+        .filter((row) => row.previewer)
+        .map((row) => ({ member: row.member_id, dayOffset: row.day_offset }));
     },
   };
 }

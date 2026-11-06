@@ -3012,8 +3012,12 @@
           "sceneId": {
             "type": "string",
             "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
-            "description": "The squad’s scene this week.",
+            "description": "The scene the squad’s home shows now: its scene this week, or, while a takeover scene (a holiday’s, say) is on, that one for every squad. `picked` is still the squad’s own.",
             "example": "ski"
+          },
+          "takeover": {
+            "type": "boolean",
+            "description": "True while `sceneId` is a takeover scene standing in for the squad’s own: the app plays its opening (the art at `openings/<sceneId>/`, if there is one) the first time it shows it each day, then drops the squad onto it."
           },
           "pickers": {
             "type": "object",
@@ -3160,6 +3164,7 @@
           "week",
           "scene",
           "sceneId",
+          "takeover",
           "pickers",
           "picked",
           "canPick",

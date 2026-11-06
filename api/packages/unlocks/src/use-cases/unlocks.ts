@@ -98,8 +98,11 @@ export function createUnlocks(deps: {
   readonly store: UnlockStore;
   readonly trainedSince: TrainedSince;
   readonly sportListed: SportListed;
-  /** Every switch as it was set at each time (now, for what is out now), as one lookup. */
-  readonly switches: () => Promise<SwitchOn>;
+  /**
+   * Every switch as `member` sees it, as it was set at each time (now, for what is out now), as
+   * one lookup.
+   */
+  readonly switches: (member: MemberId) => Promise<SwitchOn>;
   /** Whether a switch by that id exists, for admins naming one. */
   readonly switchListed: (id: string) => Promise<boolean>;
   /** Told what each grant kept new; left out where nobody needs telling. */
@@ -120,7 +123,7 @@ export function createUnlocks(deps: {
       deps.store.unlocksOf(member),
       deps.store.stores(),
       deps.store.pieces(),
-      deps.switches(),
+      deps.switches(member),
       deps.store.claimsOf(member),
     ]);
     const now = new Date();

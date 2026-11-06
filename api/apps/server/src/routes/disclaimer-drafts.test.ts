@@ -30,6 +30,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import {
   scenesOn,
+  switchesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -140,6 +141,7 @@ function appWith(model: LanguageModel, modelName?: string) {
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     scenes: scenesOn(db),
+    switches: switchesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     unlocks: unusedUnlocks,
     gifts: unusedGifts,
