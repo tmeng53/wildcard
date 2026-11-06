@@ -18,8 +18,7 @@ import SwiftUI
 /// The app once the member is signed in and in a squad: the three tabs (今天, 动态, 我) in the
 /// system's Liquid Glass tab bar (`AppTabs`), with 小队 opened inside 今天 from the home's squad
 /// card (Tracy took 小队's own tab away on 2026-11-04).
-/// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
-/// them draws the bar itself.
+/// Each tab screen keeps to the safe area, which the system raises above the bar.
 struct MainTabs: View {
     enum Tab: Hashable {
         case today, feed, profile
@@ -55,7 +54,7 @@ struct MainTabs: View {
     /// 小队, open from the home's squad card in 今天's place.
     @State var showsSquad = LaunchOptions.opensSquad
     /// The coach's card, opened from a tap on the coach on the home, popped up like a player's.
-    @State private var showsCoachCard = false
+    @State var showsCoachCard = false
     /// 小队's scene pick is playing its reveal, which fills the screen.
     @State private var squadRevealing = false
     /// 我的动态, open from 我 in its place.
@@ -64,11 +63,9 @@ struct MainTabs: View {
     @State private var newestPosts: PostWallStore
     /// A post opened from 我的动态: 动态's post page, over the wall.
     @State private var post: OpenedPost?
-    /// A player's card, opened from a tap on them on the home or their row on 小队,
-    /// popped up over every tab and the tab bar.
-    @State private var teammate: SquadmateCardModel?
-    /// The card was opened from the home, so 今天 and 拍一拍 go over it; from 小队 the scene isn't
-    /// in view to play a pat on.
+    /// A player's card, opened from a tap on them on the home or 小队, over every tab and the bar.
+    @State var teammate: SquadmateCardModel?
+    /// The card was opened from the home, so 今天 and 拍一拍 go over it (not from 小队).
     @State private var teammateOnHome = false
 
     init(
@@ -103,7 +100,7 @@ struct MainTabs: View {
             today.tellUnlocks(
                 with: UnlockNotices(
                     banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },
-                    badge: { WardrobeBadge($0, item: $1) })
+                    badge: { WardrobeBadge($0, item: $1) }, picture: { WardrobePicture($0, item: $1) })
             )
         }
         // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the
@@ -163,6 +160,9 @@ struct MainTabs: View {
                 .environment(\.sceneTheme, today.scene)
             }
         }
+        // A celebration broadcast (「感恩节快到了」) over everything, told only while 今天 is in front.
+        .celebrationPopup(today)
+        .onChange(of: homeInFront, initial: true) { today.isHomeInFront = $1 }
         .cardPopup(isPresented: $showsCoachCard) {
             CoachCardPopup(note: today.coachLine, squad: squad) { opensFeed in
                 showsCoachCard = false
