@@ -10,8 +10,15 @@ import {
 import { instructionsOf, taskOf, type CoachThread, type DayTalk } from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
 import { SquadId, type CoachSettings } from '../domain/settings.js';
-import { factsText } from '../domain/member-facts.js';
-import { consentedOnly, rosterOf, saidTo, weekText, type SquadWeek } from '../domain/squad-week.js';
+import { factsText, planIndexOf, type NoteBrief } from '../domain/member-facts.js';
+import {
+  consentedOnly,
+  rosterOf,
+  saidTo,
+  weekText,
+  type SquadWeek,
+  type WeekCheckIn,
+} from '../domain/squad-week.js';
 import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
 import type {
   AiConsented,
@@ -349,7 +356,12 @@ async function runWake(
           ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
           : [],
       talks: daily ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
-      noteTo: noteTo.map((member) => roster.get(member) ?? '').filter((name) => name !== ''),
+      ...(wake.reason.kind === 'daily'
+        ? {
+            noteTo: await briefsOf(deps, { week, roster, members: noteTo, day: wake.reason.day }),
+            yesterday: await yesterdayOf(deps, { squad: wake.squad, week, day: wake.reason.day }),
+          }
+        : {}),
     });
     if (task === undefined) {
       await deps.stores.wakes.finish(wake.id);
@@ -439,6 +451,67 @@ function factsFor(
       const members = all.filter((member) => consented.has(member));
       return factsText(await memberFacts({ members, weekStart: week.weekStart }), roster);
     },
+  };
+}
+
+/**
+ * What the daily wake tells the coach about each member it writes a morning note to: today's
+ * plan, this week's 饮食小目标 and how many days they trained so far, so it needn't look them up.
+ * Without the plans (no `memberFacts`, or they can't be read), only the days trained.
+ */
+async function briefsOf(
+  deps: CoachWakesDependencies,
+  {
+    week,
+    roster,
+    members,
+    day,
+  }: {
+    readonly week: SquadWeek;
+    readonly roster: ReadonlyMap<string, string>;
+    readonly members: readonly string[];
+    readonly day: string;
+  },
+): Promise<readonly NoteBrief[]> {
+  const facts =
+    members.length === 0 || deps.memberFacts === undefined
+      ? []
+      : await deps.memberFacts({ members, weekStart: week.weekStart }).catch(() => []);
+  const today = planIndexOf(day);
+  return members.flatMap((member): NoteBrief[] => {
+    const name = roster.get(member);
+    if (name === undefined) return [];
+    const trainedDays = new Set(
+      week.checkIns
+        .filter((each) => each.member === member && each.kind === 'trained')
+        .map((each) => each.day),
+    ).size;
+    const mine = facts.find((each) => each.member === member);
+    const planned = mine?.plan[today];
+    return [
+      {
+        name,
+        trainedDays,
+        ...(mine === undefined || planned === undefined
+          ? {}
+          : { plan: { today: planned, fuelGoals: mine.fuelGoals } }),
+      },
+    ];
+  });
+}
+
+/** The squad's posts of the day before `day`: made for it, or posted on it. */
+async function yesterdayOf(
+  deps: CoachWakesDependencies,
+  { squad, week, day }: { readonly squad: SquadId; readonly week: SquadWeek; readonly day: string },
+): Promise<{ readonly day: string; readonly checkIns: readonly WeekCheckIn[] }> {
+  const yesterday = dayBefore(day, 1);
+  // On a Monday, yesterday was last week.
+  const weekStart = weekStartOf(yesterday);
+  const its = weekStart === week.weekStart ? week : await weekOf(deps, { squad, weekStart });
+  return {
+    day: yesterday,
+    checkIns: its.checkIns.filter((each) => each.day === yesterday || each.postedDay === yesterday),
   };
 }
 
