@@ -1778,22 +1778,6 @@
         }
       }
     },
-    "营业中": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "營業中"
-          }
-        }
-      }
-    },
     "豆豆眼": {
       "localizations": {
         "en": {
@@ -2126,22 +2110,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "高能量"
-          }
-        }
-      }
-    },
-    "进店挑衣服。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pick clothes in a store."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "進店挑衣服。"
           }
         }
       }

@@ -7,9 +7,9 @@ import Foundation
 import Observation
 
 /// 商店街, its own page from 我 (the approved wardrobe design, 2026-11-04): where the member gets
-/// clothes. Each store is a card, then the open store's rack. A piece the member unlocked waits
-/// there with NEW until they claim it (领取) into their wardrobe; one this phone hasn't opened
-/// waits in its 「？」 box first. Nothing is bought: clothes come only by training.
+/// clothes. Each store is a storefront along the street, then the open store's rack. A piece the
+/// member unlocked waits there with NEW until they claim it (领取) into their wardrobe; one this
+/// phone hasn't opened waits in its 「？」 box first. Nothing is bought: clothes come only by training.
 @MainActor @Observable
 public final class StreetModel {
     /// One piece on a rack, as the member finds it.
@@ -155,7 +155,7 @@ public final class StreetModel {
 
     // MARK: Walking the street
 
-    /// Walks into an open store; a closed one stays shut, its card saying how it unlocks.
+    /// Walks into an open store; a closed one stays shut, its shutter saying how it unlocks.
     func visit(_ store: EditorChoices.Store) {
         guard store.isOpen else { return }
         (self.store, tip) = (store.id, nil)

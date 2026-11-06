@@ -1,11 +1,11 @@
 import XCTest
 
-/// 商店街 from 我 on the in-memory member: its header button, a closed store, WARM-UP's rack and its
-/// sports tip, and back. Keeps screenshots for review.
+/// 商店街 from 我 on the in-memory member: its header button, the street and its map, a closed
+/// store, WARM-UP's rack and its sports tip, and back. Keeps screenshots for review.
 @MainActor
 final class ShoppingStreetUITests: XCTestCase {
-    /// 商店街 from its header button on 我, between 换装 and 设置: a closed store's card says how it unlocks and a
-    /// tap keeps it shut; WARM-UP lets the member in, its ⓘ names the sports, and back walks out to
+    /// 商店街 from its header button on 我, between 换装 and 设置: the map walks to a closed store, whose
+    /// shutter and button say how it unlocks and whose tap keeps it shut; WARM-UP lets the member in, its ⓘ names the sports, and back walks out to
     /// the street and then to 我.
     func testShoppingStreet() {
         let app = launch(language: "zh-Hans")
@@ -20,14 +20,16 @@ final class ShoppingStreetUITests: XCTestCase {
         XCTAssertTrue(warmup.waitForExistence(timeout: 30), "no WARM-UP on the street")
         settle()
         keepScreenshot(named: "22-street")
-        let lap = app.buttons["street.store.lap"]
-        for _ in 0..<6 where !lap.isHittable { app.swipeUp() }
-        XCTAssertTrue(lap.label.contains("跑步 3 次解锁"), lap.label)
-        lap.tap()
+        walkToClosedStore(app)
         let info = app.buttons["street.rack.info"]
         XCTAssertFalse(info.exists, "a closed store let the member in")
-        for _ in 0..<6 where !warmup.isHittable { app.swipeDown() }
-        warmup.tap()
+        let enter = app.buttons["street.enter"]
+        // Back along the street to WARM-UP, and in through its button.
+        app.buttons["street.map.warmup"].tap()
+        settle()
+        XCTAssertTrue(warmup.isHittable, "the map didn't walk back to WARM-UP")
+        XCTAssertTrue(enter.isEnabled, "an open store's button is off")
+        enter.tap()
         XCTAssertTrue(info.waitForExistence(timeout: 30), "WARM-UP didn't open")
         XCTAssertTrue(app.buttons["editor.tile.top.warmup-hoodie"].exists, "no 连帽卫衣 on WARM-UP's rack")
         info.tap()
@@ -55,6 +57,20 @@ final class ShoppingStreetUITests: XCTestCase {
         XCTAssertTrue(back.isHittable, "返回 out of reach after a swipe back")
         back.tap()
         XCTAssertTrue(street.waitForExistence(timeout: 30), "back didn't return to 我")
+    }
+
+    /// The street's map walks to a closed store: its shutter and its button say how it unlocks,
+    /// and a tap on it keeps it shut.
+    private func walkToClosedStore(_ app: XCUIApplication) {
+        app.buttons["street.map.lap"].tap()
+        let lap = app.buttons["street.store.lap"]
+        XCTAssertTrue(lap.waitForExistence(timeout: 30), "the map didn't walk to LAP NINE")
+        settle()
+        XCTAssertTrue(lap.isHittable, "LAP NINE isn't in the middle of the street")
+        XCTAssertTrue(lap.label.contains("跑步 3 次解锁"), lap.label)
+        XCTAssertFalse(app.buttons["street.enter"].isEnabled, "a closed store's button lets the member in")
+        keepScreenshot(named: "22-street-closed")
+        lap.tap()
     }
 
     private func launch(language: String) -> XCUIApplication {

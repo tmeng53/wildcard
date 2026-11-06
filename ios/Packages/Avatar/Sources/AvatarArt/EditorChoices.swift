@@ -150,6 +150,17 @@ extension PlaceholderCharacter {
         return try Artwork.read(svg: svg, path: path)
     }
 
+    /// A store's own colour, for its awning and name on 商店街: the first fill in its badge that
+    /// isn't a grey (white, mist or graphite), so a store uploaded with its badge brings its colour.
+    /// Nil for a badge drawn only in greys.
+    public static func storeColor(_ store: String) -> RGBAColor? {
+        guard let badge = try? storeBadge(store) else { return nil }
+        return badge.shapes.lazy.compactMap(\.fill).first { fill in
+            let channels = [fill.red, fill.green, fill.blue].map(Int.init)
+            return (channels.max() ?? 0) - (channels.min() ?? 0) > 40
+        }
+    }
+
     /// The colors `variant` lets a look change in `slot`: its `tones.json`, or nil when its art
     /// keeps its own colors. The base is what the editor's 原色 swatch shows.
     public static func tones(for slot: Slot, wearing variant: String) -> Tones? {
