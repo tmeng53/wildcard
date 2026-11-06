@@ -65,7 +65,8 @@ final class SquadSettingsUITests: XCTestCase {
     }
 
     func testTheWinnerPicksTheSceneOnce() {
-        let app = launch(extra: ["-squad-seat", "winner"])
+        // Home's card opens unfolded, for the squad's name at the end.
+        let app = launch(extra: ["-squad-seat", "winner", "-today.cardCollapsed", "0"])
         XCTAssertFalse(app.buttons["squad.rename"].exists, "a member can rename")
         XCTAssertEqual(app.buttons.matching(identifier: "squad.member.more").count, 0, "a member manages others")
         app.buttons["squad.changeScene"].tap()

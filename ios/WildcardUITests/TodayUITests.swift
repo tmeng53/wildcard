@@ -275,7 +275,8 @@ final class TodayUITests: XCTestCase {
     }
 
     /// `cardPage` pins the squad card to its first page, since the card reopens where it was
-    /// left; pass nil to let the test swipe it.
+    /// left; pass nil to let the test swipe it. The card is pinned open (folding is
+    /// `TodayCapsuleUITests`').
     private func launch(language: String, photos: Int, extra: [String] = [], cardPage: Int? = 0) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -283,7 +284,7 @@ final class TodayUITests: XCTestCase {
             [
                 "-uitest-photos", "\(photos)", "-AppleLanguages", "(\(language))", "-AppleLocale", language,
                 "-uitest-no-push", "-uitest-noon",
-            ] + (cardPage.map { ["-today.cardPage", "\($0)"] } ?? []) + extra
+            ] + (cardPage.map { ["-today.cardPage", "\($0)"] } ?? []) + ["-today.cardCollapsed", "0"] + extra
         app.launch()
         return app
     }

@@ -345,7 +345,7 @@ struct StatusSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
             SectionTitle(number: 7, title: Text("卡片、状态圈、进度", bundle: .module))
-            GuideGroup(Text("场景上：实心白卡片", bundle: .module)) {
+            GuideGroup(Text("场景上：毛玻璃卡片，可收起", bundle: .module)) {
                 SquadCard(squad: squadWeek, mine: myWeek, page: $page, pickedDay: $pickedDay) { member in
                     GuideFace(index: members.firstIndex(of: member) ?? 0)
                 }
@@ -357,6 +357,11 @@ struct StatusSection: View {
                 .background(
                     Color(role: .bgScene, in: theme),
                     in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                SquadCapsule(squad: squadWeek, mine: myWeek, heads: { GuideHeads() }, expand: {})
+                    .padding(.vertical, Space.cardPadding)
+                    .background(
+                        Color(role: .bgScene, in: theme),
+                        in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             }
             Button {
                 mine = mine == .done ? .open : .done
@@ -380,21 +385,6 @@ struct StatusSection: View {
                 .card()
             }
         }
-    }
-}
-
-/// A stand-in head for the ring demo; the app passes the character.
-struct GuideFace: View {
-    @Environment(\.sceneTheme) private var theme
-    let index: Int
-
-    var body: some View {
-        Image(
-            systemName: ["face.smiling", "pawprint.fill", "hare.fill", "face.smiling.inverse", "cat.fill", "dog.fill"][
-                index % 6]
-        )
-        .font(.system(size: Sizing.characterHead * 0.55))
-        .foregroundStyle(Color(role: .fgMuted, in: theme))
     }
 }
 #endif
