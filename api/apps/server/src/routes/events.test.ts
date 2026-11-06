@@ -200,6 +200,10 @@ describe('Postgres live events', () => {
       db,
     );
     await expect.poll(() => shelves.ana).toBeGreaterThan(before);
+    // Taken back off, so other tests see no previewer.
+    await sql`insert into public.switch_previews (member_id, previewer) values (${ana.userId}, false)`.execute(
+      db,
+    );
 
     // A switch's log, like the stores', pieces' and rules' logs, tells every member.
     const beaBefore = shelves.bea;
