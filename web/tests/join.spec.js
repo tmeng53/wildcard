@@ -69,6 +69,29 @@ test('speaks Traditional Chinese and English, and links the legal pages in each'
   await expect(page.locator('#terms')).toHaveAttribute('href', '/terms');
 });
 
+test('opens in Simplified Chinese whatever the browser speaks', async ({ browser }) => {
+  for (const locale of ['en-US', 'zh-TW']) {
+    const context = await browser.newContext({ locale });
+    const page = await context.newPage();
+    await stub(page, 200, squad(2));
+    await page.goto('/join/K7M2QX9P');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hans');
+    await expect(page.locator('#sub')).toHaveText('2 人已上场，就等你了');
+    await expect(page.locator('.wc-logo')).toHaveAttribute('href', '/');
+    await context.close();
+  }
+});
+
+test('opens in the language last picked on the site', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.wc-lang a[lang="en"]').click();
+  await expect(page).toHaveURL(/\/en\/$/);
+  await stub(page, 200, squad(2));
+  await page.goto('/join/K7M2QX9P');
+  await expect(page.locator('#sub')).toHaveText('2 in. Waiting on you.');
+  await expect(page.locator('.wc-logo')).toHaveAttribute('href', '/en/');
+});
+
 test('a full squad says so and offers the app without the code', async ({ page }) => {
   await stub(page, 200, squad(8, { full: true }));
   await page.goto('/join/K7M2QX9P?lang=en');
@@ -273,7 +296,7 @@ for (const [width, height] of [
 }
 
 test('the home page’s button opens the App Store, with Apple’s logo', async ({ page }) => {
-  for (const path of ['/', '/zh/', '/zh-hant/']) {
+  for (const path of ['/', '/en/', '/zh-hant/']) {
     await page.goto(path);
     await expect(page.locator('.btn')).toHaveAttribute('href', APP_STORE);
     await expect(page.locator('.btn svg')).toBeVisible();
