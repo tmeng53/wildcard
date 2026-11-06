@@ -152,14 +152,18 @@ enum StoreCopy {
     static func name(_ store: String) -> Text { text(uploaded(store)?.name, names[store], or: store) }
     static func local(_ store: String) -> Text { text(uploaded(store)?.local, locals[store], or: store) }
     /// Its sports line as one word a sport, for the street's pills: split at commas where the
-    /// language lists with them (English), else at spaces.
+    /// language lists with them (English), at spaces in Chinese.
     static func sports(_ store: String) -> [String] {
         let line =
             uploaded(store)?.sports?.localized
             ?? sportLines[store].map { Bundle.module.inAppLanguage.localizedString(forKey: $0, value: nil, table: nil) }
             ?? ""
         let commas = CharacterSet(charactersIn: ",，")
-        let separators = line.unicodeScalars.contains(where: commas.contains) ? commas : .whitespaces
+        // A Latin line without commas is one phrase (Any sport counts, Winter sports); Chinese
+        // lists its sports with spaces.
+        let latin = line.unicodeScalars.contains { $0.isASCII && CharacterSet.letters.contains($0) }
+        let separators: CharacterSet =
+            line.unicodeScalars.contains(where: commas.contains) ? commas : latin ? CharacterSet() : .whitespaces
         return line.components(separatedBy: separators)
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
