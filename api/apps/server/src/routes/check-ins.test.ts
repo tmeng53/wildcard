@@ -997,7 +997,7 @@ describe('a 训练 from Apple Health', () => {
   });
   const reason = (body: unknown) => z.object({ reason: z.string() }).safeParse(body).data?.reason;
 
-  it('keeps the workout with the post, posts each workout once, and an edit can drop it', async () => {
+  it('keeps the workout with the post, posts each workout once, and an edit can strike numbers', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
     const { day, createdAt } = todayAndNow();
@@ -1076,6 +1076,25 @@ describe('a 训练 from Apple Health', () => {
       true,
       false,
     ]);
+
+    // A build from before workouts edits the caption and sends no workout: the post keeps it.
+    const older = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: {
+        version: 1,
+        kind: 'trained',
+        training: { sport: 'run', minutes: 32, caption: '风大' },
+      },
+    });
+    expect(older.status).toBe(200);
+    const after = await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token });
+    expect(
+      z
+        .object({ checkIn: z.object({ training: z.object({ workout: z.unknown() }) }) })
+        .parse(after.body).checkIn.training.workout,
+    ).toStrictEqual(shown);
 
     // Deleting the post frees the workout to be posted again.
     expect(
