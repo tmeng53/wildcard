@@ -161,7 +161,7 @@ private struct SportRow: View {
                     }
                 }
                 .frame(height: Self.bar)
-            HStack(alignment: .firstTextBaseline, spacing: 1) {
+            HStack(alignment: .firstTextBaseline, spacing: Self.unitGap) {
                 Text(verbatim: "\(days)").typeStyle(TypeRamp.scoreInline).monospacedDigit()
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Text("天", bundle: .module).typeStyle(TypeRamp.caption)
@@ -176,6 +176,8 @@ private struct SportRow: View {
     private static let glyph: Double = 14
     private static let nameWidth: Double = 72
     private static let bar: Double = 12
+    /// The hair between a number and its unit.
+    private static let unitGap: Double = 1
     private static let daysWidth: Double = 44
 }
 

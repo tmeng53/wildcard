@@ -100,8 +100,11 @@ struct FactCard: View {
     private var note: Text {
         switch fact {
         case .bestDay(let best):
-            best.members == everyone
-                ? Text("全员都训练了", bundle: .module) : Text("\(best.members) 人训练了", bundle: .module)
+            if best.members == everyone {
+                Text("全员都训练了", bundle: .module)
+            } else {
+                Text("\(best.members) 人训练了", bundle: .module)
+            }
         case .streak(let days, let from, let member):
             streakNote(from: from, through: from + days - 1, by: member)
         case .reactions, .cheers:
