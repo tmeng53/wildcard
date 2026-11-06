@@ -215,7 +215,8 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     let hop = try PlaceholderCharacter.kitHop()
     var clips = [
         hop.out, hop.in, try PlaceholderCharacter.entrance(), try PlaceholderCharacter.drop(),
-        try PlaceholderCharacter.woken(),
+        try PlaceholderCharacter.woken(), try PlaceholderCharacter.shoppingWalk(),
+        try PlaceholderCharacter.shoppingSpot(),
     ]
     clips += try PlaceholderCharacter.editorChoices().props.compactMap {
         try PlaceholderCharacter.propMove(for: Outfit(["prop": $0.id]))
