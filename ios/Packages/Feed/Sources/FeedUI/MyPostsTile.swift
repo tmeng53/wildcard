@@ -26,7 +26,8 @@ public struct MyPostsTile: View {
             HStack(spacing: Space.xxs) {
                 ForEach(0..<GlanceTileMetrics.posts, id: \.self) { index in
                     if index < store.posts.count {
-                        PostThumbnail(store: store, post: store.posts[index])
+                        // Keyed by the post, so a thumbnail never keeps another post's photo.
+                        PostThumbnail(store: store, post: store.posts[index]).id(store.posts[index].id)
                     } else {
                         Color.clear.aspectRatio(1, contentMode: .fit)
                     }
@@ -61,7 +62,9 @@ private struct PostThumbnail: View {
                     .strokeBorder(Color(role: .fgOnInkMuted, in: theme).opacity(0.4), lineWidth: Sizing.hairline)
             }
             .task(id: post.checkIn.photos?.cover.loadID) {
-                guard cover == nil, let ref = post.checkIn.photos?.cover, let jpeg = await store.photo(ref) else {
+                // An edit that changes or removes the cover drops the old one.
+                guard let ref = post.checkIn.photos?.cover, let jpeg = await store.photo(ref) else {
+                    cover = nil
                     return
                 }
                 cover = await PostTile.thumbnail(jpeg)
