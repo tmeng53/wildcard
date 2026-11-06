@@ -105,6 +105,7 @@ const RunBody = z.strictObject({
   given: z.number(),
   failed: z.number(),
   told: z.number(),
+  goals: z.object({ week: z.string(), suggested: z.number(), failed: z.number() }),
 });
 
 // The week of Monday 2026-10-19; its awards are on Sunday 10-25 at 8pm in New York.

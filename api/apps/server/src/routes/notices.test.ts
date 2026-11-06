@@ -206,3 +206,21 @@ describe('GET /me/notices: broadcasts', () => {
     expect(again).toHaveLength(1);
   });
 });
+
+describe('GET /me/notices: goal suggestions', () => {
+  it('reads a captain’s suggested goal with how many weeks the squad was over', async () => {
+    const captain = await signUp();
+    await notices.tell([
+      {
+        member: NoticeMember.parse(captain.userId),
+        kind: 'goalSuggestion',
+        subject: { version: 1, weeks: 3, daysPerMember: 4 },
+      },
+    ]);
+    const page = await get('/me/notices', captain.token);
+    expect(page.status).toBe(200);
+    expect(page.body).toMatchObject({
+      notices: [{ kind: 'goalSuggestion', weeks: 3, daysPerMember: 4 }],
+    });
+  });
+});

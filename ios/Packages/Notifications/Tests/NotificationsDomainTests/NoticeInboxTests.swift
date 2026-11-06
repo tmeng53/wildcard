@@ -312,16 +312,23 @@ private actor FakeNotices: NoticeSource {
     let told = { (id: Int, name: String) in
         Notice(id: NoticeID(rawValue: id), toldAt: monday, squad: nil, subject: .broadcast(broadcast(name)))
     }
+    let suggested = Notice(
+        id: NoticeID(rawValue: 5), toldAt: monday, squad: nil,
+        subject: .goalSuggestion(GoalSuggestion(weeks: 3, daysPerMember: 4)))
     let server = FakeNotices(
-        [told(1, "seen-already"), notice(2), told(3, "soon"), told(4, "today")], seen: NoticeID(rawValue: 2))
+        [told(1, "seen-already"), notice(2), told(3, "soon"), told(4, "today"), suggested], seen: NoticeID(rawValue: 2))
     let inbox = NoticeInbox(source: server)
 
     await inbox.load()
 
     #expect(inbox.unseenBroadcasts.map(\.id) == ["soon", "today"])
-    #expect(inbox.notices.first?.destination == .stores)
+    #expect(inbox.notices.dropFirst().first?.destination == .stores)
+    // A higher squad goal for the captain drops in the same way, and opens 小队.
+    #expect(inbox.unseenGoalSuggestions.map(\.id.rawValue) == [5])
+    #expect(inbox.unseenGoalSuggestions.first?.destination == .squad)
     await inbox.open()
     #expect(inbox.unseenBroadcasts.isEmpty)
+    #expect(inbox.unseenGoalSuggestions.isEmpty)
 }
 
 @Test @MainActor func aBroadcastOpenedFromItsBannerIsNoLongerNew() async {

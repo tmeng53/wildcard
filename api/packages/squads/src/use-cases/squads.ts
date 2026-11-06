@@ -20,6 +20,7 @@ import {
 import type { InviteCode } from '../domain/invite-code.js';
 import { handCaptaincy, removeMember, renameSquad } from './squads/settings.js';
 import { setWeeklyGoal, weeklyGoal, type WeeklyGoal } from './squads/weekly-goal.js';
+import type { GoalSuggestion } from '../domain/goal-suggestion.js';
 import { goalFor, type DaysPerMember, type WeeklyGoalSetting } from '../domain/weekly-goal.js';
 
 /** A squad as it stood at a moment in a week. */
@@ -99,6 +100,15 @@ export interface Squads {
    * what other modules ask to count a squad's week against.
    */
   daysPerMember(squad: SquadId, week: string): Promise<DaysPerMember>;
+  /** The squad's captain now; `undefined` once everyone left, or for no such squad. */
+  captainOf(squad: SquadId): Promise<MemberId | undefined>;
+  /** The higher goals suggested to the squad's captains, the earliest week first. */
+  goalSuggestions(squad: SquadId): Promise<GoalSuggestion[]>;
+  /**
+   * Keeps that the captain was suggested a higher goal for the squad in a week, unless one was
+   * that week already (`taken`): the caller tells the captain only on `suggested`.
+   */
+  suggestGoal(squad: SquadId, suggestion: GoalSuggestion): Promise<'suggested' | 'taken'>;
   /** The squad's scene picks, the earliest week first: for its scene (`createSquadScenes`). */
   scenePicks(squad: SquadId): Promise<ScenePick[]>;
   /** Saves a week's scene unless it has one: the rules are `createSquadScenes`'s. */
@@ -144,6 +154,9 @@ export function createSquads(deps: {
     weeklyGoals: (squad) => deps.store.weeklyGoals(squad),
     daysPerMember: async (squad, week) =>
       goalFor(await deps.store.weeklyGoals(squad), SceneWeek.parse(week)),
+    captainOf: async (squad) => (await deps.store.find(squad))?.captain ?? undefined,
+    goalSuggestions: (squad) => deps.store.goalSuggestions(squad),
+    suggestGoal: (squad, suggestion) => deps.store.suggestGoal(squad, suggestion),
     scenePicks: (squad) => deps.store.scenePicks(squad),
     savePick: (input) => deps.store.pickScene(input),
   };
