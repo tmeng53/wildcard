@@ -16,7 +16,8 @@ import SwiftUI
 struct StoreStreet: View {
     let model: StreetModel
     @State private var current: String?
-    @State private var player: CharacterPlayer?
+    /// The street is sliding, by a swipe or a tap on its map: the member strolls.
+    @State private var walking = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -52,6 +53,7 @@ struct StoreStreet: View {
                 .scrollPosition(id: $current)
                 .contentMargins(.horizontal, peek, for: .scrollContent)
                 .scrollIndicators(.hidden)
+                .onScrollPhaseChange { _, phase in walking = phase.isScrolling }
                 .padding(.bottom, sidewalk - Space.m)
                 walker
             }
@@ -62,21 +64,14 @@ struct StoreStreet: View {
         }
         // The street runs to the screen's edges, past the page's margins.
         .padding(.horizontal, -Space.pageMargin)
-        .task { await dress() }
     }
 
-    /// The member, standing on the sidewalk under the store in the middle.
+    /// The member with their shopping bags on the sidewalk under the store in the middle,
+    /// strolling while the street slides and, once it stops, spotting something in the window.
     private var walker: some View {
-        Group {
-            if let player {
-                CharacterView(player: player)
-            } else {
-                Color.clear
-            }
-        }
-        .frame(width: character.width, height: character.height)
-        .padding(.bottom, Space.xxs)
-        .accessibilityHidden(true)
+        ShopperView(look: model.draft.outfit, persona: model.draft.persona, walking: walking && !reduceMotion)
+            .frame(width: character.width, height: character.height)
+            .padding(.bottom, Space.xxs)
     }
 
     /// The centred store's sports and its button.
@@ -129,15 +124,6 @@ struct StoreStreet: View {
         }
     }
 
-    /// Dresses the member off the main actor, idling as their persona does.
-    private func dress() async {
-        guard player == nil, let figure = try? await CharacterEditorModel.figure(wearing: model.draft.outfit) else {
-            return
-        }
-        let species = model.draft.outfit.variants["body"].flatMap(model.catalog.species(of:))?.id
-        let idle = (try? PlaceholderCharacter.clip("idle", persona: model.draft.persona, species: species)) ?? .still
-        player = try? CharacterPlayer(figure: figure, idle: idle)
-    }
 }
 
 /// One store's front: a graphite cap and its striped awning in the store's colour, then the wall
