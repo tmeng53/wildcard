@@ -26,25 +26,40 @@ public struct TabBarItem<ID: Hashable>: Identifiable {
 /// ink, never the scene's color; the screens inside keep the system's tint. Each screen keeps to
 /// its safe area, which the system raises above the bar, so none of them measures the bar.
 /// `showsBar` false hides the bar (a tab's full-screen step). A tab in `dotted` carries a small
-/// brand dot, no number: something new there since the member last looked.
+/// brand dot, no number: something new there since the member last looked. Tapping the tab
+/// already open calls `reselected` with it, for the screen to go back to its root, as iOS's own
+/// apps do.
 public struct AppTabs<ID: Hashable, Content: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let items: [TabBarItem<ID>]
     @Binding private var selection: ID
     private let showsBar: Bool
     private let dotted: Set<ID>
+    private let reselected: (ID) -> Void
     private let content: (ID) -> Content
 
     public init(
         _ items: [TabBarItem<ID>], selection: Binding<ID>, showsBar: Bool = true, dotted: Set<ID> = [],
+        reselected: @escaping (ID) -> Void = { _ in },
         @ViewBuilder content: @escaping (ID) -> Content
     ) {
         self.items = items
         _selection = selection
         self.showsBar = showsBar
         self.dotted = dotted
+        self.reselected = reselected
         self.content = content
         Self.paintDots()
+    }
+
+    /// The selection as the bar sets it: a tap on the tab already open is a reselection, which
+    /// the system also reports through the binding.
+    private var tapped: Binding<ID> {
+        Binding(
+            get: { selection },
+            set: { tab in
+                if tab == selection { reselected(tab) } else { selection = tab }
+            })
     }
 
     /// The system draws a badge red; ours is the brand's graphite, never an alarm.
@@ -55,7 +70,7 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
     }
 
     public var body: some View {
-        TabView(selection: $selection) {
+        TabView(selection: tapped) {
             ForEach(items) { item in
                 Tab(value: item.id) {
                     content(item.id)

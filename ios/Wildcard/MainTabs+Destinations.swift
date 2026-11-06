@@ -69,6 +69,24 @@ extension MainTabs {
         }
     }
 
+    /// The tab that wears the bar's dot: 动态, with news since the member last looked.
+    var dots: Set<Tab> { feed.hasNews ? [.feed] : [] }
+
+    /// A tab back on its own page, with every page pushed over it closed: the tab left, and the
+    /// open one tapped again in the bar (Tracy, 2026-11-06). A scene pick's reveal playing over
+    /// 小队 stays until it lands.
+    func backToRoot(_ tab: Tab) {
+        switch tab {
+        case .today:
+            if !squadRevealing { todayPages = [] }
+        case .feed:
+            feed.opened = nil
+            feedPages = []
+        case .profile:
+            closeProfilePages()
+        }
+    }
+
     /// 我 back on its own page: 设置, 出赛表, 商店街, 我的动态 and a post over it all closed. 设置
     /// stays while an account is being deleted, which can't be left.
     func closeProfilePages() {
