@@ -81,11 +81,14 @@ extension InMemoryFeedSource {
                 variants: ["body": "peach", "hair": "curls", "top": "warmup-tee", "bottom": "warmup-shorts"],
                 colors: ["body": "#C68A5E"]),
             "Coco": CharacterLook(
-                persona: "drama", variants: ["body": "lop", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
+                persona: "drama",
+                variants: ["body": "lop", "cheeks": "rosy", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
             "Mia": CharacterLook(
-                persona: "deadpan", variants: ["body": "calico", "top": "warmup-tee", "bottom": "moss-cargo"]),
+                persona: "deadpan",
+                variants: ["body": "calico", "cheeks": "rosy", "top": "warmup-tee", "bottom": "moss-cargo"]),
             "豆豆": CharacterLook(
-                persona: "energetic", variants: ["body": "shiba", "top": "nolook-jersey", "bottom": "warmup-shorts"]),
+                persona: "energetic",
+                variants: ["body": "shiba", "cheeks": "rosy", "top": "nolook-jersey", "bottom": "warmup-shorts"]),
             "小鱼": CharacterLook(
                 persona: "shy",
                 variants: ["body": "peach", "hair": "ponytail", "top": "warmup-tee", "bottom": "warmup-leggings"]),

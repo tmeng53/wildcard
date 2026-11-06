@@ -85,10 +85,13 @@ public enum RecapSample {
             ]),
         member(
             mia, "Mia", .drama,
-            ["body": "tuxedo", "top": "warmup-tee", "bottom": "warmup-shorts", "hat": "warmup-headband"]),
+            [
+                "body": "tuxedo", "cheeks": "rosy", "top": "warmup-tee", "bottom": "warmup-shorts",
+                "hat": "warmup-headband",
+            ]),
         member(
             jay, "阿杰", .shy,
-            ["body": "shiba", "top": "warmup-tee", "bottom": "moss-cargo", "hat": "warmup-cap"]),
+            ["body": "shiba", "cheeks": "rosy", "top": "warmup-tee", "bottom": "moss-cargo", "hat": "warmup-cap"]),
         member(
             reader, "我", .deadpan,
             [

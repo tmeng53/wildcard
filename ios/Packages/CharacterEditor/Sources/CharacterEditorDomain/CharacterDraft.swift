@@ -37,15 +37,13 @@ public struct CharacterDraft: Hashable, Sendable {
         self.nickname = String(nickname.prefix(Self.nicknameLimit))
     }
 
-    /// What the character wears: the picks, minus hair and a person's face on an animal, whose
-    /// face comes with its coat.
+    /// What the character wears: the picks, minus hair on an animal. Animals pick a face as
+    /// people do.
     public var outfit: Outfit {
         guard !wearsHair else { return picks }
         var outfit = picks
-        for slot in ["hair"] + PlaceholderCharacter.faceSlots {
-            outfit.variants[slot] = nil
-            outfit.colors[slot] = nil
-        }
+        outfit.variants["hair"] = nil
+        outfit.colors["hair"] = nil
         return outfit
     }
 
@@ -67,7 +65,8 @@ public struct CharacterDraft: Hashable, Sendable {
     /// even when that color was the old piece's own, and skin across people. A body's own
     /// colors are what picking it means, and an animal's coat starts from its own colors.
     /// A piece put on an empty slot wears the color the slot showed when it was emptied.
-    /// Brows put on without a color take the hair's.
+    /// Brows put on without a color take the hair's. A person turned into an animal without
+    /// cheeks gets an animal's (`PlaceholderCharacter.animalCheeks`).
     @discardableResult
     public mutating func pick(_ variant: String?, for slot: Slot) -> Bool {
         let worn = picks.variants[slot]
@@ -90,6 +89,11 @@ public struct CharacterDraft: Hashable, Sendable {
             next.colors[slot] = nil
         }
         if slot == "brows", variant != nil, next.colors["brows"] == nil { next.colors["brows"] = picks.colors["hair"] }
+        if slot == "body", wearsHair, let variant, catalog.species(of: variant)?.wearsHair == false,
+            next.variants["cheeks"] == nil
+        {
+            next.variants["cheeks"] = PlaceholderCharacter.animalCheeks
+        }
         commit(next)
         return true
     }
