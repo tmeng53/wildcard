@@ -257,7 +257,29 @@ const storyFields = {
         '最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted.',
     }),
   ending: z
-    .strictObject({ done: count, plan: count })
+    .strictObject({
+      done: count,
+      plan: count,
+      headline: z
+        .string()
+        .min(1)
+        .optional()
+        .meta({
+          description:
+            'The headline over the page, such as 稳了 or 差一点, written with the awards. Missing ' +
+            'until they are, when the model didn’t write one, and for older weeks.',
+        }),
+      line: z
+        .string()
+        .min(1)
+        .optional()
+        .meta({
+          description:
+            'The line under the days against the plans, written with the awards. Missing until ' +
+            'they are, when the model didn’t write one, and for older weeks: the app then says ' +
+            'how many days are missing, or that the squad made it.',
+        }),
+    })
     .openapi('StoryEnding')
     .optional()
     .meta({

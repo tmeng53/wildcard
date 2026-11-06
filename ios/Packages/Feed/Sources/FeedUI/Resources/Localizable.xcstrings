@@ -401,7 +401,7 @@
         }
       }
     },
-    "练了" : {
+    "训练" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -412,7 +412,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "練了"
+            "value" : "訓練"
           }
         }
       }
@@ -1009,7 +1009,7 @@
         }
       }
     },
-    "练了 · %@" : {
+    "训练 · %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1020,7 +1020,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "練了 · %@"
+            "value" : "訓練 · %@"
           }
         }
       }

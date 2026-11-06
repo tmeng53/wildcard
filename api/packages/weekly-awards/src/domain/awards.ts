@@ -60,6 +60,10 @@ export const TITLE_MAX = 6;
 export const SPEECH_MAX = 24;
 /** The most titles a member gets. */
 export const TITLES_MAX = 3;
+/** The longest headline over the 战报's last page (这一周), such as 稳了 or 差一点. */
+export const ENDING_HEADLINE_MAX = 4;
+/** The longest line on the 战报's last page, under the squad's days against its plans. */
+export const ENDING_LINE_MAX = 24;
 
 /**
  * The model's reply, held to this shape by structured output, its moves only those `moves`
@@ -85,6 +89,16 @@ export function modelReplyFor(catalog: BadgeCatalog, moves: readonly [AwardMove,
           .max(TITLES_MAX),
       }),
     ),
+    ending: z
+      .strictObject({
+        headline: z.string().min(1).max(ENDING_HEADLINE_MAX),
+        line: z.string().min(1).max(ENDING_LINE_MAX),
+      })
+      .meta({
+        description:
+          'The last page of the squad’s 战报: a headline and one line on squad.trainedDays ' +
+          'against squad.plannedDays.',
+      }),
   });
 }
 export type ModelReply = z.infer<ReturnType<typeof modelReplyFor>>;
@@ -127,6 +141,17 @@ export const StoredAward = z.discriminatedUnion('version', [
 ]);
 export type StoredAward = z.infer<typeof StoredAward>;
 
+/**
+ * The words on the 战报's last page (这一周), over the squad's days trained against its plans: a
+ * headline and a line. Stored JSON (`weekly_awards.ending`).
+ */
+export const EndingWords = z.strictObject({
+  version: z.literal(1),
+  headline: z.string().min(1),
+  line: z.string().min(1),
+});
+export type EndingWords = z.infer<typeof EndingWords>;
+
 /** One member's awards for a squad's week. */
 export interface MemberAwards {
   readonly member: MemberId;
@@ -139,6 +164,11 @@ export interface MemberAwards {
  */
 export interface Awards {
   readonly members: readonly MemberAwards[];
+  /**
+   * The words for the 战报's last page; none when the squad trained no day (its story has no
+   * ending), or for awards written before the model wrote them.
+   */
+  readonly ending?: EndingWords;
 }
 
 /**
@@ -258,6 +288,16 @@ export function titlesOf(
     result.set(member, titles);
   }
   return result;
+}
+
+/**
+ * The words a reply gives the 战报's last page, trimmed and on one line, or `undefined` when
+ * either is blank.
+ */
+export function endingWordsOf(reply: ModelReply): EndingWords | undefined {
+  const headline = oneLine(reply.ending.headline);
+  const line = oneLine(reply.ending.line);
+  return headline === '' || line === '' ? undefined : { version: 1, headline, line };
 }
 
 /** The text on one line: trimmed, each line break (and the spaces around it) one space. */

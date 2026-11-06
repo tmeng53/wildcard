@@ -352,6 +352,38 @@
           }
         }
       }
+    },
+    "连续 %lld 周超过小队目标": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Over the squad goal %lld weeks in a row"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "連續 %lld 週超過小隊目標"
+          }
+        }
+      }
+    },
+    "改成人均 %lld 天？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make it %lld days each?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "改成人均 %lld 天？"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -151,7 +151,8 @@ extension WeekStory {
             week: Week(monday: monday, sunday: sunday), scene: scene, squadmates: squadmates, podium: podium,
             titles: titles, myWeek: myWeek ?? nil, squadWeek: squadWeek ?? nil, hottest: hottest ?? nil,
             meals: meals ?? nil,
-            bestDisclaimer: bestDisclaimer, ending: frozen.ending.map { Ending(done: $0.done, plan: $0.plan) })
+            bestDisclaimer: bestDisclaimer,
+            ending: frozen.ending.map { Ending(done: $0.done, plan: $0.plan, headline: $0.headline, line: $0.line) })
     }
 
     private static func member(_ id: String) -> MemberID? {

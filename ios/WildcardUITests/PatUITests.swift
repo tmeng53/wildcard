@@ -50,7 +50,7 @@ final class PatUITests: XCTestCase {
         let today = app.descendants(matching: .any).matching(identifier: "today.mateToday").firstMatch
         XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "tapping 豆豆 didn't open her today")
         XCTAssertTrue(app.buttons["me.card"].waitForExistence(timeout: Self.wait), "her card didn't open under it")
-        XCTAssertTrue(labeled("今天练了", in: app).exists, "豆豆's today doesn't say she trained")
+        XCTAssertTrue(labeled("今天训练", in: app).exists, "豆豆's today doesn't say she trained")
         XCTAssertFalse(bubble.exists, "a tap still raises a bubble over her head")
         expectOnScreen(today, pat, in: app)
         XCTAssertEqual(pat.label, "拍一拍")

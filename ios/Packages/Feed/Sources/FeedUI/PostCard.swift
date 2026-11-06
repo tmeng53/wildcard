@@ -211,7 +211,7 @@ struct PostCard: View {
 
     private var kindTitle: Text {
         switch post.checkIn.entry {
-        case .trained(let training): Text("练了 · \(training.activity.name)", bundle: .module)
+        case .trained(let training): Text("训练 · \(training.activity.name)", bundle: .module)
         case .healthyMeal: Text("健康餐", bundle: .module)
         case .cheatMeal: Text("坦白放纵餐", bundle: .module)
         case .disclaimer: Text("请假条", bundle: .module)

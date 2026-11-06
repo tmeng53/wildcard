@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -170,6 +170,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/broadcast`.
             public var broadcast: Swift.String?
+            /// How many weeks in a row the squad trained over its goal (`goalSuggestion`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/weeks`.
+            public var weeks: Swift.Int?
+            /// The goal suggested, 人均 N 天 (`goalSuggestion`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/daysPerMember`.
+            public var daysPerMember: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/title`.
             public var title: Components.Schemas.LocalizedWords?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/body`.
@@ -281,7 +289,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - squadId: The squad it is about, if any.
             ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
@@ -300,6 +308,8 @@ extension Components {
             ///   - unlockKind: What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.
             ///   - item: The store’s, prop’s or piece’s id (`unlocked`).
             ///   - broadcast: The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now.
+            ///   - weeks: How many weeks in a row the squad trained over its goal (`goalSuggestion`).
+            ///   - daysPerMember: The goal suggested, 人均 N 天 (`goalSuggestion`).
             ///   - title:
             ///   - body:
             ///   - action: A button that opens a place in the app (`broadcast`), if any: its `label`.
@@ -327,6 +337,8 @@ extension Components {
                 unlockKind: Swift.String? = nil,
                 item: Swift.String? = nil,
                 broadcast: Swift.String? = nil,
+                weeks: Swift.Int? = nil,
+                daysPerMember: Swift.Int? = nil,
                 title: Components.Schemas.LocalizedWords? = nil,
                 body: Components.Schemas.LocalizedWords? = nil,
                 action: Components.Schemas.NoticeEntry.ActionPayload? = nil,
@@ -354,6 +366,8 @@ extension Components {
                 self.unlockKind = unlockKind
                 self.item = item
                 self.broadcast = broadcast
+                self.weeks = weeks
+                self.daysPerMember = daysPerMember
                 self.title = title
                 self.body = body
                 self.action = action
@@ -382,6 +396,8 @@ extension Components {
                 case unlockKind
                 case item
                 case broadcast
+                case weeks
+                case daysPerMember
                 case title
                 case body
                 case action
@@ -8060,21 +8076,37 @@ extension Components {
             public var done: Swift.Int
             /// - Remark: Generated from `#/components/schemas/StoryEnding/plan`.
             public var plan: Swift.Int
+            /// The headline over the page, such as 稳了 or 差一点, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/headline`.
+            public var headline: Swift.String?
+            /// The line under the days against the plans, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many days are missing, or that the squad made it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/line`.
+            public var line: Swift.String?
             /// Creates a new `StoryEnding`.
             ///
             /// - Parameters:
             ///   - done:
             ///   - plan:
+            ///   - headline: The headline over the page, such as 稳了 or 差一点, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks.
+            ///   - line: The line under the days against the plans, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many days are missing, or that the squad made it.
             public init(
                 done: Swift.Int,
-                plan: Swift.Int
+                plan: Swift.Int,
+                headline: Swift.String? = nil,
+                line: Swift.String? = nil
             ) {
                 self.done = done
                 self.plan = plan
+                self.headline = headline
+                self.line = line
             }
             public enum CodingKeys: String, CodingKey {
                 case done
                 case plan
+                case headline
+                case line
             }
         }
         /// - Remark: Generated from `#/components/schemas/StoryTitle`.

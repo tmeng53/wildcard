@@ -235,13 +235,13 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
           kind: 'planCompleted',
           title: '领奖台',
           symbol: 'checkmark.seal.fill',
-          winners: [{ member: me.userId, value: 1, text: '练了 1 天' }],
+          winners: [{ member: me.userId, value: 1, text: '训练 1 天' }],
         },
         {
           kind: 'crown',
           title: '皇冠',
           symbol: 'crown.fill',
-          winners: [{ member: me.userId, value: 1, text: '练了 1 天' }],
+          winners: [{ member: me.userId, value: 1, text: '训练 1 天' }],
         },
         {
           kind: 'bestDisclaimer',

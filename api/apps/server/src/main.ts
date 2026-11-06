@@ -119,6 +119,7 @@ import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
 import { pushCoachLine } from './flows/comment-push.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
+import { suggestGoalIn } from './flows/squad-goal-suggestion.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sceneTools } from './admin-mcp/tools/scenes.js';
 import { switchTools } from './admin-mcp/tools/switches.js';
@@ -576,6 +577,16 @@ const app = createApp({
     interactions: [checkInInteractions(checkIns), nudgeInteractions(nudges)],
     clock: () => new Date(),
     ...(coachWakes === undefined ? {} : { coach: coachWakes }),
+    // The suggestion's log row and the captain's notice commit together, or neither does.
+    suggestGoal: suggestGoalIn(db, {
+      squads: (scope) =>
+        createSquads({
+          store: createPostgresSquadStore(scope),
+          inviteCodes: randomInviteCodes,
+          aiConsent: hasAiConsent,
+        }),
+      notices: noticesOn,
+    }),
     coachNotes: {
       notes: createCoachNoteDelivery({ store: createPostgresCoachNoteDelivery(db) }),
       noteHour: async () => (await createPostgresCoachSettings(db).current()).noteHour,

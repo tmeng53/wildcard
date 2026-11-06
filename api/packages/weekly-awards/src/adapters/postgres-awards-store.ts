@@ -1,6 +1,6 @@
 import { sql, type Kysely } from 'kysely';
 
-import { MemberId, SquadId, StoredAward, type TitleWin } from '../domain/awards.js';
+import { EndingWords, MemberId, SquadId, StoredAward, type TitleWin } from '../domain/awards.js';
 import { WeekStart } from '../domain/schedule.js';
 import type { AwardsStore } from '../ports.js';
 import type { DB } from './tables.js';
@@ -17,7 +17,7 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
     async find(squad, weekStart) {
       const row = await db
         .selectFrom('weekly_awards')
-        .select(['given_at', 'failed_attempts', 'last_error'])
+        .select(['given_at', 'failed_attempts', 'last_error', 'ending'])
         .where('squad_id', '=', squad)
         .where('week_start', '=', weekStart)
         .executeTakeFirst();
@@ -45,6 +45,7 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
             member: MemberId.parse(member_id),
             titles: StoredAward.parse(award).titles,
           })),
+          ...(row.ending === null ? {} : { ending: EndingWords.parse(row.ending) }),
         },
       };
     },
@@ -88,13 +89,14 @@ export function createPostgresAwardsStore(db: Kysely<WeeklyAwardTables>): Awards
 
     save: ({ squad, weekStart, awards }) =>
       db.transaction().execute(async (trx) => {
+        const ending = awards.ending === undefined ? null : JSON.stringify(awards.ending);
         const given = await trx
           .insertInto('weekly_awards')
-          .values({ squad_id: squad, week_start: weekStart, given_at: sql`now()` })
+          .values({ squad_id: squad, week_start: weekStart, given_at: sql`now()`, ending })
           .onConflict((conflict) =>
             conflict
               .columns(['squad_id', 'week_start'])
-              .doUpdateSet({ given_at: sql`now()` })
+              .doUpdateSet({ given_at: sql`now()`, ending })
               .where('weekly_awards.given_at', 'is', null),
           )
           .returning('squad_id')

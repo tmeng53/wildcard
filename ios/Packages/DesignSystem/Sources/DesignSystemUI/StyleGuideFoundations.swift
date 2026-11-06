@@ -93,7 +93,7 @@ struct TypeSection: View {
                     Sample(token: "title", style: TypeRamp.title, text: Text("本周", bundle: .module))
                     Sample(token: "headline", style: TypeRamp.headline, text: Text("周三不练腿俱乐部", bundle: .module))
                     Sample(token: "body", style: TypeRamp.body, text: Text("今天游了 2 公里，水有点凉", bundle: .module))
-                    Sample(token: "footnote", style: TypeRamp.footnote, text: Text("今天 3 人练了", bundle: .module))
+                    Sample(token: "footnote", style: TypeRamp.footnote, text: Text("今天 3 人训练", bundle: .module))
                     Sample(token: "label", style: TypeRamp.label, text: Text("本周小队训练", bundle: .module))
                 }
             }

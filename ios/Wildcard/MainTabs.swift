@@ -110,8 +110,10 @@ struct MainTabs: View {
         }
         // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the
         // home says whose it is; its button opens what its 通知 row opens.
-        .onChange(of: inbox.unseenBroadcasts.map(\.id) + [today.home?.member.description ?? ""], initial: true) {
+        // So does a higher squad goal suggested to the captain, whose button opens 小队.
+        .onChange(of: bannerNotices, initial: true) {
             tellBroadcasts()
+            tellGoalSuggestions()
         }
         // A tapped push's place.
         .onChange(of: destination, initial: true) { _, asked in
