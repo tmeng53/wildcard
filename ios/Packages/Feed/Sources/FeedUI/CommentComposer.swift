@@ -33,7 +33,7 @@ struct CommentComposer: View {
                     head: { person in head(of: person) },
                     pick: { person in
                         draft.pick(person)
-                        keepTyping()
+                        isTyping.wrappedValue = true
                     }
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -89,7 +89,7 @@ struct CommentComposer: View {
     private func mentionCoach(_ coach: CoachSpeaker) -> some View {
         Button {
             draft.pick(.coach(coach))
-            keepTyping()
+            isTyping.wrappedValue = true
         } label: {
             Text(verbatim: "@\(coach.name)")
                 .typeStyle(TypeRamp.calloutEmphasis)
@@ -101,16 +101,6 @@ struct CommentComposer: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityIdentifier("post.mentionCoach")
-    }
-
-    /// The keyboard stays up after a pick: focus is asked for again once the tap and the @ list
-    /// going away have settled, since either can take it from the field.
-    private func keepTyping() {
-        isTyping.wrappedValue = true
-        Task { @MainActor in
-            await Task.yield()
-            isTyping.wrappedValue = true
-        }
     }
 
     private func head(of person: Mentionable) -> some View {
