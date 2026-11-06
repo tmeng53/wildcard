@@ -48,6 +48,7 @@ final class TodayCapsuleUITests: XCTestCase {
         let mineDot = app.buttons["squadcard.page.mine"]
         XCTAssertTrue(mineDot.waitForExistence(timeout: Self.wait), "a swipe down didn't open the card")
         mineDot.tap()
+        XCTAssertTrue(app.buttons["squadcard.collapse"].exists, "tapping my week's dot folded the card")
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
         let monday = app.buttons["squadcard.day.0"]
         expect(monday, showsIn: card, "my week didn't show after its dot was tapped")
