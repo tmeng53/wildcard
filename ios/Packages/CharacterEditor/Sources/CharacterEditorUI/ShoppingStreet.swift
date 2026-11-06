@@ -16,8 +16,6 @@ import SwiftUI
 /// that came in open from a pop-up over the page.
 public struct ShoppingStreetPage: View {
     let model: StreetModel
-    /// A store's rack is pushed and on screen over the street.
-    @State private var rackOnScreen = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -32,8 +30,6 @@ public struct ShoppingStreetPage: View {
                 if let store = model.catalog.stores.first(where: { $0.id == id }) {
                     page(store)
                         .pushedPage()
-                        .onAppear { rackOnScreen = true }
-                        .onDisappear { rackOnScreen = false }
                 }
             }
             .onAppear { model.didOpen() }
@@ -45,10 +41,12 @@ public struct ShoppingStreetPage: View {
     }
 
     /// The street (`store` nil) or a store's rack. The pop-up, the 领取 sheet and the notice
-    /// belong to whichever page is on screen on top, so the street under a rack doesn't show them
-    /// twice, and the street shows them until the rack it opens on has slid in.
+    /// belong to the page on top, which the model says (a store open is its rack), so exactly one
+    /// page shows them. Telling it from the pages' appearing let both show them at once, as when
+    /// 商店街 and a rack are pushed together from a notice or the editor covers the rack, and a
+    /// tap could land on the copy under the rack.
     private func page(_ store: EditorChoices.Store?) -> some View {
-        let isOnTop = store != nil || !rackOnScreen
+        let isOnTop = (store == nil) == (model.store == nil)
         return ScrollView {
             VStack(alignment: .leading, spacing: Space.xs) {
                 if let store {
