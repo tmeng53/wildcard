@@ -107,7 +107,11 @@ public struct RecapEntryTile: View {
         .frame(height: Self.rowHeight)
         .background(
             Color(role: .bgAccentSubtle, in: theme),
-            in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+        )
+        // The pill stays slim, but the tap reaches the minimum target.
+        .frame(minHeight: Sizing.minimumTapTarget)
+        .contentShape(Rectangle())
     }
 
     /// How many pages the story has, as ticks; never what is on them.

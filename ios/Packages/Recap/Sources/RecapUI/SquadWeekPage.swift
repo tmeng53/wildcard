@@ -43,35 +43,52 @@ struct SquadWeekPage: View {
             }
         }
         .overlay(alignment: .top) {
-            VStack(alignment: .leading, spacing: Space.l) {
-                PageTitle(label: Text("全队", bundle: .module), title: Text("运动总结", bundle: .module))
-                HStack(alignment: .lastTextBaseline, spacing: Space.s) {
-                    Score(count: week.trainedDays, size: .hero)
-                    VStack(alignment: .leading, spacing: Space.xxs) {
-                        Text("天训练", bundle: .module).typeStyle(TypeRamp.headline)
-                        Text("\(week.members.count) 人 · \(week.sports.count) 种运动", bundle: .module)
-                            .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    }
+            // Above the squad's heads: all the cards when they fit, fewer on a short phone.
+            GeometryReader { proxy in
+                ViewThatFits(in: .vertical) {
+                    summary(cards: 6)
+                    summary(cards: 4)
+                    summary(cards: 2)
                 }
-                .accessibilityElement(children: .combine)
-                VStack(alignment: .leading, spacing: Space.m) {
-                    LazyVGrid(
-                        columns: [GridItem(.flexible(), spacing: Space.s), GridItem(.flexible(), spacing: Space.s)],
-                        spacing: Space.s
-                    ) {
-                        ForEach(Array(facts.enumerated()), id: \.offset) { index, fact in
-                            FactCard(fact: fact, monday: page.story.week.monday, nickname: nickname)
-                                .scaleEffect(0.9 + 0.1 * page.pop(Double(index) * 0.04, 0.32 + Double(index) * 0.04))
-                                .opacity(page.ramp(Double(index) * 0.04, 0.12 + Double(index) * 0.04))
-                        }
-                    }
-                    SportsMix(sports: week.sports)
+                .frame(
+                    height: max(proxy.size.height - StoryLayout.groundSquadWeek - Self.figureHeight, 0),
+                    alignment: .top)
+            }
+        }
+    }
+
+    private func summary(cards: Int) -> some View {
+        VStack(alignment: .leading, spacing: Space.l) {
+            PageTitle(label: Text("全队", bundle: .module), title: Text("运动总结", bundle: .module))
+            HStack(alignment: .lastTextBaseline, spacing: Space.s) {
+                Score(count: week.trainedDays, size: .hero)
+                VStack(alignment: .leading, spacing: Space.xxs) {
+                    Text("天训练", bundle: .module).typeStyle(TypeRamp.headline)
+                    Text("\(week.members.count) 人 · \(week.sports.count) 种运动", bundle: .module)
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }
             }
-            .padding(.horizontal, Space.l)
-            .foregroundStyle(Color(role: .fgOnScene, in: theme))
+            .accessibilityElement(children: .combine)
+            VStack(alignment: .leading, spacing: Space.m) {
+                LazyVGrid(
+                    columns: [GridItem(.flexible(), spacing: Space.s), GridItem(.flexible(), spacing: Space.s)],
+                    spacing: Space.s
+                ) {
+                    ForEach(Array(facts.prefix(cards).enumerated()), id: \.offset) { index, fact in
+                        FactCard(
+                            fact: fact, monday: page.story.week.monday, everyone: week.members.count,
+                            nickname: nickname
+                        )
+                        .scaleEffect(0.9 + 0.1 * page.pop(Double(index) * 0.04, 0.32 + Double(index) * 0.04))
+                        .opacity(page.ramp(Double(index) * 0.04, 0.12 + Double(index) * 0.04))
+                    }
+                }
+                SportsMix(sports: week.sports)
+            }
         }
+        .padding(.horizontal, Space.l)
+        .foregroundStyle(Color(role: .fgOnScene, in: theme))
     }
 
     private func nickname(_ member: MemberID) -> String { page.cast[member]?.nickname ?? "" }
@@ -88,7 +105,7 @@ struct SquadWeekPage: View {
         } else if let top = week.sports.first {
             facts.append(.topSport(top))
         }
-        if let meals = page.story.meals, meals.healthy + meals.cheat > 0 { facts.append(.meals(meals)) }
+        if let meals = page.story.meals, meals.healthy > 0 { facts.append(.meals(meals)) }
         if let disclaimers = week.disclaimers { facts.append(.disclaimers(disclaimers)) }
         return facts
     }
@@ -96,6 +113,8 @@ struct SquadWeekPage: View {
     /// The most the ground holds side by side.
     private static let most = 8
     private static let scale = 0.42
+    /// How tall a character stands at the page's scale, with a little room over its head.
+    private static let figureHeight = 320 * scale + Space.s
     /// How much room a character needs at scale 1, for fitting a big squad (neighbours may
     /// overlap a little).
     private static let figureWidth = 125.0
@@ -116,6 +135,8 @@ private enum Fact {
 private struct FactCard: View {
     let fact: Fact
     let monday: LocalDay
+    /// How many are in the squad, to say when everyone trained the same day.
+    let everyone: Int
     let nickname: (MemberID) -> String
     @Environment(\.sceneTheme) private var theme
 
@@ -180,7 +201,8 @@ private struct FactCard: View {
     private var note: Text {
         switch fact {
         case .bestDay(let best):
-            Text("\(best.members) 人都训练了", bundle: .module)
+            best.members == everyone
+                ? Text("全员都训练了", bundle: .module) : Text("\(best.members) 人训练了", bundle: .module)
         case .streak(let streak):
             Text(
                 "\(nickname(streak.member)) \(weekdayName(streak.from))到\(weekdayName(streak.through))",
@@ -306,16 +328,4 @@ private struct SportsMix: View {
     private static let dot: Double = 8
 }
 
-/// 「5 天」: the count in the scoreboard face, the unit small beside it.
-private struct DaysCount: View {
-    let days: Int
-    var style = TypeRamp.scoreInline
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 1) {
-            Text(verbatim: "\(days)").typeStyle(style).monospacedDigit()
-            Text("天", bundle: .module).typeStyle(TypeRamp.caption)
-        }
-    }
-}
 #endif

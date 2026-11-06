@@ -887,7 +887,7 @@
         }
       }
     },
-    "%lld 人都训练了": {
+    "%lld 人训练了": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -898,7 +898,23 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld 人都訓練了"
+            "value": "%lld 人訓練了"
+          }
+        }
+      }
+    },
+    "全员都训练了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everyone trained"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全員都訓練了"
           }
         }
       }

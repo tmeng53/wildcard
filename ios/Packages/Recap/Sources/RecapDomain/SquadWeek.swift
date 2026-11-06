@@ -85,7 +85,8 @@ public struct SquadWeek: Hashable, Sendable {
     /// Days trained by the whole squad: each member's days added up.
     public var trainedDays: Int { members.reduce(0) { $0 + $1.trainedDays } }
 
-    /// Every listed sport the squad trained, most days first, the earliest in the week on a tie.
+    /// Every listed sport the squad trained, most days first; on a tie the one seen first,
+    /// member by member in the order they joined.
     public var sports: [SportDays] { Self.ranked(members.flatMap(\.days)) }
 
     /// The day the most members trained, the earliest on a tie; nil when nobody trained.
