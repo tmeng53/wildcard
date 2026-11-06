@@ -493,6 +493,12 @@ describe('the holiday calendar', () => {
   it('takes a day and a one-line name, nothing else', () => {
     expect(CoachHoliday.safeParse({ date: '13-01', name: '无' }).success).toBe(false);
     expect(CoachHoliday.safeParse({ date: '2026-1-01', name: '无' }).success).toBe(false);
+    // Only days that exist: 02-29 every leap year, never 02-30 or 2026-02-29.
+    expect(CoachHoliday.safeParse({ date: '02-30', name: '无' }).success).toBe(false);
+    expect(CoachHoliday.safeParse({ date: '04-31', name: '无' }).success).toBe(false);
+    expect(CoachHoliday.safeParse({ date: '2026-02-29', name: '无' }).success).toBe(false);
+    expect(CoachHoliday.safeParse({ date: '02-29', name: '闰日' }).success).toBe(true);
+    expect(CoachHoliday.safeParse({ date: '2028-02-29', name: '闰日' }).success).toBe(true);
     expect(CoachHoliday.safeParse({ date: '01-01', name: ' ' }).success).toBe(false);
     expect(CoachHoliday.safeParse({ date: '01-01', name: '元旦\n快乐' }).success).toBe(false);
     expect(CoachHoliday.parse({ date: '01-01', name: ' 元旦 ' })).toStrictEqual({

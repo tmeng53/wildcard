@@ -32,6 +32,12 @@ export const CoachHoliday = z.strictObject({
   date: z
     .string()
     .regex(/^(\d{4}-)?(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)
+    // A day that exists: in its year, or in some year for MM-DD (02-29 only in leap years).
+    .refine((date) => {
+      const full = date.length === 5 ? `2000-${date}` : date;
+      const at = Date.parse(`${full}T00:00:00Z`);
+      return !Number.isNaN(at) && new Date(at).toISOString().slice(0, 10) === full;
+    }, 'a day that exists')
     .describe('MM-DD for every year, or YYYY-MM-DD for that year only; New York’s day.'),
   name: z
     .string()

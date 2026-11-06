@@ -362,7 +362,12 @@ async function runWake(
       week,
       files,
       // The holidays from the coach's calendar, then the app's own moments (a store open).
-      occasions: [...holidaysOn(settings.holidays, day), ...((await deps.occasions?.(day)) ?? [])],
+      occasions: [
+        ...new Set([
+          ...holidaysOn(settings.holidays, day),
+          ...((await deps.occasions?.(day)) ?? []),
+        ]),
+      ],
       recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
       ...(thread === undefined ? {} : { thread: thread.thread }),
       recentEmoji:
