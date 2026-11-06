@@ -26,6 +26,7 @@ import {
   awardsTimeOf,
   latestAwardedWeek,
   topCheckInOf,
+  type AwardsState,
   type Failures,
   type MemberAwards,
   type MemberWeek,
@@ -174,7 +175,7 @@ async function giveWeek(
               before,
               members: story.members.map(({ member }) => member),
             });
-            await deps.awards.give({ squad, weekStart: week, members });
+            await deps.awards.give({ squad, weekStart: week, members, ending: story.story.ending });
             given += 1;
           }
           if (await deps.awards.claimReadyPush({ squad, weekStart: week })) {
@@ -246,8 +247,16 @@ export interface SquadStory {
   readonly podium?: Podium<string>;
   /** The squad's meals; who ate more of what is in each member's part. */
   readonly meals?: { readonly healthy: number; readonly cheat: number };
-  /** The squad's days trained against its plans; only when someone trained. */
-  readonly ending?: { readonly done: number; readonly plan: number };
+  /**
+   * The squad's days trained against its plans, only when someone trained, with the model's
+   * headline and line for them once the awards are written.
+   */
+  readonly ending?: {
+    readonly done: number;
+    readonly plan: number;
+    readonly headline?: string;
+    readonly line?: string;
+  };
   /** The squad's best 请假条 and who wrote it, while it is still posted. */
   readonly bestDisclaimer?: {
     readonly author: string;
@@ -257,6 +266,17 @@ export interface SquadStory {
   };
   /** The reader's part, when they were in the squad at the awards; its hottest only while posted. */
   readonly mine?: StoryMember;
+}
+
+/** The squad's days against its plans, with the model's words for them once they are written. */
+function endingOf(
+  ending: { readonly done: number; readonly plan: number },
+  state: AwardsState | undefined,
+): NonNullable<SquadStory['ending']> {
+  const words = state?.status === 'given' ? state.awards.ending : undefined;
+  return words === undefined
+    ? { done: ending.done, plan: ending.plan }
+    : { done: ending.done, plan: ending.plan, headline: words.headline, line: words.line };
 }
 
 /**
@@ -301,7 +321,7 @@ export async function squadStory(
     titles,
     ...(podium === undefined ? {} : { podium }),
     ...(story.meals === undefined ? {} : { meals: story.meals }),
-    ...(story.ending === undefined ? {} : { ending: story.ending }),
+    ...(story.ending === undefined ? {} : { ending: endingOf(story.ending, state) }),
     ...(best === undefined ? {} : { bestDisclaimer: best }),
     ...(mine === undefined ? {} : { mine }),
   };

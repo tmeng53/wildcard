@@ -27,6 +27,7 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface WeeklyAwards {
   created_at: Generated<Timestamp>;
+  ending: Json | null;
   failed_attempts: Generated<number>;
   given_at: Timestamp | null;
   last_error: string | null;
