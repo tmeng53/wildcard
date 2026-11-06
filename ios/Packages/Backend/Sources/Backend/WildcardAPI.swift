@@ -55,7 +55,7 @@ public struct WildcardAPI: Sendable {
         guard let id = UUID(uuidString: answer.userId) else { throw .unreadableResponse }
         return Member(
             id: MemberID(id), profile: try answer.profile.map(Profile.init),
-            joinedAt: answer.profile.map { Timestamp($0.joinedAt) })
+            joinedAt: answer.profile.map { Timestamp($0.joinedAt) }, isAdmin: answer.isAdmin)
     }
 
     /// Creates the profile, right after the first sign-in, or replaces it.

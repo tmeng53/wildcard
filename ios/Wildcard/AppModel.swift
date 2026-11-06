@@ -50,6 +50,8 @@ final class AppModel {
     }
     /// The squad the member is no longer in (removed, or left on another phone), said once.
     var lostSquadName: String?
+    /// Whether the signed-in member is an admin, read as the tabs open: 设置 then offers 预览注册.
+    private(set) var isAdmin = false
     /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
     /// squad) puts the next tabs back on 今天.
     var showsTabs: Bool {
@@ -272,7 +274,7 @@ final class AppModel {
         // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
         // from now rather than from when the scene covered the screen.
         if let scene {
-            await today.dropIn(on: scene, coveredAt: .now)
+            await landNewSquad(on: scene, home: home, today: today)
         } else if let read = await withLaunchCover({ await openingScene(of: home.squad.id) }) {
             // The loading screen stays up until the squad's scene is known, so 今天 never shows
             // the gym first and then switches; a teammate's move drops the squad onto it.
@@ -289,6 +291,21 @@ final class AppModel {
             squad: squad,
             recap: recap)
         homeSquad = home.squad.id
+        isAdmin = (try? await api.me())?.isAdmin ?? false
+    }
+
+    /// Whoever made the squad drops onto the scene they picked. On a day a holiday's scene takes
+    /// over every home, its opening plays first, as it does for a joiner after 上场, and its 进场
+    /// drops the squad onto the holiday's scene; the pick stays the squad's own underneath.
+    private func landNewSquad(on picked: SceneTheme, home: Home, today: TodayModel) async {
+        guard let read = await openingScene(of: home.squad.id), let takeover = read.takeover else {
+            await today.dropIn(on: picked, coveredAt: .now)
+            return
+        }
+        let shown = SceneTheme(rawValue: read.scene.rawValue) ?? picked
+        await today.land(on: shown, move: nil, takeover: takeover)
+        // Its opening already played on this phone today: just the drop.
+        if !today.isShowingOpening { await today.dropIn(on: shown, coveredAt: .now) }
     }
 
     /// The member's home, from what the phone kept for them alone.

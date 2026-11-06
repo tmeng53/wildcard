@@ -1381,56 +1381,18 @@
         }
       }
     },
-    "本周目标": {
+    "我的每周计划": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Set your goal for this week"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本周目标"
+            "value": "My weekly plan"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "本週目標"
-          }
-        }
-      }
-    },
-    "每周模板": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Weekly template"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每週模板"
-          }
-        }
-      }
-    },
-    "这就是你的每周模板，以后可以在出赛表里改": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This is your weekly template. You can change it later in Lineup."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "這就是你的每週模板，以後可以在出賽表裡改"
+            "value": "我的每週計畫"
           }
         }
       }

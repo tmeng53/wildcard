@@ -41,6 +41,9 @@ struct SettingsView: View {
                 .padding(.top, Space.s)
                 preferencesGroup
                 aboutGroup
+                if let previewSignUp = destinations.previewSignUp {
+                    adminGroup(previewSignUp)
+                }
                 accountGroup
                 if model.saveFailed {
                     SaveFailed().padding(.top, Space.m)
@@ -95,6 +98,14 @@ struct SettingsView: View {
                 openURL(destinations.terms)
             }
             .accessibilityIdentifier("me.terms")
+        }
+    }
+
+    /// Only for admins: tools to try the app as a newcomer would.
+    private func adminGroup(_ previewSignUp: @escaping () -> Void) -> some View {
+        MenuGroup(Text("管理员", bundle: .module)) {
+            ListRow(Text("预览注册", bundle: .module), showsDivider: false, action: previewSignUp)
+                .accessibilityIdentifier("me.previewSignUp")
         }
     }
 

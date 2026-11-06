@@ -2043,25 +2043,33 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Me/profile`.
             public var profile: Components.Schemas.Me.ProfilePayload?
+            /// Whether the member is on the admin list. The app shows admins tools only they need, such as previewing sign-up; the admin routes check the list again themselves.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Me/isAdmin`.
+            public var isAdmin: Swift.Bool
             /// Creates a new `Me`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - userId: The signed-in member’s Supabase Auth user id.
             ///   - profile: Null until the member first saves one, right after signing up.
+            ///   - isAdmin: Whether the member is on the admin list. The app shows admins tools only they need, such as previewing sign-up; the admin routes check the list again themselves.
             public init(
                 version: Components.Schemas.Me.VersionPayload,
                 userId: Swift.String,
-                profile: Components.Schemas.Me.ProfilePayload? = nil
+                profile: Components.Schemas.Me.ProfilePayload? = nil,
+                isAdmin: Swift.Bool
             ) {
                 self.version = version
                 self.userId = userId
                 self.profile = profile
+                self.isAdmin = isAdmin
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case userId
                 case profile
+                case isAdmin
             }
         }
         /// The member’s character, made in the character editor right after signing in: the nickname squadmates call them and its look. Missing until then.

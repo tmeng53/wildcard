@@ -89,7 +89,7 @@ final class SignUpUITests: XCTestCase {
 
     private func planTheWeek(in app: XCUIApplication) {
         let count = app.descendants(matching: .any)["week.count"]
-        XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "本周目标 never appeared")
+        XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "我的每周计划 never appeared")
         settle()
         keepScreenshot(named: "45-signup-week")
         // The whole poster and the day's choices show above the buttons, with no scrolling.
@@ -97,7 +97,8 @@ final class SignUpUITests: XCTestCase {
         XCTAssertLessThanOrEqual(count.frame.maxY, rest.frame.minY, "the week's total is under the choices")
         XCTAssertLessThanOrEqual(rest.frame.maxY, app.buttons["week.done"].frame.minY, "上场 covers the choices")
         XCTAssertGreaterThanOrEqual(app.buttons["week.day.0"].frame.height, 38, "a day is as tall as the board's row")
-        XCTAssertTrue(app.staticTexts["week.note"].exists, "本周目标 doesn't say it is the 每周模板")
+        XCTAssertTrue(app.staticTexts["我的每周计划"].exists, "step 4 isn't titled 我的每周计划")
+        XCTAssertEqual(app.buttons["week.done"].label, "上场", "a joiner doesn't go 上场 from step 4")
         XCTAssertTrue(app.buttons["week.day.0"].isEnabled, "Monday can't change on the 每周模板")
         rest.tap()
         settle()
@@ -191,7 +192,8 @@ final class SignUpUITests: XCTestCase {
         XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "平时练什么？ never appeared")
         skipSports.tap()
         let skipWeek = app.buttons["week.skip"]
-        XCTAssertTrue(skipWeek.waitForExistence(timeout: Self.wait), "本周目标 never appeared")
+        XCTAssertTrue(skipWeek.waitForExistence(timeout: Self.wait), "我的每周计划 never appeared")
+        XCTAssertEqual(app.buttons["week.done"].label, "下一步", "whoever made the squad goes on to pick its scene")
         skipWeek.tap()
 
         let confirm = app.buttons["scene.done"]

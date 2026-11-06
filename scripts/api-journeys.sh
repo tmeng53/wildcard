@@ -780,7 +780,7 @@ if want account; then
   read -r leaver leaver_token <<<"$(sign_up)"
   call GET /me "$leaver_token"
   expect 200
-  [ "$(jq -c . <<<"$body")" = "$(jq -cn --arg m "$leaver" '{version:1,userId:$m,profile:null}')" ] || fail "a new member has no profile: $body"
+  [ "$(jq -c . <<<"$body")" = "$(jq -cn --arg m "$leaver" '{version:1,userId:$m,profile:null,isAdmin:false}')" ] || fail "a new member has no profile: $body"
   call PUT /me/profile "$leaver_token" '{"version":1,"timeZone":"Mars/Olympus_Mons"}'
   expect 400 TIME_ZONE_UNKNOWN
   call PUT /me/profile "$leaver_token" '{"version":1,"timeZone":"America/Toronto"}'

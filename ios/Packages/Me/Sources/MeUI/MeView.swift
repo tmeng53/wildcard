@@ -20,11 +20,16 @@ public struct MeDestinations {
     /// The published policy pages.
     public var privacyPolicy: URL
     public var terms: URL
+    /// 预览注册, for admins only: sign-up from the open screen on a sample squad, saving nothing.
+    /// Nil for everyone else, and 设置 shows no row for it.
+    public var previewSignUp: (() -> Void)?
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
-        street: @escaping () -> Void = {}, streetHasNews: Bool = false, privacyPolicy: URL, terms: URL
+        street: @escaping () -> Void = {}, streetHasNews: Bool = false, privacyPolicy: URL, terms: URL,
+        previewSignUp: (() -> Void)? = nil
     ) {
+        self.previewSignUp = previewSignUp
         self.editCharacter = editCharacter
         self.schedule = schedule
         self.street = street

@@ -22,6 +22,9 @@ extension TodayModel {
         await land(on: scene, move: move)
     }
 
+    /// Whether a takeover's opening covers the screen, until its 进场.
+    public var isShowingOpening: Bool { opening != nil }
+
     /// Everyone in the opening: teammates either side of me, as the home stands them.
     var openingSquad: [CharacterPlayer] {
         let mates = cast.mates.map(\.player)

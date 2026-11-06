@@ -158,7 +158,7 @@ const app = createApp({
     },
   },
   admin: {
-    admins: () => ({ requireAdmin: unused, list: unused, logChange: unused, listLog: unused }),
+    admins: () => ({ requireAdmin: unused, isAdmin: unused, list: unused, logChange: unused, listLog: unused }),
     tools: () => [],
     publicUrl: new URL('http://localhost:8080'),
     authorizationServer: new URL('http://localhost:54321/auth/v1'),

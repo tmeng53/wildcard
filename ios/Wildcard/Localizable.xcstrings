@@ -352,6 +352,22 @@
           }
         }
       }
+    },
+    "结束预览": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End preview"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "結束預覽"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
