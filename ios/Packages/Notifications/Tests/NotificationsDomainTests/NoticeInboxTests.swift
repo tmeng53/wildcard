@@ -163,6 +163,14 @@ private var utc: Calendar {
     cut.cancel()
     await cut.value
     #expect(inbox.phase == .loading)
+
+    await server.set(unreachable: false)
+    await inbox.load()
+    await server.set(unreachable: true)
+    let page = Task { await inbox.loadMore() }
+    page.cancel()
+    await page.value
+    #expect(!inbox.moreFailed)
 }
 
 @Test @MainActor func offlineKeepsWhatWasLoadedAndAFailedPageCanBeTriedAgain() async {

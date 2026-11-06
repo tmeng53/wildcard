@@ -112,6 +112,17 @@ private let septemberRun = FeedPost(checkIn: checkIn(3, by: owner, on: "2026-09-
     #expect(wall.phase == .loading)
 }
 
+@MainActor @Test func aPageCutShortIsNotAFailedPage() async {
+    let source = FakeWall([octoberRun, octoberSlip, septemberRun])
+    let wall = PostWallStore(source: source)
+    await wall.load()
+    await source.fail(with: .notSent)
+    let cut = Task { await wall.loadMore() }
+    cut.cancel()
+    await cut.value
+    #expect(!wall.moreFailed)
+}
+
 @MainActor @Test func aFailedPageSaysSoAndTriesAgainFromTheSamePlace() async {
     let source = FakeWall([octoberRun, octoberSlip, septemberRun])
     let wall = PostWallStore(source: source)

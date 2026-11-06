@@ -183,7 +183,8 @@ public final class PostWallStore {
             posts += page.posts.filter { !seen.contains($0.id) }
             next = page.next
         } catch {
-            guard mine == generation else { return }
+            // Cut short (the list changed under it, the page closed), it didn't fail.
+            guard mine == generation, !Task.isCancelled else { return }
             moreFailed = true
         }
     }

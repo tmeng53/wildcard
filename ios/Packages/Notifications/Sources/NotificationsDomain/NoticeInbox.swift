@@ -265,7 +265,8 @@ public final class NoticeInbox {
             let shown = Set(notices.map(\.id))
             notices += found.filter { !shown.contains($0.id) }
         } catch {
-            guard mine == generation else { return }
+            // Cut short (the list changed under it, the page closed), it didn't fail.
+            guard mine == generation, !Task.isCancelled else { return }
             moreFailed = true
         }
     }
