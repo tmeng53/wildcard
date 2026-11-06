@@ -171,7 +171,8 @@ public final class NoticeInbox {
             moreFailed = false
             phase = .current
         } catch {
-            guard mine == generation else { return }
+            // A read cut short (the page closed, the app went to the background) didn't fail.
+            guard mine == generation, !Task.isCancelled else { return }
             phase = error == .signedOut ? .signedOut : (phase == .current ? .current : .offline)
         }
     }
@@ -264,7 +265,8 @@ public final class NoticeInbox {
             let shown = Set(notices.map(\.id))
             notices += found.filter { !shown.contains($0.id) }
         } catch {
-            guard mine == generation else { return }
+            // Cut short (the list changed under it, the page closed), it didn't fail.
+            guard mine == generation, !Task.isCancelled else { return }
             moreFailed = true
         }
     }
