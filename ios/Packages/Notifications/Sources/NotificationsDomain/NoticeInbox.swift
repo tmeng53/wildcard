@@ -147,6 +147,15 @@ public final class NoticeInbox {
         }
     }
 
+    /// The higher squad goals suggested to the member as captain on the loaded page that they
+    /// haven't seen in 通知, the earliest told first: for the home's banner, which tells each once.
+    public var unseenGoalSuggestions: [Notice] {
+        notices.reversed().filter { notice in
+            guard case .goalSuggestion = notice.subject else { return false }
+            return isNewerThanSeen(notice)
+        }
+    }
+
     /// Whether `notice` is new to the member on the page as it is open now.
     public func isUnread(_ notice: Notice) -> Bool {
         !opened.contains(notice.id) && (seenWhenOpened.map { notice.id > $0 } ?? true)

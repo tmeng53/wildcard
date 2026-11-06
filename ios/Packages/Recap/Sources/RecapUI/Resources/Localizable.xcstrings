@@ -1079,7 +1079,7 @@
         }
       }
     },
-    "全队练了什么": {
+    "全队训练了什么": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1090,7 +1090,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "全隊練了什麼"
+            "value": "全隊訓練了什麼"
           }
         }
       }

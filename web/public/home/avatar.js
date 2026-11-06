@@ -128,6 +128,14 @@
     return [c, s, -s, c, cx - c * cx + s * cy, cy - s * cx - c * cy];
   };
 
+  // How much of a part that gives way to an arm shows with the arm turned by `degrees`.
+  function gives({ start, end }, degrees) {
+    const turned = Math.abs(degrees);
+    if (end <= start) return turned < end ? 1 : 0;
+    const f = Math.max(0, Math.min(1, (turned - start) / (end - start)));
+    return 1 - f * f * (3 - 2 * f);
+  }
+
   function layout(poses) {
     const matrices = new Array(PARTS.length);
     const opacities = new Array(PARTS.length);
@@ -137,6 +145,8 @@
       if (matrices[i]) return;
       const part = PARTS[i];
       const q = poses[i];
+      // A part that gives way to an arm (a bichon's chin fluff) fades as the arm rises.
+      const shown = part.hides ? gives(part.hides, poses[INDEX[part.hides.part]].rotation) : 1;
       const [px, py] = part.pivot;
       const r = (q.rotation * Math.PI) / 180;
       let m = [1, 0, 0, 1, -px, -py];
@@ -147,10 +157,10 @@
         const j = INDEX[part.parent];
         place(j);
         matrices[i] = multiply(carriers[j], m);
-        opacities[i] = q.opacity * opacities[j];
+        opacities[i] = q.opacity * shown * opacities[j];
       } else {
         matrices[i] = m;
-        opacities[i] = q.opacity;
+        opacities[i] = q.opacity * shown;
       }
       carriers[i] =
         part.elbow && q.bend ? multiply(matrices[i], turn(q.bend, part.elbow.at)) : matrices[i];

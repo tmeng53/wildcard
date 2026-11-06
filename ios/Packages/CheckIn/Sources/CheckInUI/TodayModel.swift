@@ -162,8 +162,8 @@ public final class TodayModel {
     @ObservationIgnored public var openDestination: ((AppDestination) -> Void)?
     /// Banners shown one after another since the queue was last empty.
     @ObservationIgnored var shownInRow = 0
-    /// Hears a broadcast's banner come on screen, so the app tells it only once on this phone.
-    @ObservationIgnored var broadcastShown: ((Broadcast) -> Void)?
+    /// Hears each banner from 通知 (by its id) come on screen, so the app tells it once a phone.
+    @ObservationIgnored var bannerShown: [UUID: () -> Void] = [:]
     /// Hears a broadcast opened from its banner's button, so its 通知 row is read.
     @ObservationIgnored public var broadcastOpened: ((Broadcast) -> Void)?
 

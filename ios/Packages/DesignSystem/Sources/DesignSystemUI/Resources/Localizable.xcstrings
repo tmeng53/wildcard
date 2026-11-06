@@ -251,7 +251,7 @@
         }
       }
     },
-    "今天 3 人练了": {
+    "今天 3 人训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -262,7 +262,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天 3 人練了"
+            "value": "今天 3 人訓練"
           }
         }
       }
@@ -2043,7 +2043,7 @@
         }
       }
     },
-    "练了": {
+    "训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2054,7 +2054,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "練了"
+            "value": "訓練"
           }
         }
       }
@@ -2475,7 +2475,7 @@
         }
       }
     },
-    "今天练了": {
+    "今天训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2486,7 +2486,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天練了"
+            "value": "今天訓練"
           }
         }
       }

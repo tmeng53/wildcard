@@ -62,3 +62,19 @@ private func entry(
     #expect(try entry(action: "post/nope")?.destination == nil)
     #expect(try entry(action: nil)?.destination == nil)
 }
+
+@Test func aGoalSuggestionReadsAndOpensTheSquad() throws {
+    let json = #"""
+        {"id": 9, "kind": "goalSuggestion", "at": "2026-11-23T01:00:00Z",
+         "squadId": "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59", "weeks": 3, "daysPerMember": 4}
+        """#
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+    let wire = try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(json.utf8))
+    let notice = try #require(Notice(wire))
+    #expect(notice.subject == .goalSuggestion(GoalSuggestion(weeks: 3, daysPerMember: 4)))
+    #expect(notice.destination == .squad)
+    // Without the goal it suggests, this build can't show it.
+    let partial = #"{"id": 9, "kind": "goalSuggestion", "at": "2026-11-23T01:00:00Z", "weeks": 3}"#
+    #expect(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(partial.utf8))) == nil)
+}

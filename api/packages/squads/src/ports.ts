@@ -1,6 +1,7 @@
 import type { InviteCode } from './domain/invite-code.js';
 import type { Scene, ScenePick, SceneWeek } from './domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from './domain/squad.js';
+import type { GoalSuggestion } from './domain/goal-suggestion.js';
 import type { DaysPerMember, WeeklyGoalSetting } from './domain/weekly-goal.js';
 
 /**
@@ -121,6 +122,13 @@ export interface SquadStore {
     readonly daysPerMember: DaysPerMember;
     readonly week: SceneWeek;
   }): Promise<CaptainOutcome>;
+  /** The higher goals suggested to the squad's captains, the earliest week first. */
+  goalSuggestions(squad: SquadId): Promise<GoalSuggestion[]>;
+  /**
+   * Keeps that `suggestion` was told to the squad's captain for its week, unless one already was
+   * that week: `taken` then, so a rerun tells nobody twice.
+   */
+  suggestGoal(squad: SquadId, suggestion: GoalSuggestion): Promise<'suggested' | 'taken'>;
   /** The squad's scene picks, every week's, the earliest first. */
   scenePicks(squad: SquadId): Promise<ScenePick[]>;
   /** Saves the week's scene, unless the week has one already. */
