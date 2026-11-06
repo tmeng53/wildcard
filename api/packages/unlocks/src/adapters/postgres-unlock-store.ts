@@ -151,14 +151,6 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
     },
 
     async claim(member, piece) {
-      const unlocked = await db
-        .selectFrom('member_unlocks')
-        .select('item_id')
-        .where('member_id', '=', member)
-        .where('kind', '=', 'piece')
-        .where('item_id', '=', piece)
-        .executeTakeFirst();
-      if (unlocked === undefined) return undefined;
       await db
         .insertInto('piece_claims')
         .values({ member_id: member, piece_id: piece })

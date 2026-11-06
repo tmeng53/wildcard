@@ -59,6 +59,7 @@ function toolsOn(trx: Database) {
       const { on } = await switches.statesFor(member);
       return (id, at) => on(id, newYorkDay(at));
     },
+    switchListed: async (id) => (await switches.list()).some((each) => each.id === id),
   });
   const deps = {
     campaigns: createCampaigns({ store: createPostgresCampaignStore(trx) }),
