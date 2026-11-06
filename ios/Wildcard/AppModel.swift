@@ -10,7 +10,6 @@ import DesignSystemUI
 import FeedDomain
 import FeedUI
 import Foundation
-import HealthUI
 import MeDomain
 import NotificationsDomain
 import Observation
@@ -398,8 +397,4 @@ extension AppModel {
 
     /// How long the loading screen waits for the squad's scene before opening on the kept one.
     static let sceneWait = Duration.seconds(3)
-
-    /// Apple Health through HealthKit, one for the app: a member signing in again keeps it, and
-    /// what it shares by default is this phone's.
-    static let health = HealthConnection(library: HealthKitLibrary())
 }

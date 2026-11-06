@@ -113,7 +113,6 @@ public struct TodayView: View {
                 if let home = model.home, let week = model.cardWeek, let day = home.mine?.day {
                     // Read again each minute, so 今日赛况 arrives at 21:00 with the app open.
                     TimelineView(.everyMinute) { _ in
-                        // The night's cord hangs under the Health card when there is one.
                         VStack(spacing: Space.xs) {
                             topCard(home: home, week: week, day: day, recap: model.recap)
                             HealthHomeCard.Offer(model: model)

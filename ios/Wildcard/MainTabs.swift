@@ -5,7 +5,6 @@ import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import FeedUI
-import HealthUI
 import MeDomain
 import MeUI
 import NotificationsDomain
