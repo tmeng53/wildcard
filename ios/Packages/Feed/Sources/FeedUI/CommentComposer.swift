@@ -54,6 +54,8 @@ struct CommentComposer: View {
             }
             .padding(Space.xs - 2)
             .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.card + 12, style: .continuous))
+            // A container, so its identifier doesn't replace those of ×, the field and send.
+            .accessibilityElement(children: .contain)
             .accessibilityIdentifier("post.composer")
         }
         .padding(.horizontal, Space.pageMargin)
