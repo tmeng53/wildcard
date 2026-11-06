@@ -84,8 +84,9 @@ final class TabsUITests: XCTestCase {
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
 
-        let meTab = app.buttons["tab.me"]
-        XCTAssertTrue(meTab.waitForExistence(timeout: 30), "no tab bar")
+        // 出赛表 is pushed over 我, and the system's bar drops the tabs' identifiers at times while
+        // a page is pushed, so the tab is found by its place.
+        let meTab = tabButton("tab.me", in: app)
         XCTAssertTrue(meTab.isSelected, "-tab schedule didn't open on 我")
         XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "-tab schedule didn't show 出赛表")
     }
