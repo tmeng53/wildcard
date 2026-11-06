@@ -161,10 +161,11 @@ struct WildcardApp: App {
             scenePicked: { scene in today.scene = scene })
     }
 
-    /// The sample squad's week, or no posts at all (`-uitest-empty-feed`).
+    /// The sample squad's week, no posts at all (`-uitest-empty-feed`) or none that can be read
+    /// (`-uitest-offline-feed`).
     private static func feedSource(viewer: MemberID, squad: SquadID) -> InMemoryFeedSource {
-        LaunchOptions.showsEmptyFeed
-            ? InMemoryFeedSource(viewer: viewer, posts: [], characters: [:])
+        LaunchOptions.showsEmptyFeed || LaunchOptions.feedIsOffline
+            ? InMemoryFeedSource(viewer: viewer, posts: [], characters: [:], offline: LaunchOptions.feedIsOffline)
             : InMemoryFeedSource.sample(
                 viewer: viewer, squad: squad, now: LaunchOptions.now(), zone: .current,
                 photos: InMemoryFeedSource.renderSamplePhotos(), coach: LaunchOptions.sidelineCoach)

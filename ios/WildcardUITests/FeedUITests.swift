@@ -242,6 +242,19 @@ final class FeedUITests: XCTestCase {
         waitFor(app.buttons["tab.today"], "isSelected == true", "去打卡 didn't open 今天")
     }
 
+    /// 动态 opened with no server and nothing read before: 网络开小差了 with 再试一次, not a
+    /// blank page.
+    func testOfflineFeedSaysSo() {
+        let app = launch(language: "zh-Hans", extra: ["-uitest-offline-feed"])
+        let retry = app.buttons["feed.retry"]
+        XCTAssertTrue(retry.waitForExistence(timeout: Self.wait), "no 再试一次 on an offline feed")
+        XCTAssertTrue(app.staticTexts["网络开小差了"].exists, "no 网络开小差了 on an offline feed")
+        XCTAssertFalse(app.buttons["feed.checkIn"].exists, "the empty scene on a feed that wasn't read")
+        settle()
+        assertClearOfTheTabBar(retry, in: app)
+        keepScreenshot(named: "47-feed-offline")
+    }
+
     private func launch(language: String, extra: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments +=

@@ -125,9 +125,16 @@ public struct FeedView: View {
     @ViewBuilder private var content: some View {
         let sections = model.store.sections
         if sections.isEmpty {
-            // Only a squad the server says never posted is empty; offline, pull to try again.
-            if model.store.phase == .current {
+            // Only a squad the server says never posted is empty; offline, nothing was ever read,
+            // so say so, with a way to try again (pulling down tries again too).
+            switch model.store.phase {
+            case .current:
                 EmptyFeed(model: model, checkIn: checkIn)
+            case .offline:
+                StateView.offline(retryIdentifier: "feed.retry") { Task { await model.load() } }
+                    .padding(.top, Space.xxl)
+            case .loading, .notInSquad, .signedOut:
+                EmptyView()
             }
         } else {
             // 战术板 tops today, even before anyone posted today (a squad that never posted

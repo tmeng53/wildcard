@@ -32,11 +32,13 @@ public enum RecapSample {
 
     /// - Parameters:
     ///   - pending: the AI run hasn't succeeded yet: the titles wait and no page has AI words.
+    ///   - stuck: with `pending`, a try failed, so the organizers are out of funds; otherwise
+    ///     the titles are only on their way.
     ///   - missed: the squad fell short of its plans, for the other ending.
-    public static func story(pending: Bool = false, missed: Bool = false) -> WeekStory {
+    public static func story(pending: Bool = false, stuck: Bool = true, missed: Bool = false) -> WeekStory {
         let ready = !pending
         return WeekStory(
-            status: pending ? .pending : .ready, squad: SquadID(uuid(9)), squadName: "晨跑五人组",
+            status: pending ? .pending : .ready, stuck: pending && stuck, squad: SquadID(uuid(9)), squadName: "晨跑五人组",
             week: Week(monday: day(12), sunday: day(18)), scene: .pool, squadmates: squadmates,
             order: [.podium, .titles, .myWeek, .squadWeek, .hottest, .meals, .bestDisclaimer, .ending],
             podium: Podium(
