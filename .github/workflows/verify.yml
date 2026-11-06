@@ -5,13 +5,14 @@
 # macOS runners have no Docker, so the database and API checks run in a Linux job.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
 # Free macOS runners are few and shared by every PR, and one iOS run takes about 30 minutes, so
-# no PR books a Mac on its own (Tracy, 2026-11-06). `ios` runs on a schedule, every 3 hours,
+# no PR runs the UI tests on its own (Tracy, 2026-11-06); a ready PR that changes ios/ only
+# compiles the app on a Mac (`ios-build`, about 8 minutes). `ios` runs on a schedule, every 3 hours,
 # for what main changed since the last scheduled run (nothing when main didn't change), and on a
 # manual run (Actions -> verify -> Run workflow), which the merge queue starts every few hours on
 # one branch merging the ready PRs' heads, so its screenshots are each PR's evidence; the macOS
 # `verify` and `avatar-preview` (GIFs for reviewers, no checks of its own) on manual runs only.
-# Pushes to main and every PR run the Linux checks only (`verify` on Linux builds and tests the
-# Swift packages).
+# Pushes to main and every PR run the Linux checks (`verify` on Linux builds and tests the
+# Swift packages), and PRs `ios-build` as well.
 # Every job runs only when the files a change touches can break what it checks: `verify` for the
 # app's Swift (and the OpenAPI file its generated types come from), `supabase` for the database,
 # the API and the app's Backend adapters, `web` for the site; `ios` and `avatar-preview` only
@@ -65,6 +66,7 @@ jobs:
       web: ${{ steps.diff.outputs.web }}
       app: ${{ steps.diff.outputs.app }}
       ios: ${{ steps.diff.outputs.ios }}
+      build: ${{ steps.diff.outputs.build }}
       avatar: ${{ steps.diff.outputs.avatar }}
     steps:
       - uses: actions/checkout@v5
@@ -108,6 +110,7 @@ jobs:
           # app: anything the macOS `verify` runs, so a change to it is tested on a Mac before main.
           echo "app=$(touches '^(ios/|scripts/(verify|install-swiftlint|swift-openapi)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "ios=$(touches '^(ios/|scripts/ios-test\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "build=$(touches '^(ios/|scripts/ios-build\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "avatar=$(touches '^(ios/Packages/(Avatar|DesignSystem)/|scripts/avatar-preview\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
 
   verify:
@@ -197,6 +200,25 @@ jobs:
             -e SUPABASE_URL="$API_URL" -e SUPABASE_SECRET_KEY="$SECRET_KEY" wildcard-api
           curl -fsS --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1:18080/health ||
             { docker logs api; exit 1; }
+
+  # Compiles the app, its extensions and its UI tests on a Mac, running nothing, for every ready
+  # PR that changes ios/: the app target and the packages' SwiftUI code compile only on macOS,
+  # so the Linux checks can pass on code that doesn't build (Tracy, 2026-11-06, after three app
+  # compile errors reached the merge queue). About 8 minutes; the UI tests stay in the merge
+  # queue's combined run, and scheduled and manual runs have `ios`, which builds it too.
+  ios-build:
+    needs: changes
+    if: >-
+      !cancelled() && github.event_name == 'pull_request' && !github.event.pull_request.draft &&
+      (needs.changes.result != 'success' || needs.changes.outputs.build == 'true')
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: xcodebuild -version
+      - run: scripts/ios-build.sh
 
   # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
   # so reviewers and verifiers see every visible change without a Mac.
