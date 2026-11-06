@@ -37,20 +37,22 @@ const squads = createSquads({
   inviteCodes: randomInviteCodes,
   aiConsent: () => Promise.resolve(true),
 });
-const checkIns = createCheckIns({
-  sports: createSports({ store: createPostgresSportStore(db) }),
-  store: createPostgresCheckInStore(db),
-  membership: squads,
-  reactions: createPostgresReactionStore(db),
-  comments: createPostgresCommentStore(db),
-  plans: createPostgresWeeklyPlanStore(db),
-  photos: createSupabasePhotoStorage({
-    supabaseUrl: config.supabaseUrl,
-    secretKey: config.supabaseSecretKey,
-  }),
-  calendarOf: memberCalendar(members),
-  clock: () => new Date(),
-});
+/** Check-ins whose clock reads `now`, so each member's week is the one they are in then. */
+const checkInsAt = (now: number) =>
+  createCheckIns({
+    sports: createSports({ store: createPostgresSportStore(db) }),
+    store: createPostgresCheckInStore(db),
+    membership: squads,
+    reactions: createPostgresReactionStore(db),
+    comments: createPostgresCommentStore(db),
+    plans: createPostgresWeeklyPlanStore(db),
+    photos: createSupabasePhotoStorage({
+      supabaseUrl: config.supabaseUrl,
+      secretKey: config.supabaseSecretKey,
+    }),
+    calendarOf: memberCalendar(members),
+    clock: () => new Date(now),
+  });
 
 const DAY = 86_400_000;
 // Monday 2026-07-27, three weeks before the week of 2026-08-17, whose 战报 froze on Sunday
@@ -110,7 +112,7 @@ let noticesDown = false;
 async function runAt(now: number, squad: string) {
   const told: NewNotice[] = [];
   const run = await suggestSquadGoals({
-    checkIns,
+    checkIns: checkInsAt(now),
     squads,
     suggestGoal: suggestGoalIn(db, {
       squads: (scope) =>
@@ -186,6 +188,18 @@ describe('suggesting a captain a higher squad goal', () => {
     expect(told.map((notice) => notice.subject)).toEqual([
       { version: 1, weeks: 3, daysPerMember: 7 },
     ]);
+  });
+
+  it('compares with the week after the captain’s own, already Monday in Shanghai', async () => {
+    const squad = await squadOf(1);
+    for (const week of [1, 2, 3]) await squad.train(week, 5);
+    await sql`insert into public.profiles (member_id, time_zone)
+      values (${squad.captain.userId}, 'Asia/Shanghai')`.execute(db);
+    // An hour after the freeze it is Monday 9am in Shanghai: a change now counts from week 5,
+    // where the captain already put 5.
+    await sql`insert into public.squad_weekly_goals (squad_id, days_per_member, week_start, set_by)
+      values (${squad.id}, 5, ${monday(5)}, ${squad.captain.userId})`.execute(db);
+    expect((await runAt(FROZEN + HOUR, squad.id)).told).toEqual([]);
   });
 
   it('tells a new captain in the same run of weeks, and again after a week under', async () => {

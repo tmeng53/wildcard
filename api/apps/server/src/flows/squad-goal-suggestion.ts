@@ -35,7 +35,7 @@ import type { Database } from '../ports.js';
 // to the captain through notices.
 
 export interface GoalSuggestionDependencies {
-  readonly checkIns: Pick<CheckIns, 'squadsCheckedInto' | 'squadTrainedDays'>;
+  readonly checkIns: Pick<CheckIns, 'squadsCheckedInto' | 'squadTrainedDays' | 'weekStartNow'>;
   readonly squads: Pick<Squads, 'captainOf' | 'goalSuggestions' | 'membersAt' | 'weeklyGoals'>;
   /** Keeps the suggestion and tells the captain, both or neither (`suggestGoalIn`). */
   readonly suggestGoal: SuggestGoal;
@@ -132,7 +132,12 @@ async function suggestTo(
   for (let back = SUGGESTION_WEEKS - 1; back >= 0; back -= 1) {
     weeks.push(await counter(weeksBefore(week, back)));
   }
-  const daysPerMember = suggestedGoal({ weeks, next: goalFor(settings, weekAfter(week)) });
+  // A change counts from the week after the captain's own week now (in Asia, already Monday when
+  // the 战报 freezes), so a higher goal they already set for it means nothing to suggest.
+  const captainsWeek = SceneWeek.parse(
+    await deps.checkIns.weekStartNow(CheckInMember.parse(captain)),
+  );
+  const daysPerMember = suggestedGoal({ weeks, next: goalFor(settings, weekAfter(captainsWeek)) });
   if (daysPerMember === undefined) return false;
   // Once a run of weeks over: told this captain since the last week under, they aren't again.
   const last = earlier.findLast((each) => each.captain === captain);
