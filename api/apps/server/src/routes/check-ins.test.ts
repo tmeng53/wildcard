@@ -787,6 +787,64 @@ describe('photos on check-ins', () => {
     expect(await viewed(checkIn)).toStrictEqual(expected);
   });
 
+  it('leaves out a photo whose file is gone, and still lists the rest', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const [kept, lost, alone] = [
+      await uploadPhoto(me.token, 'kept'),
+      await uploadPhoto(me.token, 'lost'),
+      await uploadPhoto(me.token, 'alone'),
+    ];
+    const { day, createdAt } = todayAndNow();
+    const [twoPhotos, onePhoto, noPhotos] = [randomUUID(), randomUUID(), randomUUID()];
+    const save = (id: string, training: Record<string, unknown>) =>
+      call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: { version: 1, day, createdAt, audience: [squad], kind: 'trained', training },
+      });
+    expect(
+      (await save(twoPhotos, { sport: 'run', photos: [{ path: lost }, { path: kept }] })).status,
+    ).toBe(201);
+    expect((await save(onePhoto, { sport: 'swim', photos: [{ path: alone }] })).status).toBe(201);
+    expect((await save(noPhotos, { sport: 'yoga' })).status).toBe(201);
+    // The files go from Storage behind the check-ins' back.
+    await photos.delete([PhotoPath.parse(lost), PhotoPath.parse(alone)]);
+
+    const listed = await call({
+      method: 'GET',
+      path: `/squads/${squad}/check-ins?from=${day}&to=${day}`,
+      token: friend.token,
+    });
+    expect(listed.status).toBe(200);
+    const training = new Map(
+      z
+        .object({
+          posts: z.array(
+            z.object({
+              checkIn: z.object({
+                id: z.string(),
+                training: z.object({ photos: z.array(z.object({ path: z.string() })).optional() }),
+              }),
+            }),
+          ),
+        })
+        .parse(listed.body)
+        .posts.map(({ checkIn }) => [checkIn.id, checkIn.training.photos?.map(({ path }) => path)]),
+    );
+    expect(training).toStrictEqual(
+      new Map([
+        [twoPhotos, [kept]],
+        [onePhoto, undefined],
+        [noPhotos, undefined],
+      ]),
+    );
+    const one = await call({ method: 'GET', path: `/check-ins/${onePhoto}`, token: me.token });
+    expect(one.status).toBe(200);
+    expect(one.body).toMatchObject({ checkIn: { id: onePhoto, training: { sport: 'swim' } } });
+  });
+
   it('refuses a photo size of 0 or with one side', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);

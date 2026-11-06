@@ -61,10 +61,11 @@ describe('createSupabasePhotoStorage', () => {
     expect(await expired.json()).toMatchObject({ code: 'InvalidJWT' });
   }, 15_000);
 
-  it('refuses to sign view URLs when a photo was never uploaded', async () => {
-    const path = newPath();
+  it('signs the photos that are there and leaves out one that is not', async () => {
+    const [path, missing] = [newPath(), newPath()];
     await fetch(await photos.createUploadUrl(path), { method: 'PUT', body: 'RIFF' });
-    expect(await reasonOf(photos.createViewUrls([path, newPath()], 60))).toBe('PHOTO_NOT_FOUND');
+    const urls = await photos.createViewUrls([missing, path], 60);
+    expect([...urls.keys()]).toStrictEqual([path]);
   });
 
   it('deletes the photos named, skipping one already gone, and leaves the rest', async () => {
