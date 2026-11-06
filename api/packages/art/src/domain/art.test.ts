@@ -116,5 +116,6 @@ describe('checkArt', () => {
     expect(ArtPath.safeParse('web/index.svg').success).toBe(false);
     expect(ArtPath.safeParse('avatar/art/top/x/torso.js').success).toBe(false);
     expect(ArtPath.safeParse('avatar/art/top/warmup-tee/armL.svg').success).toBe(true);
+    expect(ArtPath.safeParse('guides/fitbit-1@3x.png').success).toBe(true);
   });
 });
