@@ -1,24 +1,24 @@
 import DesignSystem
 import Foundation
 
-/// The squad dropping onto home once a newly picked scene has filled the screen: the end of
-/// every scene pick (Tracy, 2026-10-23: 「selecting a new scene always do the open and drop」).
-/// One after another, 0.7 s / N apart and me last, each falls from above the screen onto their
-/// spot with the drop clip; then the squad's card drops in from the top, 打卡 rises, and the
-/// system's tab bar comes back after it.
+/// The squad dropping onto home once a newly picked scene has filled the screen: the end of every
+/// scene pick (Tracy, 2026-10-23: 「selecting a new scene always do the open and drop」). One after
+/// another, 0.7 s / N apart, me after my teammates and the coach (when the squad has one on the
+/// sideline) last, each falls from above the screen onto their spot (the coach without the drop
+/// clip, which is the members' rig's); then the squad's card drops in from the top, 打卡 rises, and
+/// the system's tab bar comes back after it.
 ///
-/// Times count from the moment the picked scene covers the screen (`Unboxing.covered`), and
-/// every number is the approved 冠军开箱 prototype's, in the design's 390 × 844 stage points
-/// with y down.
+/// Times count from the moment the picked scene covers the screen (`Unboxing.covered`), and every
+/// number is the approved 冠军开箱 prototype's, in the design's 390 × 844 stage points with y down.
 public struct DropIn: Hashable, Sendable {
-    /// Everyone who drops, me included.
+    /// Everyone who drops, me and the coach included.
     public let count: Int
 
     public init(count: Int) {
         self.count = max(1, count)
     }
 
-    /// When the figure at `index` starts falling: teammates first, me last.
+    /// When the figure at `index` starts falling: teammates first, then me, then the coach.
     public func start(of index: Int) -> Double {
         Self.firstDrop + Double(index) * Self.spread / Double(count)
     }
