@@ -32,7 +32,14 @@ public struct ShoppingStreetPage: View {
                     if store != nil { model.leaveStore() } else { back() }
                 }
                 .accessibilityIdentifier("street.back")
-                if let store { RackHeader(model: model, store: store) }
+                if let store {
+                    RackHeader(model: model, store: store)
+                } else {
+                    Text("商店街", bundle: .module)
+                        .typeStyle(TypeRamp.title)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .accessibilityAddTraits(.isHeader)
+                }
             }
             .padding(.horizontal, Space.pageMargin)
             .padding(.vertical, Space.xs)
@@ -78,12 +85,7 @@ public struct ShoppingStreetPage: View {
         .accessibilityIdentifier("street.page")
     }
 
-    @ViewBuilder
     private var street: some View {
-        Text("商店街", bundle: .module)
-            .typeStyle(TypeRamp.taskTitle)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .accessibilityAddTraits(.isHeader)
         StoreStreet(model: model)
             .padding(.top, Space.s)
     }
@@ -106,12 +108,7 @@ private struct RackHeader: View {
             .typeStyle(TypeRamp.footnote)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
             .lineLimit(1)
-        if let limited = StoreCopy.limited(store.id) {
-            limited
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .lineLimit(1)
-        }
+        if let tag = LimitedTag(store: store.id) { tag }
         Spacer(minLength: 0)
         if let sports = model.sports(of: store.id) {
             Button {
@@ -199,5 +196,8 @@ enum StoreCopy {
         "deuce": "网球类 3 次解锁",
     ]
     private static let limits = ["powder": "冬季限定"]
+    /// Each bundled limit's tag colour (冬季限定: glacier blue); an uploaded store names its own
+    /// in `names.json`.
+    static let limitColors = ["powder": RGBAColor(red: 0x1E, green: 0x6A, blue: 0x9E)]
 }
 #endif

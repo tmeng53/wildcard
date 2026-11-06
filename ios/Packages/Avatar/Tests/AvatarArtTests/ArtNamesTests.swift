@@ -18,7 +18,8 @@ private let trot = Data(
        "trot": {
          "name": {"zhHans": "TURKEY TROT", "en": "TURKEY TROT", "zhHant": "TURKEY TROT"},
          "local": {"zhHans": "火鸡全开", "en": "Turkey Trot", "zhHant": "火雞全開"},
-         "limited": {"zhHans": "感恩节限定", "en": "Thanksgiving only", "zhHant": "感恩節限定"}}}}
+         "limited": {"zhHans": "感恩节限定", "en": "Thanksgiving only", "zhHant": "感恩節限定"},
+         "limitedColor": "#c8553d"}}}
     """#.utf8)
 
 @Test func uploadedNamesReadInEachLanguage() throws {
@@ -29,6 +30,7 @@ private let trot = Data(
     let store = try #require(names.stores["trot"])
     #expect(store.local.traditionalChinese == "火雞全開")
     #expect(store.limited?.simplifiedChinese == "感恩节限定")
+    #expect(store.limitedColor == RGBAColor(red: 200, green: 85, blue: 61))
     #expect(store.unlock == nil)
     #expect(ArtTree.reads(trot, at: "avatar/names.json"))
 }
@@ -41,6 +43,17 @@ private let trot = Data(
     #expect(!ArtTree.reads(noEnglish, at: "avatar/names.json"))
     #expect(!ArtTree.reads(Data(#"{"version":2}"#.utf8), at: "avatar/names.json"))
     #expect(!ArtTree.reads(trot, at: "avatar/art/acc/trot-bib/names.json"))
+}
+
+@Test func aLimitedTagsColourThatIsntOneIsLeftOut() throws {
+    let file = Data(
+        #"""
+        {"version": 1, "stores": {"trot": {
+          "name": {"zhHans": "T", "en": "T", "zhHant": "T"},
+          "local": {"zhHans": "火鸡", "en": "Turkey", "zhHant": "火雞"},
+          "limitedColor": "orange"}}}
+        """#.utf8)
+    #expect(try ArtNames.decode(file).stores["trot"]?.limitedColor == nil)
 }
 
 @Test func nothingUploadedNamesNothing() {
