@@ -110,7 +110,7 @@ jobs:
           echo "swift=$(touches '^(ios/|api/apps/server/openapi\.json$|scripts/(verify|install-swiftlint|swift-openapi)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           # backend: the database, the API, and the app's adapters that run against them.
           echo "backend=$(touches '^(supabase/|api/|ios/|scripts/|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
-          
+          # web: the website, the app art and font its generated files come from, and the arm bends both players share.
           echo "web=$(touches '^(web/|ios/Packages/Avatar/Sources/AvatarArt/|ios/Packages/Avatar/Tests/arm-bend-cases\.json$|ios/Packages/DesignSystem/Sources/DesignSystemUI/Resources/Fonts/|scripts/verify\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           # app: anything the macOS `verify` runs, so a change to it is tested on a Mac before main.
           echo "app=$(touches '^(ios/|scripts/(verify|install-swiftlint|swift-openapi)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
