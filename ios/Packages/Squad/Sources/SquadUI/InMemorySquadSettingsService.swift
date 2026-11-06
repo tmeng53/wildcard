@@ -74,7 +74,10 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
                     ]),
                 coach: SquadCoach(
                     hire: coached ? SquadCoach.Hire(coach: sampleCoach, since: now) : nil, canHire: viewer == ids[0]),
-                today: LocalDay(at: now, in: .current), timeZone: .current))
+                today: LocalDay(at: now, in: .current), timeZone: .current,
+                goal: SquadWeeklyGoal(
+                    daysPerMember: 3, nextDaysPerMember: 3, canChange: viewer == ids[0],
+                    recent: SquadWeeklyGoal.Recent(weeks: 4, daysPerMember: 3.4))))
     }
 
     public func settings() async throws(SquadError) -> SquadSettings {
@@ -131,6 +134,13 @@ extension InMemorySquadSettingsService {
         return current.coach
     }
 
+    public func setWeeklyGoal(of squad: SquadID, to daysPerMember: Int) async throws(SquadError) -> SquadWeeklyGoal {
+        if failsSaving { throw .unavailable }
+        guard current.goal.canChange, SquadWeeklyGoal.choices.contains(daysPerMember) else { throw .outdated }
+        current.goal.nextDaysPerMember = daysPerMember
+        return current.goal
+    }
+
     public func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach {
         if failsSaving { throw .unavailable }
         guard current.coach.canHire else { throw .outdated }
@@ -162,11 +172,16 @@ private let sampleLooks: [CharacterLook] = [
     CharacterLook(
         persona: "energetic",
         variants: ["body": "peach", "hair": "long", "top": "warmup-tank", "bottom": "warmup-shorts"]),
-    CharacterLook(persona: "drama", variants: ["body": "lop", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
-    CharacterLook(persona: "deadpan", variants: ["body": "calico", "top": "warmup-tee", "bottom": "moss-cargo"]),
+    CharacterLook(
+        persona: "drama",
+        variants: ["body": "lop", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
+    CharacterLook(
+        persona: "deadpan", variants: ["body": "calico", "cheeks": "rosy", "top": "warmup-tee", "bottom": "moss-cargo"]),
     CharacterLook(
         persona: "energetic",
         variants: ["body": "peach", "hair": "curls", "top": "warmup-tee", "bottom": "warmup-shorts"],
         colors: ["body": "#C68A5E"]),
-    CharacterLook(persona: "shy", variants: ["body": "shiba", "top": "nolook-jersey", "bottom": "warmup-shorts"]),
+    CharacterLook(
+        persona: "shy",
+        variants: ["body": "shiba", "cheeks": "rosy", "top": "nolook-jersey", "bottom": "warmup-shorts"]),
 ]

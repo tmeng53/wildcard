@@ -33,6 +33,17 @@ export class UnlockStoreMissingError extends AppError {
   }
 }
 
+/** Thrown when an admin has a store or piece follow a switch that doesn't exist. */
+export class UnlockSwitchMissingError extends AppError {
+  override readonly name = 'UnlockSwitchMissingError';
+  readonly reason = 'UNLOCK_SWITCH_MISSING';
+  readonly status = 'NOT_FOUND';
+
+  constructor(readonly switchId: string) {
+    super(`There is no switch ${switchId} (get_switches lists them).`);
+  }
+}
+
 /** Thrown when a coach gives a piece the gift pool doesn't offer. */
 export class GiftPieceNotOfferedError extends AppError {
   override readonly name = 'GiftPieceNotOfferedError';

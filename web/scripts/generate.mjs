@@ -5,7 +5,8 @@
 //   public/join/characters.js       the rig, all of the app's art and the idles, for the invite page
 //                                   to dress each member's look as the API sends it
 //   public/fonts/                   Barlow Condensed ExtraBold and its license, from DesignSystemUI
-//   public/{,zh/,zh-hant/}index.html  the home page in each language, from pages/home.html
+//   public/{,en/,zh-hant/}index.html  the home page in each language, from pages/home.html (/ is
+//                                   Simplified Chinese, the site's default)
 // `node scripts/generate.mjs --verify` fails while a written file is stale.
 import { readFileSync, readdirSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
@@ -54,12 +55,13 @@ for (const slot of list(join(art, 'art')).filter((s) => s !== 'base')) {
   }
 }
 
-const rigParts = rig.parts.map(({ id, parent, pivot, opacity, elbow }) => ({
+const rigParts = rig.parts.map(({ id, parent, pivot, opacity, elbow, hides }) => ({
   id,
   parent: parent ?? null,
   pivot,
   opacity: opacity ?? 1,
   ...(elbow ? { elbow } : {}),
+  ...(hides ? { hides } : {}),
 }));
 const idles = (personas) =>
   Object.fromEntries(personas.map((p) => [p, json(join(art, 'clips', p, 'idle.json'))]));
@@ -96,6 +98,8 @@ const joinBundle = {
   parts: rig.parts.map((part, i) => ({ ...rigParts[i], layers: part.layers ?? [] })),
   personas: allPersonas,
   idle: idles(allPersonas),
+  cheer: Object.fromEntries(allPersonas.map((p) => [p, clip(join(art, 'clips', p, 'cheer.json'))])),
+  moves: { wave: clip(join(web, 'character', 'moves', 'wave.json')) },
 };
 
 // Apple's logo on the button that opens the App Store (the same glyph the invite page draws).
@@ -106,23 +110,8 @@ const APPLE_LOGO =
 const pages = [
   {
     file: 'index.html',
-    lang: 'en',
-    path: '/',
-    title: 'Wildcard: become everyday athletes',
-    description: 'Check in with your squad every day. Become everyday athletes.',
-    languageLabel: 'Language',
-    headlineLabel: 'Wildcard',
-    cn: '',
-    slogan: 'Become everyday athletes',
-    button: 'Get your wildcard',
-    legal: '/',
-    privacy: 'Privacy',
-    terms: 'Terms',
-  },
-  {
-    file: 'zh/index.html',
     lang: 'zh-Hans',
-    path: '/zh/',
+    path: '/',
     title: '外卡 Wildcard：人人都是运动员',
     description: '和朋友组队，每天打卡。人人都是运动员。',
     languageLabel: '语言',
@@ -148,6 +137,21 @@ const pages = [
     legal: '/zh-hant/',
     privacy: '隱私權政策',
     terms: '使用條款',
+  },
+  {
+    file: 'en/index.html',
+    lang: 'en',
+    path: '/en/',
+    title: 'Wildcard: become everyday athletes',
+    description: 'Check in with your squad every day. Become everyday athletes.',
+    languageLabel: 'Language',
+    headlineLabel: 'Wildcard',
+    cn: '',
+    slogan: 'Become everyday athletes',
+    button: 'Get your wildcard',
+    legal: '/',
+    privacy: 'Privacy',
+    terms: 'Terms',
   },
 ];
 const template = readFileSync(join(web, 'pages', 'home.html'), 'utf8');

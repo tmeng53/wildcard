@@ -7,12 +7,14 @@ import DesignSystemUI
 import SwiftUI
 
 /// The squad's coach standing on the sideline, as big as me, idling; it has no ring, since it
-/// doesn't check in.
+/// doesn't check in. It drops in after the squad onto a newly picked scene.
 struct SidelineCoachFigure: View {
     let coach: SquadCast.Coach
     let unit: Double
     let date: Date
     let reduceMotion: Bool
+    /// How far above its spot it is, in stage points, while it drops in.
+    var lift: Double = 0
 
     /// Members' canvas, which coaches share, and where its feet are on it.
     static let canvas = CGSize(width: 240, height: 320)
@@ -27,7 +29,7 @@ struct SidelineCoachFigure: View {
             .overlay {
                 CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.reach)
                     .frame(width: Self.reach.width * scale, height: Self.reach.height * scale)
-                    .offset(y: (Self.reach.midY - Self.canvas.height / 2) * scale)
+                    .offset(y: (Self.reach.midY - Self.canvas.height / 2) * scale - lift * unit)
                     .allowsHitTesting(false)
             }
             .frame(width: Self.canvas.width * scale, height: Self.canvas.height * scale)

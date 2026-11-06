@@ -187,7 +187,7 @@
         }
       }
     },
-    "一共练了": {
+    "一共训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -198,7 +198,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "總共練了"
+            "value": "總共訓練"
           }
         }
       }
@@ -507,38 +507,6 @@
         }
       }
     },
-    "本周小队训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Squad this week"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本週小隊訓練"
-          }
-        }
-      }
-    },
-    "次": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "times"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "次"
-          }
-        }
-      }
-    },
     "没存上，再试一次": {
       "localizations": {
         "en": {
@@ -599,22 +567,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "離開賽還有"
-          }
-        }
-      }
-    },
-    "练了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trained"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "練了"
           }
         }
       }
@@ -763,7 +715,7 @@
         }
       }
     },
-    "，练了": {
+    "，训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -774,7 +726,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "，練了"
+            "value": "，訓練"
           }
         }
       }
@@ -887,6 +839,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "返回"
+          }
+        }
+      }
+    },
+    "小队本周目标": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad goal"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊本週目標"
           }
         }
       }

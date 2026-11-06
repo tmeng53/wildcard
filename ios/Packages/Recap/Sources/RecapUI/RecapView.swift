@@ -141,6 +141,7 @@ public struct RecapView: View {
         case .podium(let podium): PodiumPage(podium: podium, page: context).storyPage("podium")
         case .titles(let rows): TitlesPage(rows: rows, page: context).storyPage("titles")
         case .myWeek(let week): MyWeekPage(week: week, page: context).storyPage("myWeek")
+        case .squadWeek(let week): SquadWeekPage(week: week, page: context).storyPage("squadWeek")
         case .hottest(let hottest):
             HottestPage(hottest: hottest, page: context).storyPage("hottest")
         case .meals(let meals): MealsPage(meals: meals, page: context).storyPage("meals")

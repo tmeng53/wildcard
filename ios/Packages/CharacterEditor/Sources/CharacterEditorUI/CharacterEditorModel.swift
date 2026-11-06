@@ -11,8 +11,8 @@ import Observation
 public enum EditorTab: String, CaseIterable, Hashable, Sendable {
     case look, hair, face, outfit, prop, persona
 
-    /// Whether the tab dresses a person only: an animal's face and coat come together.
-    var isForPeople: Bool { self == .hair || self == .face }
+    /// Whether the tab dresses a person only: animals wear no hair.
+    var isForPeople: Bool { self == .hair }
 }
 
 /// The one move a change plays: the look's (the held prop's move, else the persona's cheer),
@@ -93,10 +93,13 @@ public final class CharacterEditorModel {
     ) throws(AvatarError) -> CharacterEditorModel {
         let catalog = try Catalog.placeholder(unlocks: unlocks, stock: stock)
         var generator = SystemRandomNumberGenerator()
-        let start = look ?? CharacterDraft.randomLook(from: catalog, using: &generator)
+        let arrived = Catalog.arrived(unlocks: unlocks, stock: stock)
+        let start =
+            look
+            ?? CharacterDraft.randomLook(from: catalog, using: &generator, leavingOut: arrived.subtracting(claimed))
         return CharacterEditorModel(
             draft: CharacterDraft(catalog: catalog, look: start, persona: persona, nickname: nickname), tab: tab,
-            arrived: Set(unlocks.filter { $0.kind == .piece }.map(\.id)), claimed: claimed, marks: marks)
+            arrived: arrived, claimed: claimed, marks: marks)
     }
 
     /// Puts the member's own 商店街 in an editor opened before it was known, as sign-up's first
@@ -224,7 +227,7 @@ public final class CharacterEditorModel {
 
     func shuffle() {
         var generator = SystemRandomNumberGenerator()
-        draft.shuffle(using: &generator)
+        draft.shuffle(using: &generator, leavingOut: arrived.subtracting(claimed))
         leaveTabsForPeople()
         restyle(move: .look)
     }

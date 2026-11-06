@@ -43,8 +43,10 @@ export const NoticeEntry = z
         'in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the ' +
         'squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the ' +
         'caller its morning note, 便条), `unlocked` (a store, prop or piece opened), ' +
-        '`comment` (a teammate commented on the caller’s check-in or replied to them) or ' +
-        '`broadcast` (a notice we sent everyone). ' +
+        '`comment` (a teammate commented on the caller’s check-in or replied to them), ' +
+        '`broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad ' +
+        'trained over its weekly goal some weeks in a row, so its captain is suggested a higher ' +
+        'one). ' +
         'More kinds may come: skip one you don’t know.',
     }),
     at: z.iso.datetime().meta({ description: 'When it was told, in UTC.' }),
@@ -117,6 +119,15 @@ export const NoticeEntry = z
       }),
     // A component used more than once takes no description of its own here, so the generated
     // clients read it as the component itself: what each says is on the kind.
+    weeks: z.int().positive().optional().meta({
+      description: 'How many weeks in a row the squad trained over its goal (`goalSuggestion`).',
+    }),
+    daysPerMember: z
+      .int()
+      .min(1)
+      .max(7)
+      .optional()
+      .meta({ description: 'The goal suggested, 人均 N 天 (`goalSuggestion`).' }),
     title: LocalizedWords.optional(),
     body: LocalizedWords.optional(),
     action: z
@@ -382,6 +393,12 @@ function wireNotice(
       return { ...common, unlockKind: notice.subject.kind, item: notice.subject.item };
     case 'comment':
       return { ...common, alert: notice.subject.alert, checkIn: notice.subject.checkIn };
+    case 'goalSuggestion':
+      return {
+        ...common,
+        weeks: notice.subject.weeks,
+        daysPerMember: notice.subject.daysPerMember,
+      };
     case 'broadcast': {
       const told = names.broadcast(notice.subject.broadcast);
       if (told === undefined) return undefined;

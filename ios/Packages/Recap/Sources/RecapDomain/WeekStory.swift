@@ -30,6 +30,7 @@ public struct WeekStory: Hashable, Sendable {
     public let podium: Podium?
     public let titles: [MemberTitles]
     public let myWeek: MyWeek?
+    public let squadWeek: SquadWeek?
     public let hottest: Hottest?
     public let meals: Meals?
     public let bestDisclaimer: BestDisclaimer?
@@ -38,7 +39,7 @@ public struct WeekStory: Hashable, Sendable {
     public init(
         status: Status, squad: SquadID, squadName: String, week: Week, scene: SceneTheme,
         squadmates: [Squadmate], order: [PageID]? = nil, podium: Podium? = nil, titles: [MemberTitles] = [],
-        myWeek: MyWeek? = nil, hottest: Hottest? = nil,
+        myWeek: MyWeek? = nil, squadWeek: SquadWeek? = nil, hottest: Hottest? = nil,
         meals: Meals? = nil, bestDisclaimer: BestDisclaimer? = nil, ending: Ending? = nil
     ) {
         self.status = status
@@ -51,6 +52,7 @@ public struct WeekStory: Hashable, Sendable {
         self.podium = podium
         self.titles = titles
         self.myWeek = myWeek
+        self.squadWeek = squadWeek
         self.hottest = hottest
         self.meals = meals
         self.bestDisclaimer = bestDisclaimer
@@ -67,10 +69,13 @@ public struct WeekStory: Hashable, Sendable {
 
     /// The pages to play, in order. A page whose data is missing is left out, and the ending,
     /// when there is one, closes the story. While the titles are pending, the pending page takes their place
-    /// and every other page plays as usual.
+    /// and every other page plays as usual. 全队运动总结 follows 你的一周 when an order leaves it out.
     public var pages: [StoryPage] {
         var ids = (order ?? PageID.defaultOrder).filter { $0 != .ending }
         ids = ids.reduce(into: []) { kept, id in if !kept.contains(id) { kept.append(id) } }
+        if !ids.contains(.squadWeek) {
+            ids.insert(.squadWeek, at: ids.firstIndex(of: .myWeek).map { $0 + 1 } ?? ids.endIndex)
+        }
         ids.append(.ending)
         return ids.compactMap { id in
             id == .titles && status == .pending ? .pending : page(id)
@@ -82,6 +87,7 @@ public struct WeekStory: Hashable, Sendable {
         case .podium: podium.map(StoryPage.podium)
         case .titles: titles.isEmpty ? nil : .titles(titles)
         case .myWeek: myWeek.map(StoryPage.myWeek)
+        case .squadWeek: squadWeek.map(StoryPage.squadWeek)
         case .hottest: hottest.map(StoryPage.hottest)
         case .meals: meals.map(StoryPage.meals)
         case .bestDisclaimer: bestDisclaimer.map(StoryPage.bestDisclaimer)
@@ -132,10 +138,12 @@ public struct Week: Hashable, Sendable {
 
 /// Which page, as the API names it in `order`.
 public enum PageID: String, CaseIterable, Hashable, Sendable {
-    case podium, titles, myWeek, hottest, meals, bestDisclaimer, ending
+    case podium, titles, myWeek, squadWeek, hottest, meals, bestDisclaimer, ending
 
     /// The order when the AI didn't pick one: the awards first, the ending last.
-    public static let defaultOrder: [PageID] = [.podium, .titles, .myWeek, .hottest, .meals, .bestDisclaimer, .ending]
+    public static let defaultOrder: [PageID] = [
+        .podium, .titles, .myWeek, .squadWeek, .hottest, .meals, .bestDisclaimer, .ending,
+    ]
 }
 
 /// One full-screen page of the story.
@@ -145,6 +153,7 @@ public enum StoryPage: Hashable, Sendable {
     case podium(Podium)
     case titles([MemberTitles])
     case myWeek(MyWeek)
+    case squadWeek(SquadWeek)
     case hottest(Hottest)
     case meals(Meals)
     case bestDisclaimer(BestDisclaimer)
@@ -206,42 +215,6 @@ public struct MemberTitles: Hashable, Sendable {
     }
 }
 
-/// 你的一周: the reader's own week, Monday first.
-public struct MyWeek: Hashable, Sendable {
-    public let plan: Int
-    public let days: [Day]
-    public let line: String?
-    public let healthyMeals: Int
-    public let cheatMeals: Int
-    public let reactionsReceived: Int
-
-    public struct Day: Hashable, Sendable {
-        public let day: LocalDay
-        public let kind: DayKind
-
-        public init(day: LocalDay, kind: DayKind) {
-            self.day = day
-            self.kind = kind
-        }
-    }
-
-    public init(
-        plan: Int, days: [Day], line: String? = nil, healthyMeals: Int, cheatMeals: Int, reactionsReceived: Int
-    ) {
-        self.plan = plan
-        self.days = days
-        self.line = line
-        self.healthyMeals = healthyMeals
-        self.cheatMeals = cheatMeals
-        self.reactionsReceived = reactionsReceived
-    }
-
-    /// Days trained: what the big number counts up to.
-    public var trainedDays: Int {
-        days.count { if case .trained = $0.kind { true } else { false } }
-    }
-}
-
 /// What a day of the week was.
 public enum DayKind: Hashable, Sendable {
     /// Trained; the sport is that day's main one, nil for 其他.
@@ -252,6 +225,8 @@ public enum DayKind: Hashable, Sendable {
     case disclaimer
     /// Nothing checked in.
     case none
+
+    public var isTrained: Bool { if case .trained = self { true } else { false } }
 }
 
 /// 你最火的一条: the reader's check-in with the most reactions, as it was when the awards ran.

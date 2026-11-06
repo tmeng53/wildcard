@@ -54,9 +54,38 @@ final class TeammateCardUITests: XCTestCase {
         let card = app.buttons["me.card"]
         XCTAssertTrue(app.windows.firstMatch.frame.contains(card.frame), "the card runs off the screen: \(card.frame)")
         // It pops up over the dimmed page, and a tap off it, above it, closes it.
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.06)).tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
         XCTAssertTrue(
             card.waitForNonExistence(timeout: 5), "a tap off the card didn't close it:\n\(app.debugDescription)")
+        XCTAssertTrue(row.isHittable, "小队 isn't back under the card")
+    }
+
+    func testTapsOffTheCardNeverReachWhatIsUnderIt() {
+        let app = launch(["-tab", "squad"])
+        let row = app.buttons.matching(identifier: "squad.member.card").firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: Self.wait), "no teammate row opens a card")
+        let feedTab = app.buttons["tab.feed"]
+        XCTAssertTrue(feedTab.waitForExistence(timeout: Self.wait), "no 动态 tab")
+        let card = app.buttons["me.card"]
+        let window = app.windows.firstMatch.frame
+
+        // A tap just under the status bar, where the page's own header sits, closes the card. (The
+        // status bar itself takes taps for the system, so a test can't tap there.)
+        row.tap()
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "the teammate's card didn't open")
+        Thread.sleep(forTimeInterval: 0.6)
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        XCTAssertTrue(card.waitForNonExistence(timeout: 5), "a tap under the status bar didn't close the card")
+
+        // A tap where the tab bar is closes it too, and never switches the tab under the dim.
+        row.tap()
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "the teammate's card didn't open again")
+        Thread.sleep(forTimeInterval: 0.6)
+        let tab = feedTab.frame
+        app.coordinate(withNormalizedOffset: CGVector(dx: tab.midX / window.width, dy: tab.midY / window.height))
+            .tap()
+        XCTAssertTrue(card.waitForNonExistence(timeout: 5), "a tap on the tab bar didn't close the card")
+        XCTAssertFalse(feedTab.isSelected, "a tap meant for the dim switched to 动态 under the card")
         XCTAssertTrue(row.isHittable, "小队 isn't back under the card")
     }
 

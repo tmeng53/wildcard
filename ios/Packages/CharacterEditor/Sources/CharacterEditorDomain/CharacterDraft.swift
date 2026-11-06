@@ -37,15 +37,13 @@ public struct CharacterDraft: Hashable, Sendable {
         self.nickname = String(nickname.prefix(Self.nicknameLimit))
     }
 
-    /// What the character wears: the picks, minus hair and a person's face on an animal, whose
-    /// face comes with its coat.
+    /// What the character wears: the picks, minus hair on an animal. Animals pick a face as
+    /// people do.
     public var outfit: Outfit {
         guard !wearsHair else { return picks }
         var outfit = picks
-        for slot in ["hair"] + PlaceholderCharacter.faceSlots {
-            outfit.variants[slot] = nil
-            outfit.colors[slot] = nil
-        }
+        outfit.variants["hair"] = nil
+        outfit.colors["hair"] = nil
         return outfit
     }
 
@@ -67,7 +65,8 @@ public struct CharacterDraft: Hashable, Sendable {
     /// even when that color was the old piece's own, and skin across people. A body's own
     /// colors are what picking it means, and an animal's coat starts from its own colors.
     /// A piece put on an empty slot wears the color the slot showed when it was emptied.
-    /// Brows put on without a color take the hair's.
+    /// Brows put on without a color take the hair's. A person turned into an animal without
+    /// cheeks gets an animal's (`PlaceholderCharacter.animalCheeks`), unless its coat draws its own.
     @discardableResult
     public mutating func pick(_ variant: String?, for slot: Slot) -> Bool {
         let worn = picks.variants[slot]
@@ -90,6 +89,11 @@ public struct CharacterDraft: Hashable, Sendable {
             next.colors[slot] = nil
         }
         if slot == "brows", variant != nil, next.colors["brows"] == nil { next.colors["brows"] = picks.colors["hair"] }
+        if slot == "body", wearsHair, let variant, catalog.species(of: variant)?.wearsHair == false,
+            !PlaceholderCharacter.blushingCoats.contains(variant), next.variants["cheeks"] == nil
+        {
+            next.variants["cheeks"] = PlaceholderCharacter.animalCheeks
+        }
         commit(next)
         return true
     }
@@ -125,16 +129,24 @@ public struct CharacterDraft: Hashable, Sendable {
     }
 
     /// A whole new random look, which undo can take back.
-    public mutating func shuffle(using generator: inout some RandomNumberGenerator) {
-        commit(Self.randomLook(from: catalog, using: &generator))
+    public mutating func shuffle(
+        using generator: inout some RandomNumberGenerator, leavingOut unclaimed: Set<String> = []
+    ) {
+        commit(Self.randomLook(from: catalog, using: &generator, leavingOut: unclaimed))
     }
 
     /// A random look: a person a bit less than half the time, else any animal; hair, a face,
     /// top, bottom and shoes always; brows nearly always, cheeks half the time and glasses now
     /// and then; a hat about a third of the time, an accessory a quarter of the time, a prop most
     /// of the time; and most recolorable pieces in one of their swatches, with the brows in the
-    /// hair's color.
-    public static func randomLook(from catalog: Catalog, using generator: inout some RandomNumberGenerator) -> Outfit {
+    /// hair's color. It never puts on a piece in `unclaimed`: one the member unlocked but hasn't
+    /// claimed (领取) yet, which waits on 商店街.
+    public static func randomLook(
+        from catalog: Catalog, using generator: inout some RandomNumberGenerator, leavingOut unclaimed: Set<String> = []
+    ) -> Outfit {
+        func any(_ slot: Slot) -> String? {
+            catalog.variants[slot]?.filter { !unclaimed.contains($0) }.randomElement(using: &generator)
+        }
         let people = catalog.species.filter(\.wearsHair).flatMap(\.bodies)
         let animals = catalog.species.filter { !$0.wearsHair }.flatMap(\.bodies)
         let body =
@@ -142,18 +154,18 @@ public struct CharacterDraft: Hashable, Sendable {
             ?? animals.randomElement(using: &generator) ?? people.randomElement(using: &generator)
         var look = Outfit([:])
         look.variants["body"] = body
-        look.variants["hair"] = catalog.variants["hair"]?.randomElement(using: &generator)
-        look.variants["top"] = catalog.variants["top"]?.randomElement(using: &generator)
-        look.variants["bottom"] = catalog.variants["bottom"]?.randomElement(using: &generator)
-        look.variants["shoes"] = catalog.variants["shoes"]?.randomElement(using: &generator)
-        look.variants["eyes"] = catalog.variants["eyes"]?.randomElement(using: &generator)
-        look.variants["mouth"] = catalog.variants["mouth"]?.randomElement(using: &generator)
+        look.variants["hair"] = any("hair")
+        look.variants["top"] = any("top")
+        look.variants["bottom"] = any("bottom")
+        look.variants["shoes"] = any("shoes")
+        look.variants["eyes"] = any("eyes")
+        look.variants["mouth"] = any("mouth")
         for (slot, chance): (Slot, Double) in [("brows", 0.9), ("cheeks", 0.5), ("glasses", 0.15), ("acc", 0.25)]
         where Double.random(in: 0..<1, using: &generator) < chance {
-            look.variants[slot] = catalog.variants[slot]?.randomElement(using: &generator)
+            look.variants[slot] = any(slot)
         }
         if Double.random(in: 0..<1, using: &generator) < 0.35 {
-            look.variants["hat"] = catalog.variants["hat"]?.randomElement(using: &generator)
+            look.variants["hat"] = any("hat")
         }
         if Double.random(in: 0..<1, using: &generator) < 0.7 {
             look.variants["prop"] = catalog.props.randomElement(using: &generator)

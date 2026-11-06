@@ -10,6 +10,7 @@ import {
   titlesWonOf,
   topCheckInOf,
   wornOf,
+  endingWordsOf,
   type ModelReply,
   type TitleWin,
   type WeekCheckIn,
@@ -50,6 +51,7 @@ const good: ModelReply = {
       titles: [{ title: '请假条文豪', speech: '周二的请假条写成了连载。', move: 'flat', badge }],
     },
   ],
+  ending: { headline: '稳了', line: '二十三天，计划超额完成。' },
 };
 
 describe('modelReply', () => {
@@ -60,13 +62,25 @@ describe('modelReply', () => {
     expect(schema).toContain('"maxLength":6');
     expect(schema).toContain('"maxLength":24');
     expect(schema).toContain('"maxItems":3');
+    const ending = { headline: '稳了', line: '全队超额完成。' };
     const titled = (title: string, speech = '周三下着雨还去跑了。') => ({
       version: 1,
       awards: [{ member: 'A', titles: [{ title, speech, move: 'pump', badge }] }],
+      ending,
     });
     expect(ModelReply.safeParse(titled('雨中狠人')).success).toBe(true);
     expect(ModelReply.safeParse(titled('雨中最狠的人啊')).success).toBe(false);
     expect(ModelReply.safeParse(titled('雨中狠人', '周'.repeat(25))).success).toBe(false);
+    expect(schema).toContain('"maxLength":4');
+    const ended = (headline: string, line: string) => ({
+      ...titled('雨中狠人'),
+      ending: { headline, line },
+    });
+    expect(ModelReply.safeParse(ended('差一点点啊', '还差三天。')).success).toBe(false);
+    expect(ModelReply.safeParse(ended('稳了', '周'.repeat(25))).success).toBe(false);
+    expect(ModelReply.safeParse({ version: 1, awards: titled('雨中狠人').awards }).success).toBe(
+      false,
+    );
   });
 
   it('takes badges only from the catalog', () => {
@@ -78,6 +92,7 @@ describe('modelReply', () => {
           titles: [{ title: '夜跑王', speech: '周三半夜还在跑。', move: 'pump', badge: picked }],
         },
       ],
+      ending: { headline: '稳了', line: '全队超额完成。' },
     });
     expect(ModelReply.safeParse(titled({ ...badge, glyph: 'moon.fill' })).success).toBe(true);
     expect(ModelReply.safeParse(titled({ ...badge, glyph: 'flame.fill' })).success).toBe(false);
@@ -93,9 +108,24 @@ describe('modelReply', () => {
     const moved = (move: string) => ({
       version: 1,
       awards: [{ member: 'A', titles: [{ title: '雨中狠人', speech: '下雨也跑。', move, badge }] }],
+      ending: { headline: '稳了', line: '全队超额完成。' },
     });
     expect(ModelReply.safeParse(moved('chin-up')).success).toBe(true);
     expect(ModelReply.safeParse(moved('moonwalk')).success).toBe(false);
+  });
+});
+
+describe('endingWordsOf', () => {
+  it('keeps the words trimmed on one line, and none when either is blank', () => {
+    expect(
+      endingWordsOf({ ...good, ending: { headline: ' 稳了 ', line: '二十三天，\n计划满了 ' } }),
+    ).toStrictEqual({
+      version: 1,
+      headline: '稳了',
+      line: '二十三天， 计划满了',
+    });
+    expect(endingWordsOf({ ...good, ending: { headline: ' ', line: '计划满了' } })).toBeUndefined();
+    expect(endingWordsOf({ ...good, ending: { headline: '稳了', line: '\n' } })).toBeUndefined();
   });
 });
 
@@ -268,7 +298,7 @@ describe('promptFor', () => {
           {
             day: '2026-10-21 周三',
             time: '05:00',
-            kind: '练了',
+            kind: '训练',
             sport: 'run',
             caption: '下雨也跑',
             photos: 1,
@@ -335,7 +365,7 @@ describe('promptFor', () => {
           {
             day: '2026-10-21 周三',
             time: '12:00',
-            kind: '练了',
+            kind: '训练',
             sport: 'run',
             comments: [
               { from: 'B', text: '腿还在吗' },
@@ -347,7 +377,7 @@ describe('promptFor', () => {
       },
       {
         member: 'B',
-        checkIns: [{ day: '2026-10-21 周三', time: '12:00', kind: '练了', sport: 'run' }],
+        checkIns: [{ day: '2026-10-21 周三', time: '12:00', kind: '训练', sport: 'run' }],
       },
     ]);
     expect(JSON.stringify(prompt)).not.toContain(cy);

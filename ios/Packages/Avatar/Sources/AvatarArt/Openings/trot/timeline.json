@@ -110,10 +110,10 @@
     },
     {
       "id": "squad",
-      "x": 10,
-      "y": 520,
-      "width": 370,
-      "height": 190,
+      "x": 30,
+      "y": 420,
+      "width": 330,
+      "height": 250,
       "squad": true
     },
     {

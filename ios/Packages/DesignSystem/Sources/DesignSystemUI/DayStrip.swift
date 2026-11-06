@@ -54,7 +54,8 @@ public struct DayStrip<ID: Hashable & Sendable>: View {
                 .frame(maxWidth: .infinity)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(label(day))
-                .accessibilityAddTraits(day.id == picked ? .isSelected : [])
+                // Ignoring the children drops the button trait, so it is added back.
+                .accessibilityAddTraits(day.id == picked ? [.isButton, .isSelected] : .isButton)
                 // dayStrip.0 is the earliest day.
                 .accessibilityIdentifier("dayStrip.\(index)")
             }

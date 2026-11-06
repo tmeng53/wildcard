@@ -45,6 +45,7 @@ export {
   UnlockItemMissingError,
   UnlockSportNotListedError,
   UnlockStoreMissingError,
+  UnlockSwitchMissingError,
 } from './errors.js';
 export type { GiftStore, SportListed, TrainedSince, UnlockStore, Unlocked } from './ports.js';
 export { createCoachGifts, type CoachGifts, type GiftsAdmin } from './use-cases/gifts.js';

@@ -50,6 +50,8 @@ public struct Figure: Hashable, Sendable {
         public let restOpacity: Double
         /// Where the part bends, for an arm (`bend`).
         public let elbow: Rig.Elbow?
+        /// The arm whose raising fades this part out, as an index into `parts` (`Rig.Hides`).
+        public internal(set) var hides: Hiding?
         /// Back to front.
         public internal(set) var art: [Artwork]
         /// The slot each of `art` is worn in, nil for the rig's own art.
@@ -104,6 +106,7 @@ public struct Figure: Hashable, Sendable {
                     id: part.id, pivot: part.pivot, restOpacity: part.opacity, elbow: part.elbow, art: artworks,
                     slots: slots))
         }
+        try Self.resolveHides(&built, rig.parts)
         try Self.paintHands(&built, held: held, bodies: bodies, skin: rig.skin)
         if let (slot, variant) = variants.first(where: { !used.contains($0.key) }) {
             throw .unknownVariant(slot: slot, variant: variant)
@@ -305,11 +308,14 @@ public struct Figure: Hashable, Sendable {
                 .then(.scale(x: move.scaleX, y: move.scaleY))
                 .then(.rotation(degrees: move.rotation))
                 .then(.translation(x: part.pivot.x + move.x, y: part.pivot.y + move.y))
+            // A part that gives way to an arm fades as the arm rises.
+            let shown = part.hides.map { $0.rule.shown(arm: pose.parts[$0.arm].rotation) } ?? 1
             if let parent = parents[index] {
                 placements[index] = Placement(
-                    transform: local.then(carriers[parent]), opacity: move.opacity * placements[parent].opacity)
+                    transform: local.then(carriers[parent]),
+                    opacity: move.opacity * shown * placements[parent].opacity)
             } else {
-                placements[index] = Placement(transform: local, opacity: move.opacity)
+                placements[index] = Placement(transform: local, opacity: move.opacity * shown)
             }
             carriers[index] = placements[index].transform
             if let elbow = part.elbow, move.bend != 0 {

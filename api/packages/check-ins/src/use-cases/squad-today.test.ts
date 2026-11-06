@@ -217,8 +217,8 @@ describe('a squad’s today', () => {
       },
       myLifetimeTrainedDays: 4,
       // Trained: me on Monday and today (Tuesday went elsewhere), Tokyo on Tuesday.
-      // Planned: 5 + 4 + 5.
-      squadWeek: { trainedDays: 3, plannedDays: 14 },
+      // The goal: nobody set one, so 3 a member, times 3 members, whatever their plans say.
+      squadWeek: { trainedDays: 3, plannedDays: 9, daysPerMember: 3 },
     });
   });
 
@@ -294,18 +294,36 @@ describe('a squad’s today', () => {
       restingToday: 1,
       everyoneTrained: true,
       myWeek: { from: '2026-10-19', to: '2026-10-25', trainedDays: 1, plannedDays: 5 },
-      // LA: Saturday. Tokyo: Monday only, since Saturday was in Tokyo's last week. Planned: 5 + 4.
-      squadWeek: { trainedDays: 2, plannedDays: 9 },
+      // LA: Saturday. Tokyo: Monday only, since Saturday was in Tokyo's last week. Goal: 3 × 2.
+      squadWeek: { trainedDays: 2, plannedDays: 6, daysPerMember: 3 },
     });
   });
 
-  it('counts the planned days from the day a member joined', async () => {
+  it('counts my planned days from the day I joined, and the squad’s goal in full', async () => {
     // Joined today, Wednesday: the default plan's Thursday to Saturday are left to train.
     const joinedToday = checkInsAt(now, now);
     const me = await newMember('America/Los_Angeles');
-    const squad = await newSquad(me);
+    const friend = await newMember('America/Los_Angeles');
+    const squad = await newSquad(me, friend);
     const today = await joinedToday.squadToday({ viewer: me, squad });
-    expect([today.myWeek.plannedDays, today.squadWeek.plannedDays]).toStrictEqual([3, 3]);
+    expect([today.myWeek.plannedDays, today.squadWeek.plannedDays]).toStrictEqual([3, 6]);
+  });
+
+  it('counts the squad’s week against the goal its captain set, a day once each', async () => {
+    const me = await newMember('America/Los_Angeles');
+    const friend = await newMember('America/Los_Angeles');
+    const squad = await newSquad(me, friend);
+    // 人均 5 天 from this week; 2 from next week, which doesn't count yet.
+    await sql`insert into public.squad_weekly_goals (squad_id, days_per_member, week_start)
+      values (${squad}, 5, '2026-10-19'), (${squad}, 2, '2026-10-26')`.execute(db);
+    // Two workouts on Monday count once; my friend's 请假条 and a post elsewhere don't count.
+    await checkedIn(me, { kind: 'trained', day: '2026-10-19', audience: [squad] });
+    await checkedIn(me, { kind: 'trained', day: '2026-10-19', audience: [squad], hour: 20 });
+    await checkedIn(me, { kind: 'trained', day: '2026-10-20', audience: [squad] });
+    await checkedIn(friend, { kind: 'disclaimer', day: '2026-10-20', audience: [squad] });
+    await checkedIn(friend, { kind: 'trained', day: '2026-10-21', audience: [] });
+    const today = await checkIns.squadToday({ viewer: friend, squad });
+    expect(today.squadWeek).toStrictEqual({ trainedDays: 2, plannedDays: 10, daysPerMember: 5 });
   });
 
   it('shows a squad only to its members', async () => {

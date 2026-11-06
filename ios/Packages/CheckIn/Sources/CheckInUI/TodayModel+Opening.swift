@@ -1,5 +1,6 @@
 #if os(iOS)
 import AvatarArt
+import AvatarDomain
 import AvatarUI
 import CheckInDomain
 import DesignSystem
@@ -22,26 +23,43 @@ extension TodayModel {
         await land(on: scene, move: move)
     }
 
-    /// Everyone in the opening: teammates either side of me, as the home stands them.
-    var openingSquad: [CharacterPlayer] {
-        let mates = cast.mates.map(\.player)
+    /// Everyone in the opening, with their personas: teammates either side of me, as the home
+    /// stands them.
+    private var openingCast: [(player: CharacterPlayer, persona: Persona)] {
+        let mates = cast.mates.map { (player: $0.player, persona: $0.persona) }
         let half = mates.count / 2
-        return Array(mates.prefix(half)) + (player.map { [$0] } ?? []) + Array(mates.dropFirst(half))
+        let myself = player.map { [(player: $0, persona: myPersona)] } ?? []
+        return Array(mates.prefix(half)) + myself + Array(mates.dropFirst(half))
     }
 
-    /// The opening has played: the squad cheers where it stands.
+    var openingSquad: [CharacterPlayer] { openingCast.map(\.player) }
+
+    /// The opening has played: the squad does the 人浪 across its group photo, each jumping a
+    /// moment after the one on their left, as the home's 人浪 does, and again after a breath for
+    /// as long as the opening shows, so it's there whenever the member looks.
     func cheerInOpening() {
-        for mate in cast.mates {
-            if let cheer = try? PlaceholderCharacter.clip("cheer", persona: mate.persona, species: mate.species) {
-                try? mate.player.play(cheer)
+        let squad = openingCast.map { member in
+            (player: member.player, wave: try? PlaceholderCharacter.clip(for: .wave, persona: member.persona))
+        }
+        let longest = squad.compactMap(\.wave?.duration).max() ?? 0
+        guard longest > 0 else { return }
+        Task { @MainActor [weak self] in
+            // 进场 ends it: the squad is dropping onto the scene.
+            while self?.opening != nil {
+                // Each jumps in turn, from the idle they stand in until then.
+                for member in SquadPhoto.leftToRight(count: squad.count) {
+                    guard self?.opening != nil else { return }
+                    if let wave = squad[member].wave { try? squad[member].player.play(wave) }
+                    try? await Task.sleep(for: .seconds(TogetherStage.waveStagger))
+                }
+                // The last one lands, then a breath.
+                try? await Task.sleep(for: .seconds(longest + TodayModel.openingWaveBreath))
             }
         }
-        if let cheer = try? PlaceholderCharacter.clip(
-            "cheer", persona: myPersona, species: PlaceholderCharacter.species(of: myLook))
-        {
-            try? player?.play(cheer)
-        }
     }
+
+    /// The pause between one 人浪 in the opening and the next, in seconds.
+    static let openingWaveBreath = 1.5
 
     /// 进场: the opening lifts and the squad drops onto the scene.
     func enterFromOpening() {

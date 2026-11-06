@@ -15,6 +15,24 @@ extension View {
     public func card(on surface: CardSurface = .page) -> some View {
         modifier(CardBackground(surface: surface))
     }
+
+    /// A graphite card with white words, like 我's `GlanceTile`s (小队's cards): 16 points of
+    /// padding and 12-point corners. What sits on it takes `fgOnBrand` and `fgOnInkMuted`, and
+    /// its buttons `SecondaryButtonStyle(.inCard)`, which is white.
+    public func inkCard() -> some View {
+        modifier(InkCardBackground())
+    }
+}
+
+private struct InkCardBackground: ViewModifier {
+    @Environment(\.sceneTheme) private var theme
+
+    func body(content: Content) -> some View {
+        content
+            .padding(Space.cardPadding)
+            .background(
+                Color(role: .bgBrand, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+    }
 }
 
 private struct CardBackground: ViewModifier {

@@ -140,14 +140,18 @@ struct SquadSceneView: View {
                         .accessibilityHidden(nickname(of: figure.id) == nil)
                         .zIndex(figure.depth)
                 }
-                if let coach = cast.coach, arrival == nil {
-                    SidelineCoachFigure(coach: coach, unit: unit, date: timeline.date, reduceMotion: reduceMotion)
-                        .onTapGesture(perform: tapCoach)
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel(Text(verbatim: coach.speaker.name))
-                        .accessibilityIdentifier("today.coach")
-                        .accessibilityAddTraits(.isButton)
-                        .zIndex(coach.spot.y)
+                // The coach drops in last, after me; under Reduce Motion it is simply there.
+                if let coach = cast.coach, case let fall = coachFall(at: timeline.date), fall >= 0 {
+                    SidelineCoachFigure(
+                        coach: coach, unit: unit, date: timeline.date, reduceMotion: reduceMotion,
+                        lift: DropIn.lift(at: fall, spotY: coach.spot.y, clipLift: 0)
+                    )
+                    .onTapGesture(perform: tapCoach)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Text(verbatim: coach.speaker.name))
+                    .accessibilityIdentifier("today.coach")
+                    .accessibilityAddTraits(.isButton)
+                    .zIndex(coach.spot.y)
                 }
                 ForEach(Array(Stage.fronts(of: theme).enumerated()), id: \.offset) { index, depth in
                     SceneArt(scene: theme, layer: .front(index))
@@ -222,6 +226,13 @@ struct SquadSceneView: View {
     private func fall(of member: MemberID?, at date: Date) -> Double? {
         guard let arrival else { return nil }
         return arrival.elapsed(at: date) - arrival.drop.start(of: arrival.index(of: member))
+    }
+
+    /// How far into its drop the coach is at `date`, in seconds (below zero while it waits),
+    /// or infinity once it stands, as it does whenever nobody is dropping in.
+    private func coachFall(at date: Date) -> Double {
+        guard let arrival, !reduceMotion else { return .infinity }
+        return arrival.coachFall(at: date)
     }
 
     /// A teammate's nickname, or 我 for me; nil for anyone without one yet.

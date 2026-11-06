@@ -1,5 +1,7 @@
-// Serves public/ the way Vercel does for this site (a folder's index.html at its path, then
-// vercel.json's rewrites where no file matches), for local previews and the Playwright tests:
+// Serves public/ the way Vercel does for this site (vercel.json's redirects for exact sources, a
+// folder's index.html at its path, then its rewrites where no file matches, and its headers for
+// exact sources), for local
+// previews and the Playwright tests:
 // `node scripts/serve.mjs [port]`.
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -9,11 +11,24 @@ import { fileURLToPath } from 'node:url';
 const web = join(dirname(fileURLToPath(import.meta.url)), '..');
 const root = join(web, 'public');
 // Each rewrite's source as a pattern: `:name` matches one path segment.
-const rewrites = JSON.parse(await readFile(join(web, 'vercel.json'), 'utf8')).rewrites.map(
-  ({ source, destination }) => ({
-    pattern: new RegExp(`^${source.replace(/:\w+/g, '[^/]+')}/?$`),
-    destination,
-  }),
+const vercel = JSON.parse(await readFile(join(web, 'vercel.json'), 'utf8'));
+const rewrites = vercel.rewrites.map(({ source, destination }) => ({
+  pattern: new RegExp(`^${source.replace(/:\w+/g, '[^/]+')}/?$`),
+  destination,
+}));
+// Redirects by exact path, such as /zh/ to /, the Simplified Chinese home.
+const redirects = Object.fromEntries(
+  (vercel.redirects ?? []).map(({ source, destination, permanent }) => [
+    source,
+    { destination, status: permanent ? 308 : 307 },
+  ]),
+);
+// Headers by path, such as the apple-app-site-association file's JSON type.
+const headers = Object.fromEntries(
+  (vercel.headers ?? []).map(({ source, headers: list }) => [
+    source,
+    Object.fromEntries(list.map(({ key, value }) => [key.toLowerCase(), value])),
+  ]),
 );
 const port = Number(process.argv[2] ?? 4321);
 const types = {
@@ -34,13 +49,21 @@ createServer(async (req, res) => {
     res.writeHead(403).end();
     return;
   }
+  const redirect = redirects[path];
+  if (redirect) {
+    res.writeHead(redirect.status, { location: redirect.destination }).end();
+    return;
+  }
   try {
     const found = await stat(file).catch(() => undefined);
     const rewrite = rewrites.find(({ pattern }) => pattern.test(path));
     if (!found && rewrite) file = join(root, rewrite.destination);
     else if (found?.isDirectory()) file = join(file, 'index.html');
     const body = await readFile(file);
-    res.writeHead(200, { 'content-type': types[extname(file)] ?? 'application/octet-stream' });
+    res.writeHead(200, {
+      'content-type': types[extname(file)] ?? 'application/octet-stream',
+      ...headers[path],
+    });
     res.end(body);
   } catch {
     res.writeHead(404).end('not found');

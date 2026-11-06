@@ -14,17 +14,19 @@ struct CoachName: View {
     let coach: Coach
     let name: TypeStyle
     let title: TypeStyle
+    /// White on a graphite card.
+    var onInk = false
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
             Text(verbatim: coach.name)
                 .typeStyle(name)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .foregroundStyle(Color(role: onInk ? .fgOnBrand : .fgDefault, in: theme))
                 .lineLimit(1)
             Text(verbatim: coach.title)
                 .typeStyle(title)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .foregroundStyle(Color(role: onInk ? .fgOnInkMuted : .fgMuted, in: theme))
                 .lineLimit(1)
         }
         .accessibilityElement(children: .combine)
@@ -143,48 +145,6 @@ struct CoachSilhouette: View {
         }
         .aspectRatio(CoachMetrics.figureAspect, contentMode: .fit)
         .accessibilityHidden(true)
-    }
-}
-
-/// The coach's square on 小队设置: its character's head and shoulders (a silhouette for a coach
-/// this build can't draw), or a dashed outline while there is none.
-struct CoachThumbnail: View {
-    /// Nil while the squad has no coach.
-    let coach: CoachID?
-    @State private var head: CharacterPlayer?
-    @Environment(\.sceneTheme) private var theme
-
-    /// The head and shoulders on the coaches' 240 × 320 canvas.
-    private static let face = CGRect(x: 44, y: 44, width: 152, height: 152)
-
-    var body: some View {
-        ZStack(alignment: .bottom) {
-            Color(role: .bgCanvas, in: theme)
-            if coach == nil {
-                UnevenRoundedRectangle(
-                    topLeadingRadius: CoachMetrics.thumbnailFigure / 2,
-                    topTrailingRadius: CoachMetrics.thumbnailFigure / 2,
-                    style: .continuous
-                )
-                .stroke(Color(role: .fgSubtle, in: theme), style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
-                .frame(width: CoachMetrics.thumbnailFigure, height: CoachMetrics.thumbnailFigure * 1.7)
-                .offset(y: 2)
-            } else if let head {
-                let frame = head.restFrame
-                CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.face)
-            } else if let coach, !CoachCharacter.exists(coach.rawValue) {
-                CoachSilhouette(fill: Color(role: .bgInk, in: theme))
-                    .frame(width: CoachMetrics.thumbnailFigure)
-            }
-        }
-        .frame(width: CoachMetrics.thumbnail, height: CoachMetrics.thumbnail)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
-        .accessibilityHidden(true)
-        .task(id: coach) {
-            head = nil
-            guard let id = coach?.rawValue, CoachCharacter.exists(id) else { return }
-            head = try? CharacterPlayer(figure: CoachCharacter.figure(id), idle: CoachCharacter.clip(.idle, coach: id))
-        }
     }
 }
 
