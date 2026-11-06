@@ -65,11 +65,11 @@ struct TrainingRecordView: View {
                 .overlay {
                     if isSelected {
                         shape
-                            .strokeBorder(Color(role: .bgCanvas, in: theme), lineWidth: Self.ring)
-                            .padding(-Self.ring)
+                            .strokeBorder(Color(role: .bgCanvas, in: theme), lineWidth: Self.ringWidth)
+                            .padding(-Self.ringWidth)
                             .overlay(
-                                shape.strokeBorder(Color(role: .bgBrand, in: theme), lineWidth: Self.ring)
-                                    .padding(-Self.ring * 2))
+                                shape.strokeBorder(Color(role: .bgBrand, in: theme), lineWidth: Self.ringWidth)
+                                    .padding(-Self.ringWidth * 2))
                     }
                 }
                 .contentShape(Rectangle())
@@ -157,7 +157,7 @@ struct TrainingRecordView: View {
     private static var gap: Double { 3 }
     private static var corner: Double { 3 }
     /// The selected day's ring, white then graphite.
-    private static var ring: Double { 2 }
+    private static var ringWidth: Double { 2 }
     private static var monthRow: Double { 14 }
 }
 
