@@ -200,7 +200,6 @@ public final class TodayModel {
         guard let today = home?.today else { return nil }
         return (today.squadWeek, today.myWeek.week)
     }
-
     private var heldWeek: (squad: WeekCount, mine: WeekCount)?
 
     /// The night the lights are on for, as `lightsKey` keeps it (`TodayModel+Lights.swift`).
