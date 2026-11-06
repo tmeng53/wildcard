@@ -17,7 +17,8 @@ public struct StreetStock: Hashable, Sendable {
 
     /// Where a piece stands for the member.
     public enum State: Hashable, Sendable {
-        /// Unlocked: worn all year, whatever the switches.
+        /// The member's: unlocked or claimed, worn all year whatever the switches, or a limited
+        /// store's starter while it is open (it waits on 商店街 to be claimed and kept).
         case owned
         /// A starter that is out now.
         case available
