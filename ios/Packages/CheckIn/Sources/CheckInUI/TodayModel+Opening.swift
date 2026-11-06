@@ -41,8 +41,10 @@ extension TodayModel {
         for (step, member) in SquadPhoto.leftToRight(count: squad.count).enumerated() {
             let (player, persona) = squad[member]
             guard let wave = try? PlaceholderCharacter.clip(for: .wave, persona: persona) else { continue }
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 try? await Task.sleep(for: .seconds(Double(step) * TogetherStage.waveStagger))
+                // 进场 before their turn: they're already dropping onto the scene.
+                guard self?.opening != nil else { return }
                 try? player.play(wave)
             }
         }
