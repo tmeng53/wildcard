@@ -59,6 +59,9 @@
       "path": "../../packages/switches"
     },
     {
+      "path": "../../packages/campaigns"
+    },
+    {
       "path": "../../packages/coach"
     },
     {

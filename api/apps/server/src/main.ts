@@ -26,9 +26,11 @@ import {
   createCoachHiring,
   createCoachActivity,
   createCoachSettings,
+  createCoachNoteDelivery,
   createCoachWakes,
   createPostgresCoachActivity,
   createPostgresCoachCatalog,
+  createPostgresCoachNoteDelivery,
   createPostgresCoachHiring,
   createPostgresCoachReport,
   createPostgresCoachSettings,
@@ -83,6 +85,7 @@ import {
 } from '@wildcard/weekly-awards';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import { createCampaigns, createPostgresCampaignStore } from '@wildcard/campaigns';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import {
   MemberId as UnlockMember,
@@ -119,6 +122,8 @@ import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-p
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sceneTools } from './admin-mcp/tools/scenes.js';
 import { switchTools } from './admin-mcp/tools/switches.js';
+import { campaignTools } from './admin-mcp/tools/campaigns.js';
+import { newYorkDay } from './new-york-day.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
@@ -301,17 +306,18 @@ const checkIns = createCheckIns({
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
 });
-const newYorkDays = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' });
 /** What the unlocks module asks other modules, for `unlocksOn` and a broadcast's gifts. */
 const unlockSources = (scope: Database) => ({
   store: createPostgresUnlockStore(scope),
   trainedSince: ({ member, since }: { readonly member: string; readonly since: Date }) =>
     checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
   sportListed: (id: string) => sports.isListed(id),
-  // A rule counts only 练了 made while its store's and piece's switches were on, by the New York day.
-  switches: async () => {
-    const on = await switchesOn(scope).states();
-    return (id: string, at: Date) => on(id, newYorkDays.format(at));
+  // A rule counts only 练了 made while its store's and piece's switches were on, by the New
+  // York day, as the member sees them (a previewer also counts those in preview, on their
+  // pretend day).
+  switches: async (member: string) => {
+    const { on } = await switchesOn(scope).statesFor(member);
+    return (id: string, at: Date) => on(id, newYorkDay(at));
   },
 });
 /**
@@ -499,6 +505,7 @@ const app = createApp({
   members,
   squads,
   scenes,
+  switches,
   nudges,
   notices,
   liveEvents,
@@ -567,6 +574,12 @@ const app = createApp({
     interactions: [checkInInteractions(checkIns), nudgeInteractions(nudges)],
     clock: () => new Date(),
     ...(coachWakes === undefined ? {} : { coach: coachWakes }),
+    coachNotes: {
+      notes: createCoachNoteDelivery({ store: createPostgresCoachNoteDelivery(db) }),
+      noteHour: async () => (await createPostgresCoachSettings(db).current()).noteHour,
+      tell: (told) => tellAfter(db, { told, what: 'a coach note' }),
+      clock: () => new Date(),
+    },
   },
   admin: {
     admins: adminsOn,
@@ -607,6 +620,17 @@ const app = createApp({
         clock: () => new Date(),
       }),
       ...artTools({ art: artOn(scope) }),
+      ...campaignTools({
+        campaigns: createCampaigns({ store: createPostgresCampaignStore(scope) }),
+        switches: switchesOn(scope),
+        scenes: createScenes({
+          store: createPostgresSceneStore(scope),
+          switches: () => switchesOn(scope).states(),
+        }),
+        unlocks: unlocksOn(scope),
+        art: artOn(scope),
+        clock: () => new Date(),
+      }),
       ...coachTools({
         settings: createCoachSettings({ store: createPostgresCoachSettings(scope) }),
         coaches: createCoachCatalog({ store: createPostgresCoachCatalog(scope) }),

@@ -80,11 +80,20 @@ public actor InMemoryNoticeSource: NoticeSource {
                 at(days: 0, hour: 11, minute: 5),
                 .comment(PushAlert(key: "push.comment", args: ["Coco", "这组深蹲太稳了"]), checkIn: CheckInID(UUID()))
             ),
+            // The coach's morning note, told last so the rows before it keep their numbers.
+            (at(days: 0, hour: 11, minute: 30), .coachNote(sampleNote(on: at(days: 0, hour: 11)))),
         ]
         let notices = subjects.enumerated().map { index, told in
             Notice(id: NoticeID(rawValue: index + 1), toldAt: told.0, squad: nil, subject: told.1)
         }
         return InMemoryNoticeSource(notices, seen: NoticeID(rawValue: notices.count - 2))
+    }
+
+    /// 毛头's morning note, as the approved 便条 shows it.
+    private static func sampleNote(on day: Date) -> CoachMemberNote {
+        CoachMemberNote(
+            id: 1, squad: SquadID(UUID()), day: LocalDay(at: day, in: .current),
+            text: "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。", coach: CoachSpeaker(id: "xiaohun", name: "毛头"))
     }
 
     /// No notices at all, as for a member who just joined.

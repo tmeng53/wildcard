@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -130,11 +130,11 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/checkIn`.
             public var checkIn: Swift.String?
-            /// The coach who answered (`coachReply`).
+            /// The coach who answered (`coachReply`) or wrote (`coachNote`).
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/coach`.
             public var coach: Swift.String?
-            /// Its name now (`coachReply`).
+            /// Its name now (`coachReply`, `coachNote`).
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/coachName`.
             public var coachName: Swift.String?
@@ -146,6 +146,18 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/emoji`.
             public var emoji: Swift.String?
+            /// The morning note’s id (`coachNote`): the same as the coach activity’s.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/note`.
+            public var note: Swift.Int?
+            /// The New York day the morning note was written for (`coachNote`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/day`.
+            public var day: Swift.String?
+            /// The morning note’s words (`coachNote`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/text`.
+            public var text: Swift.String?
             /// What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/unlockKind`.
@@ -269,7 +281,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - squadId: The squad it is about, if any.
             ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
@@ -278,10 +290,13 @@ extension Components {
             ///   - by: Who moved it (`sceneMoved`); left out once they deleted their account.
             ///   - byName: Their nickname now (`sceneMoved`), when they have one.
             ///   - checkIn: The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`).
-            ///   - coach: The coach who answered (`coachReply`).
-            ///   - coachName: Its name now (`coachReply`).
+            ///   - coach: The coach who answered (`coachReply`) or wrote (`coachNote`).
+            ///   - coachName: Its name now (`coachReply`, `coachNote`).
             ///   - replied: Whether the coach wrote a line (`coachReply`); else only its emoji.
             ///   - emoji: The coach’s emoji (`coachReply`), if any.
+            ///   - note: The morning note’s id (`coachNote`): the same as the coach activity’s.
+            ///   - day: The New York day the morning note was written for (`coachNote`).
+            ///   - text: The morning note’s words (`coachNote`).
             ///   - unlockKind: What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.
             ///   - item: The store’s, prop’s or piece’s id (`unlocked`).
             ///   - broadcast: The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now.
@@ -306,6 +321,9 @@ extension Components {
                 coachName: Swift.String? = nil,
                 replied: Swift.Bool? = nil,
                 emoji: Swift.String? = nil,
+                note: Swift.Int? = nil,
+                day: Swift.String? = nil,
+                text: Swift.String? = nil,
                 unlockKind: Swift.String? = nil,
                 item: Swift.String? = nil,
                 broadcast: Swift.String? = nil,
@@ -330,6 +348,9 @@ extension Components {
                 self.coachName = coachName
                 self.replied = replied
                 self.emoji = emoji
+                self.note = note
+                self.day = day
+                self.text = text
                 self.unlockKind = unlockKind
                 self.item = item
                 self.broadcast = broadcast
@@ -355,6 +376,9 @@ extension Components {
                 case coachName
                 case replied
                 case emoji
+                case note
+                case day
+                case text
                 case unlockKind
                 case item
                 case broadcast
@@ -4263,24 +4287,32 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/PushSettings/version`.
             public var version: Components.Schemas.PushSettings.VersionPayload
-            /// Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
             ///
             /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
             public struct SettingsPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/PushSettings/settings/dailyProgress`.
                 public var dailyProgress: Swift.Bool?
+                /// - Remark: Generated from `#/components/schemas/PushSettings/settings/coach`.
+                public var coach: Swift.Bool?
                 /// Creates a new `SettingsPayload`.
                 ///
                 /// - Parameters:
                 ///   - dailyProgress:
-                public init(dailyProgress: Swift.Bool? = nil) {
+                ///   - coach:
+                public init(
+                    dailyProgress: Swift.Bool? = nil,
+                    coach: Swift.Bool? = nil
+                ) {
                     self.dailyProgress = dailyProgress
+                    self.coach = coach
                 }
                 public enum CodingKeys: String, CodingKey {
                     case dailyProgress
+                    case coach
                 }
             }
-            /// Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
             ///
             /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
             public var settings: Components.Schemas.PushSettings.SettingsPayload
@@ -4288,7 +4320,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - settings: Each kind of push, on or off; all on until the member turns one off. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them.
+            ///   - settings: Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
             public init(
                 version: Components.Schemas.PushSettings.VersionPayload,
                 settings: Components.Schemas.PushSettings.SettingsPayload
@@ -5000,10 +5032,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/scene`.
             public var scene: Components.Schemas.SquadScene.ScenePayload
-            /// The squad’s scene this week.
+            /// The scene the squad’s home shows now: its scene this week, or, while a takeover scene (a holiday’s, say) is on, that one for every squad. `picked` is still the squad’s own.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/sceneId`.
             public var sceneId: Swift.String
+            /// True while `sceneId` is a takeover scene standing in for the squad’s own: the app plays its opening (the art at `openings/<sceneId>/`, if there is one) the first time it shows it each day, then drops the squad onto it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadScene/takeover`.
+            public var takeover: Swift.Bool
             /// Who picks this week’s scene, once.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/pickers`.
@@ -5191,7 +5227,8 @@ extension Components {
             ///   - version:
             ///   - week: The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s awards are given, the week after it.
             ///   - scene: The squad’s scene this week (see `sceneId`).
-            ///   - sceneId: The squad’s scene this week.
+            ///   - sceneId: The scene the squad’s home shows now: its scene this week, or, while a takeover scene (a holiday’s, say) is on, that one for every squad. `picked` is still the squad’s own.
+            ///   - takeover: True while `sceneId` is a takeover scene standing in for the squad’s own: the app plays its opening (the art at `openings/<sceneId>/`, if there is one) the first time it shows it each day, then drops the squad onto it.
             ///   - pickers: Who picks this week’s scene, once.
             ///   - picked: This week’s pick, once made; it can’t be changed.
             ///   - canPick: True when the caller may pick now: one of the pickers, and nothing picked yet.
@@ -5202,6 +5239,7 @@ extension Components {
                 week: Swift.String,
                 scene: Components.Schemas.SquadScene.ScenePayload,
                 sceneId: Swift.String,
+                takeover: Swift.Bool,
                 pickers: Components.Schemas.SquadScene.PickersPayload,
                 picked: Components.Schemas.SquadScene.PickedPayload? = nil,
                 canPick: Swift.Bool,
@@ -5212,6 +5250,7 @@ extension Components {
                 self.week = week
                 self.scene = scene
                 self.sceneId = sceneId
+                self.takeover = takeover
                 self.pickers = pickers
                 self.picked = picked
                 self.canPick = canPick
@@ -5223,6 +5262,7 @@ extension Components {
                 case week
                 case scene
                 case sceneId
+                case takeover
                 case pickers
                 case picked
                 case canPick
@@ -5502,6 +5542,33 @@ extension Components {
                 case coach
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CoachNotePutAway`.
+        public struct CoachNotePutAway: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachNotePutAway/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachNotePutAway/version`.
+            public var version: Components.Schemas.CoachNotePutAway.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CoachNotePutAway/noteId`.
+            public var noteId: Swift.Int
+            /// Creates a new `CoachNotePutAway`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - noteId:
+            public init(
+                version: Components.Schemas.CoachNotePutAway.VersionPayload,
+                noteId: Swift.Int
+            ) {
+                self.version = version
+                self.noteId = noteId
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case noteId
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CoachActivity`.
         public struct CoachActivity: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CoachActivity/version`.
@@ -5520,6 +5587,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachActivity/answers`.
             public var answers: [Components.Schemas.CoachAnswer]
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/memberNote`.
+            public var memberNote: Components.Schemas.CoachMemberNote?
             /// Creates a new `CoachActivity`.
             ///
             /// - Parameters:
@@ -5527,22 +5596,26 @@ extension Components {
             ///   - note:
             ///   - replies: The coach’s replies to the check-ins asked about; one with none is left out.
             ///   - answers: The coach’s answers to members’ replies to it under the check-ins asked about, oldest first.
+            ///   - memberNote:
             public init(
                 version: Components.Schemas.CoachActivity.VersionPayload,
                 note: Components.Schemas.CoachNote? = nil,
                 replies: [Components.Schemas.CoachReply],
-                answers: [Components.Schemas.CoachAnswer]
+                answers: [Components.Schemas.CoachAnswer],
+                memberNote: Components.Schemas.CoachMemberNote? = nil
             ) {
                 self.version = version
                 self.note = note
                 self.replies = replies
                 self.answers = answers
+                self.memberNote = memberNote
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case note
                 case replies
                 case answers
+                case memberNote
             }
         }
         /// The squad’s newest 战术板 line (the app shows it while its day is today), or null.
@@ -5766,6 +5839,57 @@ extension Components {
                 case commentId
                 case coach
                 case text
+                case at
+            }
+        }
+        /// The caller’s own newest morning note (便条) from the squad’s coach, for 今天 to show on the first open after it arrived; only the caller sees it. Left out when there is none from the last day and a half.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CoachMemberNote`.
+        public struct CoachMemberNote: Codable, Hashable, Sendable {
+            /// The note’s id, which putting it away (收下) and `coachNote` notices name.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMemberNote/id`.
+            public var id: Swift.Int
+            /// The day (New York) the note was written for.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMemberNote/day`.
+            public var day: Swift.String
+            /// The note’s words.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMemberNote/text`.
+            public var text: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachMemberNote/coach`.
+            public var coach: Components.Schemas.CoachSpeaker
+            /// When it was written.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMemberNote/at`.
+            public var at: Foundation.Date
+            /// Creates a new `CoachMemberNote`.
+            ///
+            /// - Parameters:
+            ///   - id: The note’s id, which putting it away (收下) and `coachNote` notices name.
+            ///   - day: The day (New York) the note was written for.
+            ///   - text: The note’s words.
+            ///   - coach:
+            ///   - at: When it was written.
+            public init(
+                id: Swift.Int,
+                day: Swift.String,
+                text: Swift.String,
+                coach: Components.Schemas.CoachSpeaker,
+                at: Foundation.Date
+            ) {
+                self.id = id
+                self.day = day
+                self.text = text
+                self.coach = coach
+                self.at = at
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case day
+                case text
+                case coach
                 case at
             }
         }

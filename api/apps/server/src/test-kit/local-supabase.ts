@@ -122,6 +122,11 @@ export function pushOn(db: Database, sender: PushSender = createOffSender()) {
   });
 }
 
+/** The global switches on local Supabase, as seeded (winter on its schedule). */
+export function switchesOn(db: Database) {
+  return createSwitches({ store: createPostgresSwitchStore(db) });
+}
+
 /** The scenes on local Supabase, as seeded: the five all year and the winter 雪场 on its switch. */
 export function scenesOn(db: Database) {
   const switches = createSwitches({ store: createPostgresSwitchStore(db) });
@@ -129,7 +134,19 @@ export function scenesOn(db: Database) {
 }
 
 /** Jobs as a server without a scheduler has them: no token, so none runs. */
-export const noJobs = { isScheduler: undefined, interactions: [], clock: () => new Date() };
+/** No morning notes waiting: the coach job delivers none. */
+export const noCoachNotes = {
+  notes: { waiting: () => Promise.resolve([]), delivered: () => Promise.resolve(false) },
+  noteHour: () => Promise.resolve(8),
+  tell: () => Promise.resolve(),
+  clock: () => new Date(),
+};
+export const noJobs = {
+  isScheduler: undefined,
+  interactions: [],
+  clock: () => new Date(),
+  coachNotes: noCoachNotes,
+};
 
 /**
  * Puts `member` in `squad` as well, straight in the database: a member who joined a second squad

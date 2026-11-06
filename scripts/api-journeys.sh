@@ -702,11 +702,12 @@ if want daily-push; then
 
   call GET /me/push-settings "$resting_token"
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"settings":{"dailyProgress":true}}' ] || fail "the push is on until turned off: $body"
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"settings":{"dailyProgress":true,"coach":true}}' ] || fail "the push is on until turned off: $body"
+  # An older build sends only its own switch: the coach's stays as it was.
   call PUT /me/push-settings "$resting_token" '{"version":1,"settings":{"dailyProgress":false}}'
   expect 200
   call GET /me/push-settings "$resting_token"
-  [ "$(jq -c .settings <<<"$body")" = '{"dailyProgress":false}' ] || fail "the push should be off: $body"
+  [ "$(jq -c .settings <<<"$body")" = '{"dailyProgress":false,"coach":true}' ] || fail "the push should be off: $body"
   call PUT /me/push-settings "$resting_token" '{"version":1,"settings":{}}'
   expect 400 REQUEST_INVALID
   echo "daily-push: on until turned off, then off (200); a missing switch refused (400)"
@@ -761,7 +762,7 @@ if want coach; then
   # The journeys' server has no OpenAI key, so the coach never wakes, whatever the settings say.
   call POST /jobs/coach "$jobs_token"
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"coaching":false,"squads":0,"queued":0,"done":0,"failed":0}' ] ||
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"coaching":false,"squads":0,"queued":0,"done":0,"failed":0,"notes":{"waiting":0,"delivered":0,"pushed":0}}' ] ||
     fail "without an OpenAI key the coach run does nothing: $body"
   # What the coach said, as 今天 and 动态 read it: nothing yet, for a squad's member only.
   squad_of "$coach_member_token"
@@ -931,7 +932,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_scenes,put_scene,get_unlock_rules,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,send_test_push" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_scenes,put_scene,get_unlock_rules,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,send_test_push" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 

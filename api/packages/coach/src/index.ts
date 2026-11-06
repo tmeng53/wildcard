@@ -8,6 +8,7 @@ export { createPostgresCoachCatalog } from './adapters/postgres-coach-catalog.js
 export { createPostgresCoachHiring } from './adapters/postgres-coach-hiring.js';
 export {
   createPostgresCoachActivity,
+  createPostgresCoachNoteDelivery,
   createPostgresCoachReport,
   createPostgresCoachStores,
   postgresCoachTransaction,
@@ -34,8 +35,11 @@ export type {
   CoachAgent,
   CoachCatalogStore,
   CoachHiringStore,
+  CoachMemberNoteShown,
+  CoachNoteDeliveryStore,
   CoachNoteShown,
   CoachReportStore,
+  MemberNote,
   CoachSettingsStore,
   CoachStores,
   CoachMemberFacts,
@@ -50,6 +54,7 @@ export type {
 export {
   CoachAlreadyHiredError,
   CoachNotOfferedError,
+  CoachNoteNotFoundError,
   CoachSquadNotFoundError,
   NoCoachHiredError,
 } from './errors.js';
@@ -59,6 +64,11 @@ export {
   type CoachActivity,
   type SquadCoachActivity,
 } from './use-cases/coach-activity.js';
+export {
+  createCoachNoteDelivery,
+  type CoachNoteDelivery,
+  type NoteToDeliver,
+} from './use-cases/coach-note-delivery.js';
 export { createCoachCatalog, type CoachCatalogAdmin } from './use-cases/coach-catalog.js';
 export { createCoachHiring, type CoachHiring } from './use-cases/coach-hiring.js';
 export { createCoachSettings, type CoachSettingsAdmin } from './use-cases/coach-settings.js';

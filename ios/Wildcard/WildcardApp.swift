@@ -86,7 +86,7 @@ struct WildcardApp: App {
                 backend: InMemoryCheckInBackend.sampleSquad(
                     now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
                     patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach,
-                    together: LaunchOptions.together, meals: LaunchOptions.meals),
+                    coachNote: LaunchOptions.coachNote, together: LaunchOptions.together, meals: LaunchOptions.meals),
                 outbox: InMemoryOutbox(), unlocks: SampleUnlockLedger(unlocks: LaunchOptions.unlocked),
                 now: LaunchOptions.now, newID: { UUID() }),
             writer: LaunchOptions.disclaimerWriter,
@@ -278,8 +278,13 @@ struct WildcardApp: App {
     }
 
     /// `-uitest-scene-moved track`: once the sample home is up, its first teammate moves the
-    /// squad there, as a real move is told: the drop, then the notice.
+    /// squad there, as a real move is told: the drop, then the notice. `-uitest-takeover trot`
+    /// stands a takeover scene in for the squad's, with its opening.
     private static func moveSampleSquad(today: TodayModel) async {
+        if let takeover = LaunchOptions.takeover {
+            await today.load()
+            await today.land(on: today.scene, move: nil, takeover: takeover)
+        }
         guard let scene = LaunchOptions.sceneMoved else { return }
         await today.load()
         let picker = today.home.flatMap { home in home.squad.members.first { $0 != home.member } }

@@ -9,6 +9,8 @@ public protocol MeService: Sendable {
     /// Saves the number the member picked for their player card.
     func save(jerseyNumber: JerseyNumber) async throws(MeError)
     func setDailyPush(_ isOn: Bool) async throws(MeError)
+    /// Turns the coach's pushes (教练消息) on or off; 通知 keeps what it says either way.
+    func setCoachPush(_ isOn: Bool) async throws(MeError)
     /// Wears one of the member's titles on their card (nil: the latest won again); answers the
     /// board as it now stands.
     func equip(_ title: String?) async throws(MeError) -> TitleBoard

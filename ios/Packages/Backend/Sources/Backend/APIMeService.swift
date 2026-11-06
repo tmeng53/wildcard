@@ -36,7 +36,7 @@ public struct APIMeService: MeService {
             let board = (try? await api.titleBoard()) ?? .empty
             // Unlocks must load: an empty list would lock away stores and props the member earned.
             let standing = try await api.unlockStanding()
-            let dailyPushOn = try await api.dailyPushOn()
+            let push = try await api.pushSwitches()
             // The 出赛表 tile's days: the tile shows the count alone when they don't load.
             let glance = try? await weekGlance(in: member.profile?.timeZone ?? .current)
             return MeOverview(
@@ -48,7 +48,7 @@ public struct APIMeService: MeService {
                 counts: LifetimeCounts(
                     trainedDays: totals.trainedDays, healthyMeals: totals.healthyMeals, cheatMeals: totals.cheatMeals,
                     disclaimers: totals.disclaimers),
-                week: week, squadName: squad?.name, dailyPushOn: dailyPushOn,
+                week: week, squadName: squad?.name, dailyPushOn: push.dailyProgress, coachPushOn: push.coach,
                 jerseyNumber: member.profile?.jerseyNumber,
                 // Members are listed in the order they joined.
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
@@ -119,6 +119,10 @@ public struct APIMeService: MeService {
 
     public func setDailyPush(_ isOn: Bool) async throws(MeError) {
         try await me { () throws(APIError) in try await api.setDailyPush(isOn) }
+    }
+
+    public func setCoachPush(_ isOn: Bool) async throws(MeError) {
+        try await me { () throws(APIError) in try await api.setCoachPush(isOn) }
     }
 
     public func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {

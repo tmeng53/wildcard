@@ -93,6 +93,7 @@ const app = createApp({
   }),
   nudges: { send: unused, received: unused, inSquad: unused },
   notices: { tell: unused, page: unused, markSeen: unused },
+  switches: { list: unused, statesFor: unused },
   coachNames: unused,
   liveEvents: { subscribe: unused, close: unused },
   disclaimerDrafts: { write: unused },
@@ -122,7 +123,7 @@ const app = createApp({
     currentAmong: unused,
   },
   coachHiring: { hire: unused, fire: unused, change: unused, current: unused, offered: unused },
-  coachActivity: { squad: unused, spoke: unused },
+  coachActivity: { squad: unused, putAway: unused, spoke: unused },
   weekSummaryWords: () => Promise.reject(new Error('unused')),
   scenes: createScenes({
     store: createPostgresSceneStore(db),
@@ -145,7 +146,17 @@ const app = createApp({
   unlocks: { of: unused, standing: unused, claimsOf: unused, claim: unused },
   gifts: { of: unused },
   log: createLog(unused),
-  jobs: { isScheduler: undefined, interactions: [], clock: unused },
+  jobs: {
+    isScheduler: undefined,
+    interactions: [],
+    clock: unused,
+    coachNotes: {
+      notes: { waiting: unused, delivered: unused },
+      noteHour: unused,
+      tell: unused,
+      clock: unused,
+    },
+  },
   admin: {
     admins: () => ({ requireAdmin: unused, list: unused, logChange: unused, listLog: unused }),
     tools: () => [],

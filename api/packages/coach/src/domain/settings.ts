@@ -48,6 +48,13 @@ const fields = {
   outputMicrosPerMillion: MicrosPerMillion.describe(
     'The model’s price for output tokens: US dollars in millionths per million tokens.',
   ),
+  noteHour: z
+    .int()
+    .min(0)
+    .max(23)
+    .describe(
+      'The hour on each member’s own clock when the coach’s morning note (便条) reaches them: pushed silently and told in 通知. A note written after it reaches them at once.',
+    ),
 };
 
 /** The settings, whole, as stored and logged. */

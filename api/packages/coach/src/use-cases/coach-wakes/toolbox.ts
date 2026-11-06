@@ -15,6 +15,8 @@ export interface WakeDraft {
   readonly changed: Set<StoredPath>;
   /** The 战术板 line the run posted, on a daily wake. */
   note: string | undefined;
+  /** The morning note (便条) the run wrote to each member, by member id, on a daily wake. */
+  readonly memberNotes: Map<string, string>;
   /** What the run said to the check-in, on its wake. */
   reply: string | undefined;
   /** The emoji the run reacted to the check-in with, on its wake. */
@@ -75,6 +77,7 @@ export function toolbox({
   photos,
   facts,
   pastWeek,
+  noteTo = [],
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
@@ -86,6 +89,8 @@ export function toolbox({
   readonly facts?: () => Promise<string>;
   /** A week before this one, as the model reads it. */
   readonly pastWeek?: (weeksAgo: number) => Promise<string>;
+  /** On a daily wake, the members the coach may write a morning note to, by id. */
+  readonly noteTo?: readonly string[];
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
   const tools = [
@@ -182,6 +187,28 @@ export function toolbox({
           const replaced = draft.note !== undefined;
           draft.note = line;
           return replaced ? '已换成这句。' : '已写上战术板。';
+        },
+      }),
+      defineTool(draft.steps, {
+        name: 'note_to',
+        description: `给一个队员写今天的便条：只有这个人自己看得到，早上（他那里的时间）送到他手机上。一人一张，再写会换掉。不超过 ${String(NOTE_LIMIT)} 字，对他说话用「你」。`,
+        parameters: z.object({
+          member: z.string().describe('写给谁：队员N'),
+          text: z.string().describe('便条上的这一句'),
+        }),
+        // Kept by length: it is about the member, and stays in its own table.
+        kept: ({ member, text }) => ({ member, text: `（${String(text.length)} 字）` }),
+        run: ({ member, text }) => {
+          const id = [...roster].find(([, name]) => name === member.trim())?.[0];
+          if (id === undefined || !noteTo.includes(id)) {
+            return `不能给 ${member} 写便条；能写的是：${noteTo.map((each) => roster.get(each) ?? '').join('、')}。`;
+          }
+          const line = text.trim();
+          const problem = lineProblem(line, NOTE_LIMIT);
+          if (problem !== undefined) return problem;
+          const replaced = draft.memberNotes.has(id);
+          draft.memberNotes.set(id, line);
+          return replaced ? `已换成这张，给 ${member}。` : `便条写好了，给 ${member}。`;
         },
       }),
     );

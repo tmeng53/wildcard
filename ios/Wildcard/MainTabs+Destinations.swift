@@ -43,6 +43,9 @@ extension MainTabs {
             }
         case .today:
             selection = .today
+        case .coachNote(let note):
+            selection = .today
+            today.showAgain(note)
         case .schedule:
             selection = .profile
             showsSchedule = true

@@ -71,6 +71,7 @@ public struct TodayView: View {
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.home)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.payoff)
         .modifier(HomeNotices(model: model))
+        .modifier(HolidayOpening(model: model))
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
         // 拍一拍 landing: mine on a teammate, or a teammate's on me.
@@ -165,7 +166,16 @@ public struct TodayView: View {
                 .ignoresSafeArea(edges: .bottom)
                 .transition(.opacity)
             }
+
+            // The coach's morning note, slid up from the sideline over everything on the scene.
+            if let note = model.coachNote {
+                CoachMemberNoteOverlay(note: note, reader: model.noteReader) { model.putAwayNote() }
+                    .id(note.id)
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+                    .zIndex(2)
+            }
         }
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.coachNote?.id)
     }
 
     /// The card at the top: the squad card, with the 今日赛况 tag as its last row from the evening

@@ -27,6 +27,7 @@ import { createApp } from '../app.js';
 import { createLog } from '../log.js';
 import {
   scenesOn,
+  switchesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -109,6 +110,7 @@ const app = createApp({
   }),
   push: pushOn(db),
   scenes: scenesOn(db),
+  switches: switchesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
