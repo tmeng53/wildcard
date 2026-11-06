@@ -21,7 +21,7 @@ import Testing
     try await store.post(.trained(.sport("yoga"), nil, PostBody(photos: [], caption: "")))
     try await store.post(.trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
     await store.load()
-    #expect(store.home?.today.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
+    #expect(store.home?.today.squadWeek == WeekCount(trainedDays: 15, plannedDays: 24))
     #expect(store.home?.today.today.trained == 4)
     #expect(store.myStatus == .trained)
 }
