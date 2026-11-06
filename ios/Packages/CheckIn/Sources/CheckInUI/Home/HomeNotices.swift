@@ -18,7 +18,7 @@ struct HomeNotices: ViewModifier {
             }
             // Only an unlock: something the member earned arrives.
             .haptic(.appear, trigger: model.notice?.id) { _, id in id != nil && isUnlock(model.notice) }
-            .onChange(of: model.isFreeForNotices) { _, free in
+            .onChange(of: model.isFreeForNotices, initial: true) { _, free in
                 if free { Task { await model.showNextNotice() } }
             }
             // A 练了 that opened something, or one the last load found: told once each.
