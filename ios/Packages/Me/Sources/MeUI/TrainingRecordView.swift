@@ -44,6 +44,8 @@ struct TrainingRecordView: View {
             }
             months
         }
+        // A container, so the id doesn't replace the days' own.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("me.record")
     }
 
