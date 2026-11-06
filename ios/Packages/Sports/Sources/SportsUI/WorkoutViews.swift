@@ -97,11 +97,11 @@ public struct ScoreCell: Hashable, Identifiable, Sendable {
 /// slot, so every lap fits however many there are. A slot too thin for a gap gets none.
 public enum LapBars {
     public struct Bar: Equatable, Sendable {
-        public let x: Double
+        public let start: Double
         public let width: Double
 
-        public init(x: Double, width: Double) {
-            self.x = x
+        public init(start: Double, width: Double) {
+            self.start = start
             self.width = width
         }
     }
@@ -110,7 +110,7 @@ public enum LapBars {
         guard count > 0, width > 0 else { return [] }
         let slot = width / Double(count)
         let gap = slot >= 3 ? slot * 0.3 : 0
-        return (0..<count).map { Bar(x: Double($0) * slot, width: slot - gap) }
+        return (0..<count).map { Bar(start: Double($0) * slot, width: slot - gap) }
     }
 }
 
@@ -335,7 +335,7 @@ public struct WorkoutChart: View {
             // A faster lap stands taller.
             let share = slowest == quickest ? 0.6 : 0.35 + 0.6 * (slowest - lap) / (slowest - quickest)
             let height = area.height * share
-            let bar = CGRect(x: area.minX + slot.x, y: area.maxY - height, width: slot.width, height: height)
+            let bar = CGRect(x: area.minX + slot.start, y: area.maxY - height, width: slot.width, height: height)
             context.fill(
                 Path(roundedRect: bar, cornerRadius: min(2, slot.width / 2)),
                 with: .color(index == fastest ? ink : ink.opacity(0.55)))
