@@ -56,6 +56,8 @@ final class AppModel {
         if case .tabs = screen { return true }
         return false
     }
+    /// The code of the invite link that last opened the app, for the sign-up it opens on.
+    @ObservationIgnored private var invite: InviteCode?
     /// The squad 今天 is on, whose scene it reads again each time the app comes back.
     @ObservationIgnored private var homeSquad: SquadID?
     /// A home opening under the launch cover after a sign-in on the open screen, so the account's
@@ -347,8 +349,18 @@ final class AppModel {
     }
 
     private func newSignUp(hasAgreedToAI: Bool) -> SignUpModel {
-        SignUpModel(
+        let model = SignUpModel(
             service: APISignUpService(api: api), invite: nil, nickname: "", now: Date(), hasAgreedToAI: hasAgreedToAI)
+        if let invite { model.open(invite: invite) }
+        return model
+    }
+
+    /// An invite link (wildcardsquad.com/join/<code>) opened the app: sign-up's 你的小队 starts on
+    /// 加入小队 with its code, now or once sign-up opens. A member already in a squad just gets the
+    /// app (one squad each).
+    func open(invite code: InviteCode) {
+        invite = code
+        if case .signUp(let model) = screen { model.open(invite: code) }
     }
 }
 

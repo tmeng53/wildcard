@@ -116,7 +116,7 @@ struct InviteCard: View {
             .buttonStyle(.plain)
             .accessibilityLabel(Text("复制邀请码 \(squad.inviteCode)", bundle: .module))
             .accessibilityIdentifier("squad.copyInvite")
-            ShareLink(item: Self.message(for: squad)) {
+            InviteShareLink(squad: squad) {
                 Label {
                     Text("分享", bundle: .module)
                 } icon: {
@@ -128,12 +128,6 @@ struct InviteCard: View {
             .accessibilityIdentifier("squad.share")
         }
         .card()
-    }
-
-    /// What 分享 sends: the squad's name and its invite code.
-    static func message(for squad: Squad) -> String {
-        String(
-            localized: "来外卡和我一起练！小队「\(squad.name)」的邀请码：\(squad.inviteCode)", bundle: .module.inAppLanguage)
     }
 
     private func copy() {
@@ -316,5 +310,25 @@ enum SquadSettingsMetrics {
     static let head = 36.0
     /// A scene tile's face in the picker.
     static let tile = 64.0
+}
+
+/// 分享 and the head row's 邀请: the squad's invite link (wildcardsquad.com/join/<code>), which
+/// opens the app on 加入小队 for someone who has it and shows the squad to someone who doesn't,
+/// under a line naming the squad.
+struct InviteShareLink<ShareLabel: View>: View {
+    let squad: Squad
+    @ViewBuilder let label: () -> ShareLabel
+
+    var body: some View {
+        // Looked up in the app's language, which the share sheet doesn't know.
+        let message = Text(
+            verbatim: String(localized: "来外卡和我一起训练！小队「\(squad.name)」", bundle: .module.inAppLanguage))
+        if let code = try? InviteCode(squad.inviteCode) {
+            ShareLink(item: InviteLink.url(for: code), message: message, label: label)
+        } else {
+            // A code the app can't read (never sent by the API): the code itself, as before links.
+            ShareLink(item: squad.inviteCode, message: message, label: label)
+        }
+    }
 }
 #endif

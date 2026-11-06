@@ -417,18 +417,18 @@
         }
       }
     },
-    "来外卡和我一起练！小队「%@」的邀请码：%@": {
+    "来外卡和我一起训练！小队「%@」": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Come train with me on Wildcard! Join my squad \"%@\" with code %@"
+            "value": "Come train with me on Wildcard! Join my squad \"%@\""
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "來外卡和我一起練！小隊「%1$@」的邀請碼：%2$@"
+            "value": "來外卡和我一起訓練！小隊「%@」"
           }
         }
       }
