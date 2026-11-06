@@ -61,6 +61,15 @@ extension Catalog {
             stores: stores, storeOf: storeOf, locked: stillLocked)
     }
 
+    /// The pieces that came to the member and wait on 商店街 until claimed (领取): the ones they
+    /// unlocked, and the ones the street holds as theirs without an unlock (a limited store's
+    /// starters while it is open, or anything already claimed).
+    public static func arrived(unlocks: [Unlock], stock: StreetStock?) -> Set<String> {
+        let unlocked = unlocks.filter { $0.kind == .piece }.map(\.id)
+        let owned = (stock?.pieces ?? []).filter { $0.state == .owned }.map(\.id)
+        return Set(unlocked).union(owned)
+    }
+
     /// The stores the stock lists that the art has, in its order: an open one, walked into once
     /// earned (the server lists a store's starters and boxes only then), and a closed one only as
     /// the rack of what the member owns there.

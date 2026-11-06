@@ -4,6 +4,10 @@ import Foundation
 import HTTPTypes
 import OpenAPIRuntime
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 /// Sends the member's access token, and once more with a renewed one when the API refuses it:
 /// the API can refuse a token before its expiry (signed out elsewhere, a rotated key). When it
 /// refuses the renewed one too, `refused` ends the session, so the account and the calls agree
@@ -44,6 +48,31 @@ struct BearerToken: ClientMiddleware {
         } catch {
             throw .account(error)
         }
+    }
+}
+
+/// Sends a read once more when the connection it went out on had already dropped. iOS keeps
+/// connections open between requests, and one the network closed meanwhile (the app was in the
+/// background, the phone moved from Wi-Fi to cellular) fails the next request at once with
+/// `networkConnectionLost`; a fresh connection then works. Only reads are sent again, since
+/// they change nothing; a write that failed this way is the caller's to retry.
+struct ResendDroppedRead: ClientMiddleware {
+    func intercept(
+        _ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String,
+        next: @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
+    ) async throws -> (HTTPResponse, HTTPBody?) {
+        do {
+            return try await next(request, body, baseURL)
+        } catch {
+            guard request.method == .get, Self.isDropped(error) else { throw error }
+            return try await next(request, body, baseURL)
+        }
+    }
+
+    /// Whether the call failed because its connection was already gone.
+    static func isDropped(_ error: any Error) -> Bool {
+        let cause = (error as? ClientError)?.underlyingError ?? error
+        return (cause as? URLError)?.code == .networkConnectionLost
     }
 }
 

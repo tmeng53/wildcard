@@ -337,7 +337,11 @@ describe('the coach', () => {
         '已换成这张，给 队员1。',
       ]);
       // Every member who agreed to AI use gets a note, whether or not they checked in.
-      expect(runs[1]?.task).toContain('今天给这些人各写一张便条：队员1、队员2。');
+      expect(runs[1]?.task).toContain(
+        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天。\n- 队员2：这周已经练了 0 天。',
+      );
+      // With yesterday's posts, here none.
+      expect(runs[1]?.task).toContain('昨天（周六）小队没人发动态。');
       expect(runs[0]?.task).not.toContain('便条');
       // The daily wake sees what the first one remembered, and the instructions are 小混's.
       expect(runs[1]?.task).toContain('【memory.md】\n- 队员1 周日跑步');
@@ -1021,6 +1025,7 @@ describe('the coach', () => {
             disclaimers: 0,
             titles: 0,
             plan: Array.from({ length: 7 }, () => ({ kind: 'rest' as const })),
+            fuelGoals: [],
           })),
         );
       };
@@ -1045,6 +1050,101 @@ describe('the coach', () => {
       expect(asked).toStrictEqual([{ members: [mia], weekStart: fixture.week.weekStart }]);
       expect(runs[0]?.answers[0]).toContain('一共练了 50 天');
       expect(runs[0]?.answers[1]).toContain(`本周从 ${earlier}（周一）开始。`);
+    });
+  });
+
+  it('gives the daily wake each member’s day: today’s plan, 饮食小目标 and yesterday’s posts', async () => {
+    await rolledBack(async (fixture) => {
+      const { mia, leo } = fixture;
+      const asked: unknown[] = [];
+      const rest = { kind: 'rest' } as const;
+      const memberFacts: CoachMemberFacts = (input) => {
+        asked.push(input);
+        return Promise.resolve([
+          {
+            member: mia,
+            trainedDays: 50,
+            healthyMeals: 0,
+            cheatMeals: 0,
+            disclaimers: 0,
+            titles: 0,
+            // Sunday, the wake's day, is the last.
+            plan: [rest, rest, rest, rest, rest, rest, { kind: 'train', sport: '游泳' }],
+            fuelGoals: ['喝够水'],
+          },
+        ]);
+      };
+      const { agent, runs } = scriptedAgent(() => []);
+      const saturday = {
+        id: randomUUID(),
+        member: leo,
+        day: '2026-10-31',
+        createdAt: new Date('2026-10-31T20:00:00Z'),
+        kind: 'healthyMeal' as const,
+        text: '自己做的',
+        reactions: 1,
+        comments: [],
+      };
+      await wakes(fixture, {
+        agent,
+        memberFacts,
+        weeks: {
+          [fixture.week.weekStart]: {
+            ...fixture.week,
+            checkIns: [saturday, ...fixture.week.checkIns],
+          },
+        },
+      }).run();
+      const daily = runs.find(({ task }) => task.includes('新的一天'));
+      // Asked once, by the server, for everyone it writes to.
+      expect(asked[0]).toStrictEqual({ members: [mia, leo], weekStart: fixture.week.weekStart });
+      expect(daily?.task).toContain('新的一天：2026-11-01，周日。');
+      expect(daily?.task).toContain(
+        '- 队员1：今天出赛表排了游泳；这周的饮食小目标：喝够水；这周已经练了 1 天。',
+      );
+      // A member whose plan it couldn't read still gets a note.
+      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
+      expect(daily?.task).toContain(
+        '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 「自己做的」 · 1 个表情',
+      );
+    });
+  });
+
+  it('reads yesterday from last week on a Monday, with only consented members’ posts', async () => {
+    await rolledBack(async (fixture) => {
+      const { mia, leo } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      const sunday = (member: string, text: string) => ({
+        id: randomUUID(),
+        member,
+        day: '2026-11-01',
+        createdAt: new Date('2026-11-01T20:00:00Z'),
+        kind: 'healthyMeal' as const,
+        text,
+        reactions: 0,
+        comments: [],
+      });
+      // 10:00 in New York on Monday 2026-11-02, past the daily wake's hour.
+      await wakes(fixture, {
+        agent,
+        at: new Date('2026-11-02T15:00:00Z'),
+        consented: [mia],
+        weeks: {
+          '2026-10-26': {
+            ...fixture.week,
+            checkIns: [sunday(mia, '米亚的饭'), sunday(leo, '没同意的人')],
+          },
+          '2026-11-02': { weekStart: '2026-11-02', members: fixture.week.members, checkIns: [] },
+        },
+      }).run();
+      const daily = runs.find(({ task }) => task.includes('新的一天：2026-11-02'));
+      expect(daily?.task).toContain(
+        '昨天（周日）小队的动态：\n- 11-01 周日 队员1 健康餐 「米亚的饭」',
+      );
+      expect(daily?.task).not.toContain('没同意的人');
+      // Only the consented member gets a note.
+      expect(daily?.task).toContain('今天给这些人各写一张便条：\n- 队员1：这周已经练了 0 天。');
+      expect(daily?.task).not.toContain('- 队员2：');
     });
   });
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   earned,
   idFits,
+  PieceId,
   shelf,
   toGo,
   UnlockRuleEdit,
@@ -235,10 +236,11 @@ describe('shelf', () => {
     expect(on.pieces.map(({ id, state }) => [id, state])).toStrictEqual([
       ['warmup-tee', 'available'],
       // DEUCE CLUB is not earned yet, so its starter waits.
-      ['powder-salmonsuit', 'available'],
+      // A limited starter is the member's while it is out, waiting in its store to be claimed.
+      ['powder-salmonsuit', 'owned'],
       // The tuna is reached but not yet kept: it shows once it is owned.
       ['powder-ikura', 'locked'],
-      ['warmup-scarf', 'available'],
+      ['warmup-scarf', 'owned'],
     ]);
     expect(on.pieces.find(({ id }) => id === 'powder-ikura')).toMatchObject({
       toGo: 1,
@@ -262,6 +264,53 @@ describe('shelf', () => {
       { id: 'deuce', open: true, toGo: 2 },
       { id: 'powder', open: true },
     ]);
+  });
+});
+
+describe('shelf, out of season', () => {
+  const stores: Store[] = [
+    { id: 'powder', position: 1, switchId: 'winter', offered: true },
+    { id: 'gone', position: 2, offered: false },
+  ];
+  const piece = (id: string, starter = true): Piece => ({
+    id,
+    storeId: id.split('-')[0] ?? '',
+    slot: 'top',
+    starter,
+    offered: true,
+  });
+  const pieces = [piece('powder-salmonsuit'), piece('powder-rice'), piece('gone-cap', false)];
+  const gotCap = {
+    kind: 'piece' as const,
+    id: 'gone-cap',
+    sports: [],
+    after: 3,
+    by: { checkIn: 'a' },
+    unlockedAt: at(1),
+  };
+
+  it('keeps a limited starter the member claimed once its switch is off, and drops the rest', () => {
+    const off = shelf({
+      stores,
+      pieces,
+      rules: [],
+      has: [],
+      claimed: [PieceId.parse('powder-salmonsuit')],
+      locked: [],
+      on: () => false,
+    });
+    expect(off.pieces.map(({ id, state }) => [id, state])).toStrictEqual([
+      ['powder-salmonsuit', 'owned'],
+    ]);
+  });
+
+  it('keeps what a member unlocked in a retired store, listing the store closed', () => {
+    const shown = shelf({ stores, pieces, rules: [], has: [gotCap], locked: [], on: () => false });
+    expect(shown.stores).toStrictEqual([
+      { id: 'powder', open: false },
+      { id: 'gone', open: false },
+    ]);
+    expect(shown.pieces.map(({ id, state }) => [id, state])).toStrictEqual([['gone-cap', 'owned']]);
   });
 });
 

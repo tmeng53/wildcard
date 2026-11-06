@@ -5530,7 +5530,7 @@
               "available",
               "locked"
             ],
-            "description": "`owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box)."
+            "description": "`owned` once unlocked or claimed (worn all year, whatever the switches), and for a limited store’s starter while it is out (claim it to keep it); `available` for any other starter that is out now, `locked` for one still to earn (a 「？」 box)."
           },
           "checkInsToGo": {
             "type": "integer",

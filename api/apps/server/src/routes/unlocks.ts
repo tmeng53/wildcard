@@ -91,8 +91,9 @@ const ShelfPiece = z
     storeId: ItemId.meta({ description: 'The store it hangs in.', example: 'powder' }),
     state: z.enum(['owned', 'available', 'locked']).meta({
       description:
-        '`owned` once unlocked (worn all year, whatever the switches), `available` for a ' +
-        'starter that is out now, `locked` for one still to earn (a 「？」 box).',
+        '`owned` once unlocked or claimed (worn all year, whatever the switches), and for a ' +
+        'limited store’s starter while it is out (claim it to keep it); `available` for any ' +
+        'other starter that is out now, `locked` for one still to earn (a 「？」 box).',
     }),
     checkInsToGo: LockedPiece.shape.checkInsToGo.optional().meta({
       description: 'For a locked piece: how many more 练了 check-ins in its sports open it.',

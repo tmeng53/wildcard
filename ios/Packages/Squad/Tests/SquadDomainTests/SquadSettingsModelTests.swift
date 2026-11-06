@@ -131,6 +131,23 @@ private actor Squad3: SquadSettingsService {
         #expect(!model.canPickScene)
     }
 
+    @Test func aReadCutShortIsNotAFailureAndATryAfterOneShowsTheLoader() async throws {
+        let service = try Squad3(viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false))
+        await service.fail(with: .unavailable)
+        let model = SquadSettingsModel(service: service)
+        let cut = Task { await model.reload() }
+        cut.cancel()
+        await cut.value
+        #expect(model.load == .loading)
+
+        await model.reload()
+        #expect(model.load == .failed(.unavailable))
+        let retry = Task { await model.reload() }
+        retry.cancel()
+        await retry.value
+        #expect(model.load == .loading)
+    }
+
     @Test func aMemberManagesNobody() async throws {
         let model = SquadSettingsModel(
             service: try Squad3(viewer: mia, scene: try scene(pickers: .captain(lin), canPick: false)))

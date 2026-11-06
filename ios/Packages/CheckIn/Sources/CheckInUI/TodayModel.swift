@@ -132,7 +132,8 @@ public final class TodayModel {
         self.posted = posted
         self.noSquad = noSquad
         litNight = defaults.string(forKey: Self.lightsKey)
-        dressMe(hop: false)
+        // A home loaded under the launch cover stands the squad on the scene from the first frame.
+        if store.home == nil { dressMe(hop: false) } else { placeSquad() }
     }
 
     /// How long after posting a 练了 the week's count flips up: after the ring closes and the

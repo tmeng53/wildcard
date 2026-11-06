@@ -43,13 +43,18 @@ public final class MeModel {
         if case .loaded(let overview) = load { overview } else { nil }
     }
 
-    /// Reads the overview, again after a failure or when the tab comes back.
+    /// Reads the overview, again after a failure or when the tab comes back. A try after a
+    /// failure shows the loader again, never the failure while it waits.
     public func reload() async {
+        if case .failed = load { load = .loading }
         do {
             var overview = try await service.overview()
             overview.claimed.formUnion(claimedHere)
             load = .loaded(overview)
         } catch {
+            // A read cut short (the tab left, the app went to the background) didn't fail: the
+            // next one runs when the page is back.
+            guard !Task.isCancelled else { return }
             // Keep what is on screen when a refresh fails; say so only when there is nothing.
             if overview == nil { load = .failed(error) }
             await signOutIfEnded(error)
@@ -127,10 +132,15 @@ public final class MeModel {
         load = .loaded(overview)
     }
 
-    /// The unlocked pieces not yet claimed: they wait in their stores on 商店街, marked NEW.
+    /// The pieces that came to the member and aren't claimed yet: the unlocked ones and the ones
+    /// the street holds as theirs (a limited store's starters while it is open). They wait in
+    /// their stores on 商店街, marked NEW.
     public var unclaimed: [String] {
         guard let overview else { return [] }
-        return overview.unlocks.filter { $0.kind == .piece && !overview.claimed.contains($0.id) }.map(\.id)
+        let unlocked = overview.unlocks.filter { $0.kind == .piece }.map(\.id)
+        let owned = (overview.stock?.pieces ?? []).filter { $0.state == .owned }.map(\.id)
+        var seen: Set<String> = []
+        return (unlocked + owned).filter { !overview.claimed.contains($0) && seen.insert($0).inserted }
     }
 
     /// 领取: puts `piece` in the wardrobe at once and saves it; takes it out again if saving fails.

@@ -5,6 +5,7 @@ import {
   photosOf,
   type CheckInRecord,
   type CheckIns,
+  type FuelSuggestion,
   type WeeklyPlans,
 } from '@wildcard/check-ins';
 import type {
@@ -22,6 +23,16 @@ import { MemberId as AwardsMember, type WeeklyAwards } from '@wildcard/weekly-aw
 
 // The coach across modules: who is in a squad from squads, its week from check-ins, its members'
 // nicknames from members and sports' names from sports, in the shape the coach reads.
+
+/** The suggested 饮食小目标 as the app's Simplified Chinese shows them (ScheduleUI's catalog). */
+export const FUEL_WORDS: Readonly<Record<FuelSuggestion, string>> = {
+  water: '喝够水',
+  cookAtHome: '自己做饭',
+  veggies: '每天有菜',
+  lessBubbleTea: '奶茶减半',
+  breakfast: '好好吃早餐',
+  earlyDinner: '晚饭早点吃',
+};
 
 /** A squad's week as the coach sees it, up to `now`. */
 export function coachSquadWeek(deps: {
@@ -160,6 +171,9 @@ export function coachMemberFacts(deps: {
             const sport = nameOf(day.sport, day.customSport);
             return sport === undefined ? { kind: 'train' } : { kind: 'train', sport };
           }),
+          fuelGoals: plan.fuelGoals.map((goal) =>
+            goal.kind === 'own' ? goal.text : FUEL_WORDS[goal.suggestion],
+          ),
         };
       }),
     );
