@@ -9,6 +9,12 @@ import SwiftUI
 
 /// Players' cards, opened from a tap on them on the home and from 小队's member list.
 extension MainTabs {
+    /// 今天 on screen with nothing over it: no other tab, the squad page, a card, the 战报 or the editor.
+    var homeInFront: Bool {
+        selection == .today && todayPages.isEmpty && teammate == nil && !showsCoachCard && recap.open == nil
+            && wardrobe.editor == nil
+    }
+
     /// A teammate's card in `squad`, read from the API or, on the sample squad, made from the
     /// `characters` the page that opens it already shows.
     func cardModel(

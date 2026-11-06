@@ -147,25 +147,25 @@ public final class TodayModel {
     /// Opens the squad's coach's card, from a tap on it on the sideline; the app sets it.
     @ObservationIgnored public var openCoach: () -> Void = {}
 
-    /// The squad dropping onto a newly picked scene, until everyone settles (`TodayModel+DropIn.swift`).
+    /// The squad dropping onto a newly picked scene (`TodayModel+DropIn.swift`), the tab bar held meanwhile.
     var arrival: Arrival?
-    /// Keeps the tab bar hidden while the squad drops in, until 打卡 is back.
     var holdsTabBar = false
     /// A takeover scene's opening, over the whole screen until 进场 (`TodayModel+Opening.swift`).
     var opening: OpeningArt.Loaded?
     /// The squad standing for the opening's group photo, made for it apart from the home's
     /// figures, which sit, eat or train as their day has them (`TodayModel+Opening.swift`).
     var openingFigures: [OpeningFigure] = []
-    /// The `NoticeBanner` showing at the top, and those waiting for it (`TodayModel+Notices.swift`).
+    /// The banner on top or a celebration's card, those waiting, told only while 今天 is in front.
     var notice: Notice?
     var pendingNotices: [Notice] = []
+    public internal(set) var celebration: Broadcast?
+    public var isHomeInFront = true
     /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
     @ObservationIgnored var unlockNotices: UnlockNotices?
     /// Where a broadcast's banner, or 「还有新通知」, opens its place, as the app routes every notice.
     @ObservationIgnored public var openDestination: ((AppDestination) -> Void)?
-    /// Banners shown one after another since the queue was last empty.
+    /// Banners shown in a row since the queue was empty, and who hears each from 通知 come on screen.
     @ObservationIgnored var shownInRow = 0
-    /// Hears each banner from 通知 (by its id) come on screen, so the app tells it once a phone.
     @ObservationIgnored var bannerShown: [UUID: () -> Void] = [:]
     /// Hears a broadcast opened from its banner's button, so its 通知 row is read.
     @ObservationIgnored public var broadcastOpened: ((Broadcast) -> Void)?
