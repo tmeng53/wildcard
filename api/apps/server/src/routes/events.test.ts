@@ -74,7 +74,7 @@ function reader(body: ReadableStream<Uint8Array> | null) {
         buffered += decoder.decode(value, { stream: true });
       }
     },
-    /** The next event that isn't a `shelf` one, which other test files' catalog changes tell everyone. */
+    /** The next event that isn't a `shelf` one, which any catalog change tells everyone. */
     async nextNotShelf(): Promise<string | undefined> {
       for (;;) {
         const event = await this.next();
@@ -150,7 +150,7 @@ describe('Postgres live events', () => {
     const ana = await signUp();
     const heard: LiveEvent[] = [];
     const stop = await liveEvents.subscribe(UserId.parse(ana.userId), {
-      // A catalog change another test file makes tells everyone a shelf event: only notices here.
+      // A catalog change tells everyone a shelf event: only notices here.
       event: (event) => {
         if (event.kind === 'notice') heard.push(event);
       },
@@ -180,7 +180,7 @@ describe('Postgres live events', () => {
 
   it('tells a member’s unlock and preview to them and a switch’s change to everyone', async () => {
     const [ana, bea] = await Promise.all([signUp(), signUp()]);
-    // Other test files change the catalog meanwhile, which tells everyone: count, don't list.
+    // Every catalog change tells everyone, so count rather than list.
     const shelves = { ana: 0, bea: 0 };
     const stops = await Promise.all(
       (['ana', 'bea'] as const).map((who) =>
@@ -203,7 +203,13 @@ describe('Postgres live events', () => {
 
     // A switch's log, like the stores', pieces' and rules' logs, tells every member.
     const beaBefore = shelves.bea;
-    await sql`update public.switches set label = label where id = 'winter'`.execute(db);
+    // Its log takes only a real change: a label changed and put back.
+    await sql`update public.switches set label = label || ' (test)' where id = 'winter'`.execute(
+      db,
+    );
+    await sql`update public.switches set label = replace(label, ' (test)', '') where id = 'winter'`.execute(
+      db,
+    );
     await expect.poll(() => shelves.bea).toBeGreaterThan(beaBefore);
     for (const stop of stops) stop();
   });
