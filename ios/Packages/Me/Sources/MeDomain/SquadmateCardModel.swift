@@ -22,13 +22,17 @@ public final class SquadmateCardModel {
         (self.member, self.squad, self.squadName, self.cards) = (member, squad, squadName, cards)
     }
 
-    /// Reads the card; after a failure, shows it failed until the next try.
+    /// Reads the card; after a failure, shows it failed until the next try, which shows the
+    /// loader again.
     public func reload() async {
+        if case .failed = load { load = .loading }
         do {
             var card = try await cards.card(of: member, in: squad)
             card.squadName = card.squadName ?? squadName
             load = .loaded(card)
         } catch {
+            // Closed before the card came, it didn't fail.
+            guard !Task.isCancelled else { return }
             if case .loaded = load { return }
             load = .failed(error)
         }

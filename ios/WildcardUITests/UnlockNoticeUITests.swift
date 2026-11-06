@@ -98,7 +98,8 @@ final class UnlockNoticeUITests: XCTestCase {
         keepScreenshot(named: "103-piece-tried-on")
     }
 
-    /// 先不了 leaves the box on its rack, 「可以开了」, and a tap on it puts the pop-up up again.
+    /// 先不了 leaves the piece on its rack as itself, never a 「？」 box, with NEW, and a tap on it
+    /// offers 领取.
     func testAPieceLeftInItsBoxWaitsOnItsRack() {
         continueAfterFailure = false
         let app = launchWithAPieceCameIn()
@@ -108,11 +109,13 @@ final class UnlockNoticeUITests: XCTestCase {
         let popup = waitForArrival(in: app)
         app.buttons["editor.arrival.leave"].tap()
         XCTAssertTrue(popup.waitForNonExistence(timeout: Self.wait), "the pop-up stayed up")
-        let ready = app.descendants(matching: .any).matching(identifier: "editor.ready.hat").firstMatch
-        XCTAssertTrue(ready.waitForExistence(timeout: Self.wait), "the box isn't waiting on the rack")
-        XCTAssertFalse(app.buttons["editor.tile.hat.warmup-headphones"].exists, "the box showed its piece")
-        ready.tap()
-        _ = waitForArrival(in: app)
+        let piece = app.buttons["editor.tile.hat.warmup-headphones"]
+        XCTAssertTrue(piece.waitForExistence(timeout: Self.wait), "the piece isn't waiting on the rack")
+        let tag = app.descendants(matching: .any).matching(identifier: "editor.tile.hat.warmup-headphones.new")
+        XCTAssertTrue(tag.firstMatch.exists, "the piece waits without NEW")
+        piece.tap()
+        let take = app.buttons["street.claim"]
+        XCTAssertTrue(take.waitForExistence(timeout: Self.wait), "a tap didn't offer 领取")
     }
 
     private func launchWithAPieceCameIn() -> XCUIApplication {

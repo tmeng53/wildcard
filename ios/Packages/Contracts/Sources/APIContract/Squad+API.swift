@@ -58,7 +58,8 @@ extension SquadToday {
             myWeek: MyWeek(
                 firstDay: try LocalDay(wire.me.week.from), lastDay: try LocalDay(wire.me.week.to),
                 week: WeekCount(trainedDays: wire.me.week.trainedDays, plannedDays: wire.me.week.plannedDays)),
-            squadWeek: WeekCount(trainedDays: wire.squadWeek.trainedDays, plannedDays: wire.squadWeek.plannedDays))
+            squadWeek: WeekCount(trainedDays: wire.squadWeek.trainedDays, plannedDays: wire.squadWeek.plannedDays),
+            squadDaysPerMember: wire.squadWeek.daysPerMember)
     }
 }
 
@@ -171,5 +172,18 @@ extension SquadPokes {
             received: try wire.received.map { received throws(ContractsError) in
                 ReceivedPoke(from: try MemberID(wire: received.from), patAt: Timestamp(wire: received.at))
             })
+    }
+}
+
+extension SquadWeeklyGoal {
+    public init(_ wire: Components.Schemas.SquadWeeklyGoal) {
+        self.init(
+            daysPerMember: wire.daysPerMember, nextDaysPerMember: wire.nextDaysPerMember, canChange: wire.canChange,
+            recent: wire.recent.map { Recent(weeks: $0.weeks, daysPerMember: $0.daysPerMember) })
+    }
+
+    /// The body of `PUT /squads/{squadId}/weekly-goal`.
+    public static func change(to daysPerMember: Int) -> Components.Schemas.SquadWeeklyGoalChange {
+        .init(version: ._1, daysPerMember: daysPerMember)
     }
 }

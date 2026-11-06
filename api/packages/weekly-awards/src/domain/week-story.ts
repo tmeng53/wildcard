@@ -16,6 +16,8 @@ const StoryDay = z.strictObject({
   kind: z.enum(['trained', 'rest', 'disclaimer', 'none']),
   /** For a trained day: its first 练了's listed sport; missing for a sport of the member's own. */
   sport: z.string().optional(),
+  /** For a trained day: the minutes its 练了 logged; missing when none did, or frozen before. */
+  minutes: z.int().min(1).optional(),
 });
 export type StoryDay = z.infer<typeof StoryDay>;
 

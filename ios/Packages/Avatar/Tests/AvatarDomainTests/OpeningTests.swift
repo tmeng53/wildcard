@@ -24,7 +24,7 @@ private func timeline(layers: String? = nil, clip: String? = nil, loop: String? 
     let loop = loop.map { #", "loop": \#($0)"# } ?? ""
     return Data(
         """
-        {"version": 1, "name": "Thanksgiving", "stage": {"width": 390, "height": 844}, "background": "#A8521F",
+        {"version": 2, "name": "Thanksgiving", "stage": {"width": 390, "height": 844}, "background": "#A8521F",
          "button": {"background": "#FFFFFF", "text": "#A8521F"}, "layers": \(layers), "clip": \(clip)\(loop)}
         """.utf8)
 }
@@ -103,4 +103,21 @@ private let falling = """
 func refusesALayerItCantDraw(layers: String) {
     let still = #"{"version": 1, "name": "in", "duration": 1, "loops": false, "tracks": []}"#
     #expect(throws: AvatarError.self) { try Opening.decode(timeline(layers: layers, clip: still)) }
+}
+
+@Test func refusesTheFirstVersionWhoseWordsCouldntNameTheSquad() throws {
+    let current = try #require(String(bytes: timeline(), encoding: .utf8))
+    let first = current.replacingOccurrences(
+        of: #"{"version": 2, "name": "Thanksgiving""#, with: #"{"version": 1, "name": "Thanksgiving""#)
+    #expect(throws: AvatarError.self) { try Opening.decode(Data(first.utf8)) }
+}
+
+@Test func wordsNameTheSquadInTheMembersLanguage() {
+    let greeting = ["zh-Hans": "{squad}，", "en": "Dear {squad},"]
+    #expect(Opening.words(greeting, language: "zh-Hans", squad: "快乐小队") == "快乐小队，")
+    #expect(Opening.words(greeting, language: "en", squad: "Fit Fam") == "Dear Fit Fam,")
+    #expect(Opening.words(greeting, language: "zh-Hant", squad: "快乐小队") == "快乐小队，")
+    #expect(Opening.words(greeting, language: "zh-Hans", squad: nil) == "")
+    #expect(Opening.words(greeting, language: "zh-Hans", squad: "") == "")
+    #expect(Opening.words(["zh-Hans": "感恩节快乐！"], language: "en", squad: nil) == "感恩节快乐！")
 }

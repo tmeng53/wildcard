@@ -61,6 +61,7 @@ import { comments } from './routes/comments.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadCoach } from './routes/squad-coach.js';
+import { squadWeeklyGoal } from './routes/squad-weekly-goal.js';
 import { coachActivity } from './routes/coach-activity.js';
 import { squadScene } from './routes/squad-scene.js';
 import { newYorkDay } from './new-york-day.js';
@@ -204,6 +205,7 @@ export function createApp(deps: AppDependencies) {
     }),
   );
   app.route('/', squadCoach(deps));
+  app.route('/', squadWeeklyGoal(deps));
   app.route('/', coachActivity(deps));
   app.route('/', nudges(deps));
   app.route('/', notices(deps));

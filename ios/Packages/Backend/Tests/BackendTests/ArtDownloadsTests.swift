@@ -39,9 +39,9 @@ private func file(_ path: String, _ data: Data, rig: Int = 1) -> ArtManifest.Fil
     ArtManifest.File(path: path, sha256: hex(data), size: data.count, rigVersion: rig)
 }
 
-private func downloads(from bucket: Bucket) -> (ArtDownloads, URL) {
-    let root = FileManager.default.temporaryDirectory.appending(path: "wildcard-art-\(UUID().uuidString)")
-    return (ArtDownloads(root: root, fetch: { try bucket.fetch($0) }, digest: hex), root)
+private func downloads(from bucket: Bucket, root: URL? = nil, build: String = "1") -> (ArtDownloads, URL) {
+    let root = root ?? FileManager.default.temporaryDirectory.appending(path: "wildcard-art-\(UUID().uuidString)")
+    return (ArtDownloads(root: root, fetch: { try bucket.fetch($0) }, digest: hex, build: build), root)
 }
 
 private func text(_ root: URL, _ path: String) -> String? {
@@ -117,4 +117,32 @@ private func text(_ root: URL, _ path: String) -> String? {
     #expect(text(root, "avatar/art/top/elbows/armL.svg") == nil)
     #expect(text(root, "coaches/maotou/art/base/head.svg") != nil)
     #expect(!FileManager.default.fileExists(atPath: root.appending(path: "Library").path(percentEncoded: false)))
+}
+
+@Test func updatesAtOnceDownloadOnceAndNeverGoBack() async {
+    let bucket = Bucket([svg, json])
+    let (art, root) = downloads(from: bucket)
+    let newer = ArtManifest(generation: 5, baseURL: base, files: [file("avatar/art/hat/beanie/crown.svg", svg)])
+    // Launch and a return to the app ask at once: one brings the tree, the other finds it current.
+    async let launch = art.update(to: newer)
+    async let back = art.update(to: newer)
+    let changed = await [launch, back].filter { $0 }.count
+    #expect(changed == 1)
+    #expect(bucket.downloads.withLock { $0 } == ["\(hex(svg)).svg"])
+    // A list older than the tree, read before the newer one, changes nothing.
+    let older = ArtManifest(generation: 4, baseURL: base, files: [file("avatar/art/hat/beanie/tones.json", json)])
+    #expect(await !art.update(to: older))
+    #expect(text(root, "avatar/art/hat/beanie/crown.svg") != nil)
+}
+
+@Test func aNewBuildBringsTheSameGenerationAgain() async {
+    let bucket = Bucket([svg])
+    let (art, root) = downloads(from: bucket)
+    let manifest = ArtManifest(generation: 2, baseURL: base, files: [file("avatar/a/b.svg", svg)])
+    #expect(await art.update(to: manifest))
+    #expect(await !art.update(to: manifest))
+    // After an app update, what this build left out is tried again; kept files aren't downloaded.
+    let (updated, _) = downloads(from: bucket, root: root, build: "2")
+    #expect(await updated.update(to: manifest))
+    #expect(bucket.downloads.withLock { $0 } == ["\(hex(svg)).svg"])
 }

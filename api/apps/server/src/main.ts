@@ -312,12 +312,14 @@ const unlockSources = (scope: Database) => ({
   trainedSince: ({ member, since }: { readonly member: string; readonly since: Date }) =>
     checkIns.trainedSince({ member: CheckInMember.parse(member), since }),
   sportListed: (id: string) => sports.isListed(id),
-  // A rule counts only 练了 made while its store's and piece's switches were on, by the New
-  // York day, as the member sees them (a previewer also counts those in preview, on their
-  // pretend day).
+  switchListed: async (id: string) =>
+    (await switchesOn(scope).list()).some((each) => each.id === id),
+  // A rule counts only 练了 made while its store's and piece's switches were on, by the New York
+  // day and as each switch was set then, so turning one on or off by hand changes only what
+  // follows; a previewer also counts those in preview, on their pretend day.
   switches: async (member: string) => {
-    const { on } = await switchesOn(scope).statesFor(member);
-    return (id: string, at: Date) => on(id, newYorkDay(at));
+    const was = await switchesOn(scope).historyFor(member);
+    return (id: string, at: Date) => was(id, { at, day: newYorkDay(at) });
   },
 });
 /**

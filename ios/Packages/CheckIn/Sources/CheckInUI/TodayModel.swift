@@ -132,7 +132,8 @@ public final class TodayModel {
         self.posted = posted
         self.noSquad = noSquad
         litNight = defaults.string(forKey: Self.lightsKey)
-        dressMe(hop: false)
+        // A home loaded under the launch cover stands the squad on the scene from the first frame.
+        if store.home == nil { dressMe(hop: false) } else { placeSquad() }
     }
 
     /// How long after posting a 练了 the week's count flips up: after the ring closes and the
@@ -163,6 +164,8 @@ public final class TodayModel {
     @ObservationIgnored var shownInRow = 0
     /// Hears a broadcast's banner come on screen, so the app tells it only once on this phone.
     @ObservationIgnored var broadcastShown: ((Broadcast) -> Void)?
+    /// Hears a broadcast opened from its banner's button, so its 通知 row is read.
+    @ObservationIgnored public var broadcastOpened: ((Broadcast) -> Void)?
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.
@@ -197,7 +200,6 @@ public final class TodayModel {
         guard let today = home?.today else { return nil }
         return (today.squadWeek, today.myWeek.week)
     }
-
     private var heldWeek: (squad: WeekCount, mine: WeekCount)?
 
     /// The night the lights are on for, as `lightsKey` keeps it (`TodayModel+Lights.swift`).

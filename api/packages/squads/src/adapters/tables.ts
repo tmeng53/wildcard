@@ -55,10 +55,20 @@ export interface SquadScenePicks {
   week_start: string;
 }
 
+export interface SquadWeeklyGoals {
+  days_per_member: number;
+  id: Generated<Int8>;
+  set_at: Generated<Timestamp>;
+  set_by: string | null;
+  squad_id: string;
+  week_start: string;
+}
+
 export interface DB {
   squad_events: SquadEvents;
   squad_members: SquadMembers;
   squad_membership_events: SquadMembershipEvents;
   squad_scene_picks: SquadScenePicks;
+  squad_weekly_goals: SquadWeeklyGoals;
   squads: Squads;
 }

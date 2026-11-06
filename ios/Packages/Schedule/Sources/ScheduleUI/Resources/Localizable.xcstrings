@@ -507,38 +507,6 @@
         }
       }
     },
-    "本周小队训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Squad this week"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本週小隊訓練"
-          }
-        }
-      }
-    },
-    "次": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "times"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "次"
-          }
-        }
-      }
-    },
     "没存上，再试一次": {
       "localizations": {
         "en": {
@@ -871,6 +839,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "返回"
+          }
+        }
+      }
+    },
+    "小队本周目标": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad goal"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊本週目標"
           }
         }
       }

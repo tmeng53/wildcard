@@ -84,7 +84,7 @@ extension WildcardAPI {
             unlocks: (stores + pieces).sorted { $0.unlockedAt < $1.unlockedAt },
             claimed: Set(body.claimed.map(\.id)),
             stock: StreetStock(
-                stores: body.shelf.stores.map { StreetStock.Store(id: $0.id, isOpen: $0.open) },
+                stores: body.shelf.stores.map { StreetStock.Store(id: $0.id, isOpen: $0.open, toGo: $0.checkInsToGo) },
                 pieces: body.shelf.pieces.map { piece in
                     let state: StreetStock.State =
                         switch piece.state {

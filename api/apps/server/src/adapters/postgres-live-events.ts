@@ -10,17 +10,22 @@ const CHANNEL = 'live_events';
 /** How often the listening connection is checked, so a dropped one is noticed and replaced. */
 const PING_MS = 60_000;
 
-const Payload = z.object({
-  version: z.literal(1),
-  member: z.uuid(),
-  kind: z.string(),
-  id: z.int().positive(),
-});
+const Payload = z.discriminatedUnion('kind', [
+  z.object({
+    version: z.literal(1),
+    kind: z.literal('notice'),
+    member: z.uuid(),
+    id: z.int().positive(),
+  }),
+  // `member` null: everyone's street (a store, piece, rule or switch changed).
+  z.object({ version: z.literal(1), kind: z.literal('shelf'), member: z.uuid().nullable() }),
+]);
 
 /**
  * Live events from Postgres: one connection per server instance `LISTEN`s on the `live_events`
  * channel, which the database tells on as each event's transaction commits, so every instance
- * hears every event and hands each to the subscribers of its member.
+ * hears every event and hands each to the subscribers of its member (a `shelf` event for everyone
+ * to every subscriber).
  * https://www.postgresql.org/docs/current/sql-listen.html
  *
  * `url` must hold a session of its own: Supabase's transaction pooler (port 6543) can't `LISTEN`,
@@ -57,10 +62,16 @@ export function createPostgresLiveEvents(
     }
     const event = Payload.safeParse(parsed);
     // A kind this build doesn't know (told by a newer migration) is left out.
-    if (!event.success || event.data.kind !== 'notice') return;
-    for (const listener of listeners.get(event.data.member) ?? []) {
-      listener.event({ kind: 'notice', id: event.data.id });
+    if (!event.success) return;
+    const { data } = event;
+    if (data.kind === 'notice') {
+      for (const listener of listeners.get(data.member) ?? [])
+        listener.event({ kind: 'notice', id: data.id });
+      return;
     }
+    const heard =
+      data.member === null ? [...listeners.values()] : [listeners.get(data.member) ?? new Set()];
+    for (const listener of heard.flatMap((each) => [...each])) listener.event({ kind: 'shelf' });
   }
 
   function connect(): Promise<pg.Client> {

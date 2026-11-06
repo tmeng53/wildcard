@@ -63,4 +63,22 @@ extension WildcardAPI {
         }
         return try read { () throws(ContractsError) in try SquadScene(wire) }
     }
+
+    /// The squad's weekly goal (人均 N 天), this week's and next, and its recent average.
+    public func weeklyGoal(of squad: SquadID) async throws(APIError) -> SquadWeeklyGoal {
+        let wire = try await call {
+            try await client.getSquadWeeklyGoal(path: .init(squadId: squad.description)).ok.body.json
+        }
+        return SquadWeeklyGoal(wire)
+    }
+
+    /// Sets the squad's weekly goal from next week; only its captain may. Safe to repeat.
+    public func setWeeklyGoal(of squad: SquadID, to daysPerMember: Int) async throws(APIError) -> SquadWeeklyGoal {
+        let wire = try await call {
+            try await client.setSquadWeeklyGoal(
+                path: .init(squadId: squad.description), body: .json(SquadWeeklyGoal.change(to: daysPerMember))
+            ).ok.body.json
+        }
+        return SquadWeeklyGoal(wire)
+    }
 }

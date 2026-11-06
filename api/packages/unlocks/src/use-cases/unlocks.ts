@@ -20,6 +20,7 @@ import {
   UnlockItemMissingError,
   UnlockSportNotListedError,
   UnlockStoreMissingError,
+  UnlockSwitchMissingError,
 } from '../errors.js';
 import type { SportListed, TrainedSince, UnlockStore, Unlocked } from '../ports.js';
 
@@ -38,10 +39,16 @@ export interface Unlocks {
   /** The pieces `member` claimed into their wardrobe, the earliest first. */
   claimsOf(member: MemberId): Promise<Claim[]>;
   /**
-   * 领取: puts `piece`, which `member` unlocked, in their wardrobe; claiming it again keeps the
-   * first claim.
+   * 领取: puts `piece`, which `member` unlocked (or a limited store's starter while it is out),
+   * in their wardrobe; claiming it again keeps the first claim.
    */
   claim(member: MemberId, piece: PieceId): Promise<Claim>;
+  /**
+   * Claims what `member`'s saved look wears that is theirs to claim and isn't claimed yet, so a
+   * piece put on without 领取 (on a build from before it, or before a limited store needed it)
+   * stays in their wardrobe after its store closes. Ids that aren't such a piece are skipped.
+   */
+  keepWorn(member: MemberId, worn: readonly string[]): Promise<void>;
 }
 
 /** The rules, for admins. */
@@ -91,22 +98,33 @@ export function createUnlocks(deps: {
   readonly store: UnlockStore;
   readonly trainedSince: TrainedSince;
   readonly sportListed: SportListed;
-  /** Every switch as it is now, as one lookup. */
+  /**
+   * Every switch as `member` sees it, as it was set at each time (now, for what is out now), as
+   * one lookup.
+   */
   readonly switches: (member: MemberId) => Promise<SwitchOn>;
+  /** Whether a switch by that id exists, for admins naming one. */
+  readonly switchListed: (id: string) => Promise<boolean>;
   /** Told what each grant kept new; left out where nobody needs telling. */
   readonly unlocked?: Unlocked;
 }): Unlocks & UnlocksAdmin {
+  const switchNamed = async (id: string | null | undefined) => {
+    if (id !== null && id !== undefined && !(await deps.switchListed(id))) {
+      throw new UnlockSwitchMissingError(id);
+    }
+  };
   const grant = async (member: MemberId, unlocks: readonly Unlock[]) => {
     const kept = await deps.store.grant(member, unlocks);
     if (kept.length > 0) await deps.unlocked?.(member, kept);
   };
   const standing = async (member: MemberId) => {
-    const [rules, has, stores, pieces, switchOn] = await Promise.all([
+    const [rules, has, stores, pieces, switchOn, claims] = await Promise.all([
       deps.store.rules(),
       deps.store.unlocksOf(member),
       deps.store.stores(),
       deps.store.pieces(),
       deps.switches(member),
+      deps.store.claimsOf(member),
     ]);
     const now = new Date();
     const on = (id: string) => switchOn(id, now);
@@ -135,7 +153,12 @@ export function createUnlocks(deps: {
     const locked = toGo({ rules: open, trained, switchOn });
     if (fresh.length > 0) await grant(member, fresh);
     const unlocks = fresh.length === 0 ? has : await deps.store.unlocksOf(member);
-    return { unlocks, locked, shelf: shelf({ stores, pieces, rules, has: unlocks, locked, on }) };
+    const claimed = claims.map(({ piece }) => piece);
+    return {
+      unlocks,
+      locked,
+      shelf: shelf({ stores, pieces, rules, has: unlocks, claimed, locked, on }),
+    };
   };
   return {
     of: async (member) => (await standing(member)).unlocks,
@@ -144,11 +167,22 @@ export function createUnlocks(deps: {
     claimsOf: (member) => deps.store.claimsOf(member),
 
     async claim(member, piece) {
-      // What their training earned since the last read counts, so a piece just reached can be claimed.
-      await standing(member);
-      const claim = await deps.store.claim(member, piece);
-      if (claim === undefined) throw new PieceNotUnlockedError(piece);
-      return claim;
+      // What their training earned since the last read counts, so a piece just reached can be
+      // claimed; so does a limited store's starter while it is out (the shelf holds both as theirs).
+      const { shelf: street } = await standing(member);
+      const theirs = street.pieces.some(({ id, state }) => id === piece && state === 'owned');
+      if (!theirs) throw new PieceNotUnlockedError(piece);
+      return deps.store.claim(member, piece);
+    },
+
+    async keepWorn(member, worn) {
+      const wears = new Set(worn);
+      const { shelf: street } = await standing(member);
+      const claimed = new Set((await deps.store.claimsOf(member)).map(({ piece }) => piece));
+      const toKeep = street.pieces.filter(
+        ({ id, state }) => wears.has(id) && state === 'owned' && !claimed.has(id),
+      );
+      for (const { id } of toKeep) await deps.store.claim(member, id);
     },
 
     rules: () => deps.store.rules(),
@@ -189,6 +223,7 @@ export function createUnlocks(deps: {
     stores: () => deps.store.stores(),
 
     async putStore(edit) {
+      await switchNamed(edit.switchId);
       await deps.store.putStore(edit);
       return deps.store.stores();
     },
@@ -199,6 +234,7 @@ export function createUnlocks(deps: {
       if (!(await deps.store.stores()).some(({ id }) => id === edit.storeId)) {
         throw new UnlockStoreMissingError(edit.storeId);
       }
+      await switchNamed(edit.switchId);
       await deps.store.putPiece(edit);
       return deps.store.pieces();
     },

@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["WFY3YV6SPP.com.wildcardsquad.wildcard"],
+        "components": [{ "/": "/join/*", "comment": "A squad's invite link opens the app on 加入小队." }]
+      }
+    ]
+  }
+}

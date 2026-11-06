@@ -49,10 +49,17 @@ export interface SquadToday {
   readonly myWeek: Week & { readonly trainedDays: number; readonly plannedDays: number };
   readonly myLifetimeTrainedDays: number;
   /**
-   * Days trained and planned this week, added up over the members, each in their own week; trained
-   * days from check-ins sent to this squad. Never split per member.
+   * The squad's week against its weekly goal (小队每周目标): `trainedDays` adds up the days each
+   * member trained in their own week, from check-ins sent to this squad, a day counting once
+   * however many times they trained; `plannedDays` is the goal, `daysPerMember` (人均 N 天, the
+   * captain's, in the viewer's week) times the members now. Anyone's days count towards it, and
+   * nobody's share is shown.
    */
-  readonly squadWeek: { readonly trainedDays: number; readonly plannedDays: number };
+  readonly squadWeek: {
+    readonly trainedDays: number;
+    readonly plannedDays: number;
+    readonly daysPerMember: number;
+  };
 }
 
 function firstCheckInOn(checkIns: readonly CheckInRecord[], day: LocalDay): Date | undefined {
@@ -111,7 +118,7 @@ export async function squadToday(
   const me = members.find(({ member }) => member === viewer);
   if (me === undefined) throw new SquadNotJoinedError(squad);
 
-  const [squadCheckIns, mine, myTotals] = await Promise.all([
+  const [squadCheckIns, mine, myTotals, daysPerMember] = await Promise.all([
     store.listForSquad({
       squad,
       members: memberIds,
@@ -120,9 +127,10 @@ export async function squadToday(
     }),
     store.listForMember({ member: viewer, from: me.week.from, to: me.week.to }),
     store.totals(viewer),
+    membership.daysPerMember(squad, me.week.from),
   ]);
 
-  const rows = members.map(({ member, day, week, joinedOn, plan }) => {
+  const rows = members.map(({ member, day, week, plan }) => {
     const theirs = squadCheckIns.filter((each) => each.member === member);
     const today: SquadMemberToday = {
       member,
@@ -132,11 +140,7 @@ export async function squadToday(
       plannedRest: plan[week.days.indexOf(day)]?.kind === 'rest',
       firstCheckInAt: firstCheckInOn(theirs, day),
     };
-    return {
-      today,
-      trained: trainedDays(theirs, week.days),
-      planned: plannedTrainingDays(plan, { weekDays: week.days, joinedOn }),
-    };
+    return { today, trained: trainedDays(theirs, week.days) };
   });
   const todays = rows.map(({ today }) => today);
   const resting = ({ plannedRest, training }: SquadMemberToday) =>
@@ -159,7 +163,8 @@ export async function squadToday(
     myLifetimeTrainedDays: myTotals.trainedDays,
     squadWeek: {
       trainedDays: rows.reduce((sum, { trained }) => sum + trained, 0),
-      plannedDays: rows.reduce((sum, { planned }) => sum + planned, 0),
+      plannedDays: daysPerMember * rows.length,
+      daysPerMember,
     },
   };
 }

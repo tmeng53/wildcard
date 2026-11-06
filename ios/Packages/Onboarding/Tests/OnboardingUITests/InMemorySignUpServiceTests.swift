@@ -17,8 +17,9 @@ struct InMemorySignUpServiceTests {
         #expect(preview.isFull == false)
         let joined = try await service.join(code)
         #expect(joined.teammates.map(\.nickname) == ["可可", "阿杰", "米娅", "豆豆"])
-        #expect(joined.weekGoal == 22)
-        #expect(joined.weekDone == 14)
+        #expect(joined.weekGoal == 12)
+        #expect(joined.daysPerMember == 3)
+        #expect(joined.weekDone == 9)
     }
 
     @Test func aNewSquadHasOnlyTheMember() async throws {

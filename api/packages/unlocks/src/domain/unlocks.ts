@@ -110,7 +110,12 @@ export type PieceState = 'owned' | 'available' | 'locked';
 
 /** What the 商店街 shows a member: each store open or not, each piece out for them and how. */
 export interface Shelf {
-  readonly stores: readonly { readonly id: string; readonly open: boolean }[];
+  readonly stores: readonly {
+    readonly id: string;
+    readonly open: boolean;
+    /** For a store whose rule the member hasn't reached: 练了 still to go. */
+    readonly toGo?: number;
+  }[];
   readonly pieces: readonly {
     readonly id: string;
     readonly storeId: string;
@@ -125,17 +130,21 @@ export interface Shelf {
 }
 
 /**
- * The 商店街 for a member who holds `has`, with `locked` still to go, while `on` says which
- * switches are on now. A piece is owned once unlocked, whatever the switches; available when it is
- * a starter, offered, out (its switch on, its store open) and its store earned; locked when it is
- * all that with a rule still to reach. Anything else, and every piece of a retired store, is not
- * shown.
+ * The 商店街 for a member who holds `has` and claimed `claimed`, with `locked` still to go, while
+ * `on` says which switches are on now. A piece is owned once unlocked or claimed, whatever the
+ * switches and even once it or its store is retired, so what a member holds is worn all year. A
+ * starter that is offered, out (its switch on, its store open) and in an earned store is available
+ * to everyone, except a limited one (its store or itself follows a switch), which is owned while it
+ * is out so it waits in its store to be claimed (领取), and is kept only if it was. A piece that is
+ * all that with a rule still to reach is locked. Anything else is not shown. A retired store is
+ * listed, closed, only while the member owns something in it.
  */
 export function shelf({
   stores,
   pieces,
   rules,
   has,
+  claimed = [],
   locked,
   on,
 }: {
@@ -143,6 +152,7 @@ export function shelf({
   readonly pieces: readonly Piece[];
   readonly rules: readonly UnlockRule[];
   readonly has: readonly Unlock[];
+  readonly claimed?: readonly PieceId[];
   readonly locked: readonly Locked[];
   readonly on: (id: string) => boolean;
 }): Shelf {
@@ -154,23 +164,38 @@ export function shelf({
   const offered = stores.filter((store) => store.offered);
   const open = new Map(offered.map((store) => [store.id, switchOn(store.switchId)]));
   const earnedStore = (id: string) => !ruleOf.has(key('store', id)) || held.has(key('store', id));
+  const kept = new Set<string>(claimed);
+  const limited = (piece: Piece) =>
+    piece.switchId !== undefined ||
+    offered.find(({ id }) => id === piece.storeId)?.switchId !== undefined;
+  const listed = pieces.flatMap((piece): Shelf['pieces'][number][] => {
+    const rule = ruleOf.get(key('piece', piece.id));
+    const fromStore = ruleOf.get(key('store', piece.storeId));
+    const counted = { sports: rule?.sports ?? fromStore?.sports ?? [], after: rule?.after ?? 0 };
+    const base = { id: piece.id, storeId: piece.storeId, ...counted };
+    // Owned stays on the member's rack, even once retired, switched off or in a retired store.
+    if (held.has(key('piece', piece.id)) || kept.has(piece.id))
+      return [{ ...base, state: 'owned' }];
+    if (!open.has(piece.storeId) || !piece.offered) return [];
+    const out = (open.get(piece.storeId) ?? false) && switchOn(piece.switchId);
+    if (!out || !earnedStore(piece.storeId)) return [];
+    if (piece.starter) return [{ ...base, state: limited(piece) ? 'owned' : 'available' }];
+    const left = toGoOf.get(key('piece', piece.id));
+    return left === undefined ? [] : [{ ...base, state: 'locked', toGo: left }];
+  });
+  const holding = new Set(
+    listed.filter(({ state }) => state === 'owned').map(({ storeId }) => storeId),
+  );
+  const retiredHeld = stores.filter((store) => !store.offered && holding.has(store.id));
   return {
-    stores: offered.map(({ id }) => ({ id, open: open.get(id) ?? false })),
-    pieces: pieces.flatMap((piece): Shelf['pieces'][number][] => {
-      if (!open.has(piece.storeId)) return [];
-      const rule = ruleOf.get(key('piece', piece.id));
-      const fromStore = ruleOf.get(key('store', piece.storeId));
-      const counted = { sports: rule?.sports ?? fromStore?.sports ?? [], after: rule?.after ?? 0 };
-      const base = { id: piece.id, storeId: piece.storeId, ...counted };
-      // Owned stays on the member's rack, even once retired or switched off.
-      if (held.has(key('piece', piece.id))) return [{ ...base, state: 'owned' }];
-      if (!piece.offered) return [];
-      const out = (open.get(piece.storeId) ?? false) && switchOn(piece.switchId);
-      if (!out || !earnedStore(piece.storeId)) return [];
-      if (piece.starter) return [{ ...base, state: 'available' }];
-      const left = toGoOf.get(key('piece', piece.id));
-      return left === undefined ? [] : [{ ...base, state: 'locked', toGo: left }];
-    }),
+    stores: [
+      ...offered.map(({ id }) => {
+        const left = earnedStore(id) ? undefined : toGoOf.get(key('store', id));
+        return { id, open: open.get(id) ?? false, ...(left === undefined ? {} : { toGo: left }) };
+      }),
+      ...retiredHeld.map(({ id }) => ({ id, open: false })),
+    ],
+    pieces: listed,
   };
 }
 

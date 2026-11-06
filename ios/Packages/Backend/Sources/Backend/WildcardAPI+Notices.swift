@@ -28,7 +28,8 @@ extension WildcardAPI {
         }
     }
 
-    /// The stream's events, in order: `ready`, then `notice`s; any other event is skipped.
+    /// The stream's events, in order: `ready`, then `notice`s and `shelf`s; any other event is
+    /// skipped.
     static func read(_ events: HTTPBody, _ heard: @Sendable (LiveNotice) async -> Void) async throws {
         for try await event in events.asDecodedServerSentEvents() {
             switch event.event {
@@ -38,6 +39,8 @@ extension WildcardAPI {
                 guard let data = event.data?.data(using: .utf8) else { continue }
                 let live = try DeviceJSON.decoder.decode(Components.Schemas.LiveNotice.self, from: data)
                 await heard(.told(Notice(live.notice)))
+            case "shelf":
+                await heard(.shelfChanged)
             default:
                 continue
             }
