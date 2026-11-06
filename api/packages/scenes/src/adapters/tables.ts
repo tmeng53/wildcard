@@ -20,6 +20,7 @@ export interface Scenes {
   position: number;
   signature: string;
   switch_id: string | null;
+  takeover: Generated<boolean>;
   text_color: string;
   wash: string;
 }

@@ -1,10 +1,12 @@
+import { randomUUID } from 'node:crypto';
+
 import { Kysely, PostgresDialect, sql } from 'kysely';
 import pg from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createPostgresSwitchStore, type SwitchTables } from '../adapters/postgres-switch-store.js';
-import { createSwitches } from './switches.js';
+import { addDays, createSwitches } from './switches.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Each test changes the seeded
 // switches inside a transaction it rolls back, so other test files keep reading the seed.
@@ -84,5 +86,58 @@ describe('the switches', () => {
     await expect(
       db.updateTable('switches').set({ id: 'winter2' }).where('id', '=', 'winter').execute(),
     ).rejects.toThrow(/never changes/);
+  });
+
+  it('shows a switch in preview only to previewers, on the day each pretends it is', async () => {
+    await rolledBack(async (trx) => {
+      const switches = createSwitches({ store: createPostgresSwitchStore(trx) });
+      const [admin, other] = [randomUUID(), randomUUID()];
+      await sql`insert into auth.users (id) values (${admin}), (${other})`.execute(trx);
+      await switches.put({
+        id: 'thanksgiving',
+        label: 'Thanksgiving',
+        mode: 'preview',
+        window: { start: '11-24', end: '11-26' },
+      });
+      expect(await switches.previewers()).toEqual([]);
+      expect(
+        await switches.setView({
+          member: admin,
+          view: { previewer: true, dayOffset: 18 },
+          by: admin,
+        }),
+      ).toEqual([{ member: admin, dayOffset: 18 }]);
+
+      const seen = await switches.statesFor(admin);
+      // 11-06 plus 18 days is 11-24, the first day of the window.
+      expect(seen.on('thanksgiving', '2026-11-06')).toBe(true);
+      expect(seen.on('thanksgiving', '2026-11-05')).toBe(false);
+      expect((await switches.statesFor(other)).on('thanksgiving', '2026-11-24')).toBe(false);
+      expect((await switches.states())('thanksgiving', '2026-11-24')).toBe(false);
+
+      // Taking them off brings back the real day, and a repeat writes nothing.
+      await switches.setView({
+        member: admin,
+        view: { previewer: false, dayOffset: 0 },
+        by: admin,
+      });
+      await switches.setView({
+        member: admin,
+        view: { previewer: false, dayOffset: 0 },
+        by: admin,
+      });
+      expect(await switches.previewers()).toEqual([]);
+      expect((await switches.statesFor(admin)).on('thanksgiving', '2026-11-24')).toBe(false);
+      const { rows } = await sql<{ n: number }>`
+        select count(*)::int as n from public.switch_previews where member_id = ${admin}
+      `.execute(trx);
+      expect(rows[0]?.n).toBe(2);
+    });
+  });
+
+  it('moves a day by whole days, across months and years', () => {
+    expect(addDays('2026-11-06', 18)).toBe('2026-11-24');
+    expect(addDays('2026-12-30', 3)).toBe('2027-01-02');
+    expect(addDays('2026-03-01', -1)).toBe('2026-02-28');
   });
 });

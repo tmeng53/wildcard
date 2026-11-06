@@ -29,7 +29,8 @@ extension SquadScene {
             // art for isn't offered.
             history: wire.options.compactMap { option in
                 SceneID(rawValue: option.sceneId).map { SceneHistory(scene: $0, weeksAgo: option.weeksAgo) }
-            })
+            },
+            takeover: wire.takeover ? wire.sceneId : nil)
     }
 }
 

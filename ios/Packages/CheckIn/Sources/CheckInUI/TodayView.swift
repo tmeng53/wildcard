@@ -71,6 +71,7 @@ public struct TodayView: View {
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.home)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.payoff)
         .modifier(HomeNotices(model: model))
+        .modifier(HolidayOpening(model: model))
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
         // 拍一拍 landing: mine on a teammate, or a teammate's on me.

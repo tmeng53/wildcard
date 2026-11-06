@@ -1863,6 +1863,22 @@
           }
         }
       }
+    },
+    "进场": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "進場"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

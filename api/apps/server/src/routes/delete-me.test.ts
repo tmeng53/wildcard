@@ -25,6 +25,7 @@ import { memberCalendar } from '../member-calendar.js';
 import type { RevokeAppleSignIn } from '../ports.js';
 import {
   scenesOn,
+  switchesOn,
   adminOn,
   aiConsentOn,
   config,
@@ -100,6 +101,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     scenes: scenesOn(db),
+    switches: switchesOn(db),
     weeklyAwards: unusedWeeklyAwards,
     unlocks: unusedUnlocks,
     gifts: unusedGifts,

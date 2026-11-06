@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { inWindow, isOn, SwitchEdit, type Switch } from './switches.js';
+import { inWindow, isOn, isOnForPreviewer, SwitchEdit, type Switch } from './switches.js';
 
 const winter = { start: '11-15', end: '03-31' };
 
@@ -35,6 +35,14 @@ describe('a switch', () => {
   it('is on or off by hand whatever the day', () => {
     expect(isOn({ ...scheduled, mode: 'on' }, '2026-07-01')).toBe(true);
     expect(isOn({ ...scheduled, mode: 'off' }, '2026-12-01')).toBe(false);
+  });
+
+  it('in preview, is on only for previewers, in its window', () => {
+    const preview: Switch = { ...scheduled, mode: 'preview' };
+    expect(isOn(preview, '2026-12-01')).toBe(false);
+    expect(isOnForPreviewer(preview, '2026-12-01')).toBe(true);
+    expect(isOnForPreviewer(preview, '2026-07-01')).toBe(false);
+    expect(isOnForPreviewer(scheduled, '2026-12-01')).toBe(true);
   });
 
   it('needs a window to follow a schedule', () => {

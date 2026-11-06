@@ -20,6 +20,7 @@ function columns(scene: ListedScene) {
     floor: scene.colors.floor,
     offered: scene.offered,
     switch_id: scene.switchId ?? null,
+    takeover: scene.takeover === true,
   };
 }
 
@@ -44,6 +45,7 @@ export function createPostgresSceneStore(db: Kysely<SceneTables>): SceneStore {
         },
         offered: row.offered,
         ...(row.switch_id === null ? {} : { switchId: row.switch_id }),
+        ...(row.takeover ? { takeover: true } : {}),
       }));
     },
 

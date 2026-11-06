@@ -22,6 +22,7 @@ import { PhotoPath } from '../ports.js';
 import { createLog } from '../log.js';
 import {
   scenesOn,
+  switchesOn,
   adminOn,
   aiConsentOn,
   alsoJoinedEarlier,
@@ -91,6 +92,7 @@ const app = createApp({
     aiConsent: () => Promise.resolve(true),
   }),
   scenes: scenesOn(db),
+  switches: switchesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
