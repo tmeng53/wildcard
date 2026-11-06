@@ -62,7 +62,10 @@ struct HomeNotices: ViewModifier {
         switch notice.news {
         case .unlocked(let unlock): unlocks?.open(unlock)
         case .broadcast(let broadcast):
-            if let action = broadcast.action { model.openDestination?(action.destination) }
+            if let action = broadcast.action {
+                model.broadcastOpened?(broadcast)
+                model.openDestination?(action.destination)
+            }
         case .more: model.openDestination?(.notices)
         case .moved: break
         }

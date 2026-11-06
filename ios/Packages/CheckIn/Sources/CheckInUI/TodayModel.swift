@@ -163,6 +163,8 @@ public final class TodayModel {
     @ObservationIgnored var shownInRow = 0
     /// Hears a broadcast's banner come on screen, so the app tells it only once on this phone.
     @ObservationIgnored var broadcastShown: ((Broadcast) -> Void)?
+    /// Hears a broadcast opened from its banner's button, so its 通知 row is read.
+    @ObservationIgnored public var broadcastOpened: ((Broadcast) -> Void)?
 
     /// The squad's scene this week, which the app reads with the squad: the gym until then, and
     /// until the squad's first pick. Changing it puts the squad where they belong on the new one.

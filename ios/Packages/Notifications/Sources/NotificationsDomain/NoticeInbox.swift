@@ -101,16 +101,18 @@ public final class NoticeInbox {
     public var nextPage: NoticeID? { next }
     /// Whether the last try at the next page didn't reach the server.
     public private(set) var moreFailed = false
-    /// The bell's dot: a notice newer than the newest the member has seen.
+    /// The bell's dot: a notice newer than the newest the member has seen that they haven't
+    /// already opened from its banner.
     public var hasUnread: Bool {
-        guard let newest = notices.first?.id else { return false }
-        return seenThrough.map { newest > $0 } ?? true
+        notices.contains { isNewerThanSeen($0) && !opened.contains($0.id) }
     }
 
     /// The newest notice the member has seen, as the server last said or as this page marked.
     private var seenThrough: NoticeID?
     /// What had been seen when the page last opened: newer ones show as new until it opens again.
     private var seenWhenOpened: NoticeID?
+    /// Notices the member opened from the home's banner (its button), read without 通知.
+    private var opened: Set<NoticeID> = []
     /// Whether 通知 is on screen.
     private var isOpen = false
     /// Whether the stream being heard got as far as `.ready`.
@@ -142,7 +144,23 @@ public final class NoticeInbox {
 
     /// Whether `notice` is new to the member on the page as it is open now.
     public func isUnread(_ notice: Notice) -> Bool {
-        seenWhenOpened.map { notice.id > $0 } ?? true
+        !opened.contains(notice.id) && (seenWhenOpened.map { notice.id > $0 } ?? true)
+    }
+
+    /// The member opened `broadcast` from the home's banner: its 通知 row isn't new any more, and
+    /// once nothing else waits unread, the server marks everything up to the newest read.
+    public func opened(_ broadcast: Broadcast) async {
+        let told = notices.filter { notice in
+            if case .broadcast(let other) = notice.subject { other.id == broadcast.id } else { false }
+        }
+        guard !told.isEmpty else { return }
+        opened.formUnion(told.map(\.id))
+        guard !hasUnread else { return }
+        await markNewestSeen()
+    }
+
+    private func isNewerThanSeen(_ notice: Notice) -> Bool {
+        seenThrough.map { notice.id > $0 } ?? true
     }
 
     /// Loads the newest page, in place of what was loaded: for the bell's dot, and when the page
@@ -237,7 +255,7 @@ public final class NoticeInbox {
     }
 
     private func markNewestSeen() async {
-        guard let newest = notices.first?.id, hasUnread else { return }
+        guard let newest = notices.first?.id, seenThrough.map({ newest > $0 }) ?? true else { return }
         seenThrough = newest
         try? await source.markSeen(through: newest)
     }
