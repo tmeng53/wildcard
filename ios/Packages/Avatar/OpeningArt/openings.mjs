@@ -74,7 +74,7 @@ function gifts(x, y, k) {
 const key = (t, v, ease) => (ease ? { t, v, ease } : { t, v });
 const track = (part, channel, keys) => ({ part, channel, keys });
 
-function opening({ id, name, sig, wash, ground, ribbonWords, title, sub, fall, decor, scenery, loopExtra = [] }) {
+function opening({ id, name, sig, wash, ground, ribbonWords, title, fall, decor, scenery, loopExtra = [] }) {
   const files = {};
   // Falling: two layers at two speeds, each a tile repeated down its period.
   files['fall-back.svg'] = svg(W, 422 * 3, tiled(422, 3, (dy) => fall(dy, 422, 12, 0.6)));
@@ -92,8 +92,12 @@ function opening({ id, name, sig, wash, ground, ribbonWords, title, sub, fall, d
     { id: 'ribbon', x: 45, y: 262, width: 300, height: 32, art: 'ribbon.svg' },
     { id: 'ribbonWords', x: 63, y: 262, width: 264, height: 30,
       text: { words: words(ribbonWords, ribbonWords, ribbonWords), color: sig, size: 18, font: 'display' } },
+    // A letter from Wildcard: to the squad by name, the greeting, then signed.
+    { id: 'to', x: 20, y: 214, width: 350, height: 34,
+      text: { words: words('{squad}，', '{squad},', '{squad}，'), color: '#FFFFFF', size: 22 } },
     { id: 'title', x: 20, y: 306, width: 350, height: 72, text: { words: words(...title), color: '#FFFFFF', size: 48 } },
-    { id: 'sub', x: 20, y: 382, width: 350, height: 28, text: { words: words(...sub), color: wash, size: 17 } },
+    { id: 'from', x: 190, y: 384, width: 170, height: 28,
+      text: { words: words('— 外卡', '— Wildcard', '— 外卡'), color: '#FFFFFF', size: 18 } },
     { id: 'squad', x: 10, y: 520, width: 370, height: 190, squad: true },
     { id: 'fallFront', x: 0, y: -H, width: W, height: H * 2, art: 'fall-front.svg' },
   ];
@@ -106,10 +110,11 @@ function opening({ id, name, sig, wash, ground, ribbonWords, title, sub, fall, d
       track('ribbon', 'opacity', [key(0, 0), key(0.9, 0), key(1.1, 1)]),
       track('ribbon', 'scaleX', [key(0, 0.2), key(0.9, 0.2), key(1.4, 1, 'backOut')]),
       track('ribbonWords', 'opacity', [key(0, 0), key(1.2, 0), key(1.5, 1)]),
+      track('to', 'opacity', [key(0, 0), key(0.9, 0), key(1.2, 1)]),
       track('title', 'opacity', [key(0, 0), key(1.2, 0), key(1.4, 1)]),
+      track('from', 'opacity', [key(0, 0), key(1.8, 0), key(2.2, 1)]),
       track('title', 'scaleX', [key(0, 0.4), key(1.2, 0.4), key(1.8, 1, 'backOut')]),
       track('title', 'scaleY', [key(0, 0.4), key(1.2, 0.4), key(1.8, 1, 'backOut')]),
-      track('sub', 'opacity', [key(0, 0), key(1.8, 0), key(2.2, 1)]),
       track('squad', 'y', [key(0, 300), key(1.6, 300), key(2.4, 0, 'backOut')]),
       track('fallBack', 'opacity', [key(0, 0), key(0.8, 1)]),
       track('fallFront', 'opacity', [key(0, 0), key(0.8, 1)]),
@@ -125,7 +130,7 @@ function opening({ id, name, sig, wash, ground, ribbonWords, title, sub, fall, d
     ],
   };
   const timeline = {
-    version: 1, name, stage: { width: W, height: H }, background: sig,
+    version: 2, name, stage: { width: W, height: H }, background: sig,
     button: { background: sig, text: '#FFFFFF' }, layers, clip, loop,
   };
   writeFileSync(new URL(`${id}/timeline.json`, out), JSON.stringify(timeline, null, 2) + '\n');
@@ -146,8 +151,7 @@ for (const id of ['trot', 'jingle']) mkdirSync(new URL(`${id}/`, out), { recursi
 opening({
   id: 'trot', name: 'Thanksgiving', sig: '#A8521F', wash: '#FBEFE6', ground: '#E8D9C5',
   ribbonWords: 'HAPPY THANKSGIVING',
-  title: ['感恩节快乐', 'Happy Thanksgiving', '感恩節快樂'],
-  sub: ['今天全队在秋日小镇', 'The whole squad is in Autumn Town today', '今天全隊在秋日小鎮'],
+  title: ['感恩节快乐！', 'Happy Thanksgiving!', '感恩節快樂！'],
   fall: (dy, period, count, k) => scatter(dy, period, count, (x, y, i) =>
     leaf(x, y, (5 + (i % 3) * 2) * k, (i * 47) % 180, ['#E6B54A', '#F6D9B0', '#E65345', '#E2783A'][i % 4])),
   decor: () => garland(6, W),
@@ -158,8 +162,7 @@ opening({
 opening({
   id: 'jingle', name: 'Christmas', sig: '#1F5A3A', wash: '#E6F0EA', ground: '#FFFFFF',
   ribbonWords: 'MERRY CHRISTMAS',
-  title: ['圣诞快乐', 'Merry Christmas', '聖誕快樂'],
-  sub: ['今天全队在圣诞市集', 'The whole squad is at the Christmas Market today', '今天全隊在聖誕市集'],
+  title: ['圣诞快乐！', 'Merry Christmas!', '聖誕快樂！'],
   fall: (dy, period, count, k) => scatter(dy, period, count, (x, y, i) =>
     `<circle cx="${x}" cy="${y}" r="${n((2 + (i % 3)) * k)}" fill="#FFFFFF"/>`),
   decor: () => lights(4, false),
