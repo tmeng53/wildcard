@@ -79,8 +79,7 @@ struct WildcardApp: App {
         AppModel.show(CatalogClient.bundled)
         // Only now: the editor's street is the catalog's starter street, which `show` just put out.
         _editor = State(initialValue: CharacterEditorDemo.model())
-        LaunchOptions.forgetSeenRecapIfAsked()
-        LaunchOptions.forgetLightsIfAsked()
+        LaunchOptions.forgetTodayStateIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
         let today = TodayModel(

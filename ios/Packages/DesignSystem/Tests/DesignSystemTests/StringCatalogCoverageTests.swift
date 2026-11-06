@@ -16,12 +16,13 @@ struct StringCatalogCoverageTests {
 
         let keys = try Self.localizedKeys()
         #expect(keys.count > 40, "found only \(keys.count) keys; is the pattern still right?")
-        let missing = keys.filter { key in
-            let entry = strings[key] as? [String: Any]
-            let english = (entry?["localizations"] as? [String: Any])?["en"] as? [String: Any]
-            let value = (english?["stringUnit"] as? [String: Any])?["value"] as? String
-            return value?.isEmpty ?? true
-        }
+        let translated = Set(
+            strings.compactMap { key, entry -> String? in
+                let english = ((entry as? [String: Any])?["localizations"] as? [String: Any])?["en"] as? [String: Any]
+                let value = (english?["stringUnit"] as? [String: Any])?["value"] as? String
+                return value?.isEmpty == false ? Self.placeholdersAsOne(key) : nil
+            })
+        let missing = keys.filter { !translated.contains($0) }
         #expect(missing.isEmpty, "not in the String Catalog with English: \(missing.sorted())")
     }
 
@@ -46,13 +47,18 @@ struct StringCatalogCoverageTests {
             let range = NSRange(text.startIndex..., in: text)
             for match in pattern.matches(in: text, range: range) {
                 if let keyRange = Range(match.range(at: 1), in: text) {
-                    // An interpolated Int becomes `%lld` in the catalog's key.
+                    // An interpolation becomes `%lld` or `%@` in the catalog's key, by its type.
                     keys.insert(
                         String(text[keyRange]).replacingOccurrences(
-                            of: #"\\\([^)]*\)"#, with: "%lld", options: .regularExpression))
+                            of: #"\\\([^)]*\)"#, with: "%", options: .regularExpression))
                 }
             }
         }
         return keys
+    }
+
+    /// A catalog key with each `%lld` and `%@` as `%`, as `localizedKeys` writes an interpolation.
+    private static func placeholdersAsOne(_ key: String) -> String {
+        key.replacingOccurrences(of: "%lld", with: "%").replacingOccurrences(of: "%@", with: "%")
     }
 }
