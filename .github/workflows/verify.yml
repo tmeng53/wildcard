@@ -6,7 +6,8 @@
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
 # Free macOS runners are few and shared by every PR, and one iOS run takes about 30 minutes, so
 # no merge uses a Mac on its own. `ios` runs on a schedule, every 3 hours,
-# for what main changed since the last scheduled run (nothing when main didn't change), on a
+# for what main changed since the last scheduled run (nothing when main didn't change, or when
+# every PR it gained already passed `ios`, scripts/mac-covered.sh), on a
 # manual run (Actions -> verify -> Run workflow) and on a PR carrying the `ios-ci` label; the
 # macOS `verify` only on the last two, and `avatar-preview` (GIFs for reviewers, no checks of
 # its own) on manual runs only. Owners check screens on the next scheduled run and fix
@@ -95,6 +96,10 @@ jobs:
             echo "last scheduled run checked ${BASE:-nothing yet}"
             if [ "$BASE" = "$HEAD" ]; then
               echo "main hasn't changed since; nothing to run"
+              MAC=false
+            # Nor when the Mac already passed every PR it gained, on the PR or in a combined run.
+            elif [ "$(scripts/mac-covered.sh "$BASE" "$HEAD")" = true ]; then
+              echo "every PR since was tested on the Mac already; nothing to run"
               MAC=false
             fi
           fi
