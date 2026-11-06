@@ -139,11 +139,15 @@ struct WildcardApp: App {
     /// The sample member for 我. The in-memory member has no Apple account to confirm with and
     /// nothing to sign out of.
     private static func sampleProfile() -> MeModel {
-        MeModel(
-            service: InMemoryMeService.sample(
-                failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.unlocked,
-                stock: LaunchOptions.stock),
-            confirm: { .signedInSession }, signOut: {})
+        let service = InMemoryMeService.sample(
+            failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.unlocked, stock: LaunchOptions.stock)
+        // What the server would work out while the app was away, for the test that 商店街 reads it again.
+        if let later = LaunchOptions.stockOnReturn {
+            _ = NotificationCenter.default.addObserver(
+                forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main
+            ) { _ in Task { await service.set(stock: later) } }
+        }
+        return MeModel(service: service, confirm: { .signedInSession }, signOut: {})
     }
 
     /// The sample squad's story, as the in-memory squad has no awards of its own; a scene picked on

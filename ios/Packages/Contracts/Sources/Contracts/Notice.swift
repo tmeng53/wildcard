@@ -34,6 +34,9 @@ public struct Notice: Hashable, Sendable, Identifiable {
         case comment(PushAlert, checkIn: CheckInID)
         /// A notice we sent every member.
         case broadcast(Broadcast)
+        /// The member's squad trained over its weekly goal some weeks in a row, so they, its
+        /// captain, are suggested a higher one.
+        case goalSuggestion(GoalSuggestion)
     }
 
     public let id: NoticeID
@@ -44,6 +47,18 @@ public struct Notice: Hashable, Sendable, Identifiable {
 
     public init(id: NoticeID, toldAt: Date, squad: SquadID?, subject: Subject) {
         (self.id, self.toldAt, self.squad, self.subject) = (id, toldAt, squad, subject)
+    }
+}
+
+/// A higher weekly goal suggested to a squad's captain (连续 3 周超过小队目标 · 改成人均 4 天？).
+public struct GoalSuggestion: Hashable, Sendable {
+    /// How many weeks in a row the squad trained over its goal.
+    public let weeks: Int
+    /// The goal suggested, 人均 N 天.
+    public let daysPerMember: Int
+
+    public init(weeks: Int, daysPerMember: Int) {
+        (self.weeks, self.daysPerMember) = (weeks, daysPerMember)
     }
 }
 
@@ -79,4 +94,7 @@ public enum LiveNotice: Hashable, Sendable {
     case ready
     /// A notice just told; nil for a kind this build can't show.
     case told(Notice?)
+    /// What the member's 商店街 shows may have changed (a store, piece, rule or switch, or one of
+    /// their unlocks): its shelf is read again.
+    case shelfChanged
 }

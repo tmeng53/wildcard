@@ -1,5 +1,6 @@
 #if os(iOS)
 import AvatarArt
+import AvatarDomain
 import AvatarUI
 import CheckInDomain
 import DesignSystem
@@ -22,24 +23,30 @@ extension TodayModel {
         await land(on: scene, move: move)
     }
 
-    /// Everyone in the opening: teammates either side of me, as the home stands them.
-    var openingSquad: [CharacterPlayer] {
-        let mates = cast.mates.map(\.player)
+    /// Everyone in the opening, with their personas: teammates either side of me, as the home
+    /// stands them.
+    private var openingCast: [(player: CharacterPlayer, persona: Persona)] {
+        let mates = cast.mates.map { (player: $0.player, persona: $0.persona) }
         let half = mates.count / 2
-        return Array(mates.prefix(half)) + (player.map { [$0] } ?? []) + Array(mates.dropFirst(half))
+        let myself = player.map { [(player: $0, persona: myPersona)] } ?? []
+        return Array(mates.prefix(half)) + myself + Array(mates.dropFirst(half))
     }
 
-    /// The opening has played: the squad cheers where it stands.
+    var openingSquad: [CharacterPlayer] { openingCast.map(\.player) }
+
+    /// The opening has played: the squad does the 人浪 across its group photo, each jumping a
+    /// moment after the one on their left, as the home's 人浪 does.
     func cheerInOpening() {
-        for mate in cast.mates {
-            if let cheer = try? PlaceholderCharacter.clip("cheer", persona: mate.persona, species: mate.species) {
-                try? mate.player.play(cheer)
+        let squad = openingCast
+        for (step, member) in SquadPhoto.leftToRight(count: squad.count).enumerated() {
+            let (player, persona) = squad[member]
+            guard let wave = try? PlaceholderCharacter.clip(for: .wave, persona: persona) else { continue }
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(Double(step) * TogetherStage.waveStagger))
+                // 进场 before their turn: they're already dropping onto the scene.
+                guard self?.opening != nil else { return }
+                try? player.play(wave)
             }
-        }
-        if let cheer = try? PlaceholderCharacter.clip(
-            "cheer", persona: myPersona, species: PlaceholderCharacter.species(of: myLook))
-        {
-            try? player?.play(cheer)
         }
     }
 

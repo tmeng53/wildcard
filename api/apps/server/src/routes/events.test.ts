@@ -47,6 +47,12 @@ const unlocked = (member: string, item: string) => ({
   subject: { version: 1 as const, kind: 'store' as const, item },
 });
 
+/** Gives `member` a store, as an admin's `give_unlocks` would. */
+async function unlock(member: string, store: string) {
+  await sql`insert into public.member_unlocks (member_id, kind, item_id, sports, after, given_by, unlocked_at)
+    values (${member}, 'store', ${store}, '{}', 0, ${member}, now())`.execute(db);
+}
+
 /** Reads the stream's events as they come, one at a time. */
 function reader(body: ReadableStream<Uint8Array> | null) {
   if (body === null) throw new Error('no body');
@@ -66,6 +72,13 @@ function reader(body: ReadableStream<Uint8Array> | null) {
         const { done, value } = await stream.read();
         if (done) return undefined;
         buffered += decoder.decode(value, { stream: true });
+      }
+    },
+    /** The next event that isn't a `shelf` one, which any catalog change tells everyone. */
+    async nextNotShelf(): Promise<string | undefined> {
+      for (;;) {
+        const event = await this.next();
+        if (!event?.startsWith('event: shelf')) return event;
       }
     },
     cancel: () => stream.cancel(),
@@ -89,7 +102,7 @@ describe('GET /me/events', () => {
     const [told] = (await notices.page({ member: MemberId.parse(ana.userId), limit: 1 })).notices;
     if (told === undefined) throw new Error('no notice');
 
-    expect(await stream.next()).toBe(
+    expect(await stream.nextNotShelf()).toBe(
       `event: notice\ndata: ${JSON.stringify({
         version: 1,
         notice: {
@@ -104,6 +117,20 @@ describe('GET /me/events', () => {
     await stream.cancel();
   });
 
+  it('says when the caller’s 商店街 may have changed', async () => {
+    const ana = await signUp();
+    const response = await appWith({ heartbeatMs: 60_000, maxAgeMs: 60_000 }).request(
+      '/me/events',
+      { headers: { authorization: `Bearer ${ana.token}` } },
+    );
+    const stream = reader(response.body);
+    expect(await stream.next()).toContain('event: ready');
+
+    await unlock(ana.userId, 'lap');
+    expect(await stream.next()).toBe('event: shelf\ndata: {"version":1}');
+    await stream.cancel();
+  });
+
   it('beats while quiet and ends by itself, so the app reconnects with a fresh token', async () => {
     const ana = await signUp();
     const response = await appWith({ heartbeatMs: 50, maxAgeMs: 400 }).request('/me/events', {
@@ -111,7 +138,7 @@ describe('GET /me/events', () => {
     });
     const stream = reader(response.body);
     expect(await stream.next()).toContain('event: ready');
-    expect(await stream.next()).toBe(': ping');
+    expect(await stream.nextNotShelf()).toBe(': ping');
     let rest = 0;
     while ((await stream.next()) !== undefined) rest += 1;
     expect(rest).toBeGreaterThan(0);
@@ -123,7 +150,10 @@ describe('Postgres live events', () => {
     const ana = await signUp();
     const heard: LiveEvent[] = [];
     const stop = await liveEvents.subscribe(UserId.parse(ana.userId), {
-      event: (event) => heard.push(event),
+      // A catalog change tells everyone a shelf event: only notices here.
+      event: (event) => {
+        if (event.kind === 'notice') heard.push(event);
+      },
       end: () => undefined,
     });
     await db
@@ -146,6 +176,46 @@ describe('Postgres live events', () => {
     await sql`select pg_notify('live_events', '{}')`.execute(db);
     await new Promise((resolve) => setTimeout(resolve, 200));
     expect(heard).toHaveLength(1);
+  });
+
+  it('tells a member’s unlock and preview to them and a switch’s change to everyone', async () => {
+    const [ana, bea] = await Promise.all([signUp(), signUp()]);
+    // Every catalog change tells everyone, so count rather than list.
+    const shelves = { ana: 0, bea: 0 };
+    const stops = await Promise.all(
+      (['ana', 'bea'] as const).map((who) =>
+        liveEvents.subscribe(UserId.parse((who === 'ana' ? ana : bea).userId), {
+          event: (event) => {
+            if (event.kind === 'shelf') shelves[who] += 1;
+          },
+          end: () => undefined,
+        }),
+      ),
+    );
+    await unlock(ana.userId, 'lap');
+    await expect.poll(() => shelves.ana).toBeGreaterThan(0);
+
+    const before = shelves.ana;
+    await sql`insert into public.switch_previews (member_id, previewer) values (${ana.userId}, true)`.execute(
+      db,
+    );
+    await expect.poll(() => shelves.ana).toBeGreaterThan(before);
+    // Taken back off, so other tests see no previewer.
+    await sql`insert into public.switch_previews (member_id, previewer) values (${ana.userId}, false)`.execute(
+      db,
+    );
+
+    // A switch's log, like the stores', pieces' and rules' logs, tells every member.
+    const beaBefore = shelves.bea;
+    // Its log takes only a real change: a label changed and put back.
+    await sql`update public.switches set label = label || ' (test)' where id = 'winter'`.execute(
+      db,
+    );
+    await sql`update public.switches set label = replace(label, ' (test)', '') where id = 'winter'`.execute(
+      db,
+    );
+    await expect.poll(() => shelves.bea).toBeGreaterThan(beaBefore);
+    for (const stop of stops) stop();
   });
 
   it('ends every subscriber when it closes, and refuses new ones', async () => {

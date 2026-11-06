@@ -98,8 +98,9 @@ public struct APISignUpService: SignUpService {
                     id: id, nickname: character.nickname.text, outfit: Outfit(character.look),
                     persona: Persona(character.look))
             },
-            weekGoal: max(today.squadWeek.plannedDays - mine.plannedDays, 0),
-            weekDone: max(today.squadWeek.trainedDays - mine.trainedDays, 0))
+            weekGoal: max(today.squadWeek.plannedDays - today.squadDaysPerMember, 0),
+            weekDone: max(today.squadWeek.trainedDays - mine.trainedDays, 0),
+            daysPerMember: today.squadDaysPerMember)
     }
 
     private func signUp<T>(_ call: () async throws(APIError) -> T) async throws(SignUpError) -> T {

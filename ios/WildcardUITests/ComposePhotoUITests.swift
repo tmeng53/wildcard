@@ -15,7 +15,7 @@ final class ComposePhotoUITests: XCTestCase {
         XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "no 打卡 button")
         checkIn.tap()
         let trained = app.buttons["today.capsule.trained"]
-        XCTAssertTrue(trained.waitForExistence(timeout: Self.wait), "no 练了 capsule")
+        XCTAssertTrue(trained.waitForExistence(timeout: Self.wait), "no 训练 capsule")
         trained.tap()
         let post = app.buttons["compose.post"]
         XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "the compose page never opened")

@@ -314,7 +314,7 @@ describe('the coach', () => {
         ['squad_week', 'remember', 'edit_file', 'reply', 'react'],
         ['squad_week', 'remember', 'edit_file', 'post_note', 'note_to'],
       ]);
-      expect(runs[0]?.task).toContain('队员1 练了 跑步');
+      expect(runs[0]?.task).toContain('队员1 训练 跑步');
       expect(runs[0]?.answers).toStrictEqual([
         '记下了，在 memory.md。',
         '已改好，people/队员2.md 现在 5 字。',
@@ -829,7 +829,7 @@ describe('the coach', () => {
         { agent, at: new Date(now.getTime() + 20 * 3_600_000) },
       ).run();
       expect(runs.at(-1)?.task).toContain(
-        '过去一天打卡下面的对话（先后顺序）：\n- 11-01 周日 队员1 练了 跑步',
+        '过去一天打卡下面的对话（先后顺序）：\n- 11-01 周日 队员1 训练 跑步',
       );
       expect(runs.at(-1)?.task).toContain(
         '  你：「周日也跑？」\n  队员2：「你也跑吗」\n  你：「你也来跑」\n  队员1：「那你喊大声点」\n  你：「喊破嗓子」',
@@ -1221,7 +1221,7 @@ describe('the coach', () => {
         await wakes(fixture, { agent, weeks: { '2026-11-02': nextWeek } }).run(),
       ).toMatchObject({ queued: 2, done: 2 });
       // The day's wake was queued first, from this week; then the check-in's, from next week's.
-      expect(runs.map(({ task }) => task.includes('队员1 练了 跑步'))).toStrictEqual([false, true]);
+      expect(runs.map(({ task }) => task.includes('队员1 训练 跑步'))).toStrictEqual([false, true]);
     });
   });
 

@@ -71,7 +71,7 @@ struct PosterBottomBar: View {
             switch content.tally {
             case .trained(let trained, let planned, let isPast):
                 Group {
-                    if isPast { Text("练了", bundle: .module) } else { Text("本周", bundle: .module) }
+                    if isPast { Text("训练", bundle: .module) } else { Text("本周", bundle: .module) }
                 }
                 .typeStyle(TypeRamp.label)
                 Text(verbatim: "\(trained)/\(planned)")

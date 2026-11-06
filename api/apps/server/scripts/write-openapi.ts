@@ -150,6 +150,7 @@ const app = createApp({
     isScheduler: undefined,
     interactions: [],
     clock: unused,
+    suggestGoal: unused,
     coachNotes: {
       notes: { waiting: unused, delivered: unused },
       noteHour: unused,

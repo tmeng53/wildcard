@@ -126,7 +126,7 @@ struct PosterLane: View {
         let day = lane.isToday ? Text("今天", bundle: .module) : ScheduleLabels.weekday(lane.day)
         let status: Text =
             switch lane.mark {
-            case .trained: Text("，练了", bundle: .module)
+            case .trained: Text("，训练", bundle: .module)
             case .disclaimer: Text("，请假", bundle: .module)
             case .none: Text(verbatim: "")
             }

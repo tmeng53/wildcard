@@ -201,7 +201,7 @@ private struct CardFront: View {
 
     private var stats: some View {
         HStack(alignment: .top, spacing: Space.xs) {
-            FrontStat(label: Text("练了", bundle: .module)) {
+            FrontStat(label: Text("训练", bundle: .module)) {
                 Score(count: face.counts.trainedDays, size: .card, onInk: true)
                     .accessibilityIdentifier("me.trainedDays")
             }

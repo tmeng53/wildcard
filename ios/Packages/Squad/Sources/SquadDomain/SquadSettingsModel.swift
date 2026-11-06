@@ -42,18 +42,6 @@ public struct SquadMemberRow: Hashable, Sendable, Identifiable {
     public let isManageable: Bool
 }
 
-/// The line under this week's scene while it waits to be picked: who picks it.
-public enum SceneLine: Hashable, Sendable {
-    /// The member won last week's crown and may pick once.
-    case youWon
-    /// Last week's crown winners pick; these are their nicknames.
-    case winnersPick([String])
-    /// Nobody won the crown: the member is captain and may pick once.
-    case youPickAsCaptain
-    /// Nobody won the crown: the captain picks.
-    case captainPicks
-}
-
 /// 小队设置 on screen: the squad, its members and this week's scene. The captain renames the
 /// squad, removes members and hands the captaincy on; everyone invites and can leave; last
 /// week's crown winner, or the captain when nobody won, picks the scene once.
@@ -114,12 +102,7 @@ public final class SquadSettingsModel {
         return settings.squad.captain == settings.viewer
     }
 
-    /// The captain's nickname, for 「5 人 · 队长 小林」.
-    public var captainName: String? {
-        settings.flatMap { settings in settings.squad.captain.flatMap { settings.characters[$0]?.nickname.text } }
-    }
-
-    /// How many more can join, for 「还能来 3 人」.
+    /// How many more can join, for 「还剩 3 个名额」.
     public var openSpots: Int {
         max(SquadSize.memberLimit - (settings?.squad.members.count ?? 0), 0)
     }
@@ -142,22 +125,33 @@ public final class SquadSettingsModel {
         settings.flatMap { SceneTheme(rawValue: $0.scene.scene.rawValue) } ?? .gym
     }
 
-    public var sceneLine: SceneLine? {
-        guard let settings else { return nil }
-        let scene = settings.scene
-        let isMe = scene.pickers.members.contains(settings.viewer)
-        // Once picked, the scene's name says enough: no line under it.
-        guard scene.picked == nil else { return nil }
-        switch scene.pickers {
-        case .crown(let winners):
-            return isMe ? .youWon : .winnersPick(winners.compactMap { settings.characters[$0]?.nickname.text })
-        case .captain:
-            return isMe ? .youPickAsCaptain : .captainPicks
-        }
-    }
-
     /// The member may pick this week's scene now (换场地 shows).
     public var canPickScene: Bool { settings?.scene.canPick ?? false }
+
+    // MARK: 每周目标
+
+    /// The squad's weekly goal, as last read or as the captain just set it.
+    public var goal: SquadWeeklyGoal? { settings?.goal }
+
+    /// The captain sets the goal; everyone else reads it.
+    public var canChangeGoal: Bool { isCaptain && settings?.goal.canChange == true }
+
+    /// The captain picks 人均 `daysPerMember` 天 for next week. The pill moves at once and moves
+    /// back if the change doesn't go through.
+    public func setGoal(_ daysPerMember: Int) async {
+        guard let settings, canChangeGoal, SquadWeeklyGoal.choices.contains(daysPerMember),
+            daysPerMember != settings.goal.nextDaysPerMember
+        else { return }
+        let before = settings.goal
+        update { $0.goal.nextDaysPerMember = daysPerMember }
+        await change { service throws(SquadError) in
+            let goal = try await service.setWeeklyGoal(of: settings.squad.id, to: daysPerMember)
+            self.update { $0.goal = goal }
+        }
+        if changeFailed, case .loaded(let now) = load, now.goal.nextDaysPerMember == daysPerMember {
+            update { $0.goal = before }
+        }
+    }
 
     // MARK: 教练
 
