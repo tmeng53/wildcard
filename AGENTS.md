@@ -115,6 +115,7 @@ SwiftLint and swift-format enforce style; they are not repeated here.
 - Errors: one `enum` per package conforming to `Error` with a specific case per failure the caller can act on; use typed `throws(PackageError)`. `fatalError` only for broken invariants.
 - Domain code never reads the clock, generates ids or does I/O directly: inject `Clock`, id generators and ports.
 - No force unwraps (`!`) or `try!` outside tests.
+- **Native first** (Tracy, 2026-11-05). Where iOS has the component or behaviour (navigation and its back swipe, sheets, pickers, scrolling), use the system's, never a hand-made look-alike; build our own only where an approved design asks for something the system can't do. Pages that open over another are pushed on the tab's NavigationStack (`DesignSystemUI`'s `pushedPage`).
 - **Motion and feel are features.** Animations run at 60fps or better on device; no work on the main actor that can drop a frame. Haptics come from `Haptic`: one per meaningful moment, never on every tap.
 - **Encode lessons in structure.** Prefer a type that makes a bad state unrepresentable, then a lint rule, then a runtime check.
 - Public-facing copy never mentions internals.

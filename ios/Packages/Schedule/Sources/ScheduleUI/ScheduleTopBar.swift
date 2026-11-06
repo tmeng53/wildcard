@@ -5,18 +5,15 @@ import DesignSystemUI
 import ScheduleDomain
 import SwiftUI
 
-// 出赛表's top bar: 返回, the week chips with the 每周模板 after them, and 存图.
+// 出赛表's top bar, under the navigation bar's back button: the week chips with the 每周模板
+// after them, and 存图.
 
 extension ScheduleView {
     // MARK: Top bar
 
-    /// 返回 to 我, then the week chips and 存图.
+    /// The week chips and 存图.
     var topBar: some View {
-        VStack(alignment: .leading, spacing: Space.xs) {
-            HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: back)
-                .accessibilityIdentifier("schedule.back")
-            chipRow
-        }
+        chipRow
     }
 
     private var chipRow: some View {

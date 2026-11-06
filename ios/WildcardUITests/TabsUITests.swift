@@ -68,7 +68,7 @@ final class TabsUITests: XCTestCase {
         let squadPage = app.descendants(matching: .any).matching(identifier: "squad.page").firstMatch
         XCTAssertTrue(squadPage.waitForExistence(timeout: 30), "the squad card didn't show 小队")
         XCTAssertTrue(app.buttons["tab.today"].isSelected, "小队 left 今天")
-        app.buttons["squad.back"].tap()
+        backButton(in: app).tap()
         waitFor(squadPage, "exists == false", "返回 didn't close 小队")
         XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: 30), "返回 didn't go back home")
     }
