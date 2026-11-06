@@ -314,13 +314,27 @@ export const WeekStoryBody = z
           }),
       })
       .meta({ description: 'The week’s titles are written.' }),
-    z.strictObject({ ...storyFields, status: z.literal('pending') }).meta({
-      description:
-        'The titles are due but not written yet (the AI failed, or hasn’t reached the squad): ' +
-        'only the titles page waits, showing that the organisers are out of funds with a ' +
-        'button that nudges them (`POST …/story/nudge`); every other page is frozen and shows ' +
-        'as usual. Read again later.',
-    }),
+    z
+      .strictObject({
+        ...storyFields,
+        status: z.literal('pending'),
+        stuck: z
+          .literal(true)
+          .optional()
+          .meta({
+            description:
+              'Present when a try at the titles has failed since the awards: the titles page ' +
+              'then says the organisers are out of funds, with a button that nudges them ' +
+              '(`POST …/story/nudge`). Left out while the titles are only waiting for the ' +
+              'hourly run to reach the squad: the page just says they are on their way.',
+          }),
+      })
+      .meta({
+        description:
+          'The titles are due but not written yet (the run hasn’t reached the squad, or the AI ' +
+          'failed: `stuck`): only the titles page waits; every other page is frozen and shows ' +
+          'as usual. Read again later.',
+      }),
   ])
   .openapi('WeekStory');
 
@@ -493,7 +507,11 @@ export function weekStory(
                 titles: titles.map(({ title, speech, move }) => ({ title, speech, move })),
               })),
             }
-          : { ...fields, status: 'pending' as const },
+          : {
+              ...fields,
+              status: 'pending' as const,
+              ...(story.stuck ? { stuck: true as const } : {}),
+            },
         200,
       );
     });

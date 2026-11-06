@@ -7415,7 +7415,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case1`.
             case case1(Components.Schemas.WeekStory.Case1Payload)
-            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page is frozen and shows as usual. Read again later.
+            /// The titles are due but not written yet (the run hasn’t reached the squad, or the AI failed: `stuck`): only the titles page waits; every other page is frozen and shows as usual. Read again later.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case2`.
             public struct Case2Payload: Codable, Hashable, Sendable {
@@ -7471,6 +7471,10 @@ extension Components {
                 }
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/status`.
                 public var status: Components.Schemas.WeekStory.Case2Payload.StatusPayload
+                /// Present when a try at the titles has failed since the awards: the titles page then says the organisers are out of funds, with a button that nudges them (`POST …/story/nudge`). Left out while the titles are only waiting for the hourly run to reach the squad: the page just says they are on their way.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/stuck`.
+                public var stuck: Swift.Bool?
                 /// Creates a new `Case2Payload`.
                 ///
                 /// - Parameters:
@@ -7488,6 +7492,7 @@ extension Components {
                 ///   - bestDisclaimer:
                 ///   - ending:
                 ///   - status:
+                ///   - stuck: Present when a try at the titles has failed since the awards: the titles page then says the organisers are out of funds, with a button that nudges them (`POST …/story/nudge`). Left out while the titles are only waiting for the hourly run to reach the squad: the page just says they are on their way.
                 public init(
                     version: Components.Schemas.WeekStory.Case2Payload.VersionPayload,
                     squad: Components.Schemas.StorySquad,
@@ -7502,7 +7507,8 @@ extension Components {
                     meals: Components.Schemas.StoryMeals? = nil,
                     bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
                     ending: Components.Schemas.StoryEnding? = nil,
-                    status: Components.Schemas.WeekStory.Case2Payload.StatusPayload
+                    status: Components.Schemas.WeekStory.Case2Payload.StatusPayload,
+                    stuck: Swift.Bool? = nil
                 ) {
                     self.version = version
                     self.squad = squad
@@ -7518,6 +7524,7 @@ extension Components {
                     self.bestDisclaimer = bestDisclaimer
                     self.ending = ending
                     self.status = status
+                    self.stuck = stuck
                 }
                 public enum CodingKeys: String, CodingKey {
                     case version
@@ -7534,9 +7541,10 @@ extension Components {
                     case bestDisclaimer
                     case ending
                     case status
+                    case stuck
                 }
             }
-            /// The titles are due but not written yet (the AI failed, or hasn’t reached the squad): only the titles page waits, showing that the organisers are out of funds with a button that nudges them (`POST …/story/nudge`); every other page is frozen and shows as usual. Read again later.
+            /// The titles are due but not written yet (the run hasn’t reached the squad, or the AI failed: `stuck`): only the titles page waits; every other page is frozen and shows as usual. Read again later.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekStory/case2`.
             case case2(Components.Schemas.WeekStory.Case2Payload)

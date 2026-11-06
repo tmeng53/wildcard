@@ -12,12 +12,15 @@ public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
     private var photos: [String: Data]
     /// What the squad's coach said; nil for a squad without one.
     private var coach: CoachActivity?
+    /// Whether the posts can't be read, as when the server can't be reached.
+    private let offline: Bool
 
     public init(
         viewer: MemberID, posts: [FeedPost], characters: [MemberID: MemberCharacter], photos: [String: Data] = [:],
-        coach: CoachActivity? = nil
+        coach: CoachActivity? = nil, offline: Bool = false
     ) {
         self.viewer = viewer
+        self.offline = offline
         self.posts = posts
         self.characters = characters
         self.photos = photos
@@ -38,7 +41,8 @@ public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
     public func posts(in squad: SquadID, from first: LocalDay, through last: LocalDay) async throws(FeedError)
         -> [FeedPost]
     {
-        posts.filter { $0.checkIn.audience.squads.contains(squad) && (first...last).contains($0.checkIn.day) }
+        if offline { throw .notSent }
+        return posts.filter { $0.checkIn.audience.squads.contains(squad) && (first...last).contains($0.checkIn.day) }
     }
 
     public func characters(in squad: SquadID) async throws(FeedError) -> [MemberID: MemberCharacter] {

@@ -182,10 +182,12 @@ struct TitlesPage: View {
     }
 }
 
-/// The titles are late: the organizers ran out of money. The squad dozes while the reader can
-/// nudge them, once; the rest of the story plays as usual.
+/// The titles aren't written yet; the squad dozes and the rest of the story plays as usual.
+/// Before any try failed they are only on their way; once one did, the organizers ran out of
+/// money and the reader can nudge them, once.
 struct PendingPage: View {
     let page: PageContext
+    let stuck: Bool
     let nudged: Bool
     let nudge: () -> Void
     @Environment(\.sceneTheme) private var theme
@@ -211,15 +213,15 @@ struct PendingPage: View {
             VStack(alignment: .leading, spacing: Space.l) {
                 PageTitle(label: Text("本周", bundle: .module), title: Text("头衔", bundle: .module))
                 VStack(alignment: .leading, spacing: Space.m) {
-                    Text("主办方没经费了，正在拉赞助，一会儿再来颁奖", bundle: .module)
+                    headline
                         .typeStyle(TypeRamp.title)
                         .foregroundStyle(Color(role: .fgOnScene, in: theme))
-                    if nudged {
+                    if stuck, nudged {
                         Text("已催主办方充值 token", bundle: .module)
                             .typeStyle(TypeRamp.calloutEmphasis)
                             .foregroundStyle(Color(role: .fgOnScene, in: theme))
                             .transition(.opacity)
-                    } else {
+                    } else if stuck {
                         Button(action: nudge) { Text("催一下主办方", bundle: .module) }
                             .buttonStyle(PrimaryButtonStyle(.regular))
                             .accessibilityIdentifier("recap.nudge")
@@ -230,6 +232,12 @@ struct PendingPage: View {
             }
         }
         .haptic(.pick, trigger: nudged)
+    }
+
+    private var headline: Text {
+        stuck
+            ? Text("主办方没经费了，正在拉赞助，一会儿再来颁奖", bundle: .module)
+            : Text("颁奖嘉宾在路上，一会儿就到", bundle: .module)
     }
 }
 #endif

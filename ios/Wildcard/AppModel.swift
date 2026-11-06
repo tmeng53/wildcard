@@ -40,6 +40,7 @@ final class AppModel {
         // The cover came up again; a sign-in's cover is already up and counting.
         didSet {
             if isStarting, !oldValue.isStarting, !isSigningIn { coverSince = .now }
+            if !isStarting { startsOffline = false }
             // The app started on a member's home: a link that came while it started is spent.
             if showsTabs { invite = nil }
         }
@@ -62,12 +63,17 @@ final class AppModel {
     }
     /// The code of an invite link that opened the app while it was starting, for the sign-up it
     /// opens on; used once.
-    @ObservationIgnored fileprivate var invite: InviteCode?
+    @ObservationIgnored var invite: InviteCode?
     /// The squad 今天 is on, whose scene it reads again each time the app comes back.
     @ObservationIgnored private var homeSquad: SquadID?
     /// A home opening under the launch cover after a sign-in on the open screen, so the account's
     /// next signed-in state doesn't open it a second time.
     @ObservationIgnored private var openingUnderCover = false
+    /// Launching with nothing kept on the phone and no server: 网络开小差了 instead of the cover,
+    /// while the next try waits.
+    private(set) var startsOffline = false
+    /// The wait before the next try at launch, which 再试一次 cuts short.
+    @ObservationIgnored private var nextStartTry: Task<Void, Never>?
 
     @ObservationIgnored private let account: AccountSession
     @ObservationIgnored let api: WildcardAPI
@@ -133,6 +139,11 @@ final class AppModel {
                 if case .starting = screen, !openingUnderCover { await openHome() }
             }
         }
+    }
+
+    /// 再试一次 on a launch with no server: tries again now rather than at the next try.
+    func retryStart() {
+        nextStartTry?.cancel()
     }
 
     /// Sign in with Apple came back on the open screen.
@@ -243,7 +254,11 @@ final class AppModel {
                 return
             }
             screen = .starting
-            try? await Task.sleep(for: .seconds(3))
+            startsOffline = true
+            let wait = Task { try? await Task.sleep(for: .seconds(3)) }
+            nextStartTry = wait
+            await wait.value
+            nextStartTry = nil
             await openHome()
         case .loading, .current, .offline:
             // The case above has every load without a home.
@@ -353,32 +368,6 @@ final class AppModel {
         return await model.resume(in: squad, madeIt: progress.madeIt) ? model : nil
     }
 
-}
-
-/// Invite links.
-extension AppModel {
-    /// `takesInvite`: the sign-up starts from the invite link that opened the app, if one is
-    /// waiting, and uses it up; a resumed sign-up is already in its squad and leaves it.
-    fileprivate func newSignUp(hasAgreedToAI: Bool, takesInvite: Bool = true) -> SignUpModel {
-        let model = SignUpModel(
-            service: APISignUpService(api: api), nickname: "", now: Date(), hasAgreedToAI: hasAgreedToAI)
-        if takesInvite, let code = invite {
-            invite = nil
-            model.open(invite: code)
-        }
-        return model
-    }
-
-    /// An invite link (wildcardsquad.com/join/<code>) opened the app: sign-up's 你的小队 starts on
-    /// 加入小队 with its code, now, or once sign-up opens if the app is still starting. A member
-    /// already in a squad just gets the app (one squad each), and the link is forgotten.
-    func open(invite code: InviteCode) {
-        switch screen {
-        case .starting: invite = code
-        case .signUp(let model): model.open(invite: code)
-        case .tabs: invite = nil
-        }
-    }
 }
 
 /// The squad's scene, which 今天 must open on rather than switch to.

@@ -11,12 +11,16 @@ public struct WeekStory: Hashable, Sendable {
     public enum Status: Hashable, Sendable {
         /// The awards are in.
         case ready
-        /// The week is over but the AI run hasn't written the titles yet: their page says the
-        /// organizers ran out of money, with a button to nudge them; every other page plays.
+        /// The week is over but the AI run hasn't written the titles yet: their page waits for
+        /// them (see `stuck`); every other page plays.
         case pending
     }
 
     public let status: Status
+    /// Whether a try at the titles failed since the awards. A pending story that isn't stuck is
+    /// only waiting for the hourly run, and its page says the titles are on their way; a stuck
+    /// one says the organizers ran out of money, with a button to nudge them.
+    public let stuck: Bool
     public let squad: SquadID
     public let squadName: String
     /// Monday to Sunday.
@@ -37,12 +41,13 @@ public struct WeekStory: Hashable, Sendable {
     public let ending: Ending?
 
     public init(
-        status: Status, squad: SquadID, squadName: String, week: Week, scene: SceneTheme,
+        status: Status, stuck: Bool = false, squad: SquadID, squadName: String, week: Week, scene: SceneTheme,
         squadmates: [Squadmate], order: [PageID]? = nil, podium: Podium? = nil, titles: [MemberTitles] = [],
         myWeek: MyWeek? = nil, squadWeek: SquadWeek? = nil, hottest: Hottest? = nil,
         meals: Meals? = nil, bestDisclaimer: BestDisclaimer? = nil, ending: Ending? = nil
     ) {
         self.status = status
+        self.stuck = stuck
         self.squad = squad
         self.squadName = squadName
         self.week = week

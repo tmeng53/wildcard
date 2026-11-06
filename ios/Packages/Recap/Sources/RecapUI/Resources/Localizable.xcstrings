@@ -695,6 +695,22 @@
         }
       }
     },
+    "颁奖嘉宾在路上，一会儿就到": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The award presenters are on their way"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "頒獎嘉賓在路上，等一下就到"
+          }
+        }
+      }
+    },
     "领奖台": {
       "localizations": {
         "en": {
