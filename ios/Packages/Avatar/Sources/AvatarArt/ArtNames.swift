@@ -4,9 +4,9 @@ import Foundation
 
 /// The names art carries (`avatar/names.json`), in each of the app's languages, so a piece or
 /// store added through the admin tools is named without an app release. The bundled file names
-/// every store this build ships with (its words are data only, never code); an uploaded one
-/// stands whole in its place, so it names every store. A variant named here stands in front of
-/// the String Catalog's name for the same id.
+/// every store this build ships with (its words are data only, never code); an uploaded one stands
+/// in front of it id by id, so it may name only what it adds or changes. A variant named here
+/// stands in front of the String Catalog's name for the same id.
 public struct ArtNames: Hashable, Sendable {
     /// A store's words, as 商店街 shows them.
     public struct Store: Hashable, Sendable {
@@ -45,6 +45,13 @@ public struct ArtNames: Hashable, Sendable {
     /// The name of `variant` in `slot`, if the uploaded names have one.
     public func variant(_ variant: String, in slot: Slot) -> CatalogNames? {
         variants["\(slot)/\(variant)"] ?? variants[variant]
+    }
+
+    /// `uploaded`'s names in front of these, id by id.
+    public func overlaid(by uploaded: ArtNames) -> ArtNames {
+        ArtNames(
+            variants: variants.merging(uploaded.variants) { _, new in new },
+            stores: stores.merging(uploaded.stores) { _, new in new })
     }
 
     /// The only `version` of `names.json` this build reads.
@@ -99,13 +106,17 @@ private struct ArtWords: Decodable {
 }
 
 extension PlaceholderCharacter {
-    /// The names, uploaded or else bundled; none when the file can't be read. Read once
+    /// The bundled names with the uploaded ones in front, id by id; a file that can't be read
+    /// names nothing. Read once
     /// per launch, as the scene pictures are, so a view body never reads the disk; a newer
     /// download names from the next launch.
     public static func names() -> ArtNames { uploadedNames }
 
     private static let uploadedNames: ArtNames = {
-        let url = ArtTree.url("names.json", in: tree, bundled: folder)
-        return (try? ArtNames.decode(Data(contentsOf: url))) ?? .none
+        let bundled = (try? ArtNames.decode(Data(contentsOf: folder.appending(path: "names.json")))) ?? .none
+        guard let url = ArtTree.downloadedFile("names.json", in: tree),
+            let uploaded = try? ArtNames.decode(Data(contentsOf: url))
+        else { return bundled }
+        return bundled.overlaid(by: uploaded)
     }()
 }

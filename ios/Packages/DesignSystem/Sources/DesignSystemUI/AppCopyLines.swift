@@ -5,7 +5,7 @@ import Synchronization
 /// The words the app shows: the String Catalog's, with the lines put over them since this build
 /// (`AppCopy`, the catalog's `appCopy` section) standing in front, so a line changes without an
 /// app release. Every lookup of the app's own words goes through here (`Text(copy:bundle:)`,
-/// `String(copy:bundle:)`, `Bundle.copyLine(forKey:)`; SwiftLint keeps the others out), in the
+/// `String(copy:bundle:)`, `String(copyKey:bundle:)`; SwiftLint keeps the others out), in the
 /// language the app speaks (`AppLanguage`).
 ///
 /// The copy is installed once a launch, before anything shows, so a screen never changes its
@@ -21,6 +21,9 @@ public enum AppCopyLines {
     }
 
     private static let installed = Mutex(Installed(copy: .none, bundles: [:]))
+    /// Each bundle looked a line up in, by its path and language, so a view body that draws a
+    /// line finds its bundle without touching the disk again.
+    private static let lookups = Mutex([String: Bundle]())
 
     /// Puts `copy` in front of the catalog's words from now on. `directory` is where its strings
     /// files go: a fresh folder each time, since Foundation keeps a bundle's strings once read.
@@ -59,7 +62,19 @@ public enum AppCopyLines {
         let put = installed.withLock { installed -> URL? in
             installed.copy.words(for: key, in: language.rawValue) == nil ? nil : installed.bundles[language]
         }
-        return put.flatMap(Bundle.init(url:)) ?? bundle.inAppLanguage
+        if let put, let lines = cached(put.path(percentEncoded: false), make: { Bundle(url: put) }) {
+            return lines
+        }
+        return cached("\(bundle.bundlePath)#\(language.rawValue)") { bundle.inAppLanguage } ?? bundle
+    }
+
+    private static func cached(_ path: String, make: () -> Bundle?) -> Bundle? {
+        lookups.withLock { lookups in
+            if let found = lookups[path] { return found }
+            let made = make()
+            lookups[path] = made
+            return made
+        }
     }
 
     /// `line`'s words, filled with its arguments, in the language the app speaks.

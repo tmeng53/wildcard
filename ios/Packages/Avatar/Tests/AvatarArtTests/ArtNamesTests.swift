@@ -6,7 +6,7 @@ import Testing
 @testable import AvatarArt
 
 // Art added by upload carries its own names (`avatar/names.json`), so a new store and its
-// pieces are named without an app release. Nothing is bundled.
+// pieces are named without an app release, in front of the bundled names id by id.
 
 private let trot = Data(
     #"""
@@ -53,4 +53,12 @@ private let trot = Data(
                 traditionalChinese: "操場第九圈，才是今天真正開始的地方。"))
     #expect(stores["powder"]?.limited?.simplifiedChinese == "冬季限定")
     #expect(stores["warmup"]?.unlock == nil)
+}
+
+@Test func uploadedNamesStandInFrontOfTheBundledOnesIdById() throws {
+    let bundled = PlaceholderCharacter.names()
+    let names = bundled.overlaid(by: try ArtNames.decode(trot))
+    #expect(names.stores["trot"]?.local.english == "Turkey Trot")
+    #expect(names.stores["lap"] == bundled.stores["lap"])
+    #expect(names.stores.count == bundled.stores.count + 1)
 }
