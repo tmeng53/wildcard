@@ -20,7 +20,7 @@ public struct ArtNames: Hashable, Sendable {
         public let unlock: CatalogNames?
         /// The tag a limited store wears (感恩节限定).
         public let limited: CatalogNames?
-        /// The colour of that tag, so each kind of limit can wear its own; nil for the store's.
+        /// The colour of that tag, so a kind of limit can wear its own; nil for the limited colour.
         public let limitedColor: RGBAColor?
 
         public init(

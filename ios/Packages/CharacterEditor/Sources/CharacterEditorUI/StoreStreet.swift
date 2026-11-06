@@ -329,10 +329,11 @@ enum StoreLook {
         return isLight(rgba) ? Color(role: .fgDefault, in: theme) : Color(rgba)
     }
 
-    /// The colour of a limited store's tag: the one `names.json` gives that kind of limit, else
-    /// the store's own.
+    /// The colour of a limited store's tag, so each kind of limit wears its own (冬季限定 ice
+    /// blue, 感恩节 orange, 圣诞 green): `names.json`'s, else the bundled one's, else nil for the
+    /// limited colour.
     static func limited(_ store: String) -> RGBAColor? {
-        PlaceholderCharacter.names().stores[store]?.limitedColor ?? PlaceholderCharacter.storeColor(store)
+        PlaceholderCharacter.names().stores[store]?.limitedColor ?? StoreCopy.limitColors[store]
     }
 
     static func isLight(_ rgba: RGBAColor) -> Bool {
@@ -340,8 +341,8 @@ enum StoreLook {
     }
 }
 
-/// A limited store's tag (冬季限定), filled with its limit's colour, white words on it, or ink
-/// where the colour is too light for white.
+/// A limited store's tag (冬季限定), in the limited colour, or the colour `names.json` gives its
+/// limit, with ink words where that colour is too light for white.
 struct LimitedTag: View {
     let word: Text
     let color: RGBAColor?
@@ -356,13 +357,13 @@ struct LimitedTag: View {
         let light = color.map(StoreLook.isLight) ?? false
         word
             .typeStyle(TypeRamp.label)
-            .foregroundStyle(Color(role: light ? .fgDefault : .fgOnInk, in: theme))
+            .foregroundStyle(Color(role: light ? .fgDefault : .fgOnLimited, in: theme))
             .lineLimit(1)
             .fixedSize()
             .padding(.horizontal, Space.xs - Space.xxs / 2)
             .frame(height: CoachTag.Size.small.height)
             .background(
-                color.map { Color($0) } ?? Color(role: .bgInk, in: theme),
+                color.map { Color($0) } ?? Color(role: .bgLimited, in: theme),
                 in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
     }
 }

@@ -19,6 +19,8 @@ public enum Palette {
     /// mist). Text only, never a fill.
     public static let danger = SRGBColor(red: 0xD0, green: 0x34, blue: 0x2C)
     /// Apple's own black, for the Sign in with Apple style button only.
+    /// Limited (限定): the tag a store or scene open only for a while wears, whatever its colours.
+    public static let limited = SRGBColor(red: 0xC2, green: 0x53, blue: 0x1D)
     public static let appleBlack = SRGBColor(red: 0x00, green: 0x00, blue: 0x00)
 
     // MARK: Brand: the app's own colour, the same in every scene

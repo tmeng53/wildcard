@@ -196,5 +196,8 @@ enum StoreCopy {
         "deuce": "网球类 3 次解锁",
     ]
     private static let limits = ["powder": "冬季限定"]
+    /// Each bundled limit's tag colour (冬季限定: ice blue); an uploaded store names its own in
+    /// `names.json`.
+    static let limitColors = ["powder": RGBAColor(red: 0xCD, green: 0xEB, blue: 0xF8)]
 }
 #endif
