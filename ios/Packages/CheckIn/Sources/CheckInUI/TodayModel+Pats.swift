@@ -69,6 +69,8 @@ extension TodayModel {
 
     /// The key under which the latest pat already shown to `member` is kept, apart for each
     /// account signed in on this phone.
+    private static let replayPatsKey = "today.replayPatsOnMe"
+
     private static func patsShownKey(for member: MemberID) -> String {
         "today.patsShownUntil.\(member)"
     }
@@ -76,7 +78,8 @@ extension TodayModel {
     /// The 6pm push was opened: everyone who patted me in the last day pats me again, even if
     /// those pats already played on this phone; at once when the home is in, else as it opens.
     public func replayPatsOnMe() {
-        replaysPatsOnMe = true
+        // Kept until the home has loaded, which may be after a launch the push itself started.
+        defaults.set(true, forKey: Self.replayPatsKey)
         guard store.home != nil else { return }
         Task { await playPatsOnMe() }
     }
@@ -86,8 +89,8 @@ extension TodayModel {
     /// unless the 6pm push was opened (`replayPatsOnMe`), which plays the day's again.
     func playPatsOnMe() async {
         guard let member = store.home?.member else { return }
-        let replays = replaysPatsOnMe
-        replaysPatsOnMe = false
+        let replays = defaults.bool(forKey: Self.replayPatsKey)
+        defaults.removeObject(forKey: Self.replayPatsKey)
         let shown = replays ? 0 : defaults.double(forKey: Self.patsShownKey(for: member))
         let fresh = store.pokes.received.filter { Double($0.patAt.millisecondsSince1970) > shown }
         let patters = fresh.compactMap { pat in cast.mates.first { $0.id == pat.from } }
