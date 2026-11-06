@@ -190,13 +190,13 @@ struct MainTabs: View {
     }
 
     /// A tab's full-screen step (writing a check-in, a scene pick's reveal), 通知, and a page pushed
-    /// over another pushed page on 我 (a post over 我的动态, 注销账号 over 设置) hide the bar. A post's
-    /// page pushed straight over 动态 hides it itself, as it slides in (`pushedPage(hidesTabBar:)`).
+    /// over another pushed page on 我 (a post over 我的动态, 注销账号 over 设置), and any page pushed
+    /// over 动态 (通知, a post's page) hide the bar.
     private var showsTabBar: Bool {
         switch selection {
         case .today: todayPages.isEmpty ? today.showsTabBar : !squadRevealing
         case .profile: !profile.isDeletionOpen && post == nil
-        case .feed: !showsNotices
+        case .feed: feedPages.isEmpty
         }
     }
 
@@ -213,8 +213,8 @@ struct MainTabs: View {
         }
     }
 
-    /// 动态 with the bell at its title, and 通知 pushed over it once the bell is tapped, with a post
-    /// it opens pushed over that.
+    /// 动态 with the bell at its title: a card's post page, or 通知 once the bell is tapped with a
+    /// post it opens over that, pushed on its one path.
     private var feedPage: some View {
         NavigationStack(path: $feedPages) {
             FeedView(
@@ -241,6 +241,7 @@ struct MainTabs: View {
             }
         }
         .environment(\.sceneTheme, today.scene)
+        .onChange(of: feed.opened) { _, id in pushCardPost(id) }
         // 通知 popped, or 动态 left with it open: what is told from now on lights the bell again.
         .onChange(of: showsNotices) { _, shown in if !shown { inbox.close() } }
         .onDisappear { inbox.close() }

@@ -9,7 +9,8 @@ import SwiftUI
 /// The 动态 tab: the squad's posts by day, newest first, each a card with the author's character
 /// and the teammates' emoji (the approved feed, version 20, with the approved reaction bar). The app's tab bar floats over it;
 /// the safe area the app gives it already leaves room. Pull to load again; the end loads the
-/// week before. A card's comments or comment button pushes its own page (`PostDetailView`).
+/// week before. A card's comments or comment button opens its own page (`PostDetailView`), which the app
+/// pushes.
 public struct FeedView: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -39,13 +40,11 @@ public struct FeedView: View {
         self.checkIn = checkIn
     }
 
-    /// The root of 动态's NavigationStack: a post's own page is pushed over the feed, which keeps
-    /// its place underneath.
+    /// The root of 动态's NavigationStack. A card's comments set the model's `opened`, and the
+    /// app pushes that post's page (`PostDetailView`) on the stack's own path, so every page over
+    /// 动态 goes the one way and the feed keeps its place underneath.
     public var body: some View {
         feed
-            .navigationDestination(item: $model.opened) { opened in
-                PostDetailView(model: model, post: opened) { model.opened = nil }
-            }
     }
 
     private var feed: some View {

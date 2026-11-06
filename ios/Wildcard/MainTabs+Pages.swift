@@ -45,7 +45,8 @@ enum TodayPage: Hashable {
     case coach(CoachRoute)
 }
 
-/// A post opened from 我的动态 or 通知, with the page's own model of it; one post is one page.
+/// A post opened from 动态's card (with the feed's model), 我的动态 or 通知 (with the page's own
+/// model of it); one post is one page.
 struct OpenedPost: Hashable {
     let id: CheckInID
     let model: FeedModel
@@ -58,7 +59,8 @@ struct OpenedPost: Hashable {
 enum FeedPage: Hashable {
     /// 通知, behind the bell.
     case notices
-    /// A post a notice opened, over 通知 or straight over 动态.
+    /// A post's page: a card's, straight over 动态, or one a notice opened, over 通知 or straight
+    /// over 动态.
     case post(OpenedPost)
 }
 
@@ -67,6 +69,13 @@ extension MainTabs {
     var showsNotices: Bool {
         get { feedPages.first == .notices }
         nonmutating set { feedPages = newValue ? [.notices] : [] }
+    }
+
+    /// A card's comments open its post's page, pushed straight over 动态 on the same path.
+    func pushCardPost(_ id: CheckInID?) {
+        guard let id else { return }
+        let page = FeedPage.post(OpenedPost(id: id, model: feed))
+        if feedPages != [page] { feedPages = [page] }
     }
 
     /// The post a notice opened, over 通知 when it is open, so back returns to it.
