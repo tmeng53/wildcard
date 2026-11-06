@@ -11,7 +11,8 @@ extension TodayModel {
     struct Arrival {
         let drop: DropIn
         let start: Date
-        /// The teammates in the order they drop, the back first; I drop after them.
+        /// The teammates in the order they drop, the back first; I drop after them, and the
+        /// coach, if the squad has one on the sideline, last.
         let order: [MemberID]
 
         /// Where `member` (nil for me) is in the drop's order.
@@ -19,16 +20,22 @@ extension TodayModel {
             member.flatMap { order.firstIndex(of: $0) } ?? order.count
         }
 
+        /// How far into its drop the coach is at `date`, in seconds: below zero while it waits
+        /// for its turn, after mine.
+        func coachFall(at date: Date) -> Double {
+            elapsed(at: date) - drop.start(of: order.count + 1)
+        }
+
         func elapsed(at date: Date) -> Double { date.timeIntervalSince(start) }
     }
 
     /// The end of every scene pick: the picked scene has just filled the screen, and the squad
-    /// drops onto it one after another, me last, then the card, 打卡 and the tab bar come back
-    /// (Tracy, 2026-10-23: 「selecting a new scene always do the open and drop」). The drop's
-    /// moments count from `coveredAt`, when the scene filled the screen: a boxed reveal hands
-    /// over after its confetti, a moment later. A home not loaded yet (the member went straight
-    /// to 我 and picked there) loads first, so the squad is there to drop, and the drop counts
-    /// from then.
+    /// drops onto it one after another, me after my teammates and the coach after me, then the
+    /// card, 打卡 and the tab bar come back (Tracy, 2026-10-23: 「selecting a new scene always do the
+    /// open and drop」). The drop's moments count from `coveredAt`, when the scene filled the
+    /// screen: a boxed reveal hands over after its confetti, a moment later. A home not loaded yet
+    /// (the member went straight to 我 and picked there) loads first, so the squad is there to drop,
+    /// and the drop counts from then.
     public func dropIn(on scene: SceneTheme, coveredAt: Date) async {
         var coveredAt = coveredAt
         if home == nil {
@@ -46,7 +53,7 @@ extension TodayModel {
         let mates = cast.mates.sorted { depth($0) < depth($1) }
         // Real time, not the injected clock: the drop plays against the display's frames.
         let start = coveredAt
-        let drop = DropIn(count: mates.count + 1)
+        let drop = DropIn(count: mates.count + 1 + (cast.coach == nil ? 0 : 1))
         // Unblended, so nobody slides up out of where they stood; each waits above the screen
         // until their turn.
         for (index, mate) in mates.enumerated() {

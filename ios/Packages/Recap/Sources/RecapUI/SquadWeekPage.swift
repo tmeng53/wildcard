@@ -161,7 +161,7 @@ private struct SportRow: View {
                     }
                 }
                 .frame(height: Self.bar)
-            HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 4) {
+            HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
                 Text(verbatim: "\(days)").typeStyle(TypeRamp.scoreInline).monospacedDigit()
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Text("天", bundle: .module).typeStyle(TypeRamp.caption)
