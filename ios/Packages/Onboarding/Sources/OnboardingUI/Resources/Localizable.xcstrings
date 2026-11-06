@@ -2144,6 +2144,28 @@
           }
         }
       }
+    },
+    "小队目标 · 人均 %lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad goal · %lld days each"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小队目标 · 人均 %lld 天"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊目標 · 人均 %lld 天"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -214,12 +214,6 @@ public final class SignUpModel {
     /// account's, given once: an account that already gave it never sees the line.
     let asksForAIConsent: Bool
 
-    /// 小队目标 · 每人每周练几天, for the squad being made.
-    func pickDaysPerMember(_ days: Int) {
-        guard SquadWeeklyGoal.choices.contains(days) else { return }
-        squad.daysPerMember = days
-    }
-
     func typeName(_ text: String) {
         squad.typedName = text
         failure = nil
@@ -388,12 +382,6 @@ extension SignUpModel {
         let known = stock != nil
         stock = await service.stock()
         if let editor, let stock, !known { try? editor.stock(stock) }
-    }
-
-    /// The squad's goal this week, before and after the member's 人均 N 天 adds to it.
-    var squadGoal: (before: Int, after: Int) {
-        let before = joined?.weekGoal ?? 0
-        return (before, before + (joined?.daysPerMember ?? 0))
     }
 
     /// The template's training days from today on: what this week plans, since the first week

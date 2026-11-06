@@ -20,6 +20,15 @@ struct WeekStep: View {
         StepPage(step: .week, title: Text("我的每周计划", bundle: .module), character: nil, onBack: model.back) {
             if let week = model.week {
                 VStack(alignment: .leading, spacing: Space.m) {
+                    // The squad's goal the poster starts from (方案 B, Tracy 2026-11-06): its
+                    // training days are the squad's 人均 N 天, which the member may change.
+                    if let joined = model.joined {
+                        Tag(
+                            Text("小队目标 · 人均 \(joined.daysPerMember) 天", bundle: .module),
+                            systemImage: "person.3.fill", style: .ink
+                        )
+                        .accessibilityIdentifier("week.squadGoal")
+                    }
                     PlanPoster(model: model, week: week)
                     DayChoices(model: model, week: week)
                 }

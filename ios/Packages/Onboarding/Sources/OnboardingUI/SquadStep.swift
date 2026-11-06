@@ -243,6 +243,18 @@ private struct CreatePanel: View {
 }
 
 extension SignUpModel {
+    /// 小队目标 · 每人每周练几天, for the squad being made.
+    func pickDaysPerMember(_ days: Int) {
+        guard SquadWeeklyGoal.choices.contains(days) else { return }
+        squad.daysPerMember = days
+    }
+
+    /// The squad's goal this week, before and after the member's 人均 N 天 adds to it.
+    var squadGoal: (before: Int, after: Int) {
+        let before = joined?.weekGoal ?? 0
+        return (before, before + (joined?.daysPerMember ?? 0))
+    }
+
     /// 「Tracy 的小队」.
     static func suggestedName(for nickname: String) -> String {
         String(localized: "\(nickname) 的小队", bundle: .module.inAppLanguage)

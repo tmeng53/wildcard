@@ -1,4 +1,6 @@
 import Contracts
+import FeedDomain
+import FeedUI
 import SwiftUI
 
 /// The one router: every notice, banner, push and broadcast button opens its place here.
@@ -89,4 +91,23 @@ extension MainTabs {
             today.tell(suggestion, open: open) { ShownBroadcasts.mark(shown, for: member) }
         }
     }
+}
+
+extension MainTabs {
+    /// 动态's page of a post opened from 我的动态: an edit or delete there shows on the wall too.
+    func postPage(_ id: CheckInID, over wall: PostWallStore) -> FeedModel {
+        let page = feed.page(of: id)
+        let parent = page.changed
+        page.changed = { change in
+            parent?(change)
+            wall.apply(change)
+        }
+        return page
+    }
+}
+
+/// A post opened from 我的动态, with the page's own model of it.
+struct OpenedPost {
+    let id: CheckInID
+    let model: FeedModel
 }

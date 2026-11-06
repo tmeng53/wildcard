@@ -301,21 +301,6 @@ final class AppModel {
         isAdmin = (try? await api.me())?.isAdmin ?? false
     }
 
-    /// Whoever made the squad drops onto the scene they picked. On a day a holiday's scene takes
-    /// over every home, its opening plays first, as it does for a joiner after 上场, and its 进场
-    /// drops the squad onto the holiday's scene; the pick stays the squad's own underneath.
-    private func landNewSquad(on picked: SceneTheme, home: Home, today: TodayModel) async {
-        guard let read = await openingScene(of: home.squad.id), let takeover = read.takeover else {
-            await today.dropIn(on: picked, coveredAt: .now)
-            return
-        }
-        let shown = SceneTheme(rawValue: read.scene.rawValue) ?? picked
-        await today.land(on: shown, move: nil, takeover: takeover)
-        // Its opening already played on this phone today: just the drop.
-        if !today.isShowingOpening { await today.dropIn(on: shown, coveredAt: .now) }
-    }
-
-    /// The member's home, from what the phone kept for them alone.
     private func todayStore(of member: MemberID) -> TodayStore {
         let (directory, api) = (folders.folder(for: member), memberAPI(member))
         return TodayStore(
@@ -396,21 +381,4 @@ extension AppModel {
         case .tabs: invite = nil
         }
     }
-}
-
-/// The squad's scene, which 今天 must open on rather than switch to.
-extension AppModel {
-    /// Runs `work` under the launch cover: signing in on the open screen waits here too, for a
-    /// member whose squad is already set up, rather than sitting on a button that seems to do
-    /// nothing.
-    private func withLaunchCover<Value>(_ work: () async -> Value) async -> Value {
-        guard case .signUp = screen else { return await work() }
-        screen = .starting
-        openingUnderCover = true
-        defer { openingUnderCover = false }
-        return await work()
-    }
-
-    /// How long the loading screen waits for the squad's scene before opening on the kept one.
-    static let sceneWait = Duration.seconds(3)
 }
