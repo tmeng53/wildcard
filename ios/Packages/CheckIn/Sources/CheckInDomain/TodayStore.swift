@@ -134,6 +134,16 @@ public final class TodayStore {
     /// 常用运动, for the sport picker.
     public var recentActivities: [Activity] { home?.recentActivities() ?? [] }
 
+    /// The workouts the member posted, saved or still waiting to go out: a workout is posted
+    /// once, so 打卡 shows these as posted and the home's card leaves them out.
+    public var postedWorkouts: Set<WorkoutSource> {
+        let saved = (savedHome?.checkIns ?? []).compactMap { checkIn -> WorkoutSource? in
+            guard checkIn.member == savedHome?.member, case .trained(let training) = checkIn.entry else { return nil }
+            return training.workout?.source
+        }
+        return Set(saved + pending.compactMap { $0.draft.workout?.source })
+    }
+
     // MARK: - Loading
 
     /// Shows the copy kept on the device at once, then loads the server's and sends any post
