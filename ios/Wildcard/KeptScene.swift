@@ -112,17 +112,6 @@ extension LaunchOptions {
 
 /// The squad's scene, which 今天 must open on rather than switch to.
 extension AppModel {
-    /// Runs `work` under the launch cover: signing in on the open screen waits here too, for a
-    /// member whose squad is already set up, rather than sitting on a button that seems to do
-    /// nothing.
-    func withLaunchCover<Value>(_ work: () async -> Value) async -> Value {
-        guard case .signUp = screen else { return await work() }
-        screen = .starting
-        openingUnderCover = true
-        defer { openingUnderCover = false }
-        return await work()
-    }
-
     /// How long the loading screen waits for the squad's scene before opening on the kept one.
     static let sceneWait = Duration.seconds(3)
 }

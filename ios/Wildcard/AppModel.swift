@@ -301,6 +301,17 @@ final class AppModel {
         isAdmin = (try? await api.me())?.isAdmin ?? false
     }
 
+    /// Runs `work` under the launch cover: signing in on the open screen waits here too, for a
+    /// member whose squad is already set up, rather than sitting on a button that seems to do
+    /// nothing.
+    private func withLaunchCover<Value>(_ work: () async -> Value) async -> Value {
+        guard case .signUp = screen else { return await work() }
+        screen = .starting
+        openingUnderCover = true
+        defer { openingUnderCover = false }
+        return await work()
+    }
+
     /// The member's home, from what the phone kept for them alone.
     private func todayStore(of member: MemberID) -> TodayStore {
         let (directory, api) = (folders.folder(for: member), memberAPI(member))
