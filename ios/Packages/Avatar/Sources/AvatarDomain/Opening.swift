@@ -6,8 +6,22 @@ import Foundation
 /// layers' ids. It is data (`openings/<id>/timeline.json` beside its SVGs), so a new one reaches
 /// installed apps without a release; what a layer can do is this type's to say.
 public struct Opening: Hashable, Sendable {
-    /// The only `version` of `timeline.json` this build reads.
-    public static let currentVersion = 1
+    /// The only `version` of `timeline.json` this build reads. Version 2 lets words name the
+    /// squad (`{squad}`), so a build that would show the placeholder as it is refuses the file
+    /// and keeps the opening it bundles.
+    public static let currentVersion = 2
+
+    /// Where a text layer's words put the squad's name: 「{squad}，」 reads 「快乐小队，」.
+    public static let squadPlaceholder = "{squad}"
+
+    /// A text layer's words in `language`, else in `zh-Hans`, with the squad's name in place of
+    /// `{squad}`; words that name the squad read as nothing for a member without one.
+    public static func words(_ words: [String: String], language: String, squad: String?) -> String {
+        let text = words[language] ?? words["zh-Hans"] ?? ""
+        guard text.contains(squadPlaceholder) else { return text }
+        guard let squad, !squad.isEmpty else { return "" }
+        return text.replacingOccurrences(of: squadPlaceholder, with: squad)
+    }
 
     public let name: String
     /// The stage the layers are placed on, in points; the screen fills with it, cropping its
@@ -54,7 +68,8 @@ public struct Opening: Hashable, Sendable {
         /// An SVG beside `timeline.json`, by file name, fitted into the frame.
         case art(String)
         /// Words in each language (`zh-Hans`, `en`, `zh-Hant`), centred in the frame, in the
-        /// app's display face (the wordmark's condensed one) or its body face.
+        /// app's display face (the wordmark's condensed one) or its body face; `{squad}` in
+        /// them stands for the member's squad's name (`Opening.words`).
         case text(words: [String: String], color: RGBAColor, size: Double, font: Font)
         /// The member's squad, cheering, along the frame's bottom edge.
         case squad

@@ -16,6 +16,7 @@ import {
 } from '@wildcard/notices';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
+import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -253,7 +254,15 @@ describe('joining by invite code', () => {
     });
     expect([preview.status, preview.body]).toStrictEqual([
       200,
-      { version: 1, name: '周末网球', memberCount: 1, full: false, joined: false, looks: [] },
+      {
+        version: 1,
+        name: '周末网球',
+        memberCount: 1,
+        full: false,
+        joined: false,
+        daysPerMember: 3,
+        looks: [],
+      },
     ]);
 
     const joined = await call({
@@ -627,7 +636,7 @@ describe('GET /public/squad-invites/{inviteCode}', () => {
       status: 200,
       cacheControl: 'no-store',
       retryAfter: null,
-      body: { version: 1, name: '周末网球', memberCount: 3, full: false, looks },
+      body: { version: 1, name: '周末网球', memberCount: 3, full: false, daysPerMember: 3, looks },
     });
     // A signed-in newcomer's join screen gets the same looks, before joining.
     const newcomer = await signUp();
@@ -638,7 +647,15 @@ describe('GET /public/squad-invites/{inviteCode}', () => {
     });
     expect([preview.status, preview.body]).toStrictEqual([
       200,
-      { version: 1, name: '周末网球', memberCount: 3, full: false, joined: false, looks },
+      {
+        version: 1,
+        name: '周末网球',
+        memberCount: 3,
+        full: false,
+        joined: false,
+        daysPerMember: 3,
+        looks,
+      },
     ]);
   });
 
@@ -676,5 +693,118 @@ describe('GET /public/squad-invites/{inviteCode}', () => {
     expect([refused.status, reason(refused)]).toStrictEqual([429, 'REQUESTS_TOO_FREQUENT']);
     expect(Number(refused.retryAfter)).toBeGreaterThan(590);
     expect((await lookUp('ZZZZZZZZ', '203.0.113.13')).status).toBe(404);
+  });
+});
+
+/** A valid invite code made from a uuid's hex digits, to write a squad straight to the table. */
+const inviteCodeFor = (id: string) =>
+  Array.from(id.replaceAll('-', '').slice(0, 8), (digit) =>
+    '23456789ABCDEFGH'.charAt(Number.parseInt(digit, 16)),
+  ).join('');
+
+describe('the squad’s weekly goal', () => {
+  const goalOf = (token: string, squad: string) =>
+    call({ method: 'GET', path: `/squads/${squad}/weekly-goal`, token });
+  const setGoal = (token: string, change: { squad: string; daysPerMember: unknown }) =>
+    call({
+      method: 'PUT',
+      path: `/squads/${change.squad}/weekly-goal`,
+      token,
+      body: { version: 1, daysPerMember: change.daysPerMember },
+    });
+
+  it('takes the creator’s pick, shows it on the invite, and lets only the captain change it from next week', async () => {
+    const [me, friend, outsider] = [await signUp(), await signUp(), await signUp()];
+    const id = randomUUID();
+    const created = await call({
+      method: 'PUT',
+      path: `/squads/${id}`,
+      token: me.token,
+      body: { version: 1, name: '练得多', daysPerMember: 5 },
+    });
+    expect(created.status).toBe(201);
+    const { inviteCode } = SquadBody.parse(created.body);
+    const invite = await call({ method: 'GET', path: `/public/squad-invites/${inviteCode}` });
+    expect(invite.body).toMatchObject({ memberCount: 1, daysPerMember: 5 });
+    await call({
+      method: 'POST',
+      path: `/squad-invites/${inviteCode}/accept`,
+      token: friend.token,
+    });
+
+    // A new squad has no finished week to average yet.
+    expect(await goalOf(friend.token, id)).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: { version: 1, daysPerMember: 5, nextDaysPerMember: 5, canChange: false, recent: null },
+    });
+    const refused = await setGoal(friend.token, { squad: id, daysPerMember: 4 });
+    expect([refused.status, reason(refused)]).toStrictEqual([403, 'NOT_SQUAD_CAPTAIN']);
+    const outside = await goalOf(outsider.token, id);
+    expect([outside.status, reason(outside)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
+    for (const daysPerMember of [0, 8, 2.5, '4']) {
+      const invalid = await setGoal(me.token, { squad: id, daysPerMember });
+      expect([invalid.status, reason(invalid)]).toStrictEqual([400, 'REQUEST_INVALID']);
+    }
+
+    const changed = await setGoal(me.token, { squad: id, daysPerMember: 4 });
+    expect(changed.body).toStrictEqual({
+      version: 1,
+      daysPerMember: 5,
+      nextDaysPerMember: 4,
+      canChange: true,
+      recent: null,
+    });
+    // This week's goal on the home stays: 5 a member, times 2.
+    const today = await call({ method: 'GET', path: `/squads/${id}/today`, token: me.token });
+    expect(today.body).toMatchObject({ squadWeek: { plannedDays: 10, daysPerMember: 5 } });
+  });
+
+  it('averages the days trained per member over up to 4 finished weeks', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const DAY = 86_400_000;
+    // This week's Monday, as a member with no time zone (UTC) has it, with the 3am grace.
+    const today = new Date(Date.now() - 3 * 3_600_000);
+    const monday = new Date(
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) -
+        ((today.getUTCDay() + 6) % 7) * DAY,
+    );
+    const dayOf = (offset: number) =>
+      new Date(monday.getTime() + offset * DAY).toISOString().slice(0, 10);
+    // Made 2 weeks and a day ago: its first week (from that Sunday) and last week finished.
+    const id = randomUUID();
+    const made = new Date(monday.getTime() - 8 * DAY).toISOString();
+    await sql`insert into public.squads (id, name, invite_code, created_by, captain_id, created_at)
+      values (${id}, '老队', ${inviteCodeFor(id)}, ${me.userId}, ${me.userId}, ${made})`.execute(
+      db,
+    );
+    for (const [member, at] of [
+      [me.userId, made],
+      // My friend joined last Monday.
+      [friend.userId, new Date(monday.getTime() - 7 * DAY).toISOString()],
+    ] as const) {
+      await sql`insert into public.squad_members (squad_id, member_id, joined_at)
+        values (${id}, ${member}, ${at})`.execute(db);
+      await sql`insert into public.squad_membership_events (squad_id, member_id, kind, actor_id, at)
+        values (${id}, ${member}, 'joined', ${member}, ${at})`.execute(db);
+    }
+    const trained = async (member: string, day: string) => {
+      const checkIn = randomUUID();
+      await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+        values (${checkIn}, ${member}, ${day}, ${`${day}T12:00:00.000Z`}, 'trained',
+          '{"version":1,"sport":"run"}')`.execute(db);
+      await sql`insert into public.check_in_squads (check_in_id, squad_id, position)
+        values (${checkIn}, ${id}, 1)`.execute(db);
+    };
+    // The first week (me alone): 1 day. Last week: me 3 days (one twice), my friend 2.
+    await trained(me.userId, dayOf(-8));
+    for (const offset of [-7, -7, -6, -5]) await trained(me.userId, dayOf(offset));
+    for (const offset of [-4, -3]) await trained(friend.userId, dayOf(offset));
+    // This week doesn't count yet.
+    await trained(friend.userId, dayOf(0));
+
+    const goal = await goalOf(me.token, id);
+    // (1 / 1 + 5 / 2) / 2 = 1.75, to one decimal.
+    expect(goal.body).toMatchObject({ daysPerMember: 3, recent: { weeks: 2, daysPerMember: 1.8 } });
   });
 });

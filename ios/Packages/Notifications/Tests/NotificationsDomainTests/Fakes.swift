@@ -1,3 +1,5 @@
+import Contracts
+import Foundation
 import NotificationsDomain
 
 /// iOS's permission and APNs registration, in memory. The prompt answers `answer`, and like iOS
@@ -73,4 +75,18 @@ actor SlowRegistry: DeviceRegistry {
     func remove(_ token: DeviceToken) async throws(NotificationsError) {
         calls.append(.remove(token))
     }
+}
+
+let monday = Date(timeIntervalSince1970: 1_793_577_600)  // 2026-11-02 00:00 UTC, a Monday
+
+func notice(_ id: Int, hoursAfterMonday hours: Double = 0) -> Notice {
+    Notice(
+        id: NoticeID(rawValue: id), toldAt: monday.addingTimeInterval(hours * 3600), squad: nil,
+        subject: .unlocked(.store, item: "deuce"))
+}
+
+var utc: Calendar {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+    return calendar
 }

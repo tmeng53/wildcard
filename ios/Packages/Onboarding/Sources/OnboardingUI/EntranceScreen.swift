@@ -140,7 +140,7 @@ struct EntranceScreen<Tabs: View>: View {
             SquadCard(
                 squad: SquadWeek(
                     name: joined.name, done: joined.weekDone, goal: stage.countFlipped ? goal.after : goal.before,
-                    members: stage.cardMembers),
+                    daysPerMember: joined.daysPerMember, members: stage.cardMembers),
                 mine: myWeek, page: $cardPage
             ) { member in
                 if let player = stage.player(for: member) {

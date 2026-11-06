@@ -105,6 +105,7 @@ const RunBody = z.strictObject({
   given: z.number(),
   failed: z.number(),
   told: z.number(),
+  goals: z.object({ week: z.string(), suggested: z.number(), failed: z.number() }),
 });
 
 // The week of Monday 2026-10-19; its awards are on Sunday 10-25 at 8pm in New York.
@@ -133,6 +134,7 @@ const titlesFor = (letters: readonly string[]) => ({
       },
     ],
   })),
+  ending: { headline: '稳了', line: '三天全拿下，计划都不够用。' },
 });
 
 function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) {
@@ -313,6 +315,7 @@ async function trained(
     createdAt?: Date;
     caption?: string;
     photos?: string[];
+    minutes?: number;
   },
 ) {
   const record: CheckInRecord = {
@@ -324,6 +327,7 @@ async function trained(
     kind: 'trained',
     training: {
       sport: 'run',
+      ...(options.minutes === undefined ? {} : { minutes: options.minutes }),
       ...(options.caption === undefined ? {} : { caption: options.caption }),
       ...(options.photos === undefined
         ? {}
@@ -362,9 +366,34 @@ const Story = z.object({
       reactionsReceived: z.int(),
     })
     .optional(),
+  squadWeek: z
+    .object({
+      members: z.array(
+        z.object({
+          member: z.string(),
+          trainedDays: z.int(),
+          days: z.array(
+            z.object({
+              kind: z.string(),
+              sport: z.string().optional(),
+              minutes: z.int().optional(),
+            }),
+          ),
+          reactionsReceived: z.int(),
+        }),
+      ),
+    })
+    .optional(),
   meals: z.unknown().optional(),
   bestDisclaimer: z.unknown().optional(),
-  ending: z.object({ done: z.int(), plan: z.int() }).optional(),
+  ending: z
+    .object({
+      done: z.int(),
+      plan: z.int(),
+      headline: z.string().optional(),
+      line: z.string().optional(),
+    })
+    .optional(),
   titles: z
     .array(
       z.object({
@@ -592,6 +621,8 @@ describe('weekly awards', () => {
     at(new Date(AWARDS_AT.getTime() + HOUR));
     expect((await run()).failed).toBeGreaterThanOrEqual(1);
     const pending = Story.parse((await read({ token: ana.token, squad })).body);
+    // The page's words wait with the titles: the app says how far the squad got meanwhile.
+    expect(pending.ending).toStrictEqual({ done: 1, plan: 0 });
     expect([pending.status, pending.titles, pending.hottest?.checkIn]).toStrictEqual([
       'pending',
       undefined,
@@ -651,6 +682,7 @@ describe('weekly awards', () => {
     const squad = await squadOf(ana);
     const empty = Story.parse((await read({ token: ana.token, squad })).body);
     expect([empty.status, empty.titles]).toStrictEqual(['ready', []]);
+    expect(empty.squadWeek).toBeUndefined();
     const refused = await read({ token: stranger.token, squad });
     expect([refused.status, refused.body.reason]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
     expect((await read({ token: ana.token, squad, week: '2026-10-20' })).status).toBe(400);
@@ -673,10 +705,10 @@ describe('weekly awards', () => {
   });
 
   it('is frozen at the awards: later joins, leaves, check-ins and scenes don’t change it', async () => {
-    const { run, read, at } = setup();
+    const { run, read, at, prompts } = setup();
     const [ana, bo, cy] = [await member(), await member(), await member()];
     const squad = await squadOf(ana, bo);
-    const top = await trained(ana, { squad, day: '2026-10-20' });
+    const top = await trained(ana, { squad, day: '2026-10-20', minutes: 45 });
     await trained(ana, { squad, day: '2026-10-21' });
     await trained(bo, { squad });
     await reactions.save(top, {
@@ -689,7 +721,14 @@ describe('weekly awards', () => {
     expect(first.scene).toBe('gym');
     expect(first.members.map(({ member: id }) => id)).toStrictEqual([ana.userId, bo.userId]);
     expect(first.titles).toHaveLength(2);
-    expect(first.ending?.done).toBe(3);
+    expect(first.ending).toStrictEqual({
+      done: 3,
+      plan: 0,
+      headline: '稳了',
+      line: '三天全拿下，计划都不够用。',
+    });
+    // The run reads every squad that checked in that week; this one's prompt brings its days.
+    expect(prompts.some((prompt) => prompt.includes('"squad":{"trainedDays":3,'))).toBe(true);
     // Ana trained the most days, so she stands in the middle; neither planned a day this week,
     // so both carry the plan-done mark.
     expect(first.podium).toStrictEqual({
@@ -704,6 +743,17 @@ describe('weekly awards', () => {
       'trained',
     ]);
     expect(first.hottest?.reactions).toStrictEqual([{ emoji: '💪', count: 1 }]);
+    expect(
+      first.squadWeek?.members.map(({ member: id, trainedDays, days, reactionsReceived }) => [
+        id,
+        trainedDays,
+        days.map(({ minutes }) => minutes ?? 0),
+        reactionsReceived,
+      ]),
+    ).toStrictEqual([
+      [ana.userId, 2, [0, 45, 0, 0, 0, 0, 0], 1],
+      [bo.userId, 1, [0, 0, 0, 0, 0, 0, 0], 0],
+    ]);
 
     // After the awards: Cy joins, Bo leaves, Ana posts late, a reaction comes and the scene changes.
     at(new Date(AWARDS_AT.getTime() + 3 * HOUR));

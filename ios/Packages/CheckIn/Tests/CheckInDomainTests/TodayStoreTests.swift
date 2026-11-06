@@ -161,7 +161,7 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(await backend.uploads == [id(3), id(1), id(2)])
     let saved = try #require(await backend.saves.first)
     guard case .trained(let training) = saved.entry else {
-        Issue.record("expected a 练了")
+        Issue.record("expected a 训练")
         return
     }
     // The cover stays first.

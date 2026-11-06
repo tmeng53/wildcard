@@ -63,7 +63,7 @@ export function rosterOf(week: Pick<SquadWeek, 'members'>): ReadonlyMap<string, 
 }
 
 const KIND_WORDS: Readonly<Record<CheckInKind, string>> = {
-  trained: '练了',
+  trained: '训练',
   healthyMeal: '健康餐',
   cheatMeal: '坦白放纵餐',
   disclaimer: '请假条',

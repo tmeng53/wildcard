@@ -108,6 +108,15 @@ const StoryDay = z
       description:
         'For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own.',
     }),
+    minutes: z
+      .int()
+      .min(1)
+      .optional()
+      .meta({
+        description:
+          'For a trained day: the minutes its 练了 logged, summed; missing when none did (minutes ' +
+          'are optional) or in a week frozen before they were kept.',
+      }),
   })
   .openapi('StoryDay');
 
@@ -192,6 +201,30 @@ const storyFields = {
         '你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t ' +
         'in the squad at the awards.',
     }),
+  squadWeek: z
+    .strictObject({
+      members: z
+        .array(
+          z
+            .strictObject({
+              member: z.uuid(),
+              trainedDays: count,
+              days: z.array(StoryDay).length(7).meta({ description: 'Monday first.' }),
+              reactionsReceived: count.meta({
+                description: 'Reactions on their posts that week, for 互相加油.',
+              }),
+            })
+            .openapi('StorySquadWeekMember'),
+        )
+        .meta({ description: 'Everyone in `members`, in the same order.' }),
+    })
+    .openapi('StorySquadWeek')
+    .optional()
+    .meta({
+      description:
+        '全队运动总结: every member’s week, for the squad’s days trained, the sports it trained ' +
+        'most and the week’s fun numbers. Missing when nobody trained.',
+    }),
   hottest: Hottest.optional().meta({
     description:
       'The signed-in member’s check-in with the most reactions at the awards, the latest on a ' +
@@ -224,7 +257,29 @@ const storyFields = {
         '最佳请假条: the one with the most reactions. Missing when none had any, or it was deleted.',
     }),
   ending: z
-    .strictObject({ done: count, plan: count })
+    .strictObject({
+      done: count,
+      plan: count,
+      headline: z
+        .string()
+        .min(1)
+        .optional()
+        .meta({
+          description:
+            'The headline over the page, such as 稳了 or 差一点, written with the awards. Missing ' +
+            'until they are, when the model didn’t write one, and for older weeks.',
+        }),
+      line: z
+        .string()
+        .min(1)
+        .optional()
+        .meta({
+          description:
+            'The line under the days against the plans, written with the awards. Missing until ' +
+            'they are, when the model didn’t write one, and for older weeks: the app then says ' +
+            'how many days are missing, or that the squad made it.',
+        }),
+    })
     .openapi('StoryEnding')
     .optional()
     .meta({
@@ -408,6 +463,18 @@ export function weekStory(
                 reactionsReceived: mine.reactionsReceived,
               },
             }),
+        ...(story.members.some(({ trainedDays }) => trainedDays > 0)
+          ? {
+              squadWeek: {
+                members: story.members.map(({ member, trainedDays, days, reactionsReceived }) => ({
+                  member,
+                  trainedDays,
+                  days: [...days],
+                  reactionsReceived,
+                })),
+              },
+            }
+          : {}),
         ...(hottest === undefined ? {} : { hottest: hottestView(hottest) }),
         ...(story.meals === undefined || eaters.length === 0
           ? {}

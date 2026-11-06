@@ -203,13 +203,6 @@ const morning = zoneAt(8, 11);
 /** The day on a clock `offset` hours ahead of UTC (never within 3 hours of midnight here). */
 const dayAt = (offset: number) => new Date(Date.now() + offset * HOUR).toISOString().slice(0, 10);
 
-/**
- * The days Eve's squad plans when Eve trained today: a 练了 on one of the default plan's rest days
- * (Wednesday, Sunday) makes that day a training day too, one more than `planned`.
- */
-const plannedAfterTraining = (planned: number, day: string) =>
-  String([0, 3].includes(new Date(`${day}T00:00:00.000Z`).getUTCDay()) ? planned + 1 : planned);
-
 /** A member with a profile in `at`'s zone (and a character called `nickname`) and a phone. */
 async function member(at: { readonly zone: string; readonly offset: number }, nickname?: string) {
   const signedUp = await signUp();
@@ -337,7 +330,7 @@ describe('the daily progress push', () => {
       {
         alert: {
           key: 'push.dailyProgress.received',
-          args: ['1', plannedAfterTraining(15, dayAt(eve.offset)), '2'],
+          args: ['1', '9', '2'],
         },
         category: 'dailyProgress',
         thread: 'dailyProgress',
@@ -347,9 +340,9 @@ describe('the daily progress push', () => {
           kind: 'dailyProgress',
           day: dayAt(eve.offset),
           squad,
-          // One day trained, of each member's default 5 planned.
+          // One day trained, of the squad's default goal: 3 days a member.
           squadTrainedDays: 1,
-          squadPlannedDays: Number(plannedAfterTraining(15, dayAt(eve.offset))),
+          squadPlannedDays: 9,
           received: { reaction: 2 },
           // Eve's own posts aren't in her push.
           today: { members: [{ id: eve.userId }], posts: [], more: 0 },
@@ -379,7 +372,7 @@ describe('the daily progress push', () => {
           squadId: squad,
           alert: {
             key: 'push.dailyProgress.received',
-            args: ['1', plannedAfterTraining(15, dayAt(eve.offset)), '2'],
+            args: ['1', '9', '2'],
           },
         },
       ],
@@ -436,7 +429,7 @@ describe('the daily progress push', () => {
       {
         alert: {
           key: 'push.dailyProgress.received',
-          args: ['1', plannedAfterTraining(15, dayAt(eve.offset)), '2'],
+          args: ['1', '9', '2'],
         },
         event: { received: { reaction: 1, comment: 1 } },
       },
@@ -484,7 +477,7 @@ describe('the daily progress push', () => {
     await run();
     expect(sentTo.get(eve.phone)).toMatchObject([
       {
-        alert: { key: 'push.dailyProgress.poke', args: ['0', '10', '小美'] },
+        alert: { key: 'push.dailyProgress.poke', args: ['0', '6', '小美'] },
         // The push's view shows who patted, by their character and nickname.
         event: {
           received: { poke: 1 },
@@ -515,7 +508,7 @@ describe('the daily progress push', () => {
         // The fan's reaction is in `event`, not the count: 「小美和另外 1 人拍了拍你」.
         alert: {
           key: 'push.dailyProgress.poke.more',
-          args: ['1', plannedAfterTraining(20, dayAt(eve.offset)), '小美', '1'],
+          args: ['1', '12', '小美', '1'],
         },
         event: { received: { reaction: 1, poke: 2 } },
       },
@@ -528,7 +521,7 @@ describe('the daily progress push', () => {
     await nudge(mate, { squad, to: eve, kind: 'poke' });
     await run();
     expect(sentTo.get(eve.phone)).toMatchObject([
-      { alert: { key: 'push.dailyProgress.received', args: ['0', '10', '1'] } },
+      { alert: { key: 'push.dailyProgress.received', args: ['0', '6', '1'] } },
     ]);
   });
 
@@ -547,7 +540,7 @@ describe('the daily progress push', () => {
       {
         alert: {
           key: 'push.dailyProgress',
-          args: ['1', plannedAfterTraining(10, dayAt(eve.offset))],
+          args: ['1', '6'],
         },
         event: { received: {} },
       },
@@ -571,7 +564,7 @@ describe('the daily progress push', () => {
     await run();
     expect(sentTo.get(eve.phone)).toMatchObject([
       {
-        alert: { args: ['1', plannedAfterTraining(15, dayAt(eve.offset)), '1'] },
+        alert: { args: ['1', '9', '1'] },
         event: { received: { reaction: 1 } },
       },
     ]);

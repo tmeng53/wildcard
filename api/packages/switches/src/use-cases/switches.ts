@@ -1,6 +1,7 @@
 import {
   isOn,
   isOnForPreviewer,
+  wasOn,
   type Switch,
   type SwitchEdit,
   type SwitchView,
@@ -10,6 +11,11 @@ import type { SwitchStore } from '../ports.js';
 /** Whether the switch `id` is on on `day` (`YYYY-MM-DD`, New York); false for one not listed. */
 export type SwitchOn = (id: string, day: string) => boolean;
 
+/** Whether the switch `id` was on at `at`, on `day` (New York), as it was set then. */
+export type SwitchWasOn = (
+  id: string,
+  when: { readonly at: Date; readonly day: string },
+) => boolean;
 /** The switches as one member sees them. */
 export interface MemberSwitches {
   /** Whether a switch is on on a (real) New York `day`, shifted by the member's pretend days. */
@@ -21,6 +27,11 @@ export interface Switches {
   list(): Promise<readonly Switch[]>;
   /** Every switch as everyone who doesn't preview sees it now, as one lookup. */
   states(): Promise<SwitchOn>;
+  /**
+   * Every switch as `member` saw it at any time, for counting the past: as each was set then, from
+   * its log; for a previewer, as they see the switches now (one in preview on, on their day).
+   */
+  historyFor(member: string): Promise<SwitchWasOn>;
   /** Every switch as `member` sees it: a switch in preview is on for a previewer, on their day. */
   statesFor(member: string): Promise<MemberSwitches>;
 }
@@ -65,6 +76,15 @@ export function createSwitches({
     async statesFor(member) {
       const view = await store.viewOf(member);
       return { on: await lookup(view) };
+    },
+    async historyFor(member) {
+      const view = await store.viewOf(member);
+      if (view.previewer || view.dayOffset !== 0) {
+        const on = await lookup(view);
+        return (id, { day }) => on(id, day);
+      }
+      const [settings, current] = await Promise.all([store.history(), store.list()]);
+      return wasOn(settings, current);
     },
     async put({ window, ...fields }) {
       await store.put({ ...fields, ...(window === undefined ? {} : { window }) });

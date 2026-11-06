@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { cors } from 'hono/cors';
 import {
+  DaysPerMember,
   InviteCode,
   InviteCodeUnknownError,
   MemberId,
@@ -11,6 +12,7 @@ import {
   type Squad as SquadRecord,
   type Squads,
 } from '@wildcard/squads';
+import type { CheckIns } from '@wildcard/check-ins';
 import type { Members } from '@wildcard/members';
 
 import { bodyVersion } from '../body-version.js';
@@ -66,7 +68,24 @@ const SquadList = z
   })
   .openapi('SquadList');
 
-const NewSquad = z.strictObject({ version: bodyVersion(1), name: SquadName }).openapi('NewSquad');
+const daysPerMemberField = DaysPerMember.meta({
+  description:
+    'The squad’s weekly goal (小队每周目标): how many days each member trains a week on average ' +
+    '(人均 N 天), 1 to 7; the goal is this times the members.',
+  example: 3,
+});
+
+const NewSquad = z
+  .strictObject({
+    version: bodyVersion(1),
+    name: SquadName,
+    daysPerMember: daysPerMemberField.optional().meta({
+      description:
+        'The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 ' +
+        'when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.',
+    }),
+  })
+  .openapi('NewSquad');
 
 const SquadNameBody = z
   .strictObject({ version: bodyVersion(1), name: SquadName })
@@ -88,6 +107,9 @@ const SquadInvite = z
       description: `True when it has ${String(SQUAD_MEMBER_LIMIT)} members and can’t take more.`,
     }),
     joined: z.boolean().meta({ description: 'True when the caller is in it already.' }),
+    daysPerMember: daysPerMemberField.meta({
+      description: 'The squad’s weekly goal (人均 N 天) as its captain last set it.',
+    }),
     looks: z.array(LookBody).meta({
       description:
         'The members’ characters, the earliest to join first, for the join screen to show the ' +
@@ -103,6 +125,9 @@ const PublicSquadInvite = z
     memberCount: z.int().meta({ description: 'How many members it has now.' }),
     full: z.boolean().meta({
       description: `True when it has ${String(SQUAD_MEMBER_LIMIT)} members and can’t take more.`,
+    }),
+    daysPerMember: daysPerMemberField.meta({
+      description: 'The squad’s weekly goal (人均 N 天) as its captain last set it.',
     }),
     looks: z.array(LookBody).meta({
       description:
@@ -163,6 +188,8 @@ export function squads(deps: {
   readonly verifyToken: VerifyToken;
   readonly squads: Squads;
   readonly members: Members;
+  /** Each member's week now, which a new squad's goal counts from. */
+  readonly checkIns: Pick<CheckIns, 'weekStartNow'>;
   readonly publicRoutes: PublicRoutes;
 }) {
   const squadParams = z.strictObject({ squadId: SquadId });
@@ -192,7 +219,8 @@ export function squads(deps: {
     operationId: 'createSquad',
     summary: 'Create a squad',
     description:
-      'With only a name; the caller is its first member, and needs a current AI consent ' +
+      'With a name and, optionally, its weekly goal; the caller is its first member, and needs a ' +
+      'current AI consent ' +
       '(`GET /me/ai-consent`). The app makes the id, so a create can ' +
       'be retried: the same squad again answers 200, another name or member under that id 409.',
     security: [{ bearer: [] }],
@@ -392,10 +420,14 @@ export function squads(deps: {
       return c.json({ version: 1 as const, squads: mine.map(wire) }, 200);
     })
     .openapi(create, async (c) => {
+      const creator = caller(c.var.caller.userId);
+      const { name, daysPerMember } = c.req.valid('json');
       const { squad, created } = await deps.squads.create({
         id: c.req.valid('param').squadId,
-        creator: caller(c.var.caller.userId),
-        name: c.req.valid('json').name,
+        creator,
+        name,
+        daysPerMember,
+        week: await deps.checkIns.weekStartNow(creator),
       });
       return created ? c.json(wire(squad), 201) : c.json(wire(squad), 200);
     })
@@ -432,12 +464,16 @@ export function squads(deps: {
       return c.body(null, 204);
     })
     .openapi(preview, async (c) => {
-      const { name, memberCount, full, joined, members } = await deps.squads.previewInvite({
-        inviteCode: inviteCodeOf(c.req.valid('param').inviteCode),
-        viewer: caller(c.var.caller.userId),
-      });
+      const { name, memberCount, full, joined, members, daysPerMember } =
+        await deps.squads.previewInvite({
+          inviteCode: inviteCodeOf(c.req.valid('param').inviteCode),
+          viewer: caller(c.var.caller.userId),
+        });
       const looks = await looksOf(members);
-      return c.json({ version: 1 as const, name, memberCount, full, joined, looks }, 200);
+      return c.json(
+        { version: 1 as const, name, memberCount, full, joined, daysPerMember, looks },
+        200,
+      );
     })
     .openapi(join, async (c) => {
       const { squad, joined } = await deps.squads.join({
@@ -448,12 +484,11 @@ export function squads(deps: {
     });
 
   const publicRoutes = new OpenAPIHono().openapi(publicPreview, async (c) => {
-    const { name, memberCount, full, members } = await deps.squads.previewPublicInvite(
-      inviteCodeOf(c.req.valid('param').inviteCode),
-    );
+    const { name, memberCount, full, members, daysPerMember } =
+      await deps.squads.previewPublicInvite(inviteCodeOf(c.req.valid('param').inviteCode));
     const looks = await looksOf(members);
     c.header('cache-control', 'no-store');
-    return c.json({ version: 1 as const, name, memberCount, full, looks }, 200);
+    return c.json({ version: 1 as const, name, memberCount, full, daysPerMember, looks }, 200);
   });
 
   return new OpenAPIHono().route('/', signedInRoutes).route('/', publicRoutes);

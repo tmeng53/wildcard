@@ -24,7 +24,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
             + #"{"member":"\#(myID)","catchphrase":null,"day":"2026-10-19","training":"notCheckedIn","plannedRest":true}],"#
             + #""today":{"trained":1,"disclaimer":0,"resting":1,"everyoneTrained":true},"#
             + #""me":{"week":{"from":"2026-10-19","to":"2026-10-25","trainedDays":2,"plannedDays":5},"lifetimeTrainedDays":40},"#
-            + #""squadWeek":{"trainedDays":14,"plannedDays":22}}"#)
+            + #""squadWeek":{"trainedDays":14,"plannedDays":15,"daysPerMember":5}}"#)
     let today = try SquadToday(wire)
     let day = try LocalDay("2026-10-19")
     #expect(
@@ -47,7 +47,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
                 today: TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: true),
                 myWeek: MyWeek(
                     firstDay: day, lastDay: try LocalDay("2026-10-25"), week: WeekCount(trainedDays: 2, plannedDays: 5)),
-                squadWeek: WeekCount(trainedDays: 14, plannedDays: 22)))
+                squadWeek: WeekCount(trainedDays: 14, plannedDays: 15), squadDaysPerMember: 5))
 }
 
 @Test func aWeeklyPlanReads() throws {

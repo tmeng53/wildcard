@@ -227,6 +227,7 @@ beforeAll(async () => {
                   sportListed: (id) =>
                     createSports({ store: createPostgresSportStore(scope) }).isListed(id),
                   switches: () => Promise.resolve(() => true),
+                  switchListed: (id) => Promise.resolve(id === 'winter'),
                 }),
                 gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
               }),

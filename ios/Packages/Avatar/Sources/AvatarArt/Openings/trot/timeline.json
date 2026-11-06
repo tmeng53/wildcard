@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "name": "Thanksgiving",
   "stage": {
     "width": 390,
@@ -61,6 +61,22 @@
       }
     },
     {
+      "id": "to",
+      "x": 20,
+      "y": 200,
+      "width": 350,
+      "height": 60,
+      "text": {
+        "words": {
+          "zh-Hans": "{squad}，",
+          "en": "{squad},",
+          "zh-Hant": "{squad}，"
+        },
+        "color": "#FFFFFF",
+        "size": 22
+      }
+    },
+    {
       "id": "title",
       "x": 20,
       "y": 306,
@@ -68,36 +84,36 @@
       "height": 72,
       "text": {
         "words": {
-          "zh-Hans": "感恩节快乐",
-          "en": "Happy Thanksgiving",
-          "zh-Hant": "感恩節快樂"
+          "zh-Hans": "感恩节快乐！",
+          "en": "Happy Thanksgiving!",
+          "zh-Hant": "感恩節快樂！"
         },
         "color": "#FFFFFF",
         "size": 48
       }
     },
     {
-      "id": "sub",
-      "x": 20,
-      "y": 382,
-      "width": 350,
+      "id": "from",
+      "x": 190,
+      "y": 384,
+      "width": 170,
       "height": 28,
       "text": {
         "words": {
-          "zh-Hans": "今天全队在秋日小镇",
-          "en": "The whole squad is in Autumn Town today",
-          "zh-Hant": "今天全隊在秋日小鎮"
+          "zh-Hans": "— 外卡",
+          "en": "— Wildcard",
+          "zh-Hant": "— 外卡"
         },
-        "color": "#FBEFE6",
-        "size": 17
+        "color": "#FFFFFF",
+        "size": 18
       }
     },
     {
       "id": "squad",
       "x": 10,
-      "y": 520,
+      "y": 450,
       "width": 370,
-      "height": 190,
+      "height": 260,
       "squad": true
     },
     {
@@ -209,6 +225,24 @@
         ]
       },
       {
+        "part": "to",
+        "channel": "opacity",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0
+          },
+          {
+            "t": 0.9,
+            "v": 0
+          },
+          {
+            "t": 1.2,
+            "v": 1
+          }
+        ]
+      },
+      {
         "part": "title",
         "channel": "opacity",
         "keys": [
@@ -222,6 +256,24 @@
           },
           {
             "t": 1.4,
+            "v": 1
+          }
+        ]
+      },
+      {
+        "part": "from",
+        "channel": "opacity",
+        "keys": [
+          {
+            "t": 0,
+            "v": 0
+          },
+          {
+            "t": 1.8,
+            "v": 0
+          },
+          {
+            "t": 2.2,
             "v": 1
           }
         ]
@@ -261,24 +313,6 @@
             "t": 1.8,
             "v": 1,
             "ease": "backOut"
-          }
-        ]
-      },
-      {
-        "part": "sub",
-        "channel": "opacity",
-        "keys": [
-          {
-            "t": 0,
-            "v": 0
-          },
-          {
-            "t": 1.8,
-            "v": 0
-          },
-          {
-            "t": 2.2,
-            "v": 1
           }
         ]
       },

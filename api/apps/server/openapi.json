@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -160,6 +160,17 @@
             "type": "string",
             "description": "The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now."
           },
+          "weeks": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "How many weeks in a row the squad trained over its goal (`goalSuggestion`)."
+          },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "The goal suggested, 人均 N 天 (`goalSuggestion`)."
+          },
           "title": {
             "$ref": "#/components/schemas/LocalizedWords"
           },
@@ -257,6 +268,22 @@
           "zhHant"
         ],
         "additionalProperties": false
+      },
+      "LiveShelf": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false,
+        "description": "The `shelf` event’s data: what the caller’s 商店街 shows may have changed, so read `GET /me/unlocks` again."
       },
       "Health": {
         "type": "object",
@@ -2620,6 +2647,13 @@
             "maxLength": 1000,
             "description": "Trimmed, then 1 to 20 characters as people see them, on one line.",
             "x-max-characters": 20
+          },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.",
+            "example": 3
           }
         },
         "required": [
@@ -2696,6 +2730,13 @@
             "type": "boolean",
             "description": "True when the caller is in it already."
           },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "The squad’s weekly goal (人均 N 天) as its captain last set it.",
+            "example": 3
+          },
           "looks": {
             "type": "array",
             "items": {
@@ -2710,6 +2751,7 @@
           "memberCount",
           "full",
           "joined",
+          "daysPerMember",
           "looks"
         ],
         "additionalProperties": false
@@ -2735,6 +2777,13 @@
             "type": "boolean",
             "description": "True when it has 8 members and can’t take more."
           },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "The squad’s weekly goal (人均 N 天) as its captain last set it.",
+            "example": 3
+          },
           "looks": {
             "type": "array",
             "items": {
@@ -2748,6 +2797,7 @@
           "name",
           "memberCount",
           "full",
+          "daysPerMember",
           "looks"
         ],
         "additionalProperties": false
@@ -2912,17 +2962,25 @@
               "trainedDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad."
+                "description": "Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad; a day counts once however many times they trained."
               },
               "plannedDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Training days planned this week, added up over the members’ plans, each in their own week."
+                "description": "The squad’s weekly goal (小队每周目标) in days: `daysPerMember` times the members now. Anyone’s trained days count towards it."
+              },
+              "daysPerMember": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 7,
+                "description": "The weekly goal its captain set (人均 N 天), in the caller’s week: how many days each member trains on average.",
+                "example": 3
               }
             },
             "required": [
               "trainedDays",
-              "plannedDays"
+              "plannedDays",
+              "daysPerMember"
             ],
             "additionalProperties": false
           }
@@ -3365,6 +3423,93 @@
         "required": [
           "version",
           "coach"
+        ],
+        "additionalProperties": false
+      },
+      "SquadWeeklyGoal": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "This week’s goal (人均 N 天).",
+            "example": 3
+          },
+          "nextDaysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "Next week’s goal: a change counts from the next week, so it differs from `daysPerMember` only after the captain changed it this week.",
+            "example": 3
+          },
+          "canChange": {
+            "type": "boolean",
+            "description": "True for the captain, the only one who sets it."
+          },
+          "recent": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "weeks": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4,
+                "description": "How many finished weeks it averages: up to 4."
+              },
+              "daysPerMember": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 7,
+                "description": "The days each member trained on average in those weeks, to one decimal: each week’s trained days (from check-ins sent to the squad) over its members then.",
+                "example": 3.4
+              }
+            },
+            "required": [
+              "weeks",
+              "daysPerMember"
+            ],
+            "additionalProperties": false,
+            "description": "Null until the squad has a finished week."
+          }
+        },
+        "required": [
+          "version",
+          "daysPerMember",
+          "nextDaysPerMember",
+          "canChange",
+          "recent"
+        ],
+        "additionalProperties": false
+      },
+      "SquadWeeklyGoalChange": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "How many days each member trains a week on average (人均 N 天), 1 to 7. The squad’s goal for a week is this times its members; anyone’s trained days count towards it.",
+            "example": 3
+          }
+        },
+        "required": [
+          "version",
+          "daysPerMember"
         ],
         "additionalProperties": false
       },
@@ -4419,6 +4564,9 @@
               "myWeek": {
                 "$ref": "#/components/schemas/StoryMyWeek"
               },
+              "squadWeek": {
+                "$ref": "#/components/schemas/StorySquadWeek"
+              },
               "hottest": {
                 "$ref": "#/components/schemas/StoryHottest"
               },
@@ -4522,6 +4670,9 @@
               },
               "myWeek": {
                 "$ref": "#/components/schemas/StoryMyWeek"
+              },
+              "squadWeek": {
+                "$ref": "#/components/schemas/StorySquadWeek"
               },
               "hottest": {
                 "$ref": "#/components/schemas/StoryHottest"
@@ -4710,11 +4861,65 @@
           "sport": {
             "type": "string",
             "description": "For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own."
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "For a trained day: the minutes its 练了 logged, summed; missing when none did (minutes are optional) or in a week frozen before they were kept."
           }
         },
         "required": [
           "day",
           "kind"
+        ],
+        "additionalProperties": false
+      },
+      "StorySquadWeek": {
+        "type": "object",
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorySquadWeekMember"
+            },
+            "description": "Everyone in `members`, in the same order."
+          }
+        },
+        "required": [
+          "members"
+        ],
+        "additionalProperties": false,
+        "description": "全队运动总结: every member’s week, for the squad’s days trained, the sports it trained most and the week’s fun numbers. Missing when nobody trained."
+      },
+      "StorySquadWeekMember": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trainedDays": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryDay"
+            },
+            "description": "Monday first."
+          },
+          "reactionsReceived": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Reactions on their posts that week, for 互相加油."
+          }
+        },
+        "required": [
+          "member",
+          "trainedDays",
+          "days",
+          "reactionsReceived"
         ],
         "additionalProperties": false
       },
@@ -4890,6 +5095,16 @@
           "plan": {
             "type": "integer",
             "minimum": 0
+          },
+          "headline": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The headline over the page, such as 稳了 or 差一点, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks."
+          },
+          "line": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The line under the days against the plans, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many days are missing, or that the squad made it."
           }
         },
         "required": [
@@ -5476,6 +5691,13 @@
           "open": {
             "type": "boolean",
             "description": "Whether it is open now (its switch on). A closed store shows only what the member owns."
+          },
+          "checkInsToGo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins in its sports open it.",
+            "example": 2
           }
         },
         "required": [
@@ -5507,7 +5729,7 @@
               "available",
               "locked"
             ],
-            "description": "`owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box)."
+            "description": "`owned` once unlocked or claimed (worn all year, whatever the switches), and for a limited store’s starter while it is out (claim it to keep it); `available` for any other starter that is out now, `locked` for one still to earn (a 「？」 box)."
           },
           "checkInsToGo": {
             "type": "integer",
@@ -7514,7 +7736,7 @@
       "put": {
         "operationId": "createSquad",
         "summary": "Create a squad",
-        "description": "With only a name; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.",
+        "description": "With a name and, optionally, its weekly goal; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.",
         "security": [
           {
             "bearer": []
@@ -8753,6 +8975,174 @@
         }
       }
     },
+    "/squads/{squadId}/weekly-goal": {
+      "get": {
+        "operationId": "getSquadWeeklyGoal",
+        "summary": "The squad’s weekly goal and its recent average",
+        "description": "For its members, in the caller’s week.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The goal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadWeeklyGoal"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "setSquadWeeklyGoal",
+        "summary": "Set the squad’s weekly goal",
+        "description": "For the captain. It counts from next week (the captain’s), so a week’s goal never moves while the squad trains towards it. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SquadWeeklyGoalChange"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The goal, with next week’s changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadWeeklyGoal"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id or goal",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/squads/{squadId}/coach/notes/{noteId}/put-away": {
       "put": {
         "operationId": "putAwayCoachMemberNote",
@@ -9300,7 +9690,7 @@
       "get": {
         "operationId": "streamMyEvents",
         "summary": "The caller’s live events (Server-Sent Events)",
-        "description": "A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.",
+        "description": "A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it, and each `shelf` event (data `LiveShelf`) says the caller’s 商店街 may have changed (a store, piece, rule or switch, or one of their unlocks), so read `GET /me/unlocks` again. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` and `GET /me/unlocks` again, since events sent while it was closed are not replayed.",
         "security": [
           {
             "bearer": []

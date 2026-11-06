@@ -8,7 +8,10 @@ final class SquadSettingsUITests: XCTestCase {
     func testTheCaptainsPage() {
         let app = launch()
         XCTAssertEqual(app.staticTexts["squad.name"].label, "晨跑五人组")
-        XCTAssertTrue(app.staticTexts["squad.sceneLine"].label.contains("Coco"), "the line doesn't name the winner")
+        XCTAssertTrue(app.buttons["squad.goal.pick.3"].isSelected, "the goal's pill isn't on 3")
+        XCTAssertEqual(app.staticTexts["squad.goal.note"].label, "改动下周生效")
+        XCTAssertTrue(
+            app.descendants(matching: .any)["squad.member.captain"].exists, "the captain's row has no 队长 tag")
         XCTAssertTrue(app.buttons["squad.rename"].exists, "the captain can't rename")
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the captain can pick though Coco won")
         XCTAssertEqual(app.buttons.matching(identifier: "squad.member.more").count, 4, "not one ··· per other member")
@@ -20,6 +23,11 @@ final class SquadSettingsUITests: XCTestCase {
         assertOnScreen(app)
         settle()
         keepScreenshot(named: "60-squad-captain")
+
+        // The captain's change counts from next week: this week's number stays, the line says so.
+        app.buttons["squad.goal.pick.5"].tap()
+        waitFor(app.staticTexts["squad.goal.note"], "label == '下周起人均 5 天'", "the change didn't wait for next week")
+        XCTAssertTrue(app.buttons["squad.goal.pick.5"].isSelected, "the pill didn't move to 5")
 
         app.buttons.matching(identifier: "squad.member.more").element(boundBy: 3).tap()
         let remove = app.buttons["squad.member.remove"]
@@ -88,7 +96,6 @@ final class SquadSettingsUITests: XCTestCase {
         app.descendants(matching: .any)["squadcard.squad"].tap()
         waitFor(app.staticTexts["squad.scene"], "label == '游泳池'", "the picked scene didn't show", timeout: 60)
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the winner can pick twice")
-        XCTAssertFalse(app.staticTexts["squad.sceneLine"].exists, "a picked scene still has a line under it")
     }
 
     /// The longest names the rules allow stay inside the screen on the smallest phone.
@@ -127,15 +134,16 @@ final class SquadSettingsUITests: XCTestCase {
     private func assertOnScreen(_ app: XCUIApplication) {
         let screen = app.frame
         for element in [
-            app.staticTexts["squad.name"], app.staticTexts["squad.scene"], app.staticTexts["squad.sceneLine"],
+            app.staticTexts["squad.name"], app.staticTexts["squad.scene"],
+            app.descendants(matching: .any)["squad.goal.now"],
         ] {
             XCTAssertTrue(element.exists, "\(element.identifier) is missing")
             XCTAssertGreaterThanOrEqual(element.frame.minX, screen.minX, "\(element.identifier) starts off screen")
             XCTAssertLessThanOrEqual(element.frame.maxX, screen.maxX, "\(element.identifier) runs off screen")
         }
         XCTAssertLessThanOrEqual(
-            app.staticTexts["squad.name"].frame.maxY, app.staticTexts["squad.scene"].frame.minY,
-            "the name runs into the scene card")
+            app.staticTexts["squad.name"].frame.maxY, app.descendants(matching: .any)["squad.goal.now"].frame.minY,
+            "the name runs into the goal card")
         if app.buttons["squad.rename"].exists {
             XCTAssertLessThanOrEqual(
                 app.staticTexts["squad.name"].frame.maxX, app.buttons["squad.rename"].frame.minX,

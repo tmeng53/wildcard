@@ -78,7 +78,7 @@ struct DayCircle: View {
 
     private var value: Text {
         switch status {
-        case .trained: Text("练了", bundle: .module)
+        case .trained: Text("训练", bundle: .module)
         case .excused: Text("请假", bundle: .module)
         case .restDay: Text("休息日", bundle: .module)
         case .open where isToday, .planned where isToday: Text("今天", bundle: .module)
