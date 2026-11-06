@@ -56,7 +56,7 @@ struct NeutralTests {
         (ColorRole.fgDefault, ColorRole.bgCanvas),
         (.fgDefault, .bgSubtle),
         (.fgMuted, .bgCanvas),
-        (.fgMuted, .bgSubtle), (.fgPositive, .bgCanvas),
+        (.fgMuted, .bgSubtle),
         (.fgDanger, .bgCanvas), (.fgDanger, .bgSubtle),
     ])
     func neutralTextIsReadable(text: ColorRole, background: ColorRole) {

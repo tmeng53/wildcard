@@ -5,6 +5,7 @@ import AvatarUI
 import CharacterEditorDomain
 import DesignSystem
 import DesignSystemUI
+import SportsUI
 import SwiftUI
 
 /// 商店街 as a street (逛街版, approved 2026-11-06): the stores side by side, one storefront at a
@@ -166,7 +167,6 @@ private struct Storefront: View {
                     }
                     .padding(.leading, Space.l)
                     .padding(.top, Space.xs + Space.xxs / 2 + awning)
-                    .accessibilityIdentifier("street.store.\(store.id).new")
                 }
             }
             .contentShape(Rectangle())
@@ -188,7 +188,8 @@ private struct Storefront: View {
         .background(Color(role: .bgSubtle, in: theme).overlay(color.opacity(0.06)))
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color(role: .bgBrand, in: theme).overlay(color.opacity(0.3)))
+                .fill(Color(role: .bgBrand, in: theme))
+                .overlay(color.opacity(0.3))
                 .frame(height: frame)
         }
         .overlay {
