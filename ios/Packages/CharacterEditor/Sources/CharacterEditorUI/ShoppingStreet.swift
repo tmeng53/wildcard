@@ -108,12 +108,7 @@ private struct RackHeader: View {
             .typeStyle(TypeRamp.footnote)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
             .lineLimit(1)
-        if let limited = StoreCopy.limited(store.id) {
-            limited
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .lineLimit(1)
-        }
+        LimitedTag(store: store.id)
         Spacer(minLength: 0)
         if let sports = model.sports(of: store.id) {
             Button {

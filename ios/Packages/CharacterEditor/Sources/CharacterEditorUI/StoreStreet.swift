@@ -260,11 +260,8 @@ private struct Storefront: View {
         }
         .overlay(alignment: .topTrailing) {
             // A limited store says so, never its dates.
-            if store.isOpen, let limited = StoreCopy.limited(store.id) {
-                limited
-                    .typeStyle(TypeRamp.label)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .padding(Space.s)
+            if store.isOpen, let tag = LimitedTag(store: store.id) {
+                tag.padding(Space.s)
             }
         }
     }
@@ -329,8 +326,44 @@ enum StoreLook {
     /// on white (HALF MOON's mint).
     static func wordmark(_ store: String, in theme: SceneTheme) -> Color {
         guard let rgba = PlaceholderCharacter.storeColor(store) else { return Color(role: .fgDefault, in: theme) }
-        let light = 0.299 * Double(rgba.red) + 0.587 * Double(rgba.green) + 0.114 * Double(rgba.blue)
-        return light > 160 ? Color(role: .fgDefault, in: theme) : Color(rgba)
+        return isLight(rgba) ? Color(role: .fgDefault, in: theme) : Color(rgba)
+    }
+
+    /// The colour of a limited store's tag: the one `names.json` gives that kind of limit, else
+    /// the store's own.
+    static func limited(_ store: String) -> RGBAColor? {
+        PlaceholderCharacter.names().stores[store]?.limitedColor ?? PlaceholderCharacter.storeColor(store)
+    }
+
+    static func isLight(_ rgba: RGBAColor) -> Bool {
+        0.299 * Double(rgba.red) + 0.587 * Double(rgba.green) + 0.114 * Double(rgba.blue) > 160
+    }
+}
+
+/// A limited store's tag (冬季限定), filled with its limit's colour, white words on it, or ink
+/// where the colour is too light for white.
+struct LimitedTag: View {
+    let word: Text
+    let color: RGBAColor?
+    @Environment(\.sceneTheme) private var theme
+
+    init?(store: String) {
+        guard let word = StoreCopy.limited(store) else { return nil }
+        (self.word, color) = (word, StoreLook.limited(store))
+    }
+
+    var body: some View {
+        let light = color.map(StoreLook.isLight) ?? false
+        word
+            .typeStyle(TypeRamp.label)
+            .foregroundStyle(Color(role: light ? .fgDefault : .fgOnInk, in: theme))
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, Space.xs - Space.xxs / 2)
+            .frame(height: CoachTag.Size.small.height)
+            .background(
+                color.map { Color($0) } ?? Color(role: .bgInk, in: theme),
+                in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
     }
 }
 #endif
