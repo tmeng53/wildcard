@@ -47,6 +47,10 @@ extension MainTabs {
         case .today:
             selection = .today
             todayPages = []
+        case .pats:
+            selection = .today
+            todayPages = []
+            today.replayPatsOnMe()
         case .coachNote(let note):
             // On the home itself, where the coach stands.
             selection = .today

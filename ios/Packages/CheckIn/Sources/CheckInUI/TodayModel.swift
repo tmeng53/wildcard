@@ -106,6 +106,8 @@ public final class TodayModel {
     /// Keeps when the latest pat I was shown arrived, so each pat on me plays once, and the night
     /// the lights are on for.
     let defaults: UserDefaults
+    /// The 6pm push was opened: the next pats on me play the day's again, shown or not.
+    var replaysPatsOnMe = false
 
     /// - Parameters:
     ///   - scene: the squad's scene this week; the gym, the scene the designs are drawn on, until
