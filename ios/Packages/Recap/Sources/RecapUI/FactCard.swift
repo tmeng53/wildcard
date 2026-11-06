@@ -97,11 +97,16 @@ struct FactCard: View {
         }
     }
 
+    /// Who trained on the squad's best day: everyone, or how many.
+    private func bestDayNote(members: Int) -> Text {
+        if members == everyone { return Text("全员都训练了", bundle: .module) }
+        return Text("\(members) 人训练了", bundle: .module)
+    }
+
     private var note: Text {
         switch fact {
         case .bestDay(let best):
-            best.members == everyone
-                ? Text("全员都训练了", bundle: .module) : Text("\(best.members) 人训练了", bundle: .module)
+            bestDayNote(members: best.members)
         case .streak(let days, let from, let member):
             streakNote(from: from, through: from + days - 1, by: member)
         case .reactions, .cheers:
