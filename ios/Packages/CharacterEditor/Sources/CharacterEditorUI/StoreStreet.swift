@@ -40,7 +40,9 @@ struct StoreStreet: View {
                     LazyHStack(alignment: .bottom, spacing: Space.s) {
                         ForEach(stores) { store in
                             Storefront(model: model, store: store)
-                                .containerRelativeFrame(.horizontal) { width, _ in width - 2 * peek }
+                                // The container is the scroll view less its content margins, so a
+                                // storefront as wide as it leaves a neighbour peeking in either side.
+                                .containerRelativeFrame(.horizontal)
                                 .id(store.id)
                         }
                     }
@@ -81,11 +83,8 @@ struct StoreStreet: View {
     @ViewBuilder
     private func counter(for store: EditorChoices.Store) -> some View {
         VStack(spacing: Space.m) {
-            sportsLine(store.id)
-                .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
+            sports(store.id)
+                .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("street.sports")
             if store.isOpen {
                 Button {
@@ -109,11 +108,25 @@ struct StoreStreet: View {
         .padding(.horizontal, Space.pageMargin)
     }
 
-    /// The sports its pieces' rules count, as its tip lists them, or its own line where none has one.
-    private func sportsLine(_ store: String) -> Text {
-        guard let sports = model.sports(of: store) else { return StoreCopy.sports(store) }
-        guard !sports.isEmpty else { return Text("练什么都算", bundle: .module) }
-        return Text(verbatim: sports.map(\.localizedName).joined(separator: " · "))
+    /// The sports its pieces' rules count as pills, as its tip lists them, or its own line where
+    /// none has one.
+    @ViewBuilder
+    private func sports(_ store: String) -> some View {
+        if let sports = model.sports(of: store) {
+            FlowRow(spacing: Space.xs, centred: true) {
+                if sports.isEmpty {
+                    SportPill(word: Text("练什么都算", bundle: .module))
+                } else {
+                    ForEach(sports, id: \.self) { SportPill(word: $0.name) }
+                }
+            }
+        } else {
+            StoreCopy.sports(store)
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     /// Dresses the member off the main actor, idling as their persona does.

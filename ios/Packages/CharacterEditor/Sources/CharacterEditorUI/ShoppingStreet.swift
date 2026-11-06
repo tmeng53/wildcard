@@ -32,7 +32,14 @@ public struct ShoppingStreetPage: View {
                     if store != nil { model.leaveStore() } else { back() }
                 }
                 .accessibilityIdentifier("street.back")
-                if let store { RackHeader(model: model, store: store) }
+                if let store {
+                    RackHeader(model: model, store: store)
+                } else {
+                    Text("商店街", bundle: .module)
+                        .typeStyle(TypeRamp.title)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .accessibilityAddTraits(.isHeader)
+                }
             }
             .padding(.horizontal, Space.pageMargin)
             .padding(.vertical, Space.xs)
@@ -78,12 +85,7 @@ public struct ShoppingStreetPage: View {
         .accessibilityIdentifier("street.page")
     }
 
-    @ViewBuilder
     private var street: some View {
-        Text("商店街", bundle: .module)
-            .typeStyle(TypeRamp.taskTitle)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .accessibilityAddTraits(.isHeader)
         StoreStreet(model: model)
             .padding(.top, Space.s)
     }
