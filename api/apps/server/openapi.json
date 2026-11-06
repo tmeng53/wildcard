@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them) or `broadcast` (a notice we sent everyone). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -159,6 +159,17 @@
           "broadcast": {
             "type": "string",
             "description": "The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now."
+          },
+          "weeks": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "How many weeks in a row the squad trained over its goal (`goalSuggestion`)."
+          },
+          "daysPerMember": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "The goal suggested, 人均 N 天 (`goalSuggestion`)."
           },
           "title": {
             "$ref": "#/components/schemas/LocalizedWords"

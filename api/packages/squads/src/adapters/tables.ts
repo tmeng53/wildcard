@@ -23,6 +23,14 @@ export interface SquadEvents {
   squad_id: string;
 }
 
+export interface SquadGoalSuggestions {
+  captain_id: string | null;
+  days_per_member: number;
+  squad_id: string;
+  suggested_at: Generated<Timestamp>;
+  week_start: string;
+}
+
 export interface SquadMembers {
   joined_at: Generated<Timestamp>;
   member_id: string;
@@ -66,6 +74,7 @@ export interface SquadWeeklyGoals {
 
 export interface DB {
   squad_events: SquadEvents;
+  squad_goal_suggestions: SquadGoalSuggestions;
   squad_members: SquadMembers;
   squad_membership_events: SquadMembershipEvents;
   squad_scene_picks: SquadScenePicks;

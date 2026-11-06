@@ -436,6 +436,35 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       });
     },
 
+    async goalSuggestions(squad) {
+      const rows = await db
+        .selectFrom('squad_goal_suggestions')
+        .select([sql<string>`week_start::text`.as('week_start'), 'captain_id', 'days_per_member'])
+        .where('squad_id', '=', squad)
+        .orderBy('week_start')
+        .execute();
+      return rows.map((row) => ({
+        week: SceneWeek.parse(row.week_start),
+        captain: row.captain_id === null ? null : MemberId.parse(row.captain_id),
+        daysPerMember: DaysPerMember.parse(row.days_per_member),
+      }));
+    },
+
+    async suggestGoal(squad, { week, captain, daysPerMember }) {
+      const inserted = await db
+        .insertInto('squad_goal_suggestions')
+        .values({
+          squad_id: squad,
+          week_start: week,
+          captain_id: captain,
+          days_per_member: daysPerMember,
+        })
+        .onConflict((conflict) => conflict.columns(['squad_id', 'week_start']).doNothing())
+        .returning('squad_id')
+        .executeTakeFirst();
+      return inserted === undefined ? 'taken' : 'suggested';
+    },
+
     async scenePicks(squad) {
       const rows = await db
         .selectFrom('squad_scene_picks')
