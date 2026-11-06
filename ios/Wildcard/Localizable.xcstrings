@@ -1,18 +1,18 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
-    "今天": {
+    "小队": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Today"
+            "value": "Squad"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天"
+            "value": "小隊"
           }
         }
       }
