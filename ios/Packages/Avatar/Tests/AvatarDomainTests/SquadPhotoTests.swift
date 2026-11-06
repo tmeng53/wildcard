@@ -46,4 +46,12 @@ struct SquadPhotoTests {
             #expect(spot.top + photo.figureHeight <= 190.001)
         }
     }
+
+    @Test func theWaveRunsLeftToRightAcrossBothRows() {
+        #expect(SquadPhoto.leftToRight(count: 3) == [0, 1, 2])
+        // Front 0 1 2 3, back 4 5 6 between them.
+        #expect(SquadPhoto.leftToRight(count: 7) == [0, 4, 1, 5, 2, 6, 3])
+        // Front 0 1 2 3, back 4 5 6 7 half a figure to the right.
+        #expect(SquadPhoto.leftToRight(count: 8) == [0, 4, 1, 5, 2, 6, 3, 7])
+    }
 }

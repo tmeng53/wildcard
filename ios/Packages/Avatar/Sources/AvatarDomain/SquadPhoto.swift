@@ -63,4 +63,13 @@ public struct SquadPhoto: Hashable, Sendable {
         }
         spots = backSpots + frontSpots
     }
+
+    /// The members from the photo's left edge to its right (back and front rows woven
+    /// together), for a 人浪 that runs across it: the order is the same at any size.
+    public static func leftToRight(count: Int) -> [Int] {
+        SquadPhoto(count: count, width: 1, height: 1).spots
+            .enumerated()
+            .sorted { ($0.element.left, $0.offset) < ($1.element.left, $1.offset) }
+            .map(\.element.member)
+    }
 }
