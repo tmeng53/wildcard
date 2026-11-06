@@ -82,14 +82,12 @@ final class UnlockNoticeUITests: XCTestCase {
         keepScreenshot(named: "101-piece-claim-sheet")
         claim.tap()
         // Every notice banner is one element named notice.banner (#463); this one says 已放进衣橱.
+        // It goes by itself after a few seconds, so it is tapped as soon as it shows: on a busy
+        // CI simulator a few more queries outlast it. The rack after 领取 is checked in
+        // testAPieceLeftInItsBoxWaitsOnItsRack.
         let claimed = app.descendants(matching: .any).matching(identifier: "notice.banner")
             .matching(NSPredicate(format: "label CONTAINS %@", "已放进衣橱")).firstMatch
         XCTAssertTrue(claimed.waitForExistence(timeout: Self.wait), "「已放进衣橱」 never dropped in")
-        let owned = app.descendants(matching: .any).matching(identifier: "editor.tile.hat.warmup-headphones.owned")
-            .firstMatch
-        XCTAssertTrue(owned.waitForExistence(timeout: Self.wait), "the headphones aren't 已拥有 after 领取")
-        XCTAssertFalse(tag.exists, "NEW stayed after 领取")
-        Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "102-piece-claimed")
         claimed.tap()
         let worn = app.buttons["editor.tile.hat.warmup-headphones"]
@@ -109,15 +107,24 @@ final class UnlockNoticeUITests: XCTestCase {
         XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "the notice never dropped in")
         banner.tap()
         let popup = waitForArrival(in: app)
+        // 商店街 is still sliding in under the pop-up; a tap before it settles can be lost.
+        Thread.sleep(forTimeInterval: 1)
         app.buttons["editor.arrival.leave"].tap()
         XCTAssertTrue(popup.waitForNonExistence(timeout: Self.wait), "the pop-up stayed up")
         let piece = app.buttons["editor.tile.hat.warmup-headphones"]
         XCTAssertTrue(piece.waitForExistence(timeout: Self.wait), "the piece isn't waiting on the rack")
         let tag = app.descendants(matching: .any).matching(identifier: "editor.tile.hat.warmup-headphones.new")
-        XCTAssertTrue(tag.firstMatch.exists, "the piece waits without NEW")
+            .firstMatch
+        XCTAssertTrue(tag.exists, "the piece waits without NEW")
         piece.tap()
         let take = app.buttons["street.claim"]
         XCTAssertTrue(take.waitForExistence(timeout: Self.wait), "a tap didn't offer 领取")
+        // 领取 puts it in the wardrobe: the rack shows it owned, without NEW.
+        take.tap()
+        let owned = app.descendants(matching: .any).matching(identifier: "editor.tile.hat.warmup-headphones.owned")
+            .firstMatch
+        XCTAssertTrue(owned.waitForExistence(timeout: Self.wait), "the headphones aren't 已拥有 after 领取")
+        XCTAssertFalse(tag.exists, "NEW stayed after 领取")
     }
 
     private func launchWithAPieceCameIn() -> XCUIApplication {
