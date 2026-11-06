@@ -19,18 +19,22 @@ public struct SquadMember: Identifiable, Sendable, Hashable {
     }
 }
 
-/// The squad's week: its name, check-ins against the week's planned training days, and everyone.
+/// The squad's week: its name, the days anyone trained against its goal (人均 N 天 times its
+/// members), and everyone's today.
 public struct SquadWeek: Sendable, Hashable {
     public let name: String
     public let done: Int
     public let goal: Int
+    /// The goal its captain set, 人均 N 天.
+    public let daysPerMember: Int
     /// Up to 8, checked in first by time, then resting, then everyone else.
     public let members: [SquadMember]
 
-    public init(name: String, done: Int, goal: Int, members: [SquadMember]) {
+    public init(name: String, done: Int, goal: Int, daysPerMember: Int = 3, members: [SquadMember]) {
         self.name = name
         self.done = done
         self.goal = goal
+        self.daysPerMember = daysPerMember
         self.members = members
     }
 }
@@ -224,6 +228,11 @@ enum SquadCardMetrics {
     /// On a narrower phone (375 points), eight rings shrink to fit: 32-point rings, 1 apart.
     static let compactAvatar: Double = Sizing.characterHead - 6
     static let compactRingSpacing: Double = 1
+    /// With 今天 before them on a 375-point phone, eight rings shrink a little more.
+    static let narrowAvatar: Double = Sizing.characterHead - 10
+    /// Between the goal's day cells; past 40 cells they sit closer.
+    static let cellSpacing: Double = 2
+    static let denseCellSpacing: Double = 1
     /// The second page's day circles.
     static let day: Double = 30
     static let dayGlyph: Double = 14
@@ -244,6 +253,8 @@ private struct PageHeader: View {
     let title: String
     let count: Int
     let goal: Int
+    /// A word after the score (天).
+    var unit: Text?
     var open: (() -> Void)?
 
     var body: some View {
@@ -268,7 +279,14 @@ private struct PageHeader: View {
                 }
             }
             Spacer(minLength: 0)
-            Score(count: count, goal: goal, size: .hero)
+            HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
+                Score(count: count, goal: goal, size: .hero)
+                if let unit {
+                    unit
+                        .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreHero))
+                        .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                }
+            }
         }
     }
 
@@ -291,14 +309,15 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
         let gap = footer == nil ? Space.s : Space.xs
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
-                label: Text("本周小队训练", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal,
-                open: openSquad)
+                label: Text("小队本周目标 · 人均 \(squad.daysPerMember) 天", bundle: .module), title: squad.name,
+                count: squad.done, goal: squad.goal, unit: Text("天", bundle: .module), open: openSquad)
             Spacer(minLength: gap)
-            ProgressBar(fraction: squad.goal > 0 ? Double(squad.done) / Double(squad.goal) : 0)
+            DayCells(filled: squad.done, total: squad.goal)
             Spacer(minLength: gap)
             ViewThatFits(in: .horizontal) {
-                rings(avatarSize: Sizing.characterHead, spacing: SquadCardMetrics.ringSpacing)
-                rings(avatarSize: SquadCardMetrics.compactAvatar, spacing: SquadCardMetrics.compactRingSpacing)
+                todayRings(avatarSize: Sizing.characterHead, spacing: SquadCardMetrics.ringSpacing)
+                todayRings(avatarSize: SquadCardMetrics.compactAvatar, spacing: SquadCardMetrics.compactRingSpacing)
+                todayRings(avatarSize: SquadCardMetrics.narrowAvatar, spacing: SquadCardMetrics.compactRingSpacing)
             }
             if let footer {
                 Spacer(minLength: gap)
@@ -306,6 +325,15 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
             }
         }
         .accessibilityElement(children: .contain)
+    }
+
+    /// Everyone's ring, which shows their today, after a 今天 label.
+    private func todayRings(avatarSize: Double, spacing: Double) -> some View {
+        HStack(spacing: Space.xs) {
+            SectionLabel(Text("今天", bundle: .module))
+                .fixedSize()
+            rings(avatarSize: avatarSize, spacing: spacing)
+        }
     }
 
     private func rings(avatarSize: Double, spacing: Double) -> some View {
@@ -362,33 +390,4 @@ private struct MyWeekPage: View {
     private var shownDay: Int { pickedDay ?? mine.today ?? 0 }
 }
 
-/// Two dots at the card's foot, the current page's solid. Tapping one goes to it.
-private struct PageDots: View {
-    @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Binding var page: SquadCardPage
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(SquadCardPage.allCases, id: \.self) { item in
-                Button {
-                    withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { page = item }
-                } label: {
-                    Circle()
-                        .fill(Color(role: .fgOnScene, in: theme).opacity(item == page ? 1 : 0.25))
-                        .frame(width: SquadCardMetrics.dot, height: SquadCardMetrics.dot)
-                        // 6 apart to the eye, in a row as tall as the card's padding, each
-                        // still a full tap target tall.
-                        .frame(width: SquadCardMetrics.dot * 2, height: Space.cardPadding)
-                        .contentShape(Rectangle().inset(by: -(Sizing.minimumTapTarget - Space.cardPadding) / 2))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(item == .squad ? Text("小队", bundle: .module) : Text("我这周", bundle: .module))
-                .accessibilityAddTraits(item == page ? .isSelected : [])
-                .accessibilityIdentifier("squadcard.page.\(item == .squad ? "squad" : "mine")")
-            }
-        }
-        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: page)
-    }
-}
 #endif

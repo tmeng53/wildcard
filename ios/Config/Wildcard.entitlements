@@ -6,6 +6,12 @@
 	     and the App Store switches it to production. -->
 	<key>aps-environment</key>
 	<string>development</string>
+	<!-- Invite links (wildcardsquad.com/join/<code>) open the app; the site's
+	     .well-known/apple-app-site-association names it. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:wildcardsquad.com</string>
+	</array>
 	<!-- Sign in with Apple, the app's only sign-in. -->
 	<key>com.apple.developer.applesignin</key>
 	<array>

@@ -7,10 +7,11 @@ import Foundation
 import SwiftUI
 
 /// A full-screen opening an admin drew (a holiday's 「感恩节快乐」): its layers on the stage,
-/// moved by its clip once and its loop for as long as it shows, with the squad cheering where
-/// the timeline puts them and, once the clip has played, the button that enters. The stage
-/// fills the screen, cropping its edges on a phone of another shape. With Reduce Motion on, it
-/// opens on the clip's last frame, standing still, with the button already there.
+/// moved by its clip once and its loop for as long as it shows, with the squad where the
+/// timeline puts them, posed for a group photo so everyone shows whole, and, once the clip has
+/// played, the button that enters. The stage fills the screen, cropping its edges on a phone of
+/// another shape. With Reduce Motion on, it opens on the clip's last frame, standing still, with
+/// the button already there.
 public struct OpeningView<Label: View>: View {
     let opening: Opening
     let art: [String: ArtworkView]
@@ -107,7 +108,7 @@ public struct OpeningView<Label: View>: View {
                 .minimumScaleFactor(0.5)
                 .lineLimit(2)
         case .squad:
-            SquadLineup(players: squad)
+            SquadPhotoView(players: squad)
         }
     }
 

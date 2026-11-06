@@ -245,10 +245,10 @@ final class PatStage {
         case (nil, .trained(let activity?)):
             return (
                 String(localized: "\(activity.localizedName) 中", bundle: .module.inAppLanguage),
-                caption ?? String(localized: "今天练了", bundle: .module.inAppLanguage)
+                caption ?? String(localized: "今天训练", bundle: .module.inAppLanguage)
             )
         case (nil, .trained(nil)):
-            return (String(localized: "今天练了", bundle: .module.inAppLanguage), caption)
+            return (String(localized: "今天训练", bundle: .module.inAppLanguage), caption)
         case (nil, .disclaimer):
             return (
                 String(localized: "请假条", bundle: .module.inAppLanguage),

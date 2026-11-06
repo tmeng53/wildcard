@@ -196,7 +196,7 @@ public protocol APIProtocol: Sendable {
     func getSquad(_ input: Operations.GetSquad.Input) async throws -> Operations.GetSquad.Output
     /// Create a squad
     ///
-    /// With only a name; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    /// With a name and, optionally, its weekly goal; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
@@ -292,6 +292,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /squads/{squadId}/coach`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/delete(fireSquadCoach)`.
     func fireSquadCoach(_ input: Operations.FireSquadCoach.Input) async throws -> Operations.FireSquadCoach.Output
+    /// The squad’s weekly goal and its recent average
+    ///
+    /// For its members, in the caller’s week.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weekly-goal`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weekly-goal/get(getSquadWeeklyGoal)`.
+    func getSquadWeeklyGoal(_ input: Operations.GetSquadWeeklyGoal.Input) async throws -> Operations.GetSquadWeeklyGoal.Output
+    /// Set the squad’s weekly goal
+    ///
+    /// For the captain. It counts from next week (the captain’s), so a week’s goal never moves while the squad trains towards it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/weekly-goal`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weekly-goal/put(setSquadWeeklyGoal)`.
+    func setSquadWeeklyGoal(_ input: Operations.SetSquadWeeklyGoal.Input) async throws -> Operations.SetSquadWeeklyGoal.Output
     /// Put the caller’s morning note away (收下)
     ///
     /// The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.
@@ -336,7 +350,7 @@ public protocol APIProtocol: Sendable {
     func markMyNoticesSeen(_ input: Operations.MarkMyNoticesSeen.Input) async throws -> Operations.MarkMyNoticesSeen.Output
     /// The caller’s live events (Server-Sent Events)
     ///
-    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.
+    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it, and each `shelf` event (data `LiveShelf`) says the caller’s 商店街 may have changed (a store, piece, rule or switch, or one of their unlocks), so read `GET /me/unlocks` again. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` and `GET /me/unlocks` again, since events sent while it was closed are not replayed.
     ///
     /// - Remark: HTTP `GET /me/events`.
     /// - Remark: Generated from `#/paths//me/events/get(streamMyEvents)`.
@@ -826,7 +840,7 @@ extension APIProtocol {
     }
     /// Create a squad
     ///
-    /// With only a name; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    /// With a name and, optionally, its weekly goal; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
@@ -1038,6 +1052,38 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// The squad’s weekly goal and its recent average
+    ///
+    /// For its members, in the caller’s week.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/weekly-goal`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weekly-goal/get(getSquadWeeklyGoal)`.
+    public func getSquadWeeklyGoal(
+        path: Operations.GetSquadWeeklyGoal.Input.Path,
+        headers: Operations.GetSquadWeeklyGoal.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadWeeklyGoal.Output {
+        try await getSquadWeeklyGoal(Operations.GetSquadWeeklyGoal.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Set the squad’s weekly goal
+    ///
+    /// For the captain. It counts from next week (the captain’s), so a week’s goal never moves while the squad trains towards it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/weekly-goal`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/weekly-goal/put(setSquadWeeklyGoal)`.
+    public func setSquadWeeklyGoal(
+        path: Operations.SetSquadWeeklyGoal.Input.Path,
+        headers: Operations.SetSquadWeeklyGoal.Input.Headers = .init(),
+        body: Operations.SetSquadWeeklyGoal.Input.Body
+    ) async throws -> Operations.SetSquadWeeklyGoal.Output {
+        try await setSquadWeeklyGoal(Operations.SetSquadWeeklyGoal.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
     /// Put the caller’s morning note away (收下)
     ///
     /// The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.
@@ -1136,7 +1182,7 @@ extension APIProtocol {
     }
     /// The caller’s live events (Server-Sent Events)
     ///
-    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.
+    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it, and each `shelf` event (data `LiveShelf`) says the caller’s 商店街 may have changed (a store, piece, rule or switch, or one of their unlocks), so read `GET /me/unlocks` again. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` and `GET /me/unlocks` again, since events sent while it was closed are not replayed.
     ///
     /// - Remark: HTTP `GET /me/events`.
     /// - Remark: Generated from `#/paths//me/events/get(streamMyEvents)`.

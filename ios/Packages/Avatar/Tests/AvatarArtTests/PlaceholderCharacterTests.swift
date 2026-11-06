@@ -14,8 +14,10 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "earL", "earR", "head", "flapL", "flapR", "crown", "award", "nose", "eyes", "brows", "browsSad", "browsMad",
             "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp", "drool", "vein", "steamL", "steamR",
             "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR", "sparkle", "tearL", "tearR", "food0",
-            "food1", "food2", "armL", "propL", "gripL", "armR", "chin", "propR", "gripR", "flexL", "muscleL", "flexR",
-            "muscleR", "heart", "propFront", "propOver", "desk",
+            "food1", "food2", "chin", "armL", "propL", "gripL", "armR", "chinFrontL", "chinFrontR", "propR", "gripR",
+            "flexL",
+            "muscleL",
+            "flexR", "muscleR", "heart", "propFront", "propOver", "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
     #expect(try figure.part("acc").art.count == (outfit == Looks.bear ? 1 : 0))
@@ -69,7 +71,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 62)
+    #expect(figure.parts.count == 64)
 }
 
 @Test(arguments: Persona.allCases)
@@ -147,17 +149,6 @@ func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
         for part in ["earL", "earR", "flapL", "flapR", "nose"] as [PartID] {
             #expect(try figure.part(part).art.isEmpty == !moving.contains(part), "\(body) \(part)")
         }
-    }
-}
-
-/// Hanging sleeves tuck under a person-sized chin; a bichon's fluff reaches lower, so it draws that
-/// fluff again over the hanging arms, and only the bichon does. Raised arms stay in front of it.
-@Test func aBichonsChinSitsOverTheSleeves() throws {
-    for body in try PlaceholderCharacter.variants(for: "body") {
-        let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body]))
-        #expect(try figure.part("chin").art.isEmpty == (body != "bichon"), "\(body)")
-        #expect(try figure.index("chin") > figure.index("armL") && figure.index("chin") > figure.index("armR"))
-        #expect(try figure.index("chin") < figure.index("flexL") && figure.index("chin") < figure.index("flexR"))
     }
 }
 

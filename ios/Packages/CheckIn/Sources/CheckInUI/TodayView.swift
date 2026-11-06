@@ -197,6 +197,7 @@ public struct TodayView: View {
         } else {
             let squad = SquadWeek(
                 name: home.squad.name, done: week.squad.trainedDays, goal: week.squad.plannedDays,
+                daysPerMember: home.today.squadDaysPerMember,
                 members: home.today.members.map { mate in
                     SquadMember(
                         id: mate.member.description,

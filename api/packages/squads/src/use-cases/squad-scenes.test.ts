@@ -61,6 +61,7 @@ async function squadOf(count: number) {
   const people = await Promise.all(Array.from({ length: count }, () => newMember()));
   const [captain, rest] = [nth(people, 0), people.slice(1)];
   const { squad } = await squads.create({
+    week: '2026-11-02',
     id: SquadId.parse(randomUUID()),
     creator: captain,
     name: SquadName.parse('早八跑团'),

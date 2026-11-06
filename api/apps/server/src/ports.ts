@@ -221,11 +221,11 @@ export type RateLimit = (
 ) => { readonly allowed: true } | { readonly allowed: false; readonly retryAfterSeconds: number };
 
 /** Something that just happened for one member, as soon as it is committed. */
-export interface LiveEvent {
+export type LiveEvent =
   /** A notice was told to the member (通知): its id in the notices. */
-  readonly kind: 'notice';
-  readonly id: number;
-}
+  | { readonly kind: 'notice'; readonly id: number }
+  /** What the member's 商店街 shows may have changed: read `GET /me/unlocks` again. */
+  | { readonly kind: 'shelf' };
 
 /** What hears a member's live events: each one, then the end of the feed. */
 export interface LiveListener {

@@ -21,6 +21,9 @@ public final class MeModel {
     public private(set) var saveFailed = false
 
     @ObservationIgnored private let service: any MeService
+    /// Pieces claimed here, saved or on their way: a claim is never taken back, so a read that left
+    /// one out (it was on its way before the claim saved) still shows it claimed.
+    @ObservationIgnored private var claimedHere: Set<String> = []
     @ObservationIgnored private let confirm: @MainActor () async throws(MeError) -> DeletionConfirmation
     @ObservationIgnored private let signOutHere: @MainActor () async -> Void
 
@@ -40,12 +43,18 @@ public final class MeModel {
         if case .loaded(let overview) = load { overview } else { nil }
     }
 
-    /// Reads the overview, again after a failure or when the tab comes back.
+    /// Reads the overview, again after a failure or when the tab comes back. A try after a
+    /// failure shows the loader again, never the failure while it waits.
     public func reload() async {
+        if case .failed = load { load = .loading }
         do {
-            let overview = try await service.overview()
+            var overview = try await service.overview()
+            overview.claimed.formUnion(claimedHere)
             load = .loaded(overview)
         } catch {
+            // A read cut short (the tab left, the app went to the background) didn't fail: the
+            // next one runs when the page is back.
+            guard !Task.isCancelled else { return }
             // Keep what is on screen when a refresh fails; say so only when there is nothing.
             if overview == nil { load = .failed(error) }
             await signOutIfEnded(error)
@@ -141,11 +150,13 @@ public final class MeModel {
         guard case .loaded(var overview) = load, !overview.claimed.contains(piece) else { return true }
         saveFailed = false
         overview.claimed.insert(piece)
+        claimedHere.insert(piece)
         load = .loaded(overview)
         do {
             try await service.claim(piece: piece)
             return true
         } catch {
+            claimedHere.remove(piece)
             if case .loaded(var latest) = load {
                 latest.claimed.remove(piece)
                 load = .loaded(latest)

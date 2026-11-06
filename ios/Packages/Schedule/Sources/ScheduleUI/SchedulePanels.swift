@@ -15,14 +15,14 @@ struct ScheduleCounts: View {
     var body: some View {
         HStack(alignment: .top, spacing: Space.cardGap) {
             CountCard(
-                label: Text("一共练了", bundle: .module), count: store.lifetimeTrainedDays ?? 0, goal: nil,
+                label: Text("一共训练", bundle: .module), count: store.lifetimeTrainedDays ?? 0, goal: nil,
                 unit: Text("天", bundle: .module)
             )
             .accessibilityIdentifier("schedule.count.lifetime")
             if let squad = sheet.squad {
                 CountCard(
-                    label: Text("本周小队训练", bundle: .module), count: squad.trained, goal: squad.planned,
-                    unit: Text("次", bundle: .module)
+                    label: Text("小队本周目标", bundle: .module), count: squad.trained, goal: squad.planned,
+                    unit: Text("天", bundle: .module)
                 )
                 .accessibilityIdentifier("schedule.count.squad")
             }

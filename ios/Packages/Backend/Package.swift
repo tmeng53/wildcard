@@ -91,6 +91,8 @@ let package = Package(
                 .product(name: "ScenePickDomain", package: "ScenePick"),
                 .product(name: "SquadDomain", package: "Squad"),
                 .product(name: "ScheduleDomain", package: "Schedule"),
+                .product(name: "HTTPTypes", package: "swift-http-types"),
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
             ]),
     ]
 )

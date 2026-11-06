@@ -43,7 +43,7 @@ const today: SquadToday = {
   everyoneTrained: true,
   myWeek: { from: '2026-10-19', to: '2026-10-25', days: [], trainedDays: 5, plannedDays: 5 },
   myLifetimeTrainedDays: 5,
-  squadWeek: { trainedDays: 40, plannedDays: 40 },
+  squadWeek: { trainedDays: 40, plannedDays: 40, daysPerMember: 5 },
 };
 
 function post(author: MemberId, minute: number): SquadPost {

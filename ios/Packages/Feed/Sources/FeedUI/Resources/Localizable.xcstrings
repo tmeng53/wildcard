@@ -401,7 +401,7 @@
         }
       }
     },
-    "练了" : {
+    "训练" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -412,7 +412,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "練了"
+            "value" : "訓練"
           }
         }
       }
@@ -1005,6 +1005,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "第 %1$lld 張，共 %2$lld 張"
+          }
+        }
+      }
+    },
+    "训练 · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trained · %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訓練 · %@"
           }
         }
       }
@@ -1629,22 +1645,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "路線地圖，第 %lld 張，共 %lld 張"
-          }
-        }
-      }
-    },
-    "训练 · %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Workout · %@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "訓練 · %@"
           }
         }
       }

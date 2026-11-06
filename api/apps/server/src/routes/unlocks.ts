@@ -77,6 +77,11 @@ const ShelfStore = z
       description:
         'Whether it is open now (its switch on). A closed store shows only what the member owns.',
     }),
+    checkInsToGo: LockedPiece.shape.checkInsToGo.optional().meta({
+      description:
+        'For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins ' +
+        'in its sports open it.',
+    }),
   })
   .openapi('ShelfStore');
 
@@ -261,7 +266,10 @@ export function unlocks(deps: {
             givenAt: givenAt.toISOString(),
           })),
           shelf: {
-            stores: [...shelf.stores],
+            stores: shelf.stores.map(({ toGo, ...store }) => ({
+              ...store,
+              ...(toGo === undefined ? {} : { checkInsToGo: toGo }),
+            })),
             pieces: shelf.pieces.map(({ toGo, sports, after, ...piece }) => ({
               ...piece,
               ...(toGo === undefined ? {} : { checkInsToGo: toGo }),
