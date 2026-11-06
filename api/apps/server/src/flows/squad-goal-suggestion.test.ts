@@ -24,7 +24,7 @@ import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import { config, signUp } from '../test-kit/local-supabase.js';
-import { suggestSquadGoals } from './squad-goal-suggestion.js';
+import { suggestGoalIn, suggestSquadGoals } from './squad-goal-suggestion.js';
 
 // The captain's goal suggestion end to end on local Supabase: squads, their goals and check-ins
 // are real; the notices record what the captain would be told. Its weeks are in August, apart
@@ -100,18 +100,33 @@ async function squadOf(size: number) {
   return { id, people, captain, train };
 }
 
-/** A run at `now`, with what it told this squad. */
+/** While true, every notice a run tells is refused. */
+let noticesDown = false;
+
+/**
+ * A run at `now`, with what it told this squad. The suggestion is kept on the real squads in a
+ * transaction, as on the server; the notice is recorded, or refused while `noticesDown`.
+ */
 async function runAt(now: number, squad: string) {
   const told: NewNotice[] = [];
   const run = await suggestSquadGoals({
     checkIns,
     squads,
-    notices: {
-      tell: (notices) => {
-        told.push(...notices);
-        return Promise.resolve();
-      },
-    },
+    suggestGoal: suggestGoalIn(db, {
+      squads: (scope) =>
+        createSquads({
+          store: createPostgresSquadStore(scope),
+          inviteCodes: randomInviteCodes,
+          aiConsent: () => Promise.resolve(true),
+        }),
+      notices: () => ({
+        tell: (notices) => {
+          if (noticesDown) return Promise.reject(new Error('notices are down'));
+          told.push(...notices);
+          return Promise.resolve();
+        },
+      }),
+    }),
     clock: () => new Date(now),
     log: createLog(() => undefined),
   });
@@ -193,6 +208,18 @@ describe('suggesting a captain a higher squad goal', () => {
     expect(again.told.map((notice) => notice.subject)).toEqual([
       { version: 1, weeks: 3, daysPerMember: 5 },
     ]);
+  });
+
+  it('keeps no suggestion whose notice failed, so the next run tells the captain', async () => {
+    const squad = await squadOf(1);
+    for (const week of [1, 2, 3]) await squad.train(week, 5);
+    noticesDown = true;
+    const failed = await runAt(FROZEN + HOUR, squad.id).finally(() => {
+      noticesDown = false;
+    });
+    expect(failed.run.failed).toBeGreaterThanOrEqual(1);
+    expect(await squads.goalSuggestions(SquadId.parse(squad.id))).toEqual([]);
+    expect((await runAt(FROZEN + 2 * HOUR, squad.id)).told).toHaveLength(1);
   });
 
   it('keeps every suggestion, and the log refuses a change', async () => {

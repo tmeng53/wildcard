@@ -4,7 +4,12 @@ import {
   WeekStart as CheckInWeek,
   type CheckIns,
 } from '@wildcard/check-ins';
-import { MemberId as NoticeMember, SquadId as NoticeSquad, type Notices } from '@wildcard/notices';
+import {
+  MemberId as NoticeMember,
+  SquadId as NoticeSquad,
+  type NewNotice,
+  type Notices,
+} from '@wildcard/notices';
 import {
   SUGGESTION_WEEKS,
   SceneWeek,
@@ -14,6 +19,7 @@ import {
   suggestedGoal,
   weekAfter,
   weeksBefore,
+  type GoalSuggestion,
   type GoalWeek,
   type MemberId,
   type Squads,
@@ -22,6 +28,7 @@ import {
 import { awardsTimeOf, latestAwardedWeek } from '@wildcard/weekly-awards';
 
 import type { Log } from '../log.js';
+import type { Database } from '../ports.js';
 
 // 连续 3 周超过小队目标: a squad's weeks against its goal, from squads (who was in it, its goal,
 // its captain and what they were suggested before) and check-ins (the days trained for it), told
@@ -29,13 +36,38 @@ import type { Log } from '../log.js';
 
 export interface GoalSuggestionDependencies {
   readonly checkIns: Pick<CheckIns, 'squadsCheckedInto' | 'squadTrainedDays'>;
-  readonly squads: Pick<
-    Squads,
-    'captainOf' | 'goalSuggestions' | 'membersAt' | 'suggestGoal' | 'weeklyGoals'
-  >;
-  readonly notices: Pick<Notices, 'tell'>;
+  readonly squads: Pick<Squads, 'captainOf' | 'goalSuggestions' | 'membersAt' | 'weeklyGoals'>;
+  /** Keeps the suggestion and tells the captain, both or neither (`suggestGoalIn`). */
+  readonly suggestGoal: SuggestGoal;
   readonly clock: () => Date;
   readonly log: Log;
+}
+
+/**
+ * Keeps a suggestion in the squad's log and its notice in the captain's 通知 together: 'taken'
+ * when the squad was already told that week. Both or neither, so a notice that can't be kept
+ * leaves the week to the next run instead of a suggestion nobody heard.
+ */
+export type SuggestGoal = (input: {
+  readonly squad: SquadId;
+  readonly suggestion: GoalSuggestion;
+  readonly notice: NewNotice;
+}) => Promise<'suggested' | 'taken'>;
+
+/** `SuggestGoal` in one transaction of `db`, on the squads and notices it opens there. */
+export function suggestGoalIn(
+  db: Database,
+  on: {
+    readonly squads: (scope: Database) => Pick<Squads, 'suggestGoal'>;
+    readonly notices: (scope: Database) => Pick<Notices, 'tell'>;
+  },
+): SuggestGoal {
+  return ({ squad, suggestion, notice }) =>
+    db.transaction().execute(async (trx) => {
+      const outcome = await on.squads(trx).suggestGoal(squad, suggestion);
+      if (outcome === 'suggested') await on.notices(trx).tell([notice]);
+      return outcome;
+    });
 }
 
 /** What a run did. */
@@ -107,10 +139,12 @@ async function suggestTo(
   if (last !== undefined && (await overSince(counter, { from: last.week, to: weeks[0]?.week }))) {
     return false;
   }
-  const outcome = await deps.squads.suggestGoal(squad, { week, captain, daysPerMember });
-  if (outcome === 'taken') return false;
-  await tellCaptain(deps, { squad, captain, daysPerMember });
-  return true;
+  const outcome = await deps.suggestGoal({
+    squad,
+    suggestion: { week, captain, daysPerMember },
+    notice: captainsNotice({ squad, captain, daysPerMember }),
+  });
+  return outcome === 'suggested';
 }
 
 /** Whether every week after `from` and before `to` was over its goal. */
@@ -147,20 +181,15 @@ function weekCounter(
 }
 
 /** The captain's notice: in 通知 and, once on each phone, the home's banner. Never a push. */
-async function tellCaptain(
-  deps: GoalSuggestionDependencies,
-  input: { readonly squad: SquadId; readonly captain: MemberId; readonly daysPerMember: number },
-): Promise<void> {
-  await deps.notices
-    .tell([
-      {
-        member: NoticeMember.parse(input.captain),
-        squad: NoticeSquad.parse(input.squad),
-        kind: 'goalSuggestion',
-        subject: { version: 1, weeks: SUGGESTION_WEEKS, daysPerMember: input.daysPerMember },
-      },
-    ])
-    .catch((error: unknown) => {
-      deps.log.warn('goal suggestion not kept in notices', { squad: input.squad, error });
-    });
+function captainsNotice(input: {
+  readonly squad: SquadId;
+  readonly captain: MemberId;
+  readonly daysPerMember: number;
+}): NewNotice {
+  return {
+    member: NoticeMember.parse(input.captain),
+    squad: NoticeSquad.parse(input.squad),
+    kind: 'goalSuggestion',
+    subject: { version: 1, weeks: SUGGESTION_WEEKS, daysPerMember: input.daysPerMember },
+  };
 }
