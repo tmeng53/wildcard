@@ -175,7 +175,7 @@ extension RecapDomain.MyWeek {
         var days: [Day] = []
         for each in wire.days {
             guard let day = try? LocalDay(each.day) else { return nil }
-            days.append(Day(day: day, kind: DayKind(each)))
+            days.append(Day(day: day, kind: DayKind(each), minutes: each.minutes))
         }
         self.init(
             plan: wire.plannedDays, days: days, healthyMeals: wire.healthyMeals, cheatMeals: wire.cheatMeals,
