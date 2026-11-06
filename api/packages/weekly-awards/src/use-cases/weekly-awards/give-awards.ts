@@ -107,7 +107,7 @@ export async function giveAwards(
 
 /**
  * The cause kept when every reply named the wrong members (one missing, repeated or unknown) or
- * left a title or line blank, or the 战报's last page without its words.
+ * left a title or line blank, or the 战报's last page (when it has one) without its words.
  */
 const FAILED_CHECKS = 'FailedChecks';
 
@@ -180,9 +180,10 @@ async function writeTitles(
         answer,
         winners.map(({ member }) => member),
       );
-      const words = endingWordsOf(answer);
-      if (titles !== undefined && words !== undefined) {
-        return { titles, words: ending === undefined ? undefined : words };
+      // Without an ending the words go unused, so blank ones fail nothing.
+      const words = ending === undefined ? undefined : endingWordsOf(answer);
+      if (titles !== undefined && (ending === undefined || words !== undefined)) {
+        return { titles, words };
       }
       cause = FAILED_CHECKS;
     } catch (error) {

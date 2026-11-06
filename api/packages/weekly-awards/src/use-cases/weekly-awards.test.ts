@@ -200,6 +200,17 @@ describe('createWeeklyAwards', () => {
     expect(given.ending).toBeUndefined();
   });
 
+  it('takes blank last-page words without asking again when the squad trained no day', async () => {
+    const { awards, asked } = setup([
+      () => Promise.resolve({ ...reply, ending: { headline: '稳了', line: '   ' } }),
+    ]);
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    const given = await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
+    expect(asked).toHaveLength(1);
+    expect(given.members).toHaveLength(2);
+    expect(given.ending).toBeUndefined();
+  });
+
   it('asks once more when the last page’s line comes back blank', async () => {
     const { awards, asked } = setup([
       () => Promise.resolve({ ...reply, ending: { headline: '稳了', line: '   ' } }),
