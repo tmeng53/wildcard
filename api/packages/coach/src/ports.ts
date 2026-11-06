@@ -301,6 +301,12 @@ export type SquadWeekSource = (input: {
  */
 export type AiConsented = (members: readonly string[]) => Promise<readonly string[]>;
 
+/**
+ * What the coach is told about `day` (`YYYY-MM-DD`, New York): a line for each moment on that day,
+ * such as a holiday (「今天是感恩节」), kept as data with the switches, never in code.
+ */
+export type CoachOccasions = (day: string) => Promise<readonly string[]>;
+
 /** The coach each squad has hired, and every hire and firing. */
 export interface CoachHiringStore {
   /** The coach the squad has hired now and since when, if any. */

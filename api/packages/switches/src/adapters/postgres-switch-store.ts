@@ -42,6 +42,7 @@ export function createPostgresSwitchStore(db: Kysely<SwitchTables>): SwitchStore
         mode: of.mode,
         window_start: of.window?.start ?? null,
         window_end: of.window?.end ?? null,
+        coach_note: of.coachNote ?? null,
       };
       await db
         .insertInto('switches')
@@ -107,6 +108,8 @@ interface SwitchRow {
   mode: string;
   window_start: string | null;
   window_end: string | null;
+  /** Missing from log rows written before switches had it. */
+  coach_note?: string | null;
 }
 
 function switchOf(row: SwitchRow): Switch {
@@ -119,5 +122,8 @@ function switchOf(row: SwitchRow): Switch {
       : {
           window: { start: MonthDay.parse(row.window_start), end: MonthDay.parse(row.window_end) },
         }),
+    ...(row.coach_note === undefined || row.coach_note === null
+      ? {}
+      : { coachNote: row.coach_note }),
   };
 }

@@ -3,6 +3,8 @@
 
 export { createPostgresSwitchStore, type SwitchTables } from './adapters/postgres-switch-store.js';
 export {
+  CoachNote,
+  coachNotesOn,
   DayOffset,
   inWindow,
   isOn,
