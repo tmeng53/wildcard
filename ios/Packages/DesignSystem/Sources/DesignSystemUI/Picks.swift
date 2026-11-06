@@ -64,12 +64,15 @@ public struct PickRow: View {
 
 /// A compact choice: a capsule with a word and maybe an icon, for a wrapping row of more
 /// choices (更多). Picked, an `.outlined` pill takes the accent border and a heavier word; a
-/// `.solid` one fills with the accent tone (发动态's sport and minutes). Removable pills end in a
-/// cross; the caller removes the pill in `action`.
+/// `.solid` one fills with the accent tone (发动态's sport and minutes). On a graphite card,
+/// `.onInk` pills are white hairlines with white words, and the picked one turns white with
+/// graphite words (小队's 每周目标). Removable pills end in a cross; the caller removes the pill
+/// in `action`.
 public struct PickPill: View {
     public enum Look: Sendable {
         case outlined
         case solid
+        case onInk
     }
 
     @Environment(\.sceneTheme) private var theme
@@ -119,12 +122,19 @@ public struct PickPill: View {
                         .accessibilityHidden(true)
                 }
             }
-            .foregroundStyle(Color(role: isFilled ? tone.onFill : .fgDefault, in: theme))
+            .foregroundStyle(Color(role: wordRole, in: theme))
             .padding(.horizontal, Space.s + 2)
             // Grows with Dynamic Type instead of clipping the label.
             .frame(minHeight: Sizing.compactControl)
-            .background(Color(role: isFilled ? tone.fill : .bgCanvas, in: theme), in: Capsule())
-            .overlay { PickBorder(shape: Capsule(), isSelected: isSelected) }
+            .background(fill, in: Capsule())
+            .overlay {
+                if look == .onInk {
+                    Capsule().strokeBorder(
+                        Color(role: .fgOnInkMuted, in: theme).opacity(isSelected ? 0 : 1), lineWidth: Sizing.hairline)
+                } else {
+                    PickBorder(shape: Capsule(), isSelected: isSelected)
+                }
+            }
             // Draws 36 points tall but answers taps across the full 44.
             .padding(.vertical, (Sizing.minimumTapTarget - Sizing.compactControl) / 2)
             .contentShape(Rectangle())
@@ -137,6 +147,20 @@ public struct PickPill: View {
     }
 
     private var isFilled: Bool { look == .solid && isSelected }
+
+    private var wordRole: ColorRole {
+        switch look {
+        case .onInk: isSelected ? .fgDefault : .fgOnBrand
+        case .outlined, .solid: isFilled ? tone.onFill : .fgDefault
+        }
+    }
+
+    private var fill: Color {
+        switch look {
+        case .onInk: isSelected ? Color(role: .bgCanvas, in: theme) : .clear
+        case .outlined, .solid: Color(role: isFilled ? tone.fill : .bgCanvas, in: theme)
+        }
+    }
 }
 
 /// A choice shown as a picture, such as a hairstyle on the person's own character: a white

@@ -21,8 +21,8 @@ struct ScheduleCounts: View {
             .accessibilityIdentifier("schedule.count.lifetime")
             if let squad = sheet.squad {
                 CountCard(
-                    label: Text("本周小队训练", bundle: .module), count: squad.trained, goal: squad.planned,
-                    unit: Text("次", bundle: .module)
+                    label: Text("小队本周目标", bundle: .module), count: squad.trained, goal: squad.planned,
+                    unit: Text("天", bundle: .module)
                 )
                 .accessibilityIdentifier("schedule.count.squad")
             }

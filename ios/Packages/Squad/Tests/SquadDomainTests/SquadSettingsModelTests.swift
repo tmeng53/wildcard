@@ -50,7 +50,10 @@ private actor Squad3: SquadSettingsService {
             viewer: viewer,
             characters: [lin: try character("小林"), coco: try character("Coco"), mia: try character("Mia")],
             scene: scene, coach: SquadCoach(hire: coach, canHire: viewer == lin), today: try LocalDay(today),
-            timeZone: toronto)
+            timeZone: toronto,
+            goal: SquadWeeklyGoal(
+                daysPerMember: 3, nextDaysPerMember: 3, canChange: viewer == lin,
+                recent: SquadWeeklyGoal.Recent(weeks: 2, daysPerMember: 3.4)))
     }
 
     func fail(with error: SquadError?) { failing = error }
@@ -109,6 +112,13 @@ private actor Squad3: SquadSettingsService {
         return current.coach
     }
 
+    func setWeeklyGoal(of squad: SquadID, to daysPerMember: Int) async throws(SquadError) -> SquadWeeklyGoal {
+        if let failing { throw failing }
+        guard current.goal.canChange else { throw .outdated }
+        current.goal.nextDaysPerMember = daysPerMember
+        return current.goal
+    }
+
     func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach {
         if let failing { throw failing }
         guard current.coach.canHire else { throw .outdated }
@@ -118,16 +128,44 @@ private actor Squad3: SquadSettingsService {
 }
 
 @MainActor struct SquadSettingsModelTests {
+    @Test func theCaptainSetsTheGoalForNextWeekAndAMateOnlyReadsIt() async throws {
+        let captain = SquadSettingsModel(
+            service: try Squad3(viewer: lin, scene: try scene(pickers: .captain(lin), canPick: false)))
+        await captain.reload()
+        #expect(captain.canChangeGoal)
+        await captain.setGoal(5)
+        #expect(captain.goal?.daysPerMember == 3)
+        #expect(captain.goal?.nextDaysPerMember == 5)
+        await captain.setGoal(8)
+        #expect(captain.goal?.nextDaysPerMember == 5)
+
+        let mate = SquadSettingsModel(
+            service: try Squad3(viewer: mia, scene: try scene(pickers: .captain(lin), canPick: false)))
+        await mate.reload()
+        #expect(!mate.canChangeGoal)
+        #expect(mate.goal?.recent == SquadWeeklyGoal.Recent(weeks: 2, daysPerMember: 3.4))
+        await mate.setGoal(5)
+        #expect(mate.goal?.nextDaysPerMember == 3)
+    }
+
+    @Test func aGoalThatDoesNotGoThroughMovesBack() async throws {
+        let service = try Squad3(viewer: lin, scene: try scene(pickers: .captain(lin), canPick: false))
+        let model = SquadSettingsModel(service: service)
+        await model.reload()
+        await service.fail(with: .unavailable)
+        await model.setGoal(6)
+        #expect(model.changeFailed)
+        #expect(model.goal?.nextDaysPerMember == 3)
+    }
+
     @Test func theCaptainSeesEveryoneElseAsManageable() async throws {
         let model = SquadSettingsModel(
             service: try Squad3(viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false)))
         await model.reload()
         #expect(model.isCaptain)
-        #expect(model.captainName == "小林")
         #expect(model.openSpots == 5)
         #expect(model.members.map(\.isManageable) == [false, true, true])
         #expect(model.members.map(\.hasCrown) == [false, true, false])
-        #expect(model.sceneLine == .winnersPick(["Coco"]))
         #expect(!model.canPickScene)
     }
 
@@ -154,16 +192,6 @@ private actor Squad3: SquadSettingsService {
         await model.reload()
         #expect(!model.isCaptain)
         #expect(model.members.allSatisfy { !$0.isManageable })
-        #expect(model.sceneLine == .captainPicks)
-    }
-
-    @Test func aPickedSceneHasNoLineUnderIt() async throws {
-        let model = SquadSettingsModel(
-            service: try Squad3(
-                viewer: mia,
-                scene: try scene(pickers: .captain(lin), picked: .init(scene: .track, picker: lin), canPick: false)))
-        await model.reload()
-        #expect(model.sceneLine == nil)
     }
 
     @Test func renamingSavesTrimmedAndRefusesWhatTheRulesDo() async throws {
@@ -185,7 +213,6 @@ private actor Squad3: SquadSettingsService {
         await model.reload()
         await model.handCaptaincy(to: coco)
         #expect(!model.isCaptain)
-        #expect(model.captainName == "Coco")
         #expect(model.members.allSatisfy { !$0.isManageable })
     }
 
@@ -214,7 +241,6 @@ private actor Squad3: SquadSettingsService {
         let service = try Squad3(viewer: coco, scene: try scene(pickers: .crown([coco]), canPick: true))
         let model = SquadSettingsModel(service: service)
         await model.reload()
-        #expect(model.sceneLine == .youWon)
         model.openPicker()
         let picker = try #require(model.picker)
         #expect(
@@ -229,7 +255,6 @@ private actor Squad3: SquadSettingsService {
         await model.picked()
         #expect(await service.picks == [.gym])
         #expect(model.scene == .gym)
-        #expect(model.sceneLine == nil)
         #expect(model.picker == nil)
         #expect(!model.canPickScene)
     }

@@ -12,15 +12,22 @@ public struct SquadToday: Hashable, Sendable {
     public var today: TodayCounts
     /// The signed-in member's week.
     public var myWeek: MyWeek
-    /// 本周小队训练 x/y: days trained over days planned, added up over the members.
+    /// 小队本周目标 x/y: days anyone trained (one a member a day, sent to the squad) over the
+    /// squad's goal, its 人均 N 天 times its members.
     public var squadWeek: WeekCount
+    /// The squad's goal this week, 人均 N 天 (1 to 7), as its captain set it.
+    public var squadDaysPerMember: Int
 
-    public init(squad: SquadID, members: [SquadmateToday], today: TodayCounts, myWeek: MyWeek, squadWeek: WeekCount) {
+    public init(
+        squad: SquadID, members: [SquadmateToday], today: TodayCounts, myWeek: MyWeek, squadWeek: WeekCount,
+        squadDaysPerMember: Int = 3
+    ) {
         self.squad = squad
         self.members = members
         self.today = today
         self.myWeek = myWeek
         self.squadWeek = squadWeek
+        self.squadDaysPerMember = squadDaysPerMember
     }
 }
 

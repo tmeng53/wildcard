@@ -382,10 +382,10 @@ extension SignUpModel {
         if let editor, let stock, !known { try? editor.stock(stock) }
     }
 
-    /// The squad's planned days this week, with the member's own once their plan is in.
+    /// The squad's goal this week, before and after the member's 人均 N 天 adds to it.
     var squadGoal: (before: Int, after: Int) {
         let before = joined?.weekGoal ?? 0
-        return (before, before + plannedThisWeek)
+        return (before, before + (joined?.daysPerMember ?? 0))
     }
 
     /// The template's training days from today on: what this week plans, since the first week

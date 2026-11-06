@@ -141,22 +141,22 @@
         }
       }
     },
-    "本周小队已练 %lld/%lld 次": {
+    "本周小队已练 %lld/%lld 天": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Squad this week: %1$lld of %2$lld"
+            "value": "Squad this week: %1$lld of %2$lld days"
           }
         }
       }
     },
-    "次": {
+    "天": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "times"
+            "value": "days"
           }
         }
       }
