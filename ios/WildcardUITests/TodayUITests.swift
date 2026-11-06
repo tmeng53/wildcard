@@ -21,7 +21,7 @@ final class TodayUITests: XCTestCase {
         XCTAssertEqual(checkIn.label, "打卡")
         checkIn.tap()
         waitForLabel(of: checkIn, "label == %@", "收起", "the check-in button didn't turn into 收起")
-        for (kind, label) in [("trained", "练了"), ("healthyMeal", "健康餐"), ("cheatMeal", "放纵餐"), ("disclaimer", "请假")] {
+        for (kind, label) in [("trained", "训练"), ("healthyMeal", "健康餐"), ("cheatMeal", "放纵餐"), ("disclaimer", "请假")] {
             let capsule = app.buttons["today.capsule.\(kind)"]
             XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no \(label) capsule")
             XCTAssertEqual(capsule.label, label)
