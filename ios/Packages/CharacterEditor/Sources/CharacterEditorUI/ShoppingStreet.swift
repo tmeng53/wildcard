@@ -151,7 +151,20 @@ struct StoreBadge: View {
 enum StoreCopy {
     static func name(_ store: String) -> Text { text(uploaded(store)?.name, names[store], or: store) }
     static func local(_ store: String) -> Text { text(uploaded(store)?.local, locals[store], or: store) }
-    static func sports(_ store: String) -> Text { text(uploaded(store)?.sports, sportLines[store], or: "") }
+    /// Its sports line as one word a sport, for the street's pills: split at commas where the
+    /// language lists with them (English), else at spaces.
+    static func sports(_ store: String) -> [String] {
+        let line =
+            uploaded(store)?.sports?.localized
+            ?? sportLines[store].map { Bundle.module.inAppLanguage.localizedString(forKey: $0, value: nil, table: nil) }
+            ?? ""
+        let commas = CharacterSet(charactersIn: ",，")
+        let separators = line.unicodeScalars.contains(where: commas.contains) ? commas : .whitespaces
+        return line.components(separatedBy: separators)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .map { $0.prefix(1).uppercased() + $0.dropFirst() }
+    }
     static func tagline(_ store: String) -> Text { text(uploaded(store)?.tagline, taglines[store], or: "") }
     static func unlock(_ store: String) -> Text { text(uploaded(store)?.unlock, unlocks[store], or: "") }
     /// How far a closed store is from opening: 「还有 2 次开门」 once the server says, else how it unlocks.

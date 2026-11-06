@@ -103,24 +103,19 @@ struct StoreStreet: View {
         .padding(.horizontal, Space.pageMargin)
     }
 
-    /// The sports its pieces' rules count as pills, as its tip lists them, or its own line where
-    /// none has one.
-    @ViewBuilder
+    /// The sports its pieces' rules count as pills, as its tip lists them, or its own line's
+    /// sports where none has one.
     private func sports(_ store: String) -> some View {
-        if let sports = model.sports(of: store) {
-            FlowRow(spacing: Space.xs, centred: true) {
+        FlowRow(spacing: Space.xs, centred: true) {
+            if let sports = model.sports(of: store) {
                 if sports.isEmpty {
                     SportPill(word: Text("练什么都算", bundle: .module))
                 } else {
                     ForEach(sports, id: \.self) { SportPill(word: $0.name) }
                 }
+            } else {
+                ForEach(StoreCopy.sports(store), id: \.self) { SportPill(word: Text(verbatim: $0)) }
             }
-        } else {
-            StoreCopy.sports(store)
-                .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
