@@ -105,6 +105,13 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(week.reactions == 8)
     #expect(week.disclaimers == nil)
     #expect(week.time == SquadWeek.TrainingTime(minutes: 245, longest: .init(member: id(2), minutes: 90)))
+    #expect(week.members(training: ["run"]) == [id(1), id(2)])
+    #expect(week.members(training: ["yoga"]) == [id(1), id(3)])
+    #expect(week.members(training: ["run", "yoga"]) == [id(1), id(2), id(3)])
+    #expect(week.members(training: ["swim"]) == [])
+    #expect(week.members(trainedOn: 2) == [id(1), id(2), id(3)])
+    #expect(week.members(trainedOn: 0) == [id(1)])
+    #expect(week.members(trainedOn: 5) == [])
 }
 
 @Test func aFewMinutesOrOneDayInARowAreNoFunNumber() {

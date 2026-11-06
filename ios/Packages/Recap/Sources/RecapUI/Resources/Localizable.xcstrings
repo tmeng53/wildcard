@@ -1,6 +1,23 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "，": {
+      "comment": "Between names in a list, as in 「Tracy，Fran」.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", "
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "，"
+          }
+        }
+      }
+    },
     "%@ · %@": {
       "localizations": {
         "en": {

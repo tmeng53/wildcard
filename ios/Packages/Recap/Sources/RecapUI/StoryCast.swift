@@ -1,6 +1,7 @@
 #if os(iOS)
 import AvatarArt
 import AvatarDomain
+import AvatarUI
 import Contracts
 import DesignSystem
 import RecapDomain
@@ -51,5 +52,14 @@ public struct StoryCast: Sendable {
 
     /// Someone the story names without a character shows no name.
     func nickname(of id: MemberID) -> String { members[id]?.nickname ?? "" }
+
+    /// Someone standing still in their own idle, started `lead` seconds ago so a row doesn't
+    /// breathe in step; nil for someone without a character.
+    func player(of id: MemberID, lead: Double = 0) -> CharacterPlayer? {
+        guard let member = members[id], let figure = try? PlaceholderCharacter.figure(wearing: member.look),
+            let idle = try? PlaceholderCharacter.clip("idle", persona: member.persona)
+        else { return nil }
+        return try? CharacterPlayer(figure: figure, idle: idle, now: Date().addingTimeInterval(-lead))
+    }
 }
 #endif

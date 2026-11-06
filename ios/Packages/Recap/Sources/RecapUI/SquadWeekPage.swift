@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -13,6 +14,8 @@ struct SquadWeekPage: View {
     let week: RecapDomain.SquadWeek
     let page: PageContext
     @Environment(\.sceneTheme) private var theme
+    /// Everyone's head, made once.
+    @State private var heads: [MemberID: CharacterPlayer] = [:]
 
     var body: some View {
         // All the cards when they fit, fewer on a short phone.
@@ -22,6 +25,11 @@ struct SquadWeekPage: View {
             summary(cards: 2)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .task(id: week) {
+            heads = Dictionary(
+                week.members.compactMap { member in page.cast.player(of: member.member).map { (member.member, $0) } },
+                uniquingKeysWith: { first, _ in first })
+        }
     }
 
     private func summary(cards: Int) -> some View {
@@ -45,13 +53,13 @@ struct SquadWeekPage: View {
                     ForEach(Array(facts.prefix(cards).enumerated()), id: \.offset) { index, fact in
                         FactCard(
                             fact: fact, monday: page.story.week.monday, everyone: week.members.count,
-                            nickname: nickname
+                            nickname: nickname, people: people(fact), head: { heads[$0] }
                         )
                         .scaleEffect(0.9 + 0.1 * page.pop(Double(index) * 0.04, 0.32 + Double(index) * 0.04))
                         .opacity(page.ramp(Double(index) * 0.04, 0.12 + Double(index) * 0.04))
                     }
                 }
-                SportsCard(sports: week.sports)
+                SportsCard(week: week, head: { heads[$0] })
             }
         }
         .padding(.horizontal, Space.l)
@@ -59,6 +67,16 @@ struct SquadWeekPage: View {
     }
 
     private func nickname(_ member: MemberID) -> String { page.cast[member]?.nickname ?? "" }
+
+    /// Whose heads a card shows: who trained that day or that sport, and whose streak it was.
+    private func people(_ fact: Fact) -> [MemberID] {
+        switch fact {
+        case .bestDay(let best): week.members(trainedOn: best.weekday)
+        case .streak(_, _, let member?): [member]
+        case .topSport(let top): week.members(training: [top.sport])
+        default: []
+        }
+    }
 
     /// The week's fun numbers, up to six: a number the week doesn't have is left out, and
     /// without enough minutes logged the squad's top sport takes the time's place.
@@ -83,13 +101,15 @@ struct SquadWeekPage: View {
     }
 }
 
-/// 全队训练了什么: the squad's sports on a card, a row each for the top four with its symbol, a
-/// bar against the most-trained one and its days, and the rest together as 其他.
+/// 全队训练了什么: the squad's sports on a card, a row each for the top four with its symbol, who
+/// trained it, a bar against the most-trained one and its days, and the rest together as 其他.
 private struct SportsCard: View {
-    let sports: [RecapDomain.SquadWeek.SportDays]
+    let week: RecapDomain.SquadWeek
+    let head: (MemberID) -> CharacterPlayer?
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
+        let sports = week.sports
         let most = max(sports.first?.days ?? 1, 1)
         let rest = sports.dropFirst(Self.named)
         VStack(alignment: .leading, spacing: Space.s) {
@@ -104,12 +124,14 @@ private struct SportsCard: View {
             }
             ForEach(Array(sports.prefix(Self.named)), id: \.sport) { sport in
                 SportRow(
-                    symbol: sport.sport.symbol, name: sport.sport.cardName, days: sport.days,
+                    symbol: sport.sport.symbol, name: sport.sport.cardName,
+                    heads: week.members(training: [sport.sport]).map(head), days: sport.days,
                     fraction: Double(sport.days) / Double(most), isRest: false)
             }
             if !rest.isEmpty {
                 SportRow(
                     symbol: "ellipsis", name: Text("其他 \(rest.count) 种", bundle: .module),
+                    heads: week.members(training: Set(rest.map(\.sport))).map(head),
                     days: rest.reduce(0) { $0 + $1.days },
                     fraction: Double(rest.reduce(0) { $0 + $1.days }) / Double(most), isRest: true)
             }
@@ -126,10 +148,12 @@ private struct SportsCard: View {
     private static let named = 4
 }
 
-/// One sport on 全队训练了什么: its symbol in a circle, its name, a bar and its days.
+/// One sport on 全队训练了什么: its symbol in a circle, its name, who trained it (two heads and
+/// 「+N」), a bar and its days.
 private struct SportRow: View {
     let symbol: String
     let name: Text
+    let heads: [CharacterPlayer?]
     let days: Int
     /// Against the most-trained sport, 0 to 1 (其他 may pass it).
     let fraction: Double
@@ -151,6 +175,10 @@ private struct SportRow: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .frame(width: Self.nameWidth, alignment: .leading)
+            HeadStack(heads, size: Self.head, on: .bgCanvas, limit: Self.headLimit)
+                .frame(
+                    width: Self.head * Double(Self.headLimit + 1) - Space.xxs * Double(Self.headLimit),
+                    alignment: .leading)
             Capsule()
                 .fill(Color(role: .bgCanvas, in: theme).opacity(0.8))
                 .overlay(alignment: .leading) {
@@ -177,6 +205,9 @@ private struct SportRow: View {
     private static let nameWidth: Double = 72
     private static let bar: Double = 12
     private static let daysWidth: Double = 44
+    private static let head: Double = 22
+    /// Heads before 「+N」.
+    private static let headLimit = 2
 }
 
 #endif
