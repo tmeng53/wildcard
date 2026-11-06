@@ -10,80 +10,96 @@ import SportsUI
 import SwiftUI
 
 /// 商店街, its own page from 我: the stores side by side along a street (`StoreStreet`, approved
-/// 2026-11-06), then the open store's rack. A piece that came in
-/// wears NEW until the member claims it (领取) from a sheet; the 「已放进衣橱」 notice then offers to
-/// try it on. Boxes that came in open from a pop-up over the page.
+/// 2026-11-06); a store's rack is pushed over it, and the system's back button and swipe go back,
+/// from a store to the street and from the street to 我. A piece that came in wears NEW until the
+/// member claims it (领取) from a sheet; the 「已放进衣橱」 notice then offers to try it on. Boxes
+/// that came in open from a pop-up over the page.
 public struct ShoppingStreetPage: View {
     let model: StreetModel
-    let back: () -> Void
+    /// A store's rack is pushed and on screen over the street.
+    @State private var rackOnScreen = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(model: StreetModel, back: @escaping () -> Void) {
-        (self.model, self.back) = (model, back)
+    public init(model: StreetModel) {
+        self.model = model
     }
 
     public var body: some View {
-        @Bindable var model = model
-        let store = model.store.flatMap { id in model.catalog.stores.first(where: { $0.id == id }) }
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: Space.xs) {
-                HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left") {
-                    if store != nil { model.leaveStore() } else { back() }
+        page(nil)
+            .pushedPage()
+            .navigationDestination(item: openStore) { id in
+                if let store = model.catalog.stores.first(where: { $0.id == id }) {
+                    page(store)
+                        .pushedPage()
+                        .onAppear { rackOnScreen = true }
+                        .onDisappear { rackOnScreen = false }
                 }
-                .accessibilityIdentifier("street.back")
-                if let store { RackHeader(model: model, store: store) }
+            }
+            .onAppear { model.didOpen() }
+    }
+
+    /// The store whose rack is pushed; the system's back leaves it.
+    private var openStore: Binding<String?> {
+        Binding(get: { model.store }, set: { if $0 == nil { model.leaveStore() } })
+    }
+
+    /// The street (`store` nil) or a store's rack. The pop-up, the 领取 sheet and the notice
+    /// belong to whichever page is on screen on top, so the street under a rack doesn't show them
+    /// twice, and the street shows them until the rack it opens on has slid in.
+    private func page(_ store: EditorChoices.Store?) -> some View {
+        let isOnTop = store != nil || !rackOnScreen
+        return ScrollView {
+            VStack(alignment: .leading, spacing: Space.xs) {
+                if let store {
+                    HStack(spacing: Space.xs) { RackHeader(model: model, store: store) }
+                }
+                // A 领取 that didn't save: the piece is back to NEW, so say why.
+                if model.claimFailed {
+                    Text("网络开小差了，没领上", bundle: .module)
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .accessibilityIdentifier("street.claimFailed")
+                }
+                if let store {
+                    StoreRack(model: model, store: store)
+                } else {
+                    street
+                }
             }
             .padding(.horizontal, Space.pageMargin)
-            .padding(.vertical, Space.xs)
-            ScrollView {
-                VStack(alignment: .leading, spacing: Space.xs) {
-                    // A 领取 that didn't save: the piece is back to NEW, so say why.
-                    if model.claimFailed {
-                        Text("网络开小差了，没领上", bundle: .module)
-                            .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
-                            .accessibilityIdentifier("street.claimFailed")
-                    }
-                    if let store {
-                        StoreRack(model: model, store: store)
-                    } else {
-                        street
-                    }
-                }
-                .padding(.horizontal, Space.pageMargin)
-                .padding(.bottom, Space.l)
-            }
-            .scrollIndicators(.hidden)
+            .padding(.bottom, Space.l)
         }
+        .scrollIndicators(.hidden)
+        .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text("商店街", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
-        .swipesBack { if store != nil { model.leaveStore() } else { back() } }
+        // The pop-up is modal: VoiceOver (and a UI test) reaches only it, not the rack under it.
+        .accessibilityHidden(model.arrival != nil)
         .overlay {
-            if let arrival = model.arrival {
+            if isOnTop, let arrival = model.arrival {
                 ArrivalPopup(model: model, arrival: arrival).transition(.opacity)
             }
         }
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.arrival)
-        .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.store)
-        .sheet(item: Binding(get: { model.sheet.map(ClaimSheet.Piece.init) }, set: { model.sheet = $0?.id })) { piece in
+        .sheet(
+            item: Binding(
+                get: { isOnTop ? model.sheet.map(ClaimSheet.Piece.init) : nil }, set: { model.sheet = $0?.id })
+        ) { piece in
             ClaimSheet(model: model, piece: piece.id)
                 .presentationDetents([.height(ClaimSheet.height)])
                 .presentationDragIndicator(.visible)
         }
         .noticeBanner(
-            item: $model.claimedNotice, onTap: { model.tryOn($0.id) },
+            item: Binding(get: { isOnTop ? model.claimedNotice : nil }, set: { model.claimedNotice = $0 }),
+            onTap: { model.tryOn($0.id) },
             content: { claimed in ClaimedBanner(model: model, piece: claimed.id) }
         )
-        .onAppear { model.didOpen() }
+        // A container, so its identifier doesn't replace the pop-up's (editor.arrival) and the rest.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("street.page")
     }
 
-    @ViewBuilder
     private var street: some View {
-        Text("商店街", bundle: .module)
-            .typeStyle(TypeRamp.taskTitle)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .accessibilityAddTraits(.isHeader)
         StoreStreet(model: model)
             .padding(.top, Space.s)
     }
@@ -106,12 +122,7 @@ private struct RackHeader: View {
             .typeStyle(TypeRamp.footnote)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
             .lineLimit(1)
-        if let limited = StoreCopy.limited(store.id) {
-            limited
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .lineLimit(1)
-        }
+        if let tag = LimitedTag(store: store.id) { tag }
         Spacer(minLength: 0)
         if let sports = model.sports(of: store.id) {
             Button {
@@ -154,7 +165,24 @@ struct StoreBadge: View {
 enum StoreCopy {
     static func name(_ store: String) -> Text { text(uploaded(store)?.name, names[store], or: store) }
     static func local(_ store: String) -> Text { text(uploaded(store)?.local, locals[store], or: store) }
-    static func sports(_ store: String) -> Text { text(uploaded(store)?.sports, sportLines[store], or: "") }
+    /// Its sports line as one word a sport, for the street's pills: split at commas where the
+    /// language lists with them (English), at spaces in Chinese.
+    static func sports(_ store: String) -> [String] {
+        let line =
+            uploaded(store)?.sports?.localized
+            ?? sportLines[store].map { Bundle.module.inAppLanguage.localizedString(forKey: $0, value: nil, table: nil) }
+            ?? ""
+        let commas = CharacterSet(charactersIn: ",，")
+        // A Latin line without commas is one phrase (Any sport counts, Winter sports); Chinese
+        // lists its sports with spaces.
+        let latin = line.unicodeScalars.contains { $0.isASCII && CharacterSet.letters.contains($0) }
+        let separators: CharacterSet =
+            line.unicodeScalars.contains(where: commas.contains) ? commas : latin ? CharacterSet() : .whitespaces
+        return line.components(separatedBy: separators)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .map { $0.prefix(1).uppercased() + $0.dropFirst() }
+    }
     static func tagline(_ store: String) -> Text { text(uploaded(store)?.tagline, taglines[store], or: "") }
     static func unlock(_ store: String) -> Text { text(uploaded(store)?.unlock, unlocks[store], or: "") }
     /// How far a closed store is from opening: 「还有 2 次开门」 once the server says, else how it unlocks.
@@ -199,5 +227,8 @@ enum StoreCopy {
         "deuce": "网球类 3 次解锁",
     ]
     private static let limits = ["powder": "冬季限定"]
+    /// Each bundled limit's tag colour (冬季限定: glacier blue); an uploaded store names its own
+    /// in `names.json`.
+    static let limitColors = ["powder": RGBAColor(red: 0x1E, green: 0x6A, blue: 0x9E)]
 }
 #endif

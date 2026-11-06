@@ -16,6 +16,11 @@ public struct TodayView: View {
     @State private var model: TodayModel
     /// The card's page, kept so the card reopens where it was left.
     @AppStorage("today.cardPage") private var cardPage: SquadCardPage = .squad
+    /// Whether the card is folded into its capsule so the scene shows (folded until someone
+    /// opens it, then as it was left).
+    @AppStorage("today.cardCollapsed") private var isCardCollapsed = true
+    /// The card and its capsule share one piece of glass, which morphs between them.
+    @Namespace private var cardGlass
     /// The day picked on the card's second page; nil shows today. Leaving home forgets it: this
     /// view is made anew on coming back to the tab, and going to the background clears it.
     @State private var pickedDay: Int?
@@ -117,7 +122,7 @@ public struct TodayView: View {
                             topCard(home: home, week: week, day: day, recap: model.recap)
                             HealthHomeCard.Offer(model: model)
                         }
-                        .overlay(alignment: .bottom) { lightCord }
+                        .overlay(alignment: .bottom) { lightCord(short: showsCapsule(day: day)) }
                     }
                     .padding(.top, Space.xs)
                     .modifier(Arriving(arrival: model.arrival) { $0.cardOffset(at: $1) })
@@ -187,6 +192,20 @@ public struct TodayView: View {
     private func topCard(
         home: Home, week: (squad: WeekCount, mine: WeekCount), day: LocalDay, recap: DayRecap?
     ) -> some View {
+        GlassEffectContainer {
+            squadCard(home: home, week: week, day: day, recap: recap)
+        }
+    }
+
+    /// The capsule shows while the card is folded, and not while the box score takes its place.
+    private func showsCapsule(day: LocalDay) -> Bool {
+        isCardCollapsed && openRecapDay != day
+    }
+
+    @ViewBuilder
+    private func squadCard(
+        home: Home, week: (squad: WeekCount, mine: WeekCount), day: LocalDay, recap: DayRecap?
+    ) -> some View {
         if let recap, openRecapDay == day {
             DayRecapCard(
                 recap: recap, day: model.dayDate ?? .now, timeZone: home.timeZone, member: { model.recapMember($0) },
@@ -206,41 +225,81 @@ public struct TodayView: View {
                 })
             let mine = myWeek(home: home, day: day, week: week.mine)
             Group {
-                if let recap {
+                if isCardCollapsed {
+                    capsule(squad: squad, mine: mine, day: day, recap: recap)
+                } else if let recap {
                     SquadCard(
                         squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay, avatar: { head($0) },
-                        footer: {
-                            RecapTag(recap: recap, isSeen: recapSeen == day.description) {
-                                recapSeen = day.description
-                                withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) {
-                                    openRecapDay = day
-                                }
-                            }
-                        }
+                        footer: { recapTag(recap, day: day) }
                     )
                     .opensSquad(openSquad)
+                    .collapses { foldCard(true) }
+                    .morphs(cardMorph)
                 } else {
                     SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
                         .opensSquad(openSquad)
+                        .collapses { foldCard(true) }
+                        .morphs(cardMorph)
                 }
             }
             .accessibilityIdentifier("today.card")
-            .transition(.opacity)
         }
     }
 
-    /// The tab bar's room until it is first measured (home opening while the squad drops in): the
-    /// system bar's height and its gap to the screen's edge.
+    /// The card folded: heads, the squad's score and my week. An unseen 今日赛况 hangs under its
+    /// left end, out of its height so the cord still hangs from the capsule; once seen it shows
+    /// in the open card alone.
+    private func capsule(squad: SquadWeek, mine: DesignSystemUI.MyWeek, day: LocalDay, recap: DayRecap?) -> some View {
+        SquadCapsule(
+            squad: squad, mine: mine,
+            heads: {
+                HeadStack(
+                    squad.members.map { model.head(of: $0.id) }, size: SquadCapsuleLayout.head, on: .bgCanvas,
+                    limit: SquadCapsuleLayout.heads)
+            },
+            expand: { foldCard(false) }
+        )
+        .morphs(cardMorph)
+        .overlay(alignment: .bottomLeading) {
+            if let recap, recapSeen != day.description {
+                recapTag(recap, day: day)
+                    .padding(.leading, Space.pageMargin + Space.xs)
+                    .offset(y: Sizing.tag + Space.xs)
+                    .transition(.opacity)
+            }
+        }
+        // One container, so `today.card` names it and not the capsule or the tag in it.
+        .accessibilityElement(children: .contain)
+    }
+
+    /// The 今日赛况 tag, which opens the box score in the card's place.
+    private func recapTag(_ recap: DayRecap, day: LocalDay) -> some View {
+        RecapTag(recap: recap, isSeen: recapSeen == day.description) {
+            recapSeen = day.description
+            withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) {
+                openRecapDay = day
+            }
+        }
+    }
+
+    /// Folds the card into its capsule, or opens it, the glass morphing between them.
+    private func foldCard(_ folds: Bool) {
+        withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { isCardCollapsed = folds }
+    }
+
+    private var cardMorph: GlassMorph { GlassMorph("today.card", in: cardGlass) }
+
+    /// The tab bar's room until first measured (home opening as the squad drops in), with its gap.
     private static let barRoomBeforeMeasured: Double = 88
 
-    /// The pull cord hanging under the card at night (the approved 开灯), its centre 40 points
-    /// from the screen's right edge; it follows the card as 今日赛况 makes it taller and fades out
-    /// while the 打卡 burst is open.
+    /// The pull cord under the card at night (the approved 开灯), 40 points from the right edge,
+    /// `short` under the folded capsule; it fades out while the 打卡 burst is open.
     @ViewBuilder
-    private var lightCord: some View {
+    private func lightCord(short: Bool) -> some View {
         if model.phase == .night {
             let isOn = model.lightsOn
-            PullCord(isOn ? Text("关灯", bundle: .module) : Text("开灯", bundle: .module), isOn: isOn) {
+            let chain = short ? PullCordMotion.shortLength : PullCordMotion.length
+            PullCord(isOn ? Text("关灯", bundle: .module) : Text("开灯", bundle: .module), isOn: isOn, chain: chain) {
                 model.pullCord(reduceMotion: reduceMotion)
             }
             .accessibilityIdentifier("today.lights")
@@ -248,7 +307,7 @@ public struct TodayView: View {
             .frame(maxWidth: .infinity, alignment: .trailing)
             // Hangs from the card's bottom edge: the overlay puts its bottom there, so it moves
             // down by its own height (an offset moves its taps and VoiceOver frame with it).
-            .offset(y: PullCord.size.height)
+            .offset(y: PullCord.frameSize(chain: chain).height)
             .opacity(model.isBurstOpen ? 0 : 1)
             .allowsHitTesting(!model.isBurstOpen)
             .accessibilityHidden(model.isBurstOpen)
@@ -265,62 +324,6 @@ public struct TodayView: View {
     private func head(_ member: SquadMember) -> some View {
         if let player = model.head(of: member.id) { CharacterHead(player: player) }
     }
-
-    /// My week for the card's second page: this week's days, what I trained, and each day's line
-    /// (what I trained or the plan's sport, and my meals up to today), with the count the squad's
-    /// today carries.
-    private func myWeek(home: Home, day: LocalDay, week: WeekCount) -> DesignSystemUI.MyWeek {
-        let record = home.week(on: day)
-        return DesignSystemUI.MyWeek(
-            summary: record.trained.map {
-                String(localized: "\($0.activity.localizedName) \($0.days)", bundle: .module.inAppLanguage)
-            }
-            .joined(separator: " · "),
-            done: week.trainedDays, planned: week.plannedDays,
-            days: zip(record.days, record.activities).map { status, activity in
-                switch status {
-                case .trained: .trained(symbol: activity?.symbol)
-                case .disclaimer: .excused
-                case .restDay: .restDay
-                // A training day without a sport gets a generic icon.
-                case .open: .planned(symbol: activity?.symbol ?? "figure.run")
-                }
-            },
-            today: record.today,
-            details: record.days.indices.map { index in
-                dayDetail(
-                    record.days[index], activity: record.activities[index], log: record.logs[index],
-                    isToCome: index > record.today)
-            })
-    }
-
-    /// A day's line: what I trained with its minutes, 请假了 or 休息日, else the plan's sport, light.
-    private func dayDetail(
-        _ status: WeekRecord.Day, activity: Activity?, log: WeekRecord.DayLog, isToCome: Bool
-    ) -> WeekDayDetail {
-        let meals = isToCome ? nil : WeekDayDetail.Meals(healthy: log.healthyMeals, cheat: log.cheatMeals)
-        switch status {
-        case .trained:
-            let line = log.sessions.map { session in
-                if let minutes = session.minutes {
-                    String(localized: "\(session.activity.localizedName) \(minutes) 分钟", bundle: .module.inAppLanguage)
-                } else {
-                    session.activity.localizedName
-                }
-            }
-            return WeekDayDetail(line: line.joined(separator: " · "), isPlan: false, meals: meals)
-        case .disclaimer:
-            return WeekDayDetail(
-                line: String(localized: "请假了", bundle: .module.inAppLanguage), isPlan: false, meals: meals)
-        case .restDay:
-            return WeekDayDetail(
-                line: String(localized: "休息日", bundle: .module.inAppLanguage), isPlan: false, meals: meals)
-        case .open:
-            return WeekDayDetail(
-                line: activity?.localizedName ?? String(localized: "训练日", bundle: .module.inAppLanguage), isPlan: true,
-                meals: meals)
-        }
-    }
 }
 
 /// Moves a piece of the home out of place while the squad drops onto a newly picked scene, by
@@ -336,63 +339,6 @@ private struct Arriving: ViewModifier {
         let moving = arrival != nil && !reduceMotion
         TimelineView(.animation(minimumInterval: nil, paused: !moving)) { timeline in
             content.offset(y: moving ? arrival.map { offset($0.drop, $0.elapsed(at: timeline.date)) } ?? 0 : 0)
-        }
-    }
-}
-
-/// My payoff over my character, front and centre: the 「+1」 of a 练了 and the line in the bubble on my head.
-private struct MyPayoff: View {
-    let model: TodayModel
-    let openPost: (CheckIn?) -> Void
-
-    var body: some View {
-        GeometryReader { proxy in
-            let unit = proxy.size.width / StageLayout.width
-            let head = CGPoint(
-                x: StageLayout.mySpot.x * unit,
-                y: (StageLayout.mySpot.y - Self.headHeight * StageLayout.myScale) * unit)
-            // Each piece hangs off a zero-height anchor placed on the head: the bubble and the
-            // 「+1」 sit above it, centred.
-            ZStack {
-                Self.anchor(width: Self.bubbleWidth, at: head, alignment: .bottom) {
-                    PayoffBubble(line: model.payoff?.line) { openPost(model.payoff?.post) }.fixedSize(
-                        horizontal: false, vertical: true)
-                }
-                Self.anchor(width: 0, at: CGPoint(x: head.x, y: head.y - Space.l), alignment: .bottom) {
-                    PlusOne(trigger: model.celebrations).fixedSize()
-                }
-            }
-        }
-    }
-
-    private static func anchor(
-        width: Double, at point: CGPoint, alignment: Alignment, @ViewBuilder content: () -> some View
-    ) -> some View {
-        Color.clear
-            .frame(width: width, height: 0)
-            .overlay(alignment: alignment, content: content)
-            .position(point)
-    }
-
-    /// The widest the caption's bubble gets before it wraps.
-    private static let bubbleWidth = 240.0
-
-    /// How far above the feet the top of the head is, in the rig's points.
-    private static let headHeight = 250.0
-}
-
-/// The caption in the character's speech bubble. Nothing until the first post with a line.
-private struct PayoffBubble: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    let line: String?
-    let open: () -> Void
-
-    var body: some View {
-        if let line {
-            SpeechBubble(Text(verbatim: line), kind: .info(title: nil), action: open)
-                .transition(.speech(reduceMotion: reduceMotion))
-                .accessibilityElement(children: .combine)
-                .accessibilityIdentifier("today.bubble")
         }
     }
 }

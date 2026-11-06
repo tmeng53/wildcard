@@ -16,7 +16,8 @@ import SwiftUI
 struct StoreStreet: View {
     let model: StreetModel
     @State private var current: String?
-    @State private var player: CharacterPlayer?
+    /// The street is sliding, by a swipe or a tap on its map: the member strolls.
+    @State private var walking = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -40,7 +41,9 @@ struct StoreStreet: View {
                     LazyHStack(alignment: .bottom, spacing: Space.s) {
                         ForEach(stores) { store in
                             Storefront(model: model, store: store)
-                                .containerRelativeFrame(.horizontal) { width, _ in width - 2 * peek }
+                                // The container is the scroll view less its content margins, so a
+                                // storefront as wide as it leaves a neighbour peeking in either side.
+                                .containerRelativeFrame(.horizontal)
                                 .id(store.id)
                         }
                     }
@@ -50,6 +53,7 @@ struct StoreStreet: View {
                 .scrollPosition(id: $current)
                 .contentMargins(.horizontal, peek, for: .scrollContent)
                 .scrollIndicators(.hidden)
+                .onScrollPhaseChange { _, phase in walking = phase.isScrolling }
                 .padding(.bottom, sidewalk - Space.m)
                 walker
             }
@@ -60,32 +64,22 @@ struct StoreStreet: View {
         }
         // The street runs to the screen's edges, past the page's margins.
         .padding(.horizontal, -Space.pageMargin)
-        .task { await dress() }
     }
 
-    /// The member, standing on the sidewalk under the store in the middle.
+    /// The member with their shopping bags on the sidewalk under the store in the middle,
+    /// strolling while the street slides and, once it stops, spotting something in the window.
     private var walker: some View {
-        Group {
-            if let player {
-                CharacterView(player: player)
-            } else {
-                Color.clear
-            }
-        }
-        .frame(width: character.width, height: character.height)
-        .padding(.bottom, Space.xxs)
-        .accessibilityHidden(true)
+        ShopperView(look: model.draft.outfit, persona: model.draft.persona, walking: walking && !reduceMotion)
+            .frame(width: character.width, height: character.height)
+            .padding(.bottom, Space.xxs)
     }
 
     /// The centred store's sports and its button.
     @ViewBuilder
     private func counter(for store: EditorChoices.Store) -> some View {
         VStack(spacing: Space.m) {
-            sportsLine(store.id)
-                .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
+            sports(store.id)
+                .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("street.sports")
             if store.isOpen {
                 Button {
@@ -109,21 +103,20 @@ struct StoreStreet: View {
         .padding(.horizontal, Space.pageMargin)
     }
 
-    /// The sports its pieces' rules count, as its tip lists them, or its own line where none has one.
-    private func sportsLine(_ store: String) -> Text {
-        guard let sports = model.sports(of: store) else { return StoreCopy.sports(store) }
-        guard !sports.isEmpty else { return Text("练什么都算", bundle: .module) }
-        return Text(verbatim: sports.map(\.localizedName).joined(separator: " · "))
-    }
-
-    /// Dresses the member off the main actor, idling as their persona does.
-    private func dress() async {
-        guard player == nil, let figure = try? await CharacterEditorModel.figure(wearing: model.draft.outfit) else {
-            return
+    /// The sports its pieces' rules count as pills, as its tip lists them, or its own line's
+    /// sports where none has one.
+    private func sports(_ store: String) -> some View {
+        FlowRow(spacing: Space.xs, centred: true) {
+            if let sports = model.sports(of: store) {
+                if sports.isEmpty {
+                    SportPill(word: Text("练什么都算", bundle: .module))
+                } else {
+                    ForEach(sports, id: \.self) { SportPill(word: $0.name) }
+                }
+            } else {
+                ForEach(StoreCopy.sports(store), id: \.self) { SportPill(word: Text(verbatim: $0)) }
+            }
         }
-        let species = model.draft.outfit.variants["body"].flatMap(model.catalog.species(of:))?.id
-        let idle = (try? PlaceholderCharacter.clip("idle", persona: model.draft.persona, species: species)) ?? .still
-        player = try? CharacterPlayer(figure: figure, idle: idle)
     }
 }
 
@@ -247,11 +240,8 @@ private struct Storefront: View {
         }
         .overlay(alignment: .topTrailing) {
             // A limited store says so, never its dates.
-            if store.isOpen, let limited = StoreCopy.limited(store.id) {
-                limited
-                    .typeStyle(TypeRamp.label)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .padding(Space.s)
+            if store.isOpen, let tag = LimitedTag(store: store.id) {
+                tag.padding(Space.s)
             }
         }
     }
@@ -316,8 +306,43 @@ enum StoreLook {
     /// on white (HALF MOON's mint).
     static func wordmark(_ store: String, in theme: SceneTheme) -> Color {
         guard let rgba = PlaceholderCharacter.storeColor(store) else { return Color(role: .fgDefault, in: theme) }
-        let light = 0.299 * Double(rgba.red) + 0.587 * Double(rgba.green) + 0.114 * Double(rgba.blue)
-        return light > 160 ? Color(role: .fgDefault, in: theme) : Color(rgba)
+        return isLight(rgba) ? Color(role: .fgDefault, in: theme) : Color(rgba)
+    }
+
+    /// The colour of a limited store's tag, so each kind of limit wears its own (冬季限定 blue,
+    /// 感恩节 orange, 圣诞 green): `names.json`'s, else the bundled one's, else nil for the
+    /// limited colour.
+    static func limited(_ store: String) -> RGBAColor? {
+        PlaceholderCharacter.names().stores[store]?.limitedColor ?? StoreCopy.limitColors[store]
+    }
+
+    private static func isLight(_ rgba: RGBAColor) -> Bool {
+        0.299 * Double(rgba.red) + 0.587 * Double(rgba.green) + 0.114 * Double(rgba.blue) > 160
+    }
+}
+
+/// A limited store's tag (冬季限定): its words in the limit's colour on a wash of the same
+/// colour, the limited colour unless the limit names its own.
+struct LimitedTag: View {
+    let word: Text
+    let color: RGBAColor?
+    @Environment(\.sceneTheme) private var theme
+
+    init?(store: String) {
+        guard let word = StoreCopy.limited(store) else { return nil }
+        (self.word, color) = (word, StoreLook.limited(store))
+    }
+
+    var body: some View {
+        let ink = color.map { Color($0) } ?? Color(role: .fgLimited, in: theme)
+        word
+            .typeStyle(TypeRamp.label)
+            .foregroundStyle(ink)
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, Space.xs - Space.xxs / 2)
+            .frame(height: CoachTag.Size.small.height)
+            .background(ink.opacity(0.12), in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
     }
 }
 #endif

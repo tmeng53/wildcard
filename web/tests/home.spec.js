@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 const pages = [
-  { path: '/', slogan: 'Become everyday athletes', button: 'Get your wildcard', legal: '/' },
-  { path: '/zh/', slogan: '人人都是运动员', button: '领取外卡', legal: '/zh/' },
+  { path: '/', slogan: '人人都是运动员', button: '领取外卡', legal: '/zh/' },
+  { path: '/en/', slogan: 'Become everyday athletes', button: 'Get your wildcard', legal: '/' },
   { path: '/zh-hant/', slogan: '人人都是運動員', button: '領取外卡', legal: '/zh-hant/' },
 ];
 const sizes = [
@@ -68,7 +68,7 @@ test('a tap makes a character say its lines in turn, one bubble at a time, on sc
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 568 });
-  await page.goto('/');
+  await page.goto('/en/');
   const kai = page.getByRole('button', { name: 'Kai' });
   const oreo = page.getByRole('button', { name: 'Oreo' });
 
@@ -114,7 +114,7 @@ test('the headline runs in with the tape, which is gone once it settles', async 
 
 test('with reduced motion there is no tape and the squad stands still', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/zh/');
+  await page.goto('/');
   await expect(page.locator('.btn')).toHaveCSS('opacity', '1');
   await expect(page.locator('#word')).toHaveCSS('opacity', '1');
   await expect(page.locator('body > canvas')).toHaveCount(0);
@@ -125,9 +125,40 @@ test('with reduced motion there is no tape and the squad stands still', async ({
 });
 
 test('the legal pages keep their URLs and lead home in their own language', async ({ page }) => {
-  for (const lang of ['', 'zh/', 'zh-hant/'])
+  for (const [lang, home] of [
+    ['', '/en/'],
+    ['zh/', '/'],
+    ['zh-hant/', '/zh-hant/'],
+  ])
     for (const doc of ['privacy', 'terms']) {
       expect((await page.goto(`/${lang}${doc}`)).status()).toBe(200);
-      await expect(page.locator('.mark')).toHaveAttribute('href', `/${lang}`);
+      await expect(page.locator('.mark')).toHaveAttribute('href', home);
     }
+});
+
+test('the home page is Simplified Chinese whatever the browser speaks, and /zh/ leads there', async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ locale: 'en-US' });
+  const page = await context.newPage();
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hans');
+  await expect(page.locator('.sub')).toHaveText('人人都是运动员');
+  await page.goto('/zh/');
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator('.sub')).toHaveText('人人都是运动员');
+  await context.close();
+});
+
+test('a picked language is remembered, until another is picked', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.wc-lang a[lang="en"]').click();
+  await expect(page).toHaveURL(/\/en\/$/);
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/en\/$/);
+  await expect(page.locator('.sub')).toHaveText('Become everyday athletes');
+  await page.locator('.wc-lang a[lang="zh-Hans"]').click();
+  await expect(page.locator('.sub')).toHaveText('人人都是运动员');
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hans');
 });

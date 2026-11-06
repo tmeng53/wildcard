@@ -56,6 +56,23 @@ final class RecapUITests: XCTestCase {
         show("myWeek", in: app)
     }
 
+    /// Before the AI run reaches the squad, the titles are only on their way: no organizers, no
+    /// nudge.
+    func testWaitingTitlesHaveNoNudge() {
+        let app = launch(language: "zh-Hans", extra: ["-recap-waiting"])
+        app.buttons["recap.entry"].tap()
+        show("podium", in: app)
+        next(in: app)
+        show("pending", in: app)
+        XCTAssertTrue(
+            app.staticTexts["颁奖嘉宾在路上，一会儿就到"].waitForExistence(timeout: Self.wait), "no on-their-way line")
+        XCTAssertFalse(app.buttons["recap.nudge"].exists, "a nudge while nothing failed")
+        Thread.sleep(forTimeInterval: 1.5)
+        keepScreenshot(named: "78-recap-pending-waiting")
+        next(in: app)
+        show("myWeek", in: app)
+    }
+
     func testMissedEndingInEnglish() {
         let app = launch(language: "en", extra: ["-recap-missed"])
         let tile = app.buttons["recap.entry"]

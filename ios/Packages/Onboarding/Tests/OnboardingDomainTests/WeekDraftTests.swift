@@ -11,37 +11,53 @@ struct WeekDraftTests {
     private let tennis = PlanDay.train(.sport("tennis"))
     private let climb = PlanDay.train(.sport("climbing"))
 
-    @Test func aWeekTrainsOnceForEachSportPicked() {
-        let week = WeekDraft(sports: [.sport("run"), .sport("strength")])
+    @Test func aWeekTrainsTheSquadsDaysGoingThroughTheSportsPicked() {
+        let week = WeekDraft(sports: [.sport("run"), .sport("strength")], days: 3)
+        #expect(week.days == [run, .rest, strength, .rest, run, .rest, .rest])
+        #expect(week.trainingDays == 3)
+        #expect(week.choices == [run, strength, .rest])
+        #expect(WeekDraft(sports: [.sport("run")], days: 6).days == [run, run, run, run, run, run, .rest])
+        #expect(
+            WeekDraft(sports: [.sport("run"), .sport("swim")], days: 7).days == [run, swim, run, swim, run, swim, run])
+    }
+
+    @Test func moreSportsThanDaysPlanTheFirstOnesAndOfferAll() {
+        let week = WeekDraft(sports: [.sport("run"), .sport("strength"), .sport("swim"), .sport("yoga")], days: 2)
+        #expect(week.days == [.rest, run, .rest, strength, .rest, .rest, .rest])
+        #expect(week.choices == [run, strength, swim, yoga, .rest])
+    }
+
+    @Test func eachNumberOfDaysSpreadsOutAsTheDesignShowsIt() {
+        let week = WeekDraft(sports: [.sport("run"), .sport("strength")], days: 2)
         #expect(week.days == [.rest, run, .rest, strength, .rest, .rest, .rest])
         #expect(week.trainingDays == 2)
         #expect(week.selected == 0)
         #expect(week.choices == [run, strength, .rest])
         #expect(
-            WeekDraft(sports: [.sport("run")]).days == [.rest, .rest, run, .rest, .rest, .rest, .rest])
-        let three = WeekDraft(sports: [.sport("run"), .sport("strength"), .sport("swim")])
+            WeekDraft(sports: [.sport("run")], days: 1).days == [.rest, .rest, run, .rest, .rest, .rest, .rest])
+        let three = WeekDraft(sports: [.sport("run"), .sport("strength"), .sport("swim")], days: 3)
         #expect(three.days == [run, .rest, strength, .rest, swim, .rest, .rest])
-        let four = WeekDraft(sports: [.sport("run"), .sport("strength"), .sport("swim"), .sport("yoga")])
+        let four = WeekDraft(sports: [.sport("run"), .sport("strength"), .sport("swim"), .sport("yoga")], days: 4)
         #expect(four.days == [run, strength, .rest, swim, yoga, .rest, .rest])
     }
 
-    @Test func fiveSportsOrMoreTrainFiveDaysAsTheDesignShowsIt() {
+    @Test func fiveDaysRestOnWednesdayAndSunday() {
         let sports: [Activity] = [
             .sport("run"), .sport("strength"), .sport("swim"), .sport("yoga"), .sport("tennis"), .sport("climbing"),
         ]
-        let week = WeekDraft(sports: sports)
+        let week = WeekDraft(sports: sports, days: 5)
         #expect(week.days == [run, strength, .rest, swim, yoga, tennis, .rest])
         #expect(week.choices == [run, strength, swim, yoga, tennis, climb, .rest])
     }
 
     @Test func withNoSportPickedTrainingDaysNameNone() {
-        let week = WeekDraft(sports: [])
+        let week = WeekDraft(sports: [], days: 3)
         #expect(week.choices == [.train(nil), .rest])
-        #expect(week.days == [.rest, .rest, .train(nil), .rest, .rest, .rest, .rest])
+        #expect(week.days == [.train(nil), .rest, .train(nil), .rest, .train(nil), .rest, .rest])
     }
 
     @Test func pickingADayMovesOnToTheNext() {
-        var week = WeekDraft(sports: [.sport("run")])
+        var week = WeekDraft(sports: [.sport("run")], days: 1)
         #expect(week.set(.rest) == false)
         #expect(week.selected == 1)
         week.select(3)
@@ -51,7 +67,7 @@ struct WeekDraftTests {
     }
 
     @Test func afterSundayItGoesBackToMonday() {
-        var week = WeekDraft(sports: [.sport("run")])
+        var week = WeekDraft(sports: [.sport("run")], days: 1)
         week.select(6)
         week.set(run)
         #expect(week.days[6] == run)
@@ -60,7 +76,7 @@ struct WeekDraftTests {
 
     /// A template has no days already over: Monday changes even on a Thursday's sign-up.
     @Test func everyDayCanChange() {
-        var week = WeekDraft(sports: [.sport("run"), .sport("swim"), .sport("yoga")])
+        var week = WeekDraft(sports: [.sport("run"), .sport("swim"), .sport("yoga")], days: 3)
         week.select(1)
         #expect(week.selected == 1)
         #expect(week.set(swim) == true)
@@ -71,7 +87,7 @@ struct WeekDraftTests {
 
     /// Joining on a Thursday, the week counts Thursday to Sunday of the template.
     @Test func theJoiningWeekCountsFromToday() {
-        let week = WeekDraft(sports: [.sport("run"), .sport("swim"), .sport("yoga")])
+        let week = WeekDraft(sports: [.sport("run"), .sport("swim"), .sport("yoga")], days: 3)
         #expect(week.days == [run, .rest, swim, .rest, yoga, .rest, .rest])
         #expect(week.trainingDays(from: 0) == 3)
         #expect(week.trainingDays(from: 3) == 1)
@@ -80,7 +96,7 @@ struct WeekDraftTests {
     }
 
     @Test func thePlanIsTheWeeksDays() throws {
-        let week = WeekDraft(sports: [.sport("run")])
+        let week = WeekDraft(sports: [.sport("run")], days: 1)
         let member = MemberID(.init())
         let plan = try week.plan(for: member, weekStart: try LocalDay("2026-10-19"))
         #expect(plan.days == week.days)

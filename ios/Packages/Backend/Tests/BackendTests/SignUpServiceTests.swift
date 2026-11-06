@@ -26,7 +26,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     #expect(try await member.api.hasAgreedToAI() == false)
     try await signUp.save(try character("小林", body: "calico", persona: .shy))
     try await signUp.agreeToAI()
-    let squad = try await signUp.create(named: try SquadName("周三不练腿"))
+    let squad = try await signUp.create(named: try SquadName("周三不练腿"), daysPerMember: 4)
     let week: [PlanDay] = [.train(.sport("run")), .rest, .train(nil), .rest, .train(.sport("yoga")), .rest, .rest]
     try await signUp.savePlan(week)
 
@@ -34,6 +34,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     #expect(squad.name == "周三不练腿")
     #expect(squad.teammates.isEmpty)
     #expect(squad.weekDone == 0)
+    #expect(squad.daysPerMember == 4)
     #expect(try await member.api.mySquad()?.id == squad.id)
     let profile = try #require(try await member.api.me().profile)
     #expect(
@@ -58,7 +59,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     let creator = try await stack.signedInMember()
     try await APISignUpService(api: creator.api).save(try character("阿杰", body: "shiba", persona: .energetic))
     try await APISignUpService(api: creator.api).agreeToAI()
-    let made = try await APISignUpService(api: creator.api).create(named: try SquadName("早八健身"))
+    let made = try await APISignUpService(api: creator.api).create(named: try SquadName("早八健身"), daysPerMember: 3)
     let code = try InviteCode(try #require(await creator.api.mySquad()).inviteCode)
     let friend = try await stack.signedInMember()
     let signUp = APISignUpService(api: friend.api)
@@ -66,7 +67,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     #expect(
         try await signUp.preview(code)
             == SquadPreview(
-                code: code, name: "早八健身", memberCount: 1, isFull: false,
+                code: code, name: "早八健身", memberCount: 1, isFull: false, daysPerMember: 3,
                 looks: [
                     CharacterLook(
                         persona: "energetic", variants: ["body": "shiba", "top": "warmup-tee"],
@@ -116,14 +117,16 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     let stack = try LocalStack()
     let signUp = APISignUpService(api: try await stack.signedInMember().api)
     try await signUp.agreeToAI()
-    _ = try await signUp.create(named: try SquadName("一队"))
+    _ = try await signUp.create(named: try SquadName("一队"), daysPerMember: 3)
     let creator = try await stack.signedInMember()
     let other = APISignUpService(api: creator.api)
     try await other.agreeToAI()
-    _ = try await other.create(named: try SquadName("二队"))
+    _ = try await other.create(named: try SquadName("二队"), daysPerMember: 3)
     let code = try InviteCode(try #require(await creator.api.mySquad()).inviteCode)
 
-    await #expect(throws: SignUpError.tooManySquads) { try await signUp.create(named: try SquadName("三队")) }
+    await #expect(throws: SignUpError.tooManySquads) {
+        try await signUp.create(named: try SquadName("三队"), daysPerMember: 3)
+    }
     await #expect(throws: SignUpError.tooManySquads) { try await signUp.join(code) }
 }
 
@@ -131,11 +134,13 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     let stack = try LocalStack()
     let signUp = APISignUpService(api: try await stack.signedInMember().api)
 
-    await #expect(throws: SignUpError.rejected) { try await signUp.create(named: try SquadName("一队")) }
+    await #expect(throws: SignUpError.rejected) {
+        try await signUp.create(named: try SquadName("一队"), daysPerMember: 3)
+    }
     // Agreeing twice, after a lost answer, is fine.
     try await signUp.agreeToAI()
     try await signUp.agreeToAI()
-    _ = try await signUp.create(named: try SquadName("一队"))
+    _ = try await signUp.create(named: try SquadName("一队"), daysPerMember: 3)
 }
 
 // The app's whole path, as `AppModel` composes it: a member signed in with no squad gets no
@@ -159,7 +164,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     let signUp = APISignUpService(api: member.api)
     try await signUp.save(try character("小林", body: "calico", persona: .shy))
     try await signUp.agreeToAI()
-    let squad = try await signUp.create(named: try SquadName("周三不练腿"))
+    let squad = try await signUp.create(named: try SquadName("周三不练腿"), daysPerMember: 3)
     try await signUp.savePlan(Array(repeating: .train(nil), count: 7))
 
     let today = home(member, in: directory)
@@ -197,7 +202,7 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     let creator = try await stack.signedInMember()
     try await APISignUpService(api: creator.api).save(try character("阿杰", body: "shiba", persona: .energetic))
     try await APISignUpService(api: creator.api).agreeToAI()
-    _ = try await APISignUpService(api: creator.api).create(named: try SquadName("早八健身"))
+    _ = try await APISignUpService(api: creator.api).create(named: try SquadName("早八健身"), daysPerMember: 3)
     let code = try InviteCode(try #require(await creator.api.mySquad()).inviteCode)
     let friend = try await stack.signedInMember()
     let saved = try character("小林", body: "calico", persona: .shy)

@@ -37,6 +37,12 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-recap-pending")
     }
 
+    /// `-recap-waiting`: the sample story with its titles on their way, before the AI run reached
+    /// the squad (no try failed yet).
+    static var recapWaiting: Bool {
+        ProcessInfo.processInfo.arguments.contains("-recap-waiting")
+    }
+
     /// `-recap-missed`: the sample story where the squad fell short of its plans.
     static var recapMissed: Bool {
         ProcessInfo.processInfo.arguments.contains("-recap-missed")
@@ -110,6 +116,11 @@ enum LaunchOptions {
     static var notices: any NoticeSource {
         ProcessInfo.processInfo.arguments.contains("-uitest-no-notices")
             ? InMemoryNoticeSource.empty : InMemoryNoticeSource.sample(now: now())
+    }
+
+    /// `-uitest-offline-feed`: 动态 whose posts can't be read, as with no server.
+    static var feedIsOffline: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-offline-feed")
     }
 
     /// `-uitest-empty-feed`: 动态 with no posts, to see its empty scene.
@@ -307,19 +318,17 @@ enum LaunchOptions {
         return { started.addingTimeInterval(Date().timeIntervalSince(launched)) }
     }()
 
-    /// `-uitest-recap-unseen`: forget which day's 今日赛况 this phone opened, so a UI test starts
-    /// with the tag unseen. Passing `-today.recapSeen` instead would pin the value: launch
-    /// arguments win over what the app writes once the recap is opened.
-    static func forgetSeenRecapIfAsked() {
-        guard ProcessInfo.processInfo.arguments.contains("-uitest-recap-unseen") else { return }
-        UserDefaults.standard.removeObject(forKey: "today.recapSeen")
-    }
-
-    /// `-uitest-night` also forgets the lights this phone switched on, so each UI test's night
-    /// starts dark.
-    static func forgetLightsIfAsked() {
-        guard ProcessInfo.processInfo.arguments.contains("-uitest-night") else { return }
-        UserDefaults.standard.removeObject(forKey: "today.lightsOn")
+    /// UI tests' flags that make 今天 forget what this phone kept, so each test starts as a member
+    /// first sees it and can still change it (passing the key itself would pin it: launch arguments
+    /// win over what the app writes): `-uitest-recap-unseen`, which day's 今日赛况 was opened;
+    /// `-uitest-night`, the lights switched on; `-uitest-card-folded`, home's card left open.
+    static func forgetTodayStateIfAsked() {
+        let arguments = ProcessInfo.processInfo.arguments
+        let kept = [
+            "-uitest-recap-unseen": "today.recapSeen", "-uitest-night": "today.lightsOn",
+            "-uitest-card-folded": "today.cardCollapsed",
+        ]
+        for (flag, key) in kept where arguments.contains(flag) { UserDefaults.standard.removeObject(forKey: key) }
     }
 
     /// `-uitest-thursday`: 出赛表's clock starts at noon on this week's Thursday and runs on, so

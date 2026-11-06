@@ -4775,6 +4775,302 @@ public enum Operations {
             }
         }
     }
+    /// The signed-in member’s 练了 for a range of days, for their training record
+    ///
+    /// 训练记录 on 我: each 练了 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.
+    ///
+    /// - Remark: HTTP `GET /me/trainings`.
+    /// - Remark: Generated from `#/paths//me/trainings/get(listMyTrainings)`.
+    public enum ListMyTrainings {
+        public static let id: Swift.String = "listMyTrainings"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/me/trainings/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/me/trainings/GET/query/from`.
+                public var from: Swift.String
+                /// - Remark: Generated from `#/paths/me/trainings/GET/query/to`.
+                public var to: Swift.String
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - from:
+                ///   - to:
+                public init(
+                    from: Swift.String,
+                    to: Swift.String
+                ) {
+                    self.from = from
+                    self.to = to
+                }
+            }
+            public var query: Operations.ListMyTrainings.Input.Query
+            /// - Remark: Generated from `#/paths/me/trainings/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.ListMyTrainings.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.ListMyTrainings.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.ListMyTrainings.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.ListMyTrainings.Input.Query,
+                headers: Operations.ListMyTrainings.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/me/trainings/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/me/trainings/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.TrainingRecord)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.TrainingRecord {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.ListMyTrainings.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.ListMyTrainings.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            /// The record
+            ///
+            /// - Remark: Generated from `#/paths//me/trainings/get(listMyTrainings)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.ListMyTrainings.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.ListMyTrainings.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct BadRequest: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/me/trainings/GET/responses/400/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/me/trainings/GET/responses/400/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.ListMyTrainings.Output.BadRequest.Body
+                /// Creates a new `BadRequest`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.ListMyTrainings.Output.BadRequest.Body) {
+                    self.body = body
+                }
+            }
+            /// Not a valid range of days (at most 371)
+            ///
+            /// - Remark: Generated from `#/paths//me/trainings/get(listMyTrainings)/responses/400`.
+            ///
+            /// HTTP response code: `400 badRequest`.
+            case badRequest(Operations.ListMyTrainings.Output.BadRequest)
+            /// The associated value of the enum case if `self` is `.badRequest`.
+            ///
+            /// - Throws: An error if `self` is not `.badRequest`.
+            /// - SeeAlso: `.badRequest`.
+            public var badRequest: Operations.ListMyTrainings.Output.BadRequest {
+                get throws {
+                    switch self {
+                    case let .badRequest(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "badRequest",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Unauthorized: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/me/trainings/GET/responses/401/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/me/trainings/GET/responses/401/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.ListMyTrainings.Output.Unauthorized.Body
+                /// Creates a new `Unauthorized`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.ListMyTrainings.Output.Unauthorized.Body) {
+                    self.body = body
+                }
+            }
+            /// No bearer token, or not a valid one
+            ///
+            /// - Remark: Generated from `#/paths//me/trainings/get(listMyTrainings)/responses/401`.
+            ///
+            /// HTTP response code: `401 unauthorized`.
+            case unauthorized(Operations.ListMyTrainings.Output.Unauthorized)
+            /// The associated value of the enum case if `self` is `.unauthorized`.
+            ///
+            /// - Throws: An error if `self` is not `.unauthorized`.
+            /// - SeeAlso: `.unauthorized`.
+            public var unauthorized: Operations.ListMyTrainings.Output.Unauthorized {
+                get throws {
+                    switch self {
+                    case let .unauthorized(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "unauthorized",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct ServiceUnavailable: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/me/trainings/GET/responses/503/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/me/trainings/GET/responses/503/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.ListMyTrainings.Output.ServiceUnavailable.Body
+                /// Creates a new `ServiceUnavailable`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.ListMyTrainings.Output.ServiceUnavailable.Body) {
+                    self.body = body
+                }
+            }
+            /// Sign-in or photo storage can’t be reached right now
+            ///
+            /// - Remark: Generated from `#/paths//me/trainings/get(listMyTrainings)/responses/503`.
+            ///
+            /// HTTP response code: `503 serviceUnavailable`.
+            case serviceUnavailable(Operations.ListMyTrainings.Output.ServiceUnavailable)
+            /// The associated value of the enum case if `self` is `.serviceUnavailable`.
+            ///
+            /// - Throws: An error if `self` is not `.serviceUnavailable`.
+            /// - SeeAlso: `.serviceUnavailable`.
+            public var serviceUnavailable: Operations.ListMyTrainings.Output.ServiceUnavailable {
+                get throws {
+                    switch self {
+                    case let .serviceUnavailable(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "serviceUnavailable",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case applicationProblemJson
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                case "application/problem+json":
+                    self = .applicationProblemJson
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                case .applicationProblemJson:
+                    return "application/problem+json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json,
+                    .applicationProblemJson
+                ]
+            }
+        }
+    }
     /// A signed URL to upload one check-in photo to
     ///
     /// - Remark: HTTP `POST /photo-uploads`.

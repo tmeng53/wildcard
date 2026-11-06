@@ -132,7 +132,7 @@ struct TemplateOffer: View {
                 .typeStyle(TypeRamp.footnote)
             Spacer(minLength: Space.xs)
             Button(action: onCopy) {
-                Text("也改到模板", bundle: .module)
+                Text("也改到我的每周计划", bundle: .module)
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .frame(minHeight: Sizing.minimumTapTarget)
                     .contentShape(Rectangle())

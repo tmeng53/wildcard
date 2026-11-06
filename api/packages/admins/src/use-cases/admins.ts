@@ -11,6 +11,8 @@ import type { AdminStore, Clock } from '../ports.js';
 export interface Admins {
   /** The member as an admin; throws `NotAnAdminError` when they aren't on the list. */
   requireAdmin(member: string): Promise<AdminId>;
+  /** Whether the member is on the admin list, for what only admins see in the app. */
+  isAdmin(member: string): Promise<boolean>;
   /** Everyone on the admin list, to tell about something that needs one of them. */
   list(): Promise<AdminId[]>;
   /** Logs one change an admin made with a tool, at the current time. */
@@ -29,6 +31,7 @@ export function createAdmins(deps: { readonly store: AdminStore; readonly clock:
       if (!(await deps.store.isAdmin(member))) throw new NotAnAdminError();
       return AdminId.parse(member);
     },
+    isAdmin: (member) => deps.store.isAdmin(member),
     list: () => deps.store.list(),
     logChange: async (input) => {
       const entry = {

@@ -23,6 +23,9 @@ extension TodayModel {
         await land(on: scene, move: move)
     }
 
+    /// Whether a takeover's opening covers the screen, until its 进场.
+    public var isShowingOpening: Bool { opening != nil }
+
     /// Everyone in the opening, with their personas: teammates either side of me, as the home
     /// stands them.
     private var openingCast: [(player: CharacterPlayer, persona: Persona)] {

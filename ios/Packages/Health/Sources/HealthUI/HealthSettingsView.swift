@@ -12,24 +12,20 @@ public struct HealthSettingsView: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.openURL) private var openURL
     @Bindable private var health: HealthConnection
-    private let close: () -> Void
     @State private var isConnecting = false
 
-    public init(health: HealthConnection, close: @escaping () -> Void) {
+    /// Pushed over 设置 on its NavigationStack, so going back is the system's.
+    public init(health: HealthConnection) {
         self.health = health
-        self.close = close
     }
 
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                HeaderButton(Text("设置", bundle: .module), systemImage: "chevron.left", action: close)
-                    .accessibilityIdentifier("health.back")
                 Text("Apple 健康", bundle: .module)
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
-                    .padding(.top, Space.s)
                 connection
                 if health.isConnected { sharing }
                 permissions
@@ -39,8 +35,9 @@ public struct HealthSettingsView: View {
             .padding(.bottom, Space.l)
         }
         .scrollIndicators(.hidden)
+        .barTitleOnScroll(Text("Apple 健康", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
-        .swipesBack(perform: close)
+        .pushedPage()
         .task { await health.refresh() }
         .accessibilityIdentifier("health.page")
     }
