@@ -93,6 +93,27 @@ public struct ScoreCell: Hashable, Identifiable, Sendable {
     }
 }
 
+/// Where a lap chart's bars stand across `width` points: one slot a lap, each bar most of its
+/// slot, so every lap fits however many there are. A slot too thin for a gap gets none.
+public enum LapBars {
+    public struct Bar: Equatable, Sendable {
+        public let x: Double
+        public let width: Double
+
+        public init(x: Double, width: Double) {
+            self.x = x
+            self.width = width
+        }
+    }
+
+    public static func across(_ width: Double, count: Int) -> [Bar] {
+        guard count > 0, width > 0 else { return [] }
+        let slot = width / Double(count)
+        let gap = slot >= 3 ? slot * 0.3 : 0
+        return (0..<count).map { Bar(x: Double($0) * slot, width: slot - gap) }
+    }
+}
+
 #if os(iOS)
 extension ScoreCell.Unit {
     public var text: Text {
@@ -239,6 +260,8 @@ public struct WorkoutMap: View {
                     style: StrokeStyle(lineWidth: max(1, lane / 7), lineCap: .round, dash: [lane / 2, lane / 2]))
         }
         .mapStyle(.standard(emphasis: .muted, pointsOfInterest: .excludingAll))
+        // The camera frames the route only when the map is made, so another route makes another map.
+        .id(route)
         .allowsHitTesting(false)
         .accessibilityLabel(Text("路线地图", bundle: .module))
         .accessibilityIdentifier("workout.map")
@@ -308,16 +331,13 @@ public struct WorkoutChart: View {
     ) {
         let slowest = laps.max() ?? 1
         let quickest = laps.min() ?? 0
-        let gap = area.width / Double(laps.count) * 0.3
-        let width = max(2, area.width / Double(laps.count) - gap)
-        for (index, lap) in laps.enumerated() {
+        for (index, (lap, slot)) in zip(laps, LapBars.across(area.width, count: laps.count)).enumerated() {
             // A faster lap stands taller.
             let share = slowest == quickest ? 0.6 : 0.35 + 0.6 * (slowest - lap) / (slowest - quickest)
             let height = area.height * share
-            let bar = CGRect(
-                x: area.minX + Double(index) * (width + gap), y: area.maxY - height, width: width, height: height)
+            let bar = CGRect(x: area.minX + slot.x, y: area.maxY - height, width: slot.width, height: height)
             context.fill(
-                Path(roundedRect: bar, cornerRadius: min(2, width / 2)),
+                Path(roundedRect: bar, cornerRadius: min(2, slot.width / 2)),
                 with: .color(index == fastest ? ink : ink.opacity(0.55)))
         }
     }

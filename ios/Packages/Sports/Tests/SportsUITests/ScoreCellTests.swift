@@ -29,3 +29,14 @@ import Testing
     #expect(ScoreCell.cells(of: timed).map(\.value) == ["45"])
     #expect(ScoreCell.cells(of: Training(activity: .sport("tennis"))).isEmpty)
 }
+
+@Test func everyLapBarFitsTheChartHoweverManyLapsThereAre() {
+    for count in [1, 8, 40, 200] {
+        let bars = LapBars.across(64, count: count)
+        #expect(bars.count == count)
+        #expect(bars.allSatisfy { $0.x >= 0 && $0.width > 0 && $0.x + $0.width <= 64.000_001 })
+    }
+    let two = LapBars.across(64, count: 2)
+    #expect(two.map(\.x) == [0, 32])
+    #expect(two.allSatisfy { abs($0.width - 22.4) < 0.000_001 })
+}
