@@ -83,8 +83,6 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(week.sports.map(\.sport) == ["yoga", "run"])
     #expect(week.sports.map(\.days) == [3, 2])
     #expect(week.disclaimers == SquadWeek.Disclaimers(days: 1, most: id(2)))
-    #expect(week.members.map(\.topSport) == ["run", "yoga", nil])
-    #expect(week.members.map(\.topSport.weekClip) == [.sport("run"), .sport("yoga"), .award(.cheer)])
 }
 
 @Test func theSquadsWeekFindsItsFunNumbers() {

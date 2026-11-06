@@ -22,10 +22,6 @@ public struct SquadWeek: Hashable, Sendable {
 
         public var trainedDays: Int { days.count { $0.isTrained } }
 
-        /// The sport they trained most days, the earliest on a tie; nil when they didn't train
-        /// a listed sport.
-        public var topSport: Sport? { SquadWeek.ranked(days).first?.sport }
-
         /// The minutes logged on a trained day, if any were.
         func minutes(on index: Int) -> Int? {
             guard index < days.count, days[index].isTrained, index < minutes.count else { return nil }

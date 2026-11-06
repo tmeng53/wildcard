@@ -240,17 +240,16 @@ private struct SportsCard: View {
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
             }
-            ForEach(Array(sports.prefix(Self.named).enumerated()), id: \.element.sport) { index, sport in
+            ForEach(Array(sports.prefix(Self.named)), id: \.sport) { sport in
                 SportRow(
                     symbol: sport.sport.symbol, name: sport.sport.cardName, days: sport.days,
-                    fraction: Double(sport.days) / Double(most), isRest: false, start: Double(index) * 0.04)
+                    fraction: Double(sport.days) / Double(most), isRest: false)
             }
             if !rest.isEmpty {
                 SportRow(
                     symbol: "ellipsis", name: Text("其他 \(rest.count) 种", bundle: .module),
                     days: rest.reduce(0) { $0 + $1.days },
-                    fraction: Double(rest.reduce(0) { $0 + $1.days }) / Double(most), isRest: true,
-                    start: Double(Self.named) * 0.04)
+                    fraction: Double(rest.reduce(0) { $0 + $1.days }) / Double(most), isRest: true)
             }
         }
         .padding(.horizontal, Space.m)
@@ -273,7 +272,6 @@ private struct SportRow: View {
     /// Against the most-trained sport, 0 to 1 (其他 may pass it).
     let fraction: Double
     let isRest: Bool
-    let start: Double
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
