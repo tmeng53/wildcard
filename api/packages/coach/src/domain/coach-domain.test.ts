@@ -274,6 +274,16 @@ describe('when the coach wakes', () => {
         '你的记性（你只记得这些）：\n还是空的：memory.md',
       ].join('\n\n'),
     );
+    // On a holiday the coach is told, after the talk and before its files.
+    expect(
+      taskOf({
+        reason: { kind: 'checkIn', checkIn: 'c1' },
+        week,
+        files: new Map(),
+        recentNotes: [],
+        occasions: ['今天是感恩节', 'TURKEY TROT 开张了'],
+      })?.split('\n\n')[1],
+    ).toBe('今天的日子（可以顺口提，别句句都提）：\n- 今天是感恩节\n- TURKEY TROT 开张了');
     // Without the talk, or once the check-in left the week, there is nothing to answer.
     expect(
       taskOf({
@@ -333,6 +343,21 @@ describe('when the coach wakes', () => {
         '今天没有要写便条的人。',
       ].join('\n\n'),
     );
+    // A holiday's morning: told right after the day.
+    expect(
+      taskOf({
+        reason: { kind: 'daily', day: '2026-11-26' },
+        week,
+        files: new Map(),
+        recentNotes: [],
+        occasions: ['今天是感恩节'],
+      })
+        ?.split('\n\n')
+        .slice(0, 2),
+    ).toStrictEqual([
+      '新的一天：2026-11-26，周四。',
+      '今天的日子（可以顺口提，别句句都提）：\n- 今天是感恩节',
+    ]);
     // Whom it writes a morning note to, by the names it knows them by.
     expect(
       taskOf({

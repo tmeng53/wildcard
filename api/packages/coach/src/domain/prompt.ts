@@ -91,6 +91,7 @@ export function taskOf({
   talks = [],
   noteTo = [],
   yesterday,
+  occasions = [],
 }: {
   readonly reason: WakeReason;
   readonly week: SquadWeek;
@@ -108,8 +109,11 @@ export function taskOf({
   readonly noteTo?: readonly NoteBrief[];
   /** On a daily wake, the squad's posts of the day before, oldest first. */
   readonly yesterday?: { readonly day: string; readonly checkIns: readonly WeekCheckIn[] };
+  /** What is special about the day, such as a holiday, one line each. */
+  readonly occasions?: readonly string[];
 }): string | undefined {
   const filesLine = memoryBlock(files);
+  const occasion = occasionBlock(occasions);
   if (reason.kind === 'checkIn') {
     const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
     if (checkIn === undefined) return undefined;
@@ -117,7 +121,12 @@ export function taskOf({
       recentEmoji.length === 0
         ? '你最近没点过表情。'
         : `你最近点过的表情（新的在前）：${recentEmoji.join(' ')}`;
-    return [`有人打卡：${checkInLine(checkIn, rosterOf(week))}`, emoji, filesLine].join('\n\n');
+    return [
+      `有人打卡：${checkInLine(checkIn, rosterOf(week))}`,
+      ...occasion,
+      emoji,
+      filesLine,
+    ].join('\n\n');
   }
   if (reason.kind === 'comment') {
     const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
@@ -137,6 +146,7 @@ export function taskOf({
       `${answering?.toCoach === undefined && answering?.mentionsCoach !== undefined ? '有人在评论里 @ 你' : '有人回复你'}。这条打卡：${checkInLine({ ...checkIn, comments: [] }, roster)}`,
       ...(others.length === 0 ? [] : [`这条下面别人的评论（先后顺序）：\n${others.join('\n')}`]),
       `你们在下面的对话：\n${[...ownReply, ...said].join('\n')}`,
+      ...occasion,
       filesLine,
     ].join('\n\n');
   }
@@ -151,12 +161,24 @@ export function taskOf({
   const roster = rosterOf(week);
   return [
     `新的一天：${reason.day}，${weekdayOf(reason.day)}。`,
+    ...occasion,
     ...(yesterday === undefined ? [] : [yesterdayBlock(yesterday, roster)]),
     talksBlock(talks, roster),
     filesLine,
     notes,
     noteLine,
   ].join('\n\n');
+}
+
+/**
+ * What is special about today, when anything is: the coach may pick it up, as a friend would,
+ * without making every line about it.
+ */
+function occasionBlock(occasions: readonly string[]): string[] {
+  if (occasions.length === 0) return [];
+  return [
+    `今天的日子（可以顺口提，别句句都提）：\n${occasions.map((each) => `- ${each}`).join('\n')}`,
+  ];
 }
 
 /** The squad's posts of the day before, for the morning notes to pick up on. */

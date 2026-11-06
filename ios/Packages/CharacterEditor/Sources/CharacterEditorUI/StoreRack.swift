@@ -146,9 +146,9 @@ struct SportsTip: View {
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
             FlowRow(spacing: Space.xs) {
                 if sports.isEmpty {
-                    pill(Text("练什么都算", bundle: .module))
+                    SportPill(word: Text("练什么都算", bundle: .module))
                 } else {
-                    ForEach(sports, id: \.self) { pill($0.name) }
+                    ForEach(sports, id: \.self) { SportPill(word: $0.name) }
                 }
             }
         }
@@ -157,8 +157,14 @@ struct SportsTip: View {
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("street.tip")
     }
+}
 
-    private func pill(_ word: Text) -> some View {
+/// A sport as a mist pill, in 「练这些运动解锁」 and under the street's storefront.
+struct SportPill: View {
+    let word: Text
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
         word
             .typeStyle(TypeRamp.footnoteEmphasis)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -168,9 +174,11 @@ struct SportsTip: View {
     }
 }
 
-/// Pills that wrap onto the next line where they don't fit.
+/// Pills that wrap onto the next line where they don't fit, each line from the leading edge or
+/// centred.
 struct FlowRow: Layout {
     let spacing: Double
+    var centred = false
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let rows = rows(width: proposal.width ?? .infinity, subviews: subviews)
@@ -181,7 +189,7 @@ struct FlowRow: Layout {
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         var top = bounds.minY
         for row in rows(width: bounds.width, subviews: subviews) {
-            var leading = bounds.minX
+            var leading = bounds.minX + (centred ? (bounds.width - row.width) / 2 : 0)
             for index in row.items {
                 let size = subviews[index].sizeThatFits(.unspecified)
                 subviews[index].place(at: CGPoint(x: leading, y: top), proposal: ProposedViewSize(size))

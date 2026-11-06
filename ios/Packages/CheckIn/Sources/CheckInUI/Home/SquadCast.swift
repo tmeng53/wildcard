@@ -19,6 +19,8 @@ final class SquadCast {
         /// Their nickname; nil before they make their character.
         let name: String?
         let persona: Persona
+        /// What they wear as they made their character, before their day's kit or pose.
+        let look: Outfit
         /// The species whose moves their clips play with.
         let species: String?
         let player: CharacterPlayer
@@ -99,7 +101,8 @@ final class SquadCast {
                 let player = player(for: member.id, wearing: dressed.outfit, persona: persona, looping: dressed.loop)
             else { return nil }
             return Mate(
-                member: member, name: mate.character?.nickname.text, persona: persona, species: species, player: player,
+                member: member, name: mate.character?.nickname.text, persona: persona, look: look, species: species,
+                player: player,
                 line: mate.catchphrase?.text ?? Self.personaLine(persona),
                 disclaimer: home.todaysDisclaimer(of: member.id),
                 caption: home.todaysCaption(of: member.id))
