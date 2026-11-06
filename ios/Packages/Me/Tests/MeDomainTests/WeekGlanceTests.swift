@@ -22,3 +22,13 @@ struct WeekGlanceTests {
         #expect(glance.days.allSatisfy { !$0.isToday && $0.mark == .rest })
     }
 }
+
+struct WeekGlanceDaysLeftTests {
+    @Test func countsTodayAndTheDaysAfterIt() {
+        let plan: [PlanDay] = Array(repeating: .rest, count: 7)
+        #expect(WeekGlance(number: 1, plan: plan, trainedDays: [], today: 0).daysLeft == 7)
+        #expect(WeekGlance(number: 1, plan: plan, trainedDays: [], today: 3).daysLeft == 4)
+        #expect(WeekGlance(number: 1, plan: plan, trainedDays: [], today: 6).daysLeft == 1)
+        #expect(WeekGlance(number: 1, plan: plan, trainedDays: [], today: nil).daysLeft == nil)
+    }
+}

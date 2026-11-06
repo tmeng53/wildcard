@@ -7,6 +7,7 @@ import {
   DEFAULT_PAGE,
   DayRange,
   MyDayRange,
+  RecordRange,
   MAX_PAGE,
   decodeCursor,
   encodeCursor,
@@ -213,6 +214,32 @@ export const checkInTotalsFields = {
     .openapi('TopSport'),
 };
 
+const TrainingRecord = z
+  .strictObject({
+    version: bodyVersion(1),
+    trainings: z
+      .array(
+        z
+          .strictObject({
+            id: CheckInId,
+            day: LocalDay,
+            sport: storedTrainingFields.sport,
+            customSport: z
+              .string()
+              .optional()
+              .meta({ description: 'The name of a `custom` sport; a listed sport has none.' }),
+            minutes: z
+              .int()
+              .positive()
+              .optional()
+              .meta({ description: 'How long it took, when the member said.' }),
+          })
+          .openapi('TrainingDay'),
+      )
+      .meta({ description: 'Each 练了 in the range, by day, the earliest made first.' }),
+  })
+  .openapi('TrainingRecord');
+
 const CheckInTotals = z
   .strictObject({ version: bodyVersion(1), ...checkInTotalsFields })
   .openapi('CheckInTotals');
@@ -268,7 +295,8 @@ const signedInFailures = {
  * Daily check-ins: `PUT /check-ins/{id}` saves one, `PATCH` and `DELETE` the same path edit and
  * delete the member's own, and `GET` reads it as a post (its own page), `GET /squads/{squadId}/check-ins` (the squad's feed, with reactions and
  * comments) and `GET /me/check-ins` read them back for a range of days, and
- * `GET /me/check-in-totals` counts all of the member's own.
+ * `GET /me/check-in-totals` counts all of the member's own, and `GET /me/trainings` lists their
+ * 练了 by day for 我's training record.
  */
 export function checkIns(deps: {
   readonly verifyToken: VerifyToken;
@@ -470,6 +498,27 @@ export function checkIns(deps: {
     },
   });
 
+  const trainings = createRoute({
+    method: 'get',
+    path: '/me/trainings',
+    operationId: 'listMyTrainings',
+    summary: 'The signed-in member’s 练了 for a range of days, for their training record',
+    description:
+      '训练记录 on 我: each 练了 the member posted for a day in the range, wherever it went, ' +
+      'with its sport and minutes only. At most 371 days at a time.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { query: RecordRange },
+    responses: {
+      200: {
+        description: 'The record',
+        content: { 'application/json': { schema: TrainingRecord } },
+      },
+      400: problem('Not a valid range of days (at most 371)'),
+      ...signedInFailures,
+    },
+  });
+
   return new OpenAPIHono<SignedIn>()
     .openapi(save, async (c) => {
       const { checkIn, created } = await deps.checkIns.save({
@@ -584,5 +633,14 @@ export function checkIns(deps: {
     .openapi(totals, async (c) => {
       const counts = await deps.checkIns.totals(MemberId.parse(c.var.caller.userId));
       return c.json({ version: 1 as const, ...counts }, 200);
+    })
+    .openapi(trainings, async (c) => {
+      const { from, to } = c.req.valid('query');
+      const list = await deps.checkIns.trainings({
+        member: MemberId.parse(c.var.caller.userId),
+        from,
+        to,
+      });
+      return c.json({ version: 1 as const, trainings: list }, 200);
     });
 }

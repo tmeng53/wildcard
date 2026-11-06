@@ -32,3 +32,15 @@ export interface TrainedCheckIn {
   readonly sport: SportKey;
   readonly madeAt: Date;
 }
+
+/** One 练了 on the member's training record (训练记录): its day, sport and minutes. */
+export interface TrainingDay {
+  readonly id: CheckInId;
+  /** The day it counts for. */
+  readonly day: string;
+  readonly sport: SportKey;
+  /** The name of a `custom` sport; a listed sport has none. */
+  readonly customSport?: string;
+  /** How long it took, when the member said. */
+  readonly minutes?: number;
+}

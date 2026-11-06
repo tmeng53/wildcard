@@ -37,8 +37,35 @@ public actor InMemoryMeService: MeService {
                 weekGlance: WeekGlance(
                     number: 3,
                     plan: [.train(nil), .rest, .train(nil), .train(nil), .train(nil), .train(nil), .rest],
-                    trainedDays: [0, 2, 3], today: 3)),
+                    trainedDays: [0, 2, 3], today: 3),
+                record: sampleRecord),
             failsSaving: failsSaving)
+    }
+
+    /// The sample's 训练记录: 21 weeks to Thursday 2026-11-05, a 练了 on about three days in five
+    /// at a run of lengths, the same every launch.
+    static var sampleRecord: TrainingRecord {
+        let today = (try? LocalDay(year: 2026, month: 11, day: 5)) ?? LocalDay(at: .now, in: .current)
+        let sports: [Sport] = ["run", "swim", "strength", "yoga", "tennis"]
+        let lengths: [Int?] = [20, 45, 60, nil, 30, 90, 40]
+        var seed = 11
+        var trainings: [TrainingDay] = []
+        var day = TrainingRecord.firstDay(today: today)
+        var index = 0
+        while day <= today {
+            seed = (seed * 9301 + 49297) % 233_280
+            if seed % 5 < 3 {
+                trainings.append(
+                    TrainingDay(
+                        id: CheckInID(
+                            UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", index)) ?? UUID()),
+                        day: day, activity: .sport(sports[index % sports.count]),
+                        minutes: lengths[index % lengths.count]))
+            }
+            index += 1
+            day = day.adding(days: 1)
+        }
+        return TrainingRecord(today: today, trainings: trainings)
     }
 
     public func overview() async throws(MeError) -> MeOverview {

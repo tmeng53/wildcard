@@ -3932,6 +3932,80 @@ extension Components {
                 case checkIns
             }
         }
+        /// - Remark: Generated from `#/components/schemas/TrainingRecord`.
+        public struct TrainingRecord: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/TrainingRecord/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/TrainingRecord/version`.
+            public var version: Components.Schemas.TrainingRecord.VersionPayload
+            /// Each 练了 in the range, by day, the earliest made first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainingRecord/trainings`.
+            public var trainings: [Components.Schemas.TrainingDay]
+            /// Creates a new `TrainingRecord`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - trainings: Each 练了 in the range, by day, the earliest made first.
+            public init(
+                version: Components.Schemas.TrainingRecord.VersionPayload,
+                trainings: [Components.Schemas.TrainingDay]
+            ) {
+                self.version = version
+                self.trainings = trainings
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case trainings
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/TrainingDay`.
+        public struct TrainingDay: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/TrainingDay/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/TrainingDay/day`.
+            public var day: Swift.String
+            /// - Remark: Generated from `#/components/schemas/TrainingDay/sport`.
+            public var sport: Components.Schemas.Sport
+            /// The name of a `custom` sport; a listed sport has none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainingDay/customSport`.
+            public var customSport: Swift.String?
+            /// How long it took, when the member said.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainingDay/minutes`.
+            public var minutes: Swift.Int?
+            /// Creates a new `TrainingDay`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - day:
+            ///   - sport:
+            ///   - customSport: The name of a `custom` sport; a listed sport has none.
+            ///   - minutes: How long it took, when the member said.
+            public init(
+                id: Swift.String,
+                day: Swift.String,
+                sport: Components.Schemas.Sport,
+                customSport: Swift.String? = nil,
+                minutes: Swift.Int? = nil
+            ) {
+                self.id = id
+                self.day = day
+                self.sport = sport
+                self.customSport = customSport
+                self.minutes = minutes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case day
+                case sport
+                case customSport
+                case minutes
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PhotoUpload`.
         public struct PhotoUpload: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PhotoUpload/version`.

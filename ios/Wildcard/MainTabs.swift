@@ -249,22 +249,7 @@ struct MainTabs: View {
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: noticePost?.id)
     }
 
-    /// The member's own character, on the empty 通知.
-    private var noticeViewer: NoticeViewer? {
-        profile.overview.map { NoticeViewer(outfit: $0.character.outfit, persona: $0.character.persona) }
-    }
-
-    /// A store's, prop's or piece's words and badge on its 通知 row, as the home's banner says them.
-    /// How a store or piece opened comes from the member's unlock; a prop's title says it all (the bell design).
-    private func unlockWords(_ kind: Unlock.Kind, item: String) -> UnlockWords {
-        let unlock = profile.overview?.unlocks.first { $0.kind == kind && $0.id == item }
-        return UnlockWords(
-            title: UnlockNames.title(kind, item: item),
-            detail: kind == .prop ? nil : unlock.map(UnlockNames.detail),
-            icon: AnyView(WardrobeBadge(kind, item: item)))
-    }
-
-    /// 我, or 出赛表 or 我的动态 in its place, with a post opened from the wall over it.
+    /// 我, or 出赛表 or 我的动态 in its place, with a post opened from the wall or from 训练记录 over it.
     private var profilePage: some View {
         ZStack {
             if showsSchedule {
@@ -285,11 +270,6 @@ struct MainTabs: View {
                 .allowsHitTesting(post == nil)
                 .accessibilityHidden(post != nil)
                 .transition(.move(edge: .trailing))
-                if let post {
-                    PostDetailView(model: post.model, post: post.id) { self.post = nil }
-                        .environment(\.sceneTheme, today.scene)
-                        .transition(.move(edge: .trailing))
-                }
             } else {
                 MeView(
                     model: profile,
@@ -297,10 +277,23 @@ struct MainTabs: View {
                         editCharacter: wardrobe.editCharacter,
                         schedule: { showsSchedule = true },
                         street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
+                        openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
                         privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
                 ) {
                     MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
                 }
+                .allowsHitTesting(post == nil)
+                .accessibilityHidden(post != nil)
+            }
+            // A post from the wall or 训练记录; closing it reads 我 again, as an edit or a delete
+            // there may change the record.
+            if let post {
+                PostDetailView(model: post.model, post: post.id) {
+                    self.post = nil
+                    Task { await profile.reload() }
+                }
+                .environment(\.sceneTheme, today.scene)
+                .transition(.move(edge: .trailing))
             }
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: wall != nil)

@@ -175,7 +175,7 @@ final class MeUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         let row = app.buttons["me.schedule"]
         XCTAssertTrue(row.waitForExistence(timeout: 30), "no 出赛表 tile on 我")
-        XCTAssertTrue(row.label.contains("3/5"), "the tile doesn't count this week: \(row.label)")
+        XCTAssertTrue(row.label.contains("这周还有 4 天"), "the tile doesn't count the days left: \(row.label)")
         XCTAssertTrue(row.label.contains("W3"), "the tile doesn't number this week: \(row.label)")
         app.swipeUp()
         assertClearOfTabBar(row, in: app)
@@ -235,7 +235,7 @@ final class MeUITests: XCTestCase {
     }
 
     /// What must stay tappable sits above the floating tab bar.
-    private func assertClearOfTabBar(_ element: XCUIElement, in app: XCUIApplication) {
+    func assertClearOfTabBar(_ element: XCUIElement, in app: XCUIApplication) {
         XCTAssertTrue(element.waitForExistence(timeout: 30), "\(element) never showed")
         let bar = tabButton("tab.today", in: app).frame
         XCTAssertLessThanOrEqual(element.frame.maxY, bar.minY, "\(element) sits under the tab bar")
@@ -262,7 +262,7 @@ final class MeUITests: XCTestCase {
         keepScreenshot(named: "50-settings-zh-hant")
     }
 
-    private func launch(language: String, extra: [String] = []) -> XCUIApplication {
+    func launch(language: String, extra: [String] = []) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments +=
@@ -273,11 +273,11 @@ final class MeUITests: XCTestCase {
     }
 
     /// The character's idle and springs settle before a screenshot.
-    private func settle() {
+    func settle() {
         Thread.sleep(forTimeInterval: 1)
     }
 
-    private func keepScreenshot(named name: String) {
+    func keepScreenshot(named name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
         attachment.lifetime = .keepAlways
