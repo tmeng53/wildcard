@@ -91,6 +91,7 @@ describe('the coach’s notes', () => {
     const edit = { id: 'winter', label: 'Winter', mode: 'off' };
     expect(SwitchEdit.safeParse({ ...edit, coachNote: '  ' }).success).toBe(false);
     expect(SwitchEdit.safeParse({ ...edit, coachNote: '雪'.repeat(121) }).success).toBe(false);
+    expect(SwitchEdit.safeParse({ ...edit, coachNote: '下雪了\n冷' }).success).toBe(false);
     expect(SwitchEdit.parse({ ...edit, coachNote: ' 下雪了 ' }).coachNote).toBe('下雪了');
   });
 });

@@ -4,4 +4,7 @@
 -- since a change logs the whole row.
 alter table public.switches
   add column coach_note text
-    check (coach_note is null or (coach_note <> '' and char_length(coach_note) <= 120));
+    check (
+      coach_note is null
+      or (pg_catalog.btrim(coach_note) <> '' and char_length(coach_note) <= 120 and coach_note !~ '[\r\n]')
+    );

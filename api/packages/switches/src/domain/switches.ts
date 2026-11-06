@@ -119,6 +119,7 @@ export const CoachNote = z
   .trim()
   .min(1)
   .max(120)
+  .regex(/^[^\r\n]*$/, 'one line')
   .meta({
     description:
       'What the AI coach is told while the switch is on (for everyone, not in preview), in ' +
