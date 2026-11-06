@@ -56,7 +56,9 @@ final class TabsUITests: XCTestCase {
     func testSquadCardOpensTheSquadPage() {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push"]
+        app.launchArguments += [
+            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-today.cardCollapsed", "0",
+        ]
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
 

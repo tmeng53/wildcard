@@ -1,6 +1,6 @@
 import XCTest
 
-/// 开灯 on the home at 23:30, on the sample squad: the cord hangs under the card, clear of it and
+/// 开灯 on the home at 23:30, on the sample squad: the cord hangs under the folded card, clear of it and
 /// of 打卡; tapping Coco opens her card, whose today says she's asleep; a tap on the cord switches the lights on, the
 /// sleepers wake and Coco's status is her rest day; another tap switches them off. Screenshots of
 /// each are kept for review.
@@ -14,7 +14,7 @@ final class LightsUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-night",
-            "-today.cardPage", "0",
+            "-today.cardPage", "0", "-uitest-card-folded",
         ]
         app.launch()
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
