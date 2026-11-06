@@ -404,10 +404,11 @@ async function frozenStory(
         checkedIn: page.checkedIn,
         plannedDays: page.plannedDays,
         trainedDays: page.trainedDays,
-        days: page.days.map(({ day, kind, sport }) => ({
+        days: page.days.map(({ day, kind, sport, minutes }) => ({
           day,
           kind,
           ...(sport === undefined ? {} : { sport }),
+          ...(minutes === undefined ? {} : { minutes }),
         })),
         healthyMeals: page.healthyMeals,
         cheatMeals: page.cheatMeals,

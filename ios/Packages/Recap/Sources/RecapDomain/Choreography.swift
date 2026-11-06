@@ -60,17 +60,10 @@ public enum StoryClip: Hashable, Sendable {
     }
 }
 
-extension DayKind {
-    /// What the character does on this day in 你的一周: the sport's move, a doze on a rest day,
-    /// lying flat (躺平) on a 请假条 day; nothing on a day with no check-in.
-    public var clip: StoryClip? {
-        switch self {
-        case .trained(let sport): .sport(sport)
-        case .rest: .award(.doze)
-        case .disclaimer: .award(.flat)
-        case .none: nil
-        }
-    }
+extension Optional where Wrapped == Sport {
+    /// A character's move for their week: the sport they trained most, in its kit, or the
+    /// persona's cheer when they trained none of the listed sports.
+    public var weekClip: StoryClip { map { .sport($0) } ?? .award(.cheer) }
 }
 
 extension Ending {

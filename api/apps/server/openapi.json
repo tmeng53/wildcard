@@ -4435,6 +4435,9 @@
               "myWeek": {
                 "$ref": "#/components/schemas/StoryMyWeek"
               },
+              "squadWeek": {
+                "$ref": "#/components/schemas/StorySquadWeek"
+              },
               "hottest": {
                 "$ref": "#/components/schemas/StoryHottest"
               },
@@ -4538,6 +4541,9 @@
               },
               "myWeek": {
                 "$ref": "#/components/schemas/StoryMyWeek"
+              },
+              "squadWeek": {
+                "$ref": "#/components/schemas/StorySquadWeek"
               },
               "hottest": {
                 "$ref": "#/components/schemas/StoryHottest"
@@ -4726,11 +4732,65 @@
           "sport": {
             "type": "string",
             "description": "For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own."
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "For a trained day: the minutes its 练了 logged, summed; missing when none did (minutes are optional) or in a week frozen before they were kept."
           }
         },
         "required": [
           "day",
           "kind"
+        ],
+        "additionalProperties": false
+      },
+      "StorySquadWeek": {
+        "type": "object",
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorySquadWeekMember"
+            },
+            "description": "Everyone in `members`, in the same order."
+          }
+        },
+        "required": [
+          "members"
+        ],
+        "additionalProperties": false,
+        "description": "全队运动总结: every member’s week, for the squad’s days trained, the sports it trained most and the week’s fun numbers. Missing when nobody trained."
+      },
+      "StorySquadWeekMember": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trainedDays": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryDay"
+            },
+            "description": "Monday first."
+          },
+          "reactionsReceived": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Reactions on their posts that week, for 互相加油."
+          }
+        },
+        "required": [
+          "member",
+          "trainedDays",
+          "days",
+          "reactionsReceived"
         ],
         "additionalProperties": false
       },

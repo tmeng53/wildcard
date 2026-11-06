@@ -10,6 +10,26 @@ import RecapDomain
 /// it: what the app plays without a backend, and what the UI tests screenshot. Its words stand in
 /// for the API's, which arrive already in the reader's language.
 public enum RecapSample {
+    /// 全队运动总结: each member's days, the reader's matching 你的一周.
+    private static let squadWeek = SquadWeek(members: [
+        week(coco, "run", "run", nil, "run", "strength", "run", nil),
+        week(lin, "tennis", nil, "tennis", nil, "tennis", nil, nil),
+        week(mia, "run", nil, "run", "yoga", nil, "run", nil),
+        week(jay, nil, "strength", nil, nil, nil, nil, "yoga"),
+        week(reader, "run", "tennis", nil, "strength", nil, "yoga", nil),
+    ])
+
+    /// A member's week for 全队运动总结: each day's sport, nil for a day they didn't train.
+    /// Every trained day logged 40 minutes, but Coco's long Saturday run.
+    private static func week(_ member: MemberID, _ sports: Sport?...) -> SquadWeek.Member {
+        SquadWeek.Member(
+            member: member, days: sports.map { $0.map(DayKind.trained) ?? .none },
+            minutes: sports.enumerated().map { index, sport in
+                sport == nil ? nil : member == coco && index == 5 ? 95 : 40
+            },
+            reactionsReceived: sports.count { $0 != nil } * 3)
+    }
+
     /// - Parameters:
     ///   - pending: the AI run hasn't succeeded yet: the titles wait and no page has AI words.
     ///   - missed: the squad fell short of its plans, for the other ending.
@@ -18,7 +38,7 @@ public enum RecapSample {
         return WeekStory(
             status: pending ? .pending : .ready, squad: SquadID(uuid(9)), squadName: "晨跑五人组",
             week: Week(monday: day(12), sunday: day(18)), scene: .pool, squadmates: squadmates,
-            order: [.podium, .titles, .myWeek, .hottest, .meals, .bestDisclaimer, .ending],
+            order: [.podium, .titles, .myWeek, .squadWeek, .hottest, .meals, .bestDisclaimer, .ending],
             podium: Podium(
                 champion: coco, sides: [lin, mia], planDone: [coco, mia], speech: ready ? "七天五天八点前打卡，闹钟都怕她" : nil,
                 championMove: ready ? .pose : nil, sideMove: ready ? .pump : nil),
@@ -38,6 +58,7 @@ public enum RecapSample {
                     .init(day: day(16), kind: .disclaimer), .init(day: day(17), kind: .trained("yoga")),
                     .init(day: day(18), kind: .rest),
                 ], line: ready ? "周二那场网球最有灵魂" : nil, healthyMeals: 3, cheatMeals: 1, reactionsReceived: 12),
+            squadWeek: squadWeek,
             hottest: Hottest(
                 checkIn: CheckInID(uuid(20)), day: day(15), kind: .trained, sport: "run", words: "晨跑 8 公里，腿还在",
                 reactions: [
