@@ -186,6 +186,81 @@
     return out;
   }
 
+  // An SVG path's `d` as absolute segments (AvatarDomain's PathData): M L H V C S Q T Z, absolute
+  // and relative, each as [command, its start point, ...its points] with only M, L, Q, C and Z.
+  function segments(d) {
+    const tokens = d.match(/[MLHVCSQTZ]|[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi) ?? [];
+    const out = [];
+    let k = 0;
+    let letter = '';
+    let pen = [0, 0];
+    let start = pen;
+    let cubic = null;
+    let quad = null;
+    const num = () => +tokens[k++];
+    while (k < tokens.length) {
+      if (/^[a-z]$/i.test(tokens[k])) letter = tokens[k++];
+      const relative = letter === letter.toLowerCase();
+      const point = () => {
+        const [x, y] = [num(), num()];
+        return relative ? [pen[0] + x, pen[1] + y] : [x, y];
+      };
+      const reflect = (c) => (c ? [2 * pen[0] - c[0], 2 * pen[1] - c[1]] : pen);
+      const from = pen;
+      let [nextCubic, nextQuad] = [null, null];
+      switch (letter.toUpperCase()) {
+        case 'M':
+          pen = start = point();
+          out.push(['M', from, pen]);
+          letter = relative ? 'l' : 'L';
+          break;
+        case 'L':
+          pen = point();
+          out.push(['L', from, pen]);
+          break;
+        case 'H': {
+          const x = num();
+          pen = [relative ? pen[0] + x : x, pen[1]];
+          out.push(['L', from, pen]);
+          break;
+        }
+        case 'V': {
+          const y = num();
+          pen = [pen[0], relative ? pen[1] + y : y];
+          out.push(['L', from, pen]);
+          break;
+        }
+        case 'C':
+        case 'S': {
+          const c1 = letter.toUpperCase() === 'C' ? point() : reflect(cubic);
+          const c2 = point();
+          pen = point();
+          out.push(['C', from, c1, c2, pen]);
+          nextCubic = c2;
+          break;
+        }
+        case 'Q':
+        case 'T': {
+          const c = letter.toUpperCase() === 'Q' ? point() : reflect(quad);
+          pen = point();
+          out.push(['Q', from, c, pen]);
+          nextQuad = c;
+          break;
+        }
+        case 'Z':
+          out.push(['Z', from]);
+          pen = start;
+          // Z takes no numbers; a number after it ends the path.
+          letter = '';
+          break;
+        default:
+          return out;
+      }
+      [cubic, quad] = [nextCubic, nextQuad];
+    }
+    return out;
+  }
+
   // An arm's art bent at the elbow (AvatarDomain's Bend): each point turns around the elbow by
   // more the nearer the hand, and a curve is refitted through its bent middle, so the arm curves.
   function bent(art, part, deg) {
@@ -202,34 +277,32 @@
       return [ex + c * (x - ex) - s * (y - ey), ey + s * (x - ex) + c * (y - ey)];
     };
     const n = (v) => +v.toFixed(2);
-    const path = (d) => {
-      const tokens = d.match(/[MLQZ]|-?[\d.]+(?:e-?\d+)?/g);
-      let out = '';
-      let [px, py] = [0, 0];
-      let [mx, my] = [0, 0];
-      for (let k = 0; k < tokens.length;) {
-        const command = tokens[k++];
-        const num = () => +tokens[k++];
-        if (command === 'Z') {
-          out += 'Z ';
-          [px, py] = [mx, my];
-        } else if (command === 'Q') {
-          const [cx, cy, x, y] = [num(), num(), num(), num()];
-          const [fx, fy] = move(px, py);
-          const [tx, ty] = move(x, y);
-          const [hx, hy] = move(0.25 * px + 0.5 * cx + 0.25 * x, 0.25 * py + 0.5 * cy + 0.25 * y);
-          out += `Q ${n(2 * hx - (fx + tx) / 2)} ${n(2 * hy - (fy + ty) / 2)} ${n(tx)} ${n(ty)} `;
-          [px, py] = [x, y];
-        } else {
-          const [x, y] = [num(), num()];
-          const [tx, ty] = move(x, y);
-          out += `${command} ${n(tx)} ${n(ty)} `;
-          [px, py] = [x, y];
-          if (command === 'M') [mx, my] = [x, y];
-        }
-      }
-      return out.trim();
-    };
+    const at = ([x, y]) => move(x, y);
+    const pt = ([x, y]) => `${n(x)} ${n(y)}`;
+    const mix = (points, weights) =>
+      [0, 1].map((k) => points.reduce((sum, point, j) => sum + weights[j] * point[k], 0));
+    const path = (d) =>
+      segments(d)
+        .map(([command, from, ...rest]) => {
+          if (command === 'Z') return 'Z';
+          if (command === 'M' || command === 'L') return `${command} ${pt(at(rest[0]))}`;
+          const end = rest[rest.length - 1];
+          const [f, t] = [at(from), at(end)];
+          if (command === 'Q') {
+            // The quadratic through both ends and its bent middle.
+            const h = at(mix([from, rest[0], end], [0.25, 0.5, 0.25]));
+            return `Q ${pt([2 * h[0] - (f[0] + t[0]) / 2, 2 * h[1] - (f[1] + t[1]) / 2])} ${pt(t)}`;
+          }
+          // The cubic through both ends and its bent thirds.
+          const one = at(mix([from, ...rest], [8 / 27, 12 / 27, 6 / 27, 1 / 27]));
+          const two = at(mix([from, ...rest], [1 / 27, 6 / 27, 12 / 27, 8 / 27]));
+          const a = [0, 1].map((k) => 27 * one[k] - 8 * f[k] - t[k]);
+          const b = [0, 1].map((k) => 27 * two[k] - f[k] - 8 * t[k]);
+          const c1 = [0, 1].map((k) => (2 * a[k] - b[k]) / 18);
+          const c2 = [0, 1].map((k) => (2 * b[k] - a[k]) / 18);
+          return `C ${pt(c1)} ${pt(c2)} ${pt(t)}`;
+        })
+        .join(' ');
     return art
       .replace(/ d="([^"]*)"/g, (_, d) => ` d="${path(d)}"`)
       .replace(/cx="([^"]*)" cy="([^"]*)"/g, (_, x, y) => {
