@@ -259,3 +259,21 @@ extension RoutePoint {
         return 2 * earth * atan2(chord.squareRoot(), (1 - chord).squareRoot())
     }
 }
+
+/// One page of a post's cover: a photo, or the workout's map or chart.
+public enum PostTile: Hashable, Sendable {
+    case photo(PhotoRef)
+    case workout(WorkoutTile)
+}
+
+extension Training {
+    /// The cover's pages in the member's order: the photos, with the workout's tile at its place
+    /// among them (1 is the cover). Empty without photos or a tile.
+    public var tiles: [PostTile] {
+        var tiles = (photos?.all ?? []).map(PostTile.photo)
+        if let workout, let tile = workout.tile, let position = workout.tilePosition {
+            tiles.insert(.workout(tile), at: min(max(position - 1, 0), tiles.count))
+        }
+        return tiles
+    }
+}

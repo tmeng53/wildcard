@@ -59,3 +59,13 @@ private let run = Workout(
     #expect(WorkoutSeries(laps: [52, 49, 55]).fastestLap == 1)
     #expect(WorkoutSeries(hr: [HeartRatePoint(seconds: 0, bpm: 90)]).isDrawable == false)
 }
+
+@Test func theTileSitsAtItsPlaceAmongThePhotos() throws {
+    let photo = try PhotoRef(path: "a/b")
+    let placed = Workout(
+        source: run.source, startedAt: run.startedAt, endedAt: run.endedAt, summary: run.summary, route: run.route,
+        tilePosition: 2)
+    let training = Training(activity: .sport("run"), photos: try Photos([photo]), workout: placed)
+    #expect(training.tiles == [.photo(photo), .workout(.map)])
+    #expect(Training(activity: .sport("run"), workout: run).tiles.isEmpty)
+}
