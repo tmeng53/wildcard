@@ -12,7 +12,7 @@ import {
 import { factsText } from './member-facts.js';
 import { taskOf } from './prompt.js';
 import { lineProblem } from './reply.js';
-import { SquadId } from './settings.js';
+import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
 import { costMicros, newYorkTime, wakesDue, weekStartOf, weeksAround } from './wake.js';
 
@@ -281,9 +281,9 @@ describe('when the coach wakes', () => {
         week,
         files: new Map(),
         recentNotes: [],
-        occasions: ['今天是感恩节', 'TURKEY TROT 开张了'],
+        occasions: ['感恩节', 'TURKEY TROT 限时开张'],
       })?.split('\n\n')[1],
-    ).toBe('今天的日子（可以顺口提，别句句都提）：\n- 今天是感恩节\n- TURKEY TROT 开张了');
+    ).toBe('今天：感恩节、TURKEY TROT 限时开张');
     // Without the talk, or once the check-in left the week, there is nothing to answer.
     expect(
       taskOf({
@@ -350,14 +350,11 @@ describe('when the coach wakes', () => {
         week,
         files: new Map(),
         recentNotes: [],
-        occasions: ['今天是感恩节'],
+        occasions: ['感恩节'],
       })
         ?.split('\n\n')
         .slice(0, 2),
-    ).toStrictEqual([
-      '新的一天：2026-11-26，周四。',
-      '今天的日子（可以顺口提，别句句都提）：\n- 今天是感恩节',
-    ]);
+    ).toStrictEqual(['新的一天：2026-11-26，周四。', '今天：感恩节']);
     // Whom it writes a morning note to, by the names it knows them by.
     expect(
       taskOf({
@@ -472,6 +469,36 @@ describe('when the coach wakes', () => {
         recentNotes: [{ day: '2026-10-31', text: '周末也要动一动' }],
       }),
     ).toContain('- 2026-10-31：周末也要动一动');
+  });
+});
+
+describe('the holiday calendar', () => {
+  const calendar = [
+    { date: '12-25', name: '圣诞节' },
+    { date: '2026-11-26', name: '感恩节' },
+    { date: '2027-11-25', name: '感恩节' },
+    { date: '11-26', name: '某个每年的日子' },
+  ];
+
+  it('names the day’s holidays, every year’s and that year’s, in the calendar’s order', () => {
+    expect(holidaysOn(calendar, '2026-12-25')).toStrictEqual(['圣诞节']);
+    expect(holidaysOn(calendar, '2031-12-25')).toStrictEqual(['圣诞节']);
+    expect(holidaysOn(calendar, '2026-11-26')).toStrictEqual(['感恩节', '某个每年的日子']);
+    // A holiday that moves is only on the year it names.
+    expect(holidaysOn(calendar, '2027-11-26')).toStrictEqual(['某个每年的日子']);
+    expect(holidaysOn(calendar, '2027-11-25')).toStrictEqual(['感恩节']);
+    expect(holidaysOn(calendar, '2026-11-25')).toStrictEqual([]);
+  });
+
+  it('takes a day and a one-line name, nothing else', () => {
+    expect(CoachHoliday.safeParse({ date: '13-01', name: '无' }).success).toBe(false);
+    expect(CoachHoliday.safeParse({ date: '2026-1-01', name: '无' }).success).toBe(false);
+    expect(CoachHoliday.safeParse({ date: '01-01', name: ' ' }).success).toBe(false);
+    expect(CoachHoliday.safeParse({ date: '01-01', name: '元旦\n快乐' }).success).toBe(false);
+    expect(CoachHoliday.parse({ date: '01-01', name: ' 元旦 ' })).toStrictEqual({
+      date: '01-01',
+      name: '元旦',
+    });
   });
 });
 

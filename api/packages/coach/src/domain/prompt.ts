@@ -170,15 +170,9 @@ export function taskOf({
   ].join('\n\n');
 }
 
-/**
- * What is special about today, when anything is: the coach may pick it up, as a friend would,
- * without making every line about it.
- */
+/** What today is, when it is anything: facts only, never how to bring them up. */
 function occasionBlock(occasions: readonly string[]): string[] {
-  if (occasions.length === 0) return [];
-  return [
-    `今天的日子（可以顺口提，别句句都提）：\n${occasions.map((each) => `- ${each}`).join('\n')}`,
-  ];
+  return occasions.length === 0 ? [] : [`今天：${occasions.join('、')}`];
 }
 
 /** The squad's posts of the day before, for the morning notes to pick up on. */

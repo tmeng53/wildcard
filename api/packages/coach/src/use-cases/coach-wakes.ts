@@ -9,7 +9,7 @@ import {
 } from '../domain/memory.js';
 import { instructionsOf, taskOf, type CoachThread, type DayTalk } from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
-import { SquadId, type CoachSettings } from '../domain/settings.js';
+import { holidaysOn, SquadId, type CoachSettings } from '../domain/settings.js';
 import { factsText, planIndexOf, type NoteBrief } from '../domain/member-facts.js';
 import {
   consentedOnly,
@@ -361,7 +361,8 @@ async function runWake(
       reason: wake.reason,
       week,
       files,
-      occasions: (await deps.occasions?.(day)) ?? [],
+      // The holidays from the coach's calendar, then the app's own moments (a store open).
+      occasions: [...holidaysOn(settings.holidays, day), ...((await deps.occasions?.(day)) ?? [])],
       recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
       ...(thread === undefined ? {} : { thread: thread.thread }),
       recentEmoji:
