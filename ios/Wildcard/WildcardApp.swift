@@ -57,7 +57,7 @@ struct WildcardApp: App {
     @State private var profile: MeModel
     @State private var squad: SquadSettingsModel
     @State private var recap: RecapShelf
-    @State private var editor = CharacterEditorDemo.model()
+    @State private var editor: CharacterEditorModel?
     @State private var signUp: SignUpModel?
     /// Whether `-onboarding`'s sign-up has handed over to the tabs: after it ends, and for whoever
     /// made their squad only once the squad is dropping onto the scene they picked, so the
@@ -78,6 +78,8 @@ struct WildcardApp: App {
         AppLanguage.current.share(in: AppGroup.defaults)
         // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
         AppModel.show(CatalogClient.bundled)
+        // Only now: the editor's street is the catalog's starter street, which `show` just put out.
+        _editor = State(initialValue: CharacterEditorDemo.model())
         LaunchOptions.forgetSeenRecapIfAsked()
         LaunchOptions.forgetLightsIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.

@@ -219,7 +219,7 @@ final class MeUITests: XCTestCase {
         let card = app.buttons["me.card"]
         XCTAssertTrue(card.waitForExistence(timeout: 30))
         XCTAssertTrue(card.label.contains("Workouts"), "the card isn't in English: \(card.label)")
-        XCTAssertTrue(app.buttons["Edit your Wildcard athlete"].exists)
+        XCTAssertEqual(app.buttons["me.editCharacter"].label, "Dress up")
         XCTAssertTrue(app.buttons["tab.me"].label.contains("Me"))
         settle()
         keepScreenshot(named: "46-me-en")
