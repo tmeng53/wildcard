@@ -318,17 +318,6 @@ final class AppModel {
         isAdmin = (try? await api.me())?.isAdmin ?? false
     }
 
-    /// Runs `work` under the launch cover: signing in on the open screen waits here too, for a
-    /// member whose squad is already set up, rather than sitting on a button that seems to do
-    /// nothing.
-    private func withLaunchCover<Value>(_ work: () async -> Value) async -> Value {
-        guard case .signUp = screen else { return await work() }
-        screen = .starting
-        openingUnderCover = true
-        defer { openingUnderCover = false }
-        return await work()
-    }
-
     /// The member's home, from what the phone kept for them alone.
     private func todayStore(of member: MemberID) -> TodayStore {
         let (directory, api) = (folders.folder(for: member), memberAPI(member))
@@ -344,17 +333,6 @@ final class AppModel {
         await readScene(of: squad.settings?.squad.id, into: today)
         await today.load()
         await profile.reload()
-    }
-
-    /// 冠军专属 on a 战报's last page: when the reader picks the scene for the week after the
-    /// story's and nobody has yet. Offline, there is no sticker.
-    private static func scenePicker(api: WildcardAPI, after story: WeekStory) async -> ScenePicker? {
-        guard let scene = try? await api.scene(of: story.squad), scene.canPick, scene.picked == nil,
-            scene.week == story.week.monday.adding(days: 7)
-        else { return nil }
-        return ScenePicker(
-            options: SceneOption.options(from: scene.history),
-            service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
 
     /// 我的动态 and squadmates' player cards over our API.
@@ -385,7 +363,6 @@ final class AppModel {
         let model = newSignUp(hasAgreedToAI: true, takesInvite: false)
         return await model.resume(in: squad, madeIt: progress.madeIt) ? model : nil
     }
-
 }
 
 /// The squad's scene, which 今天 must open on rather than switch to.
@@ -399,6 +376,17 @@ extension AppModel {
         openingUnderCover = true
         defer { openingUnderCover = false }
         return await work()
+    }
+
+    /// 冠军专属 on a 战报's last page: when the reader picks the scene for the week after the
+    /// story's and nobody has yet. Offline, there is no sticker.
+    private static func scenePicker(api: WildcardAPI, after story: WeekStory) async -> ScenePicker? {
+        guard let scene = try? await api.scene(of: story.squad), scene.canPick, scene.picked == nil,
+            scene.week == story.week.monday.adding(days: 7)
+        else { return nil }
+        return ScenePicker(
+            options: SceneOption.options(from: scene.history),
+            service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
 
     /// How long the loading screen waits for the squad's scene before opening on the kept one.
