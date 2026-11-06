@@ -129,6 +129,39 @@ test('a held prop takes the wearer’s hand, and a prop that hangs keeps level a
   expect(level.dumbbell).toEqual([]);
 });
 
+test('an arm bends at the elbow whatever path commands its art is drawn with', async ({ page }) => {
+  await stub(page, 200, squad(1));
+  await page.goto('/join/K7M2QX9P');
+  // POWDER DAY's sleeves are drawn with relative commands (l, h, v, c); a bent arm used to read
+  // them as absolute points and shoot a streak of the top's colour across the page.
+  const boxes = await page.evaluate(async () => {
+    const { dress } = await import('/character/dress.js');
+    const C = window.WILDCARD_CHARACTERS;
+    const armR = C.parts.findIndex(({ id }) => id === 'armR');
+    const box = (top, bend) => {
+      const art = dress(C, { body: 'bichon', top, prop: 'dumbbell' });
+      const poses = window.WildcardAvatar.pose({ loops: true, duration: 1, tracks: [] }, 0);
+      poses[armR].bend = bend;
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.innerHTML = window.WildcardAvatar.figure({ art, level: [] }, poses);
+      document.body.append(svg);
+      const { x, y, width, height } = svg.getBBox();
+      svg.remove();
+      return [x, y, x + width, y + height].map(Math.round);
+    };
+    return Object.fromEntries(
+      ['powder-salmon', 'warmup-tee'].map((top) => [
+        top,
+        { rest: box(top, 0), bent: box(top, -35) },
+      ]),
+    );
+  });
+  for (const { rest, bent } of Object.values(boxes)) {
+    // Bending the forearm moves the hand a little; it never reaches far past the figure.
+    bent.forEach((edge, i) => expect(Math.abs(edge - rest[i])).toBeLessThan(30));
+  }
+});
+
 test('five walk in and stand still in a row; six or more walk through in a loop', async ({
   page,
 }) => {
