@@ -13,6 +13,7 @@ import {
   CheckInNotFoundError,
   NotYourCheckInError,
   PhotoInUseError,
+  WorkoutAlreadyPostedError,
 } from '../../errors.js';
 import type {
   CheckInStore,
@@ -71,7 +72,12 @@ export async function editCheckIn(
   const edited = withPhotos(
     {
       ...recordFromDraft(
-        { ...edit, day: saved.day, createdAt: saved.createdAt, audience: [...saved.audience] },
+        {
+          ...keepingWorkout(edit, saved),
+          day: saved.day,
+          createdAt: saved.createdAt,
+          audience: [...saved.audience],
+        },
         { id, member },
       ),
       // An edit keeps the day it was posted on, as it keeps the day it counts for.
@@ -96,7 +102,9 @@ export async function editCheckIn(
     await checkSport(deps.sports, edited.training.sport);
   }
   const outcome = await deps.store.update(edited);
-  if (!outcome.saved) throw new PhotoInUseError();
+  if (!outcome.saved) {
+    throw outcome.taken === 'workout' ? new WorkoutAlreadyPostedError() : new PhotoInUseError();
+  }
   if (edited.kind === 'trained') {
     await planTrainedDay(
       { store: deps.plans },
@@ -121,6 +129,28 @@ export async function deleteCheckIn(
   // Every photo it ever had, in case an edit's Storage delete failed before.
   await deps.photos.delete(await deps.store.photoHistory(saved.id));
   await deps.store.remove(id);
+}
+
+/**
+ * The edit with the saved post's workout when it leaves `workout` out, as builds from before
+ * workouts do, so editing there never drops it. The tile moves back to right after the photos
+ * when the edit took photos off. A build that knows workouts always sends the one it keeps:
+ * it can strike numbers and take the tile off, never drop the workout itself.
+ */
+function keepingWorkout(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
+  if (edit.kind !== 'trained' || saved.kind !== 'trained') return edit;
+  const workout = saved.training.workout;
+  if (edit.training.workout !== undefined || workout === undefined) return edit;
+  const last = (edit.training.photos?.length ?? 0) + 1;
+  const tilePosition =
+    workout.tilePosition === undefined ? undefined : Math.min(workout.tilePosition, last);
+  return {
+    ...edit,
+    training: {
+      ...edit.training,
+      workout: { ...workout, ...(tilePosition === undefined ? {} : { tilePosition }) },
+    },
+  };
 }
 
 /** The record with its photos mapped, left out when there are none. */

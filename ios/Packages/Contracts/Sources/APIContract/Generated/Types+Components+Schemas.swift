@@ -2540,6 +2540,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/photos`.
             public var photos: [Components.Schemas.PhotoView]?
+            /// - Remark: Generated from `#/components/schemas/TrainingView/workout`.
+            public var workout: Components.Schemas.WorkoutView?
             /// Creates a new `TrainingView`.
             ///
             /// - Parameters:
@@ -2548,18 +2550,21 @@ extension Components {
             ///   - minutes: How long the workout took, in whole minutes.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
+            ///   - workout:
             public init(
                 sport: Components.Schemas.Sport,
                 customSport: Swift.String? = nil,
                 minutes: Swift.Int? = nil,
                 caption: Swift.String? = nil,
-                photos: [Components.Schemas.PhotoView]? = nil
+                photos: [Components.Schemas.PhotoView]? = nil,
+                workout: Components.Schemas.WorkoutView? = nil
             ) {
                 self.sport = sport
                 self.customSport = customSport
                 self.minutes = minutes
                 self.caption = caption
                 self.photos = photos
+                self.workout = workout
             }
             public enum CodingKeys: String, CodingKey {
                 case sport
@@ -2567,6 +2572,7 @@ extension Components {
                 case minutes
                 case caption
                 case photos
+                case workout
             }
         }
         /// A listed sport’s id from `GET /public/catalog`, or `custom` with the member’s own name in `customSport`.
@@ -2629,6 +2635,223 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case width
                 case height
+            }
+        }
+        /// The workout a 训练 was posted from (Apple Health), with only the numbers the member kept. Missing on a 训练 posted by hand; builds from before it read the post without it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/WorkoutView`.
+        public struct WorkoutView: Codable, Hashable, Sendable {
+            /// Where it came from: `apple_health` for now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/provider`.
+            public var provider: Swift.String
+            /// The provider’s own id for it (an HKWorkout’s UUID). Posted once per member.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/providerWorkoutId`.
+            public var providerWorkoutId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/summary`.
+            public var summary: Components.Schemas.WorkoutSummary
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/series`.
+            public var series: Components.Schemas.WorkoutSeries?
+            /// The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/route`.
+            public var route: [Components.Schemas.RoutePoint]?
+            /// Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/tilePosition`.
+            public var tilePosition: Swift.Int?
+            /// In UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/startedAt`.
+            public var startedAt: Foundation.Date
+            /// In UTC with milliseconds.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/endedAt`.
+            public var endedAt: Foundation.Date
+            /// Creates a new `WorkoutView`.
+            ///
+            /// - Parameters:
+            ///   - provider: Where it came from: `apple_health` for now.
+            ///   - providerWorkoutId: The provider’s own id for it (an HKWorkout’s UUID). Posted once per member.
+            ///   - summary:
+            ///   - series:
+            ///   - route: The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept.
+            ///   - tilePosition: Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
+            ///   - startedAt: In UTC with milliseconds.
+            ///   - endedAt: In UTC with milliseconds.
+            public init(
+                provider: Swift.String,
+                providerWorkoutId: Swift.String,
+                summary: Components.Schemas.WorkoutSummary,
+                series: Components.Schemas.WorkoutSeries? = nil,
+                route: [Components.Schemas.RoutePoint]? = nil,
+                tilePosition: Swift.Int? = nil,
+                startedAt: Foundation.Date,
+                endedAt: Foundation.Date
+            ) {
+                self.provider = provider
+                self.providerWorkoutId = providerWorkoutId
+                self.summary = summary
+                self.series = series
+                self.route = route
+                self.tilePosition = tilePosition
+                self.startedAt = startedAt
+                self.endedAt = endedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case provider
+                case providerWorkoutId
+                case summary
+                case series
+                case route
+                case tilePosition
+                case startedAt
+                case endedAt
+            }
+        }
+        /// The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim).
+        ///
+        /// - Remark: Generated from `#/components/schemas/WorkoutSummary`.
+        public struct WorkoutSummary: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/durationSec`.
+            public var durationSec: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/distanceM`.
+            public var distanceM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/paceSecPerKm`.
+            public var paceSecPerKm: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/speedKmh`.
+            public var speedKmh: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/avgHr`.
+            public var avgHr: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/maxHr`.
+            public var maxHr: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/effort`.
+            public var effort: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/laps`.
+            public var laps: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/poolLengthM`.
+            public var poolLengthM: Swift.Double?
+            /// Creates a new `WorkoutSummary`.
+            ///
+            /// - Parameters:
+            ///   - durationSec:
+            ///   - distanceM:
+            ///   - paceSecPerKm:
+            ///   - speedKmh:
+            ///   - avgHr:
+            ///   - maxHr:
+            ///   - effort:
+            ///   - laps:
+            ///   - poolLengthM:
+            public init(
+                durationSec: Swift.Int? = nil,
+                distanceM: Swift.Double? = nil,
+                paceSecPerKm: Swift.Double? = nil,
+                speedKmh: Swift.Double? = nil,
+                avgHr: Swift.Int? = nil,
+                maxHr: Swift.Int? = nil,
+                effort: Swift.Double? = nil,
+                laps: Swift.Int? = nil,
+                poolLengthM: Swift.Double? = nil
+            ) {
+                self.durationSec = durationSec
+                self.distanceM = distanceM
+                self.paceSecPerKm = paceSecPerKm
+                self.speedKmh = speedKmh
+                self.avgHr = avgHr
+                self.maxHr = maxHr
+                self.effort = effort
+                self.laps = laps
+                self.poolLengthM = poolLengthM
+            }
+            public enum CodingKeys: String, CodingKey {
+                case durationSec
+                case distanceM
+                case paceSecPerKm
+                case speedKmh
+                case avgHr
+                case maxHr
+                case effort
+                case laps
+                case poolLengthM
+            }
+        }
+        /// Sent only when the chart tile was kept.
+        ///
+        /// - Remark: Generated from `#/components/schemas/WorkoutSeries`.
+        public struct WorkoutSeries: Codable, Hashable, Sendable {
+            /// Heart rate, earliest first, thinned on the phone to about 120 points.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSeries/hr`.
+            public var hr: [Components.Schemas.HeartRatePoint]?
+            /// Each lap’s time in seconds, in order.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutSeries/laps`.
+            public var laps: [Swift.Double]?
+            /// Creates a new `WorkoutSeries`.
+            ///
+            /// - Parameters:
+            ///   - hr: Heart rate, earliest first, thinned on the phone to about 120 points.
+            ///   - laps: Each lap’s time in seconds, in order.
+            public init(
+                hr: [Components.Schemas.HeartRatePoint]? = nil,
+                laps: [Swift.Double]? = nil
+            ) {
+                self.hr = hr
+                self.laps = laps
+            }
+            public enum CodingKeys: String, CodingKey {
+                case hr
+                case laps
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/HeartRatePoint`.
+        public struct HeartRatePoint: Codable, Hashable, Sendable {
+            /// Seconds from the start.
+            ///
+            /// - Remark: Generated from `#/components/schemas/HeartRatePoint/t`.
+            public var t: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/HeartRatePoint/bpm`.
+            public var bpm: Swift.Int
+            /// Creates a new `HeartRatePoint`.
+            ///
+            /// - Parameters:
+            ///   - t: Seconds from the start.
+            ///   - bpm:
+            public init(
+                t: Swift.Double,
+                bpm: Swift.Int
+            ) {
+                self.t = t
+                self.bpm = bpm
+            }
+            public enum CodingKeys: String, CodingKey {
+                case t
+                case bpm
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/RoutePoint`.
+        public struct RoutePoint: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/RoutePoint/lat`.
+            public var lat: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/RoutePoint/lon`.
+            public var lon: Swift.Double
+            /// Creates a new `RoutePoint`.
+            ///
+            /// - Parameters:
+            ///   - lat:
+            ///   - lon:
+            public init(
+                lat: Swift.Double,
+                lon: Swift.Double
+            ) {
+                self.lat = lat
+                self.lon = lon
+            }
+            public enum CodingKeys: String, CodingKey {
+                case lat
+                case lon
             }
         }
         /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn`.
@@ -3058,6 +3281,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Training/photos`.
             public var photos: [Components.Schemas.PhotoRef]?
+            /// - Remark: Generated from `#/components/schemas/Training/workout`.
+            public var workout: Components.Schemas.Workout?
             /// Creates a new `Training`.
             ///
             /// - Parameters:
@@ -3066,18 +3291,21 @@ extension Components {
             ///   - minutes: How long the workout took, in whole minutes.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
+            ///   - workout:
             public init(
                 sport: Components.Schemas.Sport,
                 customSport: Swift.String? = nil,
                 minutes: Swift.Int? = nil,
                 caption: Swift.String? = nil,
-                photos: [Components.Schemas.PhotoRef]? = nil
+                photos: [Components.Schemas.PhotoRef]? = nil,
+                workout: Components.Schemas.Workout? = nil
             ) {
                 self.sport = sport
                 self.customSport = customSport
                 self.minutes = minutes
                 self.caption = caption
                 self.photos = photos
+                self.workout = workout
             }
             public enum CodingKeys: String, CodingKey {
                 case sport
@@ -3085,6 +3313,7 @@ extension Components {
                 case minutes
                 case caption
                 case photos
+                case workout
             }
         }
         /// - Remark: Generated from `#/components/schemas/PhotoRef`.
@@ -3108,6 +3337,75 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case path
                 case size
+            }
+        }
+        /// The workout a 训练 was posted from, with only the numbers the member kept. Left out on a 训练 posted by hand.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Workout`.
+        public struct Workout: Codable, Hashable, Sendable {
+            /// Where it came from: `apple_health` for now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Workout/provider`.
+            public var provider: Swift.String
+            /// The provider’s own id for it (an HKWorkout’s UUID). Posted once per member.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Workout/providerWorkoutId`.
+            public var providerWorkoutId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Workout/summary`.
+            public var summary: Components.Schemas.WorkoutSummary
+            /// - Remark: Generated from `#/components/schemas/Workout/series`.
+            public var series: Components.Schemas.WorkoutSeries?
+            /// The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Workout/route`.
+            public var route: [Components.Schemas.RoutePoint]?
+            /// Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Workout/tilePosition`.
+            public var tilePosition: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Workout/startedAt`.
+            public var startedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Workout/endedAt`.
+            public var endedAt: Foundation.Date
+            /// Creates a new `Workout`.
+            ///
+            /// - Parameters:
+            ///   - provider: Where it came from: `apple_health` for now.
+            ///   - providerWorkoutId: The provider’s own id for it (an HKWorkout’s UUID). Posted once per member.
+            ///   - summary:
+            ///   - series:
+            ///   - route: The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept.
+            ///   - tilePosition: Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
+            ///   - startedAt:
+            ///   - endedAt:
+            public init(
+                provider: Swift.String,
+                providerWorkoutId: Swift.String,
+                summary: Components.Schemas.WorkoutSummary,
+                series: Components.Schemas.WorkoutSeries? = nil,
+                route: [Components.Schemas.RoutePoint]? = nil,
+                tilePosition: Swift.Int? = nil,
+                startedAt: Foundation.Date,
+                endedAt: Foundation.Date
+            ) {
+                self.provider = provider
+                self.providerWorkoutId = providerWorkoutId
+                self.summary = summary
+                self.series = series
+                self.route = route
+                self.tilePosition = tilePosition
+                self.startedAt = startedAt
+                self.endedAt = endedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case provider
+                case providerWorkoutId
+                case summary
+                case series
+                case route
+                case tilePosition
+                case startedAt
+                case endedAt
             }
         }
         /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInDraft`.

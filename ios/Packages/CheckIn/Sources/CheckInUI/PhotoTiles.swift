@@ -5,13 +5,16 @@ import DesignSystem
 import DesignSystemUI
 import ImageIO
 import PhotosUI
+import SportsUI
 import SwiftUI
 import UIKit
 
 /// The post's photos as a row of square tiles, the cover first and marked 封面, then 「+ 照片」
-/// while there is room for another (up to three). + asks 拍照 or 从相册选 (straight to the
-/// album on a phone without a camera); × takes a photo off; tapping another photo makes it the
-/// cover, and tapping the cover shows the photos whole, full screen.
+/// while there is room for another (up to three). A 训练 from Health has its map or chart among
+/// them, which doesn't count toward the three. + asks 拍照 or 从相册选 (straight to the album on
+/// a phone without a camera); × takes a tile off, the map too; a long press drags a tile to
+/// another place, and the first is the cover; tapping a photo shows the photos whole, full
+/// screen.
 struct PhotoTiles: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -27,20 +30,35 @@ struct PhotoTiles: View {
     static let side: Double = 76
 
     var body: some View {
-        HStack(spacing: Space.xs) {
-            ForEach(Array(model.photos.enumerated()), id: \.element.id) { index, photo in
-                PhotoTile(
-                    photo: photo, number: index + 1, isCover: index == 0, load: model.loadPhoto,
-                    tap: {
-                        if index == 0 { view() } else { model.makeCover(photo) }
-                    },
-                    remove: { model.remove(photo) })
+        ScrollView(.horizontal) {
+            HStack(spacing: Space.xs) {
+                ForEach(Array(model.tiles.enumerated()), id: \.element.id) { index, tile in
+                    ComposeTile(
+                        tile: tile, number: index + 1, isCover: index == 0, model: model,
+                        view: {
+                            if case .photo(let photo) = tile, let page = model.photos.firstIndex(of: photo) {
+                                view(page)
+                            }
+                        },
+                        remove: { model.remove(tile) }
+                    )
+                    .draggable(tile.id)
+                    .dropDestination(for: String.self) { dropped, _ in
+                        guard let id = dropped.first else { return false }
+                        model.move(id, onto: tile.id)
+                        return true
+                    }
+                }
+                if model.canAddPhoto {
+                    addTile
+                }
             }
-            if model.canAddPhoto {
-                addTile
-            }
+            // Room for the × badges and the cover's ring, which the scroll view would clip.
+            .padding(.vertical, Space.xxs)
         }
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.photos)
+        .scrollIndicators(.hidden)
+        .scrollClipDisabled()
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.tiles)
         .photoViewer(isPresented: $isViewing, count: model.photos.count, page: $page, load: jpeg)
         .photosPicker(
             isPresented: $isPickingFromLibrary, selection: $picked,
@@ -115,9 +133,9 @@ struct PhotoTiles: View {
         }
     }
 
-    /// Opens on the cover.
-    private func view() {
-        page = 0
+    /// Opens on photo `index`.
+    private func view(_ index: Int) {
+        page = index
         isViewing = true
     }
 
@@ -143,19 +161,20 @@ struct PhotoTiles: View {
     }
 }
 
-/// One photo: the cover ringed and labelled 封面, × at its corner to take it off.
-private struct PhotoTile: View {
+/// One tile, a photo or the workout's map or chart: the cover ringed and labelled 封面, × at its
+/// corner to take it off.
+private struct ComposeTile: View {
     @Environment(\.sceneTheme) private var theme
-    let photo: ComposedPhoto
+    let tile: ComposedTile
     let number: Int
     let isCover: Bool
-    let load: @Sendable (PhotoRef) async -> Data?
-    let tap: () -> Void
+    let model: ComposeModel
+    let view: () -> Void
     let remove: () -> Void
 
     var body: some View {
-        Button(action: tap) {
-            ComposedPhotoImage(photo: photo, load: load)
+        Button(action: view) {
+            face
                 .frame(width: PhotoTiles.side, height: PhotoTiles.side)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
                 .overlay {
@@ -177,10 +196,12 @@ private struct PhotoTile: View {
         }
         .buttonStyle(PressableButtonStyle())
         .haptic(.pick, trigger: isCover)
-        .accessibilityLabel(isCover ? Text("封面", bundle: .module) : Text("第 \(number) 张照片", bundle: .module))
-        .accessibilityHint(isCover ? Text("全屏看", bundle: .module) : Text("设为封面", bundle: .module))
+        .accessibilityLabel(label)
+        .accessibilityHint(isWorkout ? Text("长按拖动换位置", bundle: .module) : Text("全屏看，长按拖动换位置", bundle: .module))
         .accessibilityAddTraits(isCover ? .isSelected : [])
-        .accessibilityIdentifier(isCover ? "compose.cover" : "compose.photo.\(number)")
+        .accessibilityIdentifier(
+            isWorkout ? "compose.workoutTile" : isCover ? "compose.cover" : "compose.photo.\(number)"
+        )
         .overlay(alignment: .topTrailing) {
             Button(action: remove) {
                 Image(systemName: "xmark")
@@ -190,13 +211,35 @@ private struct PhotoTile: View {
                     .background(Color(role: .bgInk, in: theme).opacity(0.7), in: Circle())
                     .padding(Space.xxs)
                     // The tap reaches past the small badge, but stays clear of the tile's middle,
-                    // which makes it the cover or opens it.
+                    // which opens it.
                     .frame(width: Sizing.compactControl, height: Sizing.compactControl, alignment: .topTrailing)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text("删掉这张", bundle: .module))
-            .accessibilityIdentifier("compose.photo.\(number).remove")
+            .accessibilityIdentifier(isWorkout ? "compose.workoutTile.remove" : "compose.photo.\(number).remove")
+        }
+    }
+
+    private var isWorkout: Bool { if case .workout = tile { true } else { false } }
+
+    @ViewBuilder private var face: some View {
+        switch tile {
+        case .photo(let photo):
+            ComposedPhotoImage(photo: photo, load: model.loadPhoto)
+        case .workout(.map):
+            if let route = model.workout?.route { WorkoutMap(route: route, activity: model.currentActivity, lane: 5) }
+        case .workout(.chart):
+            if let series = model.workout?.series { WorkoutChart(series: series, activity: model.currentActivity) }
+        }
+    }
+
+    private var label: Text {
+        let place = isCover ? Text("封面", bundle: .module) : Text("第 \(number) 张", bundle: .module)
+        return switch tile {
+        case .photo: place
+        case .workout(.map): Text("路线地图，\(place)", bundle: .module)
+        case .workout(.chart): Text("数据图，\(place)", bundle: .module)
         }
     }
 

@@ -51,7 +51,7 @@ public struct PendingCheckIn: Hashable, Sendable, Identifiable {
                     .trained(
                         Training(
                             activity: activity, minutes: minutes, photos: photos,
-                            caption: try body.caption.map(Caption.init)))
+                            caption: try body.caption.map(Caption.init), workout: body.workout))
                 case .healthyMeal(let body):
                     .healthyMeal(Meal(photos: photos, caption: try body.caption.map(Caption.init)))
                 case .cheatMeal(let body):

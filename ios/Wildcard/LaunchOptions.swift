@@ -18,6 +18,11 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-loading")
     }
 
+    /// `-health-sample`: Health connected, with the sample day of workouts; else not until 连接.
+    static var healthSample: Bool {
+        ProcessInfo.processInfo.arguments.contains("-health-sample")
+    }
+
     static var showsStyleGuide: Bool {
         ProcessInfo.processInfo.arguments.contains("-styleguide")
     }

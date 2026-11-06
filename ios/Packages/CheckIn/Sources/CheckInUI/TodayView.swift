@@ -118,8 +118,11 @@ public struct TodayView: View {
                 if let home = model.home, let week = model.cardWeek, let day = home.mine?.day {
                     // Read again each minute, so 今日赛况 arrives at 21:00 with the app open.
                     TimelineView(.everyMinute) { _ in
-                        topCard(home: home, week: week, day: day, recap: model.recap)
-                            .overlay(alignment: .bottom) { lightCord(short: showsCapsule(day: day)) }
+                        VStack(spacing: Space.xs) {
+                            topCard(home: home, week: week, day: day, recap: model.recap)
+                            HealthHomeCard.Offer(model: model)
+                        }
+                        .overlay(alignment: .bottom) { lightCord(short: showsCapsule(day: day)) }
                     }
                     .padding(.top, Space.xs)
                     .modifier(Arriving(arrival: model.arrival) { $0.cardOffset(at: $1) })

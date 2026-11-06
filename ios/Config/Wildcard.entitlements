@@ -17,6 +17,11 @@
 	<array>
 		<string>Default</string>
 	</array>
+	<!-- Apple Health, read only: the workouts a 训练 can be posted from. No clinical records. -->
+	<key>com.apple.developer.healthkit</key>
+	<true/>
+	<key>com.apple.developer.healthkit.access</key>
+	<array/>
 	<!-- Shared with the 6pm push's view (WildcardPushReact): the sign-in (an app group is also a
 	     Keychain access group), the squad's looks and where to open the app; and with it and
 	     WildcardPushService, the language picked in the app. -->

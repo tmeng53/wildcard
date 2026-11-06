@@ -1616,6 +1616,54 @@
           }
         }
       }
+    },
+    "数据图，第 %lld 张，共 %lld 张" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chart, %lld of %lld"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "數據圖，第 %lld 張，共 %lld 張"
+          }
+        }
+      }
+    },
+    "路线地图，第 %lld 张，共 %lld 张" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Route map, %lld of %lld"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "路線地圖，第 %lld 張，共 %lld 張"
+          }
+        }
+      }
+    },
+    "河边风好大" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So windy by the river"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "河邊風好大"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

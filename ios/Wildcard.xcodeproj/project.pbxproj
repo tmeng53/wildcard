@@ -52,6 +52,7 @@
 		A1C0DE0000000000000000C2 /* ScheduleDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C1 /* ScheduleDomain */; };
 		A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C3 /* ScheduleUI */; };
 		A1C0DE0000000000000000D5 /* SportsUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000D4 /* SportsUI */; };
+		A1C0DE000000000000000322 /* HealthUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000321 /* HealthUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -184,6 +185,7 @@
 				A1C0DE0000000000000000C2 /* ScheduleDomain in Frameworks */,
 				A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */,
 				A1C0DE0000000000000000D5 /* SportsUI in Frameworks */,
+				A1C0DE000000000000000322 /* HealthUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,6 +300,7 @@
 				A1C0DE0000000000000000C1 /* ScheduleDomain */,
 				A1C0DE0000000000000000C3 /* ScheduleUI */,
 				A1C0DE0000000000000000D4 /* SportsUI */,
+				A1C0DE000000000000000321 /* HealthUI */,
 				A1C0DE0000000000000000D1 /* Sentry */,
 			);
 			productName = Wildcard;
@@ -435,6 +438,7 @@
 				A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */,
 				A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */,
 				A1C0DE0000000000000000D3 /* XCLocalSwiftPackageReference "Packages/Sports" */,
+				A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Health" */,
 				A1C0DE0000000000000000D0 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -601,6 +605,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "拍照发动态。";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "读取你在 Apple 健康里的运动，发训练时帮你填好时长、距离、心率和路线。不读取卡路里、体重和睡眠。";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "存图时把出赛表海报和战报存到你的相册。";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
@@ -631,6 +636,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "拍照发动态。";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "读取你在 Apple 健康里的运动，发训练时帮你填好时长、距离、心率和路线。不读取卡路里、体重和睡眠。";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "存图时把出赛表海报和战报存到你的相册。";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
@@ -896,6 +902,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Sports;
 		};
+		A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Health" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Health;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -1104,6 +1114,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE0000000000000000D3 /* XCLocalSwiftPackageReference "Packages/Sports" */;
 			productName = SportsUI;
+		};
+		A1C0DE000000000000000321 /* HealthUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Health" */;
+			productName = HealthUI;
 		};
 		A1C0DE0000000000000000D1 /* Sentry */ = {
 			isa = XCSwiftPackageProductDependency;

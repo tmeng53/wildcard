@@ -278,7 +278,7 @@ struct MainTabs: View {
                         schedule: { showsSchedule = true },
                         street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                         openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
-                        privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms)
+                        privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms, health: today.health)
                 ) {
                     MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
                 }

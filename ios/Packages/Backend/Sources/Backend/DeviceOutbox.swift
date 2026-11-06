@@ -67,6 +67,8 @@ public actor DeviceOutbox: Outbox {
         let caption: String?
         let text: String?
         let photos: [StoredPhoto]
+        /// A 训练's workout from Health, as posted; missing on the rest and on posts kept before it.
+        let workout: Workout?
 
         init(_ post: PendingCheckIn) {
             id = post.id
@@ -84,6 +86,7 @@ public actor DeviceOutbox: Outbox {
             var minutes: Int?
             var caption: String?
             var text: String?
+            workout = post.draft.workout
             switch post.draft {
             case .trained(let activity, let workoutMinutes, let body):
                 kind = "trained"
@@ -121,7 +124,7 @@ public actor DeviceOutbox: Outbox {
                     prepared.append(PreparedPhoto(id: photo.id, jpeg: jpeg, size: size))
                 }
             }
-            let body = PostBody(photos: prepared, caption: caption ?? "")
+            let body = PostBody(photos: prepared, caption: caption ?? "", workout: kind == "trained" ? workout : nil)
             let draft: CheckInDraft
             switch kind {
             case "trained":

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { Photos, type PhotoRef } from './photos.js';
 import { SportKey } from './sports.js';
 import { Caption, CustomSportName, DisclaimerText } from './text.js';
+import { Workout } from './workout.js';
 
 // A check-in: 练了, 健康餐, 坦白放纵餐 or 今日请假条, with the kind's own fields under one
 // key named for the kind. These schemas are the contract: the OpenAPI document comes from them,
@@ -55,7 +56,11 @@ export const storedTrainingFields = {
   minutes: WorkoutMinutes.optional(),
   caption: Caption.optional(),
 };
-const trainingFields = { ...storedTrainingFields, photos: Photos.optional() };
+const trainingFields = {
+  ...storedTrainingFields,
+  photos: Photos.optional(),
+  workout: Workout.optional(),
+};
 
 /** `sport: "custom"` needs `customSport`, and a listed sport never has one. */
 function customSportMatches(
@@ -79,10 +84,29 @@ const mealFields = { ...storedMealFields, photos: Photos.optional() };
 export const storedDisclaimerFields = { text: DisclaimerText };
 const disclaimerFields = { ...storedDisclaimerFields, photos: Photos.optional() };
 
-/** 练了: what was trained, with optional minutes, photos and a line. */
+/** A workout's tile sits among the photos or right after them. */
+function tileFits(
+  training: {
+    readonly photos?: readonly unknown[] | undefined;
+    readonly workout?: { readonly tilePosition?: number | undefined } | undefined;
+  },
+  context: z.RefinementCtx,
+) {
+  const position = training.workout?.tilePosition;
+  if (position !== undefined && position > (training.photos?.length ?? 0) + 1) {
+    context.addIssue({
+      code: 'custom',
+      path: ['workout', 'tilePosition'],
+      message: 'The tile sits among the photos or right after them',
+    });
+  }
+}
+
+/** 练了: what was trained, with optional minutes, photos, a line and the workout it came from. */
 export const Training = z
   .strictObject(trainingFields)
   .superRefine(customSportMatches)
+  .superRefine(tileFits)
   .meta({ id: 'Training' });
 export type Training = z.infer<typeof Training>;
 
@@ -201,6 +225,11 @@ function contents(record: CheckInRecord) {
   return { ...record, createdAt: record.createdAt.getTime(), audience: [...record.audience] };
 }
 
+/** A 训练's workout; other kinds have none. */
+export function workoutOf(entry: Entry): Workout | undefined {
+  return entry.kind === 'trained' ? entry.training.workout : undefined;
+}
+
 /** A check-in's photos, the cover first. */
 export function photosOf(entry: Entry): readonly PhotoRef[] {
   switch (entry.kind) {
@@ -214,7 +243,8 @@ export function photosOf(entry: Entry): readonly PhotoRef[] {
   }
 }
 
-// Stored JSON: `check_ins.payload` holds the kind's fields, without photos, with their shape's
+// Stored JSON: `check_ins.payload` holds the kind's fields, without photos or the workout (each
+// in its own table), with their shape's
 // version on top. One version so far, so each kind's union has one member.
 
 const StoredTraining = z.discriminatedUnion('version', [
@@ -230,7 +260,7 @@ const StoredDisclaimer = z.discriminatedUnion('version', [
 ]);
 
 // Plain `z.object`, which drops other keys: `version` when reading a payload its Stored schema
-// checked first, and `photos` when writing one.
+// checked first, and `photos` and `workout` when writing one.
 const TrainingOfStored = z.object(storedTrainingFields).superRefine(customSportMatches);
 const MealOfStored = z.object(storedMealFields);
 const DisclaimerOfStored = z.object(storedDisclaimerFields);
@@ -256,16 +286,25 @@ export function entryFromStored({
   kind,
   payload,
   photos,
+  workout,
 }: {
   readonly kind: Entry['kind'];
   readonly payload: unknown;
   readonly photos: readonly PhotoRef[];
+  readonly workout?: Workout | undefined;
 }): Entry {
   const withPhotos = photos.length === 0 ? {} : { photos: Photos.parse(photos) };
   switch (kind) {
     case 'trained':
       StoredTraining.parse(payload);
-      return { kind, training: { ...TrainingOfStored.parse(payload), ...withPhotos } };
+      return {
+        kind,
+        training: {
+          ...TrainingOfStored.parse(payload),
+          ...withPhotos,
+          ...(workout === undefined ? {} : { workout }),
+        },
+      };
     case 'healthyMeal':
     case 'cheatMeal':
       StoredMeal.parse(payload);

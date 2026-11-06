@@ -21,6 +21,8 @@ import {
   type CheckInRecord,
   type CheckIns,
   PhotoSize,
+  WorkoutView,
+  workoutView,
   type PhotoRef,
 } from '@wildcard/check-ins';
 
@@ -78,7 +80,11 @@ const photoViews = {
     .meta({ description: '1 to 3 photos, the cover first. Missing when there are none.' }),
 };
 const TrainingView = z
-  .strictObject({ ...storedTrainingFields, ...photoViews })
+  .strictObject({
+    ...storedTrainingFields,
+    ...photoViews,
+    workout: WorkoutView.optional(),
+  })
   .openapi('TrainingView');
 const MealView = z.strictObject({ ...storedMealFields, ...photoViews }).openapi('MealView');
 const DisclaimerView = z
@@ -276,8 +282,17 @@ function wire(record: CheckInRecord, urls: ViewUrls) {
     audience: [...record.audience],
   };
   switch (record.kind) {
-    case 'trained':
-      return { ...base, kind: record.kind, training: withUrls(record.training) };
+    case 'trained': {
+      const { workout, ...training } = record.training;
+      return {
+        ...base,
+        kind: record.kind,
+        training: {
+          ...withUrls(training),
+          ...(workout === undefined ? {} : { workout: workoutView(workout) }),
+        },
+      };
+    }
     case 'healthyMeal':
     case 'cheatMeal':
       return { ...base, kind: record.kind, meal: withUrls(record.meal) };
@@ -337,7 +352,10 @@ export function checkIns(deps: {
           'isn’t uploaded',
       ),
       403: problem('Sent to a squad the member isn’t in, or with someone else’s photo'),
-      409: problem('The id holds a different check-in, or another check-in uses one of the photos'),
+      409: problem(
+        'The id holds a different check-in, another check-in uses one of the photos, or the ' +
+          'member already posted its workout (`WORKOUT_ALREADY_POSTED`)',
+      ),
       ...jsonBodyFailures,
       ...signedInFailures,
     },
@@ -370,7 +388,9 @@ export function checkIns(deps: {
       ),
       403: problem('A teammate’s check-in (`NOT_YOUR_CHECK_IN`), or someone else’s photo'),
       404: problem('No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)'),
-      409: problem('Another check-in uses one of the photos'),
+      409: problem(
+        'Another check-in uses one of the photos, or another of the member’s posts has its workout',
+      ),
       ...jsonBodyFailures,
       ...signedInFailures,
     },
