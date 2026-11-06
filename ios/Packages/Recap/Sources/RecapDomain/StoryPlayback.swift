@@ -87,53 +87,12 @@ extension StoryPage {
         case .pending: 5
         case .podium: 6.5
         case .titles(let rows): min(3 + Double(rows.count), 9)
-        case .myWeek(let week): MyWeekBeats(days: week.days).end + 1.5
+        case .myWeek: 4
+        case .squadWeek: 5
         case .hottest: 5.5
         case .meals: 6
         case .bestDisclaimer: 6.5
         case .ending: 4.5
         }
-    }
-}
-
-/// 你的一周's timing: the reader's character lands on Monday, does that day, hops to Tuesday,
-/// and so on to Sunday.
-public struct MyWeekBeats: Hashable, Sendable {
-    public struct Beat: Hashable, Sendable {
-        public let day: Int
-        /// When the character lands on the day, and when its move ends.
-        public let land: Double
-        public let end: Double
-        public let clip: StoryClip?
-    }
-
-    /// Seconds a hop to the next day takes.
-    public static let hop = 0.3
-    public let beats: [Beat]
-
-    public init(days: [MyWeek.Day]) {
-        var time = 0.2
-        var beats: [Beat] = []
-        for (index, day) in days.enumerated() {
-            let clip = day.kind.clip
-            // A day with nothing checked in is only passed over.
-            let length: Double =
-                switch clip {
-                case nil: 0.4
-                case .sport?: 1.1
-                default: 1.0
-                }
-            beats.append(Beat(day: index, land: time, end: time + length, clip: clip))
-            time += length + Self.hop
-        }
-        self.beats = beats
-    }
-
-    /// When the last day's move ends.
-    public var end: Double { beats.last?.end ?? 0 }
-
-    /// The day the character is on or hopping from at `time`, nil before Monday.
-    public func beat(at time: Double) -> Beat? {
-        beats.last { $0.land <= time }
     }
 }

@@ -7855,7 +7855,7 @@ internal struct Client: APIProtocol {
     }
     /// The caller’s live events (Server-Sent Events)
     ///
-    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` again, since events sent while it was closed are not replayed.
+    /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it, and each `shelf` event (data `LiveShelf`) says the caller’s 商店街 may have changed (a store, piece, rule or switch, or one of their unlocks), so read `GET /me/unlocks` again. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` and `GET /me/unlocks` again, since events sent while it was closed are not replayed.
     ///
     /// - Remark: HTTP `GET /me/events`.
     /// - Remark: Generated from `#/paths//me/events/get(streamMyEvents)`.

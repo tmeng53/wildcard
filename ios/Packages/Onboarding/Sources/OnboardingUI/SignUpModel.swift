@@ -74,19 +74,19 @@ public final class SignUpModel {
     /// from today.
     @ObservationIgnored let daysGone: Int
 
-    /// `invite`: the code an invite link carried. `nickname`: the name Sign in with Apple shared,
+    /// `nickname`: the name Sign in with Apple shared,
     /// to start the nickname from. `now` in `timeZone` says which week the plan is for and which
     /// of its days are over, by the member's day as the API counts it (until 3am it is still the
     /// day before); weeks start on Monday. `hasAgreedToAI`: the account consented to AI writing
     /// before, so 你的小队 doesn't ask again.
     public init(
-        service: any SignUpService, invite: InviteCode?, nickname: String, now: Date,
+        service: any SignUpService, nickname: String, now: Date,
         in timeZone: TimeZone = .current, hasAgreedToAI: Bool = false
     ) {
         self.service = service
         asksForAIConsent = !hasAgreedToAI
         self.nickname = nickname
-        squad = SquadDraft(invite: invite, suggestedName: "")
+        squad = SquadDraft(invite: nil, suggestedName: "")
         let today = LocalDay(at: now, in: timeZone)
         weekDays = (0..<WeeklyPlan.dayCount).map { today.weekStart.adding(days: $0) }
         daysGone = today.weekday - 1

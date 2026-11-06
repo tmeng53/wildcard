@@ -40,7 +40,7 @@ struct SquadHeads: View {
             }
             coachSpot
             if openSpots > 0 {
-                ShareLink(item: InviteCard.message(for: squad)) {
+                InviteShareLink(squad: squad) {
                     HeadSpot(name: Text("邀请", bundle: .module)) {
                         DashedCircle(Image(systemName: "plus").font(.system(size: Sizing.icon, weight: .regular)))
                     }

@@ -79,12 +79,16 @@ public final class SquadSettingsModel {
     }
 
     /// Reads the squad, again each time the page opens or a change was refused.
+    /// A try after a failure shows the loader again, never the failure while it waits.
     public func reload() async {
+        if case .failed = load { load = .loading }
         do {
             let settings = try await service.settings()
             load = .loaded(settings)
             if !settings.scene.canPick { picker = nil }
         } catch {
+            // A read cut short (the page closed, the app went to the background) didn't fail.
+            guard !Task.isCancelled else { return }
             if error == .noSquad { hasLeft = true }
             if settings == nil { load = .failed(error) }
             if error == .signedOut { await signOut() }
@@ -180,6 +184,8 @@ public final class SquadSettingsModel {
         do {
             market = .loaded(try await service.coaches())
         } catch {
+            // Closed before the coaches came, it didn't fail.
+            guard !Task.isCancelled else { return }
             market = .failed(error)
             if error == .signedOut { await signOut() }
         }

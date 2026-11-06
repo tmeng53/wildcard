@@ -155,6 +155,24 @@ private var utc: Calendar {
     #expect(!inbox.hasMore)
 }
 
+@Test @MainActor func aReadCutShortIsNotAFailure() async {
+    let server = FakeNotices((1...3).map { notice($0) }, size: 2)
+    let inbox = NoticeInbox(source: server)
+    await server.set(unreachable: true)
+    let cut = Task { await inbox.load() }
+    cut.cancel()
+    await cut.value
+    #expect(inbox.phase == .loading)
+
+    await server.set(unreachable: false)
+    await inbox.load()
+    await server.set(unreachable: true)
+    let page = Task { await inbox.loadMore() }
+    page.cancel()
+    await page.value
+    #expect(!inbox.moreFailed)
+}
+
 @Test @MainActor func offlineKeepsWhatWasLoadedAndAFailedPageCanBeTriedAgain() async {
     let server = FakeNotices((1...3).map { notice($0) }, size: 2)
     let inbox = NoticeInbox(source: server)
@@ -268,6 +286,31 @@ private var utc: Calendar {
     await following.value
 }
 
+@Test @MainActor func aShelfChangeOrAStreamHeardAgainSaysToReadTheShelfAgain() async {
+    let server = FakeNotices([notice(1)])
+    // The first stream's ready reads nothing more; its shelf change does, and so does the next
+    // stream's ready, which may have missed one.
+    await server.set(streams: [[.ready, .shelfChanged], [.ready]])
+    let inbox = NoticeInbox(source: server)
+    let (paused, pause) = AsyncStream.makeStream(of: Void.self)
+    let following = Task { await inbox.follow(pause: { _ in pause.yield() }) }
+    var pauses = paused.makeAsyncIterator()
+    _ = await pauses.next()
+    #expect(inbox.shelfChanges == 1)
+    _ = await pauses.next()
+    #expect(inbox.shelfChanges == 2)
+    following.cancel()
+    await following.value
+
+    // Back in front, the app reads the shelf itself: the first ready says nothing.
+    await server.set(streams: [[.ready]])
+    let again = Task { await inbox.follow(pause: { _ in pause.yield() }) }
+    _ = await pauses.next()
+    #expect(inbox.shelfChanges == 2)
+    again.cancel()
+    await again.value
+}
+
 @Test @MainActor func aNoticeToldWhileTheBellIsOpenIsReadButShowsBold() async {
     let server = FakeNotices([notice(1)], seen: NoticeID(rawValue: 1))
     let told = Notice(
@@ -360,4 +403,38 @@ private var utc: Calendar {
     #expect(inbox.notices.first?.destination == .stores)
     await inbox.open()
     #expect(inbox.unseenBroadcasts.isEmpty)
+}
+
+@Test @MainActor func aBroadcastOpenedFromItsBannerIsNoLongerNew() async {
+    let words = { (line: String) in CatalogNames(simplifiedChinese: line, english: line, traditionalChinese: line) }
+    let broadcast = { (id: String) in
+        Broadcast(
+            id: id, title: words(id), body: nil,
+            action: Broadcast.Action(label: words("去商店街看看"), destination: .stores), style: .banner, gifts: [])
+    }
+    let told = { (id: Int, name: String) in
+        Notice(id: NoticeID(rawValue: id), toldAt: monday, squad: nil, subject: .broadcast(broadcast(name)))
+    }
+
+    // Another notice still waits unread: the bell's dot stays and nothing is marked, but in 通知
+    // only that one shows as new.
+    let busy = FakeNotices([notice(1), notice(2), told(3, "winter")], seen: NoticeID(rawValue: 1))
+    let waiting = NoticeInbox(source: busy)
+    await waiting.load()
+    await waiting.opened(broadcast("winter"))
+    #expect(waiting.hasUnread)
+    #expect(await busy.marked.isEmpty)
+    await waiting.open()
+    #expect(waiting.notices.map { waiting.isUnread($0) } == [false, true, false])
+
+    // It was the only one: the server marks it read, so it stays read on the next launch.
+    let quiet = FakeNotices([notice(1), told(2, "winter")], seen: NoticeID(rawValue: 1))
+    let inbox = NoticeInbox(source: quiet)
+    await inbox.load()
+    #expect(inbox.hasUnread)
+    await inbox.opened(broadcast("winter"))
+    #expect(!inbox.hasUnread)
+    #expect(await quiet.marked == [NoticeID(rawValue: 2)])
+    await inbox.open()
+    #expect(inbox.notices.map { inbox.isUnread($0) } == [false, false])
 }
