@@ -75,7 +75,8 @@ extension WeekStory {
                 frozen: Frozen(
                     squad: ready.squad, week: ready.week, scene: ready.scene.rawValue, sceneId: ready.sceneId,
                     members: ready.members,
-                    podium: ready.podium, myWeek: ready.myWeek, hottest: ready.hottest, meals: ready.meals,
+                    podium: ready.podium, myWeek: ready.myWeek, squadWeek: ready.squadWeek, hottest: ready.hottest,
+                    meals: ready.meals,
                     bestDisclaimer: ready.bestDisclaimer, ending: ready.ending))
         case .case2(let pending):
             self.init(
@@ -84,7 +85,8 @@ extension WeekStory {
                     squad: pending.squad, week: pending.week, scene: pending.scene.rawValue,
                     sceneId: pending.sceneId,
                     members: pending.members, podium: pending.podium, myWeek: pending.myWeek,
-                    hottest: pending.hottest, meals: pending.meals, bestDisclaimer: pending.bestDisclaimer,
+                    squadWeek: pending.squadWeek, hottest: pending.hottest, meals: pending.meals,
+                    bestDisclaimer: pending.bestDisclaimer,
                     ending: pending.ending))
         }
     }
@@ -99,6 +101,7 @@ extension WeekStory {
         let members: [Components.Schemas.StoryMember]
         let podium: Components.Schemas.StoryPodium?
         let myWeek: Components.Schemas.StoryMyWeek?
+        let squadWeek: Components.Schemas.StorySquadWeek?
         let hottest: Components.Schemas.StoryHottest?
         let meals: Components.Schemas.StoryMeals?
         let bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
@@ -137,13 +140,17 @@ extension WeekStory {
         }
         let hottest = frozen.hottest.map(Hottest.init)
         let myWeek = frozen.myWeek.map(RecapDomain.MyWeek.init)
+        let squadWeek = frozen.squadWeek.map(SquadWeek.init)
         let meals = frozen.meals.map(Meals.init)
         // A page the API sent that can't be read makes the story unreadable, not a page short.
-        if hottest == .some(nil) || myWeek == .some(nil) || meals == .some(nil) { return nil }
+        if hottest == .some(nil) || myWeek == .some(nil) || squadWeek == .some(nil) || meals == .some(nil) {
+            return nil
+        }
         self.init(
             status: status, squad: SquadID(squad), squadName: frozen.squad.name,
             week: Week(monday: monday, sunday: sunday), scene: scene, squadmates: squadmates, podium: podium,
-            titles: titles, myWeek: myWeek ?? nil, hottest: hottest ?? nil, meals: meals ?? nil,
+            titles: titles, myWeek: myWeek ?? nil, squadWeek: squadWeek ?? nil, hottest: hottest ?? nil,
+            meals: meals ?? nil,
             bestDisclaimer: bestDisclaimer, ending: frozen.ending.map { Ending(done: $0.done, plan: $0.plan) })
     }
 
@@ -168,19 +175,37 @@ extension RecapDomain.MyWeek {
         var days: [Day] = []
         for each in wire.days {
             guard let day = try? LocalDay(each.day) else { return nil }
-            let kind: DayKind =
-                switch each.kind {
-                // A sport of the member's own has no art of its own: the day shows just that they trained.
-                case .trained: .trained(each.sport.flatMap(Sport.init(rawValue:)))
-                case .rest: .rest
-                case .disclaimer: .disclaimer
-                case .none: .none
-                }
-            days.append(Day(day: day, kind: kind))
+            days.append(Day(day: day, kind: DayKind(each), minutes: each.minutes))
         }
         self.init(
             plan: wire.plannedDays, days: days, healthyMeals: wire.healthyMeals, cheatMeals: wire.cheatMeals,
             reactionsReceived: wire.reactionsReceived)
+    }
+}
+
+extension SquadWeek {
+    init?(_ wire: Components.Schemas.StorySquadWeek) {
+        var members: [Member] = []
+        for each in wire.members {
+            guard let id = UUID(uuidString: each.member) else { return nil }
+            members.append(
+                Member(
+                    member: MemberID(id), days: each.days.map(DayKind.init), minutes: each.days.map(\.minutes),
+                    reactionsReceived: each.reactionsReceived))
+        }
+        self.init(members: members)
+    }
+}
+
+extension DayKind {
+    init(_ wire: Components.Schemas.StoryDay) {
+        switch wire.kind {
+        // A sport of the member's own has no art of its own: the day shows just that they trained.
+        case .trained: self = .trained(wire.sport.flatMap(Sport.init(rawValue:)))
+        case .rest: self = .rest
+        case .disclaimer: self = .disclaimer
+        case .none: self = .none
+        }
     }
 }
 

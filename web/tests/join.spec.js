@@ -31,6 +31,9 @@ async function stub(page, status, body) {
   return asked;
 }
 
+// Long enough for five to walk in and the hero to rise in.
+const SETTLE = 2600;
+
 const overlaps = (a, b) =>
   a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
@@ -40,9 +43,10 @@ test('shows the squad, its size and the code, and the button opens the App Store
   const asked = await stub(page, 200, squad(3));
   await page.goto('/join/k7m2qx9p?lang=zh-Hans');
   await expect(page.locator('#name')).toHaveText('周末网球');
-  await expect(page.locator('#eyebrow')).toHaveText('你被邀请加入');
-  await expect(page.locator('#sub')).toHaveText('3 名队员，就差你了');
-  await expect(page.locator('#get')).toHaveText('加入小队');
+  await expect(page.locator('#eyebrow')).toHaveText('你收到一张外卡');
+  await expect(page.locator('#sub')).toHaveText('3 人已上场，就等你了');
+  await expect(page.locator('#get')).toHaveText('领取外卡');
+  await expect(page.locator('#copy')).toHaveText('复制');
   await expect(page.locator('#get')).toHaveAttribute('href', APP_STORE);
   await expect(page.locator('#code-value')).toHaveText('K7M2QX9P');
   await expect(page.locator('.lineup svg')).toHaveCount(3);
@@ -55,13 +59,13 @@ test('speaks Traditional Chinese and English, and links the legal pages in each'
 }) => {
   await stub(page, 200, squad(2));
   await page.goto('/join/K7M2QX9P?lang=zh-Hant');
-  await expect(page.locator('#sub')).toHaveText('2 名隊員，就差你了');
+  await expect(page.locator('#sub')).toHaveText('2 人已上場，就等你了');
   await expect(page.locator('#privacy')).toHaveAttribute('href', '/zh-hant/privacy');
   await expect(page.locator('.wc-lang [aria-current="page"]')).toHaveText('繁體');
   await page.locator('.wc-lang a[lang="en"]').click();
   await expect(page).toHaveURL(/\/join\/K7M2QX9P\?lang=en$/);
-  await expect(page.locator('#sub')).toHaveText("2 in. You're next.");
-  await expect(page.locator('#get')).toHaveText('Join the squad');
+  await expect(page.locator('#sub')).toHaveText('2 in. Waiting on you.');
+  await expect(page.locator('#get')).toHaveText('Get your wildcard');
   await expect(page.locator('#terms')).toHaveAttribute('href', '/terms');
 });
 
@@ -125,13 +129,19 @@ test('a held prop takes the wearer’s hand, and a prop that hangs keeps level a
   expect(level.dumbbell).toEqual([]);
 });
 
-test('five stand still in a row; six or more walk through in a loop', async ({ page }) => {
+test('five walk in and stand still in a row; six or more walk through in a loop', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await stub(page, 200, squad(5));
   await page.goto('/join/K7M2QX9P');
   await expect(page.locator('.lineup svg')).toHaveCount(5);
   const lefts = () =>
     page.locator('.lineup svg').evaluateAll((all) => all.map((s) => s.getBoundingClientRect().x));
+  // They come in from past the right edge, the last one last.
+  const entering = await lefts();
+  expect(entering[4]).toBeGreaterThan(390);
+  await page.waitForTimeout(SETTLE);
   const row = await lefts();
   await page.waitForTimeout(300);
   expect(await lefts()).toStrictEqual(row);
@@ -174,9 +184,10 @@ for (const [width, height] of [
     await stub(page, 200, squad(5, { name: '周末网球和早起跑步俱乐部' }));
     await page.goto('/join/K7M2QX9P?lang=zh-Hans');
     await expect(page.locator('.lineup svg')).toHaveCount(5);
+    await page.waitForTimeout(SETTLE);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     const hero = await Promise.all(
-      ['#eyebrow', '#name', '#sub', '#get', '#code', '.wc-lang'].map((s) =>
+      ['#eyebrow', '#name', '#sub', '#get', '#copy', '.wc-lang', '#code'].map((s) =>
         page.locator(s).boundingBox(),
       ),
     );
@@ -204,4 +215,52 @@ test('the home page’s button opens the App Store, with Apple’s logo', async 
     await expect(page.locator('.btn')).toHaveAttribute('href', APP_STORE);
     await expect(page.locator('.btn svg')).toBeVisible();
   }
+});
+
+test('the copy button copies the code and says so for a moment', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await stub(page, 200, squad(3));
+  await page.goto('/join/k7m2qx9p?lang=zh-Hans');
+  await page.waitForTimeout(SETTLE);
+  await page.locator('#copy').click();
+  await expect(page.locator('#copy')).toHaveText('已复制');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('K7M2QX9P');
+  await expect(page.locator('#copy')).toHaveText('复制', { timeout: 3000 });
+});
+
+test('in WeChat it points at the menu to open the page in a browser; elsewhere it doesn’t', async ({
+  browser,
+}) => {
+  const wechat = await browser.newContext({
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.50',
+  });
+  const page = await wechat.newPage();
+  await stub(page, 200, squad(2));
+  await page.goto('/join/K7M2QX9P?lang=zh-Hans');
+  await expect(page.locator('#wechat')).toHaveText('点右上角 ··· 选「在浏览器打开」');
+  const tip = await page.locator('#wechat').boundingBox();
+  const lang = await page.locator('.wc-lang').boundingBox();
+  expect(overlaps(tip, lang)).toBe(false);
+  await wechat.close();
+
+  const other = await browser.newPage();
+  await stub(other, 200, squad(2));
+  await other.goto('/join/K7M2QX9P?lang=zh-Hans');
+  await expect(other.locator('#name')).toHaveText('周末网球');
+  await expect(other.locator('#wechat')).toBeHidden();
+  await other.close();
+});
+
+test('the site names the app for invite links, as JSON', async ({ request }) => {
+  const response = await request.get('/.well-known/apple-app-site-association');
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toBe('application/json');
+  const { applinks } = await response.json();
+  expect(applinks.details).toStrictEqual([
+    {
+      appIDs: ['WFY3YV6SPP.com.wildcardsquad.wildcard'],
+      components: [{ '/': '/join/*', comment: expect.any(String) }],
+    },
+  ]);
 });

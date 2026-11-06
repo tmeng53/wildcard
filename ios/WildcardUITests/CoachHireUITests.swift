@@ -1,12 +1,12 @@
 import XCTest
 
 /// Hiring the squad's coach the way a captain does, on the in-memory squad: 小队设置's empty 教练
-/// card, 教练招聘会, 毛头's 简历, 招聘, then the coach's own 简历 with no 换教练 or 解雇 for now; a mate reading the 简历 only; and the 简历's
+/// card, 教练招聘会, 毛头's 简历, 招聘, then 解雇 from the 简历 and back; a mate reading the 简历 only; and the 简历's
 /// field names on one line each, in Chinese and English. Keeps screenshots for review against
 /// the approved 雇教练页面 canvas.
 @MainActor
 final class CoachHireUITests: XCTestCase {
-    func testTheCaptainHiresTheCoach() {
+    func testTheCaptainHiresAndFiresTheCoach() {
         let app = launch()
         let hire = app.buttons["squad.coach.hire"]
         XCTAssertTrue(hire.waitForExistence(timeout: 30), "the captain has no 招聘")
@@ -37,15 +37,29 @@ final class CoachHireUITests: XCTestCase {
         settle()
         keepScreenshot(named: "85-coach-hired")
 
-        // 换教练 and 解雇 are off the 简历 for now (Tracy, 2026-11-04).
+        // 换教练 and 解雇 wait on the coach's 简历, small.
         app.buttons["squad.coach.open"].tap()
-        let label = app.staticTexts["coach.resume.label"].firstMatch
-        XCTAssertTrue(label.waitForExistence(timeout: 30), "the coach's 简历 didn't open")
-        XCTAssertFalse(app.buttons["coach.resume.fire"].exists, "解雇 is still on the 简历")
-        XCTAssertFalse(app.buttons["coach.resume.change"].exists, "换教练 is still on the 简历")
+        let fire = app.buttons["coach.resume.fire"]
+        XCTAssertTrue(fire.waitForExistence(timeout: 30), "the 简历 has no 解雇 for the captain")
+        XCTAssertTrue(app.buttons["coach.resume.change"].exists, "the 简历 has no 换教练 for the captain")
         XCTAssertFalse(app.buttons["coach.resume.hire"].exists, "the squad's own coach offers 招聘")
+        assertClear(of: fire, app)
         settle()
         keepScreenshot(named: "85-coach-resume-manage")
+
+        fire.tap()
+        let confirm = app.buttons["coach.fire.confirm"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 30), "解雇 didn't ask first")
+        assertInside(confirm, app)
+        settle()
+        keepScreenshot(named: "86-coach-fire")
+
+        app.buttons["coach.fire.keep"].tap()
+        XCTAssertTrue(fire.waitForExistence(timeout: 30), "先不解雇 didn't go back to the 简历")
+        fire.tap()
+        XCTAssertTrue(confirm.waitForExistence(timeout: 30), "解雇 didn't open again")
+        confirm.tap()
+        XCTAssertTrue(hire.waitForExistence(timeout: 30), "确认解雇 didn't leave the squad without a coach")
     }
 
     func testAMateReadsTheResumeOnly() {
@@ -87,17 +101,16 @@ final class CoachHireUITests: XCTestCase {
         let app = launch(language: "en", extra: ["-squad-seat", "coached"])
         let open = app.buttons["squad.coach.open"]
         XCTAssertTrue(open.waitForExistence(timeout: 30), "the captain doesn't see the squad's coach")
-        app.buttons["squad.coach.change"].tap()
-        XCTAssertTrue(
-            app.staticTexts["1 coach looking for a squad"].waitForExistence(timeout: 30),
-            "教练招聘会 doesn't count one coach in the singular")
-        backButton(in: app).tap()
-        XCTAssertTrue(open.waitForExistence(timeout: 30), "教练招聘会 didn't go back to 小队设置")
         open.tap()
         XCTAssertTrue(app.staticTexts["Expected pay"].waitForExistence(timeout: 30), "the 简历 isn't in English")
         assertLabelsKeepOneLine(app)
         settle()
         keepScreenshot(named: "88-coach-resume-en")
+        // 换教练 waits on the coach's 简历 and opens 教练招聘会.
+        app.buttons["coach.resume.change"].tap()
+        XCTAssertTrue(
+            app.staticTexts["1 coach looking for a squad"].waitForExistence(timeout: 30),
+            "教练招聘会 doesn't count one coach in the singular")
     }
 
     /// Opens 我, then 设置, then 我的小队.

@@ -419,6 +419,27 @@ extension Components {
                 case zhHant
             }
         }
+        /// The `shelf` event’s data: what the caller’s 商店街 shows may have changed, so read `GET /me/unlocks` again.
+        ///
+        /// - Remark: Generated from `#/components/schemas/LiveShelf`.
+        public struct LiveShelf: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/LiveShelf/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/LiveShelf/version`.
+            public var version: Components.Schemas.LiveShelf.VersionPayload
+            /// Creates a new `LiveShelf`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            public init(version: Components.Schemas.LiveShelf.VersionPayload) {
+                self.version = version
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/Health`.
         public struct Health: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Health/version`.
@@ -4472,21 +4493,29 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NewSquad/name`.
             public var name: Swift.String
+            /// The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NewSquad/daysPerMember`.
+            public var daysPerMember: Swift.Int?
             /// Creates a new `NewSquad`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - name: Trimmed, then 1 to 20 characters as people see them, on one line.
+            ///   - daysPerMember: The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.
             public init(
                 version: Components.Schemas.NewSquad.VersionPayload,
-                name: Swift.String
+                name: Swift.String,
+                daysPerMember: Swift.Int? = nil
             ) {
                 self.version = version
                 self.name = name
+                self.daysPerMember = daysPerMember
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case name
+                case daysPerMember
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadNameChange`.
@@ -4571,6 +4600,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadInvite/joined`.
             public var joined: Swift.Bool
+            /// The squad’s weekly goal (人均 N 天) as its captain last set it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadInvite/daysPerMember`.
+            public var daysPerMember: Swift.Int
             /// The members’ characters, the earliest to join first, for the join screen to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadInvite/looks`.
@@ -4583,6 +4616,7 @@ extension Components {
             ///   - memberCount: How many members it has now.
             ///   - full: True when it has 8 members and can’t take more.
             ///   - joined: True when the caller is in it already.
+            ///   - daysPerMember: The squad’s weekly goal (人均 N 天) as its captain last set it.
             ///   - looks: The members’ characters, the earliest to join first, for the join screen to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
             public init(
                 version: Components.Schemas.SquadInvite.VersionPayload,
@@ -4590,6 +4624,7 @@ extension Components {
                 memberCount: Swift.Int,
                 full: Swift.Bool,
                 joined: Swift.Bool,
+                daysPerMember: Swift.Int,
                 looks: [Components.Schemas.Look]
             ) {
                 self.version = version
@@ -4597,6 +4632,7 @@ extension Components {
                 self.memberCount = memberCount
                 self.full = full
                 self.joined = joined
+                self.daysPerMember = daysPerMember
                 self.looks = looks
             }
             public enum CodingKeys: String, CodingKey {
@@ -4605,6 +4641,7 @@ extension Components {
                 case memberCount
                 case full
                 case joined
+                case daysPerMember
                 case looks
             }
         }
@@ -4628,6 +4665,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/full`.
             public var full: Swift.Bool
+            /// The squad’s weekly goal (人均 N 天) as its captain last set it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/daysPerMember`.
+            public var daysPerMember: Swift.Int
             /// The members’ characters, the earliest to join first, for the page to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
             ///
             /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/looks`.
@@ -4639,18 +4680,21 @@ extension Components {
             ///   - name: The squad’s name.
             ///   - memberCount: How many members it has now.
             ///   - full: True when it has 8 members and can’t take more.
+            ///   - daysPerMember: The squad’s weekly goal (人均 N 天) as its captain last set it.
             ///   - looks: The members’ characters, the earliest to join first, for the page to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
             public init(
                 version: Components.Schemas.PublicSquadInvite.VersionPayload,
                 name: Swift.String,
                 memberCount: Swift.Int,
                 full: Swift.Bool,
+                daysPerMember: Swift.Int,
                 looks: [Components.Schemas.Look]
             ) {
                 self.version = version
                 self.name = name
                 self.memberCount = memberCount
                 self.full = full
+                self.daysPerMember = daysPerMember
                 self.looks = looks
             }
             public enum CodingKeys: String, CodingKey {
@@ -4658,6 +4702,7 @@ extension Components {
                 case name
                 case memberCount
                 case full
+                case daysPerMember
                 case looks
             }
         }
@@ -4884,29 +4929,37 @@ extension Components {
             public var me: Components.Schemas.SquadToday.MePayload
             /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek`.
             public struct SquadWeekPayload: Codable, Hashable, Sendable {
-                /// Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad.
+                /// Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad; a day counts once however many times they trained.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek/trainedDays`.
                 public var trainedDays: Swift.Int
-                /// Training days planned this week, added up over the members’ plans, each in their own week.
+                /// The squad’s weekly goal (小队每周目标) in days: `daysPerMember` times the members now. Anyone’s trained days count towards it.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek/plannedDays`.
                 public var plannedDays: Swift.Int
+                /// The weekly goal its captain set (人均 N 天), in the caller’s week: how many days each member trains on average.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek/daysPerMember`.
+                public var daysPerMember: Swift.Int
                 /// Creates a new `SquadWeekPayload`.
                 ///
                 /// - Parameters:
-                ///   - trainedDays: Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad.
-                ///   - plannedDays: Training days planned this week, added up over the members’ plans, each in their own week.
+                ///   - trainedDays: Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad; a day counts once however many times they trained.
+                ///   - plannedDays: The squad’s weekly goal (小队每周目标) in days: `daysPerMember` times the members now. Anyone’s trained days count towards it.
+                ///   - daysPerMember: The weekly goal its captain set (人均 N 天), in the caller’s week: how many days each member trains on average.
                 public init(
                     trainedDays: Swift.Int,
-                    plannedDays: Swift.Int
+                    plannedDays: Swift.Int,
+                    daysPerMember: Swift.Int
                 ) {
                     self.trainedDays = trainedDays
                     self.plannedDays = plannedDays
+                    self.daysPerMember = daysPerMember
                 }
                 public enum CodingKeys: String, CodingKey {
                     case trainedDays
                     case plannedDays
+                    case daysPerMember
                 }
             }
             /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek`.
@@ -5540,6 +5593,117 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case coach
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal`.
+        public struct SquadWeeklyGoal: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/version`.
+            public var version: Components.Schemas.SquadWeeklyGoal.VersionPayload
+            /// This week’s goal (人均 N 天).
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/daysPerMember`.
+            public var daysPerMember: Swift.Int
+            /// Next week’s goal: a change counts from the next week, so it differs from `daysPerMember` only after the captain changed it this week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/nextDaysPerMember`.
+            public var nextDaysPerMember: Swift.Int
+            /// True for the captain, the only one who sets it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/canChange`.
+            public var canChange: Swift.Bool
+            /// Null until the squad has a finished week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/recent`.
+            public struct RecentPayload: Codable, Hashable, Sendable {
+                /// How many finished weeks it averages: up to 4.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/recent/weeks`.
+                public var weeks: Swift.Int
+                /// The days each member trained on average in those weeks, to one decimal: each week’s trained days (from check-ins sent to the squad) over its members then.
+                ///
+                /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/recent/daysPerMember`.
+                public var daysPerMember: Swift.Double
+                /// Creates a new `RecentPayload`.
+                ///
+                /// - Parameters:
+                ///   - weeks: How many finished weeks it averages: up to 4.
+                ///   - daysPerMember: The days each member trained on average in those weeks, to one decimal: each week’s trained days (from check-ins sent to the squad) over its members then.
+                public init(
+                    weeks: Swift.Int,
+                    daysPerMember: Swift.Double
+                ) {
+                    self.weeks = weeks
+                    self.daysPerMember = daysPerMember
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case weeks
+                    case daysPerMember
+                }
+            }
+            /// Null until the squad has a finished week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/recent`.
+            public var recent: Components.Schemas.SquadWeeklyGoal.RecentPayload?
+            /// Creates a new `SquadWeeklyGoal`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - daysPerMember: This week’s goal (人均 N 天).
+            ///   - nextDaysPerMember: Next week’s goal: a change counts from the next week, so it differs from `daysPerMember` only after the captain changed it this week.
+            ///   - canChange: True for the captain, the only one who sets it.
+            ///   - recent: Null until the squad has a finished week.
+            public init(
+                version: Components.Schemas.SquadWeeklyGoal.VersionPayload,
+                daysPerMember: Swift.Int,
+                nextDaysPerMember: Swift.Int,
+                canChange: Swift.Bool,
+                recent: Components.Schemas.SquadWeeklyGoal.RecentPayload? = nil
+            ) {
+                self.version = version
+                self.daysPerMember = daysPerMember
+                self.nextDaysPerMember = nextDaysPerMember
+                self.canChange = canChange
+                self.recent = recent
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case daysPerMember
+                case nextDaysPerMember
+                case canChange
+                case recent
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoalChange`.
+        public struct SquadWeeklyGoalChange: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoalChange/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoalChange/version`.
+            public var version: Components.Schemas.SquadWeeklyGoalChange.VersionPayload
+            /// How many days each member trains a week on average (人均 N 天), 1 to 7. The squad’s goal for a week is this times its members; anyone’s trained days count towards it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoalChange/daysPerMember`.
+            public var daysPerMember: Swift.Int
+            /// Creates a new `SquadWeeklyGoalChange`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - daysPerMember: How many days each member trains a week on average (人均 N 天), 1 to 7. The squad’s goal for a week is this times its members; anyone’s trained days count towards it.
+            public init(
+                version: Components.Schemas.SquadWeeklyGoalChange.VersionPayload,
+                daysPerMember: Swift.Int
+            ) {
+                self.version = version
+                self.daysPerMember = daysPerMember
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case daysPerMember
             }
         }
         /// - Remark: Generated from `#/components/schemas/CoachNotePutAway`.
@@ -7113,6 +7277,8 @@ extension Components {
                 public var podium: Components.Schemas.StoryPodium?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/myWeek`.
                 public var myWeek: Components.Schemas.StoryMyWeek?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/squadWeek`.
+                public var squadWeek: Components.Schemas.StorySquadWeek?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/hottest`.
                 public var hottest: Components.Schemas.StoryHottest?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/meals`.
@@ -7171,6 +7337,7 @@ extension Components {
                 ///   - members: Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
                 ///   - podium:
                 ///   - myWeek:
+                ///   - squadWeek:
                 ///   - hottest:
                 ///   - meals:
                 ///   - bestDisclaimer:
@@ -7186,6 +7353,7 @@ extension Components {
                     members: [Components.Schemas.StoryMember],
                     podium: Components.Schemas.StoryPodium? = nil,
                     myWeek: Components.Schemas.StoryMyWeek? = nil,
+                    squadWeek: Components.Schemas.StorySquadWeek? = nil,
                     hottest: Components.Schemas.StoryHottest? = nil,
                     meals: Components.Schemas.StoryMeals? = nil,
                     bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
@@ -7201,6 +7369,7 @@ extension Components {
                     self.members = members
                     self.podium = podium
                     self.myWeek = myWeek
+                    self.squadWeek = squadWeek
                     self.hottest = hottest
                     self.meals = meals
                     self.bestDisclaimer = bestDisclaimer
@@ -7217,6 +7386,7 @@ extension Components {
                     case members
                     case podium
                     case myWeek
+                    case squadWeek
                     case hottest
                     case meals
                     case bestDisclaimer
@@ -7269,6 +7439,8 @@ extension Components {
                 public var podium: Components.Schemas.StoryPodium?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/myWeek`.
                 public var myWeek: Components.Schemas.StoryMyWeek?
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/squadWeek`.
+                public var squadWeek: Components.Schemas.StorySquadWeek?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/hottest`.
                 public var hottest: Components.Schemas.StoryHottest?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/meals`.
@@ -7294,6 +7466,7 @@ extension Components {
                 ///   - members: Everyone in the squad at the awards, in the order they joined: someone who joined later isn’t here, someone who left since is. A deleted account is left out.
                 ///   - podium:
                 ///   - myWeek:
+                ///   - squadWeek:
                 ///   - hottest:
                 ///   - meals:
                 ///   - bestDisclaimer:
@@ -7308,6 +7481,7 @@ extension Components {
                     members: [Components.Schemas.StoryMember],
                     podium: Components.Schemas.StoryPodium? = nil,
                     myWeek: Components.Schemas.StoryMyWeek? = nil,
+                    squadWeek: Components.Schemas.StorySquadWeek? = nil,
                     hottest: Components.Schemas.StoryHottest? = nil,
                     meals: Components.Schemas.StoryMeals? = nil,
                     bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
@@ -7322,6 +7496,7 @@ extension Components {
                     self.members = members
                     self.podium = podium
                     self.myWeek = myWeek
+                    self.squadWeek = squadWeek
                     self.hottest = hottest
                     self.meals = meals
                     self.bestDisclaimer = bestDisclaimer
@@ -7337,6 +7512,7 @@ extension Components {
                     case members
                     case podium
                     case myWeek
+                    case squadWeek
                     case hottest
                     case meals
                     case bestDisclaimer
@@ -7561,25 +7737,91 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/StoryDay/sport`.
             public var sport: Swift.String?
+            /// For a trained day: the minutes its 练了 logged, summed; missing when none did (minutes are optional) or in a week frozen before they were kept.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryDay/minutes`.
+            public var minutes: Swift.Int?
             /// Creates a new `StoryDay`.
             ///
             /// - Parameters:
             ///   - day:
             ///   - kind: A 练了 wins over a 请假条, which wins over a planned rest day.
             ///   - sport: For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own.
+            ///   - minutes: For a trained day: the minutes its 练了 logged, summed; missing when none did (minutes are optional) or in a week frozen before they were kept.
             public init(
                 day: Swift.String,
                 kind: Components.Schemas.StoryDay.KindPayload,
-                sport: Swift.String? = nil
+                sport: Swift.String? = nil,
+                minutes: Swift.Int? = nil
             ) {
                 self.day = day
                 self.kind = kind
                 self.sport = sport
+                self.minutes = minutes
             }
             public enum CodingKeys: String, CodingKey {
                 case day
                 case kind
                 case sport
+                case minutes
+            }
+        }
+        /// 全队运动总结: every member’s week, for the squad’s days trained, the sports it trained most and the week’s fun numbers. Missing when nobody trained.
+        ///
+        /// - Remark: Generated from `#/components/schemas/StorySquadWeek`.
+        public struct StorySquadWeek: Codable, Hashable, Sendable {
+            /// Everyone in `members`, in the same order.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StorySquadWeek/members`.
+            public var members: [Components.Schemas.StorySquadWeekMember]
+            /// Creates a new `StorySquadWeek`.
+            ///
+            /// - Parameters:
+            ///   - members: Everyone in `members`, in the same order.
+            public init(members: [Components.Schemas.StorySquadWeekMember]) {
+                self.members = members
+            }
+            public enum CodingKeys: String, CodingKey {
+                case members
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StorySquadWeekMember`.
+        public struct StorySquadWeekMember: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StorySquadWeekMember/member`.
+            public var member: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StorySquadWeekMember/trainedDays`.
+            public var trainedDays: Swift.Int
+            /// Monday first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StorySquadWeekMember/days`.
+            public var days: [Components.Schemas.StoryDay]
+            /// Reactions on their posts that week, for 互相加油.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StorySquadWeekMember/reactionsReceived`.
+            public var reactionsReceived: Swift.Int
+            /// Creates a new `StorySquadWeekMember`.
+            ///
+            /// - Parameters:
+            ///   - member:
+            ///   - trainedDays:
+            ///   - days: Monday first.
+            ///   - reactionsReceived: Reactions on their posts that week, for 互相加油.
+            public init(
+                member: Swift.String,
+                trainedDays: Swift.Int,
+                days: [Components.Schemas.StoryDay],
+                reactionsReceived: Swift.Int
+            ) {
+                self.member = member
+                self.trainedDays = trainedDays
+                self.days = days
+                self.reactionsReceived = reactionsReceived
+            }
+            public enum CodingKeys: String, CodingKey {
+                case member
+                case trainedDays
+                case days
+                case reactionsReceived
             }
         }
         /// The signed-in member’s check-in with the most reactions at the awards, the latest on a tie. No AI writes it. Missing when none of theirs had any, or it was deleted since.
@@ -8566,21 +8808,29 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfStore/open`.
             public var open: Swift.Bool
+            /// For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins in its sports open it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ShelfStore/checkInsToGo`.
+            public var checkInsToGo: Swift.Int?
             /// Creates a new `ShelfStore`.
             ///
             /// - Parameters:
             ///   - id: The store’s id in the app’s art.
             ///   - open: Whether it is open now (its switch on). A closed store shows only what the member owns.
+            ///   - checkInsToGo: For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins in its sports open it.
             public init(
                 id: Swift.String,
-                open: Swift.Bool
+                open: Swift.Bool,
+                checkInsToGo: Swift.Int? = nil
             ) {
                 self.id = id
                 self.open = open
+                self.checkInsToGo = checkInsToGo
             }
             public enum CodingKeys: String, CodingKey {
                 case id
                 case open
+                case checkInsToGo
             }
         }
         /// - Remark: Generated from `#/components/schemas/ShelfPiece`.
@@ -8593,7 +8843,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfPiece/storeId`.
             public var storeId: Swift.String
-            /// `owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box).
+            /// `owned` once unlocked or claimed (worn all year, whatever the switches), and for a limited store’s starter while it is out (claim it to keep it); `available` for any other starter that is out now, `locked` for one still to earn (a 「？」 box).
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfPiece/state`.
             @frozen public enum StatePayload: String, Codable, Hashable, Sendable, CaseIterable {
@@ -8601,7 +8851,7 @@ extension Components {
                 case available = "available"
                 case locked = "locked"
             }
-            /// `owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box).
+            /// `owned` once unlocked or claimed (worn all year, whatever the switches), and for a limited store’s starter while it is out (claim it to keep it); `available` for any other starter that is out now, `locked` for one still to earn (a 「？」 box).
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfPiece/state`.
             public var state: Components.Schemas.ShelfPiece.StatePayload
@@ -8622,7 +8872,7 @@ extension Components {
             /// - Parameters:
             ///   - id: The piece’s id in the app’s art.
             ///   - storeId: The store it hangs in.
-            ///   - state: `owned` once unlocked (worn all year, whatever the switches), `available` for a starter that is out now, `locked` for one still to earn (a 「？」 box).
+            ///   - state: `owned` once unlocked or claimed (worn all year, whatever the switches), and for a limited store’s starter while it is out (claim it to keep it); `available` for any other starter that is out now, `locked` for one still to earn (a 「？」 box).
             ///   - checkInsToGo: For a locked piece: how many more 练了 check-ins in its sports open it.
             ///   - sports: The sports whose 练了 count towards it; empty for any sport.
             ///   - checkIns: How many 练了 check-ins it takes; 0 for a starter.

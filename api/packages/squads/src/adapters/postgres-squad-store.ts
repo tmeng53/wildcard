@@ -13,6 +13,7 @@ import {
   SquadName,
   type Squad,
 } from '../domain/squad.js';
+import { DaysPerMember, goalFor } from '../domain/weekly-goal.js';
 import type { CaptainOutcome, CreateOutcome, JoinOutcome, SquadStore } from '../ports.js';
 import type { DB, Squads } from './tables.js';
 
@@ -265,7 +266,7 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       return new Set(rows.map((row) => MemberId.parse(row.member_id)));
     },
 
-    async create({ id, name, inviteCode, creator }): Promise<CreateOutcome> {
+    async create({ id, name, inviteCode, creator, goal }): Promise<CreateOutcome> {
       try {
         return await db.transaction().execute(async (trx): Promise<CreateOutcome> => {
           await lockMember(trx, creator);
@@ -293,6 +294,15 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           await trx
             .insertInto('squad_membership_events')
             .values({ squad_id: id, member_id: creator, kind: 'joined', actor_id: creator })
+            .execute();
+          await trx
+            .insertInto('squad_weekly_goals')
+            .values({
+              squad_id: id,
+              days_per_member: goal.daysPerMember,
+              week_start: goal.week,
+              set_by: creator,
+            })
             .execute();
           return { created: true };
         });
@@ -369,6 +379,61 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       return asCaptain({ squad, actor }, async (trx) =>
         (await takeOut(trx, { squad, member, kind: 'removed', actor })) ? 'changed' : 'unchanged',
       );
+    },
+
+    async weeklyGoals(squad) {
+      const rows = await db
+        .selectFrom('squad_weekly_goals')
+        .select([
+          sql<string>`week_start::text`.as('week_start'),
+          'days_per_member',
+          'set_by',
+          'set_at',
+        ])
+        .where('squad_id', '=', squad)
+        .orderBy('week_start')
+        .orderBy('id')
+        .execute();
+      return rows.map((row) => ({
+        week: SceneWeek.parse(row.week_start),
+        daysPerMember: DaysPerMember.parse(row.days_per_member),
+        by: row.set_by === null ? null : MemberId.parse(row.set_by),
+        at: row.set_at,
+      }));
+    },
+
+    setWeeklyGoal({ squad, actor, daysPerMember, week }) {
+      return asCaptain({ squad, actor }, async (trx) => {
+        const settings = (
+          await trx
+            .selectFrom('squad_weekly_goals')
+            .select([sql<string>`week_start::text`.as('week_start'), 'days_per_member'])
+            .where('squad_id', '=', squad)
+            .orderBy('week_start')
+            .orderBy('id')
+            .execute()
+        ).map((row) => ({
+          week: SceneWeek.parse(row.week_start),
+          daysPerMember: DaysPerMember.parse(row.days_per_member),
+          by: null,
+          at: new Date(0),
+        }));
+        // A later week's setting would stand over this one, so only the latest week may change.
+        const latest = settings.at(-1)?.week;
+        if (goalFor(settings, week) === daysPerMember && (latest === undefined || latest <= week)) {
+          return 'unchanged';
+        }
+        await trx
+          .insertInto('squad_weekly_goals')
+          .values({
+            squad_id: squad,
+            days_per_member: daysPerMember,
+            week_start: week,
+            set_by: actor,
+          })
+          .execute();
+        return 'changed';
+      });
     },
 
     async scenePicks(squad) {

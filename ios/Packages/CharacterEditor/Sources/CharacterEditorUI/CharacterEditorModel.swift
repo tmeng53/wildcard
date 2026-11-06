@@ -93,10 +93,13 @@ public final class CharacterEditorModel {
     ) throws(AvatarError) -> CharacterEditorModel {
         let catalog = try Catalog.placeholder(unlocks: unlocks, stock: stock)
         var generator = SystemRandomNumberGenerator()
-        let start = look ?? CharacterDraft.randomLook(from: catalog, using: &generator)
+        let arrived = Catalog.arrived(unlocks: unlocks, stock: stock)
+        let start =
+            look
+            ?? CharacterDraft.randomLook(from: catalog, using: &generator, leavingOut: arrived.subtracting(claimed))
         return CharacterEditorModel(
             draft: CharacterDraft(catalog: catalog, look: start, persona: persona, nickname: nickname), tab: tab,
-            arrived: Set(unlocks.filter { $0.kind == .piece }.map(\.id)), claimed: claimed, marks: marks)
+            arrived: arrived, claimed: claimed, marks: marks)
     }
 
     /// Puts the member's own 商店街 in an editor opened before it was known, as sign-up's first
@@ -224,7 +227,7 @@ public final class CharacterEditorModel {
 
     func shuffle() {
         var generator = SystemRandomNumberGenerator()
-        draft.shuffle(using: &generator)
+        draft.shuffle(using: &generator, leavingOut: arrived.subtracting(claimed))
         leaveTabsForPeople()
         restyle(move: .look)
     }

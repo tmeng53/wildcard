@@ -85,11 +85,17 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                         myWeek: MyWeek(
                             firstDay: day.weekStart, lastDay: day.weekStart.adding(days: 6),
                             week: WeekCount(trainedDays: earlier.count, plannedDays: 5)),
-                        squadWeek: WeekCount(trainedDays: together == .wave ? 22 : 14, plannedDays: 22)),
+                        squadWeek: squadWeek(of: members.count, reached: together == .wave)),
                     plan: plan, checkIns: checkIns)
             },
             pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none,
             coach: coach || coachNote ? sampleCoach(now: now) : nil, notes: sampleNotes(coachNote, now, squadID))
+    }
+
+    /// The squad's week at 人均 3 天, the default goal: 14 days so far, or the whole goal once
+    /// everyone `reached` it together.
+    private static func squadWeek(of members: Int, reached: Bool) -> WeekCount {
+        WeekCount(trainedDays: reached ? 3 * members : 14, plannedDays: 3 * members)
     }
 
     /// 毛头's morning note to me, as the approved 便条 shows it, when `shown`.

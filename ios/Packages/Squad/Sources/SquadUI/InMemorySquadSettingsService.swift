@@ -74,7 +74,10 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
                     ]),
                 coach: SquadCoach(
                     hire: coached ? SquadCoach.Hire(coach: sampleCoach, since: now) : nil, canHire: viewer == ids[0]),
-                today: LocalDay(at: now, in: .current), timeZone: .current))
+                today: LocalDay(at: now, in: .current), timeZone: .current,
+                goal: SquadWeeklyGoal(
+                    daysPerMember: 3, nextDaysPerMember: 3, canChange: viewer == ids[0],
+                    recent: SquadWeeklyGoal.Recent(weeks: 4, daysPerMember: 3.4))))
     }
 
     public func settings() async throws(SquadError) -> SquadSettings {
@@ -129,6 +132,13 @@ extension InMemorySquadSettingsService {
             current.coach = SquadCoach(hire: .init(coach: sampleCoach, since: .now), canHire: true)
         }
         return current.coach
+    }
+
+    public func setWeeklyGoal(of squad: SquadID, to daysPerMember: Int) async throws(SquadError) -> SquadWeeklyGoal {
+        if failsSaving { throw .unavailable }
+        guard current.goal.canChange, SquadWeeklyGoal.choices.contains(daysPerMember) else { throw .outdated }
+        current.goal.nextDaysPerMember = daysPerMember
+        return current.goal
     }
 
     public func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach {

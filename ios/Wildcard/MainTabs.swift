@@ -47,6 +47,7 @@ struct MainTabs: View {
     /// 通知 or straight over 动态 (the home's banner, a push).
     @State var feedPages: [FeedPage] = []
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     /// 商店街 and the character editor, open from 我.
     @State var wardrobe: Wardrobe
     /// 出赛表, pushed over 我.
@@ -100,6 +101,7 @@ struct MainTabs: View {
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.
             today.openDestination = { open($0) }
+            today.broadcastOpened = { broadcast in Task { await inbox.opened(broadcast) } }
             today.tellUnlocks(
                 with: UnlockNotices(
                     banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },
@@ -128,6 +130,12 @@ struct MainTabs: View {
             }
         }
         .followsNotices(inbox)
+        // 商店街 read again when the server says it changed and on each return to the front (a
+        // switch's day starting tells nothing), so a store that opened shows without a relaunch.
+        .onChange(of: inbox.shelfChanges) { Task { await profile.reload() } }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await profile.reload() } }
+        }
         .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
@@ -245,11 +253,6 @@ struct MainTabs: View {
         // 通知 popped, or 动态 left with it open: what is told from now on lights the bell again.
         .onChange(of: showsNotices) { _, shown in if !shown { inbox.close() } }
         .onDisappear { inbox.close() }
-    }
-
-    /// The member's own character, on the empty 通知.
-    private var noticeViewer: NoticeViewer? {
-        profile.overview.map { NoticeViewer(outfit: $0.character.outfit, persona: $0.character.persona) }
     }
 
     /// A store's, prop's or piece's words and badge on its 通知 row, as the home's banner says them.

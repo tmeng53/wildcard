@@ -60,14 +60,19 @@ public struct JoinedSquad: Hashable, Sendable {
     public let name: String
     /// Everyone in it but the member, the earliest to join first.
     public let teammates: [Squadmate]
-    /// The squad's planned training days this week before the member joined; theirs add to it.
+    /// The squad's goal this week (小队本周目标) before the member joined, in days; the member
+    /// adds `daysPerMember` to it.
     public let weekGoal: Int
-    /// Training days the squad has done this week.
+    /// Days the squad has trained this week.
     public let weekDone: Int
+    /// The goal its captain set, 人均 N 天.
+    public let daysPerMember: Int
 
-    public init(id: SquadID, name: String, teammates: [Squadmate], weekGoal: Int, weekDone: Int) {
+    public init(
+        id: SquadID, name: String, teammates: [Squadmate], weekGoal: Int, weekDone: Int, daysPerMember: Int = 3
+    ) {
         (self.id, self.name, self.teammates) = (id, name, teammates)
-        (self.weekGoal, self.weekDone) = (weekGoal, weekDone)
+        (self.weekGoal, self.weekDone, self.daysPerMember) = (weekGoal, weekDone, daysPerMember)
     }
 }
 

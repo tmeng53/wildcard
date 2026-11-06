@@ -1,9 +1,11 @@
-import type { Switch, SwitchView } from './domain/switches.js';
+import type { Switch, SwitchSetting, SwitchView } from './domain/switches.js';
 
 /** Where the switches are kept. */
 export interface SwitchStore {
   /** Every switch, by id. */
   list(): Promise<Switch[]>;
+  /** Every change to every switch, from its log, the oldest first. */
+  history(): Promise<SwitchSetting[]>;
   /** Adds or replaces `of`. */
   put(of: Switch): Promise<void>;
   /** How `member` sees the switches now: `PLAIN_VIEW` for anyone never set. */

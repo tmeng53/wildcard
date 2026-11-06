@@ -1,6 +1,7 @@
 import Contracts
 import DesignSystemUI
 import FeedUI
+import NotificationsUI
 import RecapUI
 import SquadUI
 import SwiftUI
@@ -69,6 +70,11 @@ extension MainTabs {
     var showsNotices: Bool {
         get { feedPages.first == .notices }
         nonmutating set { feedPages = newValue ? [.notices] : [] }
+    }
+
+    /// The member's own character, on the empty 通知.
+    var noticeViewer: NoticeViewer? {
+        profile.overview.map { NoticeViewer(outfit: $0.character.outfit, persona: $0.character.persona) }
     }
 
     /// A card's comments open its post's page, pushed straight over 动态 on the same path.

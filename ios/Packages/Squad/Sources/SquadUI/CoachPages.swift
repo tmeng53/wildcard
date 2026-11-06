@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -17,8 +18,8 @@ public enum CoachRoute: Hashable {
     case fire(Coach)
 }
 
-/// 小队设置's 教练 card: an empty spot and 招聘, or the coach, its week, 换教练 and 解雇; for a mate,
-/// 逛逛招聘会 instead.
+/// 小队设置's 教练 card, on graphite: an empty spot and 招聘, or the coach standing whole (never
+/// cropped), its name and week; for a mate, 逛逛招聘会 too.
 struct CoachCard: View {
     let hire: SquadCoach.Hire?
     let week: Int?
@@ -34,22 +35,29 @@ struct CoachCard: View {
                 empty
             }
         }
-        .card()
+        .inkCard()
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("squad.coach")
     }
 
     private var empty: some View {
         HStack(spacing: Space.s) {
-            CoachThumbnail(coach: nil)
+            UnevenRoundedRectangle(
+                topLeadingRadius: CoachMetrics.thumbnailFigure / 2, topTrailingRadius: CoachMetrics.thumbnailFigure / 2,
+                style: .continuous
+            )
+            .stroke(Color(role: .fgOnInkMuted, in: theme), style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
+            .frame(width: CoachMetrics.thumbnailFigure, height: CoachMetrics.thumbnailFigure * 1.7)
+            .frame(width: CoachMetrics.thumbnail, height: CoachMetrics.thumbnail)
+            .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: Space.xxs) {
                 Text("还没有教练", bundle: .module)
                     .typeStyle(TypeRamp.headline)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                 if !canHire {
                     Text("只有队长能雇教练", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -59,8 +67,7 @@ struct CoachCard: View {
                 } label: {
                     Text("招聘", bundle: .module)
                 }
-                .buttonStyle(PrimaryButtonStyle(.regular))
-                .accentTone(.ink)
+                .buttonStyle(SecondaryButtonStyle(.inCard))
                 .fixedSize()
                 .accessibilityIdentifier("squad.coach.hire")
             } else {
@@ -85,14 +92,19 @@ struct CoachCard: View {
             Button {
                 open(.resume(coach))
             } label: {
-                HStack(spacing: Space.s) {
-                    CoachThumbnail(coach: coach.id)
+                HStack(spacing: Space.m) {
+                    // The whole coach, uncropped, its canvas's left edge on the card's padding.
+                    CoachFigure(coach: coach.id.rawValue, pose: .still, crop: CoachCanvas.full) {
+                        CoachSilhouette(fill: Color(role: .fgOnInkMuted, in: theme))
+                            .frame(width: CoachMetrics.cardFigure * CoachMetrics.figureAspect)
+                    }
+                    .frame(height: CoachMetrics.cardFigure)
                     VStack(alignment: .leading, spacing: Space.xxs) {
-                        CoachName(coach: coach, name: TypeRamp.headline, title: TypeRamp.footnote)
+                        CoachName(coach: coach, name: TypeRamp.headline, title: TypeRamp.footnote, onInk: true)
                         if let week {
                             Text("执教第 \(week) 周", bundle: .module)
                                 .typeStyle(TypeRamp.footnote)
-                                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                                .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                                 .lineLimit(1)
                                 .accessibilityIdentifier("squad.coach.week")
                         }
@@ -100,7 +112,7 @@ struct CoachCard: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     Image(systemName: "chevron.right")
                         .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                        .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                        .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                         .accessibilityHidden(true)
                 }
                 .contentShape(Rectangle())
@@ -282,8 +294,10 @@ private struct MoreCoaches: View {
 enum CoachMetrics {
     /// The page loader's size, as every page's.
     static let spinner = 64.0
-    /// The 教练 card's square.
+    /// The 教练 card's empty spot.
     static let thumbnail = 56.0
+    /// The coach standing on the 教练 card, its 240 × 320 canvas whole.
+    static let cardFigure = 96.0
     /// The silhouette's width in the square, for a coach without a character.
     static let thumbnailFigure = 26.0
     /// A silhouette is twice as tall as it is wide.

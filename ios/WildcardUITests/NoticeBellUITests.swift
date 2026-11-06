@@ -28,7 +28,7 @@ final class NoticeBellUITests: XCTestCase {
         XCTAssertTrue(app.buttons["notices.row.6"].label.contains("教练 毛头 回复了你的打卡"))
         // The 6pm push: the squad's week on top, who patted under it, as the approved design shows.
         let daily = app.buttons["notices.row.5"].label
-        XCTAssertTrue(daily.hasPrefix("本周小队已练 9/16 次"), "the 6pm row says \(daily)")
+        XCTAssertTrue(daily.hasPrefix("本周小队已练 9/16 天"), "the 6pm row says \(daily)")
         XCTAssertTrue(daily.contains("Coco和另外 2 人拍了拍你"), "the 6pm row says \(daily)")
         waitFor(app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar stayed over 通知")
         for id in 1...9 {

@@ -77,6 +77,11 @@ const ShelfStore = z
       description:
         'Whether it is open now (its switch on). A closed store shows only what the member owns.',
     }),
+    checkInsToGo: LockedPiece.shape.checkInsToGo.optional().meta({
+      description:
+        'For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins ' +
+        'in its sports open it.',
+    }),
   })
   .openapi('ShelfStore');
 
@@ -86,8 +91,9 @@ const ShelfPiece = z
     storeId: ItemId.meta({ description: 'The store it hangs in.', example: 'powder' }),
     state: z.enum(['owned', 'available', 'locked']).meta({
       description:
-        '`owned` once unlocked (worn all year, whatever the switches), `available` for a ' +
-        'starter that is out now, `locked` for one still to earn (a 「？」 box).',
+        '`owned` once unlocked or claimed (worn all year, whatever the switches), and for a ' +
+        'limited store’s starter while it is out (claim it to keep it); `available` for any ' +
+        'other starter that is out now, `locked` for one still to earn (a 「？」 box).',
     }),
     checkInsToGo: LockedPiece.shape.checkInsToGo.optional().meta({
       description: 'For a locked piece: how many more 练了 check-ins in its sports open it.',
@@ -260,7 +266,10 @@ export function unlocks(deps: {
             givenAt: givenAt.toISOString(),
           })),
           shelf: {
-            stores: [...shelf.stores],
+            stores: shelf.stores.map(({ toGo, ...store }) => ({
+              ...store,
+              ...(toGo === undefined ? {} : { checkInsToGo: toGo }),
+            })),
             pieces: shelf.pieces.map(({ toGo, sports, after, ...piece }) => ({
               ...piece,
               ...(toGo === undefined ? {} : { checkInsToGo: toGo }),

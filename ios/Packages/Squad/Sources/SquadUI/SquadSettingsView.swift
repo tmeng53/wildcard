@@ -14,10 +14,11 @@ import SwiftUI
 import UIKit
 #endif
 
-/// 小队, the squad's page (approved canvas, 2026-10-22), opened from the home's squad card (a tab
-/// from 2026-11-02 until Tracy took the tab away on 2026-11-04): 返回, the squad's name and
-/// captain, a still row of everyone's heads with the coach and 「+ 邀请」, this week's scene and
-/// who picks it, the coach, the invite code, the members, and leaving. The captain renames the
+/// 小队, the squad's page (approved canvas, 2026-10-22; its cards redone with the weekly goal,
+/// 2026-11-06), opened from the home's squad card (a tab from 2026-11-02 until Tracy took the tab
+/// away on 2026-11-04): 返回, the squad's name, a still row of everyone's heads (the captain's
+/// tagged 队长) with the coach and 「+ 邀请」, then graphite cards: the weekly goal, the coach,
+/// this week's scene, the invite code; the members, and leaving. The captain renames the
 /// squad and manages members from each row's ··· menu; last week's crown winner, or the captain
 /// when nobody won, picks the scene once. It is pushed on 今天's NavigationStack, so the system's
 /// back button and swipe go back, and the coach's pages are pushed over it through `openCoach`;
@@ -118,8 +119,13 @@ public struct SquadSettingsView: View {
                 InlineFailure()
                     .accessibilityIdentifier("squad.changeFailed")
             }
-            section(Text("本周场地", bundle: .module)) { sceneCard }
+            section(Text("每周目标", bundle: .module)) {
+                SquadGoalCard(goal: settings.goal, canChange: model.canChangeGoal) { days in
+                    Task { await model.setGoal(days) }
+                }
+            }
             section(Text("教练", bundle: .module)) { coachCard }
+            section(Text("本周场地", bundle: .module)) { sceneCard }
             section(Text("邀请队友", bundle: .module)) { InviteCard(squad: settings.squad, openSpots: model.openSpots) }
             section(Text("队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
                 memberRows
@@ -217,25 +223,13 @@ public struct SquadSettingsView: View {
 extension SquadSettingsView {
     private func header(_ settings: SquadSettings) -> some View {
         HStack(alignment: .top, spacing: Space.s) {
-            VStack(alignment: .leading, spacing: Space.xxs) {
-                Text(verbatim: settings.squad.name)
-                    .typeStyle(TypeRamp.largeTitle)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .lineLimit(2)
-                    .accessibilityAddTraits(.isHeader)
-                    .accessibilityIdentifier("squad.name")
-                Group {
-                    if let captain = model.captainName {
-                        Text("\(settings.squad.members.count) 人 · 队长 \(captain)", bundle: .module)
-                    } else {
-                        Text("\(settings.squad.members.count) 人", bundle: .module)
-                    }
-                }
-                .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            Text(verbatim: settings.squad.name)
+                .typeStyle(TypeRamp.largeTitle)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .lineLimit(2)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityIdentifier("squad.name")
+                .frame(maxWidth: .infinity, alignment: .leading)
             if model.isCaptain {
                 LoadingSwap(isSaving(.rename)) {
                     HeaderButton(Text("改队名", bundle: .module), systemImage: "pencil") {
@@ -259,43 +253,40 @@ extension SquadSettingsView {
 
     // MARK: 本周场地
 
+    /// The scene's own art as a banner over a graphite strip with its name and, for whoever may
+    /// pick this week, 换场地; the tiles open under the card.
     private var sceneCard: some View {
         VStack(spacing: Space.s) {
-            HStack(spacing: Space.s) {
+            VStack(spacing: 0) {
                 SceneBackdrop(scene: model.scene)
-                    .frame(width: SquadSettingsMetrics.thumbnail.width, height: SquadSettingsMetrics.thumbnail.height)
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: SquadSettingsMetrics.sceneBanner)
+                    .clipped()
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: Space.xxs) {
+                HStack(spacing: Space.s) {
                     model.scene.name
                         .typeStyle(TypeRamp.headline)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .foregroundStyle(Color(role: .fgOnBrand, in: theme))
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityIdentifier("squad.scene")
-                    if let line = model.sceneLine {
-                        HStack(spacing: Space.xxs) {
-                            Image(systemName: "crown")
-                                .font(.system(size: Sizing.smallIcon - 1, weight: .semibold))
-                                .accessibilityHidden(true)
-                            SceneLineText(line: line)
-                                .typeStyle(TypeRamp.footnote)
-                                .lineLimit(2)
-                                .accessibilityIdentifier("squad.sceneLine")
+                    if model.canPickScene, model.picker == nil {
+                        Button {
+                            withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { model.openPicker() }
+                        } label: {
+                            Text("换场地", bundle: .module)
                         }
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .buttonStyle(SecondaryButtonStyle(.inCard))
+                        .fixedSize()
+                        .accessibilityIdentifier("squad.changeScene")
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                if model.canPickScene, model.picker == nil {
-                    Button {
-                        withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { model.openPicker() }
-                    } label: {
-                        Text("换场地", bundle: .module)
-                    }
-                    .buttonStyle(PrimaryButtonStyle(.regular))
-                    .fixedSize()
-                    .accessibilityIdentifier("squad.changeScene")
-                }
+                .padding(.horizontal, Space.cardPadding)
+                .padding(.vertical, Space.s)
+                .frame(minHeight: Sizing.minimumTapTarget + Space.s * 2)
+                .background(Color(role: .bgBrand, in: theme))
             }
+            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             if let picker = model.picker {
                 ScenePickerGrid(
                     picker: picker,
@@ -305,7 +296,6 @@ extension SquadSettingsView {
                     onRefused: { Task { await model.pickRefused() } })
             }
         }
-        .card()
     }
 
     // MARK: 教练

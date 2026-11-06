@@ -107,5 +107,8 @@ private struct PlainPush: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
+        // Only this view has it, so a UI test can tell the extension drew from the system's text.
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("pushReact.plain")
     }
 }

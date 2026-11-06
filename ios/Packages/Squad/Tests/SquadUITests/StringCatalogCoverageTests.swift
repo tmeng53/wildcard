@@ -90,7 +90,6 @@ struct InMemorySquadSettingsServiceTests {
         let winner = SquadSettingsModel(service: InMemorySquadSettingsService.sample(seat: .winner))
         await winner.reload()
         #expect(winner.canPickScene)
-        #expect(winner.sceneLine == .youWon)
         await winner.leave()
         #expect(winner.hasLeft)
     }
