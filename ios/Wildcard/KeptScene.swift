@@ -109,9 +109,3 @@ extension LaunchOptions {
         return arguments[flag + 1]
     }
 }
-
-/// The squad's scene, which 今天 must open on rather than switch to.
-extension AppModel {
-    /// How long the loading screen waits for the squad's scene before opening on the kept one.
-    static let sceneWait = Duration.seconds(3)
-}
