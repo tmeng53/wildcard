@@ -33,7 +33,8 @@ public actor InMemorySignUpService: SignUpService {
                 teammates: teammates.map { name, body, persona in
                     Squadmate(
                         id: MemberID(UUID()), nickname: name,
-                        outfit: Outfit(["body": body, "top": "warmup-tee", "bottom": "warmup-shorts"]), persona: persona
+                        outfit: Outfit(["body": body, "cheeks": "rosy", "top": "warmup-tee", "bottom": "warmup-shorts"]
+                        ), persona: persona
                     )
                 },
                 weekGoal: 3 * teammates.count, weekDone: 9, daysPerMember: 3))
