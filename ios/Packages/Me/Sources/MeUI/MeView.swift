@@ -17,26 +17,30 @@ public struct MeDestinations {
     public var street: () -> Void
     /// Whether a piece came in that 商店街 hasn't shown yet: the dot on its button.
     public var streetHasNews: Bool
+    /// A post opened from 训练记录's popover, over 我.
+    public var openPost: (CheckInID) -> Void
     /// The published policy pages.
     public var privacyPolicy: URL
     public var terms: URL
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
-        street: @escaping () -> Void = {}, streetHasNews: Bool = false, privacyPolicy: URL, terms: URL
+        street: @escaping () -> Void = {}, streetHasNews: Bool = false,
+        openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL
     ) {
         self.editCharacter = editCharacter
         self.schedule = schedule
         self.street = street
         self.streetHasNews = streetHasNews
+        self.openPost = openPost
         self.privacyPolicy = privacyPolicy
         self.terms = terms
     }
 }
 
 /// 我: 换装, 商店街 and 设置 at the top right, the member's player card across the page (tap it
-/// to turn it over), and under it the 出赛表 tile and the 我的动态 tile the app passes in, as wide
-/// as the card. 设置 opens the settings menu, and from there 注销账号; each page replaces the last
+/// to turn it over), under it the 出赛表 tile and the 我的动态 tile the app passes in side by side,
+/// and then 训练记录, the heatmap of the member's last weeks; all as wide as the card. 设置 opens the settings menu, and from there 注销账号; each page replaces the last
 /// in place. These pages keep out of the scene's colours: ink, graphite and white only.
 public struct MeView<PostsTile: View>: View {
     @Bindable private var model: MeModel
@@ -114,8 +118,18 @@ public struct MeView<PostsTile: View>: View {
                     PlayerCard(
                         face: overview.card, equip: { title in Task { await model.equip(title) } }, hint: nil,
                         fillsWidth: true)
-                    ScheduleTile(week: overview.week, glance: overview.weekGlance, open: destinations.schedule)
-                    postsTile
+                    HStack(spacing: Space.cardGap) {
+                        ScheduleTile(glance: overview.weekGlance, open: destinations.schedule)
+                        postsTile
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
+                    if let record = overview.record {
+                        TrainingRecordView(
+                            record: record, trainedDays: overview.counts.trainedDays,
+                            openPost: destinations.openPost
+                        )
+                        .padding(.top, Space.s)
+                    }
                     if model.saveFailed {
                         SaveFailed()
                     }
@@ -133,47 +147,21 @@ public struct MeView<PostsTile: View>: View {
     }
 }
 
-/// 出赛表 under the card: this week's number, 出赛表 with 本周 x/y, and the week's seven days
-/// (a white disc with a tick for a day with a 练了, a ring for a training day still to come or
-/// gone by, a moon for a rest day, today's mark heavier), opening it inside 我. Without the days
-/// it shows the count alone.
+/// 出赛表 beside 我的动态 under the card: this week's number, 出赛表, the days left in the week
+/// (这周还有 N 天) and a white 编辑 pill, opening it inside 我 to change the plan.
 struct ScheduleTile: View {
-    let week: WeekCount?
     let glance: WeekGlance?
     let open: () -> Void
 
     var body: some View {
         GlanceTile(
-            figure: glance.map { Text(verbatim: "W\($0.number)") } ?? Text("出赛表", bundle: .module),
-            figureStyle: glance == nil ? TypeRamp.headline : TypeRamp.scoreWeek,
-            caption: caption, action: open
+            figure: Text(verbatim: glance.map { "W\($0.number)" } ?? "W"),
+            figureStyle: TypeRamp.scoreWeek, title: Text("出赛表", bundle: .module),
+            caption: glance?.daysLeft.map { Text("这周还有 \($0) 天", bundle: .module) }, action: open
         ) {
-            if let glance {
-                GlanceWeekDays(
-                    glance.days.map { day in
-                        let status: WeekDayStatus =
-                            switch day.mark {
-                            case .trained: .trained(symbol: nil)
-                            case .planned: .open
-                            case .rest: .restDay
-                            }
-                        return GlanceWeekDays.Day(status: status, isToday: day.isToday)
-                    }
-                )
-                .accessibilityHidden(true)
-            }
+            GlanceAction(Text("编辑", bundle: .module), systemImage: "pencil")
         }
         .accessibilityIdentifier("me.schedule")
-    }
-
-    /// 出赛表 · 3/5, or 出赛表 alone with no plan this week; 本周 3/5 when the week has no number.
-    private var caption: Text {
-        switch (glance, week) {
-        case (.some, .some(let week)): Text("出赛表 · \(week.trainedDays)/\(week.plannedDays)", bundle: .module)
-        case (.some, .none): Text("出赛表", bundle: .module)
-        case (.none, .some(let week)): Text("本周 \(week.trainedDays)/\(week.plannedDays)", bundle: .module)
-        case (.none, .none): Text(verbatim: "")
-        }
     }
 }
 

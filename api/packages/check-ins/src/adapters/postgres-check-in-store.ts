@@ -304,6 +304,33 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       return rows.map((row) => SquadId.parse(row.squad_id));
     },
 
+    async trainingsForMember({ member, from, to }) {
+      const rows = await db
+        .selectFrom('check_ins')
+        .select([
+          'id',
+          sql<string>`check_ins.day::text`.as('day'),
+          sql<string>`payload ->> 'sport'`.as('sport'),
+          sql<string | null>`payload ->> 'customSport'`.as('customSport'),
+          sql<string | null>`payload ->> 'minutes'`.as('minutes'),
+        ])
+        .where('member_id', '=', member)
+        .where('kind', '=', 'trained')
+        .where('day', '>=', from)
+        .where('day', '<=', to)
+        .orderBy('day')
+        .orderBy('created_at')
+        .orderBy('id')
+        .execute();
+      return rows.map((row) => ({
+        id: CheckInId.parse(row.id),
+        day: row.day,
+        sport: SportKey.parse(row.sport),
+        ...(row.customSport === null ? {} : { customSport: row.customSport }),
+        ...(row.minutes === null ? {} : { minutes: Number(row.minutes) }),
+      }));
+    },
+
     async listForMember({ member, from, to }) {
       const rows = await db
         .selectFrom('check_ins')

@@ -1,5 +1,5 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
-import type { CheckInTotals, TrainedCheckIn } from './domain/totals.js';
+import type { CheckInTotals, TrainedCheckIn, TrainingDay } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { CheckInKind, PostCursor } from './domain/post-cursor.js';
 import type { PhotoPath } from './domain/photos.js';
@@ -56,6 +56,12 @@ export interface CheckInStore {
    * each once.
    */
   squadsCheckedInto(query: DayRange & { readonly before: Date }): Promise<SquadId[]>;
+  /** A member's 练了 for days `from` to `to`, by day, then the earliest made first. */
+  trainingsForMember(query: {
+    readonly member: MemberId;
+    readonly from: string;
+    readonly to: string;
+  }): Promise<TrainingDay[]>;
   /** A member's own check-ins, newest day first. */
   listForMember(query: DayRange & { readonly member: MemberId }): Promise<CheckInRecord[]>;
   /**
