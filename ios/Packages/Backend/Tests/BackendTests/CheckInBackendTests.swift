@@ -137,7 +137,7 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     let seen = try #require(mates.home?.todaysCheckIns(of: author.id).first)
     #expect(seen.id == saved.id)
     guard case .trained(let training) = seen.entry else {
-        Issue.record("expected a 练了")
+        Issue.record("expected a 训练")
         return
     }
     #expect(training.minutes?.value == 50)

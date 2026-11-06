@@ -161,7 +161,7 @@
         }
       }
     },
-    "练了": {
+    "训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -171,7 +171,7 @@
         }
       }
     },
-    "练了 · %@": {
+    "训练 · %@": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -181,7 +181,7 @@
         }
       }
     },
-    "练了 · %@ · %lld 分钟": {
+    "训练 · %@ · %lld 分钟": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -191,7 +191,7 @@
         }
       }
     },
-    "练了 · %lld 分钟": {
+    "训练 · %lld 分钟": {
       "localizations": {
         "en": {
           "stringUnit": {

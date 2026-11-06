@@ -298,7 +298,7 @@ describe('promptFor', () => {
           {
             day: '2026-10-21 周三',
             time: '05:00',
-            kind: '练了',
+            kind: '训练',
             sport: 'run',
             caption: '下雨也跑',
             photos: 1,
@@ -365,7 +365,7 @@ describe('promptFor', () => {
           {
             day: '2026-10-21 周三',
             time: '12:00',
-            kind: '练了',
+            kind: '训练',
             sport: 'run',
             comments: [
               { from: 'B', text: '腿还在吗' },
@@ -377,7 +377,7 @@ describe('promptFor', () => {
       },
       {
         member: 'B',
-        checkIns: [{ day: '2026-10-21 周三', time: '12:00', kind: '练了', sport: 'run' }],
+        checkIns: [{ day: '2026-10-21 周三', time: '12:00', kind: '训练', sport: 'run' }],
       },
     ]);
     expect(JSON.stringify(prompt)).not.toContain(cy);

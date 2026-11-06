@@ -114,7 +114,7 @@ final class FeedUITests: XCTestCase {
             from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
             drags += 1
         }
-        XCTAssertTrue(minutes.exists, "no minutes on a 练了")
+        XCTAssertTrue(minutes.exists, "no minutes on a 训练")
         settle()
         // Kept before the check, so a failure shows where the list stopped.
         keepScreenshot(named: "44-feed-minutes")

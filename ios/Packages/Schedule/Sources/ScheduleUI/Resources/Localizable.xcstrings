@@ -187,7 +187,7 @@
         }
       }
     },
-    "一共练了": {
+    "一共训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -198,7 +198,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "總共練了"
+            "value": "總共訓練"
           }
         }
       }
@@ -571,22 +571,6 @@
         }
       }
     },
-    "练了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trained"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "練了"
-          }
-        }
-      }
-    },
     "网络开小差了，没存上": {
       "localizations": {
         "en": {
@@ -731,7 +715,7 @@
         }
       }
     },
-    "，练了": {
+    "，训练": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -742,7 +726,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "，練了"
+            "value": "，訓練"
           }
         }
       }
