@@ -78,10 +78,26 @@ export async function saveCheckIn(
       { member, day: saved.checkIn.day, training: saved.checkIn.training },
     );
   }
-  if (saved.checkIn.kind === 'disclaimer' && saved.checkIn.disclaimer.restDay === true) {
-    await planRestDay({ store: plans }, { member, day: saved.checkIn.day });
-  }
+  await planRestPost({ store, plans }, saved.checkIn);
   return saved;
+}
+
+/**
+ * Makes a 休息's day a rest day in the member's plan, unless they trained that day: a 练了 after
+ * the 休息 made it a training day, and a retry or an edit of the 休息 must not undo that.
+ */
+export async function planRestPost(
+  { store, plans }: { readonly store: CheckInStore; readonly plans: WeeklyPlanStore },
+  checkIn: CheckInRecord,
+): Promise<void> {
+  if (checkIn.kind !== 'disclaimer' || checkIn.disclaimer.restDay !== true) return;
+  const sameDay = await store.listForMember({
+    member: checkIn.member,
+    from: checkIn.day,
+    to: checkIn.day,
+  });
+  if (sameDay.some(({ kind }) => kind === 'trained')) return;
+  await planRestDay({ store: plans }, { member: checkIn.member, day: checkIn.day });
 }
 
 async function insertCheckIn(
