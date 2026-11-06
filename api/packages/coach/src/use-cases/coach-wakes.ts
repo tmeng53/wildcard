@@ -19,13 +19,21 @@ import {
   type SquadWeek,
   type WeekCheckIn,
 } from '../domain/squad-week.js';
-import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
+import {
+  costMicros,
+  newYorkTime,
+  wakesDue,
+  weekStartOf,
+  weeksAround,
+  type Wake,
+} from '../domain/wake.js';
 import type {
   AiConsented,
   CoachAgent,
   CoachCatalogStore,
   CoachHiringStore,
   CoachMemberFacts,
+  CoachOccasions,
   CoachPhotoUrls,
   CoachSettingsStore,
   CoachStores,
@@ -112,6 +120,8 @@ export interface CoachWakesDependencies {
   readonly photoUrls?: CoachPhotoUrls;
   /** Without it the coach has no member stats or plans to look up. */
   readonly memberFacts?: CoachMemberFacts;
+  /** Without it the coach is told of no holiday or other moment. */
+  readonly occasions?: CoachOccasions;
   /** Told each reply to a check-in once it is saved; the server tells its author. */
   readonly replied?: CoachReplied;
   /** Told each answer to a member's reply once it is saved; the server tells that member. */
@@ -345,10 +355,13 @@ async function runWake(
         return [path, at === undefined ? undefined : draft.files.get(at)];
       }),
     );
+    // The day the wake is for: the daily wake's own, or New York's today.
+    const day = wake.reason.kind === 'daily' ? wake.reason.day : newYorkTime(now).day;
     const task = taskOf({
       reason: wake.reason,
       week,
       files,
+      occasions: (await deps.occasions?.(day)) ?? [],
       recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
       ...(thread === undefined ? {} : { thread: thread.thread }),
       recentEmoji:

@@ -43,6 +43,7 @@ export type {
   CoachSettingsStore,
   CoachStores,
   CoachMemberFacts,
+  CoachOccasions,
   CoachPhotoUrls,
   CoachTool,
   ToolAnswer,
