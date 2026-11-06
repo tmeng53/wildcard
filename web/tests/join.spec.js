@@ -162,6 +162,36 @@ test('an arm bends at the elbow whatever path commands its art is drawn with', a
   }
 });
 
+test('an arm bends as the app bends it, case for case', async ({ page }) => {
+  // The app writes these (AvatarDomainTests' ArmBendCasesTests), so the two players can't drift.
+  const { arm, cases } = JSON.parse(
+    readFileSync(new URL('../../ios/Packages/Avatar/Tests/arm-bend-cases.json', import.meta.url)),
+  );
+  await stub(page, 200, squad(1));
+  await page.goto('/join/K7M2QX9P');
+  const drawn = await page.evaluate(
+    ({ arm, cases }) => {
+      const part = { pivot: arm.shoulder, elbow: { at: arm.elbow, hand: arm.hand } };
+      return cases.map(
+        ({ d, degrees }) =>
+          window.WildcardAvatar.bent(`<path d="${d}"/>`, part, degrees).match(/ d="([^"]*)"/)[1],
+      );
+    },
+    { arm, cases },
+  );
+  const words = (path) => path.split(' ').map((w) => (/^[A-Z]$/.test(w) ? w : +w));
+  cases.forEach(({ about, bent }, i) => {
+    const [mine, app] = [words(drawn[i]), words(bent)];
+    expect(mine.length, about).toBe(app.length);
+    // Each rounds to two decimals on its own, so a hundredth apart is the same point.
+    mine.forEach((w, k) =>
+      typeof w === 'string'
+        ? expect(w, about).toBe(app[k])
+        : expect(Math.abs(w - app[k]), about).toBeLessThanOrEqual(0.011),
+    );
+  });
+});
+
 test('five walk in and stand still in a row; six or more walk through in a loop', async ({
   page,
 }) => {

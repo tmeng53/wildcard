@@ -327,5 +327,5 @@
     return svg;
   }
 
-  window.WildcardAvatar = { pose, perform, figure };
+  window.WildcardAvatar = { pose, perform, figure, bent };
 })();
