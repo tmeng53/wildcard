@@ -67,6 +67,9 @@ private actor FakeService: MeService {
         current.claimed.insert(piece)
     }
 
+    /// What the server's reads say was claimed, as a read made before a claim saved says.
+    func set(claimed: Set<String>) { current.claimed = claimed }
+
     func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {
         if holdsDeletes { await withCheckedContinuation { heldDelete = $0 } }
         if let failing { throw failing }
@@ -366,6 +369,24 @@ struct MeModelTests {
         #expect(await !page.claim("lap-singlet"))
         #expect(page.unclaimed == ["lap-singlet"])
         #expect(page.saveFailed)
+    }
+
+    @Test func aReadThatLeftOutAClaimMadeHereStillShowsItClaimed() async {
+        var overview = sample
+        overview.unlocks = [
+            Unlock(
+                kind: .piece, id: "lap-bib", unlockedAt: Date(timeIntervalSince1970: 1_793_577_600), sports: [],
+                checkIns: 5)
+        ]
+        let service = FakeService(overview)
+        let page = model(service)
+        await page.reload()
+        #expect(await page.claim("lap-bib"))
+
+        // 商店街's read on opening, sent before the claim saved, comes back after it.
+        await service.set(claimed: [])
+        await page.reload()
+        #expect(page.unclaimed.isEmpty)
     }
 
     @Test func theCardCarriesTheOverview() throws {
