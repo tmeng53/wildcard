@@ -27,6 +27,8 @@ public struct BroadcastCelebration: View {
     private let corner: Double = 28
     private let tile: Double = 78
     private let tileCorner: Double = 22
+    /// Three tiles and their gaps fit inside the card on a 375-point phone; four don't.
+    private static let giftsInRow = 3
 
     public init(model: TodayModel, broadcast: Broadcast) {
         (self.model, self.broadcast) = (model, broadcast)
@@ -98,22 +100,35 @@ public struct BroadcastCelebration: View {
     @ViewBuilder
     private func gifts(_ theme: SceneTheme) -> some View {
         if !broadcast.gifts.isEmpty, let unlocks = model.unlockNotices {
-            HStack(spacing: Space.xs) {
-                ForEach(broadcast.gifts, id: \.self) { gift in
-                    unlocks.picture(gift.kind, gift.id)
-                        .padding(Space.xs)
-                        .frame(width: tile, height: tile)
-                        .background(Color(role: .bgAccentSubtle, in: theme))
-                        .overlay(alignment: .topLeading) {
-                            Corner().fill(Color(role: .bgAccent, in: theme)).frame(
-                                width: tileCorner, height: tileCorner)
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
+            // At most three to a row, so any number of gifts fits the smallest phone's card.
+            VStack(spacing: Space.xs) {
+                ForEach(giftRows, id: \.self) { row in
+                    HStack(spacing: Space.xs) {
+                        ForEach(row, id: \.self) { gift in giftTile(gift, unlocks, theme) }
+                    }
                 }
             }
             .padding(.top, Space.s)
             .accessibilityHidden(true)
         }
+    }
+
+    /// The gifts in rows of `giftsInRow`.
+    private var giftRows: [[Broadcast.Gift]] {
+        stride(from: 0, to: broadcast.gifts.count, by: Self.giftsInRow).map {
+            Array(broadcast.gifts[$0..<min($0 + Self.giftsInRow, broadcast.gifts.count)])
+        }
+    }
+
+    private func giftTile(_ gift: Broadcast.Gift, _ unlocks: UnlockNotices, _ theme: SceneTheme) -> some View {
+        unlocks.picture(gift.kind, gift.id)
+            .padding(Space.xs)
+            .frame(width: tile, height: tile)
+            .background(Color(role: .bgAccentSubtle, in: theme))
+            .overlay(alignment: .topLeading) {
+                Corner().fill(Color(role: .bgAccent, in: theme)).frame(width: tileCorner, height: tileCorner)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
     }
 
     /// Its button, which opens its place, and 先不了; a broadcast without a button is put away
