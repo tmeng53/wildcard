@@ -72,9 +72,12 @@ import Testing
     #expect(editing.outfit.variants["cheeks"] == "rosy")
     editing.undo()
     #expect(editing.outfit.variants["cheeks"] == nil)
-    // A lop's coat keeps its own blush, so it gets none on top.
-    editing.pick("lop", for: "body")
-    #expect(editing.outfit.variants["cheeks"] == nil)
+    // A golden's and a lop's coats keep their own blush, so they get none on top.
+    for coat in ["golden", "lop"] {
+        var floppy = draft(Outfit(["body": "peach", "hair": "bob"]))
+        floppy.pick(coat, for: "body")
+        #expect(floppy.outfit.variants["cheeks"] == nil)
+    }
 }
 
 /// A body the editor doesn't list is no person: it wears no hair, and keeps its face.
