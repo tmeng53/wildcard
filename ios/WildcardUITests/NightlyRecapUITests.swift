@@ -6,14 +6,15 @@ final class NightlyRecapUITests: XCTestCase {
     /// Slow CI simulators can take many seconds to show a screen; a real failure still fails.
     private static let wait: TimeInterval = 30
 
-    /// 今日赛况 at 21:30: the tag on the squad card has its dot, opens the box score (three
-    /// trained, one 请假条, one rest day; nobody else), folds back and keeps the tag, now seen.
+    /// 今日赛况 at 21:30: the tag under the folded capsule has its dot, opens the box score (three
+    /// trained, one 请假条, one rest day; nobody else) and folds back; seen, the tag stays only in
+    /// the open card.
     func testNightlyRecap() {
         let app = XCUIApplication()
         continueAfterFailure = false
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-evening",
-            "-today.cardPage", "0", "-uitest-recap-unseen",
+            "-today.cardPage", "0", "-uitest-recap-unseen", "-uitest-card-folded",
         ]
         app.launch()
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
@@ -22,6 +23,10 @@ final class NightlyRecapUITests: XCTestCase {
         XCTAssertTrue(tag.waitForExistence(timeout: Self.wait), "no 今日赛况 tag at 21:30")
         XCTAssertEqual(tag.label, "今日赛况，还没看")
         XCTAssertEqual(tag.value as? String, "4/8")
+        // Unseen, it hangs under the folded capsule (home's default), clear of it.
+        let capsule = app.buttons["squadcard.capsule"]
+        XCTAssertTrue(capsule.exists, "home didn't open on the folded capsule")
+        XCTAssertGreaterThanOrEqual(tag.frame.minY, capsule.frame.maxY, "the tag overlaps the capsule")
         settle()
         keepScreenshot(named: "18-today-recap-tag")
 
@@ -40,7 +45,10 @@ final class NightlyRecapUITests: XCTestCase {
 
         app.buttons["today.recap.close"].tap()
         XCTAssertTrue(recap.waitForNonExistence(timeout: Self.wait), "收起 didn't fold the box score")
-        XCTAssertTrue(tag.waitForExistence(timeout: Self.wait), "the tag went away after 收起")
+        // Seen, it leaves the capsule and stays in the open card.
+        XCTAssertTrue(tag.waitForNonExistence(timeout: Self.wait), "the seen tag still hangs under the capsule")
+        capsule.tap()
+        XCTAssertTrue(tag.waitForExistence(timeout: Self.wait), "the open card lost the tag")
         XCTAssertEqual(tag.label, "今日赛况")
         settle()
         keepScreenshot(named: "20-today-recap-seen")

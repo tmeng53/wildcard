@@ -8,22 +8,30 @@ import SwiftUI
 /// from the top of its frame with a little bulb-shaped pull at its end, white when the lights are
 /// off and warm when they are on. Drag it down and it follows with resistance (`PullCordMotion`),
 /// clicking at 24 points, which calls `action` once; let go and it springs back and swings. A tap
-/// pulls it by itself. The caller hangs it under what it belongs to and plays the haptic. For
-/// VoiceOver it is a button named by `label` (开灯 or 关灯).
+/// pulls it by itself. The caller hangs it under what it belongs to, with a `chain` as long as
+/// suits it, and plays the haptic. For VoiceOver it is a button named by `label` (开灯 or 关灯).
 public struct PullCord: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// The frame: as wide as a tap target, and tall enough for the chain pulled all the way down.
-    public static let size = CGSize(width: 44, height: PullCordMotion.length + bulbHeight + PullCordMotion.maxPull)
+    /// The frame at the usual chain's length.
+    public static let size = frameSize(chain: PullCordMotion.length)
+    /// The frame for a `chain` this long: as wide as a tap target, and tall enough for the chain
+    /// pulled all the way down.
+    public static func frameSize(chain: Double) -> CGSize {
+        CGSize(width: 44, height: chain + bulbHeight + PullCordMotion.maxPull)
+    }
     /// The cap, screw base and bulb under the chain.
     private static let bulbHeight = 26.0
     /// The cap's own corners.
     private static let capCorner = 1.5
-    /// Where a finger can take hold: around the bulb, at least 44 by 44.
-    private static let grip = CGRect(x: 0, y: 36, width: 44, height: 66)
+    /// Where a finger can take hold, around the bulb, at least 44 by 44: from this far above the
+    /// chain's end, this tall.
+    private static let gripAbove = 34.0
+    private static let gripHeight = 66.0
 
     private let label: Text
     private let isOn: Bool
+    private let chain: Double
     private let action: () -> Void
 
     @State private var drag: Drag?
@@ -41,25 +49,27 @@ public struct PullCord: View {
         let at: Date
     }
 
-    public init(_ label: Text, isOn: Bool, action: @escaping () -> Void) {
+    public init(_ label: Text, isOn: Bool, chain: Double = PullCordMotion.length, action: @escaping () -> Void) {
         self.label = label
         self.isOn = isOn
+        self.chain = chain
         self.action = action
     }
 
     public var body: some View {
         let moving = drag != nil || tapStart != nil || release != nil
+        let size = Self.frameSize(chain: chain)
         TimelineView(.animation(minimumInterval: nil, paused: !moving)) { timeline in
             let (pull, degrees) = state(at: timeline.date)
             Canvas { context, size in
                 context.translateBy(x: size.width / 2, y: 0)
-                Self.draw(length: PullCordMotion.length + pull, isOn: isOn, in: &context)
+                Self.draw(length: chain + pull, isOn: isOn, in: &context)
             }
-            .frame(width: Self.size.width, height: Self.size.height)
+            .frame(width: size.width, height: size.height)
             .rotationEffect(.degrees(degrees), anchor: .top)
         }
-        .frame(width: Self.size.width, height: Self.size.height)
-        .contentShape(Grip())
+        .frame(width: size.width, height: size.height)
+        .contentShape(Grip(chain: chain))
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in dragged(value) }
@@ -175,8 +185,10 @@ public struct PullCord: View {
     /// Only the bulb and the chain just above it take a touch, so the rest of the frame doesn't
     /// cover what is under it.
     private struct Grip: Shape {
+        let chain: Double
+
         func path(in rect: CGRect) -> Path {
-            Path(PullCord.grip)
+            Path(CGRect(x: 0, y: chain - PullCord.gripAbove, width: rect.width, height: PullCord.gripHeight))
         }
     }
 }
