@@ -259,7 +259,7 @@ final class AppModel {
             }
             screen = .starting
             startsOffline = true
-            let wait = Task { try? await Task.sleep(for: .seconds(3)) }
+            let wait = Task { _ = try? await Task.sleep(for: .seconds(3)) }
             nextStartTry = wait
             await wait.value
             nextStartTry = nil
