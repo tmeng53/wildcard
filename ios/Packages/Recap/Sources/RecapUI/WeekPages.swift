@@ -200,7 +200,7 @@ private struct DayBubble: View {
     private var text: Text {
         switch kind {
         case .trained(let sport?): sport.name
-        case .trained(nil): Text("练了", bundle: .module)
+        case .trained(nil): Text("训练", bundle: .module)
         case .rest: Text("休息", bundle: .module)
         case .disclaimer: Text("请假条", bundle: .module)
         case .none: Text(verbatim: "")

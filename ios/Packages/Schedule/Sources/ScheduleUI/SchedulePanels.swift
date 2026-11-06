@@ -15,7 +15,7 @@ struct ScheduleCounts: View {
     var body: some View {
         HStack(alignment: .top, spacing: Space.cardGap) {
             CountCard(
-                label: Text("一共练了", bundle: .module), count: store.lifetimeTrainedDays ?? 0, goal: nil,
+                label: Text("一共训练", bundle: .module), count: store.lifetimeTrainedDays ?? 0, goal: nil,
                 unit: Text("天", bundle: .module)
             )
             .accessibilityIdentifier("schedule.count.lifetime")

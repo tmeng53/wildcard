@@ -73,7 +73,7 @@ struct StageSection: View {
                     SpeechBubble(
                         Text("小米 · 跑步 中", bundle: .module),
                         kind: .status(
-                            detail: Text("今天练了", bundle: .module),
+                            detail: Text("今天训练", bundle: .module),
                             button: .init(Text("拍一拍", bundle: .module), isDone: false) {}),
                         on: .page)
                     SpeechBubble(
