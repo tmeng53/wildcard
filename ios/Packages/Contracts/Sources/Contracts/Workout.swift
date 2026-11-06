@@ -58,9 +58,11 @@ public struct Workout: Hashable, Sendable, Codable {
     public func posting(struck: Set<WorkoutCell>, tilePosition: Int?) -> Workout {
         let chartStruck = chartCell.map(struck.contains) ?? false
         let keepsTile = tilePosition != nil && tile != nil && !chartStruck
+        // A struck 平均心率 never uploads a heart-rate curve, even inside a lap chart's series.
+        let shownSeries = struck.contains(.averageHeartRate) ? series.map { WorkoutSeries(laps: $0.laps) } : series
         return Workout(
             source: source, startedAt: startedAt, endedAt: endedAt, summary: summary.without(struck),
-            series: keepsTile && tile == .chart ? series : nil,
+            series: keepsTile && tile == .chart ? shownSeries : nil,
             route: keepsTile && tile == .map ? route : nil,
             tilePosition: keepsTile ? tilePosition : nil)
     }

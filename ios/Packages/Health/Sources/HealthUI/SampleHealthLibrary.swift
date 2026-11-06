@@ -88,13 +88,20 @@ public actor SampleHealthLibrary: HealthLibrary {
     }
 
     /// Each lap of 24, the 17th the fastest.
-    private static let laps: [Double] = (0..<24).map { $0 == 16 ? 44 : 50 + Double(($0 * 7) % 9) }
+    private static let laps: [Double] = (0..<24).map { (lap: Int) -> Double in
+        guard lap != 16 else { return 44 }
+        let spread: Int = (lap * 7) % 9
+        return 50 + Double(spread)
+    }
 
     /// A loop through a park in Manhattan, already trimmed.
     private static func loop(seed: Int) -> [RoutePoint] {
         (0...80).map { step in
-            let angle = Double(step) / 80 * 1.7 * .pi + Double(seed) * 0.1
-            return RoutePoint(lat: 40.7812 + 0.006 * sin(angle), lon: -73.9665 + 0.009 * cos(angle))
+            let turn: Double = Double(step) / 80 * 1.7 * Double.pi
+            let angle: Double = turn + Double(seed) * 0.1
+            let lat: Double = 40.7812 + 0.006 * sin(angle)
+            let lon: Double = -73.9665 + 0.009 * cos(angle)
+            return RoutePoint(lat: lat, lon: lon)
         }
     }
 
@@ -102,9 +109,11 @@ public actor SampleHealthLibrary: HealthLibrary {
     private static func heartRate(seconds: Double, seed: Int) -> [HeartRatePoint] {
         let count = 120
         return (0..<count).map { index in
-            let progress = Double(index) / Double(count - 1)
-            let wander = sin(progress * 17 + Double(seed)) * 9 + sin(progress * 5 + Double(seed) * 2) * 6
-            let shape = 95 + 50 * sin(progress * .pi)
+            let progress: Double = Double(index) / Double(count - 1)
+            let fast: Double = sin(progress * 17 + Double(seed)) * 9
+            let slow: Double = sin(progress * 5 + Double(seed) * 2) * 6
+            let wander: Double = fast + slow
+            let shape: Double = 95 + 50 * sin(progress * Double.pi)
             return HeartRatePoint(seconds: progress * seconds, bpm: Int(shape + wander))
         }
     }

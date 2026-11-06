@@ -45,7 +45,8 @@ private let run = Workout(
         summary: WorkoutSummary(durationSec: 60, avgHr: 135, laps: 2, poolLengthM: 50),
         series: WorkoutSeries(heartRate: beats, laps: [30, 30]))
     #expect(swim.chartCell == .laps)
-    #expect(swim.posting(struck: [.averageHeartRate], tilePosition: 1).series == swim.series)
+    #expect(swim.posting(struck: [], tilePosition: 1).series == swim.series)
+    #expect(swim.posting(struck: [.averageHeartRate], tilePosition: 1).series == WorkoutSeries(laps: [30, 30]))
     #expect(run.chartCell == nil)
 }
 

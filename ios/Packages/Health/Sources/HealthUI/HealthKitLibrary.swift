@@ -67,7 +67,7 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
             let kilometres = meters / 1000
             switch kind {
             case .onFoot where kilometres >= 0.1 && seconds > 0: summary.paceSecPerKm = (seconds / kilometres).rounded()
-            case .ride where seconds > 0: summary.speedKmh = ((kilometres / (seconds / 3600)) * 10).rounded() / 10
+            case .ride where seconds > 0: summary.speedKmh = (kilometres / (seconds / 3600) * 10).rounded() / 10
             default: break
             }
         }
