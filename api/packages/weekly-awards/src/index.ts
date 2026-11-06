@@ -10,6 +10,9 @@ export {
 } from './adapters/postgres-awards-store.js';
 export {
   CheckInKind,
+  ENDING_HEADLINE_MAX,
+  ENDING_LINE_MAX,
+  EndingWords,
   MemberId,
   SPEECH_MAX,
   SquadId,

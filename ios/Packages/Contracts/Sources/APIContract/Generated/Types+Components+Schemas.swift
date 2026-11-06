@@ -8060,21 +8060,37 @@ extension Components {
             public var done: Swift.Int
             /// - Remark: Generated from `#/components/schemas/StoryEnding/plan`.
             public var plan: Swift.Int
+            /// The headline over the page, such as 稳了 or 差一点, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/headline`.
+            public var headline: Swift.String?
+            /// The line under the days against the plans, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many days are missing, or that the squad made it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryEnding/line`.
+            public var line: Swift.String?
             /// Creates a new `StoryEnding`.
             ///
             /// - Parameters:
             ///   - done:
             ///   - plan:
+            ///   - headline: The headline over the page, such as 稳了 or 差一点, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks.
+            ///   - line: The line under the days against the plans, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many days are missing, or that the squad made it.
             public init(
                 done: Swift.Int,
-                plan: Swift.Int
+                plan: Swift.Int,
+                headline: Swift.String? = nil,
+                line: Swift.String? = nil
             ) {
                 self.done = done
                 self.plan = plan
+                self.headline = headline
+                self.line = line
             }
             public enum CodingKeys: String, CodingKey {
                 case done
                 case plan
+                case headline
+                case line
             }
         }
         /// - Remark: Generated from `#/components/schemas/StoryTitle`.

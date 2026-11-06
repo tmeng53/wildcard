@@ -50,10 +50,12 @@ export interface PromptMeme {
 /**
  * The user message: the week as JSON, members who checked in by letter in the order given,
  * each day's check-ins, the moves and badges to pick from, described as the settings have
- * them, and the memes in use (left out when there are none).
+ * them, the memes in use (left out when there are none) and the squad's days trained against its
+ * plans, for the 战报's last page (left out when nobody trained).
  */
 export function promptFor(week: {
   readonly weekStart: WeekStart;
+  readonly ending?: { readonly done: number; readonly plan: number } | undefined;
   readonly members: readonly MemberWeek[];
   readonly moves: AwardSettings['moves'];
   readonly badges: BadgeCatalog;
@@ -64,6 +66,9 @@ export function promptFor(week: {
   return JSON.stringify({
     version: 1,
     week: week.weekStart,
+    ...(week.ending === undefined
+      ? {}
+      : { squad: { trainedDays: week.ending.done, plannedDays: week.ending.plan } }),
     members: week.members.map(({ timeZone, checkIns }, index) => ({
       member: promptKey(index),
       checkIns: checkIns.map((each) => ({

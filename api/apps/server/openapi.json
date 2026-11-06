@@ -5084,6 +5084,16 @@
           "plan": {
             "type": "integer",
             "minimum": 0
+          },
+          "headline": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The headline over the page, such as 稳了 or 差一点, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks."
+          },
+          "line": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The line under the days against the plans, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many days are missing, or that the squad made it."
           }
         },
         "required": [

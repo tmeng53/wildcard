@@ -1,6 +1,8 @@
 import {
+  endingWordsOf,
   modelReplyFor,
   type Awards,
+  type EndingWords,
   titlesOf,
   type MemberId,
   type MemberWeek,
@@ -30,11 +32,17 @@ export interface GiveAwardsInput {
    * them.
    */
   readonly members: readonly MemberWeek[];
+  /**
+   * The squad's days trained against its plans, as its 战报 froze them, for the words on its last
+   * page; none when nobody trained.
+   */
+  readonly ending?: { readonly done: number; readonly plan: number } | undefined;
 }
 
 /**
  * A squad's awards for the week: the ones saved already, or new ones the model writes for every
- * member who checked in and agreed to AI use, saved once, read with the comments on their posts
+ * member who checked in and agreed to AI use, with the words for the 战报's last page when the
+ * squad trained, saved once, read with the comments on their posts
  * from members who agreed too. A squad where none of them did gets none, without asking the
  * model. Throws `AwardsWriterUnavailableError` when no answer passes the checks, saving only
  * the failed try and why.
@@ -47,7 +55,7 @@ export async function giveAwards(
     readonly aiConsented: AiConsented;
     readonly memes: MemesInUse;
   },
-  { squad, weekStart, members }: GiveAwardsInput,
+  { squad, weekStart, members, ending }: GiveAwardsInput,
 ): Promise<Awards> {
   const saved = await deps.store.find(squad, weekStart);
   if (saved?.status === 'given') return saved.awards;
@@ -71,14 +79,16 @@ export async function giveAwards(
       ),
     }));
   let titles: Titles = new Map<MemberId, Title[]>();
+  let words: EndingWords | undefined;
   if (winners.length > 0) {
     try {
-      titles = await writeTitles(deps.model, {
+      ({ titles, words } = await writeTitles(deps.model, {
         settings: await deps.settings.current(),
         memes: await deps.memes(),
         weekStart,
         winners,
-      });
+        ending,
+      }));
     } catch (error) {
       await deps.store.recordFailure({ squad, weekStart, error: reasonOf(error) });
       throw error;
@@ -86,6 +96,7 @@ export async function giveAwards(
   }
   const awards: Awards = {
     members: winners.map(({ member }) => ({ member, titles: titles.get(member) ?? [] })),
+    ...(words === undefined ? {} : { ending: words }),
   };
   if (await deps.store.save({ squad, weekStart, awards })) return awards;
   // Another run saved first: theirs stand.
@@ -96,7 +107,7 @@ export async function giveAwards(
 
 /**
  * The cause kept when every reply named the wrong members (one missing, repeated or unknown) or
- * left a title or line blank.
+ * left a title or line blank, or the 战报's last page without its words.
  */
 const FAILED_CHECKS = 'FailedChecks';
 
@@ -127,8 +138,9 @@ export function reasonOf(error: unknown): string {
 type Titles = NonNullable<ReturnType<typeof titlesOf>>;
 
 /**
- * Titles for every winner, asking the model the settings name up to twice for an answer that
- * passes the checks.
+ * Titles for every winner, and the words for the 战报's last page when the squad trained (the
+ * model writes them either way; they are dropped without an ending), asking the model the
+ * settings name up to twice for an answer that passes the checks.
  */
 async function writeTitles(
   model: LanguageModel,
@@ -137,15 +149,18 @@ async function writeTitles(
     memes,
     weekStart,
     winners,
+    ending,
   }: {
     readonly settings: AwardSettings;
     readonly memes: readonly PromptMeme[];
     readonly weekStart: WeekStart;
     readonly winners: readonly MemberWeek[];
+    readonly ending: GiveAwardsInput['ending'];
   },
-): Promise<Titles> {
+): Promise<{ titles: Titles; words: EndingWords | undefined }> {
   const prompt = promptFor({
     weekStart,
+    ending,
     members: winners,
     moves: settings.moves,
     badges: settings.badges,
@@ -165,7 +180,10 @@ async function writeTitles(
         answer,
         winners.map(({ member }) => member),
       );
-      if (titles !== undefined) return titles;
+      const words = endingWordsOf(answer);
+      if (titles !== undefined && words !== undefined) {
+        return { titles, words: ending === undefined ? undefined : words };
+      }
       cause = FAILED_CHECKS;
     } catch (error) {
       cause = error;

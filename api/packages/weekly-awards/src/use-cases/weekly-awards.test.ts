@@ -45,6 +45,7 @@ const reply: ModelReply = {
       titles: [{ title: '请假条文豪', speech: '周四的请假条写成了连载。', move: 'flat', badge }],
     },
   ],
+  ending: { headline: '差一点', line: ' 再练三天，\n 计划就满了 ' },
 };
 
 function setup(
@@ -167,6 +168,52 @@ describe('createWeeklyAwards', () => {
       awards: given,
     });
     expect(asked).toHaveLength(1);
+  });
+
+  it('has the model write the last page’s words from the squad’s days, kept with the awards', async () => {
+    const { awards, asked } = setup();
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    const members = weekOf([ana, bo, cy]);
+    const given = await awards.give({
+      squad,
+      weekStart: week,
+      members,
+      ending: { done: 19, plan: 22 },
+    });
+    expect(asked[0]).toContain('"squad":{"trainedDays":19,"plannedDays":22}');
+    expect(given.ending).toStrictEqual({
+      version: 1,
+      headline: '差一点',
+      line: '再练三天， 计划就满了',
+    });
+    expect(await awards.find({ squad, weekStart: week })).toStrictEqual({
+      status: 'given',
+      awards: given,
+    });
+  });
+
+  it('keeps no last-page words for a squad that trained no day', async () => {
+    const { awards, asked } = setup();
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    const given = await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
+    expect(asked[0]).not.toContain('"squad"');
+    expect(given.ending).toBeUndefined();
+  });
+
+  it('asks once more when the last page’s line comes back blank', async () => {
+    const { awards, asked } = setup([
+      () => Promise.resolve({ ...reply, ending: { headline: '稳了', line: '   ' } }),
+      () => Promise.resolve(reply),
+    ]);
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    const given = await awards.give({
+      squad,
+      weekStart: week,
+      members: weekOf([ana, bo, cy]),
+      ending: { done: 23, plan: 22 },
+    });
+    expect(asked).toHaveLength(2);
+    expect(given.ending?.headline).toBe('差一点');
   });
 
   it('hands the model the badge catalog and keeps the badge it picks on each title', async () => {
