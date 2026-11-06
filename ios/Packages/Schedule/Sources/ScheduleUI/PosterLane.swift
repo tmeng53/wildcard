@@ -69,7 +69,7 @@ struct PosterLane: View {
                 .opacity(isFaded ? restNumberOpacity : numberOpacity)
             Group {
                 if lane.isToday {
-                    Text("今天", bundle: .module)
+                    Text(copy: "今天", bundle: .module)
                 } else {
                     ScheduleLabels.weekday(lane.day)
                 }
@@ -111,7 +111,7 @@ struct PosterLane: View {
                 .background(disc, in: Circle())
                 .accessibilityHidden(true)
         case .disclaimer:
-            Text("请假", bundle: .module)
+            Text(copy: "请假", bundle: .module)
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(glyph)
                 .padding(.horizontal, Space.xs - 1)
@@ -123,14 +123,14 @@ struct PosterLane: View {
     }
 
     private var accessibilityLabel: Text {
-        let day = lane.isToday ? Text("今天", bundle: .module) : ScheduleLabels.weekday(lane.day)
+        let day = lane.isToday ? Text(copy: "今天", bundle: .module) : ScheduleLabels.weekday(lane.day)
         let status: Text =
             switch lane.mark {
-            case .trained: Text("，训练", bundle: .module)
-            case .disclaimer: Text("，请假", bundle: .module)
+            case .trained: Text(copy: "，训练", bundle: .module)
+            case .disclaimer: Text(copy: "，请假", bundle: .module)
             case .none: Text(verbatim: "")
             }
-        return Text("\(day) \(ScheduleLabels.plan(lane.shown))\(status)", bundle: .module)
+        return Text(copy: "\(day) \(ScheduleLabels.plan(lane.shown))\(status)", bundle: .module)
     }
 }
 

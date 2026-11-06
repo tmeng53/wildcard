@@ -41,8 +41,8 @@ public struct RecapEntryTile: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             seen
-                ? Text("每周战报，\(story.week.label)，已看完", bundle: .module)
-                : Text("每周战报，\(story.week.label)，未读", bundle: .module)
+                ? Text(copy: "每周战报，\(story.week.label)，已看完", bundle: .module)
+                : Text(copy: "每周战报，\(story.week.label)，未读", bundle: .module)
         )
         .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("recap.entry")
@@ -59,14 +59,14 @@ public struct RecapEntryTile: View {
                 HStack(spacing: Space.xs) {
                     Text(verbatim: story.week.label)
                         .typeStyle(TypeRamp.scoreInline)
-                    Text("新", bundle: .module)
+                    Text(copy: "新", bundle: .module)
                         .typeStyle(TypeRamp.label)
                         .foregroundStyle(Color(role: .fgOnAccent, in: theme))
                         .padding(.horizontal, Space.xs)
                         .frame(height: 20)
                         .background(Color(role: .bgAccent, in: theme), in: Capsule())
                 }
-                Text("每周战报", bundle: .module)
+                Text(copy: "每周战报", bundle: .module)
                     .typeStyle(TypeRamp.taskTitle)
                 Spacer(minLength: Space.s)
                 segments
@@ -88,7 +88,7 @@ public struct RecapEntryTile: View {
                 .font(.system(size: Self.rowIcon))
                 .foregroundStyle(Color(role: .fgAccent, in: theme))
                 .accessibilityHidden(true)
-            Text("每周战报", bundle: .module)
+            Text(copy: "每周战报", bundle: .module)
                 .typeStyle(TypeRamp.footnoteEmphasis)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
             Text(verbatim: story.week.label)
@@ -96,7 +96,7 @@ public struct RecapEntryTile: View {
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
             Spacer(minLength: Space.xs)
             HStack(spacing: Space.xxs) {
-                Text("再看一遍", bundle: .module)
+                Text(copy: "再看一遍", bundle: .module)
                 Image(systemName: "chevron.right").accessibilityHidden(true)
             }
             .typeStyle(TypeRamp.footnoteEmphasis)

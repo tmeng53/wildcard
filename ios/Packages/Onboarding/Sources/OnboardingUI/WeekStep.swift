@@ -17,14 +17,14 @@ struct WeekStep: View {
     let model: SignUpModel
 
     var body: some View {
-        StepPage(step: .week, title: Text("我的每周计划", bundle: .module), character: nil, onBack: model.back) {
+        StepPage(step: .week, title: Text(copy: "我的每周计划", bundle: .module), character: nil, onBack: model.back) {
             if let week = model.week {
                 VStack(alignment: .leading, spacing: Space.m) {
                     // The squad's goal the poster starts from (方案 B, Tracy 2026-11-06): its
                     // training days are the squad's 人均 N 天, which the member may change.
                     if let joined = model.joined {
                         Tag(
-                            Text("小队目标 · 人均 \(joined.daysPerMember) 天", bundle: .module),
+                            Text(copy: "小队目标 · 人均 \(joined.daysPerMember) 天", bundle: .module),
                             systemImage: "person.3.fill", style: .ink
                         )
                         .accessibilityIdentifier("week.squadGoal")
@@ -37,13 +37,13 @@ struct WeekStep: View {
             FailureLine(failure: model.failure)
             StepButton(
                 // Whoever made the squad picks its scene next, so only a joiner goes 上场 from here.
-                title: model.madeTheSquad ? Text("下一步", bundle: .module) : Text("上场", bundle: .module),
+                title: model.madeTheSquad ? Text(copy: "下一步", bundle: .module) : Text(copy: "上场", bundle: .module),
                 isWorking: model.isWorking, isEnabled: model.week != nil,
                 action: model.finishWeek
             )
             .accessibilityIdentifier("week.done")
             Button(action: model.skipWeek) {
-                Text("以后再说", bundle: .module)
+                Text(copy: "以后再说", bundle: .module)
             }
             .buttonStyle(TextButtonStyle())
             .accessibilityIdentifier("week.skip")
@@ -74,7 +74,7 @@ private struct PlanPoster: View {
     var body: some View {
         WeekPoster(
             title: model.nickname,
-            heading: .named(Text("我的每周计划", bundle: .module), systemImage: WeekPosterHeading.templateSymbol),
+            heading: .named(Text(copy: "我的每周计划", bundle: .module), systemImage: WeekPosterHeading.templateSymbol),
             layout: .card,
             fill: tone.fill, ink: tone.onFill
         ) {
@@ -148,7 +148,7 @@ private struct WeekTotal: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: Space.xxs + 2) {
             Spacer(minLength: 0)
-            Text("每周训练", bundle: .module)
+            Text(copy: "每周训练", bundle: .module)
                 .typeStyle(TypeRamp.label)
                 .opacity(labelOpacity)
             HStack(alignment: .firstTextBaseline, spacing: 0) {
@@ -159,13 +159,13 @@ private struct WeekTotal: View {
                     .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreCard))
                     .opacity(denominatorOpacity)
             }
-            Text("天", bundle: .module)
+            Text(copy: "天", bundle: .module)
                 .typeStyle(TypeRamp.footnoteEmphasis)
         }
         .padding(.horizontal, Space.s + 2)
         .accessibilityElement(children: .ignore)
         .accessibilityAddTraits(.isStaticText)
-        .accessibilityLabel(Text("每周训练 \(trainingDays)/\(WeeklyPlan.dayCount) 天", bundle: .module))
+        .accessibilityLabel(Text(copy: "每周训练 \(trainingDays)/\(WeeklyPlan.dayCount) 天", bundle: .module))
         .accessibilityIdentifier("week.count")
     }
 }
@@ -266,7 +266,7 @@ private struct MoreChip: View {
                 Image(systemName: "plus")
                     .font(.system(size: Sizing.smallIcon, weight: .medium))
                     .accessibilityHidden(true)
-                Text("更多", bundle: .module)
+                Text(copy: "更多", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .lineLimit(1)
                     .fixedSize()
@@ -294,8 +294,8 @@ private struct DayName: View {
     var text: Text {
         switch day {
         case .train(let activity?): activity.cardName
-        case .train(nil): Text("训练", bundle: .module)
-        case .rest: Text("休息", bundle: .module)
+        case .train(nil): Text(copy: "训练", bundle: .module)
+        case .rest: Text(copy: "休息", bundle: .module)
         }
     }
 }

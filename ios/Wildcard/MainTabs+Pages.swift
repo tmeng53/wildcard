@@ -20,13 +20,16 @@ extension MainTabs {
     }
 
     static let tabs: [TabBarItem<Tab>] = [
-        TabBarItem(id: .today, title: Text("今天"), systemImage: "sun.max", accessibilityIdentifier: "tab.today"),
         TabBarItem(
-            id: .feed, title: Text("动态"), systemImage: "bubble.left.and.bubble.right",
+            id: .today, title: Text(copy: "今天", bundle: .main), systemImage: "sun.max",
+            accessibilityIdentifier: "tab.today"),
+        TabBarItem(
+            id: .feed, title: Text(copy: "动态", bundle: .main), systemImage: "bubble.left.and.bubble.right",
             accessibilityIdentifier: "tab.feed"
         ),
         TabBarItem(
-            id: .profile, title: Text("我"), systemImage: "person.crop.circle", accessibilityIdentifier: "tab.me"),
+            id: .profile, title: Text(copy: "我", bundle: .main), systemImage: "person.crop.circle",
+            accessibilityIdentifier: "tab.me"),
     ]
 }
 

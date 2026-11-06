@@ -33,8 +33,8 @@ struct HomeNotices: ViewModifier {
         case .moved(let scene, let picker):
             // Who moved the squad, over the new scene's badge.
             NoticeBanner(
-                picker.map { Text("\($0) 把小队搬到了\(scene.name)", bundle: .module) }
-                    ?? Text("小队搬到了\(scene.name)", bundle: .module)
+                picker.map { Text(copy: "\($0) 把小队搬到了\(scene.name)", bundle: .module) }
+                    ?? Text(copy: "小队搬到了\(scene.name)", bundle: .module)
             ) { SceneBadge(scene) }
         case .unlocked(let unlock):
             if let unlocks { unlocks.banner(unlock) }
@@ -53,12 +53,12 @@ struct HomeNotices: ViewModifier {
             }
         case .goalSuggestion(let suggestion):
             NoticeBanner(
-                Text("连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
-                detail: Text("改成人均 \(suggestion.daysPerMember) 天？", bundle: .module),
-                action: Text("去改目标", bundle: .module)
+                Text(copy: "连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
+                detail: Text(copy: "改成人均 \(suggestion.daysPerMember) 天？", bundle: .module),
+                action: Text(copy: "去改目标", bundle: .module)
             ) { NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis") }
         case .more:
-            NoticeBanner(Text("还有新通知 · 去看看", bundle: .module), showsChevron: true) {
+            NoticeBanner(Text(copy: "还有新通知 · 去看看", bundle: .module), showsChevron: true) {
                 NoticeSymbol(systemImage: "bell.fill")
             }
         }

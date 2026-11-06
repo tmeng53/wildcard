@@ -64,7 +64,7 @@ struct ReactionRow: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel(Text("写评论", bundle: .module))
+        .accessibilityLabel(Text(copy: "写评论", bundle: .module))
         .accessibilityIdentifier("feed.comment")
     }
 
@@ -105,7 +105,7 @@ struct ReactionRow: View {
             FeedAnchors.Value(who: open ? FeedAnchor(post: post.id, bounds: bounds) : nil)
         }
         .accessibilityLabel(Self.summaryLabel(reactions, coach: coach))
-        .accessibilityHint(Text("看谁回应了", bundle: .module))
+        .accessibilityHint(Text(copy: "看谁回应了", bundle: .module))
         .accessibilityIdentifier("feed.reactions")
     }
 
@@ -115,10 +115,10 @@ struct ReactionRow: View {
     /// 「3 人回应：💪 2，😂 1」, after 「教练 毛头：🔥」 when the coach left one.
     static func summaryLabel(_ reactions: Responses<Emoji>, coach: CoachReply? = nil) -> Text {
         let counts = reactions.groups.map { "\($0.kind.text) \($0.members.count)" }.joined(separator: "，")
-        let members = Text("\(reactions.all.count) 人回应：\(counts)", bundle: .module)
+        let members = Text(copy: "\(reactions.all.count) 人回应：\(counts)", bundle: .module)
         guard let coach, let emoji = coach.emoji else { return members }
-        let coachSaid = Text("教练 \(coach.coach.name)：\(emoji.text)", bundle: .module)
-        return reactions.isEmpty ? coachSaid : Text("\(coachSaid)，\(members)", bundle: .module)
+        let coachSaid = Text(copy: "教练 \(coach.coach.name)：\(emoji.text)", bundle: .module)
+        return reactions.isEmpty ? coachSaid : Text(copy: "\(coachSaid)，\(members)", bundle: .module)
     }
 
     private func myButton(_ mine: Emoji?, open: Bool) -> some View {
@@ -164,7 +164,7 @@ struct ReactionRow: View {
             FeedAnchors.Value(bar: open ? FeedAnchor(post: post.id, bounds: bounds) : nil)
         }
         .accessibilityLabel(
-            mine.map { Text("我的回应：\($0.text)", bundle: .module) } ?? Text("回应", bundle: .module)
+            mine.map { Text(copy: "我的回应：\($0.text)", bundle: .module) } ?? Text(copy: "回应", bundle: .module)
         )
         .accessibilityIdentifier("feed.react")
     }

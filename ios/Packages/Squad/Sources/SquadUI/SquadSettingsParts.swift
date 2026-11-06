@@ -53,7 +53,7 @@ struct ScenePickerGrid: View {
                     }
                 }
             } label: {
-                Text("确认", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
+                Text(copy: "确认", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.regular))
             .disabled(!picker.canConfirm)
@@ -86,11 +86,11 @@ struct InviteCard: View {
                         .accessibilityIdentifier("squad.inviteCode")
                     Group {
                         if copied {
-                            Text("已复制", bundle: .module)
+                            Text(copy: "已复制", bundle: .module)
                         } else if openSpots > 0 {
-                            Text("还剩 \(openSpots) 个名额", bundle: .module)
+                            Text(copy: "还剩 \(openSpots) 个名额", bundle: .module)
                         } else {
-                            Text("满员了", bundle: .module)
+                            Text(copy: "满员了", bundle: .module)
                         }
                     }
                     .typeStyle(TypeRamp.footnote)
@@ -100,11 +100,11 @@ struct InviteCard: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("复制邀请链接 \(squad.inviteCode)", bundle: .module))
+            .accessibilityLabel(Text(copy: "复制邀请链接 \(squad.inviteCode)", bundle: .module))
             .accessibilityIdentifier("squad.copyInvite")
             InviteShareLink(squad: squad) {
                 Label {
-                    Text("分享", bundle: .module)
+                    Text(copy: "分享", bundle: .module)
                 } icon: {
                     Image(systemName: "square.and.arrow.up")
                 }
@@ -147,7 +147,7 @@ struct MemberRow: View {
 
     /// The member's nickname, or 新队友 until they make their character.
     static func name(of member: SquadMemberRow) -> String {
-        member.character?.nickname.text ?? String(localized: "新队友", bundle: .module.inAppLanguage)
+        member.character?.nickname.text ?? String(copy: "新队友", bundle: .module)
     }
 
     /// 转让队长 and 移出小队, each asking first.
@@ -156,13 +156,14 @@ struct MemberRow: View {
         let remove = MemberAction.remove(member.id, name: name)
         return [
             GlassMenuItem(
-                Text("转让队长", bundle: .module), systemImage: "crown", id: "squad.member.handCaptaincy",
-                confirm: .init(hand.title, label: Text("转让", bundle: .module), id: "squad.handCaptaincy.confirm")
+                Text(copy: "转让队长", bundle: .module), systemImage: "crown", id: "squad.member.handCaptaincy",
+                confirm: .init(hand.title, label: Text(copy: "转让", bundle: .module), id: "squad.handCaptaincy.confirm")
             ) { act(hand) },
             GlassMenuItem(
-                Text("移出小队", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right", role: .destructive,
+                Text(copy: "移出小队", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right",
+                role: .destructive,
                 id: "squad.member.remove",
-                confirm: .init(remove.title, label: Text("移出", bundle: .module), id: "squad.remove.confirm")
+                confirm: .init(remove.title, label: Text(copy: "移出", bundle: .module), id: "squad.remove.confirm")
             ) { act(remove) },
         ]
     }
@@ -173,14 +174,14 @@ struct MemberRow: View {
                 // A teammate's face and name open their player card.
                 Button(action: open) { who }
                     .buttonStyle(PressableButtonStyle())
-                    .accessibilityHint(Text("看球员卡", bundle: .module))
+                    .accessibilityHint(Text(copy: "看球员卡", bundle: .module))
                     .accessibilityIdentifier("squad.member.card")
             } else {
                 who
             }
             if member.hasCrown {
                 // Tags keep their words; a long nickname gives way instead.
-                Tag(Text("上周冠军", bundle: .module), systemImage: "crown")
+                Tag(Text(copy: "上周冠军", bundle: .module), systemImage: "crown")
                     .fixedSize()
             }
             if member.isManageable {
@@ -195,7 +196,7 @@ struct MemberRow: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(Text("管理 \(name)", bundle: .module))
+                    .accessibilityLabel(Text(copy: "管理 \(name)", bundle: .module))
                     .accessibilityIdentifier("squad.member.more")
                     .glassMenu(isPresented: $isManaging, items: manageItems)
                 }
@@ -224,11 +225,11 @@ struct MemberRow: View {
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .lineLimit(1)
                 if member.isCaptain {
-                    InkTag(Text("队长", bundle: .module))
+                    InkTag(Text(copy: "队长", bundle: .module))
                         .accessibilityIdentifier("squad.member.captain")
                 }
                 if member.isMe {
-                    Text("我", bundle: .module)
+                    Text(copy: "我", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }
@@ -276,8 +277,8 @@ enum MemberAction: Hashable {
 
     var title: Text {
         switch self {
-        case .handCaptaincy(_, let name): Text("把队长转给 \(name)？", bundle: .module)
-        case .remove(_, let name): Text("把 \(name) 移出小队？", bundle: .module)
+        case .handCaptaincy(_, let name): Text(copy: "把队长转给 \(name)？", bundle: .module)
+        case .remove(_, let name): Text(copy: "把 \(name) 移出小队？", bundle: .module)
         }
     }
 }
@@ -303,7 +304,7 @@ struct InviteShareLink<ShareLabel: View>: View {
     var body: some View {
         // Looked up in the app's language, which the share sheet doesn't know.
         let message = Text(
-            verbatim: String(localized: "来外卡和我一起训练！小队「\(squad.name)」", bundle: .module.inAppLanguage))
+            verbatim: String(copy: "来外卡和我一起训练！小队「\(squad.name)」", bundle: .module))
         if let link = squad.inviteLink {
             ShareLink(item: link, message: message, label: label)
         } else {

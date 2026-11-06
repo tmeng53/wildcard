@@ -38,7 +38,7 @@ struct StringCatalogCoverageTests {
 
     /// Every key in `Text("…", bundle: .module)` across the style guide's sources.
     private static func localizedKeys() throws -> Set<String> {
-        let pattern = try NSRegularExpression(pattern: #"Text\("((?:[^"\\]|\\.)*)", bundle: \.module\)"#)
+        let pattern = try NSRegularExpression(pattern: #"Text\(copy: "((?:[^"\\]|\\.)*)", bundle: \.module\)"#)
         let files = try FileManager.default.contentsOfDirectory(at: sources, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "swift" }
         var keys = Set<String>()

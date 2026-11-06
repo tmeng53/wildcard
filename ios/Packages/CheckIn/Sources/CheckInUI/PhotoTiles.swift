@@ -74,7 +74,7 @@ struct PhotoTiles: View {
                 } else {
                     Image(systemName: "plus")
                         .font(.system(size: Sizing.icon, weight: .medium))
-                    Text("照片", bundle: .module)
+                    Text(copy: "照片", bundle: .module)
                         .typeStyle(TypeRamp.label)
                 }
             }
@@ -86,16 +86,17 @@ struct PhotoTiles: View {
         }
         .buttonStyle(PressableButtonStyle())
         .disabled(model.isPreparingPhotos)
-        .accessibilityLabel(Text("加照片", bundle: .module))
+        .accessibilityLabel(Text(copy: "加照片", bundle: .module))
         .accessibilityIdentifier("compose.addPhoto")
         .glassMenu(
-            isPresented: $isChoosingSource, title: Text("加照片", bundle: .module),
+            isPresented: $isChoosingSource, title: Text(copy: "加照片", bundle: .module),
             items: [
-                GlassMenuItem(Text("拍照", bundle: .module), systemImage: "camera", id: "compose.addPhoto.camera") {
+                GlassMenuItem(Text(copy: "拍照", bundle: .module), systemImage: "camera", id: "compose.addPhoto.camera") {
                     isTakingPhoto = true
                 },
                 GlassMenuItem(
-                    Text("从相册选", bundle: .module), systemImage: "photo.on.rectangle", id: "compose.addPhoto.library"
+                    Text(copy: "从相册选", bundle: .module), systemImage: "photo.on.rectangle",
+                    id: "compose.addPhoto.library"
                 ) {
                     isPickingFromLibrary = true
                 },
@@ -166,7 +167,7 @@ private struct PhotoTile: View {
                 }
                 .overlay(alignment: .bottomLeading) {
                     if isCover {
-                        Text("封面", bundle: .module)
+                        Text(copy: "封面", bundle: .module)
                             .typeStyle(TypeRamp.label)
                             .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                             .padding(.horizontal, Space.xs)
@@ -177,8 +178,10 @@ private struct PhotoTile: View {
         }
         .buttonStyle(PressableButtonStyle())
         .haptic(.pick, trigger: isCover)
-        .accessibilityLabel(isCover ? Text("封面", bundle: .module) : Text("第 \(number) 张照片", bundle: .module))
-        .accessibilityHint(isCover ? Text("全屏看", bundle: .module) : Text("设为封面", bundle: .module))
+        .accessibilityLabel(
+            isCover ? Text(copy: "封面", bundle: .module) : Text(copy: "第 \(number) 张照片", bundle: .module)
+        )
+        .accessibilityHint(isCover ? Text(copy: "全屏看", bundle: .module) : Text(copy: "设为封面", bundle: .module))
         .accessibilityAddTraits(isCover ? .isSelected : [])
         .accessibilityIdentifier(isCover ? "compose.cover" : "compose.photo.\(number)")
         .overlay(alignment: .topTrailing) {
@@ -195,7 +198,7 @@ private struct PhotoTile: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("删掉这张", bundle: .module))
+            .accessibilityLabel(Text(copy: "删掉这张", bundle: .module))
             .accessibilityIdentifier("compose.photo.\(number).remove")
         }
     }

@@ -15,14 +15,14 @@ struct ScheduleCounts: View {
     var body: some View {
         HStack(alignment: .top, spacing: Space.cardGap) {
             CountCard(
-                label: Text("一共训练", bundle: .module), count: store.lifetimeTrainedDays ?? 0, goal: nil,
-                unit: Text("天", bundle: .module)
+                label: Text(copy: "一共训练", bundle: .module), count: store.lifetimeTrainedDays ?? 0, goal: nil,
+                unit: Text(copy: "天", bundle: .module)
             )
             .accessibilityIdentifier("schedule.count.lifetime")
             if let squad = sheet.squad {
                 CountCard(
-                    label: Text("小队本周目标", bundle: .module), count: squad.trained, goal: squad.planned,
-                    unit: Text("天", bundle: .module)
+                    label: Text(copy: "小队本周目标", bundle: .module), count: squad.trained, goal: squad.planned,
+                    unit: Text(copy: "天", bundle: .module)
                 )
                 .accessibilityIdentifier("schedule.count.squad")
             }
@@ -82,7 +82,7 @@ struct DayPicks: View {
                 SectionLabel(ScheduleLabels.weekday(day))
             } else {
                 SectionLabel(
-                    Text("\(ScheduleLabels.weekday(day)) · \(ScheduleLabels.shortDate(day))", bundle: .module))
+                    Text(copy: "\(ScheduleLabels.weekday(day)) · \(ScheduleLabels.shortDate(day))", bundle: .module))
             }
             FlowRow {
                 ForEach(picks, id: \.key) { activity in
@@ -91,11 +91,11 @@ struct DayPicks: View {
                     }
                     .accessibilityIdentifier("schedule.pick.\(activity.key)")
                 }
-                PickPill(Text("休息", bundle: .module), systemImage: "moon", isSelected: plan == .rest) {
+                PickPill(Text(copy: "休息", bundle: .module), systemImage: "moon", isSelected: plan == .rest) {
                     onRest()
                 }
                 .accessibilityIdentifier("schedule.pick.rest")
-                PickPill(Text("更多", bundle: .module), systemImage: "magnifyingglass", isSelected: false) {
+                PickPill(Text(copy: "更多", bundle: .module), systemImage: "magnifyingglass", isSelected: false) {
                     onMore()
                 }
                 .accessibilityIdentifier("schedule.pick.more")
@@ -110,7 +110,7 @@ struct TemplateNote: View {
 
     var body: some View {
         Label {
-            Text("改了从下周开始生效，本周不变", bundle: .module)
+            Text(copy: "改了从下周开始生效，本周不变", bundle: .module)
         } icon: {
             Image(systemName: WeekPosterHeading.templateSymbol)
                 .accessibilityHidden(true)
@@ -128,11 +128,11 @@ struct TemplateOffer: View {
 
     var body: some View {
         HStack(spacing: Space.xs) {
-            Text("只改了这一周", bundle: .module)
+            Text(copy: "只改了这一周", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
             Spacer(minLength: Space.xs)
             Button(action: onCopy) {
-                Text("也改到我的每周计划", bundle: .module)
+                Text(copy: "也改到我的每周计划", bundle: .module)
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .frame(minHeight: Sizing.minimumTapTarget)
                     .contentShape(Rectangle())
@@ -160,7 +160,7 @@ struct SaveNote: View {
     var body: some View {
         switch saving {
         case .failed:
-            Text("没存上，再试一次", bundle: .module)
+            Text(copy: "没存上，再试一次", bundle: .module)
                 .noteStyle(theme)
         default:
             EmptyView()
@@ -215,11 +215,11 @@ struct CountdownCard: View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: Space.labelGap) {
-                    SectionLabel(Text("离开赛还有", bundle: .module))
+                    SectionLabel(Text(copy: "离开赛还有", bundle: .module))
                     if let left = store.untilNextWeek {
                         HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
                             Score(count: left.days, size: .card)
-                            Text("天", bundle: .module)
+                            Text(copy: "天", bundle: .module)
                                 .typeStyle(TypeRamp.footnote)
                                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                             Text(
@@ -234,7 +234,7 @@ struct CountdownCard: View {
                 }
                 Spacer(minLength: Space.xs)
                 if let start = store.shownWeek {
-                    Text("周一 \(ScheduleLabels.posterDate(start))", bundle: .module)
+                    Text(copy: "周一 \(ScheduleLabels.posterDate(start))", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }

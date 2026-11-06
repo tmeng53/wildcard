@@ -149,7 +149,7 @@ public struct WeekPoster<Backdrop: View, Rows: View, Character: View, Overlay: V
                 .fixedSize()
                 .padding(.leading, Space.s + 2)
                 .padding(.top, layout.weekNumberTop)
-                .accessibilityLabel(Text("第 \(number) 周", bundle: .module))
+                .accessibilityLabel(Text(copy: "第 \(number) 周", bundle: .module))
         case .named(let name, let symbol):
             // Sits on the rows, where a number's foot would.
             Label {

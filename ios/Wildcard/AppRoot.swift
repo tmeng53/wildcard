@@ -77,7 +77,7 @@ struct AppRoot: View {
         // Signing in on the open screen: the tickets rock over it until the next screen opens.
         .loadingCover(app.isSigningIn) { LaunchCover(start: app.coverSince) }
         .alert(
-            Text("你已不在 \(app.lostSquadName ?? "") 小队"),
+            Text(copy: "你已不在 \(app.lostSquadName ?? "") 小队", bundle: .main),
             isPresented: Binding(
                 get: { app.lostSquadName != nil },
                 set: { shown in if !shown { app.lostSquadName = nil } })
@@ -85,7 +85,7 @@ struct AppRoot: View {
             Button {
                 app.lostSquadName = nil
             } label: {
-                Text("确认")
+                Text(copy: "确认", bundle: .main)
             }
         }
         .task { await app.run() }

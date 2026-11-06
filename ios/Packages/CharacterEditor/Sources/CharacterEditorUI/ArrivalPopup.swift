@@ -48,12 +48,12 @@ struct ArrivalPopup: View {
                     .multilineTextAlignment(.center)
                 VStack(spacing: Space.xs) {
                     Button(action: open) {
-                        Text("一键全开", bundle: .module).frame(maxWidth: .infinity)
+                        Text(copy: "一键全开", bundle: .module).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .accessibilityIdentifier("editor.arrival.open")
                     Button(action: model.leaveArrival) {
-                        Text("先不了", bundle: .module)
+                        Text(copy: "先不了", bundle: .module)
                     }
                     .buttonStyle(TextButtonStyle(.muted))
                     .accessibilityIdentifier("editor.arrival.leave")
@@ -77,7 +77,7 @@ struct ArrivalPopup: View {
         if arrival.store != nil, let first = arrival.pieces.first {
             UnlockNames.title(.piece, item: first)
         } else {
-            Text("商店街到新货了", bundle: .module)
+            Text(copy: "商店街到新货了", bundle: .module)
         }
     }
 

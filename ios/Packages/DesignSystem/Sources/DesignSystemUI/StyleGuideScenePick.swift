@@ -8,7 +8,7 @@ struct ScenePickGuide: View {
     @State private var scene: SceneTheme = .gym
 
     var body: some View {
-        GuideGroup(Text("下周场地：去过的是色卡，没开过的是纸箱", bundle: .module)) {
+        GuideGroup(Text(copy: "下周场地：去过的是色卡，没开过的是纸箱", bundle: .module)) {
             HStack(alignment: .top, spacing: Space.xxs) {
                 ForEach(SceneTheme.allCases, id: \.self) { option in
                     SceneTile(

@@ -35,7 +35,7 @@ struct DayCircle: View {
     private var scale: Double { diameter / SquadCardMetrics.day }
 
     private var label: Text {
-        compact && isToday ? Text("今天", bundle: .module) : Self.name(weekday)
+        compact && isToday ? Text(copy: "今天", bundle: .module) : Self.name(weekday)
     }
 
     @ViewBuilder private var circle: some View {
@@ -48,7 +48,7 @@ struct DayCircle: View {
                 .background(Color(role: .bgAccent, in: theme), in: Circle())
                 .overlay(alignment: .bottomTrailing) { if symbol != nil { checkBadge } }
         case .excused:
-            Text("假", bundle: .module)
+            Text(copy: "假", bundle: .module)
                 .typeStyle(compact ? TypeRamp.tabSelected : TypeRamp.footnoteEmphasis)
                 .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -88,36 +88,36 @@ struct DayCircle: View {
 
     private var value: Text {
         switch status {
-        case .trained: Text("训练", bundle: .module)
-        case .excused: Text("请假", bundle: .module)
-        case .restDay: Text("休息日", bundle: .module)
-        case .open where isToday, .planned where isToday: Text("今天", bundle: .module)
-        case .open, .planned: Text("还没练", bundle: .module)
+        case .trained: Text(copy: "训练", bundle: .module)
+        case .excused: Text(copy: "请假", bundle: .module)
+        case .restDay: Text(copy: "休息日", bundle: .module)
+        case .open where isToday, .planned where isToday: Text(copy: "今天", bundle: .module)
+        case .open, .planned: Text(copy: "还没练", bundle: .module)
         }
     }
 
     /// 周一 to 周日, for the picked day's line.
     static func fullName(_ weekday: Int) -> Text {
         switch weekday {
-        case 0: Text("周一", bundle: .module)
-        case 1: Text("周二", bundle: .module)
-        case 2: Text("周三", bundle: .module)
-        case 3: Text("周四", bundle: .module)
-        case 4: Text("周五", bundle: .module)
-        case 5: Text("周六", bundle: .module)
-        default: Text("周日", bundle: .module)
+        case 0: Text(copy: "周一", bundle: .module)
+        case 1: Text(copy: "周二", bundle: .module)
+        case 2: Text(copy: "周三", bundle: .module)
+        case 3: Text(copy: "周四", bundle: .module)
+        case 4: Text(copy: "周五", bundle: .module)
+        case 5: Text(copy: "周六", bundle: .module)
+        default: Text(copy: "周日", bundle: .module)
         }
     }
 
     static func name(_ weekday: Int) -> Text {
         switch weekday {
-        case 0: Text("一", bundle: .module)
-        case 1: Text("二", bundle: .module)
-        case 2: Text("三", bundle: .module)
-        case 3: Text("四", bundle: .module)
-        case 4: Text("五", bundle: .module)
-        case 5: Text("六", bundle: .module)
-        default: Text("日", bundle: .module)
+        case 0: Text(copy: "一", bundle: .module)
+        case 1: Text(copy: "二", bundle: .module)
+        case 2: Text(copy: "三", bundle: .module)
+        case 3: Text(copy: "四", bundle: .module)
+        case 4: Text(copy: "五", bundle: .module)
+        case 5: Text(copy: "六", bundle: .module)
+        default: Text(copy: "日", bundle: .module)
         }
     }
 }
@@ -132,7 +132,7 @@ struct DayLine: View {
         HStack(alignment: .firstTextBaseline, spacing: Space.m) {
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Group {
-                    if isToday { Text("今天", bundle: .module) } else { DayCircle.fullName(weekday) }
+                    if isToday { Text(copy: "今天", bundle: .module) } else { DayCircle.fullName(weekday) }
                 }
                 .typeStyle(TypeRamp.footnoteEmphasis)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -146,8 +146,8 @@ struct DayLine: View {
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
             if let meals = detail.meals {
-                Count(label: Text("健康餐", bundle: .module), value: meals.healthy)
-                Count(label: Text("放纵餐", bundle: .module), value: meals.cheat)
+                Count(label: Text(copy: "健康餐", bundle: .module), value: meals.healthy)
+                Count(label: Text(copy: "放纵餐", bundle: .module), value: meals.cheat)
             }
         }
         .accessibilityElement(children: .combine)

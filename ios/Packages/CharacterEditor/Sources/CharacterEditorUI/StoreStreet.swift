@@ -91,7 +91,7 @@ struct StoreStreet: View {
                 Button {
                     model.visit(store)
                 } label: {
-                    Text("进店", bundle: .module).frame(maxWidth: .infinity)
+                    Text(copy: "进店", bundle: .module).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .accentTone(.brand)
@@ -112,7 +112,7 @@ struct StoreStreet: View {
     /// The sports its pieces' rules count, as its tip lists them, or its own line where none has one.
     private func sportsLine(_ store: String) -> Text {
         guard let sports = model.sports(of: store) else { return StoreCopy.sports(store) }
-        guard !sports.isEmpty else { return Text("练什么都算", bundle: .module) }
+        guard !sports.isEmpty else { return Text(copy: "练什么都算", bundle: .module) }
         return Text(verbatim: sports.map(\.localizedName).joined(separator: " · "))
     }
 
@@ -173,7 +173,7 @@ private struct Storefront: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityElement(children: .combine)
-        .accessibilityHint(store.isOpen ? Text("进店", bundle: .module) : Text("还没开门", bundle: .module))
+        .accessibilityHint(store.isOpen ? Text(copy: "进店", bundle: .module) : Text(copy: "还没开门", bundle: .module))
         .accessibilityIdentifier("street.store.\(store.id)")
     }
 

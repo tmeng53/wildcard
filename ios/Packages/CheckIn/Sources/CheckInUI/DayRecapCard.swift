@@ -21,7 +21,7 @@ struct RecapTag: View {
                 Image(systemName: "moon.fill")
                     .font(.system(size: RecapMetrics.moon))
                     .foregroundStyle(Color(role: isSeen ? .fgSubtle : .fgOnBrand, in: theme))
-                Text("今日赛况", bundle: .module)
+                Text(copy: "今日赛况", bundle: .module)
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .foregroundStyle(Color(role: isSeen ? .fgDefault : .fgOnBrand, in: theme))
                 Text(verbatim: "\(recap.showedUp)/\(recap.members)")
@@ -46,7 +46,7 @@ struct RecapTag: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(isSeen ? Text("今日赛况", bundle: .module) : Text("今日赛况，还没看", bundle: .module))
+        .accessibilityLabel(isSeen ? Text(copy: "今日赛况", bundle: .module) : Text(copy: "今日赛况，还没看", bundle: .module))
         .accessibilityValue(Text(verbatim: "\(recap.showedUp)/\(recap.members)"))
         .accessibilityIdentifier("today.recap.tag")
     }
@@ -71,7 +71,7 @@ struct DayRecapCard: View {
         VStack(alignment: .leading, spacing: Space.s) {
             HStack(alignment: .bottom, spacing: Space.s) {
                 VStack(alignment: .leading, spacing: Space.xxs) {
-                    SectionLabel(Text("今日赛况", bundle: .module))
+                    SectionLabel(Text(copy: "今日赛况", bundle: .module))
                     Text(day, format: Date.FormatStyle(timeZone: timeZone).month().day().weekday(.abbreviated))
                         .typeStyle(TypeRamp.headline)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -81,7 +81,7 @@ struct DayRecapCard: View {
                 Score(count: shown, goal: recap.members, size: .hero)
             }
             if recap.rows.isEmpty {
-                Text("今天小队在养精蓄锐，明天见", bundle: .module)
+                Text(copy: "今天小队在养精蓄锐，明天见", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
             } else {
@@ -103,13 +103,13 @@ struct DayRecapCard: View {
             }
             HStack(spacing: Space.s) {
                 if recap.healthyMeals + recap.cheatMeals > 0 {
-                    Text("健康餐 \(recap.healthyMeals) · 放纵餐 \(recap.cheatMeals)", bundle: .module)
+                    Text(copy: "健康餐 \(recap.healthyMeals) · 放纵餐 \(recap.cheatMeals)", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }
                 Spacer(minLength: 0)
                 Button(action: close) {
-                    Text("收起", bundle: .module)
+                    Text(copy: "收起", bundle: .module)
                         .typeStyle(TypeRamp.footnoteEmphasis)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                         .padding(.horizontal, Space.s)
@@ -155,8 +155,8 @@ struct DayRecapCard: View {
                 if let meal {
                     Group {
                         switch meal {
-                        case .healthyMeal: Text("健康餐", bundle: .module)
-                        case .cheatMeal: Text("放纵餐", bundle: .module)
+                        case .healthyMeal: Text(copy: "健康餐", bundle: .module)
+                        case .cheatMeal: Text(copy: "放纵餐", bundle: .module)
                         }
                     }
                     .typeStyle(TypeRamp.footnote)
@@ -165,7 +165,7 @@ struct DayRecapCard: View {
             }
         case .disclaimer(let note):
             HStack(spacing: Space.xs) {
-                Tag(Text("请假条", bundle: .module), systemImage: "moon.fill", style: .rest, size: .small)
+                Tag(Text(copy: "请假条", bundle: .module), systemImage: "moon.fill", style: .rest, size: .small)
                     .fixedSize()
                 Text(verbatim: note)
                     .typeStyle(TypeRamp.callout)
@@ -174,7 +174,7 @@ struct DayRecapCard: View {
                     .truncationMode(.tail)
             }
         case .restDay:
-            Tag(Text("休息日", bundle: .module), systemImage: "moon.fill", style: .rest, size: .small)
+            Tag(Text(copy: "休息日", bundle: .module), systemImage: "moon.fill", style: .rest, size: .small)
         }
     }
 }

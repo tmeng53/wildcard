@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "stores": {
+    "warmup": {
+      "name": {
+        "zhHans": "WARM-UP",
+        "en": "WARM-UP",
+        "zhHant": "WARM-UP"
+      },
+      "local": {
+        "zhHans": "热身社",
+        "en": "Warm-up club",
+        "zhHant": "熱身社"
+      },
+      "sports": {
+        "zhHans": "走路 跑步 力量训练",
+        "en": "Walking, running, strength",
+        "zhHant": "走路 跑步 重訓"
+      },
+      "tagline": {
+        "zhHans": "先热身，再上场。",
+        "en": "Warm up, then step up.",
+        "zhHant": "先熱身，再上場。"
+      }
+    },
+    "lap": {
+      "name": {
+        "zhHans": "LAP NINE",
+        "en": "LAP NINE",
+        "zhHant": "LAP NINE"
+      },
+      "local": {
+        "zhHans": "第九圈",
+        "en": "Lap nine",
+        "zhHant": "第九圈"
+      },
+      "sports": {
+        "zhHans": "跑步 走路",
+        "en": "Running, walking",
+        "zhHant": "跑步 走路"
+      },
+      "tagline": {
+        "zhHans": "操场第九圈，才是今天真正开始的地方。",
+        "en": "Lap nine is where today really starts.",
+        "zhHant": "操場第九圈，才是今天真正開始的地方。"
+      },
+      "unlock": {
+        "zhHans": "跑步 3 次解锁",
+        "en": "Unlock: 3 runs",
+        "zhHant": "跑步 3 次解鎖"
+      }
+    },
+    "nolook": {
+      "name": {
+        "zhHans": "NO LOOK",
+        "en": "NO LOOK",
+        "zhHant": "NO LOOK"
+      },
+      "local": {
+        "zhHans": "不看传球",
+        "en": "No-look pass",
+        "zhHant": "不看人傳球"
+      },
+      "sports": {
+        "zhHans": "篮球 排球",
+        "en": "Basketball, volleyball",
+        "zhHant": "籃球 排球"
+      },
+      "tagline": {
+        "zhHans": "眼睛看左边，球已经到右边了。",
+        "en": "Eyes left, ball already right.",
+        "zhHant": "眼睛看左邊，球已經到右邊了。"
+      },
+      "unlock": {
+        "zhHans": "篮球 3 次解锁",
+        "en": "Unlock: 3 basketball",
+        "zhHant": "籃球 3 次解鎖"
+      }
+    },
+    "moss": {
+      "name": {
+        "zhHans": "MOSSWAY",
+        "en": "MOSSWAY",
+        "zhHant": "MOSSWAY"
+      },
+      "local": {
+        "zhHans": "苔径",
+        "en": "Moss trail",
+        "zhHant": "苔徑"
+      },
+      "sports": {
+        "zhHans": "徒步 越野跑 攀岩",
+        "en": "Hiking, trail running, climbing",
+        "zhHant": "健行 越野跑 攀岩"
+      },
+      "tagline": {
+        "zhHans": "路不在地图上，在苔藓上。",
+        "en": "The trail isn't on the map. It's on the moss.",
+        "zhHant": "路不在地圖上，在青苔上。"
+      },
+      "unlock": {
+        "zhHans": "攀岩或徒步 3 次解锁",
+        "en": "Unlock: 3 climbs or hikes",
+        "zhHant": "攀岩或徒步 3 次解鎖"
+      }
+    },
+    "halfmoon": {
+      "name": {
+        "zhHans": "HALF MOON",
+        "en": "HALF MOON",
+        "zhHant": "HALF MOON"
+      },
+      "local": {
+        "zhHans": "半月",
+        "en": "Half moon",
+        "zhHant": "半月"
+      },
+      "sports": {
+        "zhHans": "练什么都算",
+        "en": "Any sport counts",
+        "zhHant": "練什麼都算"
+      },
+      "tagline": {
+        "zhHans": "做完半月式，再去喝一杯燕麦拿铁。",
+        "en": "Half moon pose first, oat latte after.",
+        "zhHant": "做完半月式，再去喝一杯燕麥拿鐵。"
+      },
+      "unlock": {
+        "zhHans": "随便练 3 次解锁",
+        "en": "Unlock: 3 workouts",
+        "zhHant": "隨便練 3 次解鎖"
+      }
+    },
+    "deuce": {
+      "name": {
+        "zhHans": "DEUCE CLUB",
+        "en": "DEUCE CLUB",
+        "zhHant": "DEUCE CLUB"
+      },
+      "local": {
+        "zhHans": "平分俱乐部",
+        "en": "Deuce club",
+        "zhHant": "平分俱樂部"
+      },
+      "sports": {
+        "zhHans": "网球 匹克球 壁球",
+        "en": "Tennis, pickleball, squash",
+        "zhHant": "網球 匹克球 壁球"
+      },
+      "tagline": {
+        "zhHans": "平分之后，才是真的比赛。",
+        "en": "After deuce, the real match begins.",
+        "zhHant": "平分之後，才是真正的比賽。"
+      },
+      "unlock": {
+        "zhHans": "网球类 3 次解锁",
+        "en": "Unlock: 3 racket sports",
+        "zhHant": "網球類 3 次解鎖"
+      }
+    },
+    "powder": {
+      "name": {
+        "zhHans": "POWDER DAY",
+        "en": "POWDER DAY",
+        "zhHant": "POWDER DAY"
+      },
+      "local": {
+        "zhHans": "粉雪日",
+        "en": "Powder day",
+        "zhHant": "粉雪日"
+      },
+      "sports": {
+        "zhHans": "冬季运动",
+        "en": "Winter sports",
+        "zhHant": "冬季運動"
+      },
+      "tagline": {
+        "zhHans": "雪道见，压个弯。",
+        "en": "See you on the slope. Carve one.",
+        "zhHant": "雪道見，壓個彎。"
+      },
+      "limited": {
+        "zhHans": "冬季限定",
+        "en": "Winter only",
+        "zhHant": "冬季限定"
+      }
+    }
+  }
+}

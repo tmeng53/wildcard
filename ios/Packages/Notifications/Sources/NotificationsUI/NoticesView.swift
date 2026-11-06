@@ -63,7 +63,7 @@ public struct NoticesView: View {
             Color(role: .bgCanvas, in: .gym).ignoresSafeArea()
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Space.xs) {
-                    Text("通知", bundle: .module)
+                    Text(copy: "通知", bundle: .module)
                         .typeStyle(TypeRamp.largeTitle)
                         .foregroundStyle(Color(role: .fgDefault, in: .gym))
                         .accessibilityAddTraits(.isHeader)
@@ -74,7 +74,7 @@ public struct NoticesView: View {
                 .padding(.top, Space.xs)
                 .padding(.bottom, Space.l)
             }
-            .barTitleOnScroll(Text("通知", bundle: .module))
+            .barTitleOnScroll(Text(copy: "通知", bundle: .module))
             .refreshable { await inbox.refresh() }
         }
         .loadingCover(inbox.phase == .loading && inbox.notices.isEmpty) {
@@ -150,7 +150,7 @@ public struct NoticesView: View {
         Button {
             Task { await retry() }
         } label: {
-            Text("加载失败，点一下再试", bundle: .module)
+            Text(copy: "加载失败，点一下再试", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: .gym))
         }
@@ -160,9 +160,9 @@ public struct NoticesView: View {
 extension NoticeHeading {
     var title: Text {
         switch self {
-        case .today: Text("今天", bundle: .module)
-        case .thisWeek: Text("本周", bundle: .module)
-        case .earlier: Text("更早", bundle: .module)
+        case .today: Text(copy: "今天", bundle: .module)
+        case .thisWeek: Text(copy: "本周", bundle: .module)
+        case .earlier: Text(copy: "更早", bundle: .module)
         }
     }
 }
@@ -186,7 +186,7 @@ private struct EmptyNotices: View {
             .frame(width: Self.circle, height: Self.circle)
             .clipShape(Circle())
             .accessibilityHidden(true)
-            Text("还没有通知", bundle: .module)
+            Text(copy: "还没有通知", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: .gym))
         }

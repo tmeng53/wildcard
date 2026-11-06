@@ -15,9 +15,9 @@ struct ShareRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SwitchRow(Text("分享到 \(squad.name)", bundle: .module), isOn: $isShared, showsDivider: false)
+            SwitchRow(Text(copy: "分享到 \(squad.name)", bundle: .module), isOn: $isShared, showsDivider: false)
                 .accessibilityIdentifier("compose.share.\(squad.id)")
-            (isShared ? Text("小队成员都能看到", bundle: .module) : Text("仅自己可见，只在「我的动态」里", bundle: .module))
+            (isShared ? Text(copy: "小队成员都能看到", bundle: .module) : Text(copy: "仅自己可见，只在「我的动态」里", bundle: .module))
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .accessibilityIdentifier("compose.share.hint")

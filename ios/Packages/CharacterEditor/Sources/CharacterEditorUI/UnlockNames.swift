@@ -15,14 +15,14 @@ import SwiftUI
 public enum UnlockNames {
     public static func title(_ kind: Unlock.Kind, item: String) -> Text {
         switch kind {
-        case .store: Text("\(StoreCopy.name(item)) 开门了", bundle: .module)
-        case .prop: Text("解锁了\(EditorNames.variant(item, in: Slot("prop")))", bundle: .module)
+        case .store: Text(copy: "\(StoreCopy.name(item)) 开门了", bundle: .module)
+        case .prop: Text(copy: "解锁了\(EditorNames.variant(item, in: Slot("prop")))", bundle: .module)
         case .piece:
             if let store = storeOf(piece: item) {
-                Text("\(StoreCopy.name(store)) 到新货了", bundle: .module)
+                Text(copy: "\(StoreCopy.name(store)) 到新货了", bundle: .module)
             } else {
                 // A piece this build has no art for yet.
-                Text("商店街到新货了", bundle: .module)
+                Text(copy: "商店街到新货了", bundle: .module)
             }
         }
     }
@@ -36,16 +36,16 @@ public enum UnlockNames {
     /// rule's first sport stands for the rest (DEUCE CLUB takes 网球, 匹克球 and 壁球, and says 网球).
     public static func detail(_ unlock: Unlock) -> Text {
         guard let sport = unlock.sports.first else {
-            return Text("随便练满 \(unlock.checkIns) 次", bundle: .module)
+            return Text(copy: "随便练满 \(unlock.checkIns) 次", bundle: .module)
         }
         let name = sport.localizedName
         switch unlock.kind {
         case .store, .piece:
-            return Text("\(name)练满 \(unlock.checkIns) 次", bundle: .module)
+            return Text(copy: "\(name)练满 \(unlock.checkIns) 次", bundle: .module)
         case .prop:
             // Ball and racket sports are played (打), the rest trained (练).
             let played = ["racket", "ball"].contains(sport.entry?.category ?? "")
-            return played ? Text("第一次打\(name)", bundle: .module) : Text("第一次练\(name)", bundle: .module)
+            return played ? Text(copy: "第一次打\(name)", bundle: .module) : Text(copy: "第一次练\(name)", bundle: .module)
         }
     }
 }

@@ -113,6 +113,7 @@ final class AppModel {
             api: api, directory: URL.applicationSupportDirectory.appending(path: "Catalog", directoryHint: .isDirectory)
         )
         Self.show(catalog.kept())
+        SharedCopy.inAppGroup?.save(catalog.kept().copy)
         self.posted = posted
         if usesApple {
             confirmDeletion = { () async throws(MeError) -> DeletionConfirmation in
@@ -200,6 +201,8 @@ final class AppModel {
     func refreshCatalog() async {
         let fresh = await catalog.refresh()
         if let fresh { Self.show(fresh) }
+        // The lines put show from the next launch, in the app and its pushes alike.
+        SharedCopy.inAppGroup?.save((fresh ?? catalog.kept()).copy)
         await art.update(to: (fresh ?? catalog.kept()).art)
     }
 

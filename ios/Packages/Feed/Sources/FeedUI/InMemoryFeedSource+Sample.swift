@@ -122,7 +122,7 @@ extension InMemoryFeedSource {
     ]
 
     static func localized(_ key: String) -> String {
-        Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil)
+        String(copyKey: key, bundle: Bundle.module)
     }
 }
 

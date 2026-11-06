@@ -16,13 +16,15 @@ public struct AppCatalog: Hashable, Sendable {
     /// Every scene, in the picker's order: a scene added since this build takes its names and
     /// colours from here.
     public let scenes: [CatalogScene]
+    /// Lines put over the app's String Catalog, which screens and pushes show from the next launch.
+    public let copy: AppCopy
 
     public init(
         sports: SportCatalog, diceLines: [CatalogNames], starterStock: StreetStock = .empty,
-        art: ArtManifest = .none, scenes: [CatalogScene] = []
+        art: ArtManifest = .none, scenes: [CatalogScene] = [], copy: AppCopy = .none
     ) {
         (self.sports, self.diceLines, self.starterStock, self.art) = (sports, diceLines, starterStock, art)
-        self.scenes = scenes
+        (self.scenes, self.copy) = (scenes, copy)
     }
 
     /// Nothing at all.

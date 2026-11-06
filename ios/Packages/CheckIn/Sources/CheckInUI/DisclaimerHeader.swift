@@ -36,9 +36,9 @@ struct DisclaimerHeader: View {
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Group {
                     if day == nil {
-                        Text("今日请假条", bundle: .module)
+                        Text(copy: "今日请假条", bundle: .module)
                     } else {
-                        Text("请假条", bundle: .module)
+                        Text(copy: "请假条", bundle: .module)
                     }
                 }
                 .typeStyle(TypeRamp.label)
@@ -54,7 +54,7 @@ struct DisclaimerHeader: View {
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget, alignment: .trailing)
             }
-            .accessibilityLabel(Text("关闭", bundle: .module))
+            .accessibilityLabel(Text(copy: "关闭", bundle: .module))
             .accessibilityIdentifier("disclaimer.close")
         }
     }

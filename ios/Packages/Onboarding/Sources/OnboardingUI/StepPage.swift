@@ -97,11 +97,11 @@ struct FailureLine: View {
 
     static func message(for failure: SignUpError) -> Text {
         switch failure {
-        case .unknownInvite: Text("没找到这个邀请码", bundle: .module)
-        case .squadFull: Text("这个小队满 8 人了", bundle: .module)
-        case .tooManySquads: Text("你已经有小队了，先退出才能加入新的", bundle: .module)
-        case .rejected: Text("没存上，换个写法试试", bundle: .module)
-        case .unavailable: Text("网络开小差了，再试一次", bundle: .module)
+        case .unknownInvite: Text(copy: "没找到这个邀请码", bundle: .module)
+        case .squadFull: Text(copy: "这个小队满 8 人了", bundle: .module)
+        case .tooManySquads: Text(copy: "你已经有小队了，先退出才能加入新的", bundle: .module)
+        case .rejected: Text(copy: "没存上，换个写法试试", bundle: .module)
+        case .unavailable: Text(copy: "网络开小差了，再试一次", bundle: .module)
         }
     }
 }

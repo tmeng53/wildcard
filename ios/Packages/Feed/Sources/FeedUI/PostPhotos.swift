@@ -26,10 +26,10 @@ struct PostPhotos: View {
                     ForEach(Array(photos.all.enumerated()), id: \.element) { index, ref in
                         FeedPhoto(model: model, ref: ref)
                             .accessibilityLabel(
-                                Text("第 \(index + 1) 张，共 \(photos.all.count) 张", bundle: .module)
+                                Text(copy: "第 \(index + 1) 张，共 \(photos.all.count) 张", bundle: .module)
                             )
                             .accessibilityAddTraits(.isButton)
-                            .accessibilityHint(Text("全屏看", bundle: .module))
+                            .accessibilityHint(Text(copy: "全屏看", bundle: .module))
                             .accessibilityAction { isViewing = true }
                             .tag(index)
                     }

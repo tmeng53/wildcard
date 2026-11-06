@@ -129,10 +129,10 @@ public struct PostBlock: View {
     /// The sport for a 练了, else the kind.
     private var label: Text {
         switch kind {
-        case .trained: activity?.cardName ?? Text("训练", bundle: .module)
-        case .healthyMeal: Text("健康餐", bundle: .module)
-        case .cheatMeal: Text("放纵餐", bundle: .module)
-        case .disclaimer: Text("请假条", bundle: .module)
+        case .trained: activity?.cardName ?? Text(copy: "训练", bundle: .module)
+        case .healthyMeal: Text(copy: "健康餐", bundle: .module)
+        case .cheatMeal: Text(copy: "放纵餐", bundle: .module)
+        case .disclaimer: Text(copy: "请假条", bundle: .module)
         }
     }
 

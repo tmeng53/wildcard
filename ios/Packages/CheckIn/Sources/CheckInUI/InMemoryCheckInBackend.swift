@@ -77,7 +77,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     member: member, timeZone: zone,
                     squad: Squad(
                         id: squadID,
-                        name: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
+                        name: String(copyKey: "周三不练腿俱乐部", bundle: Bundle.module),
                         inviteCode: "K7M2QX9P", members: everyone.filter(kept.contains) + [member], captain: member),
                     today: SquadToday(
                         squad: squadID, members: members,
@@ -101,20 +101,20 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// 毛头's morning note to me, as the approved 便条 shows it, when `shown`.
     private static func sampleNotes(_ shown: Bool, _ now: Date, _ squad: SquadID) -> [CoachMemberNote] {
         guard shown else { return [] }
-        let words = Bundle.module.inAppLanguage
+        let words = Bundle.module
         return [
             CoachMemberNote(
                 id: 1, squad: squad, day: LocalDay(at: now, in: CoachNote.timeZone),
-                text: words.localizedString(forKey: "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。", value: nil, table: nil),
-                coach: CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil)))
+                text: String(copyKey: "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。", bundle: words),
+                coach: CoachSpeaker(id: "xiaohun", name: String(copyKey: "毛头", bundle: words)))
         ]
     }
 
     /// 毛头 with today's line, as the approved home shows it.
     private static func sampleCoach(now: Date) -> SidelineCoach {
-        let words = Bundle.module.inAppLanguage
-        let coach = CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil))
-        let line = words.localizedString(forKey: "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。", value: nil, table: nil)
+        let words = Bundle.module
+        let coach = CoachSpeaker(id: "xiaohun", name: String(copyKey: "毛头", bundle: words))
+        let line = String(copyKey: "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。", bundle: words)
         let note = CoachNote(
             day: LocalDay(at: now, in: CoachNote.timeZone), text: line, coach: coach,
             writtenAt: now.addingTimeInterval(-3600))
@@ -124,7 +124,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// A sample title, its words from the catalog.
     private static func worn(_ key: String, _ shape: String, _ colour: String, _ glyph: String) -> WornTitle {
         WornTitle(
-            title: Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil),
+            title: String(copyKey: key, bundle: Bundle.module),
             badge: TitleBadge(shape: shape, colour: colour, glyph: glyph))
     }
 
@@ -145,7 +145,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private static func character(of member: MemberID, everyone: [MemberID]) -> MemberCharacter? {
         guard let index = everyone.firstIndex(of: member),
             let nickname = try? Nickname(
-                Bundle.module.inAppLanguage.localizedString(forKey: names[index], value: nil, table: nil))
+                String(copyKey: names[index], bundle: Bundle.module))
         else { return nil }
         return MemberCharacter(
             nickname: nickname,
@@ -174,7 +174,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                 entry: entry)
         }
         let leave = try? Disclaimer(
-            Bundle.module.inAppLanguage.localizedString(forKey: "加班到十点，腿说它也想下班", value: nil, table: nil))
+            String(copyKey: "加班到十点，腿说它也想下班", bundle: Bundle.module))
         return [
             checkIn(mates[0], 5, .trained(Training(activity: .sport("run")))),
             checkIn(mates[1], 4, .trained(Training(activity: .sport(secondSport)))),
@@ -187,10 +187,10 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private static func sampleMeals(
         by mates: [MemberID], on day: LocalDay, in squad: SquadID, at time: (Double) -> Timestamp
     ) -> [CheckIn] {
-        let words = Bundle.module.inAppLanguage
+        let words = Bundle.module
         guard let audience = try? Audience([squad]),
-            let salad = try? Caption(words.localizedString(forKey: "练完来碗沙拉", value: nil, table: nil)),
-            let boba = try? Caption(words.localizedString(forKey: "奶茶续命", value: nil, table: nil))
+            let salad = try? Caption(String(copyKey: "练完来碗沙拉", bundle: words)),
+            let boba = try? Caption(String(copyKey: "奶茶续命", bundle: words))
         else { return [] }
         return [
             CheckIn(

@@ -43,6 +43,14 @@ private let trot = Data(
     #expect(!ArtTree.reads(trot, at: "avatar/art/acc/trot-bib/names.json"))
 }
 
-@Test func nothingUploadedNamesNothing() {
-    #expect(PlaceholderCharacter.names() == .none)
+@Test func theBuildNamesEveryStoreItShipsWith() {
+    let stores = PlaceholderCharacter.names().stores
+    #expect(Set(stores.keys) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce", "powder"])
+    #expect(
+        stores["lap"]?.tagline
+            == CatalogNames(
+                simplifiedChinese: "操场第九圈，才是今天真正开始的地方。", english: "Lap nine is where today really starts.",
+                traditionalChinese: "操場第九圈，才是今天真正開始的地方。"))
+    #expect(stores["powder"]?.limited?.simplifiedChinese == "冬季限定")
+    #expect(stores["warmup"]?.unlock == nil)
 }

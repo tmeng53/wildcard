@@ -97,7 +97,7 @@ private struct CoachPlayerCardFront: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if let day {
-                    Text("带队 \(day) 天", bundle: .module)
+                    Text(copy: "带队 \(day) 天", bundle: .module)
                         .typeStyle(TypeRamp.label)
                         .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                         .lineLimit(1)

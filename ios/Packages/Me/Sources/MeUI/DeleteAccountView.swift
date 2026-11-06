@@ -18,18 +18,18 @@ struct DeleteAccountView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     MeStage(character: model.overview?.character, mood: .teary, size: CGSize(width: 96, height: 120))
                         .frame(maxWidth: .infinity)
-                    Text("注销账号", bundle: .module)
+                    Text(copy: "注销账号", bundle: .module)
                         .typeStyle(TypeRamp.title)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                         .padding(.top, Space.l)
                         .padding(.bottom, Space.xs)
-                    line(Text("外卡运动员和昵称会删掉", bundle: .module))
-                    line(Text("所有打卡、照片和请假条会删掉", bundle: .module))
+                    line(Text(copy: "外卡运动员和昵称会删掉", bundle: .module))
+                    line(Text(copy: "所有打卡、照片和请假条会删掉", bundle: .module))
                     if let squadName = model.overview?.squadName {
-                        line(Text("你会离开\(squadName)", bundle: .module))
+                        line(Text(copy: "你会离开\(squadName)", bundle: .module))
                     }
-                    line(Text("给 AI 的同意也一起撤回", bundle: .module))
-                    Text("删了就找不回来了。", bundle: .module)
+                    line(Text(copy: "给 AI 的同意也一起撤回", bundle: .module))
+                    Text(copy: "删了就找不回来了。", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .padding(.top, Space.s)
@@ -55,9 +55,9 @@ struct DeleteAccountView: View {
             if case .failed(let error) = model.deletion {
                 Group {
                     if error == .confirmationFailed {
-                        Text("Apple 那边没确认上，再试一次", bundle: .module)
+                        Text(copy: "Apple 那边没确认上，再试一次", bundle: .module)
                     } else {
-                        Text("网络开小差了，再试一次", bundle: .module)
+                        Text(copy: "网络开小差了，再试一次", bundle: .module)
                     }
                 }
                 .typeStyle(TypeRamp.footnote)
@@ -65,7 +65,7 @@ struct DeleteAccountView: View {
                 .accessibilityIdentifier("delete.failed")
             }
             Button(action: close) {
-                Text("先不注销", bundle: .module).frame(maxWidth: .infinity)
+                Text(copy: "先不注销", bundle: .module).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(model.deletion == .deleting)
@@ -74,7 +74,7 @@ struct DeleteAccountView: View {
                 Task { await model.deleteAccount() }
             } label: {
                 Label {
-                    Text("用 Apple 确认注销", bundle: .module)
+                    Text(copy: "用 Apple 确认注销", bundle: .module)
                 } icon: {
                     Image(systemName: "apple.logo")
                 }

@@ -12,7 +12,8 @@ extension AppCatalog {
             diceLines: dice.isEmpty ? fallback.diceLines : dice,
             starterStock: Self.starterStock(stores: wire.stores, pieces: wire.pieces) ?? fallback.starterStock,
             art: wire.art.map(ArtManifest.init) ?? fallback.art,
-            scenes: wire.scenes.map(Self.scenes) ?? fallback.scenes)
+            scenes: wire.scenes.map(Self.scenes) ?? fallback.scenes,
+            copy: wire.appCopy.map(AppCopy.init) ?? fallback.copy)
     }
 
     /// The scenes, leaving out one whose id can't be one.
@@ -39,6 +40,16 @@ extension AppCatalog {
             stores: open.map { StreetStock.Store(id: $0, isOpen: true) },
             pieces: pieces.pieces.filter { $0.starter && $0.switchId == nil && open.contains($0.storeId) }.map {
                 StreetStock.Piece(id: $0.id, store: $0.storeId, state: .available)
+            })
+    }
+}
+
+extension AppCopy {
+    /// The `appCopy` section of `GET /public/catalog`.
+    public init(_ wire: Components.Schemas.AppCopyCatalog) {
+        self.init(
+            entries: wire.entries.additionalProperties.mapValues {
+                Words(simplifiedChinese: $0.zhHans, english: $0.en, traditionalChinese: $0.zhHant)
             })
     }
 }

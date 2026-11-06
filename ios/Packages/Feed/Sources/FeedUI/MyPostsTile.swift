@@ -21,7 +21,7 @@ public struct MyPostsTile: View {
     public var body: some View {
         GlanceTile(
             figure: Text(verbatim: store.counts.map { "\($0.posts)" } ?? "–"),
-            title: Text("我的动态", bundle: .module), action: open
+            title: Text(copy: "我的动态", bundle: .module), action: open
         ) {
             HStack(spacing: Space.xxs) {
                 ForEach(0..<GlanceTileMetrics.posts, id: \.self) { index in

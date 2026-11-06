@@ -114,3 +114,12 @@ import Testing
     #expect(catalog.sports.entry(for: "padel")?.names.english == "Padel")
     #expect(catalog.diceLines == CatalogClient.bundled.diceLines)
 }
+
+@Test func theCopyPutIsKeptForTheExtensions() throws {
+    let directory = FileManager.default.temporaryDirectory.appending(path: "SharedCopy/\(UUID().uuidString)")
+    let shared = SharedCopy(directory: directory)
+    #expect(shared.read() == nil)
+    let copy = AppCopy(entries: ["练了": AppCopy.Words(simplifiedChinese: "训练", english: "Trained")])
+    shared.save(copy)
+    #expect(SharedCopy(directory: directory).read() == copy)
+}

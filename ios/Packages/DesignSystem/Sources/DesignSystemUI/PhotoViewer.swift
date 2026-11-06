@@ -52,14 +52,14 @@ struct PhotoViewer: View {
                 ViewerPage(index: index, isShowing: index == page, load: load)
                     .accessibilityElement()
                     .accessibilityAddTraits(.isImage)
-                    .accessibilityLabel(Text("第 \(index + 1) 张，共 \(count) 张", bundle: .module))
+                    .accessibilityLabel(Text(copy: "第 \(index + 1) 张，共 \(count) 张", bundle: .module))
                     .tag(index)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: count > 1 ? .always : .never))
         .ignoresSafeArea()
         .overlay(alignment: .topTrailing) {
-            HeaderButton(Text("关闭", bundle: .module), systemImage: "xmark", on: .ink) { dismiss() }
+            HeaderButton(Text(copy: "关闭", bundle: .module), systemImage: "xmark", on: .ink) { dismiss() }
                 .padding(.horizontal, Space.m)
                 .accessibilityIdentifier("photoViewer.close")
         }

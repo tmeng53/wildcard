@@ -2,10 +2,11 @@ import AvatarDomain
 import Contracts
 import Foundation
 
-/// The names uploaded art carries (`avatar/names.json`), in each of the app's languages, so a
-/// piece or store added through the admin tools is named without an app release. Nothing is
-/// bundled: the app's own art is named in the String Catalog, and a name here stands in front
-/// of the catalog's for the same id.
+/// The names art carries (`avatar/names.json`), in each of the app's languages, so a piece or
+/// store added through the admin tools is named without an app release. The bundled file names
+/// every store this build ships with (its words are data only, never code); an uploaded one
+/// stands whole in its place, so it names every store. A variant named here stands in front of
+/// the String Catalog's name for the same id.
 public struct ArtNames: Hashable, Sendable {
     /// A store's words, as 商店街 shows them.
     public struct Store: Hashable, Sendable {
@@ -98,7 +99,7 @@ private struct ArtWords: Decodable {
 }
 
 extension PlaceholderCharacter {
-    /// The uploaded names; none when nothing was uploaded or the file can't be read. Read once
+    /// The names, uploaded or else bundled; none when the file can't be read. Read once
     /// per launch, as the scene pictures are, so a view body never reads the disk; a newer
     /// download names from the next launch.
     public static func names() -> ArtNames { uploadedNames }

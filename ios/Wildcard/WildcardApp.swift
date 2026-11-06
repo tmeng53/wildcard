@@ -75,6 +75,9 @@ struct WildcardApp: App {
         CrashReports.start()
         // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
         AppLanguage.current.share(in: AppGroup.defaults)
+        // The lines put over the app's own words, as the last launch kept them (`AppModel` keeps
+        // the newest for the next one), before anything shows.
+        AppCopyLines.install(SharedCopy.inAppGroup?.read() ?? CatalogClient.bundled.copy)
         // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
         AppModel.show(CatalogClient.bundled)
         // Only now: the editor's street is the catalog's starter street, which `show` just put out.
