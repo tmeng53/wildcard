@@ -257,16 +257,6 @@ struct MainTabs: View {
         .onDisappear { inbox.close() }
     }
 
-    /// A store's, prop's or piece's words and badge on its 通知 row, as the home's banner says them.
-    /// How a store or piece opened comes from the member's unlock; a prop's title says it all (the bell design).
-    private func unlockWords(_ kind: Unlock.Kind, item: String) -> UnlockWords {
-        let unlock = profile.overview?.unlocks.first { $0.kind == kind && $0.id == item }
-        return UnlockWords(
-            title: UnlockNames.title(kind, item: item),
-            detail: kind == .prop ? nil : unlock.map(UnlockNames.detail),
-            icon: AnyView(WardrobeBadge(kind, item: item)))
-    }
-
     /// 我, with 出赛表, 商店街 or 我的动态 pushed over it, and a post opened from the wall pushed over
     /// that.
     private var profilePage: some View {
