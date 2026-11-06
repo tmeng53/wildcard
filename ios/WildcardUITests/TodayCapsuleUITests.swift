@@ -48,7 +48,7 @@ final class TodayCapsuleUITests: XCTestCase {
         keepScreenshot(named: "12c-today-capsule-en-alone")
     }
 
-    /// The capsule on screen, clear of 打卡, with each of my week's days inside it.
+    /// The capsule inside the window and clear of 打卡.
     private func expectCapsule(in app: XCUIApplication) -> XCUIElement {
         let capsule = app.buttons["squadcard.capsule"]
         XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "home didn't open on the folded capsule")

@@ -16,6 +16,7 @@ public struct SquadCapsule<Heads: View>: View {
     private let mine: MyWeek
     private let expand: () -> Void
     private let heads: Heads
+    private var morph: GlassMorph?
     /// How far a swipe down has stretched the capsule, while the finger is down.
     @State private var stretch = 0.0
 
@@ -55,10 +56,17 @@ public struct SquadCapsule<Heads: View>: View {
             Text("\(squad.name)，本周 \(squad.done)/\(squad.goal) 天；我这周 \(mine.done)/\(mine.planned)", bundle: .module)
         )
         .accessibilityIdentifier("squadcard.capsule")
-        .sceneGlass(in: Capsule(), theme: theme, interactive: true)
+        .sceneGlass(in: Capsule(), theme: theme, interactive: true, morph: morph)
         .simultaneousGesture(pullDown)
         .padding(.horizontal, Space.pageMargin)
         .accessibilityElement(children: .contain)
+    }
+
+    /// The capsule's glass morphs into the glass with the same id, the open card.
+    public func morphs(_ morph: GlassMorph) -> Self {
+        var capsule = self
+        capsule.morph = morph
+        return capsule
     }
 
     /// The squad's week under the heads: 7/16 天.

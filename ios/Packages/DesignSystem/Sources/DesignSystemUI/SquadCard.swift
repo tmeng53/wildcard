@@ -136,6 +136,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     private let footer: Footer?
     private var openSquad: (() -> Void)?
     private var collapse: (() -> Void)?
+    private var morph: GlassMorph?
     /// How far a swipe up has lifted the card, while the finger is down.
     @State private var lift = 0.0
 
@@ -178,7 +179,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
             }
         }
         .clipShape(shape)
-        .sceneGlass(in: shape, theme: theme)
+        .sceneGlass(in: shape, theme: theme, morph: morph)
         .offset(y: lift)
         .simultaneousGesture(foldUp, including: collapse == nil ? .subviews : .all)
         .padding(.horizontal, Space.pageMargin)
@@ -215,6 +216,13 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     public func collapses(_ action: @escaping () -> Void) -> Self {
         var card = self
         card.collapse = action
+        return card
+    }
+
+    /// The card's glass morphs into the glass with the same id, its folded capsule.
+    public func morphs(_ morph: GlassMorph) -> Self {
+        var card = self
+        card.morph = morph
         return card
     }
 

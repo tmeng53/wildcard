@@ -231,15 +231,15 @@ public struct TodayView: View {
                     )
                     .opensSquad(openSquad)
                     .collapses { foldCard(true) }
+                    .morphs(cardMorph)
                 } else {
                     SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
                         .opensSquad(openSquad)
                         .collapses { foldCard(true) }
+                        .morphs(cardMorph)
                 }
             }
-            .glassEffectID(Self.cardGlassID, in: cardGlass)
             .accessibilityIdentifier("today.card")
-            .transition(.opacity)
         }
     }
 
@@ -256,6 +256,7 @@ public struct TodayView: View {
             },
             expand: { foldCard(false) }
         )
+        .morphs(cardMorph)
         .overlay(alignment: .bottomLeading) {
             if let recap, recapSeen != day.description {
                 recapTag(recap, day: day)
@@ -283,10 +284,9 @@ public struct TodayView: View {
         withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { isCardCollapsed = folds }
     }
 
-    private static let cardGlassID = "today.card"
+    private var cardMorph: GlassMorph { GlassMorph("today.card", in: cardGlass) }
 
-    /// The tab bar's room until it is first measured (home opening while the squad drops in): the
-    /// system bar's height and its gap to the screen's edge.
+    /// The tab bar's room until first measured (home opening as the squad drops in), with its gap.
     private static let barRoomBeforeMeasured: Double = 88
 
     /// The pull cord under the card at night (the approved 开灯), 40 points from the right edge,
