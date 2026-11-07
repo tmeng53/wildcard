@@ -89,6 +89,7 @@ public struct ShoppingStreetPage: View {
         }
         .noticeBanner(
             item: Binding(get: { isOnTop ? model.claimedNotice : nil }, set: { model.claimedNotice = $0 }),
+            hold: { [noticeHold = model.noticeHold] _ in noticeHold ?? Motion.noticeHold },
             onTap: { model.tryOn($0.id) },
             content: { claimed in ClaimedBanner(model: model, piece: claimed.id) }
         )

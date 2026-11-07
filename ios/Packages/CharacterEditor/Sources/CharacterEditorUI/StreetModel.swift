@@ -45,6 +45,8 @@ public final class StreetModel {
     private(set) var arrival: Arrival?
     /// The piece just claimed, for the 「已放进衣橱」 notice.
     var claimedNotice: ClaimedPiece?
+    /// How long the 「已放进衣橱」 notice stays up, in seconds; nil for the banner's own default.
+    let noticeHold: Double?
     /// A claim that couldn't be saved.
     private(set) var claimFailed = false
     let thumbnails = ThumbnailCache()
@@ -67,23 +69,26 @@ public final class StreetModel {
 
     /// The street for a member with `standing` (what they unlocked and claimed, and their 商店街 as
     /// the server works it out), dressed in `look`. `claim` saves a 领取 and answers whether it was kept; `tryOn`
-    /// opens the editor wearing a piece.
+    /// opens the editor wearing a piece. `noticeHold` keeps 「已放进衣橱」 up longer (UI tests, whose
+    /// slow simulator outlasts the banner's few seconds); nil keeps the banner's own.
     public static func placeholder(
         look: Outfit, standing: UnlockStanding, marks: any WardrobeMarks = MemoryWardrobeMarks(),
-        claim: @escaping (String) async -> Bool, tryOn: @escaping (String) -> Void
+        noticeHold: Double? = nil, claim: @escaping (String) async -> Bool, tryOn: @escaping (String) -> Void
     ) throws(AvatarError) -> StreetModel {
         let catalog = try Catalog.placeholder(unlocks: standing.unlocks, stock: standing.stock)
         return StreetModel(
             draft: CharacterDraft(catalog: catalog, look: look, persona: .energetic, nickname: ""),
             unlocks: standing.unlocks, stock: standing.stock, claimed: standing.claimed, marks: marks,
-            claim: claim, tryOn: tryOn)
+            noticeHold: noticeHold, claim: claim, tryOn: tryOn)
     }
 
     init(
         draft: CharacterDraft, unlocks: [Unlock], stock: StreetStock, claimed: Set<String>,
-        marks: any WardrobeMarks, claim: @escaping (String) async -> Bool, tryOn: @escaping (String) -> Void
+        marks: any WardrobeMarks, noticeHold: Double? = nil, claim: @escaping (String) async -> Bool,
+        tryOn: @escaping (String) -> Void
     ) {
         self.draft = draft
+        self.noticeHold = noticeHold
         self.marks = marks
         (claimPiece, tryOnPiece) = (claim, tryOn)
         let pieces = unlocks.filter { $0.kind == .piece }
