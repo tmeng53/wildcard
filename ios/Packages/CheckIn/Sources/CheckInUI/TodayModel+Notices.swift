@@ -20,6 +20,10 @@ extension TodayModel {
         /// The squad trained over its goal weeks in a row: the captain is suggested a higher one,
         /// told on this phone once; its button opens 小队.
         case goalSuggestion(GoalSuggestion)
+        /// Posts the server refused while they went out late (`TodayModel.failed`, read when it is
+        /// drawn, so one banner always says how many); its button, when `canResend`, opens the
+        /// oldest to change and send again.
+        case sendFailed(canResend: Bool)
         /// What waited after two in a row, in one banner that opens 通知 (approved C, 2026-11-05).
         case more
     }
@@ -36,6 +40,7 @@ extension TodayModel {
             switch news {
             case .broadcast(let broadcast): broadcast.action != nil || broadcast.style == .celebration
             case .goalSuggestion: true
+            case .sendFailed(let canResend): canResend
             case .moved, .unlocked, .more: false
             }
         }
@@ -85,6 +90,38 @@ extension TodayModel {
         }
         guard !unlocks.isEmpty else { return }
         pendingNotices += unlocks.map { Notice(news: .unlocked($0)) }
+        Task { await showNextNotice() }
+    }
+
+    /// The posts the server refused while they went out late, in one banner that replaces any
+    /// told before: 重发 opens the oldest to change and send again. A 请假条 has no page to open,
+    /// so it is only told.
+    func tellRefused() {
+        let refused = store.takeRefused().map(\.pending)
+        guard !refused.isEmpty else { return }
+        failed += refused
+        announceFailed()
+    }
+
+    /// 重发: the oldest refused post that can be edited opens on the compose page with everything
+    /// it had; the rest are told again once the home is free. A 请假条 was told with it and goes.
+    func resendFirst() {
+        guard let index = failed.firstIndex(where: { $0.draft.kind != .disclaimer }) else { return }
+        let post = failed.remove(at: index)
+        failed.removeAll { $0.draft.kind == .disclaimer }
+        resend(post)
+        if !failed.isEmpty { announceFailed() }
+    }
+
+    private func announceFailed() {
+        let news = NoticeNews.sendFailed(canResend: failed.contains { $0.draft.kind != .disclaimer })
+        pendingNotices.removeAll { if case .sendFailed = $0.news { true } else { false } }
+        if case .sendFailed = notice?.news {
+            // Already on screen: it says the new count by itself; only its button may change.
+            if notice?.news != news { notice = Notice(news: news) }
+            return
+        }
+        pendingNotices.append(Notice(news: news))
         Task { await showNextNotice() }
     }
 
