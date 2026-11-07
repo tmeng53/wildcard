@@ -21,6 +21,7 @@ extension TodayStore {
 
     /// The coach's morning notes waiting for the member, from their squad (one squad a member).
     private func loadCoachNotes(in home: Home) async {
+        if openedNote == nil { openedNote = await backend.openedNote() }
         guard let found = try? await backend.coachNotes(in: [home.squad.id]) else { return }
         coachNotes = found.filter { !putAway.contains($0.id) }
         // A push tapped for a note no longer waiting doesn't open a later one by itself.
@@ -40,12 +41,22 @@ extension TodayStore {
         showsWaitingNote = false
         coachNotes.removeAll { $0.id == note.id }
         putAway.insert(note.id)
+        openedNote = note
         try? await backend.putAway(note)
     }
 
     /// Shows a note again from 通知, before any other waiting.
     public func showAgain(_ note: CoachMemberNote) {
         noteAgain = note
+    }
+
+    /// Today's note the member already put away, which the coach's card opens again (今天给你的消息);
+    /// nil while none is, or one is open or waiting, which a tap on the coach opens instead.
+    public var todaysNote: CoachMemberNote? {
+        guard let note = openedNote, coachNote == nil, coachNotes.isEmpty, note.squad == savedHome?.squad.id,
+            note.day == LocalDay(at: now(), in: CoachNote.timeZone)
+        else { return nil }
+        return note
     }
 
     /// Whether a note waits unread while none is open, for the dot on the coach's phone.

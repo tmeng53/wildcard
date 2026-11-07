@@ -111,3 +111,23 @@ private func memberNote(_ id: Int, in squad: SquadID, _ text: String) throws -> 
     #expect(today.coachNote == nil)
     #expect(await backend.putAway == [])
 }
+
+@MainActor @Test func theCoachsCardOpensTodaysNoteAgainOnceItWasPutAway() async throws {
+    let backend = ScriptedBackend()
+    await backend.set(notes: [try memberNote(1, in: squadID, "今天练力量")])
+    let today = store(backend, now: newYorkMorning)
+    await today.load()
+    // While it waits, a tap on the coach opens it, so the card offers nothing.
+    #expect(today.todaysNote == nil)
+    today.showWaitingNote()
+    #expect(today.todaysNote == nil)
+    await today.putAwayNote()
+    #expect(today.todaysNote?.text == "今天练力量")
+    // On a new launch, the phone still has it for the rest of its day, then it is gone.
+    let relaunched = store(backend, now: newYorkMorning.addingTimeInterval(3600))
+    await relaunched.load()
+    #expect(relaunched.todaysNote?.id == 1)
+    let tomorrow = store(backend, now: newYorkMorning.addingTimeInterval(24 * 3600))
+    await tomorrow.load()
+    #expect(tomorrow.todaysNote == nil)
+}

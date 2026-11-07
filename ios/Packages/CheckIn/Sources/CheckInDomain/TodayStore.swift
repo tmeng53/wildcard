@@ -63,6 +63,8 @@ public final class TodayStore {
     var noteAgain: CoachMemberNote?
     /// Whether the member opened the waiting note (a tap on its push).
     var showsWaitingNote = false
+    /// The newest note put away, from this launch or kept on the phone, for the coach's card.
+    var openedNote: CoachMemberNote?
     /// Notes put away on this phone since launch, kept out of a load that crossed the put-away.
     var putAway: Set<Int> = []
     /// What changed in the squad since the home shown before, not yet told (`takeNews()`).

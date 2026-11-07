@@ -3,7 +3,7 @@ import XCTest
 /// The coach's morning note never slides up over 今天 by itself (Tracy, 2026-11-07): with a note
 /// waiting, the home opens as usual, 打卡 is free, and the phone in 毛头's hand shows a dot and
 /// buzzes (the approved 毛头的手机来消息). A tap on 毛头 opens the note, and 收下 puts it away and
-/// takes the dot with it. It also opens from its row in 通知 (`NoticeBellUITests`) or its push.
+/// takes the dot with it; the coach's card then opens it again (今天给你的消息). It also opens from its row in 通知 (`NoticeBellUITests`) or its push.
 /// Screenshots are kept for review.
 @MainActor
 final class CoachNoteUITests: XCTestCase {
@@ -43,6 +43,14 @@ final class CoachNoteUITests: XCTestCase {
         expectation(for: gone, evaluatedWith: note)
         waitForExpectations(timeout: Self.wait)
         XCTAssertNotEqual(coach.value as? String, "有新消息", "the dot stayed after 收下")
+
+        // Put away, it opens again from the coach's card.
+        coach.tap()
+        let again = app.buttons["coachCard.memberNote"]
+        XCTAssertTrue(again.waitForExistence(timeout: Self.wait), "the coach's card doesn't offer today's message")
+        keepScreenshot(named: "107-coach-card-message")
+        again.tap()
+        XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "today's message didn't open again from the card")
     }
 
     private func keepScreenshot(named name: String) {

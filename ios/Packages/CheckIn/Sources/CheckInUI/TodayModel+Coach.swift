@@ -30,6 +30,9 @@ extension TodayModel {
         store.showAgain(note)
     }
 
+    /// Today's note the member already put away, which the coach's card opens again.
+    public var todaysNote: CoachMemberNote? { store.todaysNote }
+
     /// Whether the coach's phone shows its dot: a morning note waits and none is open.
     var coachHasNote: Bool { store.hasWaitingNote }
 
