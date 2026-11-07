@@ -4,7 +4,7 @@
 # runner here: on a public repo a fork's PR could run code on that machine.
 # macOS runners have no Docker, so the database and API checks run in a Linux job.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
-# Free macOS runners are few and shared by every PR, and one iOS run takes about 30 minutes, so
+# Free macOS runners are few and shared by every PR, and one iOS run takes three of them for about 40 minutes, so
 # no merge uses a Mac on its own. `ios` runs on a schedule, every 3 hours,
 # for what main changed since the last scheduled run (nothing when main didn't change), on a
 # manual run (Actions -> verify -> Run workflow) and on a PR carrying the `ios-ci` label; the
@@ -231,16 +231,22 @@ jobs:
       - run: scripts/ios-build.sh
 
   # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
-  # so reviewers and verifiers see every visible change without a Mac.
+  # so reviewers and verifiers see every visible change without a Mac. The suite runs in three
+  # parts on three Macs at once (scripts/ios-test.sh, SHARD), each building the app itself:
+  # about 40 minutes instead of 1h30 one after another (2026-11-07). Reproducing one test
+  # (only_testing) uses one Mac.
   ios:
     needs: changes
     if: >-
       !cancelled() && needs.changes.outputs.mac == 'true' && needs.changes.outputs.ios == 'true'
     runs-on: macos-26
-    # The UI tests grew past 75 minutes with the build and a retry (main's scheduled runs and PR
-    # runs were cut off before any screenshots uploaded, 2026-11-04); 120 leaves room until the
-    # suite is split across jobs.
-    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(inputs.only_testing && '[1]' || '[1, 2, 3]') }}
+    # One part is about 27 minutes of tests after a 12-minute build; the limit leaves room for a
+    # cold build and the retries.
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v5
         with:
@@ -250,20 +256,34 @@ jobs:
         env:
           PRINT_PREVIEWS: "1"
           ONLY_TESTING: ${{ inputs.only_testing }}
+          SHARD: ${{ !inputs.only_testing && format('{0}/3', matrix.shard) || '' }}
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          # Named after the commit the PR is at, not the merge commit GitHub tests.
-          name: ios-screenshots-${{ github.event.pull_request.head.sha || github.sha }}
+          name: ios-screenshots-${{ github.event.pull_request.head.sha || github.sha }}-part${{ matrix.shard }}
           path: build/ios/screenshots
           if-no-files-found: error
       - name: Upload test results on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-xcresult-${{ github.event.pull_request.head.sha || github.sha }}
+          name: ios-xcresult-${{ github.event.pull_request.head.sha || github.sha }}-part${{ matrix.shard }}
           path: build/ios/Wildcard.xcresult
+
+  # The parts' screenshots as one artifact, ios-screenshots-<sha>, the name verifiers look for.
+  ios-screenshots:
+    needs: ios
+    if: always() && needs.ios.result != 'skipped'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/upload-artifact/merge@v4
+        with:
+          # Named after the commit the PR is at, not the merge commit GitHub tests.
+          name: ios-screenshots-${{ github.event.pull_request.head.sha || github.sha }}
+          pattern: ios-screenshots-${{ github.event.pull_request.head.sha || github.sha }}-part*
+          delete-merged: true
 
   # Renders the character's clips on an iOS simulator through the player's own view and
   # uploads them, so reviewers see motion changes without a Mac.
