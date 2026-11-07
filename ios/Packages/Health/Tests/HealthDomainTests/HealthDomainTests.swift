@@ -54,11 +54,17 @@ private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920
     let swim = Workout(
         source: source, startedAt: start, endedAt: start, summary: WorkoutSummary(),
         series: WorkoutSeries(laps: [50, 48]))
+    let beats = [HeartRatePoint(seconds: 0, bpm: 120), HeartRatePoint(seconds: 60, bpm: 150)]
+    let run = Workout(
+        source: source, startedAt: start, endedAt: start, summary: WorkoutSummary(),
+        series: WorkoutSeries(heartRate: beats), route: ride.route)
     var sharing = HealthSharing()
-    sharing.route = false
+    #expect(sharing.keptTiles(of: run) == [.map, .chart])
     sharing.heartRate = false
-    #expect(sharing.keepsTile(of: ride) == false)
-    #expect(sharing.keepsTile(of: swim) == true)
+    #expect(sharing.keptTiles(of: run) == [.map])
+    sharing.route = false
+    #expect(sharing.keptTiles(of: ride) == [])
+    #expect(sharing.keptTiles(of: swim) == [.chart])
     sharing.laps = false
-    #expect(sharing.keepsTile(of: swim) == false)
+    #expect(sharing.keptTiles(of: swim) == [])
 }

@@ -8,7 +8,7 @@ import HealthKit
 /// Apple Health through HealthKit, read only: the only code that knows HealthKit. Each workout
 /// comes with the numbers Health has for its kind (a run's distance and pace, a ride's speed, a
 /// pool swim's laps, heart rate and effort for all), its route trimmed 200 m at each end and
-/// thinned, or its heart rate or lap times for the chart. Calories, weight and sleep are never
+/// thinned, and its heart rate or lap times for the chart. Calories, weight and sleep are never
 /// read. Its two lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple.
 public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // only thread-safe lets
     private let store: HKHealthStore
@@ -82,7 +82,8 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         }
         if kind.showsEffort, let effort = await effort(of: workout) { summary.effort = effort }
         let route = kind.hasRoute ? await route(of: workout) : nil
-        if route == nil, series == nil, let curve = await heartRate(during: workout) {
+        // With a route too, so a post can show the map and the heart rate (Tracy, 2026-11-07).
+        if series == nil, let curve = await heartRate(during: workout) {
             series = WorkoutSeries(heartRate: curve)
         }
         return ImportedWorkout(
