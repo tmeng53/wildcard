@@ -238,8 +238,8 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-coach")
     }
 
-    /// `-uitest-coach-note`: 毛头 also left me today's morning note (便条), which 今天 shows on
-    /// opening until 收下.
+    /// `-uitest-coach-note`: 毛头 also left me today's morning note (便条), waiting for me to open
+    /// it from 毛头's phone, 通知 or its push.
     static var coachNote: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitest-coach-note")
     }

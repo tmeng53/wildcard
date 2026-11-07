@@ -6434,7 +6434,7 @@ extension Components {
                 case at
             }
         }
-        /// The caller’s own newest morning note (便条) from the squad’s coach, for 今天 to show on the first open after it arrived; only the caller sees it. Left out when there is none from the last day and a half.
+        /// The caller’s own newest morning note (便条) from the squad’s coach, for 今天 to show when the caller opens it; only the caller sees it. Left out when there is none from the last day and a half, or while the caller’s `coach` push switch is off.
         ///
         /// - Remark: Generated from `#/components/schemas/CoachMemberNote`.
         public struct CoachMemberNote: Codable, Hashable, Sendable {

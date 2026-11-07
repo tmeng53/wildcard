@@ -2119,6 +2119,22 @@
           }
         }
       }
+    },
+    "有新消息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New message"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有新訊息"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

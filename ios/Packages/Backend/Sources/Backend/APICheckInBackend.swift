@@ -10,6 +10,8 @@ import OpenAPIRuntime
 public struct APICheckInBackend: CheckInBackend {
     private let api: WildcardAPI
     private let saved: URL
+    /// The newest morning note the member put away on this phone.
+    private let openedNoteFile: URL
     private let shared: SharedSquad?
     private let now: @Sendable () -> Date
     private let phoneZone: @Sendable () -> TimeZone
@@ -24,6 +26,7 @@ public struct APICheckInBackend: CheckInBackend {
     ) {
         self.api = api
         saved = directory.appending(path: "home.json")
+        openedNoteFile = directory.appending(path: "coach-note.json")
         self.shared = shared
         self.phoneZone = phoneZone
         self.now = now
@@ -146,7 +149,41 @@ public struct APICheckInBackend: CheckInBackend {
     }
 
     public func putAway(_ note: CoachMemberNote) async throws(CheckInError) {
+        // Kept first, so its coach's card opens it again even when the server can't be reached.
+        if let data = try? DeviceJSON.encoder.encode(OpenedCoachNote(note)) {
+            try? DeviceJSON.write(data, to: openedNoteFile)
+        }
         do { try await api.putAway(note) } catch { throw CheckInError(error) }
+    }
+
+    public func openedNote() async -> CoachMemberNote? {
+        guard let data = try? Data(contentsOf: openedNoteFile),
+            let kept = try? DeviceJSON.decoder.decode(OpenedCoachNote.self, from: data)
+        else { return nil }
+        return kept.note
+    }
+}
+
+/// The newest morning note the member put away on this phone. Stored JSON, so it carries a `version`.
+struct OpenedCoachNote: Codable {
+    let version: Int
+    let id: Int
+    let squad: SquadID
+    let day: LocalDay
+    let text: String
+    let coach: String
+    let coachName: String
+
+    init(_ note: CoachMemberNote) {
+        (version, id, squad, day, text) = (1, note.id, note.squad, note.day, note.text)
+        (coach, coachName) = (note.coach.id.rawValue, note.coach.name)
+    }
+
+    /// Nil for a copy this build can't read.
+    var note: CoachMemberNote? {
+        guard version == 1, let coach = CoachID(rawValue: coach) else { return nil }
+        return CoachMemberNote(
+            id: id, squad: squad, day: day, text: text, coach: CoachSpeaker(id: coach, name: coachName))
     }
 }
 
