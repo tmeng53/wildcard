@@ -35,12 +35,13 @@ extension TodayModel {
         let id = UUID()
 
         /// A broadcast's button never folds into 「还有新通知」, so it can still be tapped on 今天;
-        /// nor does a celebration, which is its own card.
+        /// nor does a celebration, which is its own card, nor a refused post, which 通知 doesn't
+        /// keep: it stays until it is tapped or swiped away.
         var hasButton: Bool {
             switch news {
             case .broadcast(let broadcast): broadcast.action != nil || broadcast.style == .celebration
             case .goalSuggestion: true
-            case .sendFailed(let canResend): canResend
+            case .sendFailed: true
             case .moved, .unlocked, .more: false
             }
         }
