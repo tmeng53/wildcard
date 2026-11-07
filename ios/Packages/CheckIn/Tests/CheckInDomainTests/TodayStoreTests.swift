@@ -203,8 +203,9 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(today.pending.isEmpty)
     #expect(today.refused.map(\.reason) == [.outOfTime])
     #expect(today.myStatus == .notCheckedIn)
-    today.dismissRefused()
+    #expect(today.takeRefused().map(\.pending.draft) == [run])
     #expect(today.refused.isEmpty)
+    #expect(today.takeRefused().isEmpty)
 }
 
 @MainActor @Test func aRefusalWhilePostingIsThrownAndNothingWaits() async throws {

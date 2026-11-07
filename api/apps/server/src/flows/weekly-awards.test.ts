@@ -31,8 +31,8 @@ import {
   createPostgresAwardsStore,
   createPostgresWeekStoryStore,
   createWeeklyAwards,
-  type LanguageModel,
 } from '@wildcard/weekly-awards';
+import type { LanguageModel } from '@wildcard/language-model';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -163,6 +163,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     aiConsented: (members) =>
       aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
     memes: () => Promise.resolve([]),
+    sportGlyphs: () => Promise.resolve([]),
   });
   const clock = () => now;
   const app = createApp({

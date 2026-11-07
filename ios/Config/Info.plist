@@ -2,10 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Keys the generated Info.plist can't set. Chinese first, English second. -->
+	<!-- Keys the generated Info.plist can't set. Simplified Chinese first, then Traditional, then English. -->
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>zh-Hans</string>
+		<string>zh-Hant</string>
 		<string>en</string>
 	</array>
 	<!-- Where the hosted backend is, from build settings: Release (TestFlight, the App Store)

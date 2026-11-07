@@ -122,6 +122,7 @@ const app = createApp({
       stories: createPostgresWeekStoryStore(db),
       aiConsented: (all) => Promise.resolve(all),
       memes: () => Promise.resolve([]),
+      sportGlyphs: () => Promise.resolve([]),
     }),
     clock: () => new Date(),
   },
@@ -221,6 +222,9 @@ async function profileOf(
 
 const shield = { shape: 'shield', colour: 'track', glyph: 'sun.max.fill' };
 const hexagon = { shape: 'hexagon', colour: 'pool', glyph: 'snowflake' };
+// The badges as the API shows them, with their colours' tones from the catalog.
+const shownShield = { ...shield, tone: '#E65345' };
+const shownHexagon = { ...hexagon, tone: '#079BB8' };
 
 /** Freezes a squad's 战报 for a week under the name it had then, as Sunday 8pm does. */
 async function freeze({
@@ -286,7 +290,7 @@ describe('/me/titles and /me/equipped-title', () => {
       titles: [
         {
           title: '早八战神',
-          badge: shield,
+          badge: shownShield,
           weeks: [
             { weekStart: '2026-10-26', speech: '又是七点', squadName: '早八战队' },
             { weekStart: '2026-10-12', speech: '天天七点' },
@@ -294,7 +298,7 @@ describe('/me/titles and /me/equipped-title', () => {
         },
         {
           title: '冷面杀手',
-          badge: hexagon,
+          badge: shownHexagon,
           weeks: [{ weekStart: '2026-10-19', speech: '一句话不说' }],
         },
       ],
@@ -414,7 +418,7 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       titles: [
         {
           title: '冷面杀手',
-          badge: hexagon,
+          badge: shownHexagon,
           weeks: [
             { weekStart: '2026-10-26' },
             { weekStart: '2026-10-19', speech: '一句话不说', squadName: '这个小队' },
@@ -444,7 +448,7 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       .parse(today.body).members;
     expect(members.find(({ member }) => member === mate.userId)?.title).toStrictEqual({
       title: '冷面杀手',
-      badge: hexagon,
+      badge: shownHexagon,
     });
     expect(members.find(({ member }) => member === me.userId)?.title).toBeUndefined();
 

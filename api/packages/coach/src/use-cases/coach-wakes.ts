@@ -33,6 +33,7 @@ import type {
   CoachCatalogStore,
   CoachHiringStore,
   CoachMemberFacts,
+  CoachMemes,
   CoachOccasions,
   CoachPhotoUrls,
   CoachSettingsStore,
@@ -120,6 +121,8 @@ export interface CoachWakesDependencies {
   readonly photoUrls?: CoachPhotoUrls;
   /** Without it the coach has no member stats or plans to look up. */
   readonly memberFacts?: CoachMemberFacts;
+  /** Without it the coach has no meme library to draw humour from. */
+  readonly memes?: CoachMemes;
   /** Without it the coach is told of no holiday or other moment. */
   readonly occasions?: CoachOccasions;
   /** Told each reply to a check-in once it is saved; the server tells its author. */
@@ -409,6 +412,7 @@ async function runWake(
         kind: wake.reason.kind,
         ...photosOf(deps.photoUrls, { week, wake }),
         ...factsFor(deps, { week, roster }),
+        ...(deps.memes === undefined ? {} : { memes: deps.memes }),
         noteTo,
         pastWeek: async (weeksAgo) =>
           weekText(

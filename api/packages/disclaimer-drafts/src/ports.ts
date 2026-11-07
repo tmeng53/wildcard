@@ -2,25 +2,7 @@ import type { z } from 'zod';
 
 import type { MemberId, PromptMeme } from './domain/draft-request.js';
 import type { DiceLines } from './domain/dice.js';
-import type { DraftSettings, ModelName } from './domain/settings.js';
-
-/**
- * A language model that answers in a set JSON shape, whoever provides it. Throws
- * `DisclaimerWriterUnavailableError` when it can't be reached, declines to answer, or answers
- * out of shape.
- */
-export interface LanguageModel {
-  answer<Reply>(request: {
-    /** Which model answers, as provider/model. */
-    readonly model: ModelName;
-    /** The standing instructions (a system prompt). */
-    readonly instructions: string;
-    /** What to answer. */
-    readonly prompt: string;
-    /** The shape of the answer. */
-    readonly reply: z.ZodType<Reply>;
-  }): Promise<Reply>;
-}
+import type { DraftSettings } from './domain/settings.js';
 
 /** Where the dice lines are kept: one value, and a log of every change. */
 export interface DiceLinesStore {

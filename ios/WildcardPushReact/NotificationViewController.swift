@@ -51,6 +51,8 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
         let hosting = UIHostingController(rootView: AnyView(content.environment(\.locale, AppLanguage.current.locale)))
         hosting.sizingOptions = .preferredContentSize
         hosting.view.backgroundColor = .clear
+        // The language it speaks, for UI tests to tell it from the system's own words.
+        hosting.view.accessibilityIdentifier = "pushReact.\(AppLanguage.current.rawValue)"
         addChild(hosting)
         hosting.view.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(hosting.view)

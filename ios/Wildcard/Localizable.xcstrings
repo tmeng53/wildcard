@@ -66,25 +66,25 @@
       }
     },
     "push.coach.note": {
-      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "comment": "Push notification (APNs loc-key); the API sends the coach's name and the note, which only the app shows, never the lock screen.",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@: %2$@"
+            "value": "%1$@ sent you a message"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@：%2$@"
+            "value": "%1$@给你发了一条消息"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@：%2$@"
+            "value": "%1$@給你發了一條訊息"
           }
         }
       }
