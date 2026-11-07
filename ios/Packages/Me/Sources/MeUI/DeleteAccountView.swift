@@ -24,7 +24,7 @@ struct DeleteAccountView: View {
                         .padding(.top, Space.l)
                         .padding(.bottom, Space.xs)
                     line(Text("外卡运动员和昵称会删掉", bundle: .module))
-                    line(Text("所有打卡、照片和请假条会删掉", bundle: .module))
+                    line(Text("你发过的动态和照片都会删掉", bundle: .module))
                     if let squadName = model.overview?.squadName {
                         line(Text("你会离开\(squadName)", bundle: .module))
                     }
