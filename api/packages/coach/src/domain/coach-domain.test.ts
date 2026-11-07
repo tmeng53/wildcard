@@ -324,7 +324,7 @@ describe('when the coach wakes', () => {
     ).toBe(1);
   });
 
-  it('keeps lasting things in memory, and a note says one thing', () => {
+  it('lets the coach pick its tools, keep memory any time, and say one thing per note', () => {
     const coach = Coach.parse({
       version: 2,
       id: 'nuannuan',
@@ -346,6 +346,7 @@ describe('when the coach wakes', () => {
     expect(instructions).toContain('听到过很久还成立的事');
     expect(instructions).toContain('一张便条只说一件事');
     expect(instructions).toContain('用记性，但别说出来。');
+    expect(instructions).toContain('做什么、用哪个工具，你自己判断。');
     // The old rule had every note add something from memory, which made notes say "I remember".
     expect(instructions).not.toContain('再加上记性里记着他的');
   });

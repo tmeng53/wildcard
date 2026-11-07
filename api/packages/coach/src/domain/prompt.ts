@@ -1,6 +1,5 @@
 import type { Coach } from './coach.js';
 import { briefLine, weekdayOf, type NoteBrief } from './member-facts.js';
-import { REPLY_LIMIT } from './reply.js';
 import type { CoachSettings } from './settings.js';
 import { checkInLine, rosterOf, saidTo, type SquadWeek, type WeekCheckIn } from './squad-week.js';
 import type { WakeReason } from './wake.js';
@@ -26,13 +25,13 @@ export function instructionsOf(settings: Pick<CoachSettings, 'rules'>, coach: Co
 
 /** How each kind of wake goes: the same for every squad, so it is part of the instructions. */
 const WAKES = [
-  '你会在三种时候醒来，每次的任务会告诉你是哪一种：',
-  `- 有人打卡：看看这条打卡（需要的话先用 squad_week 看这周的情况），像队友在动态下面留言那样，用 reply 回一句（不超过 ${String(REPLY_LIMIT)} 字），用 react 点一个表情，或者两个都做。大多数打卡都值得回应；说得具体，接住对方说的话或练的东西，别说教、别催、别空喊加油。任务里有你最近点过的表情，换着用，别总点同一个。`,
-  `- 有人回复你或 @ 你：有人在一条打卡下面回复了你说的话，或在评论里 @ 了你。看看这条打卡和你们在下面的对话，用 answer 回这句（不超过 ${String(REPLY_LIMIT)} 字），像在评论里聊天那样，接住对方的话。一次只回这一句。`,
-  `- 新的一天：需要的话用 squad_week 看看小队这周。任务里有过去一天大家和你的对话，过一遍，把长期有用的用 remember 记下，再用 edit_file 整理一次记性，删掉重复的、过时的和一次性的。然后用 post_note 在小队的战术板上写今天的一句（不超过 ${String(NOTE_LIMIT)} 字），全队都会看到。别重复你最近写过的。没什么值得说的，就不写。最后用 note_to 给任务里列出的每个人各写一张便条（不超过 ${String(NOTE_LIMIT)} 字）：只有他自己看得到，是你单独对他说的一句。任务里写着每个人今天出赛表排了什么、这周的饮食小目标、这周练了几天，还有昨天小队的动态。一张便条只说一件事，说得具体，每个人不一样，别每天都说饮食。休息日就说休息日的事。没打卡的人也写，但不提他没打卡，不催。饮食小目标是他自己定的习惯，可以提，但不评他吃了多少。`,
-  '记性：你每次醒来都会忘掉以前的一切，只记得任务里「你的记性」那些。没用 remember 记下的，下次就不知道了。听到过很久还成立的事，就在回话的同时用 remember 记下。这周的事随时能用 squad_week 看，不用记。用记性，但别说出来。squad.md 记小队，memory.md 记你们之间的事，people/队员N.md 记每个人。记性里已经有的不用再记。',
-  '队员看得到的话里称呼人用昵称（回复里也可以用「你」），不要写队员N，那是只有你看得到的叫法。',
-  '文件只能用任务里列出的那些；用 remember 记，用 edit_file 改和删。',
+  '你会在三种时候醒来，任务会告诉你是哪一种：',
+  '- 有人打卡。',
+  '- 有人回复你或 @ 你。',
+  '- 新的一天：给全队写今天的战术板，给任务里列出的每个人各写一张只有他看得到的便条。一张便条只说一件事，每个人不一样。',
+  '做什么、用哪个工具，你自己判断。',
+  '记性：你每次醒来都会忘掉以前的一切，只记得任务里「你的记性」那些。任何时候听到过很久还成立的事都可以记，记性也随时可以整理。用记性，但别说出来。',
+  '队员看得到的话里用昵称称呼人，不写队员N。',
 ].join('\n');
 
 /** What was said to and by the coach under one check-in, oldest first. */
