@@ -193,11 +193,9 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(Ending(done: 19, plan: 22).finale(castSize: 5) == .warmup)
 }
 
-@Test func theEndingCountsWhatIsMissingAndFillsItsBarToFull() throws {
+@Test func theEndingHitsItsPlanAndFillsItsBarToFull() throws {
     #expect(Ending(done: 19, plan: 22).isHit == false)
-    #expect(Ending(done: 19, plan: 22).shortBy == 3)
     #expect(Ending(done: 23, plan: 22).isHit)
-    #expect(Ending(done: 23, plan: 22).shortBy == 0)
     #expect(Ending(done: 23, plan: 22).fraction == 1)
     #expect(Ending(done: 11, plan: 22).fraction == 0.5)
 }

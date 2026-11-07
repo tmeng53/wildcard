@@ -1675,18 +1675,18 @@
         }
       }
     },
-    "本周我的训练": {
+    "我的一周": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "My training this week"
+            "value": "My week"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "本週我的訓練"
+            "value": "我的一週"
           }
         }
       }
@@ -1847,22 +1847,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "游泳"
-          }
-        }
-      }
-    },
-    "游泳 1 · 跑步 1": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Swim 1 · Run 1"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "游泳 1 · 跑步 1"
           }
         }
       }
