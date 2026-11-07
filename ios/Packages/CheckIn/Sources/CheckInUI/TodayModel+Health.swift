@@ -13,8 +13,11 @@ extension TodayModel {
         return health.today(day, in: timeZone, posted: store.postedWorkouts)
     }
 
-    /// The workout the home's card offers: today's newest not posted yet.
-    var workoutToPost: ImportedWorkout? { todaysWorkouts.newestToPost }
+    /// The workout the home's card offers: today's newest not posted or put away yet.
+    var workoutToPost: ImportedWorkout? { todaysWorkouts.newestToPost(skipping: health?.putAway ?? []) }
+
+    /// Takes the home card's workout off it; 打卡 › 训练 still offers it.
+    func putAway(_ workout: ImportedWorkout) { health?.putAway(workout.id) }
 
     /// The compose page for a new post of `kind`; a 训练 from the home's card starts from `workout`.
     func newPost(_ kind: CheckInKind, from workout: ImportedWorkout?) -> ComposeModel {

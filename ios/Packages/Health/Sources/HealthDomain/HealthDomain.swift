@@ -100,9 +100,9 @@ extension [ImportedWorkout] {
 }
 
 extension [TodaysWorkout] {
-    /// What the home's card offers: the newest not posted yet.
-    public var newestToPost: ImportedWorkout? {
-        first { !$0.isPosted }?.imported
+    /// What the home's card offers: the newest neither posted nor put away from the card.
+    public func newestToPost(skipping putAway: Set<WorkoutSource> = []) -> ImportedWorkout? {
+        first { !$0.isPosted && !putAway.contains($0.imported.id) }?.imported
     }
 }
 
