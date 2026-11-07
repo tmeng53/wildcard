@@ -274,6 +274,25 @@ describe('when the coach wakes', () => {
         '你的记性（你只记得这些）：\n还是空的：memory.md',
       ].join('\n\n'),
     );
+    // A post with photos: the coach is told it hasn't seen them, so it looks before answering
+    // what they show instead of guessing from the words (and only when it can look).
+    const withPhotos: SquadWeek = {
+      ...week,
+      checkIns: week.checkIns.map((each) =>
+        each.id === 'c1' ? { ...each, photos: ['m/a.jpg', 'm/b.jpg'] } : each,
+      ),
+    };
+    const asked = {
+      reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' },
+      week: withPhotos,
+      files: new Map(),
+      recentNotes: [],
+      thread: { said: [{ member: mia, text: '你看看我吃了啥', answering: true }] },
+    } as const;
+    expect(taskOf({ ...asked, canSeePhotos: true })?.split('\n\n')).toContain(
+      '这条打卡有 2 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。',
+    );
+    expect(taskOf(asked)).not.toContain('look_at_photos');
     // On a holiday the coach is told, after the talk and before its files.
     expect(
       taskOf({
