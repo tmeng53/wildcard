@@ -16,7 +16,7 @@ final class ShoppingStreetUITests: XCTestCase {
         XCTAssertGreaterThan(enter.minY, map.maxY, "进店 isn't under the map")
         // The storefronts take the page's spare height, so no wide gap is left above the counter.
         let sports = app.descendants(matching: .any)["street.sports"].frame
-        XCTAssertLessThan(sports.minY - map.maxY, 80, "a gap is left over the counter: \(map), \(sports)")
+        XCTAssertLessThan(sports.minY - map.maxY, 48, "a gap is left over the counter: \(map), \(sports)")
     }
 
     func testShoppingStreet() {

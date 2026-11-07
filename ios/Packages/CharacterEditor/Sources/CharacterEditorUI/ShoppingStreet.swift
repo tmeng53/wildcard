@@ -123,14 +123,14 @@ public struct ShoppingStreetPage: View {
 }
 
 extension View {
-    /// Keeps `spare` at the height the scroll view shows below its content (the visible height
-    /// less its insets, the 进店 pinned under it included, less the content), so a page that
-    /// grows by it just fills the screen; nothing on a phone too short for the content, which
-    /// then scrolls. At most `StoreStreet.maxSpare`, so a big phone doesn't stretch the street.
+    /// Keeps `spare` at the height the scroll view shows below its content (its container, which
+    /// is its bounds less its insets, the bar and the 进店 pinned under it included, less the
+    /// content), so a page that grows by it just fills the screen; nothing on a phone too short
+    /// for the content, which then scrolls. At most `StoreStreet.maxSpare`, so a big phone doesn't
+    /// stretch the street.
     fileprivate func fillingSpare(_ spare: Binding<Double>, when active: Bool) -> some View {
         onScrollGeometryChange(for: Double.self) { geometry in
-            geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom
-                - geometry.contentSize.height
+            geometry.containerSize.height - geometry.contentSize.height
         } action: { _, gap in
             guard active else { return }
             // The content already holds the last spare, so the gap is what is still left (or,
