@@ -100,7 +100,7 @@ final class SignUpUITests: XCTestCase {
         XCTAssertLessThanOrEqual(rest.frame.maxY, app.buttons["week.done"].frame.minY, "上场 covers the choices")
         XCTAssertGreaterThanOrEqual(app.buttons["week.day.0"].frame.height, 38, "a day is as tall as the board's row")
         XCTAssertTrue(app.staticTexts["我的每周计划"].exists, "step 4 isn't titled 我的每周计划")
-        XCTAssertEqual(app.buttons["week.done"].label, "上场", "a joiner doesn't go 上场 from step 4")
+        XCTAssertEqual(app.buttons["week.done"].label, "上场", "a joiner doesn't go 上场 from step 5")
         XCTAssertTrue(app.buttons["week.day.0"].isEnabled, "Monday can't change on the 每周模板")
         rest.tap()
         settle()
