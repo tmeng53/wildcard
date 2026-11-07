@@ -5458,10 +5458,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TitleBadge/shape`.
             public var shape: Swift.String
-            /// Its colour, by the scene whose colour it takes: `pool`, `track`, `gym`, `tennis` or `climbing` today. An app that doesn’t know one draws `gym`.
+            /// Its colour, by its id in the badge catalog (`track`). Builds before `tone` paint it by the scene of that id, and the gym’s for any other.
             ///
             /// - Remark: Generated from `#/components/schemas/TitleBadge/colour`.
             public var colour: Swift.String
+            /// Its colour itself, as #RRGGBB, from the badge catalog: what the app paints it in. Left out by older servers and for a colour the catalog gives no tone, which the app then paints like `colour` for builds before `tone`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TitleBadge/tone`.
+            public var tone: Swift.String?
             /// The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.
             ///
             /// - Remark: Generated from `#/components/schemas/TitleBadge/glyph`.
@@ -5470,20 +5474,24 @@ extension Components {
             ///
             /// - Parameters:
             ///   - shape: The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today. An app that doesn’t know one draws a circle.
-            ///   - colour: Its colour, by the scene whose colour it takes: `pool`, `track`, `gym`, `tennis` or `climbing` today. An app that doesn’t know one draws `gym`.
+            ///   - colour: Its colour, by its id in the badge catalog (`track`). Builds before `tone` paint it by the scene of that id, and the gym’s for any other.
+            ///   - tone: Its colour itself, as #RRGGBB, from the badge catalog: what the app paints it in. Left out by older servers and for a colour the catalog gives no tone, which the app then paints like `colour` for builds before `tone`.
             ///   - glyph: The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.
             public init(
                 shape: Swift.String,
                 colour: Swift.String,
+                tone: Swift.String? = nil,
                 glyph: Swift.String
             ) {
                 self.shape = shape
                 self.colour = colour
+                self.tone = tone
                 self.glyph = glyph
             }
             public enum CodingKeys: String, CodingKey {
                 case shape
                 case colour
+                case tone
                 case glyph
             }
         }
