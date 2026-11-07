@@ -58,6 +58,8 @@ final class ShoppingStreetUITests: XCTestCase {
         let backX = back.frame.minX
         warmup.tap()
         XCTAssertTrue(info.waitForExistence(timeout: 30), "WARM-UP didn't open again")
+        // A swipe while the push is still sliding in lands on the rack, not the back gesture.
+        settle()
         let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5))
         from.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)))
         XCTAssertTrue(warmup.waitForExistence(timeout: 30), "a swipe right didn't leave the store")
