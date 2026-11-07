@@ -26,28 +26,28 @@ public struct TabBarItem<ID: Hashable>: Identifiable {
 /// ink, never the scene's color; the screens inside keep the system's tint. Each screen keeps to
 /// its safe area, which the system raises above the bar, so none of them measures the bar.
 /// `showsBar` false hides the bar (a tab's full-screen step). A tab in `dotted` carries a small
-/// brand dot, no number: something new there since the member last looked. Tapping the tab
-/// already open calls `reselected` with it, for the screen to go back to its root, as iOS's own
-/// apps do.
+/// brand dot, no number: something new there since the member last looked. `backToRoot` is
+/// called with the tab left and with the open tab tapped again, for it to close the pages pushed
+/// over it, as iOS's own apps do, so every tab opens from the bar on its own page.
 public struct AppTabs<ID: Hashable, Content: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let items: [TabBarItem<ID>]
     @Binding private var selection: ID
     private let showsBar: Bool
     private let dotted: Set<ID>
-    private let reselected: (ID) -> Void
+    private let backToRoot: (ID) -> Void
     private let content: (ID) -> Content
 
     public init(
         _ items: [TabBarItem<ID>], selection: Binding<ID>, showsBar: Bool = true, dotted: Set<ID> = [],
-        reselected: @escaping (ID) -> Void = { _ in },
+        backToRoot: @escaping (ID) -> Void = { _ in },
         @ViewBuilder content: @escaping (ID) -> Content
     ) {
         self.items = items
         _selection = selection
         self.showsBar = showsBar
         self.dotted = dotted
-        self.reselected = reselected
+        self.backToRoot = backToRoot
         self.content = content
         Self.paintDots()
     }
@@ -58,7 +58,7 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
         Binding(
             get: { selection },
             set: { tab in
-                if tab == selection { reselected(tab) } else { selection = tab }
+                if tab == selection { backToRoot(tab) } else { selection = tab }
             })
     }
 
@@ -91,6 +91,7 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
         }
         .tint(Color(role: .fgDefault, in: theme))
         .haptic(.pick, trigger: selection)
+        .onChange(of: selection) { left, _ in backToRoot(left) }
     }
 }
 

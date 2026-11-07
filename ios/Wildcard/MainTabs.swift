@@ -93,13 +93,12 @@ struct MainTabs: View {
     }
 
     var body: some View {
-        AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: dots, reselected: backToRoot) { tab in
+        AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: dots, backToRoot: backToRoot) { tab in
             // Only the tab on screen has its screen, made anew on each visit, as every tab expects:
             // a hidden tab kept alive would hold a scroll or a picked day nobody sees.
             if tab == selection { screen(tab) }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
-        .onChange(of: selection) { left, _ in backToRoot(left) }
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.
