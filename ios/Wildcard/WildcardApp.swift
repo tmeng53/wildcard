@@ -75,7 +75,7 @@ struct WildcardApp: App {
     init() {
         CrashReports.start()
         // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
-        AppLanguage.current.share(in: AppGroup.defaults)
+        AppLanguage.current.share(in: AppGroup.defaults, folder: AppGroup.directory)
         // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
         AppModel.show(CatalogClient.bundled)
         // Only now: the editor's street is the catalog's starter street, which `show` just put out.
@@ -221,7 +221,7 @@ struct WildcardApp: App {
                 .id(language)
                 .onReceive(NotificationCenter.default.publisher(for: AppLanguage.didChange)) { _ in
                     language = AppLanguage.current
-                    language.share(in: AppGroup.defaults)
+                    language.share(in: AppGroup.defaults, folder: AppGroup.directory)
                 }
                 .dismissesKeyboardOnTapOutside()
         }
