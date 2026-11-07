@@ -7,7 +7,8 @@ import SwiftUI
 
 /// 球衣号码: the member picks the number on their player card, 00 to 99, on a wheel under the
 /// number as the card prints it. Squadmates may wear the same one. It opens from the character
-/// editor's 球衣号码, which the app passes this page to.
+/// editor's 球衣号码, which the app passes this page to, pushed over the editor; `close` goes back
+/// once the number saved.
 public struct JerseyNumberView: View {
     @Bindable private var model: MeModel
     private let close: () -> Void
@@ -26,13 +27,10 @@ public struct JerseyNumberView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
-                .accessibilityIdentifier("number.back")
             Text("球衣号码", bundle: .module)
                 .typeStyle(TypeRamp.largeTitle)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .accessibilityAddTraits(.isHeader)
-                .padding(.top, Space.s)
             Text(verbatim: picked.text)
                 .typeStyle(TypeRamp.scoreHero)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -74,6 +72,7 @@ public struct JerseyNumberView: View {
         .background(Color(role: .bgCanvas, in: theme))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("number.page")
+        .pushedPage()
     }
 
     /// Every number the API takes, 00 to 99.

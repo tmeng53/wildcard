@@ -6,7 +6,7 @@ import type {
   SquadId,
 } from '../domain/check-in.js';
 import type { DayRange, Unshared } from '../domain/day-range.js';
-import type { CheckInTotals, TrainedCheckIn } from '../domain/totals.js';
+import type { CheckInTotals, TrainedCheckIn, TrainingDay } from '../domain/totals.js';
 import type { WeekStart } from '../domain/weekly-plan.js';
 import type { Comment, CommentId } from '../domain/comment.js';
 import type { Reaction } from '../domain/reaction.js';
@@ -91,6 +91,12 @@ export interface CheckIns {
     readonly member: MemberId;
     readonly since: Date;
   }): Promise<TrainedCheckIn[]>;
+  /** The member's 练了 for a range of days (训练记录 on 我), by day, the earliest made first. */
+  trainings(query: {
+    readonly member: MemberId;
+    readonly from: string;
+    readonly to: string;
+  }): Promise<TrainingDay[]>;
   react(input: ReactToCheckInInput): Promise<Reacted>;
   removeReaction(input: { readonly checkIn: CheckInId; readonly member: MemberId }): Promise<void>;
   listReactions(input: {
@@ -184,6 +190,7 @@ export function createCheckIns(deps: {
     listMyPosts: (input) => listMyPosts(deps, input),
     totals: (member) => deps.store.totals(member),
     trainedSince: (query) => deps.store.trainedSince(query),
+    trainings: (query) => deps.store.trainingsForMember(query),
     react: (input) => reactToCheckIn(deps, input),
     removeReaction: (input) =>
       removeResponse({ ...deps, remove: (...at) => deps.reactions.remove(...at) }, input),

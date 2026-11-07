@@ -7,25 +7,31 @@ import OnboardingDomain
 import SportsUI
 import SwiftUI
 
-/// 本周目标, step 4: the member's 每周模板 as a poster, each day a sport picked in the step before
-/// or 休息, with a line saying it is the template they can change later in 出赛表. Tap a day,
+/// 我的每周计划, step 4: the member's typical week (the 每周模板 in code) as a poster, each day a
+/// sport picked in the step before or 休息 (Tracy, 2026-11-06: no explaining line, and the name
+/// is 我的每周计划 wherever it shows). Tap a day,
 /// then what it is under the poster, and the next day is selected; every day can change, since
 /// it is the typical week, which this week follows from today. Giving a day a sport puts the
 /// character on the poster into that sport's kit and move, as in the step before.
 struct WeekStep: View {
     let model: SignUpModel
-    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        StepPage(step: .week, title: Text("本周目标", bundle: .module), character: nil, onBack: model.back) {
+        StepPage(step: .week, title: Text("我的每周计划", bundle: .module), character: nil, onBack: model.back) {
             if let week = model.week {
                 VStack(alignment: .leading, spacing: Space.m) {
+                    // The squad's goal the poster starts from (方案 B, Tracy 2026-11-06): its
+                    // training days are the squad's 人均 N 天, which the member may change. It takes
+                    // the place of the line that explained the step, so it stays as slim: the
+                    // small tag, close over the poster, keeping the day's choices clear of 上场.
                     VStack(alignment: .leading, spacing: Space.xs) {
-                        Text("这就是你的每周模板，以后可以在出赛表里改", bundle: .module)
-                            .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
-                            .fixedSize(horizontal: false, vertical: true)
-                            .accessibilityIdentifier("week.note")
+                        if let joined = model.joined {
+                            Tag(
+                                Text("小队目标 · 人均 \(joined.daysPerMember) 天", bundle: .module),
+                                systemImage: "person.3.fill", style: .ink, size: .small
+                            )
+                            .accessibilityIdentifier("week.squadGoal")
+                        }
                         PlanPoster(model: model, week: week)
                     }
                     DayChoices(model: model, week: week)
@@ -34,7 +40,9 @@ struct WeekStep: View {
         } actions: {
             FailureLine(failure: model.failure)
             StepButton(
-                title: Text("上场", bundle: .module), isWorking: model.isWorking, isEnabled: model.week != nil,
+                // Whoever made the squad picks its scene next, so only a joiner goes 上场 from here.
+                title: model.madeTheSquad ? Text("下一步", bundle: .module) : Text("上场", bundle: .module),
+                isWorking: model.isWorking, isEnabled: model.week != nil,
                 action: model.finishWeek
             )
             .accessibilityIdentifier("week.done")
@@ -70,7 +78,7 @@ private struct PlanPoster: View {
     var body: some View {
         WeekPoster(
             title: model.nickname,
-            heading: .named(Text("每周模板", bundle: .module), systemImage: WeekPosterHeading.templateSymbol),
+            heading: .named(Text("我的每周计划", bundle: .module), systemImage: WeekPosterHeading.templateSymbol),
             layout: .card,
             fill: tone.fill, ink: tone.onFill
         ) {

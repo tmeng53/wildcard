@@ -3,19 +3,20 @@ import DesignSystem
 import SwiftUI
 
 /// One day: its circle over its name. Today's name is ink and heavier; the picked day's sits in
-/// an ink capsule.
+/// an ink capsule. `compact`, in the folded squad capsule, draws it smaller and names today 今天.
 struct DayCircle: View {
     @Environment(\.sceneTheme) private var theme
     let status: WeekDayStatus
     let isToday: Bool
     let isPicked: Bool
     let weekday: Int
+    var compact = false
 
     var body: some View {
-        VStack(spacing: Space.xxs) {
+        VStack(spacing: compact ? SquadCardMetrics.compactDayGap : Space.xxs) {
             circle
-                .frame(width: SquadCardMetrics.day, height: SquadCardMetrics.day)
-            Self.name(weekday)
+                .frame(width: diameter, height: diameter)
+            label
                 .typeStyle(isToday || isPicked ? TypeRamp.tabSelected : TypeRamp.tab)
                 .foregroundStyle(Color(role: isPicked ? .bgCanvas : isToday ? .fgDefault : .fgMuted, in: theme))
                 .frame(minWidth: SquadCardMetrics.pick, minHeight: SquadCardMetrics.pick - 2)
@@ -28,31 +29,40 @@ struct DayCircle: View {
         .accessibilityValue(value)
     }
 
+    private var diameter: Double { compact ? SquadCardMetrics.compactDay : SquadCardMetrics.day }
+
+    /// How much smaller a compact day draws its glyphs.
+    private var scale: Double { diameter / SquadCardMetrics.day }
+
+    private var label: Text {
+        compact && isToday ? Text("今天", bundle: .module) : Self.name(weekday)
+    }
+
     @ViewBuilder private var circle: some View {
         switch status {
         case .trained(let symbol):
             Image(systemName: symbol ?? "checkmark")
-                .font(.system(size: SquadCardMetrics.dayGlyph, weight: .bold))
+                .font(.system(size: SquadCardMetrics.dayGlyph * scale, weight: .bold))
                 .foregroundStyle(Color(role: .fgOnAccent, in: theme))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(role: .bgAccent, in: theme), in: Circle())
                 .overlay(alignment: .bottomTrailing) { if symbol != nil { checkBadge } }
         case .excused:
             Text("假", bundle: .module)
-                .typeStyle(TypeRamp.footnoteEmphasis)
+                .typeStyle(compact ? TypeRamp.tabSelected : TypeRamp.footnoteEmphasis)
                 .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(role: .bgSubtle, in: theme), in: Circle())
         case .restDay:
             Image(systemName: "moon.fill")
-                .font(.system(size: SquadCardMetrics.dayGlyph * 0.85))
+                .font(.system(size: SquadCardMetrics.dayGlyph * 0.85 * scale))
                 .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(role: .bgSubtle, in: theme), in: Circle())
         case .planned(let symbol):
             ring.overlay {
                 Image(systemName: symbol)
-                    .font(.system(size: SquadCardMetrics.dayGlyph, weight: .semibold))
+                    .font(.system(size: SquadCardMetrics.dayGlyph * scale, weight: .semibold))
                     .foregroundStyle(Color(role: .fgAccent, in: theme))
             }
         case .open: ring
@@ -62,9 +72,9 @@ struct DayCircle: View {
     /// The small check that tells a done day from a planned one when both show the sport.
     private var checkBadge: some View {
         Image(systemName: "checkmark")
-            .font(.system(size: SquadCardMetrics.badgeGlyph, weight: .heavy))
+            .font(.system(size: SquadCardMetrics.badgeGlyph * scale, weight: .heavy))
             .foregroundStyle(Color(role: .fgAccent, in: theme))
-            .frame(width: SquadCardMetrics.badge, height: SquadCardMetrics.badge)
+            .frame(width: SquadCardMetrics.badge * scale, height: SquadCardMetrics.badge * scale)
             .background(Color(role: .fgOnAccent, in: theme), in: Circle())
             .offset(x: 3, y: 3)
     }

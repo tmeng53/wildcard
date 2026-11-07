@@ -119,11 +119,12 @@ public enum SquadCardPage: Int, CaseIterable, Sendable, Hashable {
 /// The card on the home scene, swiped between two pages of the same height: the squad's week
 /// (score, bar, everyone's rings in one row) and my week (my count, Monday to Sunday, and the
 /// picked day's line: what I trained and my meals; tapping a day picks it, today until then).
-/// One white card straight on the scene, no shadow: a swipe moves only what is inside it, and two
-/// dots at its foot say which page shows; tapping one goes there. The caller keeps `page`, so the card reopens on
-/// the page it was left on, and `pickedDay` (an index in `MyWeek.days`; nil for today). A
-/// `footer` (the evening's 今日赛况 tag) is the squad page's last row;
-/// the page keeps its height by drawing its rows closer.
+/// One card of scene glass straight on the scene, no shadow: a swipe moves only what is inside it,
+/// and two dots at its foot say which page shows; tapping one goes there. Given `collapses`, a
+/// grabber under the dots, or a swipe up, folds it into `SquadCapsule`. The caller keeps `page`,
+/// so the card reopens showing the page it was left on, and `pickedDay` (an index in
+/// `MyWeek.days`; nil for today). A `footer` (the evening's 今日赛况 tag) is the squad page's last
+/// row; the page keeps its height by drawing its rows closer.
 public struct SquadCard<Avatar: View, Footer: View>: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -134,6 +135,10 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     private let avatar: (SquadMember) -> Avatar
     private let footer: Footer?
     private var openSquad: (() -> Void)?
+    private var collapse: (() -> Void)?
+    private var morph: GlassMorph?
+    /// How far a swipe up has lifted the card, while the finger is down.
+    @State private var lift = 0.0
 
     public init(
         squad: SquadWeek, mine: MyWeek, page: Binding<SquadCardPage>, pickedDay: Binding<Int?> = .constant(nil),
@@ -148,36 +153,78 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     }
 
     public var body: some View {
+        let anchor: UnitPoint = page == .squad ? .leading : .trailing
         VStack(spacing: 0) {
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
                     SquadPage(squad: squad, avatar: avatar, footer: footer, openSquad: openSquad)
-                        .pageFrame()
+                        .squadCardPage()
                         .id(SquadCardPage.squad)
                     MyWeekPage(mine: mine, pickedDay: $pickedDay)
-                        .pageFrame()
+                        .squadCardPage()
                         .id(SquadCardPage.mine)
                 }
-                // Both pages as tall as the taller one.
-                .fixedSize(horizontal: false, vertical: true)
+                .fixedSize(horizontal: false, vertical: true)  // Both pages as tall as the taller.
                 .scrollTargetLayout()
             }
             .scrollTargetBehavior(.paging)
             .scrollPosition(id: pagePosition)
+            .defaultScrollAnchor(anchor, for: .initialOffset)  // Reopened, it shows `page`,
+            .defaultScrollAnchor(anchor, for: .sizeChanges)  // also while its glass grows.
             .scrollIndicators(.hidden)
             PageDots(page: $page)
-                .padding(.bottom, Space.xs)
+                .padding(.bottom, Space.xs).zIndex(1)  // Over the grabber's tap area, which reaches up here.
+            if let collapse {
+                Grabber(label: Text("收起小队卡片", bundle: .module), action: collapse)
+                    .padding(.bottom, Space.xs)
+                    .accessibilityIdentifier("squadcard.collapse")
+            }
         }
-        .background(Color(role: .bgCanvas, in: theme))
-        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        .clipShape(shape)
+        .sceneGlass(in: shape, theme: theme, morph: morph)
+        .offset(y: lift)
+        .simultaneousGesture(foldUp, including: collapse == nil ? .subviews : .all)
         .padding(.horizontal, Space.pageMargin)
         .accessibilityElement(children: .contain)
+    }
+
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+    }
+
+    /// A swipe up lifts the card a little against the finger and, past `SquadCardMetrics.fold`,
+    /// folds it; sideways swipes stay the pages'.
+    private var foldUp: some Gesture {
+        DragGesture(minimumDistance: SquadCardMetrics.dragStart)
+            .onChanged { value in
+                guard value.isVertical else { return }
+                lift = min(0, value.translation.height) * SquadCardMetrics.rubber
+            }
+            .onEnded { value in
+                let folds = value.isVertical && value.translation.height < -SquadCardMetrics.fold
+                withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { lift = 0 }
+                if folds { collapse?() }
+            }
     }
 
     /// The squad's name gets a chevron and opens `action` (我的小队) when tapped.
     public func opensSquad(_ action: @escaping () -> Void) -> Self {
         var card = self
         card.openSquad = action
+        return card
+    }
+
+    /// A grabber under the page dots, and a swipe up, fold the card; `action` folds it.
+    public func collapses(_ action: @escaping () -> Void) -> Self {
+        var card = self
+        card.collapse = action
+        return card
+    }
+
+    /// The card's glass morphs into the glass with the same id, its folded capsule.
+    public func morphs(_ morph: GlassMorph) -> Self {
+        var card = self
+        card.morph = morph
         return card
     }
 
@@ -203,46 +250,6 @@ extension SquadCard where Footer == EmptyView {
         self.avatar = avatar
         footer = nil
     }
-}
-
-extension View {
-    /// A page of the squad card: the card's whole width, the same height on both pages, with
-    /// the card's padding except at its foot, where the dots sit.
-    fileprivate func pageFrame() -> some View {
-        frame(
-            maxWidth: .infinity, minHeight: SquadCardMetrics.pageContent, maxHeight: .infinity, alignment: .topLeading
-        )
-        .padding([.top, .horizontal], Space.cardPadding)
-        .padding(.bottom, Space.xs)
-        .containerRelativeFrame(.horizontal)
-    }
-}
-
-/// Sizes that belong to the squad card alone.
-enum SquadCardMetrics {
-    /// Inside each page's padding: 186 tall with the card's padding, on both pages; the dots'
-    /// row adds its own height under them.
-    static let pageContent: Double = 186 - 2 * Space.cardPadding
-    /// Between rings: eight 38-point rings fit a 358-point card.
-    static let ringSpacing: Double = 3
-    /// On a narrower phone (375 points), eight rings shrink to fit: 32-point rings, 1 apart.
-    static let compactAvatar: Double = Sizing.characterHead - 6
-    static let compactRingSpacing: Double = 1
-    /// With 今天 before them on a 375-point phone, eight rings shrink a little more.
-    static let narrowAvatar: Double = Sizing.characterHead - 10
-    /// Between the goal's day cells; past 40 cells they sit closer.
-    static let cellSpacing: Double = 2
-    static let denseCellSpacing: Double = 1
-    /// The second page's day circles.
-    static let day: Double = 30
-    static let dayGlyph: Double = 14
-    static let badge: Double = 13
-    static let badgeGlyph: Double = 7
-    /// Today's circle is drawn in ink, a little heavier than a planned day's hairline ring.
-    static let todayStroke: Double = 2
-    /// The picked day's capsule behind its name.
-    static let pick: Double = 20
-    static let dot: Double = 6
 }
 
 /// A big number with its label and title on the left, as both pages open. Given `open`, the

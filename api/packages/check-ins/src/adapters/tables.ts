@@ -86,6 +86,20 @@ export interface CheckInSquads {
   squad_id: string;
 }
 
+export interface CheckInWorkouts {
+  chart_position: number | null;
+  check_in_id: string;
+  ended_at: Timestamp;
+  member_id: string;
+  provider: string;
+  provider_workout_id: string;
+  route: Json | null;
+  series: Json | null;
+  started_at: Timestamp;
+  summary: Json;
+  tile_position: number | null;
+}
+
 export interface FuelGoalEvents {
   at: Generated<Timestamp>;
   id: Generated<Int8>;
@@ -141,6 +155,7 @@ export interface DB {
   check_in_photos: CheckInPhotos;
   check_in_reactions: CheckInReactions;
   check_in_squads: CheckInSquads;
+  check_in_workouts: CheckInWorkouts;
   check_ins: CheckIns;
   fuel_goal_events: FuelGoalEvents;
   fuel_goals: FuelGoals;

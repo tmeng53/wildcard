@@ -69,6 +69,8 @@ public actor DeviceOutbox: Outbox {
         /// A 休息 rather than a 请假条; missing on posts kept before it existed.
         let restDay: Bool?
         let photos: [StoredPhoto]
+        /// A 训练's workout from Health, as posted; missing on the rest and on posts kept before it.
+        let workout: Workout?
 
         init(_ post: PendingCheckIn) {
             id = post.id
@@ -87,6 +89,7 @@ public actor DeviceOutbox: Outbox {
             var caption: String?
             var text: String?
             var restDay: Bool?
+            workout = post.draft.workout
             switch post.draft {
             case .trained(let activity, let workoutMinutes, let body):
                 kind = "trained"
@@ -126,7 +129,7 @@ public actor DeviceOutbox: Outbox {
                     prepared.append(PreparedPhoto(id: photo.id, jpeg: jpeg, size: size))
                 }
             }
-            let body = PostBody(photos: prepared, caption: caption ?? "")
+            let body = PostBody(photos: prepared, caption: caption ?? "", workout: kind == "trained" ? workout : nil)
             let draft: CheckInDraft
             switch kind {
             case "trained":

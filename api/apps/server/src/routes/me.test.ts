@@ -141,7 +141,21 @@ describe('GET /me', () => {
     const { token, userId } = await signUp();
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: null },
+      { version: 1, userId, profile: null, isAdmin: false },
+    ]);
+  });
+
+  it('says whether the member is on the admin list', async () => {
+    const { token, userId } = await signUp();
+    const db = createDatabase(config.databaseUrl);
+    try {
+      await sql`insert into public.admins (member_id) values (${userId})`.execute(db);
+    } finally {
+      await db.destroy();
+    }
+    expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
+      200,
+      { version: 1, userId, profile: null, isAdmin: true },
     ]);
   });
 
@@ -226,6 +240,7 @@ describe('PUT /me/profile', () => {
       {
         version: 1,
         userId,
+        isAdmin: false,
         profile: {
           timeZone: 'America/Los_Angeles',
           catchphrase: null,
@@ -252,6 +267,7 @@ describe('PUT /me/profile', () => {
       {
         version: 1,
         userId,
+        isAdmin: false,
         profile: {
           timeZone: 'America/Toronto',
           catchphrase: null,
@@ -286,6 +302,7 @@ describe('PUT /me/profile', () => {
       {
         version: 1,
         userId,
+        isAdmin: false,
         profile: { timeZone: zone, catchphrase: shout, jerseyNumber: null, joinedAt: anInstant },
       },
     ]);
@@ -304,6 +321,7 @@ describe('PUT /me/profile', () => {
       {
         version: 1,
         userId,
+        isAdmin: false,
         profile: { timeZone: zone, catchphrase: null, jerseyNumber: null, joinedAt: anInstant },
       },
     ]);
@@ -388,6 +406,7 @@ describe('PUT /me/profile', () => {
       {
         version: 1,
         userId,
+        isAdmin: false,
         profile: {
           timeZone: zone,
           catchphrase: null,
@@ -412,6 +431,7 @@ describe('PUT /me/profile', () => {
       {
         version: 1,
         userId,
+        isAdmin: false,
         profile: { timeZone: zone, catchphrase: null, jerseyNumber: null, joinedAt: anInstant },
       },
     ]);
@@ -508,7 +528,7 @@ describe('PUT /me/profile', () => {
     });
     expect(await getMe({ authorization: `Bearer ${friend.token}` })).toStrictEqual([
       200,
-      { version: 1, userId: friend.userId, profile: null },
+      { version: 1, userId: friend.userId, profile: null, isAdmin: false },
     ]);
   });
 

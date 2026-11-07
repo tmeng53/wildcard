@@ -636,6 +636,66 @@ describe('GET /me/posts', () => {
   });
 });
 
+describe('GET /me/trainings', () => {
+  it('lists the member’s 练了 by day with sport and minutes, wherever they went', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me);
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.parse(today) - 24 * 60 * 60_000).toISOString().slice(0, 10);
+    // Made a few minutes ago, in order, so the day's 练了 list the earliest made first.
+    const put = async (
+      made: { minutesAgo: number; day: string; audience: string[] },
+      fields: object,
+    ) => {
+      const id = randomUUID();
+      const createdAt = new Date(Date.now() - made.minutesAgo * 60_000).toISOString();
+      const body = { version: 1, day: made.day, createdAt, audience: made.audience, ...fields };
+      const { status } = await call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body,
+      });
+      expect(status).toBe(201);
+      return id;
+    };
+    const run = await put(
+      { minutesAgo: 3, day: today, audience: [squad] },
+      { kind: 'trained', training: { sport: 'run', minutes: 45 } },
+    );
+    const swim = await put(
+      { minutesAgo: 4, day: yesterday, audience: [] },
+      { kind: 'trained', training: { sport: 'swim' } },
+    );
+    const frisbee = await put(
+      { minutesAgo: 2, day: today, audience: [squad] },
+      { kind: 'trained', training: { sport: 'custom', customSport: '飞盘', minutes: 30 } },
+    );
+    await put({ minutesAgo: 1, day: today, audience: [squad] }, { kind: 'healthyMeal', meal: {} });
+
+    const path = `/me/trainings?from=${yesterday}&to=${today}`;
+    expect(await call({ method: 'GET', path, token: me.token })).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: {
+        version: 1,
+        trainings: [
+          { id: swim, day: yesterday, sport: 'swim' },
+          { id: run, day: today, sport: 'run', minutes: 45 },
+          { id: frisbee, day: today, sport: 'custom', customSport: '飞盘', minutes: 30 },
+        ],
+      },
+    });
+    expect((await call({ method: 'GET', path, token: friend.token })).body).toStrictEqual({
+      version: 1,
+      trainings: [],
+    });
+    expect((await call({ method: 'GET', path })).status).toBe(401);
+    const tooLong = '/me/trainings?from=2025-01-01&to=2026-01-07';
+    expect((await call({ method: 'GET', path: tooLong, token: me.token })).status).toBe(400);
+  });
+});
+
 describe('GET /me/check-in-totals', () => {
   it('counts everything the member ever checked in by kind, 练了 by day', async () => {
     const [me, friend] = [await signUp(), await signUp()];
@@ -785,6 +845,64 @@ describe('photos on check-ins', () => {
       .object({ posts: z.tuple([z.object({ checkIn: z.unknown() })]) })
       .parse(listed.body).posts;
     expect(await viewed(checkIn)).toStrictEqual(expected);
+  });
+
+  it('leaves out a photo whose file is gone, and still lists the rest', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const [kept, lost, alone] = [
+      await uploadPhoto(me.token, 'kept'),
+      await uploadPhoto(me.token, 'lost'),
+      await uploadPhoto(me.token, 'alone'),
+    ];
+    const { day, createdAt } = todayAndNow();
+    const [twoPhotos, onePhoto, noPhotos] = [randomUUID(), randomUUID(), randomUUID()];
+    const save = (id: string, training: Record<string, unknown>) =>
+      call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: { version: 1, day, createdAt, audience: [squad], kind: 'trained', training },
+      });
+    expect(
+      (await save(twoPhotos, { sport: 'run', photos: [{ path: lost }, { path: kept }] })).status,
+    ).toBe(201);
+    expect((await save(onePhoto, { sport: 'swim', photos: [{ path: alone }] })).status).toBe(201);
+    expect((await save(noPhotos, { sport: 'yoga' })).status).toBe(201);
+    // The files go from Storage behind the check-ins' back.
+    await photos.delete([PhotoPath.parse(lost), PhotoPath.parse(alone)]);
+
+    const listed = await call({
+      method: 'GET',
+      path: `/squads/${squad}/check-ins?from=${day}&to=${day}`,
+      token: friend.token,
+    });
+    expect(listed.status).toBe(200);
+    const training = new Map(
+      z
+        .object({
+          posts: z.array(
+            z.object({
+              checkIn: z.object({
+                id: z.string(),
+                training: z.object({ photos: z.array(z.object({ path: z.string() })).optional() }),
+              }),
+            }),
+          ),
+        })
+        .parse(listed.body)
+        .posts.map(({ checkIn }) => [checkIn.id, checkIn.training.photos?.map(({ path }) => path)]),
+    );
+    expect(training).toStrictEqual(
+      new Map([
+        [twoPhotos, [kept]],
+        [onePhoto, undefined],
+        [noPhotos, undefined],
+      ]),
+    );
+    const one = await call({ method: 'GET', path: `/check-ins/${onePhoto}`, token: me.token });
+    expect(one.status).toBe(200);
+    expect(one.body).toMatchObject({ checkIn: { id: onePhoto, training: { sport: 'swim' } } });
   });
 
   it('refuses a photo size of 0 or with one side', async () => {
@@ -977,5 +1095,238 @@ describe('editing and deleting a post', () => {
       body: change,
     });
     expect(editGone.status).toBe(404);
+  });
+});
+
+describe('a 训练 from Apple Health', () => {
+  const started = new Date(Date.now() - 40 * 60 * 1000);
+  const workout = (id: string, extra: Record<string, unknown> = {}) => ({
+    provider: 'apple_health',
+    providerWorkoutId: id,
+    startedAt: started.toISOString(),
+    endedAt: new Date(started.getTime() + 32 * 60 * 1000).toISOString(),
+    summary: { durationSec: 1920, distanceM: 5210.5, paceSecPerKm: 369, avgHr: 148 },
+    route: [
+      { lat: 40.7812, lon: -73.9665 },
+      { lat: 40.7821, lon: -73.9651 },
+    ],
+    tilePosition: 1,
+    ...extra,
+  });
+  const reason = (body: unknown) => z.object({ reason: z.string() }).safeParse(body).data?.reason;
+
+  it('keeps the workout with the post, posts each workout once, and an edit can strike numbers', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const training = { sport: 'run', minutes: 32, workout: workout('A1') };
+    const body = { version: 1, day, createdAt, audience: [squad], kind: 'trained', training };
+    const saved = await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body });
+    expect(saved.status).toBe(201);
+    const expected = {
+      ...workout('A1'),
+      startedAt: started.toISOString(),
+      endedAt: new Date(started.getTime() + 32 * 60 * 1000).toISOString(),
+    };
+    expect(z.object({ training: z.unknown() }).parse(saved.body).training).toStrictEqual({
+      sport: 'run',
+      minutes: 32,
+      workout: expected,
+    });
+
+    // A retry is the same post; the friend sees the workout in the feed.
+    const retry = await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body });
+    expect(retry.status).toBe(200);
+    const feed = await call({
+      method: 'GET',
+      path: `/squads/${squad}/check-ins?from=${day}&to=${day}`,
+      token: friend.token,
+    });
+    expect(JSON.stringify(feed.body)).toContain('"providerWorkoutId":"A1"');
+
+    // The same workout again is refused, from another post id.
+    const again = await call({
+      method: 'PUT',
+      path: `/check-ins/${randomUUID()}`,
+      token: me.token,
+      body: { ...body, createdAt: new Date().toISOString() },
+    });
+    expect([again.status, reason(again.body)]).toStrictEqual([409, 'WORKOUT_ALREADY_POSTED']);
+
+    // An edit that strikes heart rate and takes the map off keeps only the rest.
+    const edited = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: {
+        version: 1,
+        kind: 'trained',
+        training: {
+          sport: 'run',
+          minutes: 32,
+          workout: {
+            ...workout('A1', { route: undefined, tilePosition: undefined }),
+            summary: { durationSec: 1920, distanceM: 5210.5 },
+          },
+        },
+      },
+    });
+    expect(edited.status).toBe(200);
+    const read = await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token });
+    const shown = z
+      .object({ checkIn: z.object({ training: z.object({ workout: z.unknown() }) }) })
+      .parse(read.body).checkIn.training.workout;
+    expect(shown).toStrictEqual({
+      provider: 'apple_health',
+      providerWorkoutId: 'A1',
+      startedAt: expected.startedAt,
+      endedAt: expected.endedAt,
+      summary: { durationSec: 1920, distanceM: 5210.5 },
+    });
+    const logged = await db
+      .selectFrom('check_in_events')
+      .select('entry')
+      .where('check_in_id', '=', id)
+      .orderBy('id')
+      .execute();
+    expect(logged.map(({ entry }) => JSON.stringify(entry).includes('"avgHr":148'))).toStrictEqual([
+      true,
+      false,
+    ]);
+
+    // A build from before workouts edits the caption and sends no workout: the post keeps it.
+    const older = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: {
+        version: 1,
+        kind: 'trained',
+        training: { sport: 'run', minutes: 32, caption: '风大' },
+      },
+    });
+    expect(older.status).toBe(200);
+    const after = await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token });
+    expect(
+      z
+        .object({ checkIn: z.object({ training: z.object({ workout: z.unknown() }) }) })
+        .parse(after.body).checkIn.training.workout,
+    ).toStrictEqual(shown);
+
+    // Deleting the post frees the workout to be posted again.
+    expect(
+      (await call({ method: 'DELETE', path: `/check-ins/${id}`, token: me.token })).status,
+    ).toBe(204);
+    const posted = await call({
+      method: 'PUT',
+      path: `/check-ins/${randomUUID()}`,
+      token: me.token,
+      body: { ...body, createdAt: new Date().toISOString() },
+    });
+    expect(posted.status).toBe(201);
+  });
+
+  it('refuses a tile without its data, data without its tile, or a tile past the photos', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const put = async (extra: Record<string, unknown>) => {
+      const { status, body } = await call({
+        method: 'PUT',
+        path: `/check-ins/${randomUUID()}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: { sport: 'run', workout: workout(randomUUID(), extra) },
+        },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    expect(await put({ tilePosition: undefined })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ route: undefined })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ tilePosition: 2 })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ summary: { avgHr: 400 } })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(
+      await put({
+        route: undefined,
+        series: {
+          hr: [
+            { t: 0, bpm: 90 },
+            { t: 60, bpm: 120 },
+          ],
+        },
+      }),
+    ).toStrictEqual([201, 'saved']);
+  });
+
+  it('keeps a map and a chart together, each in its place, and an older build’s edit keeps both', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const hr = {
+      hr: [
+        { t: 0, bpm: 90 },
+        { t: 60, bpm: 120 },
+      ],
+    };
+    const photos = [{ path: await uploadPhoto(me.token, 'cover') }];
+    const put = async (extra: Record<string, unknown>, id = randomUUID()) => {
+      const { status, body } = await call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: { sport: 'run', photos, workout: workout(randomUUID(), extra) },
+        },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    // Both need their own places, among the photos or right after them.
+    expect(await put({ series: hr })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ series: hr, chartPosition: 1 })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ series: hr, chartPosition: 4 })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ chartPosition: 2 })).toStrictEqual([400, 'REQUEST_INVALID']);
+
+    const id = randomUUID();
+    expect(await put({ series: hr, tilePosition: 2, chartPosition: 3 }, id)).toStrictEqual([
+      201,
+      'saved',
+    ]);
+    const shown = async () =>
+      z
+        .object({
+          checkIn: z.object({
+            training: z.object({
+              workout: z.object({
+                tilePosition: z.int(),
+                chartPosition: z.int(),
+                series: z.unknown(),
+              }),
+            }),
+          }),
+        })
+        .parse((await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).body)
+        .checkIn.training.workout;
+    expect(await shown()).toStrictEqual({ tilePosition: 2, chartPosition: 3, series: hr });
+
+    // A build from before workouts takes the photo off: both tiles stay, right after none.
+    const older = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: { version: 1, kind: 'trained', training: { sport: 'run', caption: '风大' } },
+    });
+    expect(older.status).toBe(200);
+    expect(await shown()).toStrictEqual({ tilePosition: 1, chartPosition: 2, series: hr });
   });
 });

@@ -46,7 +46,10 @@ struct StringCatalogCoverageTests {
         let catalog = try JSONSerialization.jsonObject(with: Data(contentsOf: catalogURL)) as? [String: Any]
         let entry = (catalog?["strings"] as? [String: Any])?[key] as? [String: Any]
         let localized = (entry?["localizations"] as? [String: Any])?[language] as? [String: Any]
-        let value = (localized?["stringUnit"] as? [String: Any])?["value"] as? String
+        // A plural's value is its `other` form.
+        let plural = (localized?["variations"] as? [String: Any])?["plural"] as? [String: Any]
+        let unit = localized?["stringUnit"] ?? (plural?["other"] as? [String: Any])?["stringUnit"]
+        let value = (unit as? [String: Any])?["value"] as? String
         return value?.isEmpty == false ? value : nil
     }
 

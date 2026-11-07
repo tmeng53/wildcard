@@ -50,14 +50,20 @@ public struct PostEdit: Hashable, Sendable {
     public let line: String
     /// At most `Photos.maxCount`, the cover first.
     public let photos: [ComposedPhoto]
+    /// A 训练's workout as it is to be: numbers struck out since are gone, and its tile placed
+    /// among the photos or taken off.
+    public let workout: Workout?
 
-    public init(original: CheckIn, activity: Activity, minutes: WorkoutMinutes?, line: String, photos: [ComposedPhoto])
-    {
+    public init(
+        original: CheckIn, activity: Activity, minutes: WorkoutMinutes?, line: String, photos: [ComposedPhoto],
+        workout: Workout? = nil
+    ) {
         self.original = original
         self.activity = activity
         self.minutes = minutes
         self.line = line
         self.photos = Array(photos.prefix(Photos.maxCount))
+        self.workout = workout
     }
 
     /// The photos still to upload, in order.
@@ -89,7 +95,10 @@ public struct PostEdit: Hashable, Sendable {
             let entry: CheckIn.Entry =
                 switch original.entry {
                 case .trained:
-                    .trained(Training(activity: activity, minutes: minutes, photos: photos, caption: caption))
+                    .trained(
+                        Training(
+                            activity: activity, minutes: minutes, photos: photos, caption: caption,
+                            workout: workout))
                 case .healthyMeal: .healthyMeal(Meal(photos: photos, caption: caption))
                 case .cheatMeal: .cheatMeal(Meal(photos: photos, caption: caption))
                 case .disclaimer(let old): .disclaimer(try Disclaimer(line, restDay: old.restDay, photos: photos))

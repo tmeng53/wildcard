@@ -19,17 +19,21 @@ public struct PreparedPhoto: Hashable, Sendable, Identifiable {
     }
 }
 
-/// What a 练了 or a meal carries: up to three photos, the first the cover, and a line.
+/// What a 训练 or a meal carries: up to three photos, the first the cover, a line, and for a 训练
+/// posted from Health its workout as posted (only the numbers kept, its tile placed among the
+/// photos). A meal never has a workout.
 public struct PostBody: Hashable, Sendable {
     public let photos: [PreparedPhoto]
     public let caption: String?
+    public let workout: Workout?
 
     /// Keeps at most `Photos.maxCount` photos, and the caption trimmed, on one line and cut to
     /// `Caption.maxLength`; an empty caption is none.
-    public init(photos: [PreparedPhoto], caption: String) {
+    public init(photos: [PreparedPhoto], caption: String, workout: Workout? = nil) {
         self.photos = Array(photos.prefix(Photos.maxCount))
         let line = Self.fitCaption(caption).trimmingCharacters(in: .whitespaces)
         self.caption = line.isEmpty ? nil : line
+        self.workout = workout
     }
 
     public var cover: PreparedPhoto? { photos.first }
@@ -48,6 +52,11 @@ public enum CheckInDraft: Hashable, Sendable {
     case healthyMeal(PostBody)
     case cheatMeal(PostBody)
     case disclaimer(Disclaimer)
+
+    /// The workout a 训练 was posted from; nil for one made by hand and for the other kinds.
+    public var workout: Workout? {
+        if case .trained(_, _, let body) = self { body.workout } else { nil }
+    }
 
     /// The photos to upload before the check-in is saved, the cover first.
     public var photos: [PreparedPhoto] {

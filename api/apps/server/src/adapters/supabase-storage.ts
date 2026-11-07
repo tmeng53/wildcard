@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { PhotoNotFoundError, PhotoStorageUnavailableError } from '../errors.js';
+import { PhotoStorageUnavailableError } from '../errors.js';
 import type { PhotoPath, PhotoStorage } from '../ports.js';
 
 // Supabase Storage's HTTP API, called with the project's secret key, which only the server
@@ -98,11 +98,11 @@ export function createSupabasePhotoStorage(options: {
       const signed = new Map(
         SignedViews.parse(json).map(({ path, signedURL }) => [path, signedURL] as const),
       );
+      // Storage names a path it has no file for without a URL; it is left out.
       return new Map(
-        paths.map((path) => {
+        paths.flatMap((path) => {
           const url = signed.get(path);
-          if (url === undefined || url === null) throw new PhotoNotFoundError(path);
-          return [path, absolute(url)] as const;
+          return url === undefined || url === null ? [] : [[path, absolute(url)] as const];
         }),
       );
     },

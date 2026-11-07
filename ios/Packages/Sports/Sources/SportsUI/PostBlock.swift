@@ -6,7 +6,8 @@ import SwiftUI
 
 /// A post's face where it has no photo, and the same corners over a photo where it has one: a
 /// block in its sport's scene colour with the post's words on it, the sport or kind top right,
-/// a 练了's minutes bottom left and, on a tile, its day top left. Every screen that shows a post
+/// a 训练's minutes bottom left (not on a 动态 card, whose 成绩条 has them) and, on a tile, its
+/// day top left. Every screen that shows a post
 /// without a photo draws this one block: 我的动态's tiles, 动态's cards and the 战报's
 /// 你最火的一条 (Tracy, 2026-11-02).
 public struct PostBlock: View {
@@ -14,7 +15,8 @@ public struct PostBlock: View {
     public enum Layout: Sendable {
         /// A square on 我的动态's wall.
         case tile
-        /// A wide strip in place of a 动态 card's photos.
+        /// A wide strip in place of a 动态 card's cover, its words at its foot; the 成绩条 under it
+        /// has a 训练's minutes.
         case strip
         /// The 战报's tall card.
         case card
@@ -42,7 +44,7 @@ public struct PostBlock: View {
         self.kind = kind
         self.activity = activity
         self.words = words
-        self.minutes = minutes
+        self.minutes = layout == .strip ? nil : minutes
         self.day = day
         self.photo = photo
         self.layout = layout
@@ -127,7 +129,7 @@ public struct PostBlock: View {
     }
 
     /// A strip's least height, the design's: the words grow it from there.
-    static let stripHeight: Double = 172
+    static let stripHeight: Double = 150
 
     /// The sport for a 练了, else the kind.
     private var label: Text {
@@ -167,7 +169,13 @@ public struct PostBlock: View {
     /// Room kept under the words for the minutes.
     private var minutesHeight: Double { layout == .tile || layout == .thumbnail ? Space.l : Space.xxl }
 
-    private var wordsAlignment: Alignment { layout == .tile || layout == .thumbnail ? .leading : .topLeading }
+    private var wordsAlignment: Alignment {
+        switch layout {
+        case .tile, .thumbnail: .leading
+        case .strip: .bottomLeading
+        case .card: .topLeading
+        }
+    }
 
     private var wordsStyle: TypeStyle {
         switch layout {

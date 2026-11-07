@@ -141,17 +141,6 @@ export class PhotoStorageUnavailableError extends AppError {
   }
 }
 
-/** Thrown when no photo has been uploaded to a path. */
-export class PhotoNotFoundError extends AppError {
-  override readonly name = 'PhotoNotFoundError';
-  readonly reason = 'PHOTO_NOT_FOUND';
-  readonly status = 'NOT_FOUND';
-
-  constructor(readonly path: string) {
-    super('That photo doesn’t exist.');
-  }
-}
-
 /** Thrown for a method and path the API doesn't have. */
 export class RouteNotFoundError extends AppError {
   override readonly name = 'RouteNotFoundError';

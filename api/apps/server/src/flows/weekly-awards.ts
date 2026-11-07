@@ -239,6 +239,11 @@ export interface SquadStory {
    * model failed). Only the titles wait: every other page is frozen either way.
    */
   readonly status: 'ready' | 'pending';
+  /**
+   * Whether a try at the titles has failed since the week's awards: a `pending` story that isn't
+   * stuck is only waiting for the hourly run to reach the squad.
+   */
+  readonly stuck: boolean;
   /** Everyone in the squad at the awards, in the order they joined, less accounts deleted since. */
   readonly members: readonly StoryMember[];
   /** The titles, in the members' order: empty until ready, or when nobody checked in. */
@@ -317,6 +322,7 @@ export async function squadStory(
     squad: { id: squad, name: story.name },
     scene: story.scene,
     status: state?.status === 'given' || !anyone ? 'ready' : 'pending',
+    stuck: anyone && state?.status === 'failing',
     members,
     titles,
     ...(podium === undefined ? {} : { podium }),

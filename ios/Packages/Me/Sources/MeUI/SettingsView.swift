@@ -1,32 +1,46 @@
 #if os(iOS)
 import DesignSystem
 import DesignSystemUI
+import HealthUI
 import MeDomain
 import SwiftUI
 
 /// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
 /// small group labels (偏好, 关于, 账号), with no icons, a chevron on each row that opens a page,
-/// and an ink switch. Signing out and deleting the account come last. It holds only the app's
+/// and an ink switch; 偏好's Apple 健康 pushes its own page. Signing out and deleting the account come last. It holds only the app's
 /// own settings: what belongs to the squad or the week lives with them (2026-11-02), and 球衣号码
 /// with the character editor (2026-11-03).
 struct SettingsView: View {
     @Bindable var model: MeModel
     let destinations: MeDestinations
-    let close: () -> Void
     @State private var isSigningOut = false
     @State private var isPickingLanguage = false
+    @State private var isHealthOpen = false
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        menu.swipesBack(perform: close)
+        menu
+            .pushedPage()
+            // 注销账号, pushed over 设置; its back button and swipe wait while the account is deleting.
+            .navigationDestination(isPresented: deletionOpen) {
+                DeleteAccountView(model: model) { model.closeDeletion() }
+                    .pushedPage(canGoBack: model.deletion != .deleting, hidesTabBar: true)
+                    .accentTone(.ink)
+            }
+            .navigationDestination(isPresented: $isHealthOpen) {
+                if let health = destinations.health { HealthSettingsView(health: health) }
+            }
+    }
+
+    /// 注销账号 is open; the system's back closes it as 先不注销 does.
+    private var deletionOpen: Binding<Bool> {
+        Binding(get: { model.isDeletionOpen }, set: { if !$0 { model.closeDeletion() } })
     }
 
     private var menu: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
-                    .accessibilityIdentifier("settings.back")
                 // The character types beside the heading, standing on its line, so the menu starts
                 // right under it.
                 HStack(alignment: .bottom, spacing: Space.s) {
@@ -38,9 +52,11 @@ struct SettingsView: View {
                     MeStage(character: model.overview?.character, mood: .typing, size: CGSize(width: 72, height: 90))
                         .accessibilityHidden(true)
                 }
-                .padding(.top, Space.s)
                 preferencesGroup
                 aboutGroup
+                if let previewSignUp = destinations.previewSignUp {
+                    adminGroup(previewSignUp)
+                }
                 accountGroup
                 if model.saveFailed {
                     SaveFailed().padding(.top, Space.m)
@@ -53,6 +69,7 @@ struct SettingsView: View {
         // Always scrollable: the room left for the tab bar is a safe-area inset, which a size-based
         // bounce doesn't count, so the last rows could fit the page yet sit under the bar.
         .scrollIndicators(.hidden)
+        .barTitleOnScroll(Text("设置", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
         .accessibilityIdentifier("settings.page")
     }
@@ -75,6 +92,16 @@ struct SettingsView: View {
                     set: { isOn in Task { await model.setCoachPush(isOn) } })
             )
             .accessibilityIdentifier("me.coachNotifications")
+            if let health = destinations.health, health.isAvailable {
+                ListRow(
+                    Text("Apple 健康", bundle: .module),
+                    value: health.isConnected ? Text("已连接", bundle: .module) : Text("未连接", bundle: .module)
+                ) {
+                    isHealthOpen = true
+                }
+                .accessibilityIdentifier("me.health")
+                .task { await health.refresh() }
+            }
             ListRow(
                 Text("语言", bundle: .module), value: Text(verbatim: AppLanguage.current.name), showsDivider: false
             ) {
@@ -95,6 +122,14 @@ struct SettingsView: View {
                 openURL(destinations.terms)
             }
             .accessibilityIdentifier("me.terms")
+        }
+    }
+
+    /// Only for admins: tools to try the app as a newcomer would.
+    private func adminGroup(_ previewSignUp: @escaping () -> Void) -> some View {
+        MenuGroup(Text("管理员", bundle: .module)) {
+            ListRow(Text("预览注册", bundle: .module), showsDivider: false, action: previewSignUp)
+                .accessibilityIdentifier("me.previewSignUp")
         }
     }
 

@@ -7,6 +7,9 @@ import Foundation
 public enum PullCordMotion {
     /// The chain's length at rest, from where it hangs to the bulb's cap.
     public static let length = 70.0
+    /// The chain's length under something short (home's folded squad capsule), so the bulb
+    /// hangs close under it instead of far down the scene.
+    public static let shortLength = 40.0
     /// The furthest the cord follows a drag.
     public static let maxPull = 36.0
     /// How far down it has to go to click.

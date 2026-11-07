@@ -51,18 +51,25 @@ public struct CheckIn: Hashable, Sendable {
     }
 }
 
-/// 练了: what was trained, with optional minutes, photos and a line.
+/// 训练: what was trained, with optional minutes, photos, a line and the workout it was posted
+/// from (Apple Health).
 public struct Training: Hashable, Sendable {
     public let activity: Activity
     public let minutes: WorkoutMinutes?
     public let photos: Photos?
     public let caption: Caption?
+    /// The imported workout, with only the numbers the member kept; nil on one posted by hand.
+    public let workout: Workout?
 
-    public init(activity: Activity, minutes: WorkoutMinutes? = nil, photos: Photos? = nil, caption: Caption? = nil) {
+    public init(
+        activity: Activity, minutes: WorkoutMinutes? = nil, photos: Photos? = nil, caption: Caption? = nil,
+        workout: Workout? = nil
+    ) {
         self.activity = activity
         self.minutes = minutes
         self.photos = photos
         self.caption = caption
+        self.workout = workout
     }
 }
 

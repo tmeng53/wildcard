@@ -37,7 +37,8 @@ final class ComposePhotoUITests: XCTestCase {
         XCTAssertTrue(post.isHittable, "the compose page didn't come back")
     }
 
-    /// Three photos fill the row, so there is no 「+ 照片」 until × takes one off. With something
+    /// Three photos fill the row, so there is no 「+ 照片」 until × takes one off; a long press
+    /// drags a photo to another place, the first being the cover. With something
     /// added, 取消 asks 「放弃这条动态？」: 继续编辑 stays, 放弃 leaves.
     func testRemovePhotoAndDiscard() {
         let app = launch()
@@ -53,8 +54,7 @@ final class ComposePhotoUITests: XCTestCase {
         app.buttons["compose.photo.3.remove"].tap()
         XCTAssertTrue(add.waitForExistence(timeout: Self.wait), "× didn't make room for 「+ 照片」")
         XCTAssertFalse(app.buttons["compose.photo.3"].exists, "× didn't take the photo off")
-        app.buttons["compose.photo.2"].tap()
-        XCTAssertEqual(app.buttons["compose.photo.2"].label, "第 2 张照片", "the old cover didn't move along")
+        XCTAssertEqual(app.buttons["compose.photo.2"].label, "第 2 张", "the second photo isn't second")
         settle()
         keepScreenshot(named: "15-compose-two-photos")
 

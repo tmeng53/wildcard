@@ -12,6 +12,7 @@ import {
   AlreadyTrainedError,
   CheckInIdConflictError,
   PhotoInUseError,
+  WorkoutAlreadyPostedError,
   SquadNotJoinedError,
 } from '../../errors.js';
 import type {
@@ -144,6 +145,7 @@ async function insertCheckIn(
   const overlapping = await asRetry(store, checkIn);
   if (overlapping !== undefined) return overlapping;
   if (outcome.taken === 'photo') throw new PhotoInUseError();
+  if (outcome.taken === 'workout') throw new WorkoutAlreadyPostedError();
   throw new CheckInIdConflictError(id);
 }
 
