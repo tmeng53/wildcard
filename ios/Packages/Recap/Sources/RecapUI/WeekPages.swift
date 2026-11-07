@@ -68,19 +68,18 @@ struct MyWeekPage: View {
         .overlay(alignment: .top) {
             VStack(alignment: .leading, spacing: 0) {
                 PageTitle(label: Text("本周", bundle: .module), title: Text("你的一周", bundle: .module))
-                HStack(alignment: .top, spacing: Space.l) {
-                    VStack(alignment: .leading, spacing: Space.xxs) {
+                VStack(alignment: .leading, spacing: Space.xxs) {
+                    HStack(alignment: .center, spacing: Space.l) {
                         Score(count: week.trainedDays, goal: week.plan, size: .story)
-                            // The count's line is far taller than its digits: it sits up under
-                            // the title, as the design has it.
-                            .padding(.top, -Self.scoreLeading)
-                        Text("训练天数", bundle: .module).typeStyle(TypeRamp.footnote)
+                            // The count's line is far taller than its digits, blank above and
+                            // below: the digits sit up under the title, the line beside their
+                            // middle and 训练天数 right under them, as the design has it.
+                            .padding(.vertical, -Self.scoreLeading)
+                        if let line = week.line {
+                            Text(verbatim: line).typeStyle(TypeRamp.headline)
+                        }
                     }
-                    if let line = week.line {
-                        Text(verbatim: line)
-                            .typeStyle(TypeRamp.headline)
-                            .padding(.top, Space.l)
-                    }
+                    Text("训练天数", bundle: .module).typeStyle(TypeRamp.footnote)
                 }
                 .padding(.horizontal, Space.l)
             }
