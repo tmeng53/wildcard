@@ -14,8 +14,7 @@ import { createPostgresDraftSettings } from '../adapters/postgres-draft-settings
 import { DraftReason, MemberId, type PromptMeme } from '../domain/draft-request.js';
 import type { DraftSettings } from '../domain/settings.js';
 import type { ModelReply } from '../domain/drafts.js';
-import { DisclaimerWriterUnavailableError } from '../errors.js';
-import type { LanguageModel } from '../ports.js';
+import { LanguageModelUnavailableError, type LanguageModel } from '@wildcard/language-model';
 import { createDisclaimerDrafts } from './disclaimer-drafts.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database. The
@@ -171,7 +170,8 @@ describe('createDisclaimerDrafts', () => {
 
   it('doesn’t count a batch the model failed or that failed the checks', async () => {
     const member = await newMember();
-    const down = setup({ answer: () => Promise.reject(new DisclaimerWriterUnavailableError()) });
+    // The model's own failure comes back as the drafts' reason, which the app knows.
+    const down = setup({ answer: () => Promise.reject(new LanguageModelUnavailableError()) });
     const short = setup({
       answer: () => Promise.resolve({ ...good, drafts: ['太短了。', 'a', 'b'] }),
     });
