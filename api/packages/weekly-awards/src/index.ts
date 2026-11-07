@@ -65,7 +65,6 @@ export type {
   AiConsented,
   AwardSettingsStore,
   AwardsStore,
-  LanguageModel,
   WeekStoryStore,
   MemesInUse,
 } from './ports.js';

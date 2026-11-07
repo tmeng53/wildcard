@@ -1,8 +1,6 @@
-import { DisclaimerWriterUnavailableError } from '@wildcard/disclaimer-drafts';
+import { LanguageModelUnavailableError, type LanguageModel } from '@wildcard/language-model';
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
-
-import type { ProviderModels } from './language-models.js';
 
 /**
  * A member is waiting with the button pressed: past this, the app's dice are the better answer.
@@ -27,7 +25,7 @@ export function createOpenAILanguageModel(options: {
   readonly baseURL?: string;
   /** Tests only: answers requests from recorded responses. */
   readonly fetch?: typeof fetch;
-}): ProviderModels {
+}): LanguageModel {
   const client = new OpenAI({
     apiKey: options.apiKey,
     // Never the environment's: an OPENAI_BASE_URL meant for another tool must not redirect
@@ -56,11 +54,11 @@ export function createOpenAILanguageModel(options: {
           store: false,
         });
       } catch (error) {
-        throw new DisclaimerWriterUnavailableError({ cause: error });
+        throw new LanguageModelUnavailableError({ cause: error });
       }
       // A refusal or a cut-off answer has nothing to parse.
       if (response.status !== 'completed' || response.output_parsed === null) {
-        throw new DisclaimerWriterUnavailableError({
+        throw new LanguageModelUnavailableError({
           cause: new Error(
             `The model stopped with ${String(response.status)} (${String(response.incomplete_details?.reason)})`,
           ),

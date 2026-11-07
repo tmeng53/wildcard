@@ -21,6 +21,11 @@ final class PushLongPressUITests: XCTestCase {
             expanded.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "阿杰")).firstMatch
                 .waitForExistence(timeout: Self.wait),
             "the long-pressed push doesn't show 阿杰's post:\n\(springboard.debugDescription.prefix(4000))")
+        // In the app's language (Chinese here), not the simulator's: the extension is a process of
+        // its own, which the launch arguments don't reach.
+        XCTAssertTrue(
+            expanded.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "本周小队已练")).firstMatch.exists,
+            "the long-pressed push isn't in the app's language:\n\(springboard.debugDescription.prefix(4000))")
     }
 
     /// A push without `today` (as admins' test pushes are): the view shows its words.

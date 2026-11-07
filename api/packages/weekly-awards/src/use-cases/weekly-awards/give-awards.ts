@@ -1,3 +1,4 @@
+import type { LanguageModel } from '@wildcard/language-model';
 import {
   endingWordsOf,
   modelReplyFor,
@@ -13,13 +14,7 @@ import { promptFor, type PromptMeme } from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
 import { offeredMoves, type AwardSettings } from '../../domain/settings.js';
 import { AwardsWriterUnavailableError } from '../../errors.js';
-import type {
-  AiConsented,
-  AwardSettingsStore,
-  AwardsStore,
-  LanguageModel,
-  MemesInUse,
-} from '../../ports.js';
+import type { AiConsented, AwardSettingsStore, AwardsStore, MemesInUse } from '../../ports.js';
 
 /** Calls to the model per run: one more when the first answer fails the checks. */
 const ATTEMPTS = 2;

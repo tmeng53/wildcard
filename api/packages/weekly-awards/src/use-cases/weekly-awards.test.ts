@@ -16,7 +16,7 @@ import { MemberId, SquadId, type MemberWeek, type ModelReply } from '../domain/a
 import type { PromptMeme } from '../domain/prompt.js';
 import { WeekStart } from '../domain/schedule.js';
 import { AwardsModelMissingError, AwardsWriterUnavailableError } from '../errors.js';
-import type { LanguageModel } from '../ports.js';
+import type { LanguageModel } from '@wildcard/language-model';
 import { createWeeklyAwards } from './weekly-awards.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database. The
