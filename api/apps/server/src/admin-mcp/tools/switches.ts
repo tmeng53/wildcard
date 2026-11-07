@@ -19,7 +19,8 @@ export function getSwitches({ switches }: SwitchToolDependencies) {
     name: 'get_switches',
     title: 'Read the switches',
     description:
-      'Shows every global switch: id, label, mode (on, off, or schedule) and, for a schedule, ' +
+      'Shows every global switch: id, label, mode (on, off, schedule or preview), coachNote (what ' +
+      'the AI coach is told while it is on, when it has one) and, for a schedule, ' +
       'window (MM-DD to MM-DD every year, both included, New York time; the end may come before ' +
       'the start, over New Year). Scenes, stores and pieces with this switchId follow it.',
     changes: false,

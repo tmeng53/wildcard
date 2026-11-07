@@ -7,8 +7,10 @@ import SportsUI
 import SwiftUI
 
 /// One page like a social app's new post (spec rev 186, section 1): 取消 / title / 发布, the
-/// photos as tiles with their cover and 「+ 照片」, the sport and minutes for a 练了, and a line up
-/// to 60 characters (a 请假条's up to 80). Minutes are optional; no meal type. Editing a saved
+/// photos as tiles with their cover and 「+ 照片」, the sport and minutes for a 训练, and a line up
+/// to 60 characters (a 请假条's up to 80). Minutes are optional; no meal type. A new 训练 offers
+/// today's Apple Health workouts as chips under the photos: one picked sets the sport, puts its
+/// numbers on the 成绩条 in the minutes' place and its map or chart in the row. Editing a saved
 /// post opens the same page with 保存, and its squads stay as posted. Leaving with something
 /// added or changed asks first.
 public struct ComposeView: View {
@@ -33,6 +35,9 @@ public struct ComposeView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: Space.l) {
                         PhotoTiles(model: model)
+                        if model.kind == .trained, !model.isEditing, !model.healthWorkouts.isEmpty {
+                            HealthChips(model: model)
+                        }
                         if let today = model.postableDays.last, model.postableDays.count > 1 {
                             VStack(alignment: .leading, spacing: Space.xxs) {
                                 SectionLabel(Text(copy: "日期", bundle: .module))
@@ -49,8 +54,12 @@ public struct ComposeView: View {
                             SportRow(
                                 selected: model.currentActivity, isPickingSport: $isPickingSport
                             ) { model.activity = $0 }
-                            MinutesRow(minutes: $model.minutes, isRuling: $isRulingMinutes)
-                                .id(Self.minutesID)
+                            if model.workout != nil {
+                                ScoreRow(model: model)
+                            } else {
+                                MinutesRow(minutes: $model.minutes, isRuling: $isRulingMinutes)
+                                    .id(Self.minutesID)
+                            }
                         }
                         captionField.id(Self.captionID)
                         if model.sendFailed {

@@ -21,6 +21,9 @@ extension MainTabs {
 
     static let tabs: [TabBarItem<Tab>] = [
         TabBarItem(
+            id: .today, title: Text(copy: "小队", bundle: .main), systemImage: "sun.max",
+            accessibilityIdentifier: "tab.today"),
+        TabBarItem(
             id: .today, title: Text(copy: "今天", bundle: .main), systemImage: "sun.max",
             accessibilityIdentifier: "tab.today"),
         TabBarItem(

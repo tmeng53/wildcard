@@ -123,6 +123,7 @@ export interface CoachSettingEvents {
 export interface CoachSettings {
   cached_input_micros_per_million: Generated<number>;
   coaching: boolean;
+  holidays: Generated<Json>;
   input_micros_per_million: number;
   model: string;
   note_hour: Generated<number>;

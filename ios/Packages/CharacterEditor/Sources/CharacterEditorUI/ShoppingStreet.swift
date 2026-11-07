@@ -16,8 +16,8 @@ import SwiftUI
 /// that came in open from a pop-up over the page.
 public struct ShoppingStreetPage: View {
     let model: StreetModel
-    /// A store's rack is pushed and on screen over the street.
-    @State private var rackOnScreen = false
+    /// The store in the middle of the street, whose 进店 is pinned at the bottom.
+    @State private var centred: String?
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -32,8 +32,6 @@ public struct ShoppingStreetPage: View {
                 if let store = model.catalog.stores.first(where: { $0.id == id }) {
                     page(store)
                         .pushedPage()
-                        .onAppear { rackOnScreen = true }
-                        .onDisappear { rackOnScreen = false }
                 }
             }
             .onAppear { model.didOpen() }
@@ -45,68 +43,99 @@ public struct ShoppingStreetPage: View {
     }
 
     /// The street (`store` nil) or a store's rack. The pop-up, the 领取 sheet and the notice
-    /// belong to whichever page is on screen on top, so the street under a rack doesn't show them
-    /// twice, and the street shows them until the rack it opens on has slid in.
+    /// belong to the page on top, which the model says (a store open is its rack), so exactly one
+    /// page shows them. Telling it from the pages' appearing let both show them at once, as when
+    /// 商店街 and a rack are pushed together from a notice or the editor covers the rack, and a
+    /// tap could land on the copy under the rack.
     private func page(_ store: EditorChoices.Store?) -> some View {
-        let isOnTop = store != nil || !rackOnScreen
-        return ScrollView {
-            VStack(alignment: .leading, spacing: Space.xs) {
-                if let store {
-                    HStack(spacing: Space.xs) { RackHeader(model: model, store: store) }
-                }
-                // A 领取 that didn't save: the piece is back to NEW, so say why.
-                if model.claimFailed {
-                    Text(copy: "网络开小差了，没领上", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .accessibilityIdentifier("street.claimFailed")
-                }
-                if let store {
-                    StoreRack(model: model, store: store)
-                } else {
-                    street
+        let isOnTop = (store == nil) == (model.store == nil)
+        return content(store)
+            // The street's 进店 stays at the bottom, above the tab bar, however tall the phone.
+            .safeAreaInset(edge: .bottom) { if store == nil { counter } }
+            .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text(copy: "商店街", bundle: .module))
+            .background(Color(role: .bgCanvas, in: theme))
+            // The pop-up is modal: VoiceOver (and a UI test) reaches only it, not the rack under it.
+            .accessibilityHidden(model.arrival != nil)
+            .overlay {
+                if isOnTop, let arrival = model.arrival {
+                    ArrivalPopup(model: model, arrival: arrival).transition(.opacity)
                 }
             }
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.bottom, Space.l)
-        }
-        .scrollIndicators(.hidden)
-        .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text(copy: "商店街", bundle: .module))
-        .background(Color(role: .bgCanvas, in: theme))
-        // The pop-up is modal: VoiceOver (and a UI test) reaches only it, not the rack under it.
-        .accessibilityHidden(model.arrival != nil)
-        .overlay {
-            if isOnTop, let arrival = model.arrival {
-                ArrivalPopup(model: model, arrival: arrival).transition(.opacity)
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.arrival)
+            .sheet(
+                item: Binding(
+                    get: { isOnTop ? model.sheet.map(ClaimSheet.Piece.init) : nil }, set: { model.sheet = $0?.id })
+            ) { piece in
+                ClaimSheet(model: model, piece: piece.id)
+                    .presentationDetents([.height(ClaimSheet.height)])
+                    .presentationDragIndicator(.visible)
             }
-        }
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.arrival)
-        .sheet(
-            item: Binding(
-                get: { isOnTop ? model.sheet.map(ClaimSheet.Piece.init) : nil }, set: { model.sheet = $0?.id })
-        ) { piece in
-            ClaimSheet(model: model, piece: piece.id)
-                .presentationDetents([.height(ClaimSheet.height)])
-                .presentationDragIndicator(.visible)
-        }
-        .noticeBanner(
-            item: Binding(get: { isOnTop ? model.claimedNotice : nil }, set: { model.claimedNotice = $0 }),
-            onTap: { model.tryOn($0.id) },
-            content: { claimed in ClaimedBanner(model: model, piece: claimed.id) }
-        )
-        // A container, so its identifier doesn't replace the pop-up's (editor.arrival) and the rest.
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("street.page")
+            .noticeBanner(
+                item: Binding(get: { isOnTop ? model.claimedNotice : nil }, set: { model.claimedNotice = $0 }),
+                hold: { [noticeHold = model.noticeHold] _ in noticeHold ?? Motion.noticeHold },
+                onTap: { model.tryOn($0.id) },
+                content: { claimed in ClaimedBanner(model: model, piece: claimed.id) }
+            )
+            // A container, so its identifier doesn't replace the pop-up's (editor.arrival) and the rest.
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("street.page")
     }
 
     @ViewBuilder
-    private var street: some View {
-        Text(copy: "商店街", bundle: .module)
-            .typeStyle(TypeRamp.taskTitle)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .accessibilityAddTraits(.isHeader)
-        StoreStreet(model: model)
-            .padding(.top, Space.s)
+    private var counter: some View {
+        let stores = model.catalog.stores
+        if let shown = stores.first(where: { $0.id == centred }) ?? stores.first {
+            StreetCounter(model: model, store: shown)
+                // Opaque, so the street scrolling under it on a short phone doesn't show through.
+                .background(Color(role: .bgCanvas, in: theme))
+        }
+    }
+
+    /// A store's rack scrolls. The street fills the page between the bar and its pinned 进店, its
+    /// storefronts' windows taking whatever height the phone has, and scrolls only where even its
+    /// smallest windows don't fit.
+    @ViewBuilder
+    private func content(_ store: EditorChoices.Store?) -> some View {
+        if let store {
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.xs) {
+                    HStack(spacing: Space.xs) { RackHeader(model: model, store: store) }
+                    claimFailed
+                    StoreRack(model: model, store: store)
+                }
+                .padding(.horizontal, Space.pageMargin)
+                .padding(.bottom, Space.l)
+            }
+            .scrollIndicators(.hidden)
+        } else {
+            // The page's height between the bar and 进店, which the street is given whole; on a
+            // phone too short for it the street keeps its smallest size and scrolls.
+            GeometryReader { page in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Space.xs) {
+                        claimFailed
+                        StoreStreet(model: model, current: $centred)
+                            .padding(.top, Space.xl)
+                    }
+                    .padding(.horizontal, Space.pageMargin)
+                    .padding(.bottom, Space.l)
+                    .frame(minHeight: page.size.height, idealHeight: page.size.height, alignment: .top)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .scrollIndicators(.hidden)
+            }
+        }
+    }
+
+    /// A 领取 that didn't save: the piece is back to NEW, so say why.
+    @ViewBuilder
+    private var claimFailed: some View {
+        if model.claimFailed {
+            Text(copy: "网络开小差了，没领上", bundle: .module)
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .accessibilityIdentifier("street.claimFailed")
+        }
     }
 }
 
@@ -127,12 +156,7 @@ private struct RackHeader: View {
             .typeStyle(TypeRamp.footnote)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
             .lineLimit(1)
-        if let limited = StoreCopy.limited(store.id) {
-            limited
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .lineLimit(1)
-        }
+        if let tag = LimitedTag(store: store.id) { tag }
         Spacer(minLength: 0)
         if let sports = model.sports(of: store.id) {
             Button {
@@ -176,7 +200,21 @@ struct StoreBadge: View {
 enum StoreCopy {
     static func name(_ store: String) -> Text { text(words(store)?.name, or: store) }
     static func local(_ store: String) -> Text { text(words(store)?.local, or: store) }
-    static func sports(_ store: String) -> Text { text(words(store)?.sports, or: "") }
+    /// Its sports line as one word a sport, for the street's pills: split at commas where the
+    /// language lists with them (English), at spaces in Chinese.
+    static func sports(_ store: String) -> [String] {
+        let line = words(store)?.sports?.localized ?? ""
+        let commas = CharacterSet(charactersIn: ",，")
+        // A Latin line without commas is one phrase (Any sport counts, Winter sports); Chinese
+        // lists its sports with spaces.
+        let latin = line.unicodeScalars.contains { $0.isASCII && CharacterSet.letters.contains($0) }
+        let separators: CharacterSet =
+            line.unicodeScalars.contains(where: commas.contains) ? commas : latin ? CharacterSet() : .whitespaces
+        return line.components(separatedBy: separators)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .map { $0.prefix(1).uppercased() + $0.dropFirst() }
+    }
     static func tagline(_ store: String) -> Text { text(words(store)?.tagline, or: "") }
     static func unlock(_ store: String) -> Text { text(words(store)?.unlock, or: "") }
     /// How far a closed store is from opening: 「还有 2 次开门」 once the server says, else how it unlocks.

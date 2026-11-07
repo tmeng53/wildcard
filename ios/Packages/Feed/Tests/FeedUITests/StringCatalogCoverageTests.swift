@@ -25,11 +25,11 @@ struct StringCatalogCoverageTests {
     @Test func sampleLinesHaveEnglishThatFits() throws {
         let source = try String(
             contentsOf: Self.sources.appendingPathComponent("InMemoryFeedSource+Sample.swift"), encoding: .utf8)
-        let pattern = try NSRegularExpression(pattern: #"(?:, |localized\()"([^"]*\p{Han}[^"]*)"\)"#)
+        let pattern = try NSRegularExpression(pattern: #"(?:, |localized\()"([^"]*\p{Han}[^"]*)"[,)]"#)
         let keys = pattern.matches(in: source, range: NSRange(source.startIndex..., in: source)).compactMap {
             Range($0.range(at: 1), in: source).map { String(source[$0]) }
         }
-        #expect(keys.count == 15)
+        #expect(keys.count == 16)
         for key in keys {
             let english = try #require(try Self.english(for: key), "\(key) has no English")
             #expect(english.count <= 80, "\(english)")

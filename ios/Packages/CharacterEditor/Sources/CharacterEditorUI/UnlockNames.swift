@@ -83,4 +83,36 @@ public struct WardrobeBadge: View {
         .accessibilityHidden(true)
     }
 }
+
+/// A piece or prop on its own, filling its frame, as 商店街's tiles draw it; a store's badge. What a
+/// broadcast gives shows this way on its celebration card. Nothing for art this build doesn't have.
+public struct WardrobePicture: View {
+    private let kind: Unlock.Kind
+    private let item: String
+    /// Every picture outside the editor shares one cache.
+    @MainActor private static let thumbnails = ThumbnailCache()
+
+    public init(_ kind: Unlock.Kind, item: String) {
+        (self.kind, self.item) = (kind, item)
+    }
+
+    public var body: some View {
+        Group {
+            if kind == .store {
+                StoreBadge(store: item)
+            } else if let slot = (try? PlaceholderCharacter.editorChoices())?.slot(of: item) {
+                Thumbnail(
+                    outfit: wearing(item, in: slot), only: slot, crop: ThumbnailCrop.of(slot), cache: Self.thumbnails)
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    /// The one look every such picture is drawn on, wearing `item`: only `item` shows.
+    private func wearing(_ item: String, in slot: Slot) -> Outfit {
+        var outfit = PlaceholderCharacter.lifter
+        outfit.variants[slot] = item
+        return outfit
+    }
+}
 #endif

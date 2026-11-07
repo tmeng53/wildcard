@@ -6,7 +6,7 @@ import { createArt, createPostgresArtStore } from '@wildcard/art';
 import { createCampaigns, createPostgresCampaignStore } from '@wildcard/campaigns';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
-import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import { coachNotesOn, createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
 import { createPostgresUnlockStore, createUnlocks } from '@wildcard/unlocks';
 import { AdminId } from '@wildcard/admins';
 import { sql } from 'kysely';
@@ -100,7 +100,12 @@ const thanksgiving = {
   label: 'Thanksgiving',
   switches: [
     { id: 'tgWeek', label: 'Thanksgiving store', window: { start: '11-24', end: '11-26' } },
-    { id: 'tgDay', label: 'Thanksgiving day', window: { start: '11-26', end: '11-26' } },
+    {
+      id: 'tgDay',
+      label: 'Thanksgiving day',
+      window: { start: '11-26', end: '11-26' },
+      coachNote: '今天是感恩节',
+    },
   ],
   scenes: [
     {
@@ -219,6 +224,9 @@ describe('a campaign', () => {
       expect(await scenes.takeover({ day: '2026-11-26', switchOn: await switches.states() })).toBe(
         'tgTown',
       );
+      // The coach hears of the day from the switch's note, which every move keeps.
+      expect(coachNotesOn(await switches.list(), '2026-11-26')).toContain('今天是感恩节');
+      expect(coachNotesOn(await switches.list(), '2026-11-25')).not.toContain('今天是感恩节');
 
       // Stopped: nobody, previewers included.
       await run('set_campaign_status', {

@@ -183,7 +183,8 @@
         "zhHans": "冬季限定",
         "en": "Winter only",
         "zhHant": "冬季限定"
-      }
+      },
+      "limitedColor": "#1E6A9E"
     }
   }
 }

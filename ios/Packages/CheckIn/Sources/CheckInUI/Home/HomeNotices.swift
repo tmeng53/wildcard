@@ -18,7 +18,7 @@ struct HomeNotices: ViewModifier {
             }
             // Only an unlock: something the member earned arrives.
             .haptic(.appear, trigger: model.notice?.id) { _, id in id != nil && isUnlock(model.notice) }
-            .onChange(of: model.notice == nil && model.step == .scene && !model.isBurstOpen) { _, free in
+            .onChange(of: model.isFreeForNotices, initial: true) { _, free in
                 if free { Task { await model.showNextNotice() } }
             }
             // A 练了 that opened something, or one the last load found: told once each.
@@ -89,18 +89,22 @@ public struct UnlockNotices {
     let banner: (Unlock) -> AnyView
     let open: (Unlock) -> Void
     let badge: (Unlock.Kind, String) -> AnyView
+    let picture: (Unlock.Kind, String) -> AnyView
 
     /// - Parameters:
     ///   - banner: the `NoticeBanner` that says what opened.
     ///   - open: a tap on it: the editor, at that store or prop.
     ///   - badge: a store's sign or a piece's or prop's picture, as a broadcast's icon.
-    public init<Banner: View, Badge: View>(
+    ///   - picture: a piece or prop on its own, or a store's sign, filling its frame: a gift on a
+    ///     broadcast's celebration card.
+    public init<Banner: View, Badge: View, Picture: View>(
         banner: @escaping (Unlock) -> Banner, open: @escaping (Unlock) -> Void,
-        badge: @escaping (Unlock.Kind, String) -> Badge
+        badge: @escaping (Unlock.Kind, String) -> Badge, picture: @escaping (Unlock.Kind, String) -> Picture
     ) {
         self.banner = { AnyView(banner($0)) }
         self.open = open
         self.badge = { AnyView(badge($0, $1)) }
+        self.picture = { AnyView(picture($0, $1)) }
     }
 }
 #endif

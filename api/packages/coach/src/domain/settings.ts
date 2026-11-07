@@ -24,6 +24,38 @@ export const CoachModel = z
   .describe('openai/model, such as openai/gpt-6-luna.');
 export type CoachModel = z.infer<typeof CoachModel>;
 
+/**
+ * One day on the coach's holiday calendar: `MM-DD` every year, or `YYYY-MM-DD` that year only
+ * (a holiday that moves, such as 春节), and its name, which the coach is told as it is.
+ */
+export const CoachHoliday = z.strictObject({
+  date: z
+    .string()
+    .regex(/^(\d{4}-)?(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/)
+    // A day that exists: in its year, or in some year for MM-DD (02-29 only in leap years).
+    .refine((date) => {
+      const full = date.length === 5 ? `2000-${date}` : date;
+      const at = Date.parse(`${full}T00:00:00Z`);
+      return !Number.isNaN(at) && new Date(at).toISOString().slice(0, 10) === full;
+    }, 'a day that exists')
+    .describe('MM-DD for every year, or YYYY-MM-DD for that year only; New York’s day.'),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(40)
+    .regex(/^[^\r\n]*$/)
+    .describe('The day’s name, such as 感恩节, told to the coach as a plain fact.'),
+});
+export type CoachHoliday = z.infer<typeof CoachHoliday>;
+
+/** The names of the holidays on `day` (`YYYY-MM-DD`, New York), in the calendar's order. */
+export function holidaysOn(calendar: readonly CoachHoliday[], day: string): string[] {
+  return calendar
+    .filter(({ date }) => date === day || date === day.slice(5))
+    .map(({ name }) => name);
+}
+
 /** US dollars in millionths, per million tokens. */
 const MicrosPerMillion = z.int().min(0).max(2_000_000_000);
 
@@ -61,6 +93,12 @@ const fields = {
     .max(23)
     .describe(
       'The hour on each member’s own clock when the coach’s morning note (便条) reaches them: pushed silently and told in 通知. A note written after it reaches them at once.',
+    ),
+  holidays: z
+    .array(CoachHoliday)
+    .max(500)
+    .describe(
+      'The holiday calendar: on each of these days (New York) every wake’s task tells the coach the day’s name, and nothing about what to say. A change replaces the whole list.',
     ),
 };
 
