@@ -61,6 +61,7 @@ struct FeedLayer: View {
                     }
                     .frame(width: EmojiGrid.size.width, height: EmojiGrid.size.height)
                     .accessibilityIdentifier("feed.emojiGrid")
+                    .accessibilityAction(.escape) { close() }
                     .position(gridCenter(over: button, in: proxy))
                     .transition(.scale(scale: 0.6, anchor: .bottomTrailing).combined(with: .opacity))
                 } else {
@@ -75,6 +76,8 @@ struct FeedLayer: View {
                     }
                     .fixedSize()
                     .accessibilityIdentifier("feed.emojiBar")
+                    // VoiceOver can't tap outside: its two-finger scrub closes it instead.
+                    .accessibilityAction(.escape) { close() }
                     .onGeometryChange(for: CGRect.self) {
                         $0.frame(in: .named(FeedView.space))
                     } action: { frame in
@@ -87,6 +90,7 @@ struct FeedLayer: View {
             if let who, let post = model.store.post(who.post) {
                 let coach = model.coachReply(on: post.id)
                 WhoPanel(model: model, reactions: post.reactions, coach: coach)
+                    .accessibilityAction(.escape) { close() }
                     .position(panelCenter(at: proxy[who.bounds], for: post.reactions, coach: coach, in: proxy))
                     .transition(.scale(scale: 0.8, anchor: .topLeading).combined(with: .opacity))
             }

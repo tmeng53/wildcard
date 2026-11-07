@@ -57,6 +57,9 @@ public struct RecapView: View {
         }
         .onChange(of: voiceOver, initial: true) { _, isOn in model.autoAdvance(!isOn && autoAdvances) }
         .environment(\.sceneTheme, model.cast.scene)
+        // A timed page that never scrolls: past the largest standard size its fixed lines and
+        // podium blocks would clip, so the story stops growing there.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .statusBarHidden()
         .task { picture = await renderPicture() }
         // Drawn again on the ending if the first try came back empty.

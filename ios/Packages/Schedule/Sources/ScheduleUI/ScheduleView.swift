@@ -131,7 +131,8 @@ public struct ScheduleView: View {
                 }
                 sharing = poster
             case .failed:
-                try? await Task.sleep(for: failedNoteHold)
+                // A 存图 retried while the note shows cancels this wait: leave its new state alone.
+                guard (try? await Task.sleep(for: failedNoteHold)) != nil else { return }
                 model.clearSaving()
             case .idle, .working:
                 break

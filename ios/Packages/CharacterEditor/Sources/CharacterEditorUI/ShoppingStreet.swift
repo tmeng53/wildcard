@@ -166,7 +166,8 @@ private struct RackHeader: View {
                     .font(.system(size: 20))
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .frame(width: Sizing.compactControl, height: Sizing.compactControl)
-                    .contentShape(Circle())
+                    // Drawn small, tapped at the full 44 points.
+                    .contentShape(Rectangle().inset(by: -(Sizing.minimumTapTarget - Sizing.compactControl) / 2))
             }
             .buttonStyle(PressableButtonStyle())
             .accessibilityLabel(Text("练这些运动解锁", bundle: .module))

@@ -311,9 +311,15 @@ private struct CameraPicker: UIViewControllerRepresentable {
             _ picker: UIImagePickerController,
             didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
         ) {
-            // Full quality here: `PhotoPreparation` shrinks and recompresses it.
-            if let image = info[.originalImage] as? UIImage, let data = image.jpegData(compressionQuality: 1) {
-                parent.took(data)
+            // Full quality here: `PhotoPreparation` shrinks and recompresses it. Encoding a
+            // full-size photo takes long enough to hitch the camera closing, so it runs off the
+            // main actor.
+            if let image = info[.originalImage] as? UIImage {
+                // Holds the coordinator until the photo is handed back, after the camera closed.
+                Task {
+                    let data = await Task.detached { image.jpegData(compressionQuality: 1) }.value
+                    if let data { self.parent.took(data) }
+                }
             }
             parent.dismiss()
         }

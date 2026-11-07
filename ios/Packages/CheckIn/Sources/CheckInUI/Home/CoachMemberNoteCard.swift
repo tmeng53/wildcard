@@ -64,6 +64,9 @@ struct CoachMemberNoteOverlay: View {
             }
             .padding(.horizontal, Space.pageMargin)
             .accessibilityElement(children: .contain)
+            // Over 今天 as a card popup is: VoiceOver stays on it, and its scrub puts it away.
+            .accessibilityAddTraits(.isModal)
+            .accessibilityAction(.escape, putAway)
             .accessibilityIdentifier("today.coachNote")
         }
         .task(id: note.coach.id) {

@@ -176,7 +176,13 @@ struct WildcardApp: App {
             ? InMemoryFeedSource(viewer: viewer, posts: [], characters: [:], offline: LaunchOptions.feedIsOffline)
             : InMemoryFeedSource.sample(
                 viewer: viewer, squad: squad, now: LaunchOptions.now(), zone: .current,
-                photos: InMemoryFeedSource.renderSamplePhotos(), coach: LaunchOptions.sidelineCoach)
+                photos: samplePhotos(), coach: LaunchOptions.sidelineCoach)
+    }
+
+    /// The sample posts' photos, drawn only when the sample squad can show: with a backend the
+    /// tabs are `AppRoot`'s, and drawing them would hold the launch on the main actor for nothing.
+    private static func samplePhotos() -> [String: Data] {
+        AppConfig.current == nil ? InMemoryFeedSource.renderSamplePhotos() : [:]
     }
 
     /// 动态 on the sample squad.
