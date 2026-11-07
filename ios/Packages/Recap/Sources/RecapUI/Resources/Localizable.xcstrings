@@ -1112,18 +1112,19 @@
         }
       }
     },
-    "全队训练了什么": {
+    "项目": {
+      "comment": "Title of the card on 全队运动总结 listing the sports the squad trained this week.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "What the squad trained"
+            "value": "Sports"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "全隊訓練了什麼"
+            "value": "項目"
           }
         }
       }

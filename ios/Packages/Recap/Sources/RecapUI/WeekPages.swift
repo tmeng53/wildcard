@@ -7,11 +7,10 @@ import SportsUI
 import SwiftUI
 
 /// 你的一周: the count and the AI's line, and on the ground's edge the whole week at once,
-/// Monday to Sunday, each day's dot with what it was under it. Nothing staged: the page reads the
-/// moment it opens. The reader's character stands over the last day of the sport they trained
-/// most and does its move, in its kit, right under the count as the approved design has it; the
-/// week sits under its feet and its fun numbers on cards under the week, two to a row, as many
-/// rows as the page holds.
+/// Monday to Sunday, each day's dot on the edge with what it was under it. Nothing staged: the
+/// page reads the moment it opens. The reader's character stands in the middle, right under the
+/// count, and does the move of the sport they trained most, in its kit; the week sits under its
+/// feet and its fun numbers on cards under the week, two to a row, as many rows as the page holds.
 struct MyWeekPage: View {
     let week: RecapDomain.MyWeek
     let page: PageContext
@@ -28,7 +27,7 @@ struct MyWeekPage: View {
                 Ground(height: proxy.size.height - row)
                 page.character(page.cast.viewer, act: Act(clip: week.topSport.weekClip, start: 0.3))
                     .standing(
-                        feetAt: CGPoint(x: spots[min(week.standsOn, 6)], y: row - Self.feetAboveRow),
+                        feetAt: CGPoint(x: width / 2, y: row - Self.feetAboveRow),
                         scale: Self.scale)
                 ForEach(Array(week.days.prefix(7).enumerated()), id: \.offset) { index, day in
                     let start = Double(index) * 0.04

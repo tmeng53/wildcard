@@ -105,7 +105,7 @@ struct SquadWeekPage: View {
     }
 }
 
-/// 全队训练了什么: the squad's sports on a card, a row each for the top four with its symbol, who
+/// 项目: the squad's sports on a card, a row each for the top four with its symbol, who
 /// trained it, a bar against the most-trained one and its days, and the rest together as 其他.
 private struct SportsCard: View {
     let week: RecapDomain.SquadWeek
@@ -118,7 +118,7 @@ private struct SportsCard: View {
         let rest = sports.dropFirst(Self.named)
         VStack(alignment: .leading, spacing: Space.s) {
             HStack(alignment: .firstTextBaseline) {
-                Text("全队训练了什么", bundle: .module)
+                Text("项目", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgAccent, in: theme))
                 Spacer(minLength: Space.s)
@@ -152,7 +152,7 @@ private struct SportsCard: View {
     private static let named = 4
 }
 
-/// One sport on 全队训练了什么: its symbol in a circle, its name, who trained it (two heads and
+/// One sport on 项目: its symbol in a circle, its name, who trained it (two heads and
 /// 「+N」), a bar and its days.
 private struct SportRow: View {
     let symbol: String

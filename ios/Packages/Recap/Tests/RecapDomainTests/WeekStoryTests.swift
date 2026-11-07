@@ -181,12 +181,10 @@ private func ids(_ pages: [StoryPage]) -> [String] {
         healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)
     #expect(week.trainedDays == 3)
     #expect(week.topSport.weekClip == .sport("run"))
-    #expect(week.standsOn == 3)
     let rested = MyWeek(
         plan: 4, days: [.init(day: try day(13), kind: .rest), .init(day: try day(14), kind: .trained(nil))],
         healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)
     #expect(rested.topSport.weekClip == .award(.cheer))
-    #expect(rested.standsOn == 1)
     #expect(StoryClip.eat(.cheat).name == "eat-treat")
     #expect(StoryClip.tossFlyer.name == "toss-flyer")
 }
