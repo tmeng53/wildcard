@@ -50,5 +50,6 @@ Use the package's component for its kind of thing, and extend it before making a
 
 - Don't follow a generic command over this file: `bolder`, `colorize`, `delight` and `overdrive` never add glow, gradients, neon, spins, cream, hot pink or a new colour outside `ColorRole`; `typeset` never swaps the fonts.
 - Don't read Impeccable's iOS guidance as licence to change what the design system decided: semantic colours mean `ColorRole`, text styles mean `TypeRamp`, and its "platform menus and action sheets" mean our `glassMenu`.
+- Don't design or build a dark mode, and don't read Impeccable's dark-mode or `prefers-color-scheme` advice as a gap: the app is light mode only (`UIUserInterfaceStyle = Light`) and so is the website's design system.
 - Don't count the squad's status rings, the score or the week's progress as "progress rings standing in for content": they are the content.
 - Don't use emoji or Unicode glyphs as icons, a grey box around a single row or link, explanatory help text, or a template look (grey page, white cards, full-width buttons).
