@@ -41,7 +41,11 @@ struct PostTile: View {
                 cover = nil
                 return
             }
-            guard let jpeg = await store.photo(ref) else { return }
+            guard let jpeg = await store.photo(ref) else {
+                // Never keep a cover the post no longer has.
+                if !Task.isCancelled { cover = nil }
+                return
+            }
             cover = await Self.thumbnail(jpeg)
         }
     }

@@ -217,10 +217,11 @@ struct MeStage: View {
     }
 
     /// Builds the art off the main actor, once per look and mood: the card's front is rebuilt on
-    /// every flip, and a cached stage dresses at once instead of standing empty mid-turn.
+    /// every flip, and a cached stage dresses as soon as it shows instead of after a parse.
     private func dress() async {
         guard let character else { return }
-        let key = StageArt.Key(outfit: character.outfit, persona: character.persona, mood: mood)
+        let key = StageArt.Key(
+            outfit: character.outfit, persona: character.persona, mood: mood, generation: StageArt.generation)
         let art: StageArt
         if let cached = StageArt.cache[key] {
             art = cached
@@ -252,6 +253,15 @@ private struct StageArt: Sendable {
         let outfit: Outfit
         let persona: Persona
         let mood: MeStage.Mood
+        /// The downloaded art's generation, so a newer one is parsed again, not served stale.
+        let generation: Int?
+    }
+
+    /// `ArtTree.downloaded` is swapped whole for each new generation, so its folder's file
+    /// number changes with it; nil while nothing was downloaded.
+    @MainActor static var generation: Int? {
+        let folder = ArtTree.downloaded.path(percentEncoded: false)
+        return (try? FileManager.default.attributesOfItem(atPath: folder))?[.systemFileNumber] as? Int
     }
 
     let figure: Figure
