@@ -59,8 +59,7 @@ struct FactCard: View {
                 note
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    // Beside heads the names get a second line rather than be cut off.
-                    .lineLimit(people.isEmpty ? 1 : 2)
+                    .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
         }
@@ -80,6 +79,8 @@ struct FactCard: View {
     private static let head: Double = 22
     /// Heads before 「+N」.
     private static let headLimit = 3
+    /// Who trained is named beside the heads only up to this many.
+    private static let namedPeople = 2
 
     private var label: Text {
         switch fact {
@@ -120,7 +121,8 @@ struct FactCard: View {
         case .bestDay(let best):
             if best.members == everyone {
                 Text("全员都训练了", bundle: .module)
-            } else if people.isEmpty {
+            } else if people.isEmpty || people.count > Self.namedPeople {
+                // More than two names don't fit beside the heads; the heads say who.
                 Text("\(best.members) 人训练了", bundle: .module)
             } else {
                 // 「Tracy，Fran」: who trained, beside their heads.
