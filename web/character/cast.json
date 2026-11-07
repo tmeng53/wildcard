@@ -34,6 +34,7 @@
       "persona": "shy",
       "look": {
         "body": "bichon",
+        "cheeks": "rosy",
         "top": "lap-jacket",
         "bottom": "lap-pants",
         "shoes": "lap-runner",
@@ -49,6 +50,7 @@
       "persona": "deadpan",
       "look": {
         "body": "cat",
+        "cheeks": "rosy",
         "eyes": "sleepy",
         "mouth": "smirk",
         "top": "deuce-polo",
@@ -91,6 +93,7 @@
       "persona": "drama",
       "look": {
         "body": "tuxedo",
+        "cheeks": "rosy",
         "glasses": "square",
         "top": "halfmoon-tank",
         "bottom": "halfmoon-flare",

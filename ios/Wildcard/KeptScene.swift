@@ -62,6 +62,20 @@ struct ReadScene: Sendable {
 
 /// Reading the squad's scene, which 今天 must open on rather than switch to.
 extension AppModel {
+    /// Whoever made the squad drops onto the scene they picked. On a day a holiday's scene takes
+    /// over every home, its opening plays first, as it does for a joiner after 上场, and its 进场
+    /// drops the squad onto the holiday's scene; the pick stays the squad's own underneath.
+    func landNewSquad(on picked: SceneTheme, home: Home, today: TodayModel) async {
+        guard let read = await openingScene(of: home.squad.id), let takeover = read.takeover else {
+            await today.dropIn(on: picked, coveredAt: .now)
+            return
+        }
+        let shown = SceneTheme(rawValue: read.scene.rawValue) ?? picked
+        await today.land(on: shown, move: nil, takeover: takeover)
+        // Its opening already played on this phone today: just the drop.
+        if !today.isShowingOpening { await today.dropIn(on: shown, coveredAt: .now) }
+    }
+
     /// Puts 今天 on the squad's scene this week, dropping the squad onto it when a teammate moved
     /// it. Offline, it stays where it is.
     func readScene(of squad: SquadID?, into today: TodayModel) async {

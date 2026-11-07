@@ -113,8 +113,8 @@ public final class NoticeInbox {
     private var seenWhenOpened: NoticeID?
     /// Notices the member opened from the home's banner (its button), read without 通知.
     private var opened: Set<NoticeID> = []
-    /// Whether 通知 is on screen.
-    private var isOpen = false
+    /// 通知 is open on screen, from `open()` until `close()`.
+    public private(set) var isOpen = false
     /// Whether the stream being heard got as far as `.ready`.
     private var heardReady = false
     private var next: NoticeID?

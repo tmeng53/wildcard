@@ -1,5 +1,6 @@
-// Serves public/ the way Vercel does for this site (a folder's index.html at its path, then
-// vercel.json's rewrites where no file matches, and its headers for exact sources), for local
+// Serves public/ the way Vercel does for this site (vercel.json's redirects for exact sources, a
+// folder's index.html at its path, then its rewrites where no file matches, and its headers for
+// exact sources), for local
 // previews and the Playwright tests:
 // `node scripts/serve.mjs [port]`.
 import { createServer } from 'node:http';
@@ -15,6 +16,13 @@ const rewrites = vercel.rewrites.map(({ source, destination }) => ({
   pattern: new RegExp(`^${source.replace(/:\w+/g, '[^/]+')}/?$`),
   destination,
 }));
+// Redirects by exact path, such as /zh/ to /, the Simplified Chinese home.
+const redirects = Object.fromEntries(
+  (vercel.redirects ?? []).map(({ source, destination, permanent }) => [
+    source,
+    { destination, status: permanent ? 308 : 307 },
+  ]),
+);
 // Headers by path, such as the apple-app-site-association file's JSON type.
 const headers = Object.fromEntries(
   (vercel.headers ?? []).map(({ source, headers: list }) => [
@@ -39,6 +47,11 @@ createServer(async (req, res) => {
   let file = join(root, path);
   if (!file.startsWith(root)) {
     res.writeHead(403).end();
+    return;
+  }
+  const redirect = redirects[path];
+  if (redirect) {
+    res.writeHead(redirect.status, { location: redirect.destination }).end();
     return;
   }
   try {

@@ -99,30 +99,31 @@ final class FeedUITests: XCTestCase {
         XCTAssertTrue(photos.waitForExistence(timeout: Self.wait), "动态 didn't come back")
     }
 
-    /// A 练了 with its minutes shows them as the card's big number. The newest posts on top are a
-    /// salad and a 请假条, so the run's card is scrolled to, a little at a time.
-    func testMinutes() {
+    /// A 训练 shows its numbers on the 成绩条 under its cover, 时长 first. The newest posts on top
+    /// are a run from Apple Health, a 请假条 and a salad, so the strip is scrolled to, a little at a
+    /// time, until one clears the tab bar.
+    func testScoreStrip() {
         continueAfterFailure = false
         let app = launch(language: "zh-Hans")
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
-        let minutes = app.descendants(matching: .any).matching(identifier: "feed.minutes").firstMatch
+        let strip = app.descendants(matching: .any).matching(identifier: "post.strip").firstMatch
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         let feed = app.scrollViews.firstMatch
         var drags = 0
-        while drags < Self.maxSwipes, !(minutes.exists && minutes.frame.maxY <= tabBarTop) {
+        while drags < Self.maxSwipes, !(strip.exists && strip.frame.maxY <= tabBarTop) {
             let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
             from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
             drags += 1
         }
-        XCTAssertTrue(minutes.exists, "no minutes on a 训练")
+        XCTAssertTrue(strip.exists, "no 成绩条 on a 训练")
         settle()
         // Kept before the check, so a failure shows where the list stopped.
-        keepScreenshot(named: "44-feed-minutes")
-        assertClearOfTheTabBar(minutes, in: app)
+        keepScreenshot(named: "44-feed-score-strip")
+        assertClearOfTheTabBar(strip, in: app)
     }
 
-    /// A post without photos shows the shared colour block, its words and a 练了's minutes on it:
-    /// the 请假条 near the top, and two days back the tennis serve with its 50 minutes.
+    /// A post without a cover shows the shared colour block with its words, its minutes on the
+    /// 成绩条 under it: the 请假条 near the top, and two days back the tennis serve.
     func testPostsWithoutPhotos() {
         continueAfterFailure = false
         let app = launch(language: "zh-Hans")
@@ -139,7 +140,7 @@ final class FeedUITests: XCTestCase {
             drags += 1
         }
         XCTAssertTrue(serve.exists, "the tennis serve without a photo has no colour block")
-        XCTAssertTrue(serve.label.contains("50′"), "the block has no minutes: \(serve.label)")
+        XCTAssertFalse(serve.label.contains("50′"), "the block still has the minutes: \(serve.label)")
         settle()
         keepScreenshot(named: "47-feed-no-photo")
         assertClearOfTheTabBar(serve, in: app)
@@ -195,9 +196,10 @@ final class FeedUITests: XCTestCase {
         comments.tap()
 
         let rows = app.descendants(matching: .any).matching(identifier: "post.comment")
-        XCTAssertTrue(app.buttons["post.back"].waitForExistence(timeout: Self.wait), "the post's page didn't open")
+        XCTAssertTrue(backButton(in: app).waitForExistence(timeout: Self.wait), "the post's page didn't open")
         waitFor(rows.element(boundBy: 2), "exists == true", "the page doesn't list every comment")
-        XCTAssertFalse(app.buttons["tab.feed"].exists, "the tab bar shows over the post's page")
+        waitFor(
+            app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar shows over the post's page")
         settle()
         keepScreenshot(named: "49-post-page")
 
@@ -213,7 +215,7 @@ final class FeedUITests: XCTestCase {
         waitFor(rows.element(boundBy: 3), "exists == true", "the sent comment didn't show")
         XCTAssertFalse(app.buttons["post.cancelReply"].exists, "still replying after sending")
 
-        app.buttons["post.back"].tap()
+        backButton(in: app).tap()
         XCTAssertTrue(app.buttons["tab.feed"].waitForExistence(timeout: Self.wait), "the tab bar didn't come back")
         waitFor(comments, "label CONTAINS '全部 4 条评论'", "the card doesn't count the new comment")
         settle()
@@ -240,6 +242,19 @@ final class FeedUITests: XCTestCase {
         keepScreenshot(named: "47-feed-empty")
         checkIn.tap()
         waitFor(app.buttons["tab.today"], "isSelected == true", "去打卡 didn't open 今天")
+    }
+
+    /// 动态 opened with no server and nothing read before: 网络开小差了 with 再试一次, not a
+    /// blank page.
+    func testOfflineFeedSaysSo() {
+        let app = launch(language: "zh-Hans", extra: ["-uitest-offline-feed"])
+        let retry = app.buttons["feed.retry"]
+        XCTAssertTrue(retry.waitForExistence(timeout: Self.wait), "no 再试一次 on an offline feed")
+        XCTAssertTrue(app.staticTexts["网络开小差了"].exists, "no 网络开小差了 on an offline feed")
+        XCTAssertFalse(app.buttons["feed.checkIn"].exists, "the empty scene on a feed that wasn't read")
+        settle()
+        assertClearOfTheTabBar(retry, in: app)
+        keepScreenshot(named: "47-feed-offline")
     }
 
     private func launch(language: String, extra: [String] = []) -> XCUIApplication {

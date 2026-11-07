@@ -7,6 +7,8 @@ import Contracts
 import DesignSystem
 import DesignSystemUI
 import Foundation
+import HealthDomain
+import HealthUI
 import Observation
 import SwiftUI
 
@@ -99,6 +101,8 @@ public final class TodayModel {
     /// When the hop into my kit is over: a tap before it would stop the change halfway.
     var hopEnds: Date?
     let store: TodayStore
+    /// Apple Health, for the home's card and a 训练's chips; nil where the app has none.
+    public let health: HealthConnection?
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
     private let noSquad: @MainActor (Squad?) -> Void
@@ -116,7 +120,8 @@ public final class TodayModel {
     ///     they were in: the captain removed them, or they left on another phone.
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
-        scene: SceneTheme = .gym, now: @escaping () -> Date = Date.init, defaults: UserDefaults = .standard,
+        scene: SceneTheme = .gym, health: HealthConnection? = nil, now: @escaping () -> Date = Date.init,
+        defaults: UserDefaults = .standard,
         bubbleHold: Double? = nil, celebratesTogether: Bool = true, posted: @escaping @MainActor () -> Void,
         noSquad: @escaping @MainActor (Squad?) -> Void = { _ in }
     ) {
@@ -126,6 +131,7 @@ public final class TodayModel {
         self.scene = scene
         self.defaults = defaults
         self.store = store
+        self.health = health
         self.now = now
         self.writer = writer
         self.photoSource = photoSource
@@ -147,22 +153,25 @@ public final class TodayModel {
     /// Opens the squad's coach's card, from a tap on it on the sideline; the app sets it.
     @ObservationIgnored public var openCoach: () -> Void = {}
 
-    /// The squad dropping onto a newly picked scene, until everyone settles (`TodayModel+DropIn.swift`).
+    /// The squad dropping onto a newly picked scene (`TodayModel+DropIn.swift`), the tab bar held meanwhile.
     var arrival: Arrival?
-    /// Keeps the tab bar hidden while the squad drops in, until 打卡 is back.
     var holdsTabBar = false
     /// A takeover scene's opening, over the whole screen until 进场 (`TodayModel+Opening.swift`).
     var opening: OpeningArt.Loaded?
-    /// The `NoticeBanner` showing at the top, and those waiting for it (`TodayModel+Notices.swift`).
+    /// The squad standing for the opening's group photo, made for it apart from the home's
+    /// figures, which sit, eat or train as their day has them (`TodayModel+Opening.swift`).
+    var openingFigures: [OpeningFigure] = []
+    /// The banner on top or a celebration's card, those waiting, told only while 今天 is in front.
     var notice: Notice?
     var pendingNotices: [Notice] = []
+    public internal(set) var celebration: Broadcast?
+    public var isHomeInFront = true
     /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
     @ObservationIgnored var unlockNotices: UnlockNotices?
     /// Where a broadcast's banner, or 「还有新通知」, opens its place, as the app routes every notice.
     @ObservationIgnored public var openDestination: ((AppDestination) -> Void)?
-    /// Banners shown one after another since the queue was last empty.
+    /// Banners shown in a row since the queue was empty, and who hears each from 通知 come on screen.
     @ObservationIgnored var shownInRow = 0
-    /// Hears each banner from 通知 (by its id) come on screen, so the app tells it once a phone.
     @ObservationIgnored var bannerShown: [UUID: () -> Void] = [:]
     /// Hears a broadcast opened from its banner's button, so its 通知 row is read.
     @ObservationIgnored public var broadcastOpened: ((Broadcast) -> Void)?
@@ -211,12 +220,6 @@ public final class TodayModel {
     /// My wake-up or doze still waiting for its turn; the next pull cancels it.
     @ObservationIgnored var myLightsMove: Task<Void, Never>?
 
-    /// The character whose head the card shows for a member (`MemberID`'s description).
-    func head(of member: String) -> CharacterPlayer? {
-        guard member != home?.member.description else { return player }
-        return cast.mates.first { $0.id.description == member }?.player
-    }
-
     /// Puts everyone where they belong after the home changed.
     func placeSquad() {
         // The squad is placed again once it has dropped in.
@@ -230,6 +233,7 @@ public final class TodayModel {
         }
         if !holdsDress || player == nil { dressMe(hop: false) }
         cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach)
+        if opening != nil { standOpeningSquad() }
     }
 
     /// A 请假条 is on offer while some day it can count for is free of a 练了 (补打卡).
@@ -259,6 +263,7 @@ public final class TodayModel {
     public func load() async {
         await store.load()
         showLoaded()
+        await health?.refresh()
     }
 
     /// How often the home is read again while 今天 is on screen, so teammates' check-ins show
@@ -289,7 +294,8 @@ public final class TodayModel {
         if step == .scene { isBurstOpen = true }
     }
 
-    func pick(_ kind: CheckInKind) {
+    /// Opens the page for `kind`; a 训练 from the home's card starts from `workout`.
+    func pick(_ kind: CheckInKind, workout: ImportedWorkout? = nil) {
         sendFailed = false
         payoff = nil
         switch kind {
@@ -297,15 +303,7 @@ public final class TodayModel {
             step = .disclaimer
         case .trained, .healthyMeal, .cheatMeal:
             // Straight to the page: photos are added there, with its 「+ 照片」.
-            let given: [PreparedPhoto] = if case .provided(let photos) = photoSource { photos } else { [] }
-            compose = ComposeModel(
-                kind: kind, purpose: .new(shareSquad: shareSquad), photos: given.map(ComposedPhoto.new),
-                postableDays: store.postableDays, suggestedActivity: suggestedActivity,
-                recentActivities: recentActivities,
-                save: { [weak self] model in
-                    await self?.post(model.draft, shared: model.isShared, on: model.day) ?? false
-                },
-                close: { [weak self] in self?.cancel() })
+            compose = newPost(kind, from: workout)
             step = .composing(kind)
         }
     }

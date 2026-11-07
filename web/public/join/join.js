@@ -1,7 +1,8 @@
 // The invite page: looks the code in the link up (GET /public/squad-invites/{code}, no sign-in) and
 // shows the squad's name and size over its members' own characters in the 排队入场 queue, each
 // playing its persona's idle. The button opens the App Store; the code is there for anyone who
-// already has the app. The language follows ?lang=, else the browser's.
+// already has the app. The language follows ?lang=, else the one this browser last picked on the
+// site (public/language.js), else Simplified Chinese.
 import { dress, leveled } from '/character/dress.js';
 import { lineup } from '/character/lineup.js';
 
@@ -13,7 +14,7 @@ const A = window.WildcardAvatar;
 const WORDS = {
   'zh-Hans': {
     language: '语言',
-    home: '/zh/',
+    home: '/',
     legal: '/zh/',
     privacy: '隐私政策',
     terms: '使用条款',
@@ -53,7 +54,7 @@ const WORDS = {
   },
   en: {
     language: 'Language',
-    home: '/',
+    home: '/en/',
     legal: '/',
     privacy: 'Privacy',
     terms: 'Terms',
@@ -76,12 +77,8 @@ const WORDS = {
 function language() {
   const asked = new URLSearchParams(location.search).get('lang');
   if (asked in WORDS) return asked;
-  for (const tag of navigator.languages ?? [navigator.language]) {
-    const t = tag.toLowerCase();
-    if (!t.startsWith('zh')) continue;
-    return /hant|tw|hk|mo/.test(t) ? 'zh-Hant' : 'zh-Hans';
-  }
-  return 'en';
+  const picked = window.WildcardLanguage?.picked;
+  return picked in WORDS ? picked : 'zh-Hans';
 }
 
 const lang = language();

@@ -41,23 +41,21 @@ public struct NoticesView: View {
     private let unlocked: (Unlock.Kind, String) -> UnlockWords
     private let now: () -> Date
     private let open: (AppDestination) -> Void
-    private let close: () -> Void
 
     /// - Parameters:
     ///   - unlocked: a store's or prop's words and badge, by its id in the art.
     ///   - now: the time the rows' groups and times are told against.
     ///   - open: a row was tapped, for where it goes (`Notice.destination`); the page stays until
-    ///     the caller closes it.
+    ///     the caller pops it.
     public init(
         inbox: NoticeInbox, viewer: NoticeViewer?, unlocked: @escaping (Unlock.Kind, String) -> UnlockWords,
-        now: @escaping () -> Date = Date.init, open: @escaping (AppDestination) -> Void, close: @escaping () -> Void
+        now: @escaping () -> Date = Date.init, open: @escaping (AppDestination) -> Void
     ) {
         self.inbox = inbox
         self.viewer = viewer
         self.unlocked = unlocked
         self.now = now
         self.open = open
-        self.close = close
     }
 
     public var body: some View {
@@ -65,8 +63,6 @@ public struct NoticesView: View {
             Color(role: .bgCanvas, in: .gym).ignoresSafeArea()
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Space.xs) {
-                    HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: close)
-                        .accessibilityIdentifier("notices.back")
                     Text("通知", bundle: .module)
                         .typeStyle(TypeRamp.largeTitle)
                         .foregroundStyle(Color(role: .fgDefault, in: .gym))
@@ -78,6 +74,7 @@ public struct NoticesView: View {
                 .padding(.top, Space.xs)
                 .padding(.bottom, Space.l)
             }
+            .barTitleOnScroll(Text("通知", bundle: .module))
             .refreshable { await inbox.refresh() }
         }
         .loadingCover(inbox.phase == .loading && inbox.notices.isEmpty) {
@@ -85,9 +82,13 @@ public struct NoticesView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(role: .bgCanvas, in: .gym))
         }
-        .swipesBack(perform: close)
-        .task { await inbox.open() }
-        .onDisappear { inbox.close() }
+        .pushedPage()
+        // Opened once while the page is on the stack: a post pushed over it and back keeps what
+        // was new and the pages read further down. The app closes the inbox when it pops the page.
+        .task {
+            guard !inbox.isOpen else { return }
+            await inbox.open()
+        }
         .accessibilityIdentifier("notices.page")
     }
 

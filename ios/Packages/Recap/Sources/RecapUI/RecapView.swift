@@ -136,7 +136,7 @@ public struct RecapView: View {
     private func page(_ page: StoryPage, context: PageContext) -> some View {
         switch page {
         case .pending:
-            PendingPage(page: context, nudged: model.nudged, nudge: model.nudge)
+            PendingPage(page: context, stuck: model.story.stuck, nudged: model.nudged, nudge: model.nudge)
                 .storyPage("pending")
         case .podium(let podium): PodiumPage(podium: podium, page: context).storyPage("podium")
         case .titles(let rows): TitlesPage(rows: rows, page: context).storyPage("titles")

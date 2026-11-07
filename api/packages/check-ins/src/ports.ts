@@ -1,5 +1,5 @@
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
-import type { CheckInTotals, TrainedCheckIn } from './domain/totals.js';
+import type { CheckInTotals, TrainedCheckIn, TrainingDay } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { CheckInKind, PostCursor } from './domain/post-cursor.js';
 import type { PhotoPath } from './domain/photos.js';
@@ -11,11 +11,14 @@ import type { WeekSummaryWords } from './domain/week-summary-words.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
 export type InsertOutcome =
-  { readonly saved: true } | { readonly saved: false; readonly taken: 'id' | 'photo' };
+  { readonly saved: true } | { readonly saved: false; readonly taken: 'id' | 'photo' | 'workout' };
 
-/** What saving an edit did: another check-in may hold one of its new photos. */
+/**
+ * What saving an edit did: another check-in may hold one of its new photos, or the member's
+ * other post its workout.
+ */
 export type UpdateOutcome =
-  { readonly saved: true } | { readonly saved: false; readonly taken: 'photo' };
+  { readonly saved: true } | { readonly saved: false; readonly taken: 'photo' | 'workout' };
 
 /** Where check-ins are kept. */
 export interface CheckInStore {
@@ -56,6 +59,12 @@ export interface CheckInStore {
    * each once.
    */
   squadsCheckedInto(query: DayRange & { readonly before: Date }): Promise<SquadId[]>;
+  /** A member's 练了 for days `from` to `to`, by day, then the earliest made first. */
+  trainingsForMember(query: {
+    readonly member: MemberId;
+    readonly from: string;
+    readonly to: string;
+  }): Promise<TrainingDay[]>;
   /** A member's own check-ins, newest day first. */
   listForMember(query: DayRange & { readonly member: MemberId }): Promise<CheckInRecord[]>;
   /**

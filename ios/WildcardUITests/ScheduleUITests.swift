@@ -147,7 +147,7 @@ final class ScheduleUITests: XCTestCase {
         settle()
         XCTAssertEqual(app.buttons["schedule.save"].frame.minY, saveTop, accuracy: 1, "the top bar scrolled away")
         XCTAssertLessThanOrEqual(
-            award.frame.maxY, app.buttons["tab.me"].frame.minY, "the award sits under the tab bar")
+            award.frame.maxY, tabButton("tab.me", in: app).frame.minY, "the award sits under the tab bar")
         keepScreenshot(named: "67-schedule-past-week-award-words")
         app.swipeDown()
         settle()

@@ -28,8 +28,10 @@ public actor InMemoryNoticeSource: NoticeSource {
         seen = max(seen ?? through, through)
     }
 
-    /// Nothing is told live here: it listens until the app stops.
+    /// Nothing is told live here: it says it is ready, as the server's stream does on connecting,
+    /// so the inbox reads its newest page at launch, then listens until the app stops.
     public func listen(_ heard: @escaping @Sendable (LiveNotice) async -> Void) async throws(NotificationsError) {
+        await heard(.ready)
         let (quiet, open) = AsyncStream.makeStream(of: Never.self)
         // Ends only when the listening task is cancelled.
         for await _ in quiet {}
@@ -38,8 +40,10 @@ public actor InMemoryNoticeSource: NoticeSource {
 
     /// The sample squad's last two weeks, told before `now`: a teammate's comment, a scene move
     /// and the coach's reply today, the 6pm push yesterday, the 战报 and a store opening this week or
-    /// last, and older ones. The newest two are new.
-    public static func sample(now: Date, calendar: Calendar = .current) -> InMemoryNoticeSource {
+    /// last, and older ones, then `latest`, told just now. The newest two are new.
+    public static func sample(
+        now: Date, calendar: Calendar = .current, latest: [Notice.Subject] = []
+    ) -> InMemoryNoticeSource {
         let today = calendar.startOfDay(for: now)
         func at(days: Int, hour: Int, minute: Int = 0) -> Date {
             let day = calendar.date(byAdding: .day, value: days, to: today) ?? today
@@ -53,40 +57,62 @@ public actor InMemoryNoticeSource: NoticeSource {
         let lastMonday = calendar.date(byAdding: .day, value: -7, to: monday) ?? monday
         let parts = calendar.dateComponents([.year, .month, .day], from: lastMonday)
         let lastWeek = (try? LocalDay(year: parts.year ?? 2026, month: parts.month ?? 1, day: parts.day ?? 1))
-        let subjects: [(Date, Notice.Subject)] = [
-            (
-                at(days: -12, hour: 19), .unlocked(.prop, item: "racket")
-            ),
-            (
-                at(days: -10, hour: 18),
-                .dailyProgress(PushAlert(key: "push.dailyProgress.received", args: ["5", "16", "3"]))
-            ),
-            (at(days: -5, hour: 21), .unlocked(.store, item: "deuce")),
-            (
-                at(days: -2, hour: 20),
-                lastWeek.map { .weeklyAwards(PushAlert(key: "push.weeklyAwards.ready"), week: $0) }
-                    ?? .unlocked(.store, item: "lap")
-            ),
-            (
-                at(days: -1, hour: 18),
-                .dailyProgress(PushAlert(key: "push.dailyProgress.poke.more", args: ["9", "16", "Coco", "2"]))
-            ),
-            (
-                at(days: 0, hour: 9, minute: 30),
-                .coachReply(checkIn: CheckInID(UUID()), coach: "xiaohun", coachName: "毛头", replied: true, emoji: nil)
-            ),
-            (at(days: 0, hour: 10, minute: 12), .sceneMoved(scene: "track", mover: nil, moverName: "阿杰")),
-            (
-                at(days: 0, hour: 11, minute: 5),
-                .comment(PushAlert(key: "push.comment", args: ["Coco", "这组深蹲太稳了"]), checkIn: CheckInID(UUID()))
-            ),
-            // The coach's morning note, told last so the rows before it keep their numbers.
-            (at(days: 0, hour: 11, minute: 30), .coachNote(sampleNote(on: at(days: 0, hour: 11)))),
-        ]
+        let subjects: [(Date, Notice.Subject)] =
+            [
+                (
+                    at(days: -12, hour: 19), .unlocked(.prop, item: "racket")
+                ),
+                (
+                    at(days: -10, hour: 18),
+                    .dailyProgress(PushAlert(key: "push.dailyProgress.received", args: ["5", "16", "3"]))
+                ),
+                (at(days: -5, hour: 21), .unlocked(.store, item: "deuce")),
+                (
+                    at(days: -2, hour: 20),
+                    lastWeek.map { .weeklyAwards(PushAlert(key: "push.weeklyAwards.ready"), week: $0) }
+                        ?? .unlocked(.store, item: "lap")
+                ),
+                (
+                    at(days: -1, hour: 18),
+                    .dailyProgress(PushAlert(key: "push.dailyProgress.poke.more", args: ["9", "16", "Coco", "2"]))
+                ),
+                (
+                    at(days: 0, hour: 9, minute: 30),
+                    .coachReply(
+                        checkIn: CheckInID(UUID()), coach: "xiaohun", coachName: "毛头", replied: true, emoji: nil)
+                ),
+                (at(days: 0, hour: 10, minute: 12), .sceneMoved(scene: "track", mover: nil, moverName: "阿杰")),
+                (
+                    at(days: 0, hour: 11, minute: 5),
+                    .comment(PushAlert(key: "push.comment", args: ["Coco", "这组深蹲太稳了"]), checkIn: CheckInID(UUID()))
+                ),
+                // The coach's morning note, told last so the rows before it keep their numbers.
+                (at(days: 0, hour: 11, minute: 30), .coachNote(sampleNote(on: at(days: 0, hour: 11)))),
+            ] + latest.map { (now.addingTimeInterval(-30), $0) }
         let notices = subjects.enumerated().map { index, told in
             Notice(id: NoticeID(rawValue: index + 1), toldAt: told.0, squad: nil, subject: told.1)
         }
-        return InMemoryNoticeSource(notices, seen: NoticeID(rawValue: notices.count - 2))
+        return InMemoryNoticeSource(notices, seen: NoticeID(rawValue: notices.count - 2 - latest.count))
+    }
+
+    /// A holiday's pre-holiday broadcast in its celebration style, for the sample squad: TURKEY
+    /// TROT's (`trot`) or JINGLE JOG's (`jingle`), giving pieces the bundled art has, since the
+    /// holiday pieces are only uploaded. Its id is new on each launch, so this phone shows it
+    /// every time.
+    public static func celebration(_ store: String) -> Notice.Subject {
+        let christmas = store == "jingle"
+        let words = { (hans: String, english: String) in
+            CatalogNames(simplifiedChinese: hans, english: english, traditionalChinese: hans)
+        }
+        let gifts = (christmas ? ["warmup-beanie", "powder-scarf", "powder-edamame"] : ["lap-bib", "moss-boots"])
+            .map { Broadcast.Gift(kind: .piece, id: $0) }
+        return .broadcast(
+            Broadcast(
+                id: "\(store)-soon-\(UUID().uuidString)",
+                title: christmas ? words("圣诞节快到了", "Christmas is coming") : words("感恩节快到了", "Thanksgiving is coming"),
+                body: words("商店街上新了，快去看看吧！", "New in the shops. Go take a look!"),
+                action: Broadcast.Action(label: words("去商店街看看", "Go to the shops"), destination: .stores),
+                style: .celebration, icon: Broadcast.Gift(kind: .store, id: store), gifts: gifts))
     }
 
     /// 毛头's morning note, as the approved 便条 shows it.

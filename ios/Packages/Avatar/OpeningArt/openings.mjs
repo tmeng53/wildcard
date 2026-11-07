@@ -64,13 +64,6 @@ function tree(x, y, k) {
     `<path d="${p([[0, -78], [3, -72], [9, -71], [4.5, -67], [5.5, -61], [0, -64], [-5.5, -61], [-4.5, -67], [-9, -71], [-3, -72]])}" fill="#E6B54A"/>`;
 }
 
-function gifts(x, y, k) {
-  return `<rect x="${n(x - 16 * k)}" y="${n(y - 24 * k)}" width="${n(24 * k)}" height="${n(24 * k)}" rx="${n(2 * k)}" fill="#D6403A"/>` +
-    `<rect x="${n(x - 6 * k)}" y="${n(y - 24 * k)}" width="${n(4 * k)}" height="${n(24 * k)}" fill="#E6B54A"/>` +
-    `<rect x="${n(x + 8 * k)}" y="${n(y - 16 * k)}" width="${n(18 * k)}" height="${n(16 * k)}" rx="${n(2 * k)}" fill="#2E7D52"/>` +
-    `<rect x="${n(x + 15 * k)}" y="${n(y - 16 * k)}" width="${n(4 * k)}" height="${n(16 * k)}" fill="#FFFFFF"/>`;
-}
-
 const key = (t, v, ease) => (ease ? { t, v, ease } : { t, v });
 const track = (part, channel, keys) => ({ part, channel, keys });
 
@@ -98,7 +91,8 @@ function opening({ id, name, sig, wash, ground, ribbonWords, title, fall, decor,
     { id: 'title', x: 20, y: 306, width: 350, height: 72, text: { words: words(...title), color: '#FFFFFF', size: 48 } },
     { id: 'from', x: 190, y: 384, width: 170, height: 28,
       text: { words: words('— 外卡', '— Wildcard', '— 外卡'), color: '#FFFFFF', size: 18 } },
-    { id: 'squad', x: 10, y: 450, width: 370, height: 260, squad: true },
+    // The squad stands on the snow's crest, clear of the scenery at the edges and of 进场 below.
+    { id: 'squad', x: 30, y: 420, width: 330, height: 250, squad: true },
     { id: 'fallFront', x: 0, y: -H, width: W, height: H * 2, art: 'fall-front.svg' },
   ];
   const clip = {
@@ -155,8 +149,9 @@ opening({
   fall: (dy, period, count, k) => scatter(dy, period, count, (x, y, i) =>
     leaf(x, y, (5 + (i % 3) * 2) * k, (i * 47) % 180, ['#E6B54A', '#F6D9B0', '#E65345', '#E2783A'][i % 4])),
   decor: () => garland(6, W),
-  scenery: () => pumpkin(40, 120, 1.3) + pumpkin(352, 112, 1.1) + pumpkin(78, 150, 0.8) +
-    leaf(310, 150, 7, 30, '#C9473A') + leaf(120, 104, 6, 120, '#E6B54A'),
+  // At the edges on the crest, beside the squad and above 进场.
+  scenery: () => pumpkin(20, 74, 0.8) + pumpkin(370, 74, 0.8) +
+    leaf(44, 92, 6, 30, '#C9473A') + leaf(348, 94, 6, 120, '#E6B54A'),
 });
 
 opening({
@@ -166,7 +161,8 @@ opening({
   fall: (dy, period, count, k) => scatter(dy, period, count, (x, y, i) =>
     `<circle cx="${x}" cy="${y}" r="${n((2 + (i % 3)) * k)}" fill="#FFFFFF"/>`),
   decor: () => lights(4, false),
-  scenery: () => tree(350, 150, 1) + gifts(44, 140, 1.1) + tree(84, 172, 0.6),
+  // At the edges on the crest, beside the squad and above 进场.
+  scenery: () => tree(16, 78, 0.8) + tree(374, 78, 0.8),
   loopExtra: [{
     layer: { id: 'glow', x: 0, y: 54, width: W, height: 80, art: 'glow.svg' },
     // Half a second lit, half a second dim.

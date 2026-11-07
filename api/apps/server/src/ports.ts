@@ -197,7 +197,8 @@ export interface PhotoStorage {
   readonly exists: (path: PhotoPath) => Promise<boolean>;
   /**
    * A URL the app can `GET` each photo from for `expiresInSeconds`, in one call however many
-   * there are. Throws `PhotoNotFoundError` when one of them isn't uploaded.
+   * there are. A photo that isn't in storage (never uploaded, or deleted since) has no URL in
+   * the map, so one missing file never fails the rest.
    */
   readonly createViewUrls: (
     paths: readonly PhotoPath[],

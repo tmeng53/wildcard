@@ -17,13 +17,14 @@ final class OpeningUITests: XCTestCase {
         ]
         app.launch()
         // The overlay itself isn't an accessibility element; its words are.
-        let title = app.staticTexts["感恩节快乐"]
+        let title = app.staticTexts["感恩节快乐！"]
         XCTAssertTrue(title.waitForExistence(timeout: Self.wait), "the opening never played")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "81-opening-thanksgiving-playing")
         let enter = app.buttons["进场"]
         XCTAssertTrue(enter.waitForExistence(timeout: Self.wait), "no 进场 once the opening played")
-        XCTAssertTrue(app.staticTexts["今天全队在秋日小镇"].exists, "no line under the title")
+        // The letter (#465): to the squad by name, signed by 外卡.
+        XCTAssertTrue(app.staticTexts["— 外卡"].exists, "no signature under the letter")
         // The button whole on screen, above the home indicator.
         XCTAssertTrue(app.windows.firstMatch.frame.contains(enter.frame), "进场 runs off the screen")
         Thread.sleep(forTimeInterval: 1)
@@ -45,7 +46,7 @@ final class OpeningUITests: XCTestCase {
             "-today.cardPage", "0", "-uitest-takeover", "jingle", "-opening.played.jingle", "never",
         ]
         app.launch()
-        XCTAssertTrue(app.staticTexts["Merry Christmas"].waitForExistence(timeout: Self.wait), "no title")
+        XCTAssertTrue(app.staticTexts["Merry Christmas!"].waitForExistence(timeout: Self.wait), "no title")
         XCTAssertTrue(app.buttons["Enter"].waitForExistence(timeout: Self.wait), "no Enter once it played")
         Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "84-opening-christmas-en")

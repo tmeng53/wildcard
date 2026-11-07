@@ -32,22 +32,34 @@ final class TogetherUITests: XCTestCase {
         app.launch()
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "今天 never appeared")
-        let figures = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier IN %@", ["today.me", "today.mate"]))
         let opened = Date()
         var places: Set<String> = []
         for frame in 0..<16 {
+            // Every frame is sampled, before its screenshot: on a slow simulator the walk-over can
+            // start late, and it is over in a few seconds.
+            if walks, let now = figurePlaces(in: app) { places.insert(now) }
             let after = Int(Date().timeIntervalSince(opened) * 1000)
             keepScreenshot(named: String(format: "\(name)-%02d-%05dms", frame, after))
-            // Every frame is sampled: on a slow simulator the walk-over can start late.
-            if walks {
-                let frames = figures.allElementsBoundByIndex.map { "\(Int($0.frame.midX)),\(Int($0.frame.maxY))" }
-                places.insert(frames.sorted().joined(separator: " "))
-            }
             Thread.sleep(forTimeInterval: 0.35)
         }
         XCTAssertTrue(card.isHittable, "the squad card went away during the celebration")
         if walks { XCTAssertGreaterThan(places.count, 1, "nobody walked over: the \(kind) didn't play") }
+    }
+
+    /// Where every figure on the scene stands, from one snapshot of the app: reading each
+    /// figure's frame on its own costs a query each, which on a busy CI simulator took the 撞头's
+    /// few seconds (nine a sample) and missed it. Nil when the snapshot failed.
+    private func figurePlaces(in app: XCUIApplication) -> String? {
+        guard let root = try? app.snapshot() else { return nil }
+        var places: [String] = []
+        var pending: [any XCUIElementSnapshot] = [root]
+        while let element = pending.popLast() {
+            if ["today.me", "today.mate"].contains(element.identifier) {
+                places.append("\(Int(element.frame.midX)),\(Int(element.frame.maxY))")
+            }
+            pending += element.children
+        }
+        return places.sorted().joined(separator: " ")
     }
 
     private func keepScreenshot(named name: String) {

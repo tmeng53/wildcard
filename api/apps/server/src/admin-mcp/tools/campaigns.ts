@@ -9,6 +9,7 @@ import {
 import type { Art } from '@wildcard/art';
 import { SceneEdit, type Scenes, type ScenesAdmin } from '@wildcard/scenes';
 import {
+  CoachNote,
   DayOffset,
   MonthDay,
   SwitchId,
@@ -61,6 +62,7 @@ const CampaignSwitch = z.strictObject({
     .meta({
       description: 'The days it is on, both included, every year while the campaign is live.',
     }),
+  coachNote: CoachNote.optional(),
 });
 
 /** What one campaign bundles now: its switches and the scenes, stores, pieces and rules on them. */
@@ -304,6 +306,7 @@ export function setCampaignStatus(deps: CampaignToolDependencies) {
           label: each.label,
           mode,
           ...(each.window === undefined ? {} : { window: each.window }),
+          ...(each.coachNote === undefined ? {} : { coachNote: each.coachNote }),
         });
       const moved = await deps.campaigns.move({ id, status, by: admin });
       return { version: 1, changed: true, plan: what, campaign: await shown(moved, deps) };

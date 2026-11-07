@@ -46,3 +46,25 @@ import Testing
     #expect(kept.draft.photos.map(\.size) == [portrait, landscape])
     #expect(kept == post)
 }
+
+@Test func aWaitingTrainingKeepsItsWorkoutOnDisk() async throws {
+    let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
+    let workout = Workout(
+        source: WorkoutSource(provider: WorkoutSource.appleHealth, id: "A1"),
+        startedAt: Timestamp(millisecondsSince1970: 1_792_725_080_000),
+        endedAt: Timestamp(millisecondsSince1970: 1_792_727_000_000),
+        summary: WorkoutSummary(durationSec: 1920, distanceM: 5200, avgHr: 148),
+        route: [RoutePoint(lat: 40.78, lon: -73.96), RoutePoint(lat: 40.79, lon: -73.95)], tilePosition: 1)
+    let post = PendingCheckIn(
+        id: CheckInID(try #require(UUID(uuidString: "11111111-1111-1111-1111-111111111111"))),
+        member: MemberID(try #require(UUID(uuidString: "22222222-2222-2222-2222-222222222222"))),
+        day: try LocalDay("2026-10-23"), createdAt: Timestamp(millisecondsSince1970: 1_792_727_000_000),
+        audience: try Audience([]),
+        draft: .trained(.sport("run"), try WorkoutMinutes(32), PostBody(photos: [], caption: "", workout: workout)))
+
+    await DeviceOutbox(directory: directory).save([post])
+
+    let kept = try #require(await DeviceOutbox(directory: directory).load().first)
+    #expect(kept.draft.workout == workout)
+    #expect(kept == post)
+}

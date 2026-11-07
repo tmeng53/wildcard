@@ -5,7 +5,8 @@ import Foundation
 
 extension InMemoryFeedSource {
     /// The squad the 动态 screen is reviewed against, on `now`'s day in `zone`: today a run with
-    /// two photos, emoji and three comments, a 请假条 and a salad; yesterday a swim and my own leg day;
+    /// two photos and its route from Apple Health, emoji and three comments, a 请假条, a salad and
+    /// a run from Health with only its map; yesterday a swim with its laps and my own leg day;
     /// two days ago a tennis serve without a photo and a confessed burger. `photos` are the sample photos by
     /// their names in `samplePhotoSizes`; without them the photos' places stay grey. With `coach`,
     /// 毛头 coaches the squad: today's 战术板 line, a word and 🔥 on the run, 🫡 on the 请假条 and
@@ -22,12 +23,23 @@ extension InMemoryFeedSource {
         let write = SamplePosts(today: LocalDay(at: now, in: zone), zone: zone, audience: audience)
         var posts = [
             write.post(
-                jay, 0, 7, 42, .trained(write.training("run", minutes: 45, ["track", "tennis"], "下雨也跑了，鞋已阵亡")),
+                jay, 0, 7, 42,
+                write.fromHealth(
+                    "run", ["track", "tennis"], "下雨也跑了，鞋已阵亡", tile: 3,
+                    WorkoutSummary(durationSec: 2700, distanceM: 7400, paceSecPerKm: 365, avgHr: 151)),
                 reactions: [(coco, "💪"), (mia, "😂"), (doudou, "💪")],
                 comments: [(coco, nil, "鞋：我没签这个合同"), (jay, coco, "它会习惯的"), (mia, nil, "下次带我一起淋")]),
             write.post(mia, 0, 12, 30, .healthyMeal(write.meal("salad", "今天的草，吃得很体面")), reactions: [(coco, "❤️")]),
             write.post(
-                doudou, 1, 21, 5, .trained(write.training("swim", minutes: 40, "pool", "夜泳人，泳池是我的")),
+                kiki, 0, 6, 48,
+                write.fromHealth(
+                    "run", [], "河边风好大", tile: 1,
+                    WorkoutSummary(durationSec: 2460, distanceM: 7000, paceSecPerKm: 351, avgHr: 152))),
+            write.post(
+                doudou, 1, 21, 5,
+                write.fromHealth(
+                    "swim", ["pool"], "夜泳人，泳池是我的", tile: 2,
+                    WorkoutSummary(durationSec: 2400, distanceM: 1200, avgHr: 139, laps: 24, poolLengthM: 50)),
                 reactions: [(jay, "🔥"), (mia, "😮")]),
             write.post(
                 viewer, 1, 19, 20, .trained(write.training("strength", minutes: 60, "gym", "练腿日，明天下楼梯靠扶手")),
@@ -53,7 +65,7 @@ extension InMemoryFeedSource {
     }
 
     /// 毛头's line for today and its replies to the run (posts[0]),
-    /// the swim (posts[2]) and the 请假条 (the last).
+    /// the swim (posts[3]) and the 请假条 (the last).
     private static func sampleCoach(on posts: [FeedPost], now: Date) -> CoachActivity {
         let maotou = CoachSpeaker(id: "xiaohun", name: localized("毛头"))
         let note = CoachNote(
@@ -67,7 +79,7 @@ extension InMemoryFeedSource {
         }
         let replies = [
             reply(posts.first, localized("下雨还跑，鞋的牺牲我记下了"), "🔥"),
-            reply(posts.count > 2 ? posts[2] : nil, localized("夜泳人，记一笔"), nil),
+            reply(posts.count > 3 ? posts[3] : nil, localized("夜泳人，记一笔"), nil),
             reply(posts.last, nil, "🫡"),
         ]
         return CoachActivity(note: note, replies: replies.compactMap(\.self))
@@ -81,11 +93,14 @@ extension InMemoryFeedSource {
                 variants: ["body": "peach", "hair": "curls", "top": "warmup-tee", "bottom": "warmup-shorts"],
                 colors: ["body": "#C68A5E"]),
             "Coco": CharacterLook(
-                persona: "drama", variants: ["body": "lop", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
+                persona: "drama",
+                variants: ["body": "lop", "top": "warmup-hoodie", "bottom": "warmup-leggings"]),
             "Mia": CharacterLook(
-                persona: "deadpan", variants: ["body": "calico", "top": "warmup-tee", "bottom": "moss-cargo"]),
+                persona: "deadpan",
+                variants: ["body": "calico", "cheeks": "rosy", "top": "warmup-tee", "bottom": "moss-cargo"]),
             "豆豆": CharacterLook(
-                persona: "energetic", variants: ["body": "shiba", "top": "nolook-jersey", "bottom": "warmup-shorts"]),
+                persona: "energetic",
+                variants: ["body": "shiba", "cheeks": "rosy", "top": "nolook-jersey", "bottom": "warmup-shorts"]),
             "小鱼": CharacterLook(
                 persona: "shy",
                 variants: ["body": "peach", "hair": "ponytail", "top": "warmup-tee", "bottom": "warmup-leggings"]),
@@ -130,10 +145,50 @@ private struct SamplePosts {
     let zone: TimeZone
     let audience: Audience
 
-    func training(_ sport: Sport, minutes: Int? = nil, _ photos: [String], _ caption: String) -> Training {
+    func training(
+        _ sport: Sport, minutes: Int? = nil, _ photos: [String], _ caption: String, workout: Workout? = nil
+    ) -> Training {
         Training(
             activity: .sport(sport), minutes: minutes.flatMap { try? WorkoutMinutes($0) }, photos: self.photos(photos),
-            caption: line(caption))
+            caption: line(caption), workout: workout)
+    }
+
+    /// A 训练 posted from Apple Health with its numbers, and its tile at `tile`: a swim's laps,
+    /// the 17th the fastest, or a loop through a park.
+    func fromHealth(_ sport: Sport, _ photos: [String], _ caption: String, tile: Int, _ summary: WorkoutSummary)
+        -> CheckIn.Entry
+    {
+        let minutes = (summary.durationSec ?? 0) / 60
+        return .trained(
+            training(
+                sport, minutes: minutes, photos, caption,
+                workout: workout(sport.rawValue, minutes: minutes, tile: tile, summary)))
+    }
+
+    private func workout(_ sport: String, minutes: Int, tile: Int, _ summary: WorkoutSummary) -> Workout {
+        let ended = time(on: today, 7, 0)
+        let source = WorkoutSource(provider: WorkoutSource.appleHealth, id: "sample-\(sport)-\(minutes)")
+        let start = Timestamp(ended.addingTimeInterval(-Double(minutes) * 60))
+        if sport == "swim" {
+            let laps: [Double] = (0..<24).map { (lap: Int) -> Double in
+                guard lap != 16 else { return 44 }
+                let spread: Int = (lap * 7) % 9
+                return 50 + Double(spread)
+            }
+            return Workout(
+                source: source, startedAt: start, endedAt: Timestamp(ended), summary: summary,
+                series: WorkoutSeries(laps: laps), tilePosition: tile)
+        }
+        let route: [RoutePoint] = (0...80).map { (step: Int) -> RoutePoint in
+            let turn: Double = Double(step) / 80 * 1.7 * Double.pi
+            let angle: Double = turn + Double(minutes) * 0.1
+            let lat: Double = 40.7812 + 0.006 * sin(angle)
+            let lon: Double = -73.9665 + 0.009 * cos(angle)
+            return RoutePoint(lat: lat, lon: lon)
+        }
+        return Workout(
+            source: source, startedAt: start, endedAt: Timestamp(ended), summary: summary, route: route,
+            tilePosition: tile)
     }
 
     func training(_ sport: Sport, minutes: Int? = nil, _ photo: String, _ caption: String) -> Training {

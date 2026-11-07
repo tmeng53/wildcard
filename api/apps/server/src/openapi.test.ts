@@ -106,6 +106,7 @@ describe('openapi.json', () => {
       admin: {
         admins: () => ({
           requireAdmin: () => Promise.reject(new Error('unused')),
+          isAdmin: () => Promise.reject(new Error('unused')),
           list: () => Promise.reject(new Error('unused')),
           logChange: () => Promise.reject(new Error('unused')),
           listLog: () => Promise.reject(new Error('unused')),

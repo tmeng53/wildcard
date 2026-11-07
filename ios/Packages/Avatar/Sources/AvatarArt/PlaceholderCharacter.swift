@@ -13,9 +13,9 @@ public enum PlaceholderCharacter {
 
     /// Every variant a look can pick for `slot`, by name, sorted: what the character editor
     /// offers. Adding art is adding a folder, bundled or downloaded (`ArtTree`), so this reads
-    /// the folders instead of a list.
+    /// the folders instead of a list. The shopping bags 商店街 hands out are no pick.
     public static func variants(for slot: Slot) -> [String] {
-        ArtTree.names(in: "art/\(slot)", of: tree, bundled: folder)
+        ArtTree.names(in: "art/\(slot)", of: tree, bundled: folder).filter { slot != "prop" || $0 != shoppingBags }
     }
 
     public static func rig() throws(AvatarError) -> Rig {
