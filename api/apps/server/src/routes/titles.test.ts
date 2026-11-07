@@ -222,9 +222,9 @@ async function profileOf(
 
 const shield = { shape: 'shield', colour: 'track', glyph: 'sun.max.fill' };
 const hexagon = { shape: 'hexagon', colour: 'pool', glyph: 'snowflake' };
-// The badges as the API shows them: the catalog's colours have no tones yet, so none is sent.
-const shownShield = shield;
-const shownHexagon = hexagon;
+// The badges as the API shows them, with their colours' tones from the catalog.
+const shownShield = { ...shield, tone: '#E65345' };
+const shownHexagon = { ...hexagon, tone: '#079BB8' };
 
 /** Freezes a squad's 战报 for a week under the name it had then, as Sunday 8pm does. */
 async function freeze({
