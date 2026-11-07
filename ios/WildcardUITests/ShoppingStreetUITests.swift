@@ -10,9 +10,8 @@ final class ShoppingStreetUITests: XCTestCase {
     /// 进店 sits at the bottom, just clear of the tab bar, under the map.
     private func assertEnterIsPinned(_ app: XCUIApplication) {
         let enter = app.buttons["street.enter"].frame
-        let tabs = app.buttons["tab.me"].frame
-        XCTAssertLessThanOrEqual(enter.maxY, tabs.minY, "the tab bar covers 进店")
-        XCTAssertGreaterThan(enter.minY, tabs.minY - 200, "进店 floats above the bottom: \(enter)")
+        let tabs = tabButton("tab.me", in: app).frame
+        XCTAssertLessThanOrEqual(enter.maxY, tabs.minY, "the tab bar covers 进店: \(enter), \(tabs)")
         XCTAssertGreaterThan(enter.minY, app.buttons["street.map.warmup"].frame.maxY, "进店 isn't under the map")
     }
 

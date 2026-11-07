@@ -106,6 +106,8 @@ public struct ShoppingStreetPage: View {
         let stores = model.catalog.stores
         if let shown = stores.first(where: { $0.id == centred }) ?? stores.first {
             StreetCounter(model: model, store: shown)
+                // Opaque, so the street scrolling under it on a short phone doesn't show through.
+                .background(Color(role: .bgCanvas, in: theme))
         }
     }
 
