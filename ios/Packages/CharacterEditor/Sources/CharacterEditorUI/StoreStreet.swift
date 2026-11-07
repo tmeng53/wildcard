@@ -12,15 +12,13 @@ import SwiftUI
 /// time in the middle with its neighbours peeking in, paged by the system's scroll. The member
 /// stands on the sidewalk under it, and under the sidewalk is the street's map (every store's
 /// badge, a dot where something new waits, a tap walks there). The centred store's sports and its
-/// button are `StreetCounter`, pinned at the page's bottom.
+/// button are `StreetCounter`, pinned at the page's bottom. The street takes the height it is
+/// given: the storefronts' windows grow on a tall phone and shrink on a short one, so the street
+/// fills the page without scrolling.
 struct StoreStreet: View {
     let model: StreetModel
     /// The store in the middle, which the page's counter shows.
     @Binding var current: String?
-    /// Height the page has to spare, which each storefront's window grows by.
-    var spare: Double = 0
-    /// The most a window grows, so a big phone doesn't stretch the street.
-    static let maxSpare: Double = 200
     /// The street is sliding, by a swipe or a tap on its map: the member strolls.
     @State private var walking = false
     @Environment(\.sceneTheme) private var theme
@@ -45,7 +43,7 @@ struct StoreStreet: View {
                 ScrollView(.horizontal) {
                     LazyHStack(alignment: .bottom, spacing: Space.s) {
                         ForEach(stores) { store in
-                            Storefront(model: model, store: store, spare: spare)
+                            Storefront(model: model, store: store)
                                 // The container is the scroll view less its content margins, so a
                                 // storefront as wide as it leaves a neighbour peeking in either side.
                                 .containerRelativeFrame(.horizontal)
@@ -62,6 +60,7 @@ struct StoreStreet: View {
                 .padding(.bottom, sidewalk - Space.m)
                 walker
             }
+            .frame(maxHeight: .infinity, alignment: .bottom)
             StreetMap(model: model, current: shown?.id) { id in
                 withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { current = id }
             }
@@ -137,12 +136,10 @@ struct StreetCounter: View {
 private struct Storefront: View {
     let model: StreetModel
     let store: EditorChoices.Store
-    /// How much taller than its own height the window is, from the page's spare height.
-    let spare: Double
     @Environment(\.sceneTheme) private var theme
 
     private let awning: Double = 34
-    private let window: Double = 220
+    private let window: ClosedRange<Double> = 150...420
     private let frame: Double = 6
     private let door = CGSize(width: 50, height: 176)
     private let badge: Double = 48
@@ -185,7 +182,9 @@ private struct Storefront: View {
     private func wall(_ color: Color) -> some View {
         HStack(alignment: .bottom, spacing: Space.s) {
             glass(color)
-            DoorView(height: door.height, width: door.width)
+            DoorView(width: door.width)
+                // As tall as the window on a short phone, never taller than a door.
+                .frame(maxHeight: door.height)
         }
         .padding(.horizontal, Space.s + Space.xxs / 2)
         .padding(.top, Space.m)
@@ -242,8 +241,8 @@ private struct Storefront: View {
             .padding(.horizontal, Space.s)
             .opacity(store.isOpen ? 1 : 0)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: window + spare)
+        // As tall as the street has room for, from a short phone's to a big one's.
+        .frame(maxWidth: .infinity, minHeight: window.lowerBound, maxHeight: window.upperBound)
         .clipShape(shape)
         .overlay {
             shape.strokeBorder(Color(role: store.isOpen ? .bgBrand : .fgMuted, in: theme), lineWidth: frame)

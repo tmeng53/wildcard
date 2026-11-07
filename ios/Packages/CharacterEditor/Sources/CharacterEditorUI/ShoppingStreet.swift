@@ -18,9 +18,6 @@ public struct ShoppingStreetPage: View {
     let model: StreetModel
     /// The store in the middle of the street, whose 进店 is pinned at the bottom.
     @State private var centred: String?
-    /// The height the street's page has left over between the street and its 进店, which the
-    /// storefronts' windows take.
-    @State private var spare: Double = 0
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -52,58 +49,36 @@ public struct ShoppingStreetPage: View {
     /// tap could land on the copy under the rack.
     private func page(_ store: EditorChoices.Store?) -> some View {
         let isOnTop = (store == nil) == (model.store == nil)
-        return ScrollView {
-            VStack(alignment: .leading, spacing: Space.xs) {
-                if let store {
-                    HStack(spacing: Space.xs) { RackHeader(model: model, store: store) }
-                }
-                // A 领取 that didn't save: the piece is back to NEW, so say why.
-                if model.claimFailed {
-                    Text("网络开小差了，没领上", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .accessibilityIdentifier("street.claimFailed")
-                }
-                if let store {
-                    StoreRack(model: model, store: store)
-                } else {
-                    street
+        return content(store)
+            // The street's 进店 stays at the bottom, above the tab bar, however tall the phone.
+            .safeAreaInset(edge: .bottom) { if store == nil { counter } }
+            .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text("商店街", bundle: .module))
+            .background(Color(role: .bgCanvas, in: theme))
+            // The pop-up is modal: VoiceOver (and a UI test) reaches only it, not the rack under it.
+            .accessibilityHidden(model.arrival != nil)
+            .overlay {
+                if isOnTop, let arrival = model.arrival {
+                    ArrivalPopup(model: model, arrival: arrival).transition(.opacity)
                 }
             }
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.bottom, Space.l)
-        }
-        .scrollIndicators(.hidden)
-        .fillingSpare($spare, when: store == nil)
-        // The street's 进店 stays at the bottom, above the tab bar, however tall the phone.
-        .safeAreaInset(edge: .bottom) { if store == nil { counter } }
-        .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text("商店街", bundle: .module))
-        .background(Color(role: .bgCanvas, in: theme))
-        // The pop-up is modal: VoiceOver (and a UI test) reaches only it, not the rack under it.
-        .accessibilityHidden(model.arrival != nil)
-        .overlay {
-            if isOnTop, let arrival = model.arrival {
-                ArrivalPopup(model: model, arrival: arrival).transition(.opacity)
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.arrival)
+            .sheet(
+                item: Binding(
+                    get: { isOnTop ? model.sheet.map(ClaimSheet.Piece.init) : nil }, set: { model.sheet = $0?.id })
+            ) { piece in
+                ClaimSheet(model: model, piece: piece.id)
+                    .presentationDetents([.height(ClaimSheet.height)])
+                    .presentationDragIndicator(.visible)
             }
-        }
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.arrival)
-        .sheet(
-            item: Binding(
-                get: { isOnTop ? model.sheet.map(ClaimSheet.Piece.init) : nil }, set: { model.sheet = $0?.id })
-        ) { piece in
-            ClaimSheet(model: model, piece: piece.id)
-                .presentationDetents([.height(ClaimSheet.height)])
-                .presentationDragIndicator(.visible)
-        }
-        .noticeBanner(
-            item: Binding(get: { isOnTop ? model.claimedNotice : nil }, set: { model.claimedNotice = $0 }),
-            hold: { [noticeHold = model.noticeHold] _ in noticeHold ?? Motion.noticeHold },
-            onTap: { model.tryOn($0.id) },
-            content: { claimed in ClaimedBanner(model: model, piece: claimed.id) }
-        )
-        // A container, so its identifier doesn't replace the pop-up's (editor.arrival) and the rest.
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("street.page")
+            .noticeBanner(
+                item: Binding(get: { isOnTop ? model.claimedNotice : nil }, set: { model.claimedNotice = $0 }),
+                hold: { [noticeHold = model.noticeHold] _ in noticeHold ?? Motion.noticeHold },
+                onTap: { model.tryOn($0.id) },
+                content: { claimed in ClaimedBanner(model: model, piece: claimed.id) }
+            )
+            // A container, so its identifier doesn't replace the pop-up's (editor.arrival) and the rest.
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("street.page")
     }
 
     @ViewBuilder
@@ -116,27 +91,40 @@ public struct ShoppingStreetPage: View {
         }
     }
 
-    private var street: some View {
-        StoreStreet(model: model, current: $centred, spare: spare)
-            .padding(.top, Space.xl)
+    /// A store's rack scrolls. The street doesn't: it fills the page between the bar and its
+    /// pinned 进店, its storefronts' windows taking whatever height the phone has.
+    @ViewBuilder
+    private func content(_ store: EditorChoices.Store?) -> some View {
+        if let store {
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.xs) {
+                    HStack(spacing: Space.xs) { RackHeader(model: model, store: store) }
+                    claimFailed
+                    StoreRack(model: model, store: store)
+                }
+                .padding(.horizontal, Space.pageMargin)
+                .padding(.bottom, Space.l)
+            }
+            .scrollIndicators(.hidden)
+        } else {
+            VStack(alignment: .leading, spacing: Space.xs) {
+                claimFailed
+                StoreStreet(model: model, current: $centred)
+                    .padding(.top, Space.xl)
+            }
+            .padding(.horizontal, Space.pageMargin)
+            .padding(.bottom, Space.l)
+        }
     }
-}
 
-extension View {
-    /// Keeps `spare` at the height the scroll view shows below its content (its container, which
-    /// is its bounds less its insets, the bar and the 进店 pinned under it included, less the
-    /// content), so a page that grows by it just fills the screen; nothing on a phone too short
-    /// for the content, which then scrolls. At most `StoreStreet.maxSpare`, so a big phone doesn't
-    /// stretch the street.
-    fileprivate func fillingSpare(_ spare: Binding<Double>, when active: Bool) -> some View {
-        onScrollGeometryChange(for: Double.self) { geometry in
-            geometry.containerSize.height - geometry.contentSize.height
-        } action: { _, gap in
-            guard active else { return }
-            // The content already holds the last spare, so the gap is what is still left (or,
-            // negative, what is too much).
-            let next = min(StoreStreet.maxSpare, max(0, spare.wrappedValue + gap))
-            if abs(next - spare.wrappedValue) >= 1 { spare.wrappedValue = next }
+    /// A 领取 that didn't save: the piece is back to NEW, so say why.
+    @ViewBuilder
+    private var claimFailed: some View {
+        if model.claimFailed {
+            Text("网络开小差了，没领上", bundle: .module)
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .accessibilityIdentifier("street.claimFailed")
         }
     }
 }
