@@ -7,19 +7,29 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// The coach's morning note (便条, the approved design): it slides up over 今天 from the sideline
-/// on the first open after it arrived, a sheet on a clipboard like 动态's 战术板, with the coach's
-/// head, its name and the 教练 tag, whom it is for and the day, the line, and 收下. A tap on 收下
-/// or anywhere around it puts it away.
+/// The coach's morning note (the approved design): opened by the member, never by itself, it grows
+/// over 今天 out of the coach on the sideline, a sheet on a clipboard like 动态's 战术板, with the
+/// coach's head, its name and the 教练 tag, whom it is for and the day, the line, and 收下. A tap
+/// on 收下 or anywhere around it puts it away.
 struct CoachMemberNoteOverlay: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.locale) private var locale
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let note: CoachMemberNote
     /// The member's nickname, for 「给 小美 的」; nil before they have one.
     let reader: String?
+    /// Where the coach stands on screen (global), which the card grows out of; nil grows it from
+    /// its middle.
+    let from: CGPoint?
     let putAway: () -> Void
     @State private var head: CharacterPlayer?
+    /// Whether the card has grown to its size, once it was measured.
+    @State private var isOpen = false
+    /// Where in the card it grows from.
+    @State private var anchor: UnitPoint = .center
 
+    /// How big the card starts, before it grows out of the coach.
+    private static let startScale: Double = 0.2
     private static let faceSize: Double = 40
 
     var body: some View {

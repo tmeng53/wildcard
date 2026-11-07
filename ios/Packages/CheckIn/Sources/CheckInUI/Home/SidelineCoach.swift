@@ -109,7 +109,7 @@ struct SidelineCoachButton: ViewModifier {
                 let frame = proxy.frame(in: .global)
                 return CGPoint(x: frame.midX, y: frame.midY)
             } action: {
-                at($0)
+                standsAt($0)
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text(verbatim: name))

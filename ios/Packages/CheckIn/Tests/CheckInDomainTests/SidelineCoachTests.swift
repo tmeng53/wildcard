@@ -84,6 +84,20 @@ private func memberNote(_ id: Int, in squad: SquadID, _ text: String) throws -> 
     #expect(today.coachNote == nil)
 }
 
+@MainActor @Test func aPushTappedForANoteAlreadyGoneOpensNoLaterOne() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    // Its note was put away on another phone before this one loaded.
+    today.showWaitingNote()
+    await today.load()
+    #expect(today.coachNote == nil)
+    // Tomorrow's note waits on the coach's phone instead of opening by itself.
+    await backend.set(notes: [try memberNote(2, in: squadID, "明天慢跑")])
+    await today.load()
+    #expect(today.coachNote == nil)
+    #expect(today.hasWaitingNote)
+}
+
 @MainActor @Test func aNotePutAwayOfflineStaysAwayOnThisPhone() async throws {
     let backend = ScriptedBackend()
     await backend.set(notes: [try memberNote(1, in: squadID, "今天练力量")])

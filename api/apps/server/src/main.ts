@@ -431,8 +431,17 @@ const coachWakes =
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
         // Only members who keep the coach's messages on get a morning note (Tracy, 2026-11-07).
         wantNotes: async (members) => {
+          // A switch that can't be read counts as off for that member only.
           const on = await Promise.all(
-            members.map(async (member) => (await push.settingsOf(PushMember.parse(member))).coach),
+            members.map((member) =>
+              push
+                .settingsOf(PushMember.parse(member))
+                .then((settings) => settings.coach)
+                .catch((error: unknown) => {
+                  log.warn('coach switch not read', { member, error });
+                  return false;
+                }),
+            ),
           );
           return members.filter((_, index) => on[index] === true);
         },

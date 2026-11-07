@@ -23,6 +23,8 @@ extension TodayStore {
     private func loadCoachNotes(in home: Home) async {
         guard let found = try? await backend.coachNotes(in: [home.squad.id]) else { return }
         coachNotes = found.filter { !putAway.contains($0.id) }
+        // A push tapped for a note no longer waiting doesn't open a later one by itself.
+        if coachNotes.isEmpty { showsWaitingNote = false }
     }
 
     /// The note on 今天 now, if any: one shown again from 通知, else the first waiting once the

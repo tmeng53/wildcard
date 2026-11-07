@@ -241,9 +241,13 @@ export function coachActivity(deps: {
         checkIns: c.req.valid('query').checkIns,
         reader: c.var.caller.userId,
       });
+      // A switch that can't be read counts as off, so the rest of the activity still shows.
       const memberNote =
         written !== undefined &&
-        (await deps.push.settingsOf(PushMember.parse(c.var.caller.userId))).coach
+        (await deps.push
+          .settingsOf(PushMember.parse(c.var.caller.userId))
+          .then((settings) => settings.coach)
+          .catch(() => false))
           ? written
           : undefined;
       return c.json(
