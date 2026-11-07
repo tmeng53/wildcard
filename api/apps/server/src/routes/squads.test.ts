@@ -845,6 +845,19 @@ describe('the squad’s time zone', () => {
     expect([refused.status, reason(refused)]).toStrictEqual([403, 'NOT_SQUAD_CAPTAIN']);
     const unknown = await setZone(me.token, { squad: id, timeZone: 'Mars/Olympus' });
     expect([unknown.status, reason(unknown)]).toStrictEqual([400, 'TIME_ZONE_UNKNOWN']);
+    // Node reads a zone in any case; Postgres only as it spells it.
+    const lowercase = await setZone(me.token, { squad: id, timeZone: 'asia/tokyo' });
+    expect([lowercase.status, reason(lowercase)]).toStrictEqual([400, 'TIME_ZONE_UNKNOWN']);
+    const lowercaseSquad = await call({
+      method: 'PUT',
+      path: `/squads/${randomUUID()}`,
+      token: (await signUp()).token,
+      body: { version: 1, name: '东京队', timeZone: 'asia/tokyo' },
+    });
+    expect([lowercaseSquad.status, reason(lowercaseSquad)]).toStrictEqual([
+      400,
+      'TIME_ZONE_UNKNOWN',
+    ]);
     const changed = await setZone(me.token, { squad: id, timeZone: 'America/Los_Angeles' });
     expect(changed.body).toStrictEqual({
       version: 1,

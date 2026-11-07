@@ -132,7 +132,8 @@ export interface SquadStore {
   timeZones(squads: readonly SquadId[]): Promise<ReadonlyMap<SquadId, TimeZoneSetting[]>>;
   /**
    * Sets the squad's time zone from `week` on, if `actor` is its captain; `unchanged` when that
-   * week's zone is that already. The database refuses a zone it doesn't know.
+   * week's zone is that already. Throws `SquadTimeZoneUnknownError` for a zone the database
+   * doesn't know.
    */
   setTimeZone(change: {
     readonly squad: SquadId;

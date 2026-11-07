@@ -15,6 +15,7 @@ import {
 } from '../domain/squad.js';
 import { zoneFor, type TimeZoneSetting } from '../domain/time-zone.js';
 import { DaysPerMember, goalFor } from '../domain/weekly-goal.js';
+import { SquadTimeZoneUnknownError } from '../errors.js';
 import type { CaptainOutcome, CreateOutcome, JoinOutcome, SquadStore } from '../ports.js';
 import type { DB, Squads } from './tables.js';
 
@@ -321,6 +322,8 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
         const refused = constraint === undefined ? undefined : UNIQUE_RULES[constraint];
         if (hasErrorCode(error, '23505') && refused !== undefined)
           return { created: false, refused };
+        // invalid_parameter_value from the trigger that checks Postgres knows the zone.
+        if (hasErrorCode(error, '22023')) throw new SquadTimeZoneUnknownError(timeZone.zone);
         throw error;
       }
     },
@@ -497,10 +500,16 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
         if (zoneFor(settings, week) === timeZone && (latest === undefined || latest <= week)) {
           return 'unchanged';
         }
-        await trx
-          .insertInto('squad_time_zones')
-          .values({ squad_id: squad, time_zone: timeZone, week_start: week, set_by: actor })
-          .execute();
+        try {
+          await trx
+            .insertInto('squad_time_zones')
+            .values({ squad_id: squad, time_zone: timeZone, week_start: week, set_by: actor })
+            .execute();
+        } catch (error) {
+          // invalid_parameter_value from the trigger that checks Postgres knows the zone.
+          if (hasErrorCode(error, '22023')) throw new SquadTimeZoneUnknownError(timeZone);
+          throw error;
+        }
         return 'changed';
       });
     },
