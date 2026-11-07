@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { CheckInId, Disclaimer, Meal, MemberId, Training, type CheckInRecord } from './check-in.js';
+import {
+  CheckInId,
+  Disclaimer,
+  Meal,
+  MemberId,
+  Training,
+  isLeave,
+  type CheckInRecord,
+} from './check-in.js';
 import { latestMealOn, markOn, planFinishedAt, trainedDays, trainingOn, weekOf } from './days.js';
 
 const at = (iso: string) => new Date(iso);
@@ -65,6 +73,19 @@ describe('a day’s check-ins', () => {
     ).toBe('trained');
     expect(trainingOn([checkIn('healthyMeal', { day: day })], day)).toBe('notCheckedIn');
     expect(trainingOn([checkIn('trained', { day: '2026-10-18' })], day)).toBe('notCheckedIn');
+  });
+
+  it('leaves a 休息 out: the plan shows the day as a rest day', () => {
+    const day = '2026-10-19';
+    const rest: CheckInRecord = {
+      ...checkIn('disclaimer', { day }),
+      kind: 'disclaimer',
+      disclaimer: Disclaimer.parse({ text: '歇一天', restDay: true }),
+    };
+    expect(isLeave(rest)).toBe(false);
+    expect(isLeave(checkIn('disclaimer', { day }))).toBe(true);
+    expect(trainingOn([rest], day)).toBe('notCheckedIn');
+    expect(trainingOn([rest, checkIn('disclaimer', { day })], day)).toBe('disclaimer');
   });
 
   it('gives the latest meal', () => {

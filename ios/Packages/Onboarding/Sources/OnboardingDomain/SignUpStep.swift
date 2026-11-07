@@ -1,4 +1,4 @@
-/// Where a new member is in sign-up, in order. The open screen and 上场 frame the four task
+/// Where a new member is in sign-up, in order. The open screen and 上场 frame the five task
 /// steps the header counts. Whoever made their squad then picks where it trains, and drops onto
 /// it rather than playing 上场.
 public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
@@ -10,6 +10,10 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
     case squad
     /// 平时练什么？
     case sports
+    /// 连上 Apple 健康 (Tracy, 2026-11-06): HealthKit's own sheet picks what the app reads; a
+    /// Fitbit, WHOOP or Oura wearer learns there how theirs reaches Apple Health first. Skipped
+    /// on a device without Health.
+    case health
     /// 本周目标, on the week's poster.
     case week
     /// 这周在哪练？: only for whoever made the squad. Five cartons; the one picked opens, and the
@@ -19,8 +23,8 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
     /// 上场: the entrance into a squad joined, then home.
     case entrance
 
-    /// The steps the header counts, 「第 1 步，共 4 步」 to 「第 4 步，共 4 步」.
-    public static let counted: [SignUpStep] = [.character, .squad, .sports, .week]
+    /// The steps the header counts, 「第 1 步，共 5 步」 to 「第 5 步，共 5 步」.
+    public static let counted: [SignUpStep] = [.character, .squad, .sports, .health, .week]
 
     /// This step's number in the header, or nil for the open screen, 这周在哪练？ and 上场.
     public var number: Int? {
@@ -34,6 +38,16 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
     /// always do the join and teammates welcome effect」).
     public static func afterWeek(madeTheSquad: Bool) -> SignUpStep {
         madeTheSquad ? .scene : .entrance
+    }
+
+    /// Where 平时练什么？ goes: 连上 Apple 健康, or straight to 本周目标 on a device without Health.
+    public static func afterSports(hasHealth: Bool) -> SignUpStep {
+        hasHealth ? .health : .week
+    }
+
+    /// Where back from 本周目标 goes: the mirror of `afterSports(hasHealth:)`.
+    public static func beforeWeek(hasHealth: Bool) -> SignUpStep {
+        hasHealth ? .health : .sports
     }
 
     /// Where back goes: the open screen signs out, so there is no back from it, and none from

@@ -201,7 +201,7 @@ export const checkInTotalsFields = {
   trainedDays: count('Days with a 练了; several 练了 on one day count once.'),
   healthyMeals: count('健康餐 check-ins.'),
   cheatMeals: count('坦白放纵餐 check-ins.'),
-  disclaimers: count('今日请假条 check-ins.'),
+  disclaimers: count('今日请假条 check-ins taken as leave; a 休息 (`restDay`) is not one.'),
   topSport: z
     .strictObject({
       sport: storedTrainingFields.sport,

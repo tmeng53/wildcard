@@ -19,6 +19,8 @@ export interface WeekCheckIn {
   readonly minutes?: number;
   /** The member's line: a caption, or a 请假条's text. */
   readonly text?: string;
+  /** For a 请假条: true when it is a planned rest (休息), not leave. */
+  readonly restDay?: true;
   /** Its photos' storage paths, the cover first; the model sees only how many. */
   readonly photos?: readonly string[];
   /** How many teammates reacted to it. */
@@ -69,6 +71,9 @@ const KIND_WORDS: Readonly<Record<CheckInKind, string>> = {
   disclaimer: '请假条',
 };
 
+/** A 请假条 the member marked as a planned rest (休息): part of the plan, not leave. */
+const PLANNED_REST = '计划休息';
+
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
 /** `10-27 周二`, for a `YYYY-MM-DD` day. */
@@ -79,7 +84,9 @@ function dayWords(day: string): string {
 /** One check-in as a line the model reads. */
 export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, string>): string {
   const who = roster.get(checkIn.member) ?? '队员';
-  const parts = [`${dayWords(checkIn.day)} ${who} ${KIND_WORDS[checkIn.kind]}`];
+  const parts = [
+    `${dayWords(checkIn.day)} ${who} ${checkIn.restDay === true ? PLANNED_REST : KIND_WORDS[checkIn.kind]}`,
+  ];
   if (checkIn.postedDay !== undefined && checkIn.postedDay !== checkIn.day) {
     parts.push(`（补打卡：${dayWords(checkIn.postedDay)} 才发）`);
   }

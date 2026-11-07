@@ -1,6 +1,6 @@
 -- Art files: the public bucket takes only the art's types, and the list of files is its own log.
 begin;
-select plan(6);
+select plan(8);
 
 select is(
   (select public from storage.buckets where id = 'art'), true, 'the art bucket is public'
@@ -11,6 +11,13 @@ insert into public.art_files (path, sha256, size, changed_by) values
 insert into public.art_files (path, changed_by) values
   ('avatar/art/top/winter-scarf/torso.svg', 'e0000000-0000-0000-0000-000000000001');
 select is((select count(*)::int from public.art_files), 2, 'a path going back to the bundled file is a new row');
+
+select lives_ok(
+  $$insert into public.art_files (path, sha256, size, changed_by)
+    values ('guides/fitbit-1@3x.png', repeat('d', 64), 1, 'e0000000-0000-0000-0000-000000000001')$$,
+  'a sync guide screenshot has a path in the art tree'
+);
+select is((select count(*)::int from public.art_files), 3, 'the guide screenshot is a row');
 
 select throws_ok(
   $$update public.art_files set size = 1$$, '42501', null, 'a row is never changed'

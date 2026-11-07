@@ -11,6 +11,7 @@ import {
   checkPlanChange,
   localDayAt,
   plannedTrainingDays,
+  restedOnDay,
   trainedByKept,
   trainedOnRestDay,
   weekStartOf,
@@ -225,6 +226,31 @@ describe('trainedOnRestDay', () => {
     expect(
       trainedOnRestDay({ plan, day: '2026-10-22', training: { sport: 'swim' } }),
     ).toBeUndefined();
+  });
+});
+
+describe('restedOnDay', () => {
+  const plan: WeeklyPlan = {
+    weekStart: '2026-10-19',
+    days: [train, run, rest, train, train, train, rest],
+    source: 'saved',
+  };
+
+  it('makes a planned training day a rest day', () => {
+    expect(restedOnDay({ plan, day: '2026-10-20' })).toStrictEqual([
+      train,
+      rest,
+      rest,
+      train,
+      train,
+      train,
+      rest,
+    ]);
+  });
+
+  it('leaves a rest day, or a day outside the week, as planned', () => {
+    expect(restedOnDay({ plan, day: '2026-10-21' })).toBeUndefined();
+    expect(restedOnDay({ plan, day: '2026-10-27' })).toBeUndefined();
   });
 });
 

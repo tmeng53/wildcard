@@ -9,7 +9,8 @@ extension AppModel {
     /// waiting, and uses it up; a resumed sign-up is already in its squad and leaves it.
     func newSignUp(hasAgreedToAI: Bool, takesInvite: Bool = true) -> SignUpModel {
         let model = SignUpModel(
-            service: APISignUpService(api: api), nickname: "", now: Date(), hasAgreedToAI: hasAgreedToAI)
+            service: APISignUpService(api: api), nickname: "", now: Date(), hasAgreedToAI: hasAgreedToAI,
+            health: Self.health)
         if takesInvite, let code = invite {
             invite = nil
             model.open(invite: code)

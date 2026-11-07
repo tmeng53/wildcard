@@ -32,7 +32,9 @@ extension CheckIn {
                 createdAt: checkIn.createdAt,
                 audience: checkIn.audience,
                 entry: .disclaimer(
-                    Disclaimer(checkIn.disclaimer.text, photos: try Photos(wire: checkIn.disclaimer.photos))))
+                    Disclaimer(
+                        checkIn.disclaimer.text, restDay: checkIn.disclaimer.restDay == true,
+                        photos: try Photos(wire: checkIn.disclaimer.photos))))
         }
     }
 
@@ -104,7 +106,7 @@ extension Meal {
 }
 
 extension Disclaimer {
-    var wire: Components.Schemas.Disclaimer { .init(text: text, photos: photos?.wire) }
+    var wire: Components.Schemas.Disclaimer { .init(text: text, restDay: restDay ? true : nil, photos: photos?.wire) }
 }
 
 extension Training {

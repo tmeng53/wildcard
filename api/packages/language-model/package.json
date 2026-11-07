@@ -1,0 +1,19 @@
+{
+  "name": "@wildcard/language-model",
+  "private": true,
+  "type": "module",
+  "wildcard": {
+    "kind": "contract"
+  },
+  "exports": {
+    ".": {
+      "@wildcard/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@wildcard/errors": "workspace:*",
+    "zod": "4.6.7"
+  }
+}

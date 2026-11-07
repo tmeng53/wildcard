@@ -5,7 +5,8 @@ import HealthDomain
 import SwiftUI
 import UIKit
 
-/// 设置 › Apple 健康 (Tracy, 2026-11-06): 连接 until it is connected, then which numbers a post
+/// 设置 › Apple 健康 (Tracy, 2026-11-06): 连接 until it is connected, the Fitbit, WHOOP and Oura
+/// guide under it, then which numbers a post
 /// from Health carries unless struck (时长 always), the line on striking and the route's trimmed
 /// ends, and where iOS keeps the reading permission. Ink and white only, like the rest of 设置.
 public struct HealthSettingsView: View {
@@ -13,6 +14,7 @@ public struct HealthSettingsView: View {
     @Environment(\.openURL) private var openURL
     @Bindable private var health: HealthConnection
     @State private var isConnecting = false
+    @State private var isGuideOpen = false
 
     /// Pushed over 设置 on its NavigationStack, so going back is the system's.
     public init(health: HealthConnection) {
@@ -59,8 +61,12 @@ public struct HealthSettingsView: View {
                 }
                 .accessibilityIdentifier("health.connect")
             }
+            SyncGuideLink { isGuideOpen = true }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, Space.xxs)
         }
         .padding(.top, Space.l)
+        .sheet(isPresented: $isGuideOpen) { SyncGuideSheet() }
     }
 
     private var sharing: some View {
