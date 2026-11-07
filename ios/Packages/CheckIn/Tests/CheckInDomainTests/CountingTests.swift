@@ -88,6 +88,15 @@ private func mine(
     #expect(counted.today.everyoneTrained == false)
 }
 
+@Test func aRestShowsMeRestingNotOnLeave() throws {
+    let before = sampleToday()
+    let counted = before.countingMineSeenAsMyRow(try mine(.disclaimer(try Disclaimer("歇一天", restDay: true))))
+    #expect(counted.members.first { $0.member == myID }?.training == .notCheckedIn)
+    #expect(counted.members.first { $0.member == myID }?.plannedRest == true)
+    #expect(counted.today.disclaimer == before.today.disclaimer)
+    #expect(counted.today.resting == before.today.resting + 1)
+}
+
 extension SquadToday {
     /// Counting where the squad has seen what the member's row shows: nothing kept from it.
     fileprivate func countingMineSeenAsMyRow(_ checkIn: CheckIn) -> SquadToday {

@@ -417,22 +417,6 @@
         }
       }
     },
-    "小队成员都能看到": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your squad can see it"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小隊成員都能看到"
-          }
-        }
-      }
-    },
     "看我！": {
       "localizations": {
         "en": {
@@ -545,22 +529,6 @@
         }
       }
     },
-    "换一组": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New set"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "換一組"
-          }
-        }
-      }
-    },
     "搞笑": {
       "localizations": {
         "en": {
@@ -657,38 +625,6 @@
         }
       }
     },
-    "照着「%@」编": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Riff on “%@”"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "照著「%@」編"
-          }
-        }
-      }
-    },
-    "随便编几句": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Make some up"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隨便編幾句"
-          }
-        }
-      }
-    },
     "炫耀一下成果…": {
       "localizations": {
         "en": {
@@ -733,38 +669,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "找個藉口吧…"
-          }
-        }
-      }
-    },
-    "编几句": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Write a few"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "幫我寫"
-          }
-        }
-      }
-    },
-    "编辑": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "編輯"
           }
         }
       }
@@ -2084,6 +1988,134 @@
           "stringUnit": {
             "state": "translated",
             "value": "今天 Apple 健康裡的運動"
+          }
+        }
+      }
+    },
+    "编一句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write one"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編一句"
+          }
+        }
+      }
+    },
+    "换一句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Another"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "換一句"
+          }
+        }
+      }
+    },
+    "请假": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請假"
+          }
+        }
+      }
+    },
+    "休息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "休息"
+          }
+        }
+      }
+    },
+    "请假还是休息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave or rest"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請假還是休息"
+          }
+        }
+      }
+    },
+    "今日休息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest today"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日休息"
+          }
+        }
+      }
+    },
+    "今天怎么歇？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How are you resting?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天怎麼歇？"
+          }
+        }
+      }
+    },
+    "发布休息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Post rest"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "發布休息"
           }
         }
       }

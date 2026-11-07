@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { CheckInId, CheckInRecord, MemberId } from './check-in.js';
+import { isLeave, type CheckInId, type CheckInRecord, type MemberId } from './check-in.js';
 import { byTrainedThenFinished, planFinishedAt, trainedDays, type Week } from './days.js';
 import type { Emoji, Reaction } from './reaction.js';
 
@@ -42,6 +42,7 @@ export interface Winner {
  * their own plan first, else the earliest to join, so it is the podium's champion (`podiumOf`) and the one who picks next week's scene.
  * `bestDisclaimer` (本周最佳请假条): the
  * 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions.
+ * A 休息 (a planned rest) is not a 请假条: it counts in neither.
  */
 export const AwardKind = z.enum(['planCompleted', 'crown', 'bestDisclaimer']);
 export type AwardKind = z.infer<typeof AwardKind>;
@@ -99,7 +100,7 @@ const AWARDS: Record<AwardKind, AwardRule> = {
     let best: Required<Winner> | undefined;
     let bestAt = 0;
     for (const each of facts.members.flatMap(({ checkIns }) => checkIns)) {
-      if (each.kind !== 'disclaimer') continue;
+      if (!isLeave(each)) continue;
       const value = reactionsOn(facts, each.id);
       const at = each.createdAt.getTime();
       const better =
@@ -118,7 +119,7 @@ const STATS: Record<StatKind, StatRule> = {
   trainedDays: trainedDaysOf,
   plannedDays: (member) => member.plannedDays,
   checkIns: (member) => member.checkIns.length,
-  disclaimers: ofKind('disclaimer'),
+  disclaimers: (member) => member.checkIns.filter(isLeave).length,
   healthyMeals: ofKind('healthyMeal'),
   cheatMeals: ofKind('cheatMeal'),
   reactionsReceived: (member, facts) =>
