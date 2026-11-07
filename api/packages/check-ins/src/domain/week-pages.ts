@@ -1,4 +1,10 @@
-import type { CheckInId, CheckInRecord, LocalDay, MemberId } from './check-in.js';
+import {
+  isLeave,
+  type CheckInId,
+  type CheckInRecord,
+  type LocalDay,
+  type MemberId,
+} from './check-in.js';
 import { byTrainedThenFinished, planFinishedAt } from './days.js';
 import {
   statsOf,
@@ -184,7 +190,7 @@ export function weekPagesOf(
   };
 }
 
-/** A member's day: their first 练了's sport, else a 请假条, else a planned rest day. */
+/** A member's day: their first 练了's sport, else a 请假条, else a rest (planned, or a 休息). */
 function dayOf(
   checkIns: readonly CheckInRecord[],
   { day, planned }: { readonly day: LocalDay; readonly planned: PlanDay | undefined },
@@ -205,7 +211,9 @@ function dayOf(
       ...(minutes === 0 ? {} : { minutes }),
     };
   }
-  if (posts.some(({ kind }) => kind === 'disclaimer')) return { day, kind: 'disclaimer' };
-  if (planned?.kind === 'rest') return { day, kind: 'rest' };
+  if (posts.some(isLeave)) return { day, kind: 'disclaimer' };
+  if (planned?.kind === 'rest' || posts.some(({ kind }) => kind === 'disclaimer')) {
+    return { day, kind: 'rest' };
+  }
   return { day, kind: 'none' };
 }

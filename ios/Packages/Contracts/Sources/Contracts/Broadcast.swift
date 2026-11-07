@@ -73,6 +73,8 @@ public enum AppDestination: Hashable, Sendable {
     case post(CheckInID)
     /// 今天.
     case today
+    /// 今天, where today's pats on the member play again, even ones this phone already showed.
+    case pats
     /// 今天, with the coach's morning note (便条) slid up over it again.
     case coachNote(CoachMemberNote)
     /// 我.
@@ -85,7 +87,8 @@ extension Notice {
     /// Where a tap on it goes, from 通知, the home's banner or its push alike.
     public var destination: AppDestination? {
         switch subject {
-        case .dailyProgress: .feed
+        // The 6pm push names who patted the member: home, where they pat them again.
+        case .dailyProgress: .pats
         case .weeklyAwards(_, let week): .recap(squad: squad, week: week)
         case .sceneMoved: .today
         case .coachReply(let checkIn, _, _, _, _): .post(checkIn)

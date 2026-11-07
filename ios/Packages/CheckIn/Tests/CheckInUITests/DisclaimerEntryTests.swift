@@ -7,13 +7,13 @@ import Testing
     @Test func aBlockedReasonCantBePosted() {
         var entry = DisclaimerEntry()
         entry.write("今天不想动")
-        #expect(entry.disclaimer?.text == "今天不想动")
+        #expect(entry.disclaimer(restDay: false)?.text == "今天不想动")
         entry.block()
         #expect(entry.isBlocked)
-        #expect(entry.disclaimer == nil)
+        #expect(entry.disclaimer(restDay: false) == nil)
         // Setting the same line again keeps it blocked.
         entry.write("今天不想动")
-        #expect(entry.disclaimer == nil)
+        #expect(entry.disclaimer(restDay: false) == nil)
     }
 
     @Test func spacesAroundABlockedReasonKeepItBlocked() {
@@ -22,9 +22,9 @@ import Testing
         entry.block()
         entry.write("今天不想动 ")
         #expect(entry.isBlocked)
-        #expect(entry.disclaimer == nil)
+        #expect(entry.disclaimer(restDay: false) == nil)
         entry.write(" 今天不想动")
-        #expect(entry.disclaimer == nil)
+        #expect(entry.disclaimer(restDay: false) == nil)
     }
 
     @Test func aNewLineCanBePostedAgain() {
@@ -33,7 +33,7 @@ import Testing
         entry.block()
         entry.write("下雨，场地条件不允许")
         #expect(!entry.isBlocked)
-        #expect(entry.disclaimer?.text == "下雨，场地条件不允许")
+        #expect(entry.disclaimer(restDay: false)?.text == "下雨，场地条件不允许")
     }
 
     @Test func aLineIsOneLineOfAtMostEightyCharacters() {
@@ -42,7 +42,7 @@ import Testing
         #expect(entry.text == "第一行" + String(repeating: "累", count: 77))
         #expect(entry.text.count == 80)
         entry.write("   ")
-        #expect(entry.disclaimer == nil)
+        #expect(entry.disclaimer(restDay: false) == nil)
     }
 }
 
@@ -63,7 +63,7 @@ import Testing
         var entry = DisclaimerEntry()
         entry.suggest("今天是战略性休息")
         #expect(!entry.canRestore)
-        #expect(entry.disclaimer?.text == "今天是战略性休息")
+        #expect(entry.disclaimer(restDay: false)?.text == "今天是战略性休息")
     }
 
     @Test func nothingCanBePostedWhileTheReasonIsRefused() {
@@ -72,7 +72,7 @@ import Testing
         entry.block()
         entry.suggest("下雨，场地条件不允许")
         #expect(entry.isBlocked)
-        #expect(entry.disclaimer == nil)
+        #expect(entry.disclaimer(restDay: false) == nil)
     }
 
     @Test func aRefusalAfterSuggestedLinesStillHoldsOnTheMembersWords() {
@@ -85,7 +85,7 @@ import Testing
         #expect(!entry.canRestore)
         entry.restore()
         #expect(entry.isBlocked)
-        #expect(entry.disclaimer == nil)
+        #expect(entry.disclaimer(restDay: false) == nil)
     }
 }
 
@@ -108,4 +108,12 @@ struct DisclaimerRefillTests {
         let lines = DisclaimerEntry.newLines(from: ["第一行\n第二行", "\n"], spare: [], shown: [])
         #expect(lines == ["第一行第二行"])
     }
+}
+
+@Test func aRestPostsAsARestDayWithTheSameWords() {
+    var entry = DisclaimerEntry()
+    entry.write("腿酸，歇一天")
+    #expect(entry.disclaimer(restDay: true)?.restDay == true)
+    #expect(entry.disclaimer(restDay: false)?.restDay == false)
+    #expect(entry.disclaimer(restDay: true)?.text == "腿酸，歇一天")
 }

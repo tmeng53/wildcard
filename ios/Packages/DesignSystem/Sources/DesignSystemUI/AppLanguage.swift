@@ -42,21 +42,31 @@ public enum AppLanguage: String, CaseIterable, Sendable {
         NotificationCenter.default.post(name: Self.didChange, object: nil)
     }
 
-    /// Records this language for the app's extensions (the 6pm push's view), in the settings the
-    /// app shares with them: an extension is a process of its own, with its own `AppleLanguages`,
-    /// so it would otherwise speak the phone's language. Nil (no shared settings) records nothing.
-    public func share(in shared: UserDefaults?) {
+    /// Records this language for the app's extensions (the 6pm push's view and the service that
+    /// rewrites every push's words): an extension is a process of its own, with its own
+    /// `AppleLanguages`, so it would otherwise speak the phone's language. It goes both in the
+    /// settings the app shares with them and in a file in the folder it shares, which the
+    /// extensions read first, since the squad's file there reaches them where the shared settings
+    /// didn't on a member's phone. Nil for either records nothing there.
+    public func share(in shared: UserDefaults?, folder: URL?) {
         shared?.set(rawValue, forKey: Self.sharedKey)
+        guard let folder else { return }
+        try? Data(rawValue.utf8).write(to: folder.appending(path: Self.fileName), options: .atomic)
     }
 
     /// For an extension, before it draws or looks a string up: speaks the language the app last
-    /// shared from now on. With nothing shared (no shared settings, or the app hasn't recorded
-    /// one yet) it keeps its own.
-    public static func adopt(from shared: UserDefaults?) {
-        guard let tag = shared?.string(forKey: sharedKey), let language = AppLanguage(rawValue: tag) else { return }
-        UserDefaults.standard.set([language.rawValue], forKey: key)
+    /// shared from now on, read from the shared folder's file first, then the shared settings.
+    /// With nothing shared (the app hasn't run since it was installed or updated) it speaks
+    /// Simplified Chinese, the language the app opens in until the member picks another.
+    public static func adopt(from shared: UserDefaults?, folder: URL?) {
+        let fromFile = folder.flatMap { try? Data(contentsOf: $0.appending(path: fileName)) }
+            .flatMap { String(bytes: $0, encoding: .utf8) }
+            .flatMap(AppLanguage.init(rawValue:))
+        let language = fromFile ?? shared?.string(forKey: sharedKey).flatMap(AppLanguage.init(rawValue:))
+        UserDefaults.standard.set([(language ?? .simplifiedChinese).rawValue], forKey: key)
     }
 
+    private static let fileName = "app-language"
     private static let sharedKey = "appLanguage"
 
     /// Posted after a pick, for the app's root to draw everything again.

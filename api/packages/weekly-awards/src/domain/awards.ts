@@ -29,6 +29,8 @@ export interface WeekCheckIn {
   readonly caption?: string | undefined;
   /** For a 请假条: its text. */
   readonly text?: string | undefined;
+  /** For a 请假条: true when it is a planned rest (休息), not leave. */
+  readonly restDay?: true | undefined;
   /** Its photos' paths, the cover first. */
   readonly photos: readonly string[];
   /** Teammates' reactions on it, by emoji; an emoji nobody left is left out. */

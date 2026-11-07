@@ -7,6 +7,7 @@ import Contracts
 import DesignSystemUI
 import Foundation
 import DesignSystem
+import HealthUI
 import Observation
 import OnboardingDomain
 import ScenePickDomain
@@ -58,18 +59,14 @@ public final class SignUpModel {
     /// What went wrong with the step's last call, until the member changes something.
     private(set) var failure: SignUpError?
 
-    /// The invite code found while looking one up.
-    enum Lookup: Equatable {
-        case none
-        case looking(InviteCode)
-        case found(SquadPreview)
-        case failed(InviteCode, SignUpError)
-    }
-
     /// This week's days, Monday first, for the poster's weekday names.
     let weekDays: [LocalDay]
 
     @ObservationIgnored private let service: any SignUpService
+    /// Apple Health, which 连上 Apple 健康 connects; nil or unavailable skips that step.
+    let health: HealthConnection?
+    /// Whether 连上 Apple 健康 is asking the system now.
+    var isConnectingHealth = false
     /// How many of this week's days are over: 0 on its first day. Home's first week counts only
     /// from today.
     @ObservationIgnored let daysGone: Int
@@ -78,12 +75,14 @@ public final class SignUpModel {
     /// to start the nickname from. `now` in `timeZone` says which week the plan is for and which
     /// of its days are over, by the member's day as the API counts it (until 3am it is still the
     /// day before); weeks start on Monday. `hasAgreedToAI`: the account consented to AI writing
-    /// before, so 你的小队 doesn't ask again.
+    /// before, so 你的小队 doesn't ask again. `health`: the app's Apple Health, which 连上 Apple 健康
+    /// connects.
     public init(
         service: any SignUpService, nickname: String, now: Date,
-        in timeZone: TimeZone = .current, hasAgreedToAI: Bool = false
+        in timeZone: TimeZone = .current, hasAgreedToAI: Bool = false, health: HealthConnection? = nil
     ) {
         self.service = service
+        self.health = health
         asksForAIConsent = !hasAgreedToAI
         self.nickname = nickname
         squad = SquadDraft(invite: nil, suggestedName: "")
@@ -129,12 +128,14 @@ public final class SignUpModel {
     /// Back a step, but not while a save is on its way: it would move the member on again when
     /// it lands, after they chose to go back.
     func back() {
-        guard !isWorking, !isPickingScene, reveal == nil, let previous = step.previous else { return }
+        guard !isWorking, !isPickingScene, !isConnectingHealth, reveal == nil else { return }
+        let previous: SignUpStep? = step == .week ? .beforeWeek(hasHealth: hasHealth) : step.previous
+        guard let previous else { return }
         failure = nil
         show(previous, forward: false)
     }
 
-    private func show(_ next: SignUpStep, forward: Bool = true) {
+    func show(_ next: SignUpStep, forward: Bool = true) {
         isGoingForward = forward
         if next == .character, editor == nil {
             editor = try? CharacterEditorModel.placeholder(look: welcomeLook, nickname: nickname, stock: stock)
@@ -143,8 +144,8 @@ public final class SignUpModel {
         if next == .week, week == nil || week?.choices != WeekDraft(sports: sports.picked, days: days).choices {
             week = WeekDraft(sports: sports.picked, days: days)
         }
-        if step == .week, next == .sports {
-            // Back to the sports: the character wears the one picked last again, not the
+        if step == .week, next < .week {
+            // Back from the week: the character wears the sport picked last again, not the
             // scene's kit the week's poster put on it.
             myCharacter?.dress(for: sports.wearing)
         }
@@ -275,14 +276,14 @@ public final class SignUpModel {
     }
 
     func finishSports() {
-        show(.week)
+        show(.afterSports(hasHealth: hasHealth))
     }
 
     /// 以后再说: on with no sports, so training days name none.
     func skipSports() {
         if sports.wearing != nil { myCharacter?.dress(for: nil) }
         sports = SportPicks()
-        show(.week)
+        show(.afterSports(hasHealth: hasHealth))
     }
 
     // MARK: 本周目标
@@ -382,12 +383,6 @@ extension SignUpModel {
         let known = stock != nil
         stock = await service.stock()
         if let editor, let stock, !known { try? editor.stock(stock) }
-    }
-
-    /// The template's training days from today on: what this week plans, since the first week
-    /// counts only from the day the member joined.
-    var plannedThisWeek: Int {
-        week?.trainingDays(from: daysGone) ?? 0
     }
 }
 #endif

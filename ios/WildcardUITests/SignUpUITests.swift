@@ -27,6 +27,7 @@ final class SignUpUITests: XCTestCase {
         makeCharacter(in: app)
         joinBySquadCode(in: app)
         pickSports(in: app)
+        connectHealth(in: app)
         planTheWeek(in: app)
         watchTheEntrance(in: app)
     }
@@ -36,7 +37,7 @@ final class SignUpUITests: XCTestCase {
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "角色和昵称 never appeared")
         XCTAssertTrue(app.staticTexts["创建你的外卡运动员"].exists, "step 1 has no title")
         XCTAssertEqual(
-            app.descendants(matching: .any).matching(identifier: "editor.steps").firstMatch.label, "第 1 步，共 4 步")
+            app.descendants(matching: .any).matching(identifier: "editor.steps").firstMatch.label, "第 1 步，共 5 步")
         let nickname = app.textFields["editor.nickname"]
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
@@ -99,7 +100,7 @@ final class SignUpUITests: XCTestCase {
         XCTAssertLessThanOrEqual(rest.frame.maxY, app.buttons["week.done"].frame.minY, "上场 covers the choices")
         XCTAssertGreaterThanOrEqual(app.buttons["week.day.0"].frame.height, 38, "a day is as tall as the board's row")
         XCTAssertTrue(app.staticTexts["我的每周计划"].exists, "step 4 isn't titled 我的每周计划")
-        XCTAssertEqual(app.buttons["week.done"].label, "上场", "a joiner doesn't go 上场 from step 4")
+        XCTAssertEqual(app.buttons["week.done"].label, "上场", "a joiner doesn't go 上场 from step 5")
         XCTAssertTrue(app.buttons["week.day.0"].isEnabled, "Monday can't change on the 每周模板")
         rest.tap()
         settle()
@@ -164,6 +165,7 @@ final class SignUpUITests: XCTestCase {
         squadDone.tap()
         XCTAssertTrue(skip.waitForExistence(timeout: Self.wait), "the squad step didn't carry on to sports")
         skip.tap()
+        skipHealth(in: app)
         let count = app.descendants(matching: .any)["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "the week step never appeared")
         XCTAssertEqual(count.label, "Training 3/7 days a week")
@@ -185,6 +187,7 @@ final class SignUpUITests: XCTestCase {
         let skipSports = app.buttons["sports.skip"]
         XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "平时练什么？ never appeared")
         skipSports.tap()
+        skipHealth(in: app)
         let skipWeek = app.buttons["week.skip"]
         XCTAssertTrue(skipWeek.waitForExistence(timeout: Self.wait), "我的每周计划 never appeared")
         let goal = app.descendants(matching: .any)["week.squadGoal"]
@@ -317,10 +320,58 @@ extension SignUpUITests {
         settle()
         keepScreenshot(named: "57-signup-sports-zh-hant")
         skip.tap()
+        skipHealth(in: app)
         let count = app.descendants(matching: .any)["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "the week step never appeared")
         XCTAssertEqual(count.label, "每週訓練 3/7 天")
         settle()
         keepScreenshot(named: "58-signup-week-zh-hant")
+    }
+}
+
+/// 连上 Apple 健康, step 4.
+extension SignUpUITests {
+    /// 连上 Apple 健康: the sample run, the Fitbit, WHOOP and Oura guide, then 连接, which the sample
+    /// library allows, so the step says 已连接 and goes on with 下一步.
+    private func connectHealth(in app: XCUIApplication) {
+        let connect = app.buttons["health.connect"]
+        XCTAssertTrue(connect.waitForExistence(timeout: Self.wait), "连上 Apple 健康 never appeared")
+        XCTAssertTrue(app.descendants(matching: .any)["health.sample"].exists, "no sample run on 连上 Apple 健康")
+        let guide = app.buttons["health.guide"]
+        XCTAssertLessThanOrEqual(guide.frame.maxY, connect.frame.minY, "连接 covers the guide's link")
+        XCTAssertLessThanOrEqual(guide.frame.height, 60, "the guide's link wraps to a second line")
+        settle()
+        keepScreenshot(named: "44b-signup-health")
+        guide.tap()
+        let open = app.buttons["health.guide.open"]
+        XCTAssertTrue(open.waitForExistence(timeout: Self.wait), "the guide never opened")
+        XCTAssertEqual(open.label, "打开 Google Health")
+        let third = app.descendants(matching: .any)["health.guide.step.3"]
+        XCTAssertTrue(third.exists, "the guide has no third step")
+        XCTAssertLessThanOrEqual(third.frame.maxY, open.frame.minY, "打开 covers the last step")
+        settle()
+        keepScreenshot(named: "44c-signup-health-guide-fitbit")
+        app.segmentedControls["health.guide.wearable"].buttons["WHOOP"].tap()
+        XCTAssertEqual(open.label, "打开 WHOOP")
+        app.segmentedControls["health.guide.wearable"].buttons["Oura"].tap()
+        XCTAssertEqual(open.label, "打开 Oura")
+        settle()
+        keepScreenshot(named: "44d-signup-health-guide-oura")
+        app.buttons["health.guide.close"].tap()
+        XCTAssertTrue(connect.waitForExistence(timeout: Self.wait), "closing the guide didn't come back")
+        connect.tap()
+        let done = app.buttons["health.done"]
+        XCTAssertTrue(done.waitForExistence(timeout: Self.wait), "连接 didn't say 已连接")
+        XCTAssertTrue(app.descendants(matching: .any)["health.connected"].exists, "no 已连接 line")
+        settle()
+        keepScreenshot(named: "44e-signup-health-connected")
+        done.tap()
+    }
+
+    /// 以后再说 on 连上 Apple 健康.
+    private func skipHealth(in app: XCUIApplication) {
+        let skip = app.buttons["health.skip"]
+        XCTAssertTrue(skip.waitForExistence(timeout: Self.wait), "连上 Apple 健康 never appeared")
+        skip.tap()
     }
 }

@@ -119,6 +119,15 @@ private func text(_ root: URL, _ path: String) -> String? {
     #expect(!FileManager.default.fileExists(atPath: root.appending(path: "Library").path(percentEncoded: false)))
 }
 
+@Test func aGuideScreenshotLandsInTheGuidesTree() async {
+    let png = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00])
+    let (art, root) = downloads(from: Bucket([png]))
+    #expect(
+        await art.update(to: ArtManifest(generation: 1, baseURL: base, files: [file("guides/fitbit-1@3x.png", png)])))
+    let landed = root.appending(path: "current/guides/fitbit-1@3x.png").path(percentEncoded: false)
+    #expect(FileManager.default.fileExists(atPath: landed))
+}
+
 @Test func updatesAtOnceDownloadOnceAndNeverGoBack() async {
     let bucket = Bucket([svg, json])
     let (art, root) = downloads(from: bucket)

@@ -99,19 +99,23 @@ public struct Meal: Hashable, Sendable {
 }
 
 /// 今日请假条: the member's excuse for resting today, at most `maxLength` characters, with
-/// optional photos. The text may span lines.
+/// optional photos. The text may span lines. Taken as leave (请假), or as a rest they planned
+/// (休息, `restDay`), which makes its day a rest day in their plan.
 public struct Disclaimer: Hashable, Sendable {
     /// Characters, counted as people see them (a Chinese character or emoji is one). The API's
     /// limit; `APIContract`'s tests fail when the two differ.
     public static let maxLength = 80
 
     public let text: String
+    /// 休息, a rest the member planned, rather than leave (请假).
+    public let restDay: Bool
     public let photos: Photos?
 
-    public init(_ text: String, photos: Photos? = nil) throws(ContractsError) {
+    public init(_ text: String, restDay: Bool = false, photos: Photos? = nil) throws(ContractsError) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard (1...Self.maxLength).contains(trimmed.count) else { throw .disclaimerLength(trimmed.count) }
         self.text = trimmed
+        self.restDay = restDay
         self.photos = photos
     }
 }

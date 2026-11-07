@@ -44,7 +44,7 @@ public struct SquadmateToday: Hashable, Sendable {
     public var training: TrainingStatus
     public var latestMeal: MealKind?
     /// Today is a rest day in their weekly plan, whatever they checked in.
-    public let plannedRest: Bool
+    public var plannedRest: Bool
     /// When they first checked in today, of any kind.
     public var firstCheckInAt: Timestamp?
     /// The weekly title they wear beside their name (头衔); nil before their first.

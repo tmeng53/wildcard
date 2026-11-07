@@ -471,6 +471,27 @@ describe('a squad’s week for its awards', () => {
     });
   });
 
+  it('shows a 休息 as a rest day, never a 请假条, and gives it no best 请假条', async () => {
+    const rester = await newMember('America/Los_Angeles');
+    const fan = await newMember('America/Los_Angeles');
+    const squad = await newSquad(rester, fan);
+    const rested = await checkedIn(rester, {
+      kind: 'disclaimer',
+      day: '2026-10-20',
+      audience: [squad],
+      payload: { version: 1, text: '腿酸，歇一天', restDay: true },
+    });
+    await reacted(fan, [rested, '😂', new Date('2026-10-21T00:00:00.000Z')]);
+    const { pages } = await checkIns.squadWeekCheckIns({
+      squad,
+      weekStart: week,
+      before,
+      members: [rester, fan],
+    });
+    expect(pages.members[0]?.days[1]).toStrictEqual({ day: '2026-10-20', kind: 'rest' });
+    expect(pages).not.toHaveProperty('bestDisclaimer');
+  });
+
   it('leaves out the pages a quiet week has nothing for', async () => {
     const quiet = await newMember();
     const squad = await newSquad(quiet);

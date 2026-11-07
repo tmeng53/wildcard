@@ -196,6 +196,22 @@ export function trainedOnRestDay({
 }
 
 /**
+ * The plan with `day` a rest day when it was a training day: a 休息 posted for a day makes it a
+ * rest day. Undefined when the day was already a rest day.
+ */
+export function restedOnDay({
+  plan,
+  day,
+}: {
+  readonly plan: WeeklyPlan;
+  readonly day: LocalDay;
+}): PlanDays | undefined {
+  const index = Math.round((Date.parse(day) - Date.parse(plan.weekStart)) / DAY);
+  if (plan.days[index] === undefined || plan.days[index].kind === 'rest') return undefined;
+  return plan.days.map((planned, at): PlanDay => (at === index ? { kind: 'rest' } : planned));
+}
+
+/**
  * Checks that a member may set the 饮食小目标 of the week starting `weekStart` on `today`: this
  * week or a later one, at most `WEEKS_AHEAD` weeks ahead, as for the plan; past weeks are over.
  */

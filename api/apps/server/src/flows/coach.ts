@@ -106,7 +106,7 @@ export function coachSquadWeek(deps: {
 function entryOf(
   record: CheckInRecord,
   sportNames: ReadonlyMap<string, string>,
-): Pick<WeekCheckIn, 'sport' | 'minutes' | 'text'> {
+): Pick<WeekCheckIn, 'sport' | 'minutes' | 'text' | 'restDay'> {
   switch (record.kind) {
     case 'trained': {
       const { sport, customSport, minutes, caption } = record.training;
@@ -121,7 +121,10 @@ function entryOf(
     case 'cheatMeal':
       return record.meal.caption === undefined ? {} : { text: record.meal.caption };
     case 'disclaimer':
-      return { text: record.disclaimer.text };
+      return {
+        text: record.disclaimer.text,
+        ...(record.disclaimer.restDay === true ? { restDay: true } : {}),
+      };
   }
 }
 
