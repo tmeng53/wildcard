@@ -7,6 +7,15 @@ final class ShoppingStreetUITests: XCTestCase {
     /// 商店街 from its header button on 我, between 换装 and 设置: the map walks to a closed store, whose
     /// shutter and button say how it unlocks and whose tap keeps it shut; WARM-UP lets the member in, its ⓘ names the sports, and back walks out to
     /// the street and then to 我.
+    /// 进店 sits at the bottom, just clear of the tab bar, under the map.
+    private func assertEnterIsPinned(_ app: XCUIApplication) {
+        let enter = app.buttons["street.enter"].frame
+        let tabs = app.buttons["tab.me"].frame
+        XCTAssertLessThanOrEqual(enter.maxY, tabs.minY, "the tab bar covers 进店")
+        XCTAssertGreaterThan(enter.minY, tabs.minY - 200, "进店 floats above the bottom: \(enter)")
+        XCTAssertGreaterThan(enter.minY, app.buttons["street.map.warmup"].frame.maxY, "进店 isn't under the map")
+    }
+
     func testShoppingStreet() {
         let app = launch(language: "zh-Hans")
         let street = app.buttons["me.street"]
@@ -20,14 +29,7 @@ final class ShoppingStreetUITests: XCTestCase {
         XCTAssertTrue(warmup.waitForExistence(timeout: 30), "no WARM-UP on the street")
         settle()
         keepScreenshot(named: "22-street")
-        // 进店 sits at the bottom, just clear of the tab bar, under the map.
-        let enterButton = app.buttons["street.enter"]
-        let tabs = app.buttons["tab.me"].frame
-        XCTAssertLessThanOrEqual(enterButton.frame.maxY, tabs.minY, "the tab bar covers 进店")
-        XCTAssertGreaterThan(
-            enterButton.frame.minY, tabs.minY - 200, "进店 floats above the bottom: \(enterButton.frame)")
-        XCTAssertGreaterThan(
-            enterButton.frame.minY, app.buttons["street.map.warmup"].frame.maxY, "进店 isn't under the map")
+        assertEnterIsPinned(app)
         walkToClosedStore(app)
         let info = app.buttons["street.rack.info"]
         XCTAssertFalse(info.exists, "a closed store let the member in")
