@@ -324,7 +324,7 @@ describe('when the coach wakes', () => {
     ).toBe(1);
   });
 
-  it('uses its memory without saying so, and never keeps meals or single posts in it', () => {
+  it('keeps lasting things in memory, and a note says one thing', () => {
     const coach = Coach.parse({
       version: 2,
       id: 'nuannuan',
@@ -343,11 +343,9 @@ describe('when the coach wakes', () => {
       offered: true,
     });
     const instructions = instructionsOf({ rules: '规矩' }, coach);
-    expect(instructions).toContain(
-      '别跟队员说你记得、记着、记下了什么（「我还记着」「记住了」都不说）：记性是用的，不是说的。',
-    );
-    expect(instructions).toContain('不记吃了什么、某一顿饭、某条动态或打卡');
+    expect(instructions).toContain('听到过很久还成立的事');
     expect(instructions).toContain('一张便条只说一件事');
+    expect(instructions).toContain('用记性，但别说出来。');
     // The old rule had every note add something from memory, which made notes say "I remember".
     expect(instructions).not.toContain('再加上记性里记着他的');
   });
