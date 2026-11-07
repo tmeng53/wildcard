@@ -82,8 +82,8 @@ final class UnlockNoticeUITests: XCTestCase {
         keepScreenshot(named: "101-piece-claim-sheet")
         claim.tap()
         // Every notice banner is one element named notice.banner (#463); this one says 已放进衣橱.
-        // It goes by itself after a few seconds, so it is tapped as soon as it shows: on a busy
-        // CI simulator a few more queries outlast it. The rack after 领取 is checked in
+        // `-uitest-bubble-hold` keeps it up a minute, since on a busy CI simulator the queries
+        // before the tap outlast its few seconds. The rack after 领取 is checked in
         // testAPieceLeftInItsBoxWaitsOnItsRack.
         let claimed = app.descendants(matching: .any).matching(identifier: "notice.banner")
             .matching(NSPredicate(format: "label CONTAINS %@", "已放进衣橱")).firstMatch
