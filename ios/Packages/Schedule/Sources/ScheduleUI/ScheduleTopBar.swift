@@ -32,7 +32,7 @@ extension ScheduleView {
             save()
         } label: {
             Label {
-                Text("存图", bundle: .module)
+                Text(copy: "存图", bundle: .module)
             } icon: {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
@@ -48,7 +48,8 @@ extension ScheduleView {
         guard !store.weeks.isEmpty else { return [] }
         return weekChips + [
             CategoryBarItem(
-                id: .template, title: Text("我的每周计划", bundle: .module), systemImage: WeekPosterHeading.templateSymbol,
+                id: .template, title: Text(copy: "我的每周计划", bundle: .module),
+                systemImage: WeekPosterHeading.templateSymbol,
                 startsGroup: true, accessibilityIdentifier: "schedule.template")
         ]
     }
@@ -58,9 +59,9 @@ extension ScheduleView {
         return store.weeks.map { week in
             let title: Text =
                 if week == thisWeek {
-                    Text("本周", bundle: .module)
+                    Text(copy: "本周", bundle: .module)
                 } else if let thisWeek, week > thisWeek {
-                    Text("下周", bundle: .module)
+                    Text(copy: "下周", bundle: .module)
                 } else {
                     Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
                 }

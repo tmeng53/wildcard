@@ -3,6 +3,7 @@
 // section. src/routes/catalog.test.ts fails while the copy is stale.
 import { writeFileSync } from 'node:fs';
 
+import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
 import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-drafts';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
@@ -13,6 +14,7 @@ import { z } from 'zod';
 import { createDatabase } from '../src/adapters/postgres.js';
 import {
   catalog,
+  appCopySection,
   disclaimerDiceSection,
   scenesSection,
   sportsSection,
@@ -26,6 +28,7 @@ const app = catalog({
   sections: [
     sportsSection(createSports({ store: createPostgresSportStore(db) })),
     disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+    appCopySection(createAppCopy({ store: createPostgresAppCopy(db) })),
     scenesSection(
       createScenes({
         store: createPostgresSceneStore(db),

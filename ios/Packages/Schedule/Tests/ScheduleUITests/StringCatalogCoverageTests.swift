@@ -72,7 +72,7 @@ struct StringCatalogCoverageTests {
     /// with each `\(…)` as a placeholder; nested parentheses inside it are skipped whole.
     private static func localizedKeys() throws -> Set<String> {
         let pattern = try NSRegularExpression(
-            pattern: #"(?:Text|String)\((?:localized: )?"((?:[^"\\]|\\.)*)", bundle: \.module\)"#)
+            pattern: #"(?:Text|String)\(copy: "((?:[^"\\]|\\.)*)", bundle: \.module\)"#)
         let files = try FileManager.default.contentsOfDirectory(at: sources, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "swift" }
         var keys = Set<String>()

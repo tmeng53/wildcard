@@ -21,10 +21,10 @@ struct TrainingRecordView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s) {
             HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
-                Text("训练记录", bundle: .module)
+                Text(copy: "训练记录", bundle: .module)
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Text("\(trainedDays) 天", bundle: .module)
+                Text(copy: "\(trainedDays) 天", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
             }
@@ -120,9 +120,9 @@ struct TrainingRecordView: View {
     }
 
     private func summary(_ day: TrainingRecord.Day) -> Text {
-        guard let main = day.main else { return Text("没训练", bundle: .module) }
+        guard let main = day.main else { return Text(copy: "没训练", bundle: .module) }
         if let minutes = day.minutes {
-            return main.activity.name + Text(verbatim: " ") + Text("\(minutes) 分钟", bundle: .module)
+            return main.activity.name + Text(verbatim: " ") + Text(copy: "\(minutes) 分钟", bundle: .module)
         }
         return main.activity.name
     }
@@ -196,7 +196,7 @@ private struct DayPopover: View {
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .accessibilityIdentifier("me.record.day")
         } else {
-            line(Text("没训练", bundle: .module))
+            line(Text(copy: "没训练", bundle: .module))
                 .padding(.horizontal, Space.m)
                 .frame(minHeight: Sizing.control)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))

@@ -39,7 +39,8 @@ struct StatusTag: View {
 
     var body: some View {
         Tag(
-            isCurrent ? Text("你们的教练", bundle: .module) : Text("求职中", bundle: .module), style: .ink, size: .small
+            isCurrent ? Text(copy: "你们的教练", bundle: .module) : Text(copy: "求职中", bundle: .module), style: .ink,
+            size: .small
         )
         .fixedSize()
     }

@@ -102,7 +102,7 @@ public struct SquadSettingsView: View {
         .refreshable { await model.reload() }
         .disabled(model.isSaving)
         .accessibilityIdentifier("squad.page")
-        .alert(Text("改队名", bundle: .module), isPresented: isRenaming) {
+        .alert(Text(copy: "改队名", bundle: .module), isPresented: isRenaming) {
             renameAlert
         }
     }
@@ -119,15 +119,17 @@ public struct SquadSettingsView: View {
                 InlineFailure()
                     .accessibilityIdentifier("squad.changeFailed")
             }
-            section(Text("每周目标", bundle: .module)) {
+            section(Text(copy: "每周目标", bundle: .module)) {
                 SquadGoalCard(goal: settings.goal, canChange: model.canChangeGoal) { days in
                     Task { await model.setGoal(days) }
                 }
             }
-            section(Text("教练", bundle: .module)) { coachCard }
-            section(Text("本周场地", bundle: .module)) { sceneCard }
-            section(Text("邀请队友", bundle: .module)) { InviteCard(squad: settings.squad, openSpots: model.openSpots) }
-            section(Text("队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
+            section(Text(copy: "教练", bundle: .module)) { coachCard }
+            section(Text(copy: "本周场地", bundle: .module)) { sceneCard }
+            section(Text(copy: "邀请队友", bundle: .module)) {
+                InviteCard(squad: settings.squad, openSpots: model.openSpots)
+            }
+            section(Text(copy: "队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
                 memberRows
             }
             leaveButton(settings)
@@ -136,13 +138,13 @@ public struct SquadSettingsView: View {
 
     @ViewBuilder private var renameAlert: some View {
         TextField(text: Binding(get: { renaming ?? "" }, set: { renaming = $0 })) {
-            Text("队名", bundle: .module)
+            Text(copy: "队名", bundle: .module)
         }
         .accessibilityIdentifier("squad.rename.field")
         Button(role: .cancel) {
             renaming = nil
         } label: {
-            Text("取消", bundle: .module)
+            Text(copy: "取消", bundle: .module)
         }
         Button {
             let typed = renaming ?? ""
@@ -150,7 +152,7 @@ public struct SquadSettingsView: View {
             working = .rename
             Task { await model.rename(to: typed) }
         } label: {
-            Text("保存", bundle: .module)
+            Text(copy: "保存", bundle: .module)
         }
         .accessibilityIdentifier("squad.rename.save")
     }
@@ -191,7 +193,7 @@ public struct SquadSettingsView: View {
         Button {
             isLeaving = true
         } label: {
-            Text("退出小队", bundle: .module)
+            Text(copy: "退出小队", bundle: .module)
                 .loadingLabel(isSaving(.leave))
         }
         .buttonStyle(TextButtonStyle(.danger))
@@ -200,11 +202,12 @@ public struct SquadSettingsView: View {
         .glassConfirm(
             isPresented: $isLeaving,
             GlassMenuItem(
-                Text("退出小队", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right", role: .destructive,
+                Text(copy: "退出小队", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right",
+                role: .destructive,
                 id: "squad.leave.menu",
                 confirm: .init(
-                    Text("退出小队？", bundle: .module), message: leaveMessage(settings),
-                    label: Text("退出小队", bundle: .module), id: "squad.leave.confirm")
+                    Text(copy: "退出小队？", bundle: .module), message: leaveMessage(settings),
+                    label: Text(copy: "退出小队", bundle: .module), id: "squad.leave.confirm")
             ) {
                 working = .leave
                 Task { await model.leave() }
@@ -214,8 +217,8 @@ public struct SquadSettingsView: View {
 
     /// What leaving does beyond the member's own seat, when it does more.
     private func leaveMessage(_ settings: SquadSettings) -> Text? {
-        if settings.squad.members.count == 1 { return Text("你走了，小队就散了", bundle: .module) }
-        if model.isCaptain { return Text("队长会交给最早加入的队友", bundle: .module) }
+        if settings.squad.members.count == 1 { return Text(copy: "你走了，小队就散了", bundle: .module) }
+        if model.isCaptain { return Text(copy: "队长会交给最早加入的队友", bundle: .module) }
         return nil
     }
 }
@@ -232,7 +235,7 @@ extension SquadSettingsView {
                 .frame(maxWidth: .infinity, alignment: .leading)
             if model.isCaptain {
                 LoadingSwap(isSaving(.rename)) {
-                    HeaderButton(Text("改队名", bundle: .module), systemImage: "pencil") {
+                    HeaderButton(Text(copy: "改队名", bundle: .module), systemImage: "pencil") {
                         renaming = settings.squad.name
                     }
                     .accessibilityIdentifier("squad.rename")
@@ -274,7 +277,7 @@ extension SquadSettingsView {
                         Button {
                             withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { model.openPicker() }
                         } label: {
-                            Text("换场地", bundle: .module)
+                            Text(copy: "换场地", bundle: .module)
                         }
                         .buttonStyle(SecondaryButtonStyle(.inCard))
                         .fixedSize()

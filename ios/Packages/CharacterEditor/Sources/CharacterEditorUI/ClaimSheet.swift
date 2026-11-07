@@ -45,13 +45,13 @@ struct ClaimSheet: View {
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .padding(.top, Space.xs)
             }
-            Text("\(StoreCopy.name(store)) · \(StoreCopy.local(store))", bundle: .module)
+            Text(copy: "\(StoreCopy.name(store)) · \(StoreCopy.local(store))", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
             Button {
                 Task { await model.claim(piece) }
             } label: {
-                Text("领取", bundle: .module).frame(maxWidth: .infinity)
+                Text(copy: "领取", bundle: .module).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
             .accentTone(.brand)
@@ -74,8 +74,8 @@ struct ClaimedBanner: View {
     var body: some View {
         let preview = model.preview(of: piece)
         NoticeBanner(
-            Text("已放进衣橱", bundle: .module),
-            detail: preview.map { Text("\(EditorNames.variant(piece, in: $0.slot)) · 穿上看看", bundle: .module) },
+            Text(copy: "已放进衣橱", bundle: .module),
+            detail: preview.map { Text(copy: "\(EditorNames.variant(piece, in: $0.slot)) · 穿上看看", bundle: .module) },
             showsChevron: true
         ) {
             ZStack {

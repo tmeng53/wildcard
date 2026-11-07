@@ -58,7 +58,7 @@ struct DisclaimerComposer: View {
                 choices
             }
             if model.sendFailed {
-                Text("没发出去，再点一次打卡", bundle: .module)
+                Text(copy: "没发出去，再点一次打卡", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .padding(.bottom, Space.xs)
@@ -94,7 +94,7 @@ struct DisclaimerComposer: View {
                 .fill(Color(role: .fgDefault, in: theme))
                 .frame(width: Self.accentBar.width, height: Self.accentBar.height)
             TextField(text: $text, axis: .vertical) {
-                Text("为什么没练？", bundle: .module)
+                Text(copy: "为什么没练？", bundle: .module)
             }
             .typeStyle(TypeRamp.largeTitle)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -127,7 +127,7 @@ struct DisclaimerComposer: View {
                     Button {
                         isEditing = true
                     } label: {
-                        Text("编辑", bundle: .module)
+                        Text(copy: "编辑", bundle: .module)
                             .typeStyle(TypeRamp.label)
                             .foregroundStyle(Color(role: .fgMuted, in: theme))
                             .frame(minHeight: Sizing.minimumTapTarget)
@@ -139,7 +139,7 @@ struct DisclaimerComposer: View {
                         entry.restore()
                         text = entry.text
                     } label: {
-                        Text("用回我写的", bundle: .module)
+                        Text(copy: "用回我写的", bundle: .module)
                             .typeStyle(TypeRamp.label)
                             .foregroundStyle(Color(role: .fgMuted, in: theme))
                             .underline()
@@ -179,9 +179,9 @@ struct DisclaimerComposer: View {
     private var source: some View {
         Group {
             if entry.mine.isEmpty {
-                Text("随便编几句", bundle: .module)
+                Text(copy: "随便编几句", bundle: .module)
             } else {
-                Text("照着「\(entry.mine)」编", bundle: .module)
+                Text(copy: "照着「\(entry.mine)」编", bundle: .module)
             }
         }
         .typeStyle(TypeRamp.footnote)
@@ -322,9 +322,9 @@ private struct WriteButton: View {
             Label {
                 Group {
                     if isAgain {
-                        Text("换一组", bundle: .module)
+                        Text(copy: "换一组", bundle: .module)
                     } else {
-                        Text("编几句", bundle: .module)
+                        Text(copy: "编几句", bundle: .module)
                     }
                 }
                 .foregroundStyle(Color(role: isWriting ? .fgSubtle : .fgDefault, in: theme))
@@ -356,7 +356,7 @@ private struct PostButton: View {
             guard let disclaimer, !model.isSending else { return }
             Task { await model.post(.disclaimer(disclaimer), shared: isShared, on: day) }
         } label: {
-            Text("发布请假条", bundle: .module)
+            Text(copy: "发布请假条", bundle: .module)
                 .loadingLabel(model.isSending)
                 .frame(maxWidth: .infinity)
         }
@@ -372,10 +372,10 @@ extension DisclaimerStyle {
     /// The style's tab label.
     var label: Text {
         switch self {
-        case .funny: Text("搞笑", bundle: .module)
-        case .unhinged: Text("发疯", bundle: .module)
-        case .heroic: Text("中二", bundle: .module)
-        case .stubborn: Text("嘴硬", bundle: .module)
+        case .funny: Text(copy: "搞笑", bundle: .module)
+        case .unhinged: Text(copy: "发疯", bundle: .module)
+        case .heroic: Text(copy: "中二", bundle: .module)
+        case .stubborn: Text(copy: "嘴硬", bundle: .module)
         }
     }
 }

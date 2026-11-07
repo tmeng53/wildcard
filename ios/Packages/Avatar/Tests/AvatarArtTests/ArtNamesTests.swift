@@ -6,7 +6,7 @@ import Testing
 @testable import AvatarArt
 
 // Art added by upload carries its own names (`avatar/names.json`), so a new store and its
-// pieces are named without an app release. Nothing is bundled.
+// pieces are named without an app release, in front of the bundled names id by id.
 
 private let trot = Data(
     #"""
@@ -45,6 +45,27 @@ private let trot = Data(
     #expect(!ArtTree.reads(trot, at: "avatar/art/acc/trot-bib/names.json"))
 }
 
+@Test func theBuildNamesEveryStoreItShipsWith() {
+    let stores = PlaceholderCharacter.names().stores
+    #expect(Set(stores.keys) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce", "powder"])
+    #expect(
+        stores["lap"]?.tagline
+            == CatalogNames(
+                simplifiedChinese: "操场第九圈，才是今天真正开始的地方。", english: "Lap nine is where today really starts.",
+                traditionalChinese: "操場第九圈，才是今天真正開始的地方。"))
+    #expect(stores["powder"]?.limited?.simplifiedChinese == "冬季限定")
+    #expect(stores["powder"]?.limitedColor == RGBAColor(red: 0x1E, green: 0x6A, blue: 0x9E))
+    #expect(stores["warmup"]?.unlock == nil)
+}
+
+@Test func uploadedNamesStandInFrontOfTheBundledOnesIdById() throws {
+    let bundled = PlaceholderCharacter.names()
+    let names = bundled.overlaid(by: try ArtNames.decode(trot))
+    #expect(names.stores["trot"]?.local.english == "Turkey Trot")
+    #expect(names.stores["lap"] == bundled.stores["lap"])
+    #expect(names.stores.count == bundled.stores.count + 1)
+}
+
 @Test func aLimitedTagsColourThatIsntOneIsLeftOut() throws {
     let file = Data(
         #"""
@@ -54,8 +75,4 @@ private let trot = Data(
           "limitedColor": "orange"}}}
         """#.utf8)
     #expect(try ArtNames.decode(file).stores["trot"]?.limitedColor == nil)
-}
-
-@Test func nothingUploadedNamesNothing() {
-    #expect(PlaceholderCharacter.names() == .none)
 }

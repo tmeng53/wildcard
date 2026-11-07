@@ -53,7 +53,7 @@ struct CoachMemberNoteOverlay: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityIdentifier("today.coachNote.text")
                     Button(action: putAway) {
-                        Text("收下", bundle: .module).frame(maxWidth: .infinity)
+                        Text(copy: "收下", bundle: .module).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(PrimaryButtonStyle(.regular))
                     .accentTone(.brand)
@@ -76,8 +76,8 @@ struct CoachMemberNoteOverlay: View {
     /// 「给 小美 的 · 11月5日 周四」: the day the coach wrote it for.
     private var forWhom: Text {
         let day = Text(note.day.date, format: .dateTime.month(.abbreviated).day().weekday(.abbreviated).locale(locale))
-        guard let reader else { return Text("给你的 · \(day)", bundle: .module) }
-        return Text("给 \(reader) 的 · \(day)", bundle: .module)
+        guard let reader else { return Text(copy: "给你的 · \(day)", bundle: .module) }
+        return Text(copy: "给 \(reader) 的 · \(day)", bundle: .module)
     }
 }
 #endif

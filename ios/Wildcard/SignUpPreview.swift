@@ -27,7 +27,7 @@ struct SignUpPreview: View {
         // back leads here.
         .overlay(alignment: .topLeading) {
             if model.step == .welcome {
-                HeaderButton(Text("结束预览"), systemImage: "xmark", action: close)
+                HeaderButton(Text(copy: "结束预览", bundle: .main), systemImage: "xmark", action: close)
                     .padding(.horizontal, Space.pageMargin)
                     .accessibilityIdentifier("signUpPreview.close")
             }

@@ -44,7 +44,7 @@ public struct TicketSpinner: View {
         }
         .frame(width: size, height: size)
         .accessibilityElement()
-        .accessibilityLabel(Text("加载中", bundle: .module))
+        .accessibilityLabel(Text(copy: "加载中", bundle: .module))
     }
 }
 

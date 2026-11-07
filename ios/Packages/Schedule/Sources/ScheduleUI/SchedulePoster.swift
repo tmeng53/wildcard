@@ -63,7 +63,7 @@ struct SchedulePoster: View {
                 ? content.nickname
                 : "\(content.nickname) · \(ScheduleLabels.dates(content.weekStart, content.weekEnd))",
             heading: content.isTemplate
-                ? .named(Text("我的每周计划", bundle: .module), systemImage: WeekPosterHeading.templateSymbol)
+                ? .named(Text(copy: "我的每周计划", bundle: .module), systemImage: WeekPosterHeading.templateSymbol)
                 : .week(content.weekNumber),
             layout: Self.layout, fill: colors.fill, ink: colors.ink
         ) {
@@ -129,7 +129,7 @@ struct SchedulePoster: View {
                 .background(ink, in: Capsule())
                 .rotationEffect(.degrees(stickerTilts[position % stickerTilts.count]))
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(Text("头衔：\(title.title)", bundle: .module))
+                .accessibilityLabel(Text(copy: "头衔：\(title.title)", bundle: .module))
                 .accessibilityIdentifier("schedule.title.\(position)")
             }
         }

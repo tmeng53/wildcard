@@ -35,7 +35,7 @@ public struct CharacterEditorView: View {
         VStack(spacing: 0) {
             EditorHeader(model: model, context: context, jerseyNumber: jerseyNumber, onBack: onBack)
             if showsTitle {
-                Text("创建你的外卡运动员", bundle: .module)
+                Text(copy: "创建你的外卡运动员", bundle: .module)
                     .typeStyle(TypeRamp.taskTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
@@ -115,10 +115,10 @@ private struct EditorHeader: View {
         HStack(spacing: Space.xs) {
             switch context {
             case .signUp:
-                HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: onBack)
+                HeaderButton(Text(copy: "返回", bundle: .module), systemImage: "chevron.left", action: onBack)
                     .accessibilityIdentifier("editor.back")
             case .profile:
-                HeaderTextButton(Text("取消", bundle: .module), action: onBack)
+                HeaderTextButton(Text(copy: "取消", bundle: .module), action: onBack)
                     .accessibilityIdentifier("editor.cancel")
             }
             if case .signUp(let step, let total) = context {
@@ -129,17 +129,17 @@ private struct EditorHeader: View {
                 Spacer(minLength: 0)
                 if context == .profile, let jerseyNumber {
                     Button(action: jerseyNumber.open) {
-                        Text("球衣号码 \(jerseyNumber.number ?? "--")", bundle: .module)
+                        Text(copy: "球衣号码 \(jerseyNumber.number ?? "--")", bundle: .module)
                     }
                     .buttonStyle(TextButtonStyle(.plain))
                     .accessibilityIdentifier("editor.jerseyNumber")
                     Spacer(minLength: 0)
                 }
             }
-            HeaderButton(Text("撤销", bundle: .module), systemImage: "arrow.uturn.backward") { model.undo() }
+            HeaderButton(Text(copy: "撤销", bundle: .module), systemImage: "arrow.uturn.backward") { model.undo() }
                 .disabled(!model.draft.canUndo)
                 .accessibilityIdentifier("editor.undo")
-            HeaderButton(Text("随机换一个", bundle: .module), systemImage: "dice") { model.shuffle() }
+            HeaderButton(Text(copy: "随机换一个", bundle: .module), systemImage: "dice") { model.shuffle() }
                 .accessibilityIdentifier("editor.shuffle")
         }
         .padding(.horizontal, Space.pageMargin)
@@ -168,11 +168,11 @@ private struct DoneBar: View {
         } label: {
             Group {
                 if isNaming {
-                    Text("好了", bundle: .module)
+                    Text(copy: "好了", bundle: .module)
                 } else if context == .profile {
-                    Text("保存", bundle: .module)
+                    Text(copy: "保存", bundle: .module)
                 } else {
-                    Text("确认", bundle: .module)
+                    Text(copy: "确认", bundle: .module)
                 }
             }
             .frame(maxWidth: .infinity)

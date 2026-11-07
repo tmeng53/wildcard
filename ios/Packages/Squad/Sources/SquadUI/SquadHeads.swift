@@ -29,7 +29,7 @@ struct SquadHeads: View {
                         .overlay(alignment: .bottom) {
                             // 「队长」 hangs on the captain's head as 「教练」 does on the coach's.
                             if member.isCaptain {
-                                InkTag(Text("队长", bundle: .module))
+                                InkTag(Text(copy: "队长", bundle: .module))
                                     .offset(y: SquadHeadsMetrics.tagDrop)
                                     .accessibilityIdentifier("squad.head.captain")
                             }
@@ -41,12 +41,12 @@ struct SquadHeads: View {
             coachSpot
             if openSpots > 0 {
                 InviteShareLink(squad: squad) {
-                    HeadSpot(name: Text("邀请", bundle: .module)) {
+                    HeadSpot(name: Text(copy: "邀请", bundle: .module)) {
                         DashedCircle(Image(systemName: "plus").font(.system(size: Sizing.icon, weight: .regular)))
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(Text("邀请队友", bundle: .module))
+                .accessibilityLabel(Text(copy: "邀请队友", bundle: .module))
                 .accessibilityIdentifier("squad.head.invite")
             }
         }
@@ -58,15 +58,15 @@ struct SquadHeads: View {
             Button {
                 openCoach(.resume(coach.coach))
             } label: {
-                HeadSpot(name: Text("\(coach.coach.name)教练", bundle: .module), isCoach: true) {
+                HeadSpot(name: Text(copy: "\(coach.coach.name)教练", bundle: .module), isCoach: true) {
                     CoachHead(coach: coach.coach.id)
                 }
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("squad.head.coach")
         } else {
-            let spot = HeadSpot(name: Text("教练", bundle: .module)) {
-                DashedCircle(Text("招聘", bundle: .module).typeStyle(TypeRamp.label))
+            let spot = HeadSpot(name: Text(copy: "教练", bundle: .module)) {
+                DashedCircle(Text(copy: "招聘", bundle: .module).typeStyle(TypeRamp.label))
             }
             if canHireCoach {
                 Button {
@@ -158,7 +158,7 @@ private struct CoachHead: View {
         .clipShape(Circle())
         // The 「教练」 tag pressed onto the head's lower edge (option B, 2026-11-02).
         .overlay(alignment: .bottom) {
-            Text("教练", bundle: .module)
+            Text(copy: "教练", bundle: .module)
                 .font(.system(size: SquadHeadsMetrics.tag, weight: .bold))
                 .foregroundStyle(Color(role: .fgOnInk, in: theme))
                 .lineLimit(1)

@@ -124,15 +124,15 @@ struct CoachResumePage: View {
             }
             if let note { board(note) }
             Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: Space.m, verticalSpacing: 0) {
-                row(Text("履历", bundle: .module)) { Text(verbatim: coach.background) }
-                row(Text("执教", bundle: .module)) {
+                row(Text(copy: "履历", bundle: .module)) { Text(verbatim: coach.background) }
+                row(Text(copy: "执教", bundle: .module)) {
                     HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
                         Text(verbatim: "\(coach.yearsCoaching)").typeStyle(TypeRamp.scoreSmall)
-                        Text("年，\(coach.experience)", bundle: .module)
+                        Text(copy: "年，\(coach.experience)", bundle: .module)
                     }
                 }
-                row(Text("风格", bundle: .module)) { Text(verbatim: coach.style) }
-                row(Text("期望待遇", bundle: .module)) { Text(verbatim: coach.pay) }
+                row(Text(copy: "风格", bundle: .module)) { Text(verbatim: coach.style) }
+                row(Text(copy: "期望待遇", bundle: .module)) { Text(verbatim: coach.pay) }
                 hairline
             }
         }
@@ -152,7 +152,7 @@ struct CoachResumePage: View {
         ClipboardCard {
             VStack(alignment: .leading, spacing: Space.xs) {
                 HStack(spacing: Space.xxs) {
-                    Text("今天", bundle: .module)
+                    Text(copy: "今天", bundle: .module)
                     Text(verbatim: "·")
                     Text(note.writtenAt, format: .dateTime.hour().minute())
                 }
@@ -205,14 +205,14 @@ struct CoachResumePage: View {
                     .accessibilityIdentifier("coach.resume.failed")
             }
             if !canHire {
-                Text("只有队长能雇教练", bundle: .module)
+                Text(copy: "只有队长能雇教练", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .frame(minHeight: Sizing.control)
                     .accessibilityIdentifier("coach.resume.captainOnly")
             } else if !isCurrent {
                 Button(action: hire) {
-                    Text("招聘", bundle: .module).loadingLabel(isSaving).frame(maxWidth: .infinity)
+                    Text(copy: "招聘", bundle: .module).loadingLabel(isSaving).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryButtonStyle(.large))
                 .accentTone(.ink)
@@ -220,10 +220,10 @@ struct CoachResumePage: View {
                 .accessibilityIdentifier("coach.resume.hire")
             } else {
                 HStack(spacing: Space.l) {
-                    Button(action: change) { Text("换教练", bundle: .module) }
+                    Button(action: change) { Text(copy: "换教练", bundle: .module) }
                         .buttonStyle(TextButtonStyle(.muted))
                         .accessibilityIdentifier("coach.resume.change")
-                    Button(action: fire) { Text("解雇", bundle: .module) }
+                    Button(action: fire) { Text(copy: "解雇", bundle: .module) }
                         .buttonStyle(TextButtonStyle(.danger))
                         .accessibilityIdentifier("coach.resume.fire")
                 }
@@ -247,19 +247,19 @@ struct FireCoachPage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.l) {
-                Text("解雇\(coach.name)", bundle: .module)
+                Text(copy: "解雇\(coach.name)", bundle: .module)
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
                 CoachStage(
                     coach: coach.id,
-                    catchphrase: String(localized: "我才刚记住大家的外号……", bundle: .module.inAppLanguage),
+                    catchphrase: String(copy: "我才刚记住大家的外号……", bundle: .module),
                     bubble: .center, figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
                     mood: .crying, surface: .page
                 )
                 .frame(height: CoachMetrics.fireStage)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
-                Text("小队的记忆会留给下一个教练", bundle: .module)
+                Text(copy: "小队的记忆会留给下一个教练", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .multilineTextAlignment(.center)
@@ -276,13 +276,13 @@ struct FireCoachPage: View {
                     InlineFailure()
                 }
                 Button(action: back) {
-                    Text("先不解雇", bundle: .module).frame(maxWidth: .infinity)
+                    Text(copy: "先不解雇", bundle: .module).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryButtonStyle(.large))
                 .accentTone(.ink)
                 .accessibilityIdentifier("coach.fire.keep")
                 Button(action: fire) {
-                    Text("确认解雇", bundle: .module).loadingLabel(isSaving)
+                    Text(copy: "确认解雇", bundle: .module).loadingLabel(isSaving)
                 }
                 .buttonStyle(TextButtonStyle(.danger))
                 .disabled(isSaving)

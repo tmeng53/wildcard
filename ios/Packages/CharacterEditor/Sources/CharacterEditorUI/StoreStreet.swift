@@ -93,7 +93,7 @@ struct StreetCounter: View {
                 Button {
                     model.visit(store)
                 } label: {
-                    Text("进店", bundle: .module).frame(maxWidth: .infinity)
+                    Text(copy: "进店", bundle: .module).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .accentTone(.brand)
@@ -118,7 +118,7 @@ struct StreetCounter: View {
         FlowRow(spacing: Space.xs, centred: true) {
             if let sports = model.sports(of: store) {
                 if sports.isEmpty {
-                    SportPill(word: Text("练什么都算", bundle: .module))
+                    SportPill(word: Text(copy: "练什么都算", bundle: .module))
                 } else {
                     ForEach(sports, id: \.self) { SportPill(word: $0.name) }
                 }
@@ -175,7 +175,7 @@ private struct Storefront: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityElement(children: .combine)
-        .accessibilityHint(store.isOpen ? Text("进店", bundle: .module) : Text("还没开门", bundle: .module))
+        .accessibilityHint(store.isOpen ? Text(copy: "进店", bundle: .module) : Text(copy: "还没开门", bundle: .module))
         .accessibilityIdentifier("street.store.\(store.id)")
     }
 
@@ -324,7 +324,7 @@ enum StoreLook {
     /// 感恩节 orange, 圣诞 green): `names.json`'s, else the bundled one's, else nil for the
     /// limited colour.
     static func limited(_ store: String) -> RGBAColor? {
-        PlaceholderCharacter.names().stores[store]?.limitedColor ?? StoreCopy.limitColors[store]
+        PlaceholderCharacter.names().stores[store]?.limitedColor
     }
 
     private static func isLight(_ rgba: RGBAColor) -> Bool {

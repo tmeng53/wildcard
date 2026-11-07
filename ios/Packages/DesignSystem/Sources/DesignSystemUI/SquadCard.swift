@@ -175,7 +175,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
             PageDots(page: $page)
                 .padding(.bottom, Space.xs).zIndex(1)  // Over the grabber's tap area, which reaches up here.
             if let collapse {
-                Grabber(label: Text("收起小队卡片", bundle: .module), action: collapse)
+                Grabber(label: Text(copy: "收起小队卡片", bundle: .module), action: collapse)
                     .padding(.bottom, Space.xs)
                     .accessibilityIdentifier("squadcard.collapse")
             }
@@ -316,8 +316,8 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
         let gap = footer == nil ? Space.s : Space.xs
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
-                label: Text("小队本周目标 · 人均 \(squad.daysPerMember) 天", bundle: .module), title: squad.name,
-                count: squad.done, goal: squad.goal, unit: Text("天", bundle: .module), open: openSquad)
+                label: Text(copy: "小队本周目标 · 人均 \(squad.daysPerMember) 天", bundle: .module), title: squad.name,
+                count: squad.done, goal: squad.goal, unit: Text(copy: "天", bundle: .module), open: openSquad)
             Spacer(minLength: gap)
             DayCells(filled: squad.done, total: squad.goal)
             Spacer(minLength: gap)
@@ -337,7 +337,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     /// Everyone's ring, which shows their today, after a 今天 label.
     private func todayRings(avatarSize: Double, spacing: Double) -> some View {
         HStack(spacing: Space.xs) {
-            SectionLabel(Text("今天", bundle: .module))
+            SectionLabel(Text(copy: "今天", bundle: .module))
                 .fixedSize()
             rings(avatarSize: avatarSize, spacing: spacing)
         }
@@ -362,7 +362,7 @@ private struct MyWeekPage: View {
         let picked = shownDay
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
-                label: Text("本周我的训练", bundle: .module), title: mine.summary, count: mine.done, goal: mine.planned)
+                label: Text(copy: "本周我的训练", bundle: .module), title: mine.summary, count: mine.done, goal: mine.planned)
             Spacer(minLength: Space.s)
             HStack(spacing: 0) {
                 ForEach(Array(mine.days.enumerated()), id: \.offset) { index, status in

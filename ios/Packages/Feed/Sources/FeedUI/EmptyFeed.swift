@@ -45,12 +45,12 @@ struct EmptyFeed: View {
             .aspectRatio(Self.scene.width / Self.window.height, contentMode: .fit)
             .accessibilityHidden(true)
 
-            Text("今天还没人上场", bundle: .module)
+            Text(copy: "今天还没人上场", bundle: .module)
                 .typeStyle(TypeRamp.headline)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
             Button(action: checkIn) {
                 Label {
-                    Text("去打卡", bundle: .module)
+                    Text(copy: "去打卡", bundle: .module)
                 } icon: {
                     Image(systemName: "plus")
                         .font(.system(size: Sizing.smallIcon, weight: .bold))

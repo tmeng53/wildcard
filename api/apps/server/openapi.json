@@ -373,6 +373,9 @@
           "disclaimerDice": {
             "$ref": "#/components/schemas/DisclaimerDiceCatalog"
           },
+          "appCopy": {
+            "$ref": "#/components/schemas/AppCopyCatalog"
+          },
           "scenes": {
             "$ref": "#/components/schemas/ScenesCatalog"
           },
@@ -526,6 +529,45 @@
         "required": [
           "lines"
         ],
+        "additionalProperties": {}
+      },
+      "AppCopyCatalog": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AppCopyWords"
+            },
+            "description": "Lines put over the app’s String Catalog, by key (its Simplified Chinese source line). A language left out, or a key not here, keeps the build’s own words. Each keeps its key’s placeholders, the same kinds, perhaps by explicit position (`%2$lld`).",
+            "example": {
+              "还有 %lld 次开门": {
+                "zhHans": "再练 %lld 次就开门"
+              }
+            }
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "additionalProperties": {}
+      },
+      "AppCopyWords": {
+        "type": "object",
+        "properties": {
+          "zhHans": {
+            "type": "string",
+            "description": "Simplified Chinese."
+          },
+          "en": {
+            "type": "string",
+            "description": "English."
+          },
+          "zhHant": {
+            "type": "string",
+            "description": "Traditional Chinese (Taiwan)."
+          }
+        },
         "additionalProperties": {}
       },
       "ScenesCatalog": {

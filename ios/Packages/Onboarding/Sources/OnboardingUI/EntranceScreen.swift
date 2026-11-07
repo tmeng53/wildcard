@@ -123,7 +123,7 @@ struct EntranceScreen<Tabs: View>: View {
         .onTapGesture { if stage.showsCard { model.finishEntrance() } }
         .haptic(.land, trigger: stage.hasLanded)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("你上场了，队友们在欢迎你", bundle: .module))
+        .accessibilityLabel(Text(copy: "你上场了，队友们在欢迎你", bundle: .module))
         .accessibilityIdentifier("entrance")
         .task {
             guard let character = model.myCharacter else { return }
@@ -208,7 +208,7 @@ struct EntranceScreen<Tabs: View>: View {
                 sizes: sizes, myHeight: EntranceStage.myHeight(unit: unit), width: width, ceiling: ceiling) : []
         return ZStack(alignment: .topLeading) {
             ForEach(lines.indices, id: \.self) { index in
-                let bubble = SpeechBubble(Text(LocalizedStringKey(lines[index]), bundle: .module))
+                let bubble = SpeechBubble(Text(copyKey: lines[index], bundle: .module))
                     .fixedSize()
                 if let tip = tips[safe: index], let size = bubbleSizes[index] {
                     ZStack {

@@ -15,7 +15,7 @@ struct HealthChips: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SectionLabel(Text("今天 Apple 健康里的运动", bundle: .module))
+            SectionLabel(Text(copy: "今天 Apple 健康里的运动", bundle: .module))
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xs) {
                     ForEach(model.healthWorkouts) { today in
@@ -40,16 +40,16 @@ struct HealthChips: View {
                     Image(systemName: "heart.fill")
                         .font(.system(size: Self.heart))
                         .foregroundStyle(Color(role: .fgDanger, in: theme))
-                    (imported.activity?.name ?? Text("运动", bundle: .module))
+                    (imported.activity?.name ?? Text(copy: "运动", bundle: .module))
                     if let minutes = imported.minutes {
-                        Text("\(minutes.value) 分钟", bundle: .module)
+                        Text(copy: "\(minutes.value) 分钟", bundle: .module)
                     }
                 }
                 .typeStyle(TypeRamp.calloutEmphasis)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Group {
                     if today.isPosted {
-                        Text("已发", bundle: .module)
+                        Text(copy: "已发", bundle: .module)
                     } else {
                         Text(imported.workout.startedAt.date, format: .dateTime.hour().minute())
                     }
@@ -91,12 +91,12 @@ struct ScoreRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
             HStack(spacing: Space.xs) {
-                SectionLabel(Text("成绩", bundle: .module))
+                SectionLabel(Text(copy: "成绩", bundle: .module))
                 HStack(spacing: Space.xxs / 2) {
                     Image(systemName: "heart.fill")
                         .font(.system(size: Self.heart))
                         .foregroundStyle(Color(role: .fgDanger, in: theme))
-                    Text("Apple 健康", bundle: .module)
+                    Text(copy: "Apple 健康", bundle: .module)
                 }
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
@@ -104,9 +104,9 @@ struct ScoreRow: View {
                 .padding(.vertical, Space.xxs / 4)
                 .background(Color(role: .bgSubtle, in: theme), in: Capsule())
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(Text("Apple 健康", bundle: .module))
+                .accessibilityLabel(Text(copy: "Apple 健康", bundle: .module))
                 Spacer(minLength: 0)
-                Text("点一格可以不发", bundle: .module)
+                Text(copy: "点一格可以不发", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
             }

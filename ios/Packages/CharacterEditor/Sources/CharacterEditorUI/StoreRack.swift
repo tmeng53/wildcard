@@ -48,7 +48,7 @@ struct MysteryBox: View {
             VStack(spacing: Space.xxs) {
                 MysteryFace()
                     .aspectRatio(1, contentMode: .fit)
-                Text("再练 \(toGo) 次", bundle: .module)
+                Text(copy: "再练 \(toGo) 次", bundle: .module)
                     .typeStyle(TypeRamp.caption)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .lineLimit(1)
@@ -58,7 +58,7 @@ struct MysteryBox: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("神秘款，再练 \(toGo) 次解锁", bundle: .module))
+        .accessibilityLabel(Text(copy: "神秘款，再练 \(toGo) 次解锁", bundle: .module))
         .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("editor.mystery.\(slot.rawValue)")
     }
@@ -117,7 +117,7 @@ struct RackPiece: View {
                 .minimumScaleFactor(0.8)
                 .accessibilityHidden(true)
             if shelf == .owned {
-                Text("已拥有", bundle: .module)
+                Text(copy: "已拥有", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .lineLimit(1)
@@ -141,12 +141,12 @@ struct SportsTip: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xs) {
-            Text("练这些运动解锁", bundle: .module)
+            Text(copy: "练这些运动解锁", bundle: .module)
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
             FlowRow(spacing: Space.xs) {
                 if sports.isEmpty {
-                    SportPill(word: Text("练什么都算", bundle: .module))
+                    SportPill(word: Text(copy: "练什么都算", bundle: .module))
                 } else {
                     ForEach(sports, id: \.self) { SportPill(word: $0.name) }
                 }

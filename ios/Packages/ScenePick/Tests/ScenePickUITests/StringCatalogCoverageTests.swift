@@ -41,7 +41,7 @@ struct StringCatalogCoverageTests {
     /// Every key in `Text("…", bundle: .module)`, with each `\(…)` read as `%@`: here every
     /// interpolation is a `Text`.
     private static func localizedKeys() throws -> Set<String> {
-        let pattern = try NSRegularExpression(pattern: #"Text\(\s*"((?:[^"\\]|\\.)*)",\s*bundle: \.module\)"#)
+        let pattern = try NSRegularExpression(pattern: #"Text\(copy:\s*"((?:[^"\\]|\\.)*)",\s*bundle: \.module\)"#)
         let interpolation = try NSRegularExpression(pattern: #"\\\((?:[^()]|\([^()]*\))*\)"#)
         let files = try FileManager.default.contentsOfDirectory(at: sources, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "swift" }

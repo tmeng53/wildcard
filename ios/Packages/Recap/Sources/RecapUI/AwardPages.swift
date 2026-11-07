@@ -69,9 +69,9 @@ struct PodiumPage: View {
         }
         .overlay(alignment: .top) {
             PageTitle(
-                label: Text("本周", bundle: .module), systemImage: "checkmark.seal.fill",
-                title: Text("领奖台", bundle: .module),
-                note: podium.tieBrokenByPlan ? Text("天数一样，先练完计划的排前面", bundle: .module) : nil)
+                label: Text(copy: "本周", bundle: .module), systemImage: "checkmark.seal.fill",
+                title: Text(copy: "领奖台", bundle: .module),
+                note: podium.tieBrokenByPlan ? Text(copy: "天数一样，先练完计划的排前面", bundle: .module) : nil)
         }
         .haptic(.crown, trigger: page.time >= Self.crownLands) { old, new in !old && new }
     }
@@ -86,7 +86,7 @@ struct PodiumPage: View {
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
             if podium.planDone.contains(step.member) {
                 Label {
-                    Text("练够计划", bundle: .module)
+                    Text(copy: "练够计划", bundle: .module)
                 } icon: {
                     Image(systemName: "checkmark.seal.fill")
                 }
@@ -138,7 +138,7 @@ struct TitlesPage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            PageTitle(label: Text("本周", bundle: .module), title: Text("头衔", bundle: .module))
+            PageTitle(label: Text(copy: "本周", bundle: .module), title: Text(copy: "头衔", bundle: .module))
             VStack(spacing: Space.xs) {
                 ForEach(Array(rows.enumerated()), id: \.element.member) { index, row in
                     let start = 0.15 + Double(index) * 0.3
@@ -211,18 +211,18 @@ struct PendingPage: View {
         }
         .overlay(alignment: .top) {
             VStack(alignment: .leading, spacing: Space.l) {
-                PageTitle(label: Text("本周", bundle: .module), title: Text("头衔", bundle: .module))
+                PageTitle(label: Text(copy: "本周", bundle: .module), title: Text(copy: "头衔", bundle: .module))
                 VStack(alignment: .leading, spacing: Space.m) {
                     headline
                         .typeStyle(TypeRamp.title)
                         .foregroundStyle(Color(role: .fgOnScene, in: theme))
                     if stuck, nudged {
-                        Text("已催主办方充值 token", bundle: .module)
+                        Text(copy: "已催主办方充值 token", bundle: .module)
                             .typeStyle(TypeRamp.calloutEmphasis)
                             .foregroundStyle(Color(role: .fgOnScene, in: theme))
                             .transition(.opacity)
                     } else if stuck {
-                        Button(action: nudge) { Text("催一下主办方", bundle: .module) }
+                        Button(action: nudge) { Text(copy: "催一下主办方", bundle: .module) }
                             .buttonStyle(PrimaryButtonStyle(.regular))
                             .accessibilityIdentifier("recap.nudge")
                     }
@@ -236,8 +236,8 @@ struct PendingPage: View {
 
     private var headline: Text {
         stuck
-            ? Text("主办方没经费了，正在拉赞助，一会儿再来颁奖", bundle: .module)
-            : Text("颁奖嘉宾在路上，一会儿就到", bundle: .module)
+            ? Text(copy: "主办方没经费了，正在拉赞助，一会儿再来颁奖", bundle: .module)
+            : Text(copy: "颁奖嘉宾在路上，一会儿就到", bundle: .module)
     }
 }
 #endif

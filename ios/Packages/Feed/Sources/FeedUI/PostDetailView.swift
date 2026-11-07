@@ -90,12 +90,12 @@ public struct PostDetailView: View {
         let thread = model.thread(of: post)
         if thread.isEmpty && coach == nil {
             VStack(spacing: Space.xxs) {
-                Text("还没有人说话", bundle: .module)
+                Text(copy: "还没有人说话", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                 if post.author != model.viewer {
                     let author = model.displayName(of: post.author)
-                    Text("说一句给\(author)打打气", bundle: .module)
+                    Text(copy: "说一句给\(author)打打气", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 }
@@ -107,7 +107,7 @@ public struct PostDetailView: View {
         } else {
             VStack(alignment: .leading, spacing: Space.m) {
                 let count = thread.count + (coach == nil ? 0 : 1)
-                SectionLabel(Text("评论 \(count)", bundle: .module))
+                SectionLabel(Text(copy: "评论 \(count)", bundle: .module))
                 if let coach, let text = coach.text {
                     replyToCoach(coach.coach) {
                         CoachCommentRow(model: model, coach: coach.coach, text: text, writtenAt: coach.writtenAt)
@@ -141,7 +141,7 @@ public struct PostDetailView: View {
             label().contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityHint(Text("回复", bundle: .module))
+        .accessibilityHint(Text(copy: "回复", bundle: .module))
     }
 
     /// A comment: the writer's head, name and time, then 回复 and whom, then the words. A tap
@@ -178,7 +178,7 @@ public struct PostDetailView: View {
         .glassMenu(isPresented: isHolding(comment), items: items)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isMine ? [] : .isButton)
-        .accessibilityHint(isMine ? Text(verbatim: "") : Text("回复", bundle: .module))
+        .accessibilityHint(isMine ? Text(verbatim: "") : Text(copy: "回复", bundle: .module))
         .accessibilityAction { reply(to: comment) }
         .accessibilityActions {
             ForEach(items) { item in
@@ -202,14 +202,15 @@ public struct PostDetailView: View {
     /// Holding a comment: 复制, and 删除 on the member's own.
     private func menu(for comment: Comment, on post: FeedPost) -> [GlassMenuItem] {
         var items = [
-            GlassMenuItem(Text("复制", bundle: .module), systemImage: "doc.on.doc", id: "post.comment.copy") {
+            GlassMenuItem(Text(copy: "复制", bundle: .module), systemImage: "doc.on.doc", id: "post.comment.copy") {
                 UIPasteboard.general.string = comment.text.text
             }
         ]
         if comment.member == model.viewer, !model.store.isSending(comment.id, on: post.id) {
             items.append(
                 GlassMenuItem(
-                    Text("删除", bundle: .module), systemImage: "trash", role: .destructive, id: "post.comment.delete"
+                    Text(copy: "删除", bundle: .module), systemImage: "trash", role: .destructive,
+                    id: "post.comment.delete"
                 ) {
                     Task { await model.store.deleteComment(comment.id, on: post.id) }
                 })
@@ -221,15 +222,15 @@ public struct PostDetailView: View {
     private func words(of comment: Comment) -> Text {
         let words = Text(model.words(of: comment))
         guard let recipient = comment.replyTo.map({ model.displayName(of: $0) }) else { return words }
-        let reply = Text("回复 \(recipient)：", bundle: .module)
+        let reply = Text(copy: "回复 \(recipient)：", bundle: .module)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
-        return Text("\(reply)\(words)", bundle: .module)
+        return Text(copy: "\(reply)\(words)", bundle: .module)
     }
 
     /// The post was deleted, or the member can't see it any more.
     private var gone: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            Text("这条动态不见了", bundle: .module)
+            Text(copy: "这条动态不见了", bundle: .module)
                 .typeStyle(TypeRamp.callout)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .frame(maxWidth: .infinity)

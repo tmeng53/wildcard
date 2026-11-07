@@ -9,19 +9,22 @@ let package = Package(
         .library(name: "DesignSystem", targets: ["DesignSystem"]),
         .library(name: "DesignSystemUI", targets: ["DesignSystemUI"]),
     ],
+    dependencies: [.package(path: "../Contracts")],
     targets: [
         // Tokens as plain values: pure Swift, builds and tests on Linux.
         .target(name: "DesignSystem"),
         // SwiftUI views of the tokens, the bundled scoreboard font and the style guide.
         .target(
             name: "DesignSystemUI",
-            dependencies: ["DesignSystem"],
+            dependencies: ["DesignSystem", .product(name: "Contracts", package: "Contracts")],
             resources: [
                 .copy("Resources/Fonts"),
                 .process("Resources/Localizable.xcstrings"),
             ]
         ),
         .testTarget(name: "DesignSystemTests", dependencies: ["DesignSystem"]),
-        .testTarget(name: "DesignSystemUITests", dependencies: ["DesignSystemUI"]),
+        .testTarget(
+            name: "DesignSystemUITests",
+            dependencies: ["DesignSystemUI", .product(name: "Contracts", package: "Contracts")]),
     ]
 )

@@ -76,8 +76,8 @@ public final class DailyPushModel {
 
     /// What a member is called; a stand-in before they made their character.
     func name(of member: MemberID) -> String {
-        if member == push.viewer { return String(localized: "我", bundle: .module.inAppLanguage) }
-        return push.name(of: member) ?? String(localized: "队友", bundle: .module.inAppLanguage)
+        if member == push.viewer { return String(copy: "我", bundle: .module) }
+        return push.name(of: member) ?? String(copy: "队友", bundle: .module)
     }
 
     /// Teammates for the squad standing on an empty day: up to four, me left out.

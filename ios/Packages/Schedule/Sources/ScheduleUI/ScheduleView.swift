@@ -230,7 +230,7 @@ public struct ScheduleView: View {
         let own = sheet.fuel.filter { if case .own = $0 { true } else { false } }
         let goals = FuelSuggestion.allCases.map(FuelGoal.suggested) + own
         return VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(Text("饮食小目标 · \(sheet.fuel.count)/\(FuelGoal.maxCount)", bundle: .module))
+            SectionLabel(Text(copy: "饮食小目标 · \(sheet.fuel.count)/\(FuelGoal.maxCount)", bundle: .module))
             FlowRow {
                 ForEach(goals, id: \.self) { goal in
                     PickPill(ScheduleLabels.fuel(goal), isSelected: sheet.fuel.contains(goal)) {
@@ -238,7 +238,7 @@ public struct ScheduleView: View {
                     }
                     .accessibilityIdentifier("schedule.fuel.\(ScheduleLabels.fuelName(goal))")
                 }
-                PickPill(Text("自己写", bundle: .module), systemImage: "plus", isSelected: false) {
+                PickPill(Text(copy: "自己写", bundle: .module), systemImage: "plus", isSelected: false) {
                     ownFuel = ""
                     model.writingFuel = true
                     typingFuel = true
@@ -255,7 +255,7 @@ public struct ScheduleView: View {
     private var fuelField: some View {
         HStack(spacing: Space.xs) {
             InputField(
-                text: $ownFuel, label: Text("饮食小目标", bundle: .module),
+                text: $ownFuel, label: Text(copy: "饮食小目标", bundle: .module),
                 limit: FuelGoal.maxLength
             )
             .focused($typingFuel)
@@ -265,7 +265,7 @@ public struct ScheduleView: View {
             Button {
                 Task { await addOwnFuel() }
             } label: {
-                Text("加上", bundle: .module)
+                Text(copy: "加上", bundle: .module)
             }
             .buttonStyle(PrimaryButtonStyle(.regular))
             .disabled(ownFuel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -312,11 +312,11 @@ extension ScheduleView {
     private var loading: some View {
         switch store.phase {
         case .offline:
-            Text("网不太好，连上了再来排", bundle: .module)
+            Text(copy: "网不太好，连上了再来排", bundle: .module)
                 .typeStyle(TypeRamp.body)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
         case .signedOut:
-            Text("登录过期了，重新登录再来排", bundle: .module)
+            Text(copy: "登录过期了，重新登录再来排", bundle: .module)
                 .typeStyle(TypeRamp.body)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
         case .loading, .ready:

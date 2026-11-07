@@ -107,7 +107,7 @@ struct WelcomeScreen<SignIn: View>: View {
 
     /// The globe that picks the app's language, before signing up.
     private var language: some View {
-        HeaderButton(Text("语言", bundle: .module), systemImage: "globe", on: .scene) { picksLanguage = true }
+        HeaderButton(Text(copy: "语言", bundle: .module), systemImage: "globe", on: .scene) { picksLanguage = true }
             .padding(.trailing, Space.pageMargin)
             .accessibilityIdentifier("signup.language")
             .languagePicker(isPresented: $picksLanguage)
@@ -118,7 +118,7 @@ struct WelcomeScreen<SignIn: View>: View {
     private func title(top: Double) -> some View {
         VStack(spacing: Space.s) {
             // The word's glyphs centered on a 60-point line, as the design sets them.
-            Text("WILDCARD", bundle: .module)
+            Text(copy: "WILDCARD", bundle: .module)
                 .typeStyle(TypeRamp.scoreHero)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .fixedSize()
@@ -132,7 +132,7 @@ struct WelcomeScreen<SignIn: View>: View {
                         runner: sprint, settled: settled, baseline: (word?.height ?? 0) / 2 + WelcomeTitle.baseline)
                 )
                 .frame(height: WelcomeCrowd.wordLine)
-            Text("人人都是运动员", bundle: .module)
+            Text(copy: "人人都是运动员", bundle: .module)
                 .typeStyle(TypeRamp.headline)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .modifier(Reveal(shown: revealed, delay: 0, reduceMotion: reduceMotion))
@@ -213,8 +213,7 @@ struct WelcomeScreen<SignIn: View>: View {
     /// 继续即表示同意用户协议和隐私政策, with 用户协议 and 隐私政策 underlined links to their pages.
     /// The catalog marks them `terms:` and `privacy:`, which become the pages the app passes.
     private var termsLine: AttributedString {
-        var line = AttributedString(
-            localized: "继续即表示同意[用户协议](terms:)和[隐私政策](privacy:)", bundle: .module.inAppLanguage)
+        var line = AppCopyLines.attributed("继续即表示同意[用户协议](terms:)和[隐私政策](privacy:)", bundle: .module)
         for (link, range) in line.runs[\.link] {
             guard let link else { continue }
             line[range].link = link.scheme == "terms" ? policies.terms : policies.privacyPolicy
@@ -246,7 +245,7 @@ struct WelcomeScreen<SignIn: View>: View {
             .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: crowd.versions[index])
         }
         .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel(Text("换一个外卡运动员", bundle: .module))
+        .accessibilityLabel(Text(copy: "换一个外卡运动员", bundle: .module))
         .accessibilityIdentifier("signup.crowd")
         .haptic(.pick, trigger: crowd.taps[index])
         // Feet on the floor: the canvas's feet sit near its bottom.

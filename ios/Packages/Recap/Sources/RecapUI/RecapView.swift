@@ -83,8 +83,8 @@ public struct RecapView: View {
         .offset(y: max(dragDown, 0))
         .contentShape(Rectangle())
         .gesture(touch)
-        .accessibilityAction(named: Text("下一页", bundle: .module)) { model.next() }
-        .accessibilityAction(named: Text("上一页", bundle: .module)) { model.previous() }
+        .accessibilityAction(named: Text(copy: "下一页", bundle: .module)) { model.next() }
+        .accessibilityAction(named: Text(copy: "上一页", bundle: .module)) { model.previous() }
     }
 
     /// One touch does it all, as a phone story: touching pauses the page; a quick tap on the
@@ -124,7 +124,7 @@ public struct RecapView: View {
                 .foregroundStyle(Color(role: .fgOnScene, in: model.cast.scene))
                 .accessibilityElement(children: .combine)
                 Spacer(minLength: 0)
-                HeaderButton(Text("关闭", bundle: .module), systemImage: "xmark", on: .scene) { model.dismiss() }
+                HeaderButton(Text(copy: "关闭", bundle: .module), systemImage: "xmark", on: .scene) { model.dismiss() }
                     .accessibilityIdentifier("recap.close")
             }
         }
@@ -232,7 +232,7 @@ private struct SegmentBar: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("第 \(currentPage) 页，共 \(fractions.count) 页", bundle: .module))
+        .accessibilityLabel(Text(copy: "第 \(currentPage) 页，共 \(fractions.count) 页", bundle: .module))
     }
 
     private var currentPage: Int {

@@ -65,14 +65,14 @@ struct FactCard: View {
 
     private var label: Text {
         switch fact {
-        case .bestDay: Text("训练最多的一天", bundle: .module)
-        case .streak: Text("坚持运动最久", bundle: .module)
-        case .reactions: Text("互相加油", bundle: .module)
-        case .cheers: Text("收到加油", bundle: .module)
-        case .time: Text("一共训练了", bundle: .module)
-        case .topSport: Text("练得最多", bundle: .module)
-        case .meals: Text("吃得健康", bundle: .module)
-        case .disclaimers: Text("请假条", bundle: .module)
+        case .bestDay: Text(copy: "训练最多的一天", bundle: .module)
+        case .streak: Text(copy: "坚持运动最久", bundle: .module)
+        case .reactions: Text(copy: "互相加油", bundle: .module)
+        case .cheers: Text(copy: "收到加油", bundle: .module)
+        case .time: Text(copy: "一共训练了", bundle: .module)
+        case .topSport: Text(copy: "练得最多", bundle: .module)
+        case .meals: Text(copy: "吃得健康", bundle: .module)
+        case .disclaimers: Text(copy: "请假条", bundle: .module)
         }
     }
 
@@ -81,19 +81,19 @@ struct FactCard: View {
         case .bestDay(let best):
             Text(verbatim: weekdayName(best.weekday)).typeStyle(TypeRamp.title)
         case .streak(let days, _, _):
-            Number(count: days, unit: Text("天", bundle: .module))
+            Number(count: days, unit: Text(copy: "天", bundle: .module))
         case .reactions(let count), .cheers(let count):
             Number(count: count, unit: nil)
         case .time(let minutes, _, _) where minutes >= 60:
-            Number(count: Int((Double(minutes) / 60).rounded()), unit: Text("小时", bundle: .module))
+            Number(count: Int((Double(minutes) / 60).rounded()), unit: Text(copy: "小时", bundle: .module))
         case .time(let minutes, _, _):
-            Number(count: minutes, unit: Text("分钟", bundle: .module))
+            Number(count: minutes, unit: Text(copy: "分钟", bundle: .module))
         case .topSport(let top):
             top.sport.cardName.typeStyle(TypeRamp.title)
         case .meals(let healthy, _):
-            Number(count: healthy, unit: Text("顿", bundle: .module))
+            Number(count: healthy, unit: Text(copy: "顿", bundle: .module))
         case .disclaimers(let disclaimers):
-            Number(count: disclaimers.days, unit: Text("张", bundle: .module))
+            Number(count: disclaimers.days, unit: Text(copy: "张", bundle: .module))
         }
     }
 
@@ -101,20 +101,20 @@ struct FactCard: View {
         switch fact {
         case .bestDay(let best):
             if best.members == everyone {
-                Text("全员都训练了", bundle: .module)
+                Text(copy: "全员都训练了", bundle: .module)
             } else {
-                Text("\(best.members) 人训练了", bundle: .module)
+                Text(copy: "\(best.members) 人训练了", bundle: .module)
             }
         case .streak(let days, let from, let member):
             streakNote(from: from, through: from + days - 1, by: member)
         case .reactions, .cheers:
-            Text("个回应", bundle: .module)
+            Text(copy: "个回应", bundle: .module)
         case .time(_, let longest, let longestOn):
             longestNote(longest, on: longestOn)
         case .topSport(let top):
-            Text("\(top.days) 天", bundle: .module)
+            Text(copy: "\(top.days) 天", bundle: .module)
         case .meals(_, let cheat):
-            Text("坦白放纵 \(cheat) 顿", bundle: .module)
+            Text(copy: "坦白放纵 \(cheat) 顿", bundle: .module)
         case .disclaimers(let disclaimers):
             mostNote(disclaimers.most)
         }
@@ -123,16 +123,16 @@ struct FactCard: View {
     /// 「最会请假 胖橘」.
     private func mostNote(_ member: MemberID) -> Text {
         let who = nickname(member)
-        return Text("最会请假 \(who)", bundle: .module)
+        return Text(copy: "最会请假 \(who)", bundle: .module)
     }
 
     /// 「丸子 周二到周六」 on the squad's page, 「周三到周四」 on 你的一周.
     private func streakNote(from: Int, through: Int, by member: MemberID?) -> Text {
         let first = weekdayName(from)
         let last = weekdayName(through)
-        guard let member else { return Text("\(first)到\(last)", bundle: .module) }
+        guard let member else { return Text(copy: "\(first)到\(last)", bundle: .module) }
         let who = nickname(member)
-        return Text("\(who) \(first)到\(last)", bundle: .module)
+        return Text(copy: "\(who) \(first)到\(last)", bundle: .module)
     }
 
     /// 「最久一天 阿凯 1小时35分钟」, or 「最久一天 周四 1小时20分钟」 on 你的一周.
@@ -143,7 +143,7 @@ struct FactCard: View {
             case .day(let index): weekdayName(index)
             }
         let span = duration(minutes)
-        return Text("最久一天 \(when) \(span)", bundle: .module)
+        return Text(copy: "最久一天 \(when) \(span)", bundle: .module)
     }
 
     /// 「周三」: the week's day, 0 for Monday, in the app's language.

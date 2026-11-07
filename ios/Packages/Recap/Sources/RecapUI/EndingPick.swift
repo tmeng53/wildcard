@@ -59,7 +59,7 @@ struct EndingPickPage: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
-                Text("全队", bundle: .module)
+                Text(copy: "全队", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgAccent, in: theme))
                 headline.typeStyle(TypeRamp.title)
@@ -84,12 +84,13 @@ struct EndingPickPage: View {
     }
 
     private var headline: Text {
-        ending.headline.map { Text(verbatim: $0) } ?? Text("这一周", bundle: .module)
+        ending.headline.map { Text(verbatim: $0) } ?? Text(copy: "这一周", bundle: .module)
     }
 
     private var line: Text {
         if let line = ending.line { return Text(verbatim: line) }
-        return ending.isHit ? Text("全队达标", bundle: .module) : Text("还差 \(ending.shortBy) 次", bundle: .module)
+        return ending.isHit
+            ? Text(copy: "全队达标", bundle: .module) : Text(copy: "还差 \(ending.shortBy) 次", bundle: .module)
     }
 
     /// Each member playing their own idle, in the story's lineup order.

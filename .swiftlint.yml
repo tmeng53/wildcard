@@ -51,6 +51,15 @@ custom_rules:
     message: "Popups use DesignSystemUI's glassMenu or glassConfirm, never the system Menu, contextMenu or confirmationDialog."
     regex: '(\.contextMenu\s*[({]|\.confirmationDialog\s*\(|(^|[^.\w])Menu\s*[({])'
     severity: error
+  # Every line of the app's own goes through AppCopyLines, so an admin can put new words over
+  # any of them without a release (AGENTS.md, Domain rules).
+  copy_lookup:
+    name: "App copy lookup"
+    message: "AGENTS.md: look the app's words up with Text(copy:bundle:), String(copy:bundle:) or String(copyKey:bundle:), never Text(\"…\"), LocalizedStringKey, String(localized:) or localizedString(forKey:), so lines put over them show."
+    excluded: '.*/(Tests|WildcardUITests)/.*|.*/DesignSystemUI/AppCopyLines\.swift'
+    # Code only: a line's comment may name what it replaces.
+    regex: '^(?:(?!//)[^\n])*?(\bText\(\s*("|LocalizedStringKey\b)|\bLocalizedStringKey\b|\b(Attributed)?String\(\s*localized:|\.localizedString\(forKey:)'
+    severity: error
   # Screens take their look from DesignSystem by name (AGENTS.md, Architecture). A view of its
   # own is fine in a screen; a raw color, radius, font, spacing or haptic is not.
   raw_color:

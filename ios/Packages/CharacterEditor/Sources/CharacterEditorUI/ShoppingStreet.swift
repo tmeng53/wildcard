@@ -52,7 +52,7 @@ public struct ShoppingStreetPage: View {
         return content(store)
             // The street's 进店 stays at the bottom, above the tab bar, however tall the phone.
             .safeAreaInset(edge: .bottom) { if store == nil { counter } }
-            .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text("商店街", bundle: .module))
+            .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text(copy: "商店街", bundle: .module))
             .background(Color(role: .bgCanvas, in: theme))
             // The pop-up is modal: VoiceOver (and a UI test) reaches only it, not the rack under it.
             .accessibilityHidden(model.arrival != nil)
@@ -131,7 +131,7 @@ public struct ShoppingStreetPage: View {
     @ViewBuilder
     private var claimFailed: some View {
         if model.claimFailed {
-            Text("网络开小差了，没领上", bundle: .module)
+            Text(copy: "网络开小差了，没领上", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .accessibilityIdentifier("street.claimFailed")
@@ -169,7 +169,7 @@ private struct RackHeader: View {
                     .contentShape(Circle())
             }
             .buttonStyle(PressableButtonStyle())
-            .accessibilityLabel(Text("练这些运动解锁", bundle: .module))
+            .accessibilityLabel(Text(copy: "练这些运动解锁", bundle: .module))
             .accessibilityIdentifier("street.rack.info")
             .popover(isPresented: tipShown) {
                 SportsTip(sports: sports).presentationCompactAdaptation(.popover)
@@ -194,18 +194,16 @@ struct StoreBadge: View {
     }
 }
 
-/// A store's copy, from the String Catalog: its name (a wordmark, the same in every language),
-/// its Chinese name, its sports, its line, and how a closed one unlocks.
+/// A store's copy, from the art's `names.json` (the uploaded one, else the one bundled): its name
+/// (a wordmark, the same in every language), its Chinese name, its sports, its line, how a closed
+/// one unlocks and the tag a limited one wears. Data only, so a store's words change by upload.
 enum StoreCopy {
-    static func name(_ store: String) -> Text { text(uploaded(store)?.name, names[store], or: store) }
-    static func local(_ store: String) -> Text { text(uploaded(store)?.local, locals[store], or: store) }
+    static func name(_ store: String) -> Text { text(words(store)?.name, or: store) }
+    static func local(_ store: String) -> Text { text(words(store)?.local, or: store) }
     /// Its sports line as one word a sport, for the street's pills: split at commas where the
     /// language lists with them (English), at spaces in Chinese.
     static func sports(_ store: String) -> [String] {
-        let line =
-            uploaded(store)?.sports?.localized
-            ?? sportLines[store].map { Bundle.module.inAppLanguage.localizedString(forKey: $0, value: nil, table: nil) }
-            ?? ""
+        let line = words(store)?.sports?.localized ?? ""
         let commas = CharacterSet(charactersIn: ",，")
         // A Latin line without commas is one phrase (Any sport counts, Winter sports); Chinese
         // lists its sports with spaces.
@@ -217,52 +215,22 @@ enum StoreCopy {
             .filter { !$0.isEmpty }
             .map { $0.prefix(1).uppercased() + $0.dropFirst() }
     }
-    static func tagline(_ store: String) -> Text { text(uploaded(store)?.tagline, taglines[store], or: "") }
-    static func unlock(_ store: String) -> Text { text(uploaded(store)?.unlock, unlocks[store], or: "") }
+    static func tagline(_ store: String) -> Text { text(words(store)?.tagline, or: "") }
+    static func unlock(_ store: String) -> Text { text(words(store)?.unlock, or: "") }
     /// How far a closed store is from opening: 「还有 2 次开门」 once the server says, else how it unlocks.
     static func opens(_ store: EditorChoices.Store) -> Text {
         guard let toGo = store.toGo else { return unlock(store.id) }
-        return Text("还有 \(toGo) 次开门", bundle: .module)
+        return Text(copy: "还有 \(toGo) 次开门", bundle: .module)
     }
     /// The tag a limited store wears, such as 冬季限定; nil for one without.
     static func limited(_ store: String) -> Text? {
-        if let words = uploaded(store)?.limited { return Text(verbatim: words.localized) }
-        return limits[store].map { text(nil, $0, or: "") }
+        words(store)?.limited.map { Text(verbatim: $0.localized) }
     }
 
-    /// A store added by upload carries its words in `names.json`, in front of the catalog's.
-    private static func uploaded(_ store: String) -> ArtNames.Store? { PlaceholderCharacter.names().stores[store] }
+    private static func words(_ store: String) -> ArtNames.Store? { PlaceholderCharacter.names().stores[store] }
 
-    private static func text(_ words: CatalogNames?, _ key: String?, or fallback: String) -> Text {
-        if let words { return Text(verbatim: words.localized) }
-        guard let key else { return Text(verbatim: fallback) }
-        return Text(LocalizedStringKey(key), bundle: .module)
+    private static func text(_ words: CatalogNames?, or fallback: String) -> Text {
+        Text(verbatim: words?.localized ?? fallback)
     }
-
-    private static let names = [
-        "warmup": "WARM-UP", "lap": "LAP NINE", "nolook": "NO LOOK", "moss": "MOSSWAY", "halfmoon": "HALF MOON",
-        "deuce": "DEUCE CLUB", "powder": "POWDER DAY",
-    ]
-    private static let locals = [
-        "warmup": "热身社", "lap": "第九圈", "nolook": "不看传球", "moss": "苔径", "halfmoon": "半月", "deuce": "平分俱乐部",
-        "powder": "粉雪日",
-    ]
-    private static let sportLines = [
-        "warmup": "走路 跑步 力量训练", "lap": "跑步 走路", "nolook": "篮球 排球", "moss": "徒步 越野跑 攀岩",
-        "halfmoon": "练什么都算", "deuce": "网球 匹克球 壁球", "powder": "冬季运动",
-    ]
-    private static let taglines = [
-        "warmup": "先热身，再上场。", "lap": "操场第九圈，才是今天真正开始的地方。", "nolook": "眼睛看左边，球已经到右边了。",
-        "moss": "路不在地图上，在苔藓上。", "halfmoon": "做完半月式，再去喝一杯燕麦拿铁。", "deuce": "平分之后，才是真的比赛。",
-        "powder": "雪道见，压个弯。",
-    ]
-    private static let unlocks = [
-        "lap": "跑步 3 次解锁", "nolook": "篮球 3 次解锁", "moss": "攀岩或徒步 3 次解锁", "halfmoon": "随便练 3 次解锁",
-        "deuce": "网球类 3 次解锁",
-    ]
-    private static let limits = ["powder": "冬季限定"]
-    /// Each bundled limit's tag colour (冬季限定: glacier blue); an uploaded store names its own
-    /// in `names.json`.
-    static let limitColors = ["powder": RGBAColor(red: 0x1E, green: 0x6A, blue: 0x9E)]
 }
 #endif

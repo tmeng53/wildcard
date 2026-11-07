@@ -48,7 +48,7 @@ public struct LaunchWordmark: View {
         .background(ground)
         .dynamicTypeSize(.large)
         .accessibilityElement()
-        .accessibilityLabel(Text("加载中", bundle: .module))
+        .accessibilityLabel(Text(copy: "加载中", bundle: .module))
     }
 
     /// The logo's size, as on the system's launch screen (`LaunchMark`).

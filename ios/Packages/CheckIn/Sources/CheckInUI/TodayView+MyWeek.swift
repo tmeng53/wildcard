@@ -13,7 +13,7 @@ extension TodayView {
         let record = home.week(on: day)
         return DesignSystemUI.MyWeek(
             summary: record.trained.map {
-                String(localized: "\($0.activity.localizedName) \($0.days)", bundle: .module.inAppLanguage)
+                String(copy: "\($0.activity.localizedName) \($0.days)", bundle: .module)
             }
             .joined(separator: " · "),
             done: week.trainedDays, planned: week.plannedDays,
@@ -43,7 +43,7 @@ extension TodayView {
         case .trained:
             let line = log.sessions.map { session in
                 if let minutes = session.minutes {
-                    String(localized: "\(session.activity.localizedName) \(minutes) 分钟", bundle: .module.inAppLanguage)
+                    String(copy: "\(session.activity.localizedName) \(minutes) 分钟", bundle: .module)
                 } else {
                     session.activity.localizedName
                 }
@@ -51,13 +51,13 @@ extension TodayView {
             return WeekDayDetail(line: line.joined(separator: " · "), isPlan: false, meals: meals)
         case .disclaimer:
             return WeekDayDetail(
-                line: String(localized: "请假了", bundle: .module.inAppLanguage), isPlan: false, meals: meals)
+                line: String(copy: "请假了", bundle: .module), isPlan: false, meals: meals)
         case .restDay:
             return WeekDayDetail(
-                line: String(localized: "休息日", bundle: .module.inAppLanguage), isPlan: false, meals: meals)
+                line: String(copy: "休息日", bundle: .module), isPlan: false, meals: meals)
         case .open:
             return WeekDayDetail(
-                line: activity?.localizedName ?? String(localized: "训练日", bundle: .module.inAppLanguage), isPlan: true,
+                line: activity?.localizedName ?? String(copy: "训练日", bundle: .module), isPlan: true,
                 meals: meals)
         }
     }

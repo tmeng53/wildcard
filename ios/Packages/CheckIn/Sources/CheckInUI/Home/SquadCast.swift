@@ -162,11 +162,11 @@ final class SquadCast {
     /// What the first sleeper mumbles when the lights wake them, by persona (the approved 开灯).
     static func wokenLine(_ persona: Persona) -> String {
         switch persona {
-        case .deadpan: String(localized: "……谁开的灯", bundle: .module.inAppLanguage)
-        case .energetic: String(localized: "谁啊！", bundle: .module.inAppLanguage)
-        case .shy: String(localized: "…好亮", bundle: .module.inAppLanguage)
-        case .drama: String(localized: "我的美容觉！！", bundle: .module.inAppLanguage)
-        case .showoff: String(localized: "关了关了", bundle: .module.inAppLanguage)
+        case .deadpan: String(copy: "……谁开的灯", bundle: .module)
+        case .energetic: String(copy: "谁啊！", bundle: .module)
+        case .shy: String(copy: "…好亮", bundle: .module)
+        case .drama: String(copy: "我的美容觉！！", bundle: .module)
+        case .showoff: String(copy: "关了关了", bundle: .module)
         }
     }
 
@@ -250,11 +250,11 @@ final class SquadCast {
     /// The line a persona shouts when its member hasn't set a 口头禅 (spec rev 221).
     static func personaLine(_ persona: Persona) -> String {
         switch persona {
-        case .energetic: String(localized: "冲冲冲！", bundle: .module.inAppLanguage)
-        case .showoff: String(localized: "看我！", bundle: .module.inAppLanguage)
-        case .drama: String(localized: "泪目了", bundle: .module.inAppLanguage)
-        case .deadpan: String(localized: "可以", bundle: .module.inAppLanguage)
-        case .shy: String(localized: "（小声）加油", bundle: .module.inAppLanguage)
+        case .energetic: String(copy: "冲冲冲！", bundle: .module)
+        case .showoff: String(copy: "看我！", bundle: .module)
+        case .drama: String(copy: "泪目了", bundle: .module)
+        case .deadpan: String(copy: "可以", bundle: .module)
+        case .shy: String(copy: "（小声）加油", bundle: .module)
         }
     }
 }

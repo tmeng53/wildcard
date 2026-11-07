@@ -65,7 +65,7 @@ public struct ReactionBar<Item: Hashable>: View {
                     .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
             }
             .buttonStyle(PressableButtonStyle())
-            .accessibilityLabel(Text("更多表情", bundle: .module))
+            .accessibilityLabel(Text(copy: "更多表情", bundle: .module))
             .accessibilityIdentifier("\(identifier).more")
         }
         .padding(.horizontal, ReactionBarMetrics.inset)
@@ -73,7 +73,7 @@ public struct ReactionBar<Item: Hashable>: View {
         .glassEffect(.regular, in: Capsule())
         .onAppear { shown = true }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("选一个回应", bundle: .module))
+        .accessibilityLabel(Text(copy: "选一个回应", bundle: .module))
     }
 
     private func slot(_ item: Item, at index: Int) -> some View {
@@ -139,11 +139,11 @@ public struct EmojiPicker<Item: Hashable>: View {
         let showsRecent = !showsAll && !recent.isEmpty
         VStack(alignment: .leading, spacing: Space.xs) {
             HStack(spacing: Space.xs) {
-                PickPill(Text("最近", bundle: .module), isSelected: showsRecent) { showsAll = false }
-                PickPill(Text("全部", bundle: .module), isSelected: !showsRecent) { showsAll = true }
+                PickPill(Text(copy: "最近", bundle: .module), isSelected: showsRecent) { showsAll = false }
+                PickPill(Text(copy: "全部", bundle: .module), isSelected: !showsRecent) { showsAll = true }
             }
             if !showsRecent, search != nil {
-                SearchField(text: $query, prompt: Text("搜索表情", bundle: .module))
+                SearchField(text: $query, prompt: Text(copy: "搜索表情", bundle: .module))
             }
             ScrollView {
                 LazyVGrid(
@@ -159,7 +159,7 @@ public struct EmojiPicker<Item: Hashable>: View {
         .padding(Space.s)
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("全部表情", bundle: .module))
+        .accessibilityLabel(Text(copy: "全部表情", bundle: .module))
     }
 
     private func shown(recent showsRecent: Bool) -> [Item] {

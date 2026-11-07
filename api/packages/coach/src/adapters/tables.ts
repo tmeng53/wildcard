@@ -130,6 +130,7 @@ export interface CoachSettings {
   only_row: Generated<boolean>;
   output_micros_per_million: number;
   rules: string;
+  wakes: string;
 }
 
 export interface CoachUsage {

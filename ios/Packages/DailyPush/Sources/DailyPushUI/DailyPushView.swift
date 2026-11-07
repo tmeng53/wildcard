@@ -55,7 +55,7 @@ private struct PushHeader: View {
                         .frame(width: Self.markSize, height: Self.markSize)
                         .clipShape(RoundedRectangle(cornerRadius: Radius.thumbnail - 1, style: .continuous))
                         .accessibilityHidden(true)
-                    Text("外卡", bundle: .module)
+                    Text(copy: "外卡", bundle: .module)
                         .typeStyle(TypeRamp.footnoteEmphasis)
                         .foregroundStyle(Color(role: .fgOnBrand, in: .gym))
                     Spacer(minLength: 0)
@@ -64,7 +64,7 @@ private struct PushHeader: View {
                         .foregroundStyle(Color(role: .fgSubtle, in: .gym))
                 }
                 HStack(alignment: .lastTextBaseline, spacing: Space.s - 2) {
-                    Text("本周小队已练", bundle: .module)
+                    Text(copy: "本周小队已练", bundle: .module)
                         .typeStyle(TypeRamp.calloutEmphasis)
                         .foregroundStyle(Color(role: .fgOnBrand, in: .gym))
                     HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
@@ -76,13 +76,13 @@ private struct PushHeader: View {
                     }
                     .foregroundStyle(Color(role: .fgOnBrand, in: .gym))
                     .monospacedDigit()
-                    Text("天", bundle: .module)
+                    Text(copy: "天", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgSubtle, in: .gym))
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
-                    Text("本周小队已练 \(week.trainedDays)/\(week.plannedDays) 天", bundle: .module))
+                    Text(copy: "本周小队已练 \(week.trainedDays)/\(week.plannedDays) 天", bundle: .module))
                 Capsule()
                     .fill(Color(role: .fgOnBrand, in: .gym).opacity(0.2))
                     .overlay(alignment: .leading) {
@@ -102,7 +102,7 @@ private struct PushHeader: View {
             .background(Color(role: .bgBrand, in: .gym))
         }
         .buttonStyle(.plain)
-        .accessibilityHint(Text("打开动态", bundle: .module))
+        .accessibilityHint(Text(copy: "打开动态", bundle: .module))
     }
 
     private func fraction(_ week: WeekCount) -> Double {
@@ -118,7 +118,7 @@ private struct PushHeader: View {
                     MemberHead(player: model.head(of: member), size: Self.patHead, rim: .cutout(.bgBrand))
                 }
             }
-            Text("\(pokers.map(model.name(of:)).joined(separator: "、"))拍了拍你", bundle: .module)
+            Text(copy: "\(pokers.map(model.name(of:)).joined(separator: "、"))拍了拍你", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgOnBrand, in: .gym))
                 .lineLimit(1)
@@ -137,7 +137,7 @@ private struct PushToday: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionLabel(Text("今天", bundle: .module))
+            SectionLabel(Text(copy: "今天", bundle: .module))
                 .padding(.top, Space.xxs)
                 .padding(.bottom, Space.xxs)
             if model.push.nobodyPosted {
@@ -163,7 +163,7 @@ private struct PushToday: View {
             model.go(.feed)
         } label: {
             HStack(spacing: Space.xxs) {
-                Text("还有 \(model.push.more) 条，去动态看", bundle: .module)
+                Text(copy: "还有 \(model.push.more) 条，去动态看", bundle: .module)
                 Image(systemName: "chevron.right")
                     .font(.system(size: Sizing.smallIcon - 3, weight: .semibold))
                     .accessibilityHidden(true)
@@ -197,13 +197,13 @@ private struct EmptyDay: View {
                 }
             }
             .accessibilityHidden(true)
-            Text("今天还没人发动态", bundle: .module)
+            Text(copy: "今天还没人发动态", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: .gym))
             Button {
                 model.go(.checkIn)
             } label: {
-                Text("我去发一个", bundle: .module)
+                Text(copy: "我去发一个", bundle: .module)
             }
             .buttonStyle(PrimaryButtonStyle(.large))
             .padding(.top, Space.s - 2)

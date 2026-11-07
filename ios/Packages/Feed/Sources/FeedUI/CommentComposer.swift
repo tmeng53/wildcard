@@ -39,7 +39,7 @@ struct CommentComposer: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
             if let unsent, unsent == draft.text {
-                InlineFailure(Text("网络开小差了，没发出去", bundle: .module))
+                InlineFailure(Text(copy: "网络开小差了，没发出去", bundle: .module))
                     .accessibilityIdentifier("post.sendFailed")
             }
             VStack(alignment: .leading, spacing: Space.xxs) {
@@ -64,7 +64,7 @@ struct CommentComposer: View {
 
     private func replying(to recipient: String) -> some View {
         HStack(spacing: Space.xs) {
-            Text("回复 \(recipient)", bundle: .module)
+            Text(copy: "回复 \(recipient)", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .lineLimit(1)
@@ -79,7 +79,7 @@ struct CommentComposer: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("不回复了", bundle: .module))
+            .accessibilityLabel(Text(copy: "不回复了", bundle: .module))
             .accessibilityIdentifier("post.cancelReply")
         }
         .padding(.leading, Space.s)
@@ -116,12 +116,12 @@ struct CommentComposer: View {
         HStack(alignment: .bottom, spacing: Space.xs) {
             TextField(text: $draft.text, axis: .vertical) {
                 if let recipient = model.replyingTo.map({ model.displayName(of: $0) }) {
-                    Text("回复 \(recipient)…", bundle: .module)
+                    Text(copy: "回复 \(recipient)…", bundle: .module)
                 } else if post.author == model.viewer {
-                    Text("说点什么…", bundle: .module)
+                    Text(copy: "说点什么…", bundle: .module)
                 } else {
                     let author = model.displayName(of: post.author)
-                    Text("给\(author)说点什么…", bundle: .module)
+                    Text(copy: "给\(author)说点什么…", bundle: .module)
                 }
             }
             .typeStyle(TypeRamp.field)
@@ -164,7 +164,7 @@ struct CommentComposer: View {
         }
         .buttonStyle(PressableButtonStyle())
         .disabled(text == nil || isSending)
-        .accessibilityLabel(Text("发送", bundle: .module))
+        .accessibilityLabel(Text(copy: "发送", bundle: .module))
         .accessibilityIdentifier("post.send")
     }
 
