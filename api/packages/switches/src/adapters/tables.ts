@@ -14,6 +14,7 @@ export type Int8 = ColumnType<string, bigint | number | string, bigint | number 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface Switches {
+  coach_note: string | null;
   id: string;
   label: string;
   mode: string;

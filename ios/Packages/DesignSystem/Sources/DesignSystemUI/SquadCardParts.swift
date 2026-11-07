@@ -40,9 +40,10 @@ struct PageDots: View {
                         .fill(Color(role: .fgOnScene, in: theme).opacity(item == page ? 1 : 0.25))
                         .frame(width: SquadCardMetrics.dot, height: SquadCardMetrics.dot)
                         // 6 apart to the eye, in a row as tall as the card's padding, each
-                        // still a full tap target tall.
+                        // still a full tap target, reaching up and only halfway down to the
+                        // grabber under the row, which takes the rest.
                         .frame(width: SquadCardMetrics.dot * 2, height: Space.cardPadding)
-                        .contentShape(Rectangle().inset(by: -(Sizing.minimumTapTarget - Space.cardPadding) / 2))
+                        .contentShape(Self.tapArea)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(item == .squad ? Text("小队", bundle: .module) : Text("我这周", bundle: .module))
@@ -51,6 +52,15 @@ struct PageDots: View {
             }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: page)
+    }
+
+    /// A dot's tap area: a full target wide and above the row, and half the gap below it.
+    private static var tapArea: Path {
+        let reach = (Sizing.minimumTapTarget - Space.cardPadding) / 2
+        return Path(
+            CGRect(
+                x: -reach, y: -reach, width: SquadCardMetrics.dot * 2 + reach * 2,
+                height: reach + Space.cardPadding + Space.xs / 2))
     }
 }
 

@@ -99,5 +99,11 @@ extension TodayModel {
         else { return }
         try? player.play(move)
     }
+
+    /// The character whose head the card shows for a member (`MemberID`'s description).
+    func head(of member: String) -> CharacterPlayer? {
+        guard member != home?.member.description else { return player }
+        return cast.mates.first { $0.id.description == member }?.player
+    }
 }
 #endif

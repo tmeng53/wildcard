@@ -91,6 +91,22 @@ describe('the coach settings', () => {
     });
   });
 
+  it('keep the holiday calendar, starting empty, and log a change to it once', async () => {
+    await rolledBack(async (trx, admin) => {
+      const settings = createCoachSettings({ store: createPostgresCoachSettings(trx) });
+      expect((await settings.current()).holidays).toStrictEqual([]);
+      const holidays = [
+        { date: '12-25', name: '圣诞节' },
+        { date: '2026-11-26', name: '感恩节' },
+      ];
+      await settings.change({ holidays }, admin);
+      expect((await settings.current()).holidays).toStrictEqual(holidays);
+      // The same calendar again saves nothing new.
+      await settings.change({ holidays: holidays.map((each) => ({ ...each })) }, admin);
+      expect(await logged(trx, { log: 'coach_setting_events', by: admin })).toHaveLength(1);
+    });
+  });
+
   it('refuse a model that is not OpenAI’s, since the coach runs on the OpenAI Agents SDK', () => {
     expect(CoachSettingsChange.safeParse({ model: 'anthropic/claude-haiku-5-5' }).success).toBe(
       false,

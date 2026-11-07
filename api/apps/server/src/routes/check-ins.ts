@@ -21,6 +21,8 @@ import {
   type CheckInRecord,
   type CheckIns,
   PhotoSize,
+  WorkoutView,
+  workoutView,
   type PhotoRef,
 } from '@wildcard/check-ins';
 
@@ -78,7 +80,11 @@ const photoViews = {
     .meta({ description: '1 to 3 photos, the cover first. Missing when there are none.' }),
 };
 const TrainingView = z
-  .strictObject({ ...storedTrainingFields, ...photoViews })
+  .strictObject({
+    ...storedTrainingFields,
+    ...photoViews,
+    workout: WorkoutView.optional(),
+  })
   .openapi('TrainingView');
 const MealView = z.strictObject({ ...storedMealFields, ...photoViews }).openapi('MealView');
 const DisclaimerView = z
@@ -244,10 +250,26 @@ const CheckInTotals = z
   .strictObject({ version: bodyVersion(1), ...checkInTotalsFields })
   .openapi('CheckInTotals');
 
-/** Signs a view URL for every photo of these check-ins, in one call to storage. */
-async function viewUrls(photos: PhotoStorage, records: readonly CheckInRecord[]) {
+/**
+ * Signs a view URL for every photo of these check-ins, in one call to storage. A check-in whose
+ * photo file is gone is logged, and `wire` leaves that photo out rather than failing the list.
+ */
+async function viewUrls(
+  deps: { readonly photos: PhotoStorage; readonly log: Log },
+  records: readonly CheckInRecord[],
+) {
   const paths = records.flatMap((record) => photosOf(record).map(({ path }) => path));
-  return photos.createViewUrls(paths, PHOTO_VIEW_SECONDS);
+  const urls = await deps.photos.createViewUrls(paths, PHOTO_VIEW_SECONDS);
+  for (const record of records) {
+    const missing = photosOf(record).filter(({ path }) => !urls.has(path)).length;
+    if (missing > 0) {
+      deps.log.warn('A check-in refers to photos that are not in storage.', {
+        checkIn: record.id,
+        missing,
+      });
+    }
+  }
+  return urls;
 }
 
 type ViewUrls = Awaited<ReturnType<typeof viewUrls>>;
@@ -259,12 +281,13 @@ function wire(record: CheckInRecord, urls: ViewUrls) {
     ...fields
   }: T) => {
     if (photos === undefined) return fields;
-    const views = photos.map(({ path, size }) => {
+    // A photo whose file is gone is left out; a check-in left with none has no `photos`.
+    const views = photos.flatMap(({ path, size }) => {
       const url = urls.get(path);
-      if (url === undefined) throw new Error(`No view URL was signed for ${path}.`);
-      return size === undefined ? { path, url: url.href } : { path, url: url.href, size };
+      if (url === undefined) return [];
+      return [size === undefined ? { path, url: url.href } : { path, url: url.href, size }];
     });
-    return { ...fields, photos: views };
+    return views.length === 0 ? fields : { ...fields, photos: views };
   };
   const base = {
     version: 1 as const,
@@ -276,8 +299,17 @@ function wire(record: CheckInRecord, urls: ViewUrls) {
     audience: [...record.audience],
   };
   switch (record.kind) {
-    case 'trained':
-      return { ...base, kind: record.kind, training: withUrls(record.training) };
+    case 'trained': {
+      const { workout, ...training } = record.training;
+      return {
+        ...base,
+        kind: record.kind,
+        training: {
+          ...withUrls(training),
+          ...(workout === undefined ? {} : { workout: workoutView(workout) }),
+        },
+      };
+    }
     case 'healthyMeal':
     case 'cheatMeal':
       return { ...base, kind: record.kind, meal: withUrls(record.meal) };
@@ -337,7 +369,10 @@ export function checkIns(deps: {
           'isn’t uploaded',
       ),
       403: problem('Sent to a squad the member isn’t in, or with someone else’s photo'),
-      409: problem('The id holds a different check-in, or another check-in uses one of the photos'),
+      409: problem(
+        'The id holds a different check-in, another check-in uses one of the photos, or the ' +
+          'member already posted its workout (`WORKOUT_ALREADY_POSTED`)',
+      ),
       ...jsonBodyFailures,
       ...signedInFailures,
     },
@@ -370,7 +405,9 @@ export function checkIns(deps: {
       ),
       403: problem('A teammate’s check-in (`NOT_YOUR_CHECK_IN`), or someone else’s photo'),
       404: problem('No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)'),
-      409: problem('Another check-in uses one of the photos'),
+      409: problem(
+        'Another check-in uses one of the photos, or another of the member’s posts has its workout',
+      ),
       ...jsonBodyFailures,
       ...signedInFailures,
     },
@@ -526,7 +563,7 @@ export function checkIns(deps: {
         member: MemberId.parse(c.var.caller.userId),
         draft: c.req.valid('json'),
       });
-      const body = wire(checkIn, await viewUrls(deps.photos, [checkIn]));
+      const body = wire(checkIn, await viewUrls(deps, [checkIn]));
       // The coaches reply while the request runs, since the server has CPU only then; the app
       // sends check-ins from its outbox, so nobody waits on it.
       if (created && checkIn.audience.length > 0 && deps.coachLook !== undefined) {
@@ -543,7 +580,7 @@ export function checkIns(deps: {
         member: MemberId.parse(c.var.caller.userId),
         edit: c.req.valid('json'),
       });
-      return c.json(wire(checkIn, await viewUrls(deps.photos, [checkIn])), 200);
+      return c.json(wire(checkIn, await viewUrls(deps, [checkIn])), 200);
     })
     .openapi(remove, async (c) => {
       await deps.checkIns.delete({
@@ -559,7 +596,7 @@ export function checkIns(deps: {
         days: c.req.valid('query'),
       });
       const urls = await viewUrls(
-        deps.photos,
+        deps,
         posts.map(({ checkIn }) => checkIn),
       );
       return c.json(
@@ -580,7 +617,7 @@ export function checkIns(deps: {
         id: c.req.valid('param').id,
         viewer: MemberId.parse(c.var.caller.userId),
       });
-      const urls = await viewUrls(deps.photos, [checkIn]);
+      const urls = await viewUrls(deps, [checkIn]);
       return c.json(
         {
           version: 1 as const,
@@ -598,7 +635,7 @@ export function checkIns(deps: {
         days: { from, to },
         ...(unshared === undefined ? {} : { unshared }),
       });
-      const urls = await viewUrls(deps.photos, records);
+      const urls = await viewUrls(deps, records);
       return c.json(
         { version: 1 as const, checkIns: records.map((record) => wire(record, urls)) },
         200,
@@ -613,7 +650,7 @@ export function checkIns(deps: {
         limit: limit ?? DEFAULT_PAGE,
       });
       const urls = await viewUrls(
-        deps.photos,
+        deps,
         page.posts.map(({ checkIn }) => checkIn),
       );
       return c.json(

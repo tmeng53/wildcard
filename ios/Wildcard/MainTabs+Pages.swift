@@ -20,7 +20,7 @@ extension MainTabs {
     }
 
     static let tabs: [TabBarItem<Tab>] = [
-        TabBarItem(id: .today, title: Text("今天"), systemImage: "sun.max", accessibilityIdentifier: "tab.today"),
+        TabBarItem(id: .today, title: Text("小队"), systemImage: "sun.max", accessibilityIdentifier: "tab.today"),
         TabBarItem(
             id: .feed, title: Text("动态"), systemImage: "bubble.left.and.bubble.right",
             accessibilityIdentifier: "tab.feed"

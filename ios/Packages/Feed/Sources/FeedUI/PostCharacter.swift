@@ -6,7 +6,7 @@ import DesignSystemUI
 import FeedDomain
 import SwiftUI
 
-/// The author's character at the card's left, full height, looping what the post is about while
+/// The author's whole character at the card's left, head to feet, looping what the post is about while
 /// the card is on screen (the feed's cards are lazy, so only the visible ones draw): a 练了's
 /// sport, a meal being eaten, a 请假条 held up. With Reduce Motion it holds still. On my own post,
 /// a teammate's reaction that arrived shows in a small bubble over my character, with their head
@@ -15,6 +15,11 @@ struct PostCharacter: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: FeedModel
     let post: FeedPost
+    /// How wide the character stands; it is 4 points tall for every 3 wide, as the rig's canvas.
+    let width: Double
+
+    /// The part of the rig's canvas drawn: all of it, with 40 points more either side.
+    private static let room = CGRect(x: -40, y: 0, width: 320, height: 320)
 
     var body: some View {
         if let player = model.player(for: post) {
@@ -29,7 +34,10 @@ struct PostCharacter: View {
                         }
                     }
                 }
-                .frame(height: Sizing.characterFull)
+                // The rig's 240 × 320 canvas at `width`, drawn with room either side so a move
+                // that swings a prop past the canvas (快走's cup) shows whole, over the padding.
+                .frame(width: width * Self.room.width / 240, height: width * Self.room.height / 240)
+                .frame(width: width, height: width * 320 / 240)
                 .anchorPreference(key: FeedAnchors.self, value: .bounds) { FeedAnchors.Value(heads: [post.id: $0]) }
                 .overlay(alignment: .top) {
                     if let bubble = model.bubbles[post.id] {
@@ -56,11 +64,11 @@ struct PostCharacter: View {
 
     @ViewBuilder private func figure(_ player: CharacterPlayer, moving: Bool) -> some View {
         if moving {
-            CharacterView(player: player)
+            CharacterView(player: player, crop: Self.room)
         } else {
             let frame = player.restFrame
-            CharacterCanvas(drawing: frame.drawing, placements: frame.placements)
-                .aspectRatio(frame.drawing.width / frame.drawing.height, contentMode: .fit)
+            CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.room)
+                .aspectRatio(Self.room.width / Self.room.height, contentMode: .fit)
         }
     }
 }

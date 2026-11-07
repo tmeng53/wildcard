@@ -2534,7 +2534,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Another check-in uses one of the photos
+            /// Another check-in uses one of the photos, or another of the member’s posts has its workout
             ///
             /// - Remark: Generated from `#/paths//check-ins/{id}/patch(editCheckIn)/responses/409`.
             ///
@@ -3036,7 +3036,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// The id holds a different check-in, or another check-in uses one of the photos
+            /// The id holds a different check-in, another check-in uses one of the photos, or the member already posted its workout (`WORKOUT_ALREADY_POSTED`)
             ///
             /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)/responses/409`.
             ///

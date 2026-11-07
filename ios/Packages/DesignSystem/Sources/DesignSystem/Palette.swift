@@ -18,6 +18,9 @@ public enum Palette {
     /// The words of an action that can't be taken back, such as 解雇 (5.0:1 on white, 4.6:1 on
     /// mist). Text only, never a fill.
     public static let danger = SRGBColor(red: 0xD0, green: 0x34, blue: 0x2C)
+    /// Limited (限定): the words of the tag a store open only for a while wears, on a wash of the
+    /// same colour (4.9:1 on it).
+    public static let limited = SRGBColor(red: 0xA8, green: 0x47, blue: 0x1A)
     /// Apple's own black, for the Sign in with Apple style button only.
     public static let appleBlack = SRGBColor(red: 0x00, green: 0x00, blue: 0x00)
 
