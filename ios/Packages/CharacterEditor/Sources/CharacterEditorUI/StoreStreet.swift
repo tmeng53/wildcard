@@ -17,6 +17,10 @@ struct StoreStreet: View {
     let model: StreetModel
     /// The store in the middle, which the page's counter shows.
     @Binding var current: String?
+    /// Height the page has to spare, which each storefront's window grows by.
+    var spare: Double = 0
+    /// The most a window grows, so a big phone doesn't stretch the street.
+    static let maxSpare: Double = 200
     /// The street is sliding, by a swipe or a tap on its map: the member strolls.
     @State private var walking = false
     @Environment(\.sceneTheme) private var theme
@@ -41,7 +45,7 @@ struct StoreStreet: View {
                 ScrollView(.horizontal) {
                     LazyHStack(alignment: .bottom, spacing: Space.s) {
                         ForEach(stores) { store in
-                            Storefront(model: model, store: store)
+                            Storefront(model: model, store: store, spare: spare)
                                 // The container is the scroll view less its content margins, so a
                                 // storefront as wide as it leaves a neighbour peeking in either side.
                                 .containerRelativeFrame(.horizontal)
@@ -133,6 +137,8 @@ struct StreetCounter: View {
 private struct Storefront: View {
     let model: StreetModel
     let store: EditorChoices.Store
+    /// How much taller than its own height the window is, from the page's spare height.
+    let spare: Double
     @Environment(\.sceneTheme) private var theme
 
     private let awning: Double = 34
@@ -237,7 +243,7 @@ private struct Storefront: View {
             .opacity(store.isOpen ? 1 : 0)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: window)
+        .frame(height: window + spare)
         .clipShape(shape)
         .overlay {
             shape.strokeBorder(Color(role: store.isOpen ? .bgBrand : .fgMuted, in: theme), lineWidth: frame)

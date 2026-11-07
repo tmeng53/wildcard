@@ -18,6 +18,9 @@ public struct ShoppingStreetPage: View {
     let model: StreetModel
     /// The store in the middle of the street, whose 进店 is pinned at the bottom.
     @State private var centred: String?
+    /// The height the street's page has left over between the street and its 进店, which the
+    /// storefronts' windows take.
+    @State private var spare: Double = 0
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -71,6 +74,7 @@ public struct ShoppingStreetPage: View {
             .padding(.bottom, Space.l)
         }
         .scrollIndicators(.hidden)
+        .fillingSpare($spare, when: store == nil)
         // The street's 进店 stays at the bottom, above the tab bar, however tall the phone.
         .safeAreaInset(edge: .bottom) { if store == nil { counter } }
         .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text("商店街", bundle: .module))
@@ -113,8 +117,27 @@ public struct ShoppingStreetPage: View {
     }
 
     private var street: some View {
-        StoreStreet(model: model, current: $centred)
+        StoreStreet(model: model, current: $centred, spare: spare)
             .padding(.top, Space.xl)
+    }
+}
+
+extension View {
+    /// Keeps `spare` at the height the scroll view shows below its content (the visible height
+    /// less its insets, the 进店 pinned under it included, less the content), so a page that
+    /// grows by it just fills the screen; nothing on a phone too short for the content, which
+    /// then scrolls. At most `StoreStreet.maxSpare`, so a big phone doesn't stretch the street.
+    fileprivate func fillingSpare(_ spare: Binding<Double>, when active: Bool) -> some View {
+        onScrollGeometryChange(for: Double.self) { geometry in
+            geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom
+                - geometry.contentSize.height
+        } action: { _, gap in
+            guard active else { return }
+            // The content already holds the last spare, so the gap is what is still left (or,
+            // negative, what is too much).
+            let next = min(StoreStreet.maxSpare, max(0, spare.wrappedValue + gap))
+            if abs(next - spare.wrappedValue) >= 1 { spare.wrappedValue = next }
+        }
     }
 }
 

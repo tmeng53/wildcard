@@ -12,7 +12,11 @@ final class ShoppingStreetUITests: XCTestCase {
         let enter = app.buttons["street.enter"].frame
         let tabs = tabButton("tab.me", in: app).frame
         XCTAssertLessThanOrEqual(enter.maxY, tabs.minY, "the tab bar covers 进店: \(enter), \(tabs)")
-        XCTAssertGreaterThan(enter.minY, app.buttons["street.map.warmup"].frame.maxY, "进店 isn't under the map")
+        let map = app.buttons["street.map.warmup"].frame
+        XCTAssertGreaterThan(enter.minY, map.maxY, "进店 isn't under the map")
+        // The storefronts take the page's spare height, so no wide gap is left above the counter.
+        let sports = app.descendants(matching: .any)["street.sports"].frame
+        XCTAssertLessThan(sports.minY - map.maxY, 80, "a gap is left over the counter: \(map), \(sports)")
     }
 
     func testShoppingStreet() {
