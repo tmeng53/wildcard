@@ -1121,6 +1121,22 @@
         }
       }
     },
+    "饮食小目标" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Food goals"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "飲食小目標"
+          }
+        }
+      }
+    },
     "预览注册" : {
       "localizations" : {
         "en" : {

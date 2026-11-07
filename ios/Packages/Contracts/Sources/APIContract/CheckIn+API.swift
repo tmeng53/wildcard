@@ -172,6 +172,12 @@ extension Activity {
         try self.init(sport: wire.sport, customSport: wire.customSport)
     }
 
+    /// The sport of a day's 练了 on a squadmate's 出赛表; nil for a day without one.
+    public init?(_ wire: Components.Schemas.DayMark) throws(ContractsError) {
+        guard wire.status == .trained, let sport = wire.sport else { return nil }
+        try self.init(sport: sport, customSport: wire.customSport)
+    }
+
     init(sport: Components.Schemas.Sport, customSport: String?) throws(ContractsError) {
         switch (sport, customSport) {
         case ("custom", let name?): self = .custom(try CustomSport(name))

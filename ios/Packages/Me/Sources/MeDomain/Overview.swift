@@ -2,6 +2,7 @@ import AvatarArt
 import AvatarDomain
 import Contracts
 import Foundation
+import ScheduleDomain
 
 /// Everything the member ever checked in, by kind. Counts only go up.
 public struct LifetimeCounts: Hashable, Sendable {
@@ -168,10 +169,13 @@ public struct PlayerCardFace: Hashable, Sendable {
     /// 本周 x/y, theirs for a squadmate; nil when it isn't known (an older server, or no plan this week).
     public var week: WeekCount?
     public var board: TitleBoard
+    /// A squadmate's 出赛表 this week, on their card's back; nil on the member's own card and from
+    /// an older server.
+    public var schedule: MateSchedule?
 
     public init(
         character: MeCharacter, number: JerseyNumber?, squadName: String?, joinedAt: Date?, counts: LifetimeCounts,
-        week: WeekCount?, board: TitleBoard
+        week: WeekCount?, board: TitleBoard, schedule: MateSchedule? = nil
     ) {
         self.character = character
         self.number = number
@@ -180,11 +184,36 @@ public struct PlayerCardFace: Hashable, Sendable {
         self.counts = counts
         self.week = week
         self.board = board
+        self.schedule = schedule
     }
 
     /// The number a card shows: the member's pick, else their place in their squad (the first to
     /// join wears 01); nil with neither.
     public static func number(picked: JerseyNumber?, place: Int?) -> JerseyNumber? {
         picked ?? place.flatMap { place in try? JerseyNumber(min(place, JerseyNumber.range.upperBound)) }
+    }
+}
+
+/// A squadmate's 出赛表 for this week only, as the back of their card shows it: the plan's seven
+/// days, how each went, and the week's 饮食小目标.
+public struct MateSchedule: Hashable, Sendable {
+    /// The week's Monday, in their time zone.
+    public let weekStart: LocalDay
+    /// Seven, Monday first.
+    public let days: [PlanDay]
+    /// Seven, Monday first.
+    public let marks: [DayMark]
+    /// Empty when they set none, and then the card says nothing about them.
+    public let fuel: [FuelGoal]
+
+    public init(weekStart: LocalDay, days: [PlanDay], marks: [DayMark], fuel: [FuelGoal]) throws(MeError) {
+        guard days.count == WeeklyPlan.dayCount, marks.count == WeeklyPlan.dayCount else { throw .rejected }
+        (self.weekStart, self.days, self.marks, self.fuel) = (weekStart, days, marks, fuel)
+    }
+
+    /// The week's number on the card (W6), the week they joined being W1, as their own 出赛表
+    /// counts it; W1 without the day they joined.
+    public func weekNumber(joinedOn: LocalDay?) -> Int {
+        joinedOn.map { weekStart.weekNumber(since: $0) } ?? 1
     }
 }

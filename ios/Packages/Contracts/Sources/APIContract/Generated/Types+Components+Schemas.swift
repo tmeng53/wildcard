@@ -8812,21 +8812,49 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/plannedDays`.
                 public var plannedDays: Swift.Int
+                /// This week’s Monday, in their time zone. Left out by older servers.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/weekStart`.
+                public var weekStart: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/days`.
+                public var days: Components.Schemas.PlanDays?
+                /// How each day of this week went, Monday first: `trained` with the sport of the day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet. Left out by older servers.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/marks`.
+                public var marks: [Components.Schemas.DayMark]?
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/fuelGoals`.
+                public var fuelGoals: Components.Schemas.FuelGoals?
                 /// Creates a new `WeekPayload`.
                 ///
                 /// - Parameters:
                 ///   - trainedDays: Days they trained this week, from all their check-ins wherever they went.
                 ///   - plannedDays: Days their plan trains this week, from the day they joined on.
+                ///   - weekStart: This week’s Monday, in their time zone. Left out by older servers.
+                ///   - days:
+                ///   - marks: How each day of this week went, Monday first: `trained` with the sport of the day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet. Left out by older servers.
+                ///   - fuelGoals:
                 public init(
                     trainedDays: Swift.Int,
-                    plannedDays: Swift.Int
+                    plannedDays: Swift.Int,
+                    weekStart: Swift.String? = nil,
+                    days: Components.Schemas.PlanDays? = nil,
+                    marks: [Components.Schemas.DayMark]? = nil,
+                    fuelGoals: Components.Schemas.FuelGoals? = nil
                 ) {
                     self.trainedDays = trainedDays
                     self.plannedDays = plannedDays
+                    self.weekStart = weekStart
+                    self.days = days
+                    self.marks = marks
+                    self.fuelGoals = fuelGoals
                 }
                 public enum CodingKeys: String, CodingKey {
                     case trainedDays
                     case plannedDays
+                    case weekStart
+                    case days
+                    case marks
+                    case fuelGoals
                 }
             }
             /// Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.
@@ -8904,6 +8932,45 @@ extension Components {
                 case week
                 case titles
                 case worn
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DayMark`.
+        public struct DayMark: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DayMark/status`.
+            @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case trained = "trained"
+                case disclaimer = "disclaimer"
+                case none = "none"
+            }
+            /// - Remark: Generated from `#/components/schemas/DayMark/status`.
+            public var status: Components.Schemas.DayMark.StatusPayload
+            /// The 练了’s sport; only for `trained`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DayMark/sport`.
+            public var sport: Swift.String?
+            /// The custom sport’s name, for `sport: "custom"`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DayMark/customSport`.
+            public var customSport: Swift.String?
+            /// Creates a new `DayMark`.
+            ///
+            /// - Parameters:
+            ///   - status:
+            ///   - sport: The 练了’s sport; only for `trained`.
+            ///   - customSport: The custom sport’s name, for `sport: "custom"`.
+            public init(
+                status: Components.Schemas.DayMark.StatusPayload,
+                sport: Swift.String? = nil,
+                customSport: Swift.String? = nil
+            ) {
+                self.status = status
+                self.sport = sport
+                self.customSport = customSport
+            }
+            public enum CodingKeys: String, CodingKey {
+                case status
+                case sport
+                case customSport
             }
         }
         /// - Remark: Generated from `#/components/schemas/ClaimedPiece`.

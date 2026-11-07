@@ -3,6 +3,7 @@ import Contracts
 import DesignSystemUI
 import Foundation
 import MeDomain
+import ScheduleDomain
 
 /// A member kept in memory, for previews, UI tests and builds before the API client is wired.
 public actor InMemoryMeService: MeService {
@@ -132,8 +133,26 @@ public struct InMemorySquadmateCards: SquadmateCards {
             number: try? JerseyNumber(7), squadName: nil,
             joinedAt: Date(timeIntervalSince1970: 1_792_756_800),
             counts: LifetimeCounts(trainedDays: 42, healthyMeals: 18, cheatMeals: 5, disclaimers: 4),
-            week: WeekCount(trainedDays: 2, plannedDays: 4),
-            board: .sample)
+            week: WeekCount(trainedDays: 3, plannedDays: 5),
+            board: .sample, schedule: .sample(weekOf: LocalDay(at: Date(), in: .current)))
+    }
+}
+
+extension MateSchedule {
+    /// The approved card back's week (E1): 网球 and 跑步 trained, a 请假条 on Thursday, 力量训练
+    /// trained on Friday, 网球 still to come, and two 饮食小目标.
+    static func sample(weekOf day: LocalDay) -> MateSchedule? {
+        let tennis = PlanDay.train(.sport("tennis"))
+        let run = PlanDay.train(.sport("run"))
+        let strength = PlanDay.train(.sport("strength"))
+        return try? MateSchedule(
+            weekStart: day.weekStart,
+            days: [tennis, .rest, run, tennis, strength, tennis, .rest],
+            marks: [
+                .trained(.sport("tennis")), .none, .trained(.sport("run")), .disclaimer,
+                .trained(.sport("strength")), .none, .none,
+            ],
+            fuel: [.suggested(.veggies), .suggested(.lessBubbleTea)])
     }
 }
 
