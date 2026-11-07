@@ -73,7 +73,7 @@ struct EndingPickPage: View {
         }
         .foregroundStyle(Color(role: .fgOnScene, in: theme))
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, Space.m)
+        .padding(.horizontal, Space.l)
         .padding(.top, Space.m)
     }
 

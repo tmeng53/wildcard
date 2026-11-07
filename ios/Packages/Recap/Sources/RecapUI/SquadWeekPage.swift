@@ -43,6 +43,7 @@ struct SquadWeekPage: View {
                 }
             }
             .accessibilityElement(children: .combine)
+            .padding(.horizontal, Space.l)
             VStack(alignment: .leading, spacing: Space.m) {
                 LazyVGrid(
                     columns: [GridItem(.flexible(), spacing: Space.s), GridItem(.flexible(), spacing: Space.s)],
@@ -59,8 +60,9 @@ struct SquadWeekPage: View {
                 }
                 SportsCard(week: week, head: { heads[$0] })
             }
+            .padding(.horizontal, Space.l)
         }
-        .padding(.horizontal, Space.l)
+        // PageTitle keeps its own inset.
         .foregroundStyle(Color(role: .fgOnScene, in: theme))
     }
 

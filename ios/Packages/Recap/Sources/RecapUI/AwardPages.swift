@@ -148,7 +148,7 @@ struct TitlesPage: View {
                         .opacity(page.ramp(start, start + 0.15))
                 }
             }
-            .padding(.horizontal, Space.m)
+            .padding(.horizontal, Space.l)
             Spacer(minLength: 0)
         }
     }
