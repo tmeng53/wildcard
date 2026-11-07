@@ -91,6 +91,37 @@ final class TabsUITests: XCTestCase {
         XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "-tab schedule didn't show 出赛表")
     }
 
+    /// Every tab opens on its own page from the bar (Tracy, 2026-11-06): 我 tapped again while
+    /// 商店街 is open goes back to 我, and so does 我 tapped from another tab after 商店街 was left open.
+    func testTabsOpenOnTheirOwnPage() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push"]
+        app.launch()
+        addTeardownBlock { @MainActor in XCUIApplication().terminate() }
+
+        // The bar can drop its tabs' identifiers while a page is pushed, so each tap finds its tab again.
+        tabButton("tab.me", in: app).tap()
+        let street = app.buttons["me.street"]
+        let streetPage = app.descendants(matching: .any).matching(identifier: "street.page").firstMatch
+
+        XCTAssertTrue(street.waitForExistence(timeout: 30), "我 has no 商店街 button")
+        street.tap()
+        XCTAssertTrue(streetPage.waitForExistence(timeout: 30), "商店街 never opened")
+        tabButton("tab.me", in: app).tap()
+        waitFor(streetPage, "exists == false", "tapping 我 again stayed on 商店街")
+        XCTAssertTrue(street.waitForExistence(timeout: 30), "tapping 我 again didn't show 我")
+
+        street.tap()
+        XCTAssertTrue(streetPage.waitForExistence(timeout: 30), "商店街 never opened again")
+        tabButton("tab.today", in: app).tap()
+        waitFor(tabButton("tab.today", in: app), "isSelected == true", "今天 didn't open")
+        tabButton("tab.me", in: app).tap()
+        waitFor(tabButton("tab.me", in: app), "isSelected == true", "我 didn't open again")
+        XCTAssertTrue(street.waitForExistence(timeout: 30), "我 opened on 商店街, not its own page")
+        XCTAssertFalse(streetPage.exists, "商店街 stayed open under 我")
+    }
+
     private func keepScreenshot(named name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
