@@ -5,13 +5,14 @@
 # macOS runners have no Docker, so the database and API checks run in a Linux job.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
 # Free macOS runners are few and shared by every PR, and one iOS run takes about 30 minutes, so
-# no PR books a Mac on its own (Tracy, 2026-11-06). `ios` runs on a schedule, every 3 hours,
-# for what main changed since the last scheduled run (nothing when main didn't change), and on a
-# manual run (Actions -> verify -> Run workflow), which the merge queue starts every few hours on
-# one branch merging the ready PRs' heads, so its screenshots are each PR's evidence; the macOS
-# `verify` and `avatar-preview` (GIFs for reviewers, no checks of its own) on manual runs only.
-# Pushes to main and every PR run the Linux checks only (`verify` on Linux builds and tests the
-# Swift packages).
+# no merge uses a Mac on its own. `ios` runs on a schedule, every 3 hours,
+# for what main changed since the last scheduled run (nothing when main didn't change), on a
+# manual run (Actions -> verify -> Run workflow) and on a PR carrying the `ios-ci` label; the
+# macOS `verify` only on the last two, and `avatar-preview` (GIFs for reviewers, no checks of
+# its own) on manual runs only. Owners check screens on the next scheduled run and fix
+# forward. A ready PR that changes ios/ and doesn't run `ios` still compiles the app on a Mac
+# (`ios-build`, about 8 minutes; Tracy, 2026-11-06), so a compile error never waits for `ios`. Pushes to main and every other PR run the Linux checks only (`verify` on Linux builds
+# and tests the Swift packages).
 # Every job runs only when the files a change touches can break what it checks: `verify` for the
 # app's Swift (and the OpenAPI file its generated types come from), `supabase` for the database,
 # the API and the app's Backend adapters, `web` for the site; `ios` and `avatar-preview` only
@@ -22,7 +23,7 @@ name: verify
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
   push:
     branches: [main]
   # The macOS jobs for main (UTC). GitHub may start a scheduled run some minutes late.
@@ -46,16 +47,21 @@ concurrency:
   # A PR's newer push cancels its older run. A run for main has a group of its own (its commit),
   # so it is never cancelled and never replaces a waiting one: GitHub keeps only one pending run
   # per group, which dropped every main run but the newest while the few Macs were busy.
+  # Adding a label other than `ios-ci` gets its own group, so it never cancels the PR's real run.
   # A scheduled run has its own group too, so it never replaces the push run for the same commit.
   group: >-
     verify-${{ github.event.pull_request.number || github.sha }}${{
+    github.event.action == 'labeled' && github.event.label.name != 'ios-ci' && '-label' || '' }}${{
     github.event_name == 'schedule' && '-schedule' || '' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Which macOS jobs this PR needs, from the files it changes against its base.
   changes:
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    if: >-
+      github.event_name != 'pull_request' ||
+      (!github.event.pull_request.draft &&
+      (github.event.action != 'labeled' || github.event.label.name == 'ios-ci'))
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -65,6 +71,7 @@ jobs:
       web: ${{ steps.diff.outputs.web }}
       app: ${{ steps.diff.outputs.app }}
       ios: ${{ steps.diff.outputs.ios }}
+      build: ${{ steps.diff.outputs.build }}
       avatar: ${{ steps.diff.outputs.avatar }}
     steps:
       - uses: actions/checkout@v5
@@ -76,7 +83,9 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-          MAC: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+          MAC: >-
+            ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
+            contains(github.event.pull_request.labels.*.name, 'ios-ci') }}
           GH_TOKEN: ${{ github.token }}
         run: |
           # A scheduled run checks what main changed since the commit the last scheduled run
@@ -96,7 +105,7 @@ jobs:
             files="$(git ls-files)"
           fi
           printf '%s\n' "$files"
-          # The Mac is for scheduled and manual runs only.
+          # The Mac is for scheduled and manual runs and PRs that ask for it with the `ios-ci` label.
           echo "mac=${MAC}" >> "$GITHUB_OUTPUT"
           touches() { grep -qE "$1" <<<"$files" && echo true || echo false; }
           # swift: the app's Swift checks, and the OpenAPI file its generated types must match.
@@ -108,6 +117,7 @@ jobs:
           # app: anything the macOS `verify` runs, so a change to it is tested on a Mac before main.
           echo "app=$(touches '^(ios/|scripts/(verify|install-swiftlint|swift-openapi)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "ios=$(touches '^(ios/|scripts/ios-test\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "build=$(touches '^(ios/|scripts/ios-build\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "avatar=$(touches '^(ios/Packages/(Avatar|DesignSystem)/|scripts/avatar-preview\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
 
   verify:
@@ -148,6 +158,7 @@ jobs:
     if: >-
       !inputs.only_testing && (
       !cancelled() && !github.event.pull_request.draft && github.event_name != 'schedule' &&
+      needs.changes.result != 'skipped' &&
       (needs.changes.result != 'success' || needs.changes.outputs.web == 'true'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -166,6 +177,7 @@ jobs:
     if: >-
       !inputs.only_testing && (
       !cancelled() && !github.event.pull_request.draft && github.event_name != 'schedule' &&
+      needs.changes.result != 'skipped' &&
       (needs.changes.result != 'success' || needs.changes.outputs.backend == 'true'))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -198,6 +210,26 @@ jobs:
           curl -fsS --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1:18080/health ||
             { docker logs api; exit 1; }
 
+  # Compiles the app, its extensions and its UI tests on a Mac, running nothing, for every ready
+  # PR that changes ios/ and doesn't run `ios` (no `ios-ci` label): the app target and the
+  # packages' SwiftUI code compile only on macOS, so the Linux checks can pass on code that
+  # doesn't build (Tracy, 2026-11-06, after three app compile errors reached main's queue).
+  # About 8 minutes.
+  ios-build:
+    needs: changes
+    if: >-
+      !cancelled() && github.event_name == 'pull_request' && !github.event.pull_request.draft &&
+      needs.changes.result != 'skipped' && needs.changes.outputs.mac != 'true' &&
+      (needs.changes.result != 'success' || needs.changes.outputs.build == 'true')
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: xcodebuild -version
+      - run: scripts/ios-build.sh
+
   # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
   # so reviewers and verifiers see every visible change without a Mac.
   ios:
@@ -214,15 +246,12 @@ jobs:
         with:
           persist-credentials: false
       - run: xcodebuild -version
-      # main's scheduled run checks the build and UI tests only; screenshots are for the combined
-      # PR runs (Tracy, 2026-11-06).
       - run: scripts/ios-test.sh
         env:
-          EXPORT_SCREENSHOTS: ${{ github.event_name == 'schedule' && '0' || '1' }}
-          PRINT_PREVIEWS: ${{ github.event_name == 'schedule' && '0' || '1' }}
+          PRINT_PREVIEWS: "1"
           ONLY_TESTING: ${{ inputs.only_testing }}
       - name: Upload screenshots
-        if: always() && github.event_name != 'schedule'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           # Named after the commit the PR is at, not the merge commit GitHub tests.

@@ -90,6 +90,7 @@ export function taskOf({
   noteTo = [],
   yesterday,
   occasions = [],
+  canSeePhotos = false,
 }: {
   readonly reason: WakeReason;
   readonly week: SquadWeek;
@@ -109,6 +110,8 @@ export function taskOf({
   readonly yesterday?: { readonly day: string; readonly checkIns: readonly WeekCheckIn[] };
   /** What is special about the day, such as a holiday, one line each. */
   readonly occasions?: readonly string[];
+  /** On a reply's wake, whether the coach can look at the check-in's photos this time. */
+  readonly canSeePhotos?: boolean;
 }): string | undefined {
   const filesLine = memoryBlock(files);
   const occasion = occasionBlock(occasions);
@@ -140,10 +143,19 @@ export function taskOf({
       .map(({ member, text }) => `- ${roster.get(member) ?? '队员'}：「${text}」`);
     const answering = checkIn.comments.find(({ id }) => id === reason.comment);
     const ownReply = thread.reply === undefined ? [] : [`- 你：「${thread.reply}」`];
+    // Without this the model answers from the words alone and guesses what the photos show.
+    const photoCount = checkIn.photos?.length ?? 0;
+    const photos =
+      canSeePhotos && photoCount > 0
+        ? [
+            `这条打卡有 ${String(photoCount)} 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。`,
+          ]
+        : [];
     return [
       `${answering?.toCoach === undefined && answering?.mentionsCoach !== undefined ? '有人在评论里 @ 你' : '有人回复你'}。这条打卡：${checkInLine({ ...checkIn, comments: [] }, roster)}`,
       ...(others.length === 0 ? [] : [`这条下面别人的评论（先后顺序）：\n${others.join('\n')}`]),
       `你们在下面的对话：\n${[...ownReply, ...said].join('\n')}`,
+      ...photos,
       ...occasion,
       filesLine,
     ].join('\n\n');

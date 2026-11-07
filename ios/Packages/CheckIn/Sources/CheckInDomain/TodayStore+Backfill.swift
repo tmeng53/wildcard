@@ -24,6 +24,14 @@ extension TodayStore {
         return days
     }
 
+    /// The days among `postableDays` no 请假条 can go on: one with a 练了, and today once the
+    /// member trained. A planned rest day is still open: a member may take leave on it too.
+    public var disclaimerBlockedDays: Set<LocalDay> {
+        var blocked = trainedDays
+        if let day, !myStatus.allowsDisclaimer { blocked.insert(day) }
+        return blocked
+    }
+
     /// Throws when the day already rules the draft out. Another phone may have posted since the
     /// last load: a 请假条 must know about a 练了 the server has, and a copy from an earlier day
     /// can't say what today holds, so the server is asked first; offline, the home shown decides.

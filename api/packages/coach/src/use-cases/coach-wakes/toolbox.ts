@@ -264,15 +264,18 @@ export function toolbox({
 }
 
 /**
- * Looks at the photos of the check-in this wake is about. Only on demand: pictures cost far
- * more than words, so the model is told to call it only when someone asks about a photo or the
- * talk is clearly about one. The step keeps how many it looked at, never the pictures.
+ * Looks at the photos of the check-in this wake is about, on demand (at low detail each costs
+ * about as much as a short comment). A check-in's reply needs it only when the post is about
+ * what its photos show; a reply to the coach about the post (what's in it, what they ate) needs
+ * it every time, since the words alone don't say what the photos show. The step keeps how many
+ * it looked at, never the pictures.
  */
 function lookAtPhotos(steps: WakeStep[], photos: () => Promise<readonly string[]>): CoachTool {
   const name = 'look_at_photos';
   return {
     name,
-    description: '看这条打卡的照片。看照片比读文字贵很多，一次醒来最多看一次。',
+    description:
+      '看这条打卡的照片。照片里有什么，只有看了才知道。看照片比读文字贵很多，一次醒来最多看一次。',
     parameters: z.object({}),
     run: async (): Promise<ToolAnswer> => {
       const looked = steps.some(({ tool }) => tool === name);

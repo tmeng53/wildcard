@@ -59,7 +59,7 @@ struct MainTabs: View {
     /// The coach's card, opened from a tap on the coach on the home, popped up like a player's.
     @State var showsCoachCard = false
     /// 小队's scene pick is playing its reveal, which fills the screen.
-    @State private var squadRevealing = false
+    @State var squadRevealing = false
     /// 我的动态, pushed over 我.
     @State var wall: PostWallStore?
     /// 我的动态's tile on 我: the wall's first page, read again each time 我 shows.
@@ -93,7 +93,7 @@ struct MainTabs: View {
     }
 
     var body: some View {
-        AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: feed.hasNews ? [.feed] : []) { tab in
+        AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: dots, backToRoot: backToRoot) { tab in
             // Only the tab on screen has its screen, made anew on each visit, as every tab expects:
             // a hidden tab kept alive would hold a scroll or a picked day nobody sees.
             if tab == selection { screen(tab) }

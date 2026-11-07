@@ -12,7 +12,7 @@ extension SquadToday {
         let kind: Kind =
             switch checkIn.entry {
             case .trained: .trained
-            case .disclaimer: .disclaimer
+            case .disclaimer(let note): note.restDay ? .rest : .disclaimer
             case .healthyMeal: .healthyMeal
             case .cheatMeal: .cheatMeal
             }
@@ -29,7 +29,7 @@ extension SquadToday {
         let kind: Kind =
             switch checkIn.entry {
             case .trained: .trained
-            case .disclaimer: .disclaimer
+            case .disclaimer(let note): note.restDay ? .rest : .disclaimer
             case .healthyMeal: .healthyMeal
             case .cheatMeal: .cheatMeal
             }
@@ -41,7 +41,7 @@ extension SquadToday {
         let kind: Kind =
             switch post.draft {
             case .trained: .trained
-            case .disclaimer: .disclaimer
+            case .disclaimer(let note): note.restDay ? .rest : .disclaimer
             case .healthyMeal: .healthyMeal
             case .cheatMeal: .cheatMeal
             }
@@ -51,14 +51,15 @@ extension SquadToday {
     }
 
     private enum Kind {
-        case trained, disclaimer, healthyMeal, cheatMeal
+        /// A 休息: no 请假条, it makes the day a rest day in the plan.
+        case trained, disclaimer, rest, healthyMeal, cheatMeal
 
         /// The member's day as the squad sees it once this is shared, after `saw`.
         func after(_ saw: TrainingStatus) -> TrainingStatus {
             switch self {
             case .trained: .trained
             case .disclaimer: saw == .notCheckedIn ? .disclaimer : saw
-            case .healthyMeal, .cheatMeal: saw
+            case .rest, .healthyMeal, .cheatMeal: saw
             }
         }
     }
@@ -85,6 +86,7 @@ extension SquadToday {
         switch kind {
         case .trained: counted.countTraining(of: &member, on: day, counts: counts)
         case .disclaimer: counted.countDisclaimer(of: &member, counts: counts)
+        case .rest: counted.countRest(of: &member, counts: counts)
         case .healthyMeal: member.latestMeal = .healthyMeal
         case .cheatMeal: member.latestMeal = .cheatMeal
         }
@@ -119,6 +121,14 @@ extension SquadToday {
         if member.plannedRest && saw == .notCheckedIn { today.resting -= 1 }
         today.trained += 1
         squadWeek.trainedDays += 1
+    }
+
+    /// A 休息: the day is a rest day now, as the server's plan will say.
+    private mutating func countRest(of member: inout SquadmateToday, counts: Counts) {
+        let wasResting = member.plannedRest
+        member.plannedRest = true
+        guard case .squadAndMine(let saw) = counts, saw == .notCheckedIn, !wasResting else { return }
+        today.resting += 1
     }
 
     /// A 请假条, on a day not yet checked in.

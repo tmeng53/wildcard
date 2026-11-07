@@ -7,6 +7,7 @@ import {
   checkFuelGoalsChange,
   checkPlanChange,
   localDayAt,
+  restedOnDay,
   trainedOnRestDay,
   weekStartOf,
   type PlanDays,
@@ -118,6 +119,19 @@ export async function planTrainedDay(
 ): Promise<void> {
   const plan = await findWeeklyPlan({ store }, { member, weekStart: weekStartOf(day) });
   const days = trainedOnRestDay({ plan, day, training });
+  if (days !== undefined) await store.save({ member, weekStart: plan.weekStart, days });
+}
+
+/**
+ * Makes `day` a rest day in the member's plan when it was a training day, so a 休息 they post
+ * takes the day out of their week's plan. Safe to repeat.
+ */
+export async function planRestDay(
+  { store }: { readonly store: WeeklyPlanStore },
+  { member, day }: { readonly member: MemberId; readonly day: LocalDay },
+): Promise<void> {
+  const plan = await findWeeklyPlan({ store }, { member, weekStart: weekStartOf(day) });
+  const days = restedOnDay({ plan, day });
   if (days !== undefined) await store.save({ member, weekStart: plan.weekStart, days });
 }
 

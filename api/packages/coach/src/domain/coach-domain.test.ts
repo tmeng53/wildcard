@@ -74,6 +74,14 @@ describe('the squad’s week, as the model reads it', () => {
     expect(weekText(week)).not.toContain(mia);
   });
 
+  it('calls a planned rest 计划休息, not a 请假条', () => {
+    const [, leave] = week.checkIns;
+    if (leave === undefined) throw new Error('no check-in');
+    expect(checkInLine({ ...leave, restDay: true }, rosterOf(week))).toBe(
+      '11-01 周日 队员2 计划休息 「下雨」',
+    );
+  });
+
   it('keeps only the words of members who agreed to AI use, and the numbering', () => {
     expect(weekText(consentedOnly(week, new Set([leo])))).toBe(
       [
@@ -275,6 +283,25 @@ describe('when the coach wakes', () => {
         '你的记性（你只记得这些）：\n还是空的：memory.md',
       ].join('\n\n'),
     );
+    // A post with photos: the coach is told it hasn't seen them, so it looks before answering
+    // what they show instead of guessing from the words (and only when it can look).
+    const withPhotos: SquadWeek = {
+      ...week,
+      checkIns: week.checkIns.map((each) =>
+        each.id === 'c1' ? { ...each, photos: ['m/a.jpg', 'm/b.jpg'] } : each,
+      ),
+    };
+    const asked = {
+      reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' },
+      week: withPhotos,
+      files: new Map(),
+      recentNotes: [],
+      thread: { said: [{ member: mia, text: '你看看我吃了啥', answering: true }] },
+    } as const;
+    expect(taskOf({ ...asked, canSeePhotos: true })?.split('\n\n')).toContain(
+      '这条打卡有 2 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。',
+    );
+    expect(taskOf(asked)).not.toContain('look_at_photos');
     // On a holiday the coach is told, after the talk and before its files.
     expect(
       taskOf({

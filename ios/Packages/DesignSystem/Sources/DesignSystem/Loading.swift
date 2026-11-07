@@ -55,12 +55,4 @@ public enum Loading {
     public static func dotOpacity(dot index: Int, at time: Double) -> Double {
         dotRestOpacity + (1 - dotRestOpacity) * hop(dot: index, at: time)
     }
-
-    // MARK: - What arrives
-
-    /// What the wait was for, arriving: rising this many points as it fades in over
-    /// `arrival`, each line `arrivalStagger` after the one above.
-    public static let arrivalRise: Double = 6
-    public static let arrival = MotionCurve(duration: 0.35, 0.2, 0.8, 0.2, 1)
-    public static let arrivalStagger: Double = 0.08
 }

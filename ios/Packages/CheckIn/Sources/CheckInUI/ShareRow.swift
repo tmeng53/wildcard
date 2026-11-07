@@ -6,7 +6,7 @@ import SwiftUI
 
 /// 分享到, pinned under 发动态 and the 请假条 page: a switch for whether the member's squad sees
 /// the post. It starts on and nothing is remembered (the product owner, 2026-10-31). Off keeps the
-/// post to the member, in 我的动态 only. The page sets its side margins.
+/// post to the member, in 我的动态 only, and says so under the switch. The page sets its side margins.
 struct ShareRow: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.controlPlacement) private var placement
@@ -17,10 +17,13 @@ struct ShareRow: View {
         VStack(alignment: .leading, spacing: Space.xxs) {
             SwitchRow(Text("分享到 \(squad.name)", bundle: .module), isOn: $isShared, showsDivider: false)
                 .accessibilityIdentifier("compose.share.\(squad.id)")
-            (isShared ? Text("小队成员都能看到", bundle: .module) : Text("仅自己可见，只在「我的动态」里", bundle: .module))
-                .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                .accessibilityIdentifier("compose.share.hint")
+            // Sharing is the default and the switch says it; only the private choice needs a word.
+            if !isShared {
+                Text("仅自己可见，只在「我的动态」里", bundle: .module)
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .accessibilityIdentifier("compose.share.hint")
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, Space.xs)

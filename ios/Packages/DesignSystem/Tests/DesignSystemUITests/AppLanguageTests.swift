@@ -40,17 +40,29 @@ struct AppLanguageTests {
         let suite = "AppLanguageTests.\(UUID().uuidString)"
         let shared = try #require(UserDefaults(suiteName: suite))
         defer { shared.removePersistentDomain(forName: suite) }
-        UserDefaults.standard.set(["zh-Hans"], forKey: "AppleLanguages")
+        let folder = FileManager.default.temporaryDirectory.appending(path: suite)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        UserDefaults.standard.set(["en"], forKey: "AppleLanguages")
 
-        // Nothing shared yet, or no shared settings: the extension keeps its own.
-        AppLanguage.adopt(from: shared)
-        AppLanguage.adopt(from: nil)
+        // Nothing shared yet, or nowhere to share it: the extension speaks the app's first language.
+        AppLanguage.adopt(from: shared, folder: folder)
+        #expect(AppLanguage.current == .simplifiedChinese)
+        UserDefaults.standard.set(["en"], forKey: "AppleLanguages")
+        AppLanguage.adopt(from: nil, folder: nil)
         #expect(AppLanguage.current == .simplifiedChinese)
 
-        AppLanguage.english.share(in: shared)
-        AppLanguage.adopt(from: shared)
+        AppLanguage.english.share(in: shared, folder: folder)
+        AppLanguage.adopt(from: shared, folder: folder)
         #expect(AppLanguage.current == .english)
         #expect(UserDefaults.standard.stringArray(forKey: "AppleLanguages") == ["en"])
+
+        // The shared folder's file wins over the shared settings, and either works alone.
+        AppLanguage.traditionalChinese.share(in: nil, folder: folder)
+        AppLanguage.adopt(from: shared, folder: folder)
+        #expect(AppLanguage.current == .traditionalChinese)
+        AppLanguage.adopt(from: shared, folder: nil)
+        #expect(AppLanguage.current == .english)
     }
 
     @Test func eachLanguageIsNamedInItself() {
