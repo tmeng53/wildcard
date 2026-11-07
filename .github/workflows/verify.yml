@@ -158,6 +158,7 @@ jobs:
     if: >-
       !inputs.only_testing && (
       !cancelled() && !github.event.pull_request.draft && github.event_name != 'schedule' &&
+      needs.changes.result != 'skipped' &&
       (needs.changes.result != 'success' || needs.changes.outputs.web == 'true'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -176,6 +177,7 @@ jobs:
     if: >-
       !inputs.only_testing && (
       !cancelled() && !github.event.pull_request.draft && github.event_name != 'schedule' &&
+      needs.changes.result != 'skipped' &&
       (needs.changes.result != 'success' || needs.changes.outputs.backend == 'true'))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
