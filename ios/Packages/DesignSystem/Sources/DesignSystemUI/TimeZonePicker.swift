@@ -1,19 +1,18 @@
 #if os(iOS)
 import DesignSystem
-import DesignSystemUI
 import Foundation
 import SwiftUI
 
 /// A time zone as the 比赛时区 row and its list name it: its region's name in the app's language
 /// (北美东部时间) and the city it is named after (New York).
-struct ZoneName: Identifiable, Hashable {
-    let id: String
-    let region: String
-    let city: String
+public struct ZoneName: Identifiable, Hashable, Sendable {
+    public let id: String
+    public let region: String
+    public let city: String
     /// Seconds ahead of UTC now, for the list's order.
     let offset: Int
 
-    init(_ identifier: String, locale: Locale, now: Date = .now) {
+    public init(_ identifier: String, locale: Locale, now: Date = .now) {
         let zone = TimeZone(identifier: identifier)
         id = identifier
         city = identifier.split(separator: "/").last.map { $0.replacingOccurrences(of: "_", with: " ") } ?? identifier
@@ -38,15 +37,21 @@ struct ZoneName: Identifiable, Hashable {
 }
 
 /// 比赛时区: every time zone in the system's list with search, the picked one ticked, for a
-/// sheet. One pick closes it: the caller dismisses the sheet in `pick`.
-struct TimeZonePicker: View {
+/// sheet (sign-up's 建小队 and 小队's 比赛时区). One pick closes it: the caller dismisses the sheet
+/// in `pick`.
+public struct TimeZonePicker: View {
     let selected: String
     let pick: (String) -> Void
     @Environment(\.sceneTheme) private var theme
     @State private var query = ""
     @State private var zones: [ZoneName] = []
 
-    var body: some View {
+    public init(selected: String, pick: @escaping (String) -> Void) {
+        self.selected = selected
+        self.pick = pick
+    }
+
+    public var body: some View {
         NavigationStack {
             List(shown) { zone in
                 Button {

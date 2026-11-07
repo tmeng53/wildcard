@@ -2274,28 +2274,6 @@
           }
         }
       }
-    },
-    "搜索城市或时区": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search cities or time zones"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜索城市或时区"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜尋城市或時區"
-          }
-        }
-      }
     }
   },
   "version": "1.0"
