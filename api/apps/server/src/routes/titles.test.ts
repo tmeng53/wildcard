@@ -122,6 +122,7 @@ const app = createApp({
       stories: createPostgresWeekStoryStore(db),
       aiConsented: (all) => Promise.resolve(all),
       memes: () => Promise.resolve([]),
+      sportGlyphs: () => Promise.resolve([]),
     }),
     clock: () => new Date(),
   },

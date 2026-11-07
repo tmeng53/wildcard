@@ -3321,8 +3321,14 @@
           },
           "colour": {
             "type": "string",
-            "description": "Its colour, by the scene whose colour it takes: `pool`, `track`, `gym`, `tennis` or `climbing` today. An app that doesn’t know one draws `gym`.",
+            "description": "Its colour, by its id in the badge catalog (`track`). Builds before `tone` paint it by the scene of that id, and the gym’s for any other.",
             "example": "track"
+          },
+          "tone": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$",
+            "description": "Its colour itself, as #RRGGBB, from the badge catalog: what the app paints it in. Left out by older servers.",
+            "example": "#E65345"
           },
           "glyph": {
             "type": "string",

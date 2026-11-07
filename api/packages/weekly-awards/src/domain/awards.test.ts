@@ -11,6 +11,7 @@ import {
   topCheckInOf,
   wornOf,
   endingWordsOf,
+  type BoardTitle,
   type ModelReply,
   type TitleWin,
   type WeekCheckIn,
@@ -24,7 +25,7 @@ const catalog = BadgeCatalog.parse({
     { id: 'shield', meaning: '盾牌' },
     { id: 'circle', meaning: '圆' },
   ],
-  colours: [{ id: 'track', meaning: '红' }],
+  colours: [{ id: 'track', tone: '#E65345', meaning: '红' }],
   glyphs: [
     { id: 'sun.max.fill', meaning: '太阳' },
     { id: 'moon.fill', meaning: '月亮' },
@@ -499,7 +500,7 @@ describe('wornOf', () => {
 
   it('falls back to the latest when the equipped title is no longer on the board', () => {
     expect(wornOf(board, '雨中狠人')?.title).toBe('早八战神');
-    expect(wornOf([], '雨中狠人')).toBeUndefined();
+    expect(wornOf<BoardTitle>([], '雨中狠人')).toBeUndefined();
   });
 });
 

@@ -92,7 +92,11 @@ export function promptFor(week: {
     })),
     // By id, whatever order the database keeps them in, so the same settings make the same prompt.
     moves: offeredMoves(week.moves).map((id) => ({ id, description: week.moves[id] })),
-    badges: week.badges,
+    // The tones are the app's to paint; the model picks by what each colour means.
+    badges: {
+      ...week.badges,
+      colours: week.badges.colours.map(({ id, meaning }) => ({ id, meaning })),
+    },
     ...(week.memes.length === 0
       ? {}
       : {

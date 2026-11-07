@@ -114,7 +114,8 @@ private struct CardFront: View {
                 .overlay(alignment: .topTrailing) {
                     if let worn = face.board.wornTitle {
                         TitleBadgeView(
-                            shape: worn.badge.shape, colour: worn.badge.colour, glyph: worn.badge.glyph,
+                            shape: worn.badge.shape, colour: worn.badge.colour, tone: worn.badge.tone,
+                            glyph: worn.badge.glyph,
                             size: Self.badgeSize
                         )
                         .padding(Space.s)
@@ -164,7 +165,7 @@ private struct CardFront: View {
             }
             if let worn = face.board.wornTitle {
                 Capsule()
-                    .fill(TitleBadgeView.enamel(worn.badge.colour))
+                    .fill(TitleBadgeView.faceColor(colour: worn.badge.colour, tone: worn.badge.tone))
                     .frame(width: Self.bar.width, height: Self.bar.height)
                     .accessibilityHidden(true)
                 Text(verbatim: worn.title)

@@ -8,6 +8,7 @@ import type {
   SquadId,
   TitleWin,
 } from './domain/awards.js';
+import type { SportGlyph } from './domain/badges.js';
 import type { PromptMeme } from './domain/prompt.js';
 import type { WeekStart } from './domain/schedule.js';
 import type { WeekStory } from './domain/week-story.js';
@@ -98,6 +99,12 @@ export interface WeekStoryStore {
  * copy): only their weeks go to the model.
  */
 export type AiConsented = (members: readonly MemberId[]) => Promise<readonly string[]>;
+
+/**
+ * Every offered sport's icon, with its name as what it means, from the sports list: glyphs the
+ * model may pick for a badge besides the settings' own.
+ */
+export type SportGlyphs = () => Promise<readonly SportGlyph[]>;
 
 /** The memes in use, from the meme library. */
 export type MemesInUse = () => Promise<readonly PromptMeme[]>;
