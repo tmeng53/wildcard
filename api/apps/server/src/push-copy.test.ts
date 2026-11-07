@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { PUSH_COPY } from './push-copy.js';
+import { PUSH_COPY, UNSHOWN_ARGS } from './push-copy.js';
 import { pushSamplesJson } from './push-samples.js';
 
 // The app's String Catalog, which holds every push's words: a key the server sends that the
@@ -30,9 +30,11 @@ function placeholders(line: string): number[] {
 
 describe('the push copy', () => {
   it.each(Object.entries(PUSH_COPY))(
-    '%s has Chinese and English, each filling every placeholder once',
+    '%s has Chinese and English, each filling every placeholder it shows once',
     (key, names) => {
-      const expected = names.map((_, index) => index + 1);
+      const unshown: readonly string[] =
+        Object.entries(UNSHOWN_ARGS).find(([unshownKey]) => unshownKey === key)?.[1] ?? [];
+      const expected = names.flatMap((name, index) => (unshown.includes(name) ? [] : [index + 1]));
       for (const language of LANGUAGES) {
         const line = catalog[key]?.localizations?.[language]?.stringUnit?.value;
         expect(line, `${key} has no ${language} line`).toBeTypeOf('string');
