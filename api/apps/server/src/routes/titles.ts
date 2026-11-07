@@ -332,7 +332,11 @@ export function titles(deps: {
         deps.awards.boards([memberId]),
         deps.members.squadmates([memberId]),
         deps.checkIns.totals(memberId),
-        deps.checkIns.memberWeek({ member: memberId, viewer: MemberId.parse(c.var.caller.userId) }),
+        deps.checkIns.memberWeek({
+          member: memberId,
+          viewer: MemberId.parse(c.var.caller.userId),
+          squad: squadId,
+        }),
       ]);
       const profile = profiles.get(memberId);
       return c.json(

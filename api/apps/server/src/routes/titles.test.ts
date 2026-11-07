@@ -462,11 +462,30 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     expect(week.weekStart).toBe(weekStart);
     expect(week.days).toHaveLength(7);
     expect(week.marks).toHaveLength(7);
-    expect(week.marks[weekday]).toStrictEqual({ status: 'trained', sport: 'run' });
-    expect(week.marks.filter((mark) => JSON.stringify(mark) === '{"status":"none"}')).toHaveLength(
-      6,
-    );
+    // The run went only to the other squad, so this squad's card never says what it was.
+    expect(week.marks).toStrictEqual(Array.from({ length: 7 }, () => ({ status: 'none' })));
     expect(week.fuelGoals).toStrictEqual([{ kind: 'suggested', suggestion: 'water' }]);
+    // A 练了 sent to this squad shows with its sport.
+    const later = new Date(createdAt.getTime() + 1_000);
+    const shared = await call({
+      method: 'PUT',
+      path: `/check-ins/${randomUUID()}`,
+      token: mate.token,
+      body: {
+        version: 1,
+        day: today.toISOString().slice(0, 10),
+        createdAt: later.toISOString(),
+        audience: [squad],
+        kind: 'trained',
+        training: { sport: 'swim' },
+      },
+    });
+    expect(shared.status).toBe(201);
+    const again = await call({ method: 'GET', path, token: me.token });
+    const marks = z.object({ week: z.object({ marks: z.array(z.unknown()) }) }).parse(again.body)
+      .week.marks;
+    expect(marks[weekday]).toStrictEqual({ status: 'trained', sport: 'swim' });
+    expect(marks.filter((mark) => JSON.stringify(mark) === '{"status":"none"}')).toHaveLength(6);
     expect(z.object({ joinedAt: z.iso.datetime() }).safeParse(card.body).success).toBe(true);
 
     // The squad's today shows the title beside the name.
