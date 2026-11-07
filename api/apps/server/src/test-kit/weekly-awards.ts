@@ -1,5 +1,5 @@
 // Tests only. The weekly awards for an app whose test never reads them.
-import type { BoardTitle, MemberId, WeeklyAwards } from '@wildcard/weekly-awards';
+import type { MemberId, ShownBoardTitle, WeeklyAwards } from '@wildcard/weekly-awards';
 
 const unused = () => Promise.reject(new Error('unused'));
 
@@ -16,7 +16,7 @@ export const unusedWeeklyAwards = {
     // The squad's today reads boards: nobody has won anything.
     boards: (members: readonly MemberId[]) =>
       Promise.resolve(
-        new Map(members.map((member): [MemberId, readonly BoardTitle[]] => [member, []])),
+        new Map(members.map((member): [MemberId, readonly ShownBoardTitle[]] => [member, []])),
       ),
   } satisfies WeeklyAwards,
   clock: () => new Date(),
