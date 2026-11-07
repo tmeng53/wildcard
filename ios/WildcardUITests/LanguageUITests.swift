@@ -43,6 +43,9 @@ final class LanguageUITests: XCTestCase {
         XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "平时练什么？ never appeared")
         XCTAssertTrue(app.buttons["sports.run"].label.contains("跑步"), "a sport isn't in Chinese")
         skipSports.tap()
+        let skipHealth = app.buttons["health.skip"]
+        XCTAssertTrue(skipHealth.waitForExistence(timeout: Self.wait), "连上 Apple 健康 never appeared")
+        skipHealth.tap()
         let monday = app.buttons["week.day.0"]
         XCTAssertTrue(monday.waitForExistence(timeout: Self.wait), "本周目标 never appeared")
         XCTAssertTrue(monday.label.contains("周一"), "the week's days aren't in Chinese: \(monday.label)")
@@ -85,6 +88,9 @@ final class LanguageUITests: XCTestCase {
         XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "the sports step never appeared")
         XCTAssertTrue(app.buttons["sports.run"].label.contains("Run"), "a sport stayed Chinese")
         skipSports.tap()
+        let skipHealth = app.buttons["health.skip"]
+        XCTAssertTrue(skipHealth.waitForExistence(timeout: Self.wait), "连上 Apple 健康 never appeared")
+        skipHealth.tap()
         let monday = app.buttons["week.day.0"]
         XCTAssertTrue(monday.waitForExistence(timeout: Self.wait), "the week step never appeared")
         XCTAssertTrue(monday.label.contains("Mon"), "the week's days stayed Chinese: \(monday.label)")

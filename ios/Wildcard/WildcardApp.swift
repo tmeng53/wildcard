@@ -1,5 +1,6 @@
 import AccountDomain
 import AccountUI
+import AvatarArt
 import Backend
 import CharacterEditorUI
 import CheckInDomain
@@ -121,7 +122,7 @@ struct WildcardApp: App {
             _signUp = State(
                 initialValue: SignUpModel(
                     service: InMemorySignUpService.sampleSquad(), nickname: "",
-                    now: LaunchOptions.signUpTime))
+                    now: LaunchOptions.signUpTime, health: Self.sampleHealth()))
         }
         let feedSource = Self.feedSource(viewer: member, squad: squad)
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource))
@@ -218,6 +219,8 @@ struct WildcardApp: App {
         WindowGroup {
             root
                 .environment(\.locale, language.locale)
+                // The Fitbit, WHOOP and Oura guide's screenshots are data: downloaded art only.
+                .environment(\.guideScreenshots, GuideScreenshots { ArtTree.downloadedFile($0, in: "guides") })
                 .id(language)
                 .onReceive(NotificationCenter.default.publisher(for: AppLanguage.didChange)) { _ in
                     language = AppLanguage.current
