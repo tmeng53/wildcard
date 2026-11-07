@@ -25,9 +25,13 @@ else
 fi
 
 # xcodebuild passes TEST_RUNNER_-prefixed variables to the tests without the prefix.
-echo "==> xcodebuild test Avatar on $sim"
+# Only AvatarUITests, which render the previews: the package's other tests run in `verify`, and
+# on the CI simulator their debug build kept the runner busy until the previews' bundle timed out
+# "while preparing to run tests" (every manual run, 2026-11-06 to 11-07).
+echo "==> xcodebuild test AvatarUITests on $sim"
 (cd ios/Packages/Avatar && TEST_RUNNER_AVATAR_PREVIEW_DIR="$out/previews" xcodebuild test \
   -scheme Avatar-Package \
+  -only-testing:AvatarUITests \
   -destination "platform=iOS Simulator,OS=latest,name=$sim" \
   -derivedDataPath "$out/DerivedData" \
   -resultBundlePath "$out/Avatar.xcresult" \
