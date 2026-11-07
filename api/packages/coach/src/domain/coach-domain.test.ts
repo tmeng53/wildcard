@@ -10,7 +10,8 @@ import {
   storedPathOf,
 } from './memory.js';
 import { factsText } from './member-facts.js';
-import { taskOf } from './prompt.js';
+import { Coach } from './coach.js';
+import { instructionsOf, taskOf } from './prompt.js';
 import { lineProblem } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
@@ -348,6 +349,31 @@ describe('when the coach wakes', () => {
         { inputMicrosPerMillion: 1, cachedInputMicrosPerMillion: 0, outputMicrosPerMillion: 0 },
       ),
     ).toBe(1);
+  });
+
+  it('lets the coach pick its tools, keep memory any time, and say one thing per note', () => {
+    const coach = Coach.parse({
+      version: 2,
+      id: 'nuannuan',
+      tier: 'entry',
+      name: '暖暖',
+      title: '暖心教练',
+      catchphrase: '今天也辛苦啦',
+      background: '普拉提教练',
+      yearsCoaching: 6,
+      experience: '夸人满分',
+      tags: ['温柔'],
+      pay: '一杯奶茶',
+      style: '温柔',
+      soul: '你是暖暖。',
+      look: 'nuannuan',
+      offered: true,
+    });
+    const instructions = instructionsOf({ rules: '规矩' }, coach);
+    expect(instructions).toContain('一张便条只说一件事');
+    expect(instructions).toContain('做什么、用哪个工具，你自己判断。');
+    // The old rule had every note add something from memory, which made notes say "I remember".
+    expect(instructions).not.toContain('再加上记性里记着他的');
   });
 
   it('keeps what every wake begins with in the instructions, and only what changes in the task', () => {
