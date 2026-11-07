@@ -91,8 +91,9 @@ public struct ShoppingStreetPage: View {
         }
     }
 
-    /// A store's rack scrolls. The street doesn't: it fills the page between the bar and its
-    /// pinned 进店, its storefronts' windows taking whatever height the phone has.
+    /// A store's rack scrolls. The street fills the page between the bar and its pinned 进店, its
+    /// storefronts' windows taking whatever height the phone has, and scrolls only where even its
+    /// smallest windows don't fit.
     @ViewBuilder
     private func content(_ store: EditorChoices.Store?) -> some View {
         if let store {
@@ -107,13 +108,22 @@ public struct ShoppingStreetPage: View {
             }
             .scrollIndicators(.hidden)
         } else {
-            VStack(alignment: .leading, spacing: Space.xs) {
-                claimFailed
-                StoreStreet(model: model, current: $centred)
-                    .padding(.top, Space.xl)
+            // The page's height between the bar and 进店, which the street is given whole; on a
+            // phone too short for it the street keeps its smallest size and scrolls.
+            GeometryReader { page in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Space.xs) {
+                        claimFailed
+                        StoreStreet(model: model, current: $centred)
+                            .padding(.top, Space.xl)
+                    }
+                    .padding(.horizontal, Space.pageMargin)
+                    .padding(.bottom, Space.l)
+                    .frame(minHeight: page.size.height, idealHeight: page.size.height, alignment: .top)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .scrollIndicators(.hidden)
             }
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.bottom, Space.l)
         }
     }
 

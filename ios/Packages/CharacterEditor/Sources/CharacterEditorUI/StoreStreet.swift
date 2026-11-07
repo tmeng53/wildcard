@@ -13,8 +13,8 @@ import SwiftUI
 /// stands on the sidewalk under it, and under the sidewalk is the street's map (every store's
 /// badge, a dot where something new waits, a tap walks there). The centred store's sports and its
 /// button are `StreetCounter`, pinned at the page's bottom. The street takes the height it is
-/// given: the storefronts' windows grow on a tall phone and shrink on a short one, so the street
-/// fills the page without scrolling.
+/// given: the storefronts' windows grow on a tall phone, from the size the lockup needs, so the
+/// street fills the page.
 struct StoreStreet: View {
     let model: StreetModel
     /// The store in the middle, which the page's counter shows.
@@ -139,7 +139,7 @@ private struct Storefront: View {
     @Environment(\.sceneTheme) private var theme
 
     private let awning: Double = 34
-    private let window: ClosedRange<Double> = 150...420
+    private let window: ClosedRange<Double> = 220...420
     private let frame: Double = 6
     private let door = CGSize(width: 50, height: 176)
     private let badge: Double = 48
@@ -183,7 +183,7 @@ private struct Storefront: View {
         HStack(alignment: .bottom, spacing: Space.s) {
             glass(color)
             DoorView(width: door.width)
-                // As tall as the window on a short phone, never taller than a door.
+                // As tall as the window allows, never taller than a door.
                 .frame(maxHeight: door.height)
         }
         .padding(.horizontal, Space.s + Space.xxs / 2)
@@ -241,7 +241,7 @@ private struct Storefront: View {
             .padding(.horizontal, Space.s)
             .opacity(store.isOpen ? 1 : 0)
         }
-        // As tall as the street has room for, from a short phone's to a big one's.
+        // As tall as the street has room for, never shorter than the lockup on the glass needs.
         .frame(maxWidth: .infinity, minHeight: window.lowerBound, maxHeight: window.upperBound)
         .clipShape(shape)
         .overlay {
