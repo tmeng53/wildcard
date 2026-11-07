@@ -31,6 +31,7 @@ import type {
   AgentRun,
   CoachAgent,
   CoachMemberFacts,
+  CoachMemes,
   CoachPhotoUrls,
   CoachTool,
 } from '../ports.js';
@@ -161,6 +162,7 @@ function wakes(
     answered,
     photoUrls,
     memberFacts,
+    memes,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
@@ -170,6 +172,7 @@ function wakes(
     readonly answered?: CoachAnswered;
     readonly photoUrls?: CoachPhotoUrls;
     readonly memberFacts?: CoachMemberFacts;
+    readonly memes?: CoachMemes;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -196,6 +199,7 @@ function wakes(
     ...(answered === undefined ? {} : { answered }),
     ...(photoUrls === undefined ? {} : { photoUrls }),
     ...(memberFacts === undefined ? {} : { memberFacts }),
+    ...(memes === undefined ? {} : { memes }),
   });
 }
 
@@ -1050,6 +1054,41 @@ describe('the coach', () => {
       expect(asked).toStrictEqual([{ members: [mia], weekStart: fixture.week.weekStart }]);
       expect(runs[0]?.answers[0]).toContain('一共练了 50 天');
       expect(runs[0]?.answers[1]).toContain(`本周从 ${earlier}（周一）开始。`);
+    });
+  });
+
+  it('reads the meme library only when it asks, and keeps the answer by its length', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      let reads = 0;
+      const memes: CoachMemes = () => {
+        reads += 1;
+        return Promise.resolve([
+          { phrase: '对自己很好', meaning: '照顾自己', background: '小红书上流行' },
+        ]);
+      };
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('有人打卡') ? [{ tool: 'memes', input: {} }] : [],
+      );
+      await wakes(fixture, { agent, memes }).checkedIn({ checkIn, squads: [squad] });
+      expect(reads).toBe(1);
+      expect(runs[0]?.tools).toContain('memes');
+      expect(runs[0]?.answers[0]).toBe('- 「对自己很好」：照顾自己（小红书上流行）');
+      const report = await createPostgresCoachReport(fixture.trx).squad(squad, now);
+      expect(report.wakes[0]?.steps[0]).toStrictEqual({
+        tool: 'memes',
+        input: {},
+        output: '（22 字）',
+      });
+    });
+  });
+
+  it('has no meme tool without the library', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent }).checkedIn({ checkIn, squads: [squad] });
+      expect(runs[0]?.tools).not.toContain('memes');
     });
   });
 
