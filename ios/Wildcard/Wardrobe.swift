@@ -117,6 +117,7 @@ final class Wardrobe {
                 unlocks: overview.unlocks, claimed: overview.claimed,
                 stock: overview.stock ?? StarterStock.shared.current),
             marks: marks,
+            noticeHold: LaunchOptions.bubbleHold,
             claim: { await profile.claim($0) },
             tryOn: { [weak self] piece in
                 self?.editCharacter()

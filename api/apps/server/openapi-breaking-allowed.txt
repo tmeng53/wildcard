@@ -11,3 +11,13 @@ PUT /squads/{squadId}/weeks/{weekStart}/scene removed the enum value `pool` of t
 PUT /squads/{squadId}/weeks/{weekStart}/scene removed the enum value `tennis` of the request property `scene`
 PUT /squads/{squadId}/weeks/{weekStart}/scene removed the enum value `track` of the request property `scene`
 PUT /squads/{squadId}/weeks/{weekStart}/scene added the pattern `^[a-z][A-Za-z0-9]{0,39}$` to the request property `scene`
+# A workout's map can sit fifth, after 3 photos and its chart (Tracy, 2026-11-07). The app's generated
+# decoders don't check a number's range, and builds from before place a tile past the photos at their
+# end, so installed builds read a 5 as they read a 4.
+GET /check-ins/{id} the `checkIn/oneOf[#/components/schemas/TrainedCheckIn]/training/workout/tilePosition` response property's max was increased from `4.00` to `5.00` for the response status `200`
+PATCH /check-ins/{id} the `oneOf[#/components/schemas/TrainedCheckIn]/training/workout/tilePosition` response property's max was increased from `4.00` to `5.00` for the response status `200`
+PUT /check-ins/{id} the `oneOf[#/components/schemas/TrainedCheckIn]/training/workout/tilePosition` response property's max was increased from `4.00` to `5.00` for the response status `200`
+PUT /check-ins/{id} the `oneOf[#/components/schemas/TrainedCheckIn]/training/workout/tilePosition` response property's max was increased from `4.00` to `5.00` for the response status `201`
+GET /me/check-ins the `checkIns/items/oneOf[#/components/schemas/TrainedCheckIn]/training/workout/tilePosition` response property's max was increased from `4.00` to `5.00` for the response status `200`
+GET /me/posts the `posts/items/checkIn/oneOf[#/components/schemas/TrainedCheckIn]/training/workout/tilePosition` response property's max was increased from `4.00` to `5.00` for the response status `200`
+GET /squads/{squadId}/check-ins the `posts/items/checkIn/oneOf[#/components/schemas/TrainedCheckIn]/training/workout/tilePosition` response property's max was increased from `4.00` to `5.00` for the response status `200`

@@ -73,7 +73,6 @@ struct Glints: View {
 
 /// The glass door: graphite, a darker pane with a faint glint, and its handle.
 struct DoorView: View {
-    let height: Double
     let width: Double
     @Environment(\.sceneTheme) private var theme
 
@@ -92,7 +91,7 @@ struct DoorView: View {
                     .frame(width: Space.xxs, height: Space.m)
                     .padding(.trailing, Space.xxs + Space.xxs / 2)
             }
-            .frame(width: width, height: height)
+            .frame(width: width)
             .accessibilityHidden(true)
     }
 }

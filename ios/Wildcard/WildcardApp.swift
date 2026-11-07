@@ -133,7 +133,7 @@ struct WildcardApp: App {
     private static func sampleHealth() -> HealthConnection {
         HealthConnection(
             library: SampleHealthLibrary(connected: LaunchOptions.healthSample, endingNear: LaunchOptions.now()),
-            defaults: LaunchOptions.todayDefaults, now: LaunchOptions.now)
+            defaults: LaunchOptions.healthDefaults, now: LaunchOptions.now)
     }
 
     private static func sampleSchedule() -> ScheduleModel {

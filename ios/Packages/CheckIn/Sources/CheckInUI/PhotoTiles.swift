@@ -10,8 +10,8 @@ import SwiftUI
 import UIKit
 
 /// The post's photos as a row of square tiles, the cover first and marked 封面, then 「+ 照片」
-/// while there is room for another (up to three). A 训练 from Health has its map or chart among
-/// them, which doesn't count toward the three. + asks 拍照 or 从相册选 (straight to the album on
+/// while there is room for another (up to three). A 训练 from Health has its map and chart among
+/// them, which don't count toward the three. + asks 拍照 or 从相册选 (straight to the album on
 /// a phone without a camera); × takes a tile off, the map too; a long press drags a tile to
 /// another place, and the first is the cover; tapping a photo shows the photos whole, full
 /// screen.
@@ -200,7 +200,9 @@ private struct ComposeTile: View {
         .accessibilityHint(isWorkout ? Text("长按拖动换位置", bundle: .module) : Text("全屏看，长按拖动换位置", bundle: .module))
         .accessibilityAddTraits(isCover ? .isSelected : [])
         .accessibilityIdentifier(
-            isWorkout ? "compose.workoutTile" : isCover ? "compose.cover" : "compose.photo.\(number)"
+            tile == .workout(.chart)
+                ? "compose.chartTile"
+                : isWorkout ? "compose.workoutTile" : isCover ? "compose.cover" : "compose.photo.\(number)"
         )
         .overlay(alignment: .topTrailing) {
             Button(action: remove) {
@@ -217,7 +219,10 @@ private struct ComposeTile: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text("删掉这张", bundle: .module))
-            .accessibilityIdentifier(isWorkout ? "compose.workoutTile.remove" : "compose.photo.\(number).remove")
+            .accessibilityIdentifier(
+                tile == .workout(.chart)
+                    ? "compose.chartTile.remove"
+                    : isWorkout ? "compose.workoutTile.remove" : "compose.photo.\(number).remove")
         }
     }
 

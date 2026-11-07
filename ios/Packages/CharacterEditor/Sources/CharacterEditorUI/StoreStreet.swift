@@ -10,12 +10,15 @@ import SwiftUI
 
 /// 商店街 as a street (逛街版, approved 2026-11-06): the stores side by side, one storefront at a
 /// time in the middle with its neighbours peeking in, paged by the system's scroll. The member
-/// stands on the sidewalk under it. Under the sidewalk, the street's map (every store's badge, a
-/// dot where something new waits, a tap walks there), the centred store's sports and its button:
-/// 进店 when open, how it unlocks when not.
+/// stands on the sidewalk under it, and under the sidewalk is the street's map (every store's
+/// badge, a dot where something new waits, a tap walks there). The centred store's sports and its
+/// button are `StreetCounter`, pinned at the page's bottom. The street takes the height it is
+/// given: the storefronts' windows grow on a tall phone, from the size the lockup needs, so the
+/// street fills the page.
 struct StoreStreet: View {
     let model: StreetModel
-    @State private var current: String?
+    /// The store in the middle, which the page's counter shows.
+    @Binding var current: String?
     /// The street is sliding, by a swipe or a tap on its map: the member strolls.
     @State private var walking = false
     @Environment(\.sceneTheme) private var theme
@@ -29,7 +32,7 @@ struct StoreStreet: View {
     var body: some View {
         let stores = model.catalog.stores
         let shown = stores.first { $0.id == current } ?? stores.first
-        VStack(spacing: Space.m) {
+        VStack(spacing: Space.l) {
             ZStack(alignment: .bottom) {
                 Rectangle()
                     .fill(Color(role: .bgSubtle, in: theme))
@@ -57,10 +60,10 @@ struct StoreStreet: View {
                 .padding(.bottom, sidewalk - Space.m)
                 walker
             }
+            .frame(maxHeight: .infinity, alignment: .bottom)
             StreetMap(model: model, current: shown?.id) { id in
                 withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { current = id }
             }
-            if let shown { counter(for: shown) }
         }
         // The street runs to the screen's edges, past the page's margins.
         .padding(.horizontal, -Space.pageMargin)
@@ -73,10 +76,15 @@ struct StoreStreet: View {
             .frame(width: character.width, height: character.height)
             .padding(.bottom, Space.xxs)
     }
+}
 
-    /// The centred store's sports and its button.
-    @ViewBuilder
-    private func counter(for store: EditorChoices.Store) -> some View {
+/// The centred store's sports and its button, pinned at the bottom of 商店街 above the tab bar:
+/// 进店 when open, how it unlocks when not.
+struct StreetCounter: View {
+    let model: StreetModel
+    let store: EditorChoices.Store
+
+    var body: some View {
         VStack(spacing: Space.m) {
             sports(store.id)
                 .accessibilityElement(children: .combine)
@@ -101,6 +109,7 @@ struct StoreStreet: View {
             }
         }
         .padding(.horizontal, Space.pageMargin)
+        .padding(.bottom, Space.s)
     }
 
     /// The sports its pieces' rules count as pills, as its tip lists them, or its own line's
@@ -130,7 +139,7 @@ private struct Storefront: View {
     @Environment(\.sceneTheme) private var theme
 
     private let awning: Double = 34
-    private let window: Double = 220
+    private let window: ClosedRange<Double> = 220...420
     private let frame: Double = 6
     private let door = CGSize(width: 50, height: 176)
     private let badge: Double = 48
@@ -173,7 +182,9 @@ private struct Storefront: View {
     private func wall(_ color: Color) -> some View {
         HStack(alignment: .bottom, spacing: Space.s) {
             glass(color)
-            DoorView(height: door.height, width: door.width)
+            DoorView(width: door.width)
+                // As tall as the window allows, never taller than a door.
+                .frame(maxHeight: door.height)
         }
         .padding(.horizontal, Space.s + Space.xxs / 2)
         .padding(.top, Space.m)
@@ -230,8 +241,8 @@ private struct Storefront: View {
             .padding(.horizontal, Space.s)
             .opacity(store.isOpen ? 1 : 0)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: window)
+        // As tall as the street has room for, never shorter than the lockup on the glass needs.
+        .frame(maxWidth: .infinity, minHeight: window.lowerBound, maxHeight: window.upperBound)
         .clipShape(shape)
         .overlay {
             shape.strokeBorder(Color(role: store.isOpen ? .bgBrand : .fgMuted, in: theme), lineWidth: frame)

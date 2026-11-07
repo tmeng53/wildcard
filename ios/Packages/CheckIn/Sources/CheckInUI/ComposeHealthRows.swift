@@ -113,7 +113,7 @@ struct ScoreRow: View {
             ScoreStrip(cells: model.scoreCells, activity: model.currentActivity, struck: model.struck) { cell in
                 model.toggle(cell)
             }
-            .clipShape(RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         }
         .accessibilityIdentifier("compose.score")
     }

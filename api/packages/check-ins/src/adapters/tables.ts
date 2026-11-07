@@ -87,6 +87,7 @@ export interface CheckInSquads {
 }
 
 export interface CheckInWorkouts {
+  chart_position: number | null;
   check_in_id: string;
   ended_at: Timestamp;
   member_id: string;
