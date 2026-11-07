@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { CheckIns } from '@wildcard/check-ins';
+import { SportKey, WeekStart, type CheckIns } from '@wildcard/check-ins';
 import { EquippedTitle, JerseyNumber, MemberId, type Members } from '@wildcard/members';
 import { SquadId, SquadMemberUnknownError, type Squads } from '@wildcard/squads';
 import {
@@ -16,6 +16,7 @@ import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { CharacterBody } from './character.js';
 import { checkInTotalsFields } from './check-ins.js';
+import { fuelGoalsBody, planDays } from './weekly-plans.js';
 
 // 头衔徽章: the titles a member won in the Sunday 战报, each with its badge, on the back of their
 // player card (徽章板); the one they wear on its front and beside their name on the home; and a
@@ -124,6 +125,16 @@ const EquipTitle = z
   })
   .openapi('EquipTitle');
 
+const DayMarkBody = z
+  .strictObject({
+    status: z.enum(['trained', 'disclaimer', 'none']),
+    sport: SportKey.optional().meta({ description: 'The 练了’s sport; only for `trained`.' }),
+    customSport: z.string().optional().meta({
+      description: 'The custom sport’s name, for `sport: "custom"`.',
+    }),
+  })
+  .openapi('DayMark');
+
 const PlayerCardBody = z
   .strictObject({
     version: bodyVersion(1),
@@ -149,6 +160,24 @@ const PlayerCardBody = z
         plannedDays: z.int().nonnegative().meta({
           description: 'Days their plan trains this week, from the day they joined on.',
         }),
+        // The card's back, their 出赛表: this week only, never another week's.
+        weekStart: WeekStart.optional().meta({
+          description: 'This week’s Monday, in their time zone. Left out by older servers.',
+          example: '2026-11-02',
+        }),
+        days: planDays.optional(),
+        marks: z
+          .array(DayMarkBody)
+          .min(7)
+          .max(7)
+          .optional()
+          .meta({
+            description:
+              'How each day of this week went, Monday first: `trained` with the sport of the ' +
+              'day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` ' +
+              'for neither yet. Left out by older servers.',
+          }),
+        fuelGoals: fuelGoalsBody.optional(),
       })
       .optional()
       .meta({
@@ -315,7 +344,7 @@ export function titles(deps: {
           squadPlace: place + 1,
           ...(profile === undefined ? {} : { joinedAt: profile.joinedAt.toISOString() }),
           ...totals,
-          week,
+          week: { ...week, marks: [...week.marks] },
           ...wireBoard(
             { board: boards.get(memberId) ?? [], equipped: profile?.equippedTitle },
             (squad) => squad === squadId,

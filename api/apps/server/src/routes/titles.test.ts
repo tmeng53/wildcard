@@ -397,6 +397,16 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       },
     });
     expect(trained.status).toBe(201);
+    const today = new Date(createdAt.getTime() - 3 * 3_600_000);
+    const weekday = (today.getUTCDay() + 6) % 7;
+    const weekStart = new Date(today.getTime() - weekday * 86_400_000).toISOString().slice(0, 10);
+    const fuel = await call({
+      method: 'PUT',
+      path: `/me/weekly-plans/${weekStart}/fuel-goals`,
+      token: mate.token,
+      body: { version: 1, goals: [{ kind: 'suggested', suggestion: 'water' }] },
+    });
+    expect(fuel.status).toBe(200);
 
     const path = `/squads/${squad}/members/${mate.userId}/card`;
     const card = await call({ method: 'GET', path, token: me.token });
@@ -434,14 +444,40 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       .object({ me: z.object({ week: z.object({ trainedDays: z.int(), plannedDays: z.int() }) }) })
       .parse(theirToday.body).me.week;
     expect(own.trainedDays).toBe(1);
-    expect(z.object({ week: z.unknown() }).parse(card.body).week).toStrictEqual(own);
+    const week = z
+      .object({
+        week: z.object({
+          trainedDays: z.int(),
+          plannedDays: z.int(),
+          weekStart: z.string(),
+          days: z.array(z.unknown()),
+          marks: z.array(z.unknown()),
+          fuelGoals: z.array(z.unknown()),
+        }),
+      })
+      .parse(card.body).week;
+    expect({ trainedDays: week.trainedDays, plannedDays: week.plannedDays }).toStrictEqual(own);
+    // The back is their 出赛表 for this week only: the plan, the day's 练了 with its sport, and
+    // the week's 饮食小目标.
+    expect(week.weekStart).toBe(weekStart);
+    expect(week.days).toHaveLength(7);
+    expect(week.marks).toHaveLength(7);
+    expect(week.marks[weekday]).toStrictEqual({ status: 'trained', sport: 'run' });
+    expect(week.marks.filter((mark) => JSON.stringify(mark) === '{"status":"none"}')).toHaveLength(
+      6,
+    );
+    expect(week.fuelGoals).toStrictEqual([{ kind: 'suggested', suggestion: 'water' }]);
     expect(z.object({ joinedAt: z.iso.datetime() }).safeParse(card.body).success).toBe(true);
 
     // The squad's today shows the title beside the name.
-    const today = await call({ method: 'GET', path: `/squads/${squad}/today`, token: me.token });
+    const squadToday = await call({
+      method: 'GET',
+      path: `/squads/${squad}/today`,
+      token: me.token,
+    });
     const members = z
       .object({ members: z.array(z.object({ member: z.string(), title: z.unknown().optional() })) })
-      .parse(today.body).members;
+      .parse(squadToday.body).members;
     expect(members.find(({ member }) => member === mate.userId)?.title).toStrictEqual({
       title: '冷面杀手',
       badge: hexagon,

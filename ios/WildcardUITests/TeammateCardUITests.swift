@@ -1,8 +1,8 @@
 import XCTest
 
 /// A teammate's player card, the way a member finds it: a tap on 小米 on the home opens her card
-/// with her today over it, wearing her title, which turns over to her badge board and opens a
-/// badge with no 装备; and from 小队's member list, where it pops up over the dimmed page and a
+/// with her today over it, wearing her title, which turns over to her 出赛表 this week, whose
+/// badges open her badge board and a badge with no 装备; and from 小队's member list, where it pops up over the dimmed page and a
 /// tap off it closes it. Screenshots are kept for review.
 @MainActor
 final class TeammateCardUITests: XCTestCase {
@@ -29,11 +29,26 @@ final class TeammateCardUITests: XCTestCase {
         XCTAssertTrue(window.contains(card.frame), "the card runs off the screen: \(card.frame)")
         XCTAssertLessThanOrEqual(today.frame.maxY, card.frame.minY, "her today covers her card: \(today.frame)")
 
+        // Turned over, it is her 出赛表 this week: a row a day, her 饮食小目标, and her badges
+        // along the bottom, which open her badge board.
         card.tap()
-        let badges = app.buttons.matching(identifier: "me.badge")
-        XCTAssertTrue(badges.firstMatch.waitForExistence(timeout: 5), "her card didn't turn over")
+        let schedule = app.descendants(matching: .any).matching(identifier: "me.cardSchedule").firstMatch
+        XCTAssertTrue(schedule.waitForExistence(timeout: 5), "her card didn't turn over to her 出赛表")
         Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "57-teammate-card-back")
+        let back = app.descendants(matching: .any).matching(identifier: "me.cardBack").firstMatch
+        XCTAssertTrue(back.frame.contains(schedule.frame), "her week runs off her card: \(schedule.frame)")
+        let fuel = app.descendants(matching: .any).matching(identifier: "me.cardFuel").firstMatch
+        XCTAssertTrue(fuel.exists, "her 饮食小目标 isn't on her card")
+        XCTAssertTrue(back.frame.contains(fuel.frame), "her 饮食小目标 runs off her card: \(fuel.frame)")
+        let openBoard = app.buttons["me.cardBadges"]
+        XCTAssertTrue(openBoard.exists, "no badges on her card's back")
+        XCTAssertTrue(back.frame.contains(openBoard.frame), "her badges run off her card: \(openBoard.frame)")
+        openBoard.tap()
+        let badges = app.buttons.matching(identifier: "me.badge")
+        XCTAssertTrue(badges.firstMatch.waitForExistence(timeout: 5), "her badge board didn't open")
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "57b-teammate-badge-board")
         badges.element(boundBy: 0).tap()
         let detail = app.descendants(matching: .any).matching(identifier: "me.badgeCard").firstMatch
         XCTAssertTrue(detail.waitForExistence(timeout: 5), "her badge didn't open")
