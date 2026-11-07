@@ -16,6 +16,8 @@ import SwiftUI
 /// that came in open from a pop-up over the page.
 public struct ShoppingStreetPage: View {
     let model: StreetModel
+    /// The store in the middle of the street, whose 进店 is pinned at the bottom.
+    @State private var centred: String?
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -69,6 +71,8 @@ public struct ShoppingStreetPage: View {
             .padding(.bottom, Space.l)
         }
         .scrollIndicators(.hidden)
+        // The street's 进店 stays at the bottom, above the tab bar, however tall the phone.
+        .safeAreaInset(edge: .bottom) { if store == nil { counter } }
         .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text("商店街", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
         // The pop-up is modal: VoiceOver (and a UI test) reaches only it, not the rack under it.
@@ -97,9 +101,17 @@ public struct ShoppingStreetPage: View {
         .accessibilityIdentifier("street.page")
     }
 
+    @ViewBuilder
+    private var counter: some View {
+        let stores = model.catalog.stores
+        if let shown = stores.first(where: { $0.id == centred }) ?? stores.first {
+            StreetCounter(model: model, store: shown)
+        }
+    }
+
     private var street: some View {
-        StoreStreet(model: model)
-            .padding(.top, Space.s)
+        StoreStreet(model: model, current: $centred)
+            .padding(.top, Space.xl)
     }
 }
 
