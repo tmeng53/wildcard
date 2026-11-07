@@ -84,21 +84,27 @@ const mealFields = { ...storedMealFields, photos: Photos.optional() };
 export const storedDisclaimerFields = { text: DisclaimerText };
 const disclaimerFields = { ...storedDisclaimerFields, photos: Photos.optional() };
 
-/** A workout's tile sits among the photos or right after them. */
+/** A workout's tiles sit among the photos or right after them. */
 function tileFits(
   training: {
     readonly photos?: readonly unknown[] | undefined;
-    readonly workout?: { readonly tilePosition?: number | undefined } | undefined;
+    readonly workout?:
+      | { readonly tilePosition?: number | undefined; readonly chartPosition?: number | undefined }
+      | undefined;
   },
   context: z.RefinementCtx,
 ) {
-  const position = training.workout?.tilePosition;
-  if (position !== undefined && position > (training.photos?.length ?? 0) + 1) {
-    context.addIssue({
-      code: 'custom',
-      path: ['workout', 'tilePosition'],
-      message: 'The tile sits among the photos or right after them',
-    });
+  const tiles = [training.workout?.tilePosition, training.workout?.chartPosition];
+  const last = (training.photos?.length ?? 0) + tiles.filter((tile) => tile !== undefined).length;
+  for (const [index, key] of (['tilePosition', 'chartPosition'] as const).entries()) {
+    const position = tiles[index];
+    if (position !== undefined && position > last) {
+      context.addIssue({
+        code: 'custom',
+        path: ['workout', key],
+        message: 'The tiles sit among the photos or right after them',
+      });
+    }
   }
 }
 

@@ -226,7 +226,7 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-patted")
     }
 
-    /// `-uitest-bubble-hold`: a pat's bubble and a notice on 今天 stay up
+    /// `-uitest-bubble-hold`: a pat's bubble, a notice on 今天 and 商店街's 「已放进衣橱」 stay up
     /// for a minute instead of a few seconds, so a UI test checks them without racing their timers.
     static var bubbleHold: Double? {
         ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
@@ -256,6 +256,15 @@ enum LaunchOptions {
     /// `-uitest-meals`: two of the sample squad's latest posts are meals (小米's salad after her
     /// run, Leo's boba), so they eat on the home and their bubbles say so.
     static var meals: Bool { ProcessInfo.processInfo.arguments.contains("-uitest-meals") }
+
+    /// Apple Health's sample day starts afresh on each launch: nothing put away from the home's
+    /// card, every number shared.
+    static var healthDefaults: UserDefaults {
+        let suite = "uitest-health"
+        guard healthSample, let defaults = UserDefaults(suiteName: suite) else { return todayDefaults }
+        defaults.removePersistentDomain(forName: suite)
+        return defaults
+    }
 
     /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted`,
     /// `-uitest-coach` or `-uitest-together` a suite emptied at launch.

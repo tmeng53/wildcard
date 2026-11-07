@@ -180,7 +180,7 @@ public final class ComposeModel {
     }
 
     /// Picks one of today's workouts for a new 训练: its sport, its minutes, its numbers on the
-    /// 成绩条 with those 设置 doesn't share struck, and its map or chart first in the row.
+    /// 成绩条 with those 设置 doesn't share struck, and its map and chart first in the row.
     /// Picking the one already picked lets it go again; a posted one can't be picked.
     func pick(_ imported: ImportedWorkout) {
         guard !isEditing else { return }
@@ -195,11 +195,11 @@ public final class ComposeModel {
         chartTakenAt = nil
         if let sport = imported.activity { activity = sport }
         minutes = imported.minutes
-        if let tile = imported.workout.tile, sharing.keepsTile(of: imported.workout) {
-            tiles.insert(.workout(tile), at: 0)
-        } else if imported.workout.chartCell != nil {
-            // 设置 struck what the chart shows; restoring that number brings the chart.
-            chartTakenAt = 0
+        let kept = sharing.keptTiles(of: imported.workout)
+        tiles.insert(contentsOf: kept.map(ComposedTile.workout), at: 0)
+        if !kept.contains(.chart), imported.workout.chartCell != nil {
+            // 设置 struck what the chart shows; restoring that number brings the chart, after the map.
+            chartTakenAt = kept.count
         }
     }
 
@@ -220,18 +220,18 @@ public final class ComposeModel {
         if struck.contains(cell) { struck.remove(cell) } else { struck.insert(cell) }
         guard cell == workout?.chartCell else { return }
         // The chart shows the number struck, so it goes with it, and comes back where it was.
-        if struck.contains(cell), let index = tiles.firstIndex(where: \.isWorkout) {
+        if struck.contains(cell), let index = tiles.firstIndex(of: .workout(.chart)) {
             tiles.remove(at: index)
             chartTakenAt = index
-        } else if let index = chartTakenAt, let tile = workout?.tile {
-            tiles.insert(.workout(tile), at: min(index, tiles.count))
+        } else if let index = chartTakenAt {
+            tiles.insert(.workout(.chart), at: min(index, tiles.count))
             chartTakenAt = nil
         }
     }
 
-    /// The workout as it is to be posted: the numbers not struck, the tile where the row has it.
+    /// The workout as it is to be posted: the numbers not struck, the tiles where the row has them.
     private var postedWorkout: Workout? {
-        workout?.posting(struck: struck, tilePosition: tiles.workoutTilePosition)
+        workout?.posting(struck: struck, positions: tiles.workoutTilePositions)
     }
 
     /// Fits what is typed: no line breaks, at most `lineLimit` characters.

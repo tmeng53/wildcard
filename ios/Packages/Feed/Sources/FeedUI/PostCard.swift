@@ -8,11 +8,12 @@ import SportsUI
 import SwiftUI
 import UIKit
 
-/// One post (Tracy, 2026-11-06): its cover on top (its photos and a 训练's map or chart, swiped,
-/// the first being the cover), or without any the shared colour block with its words; a 训练's
-/// 成绩条 under it with no seam, 时长 first; then on a 12-point grid the author's character in
-/// that day's kit, their name and time with the comment and emoji buttons at the right, the
-/// kind's tag (a 请假条's grey with a moon) and the caption under a cover; then who reacted. A
+/// One post (Tracy, 2026-11-07, design E): its cover on top (its photos and a 训练's map or
+/// chart, swiped, the first being the cover), or without any the shared colour block with its
+/// words; a 训练's 成绩条 under it with no seam; then the author's whole character standing at the
+/// left, beside a column of their name, the time and what it was, the caption under a cover, and
+/// at its foot who reacted with the comment and emoji buttons, so a reaction lands next to the
+/// character that answers it; then, under a hairline, the coach's line and the latest comments. A
 /// teammate reacts with the smiley button, by holding the card and sliding to an emoji, or with
 /// a double tap on the cover or the block (❤️); the emoji flies to the author's character, which
 /// answers with a move.
@@ -22,10 +23,11 @@ struct PostCard: View {
     let model: FeedModel
     let post: FeedPost
 
-    /// The character's width at the card's left, the design's 64 points.
-    static let characterColumn: Double = 64
-    /// The name and time's row, as tall as the buttons at its right.
-    static let nameRow: Double = 36
+    /// The character's width at the card's left, the design's 80 points, head to feet.
+    static let characterColumn: Double = 80
+    /// The rig's own margin left of the body, 30 of its 240 points, pulled into the card's
+    /// padding so the body lines up with the cover's edge rather than the drawing's.
+    static let characterInset: Double = characterColumn * 30 / 240
     /// How long a press on the card takes to open the emoji bar.
     static let holdToPick: Double = 0.45
     /// Moving this far first makes the press a scroll.
@@ -61,15 +63,14 @@ struct PostCard: View {
                 if !cells.isEmpty { ScoreStrip(cells: cells, activity: training.activity) }
             }
             details
-            if hasReactions {
-                ReactionRow(model: model, post: post, part: .summary)
-                    .padding(.horizontal, Space.s)
-                    .padding(.top, -Space.xs)
-                    .padding(.bottom, !hasComments || showsAllComments ? Space.xxs : 0)
-            }
             if hasComments && !showsAllComments {
+                Rectangle()
+                    .fill(Color(role: .borderDefault, in: theme))
+                    .frame(height: 1)
+                    .padding(.horizontal, Space.s)
                 CardComments(model: model, post: post)
-                    .padding(.horizontal, Space.m)
+                    .padding(.horizontal, Space.s)
+                    .padding(.top, Space.xs)
                     .padding(.bottom, Space.s)
             }
         }
@@ -162,41 +163,53 @@ struct PostCard: View {
             }
     }
 
-    /// The character, then who and when with the buttons, what, and the words under a cover.
+    /// The whole character, then who, when and what, the words under a cover, and at the foot who
+    /// reacted with the buttons.
     private var details: some View {
-        HStack(alignment: .top, spacing: Space.s) {
+        HStack(alignment: .top, spacing: Space.xs) {
             PostCharacter(model: model, post: post, width: Self.characterColumn)
-            VStack(alignment: .leading, spacing: Space.xs - 2) {
-                HStack(spacing: Space.xs - 2) {
-                    authorName
-                        .typeStyle(TypeRamp.calloutEmphasis)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .lineLimit(1)
-                    Text(post.checkIn.createdAt.date, format: .dateTime.hour().minute())
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .lineLimit(1)
-                    if let backfill = BackfillDay(post.checkIn) {
-                        BackfillLabel(day: backfill)
-                            .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
-                            .lineLimit(1)
-                            .accessibilityIdentifier("post.backfill")
+            VStack(alignment: .leading, spacing: Space.xxs) {
+                byline
+                if !tiles.isEmpty { words.padding(.top, Space.xxs) }
+                Spacer(minLength: Space.xxs)
+                HStack(spacing: 0) {
+                    if hasReactions {
+                        ReactionRow(model: model, post: post, part: .summary)
+                    } else {
+                        Spacer(minLength: 0)
                     }
-                    Spacer(minLength: Space.xs)
                     ReactionRow(model: model, post: post, part: .buttons)
                 }
-                .frame(height: Self.nameRow)
-                if case .disclaimer = post.checkIn.entry {
-                    Tag(kindTitle, systemImage: "moon.fill", style: .rest)
-                } else {
-                    Tag(kindTitle)
-                }
-                if !tiles.isEmpty { words }
             }
+            .padding(.top, Space.xxs)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(Space.s)
+        .padding(.leading, Space.s - Self.characterInset)
+        .padding([.top, .trailing], Space.s)
+        .padding(.bottom, Space.xs)
+    }
+
+    /// 我 下午11:02 · 训练 · 快走, and which day a 补打卡 counts for.
+    private var byline: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
+            authorName
+                .typeStyle(TypeRamp.calloutEmphasis)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .layoutPriority(1)
+            Group {
+                Text(post.checkIn.createdAt.date, format: .dateTime.hour().minute())
+                Text(verbatim: "·")
+                kindTitle
+                if let backfill = BackfillDay(post.checkIn) {
+                    Text(verbatim: "·")
+                    BackfillLabel(day: backfill)
+                        .accessibilityIdentifier("post.backfill")
+                }
+            }
+            .typeStyle(TypeRamp.footnote)
+            .foregroundStyle(Color(role: .fgMuted, in: theme))
+        }
+        .lineLimit(1)
     }
 
     private var authorName: Text {

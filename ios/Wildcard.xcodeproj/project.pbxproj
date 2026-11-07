@@ -606,6 +606,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "拍照发动态。";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "读取你在 Apple 健康里的运动，发训练时帮你填好时长、距离、心率和路线。不读取卡路里、体重和睡眠。";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Wildcard 不会往 Apple 健康里写入任何数据，只读取你的运动。";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "存图时把出赛表海报和战报存到你的相册。";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
@@ -637,6 +638,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "拍照发动态。";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "读取你在 Apple 健康里的运动，发训练时帮你填好时长、距离、心率和路线。不读取卡路里、体重和睡眠。";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Wildcard 不会往 Apple 健康里写入任何数据，只读取你的运动。";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "存图时把出赛表海报和战报存到你的相册。";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
