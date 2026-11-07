@@ -1,7 +1,7 @@
 import Foundation
 
 /// The workout a 训练 was posted from, such as an Apple Health workout: who recorded it, when,
-/// the numbers the member kept, and the data its map or chart tile draws. Provider-neutral:
+/// the numbers the member kept, and the data its map and chart tiles draw. Provider-neutral:
 /// every number is optional, one adapter per provider fills what it has, and every screen shows
 /// only what is there. Only what the member posts leaves the phone; heart rate never goes to AI.
 public struct Workout: Hashable, Sendable, Codable {
@@ -15,9 +15,12 @@ public struct Workout: Hashable, Sendable, Codable {
     /// The route the map tile draws, start first, with `trimMeters` cut from each end; nil
     /// without one.
     public let route: [RoutePoint]?
-    /// Where the map or chart tile sits among the photos, 1 being the cover; nil when there is no
-    /// tile. A tile is there exactly when a route or a series is.
+    /// Where the map tile sits among the photos when there is a route, else the chart tile, 1
+    /// being the cover; nil when there is no tile. A tile is there exactly when a route or a
+    /// series is, so builds from before both tiles read the map where it was.
     public let tilePosition: Int?
+    /// Where the chart tile sits when the map is kept too (Tracy, 2026-11-07); nil otherwise.
+    public let chartPosition: Int?
 
     /// How much of the route is cut from each end on the phone, so a home address doesn't show.
     public static let trimMeters = 200.0
@@ -28,7 +31,8 @@ public struct Workout: Hashable, Sendable, Codable {
 
     public init(
         source: WorkoutSource, startedAt: Timestamp, endedAt: Timestamp, summary: WorkoutSummary,
-        series: WorkoutSeries? = nil, route: [RoutePoint]? = nil, tilePosition: Int? = nil
+        series: WorkoutSeries? = nil, route: [RoutePoint]? = nil, tilePosition: Int? = nil,
+        chartPosition: Int? = nil
     ) {
         self.source = source
         self.startedAt = startedAt
@@ -37,35 +41,46 @@ public struct Workout: Hashable, Sendable, Codable {
         self.series = series
         self.route = route
         self.tilePosition = tilePosition
+        self.chartPosition = chartPosition
     }
 
-    /// The tile it would add to a post: the map with a route, else the chart with a series.
-    public var tile: WorkoutTile? {
-        if let route, route.count >= 2 { return .map }
-        if series?.isDrawable == true { return .chart }
-        return nil
+    /// The tiles it can add to a post, the map first: the map with a route, the chart with a
+    /// series.
+    public var tiles: [WorkoutTile] {
+        (hasMap ? [.map] : []) + (series?.isDrawable == true ? [.chart] : [])
+    }
+
+    /// Where `tile` sits among the photos, 1 being the cover; nil when the post doesn't show it.
+    public func position(of tile: WorkoutTile) -> Int? {
+        guard tiles.contains(tile) else { return nil }
+        return switch tile {
+        case .map: tilePosition
+        case .chart: hasMap ? chartPosition : tilePosition
+        }
     }
 
     /// The 成绩条 cell the chart shows over time: 趟数 for a lap chart, 平均心率 for a heart-rate
     /// one; nil without a chart. Striking it takes the chart off too.
     public var chartCell: WorkoutCell? {
-        guard tile == .chart else { return nil }
+        guard tiles.contains(.chart) else { return nil }
         return series?.laps?.isEmpty == false ? .laps : .averageHeartRate
     }
 
-    /// As posted: the numbers not `struck`, and the tile's data only where the tile is kept,
-    /// at `tilePosition`, and its chart not struck through `chartCell`.
-    public func posting(struck: Set<WorkoutCell>, tilePosition: Int?) -> Workout {
+    /// As posted: the numbers not `struck`, and each tile's data only where that tile is kept,
+    /// at its place in `positions`, the chart only while `chartCell` isn't struck.
+    public func posting(struck: Set<WorkoutCell>, positions: [WorkoutTile: Int]) -> Workout {
         let chartStruck = chartCell.map(struck.contains) ?? false
-        let keepsTile = tilePosition != nil && tile != nil && !chartStruck
+        let mapAt = tiles.contains(.map) ? positions[.map] : nil
+        let chartAt = tiles.contains(.chart) && !chartStruck ? positions[.chart] : nil
         // A struck 平均心率 never uploads a heart-rate curve, even inside a lap chart's series.
         let shownSeries = struck.contains(.averageHeartRate) ? series.map { WorkoutSeries(laps: $0.laps) } : series
         return Workout(
             source: source, startedAt: startedAt, endedAt: endedAt, summary: summary.without(struck),
-            series: keepsTile && tile == .chart ? shownSeries : nil,
-            route: keepsTile && tile == .map ? route : nil,
-            tilePosition: keepsTile ? tilePosition : nil)
+            series: chartAt != nil ? shownSeries : nil, route: mapAt != nil ? route : nil,
+            tilePosition: mapAt ?? chartAt, chartPosition: mapAt != nil ? chartAt : nil)
     }
+
+    private var hasMap: Bool { (route?.count ?? 0) >= 2 }
 }
 
 /// Who recorded a workout, and their id for it.
@@ -282,11 +297,13 @@ public enum PostTile: Hashable, Sendable {
 }
 
 extension Training {
-    /// The cover's pages in the member's order: the photos, with the workout's tile at its place
-    /// among them (1 is the cover). Empty without photos or a tile.
+    /// The cover's pages in the member's order: the photos, with the workout's map and chart each
+    /// at its place among them (1 is the cover). Empty without photos or a tile.
     public var tiles: [PostTile] {
         var tiles = (photos?.all ?? []).map(PostTile.photo)
-        if let workout, let tile = workout.tile, let position = workout.tilePosition {
+        guard let workout else { return tiles }
+        let placed = workout.tiles.compactMap { tile in workout.position(of: tile).map { (tile, $0) } }
+        for (tile, position) in placed.sorted(by: { $0.1 < $1.1 }) {
             tiles.insert(.workout(tile), at: min(max(position - 1, 0), tiles.count))
         }
         return tiles

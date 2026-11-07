@@ -1263,4 +1263,70 @@ describe('a 训练 from Apple Health', () => {
       }),
     ).toStrictEqual([201, 'saved']);
   });
+
+  it('keeps a map and a chart together, each in its place, and an older build’s edit keeps both', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const hr = {
+      hr: [
+        { t: 0, bpm: 90 },
+        { t: 60, bpm: 120 },
+      ],
+    };
+    const photos = [{ path: await uploadPhoto(me.token, 'cover') }];
+    const put = async (extra: Record<string, unknown>, id = randomUUID()) => {
+      const { status, body } = await call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: { sport: 'run', photos, workout: workout(randomUUID(), extra) },
+        },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    // Both need their own places, among the photos or right after them.
+    expect(await put({ series: hr })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ series: hr, chartPosition: 1 })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ series: hr, chartPosition: 4 })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ chartPosition: 2 })).toStrictEqual([400, 'REQUEST_INVALID']);
+
+    const id = randomUUID();
+    expect(await put({ series: hr, tilePosition: 2, chartPosition: 3 }, id)).toStrictEqual([
+      201,
+      'saved',
+    ]);
+    const shown = async () =>
+      z
+        .object({
+          checkIn: z.object({
+            training: z.object({
+              workout: z.object({
+                tilePosition: z.int(),
+                chartPosition: z.int(),
+                series: z.unknown(),
+              }),
+            }),
+          }),
+        })
+        .parse((await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).body)
+        .checkIn.training.workout;
+    expect(await shown()).toStrictEqual({ tilePosition: 2, chartPosition: 3, series: hr });
+
+    // A build from before workouts takes the photo off: both tiles stay, right after none.
+    const older = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: { version: 1, kind: 'trained', training: { sport: 'run', caption: '风大' } },
+    });
+    expect(older.status).toBe(200);
+    expect(await shown()).toStrictEqual({ tilePosition: 1, chartPosition: 2, series: hr });
+  });
 });

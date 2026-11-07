@@ -18,8 +18,8 @@ import Testing
                 activity: .sport("run"), minutes: try WorkoutMinutes(32), photos: try Photos(refs), caption: nil,
                 workout: workout)))
     let tiles = ComposedTile.of(checkIn)
-    #expect(tiles.map(\.id) == ["saved:\(myID)/a", "workout", "saved:\(myID)/b"])
-    #expect(tiles.workoutTilePosition == 2)
+    #expect(tiles.map(\.id) == ["saved:\(myID)/a", "workout.map", "saved:\(myID)/b"])
+    #expect(tiles.workoutTilePositions == [.map: 2])
     #expect(tiles.photos.map(\.id) == ["saved:\(myID)/a", "saved:\(myID)/b"])
 }
 
@@ -27,13 +27,16 @@ import Testing
     let first = ComposedTile.photo(.saved(try PhotoRef(path: "\(myID)/a")))
     let second = ComposedTile.photo(.saved(try PhotoRef(path: "\(myID)/b")))
     var tiles: [ComposedTile] = [first, second, .workout(.map)]
-    tiles.move("workout", onto: first.id)
+    tiles.move("workout.map", onto: first.id)
     #expect(tiles == [.workout(.map), first, second])
-    #expect(tiles.workoutTilePosition == 1)
-    tiles.move("workout", onto: second.id)
+    #expect(tiles.workoutTilePositions == [.map: 1])
+    tiles.move("workout.map", onto: second.id)
     #expect(tiles == [first, second, .workout(.map)])
     tiles.move("gone", onto: first.id)
     #expect(tiles == [first, second, .workout(.map)])
     tiles.removeAll { $0 == .workout(.map) }
-    #expect(tiles.workoutTilePosition == nil)
+    #expect(tiles.workoutTilePositions.isEmpty)
+    tiles.insert(.workout(.chart), at: 1)
+    tiles.append(.workout(.map))
+    #expect(tiles.workoutTilePositions == [.chart: 2, .map: 4])
 }

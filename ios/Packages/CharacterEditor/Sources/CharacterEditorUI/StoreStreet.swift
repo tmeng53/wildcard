@@ -12,7 +12,9 @@ import SwiftUI
 /// time in the middle with its neighbours peeking in, paged by the system's scroll. The member
 /// stands on the sidewalk under it, and under the sidewalk is the street's map (every store's
 /// badge, a dot where something new waits, a tap walks there). The centred store's sports and its
-/// button are `StreetCounter`, pinned at the page's bottom.
+/// button are `StreetCounter`, pinned at the page's bottom. The street takes the height it is
+/// given: the storefronts' windows grow on a tall phone, from the size the lockup needs, so the
+/// street fills the page.
 struct StoreStreet: View {
     let model: StreetModel
     /// The store in the middle, which the page's counter shows.
@@ -58,6 +60,7 @@ struct StoreStreet: View {
                 .padding(.bottom, sidewalk - Space.m)
                 walker
             }
+            .frame(maxHeight: .infinity, alignment: .bottom)
             StreetMap(model: model, current: shown?.id) { id in
                 withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { current = id }
             }
@@ -136,7 +139,7 @@ private struct Storefront: View {
     @Environment(\.sceneTheme) private var theme
 
     private let awning: Double = 34
-    private let window: Double = 220
+    private let window: ClosedRange<Double> = 220...420
     private let frame: Double = 6
     private let door = CGSize(width: 50, height: 176)
     private let badge: Double = 48
@@ -179,7 +182,9 @@ private struct Storefront: View {
     private func wall(_ color: Color) -> some View {
         HStack(alignment: .bottom, spacing: Space.s) {
             glass(color)
-            DoorView(height: door.height, width: door.width)
+            DoorView(width: door.width)
+                // As tall as the window allows, never taller than a door.
+                .frame(maxHeight: door.height)
         }
         .padding(.horizontal, Space.s + Space.xxs / 2)
         .padding(.top, Space.m)
@@ -236,8 +241,8 @@ private struct Storefront: View {
             .padding(.horizontal, Space.s)
             .opacity(store.isOpen ? 1 : 0)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: window)
+        // As tall as the street has room for, never shorter than the lockup on the glass needs.
+        .frame(maxWidth: .infinity, minHeight: window.lowerBound, maxHeight: window.upperBound)
         .clipShape(shape)
         .overlay {
             shape.strokeBorder(Color(role: store.isOpen ? .bgBrand : .fgMuted, in: theme), lineWidth: frame)
