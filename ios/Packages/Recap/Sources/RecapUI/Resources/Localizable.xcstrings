@@ -678,19 +678,19 @@
         }
       }
     },
-    "天数一样，先练完计划的排前面": {
-      "comment": "Under 领奖台's title when a tie on days trained was broken by who finished their own weekly plan first.",
+    "天数一样，先练到的排前面": {
+      "comment": "Under 领奖台's title when a tie on days trained was broken by who reached that many days first.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Same days: whoever finished their plan first ranks higher"
+            "value": "Same days: whoever got there first ranks higher"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "天數一樣，先練完計劃的排前面"
+            "value": "天數一樣，先練到的排前面"
           }
         }
       }
