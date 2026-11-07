@@ -153,6 +153,8 @@ public struct NoticesView: View {
             Text("加载失败，点一下再试", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: .gym))
+                // One line of footnote, tapped a finger's width around it.
+                .contentShape(Rectangle().inset(by: -Space.s))
         }
     }
 }

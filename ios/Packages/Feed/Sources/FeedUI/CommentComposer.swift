@@ -76,7 +76,8 @@ struct CommentComposer: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .frame(width: Sizing.minimumTapTarget, height: Space.l)
-                    .contentShape(Rectangle())
+                    // A slim row, tapped at the full 44 points.
+                    .contentShape(Rectangle().inset(by: -(Sizing.minimumTapTarget - Space.l) / 2))
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text("不回复了", bundle: .module))

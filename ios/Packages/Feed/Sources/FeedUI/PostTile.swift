@@ -36,9 +36,12 @@ struct PostTile: View {
         .contentShape(RoundedRectangle(cornerRadius: Radius.pick))
         .accessibilityElement(children: .combine)
         .task(id: post.checkIn.photos?.cover.loadID) {
-            guard cover == nil, let ref = post.checkIn.photos?.cover, let jpeg = await store.photo(ref) else {
+            // An edit can swap or remove the cover: the old one stays only until the new one is in.
+            guard let ref = post.checkIn.photos?.cover else {
+                cover = nil
                 return
             }
+            guard let jpeg = await store.photo(ref) else { return }
             cover = await Self.thumbnail(jpeg)
         }
     }

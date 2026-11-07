@@ -213,28 +213,65 @@ struct MeStage: View {
             .padding(.bottom, Space.xxs)
         }
         .frame(width: size.width, height: size.height)
-        .task(id: character) { dress() }
+        .task(id: character) { await dress() }
     }
 
-    private func dress() {
+    /// Builds the art off the main actor, once per look and mood: the card's front is rebuilt on
+    /// every flip, and a cached stage dresses at once instead of standing empty mid-turn.
+    private func dress() async {
         guard let character else { return }
-        do {
-            let look = mood == .typing ? PlaceholderCharacter.atDesk(character.outfit) : character.outfit
-            let figure = try PlaceholderCharacter.figure(wearing: look)
-            let idle: Clip
-            switch mood {
-            case .idle: idle = try PlaceholderCharacter.clip("idle", persona: character.persona)
-            case .typing: idle = try PlaceholderCharacter.typing(persona: character.persona)
-            case .teary: idle = try PlaceholderCharacter.teary(persona: character.persona)
+        let key = StageArt.Key(outfit: character.outfit, persona: character.persona, mood: mood)
+        let art: StageArt
+        if let cached = StageArt.cache[key] {
+            art = cached
+        } else {
+            guard let built = try? await Task.detached(operation: { try StageArt(key) }).value else {
+                // Art that doesn't build leaves the stage empty; the rest of 我 still works.
+                player = nil
+                return
             }
+            guard !Task.isCancelled else { return }
+            StageArt.remember(built, for: key)
+            art = built
+        }
+        do {
             if let player {
-                try player.wear(figure, idle: idle)
+                try player.wear(art.figure, idle: art.idle)
             } else {
-                player = try CharacterPlayer(figure: figure, idle: idle)
+                player = try CharacterPlayer(figure: art.figure, idle: art.idle)
             }
         } catch {
-            // Art that doesn't build leaves the stage empty; the rest of 我 still works.
             player = nil
+        }
+    }
+}
+
+/// A stage's parsed figure and idle, kept for the few looks 我 shows.
+private struct StageArt: Sendable {
+    struct Key: Hashable, Sendable {
+        let outfit: Outfit
+        let persona: Persona
+        let mood: MeStage.Mood
+    }
+
+    let figure: Figure
+    let idle: Clip
+
+    @MainActor static var cache: [Key: StageArt] = [:]
+
+    @MainActor static func remember(_ art: StageArt, for key: Key) {
+        // A handful of looks a session: an edit now and then, three moods.
+        if cache.count >= 8 { cache.removeAll() }
+        cache[key] = art
+    }
+
+    init(_ key: Key) throws(AvatarError) {
+        let look = key.mood == .typing ? PlaceholderCharacter.atDesk(key.outfit) : key.outfit
+        figure = try PlaceholderCharacter.figure(wearing: look)
+        switch key.mood {
+        case .idle: idle = try PlaceholderCharacter.clip("idle", persona: key.persona)
+        case .typing: idle = try PlaceholderCharacter.typing(persona: key.persona)
+        case .teary: idle = try PlaceholderCharacter.teary(persona: key.persona)
         }
     }
 }
