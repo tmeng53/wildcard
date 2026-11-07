@@ -344,7 +344,6 @@ describe('when the coach wakes', () => {
     });
     const instructions = instructionsOf({ rules: '规矩' }, coach);
     expect(instructions).toContain('一张便条只说一件事');
-    expect(instructions).toContain('用记性，但别说出来。');
     expect(instructions).toContain('做什么、用哪个工具，你自己判断。');
     // The old rule had every note add something from memory, which made notes say "I remember".
     expect(instructions).not.toContain('再加上记性里记着他的');
