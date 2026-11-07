@@ -80,7 +80,8 @@ public final class TodayModel {
 
     /// The open compose page's state.
     private(set) var compose: ComposeModel?
-    private(set) var payoff: Payoff?
+    /// Set here and, once the post is saved, by `deliver` (`TodayModel+Sending.swift`).
+    var payoff: Payoff?
     /// Counts posts, so the one strong haptic fires on each.
     private(set) var posts = 0
     private(set) var isSending = false
