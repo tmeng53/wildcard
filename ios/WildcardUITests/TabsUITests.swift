@@ -100,25 +100,24 @@ final class TabsUITests: XCTestCase {
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
 
-        let meTab = app.buttons["tab.me"]
-        XCTAssertTrue(meTab.waitForExistence(timeout: 30), "no tab bar")
-        meTab.tap()
+        // The bar can drop its tabs' identifiers while a page is pushed, so each tap finds its tab again.
+        tabButton("tab.me", in: app).tap()
         let street = app.buttons["me.street"]
         let streetPage = app.descendants(matching: .any).matching(identifier: "street.page").firstMatch
 
         XCTAssertTrue(street.waitForExistence(timeout: 30), "我 has no 商店街 button")
         street.tap()
         XCTAssertTrue(streetPage.waitForExistence(timeout: 30), "商店街 never opened")
-        meTab.tap()
+        tabButton("tab.me", in: app).tap()
         waitFor(streetPage, "exists == false", "tapping 我 again stayed on 商店街")
         XCTAssertTrue(street.waitForExistence(timeout: 30), "tapping 我 again didn't show 我")
 
         street.tap()
         XCTAssertTrue(streetPage.waitForExistence(timeout: 30), "商店街 never opened again")
-        app.buttons["tab.today"].tap()
-        waitFor(app.buttons["tab.today"], "isSelected == true", "今天 didn't open")
-        meTab.tap()
-        waitFor(meTab, "isSelected == true", "我 didn't open again")
+        tabButton("tab.today", in: app).tap()
+        waitFor(tabButton("tab.today", in: app), "isSelected == true", "今天 didn't open")
+        tabButton("tab.me", in: app).tap()
+        waitFor(tabButton("tab.me", in: app), "isSelected == true", "我 didn't open again")
         XCTAssertTrue(street.waitForExistence(timeout: 30), "我 opened on 商店街, not its own page")
         XCTAssertFalse(streetPage.exists, "商店街 stayed open under 我")
     }
