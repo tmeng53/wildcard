@@ -9,11 +9,11 @@ import { CustomSportName } from './text.js';
 
 // A member's weekly plan, as the app's contract has it (`WeeklyPlan` in ios/Packages/Contracts):
 // seven days, Monday first, each a training day (optionally naming the sport) or a rest day.
-// 本周 x/y counts 练了 days against the plan's training days.
+// 本周 x/y counts 训练 days against the plan's training days.
 
 const DAY = 86_400_000;
 
-/** Hours after midnight that still count for the day before, as in the app's `DayBoundary`. */
+/** Hours after midnight that still count for the day before, as in the app's 3am day (`Contracts/LocalDay+Clock.swift`). */
 const GRACE_HOURS = 3;
 
 /** How many weeks ahead of the current one a member may plan. */
@@ -174,7 +174,7 @@ export function checkPlanChange({
 }
 
 /**
- * The plan with `day` a training day of `training`'s sport when it was a rest day: a 练了 on a
+ * The plan with `day` a training day of `training`'s sport when it was a rest day: a 训练 on a
  * planned rest day makes it a training day. Undefined when the day was already a training day.
  */
 export function trainedOnRestDay({

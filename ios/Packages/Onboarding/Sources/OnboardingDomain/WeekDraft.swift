@@ -1,6 +1,6 @@
 import Contracts
 
-/// The member's typical week, their 我的每周计划 (每周模板 in code), drawn on sign-up's poster: what each day is, a
+/// The member's typical week, their 我的每周计划 (我的每周计划 in code), drawn on sign-up's poster: what each day is, a
 /// sport picked in the step before, a training day with no sport named, or 休息. This week and
 /// every later one follow it until it is changed (this week counting only from the day the
 /// member joined), so every day can change here, those already over this week too. Tapping a

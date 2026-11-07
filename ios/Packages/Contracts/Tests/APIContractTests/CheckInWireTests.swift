@@ -48,8 +48,8 @@ private func saved(_ kindAndFields: String) -> String {
         activity: .sport("run"), photos: try Photos([try PhotoRef(path: photoB), try PhotoRef(path: photoA)]),
         caption: try Caption("  雨中五公里 "))
     #expect(
-        try encode(try checkIn(.trained(training), audience: [squadA, squadB]).draft)
-            == #"{"audience":["33333333-3333-3333-3333-333333333333","44444444-4444-4444-4444-444444444444"],"createdAt":"2025-10-18T00:00:00.123Z","day":"2025-10-17","kind":"trained","training":{"caption":"雨中五公里","photos":[{"path":"22222222-2222-2222-2222-222222222222/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"},{"path":"22222222-2222-2222-2222-222222222222/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}],"sport":"run"},"version":1}"#
+        try encode(try checkIn(.trained(training), audience: [squadA]).draft)
+            == #"{"audience":["33333333-3333-3333-3333-333333333333"],"createdAt":"2025-10-18T00:00:00.123Z","day":"2025-10-17","kind":"trained","training":{"caption":"雨中五公里","photos":[{"path":"22222222-2222-2222-2222-222222222222/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"},{"path":"22222222-2222-2222-2222-222222222222/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}],"sport":"run"},"version":1}"#
     )
 }
 

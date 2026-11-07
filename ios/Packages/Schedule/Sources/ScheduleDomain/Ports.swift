@@ -15,7 +15,7 @@ public protocol ScheduleBackend: Sendable {
     func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError)
     /// Every day the member ever trained (一共练了 N 天).
     func trainedDays() async throws(ScheduleError) -> Int
-    /// The member's typical week (每周模板): seven days, Monday first, which every week not
+    /// The member's typical week (我的每周计划): seven days, Monday first, which every week not
     /// changed for itself follows.
     func template() async throws(ScheduleError) -> [PlanDay]
     /// Replaces the typical week; the weeks from next week on follow it. Safe to repeat.

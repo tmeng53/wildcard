@@ -19,7 +19,9 @@ extension PlaceholderCharacter {
         return speciesByBody[body]
     }
 
-    private static let speciesByBody: [String: String] = {
+    /// The species of every body in `editor.json`. A broken `editor.json` fails the tests, so
+    /// here it only leaves the bodies without a species.
+    static let speciesByBody: [String: String] = {
         guard let choices = try? editorChoices() else { return [:] }
         var byBody: [String: String] = [:]
         for species in choices.species {

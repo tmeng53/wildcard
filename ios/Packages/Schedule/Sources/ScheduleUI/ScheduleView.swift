@@ -8,7 +8,7 @@ import SportsUI
 import SwiftUI
 
 /// 出赛表: the week as a poster the member plans on. Chips pick the week (back to the one they
-/// joined, this week, next week) or the 每周模板, on a graphite poster of its own; 存图 saves a
+/// joined, this week, next week) or the 我的每周计划, on a graphite poster of its own; 存图 saves a
 /// week's poster to Photos; under the poster sit the picks for the day in hand, next week's
 /// 饮食小目标, or the counts. It is pushed over 我, whose tab bar stays: this screen keeps to the
 /// safe area the app gives it, and the system's back button and swipe go back to 我.
@@ -154,7 +154,7 @@ public struct ScheduleView: View {
             typingFuel: model.writingFuel ? ownFuel : "")
     }
 
-    /// The week shown, or the 每周模板.
+    /// The week shown, or the 我的每周计划.
     private var shownContent: PosterContent? {
         if store.showsTemplate {
             return store.board.map { PosterContent(template: $0, nickname: store.profile?.nickname ?? "") }
@@ -189,7 +189,7 @@ public struct ScheduleView: View {
 
     // MARK: Under the poster
 
-    /// `sheet` is the week shown; nil on the 每周模板.
+    /// `sheet` is the week shown; nil on the 我的每周计划.
     @ViewBuilder
     private func panel(_ sheet: WeekSheet?) -> some View {
         VStack(alignment: .leading, spacing: Space.s) {
@@ -214,7 +214,7 @@ public struct ScheduleView: View {
     }
 
     /// Under a week with nothing in hand: next week's countdown, this week's counts or a past
-    /// week's awards; nothing under the 每周模板, whose note says when it counts.
+    /// week's awards; nothing under the 我的每周计划, whose note says when it counts.
     @ViewBuilder
     private func counts(_ sheet: WeekSheet?) -> some View {
         switch (store.board?.tense, sheet) {

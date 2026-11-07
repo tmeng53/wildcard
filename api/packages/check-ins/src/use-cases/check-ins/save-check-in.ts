@@ -43,7 +43,7 @@ export interface SavedCheckIn {
 /**
  * Saves a member's check-in under the id the app made, so a retry is safe: the same check-in
  * again is a success, different contents under a saved id are refused. A retry is recognised
- * before the time checks, so a late retry of a saved check-in still succeeds. A 练了 on a day the
+ * before the time checks, so a late retry of a saved check-in still succeeds. A 训练 on a day the
  * member's plan has as a rest day makes it a training day of that sport, on a retry too, so a
  * save that stopped between the two still ends with both. A 休息 makes its day a rest day the
  * same way.
@@ -84,7 +84,7 @@ export async function saveCheckIn(
 }
 
 /**
- * Makes a 休息's day a rest day in the member's plan, unless they trained that day: a 练了 after
+ * Makes a 休息's day a rest day in the member's plan, unless they trained that day: a 训练 after
  * the 休息 made it a training day, and a retry or an edit of the 休息 must not undo that.
  */
 export async function planRestPost(
@@ -151,7 +151,7 @@ async function insertCheckIn(
 
 /**
  * A 请假条 is for a day the member hasn't trained on, the day it counts for, so a 补打卡 follows
- * the same rule as today's. (A 练了 after a 请假条 is fine: the app stamps it 销假.)
+ * the same rule as today's. (A 训练 after a 请假条 is fine: the app stamps it 销假.)
  */
 async function checkNotTrained(store: CheckInStore, checkIn: CheckInRecord): Promise<void> {
   const sameDay = await store.listForMember({

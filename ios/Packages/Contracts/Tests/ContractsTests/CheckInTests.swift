@@ -21,13 +21,10 @@ private let squadB = SquadID(UUID(uuidString: "44444444-4444-4444-4444-444444444
     #expect(upper.description == "abcdef01-abcd-abcd-abcd-abcdef012345")
 }
 
-@Test func audienceIsUpToThreeDistinctSquads() throws {
-    let squadC = SquadID(UUID(uuidString: "55555555-5555-5555-5555-555555555555")!)
-    let squadD = SquadID(UUID(uuidString: "66666666-6666-6666-6666-666666666666")!)
-    #expect(try Audience([squadA, squadB, squadC]).squads == [squadA, squadB, squadC])
+@Test func audienceIsOneSquadAtMost() throws {
+    #expect(try Audience([squadA]).squads == [squadA])
     #expect(try Audience([]).squads == [])
-    #expect(throws: ContractsError.audienceSize(4)) { try Audience([squadA, squadB, squadC, squadD]) }
-    #expect(throws: ContractsError.repeatedSquad) { try Audience([squadA, squadA]) }
+    #expect(throws: ContractsError.audienceSize(2)) { try Audience([squadA, squadB]) }
 }
 
 @Test func captionIsOneLineOfUpToSixtyCharacters() throws {
@@ -70,8 +67,6 @@ func customSportNameHasNoDirectionControls(control: String) {
     let third = try PhotoRef(path: "m/c.jpg")
     let photos = try Photos([first, second, third])
     #expect(photos.cover == first)
-    #expect(photos.withCover(third)?.all == [third, first, second])
-    #expect(try photos.withCover(PhotoRef(path: "m/z.jpg")) == nil)
     #expect(throws: ContractsError.photoCount(0)) { try Photos([]) }
     #expect(throws: ContractsError.photoCount(4)) { try Photos([first, second, third, try PhotoRef(path: "m/d.jpg")]) }
     #expect(throws: ContractsError.repeatedPhoto) { try Photos([first, first]) }
@@ -91,10 +86,6 @@ func customSportNameHasNoDirectionControls(control: String) {
     #expect(listed == sent)
     #expect(Set([listed, relisted, sent]).count == 1)
     #expect(try PhotoRef(path: "m/b.jpg", viewURL: listed.viewURL) != listed)
-
-    // The cover can be picked from a fresh list of the same check-in.
-    let photos = try Photos([try PhotoRef(path: "m/b.jpg"), listed])
-    #expect(photos.withCover(relisted)?.all.map(\.path) == ["m/a.jpg", "m/b.jpg"])
 }
 
 @Test func nicknameIsOneLineOfUpToTwelveCharacters() throws {

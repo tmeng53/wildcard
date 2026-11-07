@@ -31,7 +31,7 @@ export function idFits(kind: UnlockKind, id: string): boolean {
 /** The most check-ins a rule may ask for. */
 export const AFTER_MAX = 100;
 
-/** How a store, prop or piece opens: `after` 练了 check-ins in one of `sports` (any when empty). */
+/** How a store, prop or piece opens: `after` 训练 check-ins in one of `sports` (any when empty). */
 export interface UnlockRule {
   readonly kind: UnlockKind;
   /** An `ItemId` for a store or prop, a `PieceId` for a piece. */
@@ -47,7 +47,7 @@ export type SwitchOn = (id: string, at: Date) => boolean;
 
 /**
  * A rule with the switches it counts under: a piece's own and its store's, a store's own. Only
- * 练了 made while all of them are on count, so progress waits for the next time they are on.
+ * 训练 made while all of them are on count, so progress waits for the next time they are on.
  */
 export interface CountedRule extends UnlockRule {
   readonly switchIds: readonly string[];
@@ -113,7 +113,7 @@ export interface Shelf {
   readonly stores: readonly {
     readonly id: string;
     readonly open: boolean;
-    /** For a store whose rule the member hasn't reached: 练了 still to go. */
+    /** For a store whose rule the member hasn't reached: 训练 still to go. */
     readonly toGo?: number;
   }[];
   readonly pieces: readonly {
@@ -124,7 +124,7 @@ export interface Shelf {
     readonly toGo?: number;
     /** What counts towards it: its rule's, else its store's (empty for any sport). */
     readonly sports: readonly SportId[];
-    /** 练了 it takes; 0 for a starter. */
+    /** 训练 it takes; 0 for a starter. */
     readonly after: number;
   }[];
 }
@@ -211,7 +211,7 @@ export interface Unlock {
   readonly unlockedAt: Date;
 }
 
-/** A 练了 check-in's sport and when it was made. */
+/** A 训练 check-in's sport and when it was made. */
 export interface Trained {
   readonly id: string;
   /** A listed sport's id, or `custom`. */
@@ -265,13 +265,13 @@ function counting(
   );
 }
 
-/** A rule a member hasn't reached yet, and how many more 练了 it takes. */
+/** A rule a member hasn't reached yet, and how many more 训练 it takes. */
 export interface Locked {
   readonly kind: UnlockKind;
   readonly id: string;
-  /** 练了 check-ins still to go, 1 or more. */
+  /** 训练 check-ins still to go, 1 or more. */
   readonly toGo: number;
-  /** The sports whose 练了 count; empty for any sport. */
+  /** The sports whose 训练 count; empty for any sport. */
   readonly sports: readonly SportId[];
 }
 
@@ -330,12 +330,12 @@ export const UnlockRuleEdit = z
       .array(SportId)
       .max(20)
       .refine((ids) => new Set(ids).size === ids.length, { message: 'a sport is listed twice' })
-      .describe('Sport ids from the sports list whose 练了 count; empty for any sport.'),
+      .describe('Sport ids from the sports list whose 训练 count; empty for any sport.'),
     after: z
       .int()
       .min(1)
       .max(AFTER_MAX)
-      .describe('How many 练了 check-ins in those sports open it.'),
+      .describe('How many 训练 check-ins in those sports open it.'),
   })
   .refine(({ kind, id }) => idFits(kind, id), {
     message: 'the id doesn’t fit its kind',

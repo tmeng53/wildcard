@@ -315,7 +315,7 @@ const unlockSources = (scope: Database) => ({
   sportListed: (id: string) => sports.isListed(id),
   switchListed: async (id: string) =>
     (await switchesOn(scope).list()).some((each) => each.id === id),
-  // A rule counts only 练了 made while its store's and piece's switches were on, by the New York
+  // A rule counts only 训练 made while its store's and piece's switches were on, by the New York
   // day and as each switch was set then, so turning one on or off by hand changes only what
   // follows; a previewer also counts those in preview, on their pretend day.
   switches: async (member: string) => {
@@ -372,7 +372,7 @@ const tellAfter = async (
   }
 };
 // What members unlock by training: the unlocks module keeps the rules and who earned what, and
-// asks check-ins for the 练了 that count and the sports module which sports exist.
+// asks check-ins for the 训练 that count and the sports module which sports exist.
 const unlocksOn = (scope: Database) =>
   createUnlocks({
     ...unlockSources(scope),

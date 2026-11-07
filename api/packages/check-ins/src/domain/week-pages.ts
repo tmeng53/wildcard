@@ -21,13 +21,13 @@ import type { PlanDay } from './weekly-plan.js';
 // week summary's awards and counts, read from the week as the awards saw it. A page with
 // nothing to show is left out, so a quiet week isn't told how short it fell.
 
-/** What a day of a member's week was: a 练了 wins over a 请假条, which wins over a rest day. */
+/** What a day of a member's week was: a 训练 wins over a 请假条, which wins over a rest day. */
 export interface StoryDay {
   readonly day: LocalDay;
   readonly kind: 'trained' | 'rest' | 'disclaimer' | 'none';
-  /** For a trained day: its first 练了's listed sport; missing for a sport of the member's own. */
+  /** For a trained day: its first 训练's listed sport; missing for a sport of the member's own. */
   readonly sport?: string;
-  /** For a trained day: the minutes its 练了 logged, when any did (minutes are never asked for). */
+  /** For a trained day: the minutes its 训练 logged, when any did (minutes are never asked for). */
   readonly minutes?: number;
 }
 
@@ -190,7 +190,7 @@ export function weekPagesOf(
   };
 }
 
-/** A member's day: their first 练了's sport, else a 请假条, else a rest (planned, or a 休息). */
+/** A member's day: their first 训练's sport, else a 请假条, else a rest (planned, or a 休息). */
 function dayOf(
   checkIns: readonly CheckInRecord[],
   { day, planned }: { readonly day: LocalDay; readonly planned: PlanDay | undefined },

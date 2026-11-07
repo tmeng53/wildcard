@@ -7,7 +7,7 @@ import OnboardingDomain
 import SportsUI
 import SwiftUI
 
-/// 我的每周计划, step 4: the member's typical week (the 每周模板 in code) as a poster, each day a
+/// 我的每周计划, step 4: the member's typical week (the 我的每周计划 in code) as a poster, each day a
 /// sport picked in the step before or 休息 (Tracy, 2026-11-06: no explaining line, and the name
 /// is 我的每周计划 wherever it shows). Tap a day,
 /// then what it is under the poster, and the next day is selected; every day can change, since
@@ -55,8 +55,8 @@ struct WeekStep: View {
     }
 }
 
-/// The 每周模板 on sign-up's `WeekPoster` card in the accent tone (the brand's, in sign-up), laid
-/// out as the approved board draws it, as 出赛表 draws the template: who, 每周模板 where a week has
+/// The 我的每周计划 on sign-up's `WeekPoster` card in the accent tone (the brand's, in sign-up), laid
+/// out as the approved board draws it, as 出赛表 draws the template: who, 我的每周计划 where a week has
 /// its number (a template has no dates or number), a row a day, the character in the corner and
 /// 每周训练 N/7 天 along the bottom.
 private struct PlanPoster: View {

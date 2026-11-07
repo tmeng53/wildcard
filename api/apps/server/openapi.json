@@ -416,7 +416,7 @@
                     "properties": {
                       "id": {
                         "type": "string",
-                        "description": "What a 练了 or a planned day sends as `sport`. Never changes, and a sport is never removed.",
+                        "description": "What a 训练 or a planned day sends as `sport`. Never changes, and a sport is never removed.",
                         "example": "run"
                       },
                       "names": {
@@ -469,7 +469,7 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "A 练了’s quick picks, before the whole list. Sport ids, in order."
+                "description": "A 训练’s quick picks, before the whole list. Sport ids, in order."
               }
             },
             "required": [
@@ -686,7 +686,7 @@
                 },
                 "free": {
                   "type": "boolean",
-                  "description": "Open to everyone with no 练了 (no unlock rule), such as WARM-UP; any other store is earned."
+                  "description": "Open to everyone with no 训练 (no unlock rule), such as WARM-UP; any other store is earned."
                 }
               },
               "required": [
@@ -840,7 +840,7 @@
                 ],
                 "maxLength": 1000,
                 "default": null,
-                "description": "What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.",
+                "description": "What the member’s character shouts when the squad cheers a teammate’s 训练 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.",
                 "x-max-characters": 10,
                 "example": "冲就完了🔥"
               },
@@ -961,7 +961,7 @@
             ],
             "maxLength": 1000,
             "default": null,
-            "description": "What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.",
+            "description": "What the member’s character shouts when the squad cheers a teammate’s 训练 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.",
             "x-max-characters": 10,
             "example": "冲就完了🔥"
           },
@@ -2434,7 +2434,7 @@
           "trainedDays": {
             "type": "integer",
             "minimum": 0,
-            "description": "Days with a 练了; several 练了 on one day count once."
+            "description": "Days with a 训练; several 训练 on one day count once."
           },
           "healthyMeals": {
             "type": "integer",
@@ -2477,7 +2477,7 @@
           "checkIns": {
             "type": "integer",
             "minimum": 0,
-            "description": "练了 check-ins of this sport."
+            "description": "训练 check-ins of this sport."
           }
         },
         "required": [
@@ -2485,7 +2485,7 @@
           "checkIns"
         ],
         "additionalProperties": false,
-        "description": "The sport with the most 练了 (最常练; a custom sport counts by its name), the latest one on a tie. Left out before the first 练了."
+        "description": "The sport with the most 训练 (最常练; a custom sport counts by its name), the latest one on a tie. Left out before the first 训练."
       },
       "TrainingRecord": {
         "type": "object",
@@ -2501,7 +2501,7 @@
             "items": {
               "$ref": "#/components/schemas/TrainingDay"
             },
-            "description": "Each 练了 in the range, by day, the earliest made first."
+            "description": "Each 训练 in the range, by day, the earliest made first."
           }
         },
         "required": [
@@ -2975,6 +2975,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 7,
+            "default": 3,
             "description": "The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.",
             "example": 3
           }
@@ -3152,7 +3153,7 @@
                     "string",
                     "null"
                   ],
-                  "description": "What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line."
+                  "description": "What the member’s character shouts when the squad cheers a teammate’s 训练 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line."
                 },
                 "character": {
                   "$ref": "#/components/schemas/Character"
@@ -3172,7 +3173,7 @@
                     "disclaimer",
                     "notCheckedIn"
                   ],
-                  "description": "Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day."
+                  "description": "Where their today stands, from check-ins sent to this squad. A 训练 wins over a 请假条 posted earlier the same day."
                 },
                 "latestMeal": {
                   "type": "string",
@@ -3214,12 +3215,12 @@
               "disclaimer": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Members whose today is a 请假条 with no 练了."
+                "description": "Members whose today is a 请假条 with no 训练."
               },
               "resting": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Members on a planned rest day with no 练了 or 请假条 today."
+                "description": "Members on a planned rest day with no 训练 or 请假条 today."
               },
               "everyoneTrained": {
                 "type": "boolean",
@@ -3251,7 +3252,7 @@
                   "trainedDays": {
                     "type": "integer",
                     "minimum": 0,
-                    "description": "Days this week with a 练了, wherever it was sent. Several on one day count once."
+                    "description": "Days this week with a 训练, wherever it was sent. Several on one day count once."
                   },
                   "plannedDays": {
                     "type": "integer",
@@ -3270,7 +3271,7 @@
               "lifetimeTrainedDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Days ever with a 练了."
+                "description": "Days ever with a 训练."
               }
             },
             "required": [
@@ -5186,16 +5187,16 @@
               "disclaimer",
               "none"
             ],
-            "description": "A 练了 wins over a 请假条, which wins over a planned rest day."
+            "description": "A 训练 wins over a 请假条, which wins over a planned rest day."
           },
           "sport": {
             "type": "string",
-            "description": "For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own."
+            "description": "For a trained day: its first 训练’s listed sport; missing for a sport of the member’s own."
           },
           "minutes": {
             "type": "integer",
             "minimum": 1,
-            "description": "For a trained day: the minutes its 练了 logged, summed; missing when none did (minutes are optional) or in a week frozen before they were kept."
+            "description": "For a trained day: the minutes its 训练 logged, summed; missing when none did (minutes are optional) or in a week frozen before they were kept."
           }
         },
         "required": [
@@ -5275,7 +5276,7 @@
           },
           "sport": {
             "type": "string",
-            "description": "For a 练了: the listed sport’s key, or the name of the member’s own."
+            "description": "For a 训练: the listed sport’s key, or the name of the member’s own."
           },
           "caption": {
             "type": "string"
@@ -5659,7 +5660,7 @@
           "trainedDays": {
             "type": "integer",
             "minimum": 0,
-            "description": "Days with a 练了; several 练了 on one day count once."
+            "description": "Days with a 训练; several 训练 on one day count once."
           },
           "healthyMeals": {
             "type": "integer",
@@ -5869,7 +5870,7 @@
               "type": "string",
               "pattern": "^[a-z][A-Za-z0-9]{0,39}$"
             },
-            "description": "The sports whose 练了 counted; empty for any sport.",
+            "description": "The sports whose 训练 counted; empty for any sport.",
             "example": [
               "tennis",
               "pickleball",
@@ -5880,7 +5881,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 100,
-            "description": "How many 练了 check-ins in them it took.",
+            "description": "How many 训练 check-ins in them it took.",
             "example": 3
           }
         },
@@ -5933,7 +5934,7 @@
               "type": "string",
               "pattern": "^[a-z][A-Za-z0-9]{0,39}$"
             },
-            "description": "The sports whose 练了 count towards it; empty for any sport.",
+            "description": "The sports whose 训练 count towards it; empty for any sport.",
             "example": [
               "run",
               "walk"
@@ -5943,7 +5944,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 100,
-            "description": "How many more 练了 check-ins in its sports open it.",
+            "description": "How many more 训练 check-ins in its sports open it.",
             "example": 2
           }
         },
@@ -6026,7 +6027,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 100,
-            "description": "For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins in its sports open it.",
+            "description": "For a store whose rule the member hasn’t reached yet: how many more 训练 check-ins in its sports open it.",
             "example": 2
           }
         },
@@ -6065,7 +6066,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 100,
-            "description": "For a locked piece: how many more 练了 check-ins in its sports open it.",
+            "description": "For a locked piece: how many more 训练 check-ins in its sports open it.",
             "example": 2
           },
           "sports": {
@@ -6074,7 +6075,7 @@
               "type": "string",
               "pattern": "^[a-z][A-Za-z0-9]{0,39}$"
             },
-            "description": "The sports whose 练了 count towards it; empty for any sport.",
+            "description": "The sports whose 训练 count towards it; empty for any sport.",
             "example": [
               "ski",
               "snowboard"
@@ -6084,7 +6085,7 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 100,
-            "description": "How many 练了 check-ins it takes; 0 for a starter.",
+            "description": "How many 训练 check-ins it takes; 0 for a starter.",
             "example": 1
           }
         },
@@ -7193,8 +7194,8 @@
     "/me/trainings": {
       "get": {
         "operationId": "listMyTrainings",
-        "summary": "The signed-in member’s 练了 for a range of days, for their training record",
-        "description": "训练记录 on 我: each 练了 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.",
+        "summary": "The signed-in member’s 训练 for a range of days, for their training record",
+        "description": "训练记录 on 我: each 训练 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.",
         "security": [
           {
             "bearer": []
@@ -11177,7 +11178,7 @@
       "get": {
         "operationId": "getMyUnlocks",
         "summary": "The stores, props and pieces the signed-in member unlocked",
-        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
+        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
         "security": [
           {
             "bearer": []

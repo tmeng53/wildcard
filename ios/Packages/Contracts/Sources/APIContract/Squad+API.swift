@@ -17,11 +17,11 @@ extension SquadScene {
     public init(_ wire: Components.Schemas.SquadScene) throws(ContractsError) {
         let pickers = try wire.pickers.members.map { member throws(ContractsError) in try MemberID(wire: member) }
         self.init(
-            week: try LocalDay(wire.week), scene: SceneID(id: wire.sceneId, legacy: wire.scene.rawValue),
+            week: try LocalDay(wire.week), scene: SceneID(id: wire.sceneId),
             pickers: wire.pickers.by == .crown ? .crown(pickers) : .captain(pickers.first),
             picked: try wire.picked.map { picked throws(ContractsError) in
                 SquadScene.Pick(
-                    scene: SceneID(id: picked.sceneId, legacy: picked.scene.rawValue),
+                    scene: SceneID(id: picked.sceneId),
                     picker: try picked.by.map { picker throws(ContractsError) in try MemberID(wire: picker) })
             },
             canPick: wire.canPick,
@@ -35,10 +35,10 @@ extension SquadScene {
 }
 
 extension SceneID {
-    /// The scene by its id, else by the five-scene field older builds read, else the gym. A
-    /// scene this build wasn't made with keeps its id (its names, colours and pictures are data).
-    init(id: String, legacy: String) {
-        self = SceneID(rawValue: id) ?? SceneID(rawValue: legacy) ?? .gym
+    /// The scene by its id, else the gym. A scene this build wasn't made with keeps its id (its
+    /// names, colours and pictures are data).
+    init(id: String) {
+        self = SceneID(rawValue: id) ?? .gym
     }
 
     /// The body of `PUT /squads/{squadId}/weeks/{weekStart}/scene`.

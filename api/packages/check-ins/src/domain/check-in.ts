@@ -7,7 +7,7 @@ import { SportKey } from './sports.js';
 import { Caption, CustomSportName, DisclaimerText } from './text.js';
 import { Workout } from './workout.js';
 
-// A check-in: 练了, 健康餐, 坦白放纵餐 or 今日请假条, with the kind's own fields under one
+// A check-in: 训练, 健康餐, 坦白放纵餐 or 今日请假条, with the kind's own fields under one
 // key named for the kind. These schemas are the contract: the OpenAPI document comes from them,
 // and the app's Swift types are generated from that (scripts/swift-openapi.sh).
 // Any kind may have photos; they live in their own table, not in the stored payload.
@@ -41,7 +41,7 @@ export const Audience = z
     message: 'Must not list a squad twice',
   });
 
-/** How long a 练了 took, in whole minutes: 1 to 600. Optional; never asked for. */
+/** How long a 训练 took, in whole minutes: 1 to 600. Optional; never asked for. */
 export const WorkoutMinutes = z
   .int()
   .min(1)
@@ -118,7 +118,7 @@ function tileFits(
   }
 }
 
-/** 练了: what was trained, with optional minutes, photos, a line and the workout it came from. */
+/** 训练: what was trained, with optional minutes, photos, a line and the workout it came from. */
 export const Training = z
   .strictObject(trainingFields)
   .superRefine(customSportMatches)

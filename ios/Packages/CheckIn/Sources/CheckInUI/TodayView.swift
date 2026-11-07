@@ -7,7 +7,7 @@ import DesignSystemUI
 import SportsUI
 import SwiftUI
 
-/// The 今天 tab: the whole squad on its scene with the week's card on top, me front and centre,
+/// The 小队 tab (`.today`): the whole squad on its scene with the week's card on top, me front and centre,
 /// and 打卡. Every check-in starts and ends here: the burst opens over the lightly blurred scene,
 /// and after posting you stay on the scene for the payoff (the approved home, version 15).
 public struct TodayView: View {

@@ -72,7 +72,7 @@ export async function squadWeekCheckIns(
   // A squad has at most 8 members, so one plan read each is fine.
   const [plans, zones, listed] = await Promise.all([
     Promise.all(
-      // As they stood at the cutoff: a later change, or a late 练了 marking a rest day, stays out.
+      // As they stood at the cutoff: a later change, or a late 训练 marking a rest day, stays out.
       memberIds.map((member) =>
         findWeeklyPlan({ store: deps.plans }, { member, weekStart, asOf: before }),
       ),

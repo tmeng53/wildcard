@@ -77,7 +77,7 @@ struct DayPicks: View {
         let plan = board.days[index]
         let picks = store.suggestedActivities(common: SportList.shared.catalog.checkInQuick)
         VStack(alignment: .leading, spacing: Space.labelGap) {
-            // The 每周模板's days are every week's: no date.
+            // The 我的每周计划's days are every week's: no date.
             if board.tense == .template {
                 SectionLabel(ScheduleLabels.weekday(day))
             } else {
@@ -104,7 +104,7 @@ struct DayPicks: View {
     }
 }
 
-/// Under the 每周模板: when a change to it counts.
+/// Under the 我的每周计划: when a change to it counts.
 struct TemplateNote: View {
     @Environment(\.sceneTheme) private var theme
 
@@ -120,7 +120,7 @@ struct TemplateNote: View {
     }
 }
 
-/// After a week's plan changes: only that week changed, and a way to change the 每周模板 too.
+/// After a week's plan changes: only that week changed, and a way to change the 我的每周计划 too.
 /// In the brand's graphite, as the template is.
 struct TemplateOffer: View {
     let onCopy: () -> Void
@@ -247,7 +247,7 @@ struct CountdownCard: View {
     }
 }
 
-/// What the 出赛表's chips show: a week, or the 每周模板.
+/// What the 出赛表's chips show: a week, or the 我的每周计划.
 enum SchedulePage: Hashable {
     case week(LocalDay)
     case template

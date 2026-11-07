@@ -23,7 +23,7 @@ export function weekOf(day: LocalDay): Week {
 export type TrainingStatus = 'trained' | 'disclaimer' | 'notCheckedIn';
 
 /**
- * A 练了 wins over a 请假条 posted earlier the same day. A 休息 is no 请假条: it made the day a
+ * A 训练 wins over a 请假条 posted earlier the same day. A 休息 is no 请假条: it made the day a
  * rest day in the plan, which is how the day shows.
  */
 export function trainingOn(checkIns: readonly CheckInRecord[], day: LocalDay): TrainingStatus {
@@ -46,14 +46,14 @@ export function latestMealOn(
   return latest?.kind === 'healthyMeal' || latest?.kind === 'cheatMeal' ? latest.kind : undefined;
 }
 
-/** Days among `days` with a 练了. Several 练了 on one day count once. */
+/** Days among `days` with a 训练. Several 训练 on one day count once. */
 export function trainedDays(checkIns: readonly CheckInRecord[], days: readonly LocalDay[]): number {
   return days.filter((day) => trainingOn(checkIns, day) === 'trained').length;
 }
 
 /**
- * When a member finished their week's plan: the moment the 练了 that made their trained days
- * reach the days they planned was checked in (the first 练了 of each day counts, the planned
+ * When a member finished their week's plan: the moment the 训练 that made their trained days
+ * reach the days they planned was checked in (the first 训练 of each day counts, the planned
  * count-th earliest of them). `undefined` without a plan, or while they are still short of it.
  */
 export function planFinishedAt(

@@ -7,7 +7,7 @@ import FeedDomain
 import SwiftUI
 
 /// The box at the bottom of a post's own page, floating in Liquid Glass over the comments as
-/// the approved chat composer does: 回复 Mia with × when replying to someone, 「@毛头」 while the
+/// the approved comment composer does: 回复 Mia with × when replying to someone, 「@毛头」 while the
 /// squad has a coach, the words (up to four lines, with the count near the limit) and the send
 /// button; typing `@` opens the @ list over it, the coach first. Sent words leave the box at
 /// once; if they couldn't go out they come back with a line saying so.

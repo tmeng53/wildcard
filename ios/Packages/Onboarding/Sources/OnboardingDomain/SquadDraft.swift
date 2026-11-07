@@ -15,10 +15,7 @@ public struct SquadDraft: Hashable, Sendable {
     public var typedName: String
     /// 小队目标 for a squad being made: each member's days a week, 人均 N 天. The captain
     /// changes it later on 小队.
-    public var daysPerMember = SquadDraft.defaultDaysPerMember
-
-    /// What a new squad starts from, as the API's.
-    public static let defaultDaysPerMember = 3
+    public var daysPerMember = SquadWeeklyGoal.defaultDaysPerMember
 
     /// `invite`: the code an invite link carried, if sign-up opened from one. `suggestedName`:
     /// what 建一个小队 starts from, such as 「Tracy 的小队」.

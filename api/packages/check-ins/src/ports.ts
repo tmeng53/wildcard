@@ -37,7 +37,7 @@ export interface CheckInStore {
   photoHistory(id: CheckInId): Promise<PhotoPath[]>;
   /** Everything `member` ever checked in, counted by kind. */
   totals(member: MemberId): Promise<CheckInTotals>;
-  /** The member's 练了 check-ins made from `since` on, the earliest made first. */
+  /** The member's 训练 check-ins made from `since` on, the earliest made first. */
   trainedSince(query: {
     readonly member: MemberId;
     readonly since: Date;
@@ -59,7 +59,7 @@ export interface CheckInStore {
    * each once.
    */
   squadsCheckedInto(query: DayRange & { readonly before: Date }): Promise<SquadId[]>;
-  /** A member's 练了 for days `from` to `to`, by day, then the earliest made first. */
+  /** A member's 训练 for days `from` to `to`, by day, then the earliest made first. */
   trainingsForMember(query: {
     readonly member: MemberId;
     readonly from: string;
