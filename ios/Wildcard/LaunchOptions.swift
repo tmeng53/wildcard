@@ -257,6 +257,15 @@ enum LaunchOptions {
     /// run, Leo's boba), so they eat on the home and their bubbles say so.
     static var meals: Bool { ProcessInfo.processInfo.arguments.contains("-uitest-meals") }
 
+    /// Apple Health's sample day starts afresh on each launch: nothing put away from the home's
+    /// card, every number shared.
+    static var healthDefaults: UserDefaults {
+        let suite = "uitest-health"
+        guard healthSample, let defaults = UserDefaults(suiteName: suite) else { return todayDefaults }
+        defaults.removePersistentDomain(forName: suite)
+        return defaults
+    }
+
     /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted`,
     /// `-uitest-coach` or `-uitest-together` a suite emptied at launch.
     static var todayDefaults: UserDefaults {

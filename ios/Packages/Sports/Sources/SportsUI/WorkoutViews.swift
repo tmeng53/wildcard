@@ -145,7 +145,8 @@ extension ScoreCell.Label {
 }
 
 /// A 训练's 成绩条 (Tracy, 2026-11-06): its numbers side by side on the sport's scene colour,
-/// 时长 first. Under a post's cover with no seam; on the compose page each cell can be tapped
+/// 时长 first. Under a post's cover with no seam: its top corners square against the cover's
+/// edge and its bottom ones rounded (Tracy, 2026-11-07); on the compose page each cell can be tapped
 /// to strike it out (dimmed, a line through), so it isn't posted, and tapped again to bring it
 /// back.
 public struct ScoreStrip: View {
@@ -168,6 +169,10 @@ public struct ScoreStrip: View {
 
     /// The strip's height, the design's.
     public static let height: Double = 58
+
+    /// Square on top, where it meets the cover; rounded underneath.
+    private static let shape = UnevenRoundedRectangle(
+        bottomLeadingRadius: Radius.card, bottomTrailingRadius: Radius.card, style: .continuous)
 
     public var body: some View {
         HStack(spacing: 0) {
@@ -201,7 +206,7 @@ public struct ScoreStrip: View {
         }
         .frame(height: Self.height)
         .frame(maxWidth: .infinity)
-        .background(Color(role: colors.fill, in: colors.scene))
+        .background(Color(role: colors.fill, in: colors.scene), in: Self.shape)
         .foregroundStyle(Color(role: colors.ink, in: colors.scene))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("post.strip")

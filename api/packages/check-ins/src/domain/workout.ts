@@ -79,8 +79,8 @@ export type RoutePoint = z.infer<typeof RoutePoint>;
 /** The most route points a workout keeps; the phone simplifies the route first. */
 export const ROUTE_POINTS_MAX = 2000;
 
-/** The most photos and the tile together: 3 photos and the tile, which doesn't count toward them. */
-const TILE_POSITION_MAX = 4;
+/** The most photos and tiles together: 3 photos and the map and chart, which don't count toward them. */
+const TILE_POSITION_MAX = 5;
 
 const workoutFields = {
   provider: z
@@ -109,12 +109,26 @@ const workoutFields = {
     .optional()
     .meta({
       description:
-        'Where the map or chart tile sits among the photos, 1 being the cover. Present exactly ' +
-        'when a route or a series is.',
+        'Where the map tile sits among the photos when there is a route, else the chart tile, 1 ' +
+        'being the cover. Present exactly when a route or a series is.',
+    }),
+  chartPosition: z
+    .int()
+    .min(1)
+    .max(TILE_POSITION_MAX)
+    .optional()
+    .meta({
+      description:
+        'Where the chart tile sits among the photos when the map is kept too, 1 being the ' +
+        'cover. Present exactly when both a route and a series are; builds from before show ' +
+        'only the map.',
     }),
 };
 
-/** The route or the chart comes with the tile that shows it, and a tile shows one of them. */
+/**
+ * The route and the chart each come with the tile that shows it: the map at `tilePosition`, the
+ * chart there too when there is no map, else at `chartPosition`.
+ */
 function tileMatches(
   workout: {
     readonly startedAt: Date | string;
@@ -122,6 +136,7 @@ function tileMatches(
     readonly series?: unknown;
     readonly route?: unknown;
     readonly tilePosition?: number | undefined;
+    readonly chartPosition?: number | undefined;
   },
   context: z.RefinementCtx,
 ) {
@@ -132,6 +147,23 @@ function tileMatches(
       code: 'custom',
       path: ['tilePosition'],
       message: 'A tile position goes with a route or a series, and only with one',
+    });
+  }
+  const hasBoth = workout.series !== undefined && workout.route !== undefined;
+  if ((workout.chartPosition !== undefined) !== hasBoth) {
+    context.addIssue({
+      code: 'custom',
+      path: ['chartPosition'],
+      message: 'A chart position goes with a route and a series together, and only then',
+    });
+  } else if (
+    workout.chartPosition !== undefined &&
+    workout.chartPosition === workout.tilePosition
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['chartPosition'],
+      message: 'The map and the chart sit in different places',
     });
   }
   if (new Date(workout.endedAt).getTime() < new Date(workout.startedAt).getTime()) {
@@ -199,6 +231,7 @@ export function storedWorkout(workout: Workout) {
     route:
       workout.route === undefined ? null : JSON.stringify({ version: 1, points: workout.route }),
     tile_position: workout.tilePosition ?? null,
+    chart_position: workout.chartPosition ?? null,
   };
 }
 
@@ -212,6 +245,7 @@ export function workoutFromStored(row: {
   readonly series: unknown;
   readonly route: unknown;
   readonly tile_position: number | null;
+  readonly chart_position: number | null;
 }): Workout {
   const summary = SummaryOfStored.parse(StoredSummary.parse(row.summary));
   const series =
@@ -227,5 +261,6 @@ export function workoutFromStored(row: {
     ...(series === undefined ? {} : { series }),
     ...(route === undefined ? {} : { route }),
     ...(row.tile_position === null ? {} : { tilePosition: row.tile_position }),
+    ...(row.chart_position === null ? {} : { chartPosition: row.chart_position }),
   };
 }

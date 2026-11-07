@@ -10,7 +10,8 @@ public enum ComposedTile: Hashable, Sendable, Identifiable {
     public var id: String {
         switch self {
         case .photo(let photo): photo.id
-        case .workout: "workout"
+        case .workout(.map): "workout.map"
+        case .workout(.chart): "workout.chart"
         }
     }
 
@@ -37,9 +38,11 @@ extension [ComposedTile] {
         compactMap { if case .photo(let photo) = $0 { photo } else { nil } }
     }
 
-    /// Where the workout's tile is, 1 being the cover; nil when it was taken off.
-    public var workoutTilePosition: Int? {
-        firstIndex(where: \.isWorkout).map { $0 + 1 }
+    /// Where the workout's map and chart are, 1 being the cover; one taken off isn't there.
+    public var workoutTilePositions: [WorkoutTile: Int] {
+        var positions: [WorkoutTile: Int] = [:]
+        for (index, tile) in enumerated() { if case .workout(let workout) = tile { positions[workout] = index + 1 } }
+        return positions
     }
 
     /// Moves the tile with `id` to where `target` is, as a drag and drop does: dropped on a tile
