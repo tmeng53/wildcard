@@ -2166,6 +2166,70 @@
           }
         }
       }
+    },
+    "连上 Apple 健康": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect Apple Health"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "連上 Apple 健康"
+          }
+        }
+      }
+    },
+    "已连接 Apple 健康": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Health connected"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已連接 Apple 健康"
+          }
+        }
+      }
+    },
+    "连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "連接"
+          }
+        }
+      }
+    },
+    "Apple 健康": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Health"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 健康"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
