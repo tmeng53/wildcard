@@ -175,9 +175,16 @@ const PlayerCardBody = z
             description:
               'How each day of this week went, Monday first: `trained` with the sport of the ' +
               'day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` ' +
-              'for neither yet. Left out by older servers.',
+              'for neither yet, from only the check-ins shared to this squad. Left out by older ' +
+              'servers.',
           }),
         fuelGoals: fuelGoalsBody.optional(),
+        firstWeek: WeekStart.optional().meta({
+          description:
+            'The Monday of the week they joined, in their time zone, which their 出赛表 counts ' +
+            'as W1. Missing before they save a profile, and from older servers.',
+          example: '2026-10-12',
+        }),
       })
       .optional()
       .meta({
@@ -348,7 +355,11 @@ export function titles(deps: {
           squadPlace: place + 1,
           ...(profile === undefined ? {} : { joinedAt: profile.joinedAt.toISOString() }),
           ...totals,
-          week: { ...week, marks: [...week.marks] },
+          week: {
+            ...week,
+            days: [...week.days],
+            marks: [...week.marks],
+          },
           ...wireBoard(
             { board: boards.get(memberId) ?? [], equipped: profile?.equippedTitle },
             (squad) => squad === squadId,

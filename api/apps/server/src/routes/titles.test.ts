@@ -357,6 +357,8 @@ describe('/me/titles and /me/equipped-title', () => {
   });
 });
 
+const WeekStartText = z.iso.date();
+
 describe('GET /squads/{squadId}/members/{memberId}/card', () => {
   it('shows a squadmate’s card, with award lines only from this squad', async () => {
     const [me, mate, stranger] = [await signUp(), await signUp(), await signUp()];
@@ -380,8 +382,28 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       body: { version: 1, title: '冷面杀手' },
     });
 
+    // Today is a rest day on their plan, so a 练了 makes it a training day of its sport.
+    const now = new Date(Date.now() - 3 * 3_600_000);
+    const monday = new Date(now.getTime() - ((now.getUTCDay() + 6) % 7) * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    const planPath = `/me/weekly-plans/${monday}`;
+    const current = z
+      .object({ days: z.array(z.record(z.string(), z.unknown())) })
+      .parse((await call({ method: 'GET', path: planPath, token: mate.token })).body).days;
+    const restToday = current.map((day, at) =>
+      at === (now.getUTCDay() + 6) % 7 ? { kind: 'rest' } : day,
+    );
+    const rested = await call({
+      method: 'PUT',
+      path: planPath,
+      token: mate.token,
+      body: { version: 1, days: restToday },
+    });
+    expect(rested.status).toBe(200);
+
     // A 练了 sent only to the other squad still counts in their own week.
-    const createdAt = new Date(Date.now() - 60_000);
+    const createdAt = new Date();
     const trained = await call({
       method: 'PUT',
       path: `/check-ins/${randomUUID()}`,
@@ -460,13 +482,21 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     // The back is their 出赛表 for this week only: the plan, the day's 练了 with its sport, and
     // the week's 饮食小目标.
     expect(week.weekStart).toBe(weekStart);
+    // They joined just now: their W1 is this week (or, before 3am on a Monday, the one before).
+    const { firstWeek } = z
+      .object({ week: z.object({ firstWeek: WeekStartText }) })
+      .parse(card.body).week;
+    expect(firstWeek <= weekStart).toBe(true);
+    expect(Date.parse(weekStart) - Date.parse(firstWeek)).toBeLessThanOrEqual(7 * 86_400_000);
     expect(week.days).toHaveLength(7);
     expect(week.marks).toHaveLength(7);
     // The run went only to the other squad, so this squad's card never says what it was.
     expect(week.marks).toStrictEqual(Array.from({ length: 7 }, () => ({ status: 'none' })));
+    // Nor does the plan: the rest day it turned into a run still reads as a rest day here.
+    expect(week.days[weekday]).toStrictEqual({ kind: 'rest' });
     expect(week.fuelGoals).toStrictEqual([{ kind: 'suggested', suggestion: 'water' }]);
     // A 练了 sent to this squad shows with its sport.
-    const later = new Date(createdAt.getTime() + 1_000);
+    const later = new Date();
     const shared = await call({
       method: 'PUT',
       path: `/check-ins/${randomUUID()}`,
@@ -482,9 +512,11 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     });
     expect(shared.status).toBe(201);
     const again = await call({ method: 'GET', path, token: me.token });
-    const marks = z.object({ week: z.object({ marks: z.array(z.unknown()) }) }).parse(again.body)
-      .week.marks;
+    const { marks, days } = z
+      .object({ week: z.object({ marks: z.array(z.unknown()), days: z.array(z.unknown()) }) })
+      .parse(again.body).week;
     expect(marks[weekday]).toStrictEqual({ status: 'trained', sport: 'swim' });
+    expect(days[weekday]).toStrictEqual({ kind: 'train', sport: 'swim' });
     expect(marks.filter((mark) => JSON.stringify(mark) === '{"status":"none"}')).toHaveLength(6);
     expect(z.object({ joinedAt: z.iso.datetime() }).safeParse(card.body).success).toBe(true);
 

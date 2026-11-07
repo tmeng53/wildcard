@@ -175,9 +175,7 @@ public struct APISquadmateCards: SquadmateCards {
                     trainedDays: card.totals.trainedDays, healthyMeals: card.totals.healthyMeals,
                     cheatMeals: card.totals.cheatMeals, disclaimers: card.totals.disclaimers),
                 week: card.week, board: card.board,
-                schedule: card.schedule.flatMap { week in
-                    try? MateSchedule(weekStart: week.weekStart, days: week.days, marks: week.marks, fuel: week.fuel)
-                })
+                schedule: card.schedule)
         }
     }
 }

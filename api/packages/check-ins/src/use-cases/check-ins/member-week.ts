@@ -1,10 +1,12 @@
-import type { MemberId, SquadId } from '../../domain/check-in.js';
+import type { CheckInRecord, LocalDay, MemberId, SquadId } from '../../domain/check-in.js';
 import { markOn, trainedDays, weekOf, type DayMark } from '../../domain/days.js';
 import type { FuelGoals } from '../../domain/fuel-goal.js';
 import {
   localDayAt,
   plannedTrainingDays,
   WeekStart,
+  weekStartOf,
+  type PlanDay,
   type PlanDays,
 } from '../../domain/weekly-plan.js';
 import type { CheckInStore, Clock, MemberCalendar, WeeklyPlanStore } from '../../ports.js';
@@ -23,6 +25,8 @@ export interface MemberWeek {
   /** Seven, Monday first. */
   readonly marks: readonly DayMark[];
   readonly fuelGoals: FuelGoals;
+  /** The Monday of the week they joined, in their time zone: their 出赛表's W1. */
+  readonly firstWeek?: WeekStart;
 }
 
 /**
@@ -59,8 +63,65 @@ export async function memberWeek(
     trainedDays: trainedDays(theirs, week.days),
     plannedDays: plannedTrainingDays(plan.days, { weekDays: week.days, joinedOn }),
     weekStart,
-    days: plan.days,
+    days: await daysSeenBy(deps.plans, {
+      member,
+      squad,
+      weekStart,
+      plan: plan.days,
+      week: week.days,
+      theirs,
+    }),
     marks: week.days.map((day) => markOn(shared, day)),
     fuelGoals: fuelGoals ?? [],
+    ...(joinedOn === undefined ? {} : { firstWeek: weekStartOf(joinedOn) }),
   };
+}
+
+/**
+ * The plan's days as the squad may see them. A 练了 on a planned rest day turns that day into a
+ * training day of its sport, so a day whose first 练了 went elsewhere shows as the plan stood
+ * before it: a rest day still, or, when a later 练了 came to this squad, that one's sport.
+ */
+async function daysSeenBy(
+  plans: WeeklyPlanStore,
+  {
+    member,
+    squad,
+    weekStart,
+    plan,
+    week,
+    theirs,
+  }: {
+    readonly member: MemberId;
+    readonly squad: SquadId;
+    readonly weekStart: WeekStart;
+    readonly plan: PlanDays;
+    readonly week: readonly LocalDay[];
+    readonly theirs: readonly CheckInRecord[];
+  },
+): Promise<PlanDay[]> {
+  const firstTraining = (day: LocalDay, sentHere: boolean) =>
+    theirs
+      .filter((record) => record.day === day && (!sentHere || record.audience.includes(squad)))
+      .flatMap((record) => (record.kind === 'trained' ? [record] : []))
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
+  return Promise.all(
+    plan.map(async (planned, index): Promise<PlanDay> => {
+      const day = week[index];
+      if (planned.kind !== 'train' || day === undefined) return planned;
+      const first = firstTraining(day, false);
+      if (first === undefined || first.audience.includes(squad)) return planned;
+      const before = await findWeeklyPlan(
+        { store: plans },
+        { member, weekStart, asOf: first.createdAt },
+      );
+      if (before.days[index]?.kind !== 'rest') return planned;
+      const sent = firstTraining(day, true);
+      if (sent === undefined) return { kind: 'rest' };
+      const { sport, customSport } = sent.training;
+      return customSport === undefined
+        ? { kind: 'train', sport }
+        : { kind: 'train', sport, customSport };
+    }),
+  );
 }

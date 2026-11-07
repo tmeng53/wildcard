@@ -205,15 +205,19 @@ public struct MateSchedule: Hashable, Sendable {
     public let marks: [DayMark]
     /// Empty when they set none, and then the card says nothing about them.
     public let fuel: [FuelGoal]
+    /// The Monday of the week they joined, in their time zone; nil before they saved a profile.
+    public let firstWeek: LocalDay?
 
-    public init(weekStart: LocalDay, days: [PlanDay], marks: [DayMark], fuel: [FuelGoal]) throws(MeError) {
+    public init(
+        weekStart: LocalDay, days: [PlanDay], marks: [DayMark], fuel: [FuelGoal], firstWeek: LocalDay?
+    ) throws(MeError) {
         guard days.count == WeeklyPlan.dayCount, marks.count == WeeklyPlan.dayCount else { throw .rejected }
-        (self.weekStart, self.days, self.marks, self.fuel) = (weekStart, days, marks, fuel)
+        (self.weekStart, self.days, self.marks, self.fuel, self.firstWeek) = (weekStart, days, marks, fuel, firstWeek)
     }
 
     /// The week's number on the card (W6), the week they joined being W1, as their own 出赛表
-    /// counts it; W1 without the day they joined.
-    public func weekNumber(joinedOn: LocalDay?) -> Int {
-        joinedOn.map { weekStart.weekNumber(since: $0) } ?? 1
+    /// counts it on their calendar; W1 without it.
+    public var weekNumber: Int {
+        firstWeek.map { weekStart.weekNumber(since: $0) } ?? 1
     }
 }

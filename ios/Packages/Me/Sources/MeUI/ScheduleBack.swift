@@ -73,7 +73,7 @@ struct ScheduleBack: View {
 
     private var week: some View {
         HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
-            Text(verbatim: "W\(schedule.weekNumber(joinedOn: joinedOn))")
+            Text(verbatim: "W\(schedule.weekNumber)")
                 .typeStyle(TypeRamp.scoreWeek)
                 .foregroundStyle(ink)
                 .fixedSize()
@@ -173,10 +173,6 @@ struct ScheduleBack: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityIdentifier("me.cardBadges")
-    }
-
-    private var joinedOn: LocalDay? {
-        face.joinedAt.map { LocalDay(at: $0, in: .current) }
     }
 }
 #endif

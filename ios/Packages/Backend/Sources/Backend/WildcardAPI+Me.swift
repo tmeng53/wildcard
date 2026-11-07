@@ -1,6 +1,7 @@
 import APIContract
 import Contracts
 import Foundation
+import MeDomain
 import ScheduleDomain
 
 // The member's own settings and records beyond the profile: lifetime counts, the push switch,
@@ -64,7 +65,7 @@ extension WildcardAPI {
                     }),
                 week: card.week.map { WeekCount(trainedDays: $0.trainedDays, plannedDays: $0.plannedDays) },
                 board: try TitleBoard(card),
-                schedule: try card.week.flatMap(MateWeek.init))
+                schedule: try card.week.flatMap(MateSchedule.init))
         }
     }
 
@@ -191,23 +192,19 @@ public struct SquadmateCard: Hashable, Sendable {
     public let week: WeekCount?
     public let board: TitleBoard
     /// Their 出赛表 this week; nil from a server that doesn't send it.
-    public let schedule: MateWeek?
+    public let schedule: MateSchedule?
 }
 
-/// A squadmate's 出赛表 this week as the API sends it on their card.
-public struct MateWeek: Hashable, Sendable {
-    public let weekStart: LocalDay
-    public let days: [PlanDay]
-    /// Seven, Monday first: the sport of the day's 练了, a 请假条, or neither.
-    public let marks: [DayMark]
-    public let fuel: [FuelGoal]
-
-    /// Nil from a server that sends only the week's count.
+extension MateSchedule {
+    /// A squadmate's 出赛表 this week as the API sends it on their card; nil from a server that
+    /// sends only the week's count.
     init?(_ wire: Components.Schemas.PlayerCard.WeekPayload) throws(ContractsError) {
         guard let start = wire.weekStart, let days = wire.days, let marks = wire.marks else { return nil }
-        weekStart = try LocalDay(start)
-        self.days = try [PlanDay](wire: days)
-        self.marks = try marks.map { mark throws(ContractsError) -> DayMark in
+        let planned = try [PlanDay](wire: days)
+        guard planned.count == WeeklyPlan.dayCount, marks.count == WeeklyPlan.dayCount else {
+            throw .planLength(planned.count)
+        }
+        let read = try marks.map { mark throws(ContractsError) -> DayMark in
             switch mark.status {
             case .trained:
                 guard let activity = try Activity(mark) else { throw .strayCustomSport }
@@ -217,6 +214,14 @@ public struct MateWeek: Hashable, Sendable {
             }
         }
         // A goal this build can't read is left out rather than the whole week.
-        fuel = (wire.fuelGoals ?? []).compactMap { try? FuelGoal($0) }
+        let fuel = (wire.fuelGoals ?? []).compactMap { try? FuelGoal($0) }
+        let weekStart = try LocalDay(start)
+        let first = try wire.firstWeek.map { day throws(ContractsError) in try LocalDay(day) }
+        // Seven of each, checked above, is all it refuses.
+        guard
+            let schedule = try? MateSchedule(
+                weekStart: weekStart, days: planned, marks: read, fuel: fuel, firstWeek: first)
+        else { throw .planLength(planned.count) }
+        self = schedule
     }
 }

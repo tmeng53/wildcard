@@ -8818,12 +8818,16 @@ extension Components {
                 public var weekStart: Swift.String?
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/days`.
                 public var days: Components.Schemas.PlanDays?
-                /// How each day of this week went, Monday first: `trained` with the sport of the day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet. Left out by older servers.
+                /// How each day of this week went, Monday first: `trained` with the sport of the day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet, from only the check-ins shared to this squad. Left out by older servers.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/marks`.
                 public var marks: [Components.Schemas.DayMark]?
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/fuelGoals`.
                 public var fuelGoals: Components.Schemas.FuelGoals?
+                /// The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/firstWeek`.
+                public var firstWeek: Swift.String?
                 /// Creates a new `WeekPayload`.
                 ///
                 /// - Parameters:
@@ -8831,15 +8835,17 @@ extension Components {
                 ///   - plannedDays: Days their plan trains this week, from the day they joined on.
                 ///   - weekStart: This week’s Monday, in their time zone. Left out by older servers.
                 ///   - days:
-                ///   - marks: How each day of this week went, Monday first: `trained` with the sport of the day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet. Left out by older servers.
+                ///   - marks: How each day of this week went, Monday first: `trained` with the sport of the day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet, from only the check-ins shared to this squad. Left out by older servers.
                 ///   - fuelGoals:
+                ///   - firstWeek: The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.
                 public init(
                     trainedDays: Swift.Int,
                     plannedDays: Swift.Int,
                     weekStart: Swift.String? = nil,
                     days: Components.Schemas.PlanDays? = nil,
                     marks: [Components.Schemas.DayMark]? = nil,
-                    fuelGoals: Components.Schemas.FuelGoals? = nil
+                    fuelGoals: Components.Schemas.FuelGoals? = nil,
+                    firstWeek: Swift.String? = nil
                 ) {
                     self.trainedDays = trainedDays
                     self.plannedDays = plannedDays
@@ -8847,6 +8853,7 @@ extension Components {
                     self.days = days
                     self.marks = marks
                     self.fuelGoals = fuelGoals
+                    self.firstWeek = firstWeek
                 }
                 public enum CodingKeys: String, CodingKey {
                     case trainedDays
@@ -8855,6 +8862,7 @@ extension Components {
                     case days
                     case marks
                     case fuelGoals
+                    case firstWeek
                 }
             }
             /// Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.
