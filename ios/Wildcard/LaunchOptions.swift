@@ -259,6 +259,15 @@ enum LaunchOptions {
 
     /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted`,
     /// `-uitest-coach` or `-uitest-together` a suite emptied at launch.
+    /// Apple Health's sample day starts afresh on each launch: nothing put away from the home's
+    /// card, every number shared.
+    static var healthDefaults: UserDefaults {
+        let suite = "uitest-health"
+        guard healthSample, let defaults = UserDefaults(suiteName: suite) else { return todayDefaults }
+        defaults.removePersistentDomain(forName: suite)
+        return defaults
+    }
+
     static var todayDefaults: UserDefaults {
         let suite = "uitest-today"
         guard pattedMe || sidelineCoach || coachNote || together != nil, let defaults = UserDefaults(suiteName: suite)

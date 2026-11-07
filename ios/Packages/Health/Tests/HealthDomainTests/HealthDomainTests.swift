@@ -25,7 +25,10 @@ private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920
         try LocalDay("2026-11-06"), in: newYork, posted: [late.id])
     #expect(today.map(\.imported.id.id) == ["C", "B", "A"])
     #expect(today.map(\.isPosted) == [true, false, false])
-    #expect(today.newestToPost?.id.id == "B")
+    #expect(today.newestToPost()?.id.id == "B")
+    // Put away from the home's card, B gives way to the one before it, and then to none.
+    #expect(today.newestToPost(skipping: [today[1].imported.id])?.id.id == "A")
+    #expect(today.newestToPost(skipping: [today[1].imported.id, today[2].imported.id]) == nil)
 }
 
 @Test func minutesRoundAndStayInTheAPIsRange() throws {

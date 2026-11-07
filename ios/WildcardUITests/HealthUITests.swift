@@ -1,16 +1,17 @@
 import XCTest
 
 /// Posting a 训练 from Apple Health on the sample day (`-health-sample`: a ride a minute ago,
-/// yoga, a swim, strength and a run), the way a member does: the home's card, 发一条, the chips
+/// yoga, a swim, strength and a run), the way a member does: the home's card, 打卡 and its ✕, the chips
 /// and the 成绩条 on the compose page, a number struck out, the post on 动态; and 设置 › Apple 健康.
 /// Screenshots go beside the approved boards (T1–T8, U1–U9).
 @MainActor
 final class HealthUITests: XCTestCase {
     private static let wait: TimeInterval = 30
 
-    /// The card under the squad card offers the newest workout; 发一条 opens the 训练 filled from
+    /// The card under the squad card offers the newest workout; 打卡 opens the 训练 filled from
     /// it, its map first in the row. Picking another chip switches, tapping it again lets it go
-    /// and the minutes come back; a struck number stays off the post.
+    /// and the minutes come back; a struck number stays off the post. Back home, the card's ✕
+    /// puts its workout away and the card offers the one before.
     func testPostFromTheHomeCard() {
         let app = launch()
         let card = app.descendants(matching: .any).matching(identifier: "today.health").firstMatch
@@ -21,7 +22,7 @@ final class HealthUITests: XCTestCase {
 
         app.buttons["today.health.post"].tap()
         let score = app.descendants(matching: .any).matching(identifier: "compose.score").firstMatch
-        XCTAssertTrue(score.waitForExistence(timeout: Self.wait), "发一条 didn't open the 训练 with its 成绩条")
+        XCTAssertTrue(score.waitForExistence(timeout: Self.wait), "打卡 didn't open the 训练 with its 成绩条")
         let map = app.buttons["compose.workoutTile"]
         XCTAssertTrue(map.exists, "the ride's map isn't in the photo row")
         XCTAssertFalse(app.buttons["compose.minutes.45"].exists, "the minutes show beside the 成绩条")
@@ -63,6 +64,16 @@ final class HealthUITests: XCTestCase {
         keepScreenshot(named: "73-health-compose-struck")
         app.buttons["compose.post"].tap()
         XCTAssertTrue(score.waitForNonExistence(timeout: Self.wait), "the post didn't go out")
+
+        // The ✕ puts the ride away from the card, which offers the next workout instead.
+        let summary = app.descendants(matching: .any).matching(identifier: "today.health.summary").firstMatch
+        XCTAssertTrue(summary.waitForExistence(timeout: Self.wait), "no Apple Health card after posting")
+        let offered = summary.label
+        app.buttons["today.health.dismiss"].tap()
+        let next = NSPredicate(format: "label != %@", offered)
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [expectation(for: next, evaluatedWith: summary)], timeout: Self.wait), .completed,
+            "the ✕ didn't put \(offered) away")
     }
 
     /// 设置 › Apple 健康: connected, the switches for what a post carries, and where iOS keeps

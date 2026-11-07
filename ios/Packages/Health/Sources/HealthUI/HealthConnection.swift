@@ -15,6 +15,8 @@ public final class HealthConnection {
     }
     /// The workouts read last, newest first; `today(_:in:posted:)` picks today's.
     public private(set) var recent: [ImportedWorkout] = []
+    /// The workouts put away from the home's card on this phone; the card offers the next one.
+    public private(set) var putAway: Set<WorkoutSource>
 
     @ObservationIgnored private let library: any HealthLibrary
     @ObservationIgnored private let defaults: UserDefaults
@@ -27,6 +29,19 @@ public final class HealthConnection {
         sharing =
             defaults.data(forKey: Self.sharingKey).flatMap { try? JSONDecoder().decode(HealthSharing.self, from: $0) }
             .flatMap { $0.version == 1 ? $0 : nil } ?? HealthSharing()
+        putAway = Set(
+            defaults.data(forKey: Self.putAwayKey).flatMap { try? JSONDecoder().decode(PutAway.self, from: $0) }
+                .flatMap { $0.version == 1 ? $0.workouts : nil } ?? [])
+    }
+
+    /// Takes `workout` off the home's card for good on this phone; it can still be posted from 打卡.
+    public func putAway(_ workout: WorkoutSource) {
+        // Only the last few matter: a card offers today's workouts alone.
+        let kept = Array(putAway.filter { source in recent.contains { $0.id == source } }) + [workout]
+        putAway = Set(kept)
+        if let data = try? JSONEncoder().encode(PutAway(version: 1, workouts: kept)) {
+            defaults.set(data, forKey: Self.putAwayKey)
+        }
     }
 
     public var isAvailable: Bool { library.isAvailable }
@@ -59,4 +74,11 @@ public final class HealthConnection {
     }
 
     private static let sharingKey = "health.sharing"
+    private static let putAwayKey = "health.putAway"
+
+    /// What `putAway` keeps on the phone.
+    private struct PutAway: Codable {
+        let version: Int
+        let workouts: [WorkoutSource]
+    }
 }
