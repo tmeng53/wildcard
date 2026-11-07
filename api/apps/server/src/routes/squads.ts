@@ -14,6 +14,7 @@ import {
 } from '@wildcard/squads';
 import type { CheckIns } from '@wildcard/check-ins';
 import type { Members } from '@wildcard/members';
+import { NEW_YORK, isKnownTimeZone, mondayOf, wallClockAt } from '@wildcard/time-zones';
 
 import { bodyVersion } from '../body-version.js';
 import type { RateLimit, VerifyToken } from '../ports.js';
@@ -430,15 +431,23 @@ export function squads(deps: {
     })
     .openapi(create, async (c) => {
       const creator = caller(c.var.caller.userId);
-      const { name, daysPerMember, timeZone } = c.req.valid('json');
+      const { name, daysPerMember } = c.req.valid('json');
+      // Builds from before 小队时区 send none: the creator's own clock.
+      const timeZone =
+        c.req.valid('json').timeZone ??
+        (await deps.members.findProfile(creator))?.timeZone ??
+        NEW_YORK;
       const { squad, created } = await deps.squads.create({
         id: c.req.valid('param').squadId,
         creator,
         name,
         daysPerMember,
-        // Builds from before 小队时区 send none: the creator's own clock.
-        timeZone: timeZone ?? (await deps.members.findProfile(creator))?.timeZone,
+        timeZone,
         week: await deps.checkIns.weekStartNow(creator),
+        // The zone counts from the squad's week on its own clock, so it holds from this moment.
+        timeZoneWeek: isKnownTimeZone(timeZone)
+          ? mondayOf(wallClockAt(new Date(), timeZone).day)
+          : undefined,
       });
       return created ? c.json(wire(squad), 201) : c.json(wire(squad), 200);
     })

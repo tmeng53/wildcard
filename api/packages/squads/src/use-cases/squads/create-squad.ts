@@ -27,8 +27,13 @@ export interface CreateSquadInput {
   readonly daysPerMember?: DaysPerMember | undefined;
   /** The squad's time zone (小队时区), which the creator picks; New York when left out. */
   readonly timeZone?: string | undefined;
-  /** The creator's week now (its Monday): the goal and the zone count from it. */
+  /** The creator's week now (its Monday): the goal counts from it. */
   readonly week: SceneWeek;
+  /**
+   * The squad's week now on its own zone's clock (its Monday), which the zone counts from, so
+   * the squad keeps it from the moment it is made; `week` when left out.
+   */
+  readonly timeZoneWeek?: SceneWeek | undefined;
 }
 
 export interface CreatedSquad {
@@ -59,7 +64,15 @@ export async function createSquad(
     readonly inviteCodes: InviteCodes;
     readonly aiConsent: AiConsentCheck;
   },
-  { id, creator, name, daysPerMember, timeZone = NEW_YORK, week }: CreateSquadInput,
+  {
+    id,
+    creator,
+    name,
+    daysPerMember,
+    timeZone = NEW_YORK,
+    week,
+    timeZoneWeek = week,
+  }: CreateSquadInput,
 ): Promise<CreatedSquad> {
   // A retry of a squad already made is answered as before, whatever the consent is now.
   if ((await store.find(id)) !== undefined)
@@ -73,7 +86,7 @@ export async function createSquad(
       creator,
       inviteCode: inviteCodes(),
       goal: { daysPerMember: daysPerMember ?? DEFAULT_DAYS_PER_MEMBER, week },
-      timeZone,
+      timeZone: { zone: timeZone, week: timeZoneWeek },
     });
     if (outcome.created) return { squad: await found(store, id), created: true };
     if (outcome.refused === 'idTaken')

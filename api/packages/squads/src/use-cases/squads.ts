@@ -35,8 +35,16 @@ export interface SquadAt {
 
 /** Squads: creating one, joining by invite code, leaving, and who is in each. */
 export interface Squads {
-  /** `week` is the creator's week now (its Monday, `YYYY-MM-DD`): the goal counts from it. */
-  create(input: Omit<CreateSquadInput, 'week'> & { week: string }): Promise<CreatedSquad>;
+  /**
+   * `week` is the creator's week now (its Monday, `YYYY-MM-DD`): the goal counts from it;
+   * `timeZoneWeek` the squad's week now on its zone's clock, which the zone counts from.
+   */
+  create(
+    input: Omit<CreateSquadInput, 'week' | 'timeZoneWeek'> & {
+      week: string;
+      timeZoneWeek?: string | undefined;
+    },
+  ): Promise<CreatedSquad>;
   join(input: JoinSquadInput): Promise<JoinedSquad>;
   previewInvite(input: { inviteCode: InviteCode; viewer: MemberId }): Promise<InvitePreview>;
   /** The squad as anyone holding its invite code may see it, signed in or not. */
@@ -148,7 +156,13 @@ export function createSquads(deps: {
   readonly aiConsent: AiConsentCheck;
 }): Squads {
   return {
-    create: (input) => createSquad(deps, { ...input, week: SceneWeek.parse(input.week) }),
+    create: (input) =>
+      createSquad(deps, {
+        ...input,
+        week: SceneWeek.parse(input.week),
+        timeZoneWeek:
+          input.timeZoneWeek === undefined ? undefined : SceneWeek.parse(input.timeZoneWeek),
+      }),
     join: (input) => joinSquad(deps, input),
     previewInvite: (input) => previewInvite(deps, input),
     previewPublicInvite: (inviteCode) => previewPublicInvite(deps, inviteCode),

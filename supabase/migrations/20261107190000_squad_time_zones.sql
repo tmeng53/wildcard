@@ -3,8 +3,8 @@
 -- day, their 6pm push, their coach's note) keeps their own profile's zone. Each row is one setting
 -- and the week it counts from (a Monday); the zone of a week is the newest row from that week or
 -- before, and a squad with none keeps New York, as every squad did before. A squad's first row
--- counts from the week it was made, a captain's change from the next week, so a week never
--- changes its clock while the squad plays it. Never changed: the table is its own log.
+-- counts from the week it was made on its own clock, a captain's change from the next week, so a
+-- week never changes its clock while the squad plays it. Never changed: the table is its own log.
 create table public.squad_time_zones (
   id bigint generated always as identity primary key,
   squad_id uuid not null references public.squads (id) on delete cascade,
@@ -57,9 +57,12 @@ create trigger squad_time_zones_no_truncate
 alter table public.squad_time_zones enable row level security;
 
 -- Squads made before this keep New York through this week, then follow their captain's own zone
--- from Monday 2026-11-09, as if the captain had set it now.
+-- from next Monday (New York's), as if the captain had set it now.
 insert into public.squad_time_zones (squad_id, time_zone, week_start)
-select squads.id, profiles.time_zone, date '2026-11-09'
+select
+  squads.id,
+  profiles.time_zone,
+  date_trunc('week', now() at time zone 'America/New_York')::date + 7
 from public.squads
 join public.profiles on profiles.member_id = squads.captain_id
 where profiles.time_zone <> 'America/New_York';

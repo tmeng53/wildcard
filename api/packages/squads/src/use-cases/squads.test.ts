@@ -562,6 +562,26 @@ describe('a squad’s time zone', () => {
     );
   });
 
+  it('keeps its zone from the moment it is made, when the creator’s week is ahead of it', async () => {
+    // Made Monday 01:00 in Taipei (2026-11-08T17:00Z) on Los Angeles, where it is still Sunday.
+    const made = new Date('2026-11-08T17:00:00Z');
+    const cy = await newMember();
+    const { squad } = await squads.create({
+      week: '2026-11-09',
+      timeZoneWeek: '2026-11-02',
+      id: SquadId.parse(randomUUID()),
+      creator: cy,
+      name: name('洛杉矶队'),
+      timeZone: 'America/Los_Angeles',
+    });
+    expect(await squads.timeZonesAt([squad.id], made)).toStrictEqual(
+      new Map([[squad.id, 'America/Los_Angeles']]),
+    );
+    expect(await squads.timeZonesFor([squad.id], '2026-11-09')).toStrictEqual(
+      new Map([[squad.id, 'America/Los_Angeles']]),
+    );
+  });
+
   it('refuses a zone that doesn’t exist', async () => {
     const ann = await newMember();
     await expect(

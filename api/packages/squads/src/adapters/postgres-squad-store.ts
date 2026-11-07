@@ -309,8 +309,8 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
             .insertInto('squad_time_zones')
             .values({
               squad_id: id,
-              time_zone: timeZone,
-              week_start: goal.week,
+              time_zone: timeZone.zone,
+              week_start: timeZone.week,
               set_by: creator,
             })
             .execute();

@@ -18,8 +18,8 @@ export interface NewSquad {
   readonly creator: MemberId;
   /** The squad's weekly goal, counting from the week it is made: the creator's week. */
   readonly goal: { readonly daysPerMember: DaysPerMember; readonly week: SceneWeek };
-  /** The squad's time zone, counting from the same week. */
-  readonly timeZone: string;
+  /** The squad's time zone, counting from the squad's week now on that zone's own clock. */
+  readonly timeZone: { readonly zone: string; readonly week: SceneWeek };
 }
 
 /**

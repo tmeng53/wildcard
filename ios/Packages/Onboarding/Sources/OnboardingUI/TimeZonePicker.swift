@@ -91,10 +91,13 @@ struct TimeZonePicker: View {
         }
     }
 
-    /// The picked zone first, then every one the search finds.
+    /// The picked zone first, even one the list leaves out (a phone on `UTC`), then every one the
+    /// search finds.
     private var shown: [ZoneName] {
         let found = zones.filter { $0.matches(query) }
-        guard query.isEmpty, let current = found.first(where: { $0.id == selected }) else { return found }
+        guard query.isEmpty, !zones.isEmpty else { return found }
+        let current =
+            found.first { $0.id == selected } ?? ZoneName(selected, locale: AppLanguage.current.locale)
         return [current] + found.filter { $0.id != selected }
     }
 }
