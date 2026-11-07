@@ -67,6 +67,28 @@
         }
       }
     },
+    "NSHealthUpdateUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wildcard never writes anything to Apple Health. It only reads your workouts."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wildcard 不会往 Apple 健康里写入任何数据，只读取你的运动。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wildcard 不會往 Apple 健康裡寫入任何資料，只讀取你的運動。"
+          }
+        }
+      }
+    },
     "NSPhotoLibraryAddUsageDescription" : {
       "localizations" : {
         "en" : {
