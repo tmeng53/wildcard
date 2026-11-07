@@ -8,6 +8,7 @@
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>zh-Hans</string>
+		<string>zh-Hant</string>
 		<string>en</string>
 	</array>
 	<!-- Where the hosted backend is, as in the app's Info.plist: reacting goes through our API. -->
