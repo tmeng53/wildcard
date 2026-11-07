@@ -350,9 +350,6 @@ public struct Ending: Hashable, Sendable {
     /// The squad trained at least as many days as it planned.
     public var isHit: Bool { done >= plan }
 
-    /// Days still missing, for the line without the AI: 「还差 3 次」.
-    public var shortBy: Int { max(plan - done, 0) }
-
     /// How full the bar is, from 0 to 1.
     public var fraction: Double { plan > 0 ? min(Double(done) / Double(plan), 1) : 1 }
 }
