@@ -137,7 +137,8 @@ public struct PostBlock: View {
         case .trained: activity?.cardName ?? Text("训练", bundle: .module)
         case .healthyMeal: Text("健康餐", bundle: .module)
         case .cheatMeal: Text("放纵餐", bundle: .module)
-        case .disclaimer: restDay ? Text("休息", bundle: .module) : Text("请假条", bundle: .module)
+        case .disclaimer:
+            if restDay { Text("休息", bundle: .module) } else { Text("请假条", bundle: .module) }
         }
     }
 
