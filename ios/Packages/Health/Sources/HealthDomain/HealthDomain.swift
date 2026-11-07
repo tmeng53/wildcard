@@ -51,13 +51,14 @@ public struct HealthSharing: Hashable, Sendable, Codable {
         return cells
     }
 
-    /// Whether a new post from `workout` starts with its tile: the map follows 路线地图, a lap
-    /// chart 趟数 and a heart-rate chart 心率.
-    public func keepsTile(of workout: Workout) -> Bool {
-        switch workout.tile {
-        case .map: route
-        case .chart: workout.series?.laps?.isEmpty == false ? laps : heartRate
-        case nil: false
+    /// The tiles a new post from `workout` starts with: the map follows 路线地图, a lap chart
+    /// 趟数 and a heart-rate chart 心率.
+    public func keptTiles(of workout: Workout) -> [WorkoutTile] {
+        workout.tiles.filter { tile in
+            switch tile {
+            case .map: route
+            case .chart: workout.series?.laps?.isEmpty == false ? laps : heartRate
+            }
         }
     }
 }

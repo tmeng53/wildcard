@@ -229,3 +229,21 @@ func datesKeepEveryMillisecond(millis: Int64) throws {
         try decode(saved(#""kind":"trained","training":{"sport":"run","minutes":32,\#(fields)}"#))
             == checkIn(.trained(training)))
 }
+
+@Test func aMapAndAChartGoWithTheirPlacesBothWays() throws {
+    let workout = Workout(
+        source: WorkoutSource(provider: WorkoutSource.appleHealth, id: "A2"),
+        startedAt: Timestamp(millisecondsSince1970: 1_760_743_680_000),
+        endedAt: Timestamp(millisecondsSince1970: 1_760_745_600_000), summary: WorkoutSummary(durationSec: 1920),
+        series: WorkoutSeries(heartRate: [HeartRatePoint(seconds: 0, bpm: 90), HeartRatePoint(seconds: 60, bpm: 130)]),
+        route: [RoutePoint(lat: 1, lon: 2), RoutePoint(lat: 1, lon: 3)], tilePosition: 2, chartPosition: 1)
+    let training = Training(activity: .sport("run"), minutes: try WorkoutMinutes(32), workout: workout)
+    let fields =
+        #""workout":{"chartPosition":1,"endedAt":"2025-10-18T00:00:00.000Z","provider":"apple_health","providerWorkoutId":"A2","route":[{"lat":1,"lon":2},{"lat":1,"lon":3}],"series":{"hr":[{"bpm":90,"t":0},{"bpm":130,"t":60}]},"startedAt":"2025-10-17T23:28:00.000Z","summary":{"durationSec":1920},"tilePosition":2}"#
+    #expect(
+        try encode(try checkIn(.trained(training)).draft)
+            .hasSuffix(#""training":{"minutes":32,"sport":"run",\#(fields)},"version":1}"#))
+    #expect(
+        try decode(saved(#""kind":"trained","training":{"sport":"run","minutes":32,\#(fields)}"#))
+            == checkIn(.trained(training)))
+}
