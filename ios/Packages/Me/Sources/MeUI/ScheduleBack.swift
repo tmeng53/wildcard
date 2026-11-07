@@ -153,7 +153,8 @@ struct ScheduleBack: View {
                     .foregroundStyle(ink)
                 ForEach(face.board.titles.prefix(Self.badgesShown)) { title in
                     TitleBadgeView(
-                        shape: title.badge.shape, colour: title.badge.colour, glyph: title.badge.glyph,
+                        shape: title.badge.shape, colour: title.badge.colour, tone: title.badge.tone,
+                        glyph: title.badge.glyph,
                         size: Self.smallBadge)
                 }
                 Spacer(minLength: Space.xs)
