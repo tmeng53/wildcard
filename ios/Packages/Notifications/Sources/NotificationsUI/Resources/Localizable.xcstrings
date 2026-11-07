@@ -33,18 +33,18 @@
         }
       }
     },
-    "加载失败，点一下再试": {
+    "再试一次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couldn't load. Tap to try again"
+            "value": "Try again"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "載入失敗，點一下再試"
+            "value": "再試一次"
           }
         }
       }
@@ -81,66 +81,66 @@
         }
       }
     },
-    "教练 %@ 回复了你的打卡": {
+    "教练 %@ 回复了你的动态": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Coach %@ replied to your check-in"
+            "value": "Coach %@ replied to your post"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "教練 %@ 回覆了你的打卡"
+            "value": "教練 %@ 回覆了你的動態"
           }
         }
       }
     },
-    "教练 %@ 给你的打卡回了 %@": {
+    "教练 %@ 给你的动态回了 %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Coach %1$@ left %2$@ on your check-in"
+            "value": "Coach %1$@ left %2$@ on your post"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "教練 %1$@ 給你的打卡回了 %2$@"
+            "value": "教練 %1$@ 給你的動態回了 %2$@"
           }
         }
       }
     },
-    "教练回复了你的打卡": {
+    "教练回复了你的动态": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your coach replied to your check-in"
+            "value": "Your coach replied to your post"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "教練回覆了你的打卡"
+            "value": "教練回覆了你的動態"
           }
         }
       }
     },
-    "教练给你的打卡回了 %@": {
+    "教练给你的动态回了 %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your coach left %@ on your check-in"
+            "value": "Your coach left %@ on your post"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "教練給你的打卡回了 %@"
+            "value": "教練給你的動態回了 %@"
           }
         }
       }
@@ -305,18 +305,18 @@
         }
       }
     },
-    "队友评论了你的打卡": {
+    "队友评论了你的动态": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A teammate commented on your check-in"
+            "value": "A teammate commented on your post"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "隊友評論了你的打卡"
+            "value": "隊友評論了你的動態"
           }
         }
       }
