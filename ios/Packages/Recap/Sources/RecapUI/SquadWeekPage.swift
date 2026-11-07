@@ -14,7 +14,8 @@ struct SquadWeekPage: View {
     let week: RecapDomain.SquadWeek
     let page: PageContext
     @Environment(\.sceneTheme) private var theme
-    /// Everyone's head, made once.
+    /// Everyone's head, made once as the page appears (not in `init`: the page is made anew on
+    /// every frame of its clock), so no card shows a blank one.
     @State private var heads: [MemberID: CharacterPlayer] = [:]
 
     var body: some View {
@@ -25,11 +26,8 @@ struct SquadWeekPage: View {
             summary(cards: 2)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .task(id: week) {
-            heads = Dictionary(
-                week.members.compactMap { member in page.cast.player(of: member.member).map { (member.member, $0) } },
-                uniquingKeysWith: { first, _ in first })
-        }
+        .onAppear(perform: makeHeads)
+        .onChange(of: week, makeHeads)
     }
 
     private func summary(cards: Int) -> some View {
@@ -64,6 +62,12 @@ struct SquadWeekPage: View {
         }
         .padding(.horizontal, Space.l)
         .foregroundStyle(Color(role: .fgOnScene, in: theme))
+    }
+
+    private func makeHeads() {
+        heads = Dictionary(
+            week.members.compactMap { member in page.cast.player(of: member.member).map { (member.member, $0) } },
+            uniquingKeysWith: { first, _ in first })
     }
 
     private func nickname(_ member: MemberID) -> String { page.cast[member]?.nickname ?? "" }

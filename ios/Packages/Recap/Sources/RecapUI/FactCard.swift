@@ -59,7 +59,8 @@ struct FactCard: View {
                 note
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .lineLimit(1)
+                    // Beside heads the names get a second line rather than be cut off.
+                    .lineLimit(people.isEmpty ? 1 : 2)
                     .minimumScaleFactor(0.8)
             }
         }
@@ -124,7 +125,7 @@ struct FactCard: View {
             } else {
                 // 「Tracy，Fran」: who trained, beside their heads.
                 Text(
-                    verbatim: people.map(nickname).joined(
+                    verbatim: people.map(nickname).filter { !$0.isEmpty }.joined(
                         separator: String(localized: "，", bundle: .module.inAppLanguage)))
             }
         case .streak(let days, let from, let member):
