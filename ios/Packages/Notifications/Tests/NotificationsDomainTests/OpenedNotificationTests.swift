@@ -23,6 +23,8 @@ import Testing
 
 @Test func theDailyPushOpensTodayWhereItsPatsPlayAgain() {
     #expect(OpenedNotification(category: "dailyProgress", event: [:]) == .open(.pats))
+    // A morning note's push opens 今天 on the newest waiting note.
+    #expect(OpenedNotification(category: "coachNote", event: ["note": "7"]) == .open(.waitingCoachNote))
 }
 
 @Test func aPushOpensWhereItsNoticeInTheBellGoes() throws {

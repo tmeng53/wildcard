@@ -25,8 +25,9 @@ extension TodayStore {
         coachNotes = found.filter { !putAway.contains($0.id) }
     }
 
-    /// The note on 今天 now, if any: one shown again from 通知, else the first waiting.
-    public var coachNote: CoachMemberNote? { noteAgain ?? coachNotes.first }
+    /// The note on 今天 now, if any: one shown again from 通知, else the first waiting once the
+    /// member opened it. None shows by itself.
+    public var coachNote: CoachMemberNote? { noteAgain ?? (showsWaitingNote ? coachNotes.first : nil) }
 
     /// 收下: the note on 今天 goes, the next (if any) follows, and the server remembers it so no
     /// phone shows it again. When the server can't be reached, it stays put away on this phone
@@ -34,6 +35,7 @@ extension TodayStore {
     public func putAwayNote() async {
         guard let note = coachNote else { return }
         noteAgain = nil
+        showsWaitingNote = false
         coachNotes.removeAll { $0.id == note.id }
         putAway.insert(note.id)
         try? await backend.putAway(note)
@@ -42,6 +44,14 @@ extension TodayStore {
     /// Shows a note again from 通知, before any other waiting.
     public func showAgain(_ note: CoachMemberNote) {
         noteAgain = note
+    }
+
+    /// Whether a note waits unread while none is open, for the dot on the coach's phone.
+    public var hasWaitingNote: Bool { coachNote == nil && !coachNotes.isEmpty }
+
+    /// Shows the newest waiting note, as soon as it is loaded: a tap on the coach or on its push.
+    public func showWaitingNote() {
+        showsWaitingNote = true
     }
 
     /// The 战术板 line the coach says on the home now, while its day lasts.

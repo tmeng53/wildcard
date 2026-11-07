@@ -52,7 +52,7 @@ private func memberNote(_ id: Int, in squad: SquadID, _ text: String) throws -> 
     CoachMemberNote(id: id, squad: squad, day: try LocalDay("2026-11-03"), text: text, coach: maotou)
 }
 
-@MainActor @Test func showsTheMorningNoteUntilPutAway() async throws {
+@MainActor @Test func showsTheMorningNoteOnlyWhenOpenedUntilPutAway() async throws {
     let backend = ScriptedBackend(server: sampleHome())
     // A squad the member isn't in is never asked.
     await backend.set(notes: [
@@ -60,9 +60,17 @@ private func memberNote(_ id: Int, in squad: SquadID, _ text: String) throws -> 
     ])
     let today = store(backend)
     await today.load()
+    // Waiting, it doesn't show by itself: the coach's phone shows its dot.
+    #expect(today.coachNotes.map(\.id) == [1])
+    #expect(today.coachNote == nil)
+    #expect(today.hasWaitingNote)
+    // A tap on the coach or its push opens it, and the dot goes while it is open.
+    today.showWaitingNote()
     #expect(today.coachNote?.text == "今天练力量")
+    #expect(!today.hasWaitingNote)
     await today.putAwayNote()
     #expect(today.coachNote == nil)
+    #expect(!today.hasWaitingNote)
     #expect(await backend.putAway == [1])
     // Loaded again, a put-away note stays away.
     await today.load()
@@ -81,6 +89,7 @@ private func memberNote(_ id: Int, in squad: SquadID, _ text: String) throws -> 
     await backend.set(notes: [try memberNote(1, in: squadID, "今天练力量")])
     let today = store(backend)
     await today.load()
+    today.showWaitingNote()
     await backend.set(failure: .notSent)
     await today.putAwayNote()
     await backend.set(failure: nil)

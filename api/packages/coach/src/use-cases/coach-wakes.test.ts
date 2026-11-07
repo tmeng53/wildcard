@@ -161,6 +161,7 @@ function wakes(
     answered,
     photoUrls,
     memberFacts,
+    wantNotes,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
@@ -170,6 +171,7 @@ function wakes(
     readonly answered?: CoachAnswered;
     readonly photoUrls?: CoachPhotoUrls;
     readonly memberFacts?: CoachMemberFacts;
+    readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -196,6 +198,7 @@ function wakes(
     ...(answered === undefined ? {} : { answered }),
     ...(photoUrls === undefined ? {} : { photoUrls }),
     ...(memberFacts === undefined ? {} : { memberFacts }),
+    ...(wantNotes === undefined ? {} : { wantNotes }),
   });
 }
 
@@ -247,6 +250,27 @@ describe('the coach', () => {
     }).run();
     expect(run).toStrictEqual({ coaching: false, squads: 0, queued: 0, done: 0, failed: 0 });
     expect(runs).toHaveLength(0);
+  });
+
+  it('writes no morning note to a member who switched the coach off', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => [
+        { tool: 'note_to', input: { member: '队员2', text: '今天走走' } },
+      ]);
+      const asked: (readonly string[])[] = [];
+      const wantNotes = (members: readonly string[]) => {
+        asked.push(members);
+        return Promise.resolve(members.filter((member) => member !== fixture.leo));
+      };
+
+      await wakes(fixture, { agent, wantNotes }).run();
+
+      const daily = runs.find(({ task }) => task.includes('新的一天'));
+      expect(asked).toStrictEqual([[fixture.mia, fixture.leo]]);
+      expect(daily?.task).toContain('今天给这些人各写一张便条：\n- 队员1：');
+      expect(daily?.task).not.toContain('- 队员2：这周');
+      expect(daily?.answers).toStrictEqual(['不能给 队员2 写便条；能写的是：队员1。']);
+    });
   });
 
   it('wakes for a check-in and for the day, keeps its memory and its line, and counts tokens', async () => {

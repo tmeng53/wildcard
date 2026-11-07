@@ -1,15 +1,15 @@
 import XCTest
 
-/// The coach's morning note (便条, the approved design, 2026-11-05): on the first open after it
-/// arrived it slides up over 今天, white on a clipboard with 毛头, whom it is for and the day, its
-/// line and 收下; 收下 puts it away and the home is as before. Checked on the smallest phone too:
-/// the card stays on screen with 收下 clear of the tab bar. Screenshots are kept for review.
+/// The coach's morning note never slides up over 今天 by itself (Tracy, 2026-11-07): with a note
+/// waiting, the home opens as usual, 打卡 is free, and the phone in 毛头's hand shows a dot and
+/// buzzes (the approved 毛头的手机来消息). A tap on 毛头 opens the note, and 收下 puts it away and
+/// takes the dot with it. It also opens from its row in 通知 (`NoticeBellUITests`) or its push.
+/// Screenshots are kept for review.
 @MainActor
 final class CoachNoteUITests: XCTestCase {
     private static let wait: TimeInterval = 30
-    private static let line = "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。"
 
-    func testTheMorningNoteShowsOnceAndIsPutAway() {
+    func testAWaitingNoteShowsOnTheCoachsPhoneAndOpensFromIt() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += [
@@ -19,22 +19,30 @@ final class CoachNoteUITests: XCTestCase {
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
 
+        let checkIn = app.buttons["today.checkin"]
+        XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "the home didn't open")
+        let coach = app.buttons["today.coach"]
+        XCTAssertTrue(coach.waitForExistence(timeout: Self.wait), "毛头 isn't on the sideline")
+        // Once the note has loaded, the coach's phone shows it.
+        let unread = NSPredicate(format: "value == %@", "有新消息")
+        expectation(for: unread, evaluatedWith: coach)
+        waitForExpectations(timeout: Self.wait)
         let note = app.descendants(matching: .any).matching(identifier: "today.coachNote").firstMatch
-        XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "no morning note on 今天")
-        let text = app.staticTexts["today.coachNote.text"]
-        XCTAssertEqual(text.label, Self.line)
-        let putAway = app.buttons["today.coachNote.putAway"]
-        let screen = app.windows.firstMatch.frame
-        XCTAssertTrue(screen.contains(note.frame), "the note runs off the screen: \(note.frame)")
-        XCTAssertTrue(putAway.isHittable, "收下 is covered")
-        Thread.sleep(forTimeInterval: 1)
-        keepScreenshot(named: "105-coach-note")
+        XCTAssertFalse(note.exists, "the morning note slid up by itself")
+        XCTAssertTrue(checkIn.isHittable, "打卡 is covered")
+        keepScreenshot(named: "105-coach-note-waiting")
 
-        putAway.tap()
-        XCTAssertTrue(note.waitForNonExistence(timeout: Self.wait), "收下 didn't put the note away")
-        XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: Self.wait), "the home isn't back")
-        XCTAssertTrue(app.buttons["today.checkin"].isHittable, "打卡 is still covered")
-        keepScreenshot(named: "106-coach-note-put-away")
+        coach.tap()
+        XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "tapping 毛头 didn't open the note")
+        // Once it has grown out of the coach.
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "106-coach-note-opened")
+
+        app.buttons["today.coachNote.putAway"].tap()
+        let gone = NSPredicate(format: "exists == false")
+        expectation(for: gone, evaluatedWith: note)
+        waitForExpectations(timeout: Self.wait)
+        XCTAssertNotEqual(coach.value as? String, "有新消息", "the dot stayed after 收下")
     }
 
     private func keepScreenshot(named name: String) {

@@ -62,6 +62,17 @@ struct CoachMemberNoteOverlay: View {
                 .padding(.top, Space.l)
                 .padding([.horizontal, .bottom], Space.m)
             }
+            .onGeometryChange(for: CGRect.self) {
+                $0.frame(in: .global)
+            } action: { frame in
+                guard !isOpen else { return }
+                if let from, frame.width > 0, frame.height > 0 {
+                    anchor = UnitPoint(x: (from.x - frame.minX) / frame.width, y: (from.y - frame.minY) / frame.height)
+                }
+                withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { isOpen = true }
+            }
+            .scaleEffect(isOpen || reduceMotion ? 1 : Self.startScale, anchor: anchor)
+            .opacity(isOpen ? 1 : 0)
             .padding(.horizontal, Space.pageMargin)
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("today.coachNote")
