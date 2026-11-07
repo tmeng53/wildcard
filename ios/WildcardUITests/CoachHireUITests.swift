@@ -20,9 +20,8 @@ final class CoachHireUITests: XCTestCase {
         settle()
         keepScreenshot(named: "83-coach-market")
 
-        coach.tap()
         let hireCoach = app.buttons["coach.resume.hire"]
-        XCTAssertTrue(hireCoach.waitForExistence(timeout: 30), "the 简历 has no 招聘")
+        tap(coach, until: hireCoach, "exists == true", "the 简历 has no 招聘")
         assertLabelsKeepOneLine(app)
         assertClear(of: hireCoach, app)
         settle()

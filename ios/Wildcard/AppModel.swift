@@ -281,7 +281,8 @@ final class AppModel {
     /// 今天 under the tab bar, on the member's squad's home; on a picked scene they drop onto it.
     private func openTabs(on home: Home, store: TodayStore, landingOn scene: SceneTheme?) async {
         let today = TodayModel(
-            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()), posted: posted,
+            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()),
+            health: Self.health, posted: posted,
             noSquad: { [weak self] squad in Task { await self?.removedFromSquad(squad) } })
         let profile = MeModel(
             service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),

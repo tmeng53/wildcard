@@ -18,7 +18,7 @@ final class TabsUITests: XCTestCase {
         XCTAssertTrue(today.isSelected, "the app didn't open on 今天")
         XCTAssertEqual(
             ["tab.today", "tab.feed", "tab.me"].map { app.buttons[$0].label },
-            ["今天", "动态", "我"])
+            ["小队", "动态", "我"])
         XCTAssertFalse(app.buttons["tab.schedule"].exists, "出赛表 is still a tab")
         XCTAssertFalse(app.buttons["tab.squad"].exists, "小队 is still a tab")
         // 打卡 sits above the bar, not under it.
@@ -84,8 +84,9 @@ final class TabsUITests: XCTestCase {
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
 
-        let meTab = app.buttons["tab.me"]
-        XCTAssertTrue(meTab.waitForExistence(timeout: 30), "no tab bar")
+        // 出赛表 is pushed over 我, and the system's bar drops the tabs' identifiers at times while
+        // a page is pushed, so the tab is found by its place.
+        let meTab = tabButton("tab.me", in: app)
         XCTAssertTrue(meTab.isSelected, "-tab schedule didn't open on 我")
         XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: 30), "-tab schedule didn't show 出赛表")
     }

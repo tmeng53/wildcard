@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { inWindow, isOn, isOnForPreviewer, SwitchEdit, wasOn, type Switch } from './switches.js';
+import {
+  coachNotesOn,
+  inWindow,
+  isOn,
+  isOnForPreviewer,
+  SwitchEdit,
+  wasOn,
+  type Switch,
+} from './switches.js';
 
 const winter = { start: '11-15', end: '03-31' };
 
@@ -50,6 +58,41 @@ describe('a switch', () => {
       false,
     );
     expect(SwitchEdit.safeParse({ id: 'winter', label: 'Winter', mode: 'off' }).success).toBe(true);
+  });
+});
+
+describe('the coach’s notes', () => {
+  const thanksgiving: Switch = {
+    id: 'thanksgivingDay',
+    label: 'Thanksgiving day',
+    mode: 'schedule',
+    window: { start: '11-26', end: '11-26' },
+    coachNote: '今天是感恩节',
+  };
+  const store: Switch = {
+    id: 'thanksgiving',
+    label: 'TURKEY TROT',
+    mode: 'schedule',
+    window: { start: '11-24', end: '11-26' },
+    coachNote: 'TURKEY TROT 开张了',
+  };
+  const winterSwitch: Switch = { id: 'winter', label: 'Winter', mode: 'schedule', window: winter };
+
+  it('are those of the switches on that day, for everyone', () => {
+    const all = [thanksgiving, store, winterSwitch];
+    expect(coachNotesOn(all, '2026-11-23')).toStrictEqual([]);
+    expect(coachNotesOn(all, '2026-11-24')).toStrictEqual(['TURKEY TROT 开张了']);
+    expect(coachNotesOn(all, '2026-11-26')).toStrictEqual(['今天是感恩节', 'TURKEY TROT 开张了']);
+    // A switch in preview tells the coach nothing: every squad's coach would hear of it.
+    expect(coachNotesOn([{ ...thanksgiving, mode: 'preview' }], '2026-11-26')).toStrictEqual([]);
+  });
+
+  it('are short lines, never empty', () => {
+    const edit = { id: 'winter', label: 'Winter', mode: 'off' };
+    expect(SwitchEdit.safeParse({ ...edit, coachNote: '  ' }).success).toBe(false);
+    expect(SwitchEdit.safeParse({ ...edit, coachNote: '雪'.repeat(121) }).success).toBe(false);
+    expect(SwitchEdit.safeParse({ ...edit, coachNote: '下雪了\n冷' }).success).toBe(false);
+    expect(SwitchEdit.parse({ ...edit, coachNote: ' 下雪了 ' }).coachNote).toBe('下雪了');
   });
 });
 

@@ -33,6 +33,8 @@ export interface Switch {
   readonly mode: SwitchMode;
   /** Its schedule; always there for one in `schedule` mode. */
   readonly window?: SwitchWindow;
+  /** What the AI coach is told while it is on, such as 「TURKEY TROT 限时开张」; never shown in the app. */
+  readonly coachNote?: string;
 }
 
 /** Whether `day` (`YYYY-MM-DD`) is in `window`, which may run over New Year (11-15 to 03-31). */
@@ -111,6 +113,28 @@ export const PLAIN_VIEW: SwitchView = { previewer: false, dayOffset: 0 };
 /** A day offset as an admin sets it: whole days, at most a bit over a year either way. */
 export const DayOffset = z.int().min(-400).max(400);
 
+/** What the AI coach is told while a switch is on, in Chinese, as the coach speaks. */
+export const CoachNote = z
+  .string()
+  .trim()
+  .min(1)
+  .max(120)
+  .regex(/^[^\r\n]*$/, 'one line')
+  .meta({
+    description:
+      'What the AI coach is told while the switch is on (for everyone, not in preview), in ' +
+      'Chinese, a plain fact such as 「TURKEY TROT 限时开张」, never how to say it; holidays go in ' +
+      'the coach’s calendar (change_coach_settings). Never shown in the app. Left out, the ' +
+      'coach is told nothing.',
+  });
+
+/** The coach's notes of every switch on on `day` (`YYYY-MM-DD`, New York) for everyone. */
+export function coachNotesOn(switches: readonly Switch[], day: string): string[] {
+  return switches.flatMap((each) =>
+    each.coachNote !== undefined && isOn(each, day) ? [each.coachNote] : [],
+  );
+}
+
 /** Adds a switch, or replaces every field of one. */
 export const SwitchEdit = z
   .strictObject({
@@ -132,6 +156,7 @@ export const SwitchEdit = z
       .meta({
         description: 'The days of every year it is on, both included; needed for `schedule`.',
       }),
+    coachNote: CoachNote.optional(),
   })
   .refine(({ mode, window }) => mode !== 'schedule' || window !== undefined, {
     message: 'a switch on a schedule needs its window',

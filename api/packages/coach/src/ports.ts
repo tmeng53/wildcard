@@ -301,6 +301,13 @@ export type SquadWeekSource = (input: {
  */
 export type AiConsented = (members: readonly string[]) => Promise<readonly string[]>;
 
+/**
+ * The app's own moments on `day` (`YYYY-MM-DD`, New York), such as a limited store open
+ * (「TURKEY TROT 限时开张」), kept as data with the switches, never in code; holidays come from
+ * the coach's own calendar in its settings.
+ */
+export type CoachOccasions = (day: string) => Promise<readonly string[]>;
+
 /** The coach each squad has hired, and every hire and firing. */
 export interface CoachHiringStore {
   /** The coach the squad has hired now and since when, if any. */

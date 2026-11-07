@@ -57,7 +57,7 @@ struct MainTabs: View {
     /// The pages pushed over 今天: 小队, from the home's squad card, and the coach's pages over it.
     @State var todayPages: [TodayPage] = LaunchOptions.opensSquad ? [.squad] : []
     /// The coach's card, opened from a tap on the coach on the home, popped up like a player's.
-    @State private var showsCoachCard = false
+    @State var showsCoachCard = false
     /// 小队's scene pick is playing its reveal, which fills the screen.
     @State var squadRevealing = false
     /// 我的动态, pushed over 我.
@@ -68,11 +68,9 @@ struct MainTabs: View {
     @State var post: OpenedPost?
     /// 设置, pushed over 我.
     @State var showsSettings = false
-    /// A player's card, opened from a tap on them on the home or their row on 小队,
-    /// popped up over every tab and the tab bar.
-    @State private var teammate: SquadmateCardModel?
-    /// The card was opened from the home, so 今天 and 拍一拍 go over it; from 小队 the scene isn't
-    /// in view to play a pat on.
+    /// A player's card, opened from the home or 小队, popped up over every tab and the tab bar.
+    @State var teammate: SquadmateCardModel?
+    /// The card was opened from the home, so 今天 and 拍一拍 go over it (小队 hides the scene).
     @State private var teammateOnHome = false
 
     init(
@@ -110,7 +108,7 @@ struct MainTabs: View {
             today.tellUnlocks(
                 with: UnlockNotices(
                     banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },
-                    badge: { WardrobeBadge($0, item: $1) })
+                    badge: { WardrobeBadge($0, item: $1) }, picture: { WardrobePicture($0, item: $1) })
             )
         }
         // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the
@@ -170,6 +168,9 @@ struct MainTabs: View {
                 .environment(\.sceneTheme, today.scene)
             }
         }
+        // A celebration broadcast (「感恩节快到了」) over everything, told only while 今天 is in front.
+        .celebrationPopup(today)
+        .onChange(of: homeInFront, initial: true) { today.isHomeInFront = $1 }
         .cardPopup(isPresented: $showsCoachCard) {
             CoachCardPopup(note: today.coachLine, squad: squad) { opensFeed in
                 showsCoachCard = false
@@ -275,7 +276,7 @@ struct MainTabs: View {
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                     openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
-                    previewSignUp: previewSignUp),
+                    previewSignUp: previewSignUp, health: today.health),
                 isSettingsOpen: $showsSettings
             ) {
                 MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }

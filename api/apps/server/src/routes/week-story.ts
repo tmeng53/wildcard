@@ -428,10 +428,10 @@ export function weekStory(
       );
       const hottestView = (top: TopCheckIn) => ({
         ...top,
-        photos: top.photos.map((path) => {
+        // A photo whose file is gone is left out, so the story still opens.
+        photos: top.photos.flatMap((path) => {
           const url = urls.get(PhotoPath.parse(path));
-          if (url === undefined) throw new Error(`No view URL was signed for ${path}.`);
-          return { path, url: url.href };
+          return url === undefined ? [] : [{ path, url: url.href }];
         }),
         reactions: Object.entries(top.reactions)
           .sort(([, a], [, b]) => b - a)

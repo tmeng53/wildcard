@@ -73,6 +73,31 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     )
 }
 
+@MainActor @Test func aWorkoutKeptToThemselvesAsLastWeeksStaysPosted() async throws {
+    // A Health workout posted as a 补打卡 a week back, to no squad: neither this week's list nor
+    // the squad's has it, yet the home must still know it went out, or it would be offered again.
+    let stack = try LocalStack()
+    let author = try await stack.signedInMember()
+    _ = try await stack.squad(of: author)
+    let directory = scratch()
+    let today = store(author, directory: directory)
+    await today.load()
+    let day = try #require(today.day)
+    let source = WorkoutSource(provider: WorkoutSource.appleHealth, id: "backfill-\(UUID())")
+    let started = Date().addingTimeInterval(-3600)
+    let workout = Workout(
+        source: source, startedAt: Timestamp(started), endedAt: Timestamp(started.addingTimeInterval(1800)),
+        summary: WorkoutSummary(durationSec: 1800))
+    let backfill = CheckIn(
+        id: CheckInID(UUID()), member: author.id, day: day.adding(days: -CheckIn.backfillDays), postedDay: day,
+        createdAt: Timestamp(Date()), audience: try Audience([]),
+        entry: .trained(Training(activity: .sport("run"), minutes: try WorkoutMinutes(30), workout: workout)))
+    _ = try await author.api.save(backfill)
+
+    await today.load()
+    #expect(today.postedWorkouts == [source])
+}
+
 @MainActor @Test func aMemberInNoSquadHasNoHome() async throws {
     let stack = try LocalStack()
     let loner = try await stack.signedInMember()

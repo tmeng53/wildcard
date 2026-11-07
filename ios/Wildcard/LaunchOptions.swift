@@ -18,6 +18,11 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-loading")
     }
 
+    /// `-health-sample`: Health connected, with the sample day of workouts; else not until 连接.
+    static var healthSample: Bool {
+        ProcessInfo.processInfo.arguments.contains("-health-sample")
+    }
+
     static var showsStyleGuide: Bool {
         ProcessInfo.processInfo.arguments.contains("-styleguide")
     }
@@ -107,10 +112,15 @@ enum LaunchOptions {
     }
 
     /// The sample member's 通知: the sample squad's last two weeks, or none with
-    /// `-uitest-no-notices`, to see the page empty.
+    /// `-uitest-no-notices`, to see the page empty. `-uitest-broadcast trot|jingle` adds that
+    /// holiday's pre-holiday broadcast, told just now, which 今天 shows on its celebration card.
     static var notices: any NoticeSource {
-        ProcessInfo.processInfo.arguments.contains("-uitest-no-notices")
-            ? InMemoryNoticeSource.empty : InMemoryNoticeSource.sample(now: now())
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-uitest-no-notices") { return InMemoryNoticeSource.empty }
+        guard let flag = arguments.firstIndex(of: "-uitest-broadcast"), flag + 1 < arguments.count else {
+            return InMemoryNoticeSource.sample(now: now())
+        }
+        return InMemoryNoticeSource.sample(now: now(), latest: [InMemoryNoticeSource.celebration(arguments[flag + 1])])
     }
 
     /// `-uitest-offline-feed`: 动态 whose posts can't be read, as with no server.
@@ -216,7 +226,7 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-patted")
     }
 
-    /// `-uitest-bubble-hold`: a pat's bubble and a notice on 今天 stay up
+    /// `-uitest-bubble-hold`: a pat's bubble, a notice on 今天 and 商店街's 「已放进衣橱」 stay up
     /// for a minute instead of a few seconds, so a UI test checks them without racing their timers.
     static var bubbleHold: Double? {
         ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
@@ -246,6 +256,15 @@ enum LaunchOptions {
     /// `-uitest-meals`: two of the sample squad's latest posts are meals (小米's salad after her
     /// run, Leo's boba), so they eat on the home and their bubbles say so.
     static var meals: Bool { ProcessInfo.processInfo.arguments.contains("-uitest-meals") }
+
+    /// Apple Health's sample day starts afresh on each launch: nothing put away from the home's
+    /// card, every number shared.
+    static var healthDefaults: UserDefaults {
+        let suite = "uitest-health"
+        guard healthSample, let defaults = UserDefaults(suiteName: suite) else { return todayDefaults }
+        defaults.removePersistentDomain(forName: suite)
+        return defaults
+    }
 
     /// Where 今天 keeps what it has shown: the app's settings, or with `-uitest-patted`,
     /// `-uitest-coach` or `-uitest-together` a suite emptied at launch.
@@ -316,14 +335,17 @@ enum LaunchOptions {
     /// UI tests' flags that make 今天 forget what this phone kept, so each test starts as a member
     /// first sees it and can still change it (passing the key itself would pin it: launch arguments
     /// win over what the app writes): `-uitest-recap-unseen`, which day's 今日赛况 was opened;
-    /// `-uitest-night`, the lights switched on; `-uitest-card-folded`, home's card left open.
+    /// `-uitest-night`, the lights switched on; `-uitest-card-folded`, home's card left open and
+    /// the page it was left on.
     static func forgetTodayStateIfAsked() {
         let arguments = ProcessInfo.processInfo.arguments
         let kept = [
-            "-uitest-recap-unseen": "today.recapSeen", "-uitest-night": "today.lightsOn",
-            "-uitest-card-folded": "today.cardCollapsed",
+            "-uitest-recap-unseen": ["today.recapSeen"], "-uitest-night": ["today.lightsOn"],
+            "-uitest-card-folded": ["today.cardCollapsed", "today.cardPage"],
         ]
-        for (flag, key) in kept where arguments.contains(flag) { UserDefaults.standard.removeObject(forKey: key) }
+        for (flag, keys) in kept where arguments.contains(flag) {
+            for key in keys { UserDefaults.standard.removeObject(forKey: key) }
+        }
     }
 
     /// `-uitest-thursday`: 出赛表's clock starts at noon on this week's Thursday and runs on, so

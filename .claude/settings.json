@@ -38,5 +38,16 @@
         ]
       }
     ]
+  },
+  "extraKnownMarketplaces": {
+    "swiftui-agent-skill": {
+      "source": {
+        "source": "github",
+        "repo": "twostraws/SwiftUI-Agent-Skill"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "swiftui-pro@swiftui-agent-skill": true
   }
 }

@@ -23,13 +23,21 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
     return (store, source)
 }
 
-/// The reviewed squad: three days, every kind, names for everyone, my own post among them.
+/// The reviewed squad: three days, every kind, posts from Apple Health, names for everyone, my own post among them.
 @MainActor @Test func theSampleCoversEveryKindOverThreeDays() async {
     let (feed, _) = await sampleFeed()
     #expect(feed.sections.map(\.heading) == [.today, .yesterday, .weekday(2)])
     let posts = feed.sections.flatMap(\.posts)
-    #expect(posts.count == 7)
+    #expect(posts.count == 8)
     #expect(posts.contains { $0.author == viewer })
+    // Three 训练 come from Apple Health: two with their map, the swim with its laps.
+    let tiles = posts.compactMap { post -> [Contracts.PostTile]? in
+        guard case .trained(let training) = post.checkIn.entry, training.workout != nil else { return nil }
+        return training.tiles
+    }
+    #expect(tiles.count == 3)
+    #expect(tiles.contains([.workout(.map)]))
+    #expect(tiles.contains { $0.count == 2 && $0.last == .workout(.chart) })
     #expect(posts.allSatisfy { feed.characters[$0.author] != nil })
     let disclaimer = posts.first {
         if case .disclaimer = $0.checkIn.entry { true } else { false }
