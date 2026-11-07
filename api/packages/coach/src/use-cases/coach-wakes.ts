@@ -370,6 +370,7 @@ async function runWake(
       ],
       recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
       ...(thread === undefined ? {} : { thread: thread.thread }),
+      canSeePhotos: deps.photoUrls !== undefined,
       recentEmoji:
         wake.reason.kind === 'checkIn'
           ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)

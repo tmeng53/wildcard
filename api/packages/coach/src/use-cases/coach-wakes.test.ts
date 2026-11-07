@@ -1148,6 +1148,63 @@ describe('the coach', () => {
     });
   });
 
+  it('tells an @ about a post with photos that it hasn’t seen them, only when it can look', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, leo, checkIn } = fixture;
+      const asked = await commentOn(fixture, {
+        member: leo,
+        text: '@小混 你看看我们吃了啥',
+        at: new Date(now.getTime() + 60_000),
+        mentionsCoach: 'xiaohun',
+      });
+      const week: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) =>
+          each.id === checkIn
+            ? { ...each, photos: ['m/a.jpg', 'm/b.jpg'], comments: [asked] }
+            : each,
+        ),
+      };
+      const hint =
+        '这条打卡有 2 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。';
+      const seeing = scriptedAgent(() => []);
+      await wakes(
+        { ...fixture, week },
+        {
+          agent: seeing.agent,
+          photoUrls: (paths) => Promise.resolve(paths.map((path) => `https://photos.test/${path}`)),
+          at: new Date(now.getTime() + 2 * 60_000),
+        },
+      ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
+      expect(seeing.runs[0]?.task).toContain(hint);
+      expect(seeing.runs[0]?.tools).toContain('look_at_photos');
+    });
+    await rolledBack(async (fixture) => {
+      const { squad, leo, checkIn } = fixture;
+      const asked = await commentOn(fixture, {
+        member: leo,
+        text: '@小混 你看看我们吃了啥',
+        at: new Date(now.getTime() + 60_000),
+        mentionsCoach: 'xiaohun',
+      });
+      const week: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) =>
+          each.id === checkIn ? { ...each, photos: ['m/a.jpg'], comments: [asked] } : each,
+        ),
+      };
+      // Without photo URLs it can't look, so it isn't told to.
+      const blind = scriptedAgent(() => []);
+      await wakes(
+        { ...fixture, week },
+        { agent: blind.agent, at: new Date(now.getTime() + 2 * 60_000) },
+      ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
+      expect(blind.runs[0]?.task).toContain('有人在评论里 @ 你。');
+      expect(blind.runs[0]?.task).not.toContain('look_at_photos');
+      expect(blind.runs[0]?.tools).not.toContain('look_at_photos');
+    });
+  });
+
   it('has no photo tool for a check-in without photos', async () => {
     await rolledBack(async (fixture) => {
       const { squad, checkIn } = fixture;
