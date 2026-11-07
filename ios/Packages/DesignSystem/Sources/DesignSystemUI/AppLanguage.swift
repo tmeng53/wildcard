@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// The language the app speaks. iOS keeps an app's language in its `AppleLanguages` and reads it
 /// once, as the app starts, so a pick made in the app (the open screen's globe, 设置's 语言) would
@@ -27,6 +28,7 @@ public enum AppLanguage: String, CaseIterable, Sendable {
     /// Hong Kong's and Macau's `zh-TW`, `zh-HK`, `zh-MO`) reads as Traditional, any other Chinese
     /// as Simplified; a list with neither Chinese nor English, as Simplified.
     public static var current: AppLanguage {
+        if let adopted = adopted.withLock({ $0 }) { return adopted }
         let preferred = UserDefaults.standard.stringArray(forKey: key) ?? Locale.preferredLanguages
         for tag in preferred {
             if tag.hasPrefix("zh-Hant") || ["zh-TW", "zh-HK", "zh-MO"].contains(tag) { return .traditionalChinese }
@@ -38,6 +40,7 @@ public enum AppLanguage: String, CaseIterable, Sendable {
 
     /// Speaks this language from now on, and from the next launch.
     public func pick() {
+        Self.adopted.withLock { $0 = nil }
         UserDefaults.standard.set([rawValue], forKey: Self.key)
         NotificationCenter.default.post(name: Self.didChange, object: nil)
     }
@@ -63,8 +66,16 @@ public enum AppLanguage: String, CaseIterable, Sendable {
             .flatMap { String(bytes: $0, encoding: .utf8) }
             .flatMap(AppLanguage.init(rawValue:))
         let language = fromFile ?? shared?.string(forKey: sharedKey).flatMap(AppLanguage.init(rawValue:))
-        UserDefaults.standard.set([(language ?? .simplifiedChinese).rawValue], forKey: key)
+        let speaks = language ?? .simplifiedChinese
+        // Kept in the process too, so nothing in it depends on the extension's own `AppleLanguages`
+        // reading back what was written: with only that, the 6pm push's view still spoke the
+        // phone's language.
+        adopted.withLock { $0 = speaks }
+        UserDefaults.standard.set([speaks.rawValue], forKey: key)
     }
+
+    /// The language an extension adopted, which `current` speaks before any setting.
+    private static let adopted = Mutex<AppLanguage?>(nil)
 
     private static let fileName = "app-language"
     private static let sharedKey = "appLanguage"
