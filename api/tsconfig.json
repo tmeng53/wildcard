@@ -26,6 +26,9 @@
       "path": "packages/sport-ids"
     },
     {
+      "path": "packages/language-model"
+    },
+    {
       "path": "packages/sports"
     },
     {

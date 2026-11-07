@@ -32,6 +32,7 @@
     "@wildcard/scenes": "workspace:*",
     "@wildcard/switches": "workspace:*",
     "@wildcard/campaigns": "workspace:*",
+    "@wildcard/language-model": "workspace:*",
     "@wildcard/sport-ids": "workspace:*",
     "@wildcard/sports": "workspace:*",
     "@wildcard/squads": "workspace:*",
