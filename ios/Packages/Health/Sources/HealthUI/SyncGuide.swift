@@ -173,6 +173,8 @@ public struct SyncGuideSheet: View {
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        // Contain, so the sheet's own id doesn't replace its buttons' ids.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("health.guide.sheet")
     }
 }
