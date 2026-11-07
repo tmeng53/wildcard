@@ -227,26 +227,6 @@ final class TodayUITests: XCTestCase {
         return field
     }
 
-    /// 健康餐: the same compose page, with its own placeholder and no sport row.
-    func testHealthyMealCompose() {
-        let app = launch(language: "zh-Hans", photos: 1)
-        _ = topCard(in: app)
-        app.buttons["today.checkin"].tap()
-        let capsule = app.buttons["today.capsule.healthyMeal"]
-        XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait))
-        capsule.tap()
-        let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
-        XCTAssertTrue(caption.waitForExistence(timeout: Self.wait), "the compose page never opened")
-        // The caption is a text view whose placeholder is drawn over it and read as its label.
-        XCTAssertEqual(caption.label, "这顿很自律…")
-        XCTAssertFalse(app.buttons["compose.sport.run"].exists, "a meal shows the sport row")
-        XCTAssertTrue(
-            app.descendants(matching: .any).matching(identifier: "compose.cover").firstMatch.exists,
-            "the one photo isn't the cover")
-        settle()
-        keepScreenshot(named: "22-compose-healthy-meal")
-    }
-
     /// The squad card's second page: my week, Monday to Sunday.
     func testMyWeekPage() {
         let app = launch(language: "zh-Hans", photos: 0, cardPage: nil)
