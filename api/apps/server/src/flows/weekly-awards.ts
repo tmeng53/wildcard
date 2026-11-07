@@ -534,7 +534,11 @@ function weekCheckIn(
     case 'cheatMeal':
       return { ...base, caption: record.meal.caption };
     case 'disclaimer':
-      return { ...base, text: record.disclaimer.text };
+      return {
+        ...base,
+        text: record.disclaimer.text,
+        ...(record.disclaimer.restDay === true ? { restDay: true } : {}),
+      };
   }
 }
 

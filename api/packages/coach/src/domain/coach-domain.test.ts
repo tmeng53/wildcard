@@ -73,6 +73,14 @@ describe('the squad’s week, as the model reads it', () => {
     expect(weekText(week)).not.toContain(mia);
   });
 
+  it('calls a planned rest 计划休息, not a 请假条', () => {
+    const [, leave] = week.checkIns;
+    if (leave === undefined) throw new Error('no check-in');
+    expect(checkInLine({ ...leave, restDay: true }, rosterOf(week))).toBe(
+      '11-01 周日 队员2 计划休息 「下雨」',
+    );
+  });
+
   it('keeps only the words of members who agreed to AI use, and the numbering', () => {
     expect(weekText(consentedOnly(week, new Set([leo])))).toBe(
       [
