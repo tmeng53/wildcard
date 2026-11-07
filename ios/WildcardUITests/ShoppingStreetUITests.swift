@@ -7,6 +7,14 @@ final class ShoppingStreetUITests: XCTestCase {
     /// 商店街 from its header button on 我, between 换装 and 设置: the map walks to a closed store, whose
     /// shutter and button say how it unlocks and whose tap keeps it shut; WARM-UP lets the member in, its ⓘ names the sports, and back walks out to
     /// the street and then to 我.
+    /// 进店 sits at the bottom, just clear of the tab bar, under the map.
+    private func assertEnterIsPinned(_ app: XCUIApplication) {
+        let enter = app.buttons["street.enter"].frame
+        let tabs = tabButton("tab.me", in: app).frame
+        XCTAssertLessThanOrEqual(enter.maxY, tabs.minY, "the tab bar covers 进店: \(enter), \(tabs)")
+        XCTAssertGreaterThan(enter.minY, app.buttons["street.map.warmup"].frame.maxY, "进店 isn't under the map")
+    }
+
     func testShoppingStreet() {
         let app = launch(language: "zh-Hans")
         let street = app.buttons["me.street"]
@@ -20,6 +28,7 @@ final class ShoppingStreetUITests: XCTestCase {
         XCTAssertTrue(warmup.waitForExistence(timeout: 30), "no WARM-UP on the street")
         settle()
         keepScreenshot(named: "22-street")
+        assertEnterIsPinned(app)
         walkToClosedStore(app)
         let info = app.buttons["street.rack.info"]
         XCTAssertFalse(info.exists, "a closed store let the member in")
@@ -49,6 +58,8 @@ final class ShoppingStreetUITests: XCTestCase {
         let backX = back.frame.minX
         warmup.tap()
         XCTAssertTrue(info.waitForExistence(timeout: 30), "WARM-UP didn't open again")
+        // A swipe while the push is still sliding in lands on the rack, not the back gesture.
+        settle()
         let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.5))
         from.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)))
         XCTAssertTrue(warmup.waitForExistence(timeout: 30), "a swipe right didn't leave the store")
