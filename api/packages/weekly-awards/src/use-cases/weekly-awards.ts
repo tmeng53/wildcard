@@ -1,3 +1,4 @@
+import type { LanguageModel } from '@wildcard/language-model';
 import {
   boardOf,
   titlesWonOf,
@@ -15,7 +16,6 @@ import type {
   AiConsented,
   AwardSettingsStore,
   AwardsStore,
-  LanguageModel,
   WeekStoryStore,
   MemesInUse,
   SportGlyphs,

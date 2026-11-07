@@ -69,21 +69,22 @@ public struct Home: Hashable, Sendable {
     }
 
     private enum Kind {
-        case trained, disclaimer, meal
+        /// `other`: a meal or a 休息, neither of which changes how the squad sees the day.
+        case trained, disclaimer, other
 
         init(_ entry: CheckIn.Entry) {
             switch entry {
             case .trained: self = .trained
-            case .disclaimer: self = .disclaimer
-            case .healthyMeal, .cheatMeal: self = .meal
+            case .disclaimer(let note): self = note.restDay ? .other : .disclaimer
+            case .healthyMeal, .cheatMeal: self = .other
             }
         }
 
         init(_ draft: CheckInDraft) {
             switch draft {
             case .trained: self = .trained
-            case .disclaimer: self = .disclaimer
-            case .healthyMeal, .cheatMeal: self = .meal
+            case .disclaimer(let note): self = note.restDay ? .other : .disclaimer
+            case .healthyMeal, .cheatMeal: self = .other
             }
         }
     }

@@ -101,7 +101,7 @@ public struct PostEdit: Hashable, Sendable {
                             workout: workout))
                 case .healthyMeal: .healthyMeal(Meal(photos: photos, caption: caption))
                 case .cheatMeal: .cheatMeal(Meal(photos: photos, caption: caption))
-                case .disclaimer: .disclaimer(try Disclaimer(line, photos: photos))
+                case .disclaimer(let old): .disclaimer(try Disclaimer(line, restDay: old.restDay, photos: photos))
                 }
             return CheckIn(
                 id: original.id, member: original.member, day: original.day, postedDay: original.postedDay,

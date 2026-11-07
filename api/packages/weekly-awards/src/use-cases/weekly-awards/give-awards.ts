@@ -1,3 +1,4 @@
+import type { LanguageModel } from '@wildcard/language-model';
 import {
   endingWordsOf,
   modelReplyFor,
@@ -18,7 +19,6 @@ import type {
   AiConsented,
   AwardSettingsStore,
   AwardsStore,
-  LanguageModel,
   MemesInUse,
   SportGlyphs,
 } from '../../ports.js';

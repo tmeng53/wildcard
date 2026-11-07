@@ -1,5 +1,3 @@
-import type { z } from 'zod';
-
 import type {
   Awards,
   AwardsState,
@@ -12,24 +10,7 @@ import type { SportGlyph } from './domain/badges.js';
 import type { PromptMeme } from './domain/prompt.js';
 import type { WeekStart } from './domain/schedule.js';
 import type { WeekStory } from './domain/week-story.js';
-import type { AwardSettings, ModelName } from './domain/settings.js';
-
-/**
- * A language model that answers in a set JSON shape, whoever provides it. Throws when it can't
- * be reached, declines to answer, or answers out of shape.
- */
-export interface LanguageModel {
-  answer<Reply>(request: {
-    /** Which model answers, as provider/model. */
-    readonly model: ModelName;
-    /** The standing instructions (a system prompt). */
-    readonly instructions: string;
-    /** What to answer. */
-    readonly prompt: string;
-    /** The shape of the answer. */
-    readonly reply: z.ZodType<Reply>;
-  }): Promise<Reply>;
-}
+import type { AwardSettings } from './domain/settings.js';
 
 /** Where the award settings are kept: one value, and a log of every change to it. */
 export interface AwardSettingsStore {

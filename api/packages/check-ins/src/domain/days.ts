@@ -1,4 +1,4 @@
-import type { CheckInRecord, LocalDay } from './check-in.js';
+import { isLeave, type CheckInRecord, type LocalDay } from './check-in.js';
 import { addDays, weekStartOf } from './weekly-plan.js';
 
 /** A Monday-to-Sunday week (ISO 8601), as weekly plans have it. */
@@ -22,11 +22,14 @@ export function weekOf(day: LocalDay): Week {
  */
 export type TrainingStatus = 'trained' | 'disclaimer' | 'notCheckedIn';
 
-/** A 练了 wins over a 请假条 posted earlier the same day. */
+/**
+ * A 练了 wins over a 请假条 posted earlier the same day. A 休息 is no 请假条: it made the day a
+ * rest day in the plan, which is how the day shows.
+ */
 export function trainingOn(checkIns: readonly CheckInRecord[], day: LocalDay): TrainingStatus {
-  const kinds = new Set(checkIns.filter((each) => each.day === day).map(({ kind }) => kind));
-  if (kinds.has('trained')) return 'trained';
-  if (kinds.has('disclaimer')) return 'disclaimer';
+  const posts = checkIns.filter((each) => each.day === day);
+  if (posts.some(({ kind }) => kind === 'trained')) return 'trained';
+  if (posts.some(isLeave)) return 'disclaimer';
   return 'notCheckedIn';
 }
 

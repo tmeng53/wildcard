@@ -260,4 +260,14 @@ extension SignUpModel {
         String(localized: "\(nickname) 的小队", bundle: .module.inAppLanguage)
     }
 }
+
+extension SignUpModel {
+    /// The invite code found while looking one up.
+    enum Lookup: Equatable {
+        case none
+        case looking(InviteCode)
+        case found(SquadPreview)
+        case failed(InviteCode, SignUpError)
+    }
+}
 #endif

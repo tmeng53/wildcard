@@ -1,5 +1,6 @@
 import AccountDomain
 import AccountUI
+import AvatarArt
 import Backend
 import CharacterEditorUI
 import CheckInDomain
@@ -75,7 +76,7 @@ struct WildcardApp: App {
     init() {
         CrashReports.start()
         // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
-        AppLanguage.current.share(in: AppGroup.defaults)
+        AppLanguage.current.share(in: AppGroup.defaults, folder: AppGroup.directory)
         // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
         AppModel.show(CatalogClient.bundled)
         // Only now: the editor's street is the catalog's starter street, which `show` just put out.
@@ -121,7 +122,7 @@ struct WildcardApp: App {
             _signUp = State(
                 initialValue: SignUpModel(
                     service: InMemorySignUpService.sampleSquad(), nickname: "",
-                    now: LaunchOptions.signUpTime))
+                    now: LaunchOptions.signUpTime, health: Self.sampleHealth()))
         }
         let feedSource = Self.feedSource(viewer: member, squad: squad)
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource))
@@ -218,10 +219,12 @@ struct WildcardApp: App {
         WindowGroup {
             root
                 .environment(\.locale, language.locale)
+                // The Fitbit, WHOOP and Oura guide's screenshots are data: downloaded art only.
+                .environment(\.guideScreenshots, GuideScreenshots { ArtTree.downloadedFile($0, in: "guides") })
                 .id(language)
                 .onReceive(NotificationCenter.default.publisher(for: AppLanguage.didChange)) { _ in
                     language = AppLanguage.current
-                    language.share(in: AppGroup.defaults)
+                    language.share(in: AppGroup.defaults, folder: AppGroup.directory)
                 }
                 .dismissesKeyboardOnTapOutside()
         }

@@ -10,7 +10,8 @@ import {
   storedPathOf,
 } from './memory.js';
 import { factsText } from './member-facts.js';
-import { taskOf } from './prompt.js';
+import { Coach } from './coach.js';
+import { instructionsOf, taskOf } from './prompt.js';
 import { lineProblem } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
@@ -71,6 +72,14 @@ describe('the squad’s week, as the model reads it', () => {
       ].join('\n'),
     );
     expect(weekText(week)).not.toContain(mia);
+  });
+
+  it('calls a planned rest 计划休息, not a 请假条', () => {
+    const [, leave] = week.checkIns;
+    if (leave === undefined) throw new Error('no check-in');
+    expect(checkInLine({ ...leave, restDay: true }, rosterOf(week))).toBe(
+      '11-01 周日 队员2 计划休息 「下雨」',
+    );
   });
 
   it('keeps only the words of members who agreed to AI use, and the numbering', () => {
@@ -274,6 +283,25 @@ describe('when the coach wakes', () => {
         '你的记性（你只记得这些）：\n还是空的：memory.md',
       ].join('\n\n'),
     );
+    // A post with photos: the coach is told it hasn't seen them, so it looks before answering
+    // what they show instead of guessing from the words (and only when it can look).
+    const withPhotos: SquadWeek = {
+      ...week,
+      checkIns: week.checkIns.map((each) =>
+        each.id === 'c1' ? { ...each, photos: ['m/a.jpg', 'm/b.jpg'] } : each,
+      ),
+    };
+    const asked = {
+      reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' },
+      week: withPhotos,
+      files: new Map(),
+      recentNotes: [],
+      thread: { said: [{ member: mia, text: '你看看我吃了啥', answering: true }] },
+    } as const;
+    expect(taskOf({ ...asked, canSeePhotos: true })?.split('\n\n')).toContain(
+      '这条打卡有 2 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。',
+    );
+    expect(taskOf(asked)).not.toContain('look_at_photos');
     // On a holiday the coach is told, after the talk and before its files.
     expect(
       taskOf({
@@ -321,6 +349,31 @@ describe('when the coach wakes', () => {
         { inputMicrosPerMillion: 1, cachedInputMicrosPerMillion: 0, outputMicrosPerMillion: 0 },
       ),
     ).toBe(1);
+  });
+
+  it('lets the coach pick its tools, keep memory any time, and say one thing per note', () => {
+    const coach = Coach.parse({
+      version: 2,
+      id: 'nuannuan',
+      tier: 'entry',
+      name: '暖暖',
+      title: '暖心教练',
+      catchphrase: '今天也辛苦啦',
+      background: '普拉提教练',
+      yearsCoaching: 6,
+      experience: '夸人满分',
+      tags: ['温柔'],
+      pay: '一杯奶茶',
+      style: '温柔',
+      soul: '你是暖暖。',
+      look: 'nuannuan',
+      offered: true,
+    });
+    const instructions = instructionsOf({ rules: '规矩' }, coach);
+    expect(instructions).toContain('一张便条只说一件事');
+    expect(instructions).toContain('做什么、用哪个工具，你自己判断。');
+    // The old rule had every note add something from memory, which made notes say "I remember".
+    expect(instructions).not.toContain('再加上记性里记着他的');
   });
 
   it('keeps what every wake begins with in the instructions, and only what changes in the task', () => {
