@@ -30,6 +30,3 @@ supabase/.branches/
 .env.*
 !.env.example
 __pycache__/
-
-# Impeccable design skill (per-developer settings and runtime files)
-.impeccable/config.local.json

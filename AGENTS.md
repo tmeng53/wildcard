@@ -56,7 +56,7 @@ Read the matching skill before the work it covers.
 | `verify-wildcard` | When you verify a change you didn't write, or prove a user journey works end to end. |
 | `project-setup` | When PRs, decisions or friction keep stalling. |
 | `cloud-test-environment` | When adding a service the tests need. |
-| `impeccable` | For UI design, critique, polish or audit work (`/impeccable critique 战报`). Vendored from `pbakaus/impeccable` (`UPSTREAM.md` in it); it reads `PRODUCT.md` and `DESIGN.md`, which point it at the design system and say which of its parts are web-only. |
+| `swiftui-pro` (plugin, enabled in `.claude/settings.json`) | Before writing or reviewing SwiftUI. Where it and this file differ, this file wins. |
 
 ## Architecture
 
