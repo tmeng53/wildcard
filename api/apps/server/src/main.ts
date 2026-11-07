@@ -73,7 +73,12 @@ import {
   createPostgresSettingsStore,
   createPush,
 } from '@wildcard/push';
-import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import {
+  SquadId as SquadsSquad,
+  createPostgresSquadStore,
+  createSquads,
+  randomInviteCodes,
+} from '@wildcard/squads';
 import {
   AwardsModelMissingError,
   AwardsWriterUnavailableError,
@@ -425,6 +430,12 @@ const coachWakes =
           aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
         hiring: createPostgresCoachHiring(db),
         clock: () => new Date(),
+        // The daily wake and its 战术板 keep each squad's own clock (小队时区).
+        timeZonesAt: (ids, moment) =>
+          squads.timeZonesAt(
+            ids.map((squad) => SquadsSquad.parse(squad)),
+            moment,
+          ),
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),

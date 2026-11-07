@@ -455,7 +455,8 @@ describe('weekly awards', () => {
     });
 
     const result = await run();
-    expect(result.weeks).toStrictEqual(['2026-10-12', WEEK]);
+    // An hour after Sunday 8pm in New York it is Monday in the zones furthest ahead.
+    expect(result.weeks).toStrictEqual(['2026-10-05', '2026-10-12', WEEK]);
     expect(prompts.filter((prompt) => prompt.includes(caption))).toHaveLength(1);
     const mine = sent.filter(({ token }) =>
       [ana.device, bo.device, cy.device].includes(DeviceToken.parse(token)),
@@ -547,6 +548,33 @@ describe('weekly awards', () => {
     const afterDelete = Story.parse((await read({ token: ana.token, squad })).body);
     expect(afterDelete.titles?.[0]?.titles).toStrictEqual(forCy.titles?.[0]?.titles);
     expect(afterDelete.hottest).toBeUndefined();
+  });
+
+  it('ends a squad’s week at Sunday 8pm in its own time zone', async () => {
+    const { run, read, at, sent } = setup();
+    const [ana, bo] = [await member('Asia/Taipei'), await member('America/New_York')];
+    const taipei = await squadOf(ana);
+    const newYork = await squadOf(bo);
+    await sql`insert into public.squad_time_zones (squad_id, time_zone, week_start)
+      values (${taipei}, 'Asia/Taipei', '2026-10-12')`.execute(db);
+    await trained(ana, { squad: taipei });
+    await trained(bo, { squad: newYork });
+
+    // Sunday 9pm in Taipei is Sunday 9am in New York.
+    at(new Date('2026-10-25T13:00:00.000Z'));
+    expect(Story.parse((await read({ token: ana.token, squad: taipei })).body).squad.id).toBe(
+      taipei,
+    );
+    const early = await read({ token: bo.token, squad: newYork });
+    expect([early.status, early.body.reason]).toStrictEqual([404, 'WEEK_STORY_NOT_READY']);
+    await run();
+    expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
+    expect(sent.filter(({ token }) => token === bo.device)).toHaveLength(0);
+
+    at(new Date(AWARDS_AT.getTime() + HOUR));
+    await run();
+    expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
+    expect(sent.filter(({ token }) => token === bo.device)).toHaveLength(1);
   });
 
   it('counts every title a member won, in all their squads, for their player card', async () => {

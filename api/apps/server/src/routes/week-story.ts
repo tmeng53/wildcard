@@ -358,7 +358,7 @@ export function weekStory(
     operationId: 'getSquadWeekStory',
     summary: 'A squad’s weekly 战报 (每周战报), frozen at the week’s awards',
     description:
-      'Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, ' +
+      'Frozen once for the whole squad on Sunday at 8pm on the squad’s clock (小队时区): who was in the squad then, ' +
       'that week’s scene, and every page from the check-ins and reactions made before then. ' +
       'Nothing that happens later changes it (a member joining or leaving, a late check-in or ' +
       'reaction, a new look or scene), except that a deleted account or post takes its own ' +
@@ -376,7 +376,9 @@ export function weekStory(
       400: problem('Not a Monday'),
       401: problem('No bearer token, or not a valid one'),
       403: problem('The member isn’t in this squad'),
-      404: problem('Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)'),
+      404: problem(
+        'Before the week’s awards on Sunday at 8pm on the squad’s clock (小队时区) (`WEEK_STORY_NOT_READY`)',
+      ),
       503: problem('Sign-in can’t be checked right now'),
     },
   });
@@ -398,7 +400,9 @@ export function weekStory(
       400: problem('Not a Monday'),
       401: problem('No bearer token, or not a valid one'),
       403: problem('The member isn’t in this squad'),
-      404: problem('Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)'),
+      404: problem(
+        'Before the week’s awards on Sunday at 8pm on the squad’s clock (小队时区) (`WEEK_STORY_NOT_READY`)',
+      ),
       503: problem('Sign-in can’t be checked right now'),
     },
   });

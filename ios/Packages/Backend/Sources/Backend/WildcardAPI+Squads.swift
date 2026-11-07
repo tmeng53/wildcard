@@ -6,12 +6,13 @@ extension WildcardAPI {
     /// Makes a squad under its own id with the member in it, and its goal, 人均 `daysPerMember`
     /// 天 (the API's 3 when nil). Safe to retry with the same id: the squad already made answers.
     public func createSquad(
-        _ id: SquadID, named name: SquadName, daysPerMember: Int? = nil
+        _ id: SquadID, named name: SquadName, daysPerMember: Int? = nil, timeZone: String? = nil
     ) async throws(APIError) -> Squad {
         let wire = try await call {
             switch try await client.createSquad(
                 path: .init(squadId: id.description),
-                body: .json(.init(version: ._1, name: name.text, daysPerMember: daysPerMember)))
+                body: .json(
+                    .init(version: ._1, name: name.text, daysPerMember: daysPerMember, timeZone: timeZone)))
             {
             case .created(let created): try created.body.json
             case .ok(let retried): try retried.body.json

@@ -348,7 +348,13 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       answers: body.answers.map((answer) => ({ ...answer, at: 'at' })),
     }).toStrictEqual({
       version: 1,
-      note: { day: '2026-11-03', text: '今天谁先动，谁就是队长', coach: speaker, at: 'at' },
+      note: {
+        day: '2026-11-03',
+        text: '今天谁先动，谁就是队长',
+        coach: speaker,
+        at: 'at',
+        timeZone: 'America/New_York',
+      },
       replies: [
         { checkInId: run, coach: speaker, text: '腿还在吗', emoji: '💪', at: 'at' },
         { checkInId: swim, coach: speaker, text: null, emoji: '🔥', at: 'at' },

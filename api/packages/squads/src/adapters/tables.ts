@@ -63,6 +63,15 @@ export interface SquadScenePicks {
   week_start: string;
 }
 
+export interface SquadTimeZones {
+  id: Generated<Int8>;
+  set_at: Generated<Timestamp>;
+  set_by: string | null;
+  squad_id: string;
+  time_zone: string;
+  week_start: string;
+}
+
 export interface SquadWeeklyGoals {
   days_per_member: number;
   id: Generated<Int8>;
@@ -78,6 +87,7 @@ export interface DB {
   squad_members: SquadMembers;
   squad_membership_events: SquadMembershipEvents;
   squad_scene_picks: SquadScenePicks;
+  squad_time_zones: SquadTimeZones;
   squad_weekly_goals: SquadWeeklyGoals;
   squads: Squads;
 }

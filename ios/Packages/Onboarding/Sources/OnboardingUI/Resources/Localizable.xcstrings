@@ -2230,6 +2230,50 @@
           }
         }
       }
+    },
+    "比赛时区": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Match time zone"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "比赛时区"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "比賽時區"
+          }
+        }
+      }
+    },
+    "每周日晚 8 点按这个时区结算本周比赛，选大多数队员所在的时区": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each week's match settles Sunday at 8pm in this time zone. Pick where most of the squad lives."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每周日晚 8 点按这个时区结算本周比赛，选大多数队员所在的时区"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每週日晚 8 點按這個時區結算本週比賽，選大多數隊員所在的時區"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
