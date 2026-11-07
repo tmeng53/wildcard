@@ -240,14 +240,13 @@ describe('createWeeklyAwards', () => {
     await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
     expect(asked[0]).toContain('{"id":"shield","meaning":"盾牌：守住了、扛住了、说到做到"}');
     expect(asked[0]).toContain('{"id":"sun.max.fill","meaning":"太阳：早起、白天练"}');
-    // The model picks a colour by what it means; its tone is only the app's.
-    expect(asked[0]).toContain('{"id":"track","meaning":"跑道红：热烈、速度、上头"}');
-    expect(asked[0]).not.toContain('#E65345');
+    expect(asked[0]).toContain('{"id":"track","meaning":"红：热烈、速度、上头"}');
     const boards = await awards.boards([ana, cy]);
     expect(boards.get(ana)).toStrictEqual([
       {
         title: '雨中狠人',
-        badge: { ...badge, tone: '#E65345' },
+        // The settings' colours have no tones yet, so it shows in the gym's steel.
+        badge: { ...badge, tone: '#4A6C8C' },
         weeks: [{ squad, weekStart: week, speech: '周三下着雨还去跑了。' }],
       },
     ]);

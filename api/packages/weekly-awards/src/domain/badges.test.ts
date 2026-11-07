@@ -41,6 +41,13 @@ describe('shownBadge', () => {
       '#4A6C8C',
     );
   });
+
+  it('paints a colour saved before colours had tones in the gym’s steel', () => {
+    const untoned = BadgeCatalog.parse({ ...catalog, colours: [{ id: 'track', meaning: '红' }] });
+    expect(shownBadge({ shape: 'circle', colour: 'track', glyph: 'moon.fill' }, untoned).tone).toBe(
+      '#4A6C8C',
+    );
+  });
 });
 
 describe('BadgeCatalog', () => {
