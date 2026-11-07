@@ -6,10 +6,11 @@ import DesignSystemUI
 import FeedDomain
 import SwiftUI
 
-/// A card's reactions, in two parts. `summary`, under the card's words: the coach's head first
+/// A card's reactions, in two parts, side by side at the foot of the column beside the author's
+/// character. `summary`, at the left: the coach's head first
 /// when it left an emoji, in its graphite ring, then up to four heads (three beside the
 /// coach's), newest first, each wearing that person's emoji, then +n for the rest; tapping them
-/// opens who reacted. `buttons`, at the right of the name and time: the comment button, then my
+/// opens who reacted. `buttons`, at the right: the comment button, then my
 /// button, a smiley that opens the emoji bar, or my emoji, outlined, once I reacted, both round
 /// Liquid Glass. My own posts have the comment button only.
 struct ReactionRow: View {

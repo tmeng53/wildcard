@@ -122,7 +122,8 @@ extension Workout {
             source: WorkoutSource(provider: wire.provider, id: wire.providerWorkoutId),
             startedAt: Timestamp(wire: wire.startedAt), endedAt: Timestamp(wire: wire.endedAt),
             summary: WorkoutSummary(wire.summary), series: wire.series.map(WorkoutSeries.init),
-            route: wire.route?.map { RoutePoint(lat: $0.lat, lon: $0.lon) }, tilePosition: wire.tilePosition)
+            route: wire.route?.map { RoutePoint(lat: $0.lat, lon: $0.lon) }, tilePosition: wire.tilePosition,
+            chartPosition: wire.chartPosition)
     }
 
     var wire: Components.Schemas.Workout {
@@ -134,7 +135,7 @@ extension Workout {
                     laps: series.laps)
             },
             route: route?.map { Components.Schemas.RoutePoint(lat: $0.lat, lon: $0.lon) },
-            tilePosition: tilePosition, startedAt: startedAt.date, endedAt: endedAt.date)
+            tilePosition: tilePosition, chartPosition: chartPosition, startedAt: startedAt.date, endedAt: endedAt.date)
     }
 }
 

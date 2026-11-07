@@ -1,7 +1,8 @@
 -- A post's Apple Health workout: posted once per member, gone with its post or its account,
--- and its route or chart kept only with the tile that shows it.
+-- and its route or chart kept only with the tile that shows it; a map and a chart each have
+-- their own place.
 begin;
-select plan(7);
+select plan(10);
 
 insert into auth.users (id, email) values
   ('c4000000-0000-0000-0000-000000000001', 'runner@example.com'),
@@ -43,6 +44,33 @@ select throws_ok(
       'S1', now() - interval '40 minutes', now(), '{"durationSec":2400}')$$,
   '23514', null, 'a summary carries its version'
 );
+select throws_ok(
+  $$insert into public.check_in_workouts
+      (check_in_id, member_id, provider, provider_workout_id, started_at, ended_at, summary, series, route,
+       tile_position)
+    values ('c4100000-0000-0000-0000-000000000002', 'c4000000-0000-0000-0000-000000000001', 'apple_health',
+      'A2', now() - interval '32 minutes', now(), '{"version":1}', '{"version":1,"hr":[]}',
+      '{"version":1,"points":[]}', 1)$$,
+  '23514', null, 'a map with a chart gives the chart its own place'
+);
+select throws_ok(
+  $$insert into public.check_in_workouts
+      (check_in_id, member_id, provider, provider_workout_id, started_at, ended_at, summary, series, route,
+       tile_position, chart_position)
+    values ('c4100000-0000-0000-0000-000000000002', 'c4000000-0000-0000-0000-000000000001', 'apple_health',
+      'A2', now() - interval '32 minutes', now(), '{"version":1}', '{"version":1,"hr":[]}',
+      '{"version":1,"points":[]}', 2, 2)$$,
+  '23514', null, 'the map and the chart don''t share a place'
+);
+select lives_ok(
+  $$insert into public.check_in_workouts
+      (check_in_id, member_id, provider, provider_workout_id, started_at, ended_at, summary, series, route,
+       tile_position, chart_position)
+    values ('c4100000-0000-0000-0000-000000000002', 'c4000000-0000-0000-0000-000000000001', 'apple_health',
+      'A2', now() - interval '32 minutes', now(), '{"version":1}', '{"version":1,"hr":[]}',
+      '{"version":1,"points":[]}', 1, 5)$$,
+  'a workout keeps its map and its chart, each in its place'
+);
 select lives_ok(
   $$insert into public.check_in_workouts
       (check_in_id, member_id, provider, provider_workout_id, started_at, ended_at, summary)
@@ -53,7 +81,7 @@ select lives_ok(
 
 delete from public.check_ins where id = 'c4100000-0000-0000-0000-000000000001';
 select is(
-  (select count(*)::int from public.check_in_workouts where member_id = 'c4000000-0000-0000-0000-000000000001'),
+  (select count(*)::int from public.check_in_workouts where check_in_id = 'c4100000-0000-0000-0000-000000000001'),
   0, 'deleting a post takes its workout with it'
 );
 delete from auth.users where id = 'c4000000-0000-0000-0000-000000000002';

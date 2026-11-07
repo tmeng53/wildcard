@@ -60,7 +60,9 @@ public actor SampleHealthLibrary: HealthLibrary {
             var series: WorkoutSeries?
             var route: [RoutePoint]?
             switch sample.extra {
-            case .route(let seed): route = Self.loop(seed: seed)
+            case .route(let seed):
+                route = Self.loop(seed: seed)
+                series = WorkoutSeries(heartRate: Self.heartRate(seconds: seconds, seed: seed))
             case .heartRate(let seed): series = WorkoutSeries(heartRate: Self.heartRate(seconds: seconds, seed: seed))
             case .laps: series = WorkoutSeries(laps: Self.laps)
             }
@@ -82,6 +84,7 @@ public actor SampleHealthLibrary: HealthLibrary {
     }
 
     private enum Extra {
+        /// A route and the heart rate along it.
         case route(Int)
         case heartRate(Int)
         case laps
