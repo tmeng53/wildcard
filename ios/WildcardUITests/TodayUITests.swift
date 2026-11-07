@@ -7,7 +7,7 @@ final class TodayUITests: XCTestCase {
     /// Slow CI simulators can take many seconds to show a screen; a real failure still fails.
     private static let wait: TimeInterval = 30
 
-    /// 练了 with three photos: pick a cover, write a caption, post, and land back on the scene
+    /// 练了 with three photos: pick the minutes, write a caption, post, and land back on the scene
     /// with the squad bar ticked up. (请假 stays offered after: it can still go to a day before.)
     func testTrainedCheckIn() {
         let app = launch(language: "zh-Hans", photos: 3)
@@ -32,7 +32,6 @@ final class TodayUITests: XCTestCase {
         app.buttons["today.capsule.trained"].tap()
         let post = app.buttons["compose.post"]
         XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "the compose page never opened")
-        app.buttons["compose.photo.2"].tap()
         checkSportAndPickMinutes(in: app)
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
         caption.tap()

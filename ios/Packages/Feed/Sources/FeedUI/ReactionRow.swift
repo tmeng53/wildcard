@@ -6,22 +6,31 @@ import DesignSystemUI
 import FeedDomain
 import SwiftUI
 
-/// The emoji row at the bottom of a card: the coach's head first when it left an emoji, in its
-/// graphite ring, then up to four heads (three beside the coach's), newest first, each wearing
-/// that person's emoji, then +n for the rest; tapping them opens who reacted. At the right, the comment
-/// button, then my button: a smiley that opens the emoji bar, or my emoji, outlined, once I
-/// reacted. My own posts have the comment button only.
+/// A card's reactions, in two parts. `summary`, under the card's words: the coach's head first
+/// when it left an emoji, in its graphite ring, then up to four heads (three beside the
+/// coach's), newest first, each wearing that person's emoji, then +n for the rest; tapping them
+/// opens who reacted. `buttons`, at the right of the name and time: the comment button, then my
+/// button, a smiley that opens the emoji bar, or my emoji, outlined, once I reacted, both round
+/// Liquid Glass. My own posts have the comment button only.
 struct ReactionRow: View {
+    enum Part {
+        case summary
+        case buttons
+    }
+
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: FeedModel
     let post: FeedPost
+    let part: Part
 
     static let heads = 4
     private static let headSize: Double = 26
     private static let emojiSize: Double = 12
-    private static let buttonSize = CGSize(width: 44, height: 34)
-    private static let buttonEmojiSize: Double = 20
+    /// The design's 36-point round buttons.
+    private static let buttonSize = CGSize(width: Sizing.compactControl, height: Sizing.compactControl)
+    private static let buttonEmojiSize: Double = 18
+    private static let buttonGlyph: Double = 16
     private static let buttonPop: Double = 1.18
     private static let mineStroke: Double = 1.5
 
@@ -30,17 +39,24 @@ struct ReactionRow: View {
     var body: some View {
         let reactions = post.reactions
         let coach = model.coachReply(on: post.id).flatMap { $0.emoji == nil ? nil : $0 }
-        HStack(spacing: Space.xs) {
-            if !reactions.isEmpty || coach != nil {
-                summary(reactions, coach: coach, open: model.listing == post.id)
+        switch part {
+        case .summary:
+            HStack(spacing: 0) {
+                if !reactions.isEmpty || coach != nil {
+                    summary(reactions, coach: coach, open: model.listing == post.id)
+                }
+                Spacer(minLength: 0)
             }
-            Spacer(minLength: 0)
-            commentButton
-            if canRespond {
-                myButton(reactions.kind(of: model.viewer), open: model.picking == post.id)
+            .frame(height: Sizing.minimumTapTarget)
+        case .buttons:
+            // Each button's tap area reaches 4 points past its circle, so they sit 8 apart.
+            HStack(spacing: 0) {
+                commentButton
+                if canRespond {
+                    myButton(reactions.kind(of: model.viewer), open: model.picking == post.id)
+                }
             }
         }
-        .frame(height: Sizing.minimumTapTarget)
     }
 
     /// Opens the post's own page to comment; anyone who sees the post comments, its author too.
@@ -56,11 +72,11 @@ struct ReactionRow: View {
             }
         } label: {
             Image(systemName: "bubble")
-                .font(.system(size: Self.buttonEmojiSize, weight: .regular))
+                .font(.system(size: Self.buttonGlyph, weight: .regular))
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .frame(width: Self.buttonSize.width, height: Self.buttonSize.height)
-                .background(Color(role: .bgCanvas, in: theme), in: Capsule())
-                .frame(minHeight: Sizing.minimumTapTarget)
+                .glassEffect(.regular.interactive(), in: Circle())
+                .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
                 .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
@@ -136,16 +152,16 @@ struct ReactionRow: View {
                     Text(verbatim: mine.text).font(.system(size: Self.buttonEmojiSize))
                 } else {
                     Image(systemName: "face.smiling")
-                        .font(.system(size: Self.buttonEmojiSize, weight: .regular))
+                        .font(.system(size: Self.buttonGlyph, weight: .regular))
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }
             }
             .frame(width: Self.buttonSize.width, height: Self.buttonSize.height)
-            .background(Color(role: .bgCanvas, in: theme), in: Capsule())
+            .glassEffect(.regular.interactive(), in: Circle())
             // Once I reacted, a dark outline: 动态 is a brand screen, so no scene colour.
             .overlay {
                 if mine != nil {
-                    Capsule().strokeBorder(Color(role: .fgDefault, in: theme), lineWidth: Self.mineStroke)
+                    Circle().strokeBorder(Color(role: .fgDefault, in: theme), lineWidth: Self.mineStroke)
                 }
             }
             .keyframeAnimator(initialValue: 1.0, trigger: mine) { button, scale in
@@ -156,7 +172,7 @@ struct ReactionRow: View {
                     SpringKeyframe(1, duration: 0.2)
                 }
             }
-            .frame(minHeight: Sizing.minimumTapTarget)
+            .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())

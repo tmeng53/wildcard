@@ -1196,6 +1196,9 @@
               "$ref": "#/components/schemas/PhotoView"
             },
             "description": "1 to 3 photos, the cover first. Missing when there are none."
+          },
+          "workout": {
+            "$ref": "#/components/schemas/WorkoutView"
           }
         },
         "required": [
@@ -1250,6 +1253,183 @@
         ],
         "additionalProperties": false,
         "description": "Its width and height in pixels. Missing on photos saved without one."
+      },
+      "WorkoutView": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "pattern": "^[a-z][a-z_]{1,30}$",
+            "description": "Where it came from: `apple_health` for now.",
+            "example": "apple_health"
+          },
+          "providerWorkoutId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The provider’s own id for it (an HKWorkout’s UUID). Posted once per member."
+          },
+          "summary": {
+            "$ref": "#/components/schemas/WorkoutSummary"
+          },
+          "series": {
+            "$ref": "#/components/schemas/WorkoutSeries"
+          },
+          "route": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoutePoint"
+            },
+            "minItems": 2,
+            "maxItems": 2000,
+            "description": "The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept."
+          },
+          "tilePosition": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is."
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "In UTC with milliseconds."
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "In UTC with milliseconds."
+          }
+        },
+        "required": [
+          "provider",
+          "providerWorkoutId",
+          "summary",
+          "startedAt",
+          "endedAt"
+        ],
+        "additionalProperties": false,
+        "description": "The workout a 训练 was posted from (Apple Health), with only the numbers the member kept. Missing on a 训练 posted by hand; builds from before it read the post without it."
+      },
+      "WorkoutSummary": {
+        "type": "object",
+        "properties": {
+          "durationSec": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 86400
+          },
+          "distanceM": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "paceSecPerKm": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 86400
+          },
+          "speedKmh": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 300
+          },
+          "avgHr": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "maxHr": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "effort": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "laps": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "poolLengthM": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 100
+          }
+        },
+        "additionalProperties": false,
+        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim)."
+      },
+      "WorkoutSeries": {
+        "type": "object",
+        "properties": {
+          "hr": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeartRatePoint"
+            },
+            "minItems": 2,
+            "maxItems": 300,
+            "description": "Heart rate, earliest first, thinned on the phone to about 120 points."
+          },
+          "laps": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 86400
+            },
+            "minItems": 1,
+            "maxItems": 1000,
+            "description": "Each lap’s time in seconds, in order."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Sent only when the chart tile was kept."
+      },
+      "HeartRatePoint": {
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 86400,
+            "description": "Seconds from the start."
+          },
+          "bpm": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          }
+        },
+        "required": [
+          "t",
+          "bpm"
+        ],
+        "additionalProperties": false
+      },
+      "RoutePoint": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "additionalProperties": false
       },
       "HealthyMealCheckIn": {
         "type": "object",
@@ -1586,6 +1766,9 @@
             "minItems": 1,
             "maxItems": 3,
             "description": "1 to 3 photos, the cover first. Leave it out for none."
+          },
+          "workout": {
+            "$ref": "#/components/schemas/Workout"
           }
         },
         "required": [
@@ -1608,6 +1791,61 @@
           "path"
         ],
         "additionalProperties": false
+      },
+      "Workout": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "pattern": "^[a-z][a-z_]{1,30}$",
+            "description": "Where it came from: `apple_health` for now.",
+            "example": "apple_health"
+          },
+          "providerWorkoutId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The provider’s own id for it (an HKWorkout’s UUID). Posted once per member."
+          },
+          "summary": {
+            "$ref": "#/components/schemas/WorkoutSummary"
+          },
+          "series": {
+            "$ref": "#/components/schemas/WorkoutSeries"
+          },
+          "route": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoutePoint"
+            },
+            "minItems": 2,
+            "maxItems": 2000,
+            "description": "The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept."
+          },
+          "tilePosition": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is."
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "provider",
+          "providerWorkoutId",
+          "summary",
+          "startedAt",
+          "endedAt"
+        ],
+        "additionalProperties": false,
+        "description": "The workout a 训练 was posted from, with only the numbers the member kept. Left out on a 训练 posted by hand."
       },
       "HealthyMealCheckInDraft": {
         "type": "object",
@@ -6313,7 +6551,7 @@
             }
           },
           "409": {
-            "description": "The id holds a different check-in, or another check-in uses one of the photos",
+            "description": "The id holds a different check-in, another check-in uses one of the photos, or the member already posted its workout (`WORKOUT_ALREADY_POSTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6426,7 +6664,7 @@
             }
           },
           "409": {
-            "description": "Another check-in uses one of the photos",
+            "description": "Another check-in uses one of the photos, or another of the member’s posts has its workout",
             "content": {
               "application/problem+json": {
                 "schema": {

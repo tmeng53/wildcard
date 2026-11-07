@@ -5,6 +5,7 @@ import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import HealthUI
 import MeDomain
 import SwiftUI
 
@@ -25,14 +26,17 @@ public struct MeDestinations {
     /// 预览注册, for admins only: sign-up from the open screen on a sample squad, saving nothing.
     /// Nil for everyone else, and 设置 shows no row for it.
     public var previewSignUp: (() -> Void)?
+    /// Apple Health, for 设置 › Apple 健康; nil where the phone has none.
+    public var health: HealthConnection?
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
         street: @escaping () -> Void = {}, streetHasNews: Bool = false,
         openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL,
-        previewSignUp: (() -> Void)? = nil
+        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil
     ) {
         self.previewSignUp = previewSignUp
+        self.health = health
         self.editCharacter = editCharacter
         self.schedule = schedule
         self.street = street

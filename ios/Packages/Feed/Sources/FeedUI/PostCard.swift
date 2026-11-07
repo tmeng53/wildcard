@@ -8,22 +8,24 @@ import SportsUI
 import SwiftUI
 import UIKit
 
-/// One post: its photos on top (swipe; the cover first), or without photos the shared colour
-/// block with its words, the author's character standing at the card's left in that day's kit,
-/// their name and time, the kind's tag (a 请假条's grey with a moon), the caption under photos,
-/// then the emoji row. A teammate reacts with the smiley button, by holding the card and sliding
-/// to an emoji, or with a double tap on a photo or the block (❤️); the emoji flies to the
-/// author's character, which answers with a move.
+/// One post (Tracy, 2026-11-06): its cover on top (its photos and a 训练's map or chart, swiped,
+/// the first being the cover), or without any the shared colour block with its words; a 训练's
+/// 成绩条 under it with no seam, 时长 first; then on a 12-point grid the author's character in
+/// that day's kit, their name and time with the comment and emoji buttons at the right, the
+/// kind's tag (a 请假条's grey with a moon) and the caption under a cover; then who reacted. A
+/// teammate reacts with the smiley button, by holding the card and sliding to an emoji, or with
+/// a double tap on the cover or the block (❤️); the emoji flies to the author's character, which
+/// answers with a move.
 struct PostCard: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: FeedModel
     let post: FeedPost
 
-    /// The column the character stands in, at the card's left.
-    static let characterColumn: Double = 100
-    /// How far the character's head reaches up into the photo above it.
-    static let overlap: Double = Space.l
+    /// The character's width at the card's left, the design's 64 points.
+    static let characterColumn: Double = 64
+    /// The name and time's row, as tall as the buttons at its right.
+    static let nameRow: Double = 36
     /// How long a press on the card takes to open the emoji bar.
     static let holdToPick: Double = 0.45
     /// Moving this far first makes the press a scroll.
@@ -32,6 +34,15 @@ struct PostCard: View {
     static let liftScale: Double = 1.02
 
     private var canRespond: Bool { post.canRespond(model.viewer) }
+    /// The cover's pages: the photos, and a 训练's map or chart where the member put it.
+    private var tiles: [Contracts.PostTile] {
+        if case .trained(let training) = post.checkIn.entry { return training.tiles }
+        return (post.checkIn.photos?.all ?? []).map(Contracts.PostTile.photo)
+    }
+    /// Teammates' emoji, or the coach's.
+    private var hasReactions: Bool {
+        !post.reactions.isEmpty || model.coachReply(on: post.id)?.emoji != nil
+    }
     /// On its own page the post lists every comment under the card instead.
     private var showsAllComments: Bool { model.opened == post.id }
     private var isLifted: Bool { model.lifted && model.picking == post.id }
@@ -40,15 +51,22 @@ struct PostCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let photos = post.checkIn.photos {
-                PostPhotos(model: model, post: post, photos: photos)
-            } else {
+            if tiles.isEmpty {
                 block
+            } else {
+                PostPhotos(model: model, post: post, tiles: tiles)
+            }
+            if case .trained(let training) = post.checkIn.entry {
+                let cells = ScoreCell.cells(of: training)
+                if !cells.isEmpty { ScoreStrip(cells: cells, activity: training.activity) }
             }
             details
-            ReactionRow(model: model, post: post)
-                .padding(.horizontal, Space.m)
-                .padding(.bottom, !hasComments || showsAllComments ? Space.xs : 0)
+            if hasReactions {
+                ReactionRow(model: model, post: post, part: .summary)
+                    .padding(.horizontal, Space.s)
+                    .padding(.top, -Space.xs)
+                    .padding(.bottom, !hasComments || showsAllComments ? Space.xxs : 0)
+            }
             if hasComments && !showsAllComments {
                 CardComments(model: model, post: post)
                     .padding(.horizontal, Space.m)
@@ -130,8 +148,8 @@ struct PostCard: View {
         model.react(.pick(EmojiBar.common[index]), on: post, from: from)
     }
 
-    /// A post without photos: the shared colour block in their place, with its words and a
-    /// 练了's minutes on it. A double tap reacts as on a photo.
+    /// A post without a cover: the shared colour block in its place, with its words on it. A
+    /// double tap reacts as on a photo.
     private var block: some View {
         PostBlock(checkIn: post.checkIn, layout: .strip)
             .clipShape(
@@ -144,16 +162,14 @@ struct PostCard: View {
             }
     }
 
-    /// The character's column, then who, when, what and the words.
+    /// The character, then who and when with the buttons, what, and the words under a cover.
     private var details: some View {
-        HStack(alignment: .top, spacing: 0) {
-            PostCharacter(model: model, post: post)
-                .frame(width: Self.characterColumn)
-                .padding(.top, -Self.overlap)
-            VStack(alignment: .leading, spacing: Space.xs) {
-                HStack(alignment: .firstTextBaseline, spacing: Space.xs - 2) {
+        HStack(alignment: .top, spacing: Space.s) {
+            PostCharacter(model: model, post: post, width: Self.characterColumn)
+            VStack(alignment: .leading, spacing: Space.xs - 2) {
+                HStack(spacing: Space.xs - 2) {
                     authorName
-                        .typeStyle(TypeRamp.headline)
+                        .typeStyle(TypeRamp.calloutEmphasis)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                         .lineLimit(1)
                     Text(post.checkIn.createdAt.date, format: .dateTime.hour().minute())
@@ -167,41 +183,20 @@ struct PostCard: View {
                             .lineLimit(1)
                             .accessibilityIdentifier("post.backfill")
                     }
-                    if post.checkIn.photos != nil, case .trained(let training) = post.checkIn.entry,
-                        let minutes = training.minutes
-                    {
-                        Spacer(minLength: Space.xs)
-                        minutesNumber(minutes)
-                    }
+                    Spacer(minLength: Space.xs)
+                    ReactionRow(model: model, post: post, part: .buttons)
                 }
+                .frame(height: Self.nameRow)
                 if case .disclaimer = post.checkIn.entry {
                     Tag(kindTitle, systemImage: "moon.fill", style: .rest)
                 } else {
                     Tag(kindTitle)
                 }
-                if post.checkIn.photos != nil { words }
+                if !tiles.isEmpty { words }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, Space.s)
-            .padding(.trailing, Space.m)
-            .padding(.bottom, Space.s)
         }
-    }
-
-    /// A 练了's minutes, the card's one big number, at the right of who and when.
-    private func minutesNumber(_ minutes: WorkoutMinutes) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
-            Text(verbatim: "\(minutes.value)")
-                .typeStyle(TypeRamp.scoreCard)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-            Text("分钟", bundle: .module)
-                .typeStyle(TypeRamp.footnoteEmphasis)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-        }
-        .lineLimit(1)
-        .fixedSize()
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("feed.minutes")
+        .padding(Space.s)
     }
 
     private var authorName: Text {

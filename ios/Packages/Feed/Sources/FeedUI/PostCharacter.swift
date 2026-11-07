@@ -6,7 +6,7 @@ import DesignSystemUI
 import FeedDomain
 import SwiftUI
 
-/// The author's character at the card's left, full height, looping what the post is about while
+/// The author's character at the card's left, to the hips, looping what the post is about while
 /// the card is on screen (the feed's cards are lazy, so only the visible ones draw): a 练了's
 /// sport, a meal being eaten, a 请假条 held up. With Reduce Motion it holds still. On my own post,
 /// a teammate's reaction that arrived shows in a small bubble over my character, with their head
@@ -15,6 +15,10 @@ struct PostCharacter: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let model: FeedModel
     let post: FeedPost
+    /// How wide the character stands; the card shows it to the hips, 9 points tall for every 8 wide.
+    let width: Double
+
+    private static let shown = 72.0 / 64
 
     var body: some View {
         if let player = model.player(for: post) {
@@ -29,7 +33,10 @@ struct PostCharacter: View {
                         }
                     }
                 }
-                .frame(height: Sizing.characterFull)
+                // Head and body to the hips, the top of the rig's 240 × 320 canvas at `width`.
+                .frame(width: width, height: width * 320 / 240)
+                .frame(width: width, height: width * Self.shown, alignment: .top)
+                .clipped()
                 .anchorPreference(key: FeedAnchors.self, value: .bounds) { FeedAnchors.Value(heads: [post.id: $0]) }
                 .overlay(alignment: .top) {
                     if let bubble = model.bubbles[post.id] {

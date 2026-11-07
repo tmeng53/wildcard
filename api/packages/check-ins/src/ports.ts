@@ -11,11 +11,14 @@ import type { WeekSummaryWords } from './domain/week-summary-words.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
 export type InsertOutcome =
-  { readonly saved: true } | { readonly saved: false; readonly taken: 'id' | 'photo' };
+  { readonly saved: true } | { readonly saved: false; readonly taken: 'id' | 'photo' | 'workout' };
 
-/** What saving an edit did: another check-in may hold one of its new photos. */
+/**
+ * What saving an edit did: another check-in may hold one of its new photos, or the member's
+ * other post its workout.
+ */
 export type UpdateOutcome =
-  { readonly saved: true } | { readonly saved: false; readonly taken: 'photo' };
+  { readonly saved: true } | { readonly saved: false; readonly taken: 'photo' | 'workout' };
 
 /** Where check-ins are kept. */
 export interface CheckInStore {
