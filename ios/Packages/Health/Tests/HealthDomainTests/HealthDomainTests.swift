@@ -25,7 +25,10 @@ private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920
         try LocalDay("2026-11-06"), in: newYork, posted: [late.id])
     #expect(today.map(\.imported.id.id) == ["C", "B", "A"])
     #expect(today.map(\.isPosted) == [true, false, false])
-    #expect(today.newestToPost?.id.id == "B")
+    #expect(today.newestToPost()?.id.id == "B")
+    // Put away from the home's card, B gives way to the one before it, and then to none.
+    #expect(today.newestToPost(skipping: [today[1].imported.id])?.id.id == "A")
+    #expect(today.newestToPost(skipping: [today[1].imported.id, today[2].imported.id]) == nil)
 }
 
 @Test func minutesRoundAndStayInTheAPIsRange() throws {
@@ -51,11 +54,17 @@ private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920
     let swim = Workout(
         source: source, startedAt: start, endedAt: start, summary: WorkoutSummary(),
         series: WorkoutSeries(laps: [50, 48]))
+    let beats = [HeartRatePoint(seconds: 0, bpm: 120), HeartRatePoint(seconds: 60, bpm: 150)]
+    let run = Workout(
+        source: source, startedAt: start, endedAt: start, summary: WorkoutSummary(),
+        series: WorkoutSeries(heartRate: beats), route: ride.route)
     var sharing = HealthSharing()
-    sharing.route = false
+    #expect(sharing.keptTiles(of: run) == [.map, .chart])
     sharing.heartRate = false
-    #expect(sharing.keepsTile(of: ride) == false)
-    #expect(sharing.keepsTile(of: swim) == true)
+    #expect(sharing.keptTiles(of: run) == [.map])
+    sharing.route = false
+    #expect(sharing.keptTiles(of: ride) == [])
+    #expect(sharing.keptTiles(of: swim) == [.chart])
     sharing.laps = false
-    #expect(sharing.keepsTile(of: swim) == false)
+    #expect(sharing.keptTiles(of: swim) == [])
 }

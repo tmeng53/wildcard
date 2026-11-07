@@ -2665,10 +2665,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutView/route`.
             public var route: [Components.Schemas.RoutePoint]?
-            /// Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
+            /// Where the map tile sits among the photos when there is a route, else the chart tile, 1 being the cover. Present exactly when a route or a series is.
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutView/tilePosition`.
             public var tilePosition: Swift.Int?
+            /// Where the chart tile sits among the photos when the map is kept too, 1 being the cover. Present exactly when both a route and a series are; builds from before show only the map.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutView/chartPosition`.
+            public var chartPosition: Swift.Int?
             /// In UTC with milliseconds.
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutView/startedAt`.
@@ -2685,7 +2689,8 @@ extension Components {
             ///   - summary:
             ///   - series:
             ///   - route: The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept.
-            ///   - tilePosition: Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
+            ///   - tilePosition: Where the map tile sits among the photos when there is a route, else the chart tile, 1 being the cover. Present exactly when a route or a series is.
+            ///   - chartPosition: Where the chart tile sits among the photos when the map is kept too, 1 being the cover. Present exactly when both a route and a series are; builds from before show only the map.
             ///   - startedAt: In UTC with milliseconds.
             ///   - endedAt: In UTC with milliseconds.
             public init(
@@ -2695,6 +2700,7 @@ extension Components {
                 series: Components.Schemas.WorkoutSeries? = nil,
                 route: [Components.Schemas.RoutePoint]? = nil,
                 tilePosition: Swift.Int? = nil,
+                chartPosition: Swift.Int? = nil,
                 startedAt: Foundation.Date,
                 endedAt: Foundation.Date
             ) {
@@ -2704,6 +2710,7 @@ extension Components {
                 self.series = series
                 self.route = route
                 self.tilePosition = tilePosition
+                self.chartPosition = chartPosition
                 self.startedAt = startedAt
                 self.endedAt = endedAt
             }
@@ -2714,6 +2721,7 @@ extension Components {
                 case series
                 case route
                 case tilePosition
+                case chartPosition
                 case startedAt
                 case endedAt
             }
@@ -3367,10 +3375,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Workout/route`.
             public var route: [Components.Schemas.RoutePoint]?
-            /// Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
+            /// Where the map tile sits among the photos when there is a route, else the chart tile, 1 being the cover. Present exactly when a route or a series is.
             ///
             /// - Remark: Generated from `#/components/schemas/Workout/tilePosition`.
             public var tilePosition: Swift.Int?
+            /// Where the chart tile sits among the photos when the map is kept too, 1 being the cover. Present exactly when both a route and a series are; builds from before show only the map.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Workout/chartPosition`.
+            public var chartPosition: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/Workout/startedAt`.
             public var startedAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/Workout/endedAt`.
@@ -3383,7 +3395,8 @@ extension Components {
             ///   - summary:
             ///   - series:
             ///   - route: The route, start first, with 200 m cut from each end on the phone. Sent only when the map tile was kept.
-            ///   - tilePosition: Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is.
+            ///   - tilePosition: Where the map tile sits among the photos when there is a route, else the chart tile, 1 being the cover. Present exactly when a route or a series is.
+            ///   - chartPosition: Where the chart tile sits among the photos when the map is kept too, 1 being the cover. Present exactly when both a route and a series are; builds from before show only the map.
             ///   - startedAt:
             ///   - endedAt:
             public init(
@@ -3393,6 +3406,7 @@ extension Components {
                 series: Components.Schemas.WorkoutSeries? = nil,
                 route: [Components.Schemas.RoutePoint]? = nil,
                 tilePosition: Swift.Int? = nil,
+                chartPosition: Swift.Int? = nil,
                 startedAt: Foundation.Date,
                 endedAt: Foundation.Date
             ) {
@@ -3402,6 +3416,7 @@ extension Components {
                 self.series = series
                 self.route = route
                 self.tilePosition = tilePosition
+                self.chartPosition = chartPosition
                 self.startedAt = startedAt
                 self.endedAt = endedAt
             }
@@ -3412,6 +3427,7 @@ extension Components {
                 case series
                 case route
                 case tilePosition
+                case chartPosition
                 case startedAt
                 case endedAt
             }

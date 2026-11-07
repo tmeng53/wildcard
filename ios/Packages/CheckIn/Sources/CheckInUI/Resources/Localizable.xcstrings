@@ -2087,22 +2087,6 @@
           }
         }
       }
-    },
-    "发一条": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Post it"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "發一條"
-          }
-        }
-      }
     }
   },
   "version": "1.0"

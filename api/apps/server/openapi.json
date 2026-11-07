@@ -1287,8 +1287,14 @@
           "tilePosition": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 4,
-            "description": "Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is."
+            "maximum": 5,
+            "description": "Where the map tile sits among the photos when there is a route, else the chart tile, 1 being the cover. Present exactly when a route or a series is."
+          },
+          "chartPosition": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Where the chart tile sits among the photos when the map is kept too, 1 being the cover. Present exactly when both a route and a series are; builds from before show only the map."
           },
           "startedAt": {
             "type": "string",
@@ -1825,8 +1831,14 @@
           "tilePosition": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 4,
-            "description": "Where the map or chart tile sits among the photos, 1 being the cover. Present exactly when a route or a series is."
+            "maximum": 5,
+            "description": "Where the map tile sits among the photos when there is a route, else the chart tile, 1 being the cover. Present exactly when a route or a series is."
+          },
+          "chartPosition": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Where the chart tile sits among the photos when the map is kept too, 1 being the cover. Present exactly when both a route and a series are; builds from before show only the map."
           },
           "startedAt": {
             "type": "string",

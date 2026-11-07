@@ -133,22 +133,32 @@ export async function deleteCheckIn(
 
 /**
  * The edit with the saved post's workout when it leaves `workout` out, as builds from before
- * workouts do, so editing there never drops it. The tile moves back to right after the photos
- * when the edit took photos off. A build that knows workouts always sends the one it keeps:
+ * workouts do, so editing there never drops it. The tiles move back to right after the photos,
+ * in their order, when the edit took photos off. A build that knows workouts always sends the one it keeps:
  * it can strike numbers and take the tile off, never drop the workout itself.
  */
 function keepingWorkout(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
   if (edit.kind !== 'trained' || saved.kind !== 'trained') return edit;
   const workout = saved.training.workout;
   if (edit.training.workout !== undefined || workout === undefined) return edit;
-  const last = (edit.training.photos?.length ?? 0) + 1;
-  const tilePosition =
-    workout.tilePosition === undefined ? undefined : Math.min(workout.tilePosition, last);
+  const photos = edit.training.photos?.length ?? 0;
+  const { tilePosition, chartPosition } = workout;
+  // Each tile past the photos goes right after them, the earlier one first.
+  const after = (position: number, other: number | undefined) =>
+    position <= photos
+      ? position
+      : photos + 1 + (other !== undefined && other < position && other > photos ? 1 : 0);
   return {
     ...edit,
     training: {
       ...edit.training,
-      workout: { ...workout, ...(tilePosition === undefined ? {} : { tilePosition }) },
+      workout: {
+        ...workout,
+        ...(tilePosition === undefined ? {} : { tilePosition: after(tilePosition, chartPosition) }),
+        ...(chartPosition === undefined
+          ? {}
+          : { chartPosition: after(chartPosition, tilePosition) }),
+      },
     },
   };
 }
