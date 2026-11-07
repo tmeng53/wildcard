@@ -1896,6 +1896,38 @@
         }
       }
     },
+    "先不了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先不了"
+          }
+        }
+      }
+    },
+    "好的": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好的"
+          }
+        }
+      }
+    },
     "全屏看，长按拖动换位置": {
       "localizations": {
         "en": {

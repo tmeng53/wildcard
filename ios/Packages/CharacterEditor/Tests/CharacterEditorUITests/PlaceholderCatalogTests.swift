@@ -85,12 +85,13 @@ private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", 
     }
 }
 
-/// The shopping street: seven stores in winter, WARM-UP and POWDER DAY open at the start, and
+/// The shopping street: seven stores in winter, WARM-UP and POWDER DAY open at the start and
+/// first on the street, and
 /// every piece of clothing on a rack, WARM-UP's nineteen pieces, tops first, then bottoms, shoes,
 /// hats and accessories.
 @Test func everyPieceHangsInAStore() throws {
     let catalog = try Catalog.placeholder(stock: try winterStart())
-    #expect(catalog.stores.map(\.id) == ["warmup", "lap", "nolook", "moss", "halfmoon", "deuce", "powder"])
+    #expect(catalog.stores.map(\.id) == ["warmup", "powder", "lap", "nolook", "moss", "halfmoon", "deuce"])
     #expect(catalog.stores.filter(\.isOpen).map(\.id) == ["warmup", "powder"])
     #expect(
         catalog.rack(of: "powder").map(\.variant) == ["powder-salmon", "powder-rice", "powder-saba", "powder-helmet"])
@@ -213,8 +214,8 @@ private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", 
         stock: try stock(earned: ["warmup", "powder"], locked: powderLocked, owned: ["powder-tuna"]))
     let summer = try Catalog.placeholder(
         stock: try stock(earned: ["warmup", "powder"], closed: ["powder"], owned: ["powder-tuna"]))
-    #expect(winter.stores.map(\.id).last == "powder" && summer.stores.map(\.id).last == "powder")
-    #expect(summer.stores.last?.isOpen == true)
+    #expect(winter.stores.map(\.id).prefix(2) == ["warmup", "powder"])
+    #expect(summer.stores.first { $0.id == "powder" }?.isOpen == true)
     #expect(winter.lockedRack(of: "powder").count == 12)
     #expect(summer.lockedRack(of: "powder").isEmpty)
     #expect(

@@ -70,16 +70,18 @@ extension Catalog {
         return Set(unlocked).union(owned)
     }
 
-    /// The stores the stock lists that the art has, in its order: an open one, walked into once
-    /// earned (the server lists a store's starters and boxes only then), and a closed one only as
-    /// the rack of what the member owns there.
+    /// The stores the stock lists that the art has, the ones the member can walk into first, each
+    /// group in the stock's order (Tracy, 2026-11-06): an open one, walked into once earned (the
+    /// server lists a store's starters and boxes only then), and a closed one only as the rack of
+    /// what the member owns there.
     private static func street(_ stock: StreetStock, art: Set<String>, owned: Set<String>) -> [EditorChoices.Store] {
-        stock.stores.filter { art.contains($0.id) }.compactMap { store in
+        let stores = stock.stores.filter { art.contains($0.id) }.compactMap { store -> EditorChoices.Store? in
             let pieces = stock.pieces.filter { $0.store == store.id }
             let ownsSome = pieces.contains { owned.contains($0.id) }
             guard store.isOpen || ownsSome else { return nil }
             return EditorChoices.Store(
                 id: store.id, isOpen: ownsSome || pieces.contains { !owned.contains($0.id) }, toGo: store.toGo)
         }
+        return stores.filter(\.isOpen) + stores.filter { !$0.isOpen }
     }
 }

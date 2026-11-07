@@ -40,6 +40,35 @@ final class TodayCapsuleUITests: XCTestCase {
         XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "a swipe up didn't fold the card")
     }
 
+    /// The card opens again on the page it was folded on, showing that page and not only its dot.
+    func testCardReopensOnItsPage() {
+        let app = launch(language: "zh-Hans")
+        let capsule = expectCapsule(in: app)
+        capsule.swipeDown()
+        let mineDot = app.buttons["squadcard.page.mine"]
+        XCTAssertTrue(mineDot.waitForExistence(timeout: Self.wait), "a swipe down didn't open the card")
+        mineDot.tap()
+        XCTAssertTrue(app.buttons["squadcard.collapse"].exists, "tapping my week's dot folded the card")
+        let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
+        let monday = app.buttons["squadcard.day.0"]
+        expect(monday, showsIn: card, "my week didn't show after its dot was tapped")
+
+        card.swipeUp()
+        XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "a swipe up didn't fold the card")
+        capsule.swipeDown()
+        XCTAssertTrue(mineDot.waitForExistence(timeout: Self.wait), "a swipe down didn't open the card again")
+        XCTAssertTrue(mineDot.isSelected, "the card didn't reopen on my week's dot")
+        expect(monday, showsIn: card, "the card reopened on my week's dot but showed the squad's page")
+        XCTAssertFalse(
+            card.frame.contains(app.buttons["squadcard.squad"].frame), "the squad's page shows under my week's dot")
+    }
+
+    /// Once the card has come to rest, `element` sits inside it.
+    private func expect(_ element: XCUIElement, showsIn card: XCUIElement, _ message: String) {
+        settle()
+        XCTAssertTrue(card.frame.contains(element.frame), "\(message): \(element.frame) in \(card.frame)")
+    }
+
     /// In English, with one member, the capsule still fits.
     func testCapsuleInEnglishAlone() {
         let app = launch(language: "en", extra: ["-uitest-squad", "1"])

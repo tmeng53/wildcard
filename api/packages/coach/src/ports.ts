@@ -302,8 +302,9 @@ export type SquadWeekSource = (input: {
 export type AiConsented = (members: readonly string[]) => Promise<readonly string[]>;
 
 /**
- * What the coach is told about `day` (`YYYY-MM-DD`, New York): a line for each moment on that day,
- * such as a holiday (「今天是感恩节」), kept as data with the switches, never in code.
+ * The app's own moments on `day` (`YYYY-MM-DD`, New York), such as a limited store open
+ * (「TURKEY TROT 限时开张」), kept as data with the switches, never in code; holidays come from
+ * the coach's own calendar in its settings.
  */
 export type CoachOccasions = (day: string) => Promise<readonly string[]>;
 
