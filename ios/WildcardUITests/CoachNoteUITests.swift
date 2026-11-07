@@ -34,11 +34,15 @@ final class CoachNoteUITests: XCTestCase {
 
         coach.tap()
         XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "tapping 毛头 didn't open the note")
-        // Once it has grown out of the coach.
+        // Once it has grown out of the coach, it is all on screen and 收下 is free.
         Thread.sleep(forTimeInterval: 1)
+        let putAway = app.buttons["today.coachNote.putAway"]
+        let screen = app.windows.firstMatch.frame
+        XCTAssertTrue(screen.contains(note.frame), "the note runs off the screen: \(note.frame)")
+        XCTAssertTrue(putAway.isHittable, "收下 is covered")
         keepScreenshot(named: "106-coach-note-opened")
 
-        app.buttons["today.coachNote.putAway"].tap()
+        putAway.tap()
         let gone = NSPredicate(format: "exists == false")
         expectation(for: gone, evaluatedWith: note)
         waitForExpectations(timeout: Self.wait)
@@ -48,6 +52,8 @@ final class CoachNoteUITests: XCTestCase {
         coach.tap()
         let again = app.buttons["coachCard.memberNote"]
         XCTAssertTrue(again.waitForExistence(timeout: Self.wait), "the coach's card doesn't offer today's message")
+        XCTAssertTrue(screen.contains(again.frame), "今天给你的消息 runs off the screen: \(again.frame)")
+        XCTAssertTrue(again.isHittable, "今天给你的消息 is covered")
         keepScreenshot(named: "107-coach-card-message")
         again.tap()
         XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "today's message didn't open again from the card")
