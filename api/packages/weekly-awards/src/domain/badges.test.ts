@@ -28,7 +28,7 @@ describe('withSportGlyphs', () => {
 });
 
 describe('shownBadge', () => {
-  it('paints a badge in its colour’s tone, and the gym’s steel for a colour no longer listed', () => {
+  it('paints a badge in its colour’s tone, and sends none for a colour no longer listed', () => {
     expect(
       shownBadge({ shape: 'circle', colour: 'lavender', glyph: 'moon.fill' }, catalog),
     ).toStrictEqual({
@@ -37,16 +37,16 @@ describe('shownBadge', () => {
       glyph: 'moon.fill',
       tone: '#9062DE',
     });
-    expect(shownBadge({ shape: 'circle', colour: 'gone', glyph: 'moon.fill' }, catalog).tone).toBe(
-      '#4A6C8C',
-    );
+    expect(
+      shownBadge({ shape: 'circle', colour: 'gone', glyph: 'moon.fill' }, catalog),
+    ).toStrictEqual({ shape: 'circle', colour: 'gone', glyph: 'moon.fill' });
   });
 
-  it('paints a colour saved before colours had tones in the gym’s steel', () => {
+  it('sends no tone for a colour saved before colours had tones, so the app paints its scene', () => {
     const untoned = BadgeCatalog.parse({ ...catalog, colours: [{ id: 'track', meaning: '红' }] });
-    expect(shownBadge({ shape: 'circle', colour: 'track', glyph: 'moon.fill' }, untoned).tone).toBe(
-      '#4A6C8C',
-    );
+    expect(
+      shownBadge({ shape: 'circle', colour: 'track', glyph: 'moon.fill' }, untoned),
+    ).toStrictEqual({ shape: 'circle', colour: 'track', glyph: 'moon.fill' });
   });
 });
 

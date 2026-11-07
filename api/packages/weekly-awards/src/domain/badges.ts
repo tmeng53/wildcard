@@ -37,11 +37,11 @@ export type Badge = z.infer<typeof Badge>;
 /** The badge a title won before titles came with one. */
 export const DEFAULT_BADGE: Badge = { shape: 'circle', colour: 'gym', glyph: 'star.fill' };
 
-/** The tone of a colour the catalog no longer lists, or lists without one: the gym's steel. */
-export const DEFAULT_TONE: BadgeTone = '#4A6C8C';
-
-/** A badge as it is shown: with its colour's tone, from the catalog. */
-export type ShownBadge = Badge & { readonly tone: BadgeTone };
+/**
+ * A badge as it is shown: with its colour's tone from the catalog, when the catalog gives one.
+ * Without one the app paints it as builds before tones did, by the scene of its colour's id.
+ */
+export type ShownBadge = Badge & { readonly tone?: BadgeTone };
 
 const meaning = z
   .string()
@@ -61,7 +61,7 @@ export const BadgeCatalog = z.strictObject({
     .refine(distinct, 'Must not list a shape twice'),
   colours: z
     // A colour saved before colours had tones (as the API before them still reads it) has none,
-    // and is shown in the gym's steel until one is set.
+    // and is sent without one until it is set.
     .array(z.strictObject({ id: BadgeColour, tone: BadgeTone.optional(), meaning }))
     .min(1)
     .max(24)
@@ -119,8 +119,8 @@ export function withSportGlyphs(
   return { ...catalog, glyphs: [...catalog.glyphs, ...added] };
 }
 
-/** `badge` with its colour's tone from `catalog`, or the gym's for a colour it no longer lists or lists without one. */
+/** `badge` with its colour's tone from `catalog`, or without one for a colour it doesn't list or lists without one. */
 export function shownBadge(badge: Badge, catalog: BadgeCatalog): ShownBadge {
-  const tone = catalog.colours.find(({ id }) => id === badge.colour)?.tone ?? DEFAULT_TONE;
-  return { ...badge, tone };
+  const tone = catalog.colours.find(({ id }) => id === badge.colour)?.tone;
+  return tone === undefined ? badge : { ...badge, tone };
 }

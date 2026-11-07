@@ -40,7 +40,8 @@ export const TitleBadgeBody = z
     tone: BadgeTone.optional().meta({
       description:
         'Its colour itself, as #RRGGBB, from the badge catalog: what the app paints it in. Left ' +
-        'out by older servers.',
+        'out by older servers and for a colour the catalog gives no tone, which the app then ' +
+        'paints like `colour` for builds before `tone`.',
       example: '#E65345',
     }),
     glyph: z.string().meta({

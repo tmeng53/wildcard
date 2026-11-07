@@ -43,7 +43,6 @@ export {
   BadgeShape,
   BadgeTone,
   DEFAULT_BADGE,
-  DEFAULT_TONE,
   shownBadge,
   withSportGlyphs,
   type ShownBadge,

@@ -245,8 +245,8 @@ describe('createWeeklyAwards', () => {
     expect(boards.get(ana)).toStrictEqual([
       {
         title: '雨中狠人',
-        // The settings' colours have no tones yet, so it shows in the gym's steel.
-        badge: { ...badge, tone: '#4A6C8C' },
+        // The settings' colours have no tones yet, so none is sent.
+        badge,
         weeks: [{ squad, weekStart: week, speech: '周三下着雨还去跑了。' }],
       },
     ]);
