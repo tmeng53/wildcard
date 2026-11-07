@@ -20,6 +20,9 @@ extension TodayModel {
         /// The squad trained over its goal weeks in a row: the captain is suggested a higher one,
         /// told on this phone once; its button opens 小队.
         case goalSuggestion(GoalSuggestion)
+        /// Posts the server refused while they went out late, `count` of them, the oldest's `line`;
+        /// its button, when `canResend`, opens that post to change and send again.
+        case sendFailed(count: Int, line: String?, canResend: Bool)
         /// What waited after two in a row, in one banner that opens 通知 (approved C, 2026-11-05).
         case more
     }
@@ -36,6 +39,7 @@ extension TodayModel {
             switch news {
             case .broadcast(let broadcast): broadcast.action != nil || broadcast.style == .celebration
             case .goalSuggestion: true
+            case .sendFailed(_, _, let canResend): canResend
             case .moved, .unlocked, .more: false
             }
         }
@@ -85,6 +89,31 @@ extension TodayModel {
         }
         guard !unlocks.isEmpty else { return }
         pendingNotices += unlocks.map { Notice(news: .unlocked($0)) }
+        Task { await showNextNotice() }
+    }
+
+    /// The posts the server refused while they went out late, in one banner: 重发 opens the oldest
+    /// to change and send again. A 请假条 has no page to open, so it is only told.
+    func tellRefused() {
+        let refused = store.takeRefused().map(\.pending)
+        guard !refused.isEmpty else { return }
+        let resendable = refused.filter { $0.draft.kind != .disclaimer }
+        unsent += resendable
+        announceUnsent(
+            count: unsent.count + refused.count - resendable.count, line: (unsent.first ?? refused[0]).draft.line)
+    }
+
+    /// 重发: the oldest refused post opens on the compose page with everything it had; any others
+    /// are told again once the home is free.
+    func resendFirst() {
+        guard !unsent.isEmpty else { return }
+        let post = unsent.removeFirst()
+        resend(post)
+        if let next = unsent.first { announceUnsent(count: unsent.count, line: next.draft.line) }
+    }
+
+    private func announceUnsent(count: Int, line: String?) {
+        pendingNotices.append(Notice(news: .sendFailed(count: count, line: line, canResend: !unsent.isEmpty)))
         Task { await showNextNotice() }
     }
 

@@ -12,17 +12,6 @@ import HealthUI
 import Observation
 import SwiftUI
 
-extension CheckInDraft {
-    var kind: CheckInKind {
-        switch self {
-        case .trained: .trained
-        case .healthyMeal: .healthyMeal
-        case .cheatMeal: .cheatMeal
-        case .disclaimer: .disclaimer
-        }
-    }
-}
-
 /// Where photos for a 练了 or a meal come from.
 public enum PhotoSource: Sendable {
     /// The member adds them on the compose page: the camera or the system photo picker.
@@ -164,6 +153,8 @@ public final class TodayModel {
     /// The banner on top or a celebration's card, those waiting, told only while 今天 is in front.
     var notice: Notice?
     var pendingNotices: [Notice] = []
+    /// Posts the server refused that 重发 can still open on the compose page, oldest first.
+    var unsent: [PendingCheckIn] = []
     public internal(set) var celebration: Broadcast?
     public var isHomeInFront = true
     /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
@@ -300,6 +291,18 @@ public final class TodayModel {
             compose = newPost(kind, from: workout)
             step = .composing(kind)
         }
+    }
+
+    /// The compose page for a post the server refused, with its photos, words, sport, workout and
+    /// day as the member made it, to change and send again.
+    func resend(_ post: PendingCheckIn) {
+        sendFailed = false
+        payoff = nil
+        let kind = post.draft.kind
+        let model = newPost(kind, from: nil)
+        model.restore(post)
+        compose = model
+        step = .composing(kind)
     }
 
     func cancel() {

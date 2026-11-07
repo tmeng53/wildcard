@@ -234,6 +234,30 @@ public final class ComposeModel {
         workout?.posting(struck: struck, positions: tiles.workoutTilePositions)
     }
 
+    /// Starts this new post again from one the server refused: its photos with the workout's
+    /// tiles, words, sport, minutes and squad as the member made it, and its day while that day
+    /// can still be posted. A 请假条 has no page here.
+    func restore(_ post: PendingCheckIn) {
+        switch post.draft {
+        case .trained(let sport, let length, let body):
+            activity = sport
+            minutes = length
+            apply(body)
+        case .healthyMeal(let body), .cheatMeal(let body):
+            apply(body)
+        case .disclaimer:
+            return
+        }
+        isShared = !post.audience.squads.isEmpty
+        day = postableDays.contains(post.day) && post.day != postableDays.last ? post.day : nil
+    }
+
+    private func apply(_ body: PostBody) {
+        tiles = ComposedTile.of(body)
+        line = body.caption ?? ""
+        workout = body.workout
+    }
+
     /// Fits what is typed: no line breaks, at most `lineLimit` characters.
     func fit(_ typed: String) -> String {
         String(typed.filter { !$0.isNewline }.prefix(lineLimit))
