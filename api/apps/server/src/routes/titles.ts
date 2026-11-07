@@ -3,10 +3,11 @@ import { SportKey, WeekStart, type CheckIns } from '@wildcard/check-ins';
 import { EquippedTitle, JerseyNumber, MemberId, type Members } from '@wildcard/members';
 import { SquadId, SquadMemberUnknownError, type Squads } from '@wildcard/squads';
 import {
+  BadgeTone,
   TITLE_MAX,
   TitleNotWonError,
   wornOf,
-  type BoardTitle,
+  type ShownBoardTitle,
   type WeeklyAwards,
 } from '@wildcard/weekly-awards';
 
@@ -33,9 +34,16 @@ export const TitleBadgeBody = z
     }),
     colour: z.string().meta({
       description:
-        'Its colour, by the scene whose colour it takes: `pool`, `track`, `gym`, `tennis` or ' +
-        '`climbing` today. An app that doesn’t know one draws `gym`.',
+        'Its colour, by its id in the badge catalog (`track`). Builds before `tone` paint it ' +
+        'by the scene of that id, and the gym’s for any other.',
       example: 'track',
+    }),
+    tone: BadgeTone.optional().meta({
+      description:
+        'Its colour itself, as #RRGGBB, from the badge catalog: what the app paints it in. Left ' +
+        'out by older servers and for a colour the catalog gives no tone, which the app then ' +
+        'paints like `colour` for builds before `tone`.',
+      example: '#E65345',
     }),
     glyph: z.string().meta({
       description: 'The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.',
@@ -201,7 +209,7 @@ function wireBoard(
   {
     board,
     equipped,
-  }: { readonly board: readonly BoardTitle[]; readonly equipped: string | null | undefined },
+  }: { readonly board: readonly ShownBoardTitle[]; readonly equipped: string | null | undefined },
   speechIn: (squad: SquadId) => boolean,
 ) {
   const worn = wornOf(board, equipped);
@@ -304,7 +312,7 @@ export function titles(deps: {
     board,
     equipped,
   }: {
-    readonly board: readonly BoardTitle[];
+    readonly board: readonly ShownBoardTitle[];
     readonly equipped: string | null | undefined;
   }) => ({
     version: 1 as const,

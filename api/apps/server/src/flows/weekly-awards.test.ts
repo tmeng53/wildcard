@@ -163,6 +163,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     aiConsented: (members) =>
       aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
     memes: () => Promise.resolve([]),
+    sportGlyphs: () => Promise.resolve([]),
   });
   const clock = () => now;
   const app = createApp({

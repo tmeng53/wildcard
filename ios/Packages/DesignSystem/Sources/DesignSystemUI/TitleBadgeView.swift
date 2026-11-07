@@ -5,10 +5,12 @@ import SwiftUI
 import UIKit
 #endif
 
-/// A 头衔徽章, as the approved badge board draws it: an enamel pin in a scene's colour (a darker
-/// rim, the enamel, a fine white ring and a highlight) with a white SF Symbol on it. Any size;
-/// the parts scale with it. A shape this build doesn't draw is a circle, a colour it doesn't know
-/// is the gym's, and a glyph this iOS doesn't have is a star, so the API can name new ones.
+/// A 头衔徽章, the approved 软糖厚章 (2026-11-07): a thick, rounded badge in one colour, built from
+/// flat tones (its side showing below, a lit edge at the top left, a shaded one at the bottom
+/// right, a highlight) with a white SF Symbol pressed into it, and no gradient or glow. Any
+/// size: the badge and its thickness fit the `size` square. A shape this build doesn't draw is a
+/// circle, a colour without a tone is its scene's (else the gym's), and a glyph this iOS doesn't
+/// have is a star, so the API can name new ones.
 public struct TitleBadgeView: View {
     /// The shapes this build draws, by the names the API sends.
     public enum Shape: String, Sendable, CaseIterable {
@@ -22,45 +24,70 @@ public struct TitleBadgeView: View {
 
     /// - Parameters:
     ///   - shape: its shape's name (`shield`).
-    ///   - colour: the scene whose colour it takes, by id (`track`).
+    ///   - colour: its colour's id in the badge catalog (`track`).
+    ///   - tone: that colour as `#RRGGBB`, when the server sent it.
     ///   - glyph: an SF Symbol's name.
-    public init(shape: String, colour: String, glyph: String, size: Double) {
+    public init(shape: String, colour: String, tone: String?, glyph: String, size: Double) {
         self.shape = Shape(rawValue: shape) ?? .circle
-        self.colors = BadgeColors(scene: SceneTheme(rawValue: colour) ?? .gym)
+        self.colors = BadgeColors(colour: colour, tone: tone)
         self.glyph = Self.symbol(glyph)
         self.size = size
     }
 
     public var body: some View {
+        let unit = size / (Self.face + Self.depth)
+        let square = Self.face * unit
         let outline = BadgeOutline(shape: shape)
-        ZStack {
-            outline.fill(Color(colors.rim))
-            outline.fill(Color(colors.enamel)).scaleEffect(Self.enamelScale)
-            outline
-                .stroke(Color(role: .fgOnInk, in: .gym).opacity(0.6), lineWidth: max(1, size / 44))
-                .scaleEffect(Self.ringScale)
+        ZStack(alignment: .top) {
+            outline.fill(Color(colors.side)).frame(width: square, height: square).offset(y: Self.depth * unit)
+            outline.fill(Color(colors.face)).frame(width: square, height: square)
+            outline.fill(Color(colors.lit)).frame(width: square, height: square)
+                .scaleEffect(Self.topScale)
+                .offset(x: -Self.edge * unit, y: -Self.edge * unit)
+            outline.fill(Color(colors.shade)).frame(width: square, height: square)
+                .scaleEffect(Self.topScale)
+                .offset(x: Self.edge * Self.shadeShare * unit, y: Self.edge * Self.shadeShare * unit)
+            outline.fill(Color(colors.face)).frame(width: square, height: square).scaleEffect(Self.topScale)
             Highlight()
                 .stroke(
-                    Color(role: .fgOnInk, in: .gym).opacity(0.35),
-                    style: StrokeStyle(lineWidth: max(1, size / 24), lineCap: .round))
-            Image(systemName: glyph)
-                .font(.system(size: size * Self.glyphScale, weight: .semibold))
-                .foregroundStyle(Color(role: .fgOnInk, in: .gym))
-                .offset(y: shape == .shield ? -size * 0.02 : 0)
+                    Color(role: .fgOnInk, in: .gym).opacity(Self.highlightOpacity),
+                    style: StrokeStyle(lineWidth: Self.highlightWidth * unit, lineCap: .round)
+                )
+                .frame(width: square, height: square)
+            glyphImage(Color(colors.side))
+                .offset(y: Self.glyphDrop * unit)
+            glyphImage(Color(role: .fgOnInk, in: .gym))
         }
-        .frame(width: size, height: size)
+        .frame(width: size, height: size, alignment: .top)
         .accessibilityHidden(true)
     }
 
-    /// The enamel's colour of a badge in `colour`, for what is drawn beside it (the card's bar
-    /// under the number, the top of its detail).
-    public static func enamel(_ colour: String) -> Color {
-        Color(BadgeColors(scene: SceneTheme(rawValue: colour) ?? .gym).enamel)
+    private func glyphImage(_ color: Color) -> some View {
+        let unit = size / (Self.face + Self.depth)
+        return Image(systemName: glyph)
+            .font(.system(size: Self.face * unit * Self.glyphScale, weight: .bold))
+            .foregroundStyle(color)
+            .frame(width: Self.face * unit, height: Self.face * unit)
+            .offset(y: shape == .shield ? -unit : 0)
     }
 
-    private static let enamelScale = 0.86
-    private static let ringScale = 0.72
-    private static let glyphScale = 0.36
+    /// The colour of a badge's face, for what is drawn beside it (the card's bar under the
+    /// number, the top of its detail).
+    public static func faceColor(colour: String, tone: String?) -> Color {
+        Color(BadgeColors(colour: colour, tone: tone).face)
+    }
+
+    /// The face's square and the thickness under it, in the outline's 48 units.
+    private static let face = 48.0
+    private static let depth = 4.2
+    /// How far the lit edge shows past the top, and how much of that the shaded one shows.
+    private static let edge = 1.1
+    private static let shadeShare = 0.7
+    private static let topScale = 0.8
+    private static let highlightOpacity = 0.6
+    private static let highlightWidth = 2.6
+    private static let glyphScale = 0.4
+    private static let glyphDrop = 1.1
 
     /// `name` when this iOS has the symbol, else a star.
     private static func symbol(_ name: String) -> String {
@@ -116,15 +143,15 @@ private struct BadgeOutline: Shape {
     }
 }
 
-/// The enamel's highlight: a short arc near the top left, as light catching the pin.
+/// The highlight: a short arc near the top left of the face, as light catching it.
 private struct Highlight: Shape {
     func path(in rect: CGRect) -> Path {
         let unit = min(rect.width, rect.height) / 48
         var path = Path()
-        path.move(to: CGPoint(x: rect.minX + 12 * unit, y: rect.minY + 15.5 * unit))
+        path.move(to: CGPoint(x: rect.minX + 13 * unit, y: rect.minY + 16 * unit))
         path.addQuadCurve(
-            to: CGPoint(x: rect.minX + 26 * unit, y: rect.minY + 8 * unit),
-            control: CGPoint(x: rect.minX + 18 * unit, y: rect.minY + 9 * unit))
+            to: CGPoint(x: rect.minX + 25.5 * unit, y: rect.minY + 9.4 * unit),
+            control: CGPoint(x: rect.minX + 18 * unit, y: rect.minY + 10.5 * unit))
         return path
     }
 }

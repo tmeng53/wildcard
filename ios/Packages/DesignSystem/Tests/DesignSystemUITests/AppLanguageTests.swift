@@ -63,6 +63,12 @@ struct AppLanguageTests {
         #expect(AppLanguage.current == .traditionalChinese)
         AppLanguage.adopt(from: shared, folder: nil)
         #expect(AppLanguage.current == .english)
+
+        // What the extension adopted holds whatever its own settings say, until a pick.
+        UserDefaults.standard.set(["zh-Hans"], forKey: "AppleLanguages")
+        #expect(AppLanguage.current == .english)
+        AppLanguage.simplifiedChinese.pick()
+        #expect(AppLanguage.current == .simplifiedChinese)
     }
 
     @Test func eachLanguageIsNamedInItself() {

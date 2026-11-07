@@ -165,15 +165,22 @@ extension TitleBoard {
     private static let sampleTitles: [BoardTitle] = [
         title("早八战神", "shield", "track", "sun.max.fill", weeks: ["2026-10-26": "连着五天七点前打卡。"]),
         title(
-            "冷面杀手", "hexagon", "gym", "snowflake",
+            "冷面杀手", "hexagon", "ski", "snowflake",
             weeks: ["2026-10-19": "练完一句话不说，表情比杠铃还沉。", "2026-10-12": "一整周没发一个表情。"]),
-        title("请假条艺术家", "circle", "pool", "doc.text.fill", weeks: ["2026-10-05": "请假条写成了连载。"]),
-        title("沙拉守门员", "scallop", "tennis", "leaf.fill", weeks: ["2026-09-28": "五顿健康餐，一顿没破。"]),
+        title("请假条艺术家", "circle", "lavender", "doc.text.fill", weeks: ["2026-10-05": "请假条写成了连载。"]),
+        title("沙拉守门员", "scallop", "mint", "leaf.fill", weeks: ["2026-09-28": "五顿健康餐，一顿没破。"]),
         title(
-            "对自己很好奖", "circle", "climbing", "heart.fill",
+            "对自己很好奖", "circle", "honey", "heart.fill",
             weeks: ["2026-09-21": "累了就休息，睡够八小时。", "2026-09-14": "按时吃饭。", "2026-09-07": "给自己放了个假。"]),
-        title("周三限定", "hexagon", "pool", "bolt.fill", weeks: ["2026-08-31": "只在周三出现，一出现就是十公里。"]),
-        title("深夜举铁人", "shield", "gym", "moon.fill", weeks: ["2026-08-24": "晚上十一点还在卧推。"]),
+        title("周三限定", "hexagon", "pool", "figure.pool.swim", weeks: ["2026-08-31": "只在周三出现，一出现就是十公里。"]),
+        title(
+            "深夜举铁人", "shield", "graphite", "figure.strengthtraining.traditional", weeks: ["2026-08-24": "晚上十一点还在卧推。"]),
+    ]
+
+    /// The tones the badge catalog sends with its colours.
+    private static let sampleTones = [
+        "track": "#E65345", "ski": "#16384D", "lavender": "#9062DE", "mint": "#278C5E", "honey": "#A0760E",
+        "pool": "#079BB8", "graphite": "#1F2128",
     ]
 
     private static func title(
@@ -182,7 +189,7 @@ extension TitleBoard {
         let bundle = Bundle.module.inAppLanguage
         return BoardTitle(
             title: bundle.localizedString(forKey: key, value: nil, table: nil),
-            badge: TitleBadge(shape: shape, colour: colour, glyph: glyph),
+            badge: TitleBadge(shape: shape, colour: colour, tone: sampleTones[colour], glyph: glyph),
             weeks: weeks.compactMap { day, speech in
                 (try? LocalDay(day)).map {
                     BoardTitle.Week(
