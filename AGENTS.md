@@ -56,6 +56,7 @@ Read the matching skill before the work it covers.
 | `verify-wildcard` | When you verify a change you didn't write, or prove a user journey works end to end. |
 | `project-setup` | When PRs, decisions or friction keep stalling. |
 | `cloud-test-environment` | When adding a service the tests need. |
+| `swiftui-pro` (plugin, enabled in `.claude/settings.json`) | Before writing or reviewing SwiftUI. Where it and this file differ, this file wins. |
 
 ## Architecture
 
