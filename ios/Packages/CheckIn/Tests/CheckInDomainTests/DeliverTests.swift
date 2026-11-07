@@ -55,3 +55,27 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(today.refused.map(\.reason) == [.notInSquad])
     #expect(today.myStatus == .notCheckedIn)
 }
+
+@MainActor @Test func aPostSentByADrainAlreadyUnderWayStillReportsItsFate() async throws {
+    let backend = ScriptedBackend()
+    let today = store(backend)
+    await today.load()
+    await backend.set(failure: .notSent)
+    try await today.post(.healthyMeal(PostBody(photos: [], caption: "鸡胸肉")))
+
+    await backend.set(failure: nil)
+    await backend.holdSaves()
+    let sending = Task { await today.sendPending() }
+    while await backend.savesWaiting == 0 { await Task.yield() }
+    let post = try await today.queue(run)
+    await backend.releaseSaves()
+    await sending.value
+    // The drain under way sent it before anyone asked.
+    #expect(today.pending.isEmpty)
+
+    guard case .posted(let saved) = await today.deliver(post.id) else {
+        Issue.record("expected it saved")
+        return
+    }
+    #expect(saved.id == post.id)
+}

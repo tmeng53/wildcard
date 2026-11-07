@@ -25,7 +25,8 @@ extension TodayStore {
     }
 
     /// Puts a check-in in the outbox, as `post` does, and returns it without sending it: it counts
-    /// on the home at once, and `deliver` sends it. Throws only for what the phone can tell
+    /// on the home at once, and `deliver` sends it (every queued post must be delivered, which
+    /// hands over what became of it). Throws only for what the phone can tell
     /// before sending: a 请假条 on a day with a 练了, or a day out of reach.
     public func queue(_ draft: CheckInDraft, shared: Bool = true, on chosen: LocalDay? = nil)
         async throws(CheckInError) -> PendingCheckIn
@@ -38,6 +39,8 @@ extension TodayStore {
         let post = PendingCheckIn(
             id: CheckInID(newID()), member: home.member, day: chosen ?? day, postedDay: day,
             createdAt: Timestamp(now()), audience: audience, draft: draft)
+        // Awaited from now, so a drain already under way that sends it keeps its fate for `deliver`.
+        awaited.insert(post.id)
         pending.append(post)
         await outbox.save(pending)
         return post
@@ -97,8 +100,9 @@ extension TodayStore {
         case waiting
     }
 
-    /// Drains the outbox until the post `id` has left it, or a drain of its own left it there.
-    /// A drain already under way is waited for, and the post sent by it if it gets that far.
+    /// Drains the outbox until the queued post `id` has left it, or a drain of its own left it
+    /// there. A drain already under way is waited for; one that sent the post, even before this
+    /// was called, kept its fate, since `queue` marked it awaited.
     private func fate(of id: CheckInID) async -> Fate {
         awaited.insert(id)
         defer {
