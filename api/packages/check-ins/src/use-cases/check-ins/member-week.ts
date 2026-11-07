@@ -1,4 +1,4 @@
-import type { CheckInRecord, LocalDay, MemberId, SquadId } from '../../domain/check-in.js';
+import type { CheckInRecord, MemberId, SquadId } from '../../domain/check-in.js';
 import { markOn, trainedDays, weekOf, type DayMark } from '../../domain/days.js';
 import type { FuelGoals } from '../../domain/fuel-goal.js';
 import {
@@ -8,6 +8,7 @@ import {
   weekStartOf,
   type PlanDay,
   type PlanDays,
+  type TrainedBy,
 } from '../../domain/weekly-plan.js';
 import type { CheckInStore, Clock, MemberCalendar, WeeklyPlanStore } from '../../ports.js';
 import { findWeeklyPlan } from '../weekly-plans.js';
@@ -53,25 +54,20 @@ export async function memberWeek(
   const { zone, joinedOn } = zones[0] ?? { zone: 'UTC', joinedOn: undefined };
   const week = weekOf(localDayAt(deps.clock(), zone));
   const weekStart = WeekStart.parse(week.from);
-  const [plan, theirs, fuelGoals] = await Promise.all([
+  const [plan, trainedBy, theirs, fuelGoals] = await Promise.all([
     findWeeklyPlan({ store: deps.plans }, { member, weekStart }),
+    deps.plans.trainedBy(member, weekStart),
     deps.store.listForMember({ member, from: week.from, to: week.to }),
     deps.plans.fuelGoals(member, weekStart),
   ]);
   const shared = theirs.filter(({ audience }) => audience.includes(squad));
+  const marks = week.days.map((day) => markOn(shared, day));
   return {
     trainedDays: trainedDays(theirs, week.days),
     plannedDays: plannedTrainingDays(plan.days, { weekDays: week.days, joinedOn }),
     weekStart,
-    days: await daysSeenBy(deps.plans, {
-      member,
-      squad,
-      weekStart,
-      plan: plan.days,
-      week: week.days,
-      theirs,
-    }),
-    marks: week.days.map((day) => markOn(shared, day)),
+    days: daysSeenBy({ plan: plan.days, trainedBy, marks, shared }),
+    marks,
     fuelGoals: fuelGoals ?? [],
     ...(joinedOn === undefined ? {} : { firstWeek: weekStartOf(joinedOn) }),
   };
@@ -79,49 +75,28 @@ export async function memberWeek(
 
 /**
  * The plan's days as the squad may see them. A 练了 on a planned rest day turns that day into a
- * training day of its sport, so a day whose first 练了 went elsewhere shows as the plan stood
- * before it: a rest day still, or, when a later 练了 came to this squad, that one's sport.
+ * training day of its sport, so a day a 练了 turned that the squad can't see (sent elsewhere, or
+ * deleted) shows as the rest day it was, or as the sport of a 练了 that did come to this squad.
  */
-async function daysSeenBy(
-  plans: WeeklyPlanStore,
-  {
-    member,
-    squad,
-    weekStart,
-    plan,
-    week,
-    theirs,
-  }: {
-    readonly member: MemberId;
-    readonly squad: SquadId;
-    readonly weekStart: WeekStart;
-    readonly plan: PlanDays;
-    readonly week: readonly LocalDay[];
-    readonly theirs: readonly CheckInRecord[];
-  },
-): Promise<PlanDay[]> {
-  const firstTraining = (day: LocalDay, sentHere: boolean) =>
-    theirs
-      .filter((record) => record.day === day && (!sentHere || record.audience.includes(squad)))
-      .flatMap((record) => (record.kind === 'trained' ? [record] : []))
-      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
-  return Promise.all(
-    plan.map(async (planned, index): Promise<PlanDay> => {
-      const day = week[index];
-      if (planned.kind !== 'train' || day === undefined) return planned;
-      const first = firstTraining(day, false);
-      if (first === undefined || first.audience.includes(squad)) return planned;
-      const before = await findWeeklyPlan(
-        { store: plans },
-        { member, weekStart, asOf: first.createdAt },
-      );
-      if (before.days[index]?.kind !== 'rest') return planned;
-      const sent = firstTraining(day, true);
-      if (sent === undefined) return { kind: 'rest' };
-      const { sport, customSport } = sent.training;
-      return customSport === undefined
-        ? { kind: 'train', sport }
-        : { kind: 'train', sport, customSport };
-    }),
-  );
+function daysSeenBy({
+  plan,
+  trainedBy,
+  marks,
+  shared,
+}: {
+  readonly plan: PlanDays;
+  readonly trainedBy: TrainedBy;
+  readonly marks: readonly DayMark[];
+  readonly shared: readonly CheckInRecord[];
+}): PlanDay[] {
+  const seen = new Set<string>(shared.map(({ id }) => id));
+  return plan.map((planned, index): PlanDay => {
+    const turnedBy = trainedBy[String(index)];
+    if (turnedBy === undefined || seen.has(turnedBy)) return planned;
+    const mark = marks[index];
+    if (mark?.status !== 'trained') return { kind: 'rest' };
+    return mark.customSport === undefined
+      ? { kind: 'train', sport: mark.sport }
+      : { kind: 'train', sport: mark.sport, customSport: mark.customSport };
+  });
 }

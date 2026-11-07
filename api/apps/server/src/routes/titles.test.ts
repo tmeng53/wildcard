@@ -403,10 +403,11 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     expect(rested.status).toBe(200);
 
     // A 练了 sent only to the other squad still counts in their own week.
+    const runId = randomUUID();
     const createdAt = new Date();
     const trained = await call({
       method: 'PUT',
-      path: `/check-ins/${randomUUID()}`,
+      path: `/check-ins/${runId}`,
       token: mate.token,
       body: {
         version: 1,
@@ -497,9 +498,10 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     expect(week.fuelGoals).toStrictEqual([{ kind: 'suggested', suggestion: 'water' }]);
     // A 练了 sent to this squad shows with its sport.
     const later = new Date();
+    const swimId = randomUUID();
     const shared = await call({
       method: 'PUT',
-      path: `/check-ins/${randomUUID()}`,
+      path: `/check-ins/${swimId}`,
       token: mate.token,
       body: {
         version: 1,
@@ -518,6 +520,16 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     expect(marks[weekday]).toStrictEqual({ status: 'trained', sport: 'swim' });
     expect(days[weekday]).toStrictEqual({ kind: 'train', sport: 'swim' });
     expect(marks.filter((mark) => JSON.stringify(mark) === '{"status":"none"}')).toHaveLength(6);
+    // With the swim deleted, and then the run that made the day a training day, it reads as
+    // the rest day it was planned as.
+    for (const id of [swimId, runId]) {
+      const deleted = await call({ method: 'DELETE', path: `/check-ins/${id}`, token: mate.token });
+      expect(deleted.status).toBe(204);
+      const after = z
+        .object({ week: z.object({ days: z.array(z.unknown()) }) })
+        .parse((await call({ method: 'GET', path, token: me.token })).body).week.days;
+      expect(after[weekday]).toStrictEqual({ kind: 'rest' });
+    }
     expect(z.object({ joinedAt: z.iso.datetime() }).safeParse(card.body).success).toBe(true);
 
     // The squad's today shows the title beside the name.

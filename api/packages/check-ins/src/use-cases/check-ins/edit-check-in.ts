@@ -108,7 +108,7 @@ export async function editCheckIn(
   if (edited.kind === 'trained') {
     await planTrainedDay(
       { store: deps.plans },
-      { member, day: edited.day, training: edited.training },
+      { member, day: edited.day, training: edited.training, checkIn: edited.id },
     );
   }
   await deleteDroppedPhotos(deps, edited.id);

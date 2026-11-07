@@ -72,10 +72,37 @@ export const plannedTrainingDays = (
     return joined?.joinedOn === undefined || date === undefined || date >= joined.joinedOn;
   }).length;
 
+/**
+ * Which days of a week's plan a 练了 turned from rest into training, by the day's index (0 is
+ * Monday) and that 练了's id, so a squadmate's card can tell them from days the member planned.
+ */
+export const TrainedBy = z.record(z.string().regex(/^[0-6]$/), z.uuid());
+export type TrainedBy = Readonly<Record<string, string>>;
+
 /** The stored plan JSON (`weekly_plans.payload`), versioned like every stored shape. */
 export const StoredPlan = z.discriminatedUnion('version', [
-  z.strictObject({ version: z.literal(1), days: PlanDays }),
+  z.strictObject({ version: z.literal(1), days: PlanDays, trainedBy: TrainedBy.optional() }),
 ]);
+
+/**
+ * The days a 练了 turned into training that `next` keeps as they were: a day the member changed
+ * is theirs from then on.
+ */
+export function trainedByKept({
+  current,
+  next,
+  trainedBy,
+}: {
+  readonly current: PlanDays;
+  readonly next: PlanDays;
+  readonly trainedBy: TrainedBy;
+}): TrainedBy {
+  return Object.fromEntries(
+    Object.entries(trainedBy).filter(([day]) =>
+      isDeepStrictEqual(current[Number(day)], next[Number(day)]),
+    ),
+  );
+}
 
 /** The plan a week has before the member makes their template: rest on Wednesday and Sunday. */
 export const DEFAULT_PLAN_DAYS: PlanDays = [
@@ -173,6 +200,11 @@ export function checkPlanChange({
   }
 }
 
+/** The day's place in the week from `weekStart`, Monday being 0. */
+export function dayIndex(weekStart: LocalDay, day: LocalDay): number {
+  return Math.round((Date.parse(day) - Date.parse(weekStart)) / DAY);
+}
+
 /**
  * The plan with `day` a training day of `training`'s sport when it was a rest day: a 练了 on a
  * planned rest day makes it a training day. Undefined when the day was already a training day.
@@ -186,7 +218,7 @@ export function trainedOnRestDay({
   readonly day: LocalDay;
   readonly training: { readonly sport: SportKey; readonly customSport?: string | undefined };
 }): PlanDays | undefined {
-  const index = Math.round((Date.parse(day) - Date.parse(plan.weekStart)) / DAY);
+  const index = dayIndex(plan.weekStart, day);
   if (plan.days[index]?.kind !== 'rest') return undefined;
   const trained: PlanDay =
     training.customSport === undefined

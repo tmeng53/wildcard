@@ -11,6 +11,7 @@ import {
   checkPlanChange,
   localDayAt,
   plannedTrainingDays,
+  trainedByKept,
   trainedOnRestDay,
   weekStartOf,
   type PlanDays as Days,
@@ -303,5 +304,26 @@ describe('plannedTrainingDays', () => {
     expect(plannedTrainingDays(DEFAULT_PLAN_DAYS, { weekDays: week, joinedOn: '2026-09-01' })).toBe(
       5,
     );
+  });
+});
+
+describe('trainedByKept', () => {
+  it('keeps the days a 练了 turned only while the member leaves them as they are', () => {
+    const run = { kind: 'train', sport: 'run' } as const;
+    const current: Days = [train, run, rest, train, train, train, rest];
+    const trainedBy = { '1': '00000000-0000-4000-8000-000000000001' };
+    expect(trainedByKept({ current, next: [...current], trainedBy })).toStrictEqual(trainedBy);
+    const next: Days = [rest, run, rest, train, train, train, rest];
+    expect(trainedByKept({ current, next, trainedBy })).toStrictEqual(trainedBy);
+    const changed: Days = [
+      train,
+      { kind: 'train', sport: 'swim' },
+      rest,
+      train,
+      train,
+      train,
+      rest,
+    ];
+    expect(trainedByKept({ current, next: changed, trainedBy })).toStrictEqual({});
   });
 });

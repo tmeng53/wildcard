@@ -201,9 +201,9 @@ extension MateSchedule {
     init?(_ wire: Components.Schemas.PlayerCard.WeekPayload) throws(ContractsError) {
         guard let start = wire.weekStart, let days = wire.days, let marks = wire.marks else { return nil }
         let planned = try [PlanDay](wire: days)
-        guard planned.count == WeeklyPlan.dayCount, marks.count == WeeklyPlan.dayCount else {
-            throw .planLength(planned.count)
-        }
+        guard planned.count == WeeklyPlan.dayCount else { throw .planLength(planned.count) }
+        // A day's mark for each of the plan's days.
+        guard marks.count == WeeklyPlan.dayCount else { throw .planLength(marks.count) }
         let read = try marks.map { mark throws(ContractsError) -> DayMark in
             switch mark.status {
             case .trained:
