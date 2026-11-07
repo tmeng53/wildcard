@@ -45,8 +45,35 @@ fi
 # second run is listed at the end of the log, so it stays visible.
 # ONLY_TESTING (space separated xcodebuild test ids, e.g. WildcardUITests/PushLongPressUITests)
 # runs just those, to reproduce one bug without the whole hour.
+# SHARD=k/n (CI's `ios` matrix) runs the k-th of n parts of the UI test classes, split by the
+# seconds each took (scripts/ios-test-weights), heaviest first onto the lightest part, so every
+# class lands in exactly one part and a new one is picked up without listing it.
 only=()
 for test in ${ONLY_TESTING:-}; do only+=("-only-testing:$test"); done
+if [ -z "${ONLY_TESTING:-}" ] && [ -n "${SHARD:-}" ]; then
+  part="$(python3 - "$SHARD" <<'PY'
+import pathlib, re, sys
+k, n = (int(x) for x in sys.argv[1].split("/"))
+assert 1 <= k <= n, sys.argv[1]
+classes = sorted({m for f in pathlib.Path("ios/WildcardUITests").glob("*.swift")
+                  for m in re.findall(r"class (\w+): XCTestCase", f.read_text())})
+weights = {}
+for line in pathlib.Path("scripts/ios-test-weights").read_text().splitlines():
+    if line.strip() and not line.startswith("#"):
+        name, seconds = line.split()
+        weights[name] = int(seconds)
+load, parts = [0] * n, [[] for _ in range(n)]
+for name in sorted(classes, key=lambda c: (-weights.get(c, 60), c)):
+    i = load.index(min(load))
+    load[i] += weights.get(name, 60)
+    parts[i].append(name)
+print(" ".join(sorted(parts[k - 1])))
+print(f"part {k} of {n}: about {load[k - 1] // 60} minutes of {sum(load) // 60}", file=sys.stderr)
+PY
+)"
+  for test in $part; do only+=("-only-testing:WildcardUITests/$test"); done
+  echo "==> shard $SHARD: $part"
+fi
 echo "==> xcodebuild test on $sim"
 status=0
 xcodebuild test \
