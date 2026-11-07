@@ -63,9 +63,12 @@ export const StoredStoryMember = z.discriminatedUnion('version', [
     cheatMeals: Count,
     reactionsReceived: Count,
     /**
-     * When they finished their week's plan, if they did: breaks a tie on the podium in favour of
-     * whoever finished first. Missing in the first stories frozen (the join order breaks ties).
+     * When they reached their days trained, if they trained: breaks a tie on the podium in
+     * favour of whoever got there first. Missing in stories frozen before it (the join order
+     * breaks their ties).
      */
+    reachedAt: z.iso.datetime().optional(),
+    /** Stories frozen before `reachedAt` kept when the member finished their plan; never read. */
     planFinishedAt: z.iso.datetime().optional(),
   }),
 ]);

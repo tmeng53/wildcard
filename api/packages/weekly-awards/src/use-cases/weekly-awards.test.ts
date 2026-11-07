@@ -492,7 +492,7 @@ describe('the frozen 战报', () => {
     healthyMeals: 0,
     cheatMeals: 1,
     reactionsReceived: 2,
-    planFinishedAt: '2026-10-22T09:00:00.000Z',
+    reachedAt: '2026-10-22T09:00:00.000Z',
   });
 
   it('is kept once: a second freeze leaves the first, and a deleted account takes its part', async () => {
