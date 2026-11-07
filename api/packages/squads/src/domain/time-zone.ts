@@ -1,6 +1,6 @@
 import { NEW_YORK, mondayOf, wallClockAt, type TimeZone } from '@wildcard/time-zones';
 
-import type { SceneWeek } from './scene.js';
+import { SceneWeek } from './scene.js';
 import type { MemberId } from './squad.js';
 
 // A squad's time zone (小队时区): the clock of what its whole squad shares, the 战报 and awards
@@ -29,14 +29,22 @@ export function zoneFor(settings: readonly TimeZoneSetting[], week: SceneWeek): 
 }
 
 /**
- * The zone the squad keeps at `moment`: the newest setting whose week has begun on its own clock
- * (a squad's week starts Monday at midnight in its zone), else New York.
+ * The squad's week at `moment` (its Monday): the latest week that has begun on its own zone's
+ * clock (a squad's week starts Monday at midnight in that week's zone).
  */
-export function zoneAt(settings: readonly TimeZoneSetting[], moment: Date): TimeZone {
-  for (const setting of [...settings].reverse()) {
-    if (mondayOf(wallClockAt(moment, setting.timeZone).day) >= setting.week) {
-      return setting.timeZone;
-    }
+export function weekAt(settings: readonly TimeZoneSetting[], moment: Date): SceneWeek {
+  // The squad's week is the Monday on one of its zones' clocks; the earliest always qualifies.
+  const candidates = [NEW_YORK, ...settings.map(({ timeZone }) => timeZone)]
+    .map((zone) => SceneWeek.parse(mondayOf(wallClockAt(moment, zone).day)))
+    .sort()
+    .reverse();
+  for (const week of candidates) {
+    if (mondayOf(wallClockAt(moment, zoneFor(settings, week)).day) >= week) return week;
   }
-  return NEW_YORK;
+  throw new Error('No week has begun.');
+}
+
+/** The zone the squad keeps at `moment`: its week's (`weekAt`). */
+export function zoneAt(settings: readonly TimeZoneSetting[], moment: Date): TimeZone {
+  return zoneFor(settings, weekAt(settings, moment));
 }

@@ -12,7 +12,11 @@ import {
 import type { Scenes } from '@wildcard/scenes';
 import { MemberId as NoticeMember, SquadId as NoticeSquad, type Notices } from '@wildcard/notices';
 import { NEW_YORK } from '@wildcard/time-zones';
-import { latestAwardedWeek } from '@wildcard/weekly-awards';
+import {
+  awardsTimeOf,
+  weeksMaybeAwarded,
+  type WeekStart as AwardsWeek,
+} from '@wildcard/weekly-awards';
 
 import { bodyVersion } from '../body-version.js';
 import { LEGACY_SCENES, LegacyScene, legacyScene } from '../legacy-scene.js';
@@ -42,7 +46,7 @@ const SquadSceneBody = z
     version: bodyVersion(1),
     week: SceneWeek.meta({
       description:
-        'The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s ' +
+        'The Monday of the week open for picking now: from Sunday 8pm on the squad’s clock (小队时区), when a week’s ' +
         'awards are given, the week after it.',
       example: '2026-10-26',
     }),
@@ -167,12 +171,19 @@ function wire(scene: SquadScene, shown: string = scene.scene) {
 }
 
 /**
- * The week a squad picks its scene for at `moment`: the week after the latest one awarded on
- * the squad's clock (小队时区). The crown winner of a week picks the next.
+ * The week a squad picks its scene for at `moment`: the week after the latest one awarded, each
+ * week on its own clock (小队时区, which a captain's change may move between weeks). The crown
+ * winner of a week picks the next.
  */
-export function sceneWeekAt(moment: Date, zone: string): SceneWeek {
-  const awarded = latestAwardedWeek(moment, zone);
+export function sceneWeekAt(moment: Date, zoneOf: (week: AwardsWeek) => string): SceneWeek {
+  const weeks = weeksMaybeAwarded(moment);
+  const awarded =
+    weeks.findLast((week) => awardsTimeOf(week, zoneOf(week)) <= moment) ?? weeks[0] ?? never();
   return SceneWeek.parse(new Date(Date.parse(awarded) + WEEK).toISOString().slice(0, 10));
+}
+
+function never(): never {
+  throw new Error('No week may be awarded.');
 }
 
 /**
@@ -200,8 +211,11 @@ export function squadScene(deps: {
     squads: deps.squads,
     clock: deps.clock,
     sceneWeekAt: async (moment, squad) => {
-      const zone = (await deps.squads.timeZonesAt([squad], moment)).get(squad) ?? NEW_YORK;
-      return sceneWeekAt(moment, zone);
+      const zones = new Map<string, string>();
+      for (const week of weeksMaybeAwarded(moment)) {
+        zones.set(week, (await deps.squads.timeZonesFor([squad], week)).get(squad) ?? NEW_YORK);
+      }
+      return sceneWeekAt(moment, (week) => zones.get(week) ?? NEW_YORK);
     },
     openScenes: (week) => deps.scenes.openOn(week),
     crownHolders: async ({ squad, week, viewer }) => {
@@ -230,7 +244,7 @@ export function squadScene(deps: {
     operationId: 'getSquadScene',
     summary: 'A squad’s scene this week, and who picks it',
     description:
-      'Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the ' +
+      'Last week’s crown winners pick the scene once a week, from Sunday 8pm on the squad’s clock (小队时区) when the ' +
       'week is awarded; when nobody won the crown, the captain picks. A squad trains on its ' +
       'latest pick until the next one, and on the gym before its first. Only for its members.',
     security: [{ bearer: [] }],

@@ -1,5 +1,4 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { CheckIns } from '@wildcard/check-ins';
 import { MemberId, SquadId, type SquadTimeZone, type Squads } from '@wildcard/squads';
 import { TimeZone } from '@wildcard/time-zones';
 
@@ -39,13 +38,12 @@ const signedInFailures = {
 };
 
 /**
- * `GET` and `PUT /squads/{squadId}/time-zone`: the squad's time zone (小队时区). It spans modules:
- * the squads keep the zone, the check-ins each member's week.
+ * `GET` and `PUT /squads/{squadId}/time-zone`: the squad's time zone (小队时区), in the squad's
+ * week on its own clock.
  */
 export function squadTimeZone(deps: {
   readonly verifyToken: VerifyToken;
   readonly squads: Squads;
-  readonly checkIns: Pick<CheckIns, 'weekStartNow'>;
 }) {
   const params = z.strictObject({ squadId: SquadId });
   const zoneResponse = (description: string) => ({
@@ -58,7 +56,7 @@ export function squadTimeZone(deps: {
     path: '/squads/{squadId}/time-zone',
     operationId: 'getSquadTimeZone',
     summary: 'The squad’s time zone',
-    description: 'For its members, in the caller’s week.',
+    description: 'For its members, in the squad’s week on its own clock.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params },
@@ -76,7 +74,7 @@ export function squadTimeZone(deps: {
     operationId: 'setSquadTimeZone',
     summary: 'Set the squad’s time zone',
     description:
-      'For the captain. It counts from next week (the captain’s), so a week’s 战报 never moves ' +
+      'For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves ' +
       'while the squad plays it. Safe to repeat.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -114,19 +112,17 @@ export function squadTimeZone(deps: {
     .openapi(read, async (c) => {
       const { squadId } = c.req.valid('param');
       const viewer = MemberId.parse(c.var.caller.userId);
-      const week = await deps.checkIns.weekStartNow(viewer);
-      const zone = await deps.squads.timeZone({ squad: squadId, viewer, week });
+      const zone = await deps.squads.timeZone({ squad: squadId, viewer, moment: new Date() });
       return c.json(await body({ squad: squadId, viewer, zone }), 200);
     })
     .openapi(change, async (c) => {
       const { squadId } = c.req.valid('param');
       const member = MemberId.parse(c.var.caller.userId);
-      const week = await deps.checkIns.weekStartNow(member);
       const zone = await deps.squads.setTimeZone({
         squad: squadId,
         member,
         timeZone: c.req.valid('json').timeZone,
-        week,
+        moment: new Date(),
       });
       return c.json(await body({ squad: squadId, viewer: member, zone }), 200);
     });

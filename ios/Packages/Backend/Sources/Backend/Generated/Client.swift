@@ -5624,7 +5624,7 @@ internal struct Client: APIProtocol {
     }
     /// A squad’s scene this week, and who picks it
     ///
-    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
+    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm on the squad’s clock (小队时区) when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/scene`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/scene/get(getSquadScene)`.
@@ -6954,7 +6954,7 @@ internal struct Client: APIProtocol {
     }
     /// The squad’s time zone
     ///
-    /// For its members, in the caller’s week.
+    /// For its members, in the squad’s week on its own clock.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/get(getSquadTimeZone)`.
@@ -7106,7 +7106,7 @@ internal struct Client: APIProtocol {
     }
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts from next week (the captain’s), so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
@@ -9644,7 +9644,7 @@ internal struct Client: APIProtocol {
     }
     /// A squad’s weekly 战报 (每周战报), frozen at the week’s awards
     ///
-    /// Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
+    /// Frozen once for the whole squad on Sunday at 8pm on the squad’s clock (小队时区): who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.

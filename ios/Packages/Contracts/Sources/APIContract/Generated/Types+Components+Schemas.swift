@@ -5503,7 +5503,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/SquadScene/version`.
             public var version: Components.Schemas.SquadScene.VersionPayload
-            /// The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s awards are given, the week after it.
+            /// The Monday of the week open for picking now: from Sunday 8pm on the squad’s clock (小队时区), when a week’s awards are given, the week after it.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/week`.
             public var week: Swift.String
@@ -5714,7 +5714,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - week: The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s awards are given, the week after it.
+            ///   - week: The Monday of the week open for picking now: from Sunday 8pm on the squad’s clock (小队时区), when a week’s awards are given, the week after it.
             ///   - scene: The squad’s scene this week (see `sceneId`).
             ///   - sceneId: The scene the squad’s home shows now: its scene this week, or, while a takeover scene (a holiday’s, say) is on, that one for every squad. `picked` is still the squad’s own.
             ///   - takeover: True while `sceneId` is a takeover scene standing in for the squad’s own: the app plays its opening (the art at `openings/<sceneId>/`, if there is one) the first time it shows it each day, then drops the squad onto it.

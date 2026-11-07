@@ -112,15 +112,18 @@ export interface Squads {
    */
   daysPerMember(squad: SquadId, week: string): Promise<DaysPerMember>;
   /**
-   * The squad's time zone (小队时区) in the viewer's week (its Monday, `YYYY-MM-DD`) and the next.
+   * The squad's time zone (小队时区) in its week at `moment` (on its own clock) and the next.
    */
-  timeZone(input: { squad: SquadId; viewer: MemberId; week: string }): Promise<SquadTimeZone>;
-  /** Sets the squad's time zone from the week after `week` (the captain's week now), for its captain. */
+  timeZone(input: { squad: SquadId; viewer: MemberId; moment: Date }): Promise<SquadTimeZone>;
+  /**
+   * Sets the squad's time zone from the week after the squad's week at `moment` (on its own
+   * clock), for its captain.
+   */
   setTimeZone(input: {
     squad: SquadId;
     member: MemberId;
     timeZone: string;
-    week: string;
+    moment: Date;
   }): Promise<SquadTimeZone>;
   /**
    * Each squad's time zone for the week starting `week` (a Monday, `YYYY-MM-DD`): the clock its
@@ -190,8 +193,8 @@ export function createSquads(deps: {
     weeklyGoals: (squad) => deps.store.weeklyGoals(squad),
     daysPerMember: async (squad, week) =>
       goalFor(await deps.store.weeklyGoals(squad), SceneWeek.parse(week)),
-    timeZone: (input) => squadTimeZone(deps, { ...input, week: SceneWeek.parse(input.week) }),
-    setTimeZone: (input) => setSquadTimeZone(deps, { ...input, week: SceneWeek.parse(input.week) }),
+    timeZone: (input) => squadTimeZone(deps, input),
+    setTimeZone: (input) => setSquadTimeZone(deps, input),
     timeZonesFor: async (squads, week) => {
       const settings = await deps.store.timeZones(squads);
       const parsed = SceneWeek.parse(week);
