@@ -20,9 +20,10 @@ extension TodayModel {
         /// The squad trained over its goal weeks in a row: the captain is suggested a higher one,
         /// told on this phone once; its button opens 小队.
         case goalSuggestion(GoalSuggestion)
-        /// Posts the server refused while they went out late, `count` of them, the oldest's `line`;
-        /// its button, when `canResend`, opens that post to change and send again.
-        case sendFailed(count: Int, line: String?, canResend: Bool)
+        /// Posts the server refused while they went out late (`TodayModel.failed`, read when it is
+        /// drawn, so one banner always says how many); its button, when `canResend`, opens the
+        /// oldest to change and send again.
+        case sendFailed(canResend: Bool)
         /// What waited after two in a row, in one banner that opens 通知 (approved C, 2026-11-05).
         case more
     }
@@ -39,7 +40,7 @@ extension TodayModel {
             switch news {
             case .broadcast(let broadcast): broadcast.action != nil || broadcast.style == .celebration
             case .goalSuggestion: true
-            case .sendFailed(_, _, let canResend): canResend
+            case .sendFailed(let canResend): canResend
             case .moved, .unlocked, .more: false
             }
         }
@@ -92,28 +93,35 @@ extension TodayModel {
         Task { await showNextNotice() }
     }
 
-    /// The posts the server refused while they went out late, in one banner: 重发 opens the oldest
-    /// to change and send again. A 请假条 has no page to open, so it is only told.
+    /// The posts the server refused while they went out late, in one banner that replaces any
+    /// told before: 重发 opens the oldest to change and send again. A 请假条 has no page to open,
+    /// so it is only told.
     func tellRefused() {
         let refused = store.takeRefused().map(\.pending)
         guard !refused.isEmpty else { return }
-        let resendable = refused.filter { $0.draft.kind != .disclaimer }
-        unsent += resendable
-        announceUnsent(
-            count: unsent.count + refused.count - resendable.count, line: (unsent.first ?? refused[0]).draft.line)
+        failed += refused
+        announceFailed()
     }
 
-    /// 重发: the oldest refused post opens on the compose page with everything it had; any others
-    /// are told again once the home is free.
+    /// 重发: the oldest refused post that can be edited opens on the compose page with everything
+    /// it had; the rest are told again once the home is free. A 请假条 was told with it and goes.
     func resendFirst() {
-        guard !unsent.isEmpty else { return }
-        let post = unsent.removeFirst()
+        guard let index = failed.firstIndex(where: { $0.draft.kind != .disclaimer }) else { return }
+        let post = failed.remove(at: index)
+        failed.removeAll { $0.draft.kind == .disclaimer }
         resend(post)
-        if let next = unsent.first { announceUnsent(count: unsent.count, line: next.draft.line) }
+        if !failed.isEmpty { announceFailed() }
     }
 
-    private func announceUnsent(count: Int, line: String?) {
-        pendingNotices.append(Notice(news: .sendFailed(count: count, line: line, canResend: !unsent.isEmpty)))
+    private func announceFailed() {
+        let news = NoticeNews.sendFailed(canResend: failed.contains { $0.draft.kind != .disclaimer })
+        pendingNotices.removeAll { if case .sendFailed = $0.news { true } else { false } }
+        if case .sendFailed = notice?.news {
+            // Already on screen: it says the new count by itself; only its button may change.
+            if notice?.news != news { notice = Notice(news: news) }
+            return
+        }
+        pendingNotices.append(Notice(news: news))
         Task { await showNextNotice() }
     }
 

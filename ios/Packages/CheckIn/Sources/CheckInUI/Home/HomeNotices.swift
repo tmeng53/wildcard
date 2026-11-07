@@ -61,10 +61,12 @@ struct HomeNotices: ViewModifier {
                 detail: Text("改成人均 \(suggestion.daysPerMember) 天？", bundle: .module),
                 action: Text("去改目标", bundle: .module)
             ) { NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis") }
-        case .sendFailed(let count, let line, let canResend):
+        case .sendFailed(let canResend):
             NoticeBanner(
-                count == 1 ? Text("有一条发送失败", bundle: .module) : Text("有 \(count) 条发送失败", bundle: .module),
-                detail: sendFailedDetail(count: count, line: line, canResend: canResend),
+                model.failed.count == 1
+                    ? Text("有一条发送失败", bundle: .module)
+                    : Text("有 \(model.failed.count) 条发送失败", bundle: .module),
+                detail: sendFailedDetail(canResend: canResend),
                 action: canResend ? Text("重发", bundle: .module) : nil
             ) { NoticeSymbol(systemImage: "arrow.clockwise") }
         case .more:
@@ -74,10 +76,14 @@ struct HomeNotices: ViewModifier {
         }
     }
 
-    private func sendFailedDetail(count: Int, line: String?, canResend: Bool) -> Text {
-        if count > 1 { return Text("先重发最早的一条", bundle: .module) }
-        if let line, !line.isEmpty { return Text("「\(line)」没能发出去，改一下再试试", bundle: .module) }
-        return canResend ? Text("改一下再试试", bundle: .module) : Text("没能发出去", bundle: .module)
+    private func sendFailedDetail(canResend: Bool) -> Text {
+        guard canResend else { return Text("没能发出去", bundle: .module) }
+        let failed = model.failed
+        if failed.count > 1 { return Text("先重发最早的一条", bundle: .module) }
+        if let line = failed.first?.draft.line, !line.isEmpty {
+            return Text("「\(line)」没能发出去，改一下再试试", bundle: .module)
+        }
+        return Text("改一下再试试", bundle: .module)
     }
 
     private func tap(_ notice: TodayModel.Notice) {

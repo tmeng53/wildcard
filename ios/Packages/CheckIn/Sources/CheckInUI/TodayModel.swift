@@ -153,8 +153,9 @@ public final class TodayModel {
     /// The banner on top or a celebration's card, those waiting, told only while 今天 is in front.
     var notice: Notice?
     var pendingNotices: [Notice] = []
-    /// Posts the server refused that 重发 can still open on the compose page, oldest first.
-    var unsent: [PendingCheckIn] = []
+    /// Posts the server refused that the member has been told of and hasn't opened again, oldest
+    /// first; 重发 opens them one by one.
+    var failed: [PendingCheckIn] = []
     public internal(set) var celebration: Broadcast?
     public var isHomeInFront = true
     /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
