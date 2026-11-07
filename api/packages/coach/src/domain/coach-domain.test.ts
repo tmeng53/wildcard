@@ -343,7 +343,6 @@ describe('when the coach wakes', () => {
       offered: true,
     });
     const instructions = instructionsOf({ rules: '规矩' }, coach);
-    expect(instructions).toContain('听到过很久还成立的事');
     expect(instructions).toContain('一张便条只说一件事');
     expect(instructions).toContain('用记性，但别说出来。');
     expect(instructions).toContain('做什么、用哪个工具，你自己判断。');

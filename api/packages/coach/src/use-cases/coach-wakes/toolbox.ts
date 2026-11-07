@@ -98,7 +98,7 @@ export function toolbox({
       name: 'squad_week',
       reads: true,
       description:
-        '小队一周的情况：队员和外号，每个人的打卡、表情和评论。默认这周；weeks_ago 填 1 到 4 看前几周，想知道以前的事（比如上次跑步是什么时候）才用。',
+        '小队一周的情况：队员和外号，每个人的打卡、表情和评论。默认这周，weeks_ago 填 1 到 4 看前几周。',
       parameters: z.object({
         weeks_ago: z.number().int().min(0).max(4).optional().describe('看几周前，0 或不填是这周'),
       }),
@@ -108,7 +108,7 @@ export function toolbox({
     defineTool(draft.steps, {
       name: 'remember',
       description:
-        '把一件以后还用得着的事记进你的记性。你每次醒来都会忘掉以前的一切，只有记性里的留得住，没记的下次就不知道了。只记过很久还成立的事，一次记一件，一句话。',
+        '把一件事记进你的记性，一次一件，一句话。值得记的是过很久还成立、会改变你以后怎么跟他们说话的事。短期的、琐碎的、记性里已经有的，不记。',
       parameters: z.object({
         path: z
           .string()
@@ -133,7 +133,7 @@ export function toolbox({
     defineTool(draft.steps, {
       name: 'edit_file',
       description:
-        '整理记性：把一个文件里 find 的原文换成 replace，用来合并重复的、改掉记错的、删掉过时的（replace 为空就是删）。find 照抄任务里「你的记性」的原文，必须正好出现一次。记新的事用 remember。',
+        '改记性，让它保持准确、不重复：把一个文件里 find 的原文换成 replace，replace 为空就是删。find 照抄任务里「你的记性」的原文，必须正好出现一次。',
       parameters: z.object({
         path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
         find: z.string().describe('要换掉的原文，照抄'),
@@ -162,7 +162,7 @@ export function toolbox({
         name: 'member_stats',
         reads: true,
         description:
-          '每个队员的数据：从加入到现在一共练了几天、健康餐、放纵餐、请假条各几次，最常练的运动，拿过几个周奖，还有这周的出赛表（每天计划练什么）和饮食小目标。想说「这是你第几次」「你最爱的运动」或者对照计划时才用。',
+          '每个队员的数据：从加入到现在一共练了几天，健康餐、放纵餐、请假条各几次，最常练的运动，拿过几个周奖，还有这周的出赛表和饮食小目标。',
         parameters: z.object({}),
         run: async () => {
           try {
@@ -272,8 +272,7 @@ function lookAtPhotos(steps: WakeStep[], photos: () => Promise<readonly string[]
   const name = 'look_at_photos';
   return {
     name,
-    description:
-      '看这条打卡的照片。看照片很贵：只在队员问到照片、或者话里明显在说照片时才用，平时不用，不看照片也能照常回。一次wake最多用一次。',
+    description: '看这条打卡的照片。看照片比读文字贵很多，一次醒来最多看一次。',
     parameters: z.object({}),
     run: async (): Promise<ToolAnswer> => {
       const looked = steps.some(({ tool }) => tool === name);
