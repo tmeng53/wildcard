@@ -1097,3 +1097,236 @@ describe('editing and deleting a post', () => {
     expect(editGone.status).toBe(404);
   });
 });
+
+describe('a 训练 from Apple Health', () => {
+  const started = new Date(Date.now() - 40 * 60 * 1000);
+  const workout = (id: string, extra: Record<string, unknown> = {}) => ({
+    provider: 'apple_health',
+    providerWorkoutId: id,
+    startedAt: started.toISOString(),
+    endedAt: new Date(started.getTime() + 32 * 60 * 1000).toISOString(),
+    summary: { durationSec: 1920, distanceM: 5210.5, paceSecPerKm: 369, avgHr: 148 },
+    route: [
+      { lat: 40.7812, lon: -73.9665 },
+      { lat: 40.7821, lon: -73.9651 },
+    ],
+    tilePosition: 1,
+    ...extra,
+  });
+  const reason = (body: unknown) => z.object({ reason: z.string() }).safeParse(body).data?.reason;
+
+  it('keeps the workout with the post, posts each workout once, and an edit can strike numbers', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const training = { sport: 'run', minutes: 32, workout: workout('A1') };
+    const body = { version: 1, day, createdAt, audience: [squad], kind: 'trained', training };
+    const saved = await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body });
+    expect(saved.status).toBe(201);
+    const expected = {
+      ...workout('A1'),
+      startedAt: started.toISOString(),
+      endedAt: new Date(started.getTime() + 32 * 60 * 1000).toISOString(),
+    };
+    expect(z.object({ training: z.unknown() }).parse(saved.body).training).toStrictEqual({
+      sport: 'run',
+      minutes: 32,
+      workout: expected,
+    });
+
+    // A retry is the same post; the friend sees the workout in the feed.
+    const retry = await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body });
+    expect(retry.status).toBe(200);
+    const feed = await call({
+      method: 'GET',
+      path: `/squads/${squad}/check-ins?from=${day}&to=${day}`,
+      token: friend.token,
+    });
+    expect(JSON.stringify(feed.body)).toContain('"providerWorkoutId":"A1"');
+
+    // The same workout again is refused, from another post id.
+    const again = await call({
+      method: 'PUT',
+      path: `/check-ins/${randomUUID()}`,
+      token: me.token,
+      body: { ...body, createdAt: new Date().toISOString() },
+    });
+    expect([again.status, reason(again.body)]).toStrictEqual([409, 'WORKOUT_ALREADY_POSTED']);
+
+    // An edit that strikes heart rate and takes the map off keeps only the rest.
+    const edited = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: {
+        version: 1,
+        kind: 'trained',
+        training: {
+          sport: 'run',
+          minutes: 32,
+          workout: {
+            ...workout('A1', { route: undefined, tilePosition: undefined }),
+            summary: { durationSec: 1920, distanceM: 5210.5 },
+          },
+        },
+      },
+    });
+    expect(edited.status).toBe(200);
+    const read = await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token });
+    const shown = z
+      .object({ checkIn: z.object({ training: z.object({ workout: z.unknown() }) }) })
+      .parse(read.body).checkIn.training.workout;
+    expect(shown).toStrictEqual({
+      provider: 'apple_health',
+      providerWorkoutId: 'A1',
+      startedAt: expected.startedAt,
+      endedAt: expected.endedAt,
+      summary: { durationSec: 1920, distanceM: 5210.5 },
+    });
+    const logged = await db
+      .selectFrom('check_in_events')
+      .select('entry')
+      .where('check_in_id', '=', id)
+      .orderBy('id')
+      .execute();
+    expect(logged.map(({ entry }) => JSON.stringify(entry).includes('"avgHr":148'))).toStrictEqual([
+      true,
+      false,
+    ]);
+
+    // A build from before workouts edits the caption and sends no workout: the post keeps it.
+    const older = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: {
+        version: 1,
+        kind: 'trained',
+        training: { sport: 'run', minutes: 32, caption: '风大' },
+      },
+    });
+    expect(older.status).toBe(200);
+    const after = await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token });
+    expect(
+      z
+        .object({ checkIn: z.object({ training: z.object({ workout: z.unknown() }) }) })
+        .parse(after.body).checkIn.training.workout,
+    ).toStrictEqual(shown);
+
+    // Deleting the post frees the workout to be posted again.
+    expect(
+      (await call({ method: 'DELETE', path: `/check-ins/${id}`, token: me.token })).status,
+    ).toBe(204);
+    const posted = await call({
+      method: 'PUT',
+      path: `/check-ins/${randomUUID()}`,
+      token: me.token,
+      body: { ...body, createdAt: new Date().toISOString() },
+    });
+    expect(posted.status).toBe(201);
+  });
+
+  it('refuses a tile without its data, data without its tile, or a tile past the photos', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const put = async (extra: Record<string, unknown>) => {
+      const { status, body } = await call({
+        method: 'PUT',
+        path: `/check-ins/${randomUUID()}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: { sport: 'run', workout: workout(randomUUID(), extra) },
+        },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    expect(await put({ tilePosition: undefined })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ route: undefined })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ tilePosition: 2 })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ summary: { avgHr: 400 } })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(
+      await put({
+        route: undefined,
+        series: {
+          hr: [
+            { t: 0, bpm: 90 },
+            { t: 60, bpm: 120 },
+          ],
+        },
+      }),
+    ).toStrictEqual([201, 'saved']);
+  });
+
+  it('keeps a map and a chart together, each in its place, and an older build’s edit keeps both', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const hr = {
+      hr: [
+        { t: 0, bpm: 90 },
+        { t: 60, bpm: 120 },
+      ],
+    };
+    const photos = [{ path: await uploadPhoto(me.token, 'cover') }];
+    const put = async (extra: Record<string, unknown>, id = randomUUID()) => {
+      const { status, body } = await call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: { sport: 'run', photos, workout: workout(randomUUID(), extra) },
+        },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    // Both need their own places, among the photos or right after them.
+    expect(await put({ series: hr })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ series: hr, chartPosition: 1 })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ series: hr, chartPosition: 4 })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ chartPosition: 2 })).toStrictEqual([400, 'REQUEST_INVALID']);
+
+    const id = randomUUID();
+    expect(await put({ series: hr, tilePosition: 2, chartPosition: 3 }, id)).toStrictEqual([
+      201,
+      'saved',
+    ]);
+    const shown = async () =>
+      z
+        .object({
+          checkIn: z.object({
+            training: z.object({
+              workout: z.object({
+                tilePosition: z.int(),
+                chartPosition: z.int(),
+                series: z.unknown(),
+              }),
+            }),
+          }),
+        })
+        .parse((await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).body)
+        .checkIn.training.workout;
+    expect(await shown()).toStrictEqual({ tilePosition: 2, chartPosition: 3, series: hr });
+
+    // A build from before workouts takes the photo off: both tiles stay, right after none.
+    const older = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: { version: 1, kind: 'trained', training: { sport: 'run', caption: '风大' } },
+    });
+    expect(older.status).toBe(200);
+    expect(await shown()).toStrictEqual({ tilePosition: 1, chartPosition: 2, series: hr });
+  });
+});

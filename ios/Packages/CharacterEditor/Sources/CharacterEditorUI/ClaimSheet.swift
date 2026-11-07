@@ -90,7 +90,6 @@ struct ClaimedBanner: View {
             }
             .accessibilityHidden(true)
         }
-        .accessibilityIdentifier("street.claimed")
     }
 }
 #endif

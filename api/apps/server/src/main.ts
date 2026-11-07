@@ -84,7 +84,7 @@ import {
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
-import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import { coachNotesOn, createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
 import { createCampaigns, createPostgresCampaignStore } from '@wildcard/campaigns';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import {
@@ -425,6 +425,8 @@ const coachWakes =
           aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
         hiring: createPostgresCoachHiring(db),
         clock: () => new Date(),
+        // A holiday or any moment reaches the coach as its switches' notes while they are on.
+        occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
         // OpenAI fetches a photo the coach asks to look at from a URL that lasts 10 minutes.
         photoUrls: async (paths) => {

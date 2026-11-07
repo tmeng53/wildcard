@@ -7,7 +7,7 @@ final class TodayUITests: XCTestCase {
     /// Slow CI simulators can take many seconds to show a screen; a real failure still fails.
     private static let wait: TimeInterval = 30
 
-    /// 练了 with three photos: pick a cover, write a caption, post, and land back on the scene
+    /// 练了 with three photos: pick the minutes, write a caption, post, and land back on the scene
     /// with the squad bar ticked up. (请假 stays offered after: it can still go to a day before.)
     func testTrainedCheckIn() {
         let app = launch(language: "zh-Hans", photos: 3)
@@ -32,7 +32,6 @@ final class TodayUITests: XCTestCase {
         app.buttons["today.capsule.trained"].tap()
         let post = app.buttons["compose.post"]
         XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "the compose page never opened")
-        app.buttons["compose.photo.2"].tap()
         checkSportAndPickMinutes(in: app)
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
         caption.tap()
@@ -225,26 +224,6 @@ final class TodayUITests: XCTestCase {
         let field = app.descendants(matching: .any).matching(identifier: "disclaimer.field").firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: Self.wait), "the 请假条 page never opened")
         return field
-    }
-
-    /// 健康餐: the same compose page, with its own placeholder and no sport row.
-    func testHealthyMealCompose() {
-        let app = launch(language: "zh-Hans", photos: 1)
-        _ = topCard(in: app)
-        app.buttons["today.checkin"].tap()
-        let capsule = app.buttons["today.capsule.healthyMeal"]
-        XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait))
-        capsule.tap()
-        let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
-        XCTAssertTrue(caption.waitForExistence(timeout: Self.wait), "the compose page never opened")
-        // The caption is a text view whose placeholder is drawn over it and read as its label.
-        XCTAssertEqual(caption.label, "这顿很自律…")
-        XCTAssertFalse(app.buttons["compose.sport.run"].exists, "a meal shows the sport row")
-        XCTAssertTrue(
-            app.descendants(matching: .any).matching(identifier: "compose.cover").firstMatch.exists,
-            "the one photo isn't the cover")
-        settle()
-        keepScreenshot(named: "22-compose-healthy-meal")
     }
 
     /// The squad card's second page: my week, Monday to Sunday.

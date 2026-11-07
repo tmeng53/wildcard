@@ -79,6 +79,34 @@ describe('the switches', () => {
     });
   });
 
+  it('keeps the coach’s note with the switch and its log, and reads logs from before it', async () => {
+    await rolledBack(async (trx) => {
+      const store = createPostgresSwitchStore(trx);
+      const switches = createSwitches({ store });
+      // The seed's row was logged before switches had a note: it reads as a switch without one.
+      const { rows } = await sql<{ has: boolean }>`
+        select value ? 'coach_note' as has from public.switch_events order by id limit 1
+      `.execute(trx);
+      expect(rows[0]?.has).toBe(false);
+      expect((await store.history())[0]?.value).not.toHaveProperty('coachNote');
+
+      const noted = {
+        id: 'tgDay',
+        label: 'Thanksgiving day',
+        mode: 'on',
+        coachNote: '今天是感恩节',
+      };
+      await switches.put({ ...noted, mode: 'on' });
+      expect((await switches.list()).find(({ id }) => id === 'tgDay')).toStrictEqual(noted);
+      expect((await store.history()).at(-1)?.value).toStrictEqual(noted);
+      // Left out, the note goes: a put replaces every field.
+      await switches.put({ id: 'tgDay', label: 'Thanksgiving day', mode: 'on' });
+      expect((await switches.list()).find(({ id }) => id === 'tgDay')).not.toHaveProperty(
+        'coachNote',
+      );
+    });
+  });
+
   it('never deletes a switch or changes its id', async () => {
     await expect(db.deleteFrom('switches').where('id', '=', 'winter').execute()).rejects.toThrow(
       /never deleted/,

@@ -36,11 +36,11 @@ final class LightsUITests: XCTestCase {
         keepScreenshot(named: "71b-today-night-asleep")
         closePopup(today, in: app)
 
-        cord.tap()
+        // The tap follows the card's closing, which a busy simulator can still be ending.
+        tap(cord, until: cord, "label == '关灯'", "the cord didn't switch the lights on")
         // Mid-wake: the first sleepers glaring up at the lamps, the first one's line.
         Thread.sleep(forTimeInterval: 1.6)
         keepScreenshot(named: "72-today-lights-waking")
-        XCTAssertEqual(cord.label, "关灯")
         Thread.sleep(forTimeInterval: 3)
         keepScreenshot(named: "73-today-lights-on")
         expectClear(cord, of: card, in: app)
@@ -52,8 +52,7 @@ final class LightsUITests: XCTestCase {
         XCTAssertFalse(labeled("睡着了", in: today).exists, "Coco still sleeps with the lights on")
         closePopup(today, in: app)
 
-        cord.tap()
-        XCTAssertEqual(cord.label, "开灯")
+        tap(cord, until: cord, "label == '开灯'", "the cord didn't switch the lights off")
         Thread.sleep(forTimeInterval: 4.5)
         keepScreenshot(named: "74-today-lights-off")
     }

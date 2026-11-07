@@ -55,7 +55,9 @@ public struct APICheckInBackend: CheckInBackend {
             async let today = api.todayWire(of: squadID)
             async let plan = api.weeklyPlanWire(weekStart: day.weekStart)
             async let checkIns = api.checkInsWire(of: squadID, from: day.adding(days: -2), through: day.adding(days: 2))
-            async let week = api.myCheckInsWire(from: day.weekStart, through: day)
+            // As far back as a 补打卡 can go, so a Health workout posted to last week stays posted.
+            let firstDay = min(day.weekStart, day.adding(days: -CheckIn.backfillDays))
+            async let week = api.myCheckInsWire(from: firstDay, through: day)
             let copy = SavedHome(
                 version: 1, member: signedIn, squad: squad, today: try await today,
                 plan: try await plan,
@@ -157,7 +159,7 @@ struct SavedHome: Codable {
     let plan: Components.Schemas.WeeklyPlan
     /// The squad's, from two days before the member's day to two days after.
     let checkIns: Components.Schemas.SquadPostList
-    /// The member's own, since Monday.
+    /// The member's own, since Monday or the first day a 补打卡 can count for, whichever is earlier.
     let week: Components.Schemas.CheckInList
 
     func home(api: WildcardAPI) throws(APIError) -> Home {

@@ -10,8 +10,10 @@ import {
   entryFromStored,
   photosOf,
   storedPayload,
+  workoutOf,
   type CheckInRecord,
 } from '../domain/check-in.js';
+import { storedWorkout, workoutFromStored, workoutView, type Workout } from '../domain/workout.js';
 import { PhotoPath, type PhotoRef } from '../domain/photos.js';
 import { SportKey } from '../domain/sports.js';
 import type { CheckInStore, InsertOutcome, UpdateOutcome } from '../ports.js';
@@ -21,10 +23,12 @@ import type { CheckIns, DB } from './tables.js';
 export type CheckInTables = DB;
 
 /** Which uniqueness rule a unique violation (23505) names. */
-const UNIQUE_RULES: Record<string, 'id' | 'photo' | undefined> = {
+const UNIQUE_RULES: Record<string, 'id' | 'photo' | 'workout' | undefined> = {
   check_ins_pkey: 'id',
   // The path is the key, so a photo belongs to one check-in.
   check_in_photos_pkey: 'photo',
+  // A member posts each workout once.
+  check_in_workouts_once: 'workout',
 };
 
 const Constraint = z.object({ constraint: z.string() });
@@ -40,8 +44,16 @@ function photoRows(checkIn: CheckInRecord) {
   }));
 }
 
-/** A `check_in_events` row: the whole entry as saved, the photos in order. */
+/** The `check_in_workouts` row of a check-in, if it has a workout. */
+function workoutRow(checkIn: CheckInRecord) {
+  const workout = workoutOf(checkIn);
+  if (workout === undefined) return undefined;
+  return { check_in_id: checkIn.id, member_id: checkIn.member, ...storedWorkout(workout) };
+}
+
+/** A `check_in_events` row: the whole entry as saved, the photos in order, and any workout. */
 function eventRow(checkIn: CheckInRecord, kind: 'posted' | 'edited') {
+  const workout = workoutOf(checkIn);
   return {
     check_in_id: checkIn.id,
     member_id: checkIn.member,
@@ -52,6 +64,7 @@ function eventRow(checkIn: CheckInRecord, kind: 'posted' | 'edited') {
       photos: photosOf(checkIn).map(({ path, size }) =>
         size === undefined ? { path } : { path, width: size.width, height: size.height },
       ),
+      ...(workout === undefined ? {} : { workout: workoutView(workout) }),
     }),
   };
 }
@@ -78,7 +91,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
   async function withAudiences(rows: readonly Row[]): Promise<CheckInRecord[]> {
     if (rows.length === 0) return [];
     const ids = rows.map((row) => row.id);
-    const [audienceRows, photoRows] = await Promise.all([
+    const [audienceRows, photoRows, workoutRows] = await Promise.all([
       db
         .selectFrom('check_in_squads')
         .select(['check_in_id', 'squad_id'])
@@ -93,7 +106,11 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .orderBy('check_in_id')
         .orderBy('position')
         .execute(),
+      db.selectFrom('check_in_workouts').selectAll().where('check_in_id', 'in', ids).execute(),
     ]);
+    const workouts = new Map<string, Workout>(
+      workoutRows.map((row) => [row.check_in_id, workoutFromStored(row)] as const),
+    );
     const audiences = new Map<string, SquadId[]>();
     for (const { check_in_id, squad_id } of audienceRows) {
       audiences.set(check_in_id, [...(audiences.get(check_in_id) ?? []), SquadId.parse(squad_id)]);
@@ -114,7 +131,11 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       postedDay: LocalDay.parse(row.posted_day),
       createdAt: row.created_at,
       audience: audiences.get(row.id) ?? [],
-      ...entryFromStored({ ...row, photos: photos.get(row.id) ?? [] }),
+      ...entryFromStored({
+        ...row,
+        photos: photos.get(row.id) ?? [],
+        workout: workouts.get(row.id),
+      }),
     }));
   }
 
@@ -158,6 +179,9 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
           }
           const photos = photoRows(checkIn);
           if (photos.length > 0) await trx.insertInto('check_in_photos').values(photos).execute();
+          const workout = workoutRow(checkIn);
+          if (workout !== undefined)
+            await trx.insertInto('check_in_workouts').values(workout).execute();
           await trx.insertInto('check_in_events').values(eventRow(checkIn, 'posted')).execute();
         });
         return { saved: true };
@@ -180,24 +204,25 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
           await trx.deleteFrom('check_in_photos').where('check_in_id', '=', checkIn.id).execute();
           const photos = photoRows(checkIn);
           if (photos.length > 0) await trx.insertInto('check_in_photos').values(photos).execute();
+          await trx.deleteFrom('check_in_workouts').where('check_in_id', '=', checkIn.id).execute();
+          const workout = workoutRow(checkIn);
+          if (workout !== undefined)
+            await trx.insertInto('check_in_workouts').values(workout).execute();
           await trx.insertInto('check_in_events').values(eventRow(checkIn, 'edited')).execute();
         });
         return { saved: true };
       } catch (error) {
         const constraint = Constraint.safeParse(error).data?.constraint;
-        if (
-          hasErrorCode(error, '23505') &&
-          constraint !== undefined &&
-          UNIQUE_RULES[constraint] === 'photo'
-        ) {
-          return { saved: false, taken: 'photo' };
+        const taken = constraint === undefined ? undefined : UNIQUE_RULES[constraint];
+        if (hasErrorCode(error, '23505') && (taken === 'photo' || taken === 'workout')) {
+          return { saved: false, taken };
         }
         throw error;
       }
     },
 
     async remove(id) {
-      // Its audience, photo rows, reactions, comments, coach wakes and log go with it.
+      // Its audience, photo rows, workout, reactions, comments, coach wakes and log go with it.
       await db.deleteFrom('check_ins').where('id', '=', id).execute();
     },
 

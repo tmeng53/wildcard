@@ -20,7 +20,7 @@
 
 /* Header and footer shared with the home page (brand surface, calm grey). */
 @font-face { font-family: 'Barlow Condensed'; font-weight: 800; font-display: swap; src: url('/fonts/BarlowCondensed-ExtraBold.ttf') format('truetype'); }
-.legal-chrome { --sky: #F2F3F5; --num: 'Barlow Condensed', 'Arial Narrow', sans-serif; }
+.legal-chrome { --ink-2: #666B7A; --sky: #F2F3F5; --num: 'Barlow Condensed', 'Arial Narrow', sans-serif; }
 .legal-chrome .wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
 header.legal-chrome { background: var(--sky); }
 header.legal-chrome .nav { height: 72px; display: flex; align-items: center; justify-content: space-between; }

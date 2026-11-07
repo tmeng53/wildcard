@@ -20,13 +20,16 @@ public struct ArtNames: Hashable, Sendable {
         public let unlock: CatalogNames?
         /// The tag a limited store wears (感恩节限定).
         public let limited: CatalogNames?
+        /// The colour of that tag, so a kind of limit can wear its own; nil for the limited colour.
+        public let limitedColor: RGBAColor?
 
         public init(
             name: CatalogNames, local: CatalogNames, sports: CatalogNames? = nil, tagline: CatalogNames? = nil,
-            unlock: CatalogNames? = nil, limited: CatalogNames? = nil
+            unlock: CatalogNames? = nil, limited: CatalogNames? = nil, limitedColor: RGBAColor? = nil
         ) {
             (self.name, self.local, self.sports) = (name, local, sports)
             (self.tagline, self.unlock, self.limited) = (tagline, unlock, limited)
+            self.limitedColor = limitedColor
         }
     }
 
@@ -51,7 +54,8 @@ public struct ArtNames: Hashable, Sendable {
 
     /// `{"version": 1, "variants": {"trot-bib": {"zhHans": "烤火鸡号码布", "en": "Turkey Bib",
     /// "zhHant": "烤火雞號碼布"}}, "stores": {"trot": {"name": {…}, "local": {…}, "sports": {…},
-    /// "tagline": {…}, "unlock": {…}, "limited": {…}}}}`; a store needs `name` and `local`.
+    /// "tagline": {…}, "unlock": {…}, "limited": {…}, "limitedColor": "#c8553d"}}}`; a store needs `name` and
+    /// `local`, and a colour that isn't `#rrggbb` is left out.
     public static func decode(_ data: Data) throws(AvatarError) -> ArtNames {
         let file: File = try decodeJSON(data, version: currentVersion, shape: File.shape)
         return ArtNames(
@@ -59,7 +63,8 @@ public struct ArtNames: Hashable, Sendable {
             stores: (file.stores ?? [:]).mapValues {
                 Store(
                     name: $0.name.names, local: $0.local.names, sports: $0.sports?.names,
-                    tagline: $0.tagline?.names, unlock: $0.unlock?.names, limited: $0.limited?.names)
+                    tagline: $0.tagline?.names, unlock: $0.unlock?.names, limited: $0.limited?.names,
+                    limitedColor: $0.limitedColor.flatMap(RGBAColor.init(hex:)))
             })
     }
 
@@ -78,6 +83,7 @@ public struct ArtNames: Hashable, Sendable {
         let tagline: ArtWords?
         let unlock: ArtWords?
         let limited: ArtWords?
+        let limitedColor: String?
     }
 }
 
