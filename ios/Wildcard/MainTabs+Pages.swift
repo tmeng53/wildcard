@@ -24,9 +24,6 @@ extension MainTabs {
             id: .today, title: Text(copy: "小队", bundle: .main), systemImage: "sun.max",
             accessibilityIdentifier: "tab.today"),
         TabBarItem(
-            id: .today, title: Text(copy: "今天", bundle: .main), systemImage: "sun.max",
-            accessibilityIdentifier: "tab.today"),
-        TabBarItem(
             id: .feed, title: Text(copy: "动态", bundle: .main), systemImage: "bubble.left.and.bubble.right",
             accessibilityIdentifier: "tab.feed"
         ),
