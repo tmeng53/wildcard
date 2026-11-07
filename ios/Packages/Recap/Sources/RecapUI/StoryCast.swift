@@ -4,6 +4,7 @@ import AvatarDomain
 import AvatarUI
 import Contracts
 import DesignSystem
+import Foundation
 import RecapDomain
 
 /// Someone the story shows: their name and character as they were that week.
