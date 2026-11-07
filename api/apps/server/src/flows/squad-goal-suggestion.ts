@@ -25,10 +25,11 @@ import {
   type Squads,
   type WeeklyGoalSetting,
 } from '@wildcard/squads';
-import { awardsTimeOf, latestAwardedWeek } from '@wildcard/weekly-awards';
+import { latestAwardedWeek, weeksMaybeAwarded } from '@wildcard/weekly-awards';
 
 import type { Log } from '../log.js';
 import type { Database } from '../ports.js';
+import { squadsAwardedIn } from './awarded-squads.js';
 
 // 连续 3 周超过小队目标: a squad's weeks against its goal, from squads (who was in it, its goal,
 // its captain and what they were suggested before) and check-ins (the days trained for it), told
@@ -36,7 +37,10 @@ import type { Database } from '../ports.js';
 
 export interface GoalSuggestionDependencies {
   readonly checkIns: Pick<CheckIns, 'squadsCheckedInto' | 'squadTrainedDays' | 'weekStartNow'>;
-  readonly squads: Pick<Squads, 'captainOf' | 'goalSuggestions' | 'membersAt' | 'weeklyGoals'>;
+  readonly squads: Pick<
+    Squads,
+    'captainOf' | 'goalSuggestions' | 'membersAt' | 'timeZonesFor' | 'weeklyGoals'
+  >;
   /** Keeps the suggestion and tells the captain, both or neither (`suggestGoalIn`). */
   readonly suggestGoal: SuggestGoal;
   readonly clock: () => Date;
@@ -72,7 +76,7 @@ export function suggestGoalIn(
 
 /** What a run did. */
 export interface GoalSuggestionRun {
-  /** The week whose 战报 froze last: the latest of the weeks counted. */
+  /** The latest week whose 战报 froze anywhere; each squad counts up to its own latest. */
   readonly week: string;
   /** Squads that trained for it before its 战报. */
   readonly squads: number;
@@ -83,7 +87,7 @@ export interface GoalSuggestionRun {
 }
 
 /**
- * Once the latest week's 战报 froze (Sunday 8pm New York), tells the captain of each squad that
+ * Once the latest week's 战报 froze (Sunday 8pm on the squad's clock), tells the captain of each squad that
  * trained over its goal in that week and the two before it a higher goal to try: the days each
  * member trained on average then, rounded, at most 7, and only above the goal it has from next
  * week. A captain is told once a run of weeks over: a squad that stays over isn't told again
@@ -93,27 +97,30 @@ export interface GoalSuggestionRun {
 export async function suggestSquadGoals(
   deps: GoalSuggestionDependencies,
 ): Promise<GoalSuggestionRun> {
-  const awarded = latestAwardedWeek(deps.clock());
-  const week = SceneWeek.parse(awarded);
-  const squads = await deps.checkIns.squadsCheckedInto({
-    weekStart: CheckInWeek.parse(week),
-    before: awardsTimeOf(awarded),
-  });
+  const now = deps.clock();
+  const weeks = weeksMaybeAwarded(now);
+  let squads = 0;
   let suggested = 0;
   let failed = 0;
-  for (const squad of squads) {
-    try {
-      if (await suggestTo(deps, { squad: SquadId.parse(squad), week })) suggested += 1;
-    } catch (error) {
-      failed += 1;
-      deps.log.error('a squad’s goal suggestion failed; the next run tries again', {
-        squad,
-        week,
-        error,
-      });
+  for (const awarded of weeks) {
+    const week = SceneWeek.parse(awarded);
+    for (const [squad, { zone }] of await squadsAwardedIn(deps, awarded)) {
+      // Only the latest week the squad's own clock has ended.
+      if (latestAwardedWeek(now, zone) !== awarded) continue;
+      squads += 1;
+      try {
+        if (await suggestTo(deps, { squad: SquadId.parse(squad), week })) suggested += 1;
+      } catch (error) {
+        failed += 1;
+        deps.log.error('a squad’s goal suggestion failed; the next run tries again', {
+          squad,
+          week,
+          error,
+        });
+      }
     }
   }
-  return { week, squads: squads.length, suggested, failed };
+  return { week: weeks.at(-1) ?? '', squads, suggested, failed };
 }
 
 /** Tells the squad's captain a higher goal after `week`, if it is due; whether it told them. */

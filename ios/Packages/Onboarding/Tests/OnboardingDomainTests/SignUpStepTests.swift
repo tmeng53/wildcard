@@ -43,21 +43,22 @@ struct SignUpStepTests {
 
 struct SquadDraftTests {
     @Test func anInviteOpensOnJoinWithItsCode() throws {
-        let draft = SquadDraft(invite: try InviteCode("K7M2QX9P"), suggestedName: "Tracy 的小队")
+        let draft = SquadDraft(invite: try InviteCode("K7M2QX9P"), suggestedName: "Tracy 的小队", timeZone: "Asia/Taipei")
         #expect(draft.choice == .join)
         #expect(draft.code == (try InviteCode("K7M2QX9P")))
         #expect(draft.codeLetters == Array("K7M2QX9P"))
     }
 
     @Test func withoutAnInviteItOpensOnCreateWithTheSuggestedName() throws {
-        let draft = SquadDraft(invite: nil, suggestedName: "Tracy 的小队")
+        let draft = SquadDraft(invite: nil, suggestedName: "Tracy 的小队", timeZone: "Asia/Taipei")
         #expect(draft.choice == .create)
         #expect(draft.name == (try SquadName("Tracy 的小队")))
+        #expect(draft.timeZone == "Asia/Taipei")
         #expect(draft.code == nil)
     }
 
     @Test func aHalfTypedCodeShowsButIsNoCodeYet() {
-        var draft = SquadDraft(invite: nil, suggestedName: "")
+        var draft = SquadDraft(invite: nil, suggestedName: "", timeZone: "Asia/Taipei")
         draft.typedCode = "k7m-2"
         #expect(draft.codeLetters == Array("K7M2"))
         #expect(draft.code == nil)
@@ -67,7 +68,7 @@ struct SquadDraftTests {
     }
 
     @Test func aNameTooLongIsNoName() {
-        var draft = SquadDraft(invite: nil, suggestedName: "")
+        var draft = SquadDraft(invite: nil, suggestedName: "", timeZone: "Asia/Taipei")
         #expect(draft.name == nil)
         draft.typedName = String(repeating: "腿", count: SquadName.maxLength + 1)
         #expect(draft.name == nil)

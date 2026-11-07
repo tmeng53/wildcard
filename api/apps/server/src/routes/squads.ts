@@ -21,6 +21,7 @@ import { jsonBodyFailures, problem } from '../problem.js';
 import { rateLimited } from '../rate-limited.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { LookBody } from './character.js';
+import { squadTimeZoneField } from './squad-time-zone.js';
 
 const inviteCodeField = z.string().meta({
   description:
@@ -83,6 +84,12 @@ const NewSquad = z
       description:
         'The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 ' +
         'when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.',
+    }),
+    timeZone: squadTimeZoneField.optional().meta({
+      description:
+        'The squad’s time zone (小队时区), the creator’s pick, counting from their week now; their ' +
+        'own profile’s zone when left out. The captain changes it later with ' +
+        '`PUT /squads/{squadId}/time-zone`.',
     }),
   })
   .openapi('NewSquad');
@@ -219,7 +226,7 @@ export function squads(deps: {
     operationId: 'createSquad',
     summary: 'Create a squad',
     description:
-      'With a name and, optionally, its weekly goal; the caller is its first member, and needs a ' +
+      'With a name and, optionally, its weekly goal and time zone; the caller is its first member, and needs a ' +
       'current AI consent ' +
       '(`GET /me/ai-consent`). The app makes the id, so a create can ' +
       'be retried: the same squad again answers 200, another name or member under that id 409.',
@@ -232,7 +239,9 @@ export function squads(deps: {
     responses: {
       200: squadResponse('Already created: this was a retry'),
       201: squadResponse('Created'),
-      400: problem(`Not a valid name, ${limitReached}, or ${noConsent}`),
+      400: problem(
+        `Not a valid name, a time zone that doesn’t exist (\`TIME_ZONE_UNKNOWN\`), ${limitReached}, or ${noConsent}`,
+      ),
       409: problem('The id holds another squad (`SQUAD_ID_CONFLICT`)'),
       ...jsonBodyFailures,
       ...signedInFailures,
@@ -421,12 +430,14 @@ export function squads(deps: {
     })
     .openapi(create, async (c) => {
       const creator = caller(c.var.caller.userId);
-      const { name, daysPerMember } = c.req.valid('json');
+      const { name, daysPerMember, timeZone } = c.req.valid('json');
       const { squad, created } = await deps.squads.create({
         id: c.req.valid('param').squadId,
         creator,
         name,
         daysPerMember,
+        // Builds from before 小队时区 send none: the creator's own clock.
+        timeZone: timeZone ?? (await deps.members.findProfile(creator))?.timeZone,
         week: await deps.checkIns.weekStartNow(creator),
       });
       return created ? c.json(wire(squad), 201) : c.json(wire(squad), 200);

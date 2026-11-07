@@ -212,10 +212,12 @@ private struct AIConsentLine: View {
     }
 }
 
-/// 小队名, starting from 「Tracy 的小队」, and under it 小队目标: each member's days a week,
-/// 3 to begin with, which the captain changes later on 小队.
+/// 小队名, starting from 「Tracy 的小队」, under it 小队目标: each member's days a week, 3 to
+/// begin with, which the captain changes later on 小队, then 比赛时区: the phone's to begin with.
 private struct CreatePanel: View {
     let model: SignUpModel
+    @Environment(\.sceneTheme) private var theme
+    @State private var isChoosingZone = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.labelGap) {
@@ -237,12 +239,36 @@ private struct CreatePanel: View {
                     .accessibilityIdentifier("squad.goal.pick.\(days)")
                 }
             }
+            SectionLabel(Text("比赛时区", bundle: .module))
+                .padding(.top, Space.s)
+            ListRow(Text(verbatim: zone.region), value: Text(verbatim: zone.city), showsDivider: false) {
+                isChoosingZone = true
+            }
+            .accessibilityIdentifier("squad.timeZone")
+            Text("每周日晚 8 点按这个时区结算本周比赛，选大多数队员所在的时区", bundle: .module)
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.top, Space.xs)
+        .sheet(isPresented: $isChoosingZone) {
+            TimeZonePicker(selected: model.squad.timeZone) { picked in
+                model.pickTimeZone(picked)
+                isChoosingZone = false
+            }
+        }
     }
+
+    private var zone: ZoneName { ZoneName(model.squad.timeZone, locale: AppLanguage.current.locale) }
 }
 
 extension SignUpModel {
+    /// 比赛时区, for the squad being made: any zone the phone knows.
+    func pickTimeZone(_ identifier: String) {
+        guard TimeZone(identifier: identifier) != nil else { return }
+        squad.timeZone = identifier
+    }
+
     /// 小队目标 · 每人每周练几天, for the squad being made.
     func pickDaysPerMember(_ days: Int) {
         guard SquadWeeklyGoal.choices.contains(days) else { return }

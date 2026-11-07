@@ -2,6 +2,7 @@ import type { InviteCode } from './domain/invite-code.js';
 import type { Scene, ScenePick, SceneWeek } from './domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from './domain/squad.js';
 import type { GoalSuggestion } from './domain/goal-suggestion.js';
+import type { TimeZoneSetting } from './domain/time-zone.js';
 import type { DaysPerMember, WeeklyGoalSetting } from './domain/weekly-goal.js';
 
 /**
@@ -17,6 +18,8 @@ export interface NewSquad {
   readonly creator: MemberId;
   /** The squad's weekly goal, counting from the week it is made: the creator's week. */
   readonly goal: { readonly daysPerMember: DaysPerMember; readonly week: SceneWeek };
+  /** The squad's time zone, counting from the same week. */
+  readonly timeZone: string;
 }
 
 /**
@@ -38,11 +41,11 @@ export type CrownHolders = (input: {
 }) => Promise<readonly MemberId[]>;
 
 /**
- * The week a squad picks its scene for at `moment`: from Sunday 8pm Eastern, when a week's
+ * The week a squad picks its scene for at `moment`: from Sunday 8pm on the squad's clock, when a week's
  * awards are given, it is the next week, so the crown winner picks the week after the one they
  * won.
  */
-export type SceneWeekAt = (moment: Date) => SceneWeek;
+export type SceneWeekAt = (moment: Date, squad: SquadId) => Promise<SceneWeek>;
 
 /** What a captain's change did. `notCaptain`: the actor isn't the captain now. */
 export type CaptainOutcome = 'changed' | 'unchanged' | 'notCaptain' | 'notMember';
@@ -120,6 +123,21 @@ export interface SquadStore {
     readonly squad: SquadId;
     readonly actor: MemberId;
     readonly daysPerMember: DaysPerMember;
+    readonly week: SceneWeek;
+  }): Promise<CaptainOutcome>;
+  /**
+   * Each squad's time zone settings, the earliest week first, a week's later settings after its
+   * earlier ones; a squad with none is left out.
+   */
+  timeZones(squads: readonly SquadId[]): Promise<ReadonlyMap<SquadId, TimeZoneSetting[]>>;
+  /**
+   * Sets the squad's time zone from `week` on, if `actor` is its captain; `unchanged` when that
+   * week's zone is that already. The database refuses a zone it doesn't know.
+   */
+  setTimeZone(change: {
+    readonly squad: SquadId;
+    readonly actor: MemberId;
+    readonly timeZone: string;
     readonly week: SceneWeek;
   }): Promise<CaptainOutcome>;
   /** The higher goals suggested to the squad's captains, the earliest week first. */

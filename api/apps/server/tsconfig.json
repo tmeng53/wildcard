@@ -50,6 +50,9 @@
       "path": "../../packages/sport-ids"
     },
     {
+      "path": "../../packages/time-zones"
+    },
+    {
       "path": "../../packages/sports"
     },
     {

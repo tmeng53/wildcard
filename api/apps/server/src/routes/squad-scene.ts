@@ -11,6 +11,7 @@ import {
 } from '@wildcard/squads';
 import type { Scenes } from '@wildcard/scenes';
 import { MemberId as NoticeMember, SquadId as NoticeSquad, type Notices } from '@wildcard/notices';
+import { NEW_YORK } from '@wildcard/time-zones';
 import { latestAwardedWeek } from '@wildcard/weekly-awards';
 
 import { bodyVersion } from '../body-version.js';
@@ -166,11 +167,11 @@ function wire(scene: SquadScene, shown: string = scene.scene) {
 }
 
 /**
- * The week a squad picks its scene for at `moment`: the week after the latest one awarded.
- * The crown winner of a week picks the next.
+ * The week a squad picks its scene for at `moment`: the week after the latest one awarded on
+ * the squad's clock (小队时区). The crown winner of a week picks the next.
  */
-export function sceneWeekAt(moment: Date): SceneWeek {
-  const awarded = latestAwardedWeek(moment);
+export function sceneWeekAt(moment: Date, zone: string): SceneWeek {
+  const awarded = latestAwardedWeek(moment, zone);
   return SceneWeek.parse(new Date(Date.parse(awarded) + WEEK).toISOString().slice(0, 10));
 }
 
@@ -198,7 +199,10 @@ export function squadScene(deps: {
   const scenes = createSquadScenes({
     squads: deps.squads,
     clock: deps.clock,
-    sceneWeekAt,
+    sceneWeekAt: async (moment, squad) => {
+      const zone = (await deps.squads.timeZonesAt([squad], moment)).get(squad) ?? NEW_YORK;
+      return sceneWeekAt(moment, zone);
+    },
     openScenes: (week) => deps.scenes.openOn(week),
     crownHolders: async ({ squad, week, viewer }) => {
       const summary = await deps.checkIns.weekSummary({
