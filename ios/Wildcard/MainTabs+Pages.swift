@@ -19,18 +19,22 @@ extension MainTabs {
         }
     }
 
-    static let tabs: [TabBarItem<Tab>] = [
-        TabBarItem(
-            id: .today, title: Text(copy: "小队", bundle: .main), systemImage: "sun.max",
-            accessibilityIdentifier: "tab.today"),
-        TabBarItem(
-            id: .feed, title: Text(copy: "动态", bundle: .main), systemImage: "bubble.left.and.bubble.right",
-            accessibilityIdentifier: "tab.feed"
-        ),
-        TabBarItem(
-            id: .profile, title: Text(copy: "我", bundle: .main), systemImage: "person.crop.circle",
-            accessibilityIdentifier: "tab.me"),
-    ]
+    /// Made on each read, since a `Text(copy:)` holds its words in the language the app spoke
+    /// when it was made: a stored list would keep the tab bar in the launch language.
+    static var tabs: [TabBarItem<Tab>] {
+        [
+            TabBarItem(
+                id: .today, title: Text(copy: "小队", bundle: .main), systemImage: "sun.max",
+                accessibilityIdentifier: "tab.today"),
+            TabBarItem(
+                id: .feed, title: Text(copy: "动态", bundle: .main), systemImage: "bubble.left.and.bubble.right",
+                accessibilityIdentifier: "tab.feed"
+            ),
+            TabBarItem(
+                id: .profile, title: Text(copy: "我", bundle: .main), systemImage: "person.crop.circle",
+                accessibilityIdentifier: "tab.me"),
+        ]
+    }
 }
 
 /// The squad's newest 战报, once there is one, opening it.
