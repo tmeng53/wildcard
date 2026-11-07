@@ -18,6 +18,8 @@ public final class HealthConnection {
     /// The workouts put away from the home's card on this phone; the card offers the next one.
     public private(set) var putAway: Set<WorkoutSource>
 
+    /// `putAway` in the order put away, oldest first.
+    @ObservationIgnored private var stored: [WorkoutSource]
     @ObservationIgnored private let library: any HealthLibrary
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let now: () -> Date
@@ -29,17 +31,19 @@ public final class HealthConnection {
         sharing =
             defaults.data(forKey: Self.sharingKey).flatMap { try? JSONDecoder().decode(HealthSharing.self, from: $0) }
             .flatMap { $0.version == 1 ? $0 : nil } ?? HealthSharing()
-        putAway = Set(
+        stored =
             defaults.data(forKey: Self.putAwayKey).flatMap { try? JSONDecoder().decode(PutAway.self, from: $0) }
-                .flatMap { $0.version == 1 ? $0.workouts : nil } ?? [])
+            .flatMap { $0.version == 1 ? $0.workouts : nil } ?? []
+        putAway = Set(stored)
     }
 
     /// Takes `workout` off the home's card for good on this phone; it can still be posted from 打卡.
     public func putAway(_ workout: WorkoutSource) {
-        // Only the last few matter: a card offers today's workouts alone.
-        let kept = Array(putAway.filter { source in recent.contains { $0.id == source } }) + [workout]
-        putAway = Set(kept)
-        if let data = try? JSONEncoder().encode(PutAway(version: 1, workouts: kept)) {
+        guard !putAway.contains(workout) else { return }
+        // A card offers today's workouts alone, so the newest few are plenty to keep.
+        stored = Array((stored + [workout]).suffix(Self.putAwayLimit))
+        putAway = Set(stored)
+        if let data = try? JSONEncoder().encode(PutAway(version: 1, workouts: stored)) {
             defaults.set(data, forKey: Self.putAwayKey)
         }
     }
@@ -75,6 +79,7 @@ public final class HealthConnection {
 
     private static let sharingKey = "health.sharing"
     private static let putAwayKey = "health.putAway"
+    private static let putAwayLimit = 50
 
     /// What `putAway` keeps on the phone.
     private struct PutAway: Codable {
