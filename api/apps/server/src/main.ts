@@ -435,6 +435,13 @@ const coachWakes =
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
+        // The coach may draw humour from the same meme library as the 请假条 drafts and awards.
+        memes: async () =>
+          (await memes.listInUse()).map(({ phrase, meaning, background }) => ({
+            phrase,
+            meaning,
+            background,
+          })),
         // OpenAI fetches a photo the coach asks to look at from a URL that lasts 10 minutes.
         photoUrls: async (paths) => {
           const parsed = paths.map((path) => PhotoPath.parse(path));
