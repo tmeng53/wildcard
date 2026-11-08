@@ -690,3 +690,31 @@ describe('a squad’s time zone', () => {
     );
   });
 });
+
+describe('the squad’s language', () => {
+  it('lets only the captain pick it, counting at once, logged with who set it', async () => {
+    const [ann, bo] = [await newMember(), await newMember()];
+    const squad = await newSquad(ann);
+    await squads.join({ inviteCode: squad.inviteCode, member: bo });
+    expect(await squads.languagesOf([squad.id])).toStrictEqual(new Map());
+    await expect(
+      squads.setLanguage({ squad: squad.id, member: bo, language: 'en' }),
+    ).rejects.toMatchObject({ reason: 'NOT_SQUAD_CAPTAIN' });
+    await squads.setLanguage({ squad: squad.id, member: ann, language: 'zh-Hant' });
+    // The same again changes nothing.
+    await squads.setLanguage({ squad: squad.id, member: ann, language: 'zh-Hant' });
+    await squads.setLanguage({ squad: squad.id, member: ann, language: 'en' });
+    expect(await squads.languagesOf([squad.id])).toStrictEqual(new Map([[squad.id, 'en']]));
+    const rows = await sql<{ language: string; set_by: string }>`
+      select language, set_by from squad_languages where squad_id = ${squad.id} order by id`.execute(
+      db,
+    );
+    expect(rows.rows).toStrictEqual([
+      { language: 'zh-Hant', set_by: ann },
+      { language: 'en', set_by: ann },
+    ]);
+    await expect(
+      sql`update squad_languages set language = 'zh-Hans' where squad_id = ${squad.id}`.execute(db),
+    ).rejects.toMatchObject({ code: '42501' });
+  });
+});

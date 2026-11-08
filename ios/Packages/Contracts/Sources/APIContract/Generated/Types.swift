@@ -334,6 +334,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
     func setSquadTimeZone(_ input: Operations.SetSquadTimeZone.Input) async throws -> Operations.SetSquadTimeZone.Output
+    /// The squad’s language
+    ///
+    /// For its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/get(getSquadLanguage)`.
+    func getSquadLanguage(_ input: Operations.GetSquadLanguage.Input) async throws -> Operations.GetSquadLanguage.Output
+    /// Set the squad’s language
+    ///
+    /// For the captain. It counts at once, for what the AI writes next. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/put(setSquadLanguage)`.
+    func setSquadLanguage(_ input: Operations.SetSquadLanguage.Input) async throws -> Operations.SetSquadLanguage.Output
     /// Accept or decline the challenge on the caller’s morning note
     ///
     /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
@@ -1197,6 +1211,38 @@ extension APIProtocol {
         body: Operations.SetSquadTimeZone.Input.Body
     ) async throws -> Operations.SetSquadTimeZone.Output {
         try await setSquadTimeZone(Operations.SetSquadTimeZone.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The squad’s language
+    ///
+    /// For its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/get(getSquadLanguage)`.
+    public func getSquadLanguage(
+        path: Operations.GetSquadLanguage.Input.Path,
+        headers: Operations.GetSquadLanguage.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadLanguage.Output {
+        try await getSquadLanguage(Operations.GetSquadLanguage.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Set the squad’s language
+    ///
+    /// For the captain. It counts at once, for what the AI writes next. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/put(setSquadLanguage)`.
+    public func setSquadLanguage(
+        path: Operations.SetSquadLanguage.Input.Path,
+        headers: Operations.SetSquadLanguage.Input.Headers = .init(),
+        body: Operations.SetSquadLanguage.Input.Body
+    ) async throws -> Operations.SetSquadLanguage.Output {
+        try await setSquadLanguage(Operations.SetSquadLanguage.Input(
             path: path,
             headers: headers,
             body: body

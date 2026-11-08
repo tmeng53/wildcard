@@ -164,6 +164,40 @@ final class SquadSettingsUITests: XCTestCase {
         keepScreenshot(named: "69-squad-time-zone-member")
     }
 
+    func testTheCaptainPicksTheSquadsLanguage() {
+        let app = launch()
+        let gear = app.buttons["squad.preferences.open"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 30), "no 小队设置 on 小队's header")
+        gear.tap()
+        let row = app.buttons["squad.language"]
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 小队语言 on the captain's 小队设置")
+        XCTAssertTrue(row.label.contains("简体中文"), "the row doesn't show the squad's language: \(row.label)")
+        let use = app.staticTexts["squad.language.use"]
+        XCTAssertTrue(use.exists, "nothing says what 小队语言 is for")
+        for element in [row, use] {
+            XCTAssertLessThanOrEqual(element.frame.maxX, app.frame.maxX, "小队语言 runs off the screen")
+        }
+        XCTAssertLessThan(use.frame.height, 30, "the line under 小队语言 wraps")
+        settle()
+        keepScreenshot(named: "70-squad-language")
+        row.tap()
+        let english = app.buttons.matching(identifier: "squad.language.en").firstMatch
+        XCTAssertTrue(english.waitForExistence(timeout: 30), "the language menu didn't open")
+        english.tap()
+        waitFor(row, "label CONTAINS 'English'", "the change didn't count at once", timeout: 30)
+        settle()
+        keepScreenshot(named: "71-squad-language-changed")
+
+        app.terminate()
+        let member = launch(extra: ["-squad-seat", "member"])
+        let memberGear = member.buttons["squad.preferences.open"]
+        XCTAssertTrue(memberGear.waitForExistence(timeout: 30), "a member has no 小队设置")
+        memberGear.tap()
+        let read = member.descendants(matching: .any)["squad.language"]
+        XCTAssertTrue(read.waitForExistence(timeout: 30), "a member doesn't see 小队语言")
+        XCTAssertFalse(member.buttons["squad.language"].exists, "a member can change 小队语言")
+    }
+
     /// A zone's name as 小队设置 shows it in Simplified Chinese (北美东部时间).
     private func region(_ identifier: String) -> String {
         TimeZone(identifier: identifier)?.localizedName(for: .generic, locale: Locale(identifier: "zh-Hans"))

@@ -6445,6 +6445,88 @@ extension Components {
                 case timeZone
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SquadLanguage`.
+        public struct SquadLanguage: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/version`.
+            public var version: Components.Schemas.SquadLanguage.VersionPayload
+            /// The squad’s language now: the captain’s pick, else the captain’s app language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/language`.
+            @frozen public enum LanguagePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case zhHans = "zh-Hans"
+                case zhHant = "zh-Hant"
+                case en = "en"
+            }
+            /// The squad’s language now: the captain’s pick, else the captain’s app language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/language`.
+            public var language: Components.Schemas.SquadLanguage.LanguagePayload
+            /// True for the captain, the only one who sets it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/canChange`.
+            public var canChange: Swift.Bool
+            /// Creates a new `SquadLanguage`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - language: The squad’s language now: the captain’s pick, else the captain’s app language.
+            ///   - canChange: True for the captain, the only one who sets it.
+            public init(
+                version: Components.Schemas.SquadLanguage.VersionPayload,
+                language: Components.Schemas.SquadLanguage.LanguagePayload,
+                canChange: Swift.Bool
+            ) {
+                self.version = version
+                self.language = language
+                self.canChange = canChange
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case language
+                case canChange
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadLanguageChange`.
+        public struct SquadLanguageChange: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/version`.
+            public var version: Components.Schemas.SquadLanguageChange.VersionPayload
+            /// The squad’s language (小队语言): what the AI writes everything the whole squad reads in, its coach’s 战术板 and name and the weekly awards. What one member reads keeps their own app’s language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/language`.
+            @frozen public enum LanguagePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case zhHans = "zh-Hans"
+                case zhHant = "zh-Hant"
+                case en = "en"
+            }
+            /// The squad’s language (小队语言): what the AI writes everything the whole squad reads in, its coach’s 战术板 and name and the weekly awards. What one member reads keeps their own app’s language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/language`.
+            public var language: Components.Schemas.SquadLanguageChange.LanguagePayload
+            /// Creates a new `SquadLanguageChange`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - language: The squad’s language (小队语言): what the AI writes everything the whole squad reads in, its coach’s 战术板 and name and the weekly awards. What one member reads keeps their own app’s language.
+            public init(
+                version: Components.Schemas.SquadLanguageChange.VersionPayload,
+                language: Components.Schemas.SquadLanguageChange.LanguagePayload
+            ) {
+                self.version = version
+                self.language = language
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case language
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CoachChallengeAnswered`.
         public struct CoachChallengeAnswered: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CoachChallengeAnswered/version`.

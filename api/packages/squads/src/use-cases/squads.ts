@@ -19,9 +19,11 @@ import {
 } from './squads/preview-invite.js';
 import type { InviteCode } from '../domain/invite-code.js';
 import { handCaptaincy, removeMember, renameSquad } from './squads/settings.js';
+import { setSquadLanguage } from './squads/language.js';
 import { setSquadTimeZone, squadTimeZone, type SquadTimeZone } from './squads/time-zone.js';
 import { setWeeklyGoal, weeklyGoal, type WeeklyGoal } from './squads/weekly-goal.js';
 import { zoneAt, zoneFor } from '../domain/time-zone.js';
+import type { ReaderLanguage } from '@wildcard/language-model';
 import type { TimeZone } from '@wildcard/time-zones';
 import type { GoalSuggestion } from '../domain/goal-suggestion.js';
 import { goalFor, type DaysPerMember, type WeeklyGoalSetting } from '../domain/weekly-goal.js';
@@ -133,6 +135,17 @@ export interface Squads {
   timeZonesFor(squads: readonly SquadId[], week: string): Promise<ReadonlyMap<SquadId, TimeZone>>;
   /** Each squad's time zone at a moment, as `timeZonesFor` for the week the squad is in then. */
   timeZonesAt(squads: readonly SquadId[], moment: Date): Promise<ReadonlyMap<SquadId, TimeZone>>;
+  /** Sets the squad's language from now on, for its captain. */
+  setLanguage(input: {
+    squad: SquadId;
+    member: MemberId;
+    language: ReaderLanguage;
+  }): Promise<ReaderLanguage>;
+  /**
+   * Each squad's language (小队语言) as its captain picked it; a squad that never picked one is left
+   * out, and reads its captain's app language.
+   */
+  languagesOf(squads: readonly SquadId[]): Promise<ReadonlyMap<SquadId, ReaderLanguage>>;
   /** The squad's captain now; `undefined` once everyone left, or for no such squad. */
   captainOf(squad: SquadId): Promise<MemberId | undefined>;
   /** The higher goals suggested to the squad's captains, the earliest week first. */
@@ -204,6 +217,8 @@ export function createSquads(deps: {
       const settings = await deps.store.timeZones(squads);
       return new Map(squads.map((squad) => [squad, zoneAt(settings.get(squad) ?? [], moment)]));
     },
+    setLanguage: (input) => setSquadLanguage(deps, input),
+    languagesOf: (squads) => deps.store.languages(squads),
     captainOf: async (squad) => (await deps.store.find(squad))?.captain ?? undefined,
     goalSuggestions: (squad) => deps.store.goalSuggestions(squad),
     suggestGoal: (squad, suggestion) => deps.store.suggestGoal(squad, suggestion),

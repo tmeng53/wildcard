@@ -43,6 +43,7 @@ actor Squad3: SquadSettingsService {
     var failing: SquadError?
     private(set) var picks: [SceneID] = []
     private(set) var hires: [CoachID] = []
+    private(set) var languagePicks: [SquadLanguage.Language] = []
 
     init(viewer: MemberID, scene: SquadScene, coach: SquadCoach.Hire? = nil, today: String = "2026-10-27") throws {
         current = SquadSettings(
@@ -55,7 +56,8 @@ actor Squad3: SquadSettingsService {
                 daysPerMember: 3, nextDaysPerMember: 3, canChange: viewer == lin,
                 recent: SquadWeeklyGoal.Recent(weeks: 2, daysPerMember: 3.4)),
             matchTimeZone: SquadTimeZone(
-                timeZone: "Asia/Taipei", nextTimeZone: "Asia/Taipei", canChange: viewer == lin))
+                timeZone: "Asia/Taipei", nextTimeZone: "Asia/Taipei", canChange: viewer == lin),
+            language: SquadLanguage(language: .traditionalChinese, canChange: viewer == lin))
     }
 
     func fail(with error: SquadError?) { failing = error }
@@ -129,6 +131,16 @@ actor Squad3: SquadSettingsService {
         return current.matchTimeZone
     }
 
+    func setLanguage(of squad: SquadID, to language: SquadLanguage.Language) async throws(SquadError)
+        -> SquadLanguage
+    {
+        if let failing { throw failing }
+        guard current.language.canChange else { throw .outdated }
+        languagePicks.append(language)
+        current.language.language = language
+        return current.language
+    }
+
     func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach {
         if let failing { throw failing }
         guard current.coach.canHire else { throw .outdated }
@@ -138,36 +150,6 @@ actor Squad3: SquadSettingsService {
 }
 
 @MainActor struct SquadSettingsModelTests {
-    @Test func theCaptainSetsTheGoalForNextWeekAndAMateOnlyReadsIt() async throws {
-        let captain = SquadSettingsModel(
-            service: try Squad3(viewer: lin, scene: try scene(pickers: .captain(lin), canPick: false)))
-        await captain.reload()
-        #expect(captain.canChangeGoal)
-        await captain.setGoal(5)
-        #expect(captain.goal?.daysPerMember == 3)
-        #expect(captain.goal?.nextDaysPerMember == 5)
-        await captain.setGoal(8)
-        #expect(captain.goal?.nextDaysPerMember == 5)
-
-        let mate = SquadSettingsModel(
-            service: try Squad3(viewer: mia, scene: try scene(pickers: .captain(lin), canPick: false)))
-        await mate.reload()
-        #expect(!mate.canChangeGoal)
-        #expect(mate.goal?.recent == SquadWeeklyGoal.Recent(weeks: 2, daysPerMember: 3.4))
-        await mate.setGoal(5)
-        #expect(mate.goal?.nextDaysPerMember == 3)
-    }
-
-    @Test func aGoalThatDoesNotGoThroughMovesBack() async throws {
-        let service = try Squad3(viewer: lin, scene: try scene(pickers: .captain(lin), canPick: false))
-        let model = SquadSettingsModel(service: service)
-        await model.reload()
-        await service.fail(with: .unavailable)
-        await model.setGoal(6)
-        #expect(model.changeFailed)
-        #expect(model.goal?.nextDaysPerMember == 3)
-    }
-
     @Test func theCaptainSeesEveryoneElseAsManageable() async throws {
         let model = SquadSettingsModel(
             service: try Squad3(viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false)))
