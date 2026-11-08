@@ -96,14 +96,6 @@ public struct CharacterCanvas: View {
                 let shapes = drawing.shapes(index, placement)
                 var part = context
                 part.transform = CGAffineTransform(placement.transform).concatenating(fit)
-                if let clip = placement.clip, let first = clip.first {
-                    part.clip(
-                        to: Path { path in
-                            path.move(to: CGPoint(x: first.x, y: first.y))
-                            for point in clip.dropFirst() { path.addLine(to: CGPoint(x: point.x, y: point.y)) }
-                            path.closeSubpath()
-                        })
-                }
                 guard placement.opacity < 1 else {
                     part.draw(shapes)
                     continue

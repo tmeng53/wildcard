@@ -129,9 +129,10 @@
     return [c, s, -s, c, cx - c * cx + s * cy, cy - s * cx - c * cy];
   };
 
-  // A part that draws only some of an arm (its `reach`, `outline`) shows only while the arm's
-  // `front` is 1; every other part, the whole arm behind the body too, always shows (Figure.depth).
-  const depth = (part, q) => (part.reach && !(q.front >= 0.5) ? 0 : 1);
+  // An arm's front copy (the part a twin names) shows only while its `front` is 1; every other part,
+  // the copy behind the body too, always shows (Figure.depth). The head covers both.
+  const FRONT = new Set(PARTS.filter((part) => part.twin).map((part) => part.twin));
+  const depth = (part, q) => (FRONT.has(part.id) && !(q.front >= 0.5) ? 0 : 1);
 
   function layout(poses) {
     const matrices = new Array(PARTS.length);
@@ -309,49 +310,9 @@
       });
   }
 
-  // Where a part that draws only some of an arm draws it, bent by `deg` (AvatarDomain's
-  // Bend.outline): the art past a line across the arm (just above the elbow for the forearm, where
-  // the bend ends for the hand), bent as the art is, as polygon points.
-  function outline(part, deg) {
-    const [sx, sy] = part.pivot;
-    const [ex, ey] = part.elbow.at;
-    const [ax, ay] = [part.elbow.hand[0] - sx, part.elbow.hand[1] - sy];
-    const length = Math.hypot(ax, ay);
-    const [ux, uy] = [ax / length, ay / length];
-    const elbow = ((ex - sx) * ux + (ey - sy) * uy) / length;
-    const line = elbow + (part.reach === 'forearm' ? -0.15 : 0.25);
-    const [near, far, side] = [line * length, 1.4 * length, 0.45 * length];
-    const turn = (x, y) => {
-      const along = ((x - sx) * ux + (y - sy) * uy) / length;
-      const f = Math.max(0, Math.min(1, (along - elbow + 0.15) / 0.4));
-      const r = (deg * f * f * (3 - 2 * f) * Math.PI) / 180;
-      const [c, s] = [Math.cos(r), Math.sin(r)];
-      return [ex + c * (x - ex) - s * (y - ey), ey + s * (x - ex) + c * (y - ey)];
-    };
-    const corners = [
-      [near, -side],
-      [far, -side],
-      [far, side],
-      [near, side],
-    ];
-    const points = [];
-    corners.forEach(([a, b], k) => {
-      const [c, d] = corners[(k + 1) % 4];
-      for (let step = 0; step < 16; step++) {
-        const [along, across] = [a + ((c - a) * step) / 16, b + ((d - b) * step) / 16];
-        const [x, y] = turn(sx + ux * along - uy * across, sy + uy * along + ux * across);
-        points.push(`${x.toFixed(2)},${y.toFixed(2)}`);
-      }
-    });
-    return points.join(' ');
-  }
-
-  // Each arm clip's id, unique on the page.
-  let clips = 0;
-
   // SVG markup of one cast member in a pose.
   function figure(member, poses) {
-    // A twin (an arm drawn again) moves as its twin does.
+    // A twin (an arm drawn again behind the body) moves as its twin does.
     const twinned = poses.map((q, i) => (PARTS[i].twin ? poses[INDEX[PARTS[i].twin]] : q));
     const posed = leveled(twinned, member.level);
     const { matrices, opacities } = layout(posed);
@@ -361,14 +322,8 @@
         part.elbow && posed[i].bend && member.art[i]
           ? bent(member.art[i], part, posed[i].bend)
           : member.art[i];
-      if (!art || opacities[i] <= 0) return;
-      let clip = '';
-      if (part.reach && part.elbow) {
-        const id = `wca-arm-${++clips}`;
-        svg += `<clipPath id="${id}"><polygon points="${outline(part, posed[i].bend || 0)}"/></clipPath>`;
-        clip = ` clip-path="url(#${id})"`;
-      }
-      svg += `<g transform="matrix(${format(matrices[i])})" opacity="${opacities[i].toFixed(3)}"${clip}>${art}</g>`;
+      if (art && opacities[i] > 0)
+        svg += `<g transform="matrix(${format(matrices[i])})" opacity="${opacities[i].toFixed(3)}">${art}</g>`;
     });
     return svg;
   }

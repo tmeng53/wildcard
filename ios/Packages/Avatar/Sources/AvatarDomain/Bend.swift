@@ -28,40 +28,6 @@ public struct Bend: Hashable, Sendable {
             .then(.translation(x: elbow.point.x, y: elbow.point.y))
     }
 
-    /// Where a part that draws only some of the arm draws it with this bend, as a polygon in
-    /// the arm's own coordinates: the art past a line across the arm (just above the elbow for
-    /// the forearm, where the bend ends for the hand), bent as the art is, so a folded forearm
-    /// stays inside it. The shoulder and upper arm before the line never are.
-    public func outline(_ reach: Rig.Reach) -> [Point] {
-        let (axisX, axisY) = (elbow.hand.x - shoulder.x, elbow.hand.y - shoulder.y)
-        let length = (axisX * axisX + axisY * axisY).squareRoot()
-        guard length > 0 else { return [] }
-        let (unitX, unitY) = (axisX / length, axisY / length)
-        let elbowAlong = ((elbow.point.x - shoulder.x) * unitX + (elbow.point.y - shoulder.y) * unitY) / length
-        // Along the arm from the line to past the hand, and as wide as the widest cuff or paw.
-        let line = elbowAlong + (reach == .forearm ? Self.span.start : Self.span.end)
-        let (near, far, side) = (line * length, 1.4 * length, 0.45 * length)
-        let spot = { (along: Double, across: Double) in
-            Point(
-                x: shoulder.x + unitX * along - unitY * across, y: shoulder.y + unitY * along + unitX * across)
-        }
-        // Each edge in steps, so the bend curves it as it curves the art.
-        let steps = 16
-        let corners = [(near, -side), (far, -side), (far, side), (near, side)]
-        var outline: [Point] = []
-        for (index, corner) in corners.enumerated() {
-            let next = corners[(index + 1) % corners.count]
-            for step in 0..<steps {
-                let fraction = Double(step) / Double(steps)
-                outline.append(
-                    apply(
-                        to: spot(
-                            corner.0 + (next.0 - corner.0) * fraction, corner.1 + (next.1 - corner.1) * fraction)))
-            }
-        }
-        return outline
-    }
-
     /// A point of the arm's art moved by the bend.
     public func apply(to point: Point) -> Point {
         let turn = degrees * weight(point)

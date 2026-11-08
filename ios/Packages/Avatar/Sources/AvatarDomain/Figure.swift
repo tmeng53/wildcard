@@ -52,8 +52,9 @@ public struct Figure: Hashable, Sendable {
         public let elbow: Rig.Elbow?
         /// The arm this part draws again, as an index into `parts` (`Rig.Part.twin`).
         public internal(set) var twin: Int?
-        /// How much of the arm it draws, and only while the arm is in front (`Rig.Part.reach`).
-        public let reach: Rig.Reach?
+        /// Whether it is an arm's front copy, drawn only while the arm is in front: the part a
+        /// twin names (`Rig.Part.twin`).
+        public internal(set) var front = false
         /// Back to front.
         public internal(set) var art: [Artwork]
         /// The slot each of `art` is worn in, nil for the rig's own art.
@@ -105,7 +106,7 @@ public struct Figure: Hashable, Sendable {
             }
             built.append(
                 Part(
-                    id: part.id, pivot: part.pivot, restOpacity: part.opacity, elbow: part.elbow, reach: part.reach,
+                    id: part.id, pivot: part.pivot, restOpacity: part.opacity, elbow: part.elbow,
                     art: artworks, slots: slots))
         }
         try Self.resolveTwins(&built, rig.parts)
@@ -319,7 +320,6 @@ public struct Figure: Hashable, Sendable {
             carriers[index] = transform
             if let elbow = part.elbow {
                 let bend = Bend(shoulder: part.pivot, elbow: elbow, degrees: move.bend)
-                placements[index].clip = part.reach.map(bend.outline)
                 if move.bend != 0 { (placements[index].bend, carriers[index]) = (bend, bend.forearm.then(transform)) }
             }
         }

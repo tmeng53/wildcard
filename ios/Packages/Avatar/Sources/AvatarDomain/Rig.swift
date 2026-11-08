@@ -88,31 +88,19 @@ public struct Rig: Hashable, Sendable {
         /// to its hand. Nil for a part that never bends.
         public var elbow: Elbow?
         /// The arm this part draws again, as a copy that moves exactly as that arm, which clips
-        /// move, with the same pivot and elbow: whole behind the body, or, with a `reach`, only
-        /// its forearm, as the arm's forearm in front of the body and behind the head.
+        /// move, with the same pivot and elbow, always drawn behind the body. The arm it names is
+        /// its front copy, in front of the body and behind the head, shown only while the arm's
+        /// `front` channel is 1. So the head always covers the arms, and a move picks whether an
+        /// arm is behind or in front of the body.
         public var twin: PartID?
-        /// How much of the arm this part draws, for an arm drawn in more than one place: only
-        /// that much, and only while the arm's `front` channel is 1 (0, the rest, leaves the arm
-        /// whole behind the body). So a move brings the forearm over the chest and the hand over
-        /// the face, while the shoulder and upper sleeve always stay behind, and the forearm
-        /// behind the head, so a raised arm never covers the cheek or chin.
-        public var reach: Reach?
 
         public init(
             id: PartID, parent: PartID? = nil, pivot: Point, opacity: Double = 1, layers: [Layer] = [],
-            elbow: Elbow? = nil, twin: PartID? = nil, reach: Reach? = nil
+            elbow: Elbow? = nil, twin: PartID? = nil
         ) {
             (self.id, self.parent, self.pivot, self.opacity, self.layers) = (id, parent, pivot, opacity, layers)
-            (self.elbow, self.twin, self.reach) = (elbow, twin, reach)
+            (self.elbow, self.twin) = (elbow, twin)
         }
-    }
-
-    /// How much of an arm a part draws, from where along the arm to its hand (`Bend.outline`).
-    public enum Reach: String, Hashable, Sendable, Codable {
-        /// From just above the elbow.
-        case forearm
-        /// From where the forearm stops bending: the cuff and the hand.
-        case hand
     }
 
     /// An arm's elbow and hand, in canvas coordinates. The `bend` channel turns the forearm
@@ -159,7 +147,7 @@ public struct Rig: Hashable, Sendable {
                     id: part.id, parent: part.parent, pivot: part.pivot.point,
                     opacity: part.opacity ?? 1, layers: part.layers ?? [],
                     elbow: part.elbow.map { Elbow(point: $0.point.point, hand: $0.hand.point) },
-                    twin: part.twin, reach: part.reach)
+                    twin: part.twin)
             },
             defaults: Dictionary(uniqueKeysWithValues: (file.defaults ?? [:]).map { (Slot($0.key), $0.value) }),
             skin: try file.skin.map { skin throws(AvatarError) in
@@ -185,7 +173,7 @@ private struct RigFile: Decodable {
         "skin": .object(["fill": .value, "stroke": .value]),
         "parts": .array(
             .object([
-                "id": .value, "parent": .value, "pivot": .value, "opacity": .value, "twin": .value, "reach": .value,
+                "id": .value, "parent": .value, "pivot": .value, "opacity": .value, "twin": .value,
                 "layers": .array(.object(["slot": .value, "art": .value, "hand": .value])),
                 "elbow": .object(["at": .value, "hand": .value]),
             ])),
@@ -209,7 +197,6 @@ private struct RigFile: Decodable {
         let layers: [Rig.Layer]?
         let elbow: ElbowFile?
         let twin: PartID?
-        let reach: Rig.Reach?
     }
 }
 

@@ -55,14 +55,13 @@ for (const slot of list(join(art, 'art')).filter((s) => s !== 'base')) {
   }
 }
 
-const rigParts = rig.parts.map(({ id, parent, pivot, opacity, elbow, twin, reach }) => ({
+const rigParts = rig.parts.map(({ id, parent, pivot, opacity, elbow, twin }) => ({
   id,
   parent: parent ?? null,
   pivot,
   opacity: opacity ?? 1,
   ...(elbow ? { elbow } : {}),
   ...(twin ? { twin } : {}),
-  ...(reach ? { reach } : {}),
 }));
 const idles = (personas) =>
   Object.fromEntries(personas.map((p) => [p, json(join(art, 'clips', p, 'idle.json'))]));

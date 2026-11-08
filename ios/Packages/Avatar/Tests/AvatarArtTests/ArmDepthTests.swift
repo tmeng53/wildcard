@@ -3,12 +3,11 @@ import AvatarDomain
 import Foundation
 import Testing
 
-/// Each arm is drawn in three places: whole (`armLBack`) before the torso, its forearm
-/// (`armLFore`) after the torso and before the head, and its hand (`armL`, which carries the prop)
-/// after the head. The forearm and hand show only while the move keys the arm in front (its
-/// `front` keys, held like Spine's draw-order keys), never worked out from the angle, so an arm at
-/// rest is behind (its sleeve root under the top), a forearm across the chest is over the top, a
-/// hand at the face is over the face, and the shoulder and sleeve stay behind the head and chin.
+/// Each arm is drawn in two places: whole behind the torso (`armLBack`), and whole in front of the
+/// torso and what is worn over it but behind the head (`armL`). The front copy shows only while
+/// the move keys the arm in front (its `front` keys, held like Spine's draw-order keys), never
+/// worked out from the angle. The head always covers both, so no arm or sleeve ever crosses the
+/// face, and an arm at rest is behind, its sleeve root under the top.
 @Test func anArmIsBehindTheBodyUnlessTheMoveBringsItInFront() throws {
     let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "top": "warmup-tee"]))
     func shown(_ part: PartID, front: Double, rotation: Double) throws -> Double {
@@ -20,81 +19,30 @@ import Testing
         return figure.layout(pose)[try figure.index(part)].opacity
     }
     for side in ["L", "R"] {
-        let (hand, fore, back) = (PartID("arm\(side)"), PartID("arm\(side)Fore"), PartID("arm\(side)Back"))
+        let (arm, back) = (PartID("arm\(side)"), PartID("arm\(side)Back"))
         #expect(try figure.index(back) < figure.index("torso"))
-        #expect(try figure.index(fore) > figure.index("torso"))
-        #expect(try figure.index(fore) < figure.index("head"))
-        #expect(try figure.index(hand) > figure.index("head"))
-        #expect(try figure.part(back).art == figure.part(hand).art)
-        #expect(try figure.part(fore).art == figure.part(hand).art)
-        #expect(try figure.part(back).reach == nil)
-        #expect(try figure.part(fore).reach == .forearm)
-        #expect(try figure.part(hand).reach == .hand)
+        #expect(try figure.index(arm) > figure.index("acc"))
+        #expect(try figure.index(arm) < figure.index("head"))
+        #expect(try figure.part(back).art == figure.part(arm).art)
         // Whatever the angle, only the key decides.
         for rotation in [0.0, -45, 45, 160] {
             for front in [0.0, 1] {
                 #expect(try shown(back, front: front, rotation: rotation) == 1)
-                #expect(try shown(fore, front: front, rotation: rotation) == front)
-                #expect(try shown(hand, front: front, rotation: rotation) == front)
+                #expect(try shown(arm, front: front, rotation: rotation) == front)
             }
         }
     }
 }
 
-/// The arm's copies move exactly as the arm clips move, bent elbow included.
-@Test func theArmsCopiesMoveAsTheArm() throws {
+/// The copy behind the body moves exactly as the arm clips move, bent elbow included.
+@Test func theArmsCopyMovesAsTheArm() throws {
     let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach"]))
     var pose = figure.restPose
     pose.parts[try figure.index("armL")].rotation = 70
     pose.parts[try figure.index("armL")].bend = 30
     let placed = figure.layout(pose)
-    for copy: PartID in ["armLBack", "armLFore"] {
-        #expect(try placed[figure.index(copy)].transform == placed[figure.index("armL")].transform)
-        #expect(try placed[figure.index(copy)].bend == placed[figure.index("armL")].bend)
-    }
-}
-
-/// The forearm draws only past a line just above the elbow, the hand only past where the bend
-/// ends, and the lines bend with the arm: the shoulder and upper sleeve stay out, and the forearm
-/// and hand stay in however far the elbow folds.
-@Test func eachCopyDrawsOnlyItsReach() throws {
-    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach"]))
-    let arm = try figure.part("armL")
-    let elbow = try #require(arm.elbow)
-    func inside(_ part: PartID, _ point: Point, bend: Double) throws -> Bool {
-        var pose = figure.restPose
-        pose.parts[try figure.index("armL")].bend = bend
-        let clip = try #require(figure.layout(pose)[figure.index(part)].clip)
-        return winding(clip, point) != 0
-    }
-    let shoulder = arm.pivot
-    let upper = Point(x: shoulder.x * 0.8 + elbow.point.x * 0.2, y: shoulder.y * 0.8 + elbow.point.y * 0.2)
-    // The furthest a move folds an arm (gloves) brings the hand back to the shoulder.
-    for bend in [0.0, 60, -110, 150] {
-        let moved = Bend(shoulder: shoulder, elbow: elbow, degrees: bend)
-        for part: PartID in ["armLFore", "armL"] {
-            if abs(bend) < 150 {
-                #expect(try !inside(part, shoulder, bend: bend))
-                #expect(try !inside(part, upper, bend: bend))
-            }
-            #expect(try inside(part, moved.apply(to: elbow.hand), bend: bend))
-        }
-        #expect(try inside("armLFore", elbow.point, bend: bend))
-        #expect(try !inside("armL", elbow.point, bend: bend))
-    }
-    #expect(try figure.layout(figure.restPose)[figure.index("armLBack")].clip == nil)
-}
-
-/// How many times a polygon winds around a point, 0 outside: clips fill by the nonzero rule.
-private func winding(_ polygon: [Point], _ point: Point) -> Int {
-    var turns = 0
-    for (index, from) in polygon.enumerated() {
-        let onto = polygon[(index + 1) % polygon.count]
-        let side = (onto.x - from.x) * (point.y - from.y) - (point.x - from.x) * (onto.y - from.y)
-        if from.y <= point.y, onto.y > point.y, side > 0 { turns += 1 }
-        if from.y > point.y, onto.y <= point.y, side < 0 { turns -= 1 }
-    }
-    return turns
+    #expect(try placed[figure.index("armLBack")].transform == placed[figure.index("armL")].transform)
+    #expect(try placed[figure.index("armLBack")].bend == placed[figure.index("armL")].bend)
 }
 
 /// What an arm holds stays in its hand whether the arm is drawn in front or behind.
@@ -127,4 +75,49 @@ private func winding(_ polygon: [Point], _ point: Point) -> Int {
         }
     }
     #expect(keyed > 80)
+}
+
+/// The head covers the arms, so a hand on the face would vanish behind it: no clip rests a hand
+/// deep inside a big (bear's) face, where it neither shows nor reads. A hand by the face sits at
+/// its edge, half out.
+@Test func noHandRestsOnTheFace() throws {
+    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "bear"]))
+    // The bear's face, in its head's own coordinates (`art/body/bear/head.svg`).
+    let (center, radii) = (Point(x: 120, y: 147.6), (x: 79.2, y: 69.6))
+    let root = URL(filePath: #filePath).deletingLastPathComponent()
+        .appending(path: "../../Sources/AvatarArt/Placeholder")
+    let files = try #require(FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil))
+    var checked = 0
+    for case let url as URL in files where url.pathExtension == "json" {
+        let name = url.path().replacing(root.path(), with: "")
+        guard ["/moves/", "/clips/", "/accents/"].contains(where: url.path().contains),
+            let clip = try? Clip.decode(Data(contentsOf: url))
+        else { continue }
+        let bound = try figure.bind(clip)
+        checked += 1
+        for step in 0...100 {
+            let pose = figure.pose(bound, at: clip.duration * Double(step) / 100)
+            let placed = figure.layout(pose)
+            let head = placed[try figure.index("head")].transform
+            for (arm, held): (PartID, PartID) in [("armL", "propL"), ("armR", "propR")]
+            where pose.parts[try figure.index(arm)].opacity > 0.5 {
+                let hand = placed[try figure.index(held)].transform.apply(to: try figure.part(held).pivot)
+                let local = try #require(inverse(head)).apply(to: hand)
+                let reach = ((local.x - center.x) / radii.x, (local.y - center.y) / radii.y)
+                let inside = (reach.0 * reach.0 + reach.1 * reach.1).squareRoot()
+                #expect(inside >= 0.85, "\(name) rests \(arm)'s hand on the face at step \(step)")
+            }
+        }
+    }
+    #expect(checked > 100)
+}
+
+/// The transform that undoes `transform`, nil when it squashes the plane flat.
+private func inverse(_ transform: Transform) -> Transform? {
+    let det = transform.a * transform.d - transform.b * transform.c
+    guard det != 0 else { return nil }
+    return Transform(
+        a: transform.d / det, b: -transform.b / det, c: -transform.c / det, d: transform.a / det,
+        tx: (transform.c * transform.ty - transform.d * transform.tx) / det,
+        ty: (transform.b * transform.tx - transform.a * transform.ty) / det)
 }

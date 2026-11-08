@@ -4,9 +4,8 @@ import Foundation
 /// added to the rest pose; scales and opacity are factors. Bend is in degrees, clockwise,
 /// at an arm's elbow (`Rig.Elbow`): only a part with one bends.
 public enum Channel: String, Hashable, Sendable, Codable, CaseIterable {
-    // `front` is 1 while an arm shows its forearm over the body and its hand over the face, and 0
-    // (its rest) while it is all behind the body (`Rig.Part.reach`), as an animator keys it; held,
-    // never eased.
+    // `front` is 1 while an arm is in front of the body (still under the head), and 0 (its rest)
+    // while it is behind (`Rig.Part.twin`), as an animator keys it; held, never eased.
     // swiftlint:disable:next identifier_name - x and y are the clip files' own channel names.
     case rotation, x, y, scaleX, scaleY, opacity, bend, front
 

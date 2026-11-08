@@ -1,7 +1,7 @@
 import Foundation
 
 extension Figure {
-    /// Finds each part's twin, and checks that a part drawing only some of an arm is an arm.
+    /// Finds each part's twin, and marks the part it names as the one drawn in front.
     static func resolveTwins(_ built: inout [Part], _ parts: [Rig.Part]) throws(AvatarError) {
         for (index, part) in parts.enumerated() {
             if let twin = part.twin {
@@ -11,19 +11,16 @@ extension Figure {
                     throw .malformedJSON(".parts: \(part.id) twins \(twin), which is no part with the same parent")
                 }
                 built[index].twin = found
-            }
-            if part.reach != nil, part.elbow == nil {
-                throw .malformedJSON(".parts: \(part.id) has a reach but no elbow")
+                built[found].front = true
             }
         }
     }
 
-    /// 1 where a part shows at its depth, 0 where it doesn't: a part that draws only some of
-    /// an arm (`Rig.Part.reach`) shows only while the arm's `front` channel is 1; every other
-    /// part, the whole arm behind the body too, always shows.
+    /// 1 where a part shows at its depth, 0 where it doesn't: an arm's front copy (the part a
+    /// twin names) shows only while its `front` channel is 1; every other part, the copy behind
+    /// the body too, always shows.
     func depth(_ index: Int, _ pose: Pose) -> Double {
-        let part = parts[index]
-        guard part.reach != nil else { return 1 }
-        return pose.parts[part.twin ?? index].front < 0.5 ? 0 : 1
+        guard parts[index].front else { return 1 }
+        return pose.parts[index].front < 0.5 ? 0 : 1
     }
 }

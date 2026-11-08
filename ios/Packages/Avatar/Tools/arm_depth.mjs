@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 // Drafts each move's `front` keys: which of the two copies of each arm shows, the one behind the
-// body (the rest) or the one in front of the head. Like Spine's draw-order keys, the depth is part
+// body (the rest) or the one in front of it, both under the head. Like Spine's draw-order keys, the depth is part
 // of the move and held, never inferred from the angle while it plays; this script only writes a
-// first draft from where each hand goes, which is then checked frame by frame on the contact sheets
-// (`--sheet`) and corrected by hand in the move's JSON.
+// first draft from where each hand goes, which is then checked frame by frame in the web player and
+// corrected by hand in the move's JSON.
 //
-// An arm is in front while its hand is at the face, over or above the head, or over the chest, so a
-// hand there is drawn over them rather than lost behind them; anywhere else (hanging, on the hip,
-// out to the side) it stays behind, so its sleeve root stays under the top and what is worn over it
-// and an arm raised to the side stays behind the cheek.
+// An arm is in front while its hand is over the chest, so the hand is drawn over the top rather than
+// lost behind it; anywhere else (hanging, on the hip, out to the side, raised beside the head) it
+// stays behind, so its sleeve root stays under the top and what is worn over it.
 //
 //   node ios/Packages/Avatar/Tools/arm_depth.mjs [--write] [--only <path fragment>] [--keep]
 //
@@ -28,17 +27,14 @@ const keep = args.includes("--keep");
 const only = args.includes("--only") ? args[args.indexOf("--only") + 1] : null;
 
 const rig = JSON.parse(readFileSync(join(placeholder, "rig.json"), "utf8"));
-const parts = rig.parts.map(
-  ({ id, parent, pivot, opacity, elbow, hides, twin }) => ({
-    id,
-    parent: parent ?? null,
-    pivot,
-    opacity: opacity ?? 1,
-    ...(elbow ? { elbow } : {}),
-    ...(hides ? { hides } : {}),
-    ...(twin ? { twin } : {}),
-  }),
-);
+const parts = rig.parts.map(({ id, parent, pivot, opacity, elbow, twin }) => ({
+  id,
+  parent: parent ?? null,
+  pivot,
+  opacity: opacity ?? 1,
+  ...(elbow ? { elbow } : {}),
+  ...(twin ? { twin } : {}),
+}));
 const window = { WILDCARD_CHARACTERS: { parts } };
 vm.runInNewContext(readFileSync(player, "utf8"), {
   window,
@@ -68,11 +64,8 @@ const multiply = ([a, b, c, d, e, f], [A, B, C, D, E, F]) => [
   b * E + d * F + f,
 ];
 
-// Where a hand behind the body would be lost: behind the widest head (a bichon's, 17 to 223 across
-// and down to its chin fluff at 234, wider than any other coat) and what sits on it, and over the
-// chest, in rest-pose canvas coordinates. The heads are big next to the arms, so an arm raised much
-// past 45 degrees has its hand behind the head and must come in front.
-const HEAD = { left: 17, right: 223, top: 0, bottom: 230 };
+// Where a hand in front of the body crosses it: over the chest, in rest-pose canvas coordinates.
+// The head covers the arms either way, so only the chest decides.
 const CHEST = { left: 86, right: 154, top: 200, bottom: 284 };
 
 function inFront(poses, matrices, arm) {
@@ -90,7 +83,7 @@ function inFront(poses, matrices, arm) {
     const y = (-b * (hand[0] - e) + a * (hand[1] - f)) / det;
     return x > box.left && x < box.right && y > box.top && y < box.bottom;
   };
-  return within("head", HEAD) || within("torso", CHEST);
+  return within("torso", CHEST);
 }
 
 const STEP = 1 / 60;
