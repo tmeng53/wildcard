@@ -107,22 +107,30 @@ public struct Rig: Hashable, Sendable {
     /// way `side` says: -1 or 1) from `start` to `end` degrees, so a raised arm is drawn over what
     /// hangs over it, such as a bichon's chin fluff, which covers the shoulders of hanging arms and
     /// must not cover raised ones. `reverse` shows the part only once the arm has turned that far
-    /// instead. It fades only itself, never what it carries.
+    /// instead. With `side`, `beyond` also counts an arm turned at least that far the other way
+    /// as turned (an arm raised over the head, its hand coming down to the face). It fades only
+    /// itself, never what it carries.
     public struct Hides: Hashable, Sendable {
         public var part: PartID
         public var start: Double
         public var end: Double
         public var side: Double?
         public var reverse: Bool
+        public var beyond: Double?
 
-        public init(part: PartID, start: Double, end: Double, side: Double? = nil, reverse: Bool = false) {
+        public init(
+            part: PartID, start: Double, end: Double, side: Double? = nil, reverse: Bool = false,
+            beyond: Double? = nil
+        ) {
             (self.part, self.start, self.end, self.side, self.reverse) = (part, start, end, side, reverse)
+            self.beyond = beyond
         }
 
         /// How much of the part shows with the arm turned `degrees`: 1 at rest, 0 once raised
         /// (the other way round when `reverse`).
         public func shown(arm degrees: Double) -> Double {
-            let turned = side.map { max(degrees * $0, 0) } ?? abs(degrees)
+            var turned = side.map { max(degrees * $0, 0) } ?? abs(degrees)
+            if let side, let beyond, -degrees * side >= beyond { turned = .infinity }
             let resting: Double
             if end > start {
                 let along = min(max((turned - start) / (end - start), 0), 1)
@@ -179,7 +187,9 @@ public struct Rig: Hashable, Sendable {
                     opacity: part.opacity ?? 1, layers: part.layers ?? [],
                     elbow: part.elbow.map { Elbow(point: $0.point.point, hand: $0.hand.point) },
                     hides: part.hides.map {
-                        Hides(part: $0.part, start: $0.start, end: $0.end, side: $0.side, reverse: $0.reverse ?? false)
+                        Hides(
+                            part: $0.part, start: $0.start, end: $0.end, side: $0.side,
+                            reverse: $0.reverse ?? false, beyond: $0.beyond)
                     }, twin: part.twin)
             },
             defaults: Dictionary(uniqueKeysWithValues: (file.defaults ?? [:]).map { (Slot($0.key), $0.value) }),
@@ -210,7 +220,7 @@ private struct RigFile: Decodable {
                 "layers": .array(.object(["slot": .value, "art": .value, "hand": .value])),
                 "elbow": .object(["at": .value, "hand": .value]),
                 "hides": .object([
-                    "part": .value, "start": .value, "end": .value, "side": .value, "reverse": .value,
+                    "part": .value, "start": .value, "end": .value, "side": .value, "reverse": .value, "beyond": .value,
                 ]),
             ])),
     ])
@@ -242,6 +252,7 @@ private struct RigFile: Decodable {
         let end: Double
         let side: Double?
         let reverse: Bool?
+        let beyond: Double?
     }
 }
 

@@ -130,8 +130,9 @@
 
   // How much of a part that gives way to an arm shows with the arm turned by `degrees`: either
   // way, or only toward `side`; `reverse` shows it only once the arm has turned that far.
-  function gives({ start, end, side, reverse }, degrees) {
-    const turned = side ? Math.max(degrees * side, 0) : Math.abs(degrees);
+  function gives({ start, end, side, reverse, beyond }, degrees) {
+    let turned = side ? Math.max(degrees * side, 0) : Math.abs(degrees);
+    if (side && beyond !== undefined && -degrees * side >= beyond) turned = Infinity;
     let resting;
     if (end <= start) resting = turned < end ? 1 : 0;
     else {

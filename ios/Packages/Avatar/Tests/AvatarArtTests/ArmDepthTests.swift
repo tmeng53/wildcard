@@ -4,7 +4,7 @@ import Testing
 
 /// An arm is drawn behind the body and head while it hangs, swings or rises out to the side, so a
 /// sleeve's root stays behind the top and a raised arm behind the cheek, and in front once it comes
-/// across the chest, so hands at the chest or face stay in front. `armLBack` and `armRBack` are the
+/// across the chest or up over the head, so hands at the chest or face stay in front. `armLBack` and `armRBack` are the
 /// arms again, before the torso, moving as the arms do.
 @Test func anArmIsBehindTheBodyUntilItComesAcrossTheChest() throws {
     let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "top": "warmup-tee"]))
@@ -23,12 +23,17 @@ import Testing
             let rotation = degrees * inward
             #expect(try shown(back, armL: rotation, armR: rotation) == (degrees < 20 ? 1 : 0), "\(back) \(degrees)")
         }
-        for degrees in [0.0, 10, 60, 150] {
+        for degrees in [0.0, 10, 60, 95] {
             let rotation = degrees * -inward
             #expect(try shown(front, armL: rotation, armR: rotation) == 0, "\(front) out \(degrees)")
             #expect(try shown(back, armL: rotation, armR: rotation) == 1, "\(back) out \(degrees)")
         }
         #expect(try shown(front, armL: 44 * inward, armR: 44 * inward) == 1)
+        for degrees in [100.0, 150] {
+            let rotation = degrees * -inward
+            #expect(try shown(front, armL: rotation, armR: rotation) == 1, "\(front) over the head \(degrees)")
+            #expect(try shown(back, armL: rotation, armR: rotation) == 0, "\(back) over the head \(degrees)")
+        }
     }
 }
 
