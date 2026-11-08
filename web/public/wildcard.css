@@ -1,5 +1,5 @@
 /* Wildcard design system v4, web tokens. Shared by every public page (home, privacy, terms and the invite page).
-   Values follow ios/Packages/DesignSystem and /mnt/project-files/design-system/v4-kit/wildcard-v4.css; they change only on Tracy's word.
+   Values follow ios/Packages/DesignSystem and /mnt/project-files/design-system/v4-kit/wildcard-v4.css; they change only on the owner's word.
    Scene colour (--sig) is the only accent and does two jobs: the primary action and the selected state. */
 :root {
   color-scheme: light;

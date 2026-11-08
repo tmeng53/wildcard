@@ -27,6 +27,10 @@ for (const { path, slogan, button, legal } of pages) {
     await expect(page.locator('.btn')).toHaveText(button);
     await expect(page.locator('footer a').nth(0)).toHaveAttribute('href', `${legal}privacy`);
     await expect(page.locator('footer a').nth(1)).toHaveAttribute('href', `${legal}terms`);
+    await expect(page.locator('footer a').nth(2)).toHaveAttribute(
+      'href',
+      `${legal}consumer-health-data`,
+    );
     await expect(page.locator('.wc-lang [aria-current="page"]')).toHaveAttribute('href', path);
     // Each language link is at least Apple's 44pt tap target.
     for (const link of await page.locator('.wc-lang a').all())
@@ -129,8 +133,10 @@ test('the legal pages keep their URLs and lead home in their own language', asyn
     ['', '/en/'],
     ['zh/', '/'],
     ['zh-hant/', '/zh-hant/'],
+    ['fr/', '/en/'],
   ])
-    for (const doc of ['privacy', 'terms']) {
+    for (const doc of ['privacy', 'terms', 'consumer-health-data']) {
+      if (lang === 'fr/' && doc === 'consumer-health-data') continue;
       expect((await page.goto(`/${lang}${doc}`)).status()).toBe(200);
       await expect(page.locator('.mark')).toHaveAttribute('href', home);
     }
@@ -161,4 +167,23 @@ test('a picked language is remembered, until another is picked', async ({ page }
   await expect(page.locator('.sub')).toHaveText('人人都是运动员');
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hans');
+});
+
+// The developer's names, kept out of this file too: the whole site is public.
+const developerNames = ['VHJhY3k=', 'TWVuZw=='].map((name) =>
+  Buffer.from(name, 'base64').toString(),
+);
+
+test('no legal page names the developer, and every page says 18', async ({ page }) => {
+  for (const lang of ['', 'zh/', 'zh-hant/', 'fr/'])
+    for (const doc of ['privacy', 'terms', 'consumer-health-data']) {
+      if (lang === 'fr/' && doc === 'consumer-health-data') continue;
+      const response = await page.goto(`/${lang}${doc}`);
+      const source = await response.text();
+      for (const name of developerNames) expect(source).not.toContain(name);
+      if (doc === 'consumer-health-data') continue;
+      const text = await page.locator('main').innerText();
+      expect(text).toMatch(/18/);
+      expect(text).not.toMatch(/\b13 ?(岁|歲|ans)|under 13|at least 13/);
+    }
 });
