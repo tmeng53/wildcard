@@ -46,7 +46,7 @@ export function createOpenAICoachAgent(options: {
   // Tracing would send members' words to OpenAI's traces dashboard as well.
   const runner = new Runner({ modelProvider, tracingDisabled: true });
   return {
-    async run({ model, instructions, task, tools, cacheKey }): Promise<AgentRun> {
+    async run({ model, instructions, task, tools, cacheKey, timeoutMs }): Promise<AgentRun> {
       const agent = new Agent({
         name: 'coach',
         instructions,
@@ -75,7 +75,7 @@ export function createOpenAICoachAgent(options: {
         await runner.run(agent, task, {
           context,
           maxTurns: MAX_TURNS,
-          signal: AbortSignal.timeout(RUN_TIMEOUT_MS),
+          signal: AbortSignal.timeout(Math.min(timeoutMs ?? RUN_TIMEOUT_MS, RUN_TIMEOUT_MS)),
         });
         return { ok: true, usage: tokensOf(context.usage) };
       } catch (error) {

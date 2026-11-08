@@ -45,6 +45,7 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
@@ -117,6 +118,7 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachLetters: unusedCoachLetters,
   notices: createNotices({
     store: createPostgresNoticeStore(db),
     broadcasts: createPostgresBroadcastStore(db),

@@ -65,7 +65,7 @@ export interface DayTalk {
  * What the coach remembers, as every task shows it: each file with its text, the empty ones
  * named together. The coach forgets everything else between wakes, so it sees this every time.
  */
-function memoryBlock(files: ReadonlyMap<string, string | undefined>): string {
+export function memoryBlock(files: ReadonlyMap<string, string | undefined>): string {
   const written = [...files].filter(([, body]) => body !== undefined && body.trim() !== '');
   const empty = [...files].filter(([, body]) => body === undefined || body.trim() === '');
   return [

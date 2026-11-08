@@ -14,6 +14,7 @@ import type {
   CoachTransaction,
   UsageTotal,
 } from '../ports.js';
+import { letterWhere } from './postgres-coach-letters.js';
 import type { DB } from './tables.js';
 
 /** How long a claimed wake may run before another run takes it back. */
@@ -353,9 +354,12 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           .insertInto('coach_usage')
           .values({
             squad_id: squad,
-            // Null when the wake has gone meanwhile (its check-in was deleted).
+            // Null for a letter, which has no wake, and when the wake has gone meanwhile (its
+            // check-in was deleted).
             wake_id: (eb) =>
-              eb.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
+              wake === undefined
+                ? sql<string | null>`null`
+                : eb.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
             coach_id: coach,
             model,
             requests: usage.requests,
@@ -406,6 +410,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
 /** What a squad's coaches have said, read from Postgres for its members. */
 export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore {
   return {
+    letter: (squad) => letterWhere(db, { toCoachNowOf: squad }),
+
     async latestNote(squad) {
       const row = await db
         .selectFrom('coach_notes')

@@ -1,3 +1,4 @@
+import type { CoachLetter } from '../domain/letter.js';
 import type { CoachAnswer, CoachReply } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
 import { CoachNoteNotFoundError } from '../errors.js';
@@ -22,6 +23,8 @@ export interface SquadCoachActivity {
   readonly answers: readonly CoachAnswer[];
   /** The reader's own newest morning note from the squad's coach, while it is fresh and not put away. */
   readonly memberNote: CoachMemberNoteShown | undefined;
+  /** The letter the squad's coach now was left when it took over (换教练), if it was left one. */
+  readonly letter: CoachLetter | undefined;
 }
 
 export interface CoachActivity {
@@ -61,7 +64,7 @@ export function createCoachActivity(deps: { readonly store: CoachActivityStore }
   return {
     squad: async ({ squad, checkIns, reader, now = new Date() }) => {
       const asked = [...new Set(checkIns.map((id) => id.toLowerCase()))].slice(0, MAX_CHECK_INS);
-      const [note, replies, answers, memberNote] = await Promise.all([
+      const [note, replies, answers, memberNote, letter] = await Promise.all([
         deps.store.latestNote(squad),
         deps.store.replies(squad, asked),
         deps.store.answers(squad, asked),
@@ -72,8 +75,9 @@ export function createCoachActivity(deps: { readonly store: CoachActivityStore }
               member: reader,
               since: new Date(now.getTime() - NOTE_FRESH_MS),
             }),
+        deps.store.letter(squad),
       ]);
-      return { note, replies, answers, memberNote };
+      return { note, replies, answers, memberNote, letter };
     },
     putAway: async (input) => {
       if (!(await deps.store.putAway(input))) throw new CoachNoteNotFoundError();

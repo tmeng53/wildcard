@@ -4,6 +4,7 @@ import type { Coach, CoachId } from './domain/coach.js';
 import type { StoredPath } from './domain/memory.js';
 import type { CoachModel, CoachSettings, MemberId, SquadId } from './domain/settings.js';
 import type { MemberFacts } from './domain/member-facts.js';
+import type { CoachLetter, Handover } from './domain/letter.js';
 import type { CoachAnswer, CoachEmoji, CoachReply } from './domain/reply.js';
 import type { SquadWeek } from './domain/squad-week.js';
 import type { NewWake, TokenUsage, Wake, WakeStep } from './domain/wake.js';
@@ -90,6 +91,8 @@ export interface CoachAgent {
      * provider keeps that beginning cached for them.
      */
     readonly cacheKey: string;
+    /** How long the whole run may take before it stops as failed, when shorter than a wake's. */
+    readonly timeoutMs?: number;
   }): Promise<AgentRun>;
 }
 
@@ -249,6 +252,8 @@ export interface CoachActivityStore {
     readonly member: string;
     readonly since: Date;
   }): Promise<CoachMemberNoteShown | undefined>;
+  /** The letter the squad's coach now was left when it took over (换教练), if it was left one. */
+  letter(squad: SquadId): Promise<CoachLetter | undefined>;
   /** The member put their note away (收下); false when it isn't theirs in the squad. Once. */
   putAway(input: {
     readonly squad: SquadId;
@@ -268,7 +273,8 @@ export interface CoachActivityStore {
 export interface CoachUsageStore {
   record(entry: {
     readonly squad: SquadId;
-    readonly wake: number;
+    /** The wake that used them; none for a letter, which runs outside the queue. */
+    readonly wake?: number;
     readonly coach: CoachId;
     readonly model: CoachModel;
     readonly usage: TokenUsage;
@@ -350,6 +356,33 @@ export interface CoachHiringStore {
     readonly coach: CoachId;
     readonly by: MemberId;
   }): Promise<'hired' | 'same' | 'noSquad'>;
+}
+
+/** The letters coaches leave the next one when their squad changes coach (换教练). */
+export interface CoachLetterStore {
+  /**
+   * The squad's change of coach that brought its coach now, when it came by one (fired the coach
+   * before it and hired it in one step); `undefined` for a coach hired with none before it.
+   */
+  handover(squad: SquadId): Promise<Handover | undefined>;
+  /** The squad's hires and firings, oldest first. */
+  history(squad: SquadId): Promise<
+    readonly {
+      readonly kind: 'hired' | 'fired';
+      readonly coach: CoachId;
+      readonly at: Date;
+    }[]
+  >;
+  /** Claims the one try at a change's letter; false when it was tried already. */
+  claim(handover: Handover): Promise<boolean>;
+  /** Saves the letter for a change it claimed. */
+  save(letter: {
+    readonly handover: Handover;
+    readonly day: string;
+    readonly text: string;
+  }): Promise<void>;
+  /** The letter written for a change, by its hire, if one was. */
+  ofHandover(hireEvent: number): Promise<CoachLetter | undefined>;
 }
 
 /** What a squad's coach has done, for the admins: its files, lines, wakes and tokens. */

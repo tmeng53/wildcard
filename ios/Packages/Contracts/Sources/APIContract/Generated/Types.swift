@@ -271,6 +271,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/weeks/{weekStart}/scene`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/scene/put(pickSquadScene)`.
     func pickSquadScene(_ input: Operations.PickSquadScene.Input) async throws -> Operations.PickSquadScene.Output
+    /// Have the outgoing coach write its letter (换教练)
+    ///
+    /// For the captain, right after changing coach: the coach that left writes the one that took over a letter from the squad’s memory, which every member then reads. Answers within about 20 seconds. Written once a change, so a retry answers the same letter, or none.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/coach/letter`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/letter/post(writeCoachLetter)`.
+    func writeCoachLetter(_ input: Operations.WriteCoachLetter.Input) async throws -> Operations.WriteCoachLetter.Output
     /// The coaches a squad can hire (教练市场)
     ///
     /// Every coach offered now, with its 简历. The same coaches for every squad.
@@ -336,7 +343,7 @@ public protocol APIProtocol: Sendable {
     func putAwayCoachMemberNote(_ input: Operations.PutAwayCoachMemberNote.Input) async throws -> Operations.PutAwayCoachMemberNote.Output
     /// What the squad’s coach said (战术板, replies and reactions)
     ///
-    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note. Only for the squad’s members. They stay after the squad fires its coach.
+    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note, and the letter the coach now was left when it took over. Only for the squad’s members. They stay after the squad fires its coach.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.
@@ -1032,6 +1039,21 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// Have the outgoing coach write its letter (换教练)
+    ///
+    /// For the captain, right after changing coach: the coach that left writes the one that took over a letter from the squad’s memory, which every member then reads. Answers within about 20 seconds. Written once a change, so a retry answers the same letter, or none.
+    ///
+    /// - Remark: HTTP `POST /squads/{squadId}/coach/letter`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/letter/post(writeCoachLetter)`.
+    public func writeCoachLetter(
+        path: Operations.WriteCoachLetter.Input.Path,
+        headers: Operations.WriteCoachLetter.Input.Headers = .init()
+    ) async throws -> Operations.WriteCoachLetter.Output {
+        try await writeCoachLetter(Operations.WriteCoachLetter.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// The coaches a squad can hire (教练市场)
     ///
     /// Every coach offered now, with its 简历. The same coaches for every squad.
@@ -1169,7 +1191,7 @@ extension APIProtocol {
     }
     /// What the squad’s coach said (战术板, replies and reactions)
     ///
-    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note. Only for the squad’s members. They stay after the squad fires its coach.
+    /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note, and the letter the coach now was left when it took over. Only for the squad’s members. They stay after the squad fires its coach.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.
