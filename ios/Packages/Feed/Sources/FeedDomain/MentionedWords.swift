@@ -37,7 +37,7 @@ public struct MentionedWords: Hashable, Sendable {
         for (_, (person, name)) in longestFirst {
             var from = text.startIndex
             while let found = text.range(of: "@\(name)", range: from..<text.endIndex) {
-                if !claimed.keys.contains(where: { $0.overlaps(found) }) {
+                if Self.endsName(found, in: text), !claimed.keys.contains(where: { $0.overlaps(found) }) {
                     claimed[found] = person
                     break
                 }
@@ -58,6 +58,14 @@ public struct MentionedWords: Hashable, Sendable {
         }
         if cursor < text.endIndex { runs.append(.plain(String(text[cursor...]))) }
         self.runs = runs
+    }
+
+    /// Whether `found` is a whole 「@名字」, not the start of a longer one (「@Mia」 in 「@Miao」): it
+    /// ends the text or is followed by a space or punctuation, as the box and the coach write it.
+    private static func endsName(_ found: Range<String.Index>, in text: String) -> Bool {
+        guard found.upperBound < text.endIndex else { return true }
+        let next = text[found.upperBound]
+        return !(next.isLetter || next.isNumber)
     }
 
     /// The next 「@名字」 from `from` that no tag has taken: the `@` and what follows it up to a

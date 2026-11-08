@@ -45,3 +45,9 @@ import Testing
     let words = MentionedWords("@这一段字比任何昵称都要长得多了吧 早", people: [], unnamed: [member(2)])
     #expect(words.runs == [.plain("@这一段字比任何昵称都要长得多了吧 早")])
 }
+
+@Test func aNameIsNotTakenFromTheStartOfALongerOne() {
+    let mia = member(1)
+    let words = MentionedWords("@Miao hi @Mia，早", people: [(.member(mia), "Mia")])
+    #expect(words.runs == [.plain("@Miao hi "), .tag("@Mia", .member(mia)), .plain("，早")])
+}
