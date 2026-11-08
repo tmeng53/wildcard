@@ -41,6 +41,26 @@ private func letter(_ id: Int = 4, to coach: CoachSpeaker = papa) throws -> Coac
     #expect(await backend.openedLetter() == 4)
 }
 
+/// The app reads the squad's coach again as soon as 换教练 lands, before the letter is written,
+/// so the new coach may already stand without it: it still gets the letter once the swap ends.
+@MainActor @Test func aCoachReadAgainDuringTheSwapStillGetsItsLetter() async throws {
+    let backend = ScriptedBackend(server: sampleHome())
+    await backend.set(coach: SidelineCoach(coach: maotou, note: nil))
+    await backend.set(letter: try letter(), holds: true)
+    let today = store(backend)
+    await today.load()
+    today.beginHandover(from: maotou, to: papa)
+    let swap = Task { await today.writeLetter() }
+    while await backend.lettersAsked == 0 { await Task.yield() }
+    await backend.set(coach: SidelineCoach(coach: papa, note: nil))
+    await today.loadCoach()
+    await backend.releaseLetter()
+    await swap.value
+    today.finishHandover()
+    #expect(today.coach == SidelineCoach(coach: papa, note: nil, letter: try letter()))
+    #expect(today.letter == ShownLetter(letter: try letter(), isSealed: true))
+}
+
 @MainActor @Test func aLetterThatCouldntBeWrittenSwapsTheCoachesWithoutOne() async throws {
     let backend = ScriptedBackend(server: sampleHome())
     await backend.set(coach: SidelineCoach(coach: maotou, note: nil))
@@ -117,6 +137,11 @@ private let sideline = StagePoint(x: 60, y: 690)
     #expect(handover.leavesAt == done)
     #expect(handover.envelopeAt == done.addingTimeInterval(0.1))
     #expect(close(handover.chip(at: done.addingTimeInterval(0.3)), 0))
+    // A hop, a step, another hop, each eased on its own, as the prototype's keyframes play.
+    let hop = handover.outgoing(at: done.addingTimeInterval(0.26))
+    #expect(close(hop.dx, 0) && close(hop.lift, 6 * 390 / 340))
+    #expect(close(handover.outgoing(at: done.addingTimeInterval(0.52)).dx, -30 * 390 / 340))
+    #expect(close(handover.outgoing(at: done.addingTimeInterval(0.78)).dx, -60 * 390 / 340))
     // Off the left edge by its 140 prototype pixels.
     #expect(close(handover.outgoing(at: done.addingTimeInterval(1.3)).dx, -140 * 390 / 340))
     #expect(!handover.showsOutgoing(at: done.addingTimeInterval(1.31)))
@@ -147,8 +172,9 @@ private func close(_ value: Double, _ expected: Double) -> Bool { abs(value - ex
     #expect(close(opening.scrim(at: start.addingTimeInterval(0.4)), 1))
     opening.open(at: start.addingTimeInterval(0.5))
     #expect(opening.opened == nil)
-    // Landed, it pulses until tapped.
-    #expect(close(opening.seal(at: start.addingTimeInterval(1.25)).scale, 1.08))
+    // Settled, it pulses until tapped.
+    #expect(opening.seal(at: start.addingTimeInterval(0.85)) == (1, 1))
+    #expect(close(opening.seal(at: start.addingTimeInterval(1.4)).scale, 1.08))
     let tap = start.addingTimeInterval(2)
     opening.open(at: tap)
     #expect(opening.opened == tap)

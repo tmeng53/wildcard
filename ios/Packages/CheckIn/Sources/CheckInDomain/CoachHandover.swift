@@ -55,13 +55,15 @@ public struct CoachHandover: Hashable, Sendable {
         guard let leaves = leavesAt else { return (0, 0) }
         let time = date.timeIntervalSince(leaves)
         guard time > 0 else { return (0, 0) }
-        let eased = Tween.cubicBezier(x1: 0.5, y1: 0, x2: 0.8, y2: 0.6, min(1, time / Self.walkOff))
-        // The prototype's keyframes: a hop, a step, another hop, then off the edge.
+        let progress = min(1, time / Self.walkOff)
+        // The prototype's keyframes: a hop, a step, another hop, then off the edge, its curve
+        // easing each step, as CSS eases each keyframe's interval.
         let keys: [(at: Double, dx: Double, lift: Double)] = [
             (0, 0, 0), (0.2, 0, 6), (0.4, -30, 0), (0.6, -60, 6), (1, -140, 0),
         ]
-        for (start, finish) in zip(keys, keys.dropFirst()) where eased <= finish.at {
-            let part = (eased - start.at) / (finish.at - start.at)
+        for (start, finish) in zip(keys, keys.dropFirst()) where progress <= finish.at {
+            let part = Tween.cubicBezier(
+                x1: 0.5, y1: 0, x2: 0.8, y2: 0.6, (progress - start.at) / (finish.at - start.at))
             return (
                 Tween.mix(start.dx, finish.dx, part) * Self.pixel, Tween.mix(start.lift, finish.lift, part) * Self.pixel
             )

@@ -29,10 +29,16 @@ extension TodayStore {
     public func finishHandover() {
         guard let handover, handover.end != nil else { return }
         self.handover = nil
-        guard let home = savedHome,
-            loadedCoach?.coach?.coach.id != handover.coming.id || loadedCoach?.squad != home.squad.id
-        else { return }
-        loadedCoach = (home.squad.id, SidelineCoach(coach: handover.coming, note: nil, letter: handover.letter))
+        guard let home = savedHome else { return }
+        // A reload during the swap may have stood the new coach already, from before its letter
+        // was written: it keeps its note and takes the letter.
+        let loaded = loadedCoach?.squad == home.squad.id ? loadedCoach?.coach : nil
+        let standing = loaded?.coach.id == handover.coming.id ? loaded : nil
+        loadedCoach = (
+            home.squad.id,
+            SidelineCoach(
+                coach: handover.coming, note: standing?.note, letter: handover.letter ?? standing?.letter)
+        )
     }
 
     /// The letter on 今天 now: one opened again from 通知 or the 简历, else a new one this phone

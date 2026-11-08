@@ -27,6 +27,8 @@ public struct LetterOpening: Hashable, Sendable {
     public static let scrimFade = 0.4
     /// The seal's pulse while it waits for a tap.
     public static let pulse = 1.0
+    /// When it starts pulsing: as the envelope settles, a little after its flight.
+    static let pulseFrom = 0.9
     static let pulseGrowth = 0.08
 
     // After the tap.
@@ -63,7 +65,7 @@ public struct LetterOpening: Hashable, Sendable {
     /// away when tapped.
     public func seal(at date: Date) -> (scale: Double, opacity: Double) {
         guard let opened else {
-            let time = date.timeIntervalSince(shown) - Self.flight
+            let time = date.timeIntervalSince(shown) - Self.pulseFrom
             guard time > 0 else { return (1, 1) }
             let phase = time.truncatingRemainder(dividingBy: Self.pulse) / Self.pulse
             return (1 + Self.pulseGrowth * Tween.easeInOut(phase < 0.5 ? phase * 2 : 2 - phase * 2), 1)
