@@ -10,6 +10,7 @@
   "references": [
     { "path": "../errors" },
     { "path": "../language-model" },
-    { "path": "../typed-text" }
+    { "path": "../typed-text" },
+    { "path": "../time-zones" }
   ]
 }

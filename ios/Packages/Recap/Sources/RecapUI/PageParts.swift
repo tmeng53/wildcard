@@ -81,19 +81,20 @@ struct PageTitle: View {
     }
 }
 
-/// The white ground the squad stands on, along the bottom of a page.
+/// The white ground the squad stands on, along the bottom of a page: its top `height` over the
+/// page's bottom, where the page puts feet, steps and the week's dots, and on under the home
+/// indicator.
 struct Ground: View {
     let height: Double
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 0)
-            Color(role: .bgCanvas, in: theme)
-                .frame(height: height)
-        }
-        .ignoresSafeArea(edges: .bottom)
-        .accessibilityHidden(true)
+        Color.clear
+            .frame(height: height)
+            // Only the colour runs into the safe area, so the top stays where the page measured it.
+            .background(Color(role: .bgCanvas, in: theme), ignoresSafeAreaEdges: .bottom)
+            .frame(maxHeight: .infinity, alignment: .bottom)
+            .accessibilityHidden(true)
     }
 }
 
@@ -220,7 +221,6 @@ enum StoryLayout {
     static let groundLow: Double = 150
     static let groundMeals: Double = 190
     static let groundEnding: Double = 214
-    static let groundWeek: Double = 224
 }
 
 extension Week {

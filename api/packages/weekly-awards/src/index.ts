@@ -52,10 +52,12 @@ export type { StoryDay, StoryMember, WeekStory } from './domain/week-story.js';
 export { AwardMove, CHEER } from './domain/moves.js';
 export {
   AWARDS_HOUR,
-  AWARDS_TIME_ZONE,
   WeekStart,
   awardsTimeOf,
+  lastAwardsTimeOf,
   latestAwardedWeek,
+  weekBefore,
+  weeksMaybeAwarded,
 } from './domain/schedule.js';
 export { AwardSettings, AwardSettingsChange, ModelName, offeredMoves } from './domain/settings.js';
 export {

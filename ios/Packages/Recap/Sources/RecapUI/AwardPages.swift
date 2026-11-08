@@ -71,7 +71,7 @@ struct PodiumPage: View {
             PageTitle(
                 label: Text("本周", bundle: .module), systemImage: "checkmark.seal.fill",
                 title: Text("领奖台", bundle: .module),
-                note: podium.tieBrokenByPlan ? Text("天数一样，先练完计划的排前面", bundle: .module) : nil)
+                note: podium.tieBrokenByTime ? Text("天数一样，先练到的排前面", bundle: .module) : nil)
         }
         .haptic(.crown, trigger: page.time >= Self.crownLands) { old, new in !old && new }
     }
@@ -148,7 +148,7 @@ struct TitlesPage: View {
                         .opacity(page.ramp(start, start + 0.15))
                 }
             }
-            .padding(.horizontal, Space.m)
+            .padding(.horizontal, Space.l)
             Spacer(minLength: 0)
         }
     }
@@ -217,7 +217,7 @@ struct PendingPage: View {
                         .typeStyle(TypeRamp.title)
                         .foregroundStyle(Color(role: .fgOnScene, in: theme))
                     if stuck, nudged {
-                        Text("已催主办方充值 token", bundle: .module)
+                        Text("已经催过了，颁奖一会儿就到", bundle: .module)
                             .typeStyle(TypeRamp.calloutEmphasis)
                             .foregroundStyle(Color(role: .fgOnScene, in: theme))
                             .transition(.opacity)
@@ -236,7 +236,7 @@ struct PendingPage: View {
 
     private var headline: Text {
         stuck
-            ? Text("主办方没经费了，正在拉赞助，一会儿再来颁奖", bundle: .module)
+            ? Text("颁奖晚点了，稍后再来看", bundle: .module)
             : Text("颁奖嘉宾在路上，一会儿就到", bundle: .module)
     }
 }

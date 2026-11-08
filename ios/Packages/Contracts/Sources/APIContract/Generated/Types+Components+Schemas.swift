@@ -4925,25 +4925,33 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NewSquad/daysPerMember`.
             public var daysPerMember: Swift.Int?
+            /// The squad’s time zone (小队时区), the creator’s pick, counting from their week now; their own profile’s zone when left out. The captain changes it later with `PUT /squads/{squadId}/time-zone`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NewSquad/timeZone`.
+            public var timeZone: Swift.String?
             /// Creates a new `NewSquad`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - name: Trimmed, then 1 to 20 characters as people see them, on one line.
             ///   - daysPerMember: The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.
+            ///   - timeZone: The squad’s time zone (小队时区), the creator’s pick, counting from their week now; their own profile’s zone when left out. The captain changes it later with `PUT /squads/{squadId}/time-zone`.
             public init(
                 version: Components.Schemas.NewSquad.VersionPayload,
                 name: Swift.String,
-                daysPerMember: Swift.Int? = nil
+                daysPerMember: Swift.Int? = nil,
+                timeZone: Swift.String? = nil
             ) {
                 self.version = version
                 self.name = name
                 self.daysPerMember = daysPerMember
+                self.timeZone = timeZone
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case name
                 case daysPerMember
+                case timeZone
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadNameChange`.
@@ -5503,7 +5511,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/SquadScene/version`.
             public var version: Components.Schemas.SquadScene.VersionPayload
-            /// The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s awards are given, the week after it.
+            /// The Monday of the week open for picking now: from Sunday 8pm on the squad’s clock (小队时区), when a week’s awards are given, the week after it.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadScene/week`.
             public var week: Swift.String
@@ -5714,7 +5722,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - week: The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s awards are given, the week after it.
+            ///   - week: The Monday of the week open for picking now: from Sunday 8pm on the squad’s clock (小队时区), when a week’s awards are given, the week after it.
             ///   - scene: The squad’s scene this week (see `sceneId`).
             ///   - sceneId: The scene the squad’s home shows now: its scene this week, or, while a takeover scene (a holiday’s, say) is on, that one for every squad. `picked` is still the squad’s own.
             ///   - takeover: True while `sceneId` is a takeover scene standing in for the squad’s own: the app plays its opening (the art at `openings/<sceneId>/`, if there is one) the first time it shows it each day, then drops the squad onto it.
@@ -6142,6 +6150,80 @@ extension Components {
                 case daysPerMember
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SquadTimeZone`.
+        public struct SquadTimeZone: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadTimeZone/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadTimeZone/version`.
+            public var version: Components.Schemas.SquadTimeZone.VersionPayload
+            /// This week’s zone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadTimeZone/timeZone`.
+            public var timeZone: Swift.String
+            /// Next week’s zone: a change counts from the next week, so it differs from `timeZone` only after the captain changed it this week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadTimeZone/nextTimeZone`.
+            public var nextTimeZone: Swift.String
+            /// True for the captain, the only one who sets it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadTimeZone/canChange`.
+            public var canChange: Swift.Bool
+            /// Creates a new `SquadTimeZone`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - timeZone: This week’s zone.
+            ///   - nextTimeZone: Next week’s zone: a change counts from the next week, so it differs from `timeZone` only after the captain changed it this week.
+            ///   - canChange: True for the captain, the only one who sets it.
+            public init(
+                version: Components.Schemas.SquadTimeZone.VersionPayload,
+                timeZone: Swift.String,
+                nextTimeZone: Swift.String,
+                canChange: Swift.Bool
+            ) {
+                self.version = version
+                self.timeZone = timeZone
+                self.nextTimeZone = nextTimeZone
+                self.canChange = canChange
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case timeZone
+                case nextTimeZone
+                case canChange
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadTimeZoneChange`.
+        public struct SquadTimeZoneChange: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadTimeZoneChange/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadTimeZoneChange/version`.
+            public var version: Components.Schemas.SquadTimeZoneChange.VersionPayload
+            /// The squad’s time zone (小队时区), an IANA name: the clock of what the whole squad shares, its 战报 and awards freezing Sunday 8pm and its coach’s daily 战术板. Each member’s own day, 6pm push and coach’s note keep their own profile’s zone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadTimeZoneChange/timeZone`.
+            public var timeZone: Swift.String
+            /// Creates a new `SquadTimeZoneChange`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - timeZone: The squad’s time zone (小队时区), an IANA name: the clock of what the whole squad shares, its 战报 and awards freezing Sunday 8pm and its coach’s daily 战术板. Each member’s own day, 6pm push and coach’s note keep their own profile’s zone.
+            public init(
+                version: Components.Schemas.SquadTimeZoneChange.VersionPayload,
+                timeZone: Swift.String
+            ) {
+                self.version = version
+                self.timeZone = timeZone
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case timeZone
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CoachNotePutAway`.
         public struct CoachNotePutAway: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CoachNotePutAway/version`.
@@ -6222,7 +6304,7 @@ extension Components {
         ///
         /// - Remark: Generated from `#/components/schemas/CoachNote`.
         public struct CoachNote: Codable, Hashable, Sendable {
-            /// The day (New York) the line is for.
+            /// The day the line is for, on the squad’s clock (`timeZone`).
             ///
             /// - Remark: Generated from `#/components/schemas/CoachNote/day`.
             public var day: Swift.String
@@ -6234,29 +6316,37 @@ extension Components {
             public var coach: Components.Schemas.CoachSpeaker
             /// - Remark: Generated from `#/components/schemas/CoachNote/at`.
             public var at: Foundation.Date
+            /// The squad’s time zone (小队时区) now, whose day `day` is: the app shows the line while it is still that day there.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachNote/timeZone`.
+            public var timeZone: Swift.String
             /// Creates a new `CoachNote`.
             ///
             /// - Parameters:
-            ///   - day: The day (New York) the line is for.
+            ///   - day: The day the line is for, on the squad’s clock (`timeZone`).
             ///   - text: The 战术板 line.
             ///   - coach:
             ///   - at:
+            ///   - timeZone: The squad’s time zone (小队时区) now, whose day `day` is: the app shows the line while it is still that day there.
             public init(
                 day: Swift.String,
                 text: Swift.String,
                 coach: Components.Schemas.CoachSpeaker,
-                at: Foundation.Date
+                at: Foundation.Date,
+                timeZone: Swift.String
             ) {
                 self.day = day
                 self.text = text
                 self.coach = coach
                 self.at = at
+                self.timeZone = timeZone
             }
             public enum CodingKeys: String, CodingKey {
                 case day
                 case text
                 case coach
                 case at
+                case timeZone
             }
         }
         /// - Remark: Generated from `#/components/schemas/CoachSpeaker`.
@@ -6450,7 +6540,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachMemberNote/id`.
             public var id: Swift.Int
-            /// The day (New York) the note was written for.
+            /// The day, on the squad’s clock, the note was written for.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachMemberNote/day`.
             public var day: Swift.String
@@ -6468,7 +6558,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The note’s id, which putting it away (收下) and `coachNote` notices name.
-            ///   - day: The day (New York) the note was written for.
+            ///   - day: The day, on the squad’s clock, the note was written for.
             ///   - text: The note’s words.
             ///   - coach:
             ///   - at: When it was written.
@@ -8068,7 +8158,7 @@ extension Components {
                 case character
             }
         }
-        /// 领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene) in the middle, up to 2 next beside, left then right. A tie goes to whoever finished their own weekly plan first, then to the earliest to join. Missing when nobody trained.
+        /// 领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene) in the middle, up to 2 next beside, left then right. A tie goes to whoever reached those days trained first, then to the earliest to join. Missing when nobody trained.
         ///
         /// - Remark: Generated from `#/components/schemas/StoryPodium`.
         public struct StoryPodium: Codable, Hashable, Sendable {
@@ -8080,33 +8170,41 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/StoryPodium/planDone`.
             public var planDone: [Swift.String]
-            /// Present when finishing the weekly plan first decided a place on the podium (or the last place just off it), so the page can say why.
+            /// No longer sent: ties now go to whoever reached the tied days first (`tieBrokenByTime`). Kept so older builds still read the reply.
             ///
             /// - Remark: Generated from `#/components/schemas/StoryPodium/tieBrokenByPlan`.
             public var tieBrokenByPlan: Swift.Bool?
+            /// Present when reaching the tied days trained first decided a place on the podium (or the last place just off it), so the page can say why.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPodium/tieBrokenByTime`.
+            public var tieBrokenByTime: Swift.Bool?
             /// Creates a new `StoryPodium`.
             ///
             /// - Parameters:
             ///   - champion:
             ///   - sides:
             ///   - planDone: Those on the podium who trained at least as many days as they planned (练够计划), for a small mark on their step. Empty when none did.
-            ///   - tieBrokenByPlan: Present when finishing the weekly plan first decided a place on the podium (or the last place just off it), so the page can say why.
+            ///   - tieBrokenByPlan: No longer sent: ties now go to whoever reached the tied days first (`tieBrokenByTime`). Kept so older builds still read the reply.
+            ///   - tieBrokenByTime: Present when reaching the tied days trained first decided a place on the podium (or the last place just off it), so the page can say why.
             public init(
                 champion: Swift.String,
                 sides: [Swift.String],
                 planDone: [Swift.String],
-                tieBrokenByPlan: Swift.Bool? = nil
+                tieBrokenByPlan: Swift.Bool? = nil,
+                tieBrokenByTime: Swift.Bool? = nil
             ) {
                 self.champion = champion
                 self.sides = sides
                 self.planDone = planDone
                 self.tieBrokenByPlan = tieBrokenByPlan
+                self.tieBrokenByTime = tieBrokenByTime
             }
             public enum CodingKeys: String, CodingKey {
                 case champion
                 case sides
                 case planDone
                 case tieBrokenByPlan
+                case tieBrokenByTime
             }
         }
         /// 你的一周: the signed-in member’s week. Missing when they checked in nothing, or weren’t in the squad at the awards.
@@ -8852,6 +8950,10 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/firstWeek`.
                 public var firstWeek: Swift.String?
+                /// Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/today`.
+                public var today: Swift.String?
                 /// Creates a new `WeekPayload`.
                 ///
                 /// - Parameters:
@@ -8862,6 +8964,7 @@ extension Components {
                 ///   - marks: How each day of this week went, Monday first: `trained` with the sport of the day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet, from only the check-ins shared to this squad. Left out by older servers.
                 ///   - fuelGoals:
                 ///   - firstWeek: The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.
+                ///   - today: Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.
                 public init(
                     trainedDays: Swift.Int,
                     plannedDays: Swift.Int,
@@ -8869,7 +8972,8 @@ extension Components {
                     days: Components.Schemas.PlanDays? = nil,
                     marks: [Components.Schemas.DayMark]? = nil,
                     fuelGoals: Components.Schemas.FuelGoals? = nil,
-                    firstWeek: Swift.String? = nil
+                    firstWeek: Swift.String? = nil,
+                    today: Swift.String? = nil
                 ) {
                     self.trainedDays = trainedDays
                     self.plannedDays = plannedDays
@@ -8878,6 +8982,7 @@ extension Components {
                     self.marks = marks
                     self.fuelGoals = fuelGoals
                     self.firstWeek = firstWeek
+                    self.today = today
                 }
                 public enum CodingKeys: String, CodingKey {
                     case trainedDays
@@ -8887,6 +8992,7 @@ extension Components {
                     case marks
                     case fuelGoals
                     case firstWeek
+                    case today
                 }
             }
             /// Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.

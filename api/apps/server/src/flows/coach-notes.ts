@@ -37,7 +37,7 @@ export interface CoachNotesRun {
 /**
  * Delivers the coach's morning notes (便条) once each member's clock passes the settings' hour:
  * a notice in their bell and a silent push, only while their `coach` switch is on.
- * A note written after that hour (a member east of New York) goes at once. Each note is claimed
+ * A note written after that hour (a member east of their squad's clock) goes at once. Each note is claimed
  * before it is told, so runs that overlap tell it once. Never throws.
  */
 export async function deliverCoachNotes(deps: CoachNotesDependencies): Promise<CoachNotesRun> {

@@ -172,8 +172,16 @@ const storyFields = {
         .optional()
         .meta({
           description:
-            'Present when finishing the weekly plan first decided a place on the podium (or the ' +
-            'last place just off it), so the page can say why.',
+            'No longer sent: ties now go to whoever reached the tied days first ' +
+            '(`tieBrokenByTime`). Kept so older builds still read the reply.',
+        }),
+      tieBrokenByTime: z
+        .literal(true)
+        .optional()
+        .meta({
+          description:
+            'Present when reaching the tied days trained first decided a place on the podium ' +
+            '(or the last place just off it), so the page can say why.',
         }),
     })
     .openapi('StoryPodium')
@@ -182,7 +190,7 @@ const storyFields = {
       description:
         '领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who ' +
         'picks next week’s scene) in the middle, up to 2 next beside, left then right. A tie ' +
-        'goes to whoever finished their own weekly plan first, then to the earliest to join. ' +
+        'goes to whoever reached those days trained first, then to the earliest to join. ' +
         'Missing when nobody trained.',
     }),
   myWeek: z
@@ -358,7 +366,7 @@ export function weekStory(
     operationId: 'getSquadWeekStory',
     summary: 'A squad’s weekly 战报 (每周战报), frozen at the week’s awards',
     description:
-      'Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, ' +
+      'Frozen once for the whole squad on Sunday at 8pm on the squad’s clock (小队时区): who was in the squad then, ' +
       'that week’s scene, and every page from the check-ins and reactions made before then. ' +
       'Nothing that happens later changes it (a member joining or leaving, a late check-in or ' +
       'reaction, a new look or scene), except that a deleted account or post takes its own ' +
@@ -376,7 +384,9 @@ export function weekStory(
       400: problem('Not a Monday'),
       401: problem('No bearer token, or not a valid one'),
       403: problem('The member isn’t in this squad'),
-      404: problem('Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)'),
+      404: problem(
+        'Before the week’s awards on Sunday at 8pm on the squad’s clock (小队时区) (`WEEK_STORY_NOT_READY`)',
+      ),
       503: problem('Sign-in can’t be checked right now'),
     },
   });
@@ -398,7 +408,9 @@ export function weekStory(
       400: problem('Not a Monday'),
       401: problem('No bearer token, or not a valid one'),
       403: problem('The member isn’t in this squad'),
-      404: problem('Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)'),
+      404: problem(
+        'Before the week’s awards on Sunday at 8pm on the squad’s clock (小队时区) (`WEEK_STORY_NOT_READY`)',
+      ),
       503: problem('Sign-in can’t be checked right now'),
     },
   });
@@ -462,7 +474,7 @@ export function weekStory(
                 champion: story.podium.champion,
                 sides: [...story.podium.sides],
                 planDone: [...story.podium.planDone],
-                ...(story.podium.tieBrokenByPlan ? { tieBrokenByPlan: true as const } : {}),
+                ...(story.podium.tieBrokenByTime ? { tieBrokenByTime: true as const } : {}),
               },
             }),
         ...(mine?.checkedIn !== true

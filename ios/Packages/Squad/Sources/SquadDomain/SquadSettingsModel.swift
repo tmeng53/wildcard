@@ -153,6 +153,31 @@ public final class SquadSettingsModel {
         }
     }
 
+    // MARK: 比赛时区
+
+    /// The squad's time zone, as last read or as the captain just set it.
+    public var matchTimeZone: SquadTimeZone? { settings?.matchTimeZone }
+
+    /// The captain sets the zone; everyone else reads it.
+    public var canChangeTimeZone: Bool { isCaptain && settings?.matchTimeZone.canChange == true }
+
+    /// The captain picks the squad's zone for next week. The row says so at once and goes back
+    /// if the change doesn't go through.
+    public func setTimeZone(_ identifier: String) async {
+        guard let settings, canChangeTimeZone, TimeZone(identifier: identifier) != nil,
+            identifier != settings.matchTimeZone.nextTimeZone
+        else { return }
+        let before = settings.matchTimeZone
+        update { $0.matchTimeZone.nextTimeZone = identifier }
+        await change { service throws(SquadError) in
+            let zone = try await service.setTimeZone(of: settings.squad.id, to: identifier)
+            self.update { $0.matchTimeZone = zone }
+        }
+        if changeFailed, case .loaded(let now) = load, now.matchTimeZone.nextTimeZone == identifier {
+            update { $0.matchTimeZone = before }
+        }
+    }
+
     // MARK: 教练
 
     /// The squad's coach, once hired.

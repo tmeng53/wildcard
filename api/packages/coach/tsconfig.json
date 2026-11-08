@@ -7,5 +7,9 @@
   },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts"],
-  "references": [{ "path": "../errors" }, { "path": "../language-model" }]
+  "references": [
+    { "path": "../errors" },
+    { "path": "../language-model" },
+    { "path": "../time-zones" }
+  ]
 }

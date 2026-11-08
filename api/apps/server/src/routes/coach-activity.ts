@@ -1,3 +1,4 @@
+import { NEW_YORK, TimeZone } from '@wildcard/time-zones';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   MAX_CHECK_INS,
@@ -24,10 +25,18 @@ const CoachSpeakerBody = z
 
 const CoachNoteBody = z
   .strictObject({
-    day: z.iso.date().meta({ description: 'The day (New York) the line is for.' }),
+    day: z.iso.date().meta({
+      description: 'The day the line is for, on the squad’s clock (`timeZone`).',
+    }),
     text: z.string().meta({ description: 'The 战术板 line.', example: '今天谁先动，谁就是队长' }),
     coach: CoachSpeakerBody,
     at: z.iso.datetime(),
+    timeZone: TimeZone.meta({
+      description:
+        'The squad’s time zone (小队时区) now, whose day `day` is: the app shows the line while ' +
+        'it is still that day there.',
+      example: 'Asia/Taipei',
+    }),
   })
   .openapi('CoachNote');
 
@@ -36,7 +45,9 @@ const CoachMemberNoteBody = z
     id: z.int().positive().meta({
       description: 'The note’s id, which putting it away (收下) and `coachNote` notices name.',
     }),
-    day: z.iso.date().meta({ description: 'The day (New York) the note was written for.' }),
+    day: z.iso
+      .date()
+      .meta({ description: 'The day, on the squad’s clock, the note was written for.' }),
     text: z.string().meta({ description: 'The note’s words.', example: '昨天那组深蹲我看见了' }),
     coach: CoachSpeakerBody,
     at: z.iso.datetime().meta({ description: 'When it was written.' }),
@@ -231,6 +242,7 @@ export function coachActivity(deps: {
       const { squadId } = c.req.valid('param');
       // Throws `SquadNotJoinedError` for anyone not in the squad.
       await deps.squads.find({ squad: squadId, viewer: MemberId.parse(c.var.caller.userId) });
+      const zone = (await deps.squads.timeZonesAt([squadId], new Date())).get(squadId) ?? NEW_YORK;
       const {
         note,
         replies,
@@ -261,6 +273,7 @@ export function coachActivity(deps: {
                   text: note.text,
                   coach: speaker(note.coach),
                   at: note.at.toISOString(),
+                  timeZone: zone,
                 },
           replies: replies.map((reply) => ({
             checkInId: reply.checkIn,

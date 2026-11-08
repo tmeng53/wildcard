@@ -21,33 +21,35 @@ import {
   type Squads,
 } from '@wildcard/squads';
 import type { Scenes } from '@wildcard/scenes';
+import type { WeekStart } from '@wildcard/weekly-awards';
 import {
   MemberId,
   awardsTimeOf,
-  latestAwardedWeek,
   topCheckInOf,
   type AwardsState,
   type Failures,
   type MemberAwards,
   type MemberWeek,
-  type SquadId,
+  SquadId,
   type StoryMember,
   type WeekCheckIn,
-  WeekStart,
   type WeekStory,
   type WeeklyAwards,
   WeekStoryNotReadyError,
+  weeksMaybeAwarded,
 } from '@wildcard/weekly-awards';
 
 import type { Log } from '../log.js';
 import { pushAlert } from '../push-copy.js';
+import { squadsAwardedIn } from './awarded-squads.js';
 import { noticeAlert } from './daily-progress-push.js';
 import { squadLanguages } from './squad-language.js';
 
 // The weekly awards and the frozen 战报 across modules: who was in the squad and its scene from
 // squads, the week's check-ins and pages from check-ins, members' clocks and characters from
 // members, the awards and the stored 战报 from weekly-awards, the squad's push from push, and
-// the admins a nudge tells from admins.
+// the admins a nudge tells from admins. Each squad's week ends Sunday 8pm on its own clock, its
+// time zone (小队时区).
 
 export interface WeeklyAwardsDependencies {
   readonly checkIns: CheckIns;
@@ -66,7 +68,10 @@ export interface WeeklyAwardsDependencies {
 
 /** What a run did, squad by squad. */
 export interface WeeklyAwardsRun {
-  /** The weeks whose awards it gave: the latest, and the one before for squads still failing. */
+  /**
+   * The weeks it looked at: the latest due in any zone, and the one before for squads still
+   * failing. A squad's own week is due at its own Sunday 8pm.
+   */
   readonly weeks: readonly WeekStart[];
   /** Squads with a check-in for the week made before the awards. */
   readonly squads: number;
@@ -125,22 +130,20 @@ export function awardsStuckNotification({
 const AT_ONCE = 4;
 
 /**
- * Gives the latest week's awards (Sunday 8pm Eastern) to every squad that checked in before
- * then, and tells everyone in the squad once. Meant to run every hour: a squad whose awards couldn't be
- * written is tried again on the next run, through the following week too, and a squad already
- * done is only checked. Check-ins made after the awards' moment still count for the week, only
- * not for its awards.
+ * Gives the latest week's awards (Sunday 8pm on each squad's clock) to every squad that checked
+ * in before then, and tells everyone in the squad once. Meant to run every hour: a squad whose
+ * awards couldn't be written is tried again on the next run, through the following week too, and
+ * a squad already done is only checked. Check-ins made after the awards' moment still count for
+ * the week, only not for its awards.
  */
 export async function giveWeeklyAwards(deps: WeeklyAwardsDependencies): Promise<WeeklyAwardsRun> {
-  const latest = latestAwardedWeek(deps.clock());
-  const previous = WeekStart.parse(
-    new Date(Date.parse(latest) - 7 * 86_400_000).toISOString().slice(0, 10),
-  );
-  const runs = [await giveWeek(deps, previous), await giveWeek(deps, latest)];
+  const weeks = weeksMaybeAwarded(deps.clock());
+  const runs: Omit<WeeklyAwardsRun, 'weeks'>[] = [];
+  for (const week of weeks) runs.push(await giveWeek(deps, week));
   const total = (key: 'squads' | 'given' | 'failed' | 'told') =>
     runs.reduce((sum, run) => sum + run[key], 0);
   return {
-    weeks: [previous, latest],
+    weeks,
     squads: total('squads'),
     given: total('given'),
     failed: total('failed'),
@@ -148,18 +151,27 @@ export async function giveWeeklyAwards(deps: WeeklyAwardsDependencies): Promise<
   };
 }
 
+/** When the squad's awards of the week are given: its Sunday 8pm in its zone that week. */
+async function awardsTimeFor(
+  deps: Pick<WeeklyAwardsDependencies, 'squads'>,
+  { squad, weekStart }: { readonly squad: SquadId; readonly weekStart: WeekStart },
+): Promise<Date> {
+  const id = SquadsSquad.parse(squad);
+  const zone = (await deps.squads.timeZonesFor([id], weekStart)).get(id);
+  if (zone === undefined) throw new Error(`No time zone for squad ${squad}`);
+  return awardsTimeOf(weekStart, zone);
+}
+
 /** One week's awards for every squad that checked in before them, as `giveWeeklyAwards`. */
 async function giveWeek(
   deps: WeeklyAwardsDependencies,
   week: WeekStart,
 ): Promise<Omit<WeeklyAwardsRun, 'weeks'>> {
-  const before = awardsTimeOf(week);
-  const [checkedIn, waiting] = await Promise.all([
-    deps.checkIns.squadsCheckedInto({ weekStart: CheckInWeek.parse(week), before }),
-    // A frozen 战报 still waiting, though the check-ins that started it were deleted since.
-    deps.awards.storiesWaiting({ weekStart: week }),
-  ]);
-  const squads = [...new Set([...checkedIn, ...waiting])];
+  const due = await squadsAwardedIn(
+    { ...deps, waiting: (weekStart) => deps.awards.storiesWaiting({ weekStart }) },
+    week,
+  );
+  const squads = [...due.keys()].map((squad) => SquadId.parse(squad));
   let given = 0;
   let failed = 0;
   let told = 0;
@@ -167,6 +179,8 @@ async function giveWeek(
     await Promise.all(
       squads.slice(start, start + AT_ONCE).map(async (squad) => {
         try {
+          const before =
+            due.get(squad)?.at ?? (await awardsTimeFor(deps, { squad, weekStart: week }));
           // The 战报 freezes first, so the awards are written for the same members and week.
           const story = await frozenStory(deps, { squad, weekStart: week });
           if ((await deps.awards.find({ squad, weekStart: week }))?.status !== 'given') {
@@ -299,7 +313,7 @@ function endingOf(
  * A squad's 战报 for one of its members: the one frozen at the week's awards, frozen now if no
  * run has yet. Nothing that happened since changes it, except that a deleted account or post
  * takes its own words and photos with it. Throws `WeekStoryNotReadyError` before the week's
- * awards (Sunday 8pm Eastern), `SquadNotJoinedError` for anyone not in the squad now.
+ * awards (Sunday 8pm on the squad's clock), `SquadNotJoinedError` for anyone not in the squad now.
  */
 export async function squadStory(
   deps: Pick<
@@ -387,7 +401,7 @@ export async function nudgeOrganisers(
 }
 
 /**
- * A squad's 战报 for the week, frozen at its awards (Sunday 8pm Eastern): the stored one, else
+ * A squad's 战报 for the week, frozen at its awards (Sunday 8pm on its clock): the stored one, else
  * frozen now from the squad as it stood then: who was in it, that week's scene, and their
  * check-ins and reactions made before then. Members' characters and the squad's name are as
  * they are when it freezes, which the hourly awards run does within the hour for every squad
@@ -399,7 +413,7 @@ async function frozenStory(
 ): Promise<WeekStory> {
   const stored = await deps.awards.story({ squad, weekStart });
   if (stored !== undefined) return stored;
-  const before = awardsTimeOf(weekStart);
+  const before = await awardsTimeFor(deps, { squad, weekStart });
   const then = await deps.squads.squadAt({
     squad: SquadsSquad.parse(squad),
     week: SceneWeek.parse(weekStart),
@@ -450,7 +464,7 @@ async function frozenStory(
         healthyMeals: page.healthyMeals,
         cheatMeals: page.cheatMeals,
         reactionsReceived: page.reactionsReceived,
-        ...(page.planFinishedAt === undefined ? {} : { planFinishedAt: page.planFinishedAt }),
+        ...(page.reachedAt === undefined ? {} : { reachedAt: page.reachedAt }),
         ...(hottest === undefined ? {} : { hottest }),
         ...(best?.author === member
           ? {
@@ -478,7 +492,9 @@ async function dueSquad(
     squad: SquadsSquad.parse(squad),
     viewer: SquadsMember.parse(viewer),
   });
-  if (deps.clock() < awardsTimeOf(weekStart)) throw new WeekStoryNotReadyError(weekStart);
+  if (deps.clock() < (await awardsTimeFor(deps, { squad, weekStart }))) {
+    throw new WeekStoryNotReadyError(weekStart);
+  }
   return found;
 }
 

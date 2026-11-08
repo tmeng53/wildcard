@@ -87,6 +87,20 @@ const fields = {
     .describe(
       'The hour on each member’s own clock when the coach’s morning note (便条) reaches them: pushed silently and told in 通知. A note written after it reaches them at once.',
     ),
+  squadDailyCapMicros: z
+    .int()
+    .min(0)
+    .max(2_000_000_000)
+    .describe(
+      'What one squad’s coach may spend a day, on the squad’s own clock: US dollars in millionths. Once the squad’s spending that day reaches it, its coach is off duty: its wakes are skipped until the next day.',
+    ),
+  dailyCapMicros: z
+    .int()
+    .min(0)
+    .max(2_000_000_000)
+    .describe(
+      'What every squad’s coach together may spend a day, New York’s day: US dollars in millionths. Once reached, every coach is off duty until the next day.',
+    ),
   holidays: z
     .array(CoachHoliday)
     .max(500)
