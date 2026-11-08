@@ -23,7 +23,7 @@ import Testing
             let rotation = degrees * inward
             #expect(try shown(back, armL: rotation, armR: rotation) == (degrees < 20 ? 1 : 0), "\(back) \(degrees)")
         }
-        for degrees in [0.0, 10, -60, -150] {
+        for degrees in [0.0, 10, 60, 150] {
             let rotation = degrees * -inward
             #expect(try shown(front, armL: rotation, armR: rotation) == 0, "\(front) out \(degrees)")
             #expect(try shown(back, armL: rotation, armR: rotation) == 1, "\(back) out \(degrees)")

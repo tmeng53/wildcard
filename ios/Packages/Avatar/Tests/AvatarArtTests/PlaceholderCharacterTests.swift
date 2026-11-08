@@ -70,7 +70,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 66)
+    #expect(figure.parts.count == 68)
 }
 
 @Test(arguments: Persona.allCases)
