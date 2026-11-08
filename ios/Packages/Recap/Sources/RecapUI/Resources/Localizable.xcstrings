@@ -364,7 +364,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "放縱餐"
+            "value": "欺騙餐"
           }
         }
       }
@@ -540,7 +540,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "本週戰報"
+            "value": "每週戰報"
           }
         }
       }
@@ -572,7 +572,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "本週戰報，%@"
+            "value": "每週戰報，%@，未讀"
           }
         }
       }
@@ -685,7 +685,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "天數一樣，先練完計劃的排前面"
+            "value": "天數一樣，先練完計畫的排前面"
           }
         }
       }
@@ -702,7 +702,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "練夠計劃"
+            "value": "練夠計畫"
           }
         }
       }
@@ -1038,7 +1038,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "請假條"
+            "value": "假單"
           }
         }
       }
@@ -1086,7 +1086,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "坦白放縱 %lld 頓"
+            "value": "坦白欺騙 %lld 頓"
           }
         }
       }

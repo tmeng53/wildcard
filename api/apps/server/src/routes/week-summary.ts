@@ -77,7 +77,7 @@ export const WeekSummaryBody = z
     version: bodyVersion(1),
     language: z.string().min(1).meta({
       description:
-        'The language the words are in: today `zh-Hans` or `en`. More may come without an app release.',
+        'The language the words are in: today `zh-Hans`, `en` or `zh-Hant`. More may come without an app release.',
     }),
     squad: z.uuid(),
     week: z.strictObject({ from: WeekStart, to: LocalDay }),

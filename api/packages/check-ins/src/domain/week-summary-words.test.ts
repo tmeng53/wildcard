@@ -5,13 +5,14 @@ import { WeekSummaryWords, winnerText } from './week-summary-words.js';
 const counted = (one: string, other: string) => ({ one, other });
 const award = {
   symbol: 'crown.fill',
-  title: { 'zh-Hans': '皇冠', en: 'Crown' },
+  title: { 'zh-Hans': '皇冠', en: 'Crown', 'zh-Hant': '皇冠' },
   winner: {
     'zh-Hans': counted('练了 {n} 天', '练了 {n} 天'),
     en: counted('Trained {n} day', 'Trained {n} days'),
+    'zh-Hant': counted('練了 {n} 天', '練了 {n} 天'),
   },
 };
-const stat = { 'zh-Hans': '打卡', en: 'Check-ins' };
+const stat = { 'zh-Hans': '打卡', en: 'Check-ins', 'zh-Hant': '打卡' };
 const words = {
   version: 1,
   awards: { planCompleted: award, crown: award, bestDisclaimer: award },
@@ -32,6 +33,7 @@ describe('the week summary’s words', () => {
     expect(winnerText(parsed, { kind: 'crown', value: 1, language: 'en' })).toBe('Trained 1 day');
     expect(winnerText(parsed, { kind: 'crown', value: 5, language: 'en' })).toBe('Trained 5 days');
     expect(winnerText(parsed, { kind: 'crown', value: 0, language: 'zh-Hans' })).toBe('练了 0 天');
+    expect(winnerText(parsed, { kind: 'crown', value: 2, language: 'zh-Hant' })).toBe('練了 2 天');
   });
 
   it('need words for every award and count, and a number in a winner’s', () => {

@@ -292,6 +292,21 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
       ],
     });
     expect(english.body).toHaveProperty('squadTotals.stats.0.label', 'Days trained');
+
+    const traditional = await call('GET', {
+      path: summaryOf(squad, monday),
+      token: me.token,
+      language: 'zh-Hant',
+    });
+    expect(traditional.body).toMatchObject({
+      language: 'zh-Hant',
+      awards: [
+        { title: '頒獎台', winners: [{ text: '訓練 1 天' }] },
+        { title: '皇冠', winners: [{ text: '訓練 1 天' }] },
+        { title: '本週最佳假單', winners: [{ text: '1 個回應' }] },
+      ],
+    });
+    expect(traditional.body).toHaveProperty('squadTotals.stats.3.label', '假單');
   });
 
   it('refuses a day that isn’t a Monday, a week not started, and non-members', async () => {

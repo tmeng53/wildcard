@@ -6,6 +6,13 @@ import type { Language } from '@wildcard/check-ins';
 const isLanguage = (tag: string, language: string) =>
   tag === language || tag.startsWith(`${language}-`);
 
+/** The Chinese a tag asks for: Traditional for `zh-Hant` and the regions that write it. */
+const chineseOf = (tag: string): Language =>
+  isLanguage(tag, 'zh-hant') ||
+  ['zh-tw', 'zh-hk', 'zh-mo'].some((region) => isLanguage(tag, region))
+    ? 'zh-Hant'
+    : 'zh-Hans';
+
 /**
  * The language in `Accept-Language` the summary is written in that the client weighs highest
  * (`q`, 1 when left out), the earlier one on a tie; Chinese when none is. A range weighed `q=0`
@@ -18,7 +25,11 @@ export function languageOf(acceptLanguage: string | undefined): Language {
     const weight = parameters.find((parameter) => parameter.startsWith('q='));
     const q = weight === undefined ? 1 : Number(weight.slice(2));
     if (!(q > 0 && q <= 1)) continue;
-    const language = isLanguage(tag, 'zh') ? 'zh-Hans' : isLanguage(tag, 'en') ? 'en' : undefined;
+    const language = isLanguage(tag, 'zh')
+      ? chineseOf(tag)
+      : isLanguage(tag, 'en')
+        ? 'en'
+        : undefined;
     if (language !== undefined && (best === undefined || q > best.q)) best = { language, q };
   }
   return best?.language ?? 'zh-Hans';

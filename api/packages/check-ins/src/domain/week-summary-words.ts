@@ -7,14 +7,14 @@ import { AwardKind, StatKind } from './week-summary.js';
 // count's name, in every language the summary is written in. The awards and counts themselves
 // are rules in code (week-summary.ts); every kind must have its words.
 
-/** The languages the summary is written in; Chinese first. */
-export const Language = z.enum(['zh-Hans', 'en']);
+/** The languages the summary is written in; Chinese first, Traditional Chinese in Taiwan's words. */
+export const Language = z.enum(['zh-Hans', 'en', 'zh-Hant']);
 export type Language = z.infer<typeof Language>;
 
 const Text = z.string().trim().min(1).max(60);
 
 /** One phrase in each language. */
-const Phrase = z.strictObject({ 'zh-Hans': Text, en: Text });
+const Phrase = z.strictObject({ 'zh-Hans': Text, en: Text, 'zh-Hant': Text });
 
 /** A count in words: `{n}` stands for the number; `one` when it is 1, `other` otherwise. */
 const Counted = z.strictObject({
@@ -30,7 +30,7 @@ const AwardWords = z.strictObject({
     .max(80),
   title: Phrase,
   /** What a winner won it by, from the award's value. */
-  winner: z.strictObject({ 'zh-Hans': Counted, en: Counted }),
+  winner: z.strictObject({ 'zh-Hans': Counted, en: Counted, 'zh-Hant': Counted }),
 });
 
 export const WeekSummaryWords = z.strictObject({

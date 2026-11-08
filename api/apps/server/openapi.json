@@ -4263,7 +4263,7 @@
           "language": {
             "type": "string",
             "minLength": 1,
-            "description": "The language the words are in: today `zh-Hans` or `en`. More may come without an app release."
+            "description": "The language the words are in: today `zh-Hans`, `en` or `zh-Hant`. More may come without an app release."
           },
           "squad": {
             "type": "string",

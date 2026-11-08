@@ -6743,7 +6743,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/WeekSummary/version`.
             public var version: Components.Schemas.WeekSummary.VersionPayload
-            /// The language the words are in: today `zh-Hans` or `en`. More may come without an app release.
+            /// The language the words are in: today `zh-Hans`, `en` or `zh-Hant`. More may come without an app release.
             ///
             /// - Remark: Generated from `#/components/schemas/WeekSummary/language`.
             public var language: Swift.String
@@ -6914,7 +6914,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - language: The language the words are in: today `zh-Hans` or `en`. More may come without an app release.
+            ///   - language: The language the words are in: today `zh-Hans`, `en` or `zh-Hant`. More may come without an app release.
             ///   - squad:
             ///   - week:
             ///   - final: Every member’s own Sunday is over: the week has been played and the card can show. Numbers can still change after that: a check-in sent up to 48 hours late, a reaction left, changed or taken off later, or a member joining or leaving, since the week is read for the squad as it is now. Before that the week is still being played.

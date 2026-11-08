@@ -839,7 +839,11 @@ describe('the admin MCP server', () => {
       stats: z.record(z.string(), z.json()),
     });
     const before = Words.parse(JSON.parse((await call('get_week_summary_words')).text));
-    expect(before.stats.checkIns).toStrictEqual({ 'zh-Hans': '打卡', en: 'Check-ins' });
+    expect(before.stats.checkIns).toStrictEqual({
+      'zh-Hans': '打卡',
+      en: 'Check-ins',
+      'zh-Hant': '打卡',
+    });
     const logged = async () =>
       (
         await sql<{ words: unknown }>`
@@ -849,7 +853,7 @@ describe('the admin MCP server', () => {
       ).rows.map(({ words }) => words);
 
     try {
-      const checkIns = { 'zh-Hans': '打卡次数', en: 'Check-ins logged' };
+      const checkIns = { 'zh-Hans': '打卡次数', en: 'Check-ins logged', 'zh-Hant': '打卡次數' };
       const changed = Words.parse(
         JSON.parse((await call('change_week_summary_words', { stats: { checkIns } })).text),
       );
@@ -860,14 +864,17 @@ describe('the admin MCP server', () => {
       // An award or count the API doesn't have, a winner's words without the number, or nothing.
       for (const args of [
         { stats: { laps: checkIns } },
+        // A count without its Traditional Chinese.
+        { stats: { checkIns: { 'zh-Hans': '打卡', en: 'Check-ins' } } },
         {
           awards: {
             crown: {
               symbol: 'crown.fill',
-              title: { 'zh-Hans': '皇冠', en: 'Crown' },
+              title: { 'zh-Hans': '皇冠', en: 'Crown', 'zh-Hant': '皇冠' },
               winner: {
                 'zh-Hans': { one: '练了几天', other: '练了 {n} 天' },
                 en: { one: '{n} day', other: '{n} days' },
+                'zh-Hant': { one: '練了 {n} 天', other: '練了 {n} 天' },
               },
             },
           },
