@@ -1,7 +1,7 @@
 -- The Sunday summary's words: one row, never deleted, and a log that only grows, except that it
 -- forgets which admin made a change once that admin deletes their account.
 begin;
-select plan(8);
+select plan(7);
 
 insert into auth.users (id, email) values ('d0000000-0000-0000-0000-000000000002', 'admin@example.com');
 insert into public.week_summary_word_events (changed_by, words) values
@@ -10,10 +10,6 @@ insert into public.week_summary_word_events (changed_by, words) values
 select is(
   (select words #>> '{awards,crown,title,zh-Hans}' from public.week_summary_words),
   '皇冠', 'the summary starts with its words'
-);
-select is(
-  (select words #>> '{awards,bestDisclaimer,title,zh-Hant}' from public.week_summary_words),
-  '本週最佳假單', 'the words are in Traditional Chinese too'
 );
 select throws_ok($$delete from public.week_summary_words$$, '42501', null, 'the words keep their row');
 select throws_ok($$insert into public.week_summary_words (only_row, words) values (false, '{"version": 1}')$$, '23514', null, 'there is only one row of words');

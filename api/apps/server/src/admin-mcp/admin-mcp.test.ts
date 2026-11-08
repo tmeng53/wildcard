@@ -839,11 +839,12 @@ describe('the admin MCP server', () => {
       stats: z.record(z.string(), z.json()),
     });
     const before = Words.parse(JSON.parse((await call('get_week_summary_words')).text));
-    expect(before.stats.checkIns).toStrictEqual({
-      'zh-Hans': '打卡',
-      en: 'Check-ins',
-      'zh-Hant': '打卡',
-    });
+    // Words saved before Traditional Chinese came may have none until an admin gives them theirs.
+    const beforeCheckIns = z
+      .strictObject({ 'zh-Hans': z.string(), en: z.string(), 'zh-Hant': z.string().optional() })
+      .parse(before.stats.checkIns);
+    expect(beforeCheckIns).toMatchObject({ 'zh-Hans': '打卡', en: 'Check-ins' });
+    const restored = { 'zh-Hant': '打卡', ...beforeCheckIns };
     const logged = async () =>
       (
         await sql<{ words: unknown }>`
@@ -885,11 +886,12 @@ describe('the admin MCP server', () => {
       }
       expect(await logged()).toHaveLength(1);
     } finally {
-      await call('change_week_summary_words', { stats: { checkIns: before.stats.checkIns } });
+      await call('change_week_summary_words', { stats: { checkIns: restored } });
     }
-    expect(Words.parse(JSON.parse((await call('get_week_summary_words')).text))).toStrictEqual(
-      before,
-    );
+    expect(Words.parse(JSON.parse((await call('get_week_summary_words')).text))).toStrictEqual({
+      ...before,
+      stats: { ...before.stats, checkIns: restored },
+    });
     await client.close();
   });
 
