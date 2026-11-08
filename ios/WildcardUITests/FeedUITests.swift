@@ -124,27 +124,6 @@ final class FeedUITests: XCTestCase {
         assertClearOfTheTabBar(strip, in: app)
     }
 
-    /// A 训练 whose cover is only its map or chart (no photo) meets its 成绩条 in a straight line:
-    /// the cover's pages are square at the bottom. The run by the river is scrolled to, and its
-    /// cover, with the strip under it, is kept for a look at where they meet.
-    func testMapCoverMeetsTheScoreStripSquare() {
-        continueAfterFailure = false
-        let app = launch(language: "zh-Hans")
-        XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
-        let map = app.descendants(matching: .any).matching(identifier: "feed.map").firstMatch
-        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
-        let feed = app.scrollViews.firstMatch
-        var drags = 0
-        while drags < Self.maxSwipes, !(map.exists && map.frame.maxY + Self.stripHeight <= tabBarTop) {
-            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
-            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
-            drags += 1
-        }
-        XCTAssertTrue(map.exists, "no map-only cover")
-        settle()
-        keepScreenshot(named: "44-feed-map-cover-strip")
-    }
-
     /// A post without a cover shows the shared colour block with its words, its minutes on the
     /// 成绩条 under it: the 请假条 near the top, and two days back the tennis serve.
     func testPostsWithoutPhotos() {
@@ -329,5 +308,28 @@ final class FeedUITests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+}
+
+extension FeedUITests {
+    /// A 训练 whose cover is only its map or chart (no photo) meets its 成绩条 in a straight line:
+    /// the cover's pages are square at the bottom. The run by the river is scrolled to, and its
+    /// cover, with the strip under it, is kept for a look at where they meet.
+    func testMapCoverMeetsTheScoreStripSquare() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
+        let map = app.descendants(matching: .any).matching(identifier: "feed.map").firstMatch
+        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
+        let feed = app.scrollViews.firstMatch
+        var drags = 0
+        while drags < Self.maxSwipes, !(map.exists && map.frame.maxY + Self.stripHeight <= tabBarTop) {
+            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            drags += 1
+        }
+        XCTAssertTrue(map.exists, "no map-only cover")
+        settle()
+        keepScreenshot(named: "44-feed-map-cover-strip")
     }
 }
