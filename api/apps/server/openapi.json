@@ -2515,14 +2515,7 @@
             "$ref": "#/components/schemas/RecordStreak"
           },
           "mealStreak": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/RecordStreak"
-              },
-              {
-                "description": "Most days in a row with a 健康餐; left out before the first."
-              }
-            ]
+            "$ref": "#/components/schemas/RecordStreak"
           },
           "hours": {
             "type": "array",
@@ -2572,7 +2565,8 @@
           "sports",
           "sportCount"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left out before the first."
       },
       "RecordStreak": {
         "type": "object",
@@ -2598,8 +2592,7 @@
           "from",
           "to"
         ],
-        "additionalProperties": false,
-        "description": "Most days trained in a row; a planned rest day between them neither breaks nor adds. Left out before the first 练了."
+        "additionalProperties": false
       },
       "RecordSport": {
         "type": "object",
@@ -2654,7 +2647,7 @@
           "firsts"
         ],
         "additionalProperties": false,
-        "description": "How the member stands in their squad, from what squadmates shared with it; left out outside a squad."
+        "description": "How the member stands in their squad, from what squadmates shared with it; left out outside a squad. `partner` is the squadmate who trained on the same days as the member the most."
       },
       "RecordMateCount": {
         "type": "object",
@@ -2673,8 +2666,7 @@
           "memberId",
           "count"
         ],
-        "additionalProperties": false,
-        "description": "The squadmate who trained on the same days as the member the most."
+        "additionalProperties": false
       },
       "RecordCheers": {
         "type": "object",
@@ -2685,20 +2677,14 @@
             "description": "Reactions, all time, between the member and their squadmates."
           },
           "top": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/RecordMateCount"
-              },
-              {
-                "description": "The squadmate with the most; none at 0."
-              }
-            ]
+            "$ref": "#/components/schemas/RecordMateCount"
           }
         },
         "required": [
           "count"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Reactions and the squadmate with the most (`top`, none at 0)."
       },
       "TrainingRecord": {
         "type": "object",

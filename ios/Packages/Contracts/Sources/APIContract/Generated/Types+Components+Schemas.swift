@@ -4270,6 +4270,8 @@ extension Components {
                 case checkIns
             }
         }
+        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left out before the first.
+        ///
         /// - Remark: Generated from `#/components/schemas/MemberRecords`.
         public struct MemberRecords: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/MemberRecords/version`.
@@ -4293,36 +4295,7 @@ extension Components {
             /// - Remark: Generated from `#/components/schemas/MemberRecords/longestStreak`.
             public var longestStreak: Components.Schemas.RecordStreak?
             /// - Remark: Generated from `#/components/schemas/MemberRecords/mealStreak`.
-            public struct MealStreakPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/MemberRecords/mealStreak/value1`.
-                public var value1: Components.Schemas.RecordStreak
-                /// Most days in a row with a 健康餐; left out before the first.
-                ///
-                /// - Remark: Generated from `#/components/schemas/MemberRecords/mealStreak/value2`.
-                public var value2: OpenAPIRuntime.OpenAPIValueContainer
-                /// Creates a new `MealStreakPayload`.
-                ///
-                /// - Parameters:
-                ///   - value1:
-                ///   - value2: Most days in a row with a 健康餐; left out before the first.
-                public init(
-                    value1: Components.Schemas.RecordStreak,
-                    value2: OpenAPIRuntime.OpenAPIValueContainer
-                ) {
-                    self.value1 = value1
-                    self.value2 = value2
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    self.value1 = try .init(from: decoder)
-                    self.value2 = try .init(from: decoder)
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    try self.value1.encode(to: encoder)
-                    try self.value2.encode(to: encoder)
-                }
-            }
-            /// - Remark: Generated from `#/components/schemas/MemberRecords/mealStreak`.
-            public var mealStreak: Components.Schemas.MemberRecords.MealStreakPayload?
+            public var mealStreak: Components.Schemas.RecordStreak?
             /// 练了 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
             ///
             /// - Remark: Generated from `#/components/schemas/MemberRecords/hours`.
@@ -4361,7 +4334,7 @@ extension Components {
                 minutes: Swift.Int,
                 longestMinutes: Swift.Int? = nil,
                 longestStreak: Components.Schemas.RecordStreak? = nil,
-                mealStreak: Components.Schemas.MemberRecords.MealStreakPayload? = nil,
+                mealStreak: Components.Schemas.RecordStreak? = nil,
                 hours: [Swift.Int],
                 weekdays: [Swift.Int],
                 sports: [Components.Schemas.RecordSport],
@@ -4394,8 +4367,6 @@ extension Components {
                 case squad
             }
         }
-        /// Most days trained in a row; a planned rest day between them neither breaks nor adds. Left out before the first 练了.
-        ///
         /// - Remark: Generated from `#/components/schemas/RecordStreak`.
         public struct RecordStreak: Codable, Hashable, Sendable {
             /// Days in the run.
@@ -4464,7 +4435,7 @@ extension Components {
                 case days
             }
         }
-        /// How the member stands in their squad, from what squadmates shared with it; left out outside a squad.
+        /// How the member stands in their squad, from what squadmates shared with it; left out outside a squad. `partner` is the squadmate who trained on the same days as the member the most.
         ///
         /// - Remark: Generated from `#/components/schemas/SquadRecords`.
         public struct SquadRecords: Codable, Hashable, Sendable {
@@ -4509,8 +4480,6 @@ extension Components {
                 case firsts
             }
         }
-        /// The squadmate who trained on the same days as the member the most.
-        ///
         /// - Remark: Generated from `#/components/schemas/RecordMateCount`.
         public struct RecordMateCount: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/RecordMateCount/memberId`.
@@ -4536,6 +4505,8 @@ extension Components {
                 case count
             }
         }
+        /// Reactions and the squadmate with the most (`top`, none at 0).
+        ///
         /// - Remark: Generated from `#/components/schemas/RecordCheers`.
         public struct RecordCheers: Codable, Hashable, Sendable {
             /// Reactions, all time, between the member and their squadmates.
@@ -4543,36 +4514,7 @@ extension Components {
             /// - Remark: Generated from `#/components/schemas/RecordCheers/count`.
             public var count: Swift.Int
             /// - Remark: Generated from `#/components/schemas/RecordCheers/top`.
-            public struct TopPayload: Codable, Hashable, Sendable {
-                /// - Remark: Generated from `#/components/schemas/RecordCheers/top/value1`.
-                public var value1: Components.Schemas.RecordMateCount
-                /// The squadmate with the most; none at 0.
-                ///
-                /// - Remark: Generated from `#/components/schemas/RecordCheers/top/value2`.
-                public var value2: OpenAPIRuntime.OpenAPIValueContainer
-                /// Creates a new `TopPayload`.
-                ///
-                /// - Parameters:
-                ///   - value1:
-                ///   - value2: The squadmate with the most; none at 0.
-                public init(
-                    value1: Components.Schemas.RecordMateCount,
-                    value2: OpenAPIRuntime.OpenAPIValueContainer
-                ) {
-                    self.value1 = value1
-                    self.value2 = value2
-                }
-                public init(from decoder: any Swift.Decoder) throws {
-                    self.value1 = try .init(from: decoder)
-                    self.value2 = try .init(from: decoder)
-                }
-                public func encode(to encoder: any Swift.Encoder) throws {
-                    try self.value1.encode(to: encoder)
-                    try self.value2.encode(to: encoder)
-                }
-            }
-            /// - Remark: Generated from `#/components/schemas/RecordCheers/top`.
-            public var top: Components.Schemas.RecordCheers.TopPayload?
+            public var top: Components.Schemas.RecordMateCount?
             /// Creates a new `RecordCheers`.
             ///
             /// - Parameters:
@@ -4580,7 +4522,7 @@ extension Components {
             ///   - top:
             public init(
                 count: Swift.Int,
-                top: Components.Schemas.RecordCheers.TopPayload? = nil
+                top: Components.Schemas.RecordMateCount? = nil
             ) {
                 self.count = count
                 self.top = top

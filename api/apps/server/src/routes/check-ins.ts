@@ -273,8 +273,9 @@ const MateCount = z
 const Cheers = z
   .strictObject({
     count: count('Reactions, all time, between the member and their squadmates.'),
-    top: MateCount.optional().meta({ description: 'The squadmate with the most; none at 0.' }),
+    top: MateCount.optional(),
   })
+  .meta({ description: 'Reactions and the squadmate with the most (`top`, none at 0).' })
   .openapi('RecordCheers');
 
 const MemberRecords = z
@@ -283,14 +284,9 @@ const MemberRecords = z
     trainedDays: count('Days with a 练了.'),
     minutes: count('Minutes of every 练了 that says how long it took.'),
     longestMinutes: count('The longest single 练了; left out when none says how long.').optional(),
-    longestStreak: Streak.optional().meta({
-      description:
-        'Most days trained in a row; a planned rest day between them neither breaks nor adds. ' +
-        'Left out before the first 练了.',
-    }),
-    mealStreak: Streak.optional().meta({
-      description: 'Most days in a row with a 健康餐; left out before the first.',
-    }),
+    // Described on the object: a described reference becomes a wrapper type in generated clients.
+    longestStreak: Streak.optional(),
+    mealStreak: Streak.optional(),
     hours: z.array(count('练了 posted in this hour.')).min(24).max(24).meta({
       description:
         '练了 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.',
@@ -316,9 +312,7 @@ const MemberRecords = z
     squad: z
       .strictObject({
         id: z.uuid(),
-        partner: MateCount.optional().meta({
-          description: 'The squadmate who trained on the same days as the member the most.',
-        }),
+        partner: MateCount.optional(),
         cheersReceived: Cheers,
         cheersGiven: Cheers,
         firsts: z.array(z.string()).meta({
@@ -332,9 +326,16 @@ const MemberRecords = z
       .meta({
         description:
           'How the member stands in their squad, from what squadmates shared with it; left ' +
-          'out outside a squad.',
+          'out outside a squad. `partner` is the squadmate who trained on the same days as the ' +
+          'member the most.',
       })
       .openapi('SquadRecords'),
+  })
+  .meta({
+    description:
+      '外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them ' +
+      'neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left ' +
+      'out before the first.',
   })
   .openapi('MemberRecords');
 

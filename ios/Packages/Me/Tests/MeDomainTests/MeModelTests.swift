@@ -33,6 +33,10 @@ actor FakeService: MeService {
         return current
     }
 
+    func records() async throws(MeError) -> WildcardRecords {
+        throw failing ?? .unavailable
+    }
+
     func save(_ character: MeCharacter) async throws(MeError) {
         if let failing { throw failing }
         current.character = character
