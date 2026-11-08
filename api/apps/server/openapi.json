@@ -5847,6 +5847,12 @@
                 "format": "date",
                 "description": "The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.",
                 "example": "2026-10-12"
+              },
+              "today": {
+                "type": "string",
+                "format": "date",
+                "description": "Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.",
+                "example": "2026-10-29"
               }
             },
             "required": [

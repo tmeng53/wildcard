@@ -153,7 +153,7 @@ extension MateSchedule {
                 .trained(.sport("strength")), .none, .none,
             ],
             fuel: [.suggested(.veggies), .suggested(.lessBubbleTea)],
-            firstWeek: day.weekStart.adding(days: -14))
+            firstWeek: day.weekStart.adding(days: -14), today: day)
     }
 }
 

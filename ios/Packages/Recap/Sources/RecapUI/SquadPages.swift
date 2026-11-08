@@ -186,8 +186,7 @@ struct EndingPage: View {
 
     private var line: Text {
         if let line = ending.line { return Text(verbatim: line) }
-        return ending.isHit
-            ? Text(copy: "全队达标", bundle: .module) : Text(copy: "还差 \(ending.shortBy) 次", bundle: .module)
+        return ending.isHit ? Text(copy: "全队达标", bundle: .module) : Text(copy: "一起练了 \(ending.done) 次", bundle: .module)
     }
 
     @ViewBuilder

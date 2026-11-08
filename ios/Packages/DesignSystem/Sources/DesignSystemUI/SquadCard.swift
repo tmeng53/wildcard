@@ -86,8 +86,6 @@ public struct WeekDayDetail: Sendable, Hashable {
 /// My week: what I trained, my count against my plan, and Monday to Sunday, each day with what it
 /// holds. No calories or body numbers.
 public struct MyWeek: Sendable, Hashable {
-    /// What I trained this week, as the app words it (游泳 1 · 跑步 1).
-    public let summary: String
     public let done: Int
     public let planned: Int
     /// Monday first, seven days.
@@ -99,9 +97,8 @@ public struct MyWeek: Sendable, Hashable {
     public let details: [WeekDayDetail]
 
     public init(
-        summary: String, done: Int, planned: Int, days: [WeekDayStatus], today: Int?, details: [WeekDayDetail]
+        done: Int, planned: Int, days: [WeekDayStatus], today: Int?, details: [WeekDayDetail]
     ) {
-        self.summary = summary
         self.done = done
         self.planned = planned
         self.days = days
@@ -257,7 +254,8 @@ extension SquadCard where Footer == EmptyView {
 private struct PageHeader: View {
     @Environment(\.sceneTheme) private var theme
     let label: Text
-    let title: String
+    /// Under the label; a page whose label says enough leaves it out.
+    let title: String?
     let count: Int
     let goal: Int
     /// A word after the score (天).
@@ -281,7 +279,7 @@ private struct PageHeader: View {
                     }
                     .buttonStyle(PressableButtonStyle())
                     .accessibilityIdentifier("squadcard.squad")
-                } else {
+                } else if title != nil {
                     titleText
                 }
             }
@@ -298,7 +296,7 @@ private struct PageHeader: View {
     }
 
     private var titleText: some View {
-        Text(verbatim: title)
+        Text(verbatim: title ?? "")
             .typeStyle(TypeRamp.headline)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .lineLimit(1)
@@ -362,7 +360,7 @@ private struct MyWeekPage: View {
         let picked = shownDay
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
-                label: Text(copy: "本周我的训练", bundle: .module), title: mine.summary, count: mine.done, goal: mine.planned)
+                label: Text(copy: "我的一周", bundle: .module), title: nil, count: mine.done, goal: mine.planned)
             Spacer(minLength: Space.s)
             HStack(spacing: 0) {
                 ForEach(Array(mine.days.enumerated()), id: \.offset) { index, status in

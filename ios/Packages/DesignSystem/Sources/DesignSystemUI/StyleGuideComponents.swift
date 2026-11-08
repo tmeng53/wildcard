@@ -304,8 +304,7 @@ struct StatusSection: View {
 
     private var myWeek: MyWeek {
         MyWeek(
-            summary: String(copy: "游泳 1 · 跑步 1", bundle: .module), done: mine == .done ? 3 : 2,
-            planned: 5,
+            done: mine == .done ? 3 : 2, planned: 5,
             days: [
                 .trained(symbol: "figure.run"), .restDay, .trained(symbol: "figure.pool.swim"), .excused,
                 mine == .done ? .trained(symbol: "figure.run") : .planned(symbol: "figure.run"),

@@ -26,12 +26,6 @@ public struct WeekRecord: Hashable, Sendable {
         public let cheatMeals: Int
     }
 
-    /// An activity I trained this week, and on how many days.
-    public struct Trained: Hashable, Sendable {
-        public let activity: Activity
-        public let days: Int
-    }
-
     /// Monday first, seven days.
     public let days: [Day]
     /// The sport each day shows, Monday first: what I trained that day, else what the plan names;
@@ -39,8 +33,6 @@ public struct WeekRecord: Hashable, Sendable {
     public let activities: [Activity?]
     /// Today's index in `days`.
     public let today: Int
-    /// Most days first; ties in the order first trained.
-    public let trained: [Trained]
     /// Monday first, seven days.
     public let logs: [DayLog]
 }
@@ -60,23 +52,8 @@ extension Home {
 
         let activities = (0..<7).map { shownActivity(on: monday.adding(days: $0), mine: mine) }
 
-        // Several of the same activity on one day count as one day of it.
-        var trainedActivities: [Activity] = []
-        var daysOf: [Activity: Set<LocalDay>] = [:]
-        for checkIn in mine {
-            guard case .trained(let training) = checkIn.entry else { continue }
-            if daysOf[training.activity] == nil { trainedActivities.append(training.activity) }
-            daysOf[training.activity, default: []].insert(checkIn.day)
-        }
-        let trained = trainedActivities.enumerated()
-            .map {
-                (order: $0.offset, item: WeekRecord.Trained(activity: $0.element, days: daysOf[$0.element]?.count ?? 0))
-            }
-            .sorted { ($1.item.days, $0.order) < ($0.item.days, $1.order) }
-            .map(\.item)
-
         return WeekRecord(
-            days: days, activities: activities, today: day.weekday - 1, trained: trained,
+            days: days, activities: activities, today: day.weekday - 1,
             logs: (0..<7).map { offset in Self.log(of: mine.filter { $0.day == monday.adding(days: offset) }) })
     }
 

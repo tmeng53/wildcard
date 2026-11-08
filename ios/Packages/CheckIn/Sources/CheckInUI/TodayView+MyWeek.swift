@@ -12,10 +12,6 @@ extension TodayView {
     func myWeek(home: Home, day: LocalDay, week: WeekCount) -> DesignSystemUI.MyWeek {
         let record = home.week(on: day)
         return DesignSystemUI.MyWeek(
-            summary: record.trained.map {
-                String(copy: "\($0.activity.localizedName) \($0.days)", bundle: .module)
-            }
-            .joined(separator: " · "),
             done: week.trainedDays, planned: week.plannedDays,
             days: zip(record.days, record.activities).map { status, activity in
                 switch status {
