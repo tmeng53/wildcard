@@ -1,4 +1,5 @@
 import { hasErrorCode } from '@wildcard/errors';
+import { ReaderLanguage } from '@wildcard/language-model';
 import { sql, type Kysely, type Selectable, type Transaction } from 'kysely';
 import { z } from 'zod';
 
@@ -510,6 +511,38 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           if (hasErrorCode(error, '22023')) throw new SquadTimeZoneUnknownError(timeZone);
           throw error;
         }
+        return 'changed';
+      });
+    },
+
+    async languages(squads) {
+      if (squads.length === 0) return new Map();
+      const rows = await db
+        .selectFrom('squad_languages')
+        .select(['squad_id', 'language'])
+        .where('squad_id', 'in', squads)
+        .orderBy('id')
+        .execute();
+      // The newest row of each squad stands.
+      return new Map(
+        rows.map((row) => [SquadId.parse(row.squad_id), ReaderLanguage.parse(row.language)]),
+      );
+    },
+
+    setLanguage({ squad, actor, language }) {
+      return asCaptain({ squad, actor }, async (trx) => {
+        const latest = await trx
+          .selectFrom('squad_languages')
+          .select('language')
+          .where('squad_id', '=', squad)
+          .orderBy('id', 'desc')
+          .limit(1)
+          .executeTakeFirst();
+        if (latest?.language === language) return 'unchanged';
+        await trx
+          .insertInto('squad_languages')
+          .values({ squad_id: squad, language, set_by: actor })
+          .execute();
         return 'changed';
       });
     },
