@@ -13,6 +13,7 @@ import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/discl
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
 import type { Notices } from '@wildcard/notices';
+import type { FeedbackInbox } from '@wildcard/feedback';
 import type { Nudges } from '@wildcard/nudges';
 import type { Push } from '@wildcard/push';
 import type { Scenes } from '@wildcard/scenes';
@@ -36,6 +37,7 @@ import type {
   Accounts,
   Database,
   IsScheduler,
+  IssueTracker,
   LiveEvents,
   OAuthConsent,
   PhotoStorage,
@@ -59,6 +61,7 @@ import { me } from './routes/me.js';
 import type { CoachNames } from './flows/coach-names.js';
 import { notices } from './routes/notices.js';
 import { nudges } from './routes/nudges.js';
+import { feedback } from './routes/feedback.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
 import { comments } from './routes/comments.js';
@@ -99,6 +102,10 @@ export interface AppDependencies {
   readonly coachActivity: CoachActivity;
   /** Squadmates' pokes, which the daily push counts. */
   readonly nudges: Nudges;
+  /** 意见反馈: members' messages to us. */
+  readonly feedback: FeedbackInbox;
+  /** Where each message is filed; undefined until its token is set, and then they wait. */
+  readonly issues: IssueTracker | undefined;
   /** What each member was told (通知, the bell on 动态), and how far they read it. */
   readonly notices: Notices;
   /** The coaches' names now, which a coach's notice shows. */
@@ -222,6 +229,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', squadLanguage(deps));
   app.route('/', coachActivity(deps));
   app.route('/', nudges(deps));
+  app.route('/', feedback(deps));
   app.route('/', notices(deps));
   app.route('/', events(deps));
   app.route('/', weekSummary({ ...deps, words: deps.weekSummaryWords }));
@@ -237,6 +245,7 @@ export function createApp(deps: AppDependencies) {
     jobs({
       isScheduler: deps.jobs.isScheduler,
       dailyProgress: { ...deps, interactions: deps.jobs.interactions, clock: deps.jobs.clock },
+      feedbackIssues: deps,
       weeklyAwards: { ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) },
       suggestGoal: deps.jobs.suggestGoal,
       ...(deps.jobs.coach === undefined ? {} : { coach: deps.jobs.coach }),

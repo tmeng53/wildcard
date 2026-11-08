@@ -26,6 +26,9 @@
       "path": "../../packages/nudges"
     },
     {
+      "path": "../../packages/feedback"
+    },
+    {
       "path": "../../packages/check-ins"
     },
     {

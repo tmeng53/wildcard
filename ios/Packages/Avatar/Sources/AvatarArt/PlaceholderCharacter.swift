@@ -13,9 +13,12 @@ public enum PlaceholderCharacter {
 
     /// Every variant a look can pick for `slot`, by name, sorted: what the character editor
     /// offers. Adding art is adding a folder, bundled or downloaded (`ArtTree`), so this reads
-    /// the folders instead of a list. The shopping bags 商店街 hands out are no pick.
+    /// the folders instead of a list. The shopping bags 商店街 hands out and 意见反馈's pencil are no pick.
+    /// Props that only a scene hands the character, never the editor.
+    private static let scenery: Set<String> = [shoppingBags, writingPencil]
+
     public static func variants(for slot: Slot) -> [String] {
-        ArtTree.names(in: "art/\(slot)", of: tree, bundled: folder).filter { slot != "prop" || $0 != shoppingBags }
+        ArtTree.names(in: "art/\(slot)", of: tree, bundled: folder).filter { slot != "prop" || !scenery.contains($0) }
     }
 
     public static func rig() throws(AvatarError) -> Rig {
