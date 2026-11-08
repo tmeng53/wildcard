@@ -94,7 +94,7 @@ export function createPostgresGiftStore(db: Kysely<DB>): GiftStore {
       return inserted === undefined ? undefined : shown(inserted);
     },
 
-    async open(member, piece, worn) {
+    async open({ member, piece, worn }) {
       const given = await db
         .selectFrom('coach_gifts')
         .select('piece_id')

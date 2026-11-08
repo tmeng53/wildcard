@@ -133,7 +133,7 @@ describe('coach gifts', () => {
     const gifts = giftsWith();
     const [member, coach, piece] = [await newMember(), await aCoach(), newPiece()];
     await gifts.putPiece({ id: piece, offered: true });
-    await expect(gifts.open(member, piece, true)).rejects.toThrow(GiftNotGivenError);
+    await expect(gifts.open({ member, piece, worn: true })).rejects.toThrow(GiftNotGivenError);
     await gifts.give({
       member,
       piece,
@@ -144,9 +144,9 @@ describe('coach gifts', () => {
       weekStart,
     });
 
-    const opened = await gifts.open(member, piece, false);
+    const opened = await gifts.open({ member, piece, worn: false });
     expect(opened.opened).toMatchObject({ worn: false });
-    const again = await gifts.open(member, piece, true);
+    const again = await gifts.open({ member, piece, worn: true });
     expect(again.opened).toStrictEqual(opened.opened);
   });
 

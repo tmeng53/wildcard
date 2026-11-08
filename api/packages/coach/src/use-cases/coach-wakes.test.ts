@@ -1358,12 +1358,18 @@ describe('the coach', () => {
       `
         .execute(trx)
         .then(({ rows }) => rows.map(({ id }) => Number(id)));
-      const answer = (member: string, note: number | undefined, said: 'accepted' | 'declined') =>
-        activity.answerChallenge({ squad, member, note: note ?? 0, answer: said });
-      expect(await answer(mia, mine, 'accepted')).toBe('accepted');
-      expect(await answer(mia, mine, 'declined')).toBe('accepted');
-      await expect(answer(leo, mine, 'accepted')).rejects.toThrow(CoachNoteNotFoundError);
-      await expect(answer(leo, theirs, 'accepted')).rejects.toThrow(CoachNoteNoChallengeError);
+      const answer = (
+        member: string,
+        { note, said }: { note: number | undefined; said: 'accepted' | 'declined' },
+      ) => activity.answerChallenge({ squad, member, note: note ?? 0, answer: said });
+      expect(await answer(mia, { note: mine, said: 'accepted' })).toBe('accepted');
+      expect(await answer(mia, { note: mine, said: 'declined' })).toBe('accepted');
+      await expect(answer(leo, { note: mine, said: 'accepted' })).rejects.toThrow(
+        CoachNoteNotFoundError,
+      );
+      await expect(answer(leo, { note: theirs, said: 'accepted' })).rejects.toThrow(
+        CoachNoteNoChallengeError,
+      );
       const later = randomUUID();
       await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
         values (${later}, ${mia}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(

@@ -292,11 +292,11 @@ export function unlocks(deps: {
 
   return new OpenAPIHono<SignedIn>()
     .openapi(open, async (c) => {
-      const gift = await deps.gifts.open(
-        MemberId.parse(c.var.caller.userId),
-        PieceId.parse(c.req.valid('param').pieceId),
-        c.req.valid('json').worn,
-      );
+      const gift = await deps.gifts.open({
+        member: MemberId.parse(c.var.caller.userId),
+        piece: PieceId.parse(c.req.valid('param').pieceId),
+        worn: c.req.valid('json').worn,
+      });
       return c.json({ version: 1 as const, gift: shownGift(gift) }, 200);
     })
     .openapi(claim, async (c) => {

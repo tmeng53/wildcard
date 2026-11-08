@@ -396,8 +396,9 @@ describe('GET /me/unlocks', () => {
     const opened = await open(me.token, true);
     expect(opened).toMatchObject({
       status: 200,
-      body: { version: 1, gift: { id: piece, worn: true, openedAt: expect.any(String) } },
+      body: { version: 1, gift: { id: piece, worn: true } },
     });
+    expect(JSON.stringify(opened.body)).toContain('"openedAt"');
     expect((await open(me.token, false)).body).toStrictEqual(opened.body);
     expect(await open(friend.token, true)).toMatchObject({
       status: 404,

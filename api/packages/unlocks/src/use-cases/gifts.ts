@@ -26,7 +26,11 @@ export interface CoachGifts {
    * Keeps that `member` opened their gift of `piece` (拆开) and whether they put it on then.
    * Opening it again keeps the first; answers with the gift as it stands.
    */
-  open(member: MemberId, piece: PieceId, worn: boolean): Promise<CoachGift>;
+  open(opening: {
+    readonly member: MemberId;
+    readonly piece: PieceId;
+    readonly worn: boolean;
+  }): Promise<CoachGift>;
 }
 
 /** The gift pool, for admins. */
@@ -69,8 +73,8 @@ export function createCoachGifts(deps: {
 
     of: (member) => deps.store.giftsOf(member),
 
-    async open(member, piece, worn) {
-      if (!(await deps.store.open(member, piece, worn))) throw new GiftNotGivenError(piece);
+    async open({ member, piece, worn }) {
+      if (!(await deps.store.open({ member, piece, worn }))) throw new GiftNotGivenError(piece);
       const gift = (await deps.store.giftsOf(member)).find((each) => each.piece === piece);
       if (gift === undefined) throw new GiftNotGivenError(piece);
       return gift;

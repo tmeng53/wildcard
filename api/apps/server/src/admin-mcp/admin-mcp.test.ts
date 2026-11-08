@@ -235,7 +235,7 @@ beforeAll(async () => {
                   switchListed: (id) => Promise.resolve(id === 'winter'),
                 }),
                 gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
-                giveGift: giveGiftAsAdmin(scope, async () => weekStartNow),
+                giveGift: giveGiftAsAdmin(scope, () => Promise.resolve(weekStartNow)),
               }),
               ...broadcastTools({
                 broadcasts: createNotices({
@@ -1292,10 +1292,9 @@ describe('the admin MCP server', () => {
     const gift = { squad, member: friend.userId, piece: scarf, line: '天冷了，围上。' };
 
     // Only from a squad's coach.
-    expect(await call('give_gift', gift)).toMatchObject({
-      isError: true,
-      text: expect.stringContaining('GIFT_NO_COACH') as unknown,
-    });
+    const refusedGiftNoCoach = await call('give_gift', gift);
+    expect(refusedGiftNoCoach.isError).toBe(true);
+    expect(refusedGiftNoCoach.text).toContain('GIFT_NO_COACH');
     await call('hire_coach', { squad, coach: 'xiaohun' });
     const given = await call('give_gift', gift);
     expect(given.isError).toBe(false);
@@ -1304,14 +1303,15 @@ describe('the admin MCP server', () => {
       gift: { piece: scarf, coach: 'xiaohun', squad, line: '天冷了，围上。', givenBy: 'admin' },
     });
     // One a member a week, and only to a member of the squad.
-    expect(await call('give_gift', { ...gift, piece: cap })).toMatchObject({
-      isError: true,
-      text: expect.stringContaining('GIFT_WEEKLY_LIMIT') as unknown,
+    const refusedGiftWeeklyLimit = await call('give_gift', { ...gift, piece: cap });
+    expect(refusedGiftWeeklyLimit.isError).toBe(true);
+    expect(refusedGiftWeeklyLimit.text).toContain('GIFT_WEEKLY_LIMIT');
+    const refusedGiftMemberNotInSquad = await call('give_gift', {
+      ...gift,
+      member: outsider.userId,
     });
-    expect(await call('give_gift', { ...gift, member: outsider.userId })).toMatchObject({
-      isError: true,
-      text: expect.stringContaining('GIFT_MEMBER_NOT_IN_SQUAD') as unknown,
-    });
+    expect(refusedGiftMemberNotInSquad.isError).toBe(true);
+    expect(refusedGiftMemberNotInSquad.text).toContain('GIFT_MEMBER_NOT_IN_SQUAD');
     const kept = await sql<{ given_by: string; admin_id: string | null }>`
       select given_by, admin_id from public.coach_gifts where member_id = ${friend.userId}
     `.execute(db);
@@ -1320,6 +1320,8 @@ describe('the admin MCP server', () => {
       select action from public.admin_actions where admin_id = ${admin.userId} order by at
     `.execute(db);
     expect(logged.rows.map(({ action }) => action.tool)).toContain('give_gift');
+    // Fired again, so no other test's coach run finds this squad hired.
+    await call('fire_coach', { squad });
     await client.close();
   });
 

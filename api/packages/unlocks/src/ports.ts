@@ -76,5 +76,9 @@ export interface GiftStore {
    * Keeps that `member` opened their gift of `piece` and whether they put it on; false when they
    * weren't given it. Opening it again keeps the first.
    */
-  open(member: MemberId, piece: PieceId, worn: boolean): Promise<boolean>;
+  open(opening: {
+    readonly member: MemberId;
+    readonly piece: PieceId;
+    readonly worn: boolean;
+  }): Promise<boolean>;
 }
