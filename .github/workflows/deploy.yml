@@ -49,6 +49,13 @@ jobs:
           workload_identity_provider: projects/${{ env.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/wildcard
           service_account: github-deploy@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com
       - uses: google-github-actions/setup-gcloud@v3
+      # The Supabase CLI npx installs (its install fetches the binary from GitHub releases), shared
+      # with verify's `supabase` job.
+      - name: Cache the Supabase CLI
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm/_npx
+          key: npx-supabase-${{ runner.os }}-2.121.0
 
       # `database-url` is the transaction pooler (port 6543), which the server shares across
       # instances. Migrations run through the session pooler on 5432 of the same host, which keeps

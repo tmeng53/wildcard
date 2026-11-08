@@ -422,6 +422,11 @@
                 "names": {
                   "$ref": "#/components/schemas/CatalogNames"
                 },
+                "color": {
+                  "type": "string",
+                  "description": "The colour its sports’ 成绩条, post blocks, routes and charts wear, with white on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before colours still reads (its sports then wear the gym’s steel).",
+                  "example": "#E65345"
+                },
                 "sports": {
                   "type": "array",
                   "items": {
@@ -1377,10 +1382,35 @@
             "type": "number",
             "exclusiveMinimum": 0,
             "maximum": 100
+          },
+          "runs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "descentM": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "topSpeedKmh": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 300
+          },
+          "elevationGainM": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "paceSecPer100m": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 86400
           }
         },
         "additionalProperties": false,
-        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim)."
+        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike)."
       },
       "WorkoutSeries": {
         "type": "object",
@@ -4010,7 +4040,7 @@
             "type": "string",
             "maxLength": 64,
             "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
-            "description": "Next week’s zone: a change counts from the next week, so it differs from `timeZone` only after the captain changed it this week.",
+            "description": "Next week’s zone, the same as `timeZone`: a change counts at once. Kept for builds that show a change waiting for next week.",
             "example": "Asia/Taipei"
           },
           "canChange": {
@@ -10262,7 +10292,7 @@
       "put": {
         "operationId": "setSquadTimeZone",
         "summary": "Set the squad’s time zone",
-        "description": "For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.",
+        "description": "For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.",
         "security": [
           {
             "bearer": []
@@ -10291,7 +10321,7 @@
         },
         "responses": {
           "200": {
-            "description": "The zone, with next week’s changed",
+            "description": "The zone, changed",
             "content": {
               "application/json": {
                 "schema": {

@@ -39,10 +39,20 @@ export const SportEdit = z.strictObject({
 });
 export type SportEdit = z.infer<typeof SportEdit>;
 
+/** A colour as `#RRGGBB`; kept upper case. */
+export const CategoryColor = z
+  .string()
+  .regex(/^#[0-9A-Fa-f]{6}$/)
+  .transform((hex) => hex.toUpperCase());
+
 /** A picker tab as a whole. */
 export const CategoryEdit = z.strictObject({
   id: CategoryId.describe('Its id, camelCase, such as `racket`.'),
   names: LocalizedNamesInput,
+  color: CategoryColor.describe(
+    'The colour its sports’ 成绩条, post blocks, routes and charts wear, with white on it, as ' +
+      '`#RRGGBB`, such as `#2F86C4`. Pick one dark enough for white text.',
+  ),
   position: Position.optional().describe(
     'Its place among the tabs, from 1. Leave it out to keep its place, or put a new one last.',
   ),
