@@ -106,7 +106,15 @@ public struct SecondaryButtonStyle: ButtonStyle {
                     placement: controlPlacement, fill: surface == .onInk ? .bgCanvas : .bgBrand, tinted: false)
             )
             .contentShape(Capsule())
+            // Compact draws 32 tall but answers taps across the full 44, without growing its row.
+            .padding(.vertical, tapOutset)
+            .contentShape(Rectangle())
+            .padding(.vertical, -tapOutset)
             .modifier(PressFeedback(isPressed: configuration.isPressed))
+    }
+
+    private var tapOutset: Double {
+        size == .regular ? 0 : (Sizing.minimumTapTarget - Sizing.segmentedControl) / 2
     }
 }
 
