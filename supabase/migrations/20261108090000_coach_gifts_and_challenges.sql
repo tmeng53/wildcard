@@ -22,6 +22,37 @@ alter table public.coach_gifts
   add column week_from timestamptz;
 
 create unique index coach_gifts_one_a_week on public.coach_gifts (member_id, week_from);
+create index coach_gifts_admin_id_idx on public.coach_gifts (admin_id);
+
+-- A gift is still never changed, but when the admin who gave it deletes their account, its
+-- `admin_id` turns null and nothing else; deleting the member's account takes the gift.
+create function public.coach_gifts_append_only() returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'DELETE' and not exists (select 1 from auth.users where id = old.member_id) then
+    return old;
+  end if;
+  if tg_op = 'UPDATE'
+    and new.admin_id is null
+    and old.admin_id is not null
+    and not exists (select 1 from auth.users where id = old.admin_id)
+    and (new.member_id, new.piece_id, new.coach_id, new.squad_id, new.given_at, new.line,
+      new.given_by, new.week_from)
+      is not distinct from (old.member_id, old.piece_id, old.coach_id, old.squad_id,
+      old.given_at, old.line, old.given_by, old.week_from)
+  then
+    return new;
+  end if;
+  raise exception 'coach_gifts is append-only' using errcode = '42501';
+end;
+$$;
+
+drop trigger coach_gifts_append_only on public.coach_gifts;
+create trigger coach_gifts_append_only
+  before update or delete on public.coach_gifts
+  for each row execute function public.coach_gifts_append_only();
 
 -- When the member opened each gift (拆开), and whether they put it on then (立刻穿上) or kept it
 -- for later (一会儿再说). Once a gift; it goes only with its gift.

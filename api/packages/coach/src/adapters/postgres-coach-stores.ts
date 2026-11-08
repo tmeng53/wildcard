@@ -275,6 +275,12 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
       async challengeOf({ squad, member, day }) {
         const row = await db
           .selectFrom('coach_member_notes')
+          // Only once it reached the member: before then they can't have seen it.
+          .innerJoin(
+            'coach_member_note_deliveries',
+            'coach_member_note_deliveries.note_id',
+            'coach_member_notes.id',
+          )
           .leftJoin(
             'coach_challenge_answers',
             'coach_challenge_answers.note_id',
@@ -522,12 +528,18 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
     },
 
     async answerChallenge({ squad, member, note, answer }) {
+      // Only a note that reached the member: one still waiting isn't theirs to answer yet.
       const mine = await db
         .selectFrom('coach_member_notes')
-        .select(['challenge_title'])
-        .where('id', '=', String(note))
-        .where('squad_id', '=', squad)
-        .where('member_id', '=', member)
+        .innerJoin(
+          'coach_member_note_deliveries',
+          'coach_member_note_deliveries.note_id',
+          'coach_member_notes.id',
+        )
+        .select(['coach_member_notes.challenge_title'])
+        .where('coach_member_notes.id', '=', String(note))
+        .where('coach_member_notes.squad_id', '=', squad)
+        .where('coach_member_notes.member_id', '=', member)
         .executeTakeFirst();
       if (mine === undefined) return 'noNote';
       if (mine.challenge_title === null) return 'noChallenge';

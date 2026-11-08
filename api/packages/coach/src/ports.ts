@@ -176,7 +176,7 @@ export interface CoachMemberNoteStore {
   }): Promise<boolean>;
   /**
    * The challenge the member's note of `day` (the squad's day) set, and what they said to it;
-   * `undefined` when that note set none, or there is no note.
+   * `undefined` when that note set none, there is no note, or it hasn't reached them yet.
    */
   challengeOf(input: {
     readonly squad: SquadId;
@@ -273,7 +273,8 @@ export interface CoachActivityStore {
   letter(squad: SquadId): Promise<CoachLetter | undefined>;
   /**
    * The member's answer to their note's challenge (接受挑战 or 算了); `noNote` when the note
-   * isn't theirs in the squad, `noChallenge` when it set none. The first answer stands.
+   * isn't theirs in the squad or hasn't reached them yet, `noChallenge` when it set none. The
+   * first answer stands.
    */
   answerChallenge(input: {
     readonly squad: SquadId;

@@ -1358,6 +1358,12 @@ describe('the coach', () => {
       `
         .execute(trx)
         .then(({ rows }) => rows.map(({ id }) => Number(id)));
+      // Answered only once the note reached them.
+      const early = (note: number | undefined) =>
+        activity.answerChallenge({ squad, member: mia, note: note ?? 0, answer: 'accepted' });
+      await expect(early(mine)).rejects.toThrow(CoachNoteNotFoundError);
+      await sql`insert into public.coach_member_note_deliveries (note_id)
+        select id from public.coach_member_notes where squad_id = ${squad}`.execute(trx);
       const answer = (
         member: string,
         { note, said }: { note: number | undefined; said: 'accepted' | 'declined' },
