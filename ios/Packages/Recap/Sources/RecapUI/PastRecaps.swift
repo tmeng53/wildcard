@@ -31,7 +31,7 @@ public struct PastRecaps: View {
                     LazyHStack(spacing: Space.xs) {
                         ForEach(shelf.past, id: \.week.monday) { story in
                             RecapCover(story: story, viewer: shelf.reader, isNew: !shelf.isSeen(story)) {
-                                shelf.open(story)
+                                Task { await shelf.open(story) }
                             }
                         }
                     }

@@ -107,9 +107,9 @@ public final class RecapShelf {
         }
     }
 
-    /// Reads every story the squad has, for 往期战报. A story that came out stays as it was read,
-    /// since nothing changes it; one whose titles were still on their way is read again. A week
-    /// that fails to read is left out until the next read.
+    /// Reads every story the squad has, for 往期战报, each time: a story's photo links last an
+    /// hour, and a deleted post or photo leaves it. A week that fails to read keeps the copy
+    /// already shown, else is left out until the next read.
     public func refreshPast() async {
         guard let squad = readSquad() else { return }
         viewer = squad.viewer
@@ -119,19 +119,19 @@ public final class RecapShelf {
         } catch {
             return
         }
-        let kept = Dictionary(
-            past.filter { $0.squad == squad.id && $0.status == .ready }.map { ($0.week.monday, $0) },
+        let shown = Dictionary(
+            past.filter { $0.squad == squad.id }.map { ($0.week.monday, $0) },
             uniquingKeysWith: { first, _ in first })
         let service = service
         let read = await withTaskGroup(of: (LocalDay, WeekStory?).self) { group in
-            for week in weeks where kept[week] == nil {
+            for week in weeks {
                 group.addTask { (week, try? await service.story(squad: squad.id, week: week)) }
             }
             var read: [LocalDay: WeekStory] = [:]
             for await (week, story) in group { read[week] = story }
             return read
         }
-        past = weeks.compactMap { kept[$0] ?? read[$0] }.filter(\.isPublished)
+        past = weeks.compactMap { read[$0] ?? shown[$0] }.filter(\.isPublished)
     }
 
     /// Whether the reader watched this story to its last page on this phone.
@@ -139,26 +139,27 @@ public final class RecapShelf {
         seen.contains(RecapSeen.key(story))
     }
 
-    /// Opens one of the squad's stories, from its cover on 往期战报.
-    public func open(_ story: WeekStory) {
+    /// Opens one of the squad's stories, from its cover on 往期战报, read again first so its
+    /// photo links are fresh and what was deleted is gone; the copy on the cover if that fails.
+    public func open(_ story: WeekStory) async {
         guard let viewer else { return }
-        show(story, viewer: viewer)
+        let fresh = try? await service.story(squad: story.squad, week: story.week.monday)
+        show(fresh ?? story, viewer: viewer)
     }
 
     /// Opens the squad's story for the week starting `monday`, from a tapped awards push or its
-    /// 通知 row: the one already read, else read now. Nothing opens for a week without one, or
+    /// 通知 row: read now, else the copy already read. Nothing opens for a week without one, or
     /// for another squad's (one the reader has left).
     public func open(week monday: LocalDay, of squadID: SquadID? = nil) async {
         guard let squad = readSquad(), squadID == nil || squadID == squad.id else { return }
         viewer = squad.viewer
-        if let known = ([latest].compactMap { $0 } + past).first(where: {
-            $0.squad == squad.id && $0.week.monday == monday && $0.status == .ready
+        if let story = try? await service.story(squad: squad.id, week: monday) {
+            show(story, viewer: squad.viewer)
+        } else if let known = ([latest].compactMap { $0 } + past).first(where: {
+            $0.squad == squad.id && $0.week.monday == monday
         }) {
-            open(known)
-            return
+            show(known, viewer: squad.viewer)
         }
-        guard let story = try? await service.story(squad: squad.id, week: monday) else { return }
-        open(story)
     }
 
     /// Opens the newest story, from 动态's tile.
