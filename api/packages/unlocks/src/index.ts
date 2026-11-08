@@ -35,12 +35,19 @@ export {
 export {
   CoachId,
   GiftPieceEdit,
+  GIFT_LINE_LIMIT,
+  GivenBy,
   type CoachGift,
   type GiftPiece,
   type GiftRequest,
 } from './domain/gifts.js';
 export {
+  GiftAlreadyOwnedError,
+  GiftMemberNotInSquadError,
+  GiftNoCoachError,
+  GiftNotGivenError,
   GiftPieceNotOfferedError,
+  GiftWeeklyLimitError,
   PieceNotUnlockedError,
   UnlockItemMissingError,
   UnlockSportNotListedError,

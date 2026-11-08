@@ -88,6 +88,7 @@ import { sportTools } from './tools/sports.js';
 import { unlockTools } from './tools/unlocks.js';
 import { broadcastTools } from './tools/broadcasts.js';
 import { weekSummaryWordTools } from './tools/week-summary-words.js';
+import { giveGiftAsAdmin } from '../flows/coach-gifts.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
@@ -236,6 +237,7 @@ beforeAll(async () => {
                   switchListed: (id) => Promise.resolve(id === 'winter'),
                 }),
                 gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
+                giveGift: giveGiftAsAdmin(scope, () => Promise.resolve(weekStartNow)),
               }),
               ...broadcastTools({
                 broadcasts: createNotices({
@@ -291,6 +293,8 @@ afterAll(async () => {
 
 const now = new Date('2026-10-19T16:00:00.000Z');
 const logFails = '日志断了';
+/** Every gift counts towards this week, so a second one is always refused. */
+const weekStartNow = new Date(0);
 const unused = () => Promise.reject(new Error('the admin tools use no photos'));
 
 /** A member signed up through local Supabase Auth, on the admin list when asked. */
@@ -443,6 +447,7 @@ describe('the admin MCP server', () => {
       ['put_piece', false],
       ['get_gift_pieces', true],
       ['put_gift_piece', false],
+      ['give_gift', false],
       ['list_broadcasts', true],
       ['put_broadcast', false],
       ['get_art', true],
@@ -1278,6 +1283,61 @@ describe('the admin MCP server', () => {
     expect(rows.rows.map(({ action }) => action)).toStrictEqual([
       { version: 1, tool: 'put_gift_piece', arguments: edit },
     ]);
+    await client.close();
+  });
+
+  it('gives a member a gift from their squad’s coach, one a week, and logs it', async () => {
+    const admin = await member({ admin: true });
+    const [friend, outsider] = [await member({ admin: false }), await member({ admin: false })];
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const squad = randomUUID();
+    await sql`insert into public.squads (id, name, invite_code) values (${squad}, 'squad', ${squad})`.execute(
+      db,
+    );
+    await sql`insert into public.squad_members (squad_id, member_id) values (${squad}, ${friend.userId})`.execute(
+      db,
+    );
+    const [scarf, cap] = [`gift-${randomUUID().slice(0, 8)}`, `gift-${randomUUID().slice(0, 8)}`];
+    for (const id of [scarf, cap]) {
+      await call('put_gift_piece', { id, offered: true, description: '一条红围巾' });
+    }
+    const gift = { squad, member: friend.userId, piece: scarf, line: '天冷了，围上。' };
+
+    // Only from a squad's coach.
+    const refusedGiftNoCoach = await call('give_gift', gift);
+    expect(refusedGiftNoCoach.isError).toBe(true);
+    expect(refusedGiftNoCoach.text).toContain('GIFT_NO_COACH');
+    await call('hire_coach', { squad, coach: 'xiaohun' });
+    const given = await call('give_gift', gift);
+    expect(given.isError).toBe(false);
+    expect(JSON.parse(given.text)).toMatchObject({
+      version: 1,
+      gift: { piece: scarf, coach: 'xiaohun', squad, line: '天冷了，围上。', givenBy: 'admin' },
+    });
+    // One a member a week, and only to a member of the squad.
+    const refusedGiftWeeklyLimit = await call('give_gift', { ...gift, piece: cap });
+    expect(refusedGiftWeeklyLimit.isError).toBe(true);
+    expect(refusedGiftWeeklyLimit.text).toContain('GIFT_WEEKLY_LIMIT');
+    const refusedGiftMemberNotInSquad = await call('give_gift', {
+      ...gift,
+      member: outsider.userId,
+    });
+    expect(refusedGiftMemberNotInSquad.isError).toBe(true);
+    expect(refusedGiftMemberNotInSquad.text).toContain('GIFT_MEMBER_NOT_IN_SQUAD');
+    const kept = await sql<{ given_by: string; admin_id: string | null }>`
+      select given_by, admin_id from public.coach_gifts where member_id = ${friend.userId}
+    `.execute(db);
+    expect(kept.rows).toStrictEqual([{ given_by: 'admin', admin_id: admin.userId }]);
+    const logged = await sql<{ action: { tool: string } }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(logged.rows.map(({ action }) => action.tool)).toContain('give_gift');
+    // Fired again, so no other test's coach run finds this squad hired.
+    await call('fire_coach', { squad });
     await client.close();
   });
 
