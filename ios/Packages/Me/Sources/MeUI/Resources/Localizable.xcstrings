@@ -1169,50 +1169,21 @@
         }
       }
     },
-    "订阅" : {
+
+
+
+    "外卡所有功能免费开放" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Subscription"
+            "value" : "Every Wildcard feature is free to use"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "訂閱"
-          }
-        }
-      }
-    },
-    "公测期间" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Public beta"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "公測期間"
-          }
-        }
-      }
-    },
-    "全部免费" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Everything free"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "全部免費"
+            "value" : "外卡所有功能免費開放"
           }
         }
       }
