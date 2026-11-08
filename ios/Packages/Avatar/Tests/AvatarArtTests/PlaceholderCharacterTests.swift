@@ -10,11 +10,11 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "torso", "medal", "acc",
-            "earL", "earR", "head", "flapL", "flapR", "crown", "award", "nose", "eyes", "brows", "browsSad", "browsMad",
+            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "torso", "medal",
+            "earL", "earR", "head", "flapL", "flapR", "brows", "browsSad", "browsMad", "crown", "award", "nose", "eyes",
             "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp", "drool", "vein", "steamL", "steamR",
             "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR", "sparkle", "tearL", "tearR", "food0",
-            "food1", "food2", "chin", "armL", "jawL", "propL", "gripL", "armR", "jawR", "chinFrontL", "chinFrontR",
+            "food1", "food2", "chin", "armL", "jawL", "propL", "gripL", "armR", "jawR", "acc", "chinFrontL", "chinFrontR",
             "propR", "gripR",
             "flexL",
             "muscleL",
