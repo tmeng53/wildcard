@@ -12,7 +12,7 @@ What breaks first if a few hundred to 1,000 members (about 200 squads) arrive at
 | Supabase compute | Nano | 1,000 members' reads plus the hourly and 10-minute jobs on a shared half-CPU | With Pro, pick Small (2 GB RAM, 90 connections) in dashboard → Compute. It restarts the database for about 2 minutes, so do it before launch. | About $5 a month after Pro's credit. |
 | Supabase pooler pool size | 15 server connections, shared by the transaction pooler (every request) and each instance's `LISTEN` session (session pooler) | With 10 Cloud Run instances, 10 `LISTEN` sessions can hold most of the 15, and requests queue for the rest. | After Small compute, raise the pool size to about 40 in dashboard → Database → Connection pooling. | Free. |
 | Cloud Run concurrency and instances | Was 80 requests an instance and 3 instances: 240 open apps (each open app holds one `GET /me/events` stream) | The 241st open app waits or gets a 429. | `--concurrency 250 --max-instances 10` in `.github/workflows/deploy.yml` (this PR), then run the deploy. Holds 2,500 open apps; min instances stays 0. | Billing follows instances actually running: about $50–100 a month at 1,000 members, the same as before. |
-| OpenAI budget | No budget cap on the project (on the launch list) | A bug or abuse could spend without limit. The coach's own caps (below) cover only the coach. | Set a monthly budget on the OpenAI project, about $300. | Free. |
+| OpenAI budget | No budget cap on the project (on the launch list) | A bug or abuse could spend without limit. The coach's own caps (below) cover only the coach. | Set a monthly budget of about $300 on the OpenAI project and turn on its hard limit, so requests stop at the budget instead of only alerting. | Free. |
 
 ## When needed
 
