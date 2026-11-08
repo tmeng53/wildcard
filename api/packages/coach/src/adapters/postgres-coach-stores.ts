@@ -633,7 +633,7 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
           join public.check_in_comments cc on cc.id = a.comment_id
           where a.squad_id = ${squad}::uuid and cc.member_id = ${member}::uuid and a.at >= ${since}
         )
-        select mine.*, coaches.id as coach_id, coaches.name, coaches.look
+        select mine.*, coaches.name, coaches.look
         from mine join public.coaches on coaches.id = mine.coach_id
         order by mine.at,
           array_position(array['board', 'note', 'challenge', 'reply', 'answer'], mine.kind),

@@ -10547,7 +10547,7 @@
       "get": {
         "operationId": "getCoachCards",
         "summary": "What the squad’s coach said to the caller, as cards (the coach page)",
-        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered, its gifts, and its lines to their check-ins and replies. The unseen ones from the last 72 hours are the stack; the rest are 以前.",
+        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts, and its lines to their check-ins and replies. The unseen ones from the last 72 hours are the stack; the rest are 以前.",
         "security": [
           {
             "bearer": []
@@ -10679,7 +10679,7 @@
             }
           },
           "400": {
-            "description": "Not a valid squad id, card kind or card id",
+            "description": "Not a valid squad id or card kind, or not an id of that kind (`COACH_CARD_ID_INVALID`)",
             "content": {
               "application/problem+json": {
                 "schema": {

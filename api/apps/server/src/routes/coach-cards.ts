@@ -10,6 +10,7 @@ import {
   type CoachActivity,
   type CoachOwnCard,
 } from '@wildcard/coach';
+import { MemberId as PushMember, type Push } from '@wildcard/push';
 import { MemberId, SquadId, type Squads } from '@wildcard/squads';
 import { MemberId as UnlockMember, type CoachGift, type CoachGifts } from '@wildcard/unlocks';
 
@@ -146,6 +147,8 @@ export function coachCards(deps: {
   /** The coaches on offer, for a gift's coach's look (a retired one's stands in as a silhouette). */
   readonly coachHiring: { offered(): Promise<readonly Coach[]> };
   readonly coachNames: CoachNames;
+  /** The caller's `coach` switch: switched off, no morning note or challenge shows (Tracy, 2026-11-07). */
+  readonly push: Pick<Push, 'settingsOf'>;
 }) {
   const read = createRoute({
     method: 'get',
@@ -155,7 +158,8 @@ export function coachCards(deps: {
     description:
       'A card for each thing the squad’s coach said to the caller since they joined, up to ' +
       `${String(CARDS_DAYS)} days back: its 战术板 lines, their morning notes and challenges once ` +
-      'delivered, its gifts, and its lines to their check-ins and replies. The unseen ones from ' +
+      'delivered (while their `coach` switch is on), its gifts, and its lines to their check-ins ' +
+      'and replies. The unseen ones from ' +
       `the last ${String(STACK_HOURS)} hours are the stack; the rest are 以前.`,
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -190,7 +194,9 @@ export function coachCards(deps: {
         description: 'Seen',
         content: { 'application/json': { schema: CoachCardSeen } },
       },
-      400: problem('Not a valid squad id, card kind or card id'),
+      400: problem(
+        'Not a valid squad id or card kind, or not an id of that kind (`COACH_CARD_ID_INVALID`)',
+      ),
       401: problem('No bearer token, or not a valid one'),
       403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
       503: problem('Sign-in can’t be checked right now'),
@@ -207,11 +213,19 @@ export function coachCards(deps: {
       const joined = squad.members.find((each) => String(each.member) === member)?.joinedAt;
       const back = new Date(now.getTime() - CARDS_DAYS * 24 * 60 * 60_000);
       const since = joined !== undefined && joined > back ? joined : back;
-      const [{ cards, seen: seenKeys }, allGifts, coaches] = await Promise.all([
+      const [{ cards: all, seen: seenKeys }, allGifts, coaches, notesOn] = await Promise.all([
         deps.coachActivity.cards({ squad: CoachSquadId.parse(squadId), member, since }),
         deps.gifts.of(UnlockMember.parse(member)),
         deps.coachHiring.offered().catch(() => []),
+        // A switch that can't be read counts as off, so the rest of the cards still show.
+        deps.push
+          .settingsOf(PushMember.parse(member))
+          .then((settings) => settings.coach)
+          .catch(() => false),
       ]);
+      const cards = notesOn
+        ? all
+        : all.filter((card) => card.kind !== 'note' && card.kind !== 'challenge');
       const gifts = allGifts.filter((gift) => gift.squad === squadId && gift.givenAt >= since);
       const named = await deps.coachNames(
         [...cards.map((card) => card.coach.id), ...gifts.map((gift) => gift.coach)].map(
@@ -220,7 +234,7 @@ export function coachCards(deps: {
       );
       const speaker = speakerIn((coach) => named(coach, squadId));
       const byId = new Map<string, Coach>(coaches.map((coach) => [coach.id, coach]));
-      const all = [
+      const merged = [
         ...cards.map((card) => ({ at: card.at, wire: wireCard(card, speaker) })),
         ...gifts.map((gift) => ({
           at: gift.givenAt,
@@ -228,14 +242,14 @@ export function coachCards(deps: {
         })),
       ].sort((a, b) => a.at.getTime() - b.at.getTime());
       const fresh = now.getTime() - STACK_HOURS * 60 * 60_000;
-      const stacked = (card: (typeof all)[number]) =>
+      const stacked = (card: (typeof merged)[number]) =>
         card.at.getTime() >= fresh &&
         !seenKeys.has(cardKey(CoachCardKind.parse(card.wire.kind), card.wire.id));
       return c.json(
         {
           version: 1 as const,
-          stack: all.filter(stacked).map(({ wire }) => wire),
-          earlier: all
+          stack: merged.filter(stacked).map(({ wire }) => wire),
+          earlier: merged
             .filter((card) => !stacked(card))
             .reverse()
             .map(({ wire }) => wire),

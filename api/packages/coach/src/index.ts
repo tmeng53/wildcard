@@ -80,6 +80,7 @@ export {
   CoachAlreadyHiredError,
   CoachFileMemberNotFoundError,
   CoachNotOfferedError,
+  CoachCardIdError,
   CoachNoteNoChallengeError,
   CoachNoteNotFoundError,
   CoachSquadNotFoundError,

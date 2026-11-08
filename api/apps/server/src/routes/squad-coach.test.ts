@@ -600,6 +600,41 @@ describe('/squads/{squadId}/coach/cards', () => {
       (await call({ method: 'GET', path: `/squads/${squad}/coach/activity`, token: mate.token }))
         .body,
     ).not.toHaveProperty('memberNote');
+    // Marking someone else's card marks it for the marker only.
+    expect(
+      (await call({ method: 'PUT', path: `${path}/challenge/${note}/seen`, token: captain.token }))
+        .status,
+    ).toBe(200);
+    expect(
+      ids(CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body).stack),
+    ).toContain(`challenge:${note}`);
+    // An id not shaped like one of its kind is refused, so nothing odd is kept.
+    const odds: readonly (readonly [string, string])[] = [
+      ['note', '1e3'],
+      ['note', '0x10'],
+      ['board', 'today'],
+      ['gift', 'A'],
+    ];
+    for (const [kind, id] of odds) {
+      const odd = await call({
+        method: 'PUT',
+        path: `${path}/${kind}/${id}/seen`,
+        token: mate.token,
+      });
+      expect([odd.status, reason(odd)]).toStrictEqual([400, 'COACH_CARD_ID_INVALID']);
+    }
+    // With the coach switch off, no morning note or challenge shows; the rest still does.
+    const off = await call({
+      method: 'PUT',
+      path: '/me/push-settings',
+      token: mate.token,
+      body: { version: 1, settings: { dailyProgress: true, coach: false } },
+    });
+    expect(off.status).toBe(200);
+    const quiet = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect([...ids(quiet.stack), ...ids(quiet.earlier)].toSorted()).toStrictEqual(
+      [`board:${today}`, 'gift:cards-towel', `reply:${String(reply.rows[0]?.id)}`].toSorted(),
+    );
     // The captain's own stack is theirs: the board line and the reply to their post.
     expect(
       ids(CardsBody.parse((await call({ method: 'GET', path, token: captain.token })).body).stack),

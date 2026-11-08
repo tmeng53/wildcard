@@ -75,3 +75,13 @@ export class CoachNoteNoChallengeError extends AppError {
     super('The morning note sets no challenge.');
   }
 }
+
+export class CoachCardIdError extends AppError {
+  override readonly name = 'CoachCardIdError';
+  readonly reason = 'COACH_CARD_ID_INVALID';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor() {
+    super('Not the id of a card of that kind.');
+  }
+}

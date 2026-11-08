@@ -17,6 +17,24 @@ export const CoachCardId = z
   .meta({ description: 'The card’s id within its kind.', example: '42' });
 export type CoachCardId = z.infer<typeof CoachCardId>;
 
+/**
+ * Whether `id` has the shape of a card of `kind`: a day for a 战术板 line, a piece id for a gift,
+ * a row id (a positive whole number) otherwise. Only such ids are marked seen.
+ */
+export function isCardId(kind: CoachCardKind, id: string): boolean {
+  switch (kind) {
+    case 'board':
+      return /^\d{4}-\d{2}-\d{2}$/u.test(id);
+    case 'gift':
+      return /^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$/u.test(id) && id.length <= 48;
+    case 'note':
+    case 'challenge':
+    case 'reply':
+    case 'answer':
+      return /^[1-9]\d{0,17}$/u.test(id);
+  }
+}
+
 /** How far back the page reaches, stack and 以前 together. */
 export const CARDS_DAYS = 30;
 

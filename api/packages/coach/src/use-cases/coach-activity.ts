@@ -1,9 +1,9 @@
-import type { CoachCardKind, CoachOwnCard } from '../domain/cards.js';
+import { isCardId, type CoachCardKind, type CoachOwnCard } from '../domain/cards.js';
 import type { CoachLetter } from '../domain/letter.js';
 import type { CoachAnswer, CoachReply } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
 import type { ChallengeAnswer } from '../domain/challenge.js';
-import { CoachNoteNoChallengeError, CoachNoteNotFoundError } from '../errors.js';
+import { CoachCardIdError, CoachNoteNoChallengeError, CoachNoteNotFoundError } from '../errors.js';
 import type { CoachActivityStore, CoachMemberNoteShown, CoachNoteShown } from '../ports.js';
 
 /** The most check-ins one read asks about: a page of 动态. */
@@ -79,6 +79,7 @@ export interface CoachActivity {
   /**
    * The member swiped a card away: seen, once. Seeing a note also puts it away on 今天 (收下).
    * The caller checks they are in the squad; an id that isn't theirs marks nothing they can see.
+   * Throws `CoachCardIdError` for an id not shaped like one of `kind` (`isCardId`).
    */
   markSeen(input: {
     readonly squad: SquadId;
@@ -129,10 +130,14 @@ export function createCoachActivity(deps: { readonly store: CoachActivityStore }
       return { cards, seen };
     },
     markSeen: async (input) => {
+      if (!isCardId(input.kind, input.id)) throw new CoachCardIdError();
       await deps.store.markSeen(input);
-      const note = input.kind === 'note' ? Number(input.id) : Number.NaN;
-      if (Number.isSafeInteger(note) && note > 0) {
-        await deps.store.putAway({ squad: input.squad, member: input.member, note });
+      if (input.kind === 'note') {
+        await deps.store.putAway({
+          squad: input.squad,
+          member: input.member,
+          note: Number(input.id),
+        });
       }
     },
     spoke: async ({ squads, checkIn, coach }) => {
