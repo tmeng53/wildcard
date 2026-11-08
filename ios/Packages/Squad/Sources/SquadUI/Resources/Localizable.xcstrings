@@ -1203,28 +1203,6 @@
         }
       }
     },
-    "用于全队都能看到的内容，比如周日晚 8 点的战报": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For what the whole squad sees, like the Sunday 8pm recap."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用于全队都能看到的内容，比如周日晚 8 点的战报"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用於全隊都能看到的內容，比如週日晚 8 點的戰報"
-          }
-        }
-      }
-    },
     "下周起改为%@（%@）": {
       "localizations": {
         "en": {
@@ -1247,24 +1225,24 @@
         }
       }
     },
-    "周日 20:00 结算": {
+    "小队设置": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Settles Sunday 8pm"
+            "value": "Squad settings"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "周日 20:00 结算"
+            "value": "小队设置"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "週日 20:00 結算"
+            "value": "小隊設定"
           }
         }
       }
