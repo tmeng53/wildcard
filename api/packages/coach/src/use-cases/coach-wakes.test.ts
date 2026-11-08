@@ -1328,6 +1328,22 @@ describe('the coach', () => {
     });
   });
 
+  it('writes the 战术板 in the squad’s language and a check-in’s reply in its author’s', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      const week: SquadWeek = {
+        ...fixture.week,
+        members: fixture.week.members.map((member) => ({ ...member, language: 'en' })),
+        language: 'zh-Hant',
+      };
+      await wakes(fixture, { agent, weeks: { [week.weekStart]: week } }).run();
+      const daily = runs.find(({ task }) => task.includes('新的一天'))?.task;
+      const checkIn = runs.find(({ task }) => task.includes('有人打卡'))?.task;
+      expect(daily).toContain('战术板：用繁體中文寫，照台灣的說法。');
+      expect(checkIn?.split('\n\n')).toContain('Write in English.');
+    });
+  });
+
   it('wakes for a check-in made on a day already in next week, as a member far east has it', async () => {
     await rolledBack(async (fixture) => {
       const { agent, runs } = scriptedAgent(() => []);

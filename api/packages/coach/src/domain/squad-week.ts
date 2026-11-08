@@ -142,8 +142,7 @@ export function weekText(week: SquadWeek): string {
  */
 export function consentedOnly(week: SquadWeek, consented: ReadonlySet<string>): SquadWeek {
   return {
-    weekStart: week.weekStart,
-    ...(week.name === undefined ? {} : { name: week.name }),
+    ...week,
     members: week.members.map((entry) =>
       consented.has(entry.member) ? entry : { member: entry.member },
     ),
