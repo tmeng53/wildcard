@@ -2,10 +2,11 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { CoachId, MemberId as CoachMemberId, SquadId as CoachSquadId } from '@wildcard/coach';
 import { coachIn, NoCoachHiredError, type Coach, type CoachHiring } from '@wildcard/coach';
 import type { ReaderLanguage } from '@wildcard/language-model';
-import { MemberId as ReaderId, type Members } from '@wildcard/members';
+import type { Members } from '@wildcard/members';
 import { MemberId, NotSquadCaptainError, SquadId, type Squads } from '@wildcard/squads';
 
 import { bodyVersion } from '../body-version.js';
+import { captainLanguage } from '../flows/squad-language.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { readerLanguageOf } from '../reader-language.js';
@@ -116,12 +117,6 @@ export function squadCoach(deps: {
     const squad = await deps.squads.find({ squad: squadId, viewer });
     return { viewer, isCaptain: squad.captain === viewer, captain: squad.captain };
   };
-  /** The squad's language: its captain's (Tracy, 2026-11-08). */
-  const squadLanguageOf = async (captain: string | null): Promise<ReaderLanguage> => {
-    if (captain === null) return 'zh-Hans';
-    const id = ReaderId.parse(captain);
-    return (await deps.members.languages([id])).get(id) ?? 'zh-Hans';
-  };
   const squadCoachOf = async (
     squadId: SquadId,
     {
@@ -135,7 +130,7 @@ export function squadCoach(deps: {
     },
   ) => {
     const current = await deps.coachHiring.current(CoachSquadId.parse(squadId));
-    const squad = current === undefined ? reader : await squadLanguageOf(captain);
+    const squad = current === undefined ? reader : await captainLanguage(deps, captain);
     return {
       version: 1 as const,
       coach: current === undefined ? null : card(current.coach, { reader, squad }),

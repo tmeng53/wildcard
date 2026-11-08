@@ -37,6 +37,13 @@ export const CoachWords = z.strictObject({
 export type CoachWords = z.infer<typeof CoachWords>;
 
 /** A coach, whole, as stored, logged and put by an admin. */
+/** Its words in 繁體中文 and English; a language left out shows the Chinese ones. */
+const CoachTranslations = z
+  .strictObject({ 'zh-Hant': CoachWords.optional(), en: CoachWords.optional() })
+  .describe(
+    'Its words in 繁體中文 (Taiwan wording) and English. A language left out shows the Chinese ones.',
+  );
+
 export const Coach = z.strictObject({
   version: z.literal(3),
   id: CoachId.describe('Its id, such as `xiaohun`. Never changes.'),
@@ -85,12 +92,8 @@ export const Coach = z.strictObject({
     .describe('Its persona prompt, Chinese. Only the model reads it; the app never gets it.'),
   look: CoachLook.describe('The character the app draws, by the art’s id.'),
   offered: z.boolean().describe('False retires it: squads can no longer hire it.'),
-  translations: z
-    .strictObject({ 'zh-Hant': CoachWords.optional(), en: CoachWords.optional() })
-    .default({})
-    .describe(
-      'Its words in 繁體中文 (Taiwan wording) and English. A language left out shows the Chinese ones.',
-    ),
+  // Coaches logged before translations came have none.
+  translations: CoachTranslations.default({}),
 });
 export type Coach = z.infer<typeof Coach>;
 
@@ -100,6 +103,9 @@ export function coachIn(coach: Coach, language: ReaderLanguage): Coach {
   return words === undefined ? coach : { ...coach, ...words };
 }
 
-/** A coach as an admin puts it: every field but the version. */
-export const CoachEdit = Coach.omit({ version: true });
+/**
+ * A coach as an admin puts it: every field but the version. Its translations too, so a put that
+ * leaves them out is refused rather than taking them away.
+ */
+export const CoachEdit = Coach.omit({ version: true }).extend({ translations: CoachTranslations });
 export type CoachEdit = z.infer<typeof CoachEdit>;

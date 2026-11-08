@@ -92,6 +92,25 @@ describe('a coach’s name', () => {
     ]).toStrictEqual(['Poki', '毛頭', '毛头', '毛头', undefined]);
   });
 
+  it('falls back to the stored one, never failing, when it can’t be looked up', async () => {
+    const failing = coachNamesIn({
+      coaches: { list: () => Promise.resolve([poki]) },
+      members: { languages: () => Promise.reject(new Error('down')) },
+      squads: { captainOf: (squad) => Promise.resolve(captains.get(squad)) },
+    });
+    expect((await failing([{ coach: 'xiaohun', squad: english }]))('xiaohun', english)).toBe(
+      '毛头',
+    );
+    const noCatalog = coachNamesIn({
+      coaches: { list: () => Promise.reject(new Error('down')) },
+      members: { languages: () => Promise.resolve(new Map()) },
+      squads: { captainOf: () => Promise.resolve(undefined) },
+    });
+    expect((await noCatalog([{ coach: 'xiaohun', squad: english }]))('xiaohun', english)).toBe(
+      undefined,
+    );
+  });
+
   it('heads a 简历 in the reader’s language', () => {
     expect(card(poki, { reader: 'zh-Hans', squad: 'en' })).toStrictEqual({
       id: 'xiaohun',

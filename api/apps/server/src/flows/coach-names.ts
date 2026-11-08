@@ -18,15 +18,23 @@ export function coachNamesIn(deps: {
   readonly squads: Pick<Squads, 'captainOf'>;
 }): CoachNames {
   return async (asked) => {
+    // A name is no reason to fail what shows it: callers fall back to the stored Chinese one.
     const coaches = new Map<string, Coach>(
-      (await deps.coaches.list()).map((coach) => [coach.id, coach]),
+      (await deps.coaches.list().catch(() => [])).map((coach) => [coach.id, coach]),
     );
     const squads = [...new Set(asked.flatMap(({ squad }) => (squad === undefined ? [] : [squad])))];
     const languages = new Map(
       await Promise.all(
         squads.map(
           async (squad) =>
-            [squad, (await squadLanguages(deps, { squad, members: [] })).squad] as const,
+            [
+              squad,
+              // Without the squad's language, the Chinese name.
+              await squadLanguages(deps, { squad, members: [] }).then(
+                ({ squad: language }) => language,
+                () => 'zh-Hans' as const,
+              ),
+            ] as const,
         ),
       ),
     );
