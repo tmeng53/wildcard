@@ -396,7 +396,4 @@ extension AppModel {
             options: SceneOption.options(from: scene.history),
             service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
-
-    /// How long the loading screen waits for the squad's scene before opening on the kept one.
-    static let sceneWait = Duration.seconds(3)
 }
