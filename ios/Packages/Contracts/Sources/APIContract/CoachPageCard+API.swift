@@ -15,11 +15,7 @@ extension CoachPageCards {
 extension CoachPageCard {
     public init(_ wire: Components.Schemas.CoachPageCard) throws(ContractsError) {
         guard let kind = Kind(rawValue: wire.kind) else { throw .invalidID(wire.kind) }
-        let challenge = wire.challenge.map(\.value1).map { wire in
-            Challenge(
-                title: wire.title, amount: wire.amount, unit: wire.unit, line: wire.line,
-                answer: wire.answer.flatMap { CoachChallengeAnswer(rawValue: $0.rawValue) })
-        }
+        let challenge = wire.challenge.map(\.value1).map(Challenge.init)
         let gift = wire.gift.map {
             Gift(piece: $0.pieceId, line: $0.line, openedAt: $0.openedAt, worn: $0.worn)
         }
@@ -35,5 +31,24 @@ extension CoachPageCard {
 extension CoachPageCard.Gift {
     public init(_ wire: Components.Schemas.GiftedPiece) {
         self.init(piece: wire.id, line: wire.line, openedAt: wire.openedAt, worn: wire.worn)
+    }
+}
+
+extension CoachPageCard.Challenge {
+    public init(_ wire: Components.Schemas.CoachChallenge) {
+        self.init(
+            title: wire.title, amount: wire.amount, unit: wire.unit, line: wire.line,
+            answer: wire.answer.flatMap { CoachChallengeAnswer(rawValue: $0.rawValue) },
+            completedBy: wire.completedBy.flatMap { CoachChallengeCompleter(rawValue: $0.rawValue) })
+    }
+}
+
+extension DayChallenge {
+    /// Today's challenge, or nil when there is none (or the coach's pushes are off).
+    public init?(_ wire: Components.Schemas.CoachDayChallenge) throws(ContractsError) {
+        guard let today = wire.today else { return nil }
+        self.init(
+            note: String(today.noteId), day: try LocalDay(today.day),
+            challenge: CoachPageCard.Challenge(today.challenge))
     }
 }

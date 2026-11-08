@@ -2208,6 +2208,38 @@
           }
         }
       }
+    },
+    "%@ · 今日挑战": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · Today's challenge"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · 今日挑戰"
+          }
+        }
+      }
+    },
+    "拉伸": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stretch"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "伸展"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

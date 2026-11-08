@@ -40,6 +40,12 @@ public protocol CheckInBackend: Sendable {
     /// The coaches' morning notes (便条) waiting for the member on 今天, one at most from each of
     /// `squads`, in their order.
     func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote]
+    /// The challenge in the member's morning note today in `squad`, answered or not; nil when
+    /// there is none.
+    func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge?
+    /// 我完成了: marks a challenge done on its own day; the first completion stands, whoever made
+    /// it, and is what comes back.
+    func completeChallenge(_ note: String, in squad: SquadID) async throws(CheckInError) -> CoachChallengeCompleter
 }
 
 /// Check-ins waiting to go out, kept on the device so a post made offline survives the app

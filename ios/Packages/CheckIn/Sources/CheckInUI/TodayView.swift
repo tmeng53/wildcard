@@ -211,7 +211,9 @@ public struct TodayView: View {
                         isMe: mate.member == home.member,
                         accessibilityIdentifier: mate.member == home.member ? "today.myRing" : nil)
                 })
-            let mine = myWeek(home: home, day: day, week: week.mine)
+            let mine = myWeek(
+                home: home, day: day, week: week.mine,
+                challenge: weekChallenge(model.myChallenge, coach: model.sidelineCoach))
             Group {
                 if isCardCollapsed {
                     capsule(squad: squad, mine: mine, day: day, recap: recap)
@@ -221,11 +223,13 @@ public struct TodayView: View {
                         footer: { recapTag(recap, day: day) }
                     )
                     .opensSquad(openSquad)
+                    .completesChallenge(model.completeChallenge)
                     .collapses { foldCard(true) }
                     .morphs(cardMorph)
                 } else {
                     SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
                         .opensSquad(openSquad)
+                        .completesChallenge(model.completeChallenge)
                         .collapses { foldCard(true) }
                         .morphs(cardMorph)
                 }

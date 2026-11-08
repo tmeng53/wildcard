@@ -9,7 +9,9 @@ extension TodayView {
     /// My week for the card's second page: this week's days, what I trained, and each day's line
     /// (what I trained or the plan's sport, and my meals up to today), with the count the squad's
     /// today carries.
-    func myWeek(home: Home, day: LocalDay, week: WeekCount) -> DesignSystemUI.MyWeek {
+    func myWeek(
+        home: Home, day: LocalDay, week: WeekCount, challenge: WeekChallenge? = nil
+    ) -> DesignSystemUI.MyWeek {
         let record = home.week(on: day)
         return DesignSystemUI.MyWeek(
             done: week.trainedDays, planned: week.plannedDays,
@@ -27,7 +29,21 @@ extension TodayView {
                 dayDetail(
                     record.days[index], activity: record.activities[index], log: record.logs[index],
                     isToCome: index > record.today)
-            })
+            },
+            challenge: challenge)
+    }
+
+    /// The challenge I accepted from the coach for today, under today's line (Tracy, 2026-11-08):
+    /// what to do then how much (「拉伸 5 分钟」), and who set it.
+    func weekChallenge(_ today: DayChallenge?, coach: CoachSpeaker?) -> WeekChallenge? {
+        guard let today else { return nil }
+        let challenge = today.challenge
+        let amount = challenge.amount.map { amount in [String(amount), challenge.unit].compactMap(\.self) } ?? []
+        let coach = coach?.name ?? ""
+        return WeekChallenge(
+            title: ([challenge.title] + amount).joined(separator: " "),
+            byline: String(localized: "\(coach) · 今日挑战", bundle: .module.inAppLanguage),
+            isDone: challenge.completedBy != nil)
     }
 
     /// A day's line: what I trained with its minutes, 请假了 or 休息日, else the plan's sport, light.

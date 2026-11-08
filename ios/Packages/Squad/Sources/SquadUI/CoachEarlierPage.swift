@@ -57,8 +57,12 @@ public struct CoachEarlierPage: View {
                 HStack(spacing: Space.xxs) {
                     CoachDeckCard.kind(card.kind)
                     Text(verbatim: "· \(CoachDeckCard.time(of: card.time))")
-                    // An accepted challenge stays here, and says so (Tracy, 2026-11-08).
-                    if card.challenge?.answer == .accepted {
+                    // An accepted challenge stays here, and says so, then that it was done
+                    // (Tracy, 2026-11-08).
+                    if card.challenge?.completedBy != nil {
+                        Text(verbatim: "·")
+                        Text("已完成", bundle: .module)
+                    } else if card.challenge?.answer == .accepted {
                         Text(verbatim: "·")
                         Text("已接受", bundle: .module)
                     }

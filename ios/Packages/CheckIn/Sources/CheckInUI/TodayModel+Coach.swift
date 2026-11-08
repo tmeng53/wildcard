@@ -50,6 +50,14 @@ extension TodayModel {
     /// The coach on the sideline, as last read; nil while the squad has none.
     public var sidelineCoach: CoachSpeaker? { store.coach?.coach }
 
+    /// The day's challenge I accepted from the coach, while its day lasts.
+    var myChallenge: DayChallenge? { store.acceptedChallenge }
+
+    /// 我完成了 on today's challenge.
+    func completeChallenge() {
+        Task { await store.completeChallenge() }
+    }
+
     /// The squad on the home, whose coach's page opens.
     public var squadID: SquadID? { home?.squad.id }
 }

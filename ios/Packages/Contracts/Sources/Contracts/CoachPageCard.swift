@@ -1,6 +1,11 @@
 import Foundation
 
 /// The member's answer to a day's challenge (今日挑战): 接受挑战 or 不接挑战.
+/// Who marked a day's challenge done.
+public enum CoachChallengeCompleter: String, Hashable, Sendable {
+    case member, coach
+}
+
 public enum CoachChallengeAnswer: String, Hashable, Sendable {
     case accepted, declined
 
@@ -46,16 +51,28 @@ public struct CoachPageCard: Hashable, Sendable, Identifiable {
         public let line: String?
         /// Nil until the member answers; the first answer stands.
         public let answer: CoachChallengeAnswer?
+        /// Who marked it done, on its own day: the member (我完成了) or the coach, from their
+        /// check-ins. Nil until then; the first stands.
+        public let completedBy: CoachChallengeCompleter?
 
         public init(
             title: String, amount: Int? = nil, unit: String? = nil, line: String? = nil,
-            answer: CoachChallengeAnswer? = nil
+            answer: CoachChallengeAnswer? = nil, completedBy: CoachChallengeCompleter? = nil
         ) {
-            (self.title, self.amount, self.unit, self.line, self.answer) = (title, amount, unit, line, answer)
+            (self.title, self.amount, self.unit, self.line) = (title, amount, unit, line)
+            (self.answer, self.completedBy) = (answer, completedBy)
         }
 
         public func answered(_ answer: CoachChallengeAnswer) -> Challenge {
-            Challenge(title: title, amount: amount, unit: unit, line: line, answer: self.answer ?? answer)
+            Challenge(
+                title: title, amount: amount, unit: unit, line: line, answer: self.answer ?? answer,
+                completedBy: completedBy)
+        }
+
+        public func completed(by completer: CoachChallengeCompleter) -> Challenge {
+            Challenge(
+                title: title, amount: amount, unit: unit, line: line, answer: answer,
+                completedBy: completedBy ?? completer)
         }
     }
 

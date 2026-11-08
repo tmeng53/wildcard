@@ -42,9 +42,30 @@ extension WildcardAPI {
         }
         let wire = try await call {
             try await client.answerCoachChallenge(
-                path: .init(squadId: squad.description, noteId: note), body: .json(.init(version: ._1, answer: sent, reason: reason))
+                path: .init(squadId: squad.description, noteId: note),
+                body: .json(.init(version: ._1, answer: sent, reason: reason))
             ).ok.body.json
         }
         return CoachChallengeAnswer(rawValue: wire.answer.rawValue) ?? answer
+    }
+
+    /// The challenge in the caller's morning note today in `squad`, answered or not; nil when
+    /// there is none.
+    public func todayChallenge(in squad: SquadID) async throws(APIError) -> DayChallenge? {
+        let wire = try await call {
+            try await client.getCoachChallenge(path: .init(squadId: squad.description)).ok.body.json
+        }
+        do { return try DayChallenge(wire) } catch { throw .unreadableResponse }
+    }
+
+    /// 我完成了 on a morning note's challenge, on its own day; the first completion stands and
+    /// comes back.
+    public func completeChallenge(of note: Int, in squad: SquadID) async throws(APIError) -> CoachChallengeCompleter {
+        let wire = try await call {
+            try await client.completeCoachChallenge(
+                path: .init(squadId: squad.description, noteId: note), body: .json(.init(version: ._1))
+            ).ok.body.json
+        }
+        return CoachChallengeCompleter(rawValue: wire.completedBy.rawValue) ?? .member
     }
 }

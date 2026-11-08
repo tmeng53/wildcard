@@ -58,6 +58,10 @@ public final class TodayStore {
     /// The coaches' morning notes (便条) waiting for the member, as last loaded, newest first:
     /// the dot on the coach's phone until the member sees them on the coach's page.
     public internal(set) var coachNotes: [CoachMemberNote] = []
+    /// The challenge in today's morning note, as last loaded, for the squad it was loaded for.
+    var loadedChallenge: (squad: SquadID, challenge: DayChallenge?)?
+    /// 我完成了 is on its way.
+    public internal(set) var isCompletingChallenge = false
     /// What changed in the squad since the home shown before, not yet told (`takeNews()`).
     public internal(set) var news = SquadNews()
     /// The squad the member was in when the server last said they are in none: they left it, or

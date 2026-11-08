@@ -13,14 +13,17 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private var squadPokes: SquadPokes
     private let sidelineCoach: SidelineCoach?
     private var memberNotes: [CoachMemberNote]
+    private var dayChallenge: DayChallenge?
 
     public init(
-        home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, notes: [CoachMemberNote] = []
+        home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, notes: [CoachMemberNote] = [],
+        challenge: DayChallenge? = nil
     ) {
         current = home
         squadPokes = pokes
         sidelineCoach = coach
         memberNotes = notes
+        dayChallenge = challenge
     }
 
     /// The squad the screens are reviewed against: 本周小队 14/22, eight members on the scene in
@@ -32,11 +35,12 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// runner (小米) and the 请假条 (阿杰) patted me an hour ago, so the home plays it. With `coach`,
     /// the squad has hired 毛头, who wrote today's 战术板 line. With `together`, the home opens on
     /// that celebration: `.wave` reaches the squad's week (22/22), `.stack` has the yoga teammate
-    /// run like 小米, and `.bump` has me trained too.
+    /// run like 小米, and `.bump` has me trained too. With `challenge`, I accepted 毛头's
+    /// challenge for today (拉伸 5 分钟), not yet done.
     public static func sampleSquad(
         now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID()),
         patted: Bool = false, coach: Bool = false, coachNote: Bool = false,
-        together: SquadCelebration.Kind? = nil, meals: Bool = false
+        together: SquadCelebration.Kind? = nil, meals: Bool = false, challenge: Bool = false
     ) -> InMemoryCheckInBackend {
         let (zone, day) = (TimeZone.current, LocalDay(at: now, in: TimeZone.current))
         let everyone = (0..<7).map { _ in MemberID(UUID()) }
@@ -68,9 +72,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             }.filter { kept.contains($0.member) }
             + (meals ? sampleMeals(by: everyone, on: day, in: squadID) { at($0) } : [])
             + myEarlierCheckIns(by: member, on: earlier, in: squadID) { at($0) }
-        let plan = try? WeeklyPlan(
-            member: member, weekStart: day.weekStart,
-            days: [.train(.sport("run")), .train(nil), .rest, .train(.sport("run")), .train(nil), .train(nil), .rest])
+        let plan = samplePlan(of: member, on: day)
         return InMemoryCheckInBackend(
             home: plan.map { plan in
                 Home(
@@ -89,7 +91,9 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     plan: plan, checkIns: checkIns)
             },
             pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none,
-            coach: coach || coachNote ? sampleCoach(now: now) : nil, notes: sampleNotes(coachNote, now, squadID))
+            coach: coach || coachNote || challenge ? sampleCoach(now: now) : nil,
+            notes: sampleNotes(coachNote, now, squadID),
+            challenge: challenge ? sampleChallenge(on: day) : nil)
     }
 
     /// The squad's week at 人均 3 天, the default goal: 14 days so far, or the whole goal once
@@ -297,6 +301,35 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     public func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote] {
         squads.compactMap { squad in memberNotes.first { $0.squad == squad } }
+    }
+}
+
+extension InMemoryCheckInBackend {
+    /// My week's plan: running Monday and Thursday, rest Wednesday and Sunday.
+    fileprivate static func samplePlan(of member: MemberID, on day: LocalDay) -> WeeklyPlan? {
+        try? WeeklyPlan(
+            member: member, weekStart: day.weekStart,
+            days: [.train(.sport("run")), .train(nil), .rest, .train(.sport("run")), .train(nil), .train(nil), .rest])
+    }
+
+    /// 毛头's challenge for today, accepted, as the approved 我的一周 shows it.
+    fileprivate static func sampleChallenge(on day: LocalDay) -> DayChallenge {
+        let words = Bundle.module.inAppLanguage
+        return DayChallenge(
+            note: "41", day: day,
+            challenge: CoachPageCard.Challenge(
+                title: words.localizedString(forKey: "拉伸", value: nil, table: nil), amount: 5,
+                unit: words.localizedString(forKey: "分钟", value: nil, table: nil), answer: .accepted))
+    }
+
+    public func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? { dayChallenge }
+
+    public func completeChallenge(_ note: String, in squad: SquadID) async throws(CheckInError)
+        -> CoachChallengeCompleter
+    {
+        guard let found = dayChallenge, found.note == note else { throw .refused }
+        dayChallenge = found.completed(by: .member)
+        return dayChallenge?.challenge.completedBy ?? .member
     }
 }
 

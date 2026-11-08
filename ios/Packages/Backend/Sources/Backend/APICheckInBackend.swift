@@ -144,6 +144,17 @@ public struct APICheckInBackend: CheckInBackend {
         }
         return notes
     }
+
+    public func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? {
+        do { return try await api.todayChallenge(in: squad) } catch { throw CheckInError(error) }
+    }
+
+    public func completeChallenge(_ note: String, in squad: SquadID) async throws(CheckInError)
+        -> CoachChallengeCompleter
+    {
+        guard let id = Int(note) else { throw .refused }
+        do { return try await api.completeChallenge(of: id, in: squad) } catch { throw CheckInError(error) }
+    }
 }
 
 /// The home as the API sent it. Stored JSON, so it carries a `version`.

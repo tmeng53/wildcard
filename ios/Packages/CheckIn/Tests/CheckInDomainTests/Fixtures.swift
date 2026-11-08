@@ -190,6 +190,23 @@ actor ScriptedBackend: CheckInBackend {
         if let failure { throw failure }
         return squads.compactMap { squad in serverNotes.first { $0.squad == squad } }
     }
+
+    var serverChallenge: DayChallenge?
+    var completionFails = false
+    func set(challenge: DayChallenge?) { serverChallenge = challenge }
+    func set(completionFails: Bool) { self.completionFails = completionFails }
+
+    func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? {
+        if let failure { throw failure }
+        return serverChallenge
+    }
+
+    func completeChallenge(_ note: String, in squad: SquadID) async throws(CheckInError) -> CoachChallengeCompleter {
+        if completionFails { throw .refused }
+        guard let found = serverChallenge, found.note == note else { throw .refused }
+        serverChallenge = found.completed(by: .member)
+        return serverChallenge?.challenge.completedBy ?? .member
+    }
 }
 
 actor MemoryOutbox: Outbox {

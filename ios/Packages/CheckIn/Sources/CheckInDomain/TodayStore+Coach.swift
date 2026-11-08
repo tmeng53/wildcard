@@ -24,6 +24,37 @@ extension TodayStore {
             loadedCoach = (home.squad.id, try await backend.coach(in: home.squad.id))
         } catch {}
         await loadCoachNotes(in: home)
+        await loadChallenge(in: home)
+    }
+
+    private func loadChallenge(in home: Home) async {
+        guard let found = try? await backend.todayChallenge(in: home.squad.id) else { return }
+        loadedChallenge = (home.squad.id, found)
+    }
+
+    /// The day's challenge the member accepted, while its day lasts, for 我的一周 (Tracy,
+    /// 2026-11-08): with 我完成了 until it is done. Nil for one declined or not yet answered.
+    public var acceptedChallenge: DayChallenge? {
+        guard let loadedChallenge, loadedChallenge.squad == savedHome?.squad.id,
+            let found = loadedChallenge.challenge, found.challenge.answer == .accepted, found.day == day
+        else { return nil }
+        return found
+    }
+
+    /// 我完成了: marks today's challenge done at once, and back as it was if the server refused.
+    public func completeChallenge() async {
+        guard let home = savedHome, let found = acceptedChallenge, found.challenge.completedBy == nil,
+            !isCompletingChallenge
+        else { return }
+        isCompletingChallenge = true
+        defer { isCompletingChallenge = false }
+        loadedChallenge = (home.squad.id, found.completed(by: .member))
+        do {
+            let standing = try await backend.completeChallenge(found.note, in: home.squad.id)
+            loadedChallenge = (home.squad.id, found.completed(by: standing))
+        } catch {
+            loadedChallenge = (home.squad.id, found)
+        }
     }
 
     /// The coach's morning notes waiting for the member, from their squad (one squad a member).
