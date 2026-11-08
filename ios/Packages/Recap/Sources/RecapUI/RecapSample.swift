@@ -35,11 +35,16 @@ public enum RecapSample {
     ///   - stuck: with `pending`, a try failed, so the organizers are out of funds; otherwise
     ///     the titles are only on their way.
     ///   - missed: the squad fell short of its plans, for the other ending.
-    public static func story(pending: Bool = false, stuck: Bool = true, missed: Bool = false) -> WeekStory {
+    ///   - monday: the week, the sample week of 10.12 unless another is asked for, as 往期战报 does.
+    ///   - scene: where the squad trained that week.
+    public static func story(
+        pending: Bool = false, stuck: Bool = true, missed: Bool = false, monday: LocalDay? = nil,
+        scene: SceneTheme = .pool
+    ) -> WeekStory {
         let ready = !pending
         return WeekStory(
             status: pending ? .pending : .ready, stuck: pending && stuck, squad: SquadID(uuid(9)), squadName: "晨跑五人组",
-            week: Week(monday: day(12), sunday: day(18)), scene: .pool, squadmates: squadmates,
+            week: week(from: monday ?? day(12)), scene: scene, squadmates: squadmates,
             order: [.podium, .titles, .myWeek, .squadWeek, .hottest, .meals, .bestDisclaimer, .ending],
             podium: Podium(
                 champion: coco, sides: [lin, mia], planDone: [coco, mia], speech: ready ? "七天五天八点前打卡，闹钟都怕她" : nil,
@@ -87,6 +92,15 @@ public enum RecapSample {
                     done: 23, plan: 22, headline: ready ? "稳了" : nil, line: ready ? "超额 1 次，多出来那次算利息" : nil,
                     move: ready ? .stack : nil))
     }
+
+    private static func week(from monday: LocalDay) -> Week {
+        Week(monday: monday, sunday: monday.adding(days: 6))
+    }
+
+    /// The sample squad's 往期战报: the sample week and the three before it, the latest first.
+    static let pastWeeks = (0..<4).map { day(12).adding(days: -7 * $0) }
+    /// Where the sample squad trained each of those weeks.
+    static let pastScenes: [SceneTheme] = [.pool, .track, .gym, .tennis]
 
     /// The demo squad on the pool scene, read by 我.
     public static let cast = StoryCast(story: story(), viewer: reader)

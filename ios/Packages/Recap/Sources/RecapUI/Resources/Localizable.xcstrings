@@ -1,6 +1,102 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "%lld 期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld recaps"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 期"
+          }
+        }
+      }
+    },
+    "全队 %lld/%lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad %1$lld/%2$lld days"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全隊 %1$lld/%2$lld 天"
+          }
+        }
+      }
+    },
+    "往期战报": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Past recaps"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "往期戰報"
+          }
+        }
+      }
+    },
+    "未读": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未讀"
+          }
+        }
+      }
+    },
+    "每周战报，%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly recap, %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每週戰報，%@"
+          }
+        }
+      }
+    },
+    "每周战报，%@，冠军 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly recap, %1$@, champion %2$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每週戰報，%1$@，冠軍 %2$@"
+          }
+        }
+      }
+    },
     "，": {
       "comment": "Between names in a list, as in 「Tracy，Fran」.",
       "localizations": {
@@ -322,22 +418,6 @@
         }
       }
     },
-    "再看一遍": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Watch again"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "再看一遍"
-          }
-        }
-      }
-    },
     "吃了": {
       "localizations": {
         "en": {
@@ -558,22 +638,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "本週戰報"
-          }
-        }
-      }
-    },
-    "每周战报，%@，已看完": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Weekly recap, %@, watched"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每週戰報，%@，已看完"
           }
         }
       }

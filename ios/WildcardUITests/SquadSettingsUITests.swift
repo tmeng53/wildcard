@@ -61,7 +61,31 @@ final class SquadSettingsUITests: XCTestCase {
         app.swipeUp()
         settle()
         keepScreenshot(named: "62-squad-bottom")
-        XCTAssertFalse(app.buttons["squad.pastRecaps"].exists, "往期战报 is back on 小队; the 战报 live in 动态")
+    }
+
+    /// 往期战报: every week's 战报 as a cover in a row under this week's scene, the latest first and
+    /// new until watched; a cover plays its week.
+    func testPastRecapsOpenTheirWeek() {
+        let app = launch()
+        let row = app.descendants(matching: .any)["squad.pastRecaps"]
+        for _ in 0..<4 where !row.isHittable { app.swipeUp() }
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 往期战报 on 小队")
+        let covers = app.buttons.matching(identifier: "squad.pastRecap")
+        XCTAssertEqual(covers.count, 4, "not one cover per week")
+        let latest = covers.element(boundBy: 0)
+        XCTAssertTrue(latest.label.contains("10.12"), "the latest week isn't first: \(latest.label)")
+        XCTAssertTrue(latest.label.contains("Coco"), "the cover doesn't name the champion")
+        XCTAssertEqual(latest.value as? String, "未读", "a week not yet watched isn't new")
+        XCTAssertGreaterThanOrEqual(
+            latest.frame.minX, app.frame.minX + 16, "the first cover isn't on the page's margin")
+        settle()
+        keepScreenshot(named: "67-squad-past-recaps")
+
+        covers.element(boundBy: 1).tap()
+        let close = app.buttons["recap.close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 30), "the cover didn't play its week")
+        close.tap()
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "✕ didn't go back to 小队")
     }
 
     func testTheWinnerPicksTheSceneOnce() {

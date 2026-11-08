@@ -12,7 +12,6 @@ final class RecapUITests: XCTestCase {
         let tile = app.buttons["recap.entry"]
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no 战报 tile")
         XCTAssertTrue(tile.label.contains("每周战报"))
-        XCTAssertTrue(tile.label.contains("未读"), "a story not yet watched shows as read")
         keepScreenshot(named: "70-recap-tile")
         tile.tap()
 
@@ -33,9 +32,6 @@ final class RecapUITests: XCTestCase {
         XCTAssertTrue(app.buttons["recap.planNextWeek"].exists)
         app.buttons["recap.close"].tap()
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "✕ didn't close the story")
-        XCTAssertTrue(tile.label.contains("已看完"), "a story watched to the end still shows as new")
-        Thread.sleep(forTimeInterval: 1)
-        keepScreenshot(named: "70-recap-tile-seen")
     }
 
     /// Only the titles wait while the AI run is late: the out-of-funds page and its nudge.
@@ -89,7 +85,8 @@ final class RecapUITests: XCTestCase {
         XCTAssertEqual(app.buttons["recap.planNextWeek"].label, "Plan next week")
     }
 
-    /// 动态 shows the squad's newest 战报 as its tile, clear of the tab bar, and the tile opens it.
+    /// 动态 shows the squad's newest 战报 as its tile, clear of the tab bar, and the tile opens it;
+    /// once watched to the end the tile goes, the story staying on 小队's 往期战报.
     func testFeedTileOpensTheStory() {
         let app = launch(language: "zh-Hans", extra: ["-tab", "feed"], demo: false)
         let tile = app.buttons["recap.entry"]
@@ -103,6 +100,16 @@ final class RecapUITests: XCTestCase {
         show("podium", in: app)
         app.buttons["recap.close"].tap()
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "✕ didn't go back to 动态")
+
+        tile.tap()
+        let ending = app.descendants(matching: .any).matching(identifier: "recap.page.ending").firstMatch
+        for _ in 0..<12 where !ending.exists {
+            XCTAssertTrue(app.buttons["recap.close"].waitForExistence(timeout: Self.wait), "the story didn't open")
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap()
+        }
+        XCTAssertTrue(ending.waitForExistence(timeout: Self.wait), "the last page never showed")
+        app.buttons["recap.close"].tap()
+        XCTAssertTrue(tile.waitForNonExistence(timeout: Self.wait), "动态 still shows a 战报 watched to the end")
     }
 
     private func launch(language: String, extra: [String] = [], demo: Bool = true) -> XCUIApplication {

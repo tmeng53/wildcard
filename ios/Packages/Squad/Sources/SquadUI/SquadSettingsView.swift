@@ -18,14 +18,15 @@ import UIKit
 /// 2026-11-06), opened from the home's squad card (a tab from 2026-11-02 until Tracy took the tab
 /// away on 2026-11-04): 返回, the squad's name, a still row of everyone's heads (the captain's
 /// tagged 队长) with the coach and 「+ 邀请」, then graphite cards: the weekly goal, the coach,
-/// this week's scene, the invite code; the members, and leaving. The captain renames the
+/// this week's scene, 往期战报 (which the app passes in, since the 战报 is another package's),
+/// the invite code; the members, and leaving. The captain renames the
 /// squad and manages members from each row's ··· menu; last week's crown winner, or the captain
 /// when nobody won, picks the scene once. It is pushed on 今天's NavigationStack, so the system's
 /// back button and swipe go back, and the coach's pages are pushed over it through `openCoach`;
 /// the app follows `model.hasLeft`. A pick ends where every pick does, on home with the squad
 /// dropping in: once the reveal is over, `picked` hands the scene to the app, which takes over;
 /// while the reveal plays, `revealing` is true, so the app can put away its tab bar.
-public struct SquadSettingsView: View {
+public struct SquadSettingsView<PastRecaps: View>: View {
     @Bindable private var model: SquadSettingsModel
     private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
     /// Pushes one of the coach's pages (`CoachPage`) over this one.
@@ -33,6 +34,8 @@ public struct SquadSettingsView: View {
     @Binding private var revealing: Bool
     /// Opens a teammate's player card, from their row; the app pops it up over everything.
     private let openTeammate: ((MemberID) -> Void)?
+    /// 往期战报, under this week's scene; it shows nothing until the squad has one.
+    private let pastRecaps: PastRecaps
     @State private var renaming: String?
     @State private var isLeaving = false
     @State private var reveal: Reveal?
@@ -44,13 +47,14 @@ public struct SquadSettingsView: View {
     public init(
         model: SquadSettingsModel, picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void,
         openCoach: @escaping (CoachRoute) -> Void, revealing: Binding<Bool>,
-        openTeammate: ((MemberID) -> Void)? = nil
+        openTeammate: ((MemberID) -> Void)? = nil, @ViewBuilder pastRecaps: () -> PastRecaps
     ) {
         self.model = model
         self.picked = picked
         self.openCoach = openCoach
         _revealing = revealing
         self.openTeammate = openTeammate
+        self.pastRecaps = pastRecaps()
     }
 
     public var body: some View {
@@ -126,6 +130,7 @@ public struct SquadSettingsView: View {
             }
             section(Text("教练", bundle: .module)) { coachCard }
             section(Text("本周场地", bundle: .module)) { sceneCard }
+            pastRecaps
             section(Text("邀请队友", bundle: .module)) { InviteCard(squad: settings.squad, openSpots: model.openSpots) }
             section(Text("队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
                 memberRows
