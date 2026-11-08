@@ -22,10 +22,12 @@ final class NoticeBellUITests: XCTestCase {
         bell.tap()
         let comment = app.buttons["notices.row.8"]
         XCTAssertTrue(comment.waitForExistence(timeout: Self.wait), "通知 didn't open")
-        XCTAssertTrue(comment.label.contains("Coco 评论了你：这组深蹲太稳了"), "the comment row says \(comment.label)")
+        // The coach's reply and Coco's comment on one post today are one row, the newest line under it.
+        XCTAssertTrue(comment.label.contains("Coco 和 毛头 评论了你的动态"), "the post's row says \(comment.label)")
+        XCTAssertTrue(comment.label.contains("Coco：这组深蹲太稳了"), "the post's row says \(comment.label)")
         let moved = app.buttons["notices.row.7"]
         XCTAssertTrue(moved.label.contains("阿杰 把小队搬到了跑道"), "the scene row says \(moved.label)")
-        XCTAssertTrue(app.buttons["notices.row.6"].label.contains("教练 毛头 回复了你的动态"))
+        XCTAssertFalse(app.buttons["notices.row.6"].exists, "the coach's reply kept its own row")
         // The 6pm push: the squad's week on top, who patted under it, as the approved design shows.
         let daily = app.buttons["notices.row.5"].label
         XCTAssertTrue(daily.hasPrefix("本周小队已练 9/16 天"), "the 6pm row says \(daily)")
