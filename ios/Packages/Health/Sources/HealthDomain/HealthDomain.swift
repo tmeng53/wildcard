@@ -91,7 +91,7 @@ public struct TodaysWorkout: Hashable, Sendable, Identifiable {
 }
 
 extension [ImportedWorkout] {
-    /// Those that ended on the member's `day` (a day runs to 3am), newest first, each marked
+    /// Those that ended on the member's `day`, newest first, each marked
     /// posted when `posted` holds it: a member posts each workout once.
     public func today(_ day: LocalDay, in timeZone: TimeZone, posted: Set<WorkoutSource>) -> [TodaysWorkout] {
         filter { LocalDay(at: $0.workout.endedAt.date, in: timeZone) == day }
@@ -107,5 +107,5 @@ extension [TodaysWorkout] {
     }
 }
 
-/// How many hours back Health is read for today: a day with its 3am grace, from any time zone.
+/// How many hours back Health is read for today: a whole day, from any time zone.
 public let healthLookBackHours = 36.0

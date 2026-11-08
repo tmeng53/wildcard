@@ -37,7 +37,7 @@ export const CHECK_IN_WINDOW_MS = 60 * 60_000;
 
 /**
  * Every week a member's own day can be in at `now`, or was in an hour ago: members' clocks run
- * from UTC−11 to UTC+14, so from 6 hours behind New York to 19 ahead, and a day starts at 3am.
+ * from UTC−11 to UTC+14, so from 7 hours behind New York to 19 ahead (−10 leaves room to spare).
  * One week most of the time, two near Monday.
  */
 export function weeksAround(now: Date): string[] {

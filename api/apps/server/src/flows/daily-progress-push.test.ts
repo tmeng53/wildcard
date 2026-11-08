@@ -200,7 +200,7 @@ function zoneAt(from: number, to: number) {
 // Well inside the evening and the morning, so a test running across an hour still lands there.
 const evening = zoneAt(19, 21);
 const morning = zoneAt(8, 11);
-/** The day on a clock `offset` hours ahead of UTC (never within 3 hours of midnight here). */
+/** The day on a clock `offset` hours ahead of UTC (never near midnight here). */
 const dayAt = (offset: number) => new Date(Date.now() + offset * HOUR).toISOString().slice(0, 10);
 
 /** A member with a profile in `at`'s zone (and a character called `nickname`) and a phone. */
