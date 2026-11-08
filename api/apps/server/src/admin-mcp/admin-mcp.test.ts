@@ -95,6 +95,7 @@ import {
   unusedCoachHiring,
   unusedCoachActivity,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
@@ -178,6 +179,7 @@ beforeAll(async () => {
           coachHiring: unusedCoachHiring,
           coachActivity: unusedCoachActivity,
           ...ignoredNotices,
+          ...unusedFeedback,
           log: createLog(() => undefined),
           jobs: noJobs,
           admin: {

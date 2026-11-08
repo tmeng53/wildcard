@@ -53,6 +53,7 @@ import {
   unusedCoachHiring,
   unusedCoachActivity,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
@@ -144,6 +145,7 @@ const deps = {
   publicRoutes: unlimitedPublicRoutes,
   aiConsent: aiConsentOn(db),
   nudges,
+  ...unusedFeedback,
 };
 const app = createApp(deps);
 

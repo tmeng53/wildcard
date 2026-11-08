@@ -129,3 +129,8 @@ func planLengthIsTheAPIs(schema: String) throws {
     }
     #expect(days == CheckIn.backfillDays)
 }
+
+@Test func feedbackLimitsAreTheAPIs() throws {
+    #expect(try property("body", of: "FeedbackDraft")?.maxCharacters == FeedbackText.maxLength)
+    #expect(try property("screenshots", of: "FeedbackDraft")?.maxItems == FeedbackText.maxScreenshots)
+}

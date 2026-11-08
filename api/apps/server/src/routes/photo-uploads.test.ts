@@ -38,6 +38,7 @@ import {
   unusedCoachHiring,
   unusedCoachActivity,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 // The whole journey against local Supabase: sign in, ask for an upload URL, upload to it.
@@ -99,6 +100,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
     ...ignoredNotices,
+    ...unusedFeedback,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     log: createLog(() => undefined),

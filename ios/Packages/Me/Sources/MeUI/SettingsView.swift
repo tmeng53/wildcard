@@ -4,9 +4,10 @@ import DesignSystemUI
 import HealthUI
 import MeDomain
 import SwiftUI
+import UIKit
 
 /// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
-/// small group labels (偏好, 关于, 账号), with no icons, a chevron on each row that opens a page,
+/// small group labels (偏好, 关于 with 意见反馈, 账号), with no icons, a chevron on each row that opens a page,
 /// and an ink switch; 偏好's Apple 健康 pushes its own page. Signing out and deleting the account come last. It holds only the app's
 /// own settings: what belongs to the squad or the week lives with them (2026-11-02), and 球衣号码
 /// with the character editor (2026-11-03).
@@ -16,6 +17,8 @@ struct SettingsView: View {
     @State private var isSigningOut = false
     @State private var isPickingLanguage = false
     @State private var isHealthOpen = false
+    /// 意见反馈 while it is open, a fresh page each time.
+    @State private var feedback: FeedbackModel?
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
@@ -31,6 +34,19 @@ struct SettingsView: View {
             .navigationDestination(isPresented: $isHealthOpen) {
                 if let health = destinations.health { HealthSettingsView(health: health) }
             }
+            .navigationDestination(isPresented: feedbackOpen) {
+                if let feedback {
+                    FeedbackView(
+                        model: feedback, character: model.overview?.character, writeReview: destinations.writeReview
+                    )
+                    .pushedPage(canGoBack: feedback.phase != .sending, hidesTabBar: true)
+                    .accentTone(.ink)
+                }
+            }
+    }
+
+    private var feedbackOpen: Binding<Bool> {
+        Binding(get: { feedback != nil }, set: { if !$0 { feedback = nil } })
     }
 
     /// 注销账号 is open; the system's back closes it as 先不注销 does.
@@ -114,6 +130,11 @@ struct SettingsView: View {
 
     private var aboutGroup: some View {
         MenuGroup(Text("关于", bundle: .module)) {
+            // Also the app's 联系我们 (App Review 1.2): the page shows the support email too.
+            ListRow(Text("意见反馈", bundle: .module)) {
+                feedback = FeedbackModel(service: model.feedback, app: .current, newID: UUID.init)
+            }
+            .accessibilityIdentifier("me.feedback")
             ListRow(Text("隐私政策", bundle: .module)) {
                 openURL(destinations.privacyPolicy)
             }
@@ -176,6 +197,25 @@ private struct MenuGroup<Rows: View>: View {
             VStack(spacing: 0) { rows }
         }
         .padding(.top, Space.l)
+    }
+}
+
+extension FeedbackApp {
+    /// This app on this phone: its version and build, iOS, the model (iPhone17,3) and the
+    /// language picked in the app.
+    @MainActor static var current: FeedbackApp {
+        let info = Bundle.main.infoDictionary ?? [:]
+        var system = utsname()
+        uname(&system)
+        let machine = withUnsafeBytes(of: &system.machine) { bytes in
+            String(bytes: bytes.prefix { $0 != 0 }, encoding: .utf8) ?? ""
+        }
+        return FeedbackApp(
+            appVersion: info["CFBundleShortVersionString"] as? String ?? "?",
+            build: info["CFBundleVersion"] as? String ?? "?",
+            system: "iOS \(UIDevice.current.systemVersion)",
+            device: machine.isEmpty ? UIDevice.current.model : machine,
+            language: AppLanguage.current.rawValue)
     }
 }
 #endif

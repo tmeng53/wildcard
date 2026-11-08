@@ -59,3 +59,9 @@ export const ignoredNotices = {
   coachNames: unused,
   liveEvents: { subscribe: unused, close: () => Promise.resolve() },
 };
+
+/** 意见反馈, for an app whose test never sends any; no tracker, so nothing is filed. */
+export const unusedFeedback = {
+  feedback: { send: unused, toFile: unused, filed: unused },
+  issues: undefined,
+};
