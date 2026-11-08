@@ -92,6 +92,7 @@ const app = createApp({
     clock: unused,
   }),
   nudges: { send: unused, received: unused, inSquad: unused },
+  weather: { savePlace: unused, forgetPlace: unused, dayFor: unused },
   feedback: { send: unused, toFile: unused, filed: unused },
   issues: undefined,
   notices: { tell: unused, page: unused, markSeen: unused },

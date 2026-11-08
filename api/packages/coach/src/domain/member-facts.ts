@@ -74,6 +74,8 @@ export interface NoteBrief {
   readonly trainedDays: number;
   /** Today's plan and this week's 饮食小目标, when they could be read. */
   readonly plan?: { readonly today: PlanDayFacts; readonly fuelGoals: readonly string[] };
+  /** Today's (and yesterday's) weather where they are, in words starting 今天, when known. */
+  readonly weather?: string;
 }
 
 /** The weekday of a `YYYY-MM-DD` day, Monday 0, as the plan counts it. */
@@ -90,9 +92,10 @@ export function weekdayOf(day: string): string {
 export function briefLine(brief: NoteBrief): string {
   const language = brief.language === undefined ? '' : ` ${writeIn(brief.language)}`;
   const trained = `这周已经练了 ${String(brief.trainedDays)} 天`;
-  if (brief.plan === undefined) return `- ${brief.name}：${trained}。${language}`;
+  const weather = brief.weather === undefined ? '' : `；当地${brief.weather}`;
+  if (brief.plan === undefined) return `- ${brief.name}：${trained}${weather}。${language}`;
   const { today, fuelGoals } = brief.plan;
   const plan =
     today.kind === 'rest' ? '今天出赛表是休息日' : `今天出赛表排了${planDayWords(today)}`;
-  return `- ${brief.name}：${plan}；${fuelWords(fuelGoals)}；${trained}。${language}`;
+  return `- ${brief.name}：${plan}；${fuelWords(fuelGoals)}；${trained}${weather}。${language}`;
 }

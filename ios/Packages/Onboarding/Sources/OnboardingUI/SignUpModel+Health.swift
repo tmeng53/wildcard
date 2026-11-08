@@ -2,7 +2,7 @@
 import HealthUI
 import OnboardingDomain
 
-/// 连上 Apple 健康 (Tracy, 2026-11-06), between 平时练什么？ and 本周目标.
+/// 连上 Apple 健康 (Tracy, 2026-11-06), between 平时练什么？ and 打开大概位置.
 extension SignUpModel {
     /// Whether this phone has Apple Health, so 连上 Apple 健康 shows.
     var hasHealth: Bool { health?.isAvailable ?? false }
@@ -18,10 +18,10 @@ extension SignUpModel {
         }
     }
 
-    /// 下一步 or 以后再说: on to 本周目标. Skipping connects nothing; 设置 › Apple 健康 can later.
+    /// 下一步 or 以后再说: on to 打开大概位置. Skipping connects nothing; 设置 › Apple 健康 can later.
     func finishHealth() {
         guard !isConnectingHealth else { return }
-        show(.week)
+        show(SignUpStep.health.next(hasHealth: true, hasLocation: hasLocation) ?? .week)
     }
 }
 #endif

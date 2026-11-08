@@ -28,6 +28,7 @@ final class SignUpUITests: XCTestCase {
         joinBySquadCode(in: app)
         pickSports(in: app)
         connectHealth(in: app)
+        allowLocation(in: app)
         planTheWeek(in: app)
         watchTheEntrance(in: app)
     }
@@ -165,7 +166,7 @@ final class SignUpUITests: XCTestCase {
         squadDone.tap()
         XCTAssertTrue(skip.waitForExistence(timeout: Self.wait), "the squad step didn't carry on to sports")
         skip.tap()
-        skipHealth(in: app)
+        skipHealthAndLocation(in: app)
         let count = app.descendants(matching: .any)["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "the week step never appeared")
         XCTAssertEqual(count.label, "Training 3/7 days a week")
@@ -188,7 +189,7 @@ final class SignUpUITests: XCTestCase {
         let skipSports = app.buttons["sports.skip"]
         XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "平时练什么？ never appeared")
         skipSports.tap()
-        skipHealth(in: app)
+        skipHealthAndLocation(in: app)
         let skipWeek = app.buttons["week.skip"]
         XCTAssertTrue(skipWeek.waitForExistence(timeout: Self.wait), "我的每周计划 never appeared")
         let goal = app.descendants(matching: .any)["week.squadGoal"]
@@ -321,7 +322,7 @@ extension SignUpUITests {
         settle()
         keepScreenshot(named: "57-signup-sports-zh-hant")
         skip.tap()
-        skipHealth(in: app)
+        skipHealthAndLocation(in: app)
         let count = app.descendants(matching: .any)["week.count"]
         XCTAssertTrue(count.waitForExistence(timeout: Self.wait), "the week step never appeared")
         XCTAssertEqual(count.label, "每週訓練 3/7 天")
@@ -369,10 +370,13 @@ extension SignUpUITests {
         done.tap()
     }
 
-    /// 以后再说 on 连上 Apple 健康.
-    private func skipHealth(in app: XCUIApplication) {
+    /// 以后再说 on 连上 Apple 健康, then on 打开大概位置.
+    private func skipHealthAndLocation(in app: XCUIApplication) {
         let skip = app.buttons["health.skip"]
         XCTAssertTrue(skip.waitForExistence(timeout: Self.wait), "连上 Apple 健康 never appeared")
         skip.tap()
+        let skipLocation = app.buttons["location.skip"]
+        XCTAssertTrue(skipLocation.waitForExistence(timeout: Self.wait), "打开大概位置 never appeared")
+        skipLocation.tap()
     }
 }

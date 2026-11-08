@@ -31,6 +31,7 @@
     "@wildcard/memes": "workspace:*",
     "@wildcard/notices": "workspace:*",
     "@wildcard/nudges": "workspace:*",
+    "@wildcard/weather": "workspace:*",
     "@wildcard/push": "workspace:*",
     "@wildcard/scenes": "workspace:*",
     "@wildcard/sport-ids": "workspace:*",
