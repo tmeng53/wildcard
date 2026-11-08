@@ -3,18 +3,15 @@ import AvatarDomain
 import Testing
 
 /// The arms are drawn after the head so a raised hand stays in front of the face, which puts each
-/// shoulder over the chin, and the accessory after the arms so its straps lie over the sleeves. Every
-/// head but the bichon's (whose fluff does it, `chinFrontL`/`R`) draws the halves of its chin again
-/// (`jawL`, `jawR`) after both arms and the accessory and before what the hand holds, so no sleeve
-/// or strap crosses the chin's outline.
+/// shoulder over the chin. Every head but the bichon's (whose fluff does it, `chinFrontL`/`R`) draws
+/// its chin again over its arm's shoulder (`jawL`, `jawR`), right after that arm and before what the
+/// hand holds, so no sleeve crosses the chin's outline.
 @Test func everyChinCoversItsShoulders() throws {
     for body in try PlaceholderCharacter.variants(for: "body") {
         let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body]))
         for (jaw, arm, prop): (PartID, PartID, PartID) in [("jawL", "armL", "propL"), ("jawR", "armR", "propR")] {
             #expect(try figure.part(jaw).art.isEmpty == (body == "bichon"), "\(body) \(jaw)")
-            #expect(try figure.index(jaw) > figure.index("armL"))
-            #expect(try figure.index(jaw) > figure.index("armR"))
-            #expect(try figure.index(jaw) > figure.index("acc"))
+            #expect(try figure.index(jaw) == figure.index(arm) + 1)
             #expect(try figure.index(jaw) < figure.index(prop))
             #expect(try figure.part(jaw).hides?.arm == figure.index(arm))
         }

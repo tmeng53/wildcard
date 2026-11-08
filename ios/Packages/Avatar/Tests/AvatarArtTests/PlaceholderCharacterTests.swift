@@ -10,15 +10,13 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "torso", "medal",
-            "earL", "earR", "head", "flapL", "flapR", "brows", "browsSad", "browsMad", "crown", "award", "nose", "eyes",
-            "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp", "drool", "vein", "steamL", "steamR",
-            "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR", "sparkle", "tearL", "tearR", "food0",
-            "food1", "food2", "chin", "armL", "armR", "acc", "jawL", "propL", "gripL", "jawR",
-            "chinFrontL", "chinFrontR", "propR", "gripR",
-            "flexL",
-            "muscleL",
-            "flexR", "muscleR", "heart", "propFront", "propOver", "desk",
+            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "armLBack", "armRBack",
+            "torso", "medal", "acc", "earL", "earR", "head", "flapL", "flapR", "brows", "browsSad", "browsMad",
+            "crown", "award", "nose", "eyes", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp",
+            "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR",
+            "sparkle", "tearL", "tearR", "food0", "food1", "food2", "chin", "armL", "jawL", "propL", "gripL", "armR",
+            "jawR", "chinFrontL", "chinFrontR", "propR", "gripR", "flexL", "muscleL", "flexR", "muscleR", "heart",
+            "propFront", "propOver", "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
     #expect(try figure.part("acc").art.count == (outfit == Looks.bear ? 1 : 0))

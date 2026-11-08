@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-# The jaws: each body's and hair's head art cut to the left and right halves of the chin, drawn again
-# over both arms and the accessory (rig parts `jawL` and `jawR`). The arms are drawn after the head so
-# a raised hand stays in front of the face, which also put every sleeve's shoulder over the chin's
-# outline, and the accessory after the arms so its straps lie over the sleeves; the jaw tucks both
-# back under the chin until that side's arm comes up to the face (the parts' `hides`).
+# The jaws: each body's and hair's head art cut to the chin beside each shoulder, drawn again over
+# that arm (rig parts `jawL` and `jawR`). The arms are drawn after the head so a raised hand stays
+# in front of the face, which also put every sleeve's shoulder over the chin's outline; the jaw
+# tucks the shoulder back under the chin until the arm comes up to the face (the parts' `hides`).
 #
 # Run `python3 ios/Packages/Avatar/Tools/jaws.py` after changing a head; it rewrites every
 # art/body/<variant>/jawL.svg and jawR.svg, and the hair's where its head reaches the chin.
@@ -14,8 +13,9 @@ from shapely.geometry.polygon import orient
 from svgelements import SVG, Close, Color, Move, Path, Shape
 
 PLACEHOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../Sources/AvatarArt/Placeholder')
-# Below every open mouth (the lowest reaches 202.8), split down the middle.
-REGIONS = {'jawL': box(0, 203, 120, 320), 'jawR': box(120, 203, 240, 320)}
+# Below every open mouth (the lowest reaches 202.8) and out to each sleeve's inner edge, with the
+# middle of the chin left to the head, where nothing of the arms reaches at rest.
+REGIONS = {'jawL': box(0, 203, 110, 320), 'jawR': box(130, 203, 240, 320)}
 # A bichon's fluff hangs over the shoulders already (`chinFrontL`, `chinFrontR`).
 SKIP = {'body/bichon'}
 

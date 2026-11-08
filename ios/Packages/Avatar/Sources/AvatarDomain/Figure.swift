@@ -52,6 +52,8 @@ public struct Figure: Hashable, Sendable {
         public let elbow: Rig.Elbow?
         /// The arm whose raising fades this part out, as an index into `parts` (`Rig.Hides`).
         public internal(set) var hides: Hiding?
+        /// The part this one moves exactly as, as an index into `parts` (`Rig.Part.twin`).
+        public internal(set) var twin: Int?
         /// Back to front.
         public internal(set) var art: [Artwork]
         /// The slot each of `art` is worn in, nil for the rig's own art.
@@ -300,9 +302,12 @@ public struct Figure: Hashable, Sendable {
         var placements = [Placement](repeating: Placement(transform: .identity, opacity: 1), count: parts.count)
         /// What each part's children move with: its own placement, past the elbow for an arm.
         var carriers = [Transform](repeating: .identity, count: parts.count)
+        /// How opaque each part's children are drawn: its own opacity, less its giving way.
+        var carried = [Double](repeating: 1, count: parts.count)
         for index in evaluationOrder {
             let part = parts[index]
-            let move = pose.parts[index]
+            // A twin moves as its twin does, whatever clip moves that.
+            let move = pose.parts[part.twin ?? index]
             // Turn and scale around the pivot, then shift by the clip's offset.
             let local = Transform.translation(x: -part.pivot.x, y: -part.pivot.y)
                 .then(.scale(x: move.scaleX, y: move.scaleY))
@@ -311,10 +316,10 @@ public struct Figure: Hashable, Sendable {
             // A part that gives way to an arm fades as the arm rises.
             let shown = part.hides.map { $0.rule.shown(arm: pose.parts[$0.arm].rotation) } ?? 1
             if let parent = parents[index] {
-                placements[index] = Placement(
-                    transform: local.then(carriers[parent]),
-                    opacity: move.opacity * shown * placements[parent].opacity)
+                carried[index] = move.opacity * carried[parent]
+                placements[index] = Placement(transform: local.then(carriers[parent]), opacity: carried[index] * shown)
             } else {
+                carried[index] = move.opacity
                 placements[index] = Placement(transform: local, opacity: move.opacity * shown)
             }
             carriers[index] = placements[index].transform
