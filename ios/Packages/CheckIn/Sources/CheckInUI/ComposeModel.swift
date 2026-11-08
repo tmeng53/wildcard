@@ -31,6 +31,9 @@ public final class ComposeModel {
     /// The sport picked; the suggestion until the member picks one.
     var activity: Activity?
     var minutes: WorkoutMinutes?
+    /// When a 训练 made by hand started, if the member picked it on the flip clock; a workout
+    /// from Apple Health carries its own.
+    var startTime: StartTime?
     /// The workout the 训练 is posted from, as Health has it (or, for an edit, as it was posted);
     /// nil for one made by hand.
     private(set) var workout: Workout?
@@ -89,7 +92,7 @@ public final class ComposeModel {
         // Locals first: an @Observable model can't read its own properties until all are set.
         var start = Snapshot(
             tiles: Array(photos.prefix(Photos.maxCount)).map(ComposedTile.photo), line: "", activity: nil,
-            minutes: nil)
+            minutes: nil, startTime: nil)
         var posted: Workout?
         if case .edit(let checkIn) = purpose {
             start.tiles = ComposedTile.of(checkIn)
@@ -97,6 +100,7 @@ public final class ComposeModel {
             if case .trained(let training) = checkIn.entry {
                 start.activity = training.activity
                 start.minutes = training.minutes
+                start.startTime = training.startTime
                 posted = training.workout
             }
         }
@@ -104,6 +108,7 @@ public final class ComposeModel {
         line = start.line
         activity = start.activity
         minutes = start.minutes
+        startTime = start.startTime
         workout = posted
         initial = start
     }
@@ -157,7 +162,8 @@ public final class ComposeModel {
     /// What the member would lose by leaving: anything added to a new post, any change to an edit.
     var hasChanges: Bool {
         if isEditing {
-            return Snapshot(tiles: tiles, line: line, activity: activity, minutes: minutes) != initial
+            return Snapshot(tiles: tiles, line: line, activity: activity, minutes: minutes, startTime: startTime)
+                != initial
                 || !struck.isEmpty
         }
         return !photos.isEmpty || !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -195,6 +201,7 @@ public final class ComposeModel {
         chartTakenAt = nil
         if let sport = imported.activity { activity = sport }
         minutes = imported.minutes
+        startTime = nil
         let kept = sharing.keptTiles(of: imported.workout)
         tiles.insert(contentsOf: kept.map(ComposedTile.workout), at: 0)
         if !kept.contains(.chart), imported.workout.chartCell != nil {
@@ -212,6 +219,7 @@ public final class ComposeModel {
         chartTakenAt = nil
         activity = nil
         minutes = nil
+        startTime = nil
     }
 
     /// Strikes a number out of the post, or brings it back. 时长 always goes.
@@ -242,6 +250,7 @@ public final class ComposeModel {
         case .trained(let sport, let length, let body):
             activity = sport
             minutes = length
+            startTime = body.startTime
             apply(body)
         case .healthyMeal(let body), .cheatMeal(let body):
             apply(body)
@@ -275,7 +284,10 @@ public final class ComposeModel {
     /// A new post as drafted, its photos all just picked.
     var draft: CheckInDraft {
         let picked = photos.compactMap { if case .new(let photo) = $0 { photo } else { nil } }
-        let body = PostBody(photos: picked, caption: line, workout: kind == .trained ? postedWorkout : nil)
+        let trained = kind == .trained
+        let body = PostBody(
+            photos: picked, caption: line, workout: trained ? postedWorkout : nil,
+            startTime: trained && workout == nil ? startTime : nil)
         return switch kind {
         case .trained: .trained(currentActivity, minutes, body)
         case .healthyMeal: .healthyMeal(body)
@@ -288,7 +300,7 @@ public final class ComposeModel {
         guard case .edit(let checkIn) = purpose else { return nil }
         return PostEdit(
             original: checkIn, activity: currentActivity, minutes: minutes, line: line, photos: photos,
-            workout: postedWorkout)
+            workout: postedWorkout, startTime: workout == nil ? startTime : nil)
     }
 
     private struct Snapshot: Equatable {
@@ -296,6 +308,7 @@ public final class ComposeModel {
         var line: String
         var activity: Activity?
         var minutes: WorkoutMinutes?
+        var startTime: StartTime?
     }
 }
 

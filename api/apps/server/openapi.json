@@ -1197,6 +1197,11 @@
             "maximum": 600,
             "description": "How long the workout took, in whole minutes."
           },
+          "startTime": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "description": "When it started, on the member's clock on its day, as HH:mm."
+          },
           "caption": {
             "type": "string",
             "maxLength": 1000,
@@ -1777,6 +1782,11 @@
             "minimum": 1,
             "maximum": 600,
             "description": "How long the workout took, in whole minutes."
+          },
+          "startTime": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "description": "When it started, on the member's clock on its day, as HH:mm."
           },
           "caption": {
             "type": "string",
