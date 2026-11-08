@@ -3,6 +3,7 @@ import AvatarArt
 import AvatarDomain
 import AvatarUI
 import CheckInDomain
+import Contracts
 import Foundation
 import SportsUI
 
@@ -22,7 +23,24 @@ extension TodayModel {
             status: StageStatus(
                 training: store.myStatus, activity: home.todaysSport(of: home.member),
                 plannedRest: home.mine?.plannedRest ?? false),
-            firstCheckInAt: home.mine?.firstCheckInAt, keepsToTheBack: false, eating: home.todaysMeal(of: home.member))
+            firstCheckInAt: home.mine?.firstCheckInAt, keepsToTheBack: false,
+            eating: home.todaysMeal(of: home.member, at: Timestamp(now())))
+    }
+
+    /// Someone who trained and then posted a meal eats it for `Home.mealAfterTraining`, then
+    /// goes back to their sport: the squad is placed again then, with the app open.
+    func placeAgainWhenAMealEnds(_ home: Home) {
+        mealEnd?.cancel()
+        let moment = Timestamp(now())
+        guard
+            let next = home.today.members.compactMap({ home.mealEnds(of: $0.member) }).filter({ $0 > moment }).min()
+        else { return }
+        let wait = Double(next.millisecondsSince1970 - moment.millisecondsSince1970) / 1000
+        mealEnd = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(wait))
+            guard !Task.isCancelled else { return }
+            self?.placeSquad()
+        }
     }
 
     /// What I'm doing on the scene, by the same rule as every teammate: training in my sport's

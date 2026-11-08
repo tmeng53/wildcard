@@ -27,7 +27,8 @@ public enum StagePose: Hashable, Sendable {
     case holdingSign
     /// A rest day: sitting on the floor, cheering when someone checks in.
     case sitting
-    /// Their latest post today is a meal: eating it on their spot.
+    /// Their latest post today is a meal: eating it on their spot, for an hour when they trained
+    /// first (`Home.mealAfterTraining`).
     case eating(MealKind)
     /// Not checked in yet: standing in everyday clothes.
     case standing

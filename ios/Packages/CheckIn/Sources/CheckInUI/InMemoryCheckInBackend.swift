@@ -184,7 +184,8 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     }
 
     /// With `meals`, two teammates' latest posts are meals: 小米 had a salad after her run, and
-    /// Leo, who hasn't trained, owned up to a boba. Both eat on the home.
+    /// Leo, who hasn't trained, owned up to a boba. Both eat on the home (小米 for the hour
+    /// after her salad).
     private static func sampleMeals(
         by mates: [MemberID], on day: LocalDay, in squad: SquadID, at time: (Double) -> Timestamp
     ) -> [CheckIn] {
@@ -195,7 +196,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
         else { return [] }
         return [
             CheckIn(
-                id: CheckInID(UUID()), member: mates[0], day: day, createdAt: time(1), audience: audience,
+                id: CheckInID(UUID()), member: mates[0], day: day, createdAt: time(0.25), audience: audience,
                 entry: .healthyMeal(Meal(caption: salad))),
             CheckIn(
                 id: CheckInID(UUID()), member: mates[5], day: day, createdAt: time(0.5), audience: audience,

@@ -130,27 +130,55 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
 }
 
 @Test func whatSomeoneDoesOnTheHomeIsTheirLatestPostAndItsWords() throws {
+    // The meal at 2 was posted at 1_792_500_000_002.
+    let justAte = Timestamp(millisecondsSince1970: 1_792_500_000_002)
     let trainedThenAte = sampleHome(checkIns: [
         try checkIn(1, by: mate, .trained(Training(activity: .sport("climb"), caption: try Caption("爬到顶了")))),
         try checkIn(2, by: mate, .cheatMeal(Meal())),
     ])
-    #expect(trainedThenAte.todaysMeal(of: mate) == .cheatMeal)
+    #expect(trainedThenAte.todaysMeal(of: mate, at: justAte) == .cheatMeal)
     // The bubble says what the latest post says: this meal has no words.
-    #expect(trainedThenAte.todaysCaption(of: mate) == nil)
+    #expect(trainedThenAte.todaysCaption(of: mate, at: justAte) == nil)
 
     let ateThenTrained = sampleHome(checkIns: [
         try checkIn(1, by: mate, .healthyMeal(Meal(caption: try Caption("沙拉")))),
         try checkIn(2, by: mate, .trained(Training(activity: .sport("climb")))),
     ])
-    #expect(ateThenTrained.todaysMeal(of: mate) == nil)
-    #expect(ateThenTrained.todaysCaption(of: mate) == nil)
+    #expect(ateThenTrained.todaysMeal(of: mate, at: justAte) == nil)
+    #expect(ateThenTrained.todaysCaption(of: mate, at: justAte) == nil)
     #expect(
         sampleHome(checkIns: [try checkIn(1, by: mate, .healthyMeal(Meal(caption: try Caption("沙拉"))))])
-            .todaysCaption(of: mate) == "沙拉")
+            .todaysCaption(of: mate, at: justAte) == "沙拉")
 
     let yesterday = sampleHome(checkIns: [
         try checkIn(1, by: mate, on: tuesday.adding(days: -1), .healthyMeal(Meal(caption: try Caption("昨天的"))))
     ])
-    #expect(yesterday.todaysMeal(of: mate) == nil)
-    #expect(yesterday.todaysCaption(of: mate) == nil)
+    #expect(yesterday.todaysMeal(of: mate, at: justAte) == nil)
+    #expect(yesterday.todaysCaption(of: mate, at: justAte) == nil)
+}
+
+@Test func aMealAfterTrainingLastsAnHourThenTheyTrainAgain() throws {
+    let trainedThenAte = sampleHome(checkIns: [
+        try checkIn(1, by: mate, .trained(Training(activity: .sport("run"), caption: try Caption("5 公里")))),
+        try checkIn(2, by: mate, .healthyMeal(Meal(caption: try Caption("沙拉")))),
+    ])
+    #expect(trainedThenAte.mealEnds(of: mate) == Timestamp(millisecondsSince1970: 1_792_503_600_002))
+    let lastMinute = Timestamp(millisecondsSince1970: 1_792_503_600_001)
+    #expect(trainedThenAte.todaysMeal(of: mate, at: lastMinute) == .healthyMeal)
+    #expect(trainedThenAte.todaysCaption(of: mate, at: lastMinute) == "沙拉")
+    let anHourOn = Timestamp(millisecondsSince1970: 1_792_503_600_002)
+    #expect(trainedThenAte.todaysMeal(of: mate, at: anHourOn) == nil)
+    #expect(trainedThenAte.todaysCaption(of: mate, at: anHourOn) == "5 公里")
+    #expect(trainedThenAte.todaysSport(of: mate) == .sport("run"))
+
+    // Without a 练了 first, the meal lasts all day.
+    let onlyAte = sampleHome(checkIns: [try checkIn(1, by: mate, .healthyMeal(Meal()))])
+    #expect(onlyAte.mealEnds(of: mate) == nil)
+    #expect(onlyAte.todaysMeal(of: mate, at: Timestamp(millisecondsSince1970: 1_792_550_000_000)) == .healthyMeal)
+    // Nor does a 练了 after the meal leave one to end.
+    let ateThenTrained = sampleHome(checkIns: [
+        try checkIn(1, by: mate, .healthyMeal(Meal())),
+        try checkIn(2, by: mate, .trained(Training(activity: .sport("run")))),
+    ])
+    #expect(ateThenTrained.mealEnds(of: mate) == nil)
 }

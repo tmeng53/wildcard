@@ -95,20 +95,47 @@ public struct Home: Hashable, Sendable {
             .flatMap { if case .trained(let training) = $0.entry { training.activity } else { nil } }
     }
 
-    /// The meal `member` is eating: their latest post today, when it is a 健康餐 or 坦白放纵餐.
-    /// Whatever they posted last is what their character does, a 练了 not first (Tracy, 2026-11-04).
-    public func todaysMeal(of member: MemberID) -> MealKind? {
-        switch todaysCheckIns(of: member).last?.entry {
-        case .healthyMeal?: .healthyMeal
-        case .cheatMeal?: .cheatMeal
-        case .trained?, .disclaimer?, nil: nil
+    /// How long someone who trained today eats a meal posted after it, before going back to
+    /// their sport (Tracy, 2026-11-08).
+    public static let mealAfterTraining = Duration.seconds(3600)
+
+    /// The post `member`'s character acts out at `now`: their latest today, except that a meal
+    /// after a 练了 lasts `mealAfterTraining`, then they go back to training.
+    func todaysShownPost(of member: MemberID, at now: Timestamp) -> CheckIn? {
+        let posts = todaysCheckIns(of: member)
+        guard let last = posts.last, let ends = mealEnds(of: member) else { return posts.last }
+        return now < ends ? last : posts.last { if case .trained = $0.entry { true } else { false } }
+    }
+
+    /// When the meal `member` eats after a 练了 today ends, while their latest post is one; nil
+    /// when they didn't train first, so their meal lasts all day.
+    public func mealEnds(of member: MemberID) -> Timestamp? {
+        let posts = todaysCheckIns(of: member)
+        guard let last = posts.last, Self.meal(last.entry) != nil,
+            posts.contains(where: { if case .trained = $0.entry { true } else { false } })
+        else { return nil }
+        let length = Int64(Self.mealAfterTraining / .milliseconds(1))
+        return Timestamp(millisecondsSince1970: last.createdAt.millisecondsSince1970 + length)
+    }
+
+    /// The meal `member` is eating at `now`: their latest post today, when it is a 健康餐 or
+    /// 坦白放纵餐 (Tracy, 2026-11-04), for an hour when they trained before it.
+    public func todaysMeal(of member: MemberID, at now: Timestamp) -> MealKind? {
+        todaysShownPost(of: member, at: now).flatMap { Self.meal($0.entry) }
+    }
+
+    private static func meal(_ entry: CheckIn.Entry) -> MealKind? {
+        switch entry {
+        case .healthyMeal: .healthyMeal
+        case .cheatMeal: .cheatMeal
+        case .trained, .disclaimer: nil
         }
     }
 
-    /// The words of `member`'s latest post today, if it has any: the second line of their
-    /// bubble, under what that post says they are doing.
-    public func todaysCaption(of member: MemberID) -> String? {
-        switch todaysCheckIns(of: member).last?.entry {
+    /// The words of the post `member`'s character acts out at `now`, if it has any: the second
+    /// line of their bubble, under what that post says they are doing.
+    public func todaysCaption(of member: MemberID, at now: Timestamp) -> String? {
+        switch todaysShownPost(of: member, at: now)?.entry {
         case .trained(let training)?: training.caption?.text
         case .healthyMeal(let meal)?, .cheatMeal(let meal)?: meal.caption?.text
         case .disclaimer?, nil: nil

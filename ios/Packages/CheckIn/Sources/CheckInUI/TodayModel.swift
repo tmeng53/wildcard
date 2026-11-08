@@ -211,6 +211,8 @@ public final class TodayModel {
     var myDoze = 0.0
     /// My wake-up or doze still waiting for its turn; the next pull cancels it.
     @ObservationIgnored var myLightsMove: Task<Void, Never>?
+    /// Places the squad again when the next meal eaten after a 练了 ends.
+    @ObservationIgnored var mealEnd: Task<Void, Never>?
 
     /// Puts everyone where they belong after the home changed.
     func placeSquad() {
@@ -224,7 +226,8 @@ public final class TodayModel {
             }
         }
         if !holdsDress || player == nil { dressMe(hop: false) }
-        cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach)
+        cast.update(home: home, scene: scene, phase: stagePhase, at: Timestamp(now()), coach: store.coach?.coach)
+        placeAgainWhenAMealEnds(home)
         if opening != nil { standOpeningSquad() }
     }
 

@@ -41,7 +41,8 @@ extension TodayModel {
                 StageStatus(
                     training: store.myStatus, activity: home.todaysSport(of: member),
                     plannedRest: home.mine?.plannedRest ?? false),
-                eating: home.todaysMeal(of: member), caption: home.todaysCaption(of: member),
+                eating: home.todaysMeal(of: member, at: Timestamp(now())),
+                caption: home.todaysCaption(of: member, at: Timestamp(now())),
                 disclaimer: home.todaysDisclaimer(of: member), asleep: myPose(at: stagePhase) == .asleep)
             return MateToday(title: line.title, detail: line.detail, isMe: true)
         }

@@ -75,8 +75,9 @@ final class SquadCast {
     /// a quick second pull never lets the first one's move play after it.
     private var lightsMoves: [MemberID: Task<Void, Never>] = [:]
 
-    /// Places the squad from the store's home: everyone but `me`, and `coach` on the sideline.
-    func update(home: Home, scene: SceneTheme, phase: DayPhase, coach speaker: CoachSpeaker? = nil) {
+    /// Places the squad from the store's home at `now`: everyone but `me`, and `coach` on the
+    /// sideline.
+    func update(home: Home, scene: SceneTheme, phase: DayPhase, at now: Timestamp, coach speaker: CoachSpeaker? = nil) {
         if stage.layout != .of(scene) { stage = SquadStage(layout: .of(scene)) }
         coach = sideline(speaker)
         watch(home, by: speaker)
@@ -88,7 +89,7 @@ final class SquadCast {
                     training: mate.training, activity: home.todaysSport(of: mate.member),
                     plannedRest: mate.plannedRest),
                 firstCheckInAt: mate.firstCheckInAt,
-                keepsToTheBack: Self.persona(of: mate) == .shy, eating: home.todaysMeal(of: mate.member))
+                keepsToTheBack: Self.persona(of: mate) == .shy, eating: home.todaysMeal(of: mate.member, at: now))
         }
         stage.arrange(members, coach: coach != nil)
         mates = zip(teammates, members).compactMap { mate, member in
@@ -105,7 +106,7 @@ final class SquadCast {
                 player: player,
                 line: mate.catchphrase?.text ?? Self.personaLine(persona),
                 disclaimer: home.todaysDisclaimer(of: member.id),
-                caption: home.todaysCaption(of: member.id))
+                caption: home.todaysCaption(of: member.id, at: now))
         }
     }
 

@@ -9,7 +9,7 @@ public struct StageMember: Hashable, Sendable {
     /// 社恐 takes the free spot furthest back.
     public let keepsToTheBack: Bool
     /// What they are eating, when their latest post today is a meal: they eat it on their spot,
-    /// off the equipment, even after a 练了.
+    /// off the equipment, for the hour after it when they trained first (`Home.todaysMeal`).
     public let eating: MealKind?
 
     public init(
