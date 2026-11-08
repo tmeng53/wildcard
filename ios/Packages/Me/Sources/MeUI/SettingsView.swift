@@ -68,6 +68,7 @@ struct SettingsView: View {
                     MeStage(character: model.overview?.character, mood: .typing, size: CGSize(width: 72, height: 90))
                         .accessibilityHidden(true)
                 }
+                subscriptionGroup
                 preferencesGroup
                 aboutGroup
                 if let previewSignUp = destinations.previewSignUp {
@@ -88,6 +89,14 @@ struct SettingsView: View {
         .barTitleOnScroll(Text("设置", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
         .accessibilityIdentifier("settings.page")
+    }
+
+    /// Where paying will live; for now it only says the public beta is free.
+    private var subscriptionGroup: some View {
+        MenuGroup(Text("订阅", bundle: .module)) {
+            ListRow(Text("公测期间", bundle: .module), value: Text("全部免费", bundle: .module), showsDivider: false)
+                .accessibilityIdentifier("me.subscription")
+        }
     }
 
     private var preferencesGroup: some View {
