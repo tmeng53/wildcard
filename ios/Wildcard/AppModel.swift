@@ -141,8 +141,7 @@ final class AppModel {
             switch state {
             case .signedOut: await signedOut()
             case .signedIn:
-                await registerForPush()
-                await Self.location.signedIn(APILocationRegistry(api: api))
+                await registerDevice()
                 if case .starting = screen, !openingUnderCover { await openHome() }
             }
         }
@@ -348,10 +347,6 @@ final class AppModel {
 
     /// 通知 over our API.
     var notices: any NoticeSource { APINoticeSource(api: api) }
-
-    private func registerForPush() async {
-        try? await Push.registration.signedIn(APIDeviceRegistry(api: api))
-    }
 
     private func signedOut() async {
         // The next account on this phone reads its own; until then it is no admin.
