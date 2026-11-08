@@ -60,7 +60,7 @@ struct ControlSurface: ViewModifier {
 }
 
 /// A second action beside or under the primary one (换一组, 存图): the brand's graphite capsule
-/// with white words, 44 tall, on a page or in a card alike (Tracy, 2026-11-08: one colour for
+/// with white words, 44 tall (32 in `.compact`, beside a segmented control), on a page or in a card alike (Tracy, 2026-11-08: one colour for
 /// every secondary button). On graphite itself (`.onInk`: an `inkCard`, a graphite bar) it turns
 /// white with ink words. An action that can't be taken back is a `TextButtonStyle(.danger)`,
 /// never this. Floating, it is clear interactive Liquid Glass.
