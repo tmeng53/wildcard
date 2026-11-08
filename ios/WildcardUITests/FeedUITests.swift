@@ -101,7 +101,7 @@ final class FeedUITests: XCTestCase {
         XCTAssertTrue(photos.waitForExistence(timeout: Self.wait), "动态 didn't come back")
     }
 
-    /// A 训练 shows its numbers on the 成绩条 under its cover, 时长 first. The newest posts on top
+    /// A 训练 shows its numbers on the 成绩条 under its cover, 时长 first, across the card. The newest posts on top
     /// are a run from Apple Health, a 请假条 and a salad, so the strip is scrolled to, a little at a
     /// time, until one clears the tab bar.
     func testScoreStrip() {
@@ -122,6 +122,11 @@ final class FeedUITests: XCTestCase {
         // Kept before the check, so a failure shows where the list stopped.
         keepScreenshot(named: "44-feed-score-strip")
         assertClearOfTheTabBar(strip, in: app)
+        // The strip opens the ticket's stub, across the whole card.
+        let card = app.descendants(matching: .any).matching(identifier: "feed.post")
+            .containing(.any, identifier: "post.strip").firstMatch
+        XCTAssertEqual(strip.frame.minX, card.frame.minX, accuracy: 1, "the 成绩条 doesn't reach the card's left edge")
+        XCTAssertEqual(strip.frame.maxX, card.frame.maxX, accuracy: 1, "the 成绩条 doesn't reach the card's right edge")
     }
 
     /// A post without a cover shows the shared colour block with its words, its minutes on the
