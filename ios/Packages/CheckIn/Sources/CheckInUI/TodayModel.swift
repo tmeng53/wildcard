@@ -141,6 +141,8 @@ public final class TodayModel {
     @ObservationIgnored public var openTeammate: (MemberID) -> Void = { _ in }
     /// Opens the squad's coach's card, from a tap on it on the sideline; the app sets it.
     @ObservationIgnored public var openCoach: () -> Void = {}
+    /// Opens 教练招聘会, from a tap on the coach's empty spot on the sideline; the app sets it.
+    @ObservationIgnored public var openCoachMarket: () -> Void = {}
 
     /// The squad dropping onto a newly picked scene (`TodayModel+DropIn.swift`), the tab bar held meanwhile.
     var arrival: Arrival?
@@ -224,7 +226,8 @@ public final class TodayModel {
             }
         }
         if !holdsDress || player == nil { dressMe(hop: false) }
-        cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach)
+        cast.update(
+            home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach, hiring: store.isHiringCoach)
         if opening != nil { standOpeningSquad() }
     }
 

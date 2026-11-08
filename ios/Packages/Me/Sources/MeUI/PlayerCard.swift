@@ -20,44 +20,17 @@ struct PlayerCard: View {
     var hint: ColorRole? = .fgMuted
     /// Spans the width it is given at the card's proportions (我), instead of its own 300 points.
     var fillsWidth = false
-    @State private var showsBack = false
-    /// How far the card has turned on its vertical axis, in degrees: it turns edge-on, swaps sides
-    /// out of sight and turns back.
-    @State private var turn: Double = 0
-    @State private var isTurning = false
     @State private var opened: BoardTitle?
     /// The badge board, opened from the 出赛表 on a squadmate's card's back.
     @State private var showsBoard = false
     @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     static var size: CGSize { TradingCard.size }
 
     var body: some View {
-        VStack(spacing: Space.s) {
-            Group {
-                if showsBack {
-                    // The back's badges are buttons of their own, so the back is no button: a
-                    // tap anywhere else on it turns it over.
-                    sided(back)
-                        .onTapGesture(perform: flip)
-                        .accessibilityElement(children: .contain)
-                        .accessibilityAction(named: Text("轻点翻面", bundle: .module), flip)
-                        .accessibilityIdentifier("me.cardBack")
-                } else {
-                    Button(action: flip) { sided(CardFront(face: face)) }
-                        .buttonStyle(PressableButtonStyle())
-                        .accessibilityHint(Text("轻点翻面", bundle: .module))
-                        .accessibilityIdentifier("me.card")
-                }
-            }
-            .rotation3DEffect(.degrees(turn), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
-            // It turns over rather than swipes, so it says so.
-            if let hint {
-                Text("轻点翻面", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: hint, in: theme))
-                    .accessibilityHidden(true)
-            }
+        FlippingCard(hint: hint, fillsWidth: fillsWidth, identifier: "me.card") {
+            CardFront(face: face)
+        } back: {
+            back
         }
         .sheet(isPresented: $showsBoard) {
             BadgeBoardSheet(face: face)
@@ -81,34 +54,6 @@ struct PlayerCard: View {
             ScheduleBack(face: face, schedule: schedule) { showsBoard = true }
         } else {
             CardBack(face: face) { opened = $0 }
-        }
-    }
-
-    /// A side on the card's stock, at the card's size.
-    private func sided(_ side: some View) -> some View {
-        side.tradingCardStock(fillsWidth: fillsWidth)
-    }
-
-    /// Half a turn each way on the page spring's time; with Reduce Motion on, the sides swap with
-    /// a fade.
-    private func flip() {
-        guard !isTurning else { return }
-        if reduceMotion {
-            withAnimation(.wildcard(Motion.page, reduceMotion: true)) { showsBack.toggle() }
-            return
-        }
-        isTurning = true
-        let half = Motion.page.response / 2
-        withAnimation(.easeIn(duration: half)) {
-            turn = 90
-        } completion: {
-            showsBack.toggle()
-            turn = -90
-            withAnimation(.easeOut(duration: half)) {
-                turn = 0
-            } completion: {
-                isTurning = false
-            }
         }
     }
 }

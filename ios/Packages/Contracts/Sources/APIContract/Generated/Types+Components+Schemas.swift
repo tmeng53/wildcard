@@ -188,7 +188,7 @@ extension Components {
             public struct ActionPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/NoticeEntry/action/label`.
                 public var label: Components.Schemas.LocalizedWords
-                /// Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` (小队), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show no button for one you don’t know.
+                /// Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` (小队), `coaches` (教练招聘会), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show no button for one you don’t know.
                 ///
                 /// - Remark: Generated from `#/components/schemas/NoticeEntry/action/destination`.
                 public var destination: Swift.String
@@ -196,7 +196,7 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - label:
-                ///   - destination: Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` (小队), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show no button for one you don’t know.
+                ///   - destination: Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` (小队), `coaches` (教练招聘会), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show no button for one you don’t know.
                 public init(
                     label: Components.Schemas.LocalizedWords,
                     destination: Swift.String

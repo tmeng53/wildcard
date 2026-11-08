@@ -47,6 +47,7 @@ private func entry(
     #expect(try entry(action: "schedule")?.destination == .schedule)
     #expect(try entry(action: "me")?.destination == .profile)
     #expect(try entry(action: "notices")?.destination == .notices)
+    #expect(try entry(action: "coaches")?.destination == .coaches)
 }
 
 @Test func aPlaceThisBuildDoesntKnowShowsNoButtonAndAnUnknownStyleIsABanner() throws {

@@ -110,7 +110,8 @@ public struct TodayView: View {
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
                 pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
                 tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, tapCoach: model.tapCoach,
-                coachHasNote: model.coachHasNote, coachAt: { coachCenter = $0 }
+                coachHasNote: model.coachHasNote, coachAt: { coachCenter = $0 },
+                tapVacancy: model.tapVacancy
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)

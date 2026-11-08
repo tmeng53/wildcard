@@ -13,7 +13,7 @@ import SwiftUI
 /// screen's width.
 struct SquadSceneView: View {
     @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     let cast: SquadCast
     let myPlayer: CharacterPlayer?
@@ -47,6 +47,8 @@ struct SquadSceneView: View {
     /// Whether the coach's note waits unread (its phone shows it), and where it stands on screen.
     var coachHasNote = false
     var coachAt: (CGPoint) -> Void = { _ in }
+    /// I tapped the coach's empty spot, there while the squad has no coach: 教练招聘会 opens.
+    var tapVacancy: () -> Void = {}
 
     /// The pull whose wake-up (or doze) has played out, after which the scene stops redrawing
     /// for it under Reduce Motion.
@@ -155,6 +157,11 @@ struct SquadSceneView: View {
                     )
                     .zIndex(coach.spot.y)
                 }
+                // Nobody drops into the empty spot: it shows once the squad stands.
+                if let spot = cast.vacancy, coachFall(at: timeline.date) >= 0 {
+                    SidelineVacancy(spot: spot, unit: unit, tap: tapVacancy)
+                        .zIndex(spot.y)
+                }
                 ForEach(Array(Stage.fronts(of: theme).enumerated()), id: \.offset) { index, depth in
                     SceneArt(scene: theme, layer: .front(index))
                         .frame(width: StageLayout.width * unit, height: Stage.height * unit)
@@ -228,13 +235,6 @@ struct SquadSceneView: View {
     private func fall(of member: MemberID?, at date: Date) -> Double? {
         guard let arrival else { return nil }
         return arrival.elapsed(at: date) - arrival.drop.start(of: arrival.index(of: member))
-    }
-
-    /// How far into its drop the coach is at `date`, in seconds (below zero while it waits),
-    /// or infinity once it stands, as it does whenever nobody is dropping in.
-    private func coachFall(at date: Date) -> Double {
-        guard let arrival, !reduceMotion else { return .infinity }
-        return arrival.coachFall(at: date)
     }
 
     /// A teammate's nickname, or 我 for me; nil for anyone without one yet.
@@ -368,7 +368,7 @@ private struct StageFigure: View {
 /// the character (`scale`); its line stays the same on everyone (`unit`, one stage point).
 private struct GroundRing: View {
     @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     let ring: RingStatus
     let scale: Double
     let unit: Double

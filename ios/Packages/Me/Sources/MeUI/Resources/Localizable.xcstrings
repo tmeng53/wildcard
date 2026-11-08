@@ -385,22 +385,6 @@
         }
       }
     },
-    "轻点翻面" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap to flip the card"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "點一下翻面"
-          }
-        }
-      }
-    },
     "球衣号码" : {
       "localizations" : {
         "en" : {
