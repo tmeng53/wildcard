@@ -6,6 +6,7 @@ import {
 import type { Members } from '@wildcard/members';
 import { MemberId as PushMember, type Push } from '@wildcard/push';
 import { MemberId as SquadMember, type Squads } from '@wildcard/squads';
+import { NEW_YORK } from '@wildcard/time-zones';
 import { SquadId, latestAwardedWeek } from '@wildcard/weekly-awards';
 import { z } from 'zod';
 
@@ -54,7 +55,13 @@ export function sendTestPush({ push, squads, checkIns, members, clock }: TestPus
       const now = clock();
       const built =
         kind === 'weeklyAwards'
-          ? awardsReadyNotification(SquadId.parse(squad.id), latestAwardedWeek(now))
+          ? awardsReadyNotification(
+              SquadId.parse(squad.id),
+              latestAwardedWeek(
+                now,
+                (await squads.timeZonesAt([squad.id], now)).get(squad.id) ?? NEW_YORK,
+              ),
+            )
           : await dailyProgress(kind, { admin, squad: squad.id, now });
       // Its own collapse id, so on the phone it never replaces the real push of the day or week,
       // nor is replaced by it.

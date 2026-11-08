@@ -30,7 +30,7 @@ export class AwardsModelMissingError extends AppError {
 }
 
 /**
- * Thrown when a week's story is asked for before its awards (Sunday 8pm Eastern): there is
+ * Thrown when a week's story is asked for before its awards (Sunday 8pm on the squad's clock): there is
  * nothing to show yet, so the feed shows no tile for it.
  */
 export class WeekStoryNotReadyError extends AppError {
@@ -39,7 +39,9 @@ export class WeekStoryNotReadyError extends AppError {
   readonly status = 'NOT_FOUND';
 
   constructor(readonly weekStart: string) {
-    super(`The story of the week from ${weekStart} comes on its Sunday at 8pm Eastern.`);
+    super(
+      `The story of the week from ${weekStart} comes on its Sunday at 8pm on the squad's clock.`,
+    );
   }
 }
 
