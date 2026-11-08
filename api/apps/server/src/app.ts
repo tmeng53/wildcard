@@ -120,7 +120,7 @@ export interface AppDependencies {
   /** The stores, props and pieces members unlock by training. */
   readonly unlocks: Unlocks;
   /** What squads' coaches gave members, for `/me/unlocks`. */
-  readonly gifts: Pick<CoachGifts, 'of'>;
+  readonly gifts: Pick<CoachGifts, 'of' | 'open'>;
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */
   readonly jobs: {
