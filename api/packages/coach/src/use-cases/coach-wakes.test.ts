@@ -32,6 +32,7 @@ import type {
   AgentRun,
   CoachAgent,
   CoachGifting,
+  CoachHiringStore,
   CoachMemberFacts,
   CoachMemes,
   CoachPhotoUrls,
@@ -154,7 +155,7 @@ function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
  * every week) and whose members all agreed to AI use unless `consented` says who did.
  */
 function wakes(
-  { trx, week }: Fixture,
+  { trx, squad, week }: Fixture,
   {
     agent,
     at = now,
@@ -199,7 +200,7 @@ function wakes(
       Promise.resolve(
         consented === undefined ? members : members.filter((member) => consented.includes(member)),
       ),
-    hiring: createPostgresCoachHiring(trx),
+    hiring: ownSquadOnly(createPostgresCoachHiring(trx), squad),
     clock: () => at,
     ...(replied === undefined ? {} : { replied }),
     ...(answered === undefined ? {} : { answered }),
@@ -209,6 +210,18 @@ function wakes(
     ...(memes === undefined ? {} : { memes }),
     ...(gifting === undefined ? {} : { gifting }),
   });
+}
+
+/**
+ * The hiring store, seeing only the fixture's squad among the squads with a coach: other
+ * test files commit squads that keep theirs, and a run would wake those too.
+ */
+function ownSquadOnly(hiring: CoachHiringStore, squad: SquadId): CoachHiringStore {
+  return {
+    ...hiring,
+    hired: async () =>
+      new Map([...(await hiring.hired())].filter(([hiredSquad]) => hiredSquad === squad)),
+  };
 }
 
 /** A comment under the fixture's check-in, as the check-ins module saves it. */
