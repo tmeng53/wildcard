@@ -68,7 +68,6 @@ struct SettingsView: View {
                     MeStage(character: model.overview?.character, mood: .typing, size: CGSize(width: 72, height: 90))
                         .accessibilityHidden(true)
                 }
-                betaLine
                 preferencesGroup
                 aboutGroup
                 if let previewSignUp = destinations.previewSignUp {
@@ -89,15 +88,6 @@ struct SettingsView: View {
         .barTitleOnScroll(Text("设置", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
         .accessibilityIdentifier("settings.page")
-    }
-
-    /// One plain line under the heading while the public beta runs.
-    private var betaLine: some View {
-        Text("外卡所有功能免费开放", bundle: .module)
-            .typeStyle(TypeRamp.callout)
-            .foregroundStyle(Color(role: .fgMuted, in: theme))
-            .padding(.top, Space.xs)
-            .accessibilityIdentifier("me.betaFree")
     }
 
     private var preferencesGroup: some View {

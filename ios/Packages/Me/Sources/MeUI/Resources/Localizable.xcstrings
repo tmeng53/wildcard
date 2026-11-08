@@ -1172,22 +1172,7 @@
 
 
 
-    "外卡所有功能免费开放" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Every Wildcard feature is free to use"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "外卡所有功能免費開放"
-          }
-        }
-      }
-    },
+
     "公测期间提出反馈，领取神秘奖励" : {
       "localizations" : {
         "en" : {
