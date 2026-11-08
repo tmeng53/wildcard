@@ -344,10 +344,14 @@ export function toolbox({
           const problem = lineProblem(line, NOTE_LIMIT);
           if (problem !== undefined) return problem;
           // A blank title is no challenge: the model sends one, with a zero amount, for a rest day.
+          // A blank line under it is none too.
           const set =
             challenge === undefined || challenge.title.trim() === ''
               ? undefined
-              : Challenge.safeParse(challenge);
+              : Challenge.safeParse({
+                  ...challenge,
+                  line: challenge.line.trim() === '' ? undefined : challenge.line,
+                });
           if (set !== undefined && !set.success) {
             return `挑战不对：title 不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数，unit 不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字，两个一起填或都不填；line 不超过 ${String(CHALLENGE_LINE_LIMIT)} 字。`;
           }

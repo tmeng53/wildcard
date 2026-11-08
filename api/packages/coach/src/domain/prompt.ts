@@ -149,6 +149,7 @@ export function taskOf({
   readonly challenge?: {
     readonly challenge: Challenge;
     readonly answer?: ChallengeAnswer;
+    readonly reason?: string;
     readonly completion?: ChallengeCompletion;
   };
   /** On a daily wake, the gift pool and who may get one this week. */

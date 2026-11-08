@@ -445,6 +445,7 @@ async function runWake(
             challenge: {
               challenge: challenge.challenge,
               ...(challenge.answer === undefined ? {} : { answer: challenge.answer }),
+              ...(challenge.reason === undefined ? {} : { reason: challenge.reason }),
               ...(challenge.completion === undefined ? {} : { completion: challenge.completion }),
             },
           }),

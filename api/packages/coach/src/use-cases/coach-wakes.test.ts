@@ -1750,6 +1750,37 @@ describe('the coach', () => {
         answer: 'declined',
         reason: '我鸡蛋过敏',
       });
+      // A check-in's wake that day is told why it was let go, and not to repeat it.
+      const meal = randomUUID();
+      await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+        values (${meal}, ${leo}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(
+        trx,
+      );
+      await wakes(
+        {
+          ...fixture,
+          week: {
+            ...fixture.week,
+            checkIns: [
+              ...fixture.week.checkIns,
+              {
+                id: meal,
+                member: leo,
+                day: '2026-11-01',
+                createdAt: now,
+                kind: 'healthyMeal',
+                reactions: 0,
+                comments: [],
+              },
+            ],
+          },
+        },
+        { agent },
+      ).checkedIn({ checkIn: meal, squads: [squad] });
+      expect(runs.at(-1)?.task).toContain(
+        '你今天给他的挑战：「吃鸡蛋」，他说算了，因为「我鸡蛋过敏」（他只告诉了你，别在回复里说）。',
+      );
+      expect(runs.at(-1)?.tools).not.toContain('complete_challenge');
       // The coach can't mark one let go, or one of another day.
       const notes = createPostgresCoachStores(trx).memberNotes;
       const coachDone = (member: string, day: string) =>
