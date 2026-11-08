@@ -5,6 +5,7 @@ import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import FeedUI
+import LocationDomain
 import MeDomain
 import MeUI
 import NotificationsDomain
@@ -43,6 +44,8 @@ struct MainTabs: View {
     var leftSquad: () -> Void = {}
     /// 设置's 预览注册, for admins; nil for everyone else.
     var previewSignUp: (() -> Void)?
+    /// 设置 › 位置: the phone's approximate location for the coach's weather.
+    let location: LocationSharing?
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
     @State var inbox: NoticeInbox
     /// The pages pushed over 动态: 通知, once the bell is tapped, and a post a notice opens, over
@@ -56,8 +59,9 @@ struct MainTabs: View {
     @State var showsSchedule = LaunchOptions.opensSchedule
     /// The pages pushed over 今天: 小队, from the home's squad card, and the coach's pages over it.
     @State var todayPages: [TodayPage] = LaunchOptions.opensSquad ? [.squad] : []
-    /// The coach's card, opened from a tap on the coach on the home, popped up like a player's.
-    @State var showsCoachCard = false
+    /// The coach's cards for the member, on its page; made for the squad the page opens on.
+    let coachCards: any CoachCardSource
+    @State var coachDeck: CoachDeck?
     /// 小队's scene pick is playing its reveal, which fills the screen.
     @State var squadRevealing = false
     /// 我的动态, pushed over 我.
@@ -75,15 +79,16 @@ struct MainTabs: View {
 
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
-        recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
+        recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource, coachCards: any CoachCardSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
         destination: Binding<AppDestination?> = .constant(nil), previewSignUp: (() -> Void)? = nil,
-        leftSquad: @escaping () -> Void = {}
+        location: LocationSharing? = nil, leftSquad: @escaping () -> Void = {}
     ) {
         self.previewSignUp = previewSignUp
+        self.location = location
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
-        self.squadmateCards = squadmateCards
+        (self.squadmateCards, self.coachCards) = (squadmateCards, coachCards)
         _selection = selection
         _destination = destination
         self.leftSquad = leftSquad
@@ -133,7 +138,7 @@ struct MainTabs: View {
                 try? await Task.sleep(for: .seconds(60))
             }
         }
-        .followsNotices(inbox)
+        .followsNotices(inbox) { refreshOpenPosts(about: $0) }
         // 商店街 read again when the server says it changed and on each return to the front (a
         // switch's day starting tells nothing), so a store that opened shows without a relaunch.
         .onChange(of: inbox.shelfChanges) { Task { await profile.reload() } }
@@ -170,10 +175,6 @@ struct MainTabs: View {
         // A celebration broadcast (「感恩节快到了」) over everything, told only while 今天 is in front.
         .celebrationPopup(today)
         .onChange(of: homeInFront, initial: true) { today.isHomeInFront = $1 }
-        .cardPopup(isPresented: $showsCoachCard) {
-            CoachCardPopup(today: today, squad: squad, close: closeCoachCard, browse: browseCoaches)
-                .environment(\.sceneTheme, today.scene)
-        }
         .onChange(of: squad.hasLeft) { _, left in
             guard left else { return }
             leftSquad()
@@ -272,7 +273,8 @@ struct MainTabs: View {
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                     openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
-                    previewSignUp: previewSignUp, health: today.health),
+                    writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health,
+                    location: location),
                 isSettingsOpen: $showsSettings
             ) {
                 MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
@@ -356,7 +358,7 @@ extension MainTabs {
                     teammateOnHome = true
                     teammate = homeCard(of: $0)
                 }
-                today.openCoach = { showsCoachCard = true }
+                today.openCoach = { openCoachDeck() }
             }
             .navigationDestination(for: TodayPage.self) { page in
                 switch page {
@@ -370,8 +372,21 @@ extension MainTabs {
                     .environment(\.sceneTheme, squad.scene)
                     .task { await recap.refreshPast() }
                 case .coach(let route):
-                    CoachPage(route: route, model: squad, pages: coachPages, note: today.coachLine)
-                        .environment(\.sceneTheme, squad.scene)
+                    CoachPage(
+                        route: route, model: squad, pages: coachPages, note: today.coachLine,
+                        letter: today.coachLetter,
+                        swapped: { leaving, coming in
+                            // Back on 今天, where they change places while the letter is written.
+                            todayPages = []
+                            today.handOver(
+                                from: CoachSpeaker(id: leaving.id, name: leaving.name),
+                                to: CoachSpeaker(id: coming.id, name: coming.name))
+                        }
+                    )
+                    .environment(\.sceneTheme, squad.scene)
+                case .coachDeck, .coachEarlier, .coachCard:
+                    coachDeckPage(page)
+                        .environment(\.sceneTheme, today.scene)
                 }
             }
         }

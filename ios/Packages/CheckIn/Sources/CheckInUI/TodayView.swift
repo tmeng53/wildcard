@@ -32,7 +32,7 @@ public struct TodayView: View {
     /// The day whose 今日赛况 box score is open in the card's place: left open past the day's
     /// end, it doesn't reopen by itself the next evening.
     @State private var openRecapDay: LocalDay?
-    /// Where the coach stands on screen, which its morning note opens from.
+    /// Where the coach stands on screen, which its letter flies from.
     @State private var coachCenter: CGPoint?
 
     /// Opens the post my caption's bubble is from in 动态; nil while it is still waiting to go
@@ -111,7 +111,7 @@ public struct TodayView: View {
                 pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
                 tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, tapCoach: model.tapCoach,
                 coachHasNote: model.coachHasNote, coachAt: { coachCenter = $0 },
-                tapVacancy: model.tapVacancy
+                tapVacancy: model.tapVacancy, clock: model.now
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -174,18 +174,9 @@ public struct TodayView: View {
                 .ignoresSafeArea(edges: .bottom)
                 .transition(.opacity)
             }
-
-            // The coach's morning note, opened from the coach over everything on the scene.
-            if let note = model.coachNote {
-                CoachMemberNoteOverlay(note: note, reader: model.noteReader, from: coachCenter) {
-                    model.putAwayNote()
-                }
-                .id(note.id)
-                .transition(.opacity)
-                .zIndex(2)
-            }
         }
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.coachNote?.id)
+        .overlay { letter }
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.shownLetter)
     }
 
     /// The card at the top: the squad card, with the 今日赛况 tag as its last row from the evening
@@ -224,7 +215,9 @@ public struct TodayView: View {
                         isMe: mate.member == home.member,
                         accessibilityIdentifier: mate.member == home.member ? "today.myRing" : nil)
                 })
-            let mine = myWeek(home: home, day: day, week: week.mine)
+            let mine = myWeek(
+                home: home, day: day, week: week.mine,
+                challenge: weekChallenge(model.myChallenge, coach: model.sidelineCoach))
             Group {
                 if isCardCollapsed {
                     capsule(squad: squad, mine: mine, day: day, recap: recap)
@@ -234,11 +227,13 @@ public struct TodayView: View {
                         footer: { recapTag(recap, day: day) }
                     )
                     .opensSquad(openSquad)
+                    .completesChallenge(model.completeChallenge)
                     .collapses { foldCard(true) }
                     .morphs(cardMorph)
                 } else {
                     SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
                         .opensSquad(openSquad)
+                        .completesChallenge(model.completeChallenge)
                         .collapses { foldCard(true) }
                         .morphs(cardMorph)
                 }
@@ -368,4 +363,17 @@ extension TodayView {
     }
 }
 
+extension TodayView {
+    /// The coach's letter, over everything on the scene, the tab bar hidden under it.
+    @ViewBuilder private var letter: some View {
+        if let shown = model.shownLetter {
+            CoachLetterOverlay(
+                shown: shown, shownAt: model.letterShownAt, from: coachCenter, clock: model.now,
+                putAway: model.putAwayLetter
+            )
+            .id(shown)
+            .transition(.opacity)
+        }
+    }
+}
 #endif

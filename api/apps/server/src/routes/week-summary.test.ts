@@ -31,6 +31,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -41,6 +42,7 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
   unusedUnlocks,
   unusedGifts,
 } from '../test-kit/weekly-awards.js';
@@ -94,6 +96,7 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
   scenes: scenesOn(db),
   switches: switchesOn(db),
   weeklyAwards: unusedWeeklyAwards,
@@ -104,6 +107,7 @@ const app = createApp({
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
   ...ignoredNotices,
+  ...unusedFeedback,
   log: createLog(() => undefined),
   admin: adminOn(),
   jobs: noJobs,

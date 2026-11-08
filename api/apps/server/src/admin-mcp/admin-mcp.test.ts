@@ -72,6 +72,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -99,6 +100,7 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 // The admin MCP server as an MCP client meets it: the API listens on a real port, the client
@@ -173,6 +175,7 @@ beforeAll(async () => {
           photos,
           aiConsent: aiConsentOn(db),
           nudges: nudgesOn(db),
+          weather: weatherOn(db),
           scenes: scenesOn(db),
           switches: switchesOn(db),
           weeklyAwards: unusedWeeklyAwards,
@@ -183,6 +186,7 @@ beforeAll(async () => {
           coachActivity: unusedCoachActivity,
           coachLetters: unusedCoachLetters,
           ...ignoredNotices,
+          ...unusedFeedback,
           log: createLog(() => undefined),
           jobs: noJobs,
           admin: {

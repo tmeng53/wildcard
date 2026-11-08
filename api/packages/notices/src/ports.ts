@@ -3,8 +3,11 @@ import type { MemberId, NewNotice, Notice, NoticeId } from './domain/notice.js';
 
 /** Where notices and how far each member read them are kept. Neither is ever changed. */
 export interface NoticeStore {
-  /** Writes `notices`, in order. */
-  add(notices: readonly NewNotice[]): Promise<void>;
+  /**
+   * Writes `notices`, in order, and answers with the members whose notice this call wrote; one
+   * the database already holds (a comment's, told once a member) is left out, never written twice.
+   */
+  add(notices: readonly NewNotice[]): Promise<readonly MemberId[]>;
   /** The broadcasts the member was told, by id. */
   toldBroadcasts(member: MemberId): Promise<ReadonlySet<BroadcastId>>;
   /**

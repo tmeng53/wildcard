@@ -33,15 +33,15 @@ extension MainTabs {
         }
     }
 
-    /// 今天 itself, with today's pats on me again or the coach's note shown again.
+    /// 今天 itself, with today's pats on me again; a morning note opens the coach's page, where
+    /// it is one of its cards.
     private func openToday(_ destination: AppDestination) {
         selection = .today
         todayPages = []
         switch destination {
         case .pats: today.replayPatsOnMe()
-        // On the home itself, where the coach stands.
-        case .coachNote(let note): today.showAgain(note)
-        case .waitingCoachNote: today.showWaitingNote()
+        case .coachNote, .waitingCoachNote: openCoachDeck()
+        case .coachLetter(let letter): today.showAgain(letter)
         default: break
         }
     }
@@ -57,7 +57,7 @@ extension MainTabs {
                 await recap.refresh()
                 await recap.open(week: week, of: squad)
             }
-        case .today, .pats, .coachNote, .waitingCoachNote:
+        case .today, .pats, .coachNote, .coachLetter, .waitingCoachNote:
             openToday(destination)
         case .schedule:
             selection = .profile

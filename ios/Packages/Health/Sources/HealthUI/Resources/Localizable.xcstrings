@@ -65,34 +65,66 @@
         }
       }
     },
-    "发到小队时默认带上" : {
+    "发之前还能逐项关掉。路线的起点和终点各 200 米不显示。" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Shared with your squad by default"
+            "value" : "You can turn any of these off before you post. The first and last 200 m of a route are hidden."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "發到小隊時預設帶上"
+            "value" : "發之前還能逐項關掉。路線的起點和終點各 200 公尺不顯示。"
           }
         }
       }
     },
-    "在 iOS 设置里管理读取权限" : {
+    "发动态时显示" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Manage reading access in iOS Settings"
+            "value" : "Shown when you post"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在 iOS 設定裡管理讀取權限"
+            "value" : "發動態時顯示"
+          }
+        }
+      }
+    },
+    "在“设置”中管理权限" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage access in Settings"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在「設定」中管理權限"
+          }
+        }
+      }
+    },
+    "始终显示" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一律顯示"
           }
         }
       }
@@ -113,6 +145,22 @@
         }
       }
     },
+    "强度" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effort"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "強度"
+          }
+        }
+      }
+    },
     "心率" : {
       "localizations" : {
         "en" : {
@@ -125,22 +173,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "心率"
-          }
-        }
-      }
-    },
-    "总是带" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Always"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "總是帶"
           }
         }
       }
@@ -289,34 +321,18 @@
         }
       }
     },
-    "每次发的时候还可以在成绩条上点掉。路线会自动去掉起点和终点各 200 米。" : {
+    "没看到运动记录？前往 设置 › App › 健康 › 数据访问与设备 › 外卡，打开读取。" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You can still tap any number off when you post. Routes always drop the first and last 200 m."
+            "value" : "Don't see your workouts? Go to Settings › Apps › Health › Data Access & Devices › Wildcard and turn on reading."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每次發的時候還可以在成績條上點掉。路線會自動去掉起點和終點各 200 公尺。"
-          }
-        }
-      }
-    },
-    "没看到运动？在 设置 › 健康 › 数据访问与设备 › 外卡 里打开读取。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Don't see your workouts? Turn on reading in Settings › Health › Data Access & Devices › Wildcard."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "沒看到運動？在 設定 › 健康 › 資料取用與裝置 › 外卡 裡打開讀取。"
+            "value" : "沒看到運動紀錄？前往 設定 › App › 健康 › 資料取用與裝置 › 外卡，打開讀取。"
           }
         }
       }
@@ -369,34 +385,18 @@
         }
       }
     },
-    "费力" : {
+    "趟数（游泳、滑雪）" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Effort"
+            "value" : "Lengths and runs"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "費力"
-          }
-        }
-      }
-    },
-    "趟数" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lengths"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "趟數"
+            "value" : "趟數（游泳、滑雪）"
           }
         }
       }
@@ -417,18 +417,18 @@
         }
       }
     },
-    "路线地图" : {
+    "路线" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Route map"
+            "value" : "Route"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "路線地圖"
+            "value" : "路線"
           }
         }
       }
@@ -465,7 +465,7 @@
         }
       }
     },
-    "配速 / 均速" : {
+    "配速 / 速度" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -476,7 +476,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "配速 / 均速"
+            "value" : "配速 / 速度"
           }
         }
       }

@@ -47,6 +47,7 @@ import {
   switchesOn,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -57,6 +58,7 @@ import {
   unusedUnlocks,
   unusedGifts,
   unusedWeekSummaryWords,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -115,6 +117,8 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
+  ...unusedFeedback,
   weeklyAwards: {
     awards: createWeeklyAwards({
       model: { answer: () => Promise.reject(new Error('unused')) },

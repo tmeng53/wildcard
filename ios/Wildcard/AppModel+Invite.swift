@@ -10,7 +10,7 @@ extension AppModel {
     func newSignUp(hasAgreedToAI: Bool, takesInvite: Bool = true) -> SignUpModel {
         let model = SignUpModel(
             service: APISignUpService(api: api), nickname: "", now: Date(), hasAgreedToAI: hasAgreedToAI,
-            health: Self.health)
+            health: Self.health, location: Self.location)
         if takesInvite, let code = invite {
             invite = nil
             model.open(invite: code)

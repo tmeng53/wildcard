@@ -35,6 +35,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -47,6 +48,7 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -110,6 +112,8 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
+  ...unusedFeedback,
   scenes: scenesOn(db),
   switches: switchesOn(db),
   weeklyAwards: unusedWeeklyAwards,
@@ -136,14 +140,18 @@ async function call({
   path,
   token,
   body,
+  language,
 }: {
   readonly method: string;
   readonly path: string;
   readonly token?: string | undefined;
   readonly body?: unknown;
+  /** The app's language, as `Accept-Language`. */
+  readonly language?: string | undefined;
 }) {
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (token !== undefined) headers.authorization = `Bearer ${token}`;
+  if (language !== undefined) headers['accept-language'] = language;
   const response = await app.request(path, {
     method,
     headers,
@@ -822,7 +830,7 @@ describe('the squad’s time zone', () => {
       body: { version: 1, timeZone: change.timeZone },
     });
 
-  it('takes the creator’s pick, and lets only the captain change it from next week', async () => {
+  it('takes the creator’s pick, and lets only the captain change it, at once', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const id = randomUUID();
     const created = await call({
@@ -861,12 +869,14 @@ describe('the squad’s time zone', () => {
       'TIME_ZONE_UNKNOWN',
     ]);
     const changed = await setZone(me.token, { squad: id, timeZone: 'America/Los_Angeles' });
+    // At once, whatever the day on either clock.
     expect(changed.body).toStrictEqual({
       version: 1,
-      timeZone: 'Asia/Taipei',
+      timeZone: 'America/Los_Angeles',
       nextTimeZone: 'America/Los_Angeles',
       canChange: true,
     });
+    expect((await zoneOf(me.token, id)).body).toStrictEqual(changed.body);
   });
 
   it('keeps the creator’s own zone when an older build sends none', async () => {
@@ -888,5 +898,65 @@ describe('the squad’s time zone', () => {
     expect((await zoneOf(other.token, plain.id)).body).toMatchObject({
       timeZone: 'America/New_York',
     });
+  });
+});
+
+describe('the squad’s language', () => {
+  const languageOf = (token: string, { squad, language }: { squad: string; language?: string }) =>
+    call({ method: 'GET', path: `/squads/${squad}/language`, token, language });
+  const setLanguage = (token: string, change: { squad: string; language: unknown }) =>
+    call({
+      method: 'PUT',
+      path: `/squads/${change.squad}/language`,
+      token,
+      body: { version: 1, language: change.language },
+    });
+
+  it('reads the captain’s app language until the captain picks one, which only the captain may', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await newSquad(me.token);
+    await call({
+      method: 'POST',
+      path: `/squad-invites/${squad.inviteCode}/accept`,
+      token: friend.token,
+    });
+    // No app language heard yet: Simplified Chinese.
+    expect((await languageOf(friend.token, { squad: squad.id })).body).toStrictEqual({
+      version: 1,
+      language: 'zh-Hans',
+      canChange: false,
+    });
+    // The captain's app speaks 繁體 (kept with their profile); a member's own doesn't count.
+    const saved = await call({
+      method: 'PUT',
+      path: '/me/profile',
+      token: me.token,
+      body: { version: 1, timeZone: 'Asia/Taipei' },
+      language: 'zh-Hant',
+    });
+    expect(saved.status).toBe(200);
+    // Heard before the profile existed, so heard again.
+    await languageOf(me.token, { squad: squad.id, language: 'zh-Hant' });
+    expect(
+      (await languageOf(friend.token, { squad: squad.id, language: 'en' })).body,
+    ).toMatchObject({
+      language: 'zh-Hant',
+    });
+
+    const refused = await setLanguage(friend.token, { squad: squad.id, language: 'en' });
+    expect([refused.status, reason(refused)]).toStrictEqual([403, 'NOT_SQUAD_CAPTAIN']);
+    const unknown = await setLanguage(me.token, { squad: squad.id, language: 'fr' });
+    expect(unknown.status).toBe(400);
+    const changed = await setLanguage(me.token, { squad: squad.id, language: 'en' });
+    expect(changed.body).toStrictEqual({ version: 1, language: 'en', canChange: true });
+    // Picked, it no longer follows the captain's app.
+    expect(
+      (await languageOf(me.token, { squad: squad.id, language: 'zh-Hans' })).body,
+    ).toMatchObject({
+      language: 'en',
+    });
+    const outsider = await signUp();
+    const notJoined = await languageOf(outsider.token, { squad: squad.id });
+    expect([notJoined.status, reason(notJoined)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
   });
 });

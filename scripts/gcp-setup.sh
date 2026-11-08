@@ -19,6 +19,11 @@
 #   runs: the daily progress push every 15 minutes and the weekly awards every hour. Each call
 #   carries an ID token Google signs for that account, which the API checks, so no shared secret
 #   sits in a job. Two jobs fit in Cloud Scheduler's free tier (three a billing account);
+# - the Pub/Sub topics the server publishes events to (a new check-in, a new comment) and a push
+#   subscription per subscriber, which calls `/jobs/events/<subscriber>` signed as
+#   `wildcard-scheduler`, tries again with backoff and, after five tries, parks the event on
+#   `events-dead-letter`; the server publishes once the deploy sets PUBSUB_EVENTS=on. Its traffic
+#   stays far inside Pub/Sub's free 10 GiB a month (https://cloud.google.com/pubsub/pricing);
 # - an uptime check on the API's /health and four alert policies, which email the account running
 #   this (or ALERT_EMAIL): the API is down, it answers 5xx, a scheduled job's call failed, or the
 #   daily push or weekly awards logged an ERROR. Alerting costs nothing until September 2027 at
@@ -59,7 +64,7 @@ scheduler="wildcard-scheduler@$project.iam.gserviceaccount.com"
 
 gcloud services enable run.googleapis.com artifactregistry.googleapis.com \
   secretmanager.googleapis.com iam.googleapis.com iamcredentials.googleapis.com sts.googleapis.com \
-  cloudscheduler.googleapis.com monitoring.googleapis.com logging.googleapis.com
+  cloudscheduler.googleapis.com monitoring.googleapis.com logging.googleapis.com pubsub.googleapis.com
 
 exists gcloud artifacts repositories describe wildcard --location "$region" ||
   gcloud artifacts repositories create wildcard --repository-format docker --location "$region"
@@ -122,6 +127,43 @@ schedule daily-progress-push '*/15 * * * *'
 schedule weekly-awards '5 * * * *'
 # The AI coach wakes for each check-in and once a day; while coaching is off a run does nothing.
 schedule coach '*/10 * * * *'
+
+# Events (api/apps/server/src/events.ts): a topic per kind, and a push subscription per
+# subscriber that calls the API signed as `wildcard-scheduler`, as the scheduler's jobs are.
+# https://cloud.google.com/pubsub/docs/create-push-subscription
+# https://cloud.google.com/pubsub/docs/handling-failures#dead_letter_topic
+pubsub_agent="service-$number@gcp-sa-pubsub.iam.gserviceaccount.com"
+# The server publishes as itself.
+grant_project "$runtime" roles/pubsub.publisher
+# Pub/Sub signs each push's ID token as `wildcard-scheduler`.
+gcloud iam service-accounts add-iam-policy-binding "$scheduler" \
+  --member "serviceAccount:$pubsub_agent" --role roles/iam.serviceAccountTokenCreator >/dev/null
+for topic in check-in-created comment-created events-dead-letter; do
+  exists gcloud pubsub topics describe "$topic" || gcloud pubsub topics create "$topic" >/dev/null
+done
+gcloud pubsub topics add-iam-policy-binding events-dead-letter \
+  --member "serviceAccount:$pubsub_agent" --role roles/pubsub.publisher >/dev/null
+# Keeps parked events a week, to read with `gcloud pubsub subscriptions pull events-dead-letter`.
+exists gcloud pubsub subscriptions describe events-dead-letter ||
+  gcloud pubsub subscriptions create events-dead-letter --topic events-dead-letter \
+    --message-retention-duration 7d >/dev/null
+subscribe() {
+  local verb=create topic_flag=(--topic "$2")
+  if exists gcloud pubsub subscriptions describe "$1"; then verb=update topic_flag=(); fi
+  gcloud pubsub subscriptions "$verb" "$1" "${topic_flag[@]}" \
+    --push-endpoint "$api_url/jobs/events/$1" \
+    --push-auth-service-account "$scheduler" --push-auth-token-audience "$api_url" \
+    --ack-deadline 300 --min-retry-delay 10s --max-retry-delay 600s \
+    --dead-letter-topic events-dead-letter --max-delivery-attempts 5 >/dev/null
+  gcloud pubsub subscriptions add-iam-policy-binding "$1" \
+    --member "serviceAccount:$pubsub_agent" --role roles/pubsub.subscriber >/dev/null
+}
+# The squads' coaches look at a new check-in.
+subscribe coach-look check-in-created
+# A new comment is told to the post's author, whom it replies to and whom it @s.
+subscribe comment-push comment-created
+# The coach a comment replies to or @s answers it.
+subscribe coach-answer comment-created
 
 # Alerts, by email to whoever runs this in Cloud Shell, unless ALERT_EMAIL names someone else.
 alert_email="${ALERT_EMAIL:-$(gcloud config get account 2>/dev/null)}"

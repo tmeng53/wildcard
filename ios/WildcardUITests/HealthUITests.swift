@@ -1,7 +1,7 @@
 import XCTest
 
 /// Posting a 训练 from Apple Health on the sample day (`-health-sample`: a ride a minute ago,
-/// yoga, a swim, strength and a run), the way a member does: the home's card, 打卡 and its ✕, the chips
+/// yoga, a swim, strength, a ski day and a run), the way a member does: the home's card, 打卡 and its ✕, the chips
 /// and the 成绩条 on the compose page, a number struck out, the post on 动态; and 设置 › Apple 健康.
 /// Screenshots go beside the approved boards (T1–T8, U1–U9).
 @MainActor
@@ -57,6 +57,8 @@ final class HealthUITests: XCTestCase {
         yogaHeart.tap()
         XCTAssertTrue(chart.waitForExistence(timeout: Self.wait), "restoring 平均心率 didn't bring the chart back")
 
+        checkTheSkiDay(in: app)
+
         // The run, with its heart rate struck out, posts its map alone.
         app.buttons["compose.health.sample-run"].tap()
         let heart = app.buttons["strip.averageHeartRate"]
@@ -91,6 +93,33 @@ final class HealthUITests: XCTestCase {
         keepScreenshot(named: "74-health-settings")
         let permissions = app.buttons["health.permissions"]
         assertOnScreen(permissions, in: app)
+
+        // Scrolled to the end, the last line clears the tab bar.
+        page.swipeUp()
+        page.swipeUp()
+        settle()
+        let hint = app.staticTexts["health.permissions.hint"]
+        assertOnScreen(hint, in: app)
+        let tabBar = app.tabBars.firstMatch
+        if tabBar.exists {
+            XCTAssertLessThanOrEqual(
+                hint.frame.maxY, tabBar.frame.minY, "the last line is behind the tab bar: \(hint.frame)")
+        }
+        keepScreenshot(named: "75-health-settings-bottom")
+    }
+
+    /// The ski day: 趟数 · 落差 · 最高速 in place of heart rate on its 成绩条.
+    private func checkTheSkiDay(in app: XCUIApplication) {
+        app.buttons["compose.health.sample-ski"].tap()
+        XCTAssertTrue(
+            app.descendants(matching: .any).matching(identifier: "strip.runs").firstMatch
+                .waitForExistence(timeout: Self.wait), "the ski day's 趟数 isn't on the 成绩条")
+        for cell in ["strip.descent", "strip.topSpeed"] {
+            XCTAssertTrue(app.descendants(matching: .any).matching(identifier: cell).firstMatch.exists, "no \(cell)")
+        }
+        XCTAssertFalse(app.buttons["strip.averageHeartRate"].exists, "the ski day's 成绩条 shows heart rate")
+        settle()
+        keepScreenshot(named: "75-health-compose-ski")
     }
 
     /// Back home, the card's ✕ puts its workout away, and the card offers the next one instead.

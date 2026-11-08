@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { containsLink, graphemeCount } from './index.js';
+import { UNITS_PER_CHARACTER, containsLink, graphemeCount, typedText } from './index.js';
 
 describe('graphemeCount', () => {
   it.each([
@@ -39,4 +39,24 @@ describe('containsLink', () => {
       expect(containsLink(text)).toBe(false);
     },
   );
+});
+
+describe('typedText', () => {
+  const text = typedText({
+    max: 1000,
+    oneLine: false,
+    description: 'words',
+    rawUnits: 1000 * UNITS_PER_CHARACTER,
+  });
+
+  it('takes `max` characters however many UTF-16 units they need', () => {
+    const family = '👨\u200D👩\u200D👧\u200D👦';
+    expect(text.safeParse('字'.repeat(990) + '👍🏽'.repeat(6)).success).toBe(true);
+    expect(text.safeParse(family.repeat(1000)).success).toBe(true);
+    expect(text.safeParse(family.repeat(1001)).success).toBe(false);
+  });
+
+  it('still refuses a raw body far past any `max` characters', () => {
+    expect(text.safeParse('a'.repeat(16_001)).success).toBe(false);
+  });
 });

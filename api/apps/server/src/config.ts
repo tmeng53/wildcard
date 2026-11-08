@@ -66,12 +66,37 @@ const Environment = z.object({
     .transform((key) => key.replaceAll('\\n', '\n'))
     .pipe(z.string().includes('-----BEGIN PRIVATE KEY-----'))
     .optional(),
+  // Apple WeatherKit's REST API, for each member's weather the coach reads: a key made in Apple
+  // Developer with WeatherKit ticked, and the identifier WeatherKit is enabled for (the app's
+  // bundle id). All four, or none: without them the coach knows no one's weather.
+  WEATHERKIT_TEAM_ID: z
+    .string()
+    .regex(/^[A-Z0-9]{10}$/)
+    .optional(),
+  WEATHERKIT_SERVICE_ID: z.string().min(1).optional(),
+  WEATHERKIT_KEY_ID: z
+    .string()
+    .regex(/^[A-Z0-9]{10}$/)
+    .optional(),
+  WEATHERKIT_PRIVATE_KEY: z
+    .string()
+    .transform((key) => key.replaceAll('\\n', '\n'))
+    .pipe(z.string().includes('-----BEGIN PRIVATE KEY-----'))
+    .optional(),
   // What the scheduler sends to start jobs such as the daily progress push. Without it no job
   // runs. Long and random, like any secret.
   JOBS_TOKEN: z.string().min(32).optional(),
   // The service account Cloud Scheduler signs its OIDC tokens as, on the hosted server. When
   // set, only its tokens (for PUBLIC_URL) start jobs, and JOBS_TOKEN isn't used.
   JOBS_SCHEDULER_ACCOUNT: z.email().optional(),
+  // Where 意见反馈 is filed: a GitHub repository (`owner/name`, our private feedback one) and a
+  // fine-grained token that may write its issues and contents. Without the token, messages are
+  // only saved, and filed once it is set.
+  FEEDBACK_GITHUB_REPO: z
+    .string()
+    .regex(/^[\w.-]+\/[\w.-]+$/)
+    .default('tmeng53/wildcard-feedback'),
+  FEEDBACK_GITHUB_TOKEN: z.string().min(1).optional(),
   // Where error reports go: the API project's Sentry DSN. Without it nothing is reported, and
   // errors are only logged.
   SENTRY_DSN_API: z.url({ protocol: /^https$/ }).optional(),
@@ -83,6 +108,9 @@ const Environment = z.object({
     .string()
     .regex(/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/)
     .optional(),
+  // `on` sends events (a new check-in, a new comment) through Pub/Sub topics in
+  // GOOGLE_CLOUD_PROJECT, which `scripts/gcp-setup.sh` makes; otherwise they run in the request.
+  PUBSUB_EVENTS: z.enum(['on', 'off']).default('off'),
 });
 
 const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
@@ -93,6 +121,12 @@ const APNS = [
   'APNS_SANDBOX_PRIVATE_KEY',
   'APNS_PRODUCTION_KEY_ID',
   'APNS_PRODUCTION_PRIVATE_KEY',
+] as const;
+const WEATHERKIT = [
+  'WEATHERKIT_TEAM_ID',
+  'WEATHERKIT_SERVICE_ID',
+  'WEATHERKIT_KEY_ID',
+  'WEATHERKIT_PRIVATE_KEY',
 ] as const;
 
 export interface Config {
@@ -124,6 +158,15 @@ export interface Config {
         readonly clientId: string;
       }
     | undefined;
+  /** Apple WeatherKit's key; undefined until it is set up, and then no one has weather. */
+  readonly weatherKit:
+    | {
+        readonly teamId: string;
+        readonly serviceId: string;
+        readonly keyId: string;
+        readonly privateKey: string;
+      }
+    | undefined;
   /** How the scheduler proves itself; undefined until one is set up, and then no job runs. */
   readonly scheduler:
     | { readonly kind: 'google'; readonly serviceAccount: string }
@@ -143,6 +186,10 @@ export interface Config {
     | undefined;
   /** The Google Cloud project log entries name their traces in; undefined off Google Cloud. */
   readonly traceProject: string | undefined;
+  /** The project whose Pub/Sub topics take events; undefined runs them in the request. */
+  readonly pubSubProject: string | undefined;
+  /** Where 意见反馈 is filed; undefined until the token is set, and then messages wait. */
+  readonly feedbackIssues: { readonly repo: string; readonly token: string } | undefined;
 }
 
 /** Reads the server's settings from environment variables; throws naming each bad one. */
@@ -186,6 +233,27 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     );
   }
   const apns = readApns(result.data);
+  const weatherSet = WEATHERKIT.filter((name) => result.data[name] !== undefined);
+  if (weatherSet.length > 0 && weatherSet.length < WEATHERKIT.length) {
+    const missing = WEATHERKIT.filter((name) => !weatherSet.includes(name));
+    throw new Error(
+      `Bad server environment: set all of ${WEATHERKIT.join(', ')} or none (missing ${missing.join(', ')})`,
+    );
+  }
+  const { WEATHERKIT_TEAM_ID, WEATHERKIT_SERVICE_ID, WEATHERKIT_KEY_ID, WEATHERKIT_PRIVATE_KEY } =
+    result.data;
+  const weatherKit =
+    WEATHERKIT_TEAM_ID !== undefined &&
+    WEATHERKIT_SERVICE_ID !== undefined &&
+    WEATHERKIT_KEY_ID !== undefined &&
+    WEATHERKIT_PRIVATE_KEY !== undefined
+      ? {
+          teamId: WEATHERKIT_TEAM_ID,
+          serviceId: WEATHERKIT_SERVICE_ID,
+          keyId: WEATHERKIT_KEY_ID,
+          privateKey: WEATHERKIT_PRIVATE_KEY,
+        }
+      : undefined;
   return {
     port: result.data.PORT,
     databaseUrl: result.data.DATABASE_URL,
@@ -208,11 +276,18 @@ export function readConfig(environment: Record<string, string | undefined>): Con
           ? { kind: 'token', token: result.data.JOBS_TOKEN }
           : undefined,
     apns,
+    weatherKit,
     errorReports:
       result.data.SENTRY_DSN_API === undefined
         ? undefined
         : { dsn: result.data.SENTRY_DSN_API, release: result.data.K_REVISION },
     traceProject: result.data.GOOGLE_CLOUD_PROJECT,
+    pubSubProject:
+      result.data.PUBSUB_EVENTS === 'on' ? result.data.GOOGLE_CLOUD_PROJECT : undefined,
+    feedbackIssues:
+      result.data.FEEDBACK_GITHUB_TOKEN === undefined
+        ? undefined
+        : { repo: result.data.FEEDBACK_GITHUB_REPO, token: result.data.FEEDBACK_GITHUB_TOKEN },
   };
 }
 

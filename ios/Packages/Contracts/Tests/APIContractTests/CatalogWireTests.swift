@@ -9,7 +9,7 @@ private let newer = #"""
     {"version": 1,
      "venues": {"pool": {"icon": "drop"}},
      "sports": {
-       "categories": [{"id": "racket", "names": {"zhHans": "球拍", "en": "Racket", "zhHant": "球拍"},
+       "categories": [{"id": "racket", "names": {"zhHans": "球拍", "en": "Racket", "zhHant": "球拍"}, "color": "#4F6B22",
          "sports": [{"id": "padel", "names": {"zhHans": "板式网球", "en": "Padel", "zhHant": "板式網球"},
            "shortNames": {"zhHans": "板网", "en": "Padel", "zhHant": "板網"},
            "icon": "figure.tennis", "offered": true, "season": "summer"}]}],
@@ -26,6 +26,7 @@ private let newer = #"""
     let sports = catalog.sports
     #expect(sports.entry(for: "padel")?.names.english == "Padel")
     #expect(sports.entry(for: "padel")?.category == "racket")
+    #expect(sports.color(of: "padel") == "#4F6B22")
     #expect(sports.entry(for: "padel")?.shortNames?.simplifiedChinese == "板网")
     #expect(sports.signUpCommon == ["padel"])
     #expect(sports.checkInQuick == ["padel"])

@@ -46,6 +46,12 @@ struct RecapTile: View {
 enum TodayPage: Hashable {
     case squad
     case coach(CoachRoute)
+    /// The coach's own page, from a tap on the coach on 今天: its cards for the member.
+    case coachDeck
+    /// 以前, from the clock on the coach's page.
+    case coachEarlier
+    /// A card opened from 以前.
+    case coachCard(CoachPageCard)
 }
 
 /// A post opened from 动态's card (with the feed's model), 我的动态 or 通知 (with the page's own
@@ -86,6 +92,15 @@ extension MainTabs {
         if feedPages != [page] { feedPages = [page] }
     }
 
+    /// Every post page open now reads itself again when a notice is news of it (the coach answered
+    /// after the comment was saved): 动态's own, and one opened with a model of its own.
+    func refreshOpenPosts(about notice: Notice) {
+        feed.refreshIfOpen(about: notice)
+        for page in [noticePost, post].compactMap({ $0 }) where page.model !== feed {
+            page.model.refresh(page.id, about: notice)
+        }
+    }
+
     /// The post a notice opened, over 通知 when it is open, so back returns to it.
     var noticePost: OpenedPost? {
         get {
@@ -110,20 +125,8 @@ extension MainTabs {
 }
 
 extension MainTabs {
-    /// Puts the coach's card away, opening 动态 when the card's 战术板 was tapped.
-    func closeCoachCard(opensFeed: Bool) {
-        showsCoachCard = false
-        if opensFeed { selection = .feed }
-    }
-
-    /// 逛逛招聘会 on the coach's card's back: the card goes and 教练招聘会 opens over 今天.
-    func browseCoaches() {
-        showsCoachCard = false
-        todayPages = [.coach(.market)]
-    }
-
-    /// The coach's pages on 今天's stack; taking them away goes back to 小队, or to 今天 when they
-    /// opened from the sideline's empty spot.
+    /// The coach's pages on 今天's stack; taking them away goes back to the page under them (小队,
+    /// the coach's own page, or 今天 when they opened from the sideline's empty spot).
     var coachPages: Binding<[CoachRoute]> {
         Binding(
             get: {
@@ -133,7 +136,11 @@ extension MainTabs {
                 }
             },
             set: { routes in
-                todayPages = todayPages.filter { $0 == .squad } + routes.map(TodayPage.coach)
+                let under = todayPages.prefix { page in
+                    if case .coach = page { return false }
+                    return true
+                }
+                todayPages = Array(under) + routes.map(TodayPage.coach)
             })
     }
 }

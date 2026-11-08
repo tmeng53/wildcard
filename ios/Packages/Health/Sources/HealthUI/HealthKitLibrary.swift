@@ -51,37 +51,17 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
     }
 
     private func imported(_ workout: HKWorkout) async -> ImportedWorkout {
-        let kind = WorkoutKind(workout.workoutActivityType)
+        let type = workout.workoutActivityType
+        let kind = WorkoutKind(type, openWater: Self.isOpenWater(workout))
         let seconds = workout.duration
         var summary = WorkoutSummary(durationSec: seconds >= 1 ? Int(seconds.rounded()) : nil)
-        let heart = workout.statistics(for: HKQuantityType(.heartRate))
-        let beats = HKUnit.count().unitDivided(by: .minute())
-        if let average = heart?.averageQuantity()?.doubleValue(for: beats) { summary.avgHr = Self.bpm(average) }
-        if kind.showsMaxHeartRate, let max = heart?.maximumQuantity()?.doubleValue(for: beats) {
-            summary.maxHr = Self.bpm(max)
-        }
-        if kind.showsDistance, let distanceType = kind.distanceType,
-            let meters = workout.statistics(for: distanceType)?.sumQuantity()?.doubleValue(for: .meter()), meters > 0
-        {
-            summary.distanceM = meters.rounded()
-            let kilometres = meters / 1000
-            switch kind {
-            case .onFoot where kilometres >= 0.1 && seconds > 0: summary.paceSecPerKm = (seconds / kilometres).rounded()
-            case .ride where seconds > 0: summary.speedKmh = (kilometres / (seconds / 3600) * 10).rounded() / 10
-            default: break
-            }
-        }
-        var series: WorkoutSeries?
-        if kind == .swim, let pool = workout.metadata?[HKMetadataKeyLapLength] as? HKQuantity {
-            let laps = (workout.workoutEvents ?? []).filter { $0.type == .lap }.map(\.dateInterval.duration)
-            if !laps.isEmpty {
-                summary.laps = laps.count
-                summary.poolLengthM = pool.doubleValue(for: .meter()).rounded()
-                series = WorkoutSeries(laps: laps.map { ($0 * 10).rounded() / 10 })
-            }
-        }
+        Self.addHeartRate(of: workout, kind: kind, to: &summary)
+        Self.addDistance(of: workout, kind: kind, to: &summary)
+        var series = kind == .poolSwim ? Self.addLaps(of: workout, to: &summary) : nil
         if kind.showsEffort, let effort = await effort(of: workout) { summary.effort = effort }
         let route = kind.hasRoute ? await route(of: workout) : nil
+        // A ski day's 趟数 · 落差 · 最高速 come from the route's heights and speeds, on the phone.
+        if kind == .slope, let slopes = route?.slopes, let day = SlopeDay(slopes) { summary = summary.skied(day) }
         // With a route too, so a post can show the map and the heart rate (Tracy, 2026-11-07).
         if series == nil, let curve = await heartRate(during: workout) {
             series = WorkoutSeries(heartRate: curve)
@@ -90,8 +70,58 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
             workout: Workout(
                 source: WorkoutSource(provider: WorkoutSource.appleHealth, id: workout.uuid.uuidString),
                 startedAt: Timestamp(workout.startDate), endedAt: Timestamp(workout.endDate), summary: summary,
-                series: series, route: route),
-            activity: kind.sport(for: workout.workoutActivityType).map(Activity.sport))
+                series: series, route: route?.points),
+            activity: WorkoutKind.sport(for: type).map(Activity.sport))
+    }
+
+    /// Its average heart rate, and its highest where its kind shows that.
+    private static func addHeartRate(of workout: HKWorkout, kind: WorkoutKind, to summary: inout WorkoutSummary) {
+        let heart = workout.statistics(for: HKQuantityType(.heartRate))
+        let beats = HKUnit.count().unitDivided(by: .minute())
+        if let average = heart?.averageQuantity()?.doubleValue(for: beats) { summary.avgHr = bpm(average) }
+        if kind.showsMaxHeartRate, let max = heart?.maximumQuantity()?.doubleValue(for: beats) {
+            summary.maxHr = bpm(max)
+        }
+    }
+
+    /// A pool swim's laps with the pool's length, and each lap's time for its chart; nil without.
+    private static func addLaps(of workout: HKWorkout, to summary: inout WorkoutSummary) -> WorkoutSeries? {
+        guard let pool = workout.metadata?[HKMetadataKeyLapLength] as? HKQuantity else { return nil }
+        let laps = (workout.workoutEvents ?? []).filter { $0.type == .lap }.map(\.dateInterval.duration)
+        guard !laps.isEmpty else { return nil }
+        summary.laps = laps.count
+        summary.poolLengthM = pool.doubleValue(for: .meter()).rounded()
+        return WorkoutSeries(laps: laps.map { ($0 * 10).rounded() / 10 })
+    }
+
+    /// Its distance, with the pace or speed that goes with it, and a hike's climb.
+    private static func addDistance(of workout: HKWorkout, kind: WorkoutKind, to summary: inout WorkoutSummary) {
+        let seconds = workout.duration
+        let meters = kind.distanceTypes(for: workout.workoutActivityType).compactMap {
+            workout.statistics(for: $0)?.sumQuantity()?.doubleValue(for: .meter())
+        }.reduce(0, +)
+        if meters > 0 {
+            summary.distanceM = meters.rounded()
+            let kilometres = meters / 1000
+            switch kind {
+            case .onFoot where kilometres >= 0.1 && seconds > 0: summary.paceSecPerKm = (seconds / kilometres).rounded()
+            case .openWaterSwim where meters >= 100 && seconds > 0:
+                summary.paceSecPer100m = (seconds / (meters / 100)).rounded()
+            case .ride, .glide:
+                if seconds > 0 { summary.speedKmh = (kilometres / (seconds / 3600) * 10).rounded() / 10 }
+            default: break
+            }
+        }
+        if kind == .hike, let climbed = workout.metadata?[HKMetadataKeyElevationAscended] as? HKQuantity {
+            let gain = climbed.doubleValue(for: .meter())
+            if gain >= 1 { summary.elevationGainM = gain.rounded() }
+        }
+    }
+
+    /// A swim in open water, which Health marks; a pool swim otherwise.
+    private static func isOpenWater(_ workout: HKWorkout) -> Bool {
+        let location = (workout.metadata?[HKMetadataKeySwimmingLocationType] as? NSNumber)?.intValue
+        return location == HKWorkoutSwimmingLocationType.openWater.rawValue
     }
 
     /// How hard it felt, 1 to 10: the member's own rating, else the Watch's estimate.
@@ -108,21 +138,30 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         return nil
     }
 
-    /// The route, trimmed and thinned; nil without one or when it is too short to trim.
-    private func route(of workout: HKWorkout) async -> [RoutePoint]? {
+    /// The route, trimmed and thinned, with its heights and speeds for a ski day, read before
+    /// the trim (the points posted keep only where they were); nil without one.
+    private func route(of workout: HKWorkout) async -> (points: [RoutePoint]?, slopes: [SlopeDay.Sample])? {
         let routes = HKSampleQueryDescriptor(
             predicates: [.workoutRoute(HKQuery.predicateForObjects(from: workout))], sortDescriptors: [], limit: 1)
         guard let route = try? await routes.result(for: store).first else { return nil }
         var points: [RoutePoint] = []
+        var slopes: [SlopeDay.Sample] = []
         do {
             for try await location in HKWorkoutRouteQueryDescriptor(route).results(for: store) {
                 points.append(RoutePoint(lat: location.coordinate.latitude, lon: location.coordinate.longitude))
+                // A negative accuracy means the reading has no height, a negative speed none.
+                if location.verticalAccuracy >= 0 {
+                    slopes.append(
+                        SlopeDay.Sample(
+                            seconds: location.timestamp.timeIntervalSince(workout.startDate),
+                            altitude: location.altitude, speed: location.speed >= 0 ? location.speed : nil))
+                }
             }
         } catch {
             return nil
         }
         let kept = points.trimmed().thinned(to: Self.routePoints)
-        return kept.count >= 2 ? kept : nil
+        return (kept.count >= 2 ? kept : nil, slopes)
     }
 
     /// Heart rate through the workout, thinned for the chart; nil with too few readings.
@@ -149,7 +188,10 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
     private static let readTypes: Set<HKObjectType> = [
         HKObjectType.workoutType(), HKSeriesType.workoutRoute(), HKQuantityType(.heartRate),
         HKQuantityType(.distanceWalkingRunning), HKQuantityType(.distanceCycling), HKQuantityType(.distanceSwimming),
-        HKQuantityType(.workoutEffortScore), HKQuantityType(.estimatedWorkoutEffortScore),
+        HKQuantityType(.distanceCrossCountrySkiing), HKQuantityType(.distanceRowing),
+        HKQuantityType(.distancePaddleSports), HKQuantityType(.distanceSkatingSports),
+        HKQuantityType(.distanceWheelchair), HKQuantityType(.workoutEffortScore),
+        HKQuantityType(.estimatedWorkoutEffortScore),
     ]
     private static let connectedKey = "health.connected"
     private static let workoutsMax = 20
@@ -157,56 +199,145 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
     private static let routePoints = 600
 }
 
-/// Which numbers a kind of workout shows, as the approved strips do (Tracy, 2026-11-06): a run
-/// 距离 · 配速 · 平均心率, a ride 距离 · 均速 · 平均心率, a swim 趟数 · 距离 · 平均心率, yoga and the like
-/// 平均心率 · 费力, everything else 平均心率 · 最高心率 · 费力; 时长 first always.
+/// Which numbers a kind of workout shows, as the approved strips do (Tracy, 2026-11-06 and
+/// 2026-11-08), 时长 first always: a run or walk 距离 · 配速 · 平均心率, a hike 距离 · 爬升 · 平均心率,
+/// a ride 距离 · 均速 · 平均心率, a pool swim 趟数 · 距离 · 平均心率, an open-water swim 距离 · 配速
+/// /100 米 · 平均心率, a ski or snowboard day 趟数 · 落差 · 最高速 (worked out from its route, else as
+/// other kinds), cross-country skiing, rowing, paddling and skating 距离 · 均速 · 平均心率, a
+/// triathlon 距离 · 平均心率 · 最高心率, yoga and the like 平均心率 · 强度, everything else 平均心率 ·
+/// 最高心率 · 强度.
 private enum WorkoutKind: Equatable {
-    case onFoot, ride, swim, calm, other
+    case onFoot, hike, ride, poolSwim, openWaterSwim, slope, glide, triathlon, calm, other
 
-    init(_ type: HKWorkoutActivityType) {
+    init(_ type: HKWorkoutActivityType, openWater: Bool) {
         switch type {
-        case .running, .walking, .hiking, .wheelchairWalkPace, .wheelchairRunPace: self = .onFoot
+        case .running, .walking, .wheelchairWalkPace, .wheelchairRunPace, .trackAndField: self = .onFoot
+        case .hiking: self = .hike
         case .cycling, .handCycling: self = .ride
-        case .swimming: self = .swim
+        case .swimming: self = openWater ? .openWaterSwim : .poolSwim
+        case .downhillSkiing, .snowboarding: self = .slope
+        case .crossCountrySkiing, .rowing, .paddleSports, .skatingSports: self = .glide
+        case .swimBikeRun: self = .triathlon
         case .yoga, .pilates, .mindAndBody, .flexibility, .barre, .taiChi, .cooldown, .preparationAndRecovery:
             self = .calm
         default: self = .other
         }
     }
 
-    var showsDistance: Bool { self == .onFoot || self == .ride || self == .swim }
-    var showsMaxHeartRate: Bool { self == .other }
-    var showsEffort: Bool { self == .calm || self == .other }
+    /// A ski day without the route to work out its runs shows what other kinds do.
+    var showsMaxHeartRate: Bool { [.other, .slope, .triathlon].contains(self) }
+    var showsEffort: Bool { [.calm, .other, .slope].contains(self) }
     /// Outdoor kinds may have a route; indoor ones get the chart instead.
-    var hasRoute: Bool { self == .onFoot || self == .ride || self == .other }
+    var hasRoute: Bool { ![.poolSwim, .calm].contains(self) }
 
-    var distanceType: HKQuantityType? {
-        switch self {
-        case .onFoot: HKQuantityType(.distanceWalkingRunning)
-        case .ride: HKQuantityType(.distanceCycling)
-        case .swim: HKQuantityType(.distanceSwimming)
-        case .calm, .other: nil
+    /// Where Health keeps its distance: a triathlon's is its legs' added up.
+    func distanceTypes(for type: HKWorkoutActivityType) -> [HKQuantityType] {
+        switch (self, type) {
+        case (.onFoot, .wheelchairWalkPace), (.onFoot, .wheelchairRunPace): [HKQuantityType(.distanceWheelchair)]
+        case (.onFoot, _), (.hike, _): [HKQuantityType(.distanceWalkingRunning)]
+        case (.ride, _): [HKQuantityType(.distanceCycling)]
+        case (.poolSwim, _), (.openWaterSwim, _): [HKQuantityType(.distanceSwimming)]
+        case (.glide, .crossCountrySkiing): [HKQuantityType(.distanceCrossCountrySkiing)]
+        case (.glide, .rowing): [HKQuantityType(.distanceRowing)]
+        case (.glide, .paddleSports): [HKQuantityType(.distancePaddleSports)]
+        case (.glide, _): [HKQuantityType(.distanceSkatingSports)]
+        case (.triathlon, _):
+            [
+                HKQuantityType(.distanceSwimming), HKQuantityType(.distanceCycling),
+                HKQuantityType(.distanceWalkingRunning),
+            ]
+        case (.slope, _), (.calm, _), (.other, _): []
         }
     }
 
-    /// The sport of the sports list it is; nil when the list has none like it.
-    func sport(for type: HKWorkoutActivityType) -> Sport? {
-        Self.sports[type].flatMap(Sport.init(rawValue:))
+    /// The sport of the sports list each kind of Health workout is (Tracy, 2026-11-08: every one
+    /// has one); nil only for 其他, which the member picks.
+    static func sport(for type: HKWorkoutActivityType) -> Sport? {
+        sportID(for: type).flatMap(Sport.init(rawValue:))
     }
 
-    /// Health's kinds by the sports list's ids.
-    private static let sports: [HKWorkoutActivityType: String] = [
-        .running: "run", .walking: "walk", .hiking: "hike", .cycling: "roadCycling", .swimming: "swim",
-        .traditionalStrengthTraining: "strength", .functionalStrengthTraining: "strength", .coreTraining: "strength",
-        .crossTraining: "crossfit", .highIntensityIntervalTraining: "hiit", .rowing: "rowing",
-        .elliptical: "elliptical", .jumpRope: "jumpRope", .mixedCardio: "aerobics", .stepTraining: "aerobics",
-        .stairClimbing: "aerobics", .yoga: "yoga", .pilates: "matPilates", .barre: "barre",
-        .flexibility: "stretching", .cooldown: "stretching", .tennis: "tennis", .badminton: "badminton",
-        .pickleball: "pickleball", .tableTennis: "tableTennis", .squash: "squash", .basketball: "basketball",
-        .soccer: "soccer", .volleyball: "volleyball", .golf: "golf", .climbing: "climb",
-        .downhillSkiing: "ski", .crossCountrySkiing: "ski", .snowboarding: "snowboard", .skatingSports: "skate",
-        .boxing: "boxing", .kickboxing: "kickboxing", .martialArts: "martialArts", .socialDance: "dance",
-        .cardioDance: "dance", .surfingSports: "surf", .paddleSports: "paddleboard",
-    ]
+    // Every kind Health has; one a later iOS adds is 其他 until it is listed here.
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
+    private static func sportID(for type: HKWorkoutActivityType) -> String? {
+        switch type {
+        case .running, .trackAndField, .wheelchairRunPace: "run"
+        case .walking, .wheelchairWalkPace: "walk"
+        case .hiking: "hike"
+        case .swimBikeRun, .transition: "triathlon"
+        case .traditionalStrengthTraining, .functionalStrengthTraining, .coreTraining: "strength"
+        case .crossTraining: "crossfit"
+        case .gymnastics: "gymnastics"
+        case .cycling, .handCycling: "roadCycling"
+        case .highIntensityIntervalTraining: "hiit"
+        case .rowing: "rowing"
+        case .elliptical: "elliptical"
+        case .jumpRope: "jumpRope"
+        case .mixedCardio, .stepTraining: "aerobics"
+        case .stairClimbing, .stairs: "stairs"
+        case .fitnessGaming: "fitnessGaming"
+        case .yoga, .mindAndBody: "yoga"
+        case .pilates: "matPilates"
+        case .barre: "barre"
+        case .flexibility, .cooldown, .preparationAndRecovery: "stretching"
+        case .taiChi: "taiChi"
+        case .swimming: "swim"
+        case .surfingSports: "surf"
+        case .paddleSports: "paddleboard"
+        case .underwaterDiving: "diving"
+        case .sailing: "sailing"
+        case .waterFitness: "waterFitness"
+        case .waterPolo: "waterPolo"
+        case .waterSports: "waterSports"
+        case .tennis: "tennis"
+        case .badminton: "badminton"
+        case .pickleball: "pickleball"
+        case .tableTennis: "tableTennis"
+        case .squash: "squash"
+        case .racquetball: "racquetball"
+        case .basketball: "basketball"
+        case .soccer: "soccer"
+        case .volleyball: "volleyball"
+        case .golf: "golf"
+        case .baseball, .softball: "baseballSoftball"
+        case .discSports: "ultimate"
+        case .americanFootball: "americanFootball"
+        case .rugby, .australianFootball: "rugby"
+        case .hockey: "hockey"
+        case .lacrosse: "lacrosse"
+        case .cricket: "cricket"
+        case .handball: "handball"
+        case .bowling: "bowling"
+        case .climbing: "climb"
+        case .archery: "archery"
+        case .equestrianSports: "horseRiding"
+        case .fishing: "fishing"
+        case .hunting: "hunting"
+        case .downhillSkiing: "ski"
+        case .snowboarding: "snowboard"
+        case .crossCountrySkiing: "crossCountrySki"
+        case .skatingSports: "skate"
+        case .curling: "curling"
+        case .snowSports: "snowHike"
+        case .boxing: "boxing"
+        case .kickboxing: "kickboxing"
+        case .martialArts: "martialArts"
+        case .fencing: "fencing"
+        case .wrestling: "wrestling"
+        case .socialDance, .cardioDance: "dance"
+        case .play: "play"
+        case .other: nil
+        default: retiredSportID(rawValue: type.rawValue)
+        }
+    }
+
+    /// Kinds Apple retired, which older apps may still write, by their raw values (naming them
+    /// warns): dance (14) and dance-inspired training (15) are 跳舞, mixed metabolic cardio (30) 有氧操.
+    private static func retiredSportID(rawValue: UInt) -> String? {
+        switch rawValue {
+        case 14, 15: "dance"
+        case 30: "aerobics"
+        default: nil
+        }
+    }
 }
 #endif

@@ -1585,38 +1585,6 @@
         }
       }
     },
-    "给你的 · %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For you · %@"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "給你的 · %@"
-          }
-        }
-      }
-    },
-    "给 %@ 的 · %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For %1$@ · %2$@"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "給 %1$@ 的 · %2$@"
-          }
-        }
-      }
-    },
     "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。": {
       "localizations": {
         "en": {
@@ -2253,6 +2221,134 @@
           "stringUnit": {
             "state": "translated",
             "value": "沒網，連上自動發"
+          }
+        }
+      }
+    },
+    "交接中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Handing over"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "交接中"
+          }
+        }
+      }
+    },
+    "%@：": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@,"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@："
+          }
+        }
+      }
+    },
+    "给 %@ · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To %1$@ · from %2$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "給 %1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "开信": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the letter"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開信"
+          }
+        }
+      }
+    },
+    "帕帕": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Papa"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "帕帕"
+          }
+        }
+      }
+    },
+    "这队交给你了，我先撤。\n小美周三雷打不动去游泳，周五一定请假，别问，问就是加班。\n阿杰在备战半马，跑完要人夸，夸具体点，他听得出来是不是敷衍。\n大鹏不爱说话，练完只发图，回个表情就够了。\n这队周日晚上最热闹，战报一出全在线。\n器材室那条毯子留给你，午觉在那儿睡最舒服。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This squad's yours now. I'm out.\nXiaomei swims every Wednesday, no matter what, and always takes Friday off. Don't ask: it's work.\nAjie is training for a half marathon. Praise him after a run, and be specific; he can tell when you're not.\nDapeng doesn't talk much. He posts photos after training, and an emoji back is plenty.\nSunday nights are the squad's busiest: everyone's online the moment the recap is out.\nThe blanket in the equipment room is yours. Best nap spot in the place."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這隊交給你了，我先撤。\n小美週三雷打不動去游泳，週五一定請假，別問，問就是加班。\n阿傑在備戰半馬，跑完要人誇，誇具體點，他聽得出來是不是敷衍。\n大鵬不愛說話，練完只發圖，回個表情就夠了。\n這隊週日晚上最熱鬧，戰報一出全在線。\n器材室那條毯子留給你，午覺在那兒睡最舒服。"
+          }
+        }
+      }
+    },
+    "%@ · 今日挑战": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · Today's challenge"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · 今日挑戰"
+          }
+        }
+      }
+    },
+    "拉伸": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stretch"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "伸展"
           }
         }
       }

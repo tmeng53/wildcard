@@ -30,6 +30,11 @@ export interface Members {
    * app says another. Members without a profile are left out.
    */
   languages(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, ReaderLanguage>>;
+  /**
+   * The time zone each of these members' day follows (their profile's), by member. Members
+   * without a profile are left out.
+   */
+  timeZones(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, string>>;
   /** When the member joined (first saved their profile), or `undefined` before that. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
   /**
@@ -50,6 +55,7 @@ export function createMembers(deps: { readonly store: ProfileStore }): Members {
     },
     saveLanguage: (member, language) => deps.store.saveLanguage(member, language),
     languages: (members) => deps.store.languages(members),
+    timeZones: (members) => deps.store.timeZones(members),
     joinedAt: (member) => deps.store.joinedAt(member),
     pastLocalHour: (input) => deps.store.pastLocalHour(input),
   };

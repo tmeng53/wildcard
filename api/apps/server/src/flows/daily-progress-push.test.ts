@@ -41,6 +41,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -54,6 +55,7 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
@@ -146,6 +148,8 @@ const deps = {
   publicRoutes: unlimitedPublicRoutes,
   aiConsent: aiConsentOn(db),
   nudges,
+  weather: weatherOn(db),
+  ...unusedFeedback,
 };
 const app = createApp(deps);
 

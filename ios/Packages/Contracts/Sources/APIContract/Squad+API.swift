@@ -190,11 +190,24 @@ extension SquadWeeklyGoal {
 
 extension SquadTimeZone {
     public init(_ wire: Components.Schemas.SquadTimeZone) {
-        self.init(timeZone: wire.timeZone, nextTimeZone: wire.nextTimeZone, canChange: wire.canChange)
+        self.init(timeZone: wire.timeZone, canChange: wire.canChange)
     }
 
     /// The body of `PUT /squads/{squadId}/time-zone`.
     public static func change(to timeZone: String) -> Components.Schemas.SquadTimeZoneChange {
         .init(version: ._1, timeZone: timeZone)
+    }
+}
+
+extension SquadLanguage {
+    public init(_ wire: Components.Schemas.SquadLanguage) {
+        // The wire's languages are the app's, tag for tag.
+        let language = Language(rawValue: wire.language.rawValue) ?? .simplifiedChinese
+        self.init(language: language, canChange: wire.canChange)
+    }
+
+    /// The body of `PUT /squads/{squadId}/language`.
+    public static func change(to language: Language) -> Components.Schemas.SquadLanguageChange {
+        .init(version: ._1, language: .init(rawValue: language.rawValue) ?? .zhHans)
     }
 }

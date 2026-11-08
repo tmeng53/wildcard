@@ -47,6 +47,9 @@ final class LanguageUITests: XCTestCase {
         let skipHealth = app.buttons["health.skip"]
         XCTAssertTrue(skipHealth.waitForExistence(timeout: Self.wait), "连上 Apple 健康 never appeared")
         skipHealth.tap()
+        let skipLocation = app.buttons["location.skip"]
+        XCTAssertTrue(skipLocation.waitForExistence(timeout: Self.wait), "打开大概位置 never appeared")
+        skipLocation.tap()
         let monday = app.buttons["week.day.0"]
         XCTAssertTrue(monday.waitForExistence(timeout: Self.wait), "本周目标 never appeared")
         XCTAssertTrue(monday.label.contains("周一"), "the week's days aren't in Chinese: \(monday.label)")
@@ -103,14 +106,18 @@ final class LanguageUITests: XCTestCase {
         let skipHealth = app.buttons["health.skip"]
         XCTAssertTrue(skipHealth.waitForExistence(timeout: Self.wait), "连上 Apple 健康 never appeared")
         skipHealth.tap()
+        let skipLocation = app.buttons["location.skip"]
+        XCTAssertTrue(skipLocation.waitForExistence(timeout: Self.wait), "打开大概位置 never appeared")
+        skipLocation.tap()
         let monday = app.buttons["week.day.0"]
         XCTAssertTrue(monday.waitForExistence(timeout: Self.wait), "the week step never appeared")
         XCTAssertTrue(monday.label.contains("Mon"), "the week's days stayed Chinese: \(monday.label)")
     }
 
-    /// 设置's 语言 switches the app too, and back.
+    /// 设置's 语言 switches the app too, and back. The phone is English here whatever the simulator
+    /// was left speaking, so the app opens in Simplified Chinese.
     func testSettingsSwitchesTheLanguage() {
-        let app = launchFirstTime(["-tab", "me", "-uitest-no-push"])
+        let app = launchFirstTime(["-tab", "me", "-uitest-no-push", "-uitest-phone-language", "en-US"])
         let settingsButton = app.buttons["me.settings"]
         XCTAssertTrue(settingsButton.waitForExistence(timeout: Self.wait), "我 never showed")
         settingsButton.tap()

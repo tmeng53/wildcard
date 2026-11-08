@@ -23,6 +23,7 @@ import {
   aiConsentOn,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
@@ -35,6 +36,7 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 const config = readConfig(process.env);
@@ -98,8 +100,10 @@ async function getHealth(db: Database) {
     coachActivity: unusedCoachActivity,
     coachLetters: unusedCoachLetters,
     ...ignoredNotices,
+    ...unusedFeedback,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
+    weather: weatherOn(db),
     log: createLog((line) => lines.push(line)),
     jobs: noJobs,
     admin: adminOn(),
@@ -194,8 +198,10 @@ describe('an unknown route', () => {
       scenes: scenesOn(db),
       switches: switchesOn(db),
       ...ignoredNotices,
+      ...unusedFeedback,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),
+      weather: weatherOn(db),
       log: createLog(() => undefined),
       jobs: noJobs,
       admin: adminOn(),

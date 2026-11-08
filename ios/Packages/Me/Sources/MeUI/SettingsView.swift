@@ -2,12 +2,15 @@
 import DesignSystem
 import DesignSystemUI
 import HealthUI
+import LocationDomain
 import MeDomain
 import SwiftUI
+import UIKit
 
 /// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
-/// small group labels (偏好, 关于, 账号), with no icons, a chevron on each row that opens a page,
-/// and an ink switch; 偏好's Apple 健康 pushes its own page. Signing out and deleting the account come last. It holds only the app's
+/// small group labels (偏好, 关于 with 意见反馈, 账号), with no icons, a chevron on each row that opens a page,
+/// and an ink switch; 偏好's Apple 健康 pushes its own page, and 位置 asks for approximate location
+/// once, then opens iOS Settings. Signing out and deleting the account come last. It holds only the app's
 /// own settings: what belongs to the squad or the week lives with them (2026-11-02), and 球衣号码
 /// with the character editor (2026-11-03).
 struct SettingsView: View {
@@ -16,6 +19,8 @@ struct SettingsView: View {
     @State private var isSigningOut = false
     @State private var isPickingLanguage = false
     @State private var isHealthOpen = false
+    /// 意见反馈 while it is open, a fresh page each time.
+    @State private var feedback: FeedbackModel?
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
@@ -31,6 +36,19 @@ struct SettingsView: View {
             .navigationDestination(isPresented: $isHealthOpen) {
                 if let health = destinations.health { HealthSettingsView(health: health) }
             }
+            .navigationDestination(isPresented: feedbackOpen) {
+                if let feedback {
+                    FeedbackView(
+                        model: feedback, character: model.overview?.character, writeReview: destinations.writeReview
+                    )
+                    .pushedPage(canGoBack: feedback.phase != .sending, hidesTabBar: true)
+                    .accentTone(.ink)
+                }
+            }
+    }
+
+    private var feedbackOpen: Binding<Bool> {
+        Binding(get: { feedback != nil }, set: { if !$0 { feedback = nil } })
     }
 
     /// 注销账号 is open; the system's back closes it as 先不注销 does.
@@ -83,10 +101,9 @@ struct SettingsView: View {
                     set: { isOn in Task { await model.setDailyPush(isOn) } })
             )
             .accessibilityIdentifier("me.notifications")
-            // The coach's own switch, under 通知: silent pushes, and 通知 keeps its words anyway.
+            // The coach's own switch, under 通知: its pushes are silent, and 通知 keeps its words anyway.
             SwitchRow(
                 Text("教练消息", bundle: .module),
-                detail: Text("教练的消息和回复，静默推送。关掉后通知里照样有。", bundle: .module),
                 isOn: Binding(
                     get: { model.coachPushOn },
                     set: { isOn in Task { await model.setCoachPush(isOn) } })
@@ -102,6 +119,21 @@ struct SettingsView: View {
                 .accessibilityIdentifier("me.health")
                 .task { await health.refresh() }
             }
+            if let location = destinations.location {
+                ListRow(
+                    Text("位置", bundle: .module),
+                    value: location.access == .allowed ? Text("已打开", bundle: .module) : Text("未打开", bundle: .module)
+                ) {
+                    // Only the first time can the app ask; after that, iOS Settings changes it.
+                    if location.access == .notAsked {
+                        Task { await location.ask() }
+                    } else if let settings = URL(string: UIApplication.openSettingsURLString) {
+                        openURL(settings)
+                    }
+                }
+                .accessibilityIdentifier("me.location")
+                .task { await location.refresh() }
+            }
             ListRow(
                 Text("语言", bundle: .module), value: Text(verbatim: AppLanguage.current.name), showsDivider: false
             ) {
@@ -112,16 +144,28 @@ struct SettingsView: View {
         }
     }
 
+    /// Apple Weather's data sources, which WeatherKit asks apps that show its weather to link.
+    private static let weatherSources = URL(string: "https://developer.apple.com/weatherkit/data-source-attribution/")
     private var aboutGroup: some View {
         MenuGroup(Text("关于", bundle: .module)) {
+            // Also the app's 联系我们 (App Review 1.2): the page shows the support email too.
+            ListRow(Text("意见反馈", bundle: .module)) {
+                feedback = FeedbackModel(service: model.feedback, app: .current, newID: UUID.init)
+            }
+            .accessibilityIdentifier("me.feedback")
             ListRow(Text("隐私政策", bundle: .module)) {
                 openURL(destinations.privacyPolicy)
             }
             .accessibilityIdentifier("me.privacy")
-            ListRow(Text("用户条款", bundle: .module), showsDivider: false) {
+            ListRow(Text("用户条款", bundle: .module)) {
                 openURL(destinations.terms)
             }
             .accessibilityIdentifier("me.terms")
+            // WeatherKit's terms: the coach's weather credits Apple Weather and links its sources.
+            ListRow(Text("天气数据：Apple 天气", bundle: .module), showsDivider: false) {
+                if let sources = Self.weatherSources { openURL(sources) }
+            }
+            .accessibilityIdentifier("me.weatherSources")
         }
     }
 
@@ -176,6 +220,25 @@ private struct MenuGroup<Rows: View>: View {
             VStack(spacing: 0) { rows }
         }
         .padding(.top, Space.l)
+    }
+}
+
+extension FeedbackApp {
+    /// This app on this phone: its version and build, iOS, the model (iPhone17,3) and the
+    /// language picked in the app.
+    @MainActor static var current: FeedbackApp {
+        let info = Bundle.main.infoDictionary ?? [:]
+        var system = utsname()
+        uname(&system)
+        let machine = withUnsafeBytes(of: &system.machine) { bytes in
+            String(bytes: bytes.prefix { $0 != 0 }, encoding: .utf8) ?? ""
+        }
+        return FeedbackApp(
+            appVersion: info["CFBundleShortVersionString"] as? String ?? "?",
+            build: info["CFBundleVersion"] as? String ?? "?",
+            system: "iOS \(UIDevice.current.systemVersion)",
+            device: machine.isEmpty ? UIDevice.current.model : machine,
+            language: AppLanguage.current.rawValue)
     }
 }
 #endif

@@ -8,6 +8,8 @@ import PackageDescription
 //   knows Supabase Auth's HTTP API, so changing provider means replacing it.
 // - `WildcardAPI`, the client of our own API: the client scripts/swift-openapi.sh generates
 //   (`Generated/`, never edited by hand) behind calls that take and return `Contracts` types.
+// - `APILocationRegistry`, behind `LocationDomain`'s `LocationRegistry`: the member's rough
+//   place, for the coach's weather.
 // - `APIDeviceRegistry` puts it behind the `DeviceRegistry` that push registration talks to, and
 //   `APINoticeSource` behind `NoticeInbox`'s `NoticeSource`: 通知, the bell on 动态.
 // - `APIWeekStoryService`, the Sunday 战报 behind `RecapDomain`'s `WeekStoryService`.
@@ -39,6 +41,7 @@ let package = Package(
         .package(path: "../Contracts"),
         .package(path: "../DailyPush"),
         .package(path: "../Feed"),
+        .package(path: "../Location"),
         .package(path: "../DesignSystem"),
         .package(path: "../Me"),
         .package(path: "../Notifications"),
@@ -61,6 +64,7 @@ let package = Package(
                 .product(name: "APIContract", package: "Contracts"),
                 .product(name: "DailyPushDomain", package: "DailyPush"),
                 .product(name: "FeedDomain", package: "Feed"),
+                .product(name: "LocationDomain", package: "Location"),
                 .product(name: "MeDomain", package: "Me"),
                 .product(name: "NotificationsDomain", package: "Notifications"),
                 .product(name: "RecapDomain", package: "Recap"),
@@ -83,6 +87,7 @@ let package = Package(
                 .product(name: "AvatarArt", package: "Avatar"), .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
                 .product(name: "FeedDomain", package: "Feed"),
+                .product(name: "LocationDomain", package: "Location"),
                 .product(name: "MeDomain", package: "Me"),
                 .product(name: "NotificationsDomain", package: "Notifications"),
                 .product(name: "RecapDomain", package: "Recap"),

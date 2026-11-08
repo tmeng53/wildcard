@@ -24,6 +24,11 @@ import {
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import {
+  createPostgresPlaceStore,
+  createPostgresWeatherDayStore,
+  createWeather,
+} from '@wildcard/weather';
 import { z } from 'zod';
 
 import type { AdminTool } from '../admin-mcp/admin-tool.js';
@@ -91,6 +96,15 @@ export function aiConsentOn(db: Database) {
   return createAiConsent({
     store: createPostgresConsentStore(db),
     copyVersion: AI_CONSENT_COPY_VERSION,
+    clock: () => new Date(),
+  });
+}
+
+/** Members' places on local Supabase, with no weather provider: no live calls in tests. */
+export function weatherOn(db: Database) {
+  return createWeather({
+    places: createPostgresPlaceStore(db),
+    days: createPostgresWeatherDayStore(db),
     clock: () => new Date(),
   });
 }

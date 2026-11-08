@@ -54,6 +54,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -65,6 +66,7 @@ import {
   unusedUnlocks,
   unusedGifts,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
@@ -207,6 +209,8 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     liveEvents: ignoredNotices.liveEvents,
     aiConsent,
     nudges: nudgesOn(db),
+    weather: weatherOn(db),
+    ...unusedFeedback,
     log: createLog(() => undefined),
     jobs: { ...noJobs, isScheduler: jobsTokenScheduler(JOBS_TOKEN) },
     admin: adminOn(),

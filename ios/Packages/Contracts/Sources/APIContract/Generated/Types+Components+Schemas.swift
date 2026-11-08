@@ -739,6 +739,10 @@ extension Components {
                 public var id: Swift.String
                 /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/names`.
                 public var names: Components.Schemas.CatalogNames
+                /// The colour its sports’ 成绩条, post blocks, routes and charts wear, with white on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before colours still reads (its sports then wear the gym’s steel).
+                ///
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/color`.
+                public var color: Swift.String?
                 /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload`.
                 public struct SportsPayloadPayload: Codable, Hashable, Sendable {
                     /// What a 训练 or a planned day sends as `sport`. Never changes, and a sport is never removed.
@@ -856,22 +860,26 @@ extension Components {
                 /// - Parameters:
                 ///   - id:
                 ///   - names:
+                ///   - color: The colour its sports’ 成绩条, post blocks, routes and charts wear, with white on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before colours still reads (its sports then wear the gym’s steel).
                 ///   - sports:
                 ///   - additionalProperties: A container of undocumented properties.
                 public init(
                     id: Swift.String,
                     names: Components.Schemas.CatalogNames,
+                    color: Swift.String? = nil,
                     sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload,
                     additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
                 ) {
                     self.id = id
                     self.names = names
+                    self.color = color
                     self.sports = sports
                     self.additionalProperties = additionalProperties
                 }
                 public enum CodingKeys: String, CodingKey {
                     case id
                     case names
+                    case color
                     case sports
                 }
                 public init(from decoder: any Swift.Decoder) throws {
@@ -884,6 +892,10 @@ extension Components {
                         Components.Schemas.CatalogNames.self,
                         forKey: .names
                     )
+                    self.color = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .color
+                    )
                     self.sports = try container.decode(
                         Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload.self,
                         forKey: .sports
@@ -891,6 +903,7 @@ extension Components {
                     additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                         "id",
                         "names",
+                        "color",
                         "sports"
                     ])
                 }
@@ -903,6 +916,10 @@ extension Components {
                     try container.encode(
                         self.names,
                         forKey: .names
+                    )
+                    try container.encodeIfPresent(
+                        self.color,
+                        forKey: .color
                     )
                     try container.encode(
                         self.sports,
@@ -2758,7 +2775,7 @@ extension Components {
                 case endedAt
             }
         }
-        /// The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim).
+        /// The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike).
         ///
         /// - Remark: Generated from `#/components/schemas/WorkoutSummary`.
         public struct WorkoutSummary: Codable, Hashable, Sendable {
@@ -2780,6 +2797,16 @@ extension Components {
             public var laps: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/WorkoutSummary/poolLengthM`.
             public var poolLengthM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/runs`.
+            public var runs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/descentM`.
+            public var descentM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/topSpeedKmh`.
+            public var topSpeedKmh: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/elevationGainM`.
+            public var elevationGainM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/paceSecPer100m`.
+            public var paceSecPer100m: Swift.Double?
             /// Creates a new `WorkoutSummary`.
             ///
             /// - Parameters:
@@ -2792,6 +2819,11 @@ extension Components {
             ///   - effort:
             ///   - laps:
             ///   - poolLengthM:
+            ///   - runs:
+            ///   - descentM:
+            ///   - topSpeedKmh:
+            ///   - elevationGainM:
+            ///   - paceSecPer100m:
             public init(
                 durationSec: Swift.Int? = nil,
                 distanceM: Swift.Double? = nil,
@@ -2801,7 +2833,12 @@ extension Components {
                 maxHr: Swift.Int? = nil,
                 effort: Swift.Double? = nil,
                 laps: Swift.Int? = nil,
-                poolLengthM: Swift.Double? = nil
+                poolLengthM: Swift.Double? = nil,
+                runs: Swift.Int? = nil,
+                descentM: Swift.Double? = nil,
+                topSpeedKmh: Swift.Double? = nil,
+                elevationGainM: Swift.Double? = nil,
+                paceSecPer100m: Swift.Double? = nil
             ) {
                 self.durationSec = durationSec
                 self.distanceM = distanceM
@@ -2812,6 +2849,11 @@ extension Components {
                 self.effort = effort
                 self.laps = laps
                 self.poolLengthM = poolLengthM
+                self.runs = runs
+                self.descentM = descentM
+                self.topSpeedKmh = topSpeedKmh
+                self.elevationGainM = elevationGainM
+                self.paceSecPer100m = paceSecPer100m
             }
             public enum CodingKeys: String, CodingKey {
                 case durationSec
@@ -2823,6 +2865,11 @@ extension Components {
                 case effort
                 case laps
                 case poolLengthM
+                case runs
+                case descentM
+                case topSpeedKmh
+                case elevationGainM
+                case paceSecPer100m
             }
         }
         /// Sent only when the chart tile was kept.
@@ -4822,6 +4869,41 @@ extension Components {
                 case settings
             }
         }
+        /// The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach. Squadmates and the AI never see it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/MemberLocation`.
+        public struct MemberLocation: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/version`.
+            public var version: Components.Schemas.MemberLocation.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/latitude`.
+            public var latitude: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/longitude`.
+            public var longitude: Swift.Double
+            /// Creates a new `MemberLocation`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - latitude:
+            ///   - longitude:
+            public init(
+                version: Components.Schemas.MemberLocation.VersionPayload,
+                latitude: Swift.Double,
+                longitude: Swift.Double
+            ) {
+                self.version = version
+                self.latitude = latitude
+                self.longitude = longitude
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case latitude
+                case longitude
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadList`.
         public struct SquadList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadList/version`.
@@ -6352,7 +6434,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/timeZone`.
             public var timeZone: Swift.String
-            /// Next week’s zone: a change counts from the next week, so it differs from `timeZone` only after the captain changed it this week.
+            /// Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/nextTimeZone`.
             public var nextTimeZone: Swift.String
@@ -6365,7 +6447,7 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - timeZone: This week’s zone.
-            ///   - nextTimeZone: Next week’s zone: a change counts from the next week, so it differs from `timeZone` only after the captain changed it this week.
+            ///   - nextTimeZone: Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.
             ///   - canChange: True for the captain, the only one who sets it.
             public init(
                 version: Components.Schemas.SquadTimeZone.VersionPayload,
@@ -6414,6 +6496,308 @@ extension Components {
                 case timeZone
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SquadLanguage`.
+        public struct SquadLanguage: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/version`.
+            public var version: Components.Schemas.SquadLanguage.VersionPayload
+            /// The squad’s language now: the captain’s pick, else the captain’s app language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/language`.
+            @frozen public enum LanguagePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case zhHans = "zh-Hans"
+                case zhHant = "zh-Hant"
+                case en = "en"
+            }
+            /// The squad’s language now: the captain’s pick, else the captain’s app language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/language`.
+            public var language: Components.Schemas.SquadLanguage.LanguagePayload
+            /// True for the captain, the only one who sets it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/canChange`.
+            public var canChange: Swift.Bool
+            /// Creates a new `SquadLanguage`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - language: The squad’s language now: the captain’s pick, else the captain’s app language.
+            ///   - canChange: True for the captain, the only one who sets it.
+            public init(
+                version: Components.Schemas.SquadLanguage.VersionPayload,
+                language: Components.Schemas.SquadLanguage.LanguagePayload,
+                canChange: Swift.Bool
+            ) {
+                self.version = version
+                self.language = language
+                self.canChange = canChange
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case language
+                case canChange
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadLanguageChange`.
+        public struct SquadLanguageChange: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/version`.
+            public var version: Components.Schemas.SquadLanguageChange.VersionPayload
+            /// The squad’s language (小队语言): what the AI writes everything the whole squad reads in, its coach’s 战术板 and name and the weekly awards. What one member reads keeps their own app’s language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/language`.
+            @frozen public enum LanguagePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case zhHans = "zh-Hans"
+                case zhHant = "zh-Hant"
+                case en = "en"
+            }
+            /// The squad’s language (小队语言): what the AI writes everything the whole squad reads in, its coach’s 战术板 and name and the weekly awards. What one member reads keeps their own app’s language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/language`.
+            public var language: Components.Schemas.SquadLanguageChange.LanguagePayload
+            /// Creates a new `SquadLanguageChange`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - language: The squad’s language (小队语言): what the AI writes everything the whole squad reads in, its coach’s 战术板 and name and the weekly awards. What one member reads keeps their own app’s language.
+            public init(
+                version: Components.Schemas.SquadLanguageChange.VersionPayload,
+                language: Components.Schemas.SquadLanguageChange.LanguagePayload
+            ) {
+                self.version = version
+                self.language = language
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case language
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachDayChallenge`.
+        public struct CoachDayChallenge: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachDayChallenge/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachDayChallenge/version`.
+            public var version: Components.Schemas.CoachDayChallenge.VersionPayload
+            /// The caller’s challenge today, once their morning note reached them; `null` when there is none, or while their `coach` switch is off.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachDayChallenge/today`.
+            public struct TodayPayload: Codable, Hashable, Sendable {
+                /// The morning note that set it, which answering and completing it name.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachDayChallenge/today/noteId`.
+                public var noteId: Swift.Int
+                /// Its day, on the squad’s clock.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachDayChallenge/today/day`.
+                public var day: Swift.String
+                /// - Remark: Generated from `#/components/schemas/CoachDayChallenge/today/challenge`.
+                public var challenge: Components.Schemas.CoachChallenge
+                /// Creates a new `TodayPayload`.
+                ///
+                /// - Parameters:
+                ///   - noteId: The morning note that set it, which answering and completing it name.
+                ///   - day: Its day, on the squad’s clock.
+                ///   - challenge:
+                public init(
+                    noteId: Swift.Int,
+                    day: Swift.String,
+                    challenge: Components.Schemas.CoachChallenge
+                ) {
+                    self.noteId = noteId
+                    self.day = day
+                    self.challenge = challenge
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case noteId
+                    case day
+                    case challenge
+                }
+            }
+            /// The caller’s challenge today, once their morning note reached them; `null` when there is none, or while their `coach` switch is off.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachDayChallenge/today`.
+            public var today: Components.Schemas.CoachDayChallenge.TodayPayload?
+            /// Creates a new `CoachDayChallenge`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - today: The caller’s challenge today, once their morning note reached them; `null` when there is none, or while their `coach` switch is off.
+            public init(
+                version: Components.Schemas.CoachDayChallenge.VersionPayload,
+                today: Components.Schemas.CoachDayChallenge.TodayPayload? = nil
+            ) {
+                self.version = version
+                self.today = today
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case today
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachChallenge`.
+        public struct CoachChallenge: Codable, Hashable, Sendable {
+            /// What to do, in a few words.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallenge/title`.
+            public var title: Swift.String
+            /// How much, when it has a number; always with `unit`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallenge/amount`.
+            public var amount: Swift.Int?
+            /// The amount’s unit, the coach’s own word.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallenge/unit`.
+            public var unit: Swift.String?
+            /// The coach talking to the member under the title, about why; left out on older notes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallenge/line`.
+            public var line: Swift.String?
+            /// What the member said to it; left out until they answer. The first stands.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallenge/answer`.
+            @frozen public enum AnswerPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case accepted = "accepted"
+                case declined = "declined"
+            }
+            /// What the member said to it; left out until they answer. The first stands.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallenge/answer`.
+            public var answer: Components.Schemas.CoachChallenge.AnswerPayload?
+            /// Why the member let it go, when they said; only the member sees it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallenge/reason`.
+            public var reason: Swift.String?
+            /// When it was marked done (已完成); left out until it is. The first stands.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallenge/completedAt`.
+            public var completedAt: Foundation.Date?
+            /// Who marked it done, with `completedAt`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallenge/completedBy`.
+            @frozen public enum CompletedByPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case member = "member"
+                case coach = "coach"
+            }
+            /// Who marked it done, with `completedAt`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallenge/completedBy`.
+            public var completedBy: Components.Schemas.CoachChallenge.CompletedByPayload?
+            /// Creates a new `CoachChallenge`.
+            ///
+            /// - Parameters:
+            ///   - title: What to do, in a few words.
+            ///   - amount: How much, when it has a number; always with `unit`.
+            ///   - unit: The amount’s unit, the coach’s own word.
+            ///   - line: The coach talking to the member under the title, about why; left out on older notes.
+            ///   - answer: What the member said to it; left out until they answer. The first stands.
+            ///   - reason: Why the member let it go, when they said; only the member sees it.
+            ///   - completedAt: When it was marked done (已完成); left out until it is. The first stands.
+            ///   - completedBy: Who marked it done, with `completedAt`.
+            public init(
+                title: Swift.String,
+                amount: Swift.Int? = nil,
+                unit: Swift.String? = nil,
+                line: Swift.String? = nil,
+                answer: Components.Schemas.CoachChallenge.AnswerPayload? = nil,
+                reason: Swift.String? = nil,
+                completedAt: Foundation.Date? = nil,
+                completedBy: Components.Schemas.CoachChallenge.CompletedByPayload? = nil
+            ) {
+                self.title = title
+                self.amount = amount
+                self.unit = unit
+                self.line = line
+                self.answer = answer
+                self.reason = reason
+                self.completedAt = completedAt
+                self.completedBy = completedBy
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case amount
+                case unit
+                case line
+                case answer
+                case reason
+                case completedAt
+                case completedBy
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachChallengeCompleted`.
+        public struct CoachChallengeCompleted: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachChallengeCompleted/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachChallengeCompleted/version`.
+            public var version: Components.Schemas.CoachChallengeCompleted.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CoachChallengeCompleted/noteId`.
+            public var noteId: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CoachChallengeCompleted/completedAt`.
+            public var completedAt: Foundation.Date
+            /// `member` for the member’s own 我完成了, `coach` when the coach saw it in their check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallengeCompleted/completedBy`.
+            @frozen public enum CompletedByPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case member = "member"
+                case coach = "coach"
+            }
+            /// `member` for the member’s own 我完成了, `coach` when the coach saw it in their check-ins.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallengeCompleted/completedBy`.
+            public var completedBy: Components.Schemas.CoachChallengeCompleted.CompletedByPayload
+            /// Creates a new `CoachChallengeCompleted`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - noteId:
+            ///   - completedAt:
+            ///   - completedBy: `member` for the member’s own 我完成了, `coach` when the coach saw it in their check-ins.
+            public init(
+                version: Components.Schemas.CoachChallengeCompleted.VersionPayload,
+                noteId: Swift.Int,
+                completedAt: Foundation.Date,
+                completedBy: Components.Schemas.CoachChallengeCompleted.CompletedByPayload
+            ) {
+                self.version = version
+                self.noteId = noteId
+                self.completedAt = completedAt
+                self.completedBy = completedBy
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case noteId
+                case completedAt
+                case completedBy
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachChallengeCompletion`.
+        public struct CoachChallengeCompletion: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachChallengeCompletion/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachChallengeCompletion/version`.
+            public var version: Components.Schemas.CoachChallengeCompletion.VersionPayload
+            /// Creates a new `CoachChallengeCompletion`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            public init(version: Components.Schemas.CoachChallengeCompletion.VersionPayload) {
+                self.version = version
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CoachChallengeAnswered`.
         public struct CoachChallengeAnswered: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CoachChallengeAnswered/version`.
@@ -6435,25 +6819,33 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachChallengeAnswered/answer`.
             public var answer: Components.Schemas.CoachChallengeAnswered.AnswerPayload
+            /// Why they let it go, when they said; the first answer’s.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallengeAnswered/reason`.
+            public var reason: Swift.String?
             /// Creates a new `CoachChallengeAnswered`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - noteId:
             ///   - answer: `accepted` for 接受挑战, `declined` for 算了.
+            ///   - reason: Why they let it go, when they said; the first answer’s.
             public init(
                 version: Components.Schemas.CoachChallengeAnswered.VersionPayload,
                 noteId: Swift.Int,
-                answer: Components.Schemas.CoachChallengeAnswered.AnswerPayload
+                answer: Components.Schemas.CoachChallengeAnswered.AnswerPayload,
+                reason: Swift.String? = nil
             ) {
                 self.version = version
                 self.noteId = noteId
                 self.answer = answer
+                self.reason = reason
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case noteId
                 case answer
+                case reason
             }
         }
         /// - Remark: Generated from `#/components/schemas/CoachChallengeAnswer`.
@@ -6475,21 +6867,29 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachChallengeAnswer/answer`.
             public var answer: Components.Schemas.CoachChallengeAnswer.AnswerPayload
+            /// Why they let it go, if they say; only with `declined`. Their coach remembers it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallengeAnswer/reason`.
+            public var reason: Swift.String?
             /// Creates a new `CoachChallengeAnswer`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - answer: `accepted` for 接受挑战, `declined` for 算了.
+            ///   - reason: Why they let it go, if they say; only with `declined`. Their coach remembers it.
             public init(
                 version: Components.Schemas.CoachChallengeAnswer.VersionPayload,
-                answer: Components.Schemas.CoachChallengeAnswer.AnswerPayload
+                answer: Components.Schemas.CoachChallengeAnswer.AnswerPayload,
+                reason: Swift.String? = nil
             ) {
                 self.version = version
                 self.answer = answer
+                self.reason = reason
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case answer
+                case reason
             }
         }
         /// - Remark: Generated from `#/components/schemas/CoachNotePutAway`.
@@ -6857,56 +7257,239 @@ extension Components {
                 case at
             }
         }
-        /// The day’s challenge (今日挑战) the note sets, if any; only the member sees it.
-        ///
-        /// - Remark: Generated from `#/components/schemas/CoachChallenge`.
-        public struct CoachChallenge: Codable, Hashable, Sendable {
-            /// What to do, in a few words.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CoachChallenge/title`.
-            public var title: Swift.String
-            /// How much, when it has a number; always with `unit`.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CoachChallenge/amount`.
-            public var amount: Swift.Int?
-            /// The amount’s unit, the coach’s own word.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CoachChallenge/unit`.
-            public var unit: Swift.String?
-            /// What the member said to it; left out until they answer. The first stands.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CoachChallenge/answer`.
-            @frozen public enum AnswerPayload: String, Codable, Hashable, Sendable, CaseIterable {
-                case accepted = "accepted"
-                case declined = "declined"
+        /// - Remark: Generated from `#/components/schemas/CoachCards`.
+        public struct CoachCards: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachCards/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
             }
-            /// What the member said to it; left out until they answer. The first stands.
+            /// - Remark: Generated from `#/components/schemas/CoachCards/version`.
+            public var version: Components.Schemas.CoachCards.VersionPayload
+            /// The cards not seen yet from the last 72 hours, oldest first: the stack.
             ///
-            /// - Remark: Generated from `#/components/schemas/CoachChallenge/answer`.
-            public var answer: Components.Schemas.CoachChallenge.AnswerPayload?
-            /// Creates a new `CoachChallenge`.
+            /// - Remark: Generated from `#/components/schemas/CoachCards/stack`.
+            public var stack: [Components.Schemas.CoachPageCard]
+            /// Every other card from the last 30 days, newest first: 以前.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCards/earlier`.
+            public var earlier: [Components.Schemas.CoachPageCard]
+            /// Creates a new `CoachCards`.
             ///
             /// - Parameters:
-            ///   - title: What to do, in a few words.
-            ///   - amount: How much, when it has a number; always with `unit`.
-            ///   - unit: The amount’s unit, the coach’s own word.
-            ///   - answer: What the member said to it; left out until they answer. The first stands.
+            ///   - version:
+            ///   - stack: The cards not seen yet from the last 72 hours, oldest first: the stack.
+            ///   - earlier: Every other card from the last 30 days, newest first: 以前.
             public init(
-                title: Swift.String,
-                amount: Swift.Int? = nil,
-                unit: Swift.String? = nil,
-                answer: Components.Schemas.CoachChallenge.AnswerPayload? = nil
+                version: Components.Schemas.CoachCards.VersionPayload,
+                stack: [Components.Schemas.CoachPageCard],
+                earlier: [Components.Schemas.CoachPageCard]
             ) {
-                self.title = title
-                self.amount = amount
-                self.unit = unit
-                self.answer = answer
+                self.version = version
+                self.stack = stack
+                self.earlier = earlier
             }
             public enum CodingKeys: String, CodingKey {
-                case title
-                case amount
-                case unit
-                case answer
+                case version
+                case stack
+                case earlier
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachPageCard`.
+        public struct CoachPageCard: Codable, Hashable, Sendable {
+            /// `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/kind`.
+            public var kind: Swift.String
+            /// The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece, a reply’s or answer’s id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/coach`.
+            public var coach: Components.Schemas.CoachSpeaker
+            /// When it came: a note when it was delivered, a `challengeDone` when marked.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/at`.
+            public var at: Foundation.Date
+            /// The squad’s day a `board`, `note`, `challenge` or `challengeDone` is for.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/day`.
+            public var day: Swift.String?
+            /// What the coach said, on a `board`, `note`, `reply` or `answer`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/text`.
+            public var text: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/challenge`.
+            public struct ChallengePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/challenge/value1`.
+                public var value1: Components.Schemas.CoachChallenge
+                /// A `challenge`’s or `challengeDone`’s challenge.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/challenge/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `ChallengePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: A `challenge`’s or `challengeDone`’s challenge.
+                public init(
+                    value1: Components.Schemas.CoachChallenge,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/challenge`.
+            public var challenge: Components.Schemas.CoachPageCard.ChallengePayload?
+            /// The caller’s check-in a `reply` is on, or an `answer`’s post.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/checkInId`.
+            public var checkInId: Swift.String?
+            /// The caller’s reply an `answer` answers.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/commentId`.
+            public var commentId: Swift.String?
+            /// A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift`.
+            public struct GiftPayload: Codable, Hashable, Sendable {
+                /// The piece, by the art’s id.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift/pieceId`.
+                public var pieceId: Swift.String
+                /// What the coach said with it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift/line`.
+                public var line: Swift.String?
+                /// When the caller opened it (拆开); left out while it waits boxed.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift/openedAt`.
+                public var openedAt: Foundation.Date?
+                /// Whether they put it on when they opened it; only once opened.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift/worn`.
+                public var worn: Swift.Bool?
+                /// Creates a new `GiftPayload`.
+                ///
+                /// - Parameters:
+                ///   - pieceId: The piece, by the art’s id.
+                ///   - line: What the coach said with it.
+                ///   - openedAt: When the caller opened it (拆开); left out while it waits boxed.
+                ///   - worn: Whether they put it on when they opened it; only once opened.
+                public init(
+                    pieceId: Swift.String,
+                    line: Swift.String? = nil,
+                    openedAt: Foundation.Date? = nil,
+                    worn: Swift.Bool? = nil
+                ) {
+                    self.pieceId = pieceId
+                    self.line = line
+                    self.openedAt = openedAt
+                    self.worn = worn
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case pieceId
+                    case line
+                    case openedAt
+                    case worn
+                }
+            }
+            /// A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift`.
+            public var gift: Components.Schemas.CoachPageCard.GiftPayload?
+            /// Creates a new `CoachPageCard`.
+            ///
+            /// - Parameters:
+            ///   - kind: `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.
+            ///   - id: The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece, a reply’s or answer’s id.
+            ///   - coach:
+            ///   - at: When it came: a note when it was delivered, a `challengeDone` when marked.
+            ///   - day: The squad’s day a `board`, `note`, `challenge` or `challengeDone` is for.
+            ///   - text: What the coach said, on a `board`, `note`, `reply` or `answer`.
+            ///   - challenge:
+            ///   - checkInId: The caller’s check-in a `reply` is on, or an `answer`’s post.
+            ///   - commentId: The caller’s reply an `answer` answers.
+            ///   - gift: A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
+            public init(
+                kind: Swift.String,
+                id: Swift.String,
+                coach: Components.Schemas.CoachSpeaker,
+                at: Foundation.Date,
+                day: Swift.String? = nil,
+                text: Swift.String? = nil,
+                challenge: Components.Schemas.CoachPageCard.ChallengePayload? = nil,
+                checkInId: Swift.String? = nil,
+                commentId: Swift.String? = nil,
+                gift: Components.Schemas.CoachPageCard.GiftPayload? = nil
+            ) {
+                self.kind = kind
+                self.id = id
+                self.coach = coach
+                self.at = at
+                self.day = day
+                self.text = text
+                self.challenge = challenge
+                self.checkInId = checkInId
+                self.commentId = commentId
+                self.gift = gift
+            }
+            public enum CodingKeys: String, CodingKey {
+                case kind
+                case id
+                case coach
+                case at
+                case day
+                case text
+                case challenge
+                case checkInId
+                case commentId
+                case gift
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachCardSeen`.
+        public struct CoachCardSeen: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachCardSeen/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachCardSeen/version`.
+            public var version: Components.Schemas.CoachCardSeen.VersionPayload
+            /// The card’s kind, as asked; more kinds may come.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCardSeen/kind`.
+            public var kind: Swift.String
+            /// The card’s id within its kind.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCardSeen/id`.
+            public var id: Swift.String
+            /// Creates a new `CoachCardSeen`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - kind: The card’s kind, as asked; more kinds may come.
+            ///   - id: The card’s id within its kind.
+            public init(
+                version: Components.Schemas.CoachCardSeen.VersionPayload,
+                kind: Swift.String,
+                id: Swift.String
+            ) {
+                self.version = version
+                self.kind = kind
+                self.id = id
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case kind
+                case id
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadNudges`.
@@ -7075,6 +7658,144 @@ extension Components {
                 case version
                 case to
                 case kind
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/FeedbackSent`.
+        public struct FeedbackSent: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FeedbackSent/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/FeedbackSent/version`.
+            public var version: Components.Schemas.FeedbackSent.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/FeedbackSent/id`.
+            public var id: Swift.String
+            /// Creates a new `FeedbackSent`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id:
+            public init(
+                version: Components.Schemas.FeedbackSent.VersionPayload,
+                id: Swift.String
+            ) {
+                self.version = version
+                self.id = id
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/FeedbackDraft`.
+        public struct FeedbackDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/version`.
+            public var version: Components.Schemas.FeedbackDraft.VersionPayload
+            /// Made by the app, so sending again saves it once.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/id`.
+            public var id: Swift.String
+            /// 出问题了 (`problem`) or 提个建议 (`idea`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case problem = "problem"
+                case idea = "idea"
+            }
+            /// 出问题了 (`problem`) or 提个建议 (`idea`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/kind`.
+            public var kind: Components.Schemas.FeedbackDraft.KindPayload
+            /// What the member wrote: 1 to 1000 characters once trimmed.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/body`.
+            public var body: Swift.String
+            /// Up to 3 screenshots, uploaded first through `POST /photo-uploads` and listed by path.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/screenshots`.
+            public var screenshots: [Swift.String]
+            /// Which app sent it (version, build, iOS version, device model, language), so whoever fixes it knows where to look.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app`.
+            public struct AppPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app/appVersion`.
+                public var appVersion: Swift.String
+                /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app/build`.
+                public var build: Swift.String
+                /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app/os`.
+                public var os: Swift.String
+                /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app/device`.
+                public var device: Swift.String
+                /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app/language`.
+                public var language: Swift.String
+                /// Creates a new `AppPayload`.
+                ///
+                /// - Parameters:
+                ///   - appVersion:
+                ///   - build:
+                ///   - os:
+                ///   - device:
+                ///   - language:
+                public init(
+                    appVersion: Swift.String,
+                    build: Swift.String,
+                    os: Swift.String,
+                    device: Swift.String,
+                    language: Swift.String
+                ) {
+                    self.appVersion = appVersion
+                    self.build = build
+                    self.os = os
+                    self.device = device
+                    self.language = language
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case appVersion
+                    case build
+                    case os
+                    case device
+                    case language
+                }
+            }
+            /// Which app sent it (version, build, iOS version, device model, language), so whoever fixes it knows where to look.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app`.
+            public var app: Components.Schemas.FeedbackDraft.AppPayload
+            /// Creates a new `FeedbackDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id: Made by the app, so sending again saves it once.
+            ///   - kind: 出问题了 (`problem`) or 提个建议 (`idea`).
+            ///   - body: What the member wrote: 1 to 1000 characters once trimmed.
+            ///   - screenshots: Up to 3 screenshots, uploaded first through `POST /photo-uploads` and listed by path.
+            ///   - app: Which app sent it (version, build, iOS version, device model, language), so whoever fixes it knows where to look.
+            public init(
+                version: Components.Schemas.FeedbackDraft.VersionPayload,
+                id: Swift.String,
+                kind: Components.Schemas.FeedbackDraft.KindPayload,
+                body: Swift.String,
+                screenshots: [Swift.String],
+                app: Components.Schemas.FeedbackDraft.AppPayload
+            ) {
+                self.version = version
+                self.id = id
+                self.kind = kind
+                self.body = body
+                self.screenshots = screenshots
+                self.app = app
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case kind
+                case body
+                case screenshots
+                case app
             }
         }
         /// - Remark: Generated from `#/components/schemas/NoticePage`.

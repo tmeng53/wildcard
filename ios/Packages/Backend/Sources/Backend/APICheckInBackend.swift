@@ -10,8 +10,8 @@ import OpenAPIRuntime
 public struct APICheckInBackend: CheckInBackend {
     private let api: WildcardAPI
     private let saved: URL
-    /// The newest morning note the member put away on this phone.
-    private let openedNoteFile: URL
+    /// The newest coach's letter (交接信) opened on this phone.
+    private let openedLetterFile: URL
     private let shared: SharedSquad?
     private let now: @Sendable () -> Date
     private let phoneZone: @Sendable () -> TimeZone
@@ -26,7 +26,7 @@ public struct APICheckInBackend: CheckInBackend {
     ) {
         self.api = api
         saved = directory.appending(path: "home.json")
-        openedNoteFile = directory.appending(path: "coach-note.json")
+        openedLetterFile = directory.appending(path: "coach-letter.json")
         self.shared = shared
         self.phoneZone = phoneZone
         self.now = now
@@ -132,9 +132,10 @@ public struct APICheckInBackend: CheckInBackend {
     public func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? {
         do {
             guard let hire = try await api.coach(of: squad).hire else { return nil }
+            let activity = try await api.coachActivity(of: squad)
             return SidelineCoach(
-                coach: CoachSpeaker(id: hire.coach.id, name: hire.coach.name),
-                note: try await api.coachActivity(of: squad).note)
+                coach: CoachSpeaker(id: hire.coach.id, name: hire.coach.name), note: activity.note,
+                letter: activity.letter)
         } catch { throw CheckInError(error) }
     }
 
@@ -148,43 +149,40 @@ public struct APICheckInBackend: CheckInBackend {
         return notes
     }
 
-    public func putAway(_ note: CoachMemberNote) async throws(CheckInError) {
-        // Kept first, so its coach's card opens it again even when the server can't be reached.
-        if let data = try? DeviceJSON.encoder.encode(OpenedCoachNote(note)) {
-            try? DeviceJSON.write(data, to: openedNoteFile)
-        }
-        do { try await api.putAway(note) } catch { throw CheckInError(error) }
+    public func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? {
+        do { return try await api.todayChallenge(in: squad) } catch { throw CheckInError(error) }
     }
 
-    public func openedNote() async -> CoachMemberNote? {
-        guard let data = try? Data(contentsOf: openedNoteFile),
-            let kept = try? DeviceJSON.decoder.decode(OpenedCoachNote.self, from: data)
+    public func completeChallenge(_ note: String, in squad: SquadID) async throws(CheckInError)
+        -> CoachChallengeCompleter
+    {
+        guard let id = Int(note) else { throw .refused }
+        do { return try await api.completeChallenge(of: id, in: squad) } catch { throw CheckInError(error) }
+    }
+
+    public func writeLetter(in squad: SquadID) async throws(CheckInError) -> CoachLetter? {
+        do { return try await api.writeLetter(in: squad) } catch { throw CheckInError(error) }
+    }
+
+    public func openedLetter() async -> Int? {
+        guard let data = try? Data(contentsOf: openedLetterFile),
+            let kept = try? DeviceJSON.decoder.decode(OpenedCoachLetter.self, from: data), kept.version == 1
         else { return nil }
-        return kept.note
+        return kept.letter
+    }
+
+    public func opened(_ letter: CoachLetter) async {
+        guard let data = try? DeviceJSON.encoder.encode(OpenedCoachLetter(version: 1, letter: letter.id)) else {
+            return
+        }
+        try? DeviceJSON.write(data, to: openedLetterFile)
     }
 }
 
-/// The newest morning note the member put away on this phone. Stored JSON, so it carries a `version`.
-struct OpenedCoachNote: Codable {
+/// The newest coach's letter opened on this phone, by its id. Stored JSON, so it carries a `version`.
+struct OpenedCoachLetter: Codable {
     let version: Int
-    let id: Int
-    let squad: SquadID
-    let day: LocalDay
-    let text: String
-    let coach: String
-    let coachName: String
-
-    init(_ note: CoachMemberNote) {
-        (version, id, squad, day, text) = (1, note.id, note.squad, note.day, note.text)
-        (coach, coachName) = (note.coach.id.rawValue, note.coach.name)
-    }
-
-    /// Nil for a copy this build can't read.
-    var note: CoachMemberNote? {
-        guard version == 1, let coach = CoachID(rawValue: coach) else { return nil }
-        return CoachMemberNote(
-            id: id, squad: squad, day: day, text: text, coach: CoachSpeaker(id: coach, name: coachName))
-    }
+    let letter: Int
 }
 
 /// The home as the API sent it. Stored JSON, so it carries a `version`.

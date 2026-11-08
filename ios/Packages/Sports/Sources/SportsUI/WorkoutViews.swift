@@ -7,92 +7,6 @@ import MapKit
 import SwiftUI
 #endif
 
-/// One cell of a 成绩条: the number as Health gave it, its unit and what it is.
-public struct ScoreCell: Hashable, Identifiable, Sendable {
-    public enum Unit: Hashable, Sendable {
-        case minutes, laps, meters, kilometres, kilometresPerHour, outOfTen
-    }
-
-    public enum Label: Hashable, Sendable {
-        case duration, distance, pace, speed, averageHeartRate, maxHeartRate, effort
-        /// Laps, with the pool's length when Health has it.
-        case laps(poolMeters: Int?)
-    }
-
-    public let cell: WorkoutCell
-    public let value: String
-    public let unit: Unit?
-    public let label: Label
-
-    public var id: WorkoutCell { cell }
-
-    public init(cell: WorkoutCell, value: String, unit: Unit?, label: Label) {
-        self.cell = cell
-        self.value = value
-        self.unit = unit
-        self.label = label
-    }
-
-    /// A 训练's cells: its workout's numbers, 时长 first, or a hand-made post's minutes alone;
-    /// none when it has neither.
-    public static func cells(of training: Training) -> [ScoreCell] {
-        if let workout = training.workout { return cells(of: workout.summary) }
-        guard let minutes = training.minutes else { return [] }
-        return [ScoreCell(cell: .duration, value: "\(minutes.value)", unit: .minutes, label: .duration)]
-    }
-
-    /// Each number a workout has, in the strip's order, never converted.
-    public static func cells(of summary: WorkoutSummary) -> [ScoreCell] {
-        summary.cells.compactMap { cell in
-            switch cell {
-            case .duration:
-                summary.durationSec.map {
-                    ScoreCell(
-                        cell: cell, value: "\(max(1, Int((Double($0) / 60).rounded())))", unit: .minutes,
-                        label: .duration)
-                }
-            case .laps:
-                summary.laps.map {
-                    ScoreCell(
-                        cell: cell, value: "\($0)", unit: .laps,
-                        label: .laps(poolMeters: summary.poolLengthM.map { Int($0.rounded()) }))
-                }
-            case .distance:
-                summary.distanceM.map { meters in
-                    // A pool swim reads in metres; anything else in kilometres.
-                    summary.laps != nil || summary.poolLengthM != nil
-                        ? ScoreCell(cell: cell, value: "\(Int(meters.rounded()))", unit: .meters, label: .distance)
-                        : ScoreCell(
-                            cell: cell, value: String(format: "%.1f", meters / 1000), unit: .kilometres,
-                            label: .distance)
-                }
-            case .pace:
-                summary.paceSecPerKm.map { pace in
-                    let seconds = Int(pace.rounded())
-                    return ScoreCell(
-                        cell: cell, value: String(format: "%d′%02d″", seconds / 60, seconds % 60), unit: nil,
-                        label: .pace)
-                }
-            case .speed:
-                summary.speedKmh.map {
-                    ScoreCell(
-                        cell: cell, value: String(format: "%.1f", $0), unit: .kilometresPerHour, label: .speed)
-                }
-            case .averageHeartRate:
-                summary.avgHr.map { ScoreCell(cell: cell, value: "\($0)", unit: nil, label: .averageHeartRate) }
-            case .maxHeartRate:
-                summary.maxHr.map { ScoreCell(cell: cell, value: "\($0)", unit: nil, label: .maxHeartRate) }
-            case .effort:
-                summary.effort.map {
-                    ScoreCell(
-                        cell: cell, value: $0.rounded() == $0 ? "\(Int($0))" : String(format: "%.1f", $0),
-                        unit: .outOfTen, label: .effort)
-                }
-            }
-        }
-    }
-}
-
 /// Where a lap chart's bars stand across `width` points: one slot a lap, each bar most of its
 /// slot, so every lap fits however many there are. A slot too thin for a gap gets none.
 public enum LapBars {
@@ -120,9 +34,11 @@ extension ScoreCell.Unit {
         switch self {
         case .minutes: Text("分钟", bundle: .module)
         case .laps: Text("趟", bundle: .module)
+        case .runs: Text("score.runs.unit", bundle: .module)
         case .meters: Text("米", bundle: .module)
         case .kilometres: Text("公里", bundle: .module)
         case .kilometresPerHour: Text("km/h", bundle: .module)
+        case .per100Meters: Text("/100 米", bundle: .module)
         case .outOfTen: Text(verbatim: "/10")
         }
     }
@@ -137,14 +53,18 @@ extension ScoreCell.Label {
         case .speed: Text("均速", bundle: .module)
         case .averageHeartRate: Text("平均心率", bundle: .module)
         case .maxHeartRate: Text("最高心率", bundle: .module)
-        case .effort: Text("费力", bundle: .module)
+        case .effort: Text("强度", bundle: .module)
+        case .runs: Text("score.runs", bundle: .module)
+        case .descent: Text("落差", bundle: .module)
+        case .topSpeed: Text("最高速", bundle: .module)
+        case .elevationGain: Text("爬升", bundle: .module)
         case .laps(let pool?): Text("\(pool) 米泳池", bundle: .module)
         case .laps(nil): Text("趟数", bundle: .module)
         }
     }
 }
 
-/// A 训练's 成绩条 (Tracy, 2026-11-06): its numbers side by side on the sport's scene colour,
+/// A 训练's 成绩条 (Tracy, 2026-11-06): its numbers side by side on the sport category's colour,
 /// 时长 first. Under a post's cover with no seam: its top corners square against the cover's
 /// edge and its bottom ones rounded (Tracy, 2026-11-07). Only read: the compose page strikes
 /// numbers out on cells of its own.
@@ -152,25 +72,35 @@ public struct ScoreStrip: View {
     @Environment(\.locale) private var locale
     private let cells: [ScoreCell]
     private let colors: PostBlockColors
+    private let bottom: Bottom
 
-    public init(cells: [ScoreCell], activity: Activity) {
+    /// Under a card (rounded) or across a post's ticket, where the stub goes on under it (square).
+    public enum Bottom: Sendable {
+        case rounded
+        case square
+    }
+
+    public init(cells: [ScoreCell], activity: Activity, bottom: Bottom = .rounded) {
         self.cells = cells
+        self.bottom = bottom
         colors = PostBlockColors(kind: .trained, activity: activity)
     }
 
     /// The strip's height, the design's.
     public static let height: Double = 58
 
-    /// Square on top, where it meets the cover; rounded underneath.
-    private static let shape = UnevenRoundedRectangle(
-        bottomLeadingRadius: Radius.card, bottomTrailingRadius: Radius.card, style: .continuous)
+    /// Square on top, where it meets the cover; rounded underneath unless the stub goes on.
+    private var shape: UnevenRoundedRectangle {
+        let radius = bottom == .rounded ? Radius.card : 0
+        return UnevenRoundedRectangle(bottomLeadingRadius: radius, bottomTrailingRadius: radius, style: .continuous)
+    }
 
     public var body: some View {
         HStack(spacing: 0) {
             ForEach(Array(cells.enumerated()), id: \.element.id) { index, cell in
                 if index > 0 {
                     Rectangle()
-                        .fill(Color(role: colors.ink, in: colors.scene).opacity(0.35))
+                        .fill(Color(colors.ink).opacity(0.35))
                         .frame(width: 1)
                         .padding(.vertical, Space.s)
                 }
@@ -180,8 +110,8 @@ public struct ScoreStrip: View {
         }
         .frame(height: Self.height)
         .frame(maxWidth: .infinity)
-        .background(Color(role: colors.fill, in: colors.scene), in: Self.shape)
-        .foregroundStyle(Color(role: colors.ink, in: colors.scene))
+        .background(Color(colors.fill), in: shape)
+        .foregroundStyle(Color(colors.ink))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("post.strip")
     }
@@ -207,7 +137,7 @@ public struct ScoreStrip: View {
     }
 }
 
-/// A workout's route on a map, drawn live from the stored points as a lane in the sport's scene
+/// A workout's route on a map, drawn live from the stored points as a lane in the sport category's
 /// colour with a white dashed centre line. No one is drawn on it, and it doesn't move under a
 /// finger: a tap goes to the card.
 public struct WorkoutMap: View {
@@ -227,11 +157,11 @@ public struct WorkoutMap: View {
         Map(initialPosition: .rect(Self.frame(around: coordinates)), interactionModes: []) {
             MapPolyline(coordinates: coordinates)
                 .stroke(
-                    Color(role: colors.fill, in: colors.scene),
+                    Color(colors.fill),
                     style: StrokeStyle(lineWidth: lane, lineCap: .round, lineJoin: .round))
             MapPolyline(coordinates: coordinates)
                 .stroke(
-                    Color(role: colors.ink, in: colors.scene),
+                    Color(colors.ink),
                     style: StrokeStyle(lineWidth: max(1, lane / 7), lineCap: .round, dash: [lane / 2, lane / 2]))
         }
         .mapStyle(.standard(emphasis: .muted, pointsOfInterest: .excludingAll))
@@ -255,7 +185,7 @@ public struct WorkoutMap: View {
     }
 }
 
-/// A workout's chart on the sport's scene colour: heart rate as a line, or for a swim each lap's
+/// A workout's chart on the sport category's colour: heart rate as a line, or for a swim each lap's
 /// time as a bar, the fastest in white and the rest dimmed. With `label`, its name top left.
 public struct WorkoutChart: View {
     private let series: WorkoutSeries
@@ -269,7 +199,7 @@ public struct WorkoutChart: View {
     }
 
     public var body: some View {
-        let ink = Color(role: colors.ink, in: colors.scene)
+        let ink = Color(colors.ink)
         Canvas { context, size in
             let pad = size.width > 100 ? Space.s : Space.xxs + 2
             let top = showsLabel ? Space.xxl : pad
@@ -280,7 +210,7 @@ public struct WorkoutChart: View {
                 Self.drawHeartRate(curve, in: area, ink: ink, lineWidth: size.width > 100 ? 2.5 : 2, context: context)
             }
         }
-        .background(Color(role: colors.fill, in: colors.scene))
+        .background(Color(colors.fill))
         .overlay(alignment: .topLeading) {
             if showsLabel {
                 label
