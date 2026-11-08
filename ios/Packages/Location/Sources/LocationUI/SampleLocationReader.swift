@@ -30,8 +30,7 @@ extension LocationSharing {
 }
 
 /// What the sample sent, kept in memory only.
-private final class SampleSentPlace: SentPlaceStore, @unchecked Sendable {
-    // Only the main actor's `LocationSharing` reads and writes it.
+private final class SampleSentPlace: SentPlaceStore, @unchecked Sendable {  // Main actor only.
     private var place: SentPlace?
     func load() -> SentPlace? { place }
     func save(_ place: SentPlace?) { self.place = place }

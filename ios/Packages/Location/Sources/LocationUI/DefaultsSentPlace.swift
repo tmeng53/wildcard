@@ -2,8 +2,7 @@ import Foundation
 import LocationDomain
 
 /// `SentPlace` in `UserDefaults`, as JSON with its version.
-public struct DefaultsSentPlace: SentPlaceStore, @unchecked Sendable {
-    // UserDefaults is documented thread-safe; it isn't marked Sendable.
+public struct DefaultsSentPlace: SentPlaceStore, @unchecked Sendable {  // UserDefaults is thread-safe.
     private let defaults: UserDefaults
     private static let key = "location.sent"
 
