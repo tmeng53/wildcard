@@ -230,14 +230,17 @@ public final class SquadSettingsModel {
         return settings.today.dayNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
     }
 
-    /// Reads 教练招聘会's coaches, each time it opens.
+    /// Reads 教练招聘会's coaches, each time it opens, and again on coming back from a 简历. A list
+    /// already shown stays up while it is read again (and when that read fails), so the page keeps
+    /// its place instead of falling back to the spinner and the top.
     public func loadMarket() async {
-        market = .loading
+        if case .loaded = market {} else { market = .loading }
         do {
             market = .loaded(try await service.coaches())
         } catch {
             // Closed before the coaches came, it didn't fail.
             guard !Task.isCancelled else { return }
+            if case .loaded = market, error != .signedOut { return }
             market = .failed(error)
             if error == .signedOut { await signOut() }
         }
