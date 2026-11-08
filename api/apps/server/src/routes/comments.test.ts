@@ -160,6 +160,7 @@ const app = createApp({
     ...noJobs,
     coach: {
       run: () => Promise.reject(new Error('unused')),
+      preview: () => Promise.reject(new Error('unused')),
       answer: (asked) => {
         answersAsked.push(asked);
         return Promise.resolve();
