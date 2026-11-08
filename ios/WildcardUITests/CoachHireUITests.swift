@@ -113,7 +113,7 @@ final class CoachHireUITests: XCTestCase {
     }
 
     /// 换教练 asks first, since the coach the squad has leaves: 毛头 crying, that he leaves and
-    /// 柚子 comes; 先不换 goes back, 确认换教练 changes it.
+    /// 帕帕 comes; 先不换 goes back, 确认换教练 changes it.
     func testTheCaptainConfirmsChangingTheCoach() {
         let app = launch(extra: ["-squad-seat", "coached"])
         let open = app.buttons["squad.coach.open"]
@@ -125,12 +125,12 @@ final class CoachHireUITests: XCTestCase {
         let coaches = app.buttons.matching(identifier: "coach.market.coach")
         XCTAssertTrue(coaches.element(boundBy: 1).waitForExistence(timeout: 30), "教练招聘会 shows no other coach")
         let hireCoach = app.buttons["coach.resume.hire"]
-        tap(coaches.element(boundBy: 1), until: hireCoach, "exists == true", "柚子's 简历 has no 招聘")
+        tap(coaches.element(boundBy: 1), until: hireCoach, "exists == true", "帕帕's 简历 has no 招聘")
         hireCoach.tap()
 
         let confirm = app.buttons["coach.swap.confirm"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 30), "换教练 didn't ask first")
-        XCTAssertTrue(app.staticTexts["毛头会离开，柚子会来"].exists, "换教练 doesn't say who leaves and who comes")
+        XCTAssertTrue(app.staticTexts["毛头会离开，帕帕会来"].exists, "换教练 doesn't say who leaves and who comes")
         assertInside(confirm, app)
         settle()
         keepScreenshot(named: "90-coach-swap")

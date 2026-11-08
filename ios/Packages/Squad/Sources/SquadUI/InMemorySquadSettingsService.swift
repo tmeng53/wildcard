@@ -158,13 +158,14 @@ private let sampleCoach = Coach(
     background: "体育学院刚毕业，该学的都学了，就是证还没考下来", yearsCoaching: 0, experience: "热情满格",
     style: "懂行、松弛、风趣", tags: ["体院应届", "懂行", "松弛", "风趣"], pay: "管饭就行")
 
-/// The second coach, 柚子, with the 简历 Tracy approved (2026-11-08).
+/// The second coach, 帕帕, a smiling follow-along coach whose 「最后八个」 never ends (Tracy, 2026-11-08).
 private let sampleCoaches = [
     sampleCoach,
     Coach(
-        id: "youzi", name: "柚子", title: "团课教练", catchphrase: "最后八个，跟上",
-        background: "持证团课教练，一周带二十节课，下了课也不走", yearsCoaching: 5, experience: "一周二十节团课",
-        style: "专业、利落、带劲", tags: ["持证上岗", "团课", "节奏感", "元气"], pay: "课别排早八"),
+        id: "papa", name: "帕帕", title: "跟练教练", catchphrase: "最后八个",
+        background: "跟练视频收藏的人比练的人多，评论区一半在打卡第一天", yearsCoaching: 5,
+        experience: "个人纪录：一组「最后八个」做了 64 个", style: "全程微笑，一口气不歇，像个人形 AI",
+        tags: ["收藏等于练过", "打卡第一天", "这才一半", "健身界严母"], pay: "先把你收藏夹里的练完"),
 ]
 
 extension Squad {
