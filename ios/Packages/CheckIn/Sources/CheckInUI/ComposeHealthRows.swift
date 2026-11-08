@@ -90,7 +90,7 @@ struct ScoreRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SectionLabel(Text("成绩", bundle: .module))
+            SectionLabel(Text("数据", bundle: .module))
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xs) {
                     ForEach(model.scoreCells) { cell in

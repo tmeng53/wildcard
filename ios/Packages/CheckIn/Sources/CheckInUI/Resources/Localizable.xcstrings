@@ -1729,7 +1729,7 @@
         }
       }
     },
-    "成绩": {
+    "数据": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1740,7 +1740,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "成績"
+            "value": "數據"
           }
         }
       }
