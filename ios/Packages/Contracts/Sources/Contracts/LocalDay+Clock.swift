@@ -1,20 +1,15 @@
 import Foundation
 
 extension LocalDay {
-    /// A day lasts until this hour of the next morning, so a late workout logged after midnight
-    /// counts for the day it was done. The API's rule; it refuses a check-in for any other day.
-    public static let graceHours = 3
-
-    /// The member's day at `moment` on the wall clock of `timeZone`: before 3am it is still the
-    /// day before.
+    /// The member's day at `moment`: its date on the wall clock of `timeZone`, which turns at
+    /// midnight, as the API counts it (Tracy, 2026-11-08). A late post after midnight goes on the
+    /// day before through 补打卡.
     public init(at moment: Date, in timeZone: TimeZone) {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
-        // The wall clock's hour, not three hours earlier: the two differ on the nights clocks change.
-        let parts = calendar.dateComponents([.year, .month, .day, .hour], from: moment)
+        let parts = calendar.dateComponents([.year, .month, .day], from: moment)
         // A Gregorian calendar always gives a real year, month and day for a real moment.
-        let calendarDay = Self.unchecked(year: parts.year ?? 1970, month: parts.month ?? 1, day: parts.day ?? 1)
-        self = (parts.hour ?? 0) < Self.graceHours ? calendarDay.adding(days: -1) : calendarDay
+        self = Self.unchecked(year: parts.year ?? 1970, month: parts.month ?? 1, day: parts.day ?? 1)
     }
 
     /// The day `count` days later, or earlier when negative.

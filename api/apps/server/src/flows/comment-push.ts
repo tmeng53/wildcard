@@ -175,10 +175,18 @@ export interface CoachLine {
   /** The coach's name now. */
   readonly coachName: string;
   readonly text: string;
-  /** Whether it answers the member's reply to the coach; else it replies to their check-in. */
-  readonly answer: boolean;
+  /**
+   * What it is to them: a reply to their check-in, an answer to their reply to the coach, or an
+   * @ of them under anyone's check-in.
+   */
+  readonly news: CommentNews;
   /** Names the push, so a retry shows once: the reply it answers, or the check-in. */
   readonly about: string;
+}
+
+/** The alert of a coach's line: the same words as a teammate's comment, with the coach's name. */
+export function coachLineAlert(line: Pick<CoachLine, 'coachName' | 'text' | 'news'>) {
+  return pushAlert(NEWS_KEY[line.news], [line.coachName, line.text]);
 }
 
 /**
@@ -195,10 +203,7 @@ export async function pushCoachLine(
     // The coach's own switch; its words are in the member's bell whatever it is.
     if (!(await deps.push.settingsOf(to)).coach) return;
     const notification: PushNotification = {
-      alert: pushAlert(line.answer ? 'push.comment.reply' : 'push.comment', [
-        line.coachName,
-        line.text,
-      ]),
+      alert: coachLineAlert(line),
       category: 'comment',
       thread: `comments-${line.checkIn}`,
       collapseId: `coach-${line.about}`,

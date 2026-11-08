@@ -48,6 +48,7 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
@@ -148,6 +149,7 @@ function appWith(model: LanguageModel, modelName?: string) {
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachLetters: unusedCoachLetters,
     ...ignoredNotices,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,

@@ -73,8 +73,7 @@ public final class SignUpModel {
 
     /// `nickname`: the name Sign in with Apple shared,
     /// to start the nickname from. `now` in `timeZone` says which week the plan is for and which
-    /// of its days are over, by the member's day as the API counts it (until 3am it is still the
-    /// day before); weeks start on Monday. `hasAgreedToAI`: the account consented to AI writing
+    /// of its days are over, by the member's day as the API counts it; weeks start on Monday. `hasAgreedToAI`: the account consented to AI writing
     /// before, so 你的小队 doesn't ask again. `health`: the app's Apple Health, which 连上 Apple 健康
     /// connects.
     public init(
