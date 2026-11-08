@@ -148,7 +148,6 @@ final class SquadSettingsUITests: XCTestCase {
         XCTAssertTrue(newYork.waitForExistence(timeout: 30), "searching New York finds no zone")
         newYork.tap()
         waitFor(row, "label CONTAINS '\(region("America/New_York"))'", "the change didn't count at once", timeout: 30)
-        XCTAssertFalse(app.staticTexts["squad.timeZone.next"].exists, "the change waits for next week")
         settle()
         keepScreenshot(named: "68-squad-time-zone-changed")
 

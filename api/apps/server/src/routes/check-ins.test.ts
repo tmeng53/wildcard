@@ -113,6 +113,7 @@ const app = createApp({
     ...noJobs,
     coach: {
       run: () => Promise.reject(new Error('unused')),
+      preview: () => Promise.reject(new Error('unused')),
       answer: () => Promise.reject(new Error('unused')),
       checkedIn: (asked) => {
         looked.push(asked);
@@ -699,6 +700,133 @@ describe('GET /me/trainings', () => {
     expect((await call({ method: 'GET', path })).status).toBe(401);
     const tooLong = '/me/trainings?from=2025-01-01&to=2026-01-07';
     expect((await call({ method: 'GET', path: tooLong, token: me.token })).status).toBe(400);
+  });
+});
+
+describe('GET /me/records', () => {
+  it('works out the member’s records and how they stand in their squad', async () => {
+    const [me, coco, loner] = [await signUp(), await signUp(), await signUp()];
+    const squad = await squadOf(me, coco);
+    const today = new Date().toISOString().slice(0, 10);
+    const twoDaysAgo = new Date(Date.parse(today) - 2 * 24 * 60 * 60_000)
+      .toISOString()
+      .slice(0, 10);
+    const madeAt = new Date(Date.now() - 60_000);
+    const put = async (
+      who: { readonly token: string },
+      { day, ...fields }: { readonly day: string } & Readonly<Record<string, unknown>>,
+    ) => {
+      const id = randomUUID();
+      const body = {
+        version: 1,
+        day,
+        createdAt: madeAt.toISOString(),
+        audience: [squad],
+        ...fields,
+      };
+      expect(
+        (await call({ method: 'PUT', path: `/check-ins/${id}`, token: who.token, body })).status,
+      ).toBe(201);
+      return id;
+    };
+    const run = await put(me, {
+      day: today,
+      kind: 'trained',
+      training: { sport: 'run', minutes: 45 },
+    });
+    // A 补打卡: a day, but not on the clock. Without a time zone on the profile, a day two
+    // before the UTC date is one for sure.
+    await put(me, {
+      day: twoDaysAgo,
+      kind: 'trained',
+      training: { sport: 'run', minutes: 30 },
+    });
+    await put(me, { day: today, kind: 'healthyMeal', meal: {} });
+    const swim = await put(coco, { day: today, kind: 'trained', training: { sport: 'swim' } });
+    const react = async (who: { readonly token: string }, id: string) => {
+      expect(
+        (
+          await call({
+            method: 'PUT',
+            path: `/check-ins/${id}/reactions/mine`,
+            token: who.token,
+            body: { version: 1, emoji: '🔥' },
+          })
+        ).status,
+      ).toBe(201);
+    };
+    await react(coco, run);
+    await react(me, swim);
+
+    const { status, body } = await call({ method: 'GET', path: '/me/records', token: me.token });
+    expect(status).toBe(200);
+    const hours = Array.from({ length: 24 }, () => 0);
+    hours[madeAt.getUTCHours()] = 1;
+    const weekday = (day: string) => (new Date(day).getUTCDay() + 6) % 7;
+    const weekdays = Array.from({ length: 7 }, () => 0);
+    for (const day of [today, twoDaysAgo])
+      weekdays[weekday(day)] = (weekdays[weekday(day)] ?? 0) + 1;
+    const cocoId = coco.userId;
+    expect(body).toStrictEqual({
+      version: 1,
+      trainedDays: 2,
+      minutes: 75,
+      longestMinutes: 45,
+      longestStreak: { days: 1, from: today, to: today },
+      mealStreak: { days: 1, from: today, to: today },
+      hours,
+      weekdays,
+      sports: [{ sport: 'run', days: 2 }],
+      sportCount: 1,
+      squad: {
+        id: squad,
+        partner: { memberId: cocoId, count: 1 },
+        cheersReceived: { count: 1, top: { memberId: cocoId, count: 1 } },
+        cheersGiven: { count: 1, top: { memberId: cocoId, count: 1 } },
+        firsts: ['topSport', 'mostDays'],
+      },
+    });
+
+    const alone = await call({ method: 'GET', path: '/me/records', token: loner.token });
+    expect(alone.body).toStrictEqual({
+      version: 1,
+      trainedDays: 0,
+      minutes: 0,
+      hours: Array(24).fill(0),
+      weekdays: Array(7).fill(0),
+      sports: [],
+      sportCount: 0,
+    });
+    expect((await call({ method: 'GET', path: '/me/records' })).status).toBe(401);
+  });
+
+  it('stands the member against squadmates only on what they shared with the squad', async () => {
+    const [me, coco] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, coco);
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.parse(today) - 24 * 60 * 60_000).toISOString().slice(0, 10);
+    const put = async (
+      who: { readonly token: string },
+      { day, audience }: { readonly day: string; readonly audience: readonly string[] },
+    ) => {
+      const body = {
+        version: 1,
+        day,
+        createdAt: new Date(Date.now() - 60_000).toISOString(),
+        audience,
+        kind: 'trained',
+        training: { sport: 'run' },
+      };
+      const path = `/check-ins/${randomUUID()}`;
+      expect((await call({ method: 'PUT', path, token: who.token, body })).status).toBe(201);
+    };
+    await put(me, { day: today, audience: [squad] });
+    // Kept to myself: mine, but not the squad's to compare.
+    await put(me, { day: yesterday, audience: [] });
+    await put(coco, { day: today, audience: [squad] });
+
+    const { body } = await call({ method: 'GET', path: '/me/records', token: me.token });
+    expect(body).toMatchObject({ trainedDays: 2, squad: { firsts: [] } });
   });
 });
 

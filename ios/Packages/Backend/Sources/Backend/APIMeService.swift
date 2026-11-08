@@ -57,8 +57,30 @@ public struct APIMeService: MeService {
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
                 board: board,
                 unlocks: standing.unlocks,
-                stock: standing.stock, claimed: standing.claimed, weekGlance: glance,
+                stock: standing.stock, claimed: standing.claimed, gifts: standing.gifts, weekGlance: glance,
                 record: record)
+        }
+    }
+
+    /// 外卡记录, its squadmates named and drawn from the squad's today. A today that doesn't load
+    /// leaves them as members without a character.
+    public func records() async throws(MeError) -> WildcardRecords {
+        try await me { () throws(APIError) in
+            var characters: [MemberID: MemberCharacter] = [:]
+            if let squad = try await api.mySquad(), let today = try? await api.today(of: squad.id) {
+                for member in today.members {
+                    characters[member.member] = member.character
+                }
+            }
+            return try await api.records { member in
+                RecordMate(
+                    member: member,
+                    character: characters[member].map { character in
+                        MeCharacter(
+                            nickname: character.nickname.text, outfit: Outfit(character.look),
+                            persona: Persona(character.look))
+                    })
+            }
         }
     }
 

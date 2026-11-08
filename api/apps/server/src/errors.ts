@@ -269,3 +269,13 @@ export class TestPushNoSquadError extends AppError {
     super('A test push is about your squad, and you are in none. Join or create one in the app.');
   }
 }
+
+export class CoachPreviewNoSquadError extends AppError {
+  override readonly name = 'CoachPreviewNoSquadError';
+  readonly reason = 'COACH_PREVIEW_NO_SQUAD';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('That member is in no squad, so no coach writes to them.');
+  }
+}

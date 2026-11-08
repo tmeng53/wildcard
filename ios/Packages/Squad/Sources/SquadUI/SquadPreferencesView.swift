@@ -69,30 +69,22 @@ struct SquadPreferencesView: View {
 
     private var zone: SquadTimeZone {
         settings?.matchTimeZone
-            ?? SquadTimeZone(timeZone: SquadTimeZone.newYork, nextTimeZone: SquadTimeZone.newYork, canChange: false)
+            ?? SquadTimeZone(timeZone: SquadTimeZone.newYork, canChange: false)
     }
 
     private var timeZone: some View {
-        VStack(alignment: .leading, spacing: Space.xs) {
-            Group {
-                if model.canChangeTimeZone {
-                    ListRow(Text("比赛时区", bundle: .module), value: zoneValue, showsDivider: false) {
-                        isChoosingZone = true
-                    }
-                } else {
-                    ListRow(Text("比赛时区", bundle: .module), value: zoneValue, showsDivider: false)
+        Group {
+            if model.canChangeTimeZone {
+                ListRow(Text("比赛时区", bundle: .module), value: zoneValue, showsDivider: false) {
+                    isChoosingZone = true
                 }
-            }
-            .accessibilityIdentifier("squad.timeZone")
-            if model.canChangeTimeZone, zone.nextTimeZone != zone.timeZone {
-                Text("下周起：\(nextLabel)", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .accessibilityIdentifier("squad.timeZone.next")
+            } else {
+                ListRow(Text("比赛时区", bundle: .module), value: zoneValue, showsDivider: false)
             }
         }
+        .accessibilityIdentifier("squad.timeZone")
         .sheet(isPresented: $isChoosingZone) {
-            TimeZonePicker(selected: zone.nextTimeZone) { picked in
+            TimeZonePicker(selected: zone.timeZone) { picked in
                 isChoosingZone = false
                 Task { await model.setTimeZone(picked) }
             }
@@ -101,13 +93,6 @@ struct SquadPreferencesView: View {
 
     /// The zone's region (北美东部时间); the zone list shows the cities.
     private var zoneValue: Text { Text(verbatim: name(zone.timeZone).region) }
-
-    /// Next week's zone by its region, or by its city when the region is the same (New York to Toronto).
-    private var nextLabel: String {
-        let now = name(zone.timeZone)
-        let next = name(zone.nextTimeZone)
-        return next.region == now.region ? next.city : next.region
-    }
 
     private func name(_ identifier: String) -> ZoneName {
         ZoneName(identifier, locale: AppLanguage.current.locale)

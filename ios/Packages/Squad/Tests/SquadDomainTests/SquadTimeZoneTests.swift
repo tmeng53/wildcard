@@ -13,7 +13,6 @@ import Testing
         #expect(captain.canChangeTimeZone)
         await captain.setTimeZone("America/New_York")
         #expect(captain.matchTimeZone?.timeZone == "America/New_York")
-        #expect(captain.matchTimeZone?.nextTimeZone == "America/New_York")
         await captain.setTimeZone("Mars/Olympus")
         #expect(captain.matchTimeZone?.timeZone == "America/New_York")
 
@@ -33,6 +32,5 @@ import Testing
         await model.setTimeZone("Europe/London")
         #expect(model.changeFailed)
         #expect(model.matchTimeZone?.timeZone == "Asia/Taipei")
-        #expect(model.matchTimeZone?.nextTimeZone == "Asia/Taipei")
     }
 }

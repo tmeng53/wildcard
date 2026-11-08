@@ -307,7 +307,7 @@ struct TypographyTests {
         }
         let names = [
             "scoreStory", "scoreEnding", "scoreHero", "scoreCard", "scoreWeek", "scoreInline", "scoreSmall",
-            "scoreCaption", "ticketDate", "posterWeek", "launchWord",
+            "scoreCaption", "ticketDate", "ticketStamp", "posterWeek", "launchWord",
         ]
         #expect(scoreboard.map(\.name) == names)
         #expect(TypeRamp.scoreCaption.size == 14 && TypeRamp.scoreCaption.face == .scoreboard(.semibold))
@@ -389,8 +389,8 @@ struct BrandTests {
     }
 
     /// A brand button's label can be small regular text, not only the 19-point action.
-    @Test func labelsOnTheBrandAreReadable() {
-        #expect(ColorRole.fgOnBrand.color(in: .pool).contrastRatio(with: ColorRole.bgBrand.color(in: .pool)) >= 4.5)
+    @Test(arguments: [ColorRole.fgOnBrand, .fgOnBrandMuted]) func labelsOnTheBrandAreReadable(role: ColorRole) {
+        #expect(role.color(in: .pool).contrastRatio(with: ColorRole.bgBrand.color(in: .pool)) >= 4.5)
     }
 
     @Test func eachToneUsesItsOwnPair() {

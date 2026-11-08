@@ -57,6 +57,8 @@ public enum Sizing {
     public static let control: Double = 44
     /// Tags, pills and switches. Their tap target stays `minimumTapTarget`.
     public static let compactControl: Double = 36
+    /// The system segmented control's height, for a button that shares its row.
+    public static let segmentedControl: Double = 32
     /// The smallest tap target, even when a control draws smaller.
     public static let minimumTapTarget: Double = 44
 

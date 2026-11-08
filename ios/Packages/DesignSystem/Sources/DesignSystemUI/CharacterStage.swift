@@ -32,6 +32,13 @@ public struct CharacterStage<Content: View, Stub: View>: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: Self.stubHeight)
         }
+        .overlay(alignment: .topLeading) {
+            // The W in the top corner, on the date's baseline.
+            TicketW()
+                .foregroundStyle(Color(role: .fgOnBrand, in: theme).opacity(0.85))
+                .alignmentGuide(.top) { $0[.firstTextBaseline] - TicketArt.dateBaseline }
+                .padding(.leading, TicketArt.edge)
+        }
         .overlay(alignment: .topTrailing) {
             if let issued {
                 Text(verbatim: TicketArt.stamp(issued))
@@ -148,13 +155,6 @@ struct TicketArt: View {
             tearLine.addLine(to: CGPoint(x: size.width - 22, y: tear))
             context.stroke(
                 tearLine, with: .color(light.opacity(0.28)), style: StrokeStyle(lineWidth: 2, dash: [4, 5]))
-
-            // The W mark in the top corner, 16 × 17.6 from y 18 (`WMark` keeps 2 points clear above
-            // and below its points).
-            let mark = WMark().path(in: CGRect(x: Self.edge, y: 16, width: 16, height: 21.6))
-            context.stroke(
-                mark, with: .color(light.opacity(0.85)),
-                style: StrokeStyle(lineWidth: 3.68, lineJoin: .miter, miterLimit: 4))
         }
         .accessibilityHidden(true)
     }

@@ -80,30 +80,6 @@ public struct WeekDayDetail: Sendable, Hashable {
     }
 }
 
-/// My week: what I trained, my count against my plan, and Monday to Sunday, each day with what it
-/// holds. No calories or body numbers.
-public struct MyWeek: Sendable, Hashable {
-    public let done: Int
-    public let planned: Int
-    /// Monday first, seven days.
-    public let days: [WeekDayStatus]
-    /// Today's index in `days`, if this is the current week.
-    public let today: Int?
-    /// Monday first, seven days: what each day shows once picked; empty for a week whose days
-    /// can't be picked.
-    public let details: [WeekDayDetail]
-
-    public init(
-        done: Int, planned: Int, days: [WeekDayStatus], today: Int?, details: [WeekDayDetail]
-    ) {
-        self.done = done
-        self.planned = planned
-        self.days = days
-        self.today = today
-        self.details = details
-    }
-}
-
 /// The squad card's two pages.
 public enum SquadCardPage: Int, CaseIterable, Sendable, Hashable {
     case squad
@@ -131,6 +107,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     private var openSquad: (() -> Void)?
     private var collapse: (() -> Void)?
     private var morph: GlassMorph?
+    private var completeChallenge: (() -> Void)?
     /// How far a swipe up has lifted the card, while the finger is down.
     @State private var lift = 0.0
 
@@ -154,7 +131,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
                     SquadPage(squad: squad, avatar: avatar, footer: footer, openSquad: openSquad)
                         .squadCardPage()
                         .id(SquadCardPage.squad)
-                    MyWeekPage(mine: mine, pickedDay: $pickedDay)
+                    MyWeekPage(mine: mine, pickedDay: $pickedDay, completeChallenge: completeChallenge)
                         .squadCardPage()
                         .id(SquadCardPage.mine)
                 }
@@ -212,6 +189,13 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     public func collapses(_ action: @escaping () -> Void) -> Self {
         var card = self
         card.collapse = action
+        return card
+    }
+
+    /// 我完成了 on today's challenge, under my week's today (`MyWeek.challenge`).
+    public func completesChallenge(_ action: @escaping () -> Void) -> Self {
+        var card = self
+        card.completeChallenge = action
         return card
     }
 
@@ -357,6 +341,7 @@ private struct MyWeekPage: View {
     @Environment(\.sceneTheme) private var theme
     let mine: MyWeek
     @Binding var pickedDay: Int?
+    let completeChallenge: (() -> Void)?
 
     var body: some View {
         let picked = shownDay
@@ -388,6 +373,9 @@ private struct MyWeekPage: View {
             Spacer(minLength: Space.s)
             if mine.details.indices.contains(picked) {
                 DayLine(detail: mine.details[picked], weekday: picked, isToday: picked == mine.today)
+            }
+            if let challenge = mine.challenge, picked == mine.today {
+                ChallengeRow(challenge: challenge, complete: completeChallenge)
             }
         }
         .accessibilityElement(children: .contain)

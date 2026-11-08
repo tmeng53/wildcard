@@ -92,7 +92,7 @@ struct WildcardApp: App {
                     now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
                     patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach,
                     coachNote: LaunchOptions.coachNote, coachLetter: LaunchOptions.coachLetter,
-                    together: LaunchOptions.together, meals: LaunchOptions.meals),
+                    together: LaunchOptions.together, meals: LaunchOptions.meals, challenge: LaunchOptions.challenge),
                 outbox: InMemoryOutbox(), unlocks: SampleUnlockLedger(unlocks: LaunchOptions.unlocked),
                 now: LaunchOptions.now, newID: { UUID() }),
             writer: LaunchOptions.disclaimerWriter,
@@ -279,8 +279,8 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, notices: LaunchOptions.notices, selection: $tab, destination: $pushDestination,
-                location: Self.sampleLocation
+                myPosts: myPosts, notices: LaunchOptions.notices, coachCards: LaunchOptions.coachCards, selection: $tab,
+                destination: $pushDestination, location: Self.sampleLocation
             )
             .onAppear {
                 // As on the real backend: a push opens where its notice in 通知 goes, unless the

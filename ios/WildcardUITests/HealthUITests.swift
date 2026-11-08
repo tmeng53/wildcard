@@ -93,6 +93,19 @@ final class HealthUITests: XCTestCase {
         keepScreenshot(named: "74-health-settings")
         let permissions = app.buttons["health.permissions"]
         assertOnScreen(permissions, in: app)
+
+        // Scrolled to the end, the last line clears the tab bar.
+        page.swipeUp()
+        page.swipeUp()
+        settle()
+        let hint = app.staticTexts["health.permissions.hint"]
+        assertOnScreen(hint, in: app)
+        let tabBar = app.tabBars.firstMatch
+        if tabBar.exists {
+            XCTAssertLessThanOrEqual(
+                hint.frame.maxY, tabBar.frame.minY, "the last line is behind the tab bar: \(hint.frame)")
+        }
+        keepScreenshot(named: "75-health-settings-bottom")
     }
 
     /// The ski day: 趟数 · 落差 · 最高速 in place of heart rate on its 成绩条.

@@ -240,3 +240,13 @@ private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", 
     #expect(catalog.stores == [EditorChoices.Store(id: "warmup", isOpen: true)])
     #expect(catalog.variants["top"] == ["warmup-tee"])
 }
+
+/// A coach's gift the member opened is theirs to wear: in its slot's choices, or held as a prop,
+/// and listed apart from the stores' racks; one this build has no art for yet is left out.
+@Test func openedGiftsAreWornFromTheSlotTheirArtIsIn() throws {
+    let catalog = try Catalog.placeholder(gifts: ["shopping", "gift-not-drawn-yet"])
+    #expect(catalog.gifts == ["shopping"])
+    #expect(catalog.props.contains("shopping"))
+    #expect(catalog.gifts(in: "prop") == [])
+    #expect(try Catalog.placeholder().gifts == [])
+}
