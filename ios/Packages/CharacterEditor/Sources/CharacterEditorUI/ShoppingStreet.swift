@@ -59,7 +59,9 @@ public struct ShoppingStreetPage: View {
             .accessibilityHidden(model.arrival != nil)
             .overlay {
                 if isOnTop, let arrival = model.arrival {
-                    ArrivalPopup(model: model, arrival: arrival).transition(.opacity)
+                    ArrivalPopup(model: model, arrival: arrival)
+                        .id(ArrivalPopup.Key(model: ObjectIdentifier(model), arrival: arrival))
+                        .transition(.opacity)
                 }
             }
             .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.arrival)

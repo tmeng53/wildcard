@@ -26,7 +26,7 @@ public final class StreetModel {
     }
 
     /// The boxes waiting, in the pop-up over the street.
-    struct Arrival: Equatable {
+    struct Arrival: Hashable {
         let pieces: [String]
         /// The one store they all came to, or nil when they came to several.
         let store: String?

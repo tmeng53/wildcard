@@ -9,6 +9,10 @@ import SwiftUI
 /// every box at once (they shake, the flaps fly off and each piece pops out), then the store (or the
 /// street, when they came to several) shows each new piece wearing NEW; nothing is put on. 先不了 leaves the boxes on
 /// their racks. With reduced motion the pieces just fade in.
+///
+/// Its state belongs to one model's one arrival: the page gives it an identity of both, so a
+/// street made again under it (a notice opening 商店街 while it is up) starts a closed pop-up, never
+/// one left mid-opening whose 一键全开 would wait forever on the old model.
 struct ArrivalPopup: View {
     let model: StreetModel
     let arrival: StreetModel.Arrival
@@ -18,6 +22,12 @@ struct ArrivalPopup: View {
 
     enum Step: Comparable {
         case closed, shaking, open, revealed
+    }
+
+    /// Which model's arrival the pop-up shows: its identity on the page.
+    struct Key: Hashable {
+        let model: ObjectIdentifier
+        let arrival: StreetModel.Arrival
     }
 
     /// The most cartons that stand in a row; the rest wait behind them, out of sight.
@@ -58,7 +68,8 @@ struct ArrivalPopup: View {
                     .buttonStyle(TextButtonStyle(.muted))
                     .accessibilityIdentifier("editor.arrival.leave")
                 }
-                .disabled(step != .closed)
+                // Taps wait while the boxes open; the buttons keep their look, never a grey fill.
+                .allowsHitTesting(step == .closed)
             }
             .padding(Space.l)
             .background(
@@ -70,6 +81,12 @@ struct ArrivalPopup: View {
             .accessibilityIdentifier("editor.arrival")
         }
         .haptic(.unbox, trigger: step) { _, step in step == .open }
+        // The opening runs as the pop-up's own task, so it ends with the pop-up and always opens
+        // the boxes of the model it shows.
+        .task(id: step == .closed) {
+            guard step != .closed else { return }
+            await play()
+        }
     }
 
     /// 「LAP NINE 到新货了」 when they all came to one store, else 「商店街到新货了」.
@@ -82,19 +99,29 @@ struct ArrivalPopup: View {
     }
 
     private func open() {
-        Task {
-            if reduceMotion {
-                withAnimation(.wildcard(Motion.sheet, reduceMotion: true)) { step = .revealed }
-            } else {
-                step = .shaking
-                try? await Task.sleep(for: .seconds(shake))
+        guard step == .closed else { return }
+        if reduceMotion {
+            withAnimation(.wildcard(Motion.sheet, reduceMotion: true)) { step = .revealed }
+        } else {
+            step = .shaking
+        }
+    }
+
+    /// The boxes shake, open and show their pieces, then the street takes over. A cancelled
+    /// pause (the pop-up went away) stops here.
+    private func play() async {
+        do {
+            if !reduceMotion {
+                try await Task.sleep(for: .seconds(shake))
                 withAnimation(.wildcard(Motion.sheet)) { step = .open }
-                try? await Task.sleep(for: .seconds(Motion.sheet.response))
+                try await Task.sleep(for: .seconds(Motion.sheet.response))
                 withAnimation(.wildcard(Motion.celebrate)) { step = .revealed }
             }
-            try? await Task.sleep(for: .seconds(hold))
-            model.openArrival()
+            try await Task.sleep(for: .seconds(hold))
+        } catch {
+            return
         }
+        model.openArrival()
     }
 }
 
