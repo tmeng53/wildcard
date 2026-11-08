@@ -147,3 +147,14 @@ export class SceneNotOpenError extends AppError {
     super(`${scene} isn’t a scene squads can train on this week.`);
   }
 }
+
+/** Thrown for a squad time zone that isn't a known zone. The app sends one the phone knows. */
+export class SquadTimeZoneUnknownError extends AppError {
+  override readonly name = 'SquadTimeZoneUnknownError';
+  readonly reason = 'TIME_ZONE_UNKNOWN';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(readonly timeZone: string) {
+    super(`${timeZone} is not a known time zone.`);
+  }
+}

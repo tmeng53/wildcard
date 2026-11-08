@@ -73,15 +73,15 @@ export function trainedDays(checkIns: readonly CheckInRecord[], days: readonly L
 }
 
 /**
- * When a member finished their week's plan: the moment the 练了 that made their trained days
- * reach the days they planned was checked in (the first 练了 of each day counts, the planned
- * count-th earliest of them). `undefined` without a plan, or while they are still short of it.
+ * When a member reached their `count`-th day trained: the moment the 练了 that made it was
+ * checked in (the first 练了 of each day counts, the count-th earliest of them). `undefined`
+ * for a count under 1, or while they have trained fewer days.
  */
-export function planFinishedAt(
+export function trainedDaysReachedAt(
   checkIns: readonly CheckInRecord[],
-  { days, plannedDays }: { readonly days: readonly LocalDay[]; readonly plannedDays: number },
+  { days, count }: { readonly days: readonly LocalDay[]; readonly count: number },
 ): Date | undefined {
-  if (plannedDays < 1) return undefined;
+  if (count < 1) return undefined;
   const firsts = days
     .flatMap((day) => {
       const times = checkIns
@@ -90,23 +90,23 @@ export function planFinishedAt(
       return times.length === 0 ? [] : [Math.min(...times)];
     })
     .toSorted((a, b) => a - b);
-  const at = firsts[plannedDays - 1];
+  const at = firsts[count - 1];
   return at === undefined ? undefined : new Date(at);
 }
 
 /**
- * Orders members by days trained, most first. A tie goes to whoever finished their own plan
- * first (`planFinishedAt`); someone who hasn't finished it comes after anyone who has, and the
- * rest keep the order they came in (the order they joined).
+ * Orders members by days trained, most first. A tie goes to whoever reached that many days
+ * first (`reachedAt`, from `trainedDaysReachedAt`); someone without one comes after anyone
+ * with one, and the rest keep the order they came in (the order they joined).
  */
-export function byTrainedThenFinished<
-  Member extends { readonly trainedDays: number; readonly planFinishedAt?: Date | string },
+export function byTrainedThenReached<
+  Member extends { readonly trainedDays: number; readonly reachedAt?: Date | string | undefined },
 >(a: Member, b: Member): number {
   if (a.trainedDays !== b.trainedDays) return b.trainedDays - a.trainedDays;
   const at = (member: Member) =>
-    member.planFinishedAt === undefined
+    member.reachedAt === undefined
       ? Number.POSITIVE_INFINITY
-      : new Date(member.planFinishedAt).getTime();
+      : new Date(member.reachedAt).getTime();
   const [x, y] = [at(a), at(b)];
   if (x === y) return 0;
   return x < y ? -1 : 1;

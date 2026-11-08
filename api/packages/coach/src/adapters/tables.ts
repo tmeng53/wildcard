@@ -53,6 +53,7 @@ export interface Coaches {
   name: string;
   offered: boolean;
   pay: string;
+  position: number;
   soul: string;
   style: string;
   tags: string[];
@@ -123,6 +124,7 @@ export interface CoachSettingEvents {
 export interface CoachSettings {
   cached_input_micros_per_million: Generated<number>;
   coaching: boolean;
+  daily_cap_micros: Generated<number>;
   holidays: Generated<Json>;
   input_micros_per_million: number;
   model: string;
@@ -130,6 +132,7 @@ export interface CoachSettings {
   only_row: Generated<boolean>;
   output_micros_per_million: number;
   rules: string;
+  squad_daily_cap_micros: Generated<number>;
 }
 
 export interface CoachUsage {

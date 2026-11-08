@@ -6,7 +6,7 @@ import XCTest
 final class SignUpUITests: XCTestCase {
     /// How long a check waits for the UI. A busy CI runner can take seconds per accessibility
     /// query; a wait that succeeds returns as soon as it does.
-    private static let wait: TimeInterval = 30
+    static let wait: TimeInterval = 30
 
     /// Open screen, 角色和昵称, a squad joined by code, two sports, the week, then 上场 and home.
     func testJoiningASquad() {
@@ -183,6 +183,7 @@ final class SignUpUITests: XCTestCase {
         waitFor(squadDone, "isEnabled == true", "建小队 stays off with a name")
         // 小队目标 under the name: 3 to begin with, and the creator's pick carries to step 4.
         pickSquadGoal(4, in: app)
+        pickSquadTimeZone(searching: "Taipei", in: app)
         squadDone.tap()
         let skipSports = app.buttons["sports.skip"]
         XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "平时练什么？ never appeared")
@@ -272,11 +273,11 @@ final class SignUpUITests: XCTestCase {
     }
 
     /// Lets the characters build and their moves finish before a screenshot.
-    private func settle() {
+    func settle() {
         Thread.sleep(forTimeInterval: 2)
     }
 
-    private func keepScreenshot(named name: String) {
+    func keepScreenshot(named name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
         attachment.lifetime = .keepAlways

@@ -78,12 +78,4 @@ public struct MyWeek: Hashable, Sendable {
         return TrainingTime(
             minutes: logged.reduce(0) { $0 + $1.1 }, longestDay: longest.0, longestMinutes: longest.1)
     }
-
-    /// Which day the character stands over, Monday 0: the last day of their top sport, else the
-    /// last day they trained, else midweek.
-    public var standsOn: Int {
-        let kinds = days.map(\.kind)
-        if let sport = topSport, let last = kinds.lastIndex(of: .trained(sport)) { return last }
-        return kinds.lastIndex { $0.isTrained } ?? 3
-    }
 }

@@ -1,6 +1,23 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "，": {
+      "comment": "Between names in a list, as in 「Tracy，Fran」.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", "
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "，"
+          }
+        }
+      }
+    },
     "%@ · %@": {
       "localizations": {
         "en": {
@@ -97,18 +114,18 @@
         }
       }
     },
-    "主办方没经费了，正在拉赞助，一会儿再来颁奖": {
+    "颁奖晚点了，稍后再来看": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The organizers are out of money. Hunting for sponsors. Awards soon."
+            "value": "The awards are running late. Check back soon"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "主辦單位沒經費了，正在拉贊助，等一下再來頒獎"
+            "value": "頒獎晚點了，稍後再來看"
           }
         }
       }
@@ -289,18 +306,18 @@
         }
       }
     },
-    "已催主办方充值 token": {
+    "已经催过了，颁奖一会儿就到": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Organizers nudged to top up tokens"
+            "value": "Nudged. The awards will be along soon"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "已催主辦單位儲值 token"
+            "value": "已經催過了，頒獎一會兒就到"
           }
         }
       }
@@ -641,18 +658,18 @@
         }
       }
     },
-    "还差 %lld 次": {
+    "一起练了 %lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld to go"
+            "value": "Trained together %lld times"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "還差 %lld 次"
+            "value": "一起練了 %lld 次"
           }
         }
       }
@@ -673,19 +690,19 @@
         }
       }
     },
-    "天数一样，先练完计划的排前面": {
-      "comment": "Under 领奖台's title when a tie on days trained was broken by who finished their own weekly plan first.",
+    "天数一样，先练到的排前面": {
+      "comment": "Under 领奖台's title when a tie on days trained was broken by who reached that many days first.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Same days: whoever finished their plan first ranks higher"
+            "value": "Same days: whoever got there first ranks higher"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "天數一樣，先練完計畫的排前面"
+            "value": "天數一樣，先練到的排前面"
           }
         }
       }
@@ -1107,18 +1124,19 @@
         }
       }
     },
-    "全队训练了什么": {
+    "项目": {
+      "comment": "Title of the card on 全队运动总结 listing the sports the squad trained this week.",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "What the squad trained"
+            "value": "Sports"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "全隊訓練了什麼"
+            "value": "項目"
           }
         }
       }

@@ -41,18 +41,21 @@ struct MealsPage: View {
         .overlay(alignment: .top) {
             VStack(alignment: .leading, spacing: Space.l) {
                 PageTitle(label: Text("全队", bundle: .module), title: Text("吃了", bundle: .module))
-                HStack(alignment: .top, spacing: Space.xl) {
-                    count(meals.healthy, Text("健康餐", bundle: .module), size: .story)
-                    count(meals.cheat, Text("放纵餐", bundle: .module), size: .hero)
+                // PageTitle keeps its own inset; the counts and the line take the same.
+                VStack(alignment: .leading, spacing: Space.l) {
+                    HStack(alignment: .top, spacing: Space.xl) {
+                        count(meals.healthy, Text("健康餐", bundle: .module), size: .story)
+                        count(meals.cheat, Text("放纵餐", bundle: .module), size: .hero)
+                    }
+                    if let line = meals.line {
+                        Text(verbatim: line)
+                            .typeStyle(TypeRamp.headline)
+                            .opacity(page.ramp(0.6, 0.9))
+                    }
                 }
-                if let line = meals.line {
-                    Text(verbatim: line)
-                        .typeStyle(TypeRamp.headline)
-                        .opacity(page.ramp(0.6, 0.9))
-                }
+                .padding(.horizontal, Space.l)
             }
             .foregroundStyle(Color(role: .fgOnScene, in: theme))
-            .padding(.horizontal, Space.l)
         }
     }
 
@@ -105,7 +108,7 @@ struct BestDisclaimerPage: View {
                     label: Text("本周", bundle: .module), systemImage: "bubble.left.fill",
                     title: Text("最佳请假条", bundle: .module))
                 card
-                    .padding(.horizontal, Space.m)
+                    .padding(.horizontal, Space.l)
                     .offset(y: 24 * (1 - page.pop(0, 0.5)))
                     .opacity(page.ramp(0, 0.2))
             }
@@ -183,7 +186,7 @@ struct EndingPage: View {
 
     private var line: Text {
         if let line = ending.line { return Text(verbatim: line) }
-        return ending.isHit ? Text("全队达标", bundle: .module) : Text("还差 \(ending.shortBy) 次", bundle: .module)
+        return ending.isHit ? Text("全队达标", bundle: .module) : Text("一起练了 \(ending.done) 次", bundle: .module)
     }
 
     @ViewBuilder
@@ -275,7 +278,7 @@ struct EndingButtons: View {
                 .buttonStyle(TextButtonStyle(.muted))
                 .accessibilityIdentifier("recap.planNextWeek")
         }
-        .padding(.horizontal, Space.m)
+        .padding(.horizontal, Space.l)
         // Over the week's scene: glass, as every button that floats over art is.
         .controlPlacement(.floating)
     }

@@ -73,7 +73,7 @@ struct EndingPickPage: View {
         }
         .foregroundStyle(Color(role: .fgOnScene, in: theme))
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, Space.m)
+        .padding(.horizontal, Space.l)
         .padding(.top, Space.m)
     }
 
@@ -89,18 +89,12 @@ struct EndingPickPage: View {
 
     private var line: Text {
         if let line = ending.line { return Text(verbatim: line) }
-        return ending.isHit ? Text("全队达标", bundle: .module) : Text("还差 \(ending.shortBy) 次", bundle: .module)
+        return ending.isHit ? Text("全队达标", bundle: .module) : Text("一起练了 \(ending.done) 次", bundle: .module)
     }
 
     /// Each member playing their own idle, in the story's lineup order.
     private static func players(_ lineup: [MemberID], in cast: StoryCast) -> [CharacterPlayer] {
-        lineup.enumerated().compactMap { index, id in
-            guard let member = cast[id], let figure = try? PlaceholderCharacter.figure(wearing: member.look),
-                let idle = try? PlaceholderCharacter.clip("idle", persona: member.persona)
-            else { return nil }
-            return try? CharacterPlayer(
-                figure: figure, idle: idle, now: Date().addingTimeInterval(-Double(index) * 0.6))
-        }
+        lineup.enumerated().compactMap { index, id in cast.player(of: id, lead: Double(index) * 0.6) }
     }
 
     /// The white panel under the buttons, as the design draws it.
