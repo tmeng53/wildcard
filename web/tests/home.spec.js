@@ -169,12 +169,20 @@ test('a picked language is remembered, until another is picked', async ({ page }
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hans');
 });
 
+// The developer's names, kept out of this file too: the whole site is public.
+const developerNames = ['VHJhY3k=', 'TWVuZw=='].map((name) =>
+  Buffer.from(name, 'base64').toString(),
+);
+
 test('no legal page names the developer, and every page says 18', async ({ page }) => {
   for (const lang of ['', 'zh/', 'zh-hant/', 'fr/'])
-    for (const doc of ['privacy', 'terms']) {
-      await page.goto(`/${lang}${doc}`);
+    for (const doc of ['privacy', 'terms', 'consumer-health-data']) {
+      if (lang === 'fr/' && doc === 'consumer-health-data') continue;
+      const response = await page.goto(`/${lang}${doc}`);
+      const source = await response.text();
+      for (const name of developerNames) expect(source).not.toContain(name);
+      if (doc === 'consumer-health-data') continue;
       const text = await page.locator('main').innerText();
-      expect(text).not.toContain('Tracy');
       expect(text).toMatch(/18/);
       expect(text).not.toMatch(/\b13 ?(岁|歲|ans)|under 13|at least 13/);
     }
