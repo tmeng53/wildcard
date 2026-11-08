@@ -41,4 +41,4 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 ## Worth probing
 
 - In the current week after the join day: changing a day before today (`PLAN_DAY_STARTED`); today or a later day turning into a rest day is allowed and logged.
-- Today's day in a zone where it is just before 3am: it still counts as the day before.
+- Today's day in a zone where it is just after midnight: it is already the new day.

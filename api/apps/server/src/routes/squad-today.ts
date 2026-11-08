@@ -31,9 +31,7 @@ const MemberToday = z.strictObject({
       'their latest. Missing before their first.',
   }),
   day: LocalDay.meta({
-    description:
-      'The member’s own today: their local date in their time zone, where anything before 3am ' +
-      'still counts for the day before.',
+    description: 'The member’s own today: their local date in their time zone.',
   }),
   training: z.enum(['trained', 'disclaimer', 'notCheckedIn']).meta({
     description:

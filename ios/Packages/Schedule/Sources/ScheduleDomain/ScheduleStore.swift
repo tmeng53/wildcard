@@ -72,7 +72,7 @@ public final class ScheduleStore {
 
     // MARK: - Reading
 
-    /// The member's day now, in their profile's time zone, with the 3am grace.
+    /// The member's day now, in their profile's time zone.
     public var today: LocalDay? {
         profile.map { LocalDay(at: now(), in: $0.timeZone) }
     }

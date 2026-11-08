@@ -763,8 +763,8 @@ describe('the squad’s weekly goal', () => {
   it('averages the days trained per member over up to 4 finished weeks', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const DAY = 86_400_000;
-    // This week's Monday, as a member with no time zone (UTC) has it, with the 3am grace.
-    const today = new Date(Date.now() - 3 * 3_600_000);
+    // This week's Monday, as a member with no time zone (UTC) has it.
+    const today = new Date();
     const monday = new Date(
       Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) -
         ((today.getUTCDay() + 6) % 7) * DAY,

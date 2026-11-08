@@ -8438,7 +8438,7 @@ internal struct Client: APIProtocol {
     }
     /// A squad’s week: its awards and counts (周日战报)
     ///
-    /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.
+    /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/summary`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/summary/get(getSquadWeekSummary)`.
@@ -9167,7 +9167,7 @@ internal struct Client: APIProtocol {
     }
     /// Save the signed-in member’s plan for a week
     ///
-    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, and today and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.
+    /// Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, and today and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone.
     ///
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/put(saveMyWeeklyPlan)`.

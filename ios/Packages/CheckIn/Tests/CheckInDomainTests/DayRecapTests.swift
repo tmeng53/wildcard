@@ -76,10 +76,10 @@ private func today(_ mates: TrainingStatus, _ mine: TrainingStatus, _ third: Tra
 
 @Test func theRecapShowsFromNineInTheEveningUntilTheDayEnds() {
     let home = sampleHome()
-    // Tuesday in Los Angeles: 20:59, 21:00, then 02:59 and 03:00 the next morning.
+    // Tuesday in Los Angeles: 20:59, 21:00, then 23:59 and midnight.
     let nine = Date(timeIntervalSince1970: 1_792_555_200)
     #expect(!home.showsRecap(at: nine.addingTimeInterval(-60)))
     #expect(home.showsRecap(at: nine))
-    #expect(home.showsRecap(at: nine.addingTimeInterval(6 * 3600 - 60)))
-    #expect(!home.showsRecap(at: nine.addingTimeInterval(6 * 3600)))
+    #expect(home.showsRecap(at: nine.addingTimeInterval(3 * 3600 - 60)))
+    #expect(!home.showsRecap(at: nine.addingTimeInterval(3 * 3600)))
 }

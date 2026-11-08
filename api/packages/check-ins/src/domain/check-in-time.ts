@@ -16,7 +16,7 @@ export const BACKFILL_DAYS = 7;
 /**
  * Checks a new check-in's moment and day against the server's clock, and gives the day it was
  * posted on. Made at most 48 hours ago and at most 5 minutes ahead; posted on the member's day at
- * that moment, with their time zone (the 3am rule the home summary and plans use); and counted for
+ * that moment, by their time zone's wall clock (as the home summary and plans count days); and counted for
  * that day or one of the 7 before it (补打卡), never a later one. Without a time zone, the day
  * posted on is the one it counts for when that is within one day of the moment's UTC date (every
  * time zone's local date is), else the UTC date, which it may count up to 7 days before. Throws
