@@ -193,7 +193,7 @@ function* clips(dir) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  for (const dir of ["moves", "clips"]) {
+  for (const dir of ["moves", "clips", "accents"]) {
     for (const [path, clip] of clips(join(placeholder, dir))) {
       const name = relative(placeholder, path);
       if (only && !name.includes(only)) continue;
