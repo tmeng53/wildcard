@@ -61,7 +61,7 @@ public struct CoachPage: View {
     /// coach leaves.
     private func hire(_ coach: Coach) {
         if let current = model.coach?.coach, current.id != coach.id {
-            push(.swap(from: current, to: coach))
+            push(.swap(leaving: current, coming: coach))
         } else {
             Task { finish(await model.hire(coach.id)) }
         }
