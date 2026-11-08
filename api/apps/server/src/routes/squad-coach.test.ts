@@ -22,6 +22,7 @@ import {
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
+import { createCoachGifts, createPostgresGiftStore } from '@wildcard/unlocks';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -49,7 +50,6 @@ import {
   unusedWeeklyAwards,
   unusedWeekSummaryWords,
   unusedUnlocks,
-  unusedGifts,
   ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
@@ -111,7 +111,7 @@ const app = createApp({
   switches: switchesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
-  gifts: unusedGifts,
+  gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: createCoachHiring({
     hiring: createPostgresCoachHiring(db),
@@ -506,6 +506,121 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       token: captain.token,
     });
     expect(tooMany.status).toBe(400);
+  });
+});
+
+describe('/squads/{squadId}/coach/cards', () => {
+  const speaker = { id: 'xiaohun', name: '小混', look: 'xiaohun' };
+  const CardsBody = z.object({
+    stack: z.array(z.object({ kind: z.string(), id: z.string() }).loose()),
+    earlier: z.array(z.object({ kind: z.string(), id: z.string() }).loose()),
+  });
+  const ids = (cards: readonly { kind: string; id: string }[]) =>
+    cards.map(({ kind, id }) => `${kind}:${id}`);
+
+  it('stacks what the coach said to the caller, oldest first, and moves a seen card to 以前', async () => {
+    const [captain, mate] = [await signUp(), await signUp()];
+    const squad = await squadOf(captain, mate);
+    const path = `/squads/${squad}/coach/cards`;
+    expect(await call({ method: 'GET', path, token: mate.token })).toMatchObject({
+      status: 200,
+      body: { version: 1, stack: [], earlier: [] },
+    });
+
+    const today = new Date().toISOString().slice(0, 10);
+    await coachSaid(squad, { day: today, text: '今天谁先动，谁就是队长' });
+    const written = await sql<{ id: string }>`
+      insert into public.coach_member_notes
+        (squad_id, member_id, coach_id, day, text, challenge_title, challenge_amount,
+         challenge_unit, challenge_line)
+      values (${squad}, ${mate.userId}, 'xiaohun', current_date, '今天随便动动', '拉伸', 5, '分钟',
+        '昨天跑完腿还紧，睡前拉一拉。')
+      returning id`.execute(db);
+    const note = String(written.rows[0]?.id);
+    // Not delivered yet: nothing of it shows.
+    expect(
+      ids(CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body).stack),
+    ).toStrictEqual([`board:${today}`]);
+    await sql`insert into public.coach_member_note_deliveries (note_id) values (${note})`.execute(
+      db,
+    );
+    await sql`insert into public.gift_pieces (piece_id) values ('cards-towel') on conflict do nothing`.execute(
+      db,
+    );
+    await sql`insert into public.coach_gifts (member_id, piece_id, coach_id, squad_id, line)
+      values (${mate.userId}, 'cards-towel', 'xiaohun', ${squad}, '练完擦汗')`.execute(db);
+    const mine = await checkIn(mate.token, squad);
+    const theirs = await checkIn(captain.token, squad);
+    await coachSaid(squad, { checkIn: mine, text: '配速比上周快了', emoji: null });
+    await coachSaid(squad, { checkIn: theirs, text: '腿还在吗', emoji: null });
+    const reply = await sql<{ id: string }>`select id from public.coach_replies
+      where check_in_id = ${mine}`.execute(db);
+
+    const read = await call({ method: 'GET', path, token: mate.token });
+    expect(read.status).toBe(200);
+    const cards = CardsBody.parse(read.body);
+    // The captain's post's reply is the captain's, not the mate's.
+    expect(ids(cards.stack)).toStrictEqual([
+      `board:${today}`,
+      `note:${note}`,
+      `challenge:${note}`,
+      'gift:cards-towel',
+      `reply:${String(reply.rows[0]?.id)}`,
+    ]);
+    expect(cards.stack[2]).toMatchObject({
+      coach: speaker,
+      day: today,
+      challenge: { title: '拉伸', amount: 5, unit: '分钟', line: '昨天跑完腿还紧，睡前拉一拉。' },
+    });
+    expect(cards.stack[3]).toMatchObject({
+      gift: { pieceId: 'cards-towel', line: '练完擦汗' },
+      coach: speaker,
+    });
+    expect(cards.stack[4]).toMatchObject({ checkInId: mine, text: '配速比上周快了' });
+
+    const seen = (kind: string, id: string) =>
+      call({ method: 'PUT', path: `${path}/${kind}/${id}/seen`, token: mate.token });
+
+    expect(await seen('note', note)).toMatchObject({
+      status: 200,
+      body: { version: 1, kind: 'note', id: note },
+    });
+    expect((await seen('note', note)).status).toBe(200);
+    expect((await seen('gift', 'cards-towel')).status).toBe(200);
+    const after = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect(ids(after.stack)).toStrictEqual([
+      `board:${today}`,
+      `challenge:${note}`,
+      `reply:${String(reply.rows[0]?.id)}`,
+    ]);
+    // 以前 is newest first.
+    expect(ids(after.earlier)).toStrictEqual(['gift:cards-towel', `note:${note}`]);
+    // Seeing the note also put it away on 今天.
+    expect(
+      (await call({ method: 'GET', path: `/squads/${squad}/coach/activity`, token: mate.token }))
+        .body,
+    ).not.toHaveProperty('memberNote');
+    // The captain's own stack is theirs: the board line and the reply to their post.
+    expect(
+      ids(CardsBody.parse((await call({ method: 'GET', path, token: captain.token })).body).stack),
+    ).toHaveLength(2);
+  });
+
+  it('refuses anyone outside the squad and a kind it doesn’t know', async () => {
+    const [captain, stranger] = [await signUp(), await signUp()];
+    const squad = await squadOf(captain);
+    const path = `/squads/${squad}/coach/cards`;
+    const outside = await call({ method: 'GET', path, token: stranger.token });
+    expect([outside.status, reason(outside)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
+    const marked = await call({
+      method: 'PUT',
+      path: `${path}/note/1/seen`,
+      token: stranger.token,
+    });
+    expect(marked.status).toBe(403);
+    expect((await call({ method: 'GET', path })).status).toBe(401);
+    const odd = await call({ method: 'PUT', path: `${path}/poster/1/seen`, token: captain.token });
+    expect(odd.status).toBe(400);
   });
 });
 

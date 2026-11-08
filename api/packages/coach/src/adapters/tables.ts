@@ -36,6 +36,14 @@ export interface CoachAnswers {
   wake_id: Int8 | null;
 }
 
+export interface CoachCardSeen {
+  at: Generated<Timestamp>;
+  card_id: string;
+  kind: string;
+  member_id: string;
+  squad_id: string;
+}
+
 export interface CoachCatalogEvents {
   at: Generated<Timestamp>;
   changed_by: string | null;
@@ -109,6 +117,7 @@ export interface CoachMemberNoteReads {
 export interface CoachMemberNotes {
   at: Generated<Timestamp>;
   challenge_amount: number | null;
+  challenge_line: string | null;
   challenge_title: string | null;
   challenge_unit: string | null;
   coach_id: string;
@@ -219,6 +228,7 @@ export interface SquadCoachEvents {
 
 export interface DB {
   coach_answers: CoachAnswers;
+  coach_card_seen: CoachCardSeen;
   coach_catalog_events: CoachCatalogEvents;
   coach_challenge_answers: CoachChallengeAnswers;
   coach_files: CoachFiles;

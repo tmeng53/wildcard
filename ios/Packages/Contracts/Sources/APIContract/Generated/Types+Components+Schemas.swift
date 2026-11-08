@@ -6857,6 +6857,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachChallenge/unit`.
             public var unit: Swift.String?
+            /// The coach talking to the member under the title, about why; left out on older notes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachChallenge/line`.
+            public var line: Swift.String?
             /// What the member said to it; left out until they answer. The first stands.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachChallenge/answer`.
@@ -6874,23 +6878,108 @@ extension Components {
             ///   - title: What to do, in a few words.
             ///   - amount: How much, when it has a number; always with `unit`.
             ///   - unit: The amount’s unit, the coach’s own word.
+            ///   - line: The coach talking to the member under the title, about why; left out on older notes.
             ///   - answer: What the member said to it; left out until they answer. The first stands.
             public init(
                 title: Swift.String,
                 amount: Swift.Int? = nil,
                 unit: Swift.String? = nil,
+                line: Swift.String? = nil,
                 answer: Components.Schemas.CoachChallenge.AnswerPayload? = nil
             ) {
                 self.title = title
                 self.amount = amount
                 self.unit = unit
+                self.line = line
                 self.answer = answer
             }
             public enum CodingKeys: String, CodingKey {
                 case title
                 case amount
                 case unit
+                case line
                 case answer
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachCards`.
+        public struct CoachCards: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachCards/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachCards/version`.
+            public var version: Components.Schemas.CoachCards.VersionPayload
+            /// The cards not seen yet from the last 72 hours, oldest first: the stack.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCards/stack`.
+            public var stack: [Components.Schemas.CoachCard]
+            /// Every other card from the last 30 days, newest first: 以前.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCards/earlier`.
+            public var earlier: [Components.Schemas.CoachCard]
+            /// Creates a new `CoachCards`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - stack: The cards not seen yet from the last 72 hours, oldest first: the stack.
+            ///   - earlier: Every other card from the last 30 days, newest first: 以前.
+            public init(
+                version: Components.Schemas.CoachCards.VersionPayload,
+                stack: [Components.Schemas.CoachCard],
+                earlier: [Components.Schemas.CoachCard]
+            ) {
+                self.version = version
+                self.stack = stack
+                self.earlier = earlier
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case stack
+                case earlier
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachCardSeen`.
+        public struct CoachCardSeen: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachCardSeen/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachCardSeen/version`.
+            public var version: Components.Schemas.CoachCardSeen.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CoachCardSeen/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case board = "board"
+                case note = "note"
+                case challenge = "challenge"
+                case gift = "gift"
+                case reply = "reply"
+                case answer = "answer"
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachCardSeen/kind`.
+            public var kind: Components.Schemas.CoachCardSeen.KindPayload
+            /// The card’s id within its kind.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachCardSeen/id`.
+            public var id: Swift.String
+            /// Creates a new `CoachCardSeen`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - kind:
+            ///   - id: The card’s id within its kind.
+            public init(
+                version: Components.Schemas.CoachCardSeen.VersionPayload,
+                kind: Components.Schemas.CoachCardSeen.KindPayload,
+                id: Swift.String
+            ) {
+                self.version = version
+                self.kind = kind
+                self.id = id
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case kind
+                case id
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadNudges`.

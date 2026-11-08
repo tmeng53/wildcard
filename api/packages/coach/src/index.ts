@@ -23,6 +23,7 @@ export {
   Challenge,
   ChallengeAnswer,
   CHALLENGE_AMOUNT_MAX,
+  CHALLENGE_LINE_LIMIT,
   CHALLENGE_TITLE_LIMIT,
   CHALLENGE_UNIT_LIMIT,
 } from './domain/challenge.js';
@@ -113,3 +114,11 @@ export {
   type CoachWakes,
   type CoachWakesDependencies,
 } from './use-cases/coach-wakes.js';
+export {
+  CARDS_DAYS,
+  CoachCardId,
+  CoachCardKind,
+  STACK_HOURS,
+  cardKey,
+  type CoachOwnCard,
+} from './domain/cards.js';

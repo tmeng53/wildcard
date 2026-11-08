@@ -12,12 +12,16 @@ export const CHALLENGE_TITLE_LIMIT = 8;
 export const CHALLENGE_UNIT_LIMIT = 4;
 /** The biggest amount; the database checks the same. */
 export const CHALLENGE_AMOUNT_MAX = 9999;
+/** The longest line under the title, in characters; the database checks the same. */
+export const CHALLENGE_LINE_LIMIT = 24;
 
 export const Challenge = z
   .strictObject({
     title: z.string().trim().min(1).max(CHALLENGE_TITLE_LIMIT),
     amount: z.int().min(1).max(CHALLENGE_AMOUNT_MAX).optional(),
     unit: z.string().trim().min(1).max(CHALLENGE_UNIT_LIMIT).optional(),
+    /** The coach talking to the member under the title, about why (「昨天跑完腿还紧，睡前拉一拉。」). */
+    line: z.string().trim().min(1).max(CHALLENGE_LINE_LIMIT).optional(),
   })
   .refine(({ amount, unit }) => (amount === undefined) === (unit === undefined), {
     message: 'amount and unit come together, or neither',

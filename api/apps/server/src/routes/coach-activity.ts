@@ -3,6 +3,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   LETTER_LIMIT,
   CHALLENGE_AMOUNT_MAX,
+  CHALLENGE_LINE_LIMIT,
   CHALLENGE_TITLE_LIMIT,
   CHALLENGE_UNIT_LIMIT,
   ChallengeAnswer,
@@ -22,7 +23,7 @@ import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
-const CoachSpeakerBody = z
+export const CoachSpeakerBody = z
   .strictObject({
     id: z.string().meta({ description: 'The coach’s id. Never changes.', example: 'xiaohun' }),
     name: z.string().meta({ description: 'Its name, shown with the 教练 tag.', example: '毛头' }),
@@ -51,7 +52,7 @@ const ChallengeAnswerBody = ChallengeAnswer.meta({
   description: '`accepted` for 接受挑战, `declined` for 算了.',
 });
 
-const CoachChallengeBody = z
+export const CoachChallengeBody = z
   .strictObject({
     title: z.string().max(CHALLENGE_TITLE_LIMIT).meta({
       description: 'What to do, in a few words.',
@@ -64,6 +65,11 @@ const CoachChallengeBody = z
     unit: z.string().max(CHALLENGE_UNIT_LIMIT).optional().meta({
       description: 'The amount’s unit, the coach’s own word.',
       example: '杯',
+    }),
+    line: z.string().max(CHALLENGE_LINE_LIMIT).optional().meta({
+      description:
+        'The coach talking to the member under the title, about why; left out on older notes.',
+      example: '泳池泡久了也会渴，别等口干。',
     }),
     answer: ChallengeAnswerBody.optional().meta({
       description: 'What the member said to it; left out until they answer. The first stands.',

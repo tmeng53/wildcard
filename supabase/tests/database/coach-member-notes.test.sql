@@ -1,7 +1,7 @@
 -- The coach's morning note to each member: one a member a squad a day, never changed, gone with
 -- the member or the squad; delivered once.
 begin;
-select plan(17);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('11111111-1111-4111-8111-111111111111', 'mia@example.com'),
@@ -50,13 +50,36 @@ select throws_ok($$update public.coach_challenge_answers set answer = 'declined'
 select throws_ok($$insert into public.coach_challenge_answers (note_id, answer) values (1, 'maybe')$$,
   '23514', null, 'an answer is accepted or declined');
 
+-- The line under a challenge's title is short, and only with a challenge.
+select throws_ok($$insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, challenge_line)
+  values ('33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 'xiaohun', '2026-11-07', '歇着', '多睡会儿')$$,
+  '23514', null, 'a challenge line needs its challenge');
+select throws_ok($$insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, challenge_title, challenge_line)
+  values ('33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 'xiaohun', '2026-11-07', '歇着', '早睡', repeat('睡', 25))$$,
+  '23514', null, 'a challenge line is short');
+
+-- The coach page's cards each member saw: once, never changed, gone with the member or squad.
+insert into public.coach_card_seen (member_id, squad_id, kind, card_id) values
+  ('11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-333333333333', 'note', '1'),
+  ('22222222-2222-4222-8222-222222222222', '33333333-3333-4333-8333-333333333333', 'gift', 'towel-fleece');
+select throws_ok($$insert into public.coach_card_seen (member_id, squad_id, kind, card_id)
+  values ('11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-333333333333', 'note', '1')$$,
+  '23505', null, 'a card is seen once');
+select throws_ok($$insert into public.coach_card_seen (member_id, squad_id, kind, card_id)
+  values ('11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-333333333333', 'poster', '1')$$,
+  '23514', null, 'a card is one of the kinds');
+select throws_ok($$delete from public.coach_card_seen where card_id = '1'$$,
+  '42501', null, 'a seen card stays seen');
+
 delete from auth.users where id = '22222222-2222-4222-8222-222222222222';
+select is((select count(*)::int from public.coach_card_seen), 1, 'a deleted account takes what it saw');
 select is((select count(*)::int from public.coach_member_notes), 2, 'a deleted account takes its notes');
 delete from public.squads where id = '33333333-3333-4333-8333-333333333333';
 select is((select count(*)::int from public.coach_member_notes), 0, 'an ended squad takes its notes');
 select is((select count(*)::int from public.coach_member_note_deliveries), 0, 'and their deliveries');
 select is((select count(*)::int from public.coach_member_note_reads), 0, 'and when they were put away');
 select is((select count(*)::int from public.coach_challenge_answers), 0, 'and the answers to their challenges');
+select is((select count(*)::int from public.coach_card_seen), 0, 'and the cards its members saw');
 
 select * from finish();
 rollback;

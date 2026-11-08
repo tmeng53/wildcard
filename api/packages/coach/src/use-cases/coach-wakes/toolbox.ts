@@ -4,6 +4,7 @@ import { editBody, FILE_LIMIT, storedPathOf, type StoredPath } from '../../domai
 import {
   Challenge,
   CHALLENGE_AMOUNT_MAX,
+  CHALLENGE_LINE_LIMIT,
   CHALLENGE_TITLE_LIMIT,
   CHALLENGE_UNIT_LIMIT,
   challengeText,
@@ -308,6 +309,11 @@ export function toolbox({
                 .describe(
                   `数量的单位，不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字；和 amount 一起填`,
                 ),
+              line: z
+                .string()
+                .describe(
+                  `标题下面的一句小字，对他说为什么是这件事，不超过 ${String(CHALLENGE_LINE_LIMIT)} 字`,
+                ),
             })
             .optional()
             .describe(
@@ -330,7 +336,7 @@ export function toolbox({
           if (problem !== undefined) return problem;
           const set = challenge === undefined ? undefined : Challenge.safeParse(challenge);
           if (set !== undefined && !set.success) {
-            return `挑战不对：title 不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数，unit 不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字，两个一起填或都不填。`;
+            return `挑战不对：title 不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数，unit 不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字，两个一起填或都不填；line 不超过 ${String(CHALLENGE_LINE_LIMIT)} 字。`;
           }
           const replaced = draft.memberNotes.has(id);
           draft.memberNotes.set(id, {

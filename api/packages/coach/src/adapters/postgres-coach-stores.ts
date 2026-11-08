@@ -3,6 +3,7 @@ import { sql, type Kysely } from 'kysely';
 import { z } from 'zod';
 
 import { ChallengeAnswer, type Challenge } from '../domain/challenge.js';
+import { cardKey, CoachCardKind } from '../domain/cards.js';
 import { CoachId } from '../domain/coach.js';
 import { CoachEmoji } from '../domain/reply.js';
 import { memberOfPath } from '../domain/memory.js';
@@ -262,10 +263,10 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
         const saved = await sql<{ id: string }>`
           insert into public.coach_member_notes
             (squad_id, member_id, coach_id, day, text, challenge_title, challenge_amount,
-             challenge_unit, wake_id)
+             challenge_unit, challenge_line, wake_id)
           select ${squad}::uuid, ${member}::uuid, ${coach}, ${day}::date, ${text},
             ${challenge?.title ?? null}, ${challenge?.amount ?? null}::int,
-            ${challenge?.unit ?? null}, ${String(wake)}::bigint
+            ${challenge?.unit ?? null}, ${challenge?.line ?? null}, ${String(wake)}::bigint
           where exists (select 1 from auth.users where id = ${member}::uuid)
           on conflict (squad_id, member_id, day) do nothing
           returning id`.execute(db);
@@ -290,6 +291,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
             'coach_member_notes.challenge_title',
             'coach_member_notes.challenge_amount',
             'coach_member_notes.challenge_unit',
+            'coach_member_notes.challenge_line',
             'coach_challenge_answers.answer',
           ])
           .where('coach_member_notes.squad_id', '=', squad)
@@ -492,6 +494,7 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
           'coach_member_notes.challenge_title',
           'coach_member_notes.challenge_amount',
           'coach_member_notes.challenge_unit',
+          'coach_member_notes.challenge_line',
           'coach_challenge_answers.answer',
           'coach_member_notes.at',
           'coaches.id as coach_id',
@@ -571,6 +574,122 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         .where('member_id', '=', member)
         .executeTakeFirst();
       return mine !== undefined;
+    },
+
+    async cards({ squad, member, since }) {
+      // Each kind from its own table, for this member in this squad: the squad's 战术板 lines,
+      // the member's notes (and their challenges) once delivered, the coach's lines to the
+      // member's check-ins, and its answers to the member's replies.
+      const rows = await sql<{
+        kind: 'board' | 'note' | 'challenge' | 'reply' | 'answer';
+        id: string;
+        day: string | null;
+        text: string | null;
+        check_in_id: string | null;
+        comment_id: string | null;
+        challenge_title: string | null;
+        challenge_amount: number | null;
+        challenge_unit: string | null;
+        challenge_line: string | null;
+        answer: string | null;
+        at: Date;
+        coach_id: string;
+        name: string;
+        look: string;
+      }>`
+        with mine as (
+          select 'board' as kind, to_char(n.day, 'YYYY-MM-DD') as id,
+            to_char(n.day, 'YYYY-MM-DD') as day, n.text, null::uuid as check_in_id,
+            null::uuid as comment_id, null as challenge_title, null::int as challenge_amount,
+            null as challenge_unit, null as challenge_line, null as answer, n.at, n.coach_id
+          from public.coach_notes n
+          where n.squad_id = ${squad}::uuid and n.at >= ${since}
+          union all
+          select 'note', m.id::text, to_char(m.day, 'YYYY-MM-DD'), m.text, null, null, null,
+            null, null, null, null, d.at, m.coach_id
+          from public.coach_member_notes m
+          join public.coach_member_note_deliveries d on d.note_id = m.id
+          where m.squad_id = ${squad}::uuid and m.member_id = ${member}::uuid and d.at >= ${since}
+          union all
+          select 'challenge', m.id::text, to_char(m.day, 'YYYY-MM-DD'), null, null, null,
+            m.challenge_title, m.challenge_amount, m.challenge_unit, m.challenge_line, a.answer,
+            d.at, m.coach_id
+          from public.coach_member_notes m
+          join public.coach_member_note_deliveries d on d.note_id = m.id
+          left join public.coach_challenge_answers a on a.note_id = m.id
+          where m.squad_id = ${squad}::uuid and m.member_id = ${member}::uuid
+            and m.challenge_title is not null and d.at >= ${since}
+          union all
+          select 'reply', r.id::text, null, r.text, r.check_in_id, null, null, null, null, null,
+            null, r.at, r.coach_id
+          from public.coach_replies r
+          join public.check_ins c on c.id = r.check_in_id
+          where r.squad_id = ${squad}::uuid and c.member_id = ${member}::uuid
+            and r.text is not null and r.at >= ${since}
+          union all
+          select 'answer', a.id::text, null, a.text, a.check_in_id, a.comment_id, null, null,
+            null, null, null, a.at, a.coach_id
+          from public.coach_answers a
+          join public.check_in_comments cc on cc.id = a.comment_id
+          where a.squad_id = ${squad}::uuid and cc.member_id = ${member}::uuid and a.at >= ${since}
+        )
+        select mine.*, coaches.id as coach_id, coaches.name, coaches.look
+        from mine join public.coaches on coaches.id = mine.coach_id
+        order by mine.at,
+          array_position(array['board', 'note', 'challenge', 'reply', 'answer'], mine.kind),
+          mine.id`.execute(db);
+      return rows.rows.map((row) => {
+        const base = {
+          id: row.id,
+          coach: { id: row.coach_id, name: row.name, look: row.look },
+          at: new Date(row.at),
+        };
+        switch (row.kind) {
+          case 'board':
+          case 'note':
+            return { ...base, kind: row.kind, day: row.day ?? '', text: row.text ?? '' };
+          case 'challenge':
+            return {
+              ...base,
+              kind: row.kind,
+              day: row.day ?? '',
+              challenge: challengeOfRow(row) ?? { title: '' },
+              answer: row.answer === null ? undefined : ChallengeAnswer.parse(row.answer),
+            };
+          case 'reply':
+            return {
+              ...base,
+              kind: row.kind,
+              checkIn: row.check_in_id ?? '',
+              text: row.text ?? '',
+            };
+          case 'answer':
+            return {
+              ...base,
+              kind: row.kind,
+              checkIn: row.check_in_id ?? '',
+              comment: row.comment_id ?? '',
+              text: row.text ?? '',
+            };
+        }
+      });
+    },
+
+    async seenCards({ squad, member }) {
+      const rows = await db
+        .selectFrom('coach_card_seen')
+        .select(['kind', 'card_id'])
+        .where('squad_id', '=', squad)
+        .where('member_id', '=', member)
+        .execute();
+      return new Set(rows.map((row) => cardKey(CoachCardKind.parse(row.kind), row.card_id)));
+    },
+
+    async markSeen({ squad, member, kind, id }) {
+      await sql`
+        insert into public.coach_card_seen (member_id, squad_id, kind, card_id)
+        values (${member}::uuid, ${squad}::uuid, ${kind}, ${id})
+        on conflict do nothing`.execute(db);
     },
 
     async replies(squad, checkIns) {
@@ -833,6 +952,7 @@ function challengeOfRow(row: {
   readonly challenge_title: string | null;
   readonly challenge_amount: number | null;
   readonly challenge_unit: string | null;
+  readonly challenge_line: string | null;
 }): Challenge | undefined {
   if (row.challenge_title === null) return undefined;
   return {
@@ -840,5 +960,6 @@ function challengeOfRow(row: {
     ...(row.challenge_amount === null || row.challenge_unit === null
       ? {}
       : { amount: row.challenge_amount, unit: row.challenge_unit }),
+    ...(row.challenge_line === null ? {} : { line: row.challenge_line }),
   };
 }

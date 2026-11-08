@@ -4330,6 +4330,12 @@
             "description": "The amount’s unit, the coach’s own word.",
             "example": "杯"
           },
+          "line": {
+            "type": "string",
+            "maxLength": 24,
+            "description": "The coach talking to the member under the title, about why; left out on older notes.",
+            "example": "泳池泡久了也会渴，别等口干。"
+          },
           "answer": {
             "type": "string",
             "enum": [
@@ -4344,6 +4350,71 @@
         ],
         "additionalProperties": false,
         "description": "The day’s challenge (今日挑战) the note sets, if any; only the member sees it."
+      },
+      "CoachCards": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "stack": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachCard"
+            },
+            "description": "The cards not seen yet from the last 72 hours, oldest first: the stack."
+          },
+          "earlier": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachCard"
+            },
+            "description": "Every other card from the last 30 days, newest first: 以前."
+          }
+        },
+        "required": [
+          "version",
+          "stack",
+          "earlier"
+        ],
+        "additionalProperties": false
+      },
+      "CoachCardSeen": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "board",
+              "note",
+              "challenge",
+              "gift",
+              "reply",
+              "answer"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,64}$/u",
+            "description": "The card’s id within its kind.",
+            "example": "42"
+          }
+        },
+        "required": [
+          "version",
+          "kind",
+          "id"
+        ],
+        "additionalProperties": false
       },
       "SquadNudges": {
         "type": "object",
@@ -10431,6 +10502,184 @@
           },
           "400": {
             "description": "Not a valid squad id, or not valid check-in ids, or more than 100",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/coach/cards": {
+      "get": {
+        "operationId": "getCoachCards",
+        "summary": "What the squad’s coach said to the caller, as cards (the coach page)",
+        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered, its gifts, and its lines to their check-ins and replies. The unseen ones from the last 72 hours are the stack; the rest are 以前.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The stack and 以前",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachCards"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/coach/cards/{kind}/{cardId}/seen": {
+      "put": {
+        "operationId": "markCoachCardSeen",
+        "summary": "Mark one of the coach’s cards seen (swiped into 以前)",
+        "description": "The caller swiped the card away: it leaves the stack on every phone and stays in 以前. A seen `note` is also put away (收下) on 今天. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "board",
+                "note",
+                "challenge",
+                "gift",
+                "reply",
+                "answer"
+              ]
+            },
+            "required": true,
+            "name": "kind",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.:-]{1,64}$/u",
+              "description": "The card’s id within its kind.",
+              "example": "42"
+            },
+            "required": true,
+            "description": "The card’s id within its kind.",
+            "name": "cardId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Seen",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachCardSeen"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id, card kind or card id",
             "content": {
               "application/problem+json": {
                 "schema": {

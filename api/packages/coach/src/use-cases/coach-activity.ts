@@ -1,3 +1,4 @@
+import type { CoachCardKind, CoachOwnCard } from '../domain/cards.js';
 import type { CoachLetter } from '../domain/letter.js';
 import type { CoachAnswer, CoachReply } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
@@ -65,6 +66,26 @@ export interface CoachActivity {
     readonly note: number;
     readonly answer: ChallengeAnswer;
   }): Promise<ChallengeAnswer>;
+  /**
+   * The coach's own cards for the member in the squad since `since`, oldest first, and the keys
+   * (`cardKey`) of every card they have seen there, the gifts' too. The caller checks they are in
+   * the squad.
+   */
+  cards(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly since: Date;
+  }): Promise<{ readonly cards: readonly CoachOwnCard[]; readonly seen: ReadonlySet<string> }>;
+  /**
+   * The member swiped a card away: seen, once. Seeing a note also puts it away on 今天 (收下).
+   * The caller checks they are in the squad; an id that isn't theirs marks nothing they can see.
+   */
+  markSeen(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly kind: CoachCardKind;
+    readonly id: string;
+  }): Promise<void>;
   spoke(input: {
     readonly squads: readonly SquadId[];
     readonly checkIn: string;
@@ -99,6 +120,20 @@ export function createCoachActivity(deps: { readonly store: CoachActivityStore }
       if (kept === 'noNote') throw new CoachNoteNotFoundError();
       if (kept === 'noChallenge') throw new CoachNoteNoChallengeError();
       return kept;
+    },
+    cards: async (input) => {
+      const [cards, seen] = await Promise.all([
+        deps.store.cards(input),
+        deps.store.seenCards({ squad: input.squad, member: input.member }),
+      ]);
+      return { cards, seen };
+    },
+    markSeen: async (input) => {
+      await deps.store.markSeen(input);
+      const note = input.kind === 'note' ? Number(input.id) : Number.NaN;
+      if (Number.isSafeInteger(note) && note > 0) {
+        await deps.store.putAway({ squad: input.squad, member: input.member, note });
+      }
     },
     spoke: async ({ squads, checkIn, coach }) => {
       const replies = await Promise.all(

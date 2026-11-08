@@ -1303,7 +1303,7 @@ describe('the coach', () => {
                 input: {
                   member: '队员1',
                   text: '今天多喝水',
-                  challenge: { title: '喝水', amount: 8 },
+                  challenge: { title: '喝水', amount: 8, line: '天干，别等口渴' },
                 },
               },
               {
@@ -1311,7 +1311,7 @@ describe('the coach', () => {
                 input: {
                   member: '队员1',
                   text: '今天多喝水',
-                  challenge: { title: '喝水', amount: 8, unit: '杯' },
+                  challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干，别等口渴' },
                 },
               },
               { tool: 'note_to', input: { member: '队员2', text: '今天走走' } },
@@ -1331,7 +1331,7 @@ describe('the coach', () => {
       expect(daily?.task).toContain('礼物清单：\n- gift-scarf：红围巾\n- gift-cap');
       expect(daily?.task).toContain('这周还能收礼物的：\n- 队员1（已有：gift-cap）');
       expect(daily?.answers.slice(0, 7)).toStrictEqual([
-        '挑战不对：title 不超过 8 字；amount 是 1 到 9999 的整数，unit 不超过 4 字，两个一起填或都不填。',
+        '挑战不对：title 不超过 8 字；amount 是 1 到 9999 的整数，unit 不超过 4 字，两个一起填或都不填；line 不超过 24 字。',
         '便条写好了，给 队员1，挑战「喝水 8 杯」。',
         '便条写好了，给 队员2。',
         '队员2 这周不能收礼物；能收的是：队员1。',
@@ -1343,12 +1343,24 @@ describe('the coach', () => {
         { squad, member: mia, coach: 'xiaohun', piece: 'gift-scarf', line: '天冷了' },
       ]);
       const notes = await sql<{ member_id: string; challenge_title: string | null }>`
-        select member_id, challenge_title, challenge_amount, challenge_unit
+        select member_id, challenge_title, challenge_amount, challenge_unit, challenge_line
         from public.coach_member_notes where squad_id = ${squad} order by member_id = ${mia} desc
       `.execute(trx);
       expect(notes.rows).toStrictEqual([
-        { member_id: mia, challenge_title: '喝水', challenge_amount: 8, challenge_unit: '杯' },
-        { member_id: leo, challenge_title: null, challenge_amount: null, challenge_unit: null },
+        {
+          member_id: mia,
+          challenge_title: '喝水',
+          challenge_amount: 8,
+          challenge_unit: '杯',
+          challenge_line: '天干，别等口渴',
+        },
+        {
+          member_id: leo,
+          challenge_title: null,
+          challenge_amount: null,
+          challenge_unit: null,
+          challenge_line: null,
+        },
       ]);
 
       // The member accepts it (the first answer stands), and the next check-in's wake knows.

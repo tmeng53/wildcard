@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 
+import type { CoachCardKind, CoachOwnCard } from './domain/cards.js';
 import type { Challenge, ChallengeAnswer } from './domain/challenge.js';
 import type { Coach, CoachId } from './domain/coach.js';
 import type { StoredPath } from './domain/memory.js';
@@ -288,6 +289,25 @@ export interface CoachActivityStore {
     readonly member: string;
     readonly note: number;
   }): Promise<boolean>;
+  /**
+   * The coach's own cards for the member in the squad since `since`, oldest first: its 战术板
+   * lines, the member's delivered notes and their challenges, its lines to the member's
+   * check-ins and its answers to the member's replies.
+   */
+  cards(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly since: Date;
+  }): Promise<readonly CoachOwnCard[]>;
+  /** The keys (`cardKey`) of the cards the member has seen in the squad. */
+  seenCards(input: { readonly squad: SquadId; readonly member: string }): Promise<Set<string>>;
+  /** Marks a card seen for the member; once, however many times it is called. */
+  markSeen(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly kind: CoachCardKind;
+    readonly id: string;
+  }): Promise<void>;
   /** The squad's replies to these check-ins, in no order; a check-in with none is left out. */
   replies(squad: SquadId, checkIns: readonly string[]): Promise<readonly CoachReply[]>;
   /** The squad's answers to replies under these check-ins, oldest first. */

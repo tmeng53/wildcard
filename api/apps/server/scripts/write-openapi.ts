@@ -123,7 +123,14 @@ const app = createApp({
     currentAmong: unused,
   },
   coachHiring: { hire: unused, fire: unused, change: unused, current: unused, offered: unused },
-  coachActivity: { squad: unused, putAway: unused, answerChallenge: unused, spoke: unused },
+  coachActivity: {
+    squad: unused,
+    putAway: unused,
+    answerChallenge: unused,
+    cards: unused,
+    markSeen: unused,
+    spoke: unused,
+  },
   coachLetters: { write: unused },
   weekSummaryWords: () => Promise.reject(new Error('unused')),
   scenes: createScenes({
