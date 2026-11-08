@@ -31,7 +31,8 @@ public struct UnlockWords {
 }
 
 /// 通知, opened from the bell on 动态 (the approved bell design): everything the member was told,
-/// under 今天, 本周 and 更早, newest first, the ones that were new in bold with a dot. Opening it
+/// under 今天, 本周 and 更早, newest first (what was said on one post in a day is one row), the
+/// ones that were new in bold with a dot. Opening it
 /// marks them all read. A tap on a row goes where it points. Empty, the member's character
 /// stands there with 还没有通知.
 public struct NoticesView: View {
@@ -108,17 +109,18 @@ public struct NoticesView: View {
             ForEach(NoticeSection.sections(inbox.notices, now: shownAt, calendar: .current)) { section in
                 SectionLabel(section.heading.title)
                     .padding(.top, Space.s)
-                ForEach(section.notices) { notice in
+                ForEach(section.entries) { entry in
                     Button {
                         // The same place its banner and its push open.
-                        if let destination = notice.destination { open(destination) }
+                        if let destination = entry.notice.destination { open(destination) }
                     } label: {
                         NoticeRow(
-                            notice: notice, heading: section.heading, isUnread: inbox.isUnread(notice), now: shownAt,
-                            unlocked: unlocked)
+                            entry: entry, heading: section.heading,
+                            isUnread: entry.notices.contains(where: inbox.isUnread),
+                            now: shownAt, unlocked: unlocked)
                     }
                     .buttonStyle(PressableButtonStyle())
-                    .accessibilityIdentifier("notices.row.\(notice.id.rawValue)")
+                    .accessibilityIdentifier("notices.row.\(entry.id.rawValue)")
                 }
             }
             if inbox.hasMore {
