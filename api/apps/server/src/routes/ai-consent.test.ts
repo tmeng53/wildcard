@@ -138,7 +138,7 @@ async function call(
 
 const reasonOf = (body: unknown) => z.object({ reason: z.string() }).parse(body).reason;
 
-const agree = (token: string, copyVersion = 2) =>
+const agree = (token: string, copyVersion = 3) =>
   call('PUT', '/me/ai-consent', token, { version: 1, copyVersion });
 
 const SquadBody = z.object({
@@ -154,14 +154,14 @@ describe('GET and PUT /me/ai-consent', () => {
     const me = await signUp();
     expect(await call('GET', '/me/ai-consent', me.token)).toStrictEqual({
       status: 200,
-      body: { version: 1, copyVersion: 2, current: false },
+      body: { version: 1, copyVersion: 3, current: false },
     });
 
     const agreed = await agree(me.token);
     const Agreed = z.strictObject({
       version: z.literal(1),
-      copyVersion: z.literal(2),
-      given: z.strictObject({ copyVersion: z.literal(2), givenAt: z.iso.datetime() }),
+      copyVersion: z.literal(3),
+      given: z.strictObject({ copyVersion: z.literal(3), givenAt: z.iso.datetime() }),
       current: z.literal(true),
     });
     expect(agreed.status).toBe(200);
@@ -181,7 +181,7 @@ describe('GET and PUT /me/ai-consent', () => {
     expect([invalid.status, reasonOf(invalid.body)]).toStrictEqual([400, 'REQUEST_INVALID']);
     expect((await call('GET', '/me/ai-consent', me.token)).body).toStrictEqual({
       version: 1,
-      copyVersion: 2,
+      copyVersion: 3,
       current: false,
     });
   });
