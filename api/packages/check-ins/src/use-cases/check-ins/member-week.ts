@@ -1,4 +1,4 @@
-import type { CheckInRecord, MemberId, SquadId } from '../../domain/check-in.js';
+import type { CheckInRecord, LocalDay, MemberId, SquadId } from '../../domain/check-in.js';
 import { markOn, trainedDays, weekOf, type DayMark } from '../../domain/days.js';
 import type { FuelGoals } from '../../domain/fuel-goal.js';
 import {
@@ -28,6 +28,8 @@ export interface MemberWeek {
   readonly fuelGoals: FuelGoals;
   /** The Monday of the week they joined, in their time zone: their 出赛表's W1. */
   readonly firstWeek?: WeekStart;
+  /** Their today, in their time zone: the row their 出赛表 shades as 今天. */
+  readonly today: LocalDay;
 }
 
 /**
@@ -52,7 +54,8 @@ export async function memberWeek(
 ): Promise<MemberWeek> {
   const zones = await zonesOf(deps.calendarOf, { members: [member, viewer], viewer });
   const { zone, joinedOn } = zones[0] ?? { zone: 'UTC', joinedOn: undefined };
-  const week = weekOf(localDayAt(deps.clock(), zone));
+  const today = localDayAt(deps.clock(), zone);
+  const week = weekOf(today);
   const weekStart = WeekStart.parse(week.from);
   const [plan, trainedBy, theirs, fuelGoals] = await Promise.all([
     findWeeklyPlan({ store: deps.plans }, { member, weekStart }),
@@ -70,6 +73,7 @@ export async function memberWeek(
     marks,
     fuelGoals: fuelGoals ?? [],
     ...(joinedOn === undefined ? {} : { firstWeek: weekStartOf(joinedOn) }),
+    today,
   };
 }
 

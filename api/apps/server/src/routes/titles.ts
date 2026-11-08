@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { SportKey, WeekStart, type CheckIns } from '@wildcard/check-ins';
+import { LocalDay, SportKey, WeekStart, type CheckIns } from '@wildcard/check-ins';
 import { EquippedTitle, JerseyNumber, MemberId, type Members } from '@wildcard/members';
 import { SquadId, SquadMemberUnknownError, type Squads } from '@wildcard/squads';
 import {
@@ -192,6 +192,12 @@ const PlayerCardBody = z
             'The Monday of the week they joined, in their time zone, which their 出赛表 counts ' +
             'as W1. Missing before they save a profile, and from older servers.',
           example: '2026-10-12',
+        }),
+        today: LocalDay.optional().meta({
+          description:
+            'Their today, in their time zone, which their 出赛表 shades as 今天. Left out by ' +
+            'older servers.',
+          example: '2026-10-29',
         }),
       })
       .optional()
