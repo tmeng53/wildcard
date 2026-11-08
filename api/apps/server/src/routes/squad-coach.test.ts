@@ -11,6 +11,10 @@ import {
 import {
   createCoachActivity,
   createCoachHiring,
+  createCoachLetters,
+  createPostgresCoachLetters,
+  createPostgresCoachSettings,
+  createPostgresCoachStores,
   createPostgresCoachActivity,
   createPostgresCoachCatalog,
   createPostgresCoachHiring,
@@ -113,6 +117,17 @@ const app = createApp({
     catalog: createPostgresCoachCatalog(db),
   }),
   coachActivity: createCoachActivity({ store: createPostgresCoachActivity(db) }),
+  // No model here: the coach module's own tests write letters.
+  coachLetters: createCoachLetters({
+    settings: createPostgresCoachSettings(db),
+    catalog: createPostgresCoachCatalog(db),
+    letters: createPostgresCoachLetters(db),
+    memory: createPostgresCoachStores(db).memory,
+    usage: createPostgresCoachStores(db).usage,
+    squadWeek: () => Promise.reject(new Error('unused')),
+    aiConsented: () => Promise.reject(new Error('unused')),
+    clock: () => new Date(),
+  }),
   ...ignoredNotices,
   log: createLog(() => undefined),
   jobs: noJobs,
@@ -440,5 +455,38 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       token: captain.token,
     });
     expect(tooMany.status).toBe(400);
+  });
+});
+
+describe('POST /squads/{squadId}/coach/letter', () => {
+  // Writing and reading a letter is the coach module's to test, inside transactions it rolls
+  // back, since it needs a second coach this shared database doesn't have.
+  it('is asked for by the captain only, and is none without a change of coach', async () => {
+    const [captain, mate] = [await signUp(), await signUp()];
+    const squad = await squadOf(captain, mate);
+    const path = `/squads/${squad}/coach/letter`;
+    const byMate = await call({ method: 'POST', path, token: mate.token });
+    expect([byMate.status, reason(byMate)]).toStrictEqual([403, 'NOT_SQUAD_CAPTAIN']);
+    await call({
+      method: 'PUT',
+      path: `/squads/${squad}/coach`,
+      token: captain.token,
+      body: { version: 1, coach: 'xiaohun' },
+    });
+    expect(await call({ method: 'POST', path, token: captain.token })).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: { version: 1, letter: null },
+    });
+    expect(
+      await call({ method: 'GET', path: `/squads/${squad}/coach/activity`, token: mate.token }),
+    ).not.toHaveProperty('body.letter');
+    // Leave no squad with a coach: the coach's own tests count every squad that has one.
+    const fired = await call({
+      method: 'DELETE',
+      path: `/squads/${squad}/coach`,
+      token: captain.token,
+    });
+    expect(fired.status).toBe(200);
   });
 });

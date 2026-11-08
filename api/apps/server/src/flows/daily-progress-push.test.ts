@@ -52,6 +52,7 @@ import {
   unusedGifts,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 import {
@@ -134,6 +135,7 @@ const deps = {
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachLetters: unusedCoachLetters,
   notices,
   coachNames: () => Promise.reject(new Error('unused')),
   liveEvents: ignoredNotices.liveEvents,
