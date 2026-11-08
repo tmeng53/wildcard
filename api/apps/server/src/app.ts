@@ -68,6 +68,7 @@ import { squadLanguage } from './routes/squad-language.js';
 import { squadTimeZone } from './routes/squad-time-zone.js';
 import { squadWeeklyGoal } from './routes/squad-weekly-goal.js';
 import { coachActivity } from './routes/coach-activity.js';
+import { coachCards } from './routes/coach-cards.js';
 import { squadScene } from './routes/squad-scene.js';
 import { newYorkDay } from './new-york-day.js';
 import { squadToday } from './routes/squad-today.js';
@@ -212,6 +213,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', squadTimeZone(deps));
   app.route('/', squadLanguage(deps));
   app.route('/', coachActivity(deps));
+  app.route('/', coachCards(deps));
   app.route('/', nudges(deps));
   app.route('/', feedback(deps));
   app.route('/', notices(deps));

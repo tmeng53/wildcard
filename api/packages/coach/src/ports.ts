@@ -1,6 +1,12 @@
 import type { z } from 'zod';
 
-import type { Challenge, ChallengeAnswer } from './domain/challenge.js';
+import type { CoachCardKind, CoachOwnCard } from './domain/cards.js';
+import type {
+  Challenge,
+  ChallengeAnswer,
+  ChallengeCompletion,
+  ChallengeDoneBy,
+} from './domain/challenge.js';
 import type { Coach, CoachId } from './domain/coach.js';
 import type { StoredPath } from './domain/memory.js';
 import type { CoachModel, CoachSettings, MemberId, SquadId } from './domain/settings.js';
@@ -182,9 +188,40 @@ export interface CoachMemberNoteStore {
     readonly squad: SquadId;
     readonly member: string;
     readonly day: string;
-  }): Promise<
-    { readonly challenge: Challenge; readonly answer: ChallengeAnswer | undefined } | undefined
-  >;
+  }): Promise<DayChallenge | undefined>;
+  /**
+   * Marks the challenge on a note done, by the coach from the day's check-ins; false when it
+   * set none, isn't for `day` (the squad's), was let go or was done already (the first stands).
+   */
+  complete(input: {
+    readonly note: number;
+    readonly by: ChallengeDoneBy;
+    readonly day: string;
+  }): Promise<boolean>;
+  /** The challenges on the squad's notes of `day` that reached their members, by member. */
+  challengesOn(input: {
+    readonly squad: SquadId;
+    readonly day: string;
+  }): Promise<readonly (DayChallenge & { readonly member: string })[]>;
+}
+
+/** What a member said to a challenge, and why they let it go if they said. */
+export interface ChallengeAnswered {
+  readonly answer: ChallengeAnswer;
+  readonly reason?: string;
+}
+
+/** A member's challenge on one day's note, as they and their coach read it. */
+export interface DayChallenge {
+  /** The note that set it. */
+  readonly note: number;
+  /** The squad's day it is for, `YYYY-MM-DD`. */
+  readonly day: string;
+  readonly challenge: Challenge;
+  readonly answer: ChallengeAnswer | undefined;
+  /** Why they let it go, if they said. */
+  readonly reason: string | undefined;
+  readonly completion: ChallengeCompletion | undefined;
 }
 
 /** What coaches said to check-ins: a line, an emoji or both, one a squad a check-in. */
@@ -281,13 +318,55 @@ export interface CoachActivityStore {
     readonly member: string;
     readonly note: number;
     readonly answer: ChallengeAnswer;
-  }): Promise<ChallengeAnswer | 'noNote' | 'noChallenge'>;
+    /** Why they let it go, with `declined` only. */
+    readonly reason?: string;
+  }): Promise<ChallengeAnswered | 'noNote' | 'noChallenge'>;
+  /**
+   * The member's challenge on their note of `day` (the squad's day), once delivered; the same
+   * as the coach's `challengeOf`.
+   */
+  challengeOf(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly day: string;
+  }): Promise<DayChallenge | undefined>;
+  /**
+   * The member marks their note's challenge done (我完成了) on `today`, the squad's day:
+   * `noNote` when the note isn't theirs in the squad or hasn't reached them, `noChallenge` when
+   * it set none, `declined` when they let it go, `dayOver` when it was another day's. The first
+   * one stands, the coach's too, and is what comes back.
+   */
+  completeChallenge(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly note: number;
+    readonly today: string;
+  }): Promise<ChallengeCompletion | 'noNote' | 'noChallenge' | 'declined' | 'dayOver'>;
   /** The member put their note away (收下); false when it isn't theirs in the squad. Once. */
   putAway(input: {
     readonly squad: SquadId;
     readonly member: string;
     readonly note: number;
   }): Promise<boolean>;
+  /**
+   * The coach's own cards for the member in the squad since `since`, oldest first: its 战术板
+   * lines, the member's delivered notes and their challenges, its lines to the member's
+   * check-ins and its answers to the member's replies.
+   */
+  cards(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly since: Date;
+  }): Promise<readonly CoachOwnCard[]>;
+  /** The keys (`cardKey`) of the cards the member has seen in the squad. */
+  seenCards(input: { readonly squad: SquadId; readonly member: string }): Promise<Set<string>>;
+  /** Marks a card seen for the member; once, however many times it is called. */
+  markSeen(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly kind: CoachCardKind;
+    readonly id: string;
+  }): Promise<void>;
   /** The squad's replies to these check-ins, in no order; a check-in with none is left out. */
   replies(squad: SquadId, checkIns: readonly string[]): Promise<readonly CoachReply[]>;
   /** The squad's answers to replies under these check-ins, oldest first. */

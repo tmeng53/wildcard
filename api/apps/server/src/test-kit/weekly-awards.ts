@@ -43,6 +43,10 @@ export const unusedCoachActivity = {
   squad: unused,
   putAway: unused,
   answerChallenge: unused,
+  challenge: unused,
+  completeChallenge: unused,
+  cards: unused,
+  markSeen: unused,
   spoke: unused,
 };
 

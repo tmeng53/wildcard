@@ -4,6 +4,7 @@ import { editBody, FILE_LIMIT, storedPathOf, type StoredPath } from '../../domai
 import {
   Challenge,
   CHALLENGE_AMOUNT_MAX,
+  CHALLENGE_LINE_LIMIT,
   CHALLENGE_TITLE_LIMIT,
   CHALLENGE_UNIT_LIMIT,
   challengeText,
@@ -39,6 +40,8 @@ export interface WakeDraft {
   answer: string | undefined;
   /** Whom that answer @s, by member id. */
   answerMentions: readonly string[];
+  /** Whether the run marked the check-in's author's challenge today done, on its wake. */
+  challengeDone: boolean;
   /** Every tool call of the run, in order. */
   readonly steps: WakeStep[];
 }
@@ -146,6 +149,7 @@ export function toolbox({
   noteTo = [],
   gifting,
   to,
+  openChallenge = false,
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
@@ -165,6 +169,8 @@ export function toolbox({
   readonly gifting?: GiftOptions;
   /** Whom a line on this wake answers, by member id: the post's author or the replier. */
   readonly to?: string | undefined;
+  /** On a check-in's wake, whether its author has a challenge today that can still be done. */
+  readonly openChallenge?: boolean;
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
   const tools = [
@@ -296,7 +302,11 @@ export function toolbox({
           text: z.string().describe('便条上的这一句'),
           challenge: z
             .object({
-              title: z.string().describe(`做什么，不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字`),
+              title: z
+                .string()
+                .describe(
+                  `做什么，只写动作，数量和单位不写进来，不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字`,
+                ),
               amount: z
                 .number()
                 .int()
@@ -308,10 +318,15 @@ export function toolbox({
                 .describe(
                   `数量的单位，不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字；和 amount 一起填`,
                 ),
+              line: z
+                .string()
+                .describe(
+                  `标题下面的一句小字，对他说为什么是这件事，不超过 ${String(CHALLENGE_LINE_LIMIT)} 字`,
+                ),
             })
             .optional()
             .describe(
-              '今日挑战，可以不给。只给一件今天做得到、真能让他练得更好或吃得更好的小事，从他今天的计划、饮食小目标和最近的训练里找；没有合适的就不给。不加练量，不提体重和热量；休息日、请假或身体不舒服的人不给。他可以接受或说算了，之后他发打卡时你会知道。',
+              '今日挑战，可以不给。只给一件今天做得到、真能让他练得更好或吃得更好的小事，从他今天的计划、饮食小目标和最近的训练里找；没有合适的就不给。要比他平时多走一小步，数量要真有意思，别把他的目标原样再说一遍。不加练量，不提体重和热量；休息日、请假或身体不舒服的人不给。他可以接受或说算了，之后他发打卡时你会知道。',
             ),
         }),
         // Kept by length: it is about the member, and stays in its own table.
@@ -328,9 +343,17 @@ export function toolbox({
           const line = text.trim();
           const problem = lineProblem(line, NOTE_LIMIT);
           if (problem !== undefined) return problem;
-          const set = challenge === undefined ? undefined : Challenge.safeParse(challenge);
+          // A blank title is no challenge: the model sends one, with a zero amount, for a rest day.
+          // A blank line under it is none too.
+          const set =
+            challenge === undefined || challenge.title.trim() === ''
+              ? undefined
+              : Challenge.safeParse({
+                  ...challenge,
+                  line: challenge.line.trim() === '' ? undefined : challenge.line,
+                });
           if (set !== undefined && !set.success) {
-            return `挑战不对：title 不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数，unit 不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字，两个一起填或都不填。`;
+            return `挑战不对：title 不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数，unit 不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字，两个一起填或都不填；line 不超过 ${String(CHALLENGE_LINE_LIMIT)} 字。`;
           }
           const replaced = draft.memberNotes.has(id);
           draft.memberNotes.set(id, {
@@ -400,6 +423,21 @@ export function toolbox({
           const replaced = draft.reaction !== undefined;
           draft.reaction = emoji;
           return replaced ? `已换成 ${emoji}。` : `已点 ${emoji}。`;
+        },
+      }),
+    );
+  }
+  if (kind === 'checkIn' && openChallenge) {
+    tools.push(
+      defineTool(draft.steps, {
+        name: 'complete_challenge',
+        description:
+          '这条打卡做到了你今天给他的挑战，就记他完成：他自己的页面上会显示「已完成」。没做到就不用。',
+        parameters: z.object({}),
+        run: () => {
+          const again = draft.challengeDone;
+          draft.challengeDone = true;
+          return again ? '已经记过了。' : '已记他完成。';
         },
       }),
     );
