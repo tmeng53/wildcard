@@ -2,6 +2,8 @@
 // reactions and comments on it. The model never sees a member's id: each member is 队员N, by
 // the order they joined, with the nickname they gave their character.
 
+import type { ReaderLanguage } from '@wildcard/language-model';
+
 /** What a member checked in. */
 export type CheckInKind = 'trained' | 'healthyMeal' | 'cheatMeal' | 'disclaimer';
 
@@ -53,8 +55,17 @@ export interface SquadWeek {
   readonly weekStart: string;
   /** The squad's name now. */
   readonly name?: string;
-  /** Everyone in the squad now, in the order they joined. */
-  readonly members: readonly { readonly member: string; readonly nickname?: string }[];
+  /**
+   * Everyone in the squad now, in the order they joined, with the language their app speaks
+   * (Simplified Chinese when left out).
+   */
+  readonly members: readonly {
+    readonly member: string;
+    readonly nickname?: string;
+    readonly language?: ReaderLanguage;
+  }[];
+  /** The squad's language, its captain's, for what the whole squad reads (the 战术板). */
+  readonly language?: ReaderLanguage;
   /** The week's check-ins shared to the squad, oldest first. */
   readonly checkIns: readonly WeekCheckIn[];
 }
@@ -143,4 +154,9 @@ export function consentedOnly(week: SquadWeek, consented: ReadonlySet<string>): 
         comments: checkIn.comments.filter(({ member }) => consented.has(member)),
       })),
   };
+}
+
+/** The language a member's app speaks, Simplified Chinese when the week doesn't say. */
+export function languageOf(week: Pick<SquadWeek, 'members'>, member: string): ReaderLanguage {
+  return week.members.find((each) => each.member === member)?.language ?? 'zh-Hans';
 }

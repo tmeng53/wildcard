@@ -1,4 +1,5 @@
 import type { DisclaimerStyle } from '@wildcard/disclaimer-styles';
+import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
 
 import { STYLE_NAMES, type DraftReason, type PromptMeme } from './draft-request.js';
 
@@ -7,11 +8,16 @@ import { STYLE_NAMES, type DraftReason, type PromptMeme } from './draft-request.
 // and its eval cases. The reply names its outcome, so a reason about self-harm gets the care line
 // and any other refused reason gets the dice.
 
-/** The user message: the reason, the style, and this call's meme, if it got one. */
+/**
+ * The user message: the reason, the style, this call's meme, if it got one, and the language
+ * to write in when it isn't Simplified Chinese.
+ */
 export function promptFor(request: {
   readonly reason: DraftReason;
   readonly style: DisclaimerStyle;
   readonly meme: PromptMeme | undefined;
+  /** The member's app language; Simplified Chinese, the instructions' own, when left out. */
+  readonly language?: ReaderLanguage;
 }): string {
   const lines = [`原因：${request.reason}`, `风格：${STYLE_NAMES[request.style]}`];
   if (request.meme !== undefined) {
@@ -20,6 +26,9 @@ export function promptFor(request: {
       `  意思：${request.meme.meaning}`,
       `  背景：${request.meme.background}`,
     );
+  }
+  if (request.language !== undefined && request.language !== 'zh-Hans') {
+    lines.push(writeIn(request.language));
   }
   return lines.join('\n');
 }

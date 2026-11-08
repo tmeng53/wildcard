@@ -366,7 +366,7 @@ describe('the coach', () => {
       ]);
       // Every member who agreed to AI use gets a note, whether or not they checked in.
       expect(runs[1]?.task).toContain(
-        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天。\n- 队员2：这周已经练了 0 天。',
+        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天。 用简体中文写。\n- 队员2：这周已经练了 0 天。 用简体中文写。',
       );
       // With yesterday's posts, here none.
       expect(runs[1]?.task).toContain('昨天（周六）小队没人发动态。');

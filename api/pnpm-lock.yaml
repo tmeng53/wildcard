@@ -287,6 +287,9 @@ importers:
       '@wildcard/errors':
         specifier: workspace:*
         version: link:../errors
+      '@wildcard/language-model':
+        specifier: workspace:*
+        version: link:../language-model
       kysely:
         specifier: 0.29.7
         version: 0.29.7
@@ -361,6 +364,9 @@ importers:
       '@wildcard/errors':
         specifier: workspace:*
         version: link:../errors
+      '@wildcard/language-model':
+        specifier: workspace:*
+        version: link:../language-model
       '@wildcard/typed-text':
         specifier: workspace:*
         version: link:../typed-text
