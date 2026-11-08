@@ -1812,6 +1812,22 @@
           }
         }
       }
+    },
+    "已接受": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accepted"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已接受"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

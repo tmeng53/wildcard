@@ -47,8 +47,12 @@ struct CoachDeckCard: View {
     let places: CoachDeckPlaces
     /// The top card, whose buttons work; the ones under it only show.
     var isTop = true
+    /// Swipes the card into 以前, once its challenge is answered; nil on a card opened from 以前.
+    var putAway: ((CoachPageCard) -> Void)?
     /// The gift's moment, kept here while it is opened as the member watches.
     @State private var moment: GiftMoment?
+    /// 接受挑战 was tapped and went through: the button gives its stamp.
+    @State private var stamped = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -191,7 +195,8 @@ struct CoachDeckCard: View {
                         primary(Text("回他", bundle: .module), id: "coachDeck.reply") { places.post(post) }
                     }
                 case .challenge:
-                    if shown.challenge?.answer == nil { challengeButtons(shown) }
+                    // Held while its stamp plays, then the card goes.
+                    if shown.challenge?.answer == nil || stamped { challengeButtons(shown) }
                 case .gift:
                     giftButtons(shown)
                 case .note:
@@ -209,14 +214,27 @@ struct CoachDeckCard: View {
         }
     }
 
+    /// 算了 swipes the card away once it is kept; 接受挑战 stamps its button first (Tracy,
+    /// 2026-11-08).
     private func challengeButtons(_ card: CoachPageCard) -> some View {
         Group {
             outline(Text("算了", bundle: .module), id: "coachDeck.decline", grows: false) {
-                Task { await deck.answer(card, .declined) }
+                Task {
+                    await deck.answer(card, .declined)
+                    if deck.current(card).challenge?.answer != nil { putAway?(card) }
+                }
             }
             primary(Text("接受挑战", bundle: .module), id: "coachDeck.accept") {
-                Task { await deck.answer(card, .accepted) }
+                Task {
+                    await deck.answer(card, .accepted)
+                    guard deck.current(card).challenge?.answer != nil else { return }
+                    withAnimation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion)) { stamped = true }
+                    try? await Task.sleep(for: .seconds(reduceMotion ? 0 : DeckMetrics.stampHold))
+                    putAway?(card)
+                }
             }
+            .scaleEffect(stamped && !reduceMotion ? 1.08 : 1)
+            .haptic(.land, trigger: stamped)
         }
     }
 
@@ -350,5 +368,7 @@ enum DeckMetrics {
     static let giftTile: Double = 84
     /// How far in, and down, each card under the top one peeks out.
     static let peek: Double = 12
+    /// Seconds 接受挑战's stamp shows before the card goes into 以前.
+    static let stampHold: Double = 0.45
 }
 #endif

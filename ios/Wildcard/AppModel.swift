@@ -339,9 +339,6 @@ final class AppModel {
         await profile.reload()
     }
 
-    /// The coach's cards for the member, on its page, over our API.
-    var coachCards: any CoachCardSource { APICoachCardSource(api: api) }
-
     /// 我的动态 and squadmates' player cards over our API.
     var myPosts: any MyPostsSource { APIMyPostsSource(api: api) }
     var squadmateCards: any SquadmateCards { APISquadmateCards(api: api) }

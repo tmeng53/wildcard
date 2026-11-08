@@ -74,7 +74,7 @@ public struct CoachDeckPage: View {
                     let isTop = depth == 0
                     CoachDeckCard(
                         deck: deck, card: card, coach: card.coach, coachLook: card.look, cast: cast, places: places,
-                        isTop: isTop
+                        isTop: isTop, putAway: putAway
                     )
                     .padding(.horizontal, Double(depth) * DeckMetrics.peek)
                     .offset(y: Double(depth) * DeckMetrics.peek)
