@@ -9,12 +9,15 @@ import SwiftUI
 /// from the gear on 小队's header: 比赛时区 as a plain row, then 退出小队. The captain's row opens
 /// the system's zone list, the one sign-up's 建小队 shows, and a change counts at once (Tracy,
 /// 2026-11-08); in the hours it waits for Monday on the new clock, one short line under the row says
-/// so. Everyone else only reads it. No help text.
+/// so. Everyone else only reads it. Then 小队语言, the language the coach and 战报 are written in,
+/// with the one line that says so (Tracy, 2026-11-08: without it the setting is confusing); the
+/// captain's opens the same menu 我's 语言 does. No other help text.
 struct SquadPreferencesView: View {
     @Bindable var model: SquadSettingsModel
     /// The page's squad as the model has it now, so a saved change shows here at once.
     private var settings: SquadSettings? { model.settings }
     @State private var isChoosingZone = false
+    @State private var isChoosingLanguage = false
     @State private var isLeaving = false
     @State private var isLeavingNow = false
     @Environment(\.sceneTheme) private var theme
@@ -30,6 +33,7 @@ struct SquadPreferencesView: View {
                     InlineFailure()
                 }
                 timeZone
+                language
                 leaveButton
             }
             .padding(.horizontal, Space.pageMargin)
@@ -90,6 +94,46 @@ struct SquadPreferencesView: View {
 
     private func name(_ identifier: String) -> ZoneName {
         ZoneName(identifier, locale: AppLanguage.current.locale)
+    }
+
+    // MARK: 小队语言
+
+    private var language: some View {
+        VStack(alignment: .leading, spacing: Space.xs) {
+            Group {
+                if model.canChangeLanguage {
+                    ListRow(Text("小队语言", bundle: .module), value: languageValue, showsDivider: false) {
+                        isChoosingLanguage = true
+                    }
+                } else {
+                    ListRow(Text("小队语言", bundle: .module), value: languageValue, showsDivider: false)
+                }
+            }
+            .accessibilityIdentifier("squad.language")
+            Text("教练和战报用这个语言", bundle: .module)
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                .accessibilityIdentifier("squad.language.use")
+        }
+        .glassMenu(
+            isPresented: $isChoosingLanguage, title: Text("小队语言", bundle: .module),
+            items: SquadLanguage.Language.allCases.map { choice in
+                GlassMenuItem(
+                    Text(verbatim: name(of: choice)), isSelected: choice == settings?.language.language,
+                    id: "squad.language.\(choice.rawValue)"
+                ) {
+                    Task { await model.setLanguage(choice) }
+                }
+            })
+    }
+
+    /// The language by its own name (简体中文, 繁體中文, English), as 我's 语言 shows it.
+    private var languageValue: Text {
+        Text(verbatim: name(of: settings?.language.language ?? .simplifiedChinese))
+    }
+
+    private func name(of language: SquadLanguage.Language) -> String {
+        AppLanguage(rawValue: language.rawValue)?.name ?? language.rawValue
     }
 
     // MARK: 退出小队

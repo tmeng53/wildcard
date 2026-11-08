@@ -15,7 +15,7 @@ export type CoachNames = (
 export function coachNamesIn(deps: {
   readonly coaches: { list(): Promise<readonly Coach[]> };
   readonly members: Pick<Members, 'languages'>;
-  readonly squads: Pick<Squads, 'captainOf'>;
+  readonly squads: Pick<Squads, 'captainOf' | 'languagesOf'>;
 }): CoachNames {
   return async (asked) => {
     // A name is no reason to fail what shows it: callers fall back to the stored Chinese one.

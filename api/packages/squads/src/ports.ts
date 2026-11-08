@@ -1,3 +1,5 @@
+import type { ReaderLanguage } from '@wildcard/language-model';
+
 import type { InviteCode } from './domain/invite-code.js';
 import type { Scene, ScenePick, SceneWeek } from './domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from './domain/squad.js';
@@ -140,6 +142,17 @@ export interface SquadStore {
     readonly actor: MemberId;
     readonly timeZone: string;
     readonly week: SceneWeek;
+  }): Promise<CaptainOutcome>;
+  /** Each squad's language (小队语言), its newest setting; a squad that never set one is left out. */
+  languages(squads: readonly SquadId[]): Promise<ReadonlyMap<SquadId, ReaderLanguage>>;
+  /**
+   * Sets the squad's language from now on, if `actor` is its captain; `unchanged` when it is that
+   * already.
+   */
+  setLanguage(change: {
+    readonly squad: SquadId;
+    readonly actor: MemberId;
+    readonly language: ReaderLanguage;
   }): Promise<CaptainOutcome>;
   /** The higher goals suggested to the squad's captains, the earliest week first. */
   goalSuggestions(squad: SquadId): Promise<GoalSuggestion[]>;
