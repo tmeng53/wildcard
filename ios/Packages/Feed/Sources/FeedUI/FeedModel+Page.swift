@@ -14,6 +14,19 @@ extension FeedModel {
         opened = post
     }
 
+    /// Reads a post's page again when news of it comes while it is open (the coach answered, a
+    /// teammate commented), so the page shows it without a pull.
+    public func refreshIfOpen(about notice: Notice) {
+        if let opened { refresh(opened, about: notice) }
+    }
+
+    /// Reads `post`'s page again when `notice` is news of it, for a page shown with its own model
+    /// (opened from 通知, a push, 我的动态 or 训练记录).
+    public func refresh(_ post: CheckInID, about notice: Notice) {
+        guard case .post(let about) = notice.destination, about == post else { return }
+        Task { await loadPage(post) }
+    }
+
     /// A post's own page outside the feed (a tile on 我的动态): one post, read and answered as
     /// 动态 does, with the same recent emoji.
     public func page(of post: CheckInID) -> FeedModel {
@@ -34,7 +47,7 @@ extension FeedModel {
         if sent {
             if replyingTo == target { replyingTo = nil }
             commentsSent += 1
-            // The server has the coach answer before it answers us, so its answer is there now.
+            // The coach's answer may already be there; if not, its notice reads the page again.
             if case .coach = target {
                 await coach?.load(about: [post])
             } else if mentions.coach != nil {

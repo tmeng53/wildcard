@@ -46,6 +46,27 @@ function scene(member: MemberId, { squad, name }: { squad: SquadId; name: string
 }
 
 describe('notices', () => {
+  it('tells a member of a comment once, however often it is told', async () => {
+    const [me, other] = [await newMember(), await newMember()];
+    const [checkIn, comment] = [randomUUID(), randomUUID()];
+    const told = (member: MemberId): NewNotice => ({
+      member,
+      kind: 'comment',
+      subject: {
+        version: 1,
+        alert: { key: 'push.comment', args: ['安安', '加油'] },
+        checkIn,
+        comment,
+      },
+    });
+
+    expect(await notices.tell([told(me)])).toEqual([me]);
+    expect(await notices.tell([told(me), told(other)])).toEqual([other]);
+
+    const page = await notices.page({ member: me, limit: 10 });
+    expect(page.notices.filter(({ kind }) => kind === 'comment')).toHaveLength(1);
+  });
+
   it('pages a member’s notices newest first, and only theirs', async () => {
     const [me, other, squad] = [await newMember(), await newMember(), await newSquad()];
     await notices.tell([
