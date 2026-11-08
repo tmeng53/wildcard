@@ -36,8 +36,8 @@ public struct CoachDeckPlaces {
 
 /// One of the coach's cards (the approved deck, 2026-11-08): its stage on top, then what kind it
 /// is and when, what the coach said, and its buttons at the bottom. A gift opens in place
-/// (拆开 → 一会儿再说 | 立刻穿上) and a challenge is answered in place (算了 | 接受挑战). `card` nil
-/// is the last card, once everything is seen.
+/// (拆开 → 一会儿再说 | 立刻穿上) and a challenge is answered in place (接受挑战, or 不接挑战 with an
+/// optional word to the coach on why). `card` nil is the last card, once everything is seen.
 struct CoachDeckCard: View {
     let deck: CoachDeck
     let card: CoachPageCard?
@@ -51,8 +51,13 @@ struct CoachDeckCard: View {
     var putAway: ((CoachPageCard) -> Void)?
     /// The gift's moment, kept here while it is opened as the member watches.
     @State private var moment: GiftMoment?
-    /// 接受挑战 was tapped and went through: the button gives its stamp.
+    /// 接受挑战 was tapped and went through: the stamp comes down and the button pops.
     @State private var stamped = false
+    /// What the member is telling the coach about 不接挑战.
+    @State private var reason = ""
+    /// The reason's field has the keyboard: the stage gives up its height so the field and its
+    /// button stay above the keyboard.
+    @FocusState private var typing: Bool
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -63,14 +68,19 @@ struct CoachDeckCard: View {
                 giftPicture: shown?.gift.map { places.giftPicture($0.piece) }
             )
             .frame(maxWidth: .infinity)
-            .frame(height: DeckMetrics.stageHeight)
+            .frame(
+                minHeight: typing ? 0 : DeckMetrics.stageHeight, maxHeight: DeckMetrics.stageHeight,
+                alignment: .bottom
+            )
+            .clipped()
+            .layoutPriority(typing ? -1 : 0)
             VStack(alignment: .leading, spacing: Space.xs) {
                 kindLine
                 content
             }
             .padding(.horizontal, Space.m + Space.xxs)
             .padding(.top, Space.m)
-            Spacer(minLength: Space.s)
+            if !typing { Spacer(minLength: Space.s) }
             if isTop {
                 buttons
                     .padding(.horizontal, Space.s + Space.xxs)
@@ -85,6 +95,7 @@ struct CoachDeckCard: View {
                 .strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline)
         }
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: giftMoment)
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: typing)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(card.map { "coachDeck.card.\($0.kind.rawValue)" } ?? "coachDeck.allSeen")
     }
@@ -127,7 +138,7 @@ struct CoachDeckCard: View {
         if let shown {
             switch shown.kind {
             case .challenge:
-                if let challenge = shown.challenge { ChallengeFace(challenge: challenge) }
+                if let challenge = shown.challenge { ChallengeFace(challenge: challenge, stamped: stamped) }
             case .gift:
                 if let gift = shown.gift { giftFace(gift) }
             case .board, .note, .reply, .answer:
@@ -185,25 +196,16 @@ struct CoachDeckCard: View {
     // MARK: Buttons
 
     @ViewBuilder private var buttons: some View {
-        HStack(spacing: Space.s) {
-            if let shown {
-                switch shown.kind {
-                case .board:
-                    primary(Text("去动态看看", bundle: .module), id: "coachDeck.feed", action: places.feed)
-                case .reply, .answer:
-                    if let post = shown.checkIn {
-                        primary(Text("回他", bundle: .module), id: "coachDeck.reply") { places.post(post) }
-                    }
-                case .challenge:
-                    // Held while its stamp plays, then the card goes.
-                    if shown.challenge?.answer == nil || stamped { challengeButtons(shown) }
-                case .gift:
-                    giftButtons(shown)
-                case .note:
-                    EmptyView()
+        Group {
+            if let shown, shown.kind == .challenge {
+                // Held while its stamp plays, then the card goes.
+                if shown.challenge?.answer == nil || stamped {
+                    ChallengeAnswers(
+                        deck: deck, card: shown, coachName: coach.name, stamped: $stamped, reason: $reason,
+                        typing: $typing, putAway: putAway)
                 }
             } else {
-                outline(Text("看以前的", bundle: .module), id: "coachDeck.earlier", grows: true, action: places.earlier)
+                HStack(spacing: Space.s) { rowButtons }
             }
         }
         .disabled(shown.map { deck.sending.contains($0.key) } ?? false)
@@ -214,27 +216,23 @@ struct CoachDeckCard: View {
         }
     }
 
-    /// 算了 swipes the card away once it is kept; 接受挑战 stamps its button first (Tracy,
-    /// 2026-11-08).
-    private func challengeButtons(_ card: CoachPageCard) -> some View {
-        Group {
-            outline(Text("算了", bundle: .module), id: "coachDeck.decline", grows: false) {
-                Task {
-                    await deck.answer(card, .declined)
-                    if deck.current(card).challenge?.answer != nil { putAway?(card) }
+    /// Every card's buttons but a challenge's, side by side.
+    @ViewBuilder private var rowButtons: some View {
+        if let shown {
+            switch shown.kind {
+            case .board:
+                primary(Text("去动态看看", bundle: .module), id: "coachDeck.feed", action: places.feed)
+            case .reply, .answer:
+                if let post = shown.checkIn {
+                    primary(Text("回他", bundle: .module), id: "coachDeck.reply") { places.post(post) }
                 }
+            case .gift:
+                giftButtons(shown)
+            case .note, .challenge:
+                EmptyView()
             }
-            primary(Text("接受挑战", bundle: .module), id: "coachDeck.accept") {
-                Task {
-                    await deck.answer(card, .accepted)
-                    guard deck.current(card).challenge?.answer != nil else { return }
-                    withAnimation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion)) { stamped = true }
-                    try? await Task.sleep(for: .seconds(reduceMotion ? 0 : DeckMetrics.stampHold))
-                    putAway?(card)
-                }
-            }
-            .scaleEffect(stamped && !reduceMotion ? 1.08 : 1)
-            .haptic(.land, trigger: stamped)
+        } else {
+            outline(Text("看以前的", bundle: .module), id: "coachDeck.earlier", grows: true, action: places.earlier)
         }
     }
 
@@ -308,58 +306,6 @@ struct CoachDeckCard: View {
     }
 }
 
-/// A day's challenge: its amount big, in the scene's colour, with its unit, the title under it,
-/// the coach's line, and the 挑战 stamp.
-struct ChallengeFace: View {
-    let challenge: CoachPageCard.Challenge
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.xxs) {
-            if let amount = challenge.amount {
-                HStack(alignment: .firstTextBaseline, spacing: Space.xxs + 2) {
-                    Text(verbatim: "\(amount)")
-                        .typeStyle(TypeRamp.scoreEnding)
-                        .minimumScaleFactor(0.6)
-                    if let unit = challenge.unit {
-                        Text(verbatim: unit).typeStyle(TypeRamp.title)
-                    }
-                }
-                .foregroundStyle(Color(role: .fgAccent, in: theme))
-                .lineLimit(1)
-            }
-            Text(verbatim: challenge.title)
-                .typeStyle(TypeRamp.taskTitle)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .lineLimit(1)
-            if let line = challenge.line {
-                Text(verbatim: line)
-                    .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .topTrailing) {
-            Text("挑战", bundle: .module)
-                .typeStyle(TypeRamp.headline)
-                .tracking(4)
-                .foregroundStyle(Color(role: .fgAccent, in: theme))
-                .padding(.horizontal, Space.s)
-                .padding(.vertical, Space.xxs)
-                .overlay {
-                    RoundedRectangle(cornerRadius: Radius.pick * 0.8, style: .continuous)
-                        .strokeBorder(Color(role: .fgAccent, in: theme), lineWidth: 2.5)
-                }
-                .rotationEffect(.degrees(-12))
-                .padding(.top, Space.s)
-                .accessibilityHidden(true)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("coachDeck.challenge")
-    }
-}
-
 enum DeckMetrics {
     /// The stage's height on a card, as the approved deck has it on a 390-point phone.
     static let stageHeight: Double = 300
@@ -368,7 +314,11 @@ enum DeckMetrics {
     static let giftTile: Double = 84
     /// How far in, and down, each card under the top one peeks out.
     static let peek: Double = 12
+    /// The 挑战 stamp's width.
+    static let stamp: Double = 80
+    /// Seconds each beat of the stamp's slam and the button's squash takes.
+    static let squash: Double = 0.08
     /// Seconds 接受挑战's stamp shows before the card goes into 以前.
-    static let stampHold: Double = 0.45
+    static let stampHold: Double = 0.6
 }
 #endif

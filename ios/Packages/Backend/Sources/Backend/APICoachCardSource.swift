@@ -23,10 +23,10 @@ public struct APICoachCardSource: CoachCardSource {
     }
 
     public func answerChallenge(
-        _ note: String, in squad: SquadID, with answer: CoachChallengeAnswer
+        _ note: String, in squad: SquadID, with answer: CoachChallengeAnswer, reason: String?
     ) async throws(SquadError) -> CoachChallengeAnswer {
         guard let id = Int(note) else { throw .outdated }
-        return try await coach { () throws(APIError) in try await api.answerChallenge(of: id, in: squad, with: answer) }
+        return try await coach { () throws(APIError) in try await api.answerChallenge(of: id, in: squad, with: answer, reason: reason) }
     }
 
     private func coach<T>(_ call: () async throws(APIError) -> T) async throws(SquadError) -> T {

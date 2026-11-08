@@ -1701,7 +1701,7 @@
         }
       }
     },
-    "算了": {
+    "不接挑战": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1712,7 +1712,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "算了"
+            "value": "不接挑戰"
           }
         }
       }
@@ -1825,6 +1825,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "已接受"
+          }
+        }
+      }
+    },
+    "告诉%@为什么（可选）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tell %@ why (optional)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "告訴%@為什麼（可選）"
           }
         }
       }

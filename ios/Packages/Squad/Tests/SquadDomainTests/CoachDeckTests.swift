@@ -24,6 +24,7 @@ private final class CardsInMemory: CoachCardSource {
         var seen: [CoachPageCard.Key] = []
         var opened: [(piece: String, worn: Bool)] = []
         var answers: [String: CoachChallengeAnswer] = [:]
+        var reasons: [String?] = []
         var down = false
     }
 
@@ -51,9 +52,10 @@ private final class CardsInMemory: CoachCardSource {
     }
 
     func answerChallenge(
-        _ note: String, in squad: SquadID, with answer: CoachChallengeAnswer
+        _ note: String, in squad: SquadID, with answer: CoachChallengeAnswer, reason: String?
     ) async throws(SquadError) -> CoachChallengeAnswer {
         state.withLock { state in
+            state.reasons.append(reason)
             let standing = state.answers[note] ?? answer
             state.answers[note] = standing
             return standing
@@ -151,6 +153,23 @@ private let oldReply = card(.reply, "r0", minutes: -1440, text: "配速比上周
     #expect(deck.top?.challenge?.answer == .accepted)
     await deck.answer(deck.current(stretch), .declined)
     #expect(deck.top?.challenge?.answer == .accepted)
+}
+
+@MainActor @Test(arguments: [
+    (CoachChallengeAnswer.declined, "  我鸡蛋过敏 \n", "我鸡蛋过敏" as String?),
+    (.declined, "   ", nil),
+    (.accepted, "我鸡蛋过敏", nil),
+])
+func onlyADeclineSendsWhatWasTyped(answer: CoachChallengeAnswer, typed: String, sent: String?) async {
+    let source = CardsInMemory(CoachPageCards(stack: [stretch], earlier: []))
+    let deck = CoachDeck(squad: deckSquad, source: source)
+    await deck.reload()
+    await deck.answer(stretch, answer, reason: typed)
+    #expect(source.state.withLock { $0.reasons } == [sent])
+}
+
+@Test func aReasonIsCutToTheLimit() {
+    #expect(CoachChallengeAnswer.reason(String(repeating: "蛋", count: 70)) == String(repeating: "蛋", count: 60))
 }
 
 @MainActor @Test func aFailedFirstReadSaysSo() async {

@@ -79,7 +79,7 @@ public actor InMemoryCoachCardSource: CoachCardSource {
     }
 
     public func answerChallenge(
-        _ note: String, in squad: SquadID, with answer: CoachChallengeAnswer
+        _ note: String, in squad: SquadID, with answer: CoachChallengeAnswer, reason: String?
     ) async throws(SquadError) -> CoachChallengeAnswer {
         let isIt = { (card: CoachPageCard) in card.kind == .challenge && card.id == note }
         guard let challenge = (stack + earlier).first(where: isIt)?.challenge else { throw .outdated }

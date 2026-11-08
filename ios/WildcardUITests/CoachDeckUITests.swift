@@ -59,6 +59,37 @@ final class CoachDeckUITests: XCTestCase {
         keepScreenshot(named: "114-coach-earlier")
     }
 
+    /// 不接挑战 with a word to 毛头 on why: the field and 不接挑战 stay above the keyboard while it
+    /// is typed, and the card goes once it is sent.
+    func testTheReasonForPassingStaysAboveTheKeyboard() {
+        continueAfterFailure = false
+        let app = launch()
+        let coach = app.buttons["today.coach"]
+        XCTAssertTrue(coach.waitForExistence(timeout: Self.wait), "毛头 isn't on the sideline")
+        coach.tap()
+        for kind in ["board", "note", "gift"] {
+            let next = card(kind, in: app)
+            XCTAssertTrue(next.waitForExistence(timeout: Self.wait), "the \(kind) isn't next")
+            putAway(next, in: app)
+        }
+        let challenge = card("challenge", in: app)
+        let reason = element("coachDeck.reason", in: app)
+        XCTAssertTrue(reason.waitForExistence(timeout: Self.wait), "the challenge has no field for why")
+        XCTAssertEqual(reason.placeholderValue, "告诉毛头为什么（可选）")
+        reason.tap()
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertTrue(keyboard.waitForExistence(timeout: Self.wait), "the keyboard isn't up")
+        reason.typeText("我鸡蛋过敏")
+        Thread.sleep(forTimeInterval: 1)
+        let decline = app.buttons["coachDeck.decline"]
+        XCTAssertLessThanOrEqual(reason.frame.maxY, keyboard.frame.minY, "the keyboard covers the field")
+        XCTAssertLessThanOrEqual(decline.frame.maxY, keyboard.frame.minY, "the keyboard covers 不接挑战")
+        XCTAssertTrue(decline.isHittable, "不接挑战 is covered")
+        keepScreenshot(named: "116-coach-deck-challenge-reason")
+        decline.tap()
+        waitFor(challenge, "exists == false", "the challenge stayed after 不接挑战")
+    }
+
     /// A gift swiped away in its box stays boxed in 以前, and opens from there.
     func testAGiftSwipedAwayBoxedOpensFromEarlier() {
         continueAfterFailure = false
@@ -110,7 +141,7 @@ final class CoachDeckUITests: XCTestCase {
         XCTAssertTrue(challenge.waitForExistence(timeout: Self.wait), "the challenge isn't next")
         let accept = app.buttons["coachDeck.accept"]
         assertOnScreen(challenge, accept, in: app)
-        XCTAssertTrue(app.buttons["coachDeck.decline"].isHittable, "算了 is covered")
+        XCTAssertTrue(app.buttons["coachDeck.decline"].isHittable, "不接挑战 is covered")
         keepScreenshot(named: "111-coach-deck-challenge")
         accept.tap()
         waitFor(challenge, "exists == false", "the challenge stayed after it was accepted")

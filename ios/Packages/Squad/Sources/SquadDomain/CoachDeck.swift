@@ -13,9 +13,10 @@ public protocol CoachCardSource: Sendable {
     /// 拆开: keeps that the member opened a gift and whether they put it on then. The first
     /// opening stands.
     func openGift(_ piece: String, worn: Bool) async throws(SquadError) -> CoachPageCard.Gift
-    /// Accepts or declines a day's challenge, once; the first answer stands.
+    /// Accepts or declines a day's challenge, once; the first answer stands. A decline may carry
+    /// the member's reason, which only the coach reads.
     func answerChallenge(
-        _ note: String, in squad: SquadID, with answer: CoachChallengeAnswer
+        _ note: String, in squad: SquadID, with answer: CoachChallengeAnswer, reason: String?
     ) async throws(SquadError) -> CoachChallengeAnswer
 }
 
@@ -105,13 +106,16 @@ public final class CoachDeck {
         }
     }
 
-    /// 接受挑战 or 算了.
-    public func answer(_ card: CoachPageCard, _ answer: CoachChallengeAnswer) async {
+    /// 接受挑战, or 不接挑战 with what the member typed to tell the coach why (Tracy, 2026-11-08),
+    /// sent only when there is something.
+    public func answer(_ card: CoachPageCard, _ answer: CoachChallengeAnswer, reason typed: String = "") async {
         guard let challenge = card.challenge, challenge.answer == nil, !sending.contains(card.key) else { return }
         sending.insert(card.key)
         defer { sending.remove(card.key) }
         do {
-            let standing = try await source.answerChallenge(card.id, in: squad, with: answer)
+            let standing = try await source.answerChallenge(
+                card.id, in: squad, with: answer,
+                reason: answer == .declined ? CoachChallengeAnswer.reason(typed) : nil)
             failed = nil
             replace(card.with(challenge: challenge.answered(standing)))
         } catch {

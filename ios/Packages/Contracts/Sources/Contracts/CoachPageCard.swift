@@ -1,8 +1,18 @@
 import Foundation
 
-/// The member's answer to a day's challenge (今日挑战): 接受挑战 or 算了.
+/// The member's answer to a day's challenge (今日挑战): 接受挑战 or 不接挑战.
 public enum CoachChallengeAnswer: String, Hashable, Sendable {
     case accepted, declined
+
+    /// The longest reason a member may give the coach for 不接挑战, in characters; the API checks
+    /// the same.
+    public static let reasonLimit = 60
+
+    /// A typed reason as it is sent: trimmed and cut to `reasonLimit`, nil when nothing is left.
+    public static func reason(_ typed: String) -> String? {
+        let trimmed = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : String(trimmed.prefix(reasonLimit))
+    }
 }
 
 /// One thing the squad's coach has for the member on the coach page (Tracy, 2026-11-08): a card in

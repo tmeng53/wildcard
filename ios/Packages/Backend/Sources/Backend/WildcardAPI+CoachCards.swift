@@ -33,9 +33,9 @@ extension WildcardAPI {
         return CoachPageCard.Gift(wire.gift)
     }
 
-    /// 接受挑战 or 算了 on a morning note's challenge; the first answer stands.
+    /// 接受挑战 or 不接挑战 on a morning note's challenge; the first answer stands.
     public func answerChallenge(
-        of note: Int, in squad: SquadID, with answer: CoachChallengeAnswer
+        of note: Int, in squad: SquadID, with answer: CoachChallengeAnswer, reason: String? = nil
     ) async throws(APIError) -> CoachChallengeAnswer {
         guard let sent = Components.Schemas.CoachChallengeAnswer.AnswerPayload(rawValue: answer.rawValue) else {
             throw .unreadableResponse
