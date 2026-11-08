@@ -255,8 +255,7 @@ private struct PageHeader: View {
     let title: String?
     let count: Int
     let goal: Int
-    /// A word after the score (天).
-    var unit: Text?
+    var unit: Text?  // A word after the score (天).
     var showsExtra = false  // Days past the goal as a small 「+N」 tag after the score.
     var open: (() -> Void)?
 
@@ -291,6 +290,7 @@ private struct PageHeader: View {
                 }
                 if showsExtra, count > goal {
                     InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)
+                        .accessibilityLabel(Text("多练 \(count - goal) 天", bundle: .module))
                         .accessibilityIdentifier("squadcard.extra")
                 }
             }

@@ -3329,6 +3329,22 @@
         }
       }
     },
+    "多练 %lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days over"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "多練 %lld 天"
+          }
+        }
+      }
+    },
     "天": {
       "localizations": {
         "en": {
