@@ -8,13 +8,13 @@ describe('a coachLetter notice', () => {
     const entries = await noticeEntries(
       {
         members: { squadmates: () => Promise.reject(new Error('No squadmates to read.')) },
-        coachNames: () =>
-          Promise.resolve(
-            new Map([
-              ['xiaohun', '毛头'],
-              ['papa', '帕帕'],
-            ]),
-          ),
+        coachNames: () => {
+          const names = new Map([
+            ['xiaohun', '毛头'],
+            ['papa', '帕帕'],
+          ]);
+          return Promise.resolve((coach: string) => names.get(coach));
+        },
       },
       {
         notices: [

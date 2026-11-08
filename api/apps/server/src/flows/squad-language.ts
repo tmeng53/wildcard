@@ -5,6 +5,16 @@ import { SquadId, type Squads } from '@wildcard/squads';
 // What the whole squad reads (the coach's 战术板, the weekly awards) is written once, in its
 // captain's language (Tracy, 2026-11-08); what one member reads, in their own.
 
+/** The language a squad with `captain` reads: its captain's, Simplified Chinese with none. */
+export async function captainLanguage(
+  deps: { readonly members: Pick<Members, 'languages'> },
+  captain: string | null | undefined,
+): Promise<ReaderLanguage> {
+  if (captain === null || captain === undefined) return 'zh-Hans';
+  const id = MemberId.parse(captain);
+  return (await deps.members.languages([id])).get(id) ?? 'zh-Hans';
+}
+
 /**
  * The language each of `members` reads, by member (Simplified Chinese, the app's default,
  * until their app says another), and the squad's: its captain's.
