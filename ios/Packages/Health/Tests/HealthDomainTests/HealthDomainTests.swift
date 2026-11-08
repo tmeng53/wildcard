@@ -42,7 +42,11 @@ private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920
     #expect(sharing.struck.isEmpty)
     sharing.pace = false
     sharing.heartRate = false
-    #expect(sharing.struck == [.pace, .speed, .averageHeartRate, .maxHeartRate])
+    #expect(sharing.struck == [.pace, .swimPace, .speed, .topSpeed, .averageHeartRate, .maxHeartRate])
+    sharing = HealthSharing()
+    sharing.distance = false
+    sharing.laps = false
+    #expect(sharing.struck == [.distance, .descent, .elevationGain, .laps, .runs])
 }
 
 @Test func tilesFollowTheirSwitches() {

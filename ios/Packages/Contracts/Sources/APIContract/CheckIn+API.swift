@@ -146,13 +146,16 @@ extension WorkoutSummary {
         self.init(
             durationSec: wire.durationSec, distanceM: wire.distanceM, paceSecPerKm: wire.paceSecPerKm,
             speedKmh: wire.speedKmh, avgHr: wire.avgHr, maxHr: wire.maxHr, effort: wire.effort, laps: wire.laps,
-            poolLengthM: wire.poolLengthM)
+            poolLengthM: wire.poolLengthM, runs: wire.runs, descentM: wire.descentM, topSpeedKmh: wire.topSpeedKmh,
+            elevationGainM: wire.elevationGainM, paceSecPer100m: wire.paceSecPer100m)
     }
 
     var wire: Components.Schemas.WorkoutSummary {
         .init(
             durationSec: durationSec, distanceM: distanceM, paceSecPerKm: paceSecPerKm, speedKmh: speedKmh,
-            avgHr: avgHr, maxHr: maxHr, effort: effort, laps: laps, poolLengthM: poolLengthM)
+            avgHr: avgHr, maxHr: maxHr, effort: effort, laps: laps, poolLengthM: poolLengthM, runs: runs,
+            descentM: descentM, topSpeedKmh: topSpeedKmh, elevationGainM: elevationGainM, paceSecPer100m: paceSecPer100m
+        )
     }
 }
 

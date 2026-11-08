@@ -1,13 +1,23 @@
 -- What the database keeps true about the sports list however it is edited.
 begin;
-select plan(16);
+select plan(18);
 
-select is((select count(*)::int from public.sports), 57, 'the list has 57 sports, the winter ones included');
+select is((select count(*)::int from public.sports), 82, 'the list has 82 sports: the winter ones and one for each kind of Apple Health workout included');
 select is(
-  (select count(*)::int from public.sport_catalog_events where op = 'INSERT'),
+  (select (count(*) filter (where op = 'INSERT') - count(*) filter (where op = 'DELETE'))::int
+    from public.sport_catalog_events),
   (select (select count(*) from public.sport_categories) + (select count(*) from public.sports)
     + (select count(*) from public.sport_picks))::int,
-  'seeding the list logged a row for each row it added'
+  'seeding the list logged a row for each row it added and removed'
+);
+
+select throws_ok(
+  $$update public.sport_categories set color = 'blue' where id = 'winter'$$,
+  '23514', null, 'a category''s colour is #RRGGBB'
+);
+select is(
+  (select count(*)::int from public.sport_categories where color is null), 0,
+  'every category has a colour'
 );
 
 select throws_ok(

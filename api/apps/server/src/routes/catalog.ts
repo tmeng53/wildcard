@@ -43,6 +43,16 @@ export const SportsCatalog = z
         z.looseObject({
           id: z.string().meta({ example: 'runWalk' }),
           names: Names,
+          color: z
+            .string()
+            .optional()
+            .meta({
+              description:
+                'The colour its sports’ 成绩条, post blocks, routes and charts wear, with white ' +
+                'on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before ' +
+                'colours still reads (its sports then wear the gym’s steel).',
+              example: '#E65345',
+            }),
           sports: z.array(
             z.looseObject({
               id: z.string().meta({
@@ -89,9 +99,10 @@ export function sportsSection(sports: Sports): CatalogSection<typeof SportsCatal
 }
 
 const wireSports = (catalog: SportCatalog): z.input<typeof SportsCatalog> => ({
-  categories: catalog.categories.map(({ id, names, sports }) => ({
+  categories: catalog.categories.map(({ id, names, color, sports }) => ({
     id,
     names: { ...names },
+    color,
     sports: sports.map(({ shortNames, ...sport }) => ({
       ...sport,
       names: { ...sport.names },
