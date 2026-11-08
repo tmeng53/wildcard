@@ -37,7 +37,12 @@ public struct CoachPage: View {
                 retry: { Task { await model.loadMarket() } },
                 open: { coach in push(.resume(coach)) }
             )
-            .task { await model.loadMarket() }
+            .task {
+                // Opened straight from 今天, past 小队: who may hire comes from the squad, so read
+                // it again when it never loaded.
+                await model.loadMarket()
+                if model.settings == nil { await model.reload() }
+            }
         case .resume(let coach):
             CoachResumePage(
                 coach: coach, isCurrent: model.coach?.coach.id == coach.id,
