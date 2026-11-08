@@ -1,3 +1,4 @@
+import { LanguageModelUnavailableError, type LanguageModel } from '@wildcard/language-model';
 import type { DisclaimerStyle } from '@wildcard/disclaimer-styles';
 
 import type { DraftReason, MemberId, PromptMeme } from '../../domain/draft-request.js';
@@ -14,7 +15,6 @@ import type {
   Clock,
   DraftAllowance,
   DraftSettingsStore,
-  LanguageModel,
   MemesInUse,
   Random,
 } from '../../ports.js';
@@ -62,12 +62,20 @@ export async function writeDisclaimerDrafts(
 
   try {
     const meme = await memeFor(deps, { style: input.style, chance: settings.memeChance });
-    const reply = await deps.model.answer({
-      model: settings.model,
-      instructions: settings.instructions,
-      prompt: promptFor({ reason: input.reason, style: input.style, meme }),
-      reply: ModelReply,
-    });
+    const reply = await deps.model
+      .answer({
+        model: settings.model,
+        instructions: settings.instructions,
+        prompt: promptFor({ reason: input.reason, style: input.style, meme }),
+        reply: ModelReply,
+      })
+      .catch((error: unknown) => {
+        // The model's failure is the drafts' to name; any other error (drafts off) stands.
+        if (error instanceof LanguageModelUnavailableError) {
+          throw new DisclaimerWriterUnavailableError({ cause: error });
+        }
+        throw error;
+      });
     const outcome = outcomeOf(reply);
     if (outcome === undefined) {
       throw new DisclaimerWriterUnavailableError({

@@ -25,6 +25,7 @@ export {
   type Awards,
   type AwardsState,
   type BoardTitle,
+  type ShownBoardTitle,
   type TitleWin,
   type Failures,
   type MemberAwards,
@@ -40,16 +41,23 @@ export {
   BadgeColour,
   BadgeGlyph,
   BadgeShape,
+  BadgeTone,
   DEFAULT_BADGE,
+  shownBadge,
+  withSportGlyphs,
+  type ShownBadge,
+  type SportGlyph,
 } from './domain/badges.js';
 export type { StoryDay, StoryMember, WeekStory } from './domain/week-story.js';
 export { AwardMove, CHEER } from './domain/moves.js';
 export {
   AWARDS_HOUR,
-  AWARDS_TIME_ZONE,
   WeekStart,
   awardsTimeOf,
+  lastAwardsTimeOf,
   latestAwardedWeek,
+  weekBefore,
+  weeksMaybeAwarded,
 } from './domain/schedule.js';
 export { AwardSettings, AwardSettingsChange, ModelName, offeredMoves } from './domain/settings.js';
 export {
@@ -63,9 +71,9 @@ export type {
   AiConsented,
   AwardSettingsStore,
   AwardsStore,
-  LanguageModel,
   WeekStoryStore,
   MemesInUse,
+  SportGlyphs,
 } from './ports.js';
 export { createAwardSettings, type AwardSettingsAdmin } from './use-cases/award-settings.js';
 export { createWeeklyAwards, type WeeklyAwards } from './use-cases/weekly-awards.js';

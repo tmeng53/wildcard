@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@wildcard/errors": "workspace:*",
+    "@wildcard/language-model": "workspace:*",
+    "@wildcard/time-zones": "workspace:*",
     "@wildcard/typed-text": "workspace:*",
     "kysely": "0.29.7",
     "zod": "4.6.7"

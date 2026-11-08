@@ -31,6 +31,7 @@ import type {
   AgentRun,
   CoachAgent,
   CoachMemberFacts,
+  CoachMemes,
   CoachPhotoUrls,
   CoachTool,
 } from '../ports.js';
@@ -161,6 +162,8 @@ function wakes(
     answered,
     photoUrls,
     memberFacts,
+    wantNotes,
+    memes,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
@@ -170,6 +173,8 @@ function wakes(
     readonly answered?: CoachAnswered;
     readonly photoUrls?: CoachPhotoUrls;
     readonly memberFacts?: CoachMemberFacts;
+    readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
+    readonly memes?: CoachMemes;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -196,6 +201,8 @@ function wakes(
     ...(answered === undefined ? {} : { answered }),
     ...(photoUrls === undefined ? {} : { photoUrls }),
     ...(memberFacts === undefined ? {} : { memberFacts }),
+    ...(wantNotes === undefined ? {} : { wantNotes }),
+    ...(memes === undefined ? {} : { memes }),
   });
 }
 
@@ -247,6 +254,27 @@ describe('the coach', () => {
     }).run();
     expect(run).toStrictEqual({ coaching: false, squads: 0, queued: 0, done: 0, failed: 0 });
     expect(runs).toHaveLength(0);
+  });
+
+  it('writes no morning note to a member who switched the coach off', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => [
+        { tool: 'note_to', input: { member: '队员2', text: '今天走走' } },
+      ]);
+      const asked: (readonly string[])[] = [];
+      const wantNotes = (members: readonly string[]) => {
+        asked.push(members);
+        return Promise.resolve(members.filter((member) => member !== fixture.leo));
+      };
+
+      await wakes(fixture, { agent, wantNotes }).run();
+
+      const daily = runs.find(({ task }) => task.includes('新的一天'));
+      expect(asked).toStrictEqual([[fixture.mia, fixture.leo]]);
+      expect(daily?.task).toContain('今天给这些人各写一张便条：\n- 队员1：');
+      expect(daily?.task).not.toContain('- 队员2：这周');
+      expect(daily?.answers).toStrictEqual(['不能给 队员2 写便条；能写的是：队员1。']);
+    });
   });
 
   it('wakes for a check-in and for the day, keeps its memory and its line, and counts tokens', async () => {
@@ -896,6 +924,67 @@ describe('the coach', () => {
     });
   });
 
+  it('is off duty for the rest of the day once the squad spent its cap, and back the next', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      // One wake costs 12,000 input and 800 output tokens: 4,600 micros at the fixture's prices.
+      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
+        { squadDailyCapMicros: 4_600 },
+        MemberId.parse(mia),
+      );
+      const { agent, runs } = scriptedAgent(() => []);
+      expect(await wakes(fixture, { agent }).run()).toMatchObject({ done: 2, failed: 0 });
+      expect(runs).toHaveLength(1);
+      const tomorrow = new Date(now.getTime() + 86_400_000);
+      await wakes(fixture, { agent, at: tomorrow }).run();
+      expect(runs).toHaveLength(2);
+      const states = await sql<{ reason: string; state: string; last_error: string | null }>`
+        select reason, state, last_error from public.coach_wakes where squad_id = ${squad} order by id`.execute(
+        trx,
+      );
+      expect(states.rows).toStrictEqual([
+        { reason: 'checkIn', state: 'done', last_error: null },
+        {
+          reason: 'daily',
+          state: 'skipped',
+          last_error: 'off duty: the squad spent 4600 of its 4600 micros today',
+        },
+        { reason: 'daily', state: 'done', last_error: null },
+      ]);
+    });
+  });
+
+  it('is off duty everywhere once every squad together spent the day’s cap', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      const other = SquadId.parse(randomUUID());
+      await sql`insert into public.squads (id, name, invite_code) values (${other}, 'other', ${other})`.execute(
+        trx,
+      );
+      // Another squad spent the whole day's cap this morning.
+      await sql`insert into public.coach_usage
+          (squad_id, coach_id, model, requests, input_tokens, output_tokens, cost_micros, at)
+        values (${other}, 'xiaohun', 'openai/gpt-6-luna', 1, 1, 1, 9000, ${new Date(now.getTime() - 3_600_000)})`.execute(
+        trx,
+      );
+      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
+        { dailyCapMicros: 9_000 },
+        MemberId.parse(mia),
+      );
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent }).run();
+      expect(runs).toHaveLength(0);
+      const states = await sql<{ state: string; last_error: string }>`
+        select state, last_error from public.coach_wakes where squad_id = ${squad} order by id`.execute(
+        trx,
+      );
+      expect(states.rows.map(({ state }) => state)).toStrictEqual(['skipped', 'skipped']);
+      expect(states.rows[0]?.last_error).toBe(
+        'off duty: every squad spent 9000 of the 9000 micros today',
+      );
+    });
+  });
+
   it('looks at a check-in at once, shows its recent emoji, and keeps every tool call', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, mia, checkIn } = fixture;
@@ -1050,6 +1139,41 @@ describe('the coach', () => {
       expect(asked).toStrictEqual([{ members: [mia], weekStart: fixture.week.weekStart }]);
       expect(runs[0]?.answers[0]).toContain('一共练了 50 天');
       expect(runs[0]?.answers[1]).toContain(`本周从 ${earlier}（周一）开始。`);
+    });
+  });
+
+  it('reads the meme library only when it asks, and keeps the answer by its length', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      let reads = 0;
+      const memes: CoachMemes = () => {
+        reads += 1;
+        return Promise.resolve([
+          { phrase: '对自己很好', meaning: '照顾自己', background: '小红书上流行' },
+        ]);
+      };
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('有人打卡') ? [{ tool: 'memes', input: {} }] : [],
+      );
+      await wakes(fixture, { agent, memes }).checkedIn({ checkIn, squads: [squad] });
+      expect(reads).toBe(1);
+      expect(runs[0]?.tools).toContain('memes');
+      expect(runs[0]?.answers[0]).toBe('- 「对自己很好」：照顾自己（小红书上流行）');
+      const report = await createPostgresCoachReport(fixture.trx).squad(squad, now);
+      expect(report.wakes[0]?.steps[0]).toStrictEqual({
+        tool: 'memes',
+        input: {},
+        output: '（22 字）',
+      });
+    });
+  });
+
+  it('has no meme tool without the library', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent }).checkedIn({ checkIn, squads: [squad] });
+      expect(runs[0]?.tools).not.toContain('memes');
     });
   });
 

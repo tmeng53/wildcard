@@ -81,4 +81,22 @@ extension WildcardAPI {
         }
         return SquadWeeklyGoal(wire)
     }
+
+    /// The squad's time zone (小队时区) this week and next.
+    public func timeZone(of squad: SquadID) async throws(APIError) -> SquadTimeZone {
+        let wire = try await call {
+            try await client.getSquadTimeZone(path: .init(squadId: squad.description)).ok.body.json
+        }
+        return SquadTimeZone(wire)
+    }
+
+    /// Sets the squad's time zone from the squad's next week; only its captain may. Safe to repeat.
+    public func setTimeZone(of squad: SquadID, to timeZone: String) async throws(APIError) -> SquadTimeZone {
+        let wire = try await call {
+            try await client.setSquadTimeZone(
+                path: .init(squadId: squad.description), body: .json(SquadTimeZone.change(to: timeZone))
+            ).ok.body.json
+        }
+        return SquadTimeZone(wire)
+    }
 }

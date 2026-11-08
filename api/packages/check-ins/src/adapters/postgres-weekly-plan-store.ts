@@ -76,8 +76,22 @@ export function createPostgresWeeklyPlanStore(db: Kysely<DB>): WeeklyPlanStore {
       `.execute(db);
     },
 
-    async save({ member, weekStart, days }) {
-      const payload = JSON.stringify({ version: 1, days });
+    async trainedBy(member, weekStart) {
+      const row = await db
+        .selectFrom('weekly_plans')
+        .select('payload')
+        .where('member_id', '=', member)
+        .where('week_start', '=', weekStart)
+        .executeTakeFirst();
+      return row === undefined ? {} : (StoredPlan.parse(row.payload).trainedBy ?? {});
+    },
+
+    async save({ member, weekStart, days, trainedBy = {} }) {
+      const payload = JSON.stringify(
+        Object.keys(trainedBy).length === 0
+          ? { version: 1, days }
+          : { version: 1, days, trainedBy },
+      );
       // One statement: the plan and its log entry are saved together, and a save that
       // changes nothing writes neither.
       await db

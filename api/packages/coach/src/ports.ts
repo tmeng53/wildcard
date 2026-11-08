@@ -60,6 +60,16 @@ export type CoachMemberFacts = (input: {
   readonly weekStart: string;
 }) => Promise<readonly MemberFacts[]>;
 
+/** A meme in use now, from the meme library: what it means and where it came from. */
+export interface CoachMeme {
+  readonly phrase: string;
+  readonly meaning: string;
+  readonly background: string;
+}
+
+/** The memes in use now, which the coach may draw humour from. */
+export type CoachMemes = () => Promise<readonly CoachMeme[]>;
+
 /** How a wake's run ended, with the tokens it used either way. */
 export type AgentRun =
   | { readonly ok: true; readonly usage: TokenUsage }
@@ -102,6 +112,8 @@ export interface CoachWakeStore {
   finish(wake: number): Promise<void>;
   /** Puts a wake back to try again, or marks it failed after its last try, with why. */
   fail(wake: number, error: string): Promise<void>;
+  /** Marks a wake skipped without running it (its coach was off duty), with why. */
+  skip(wake: number, why: string): Promise<void>;
 }
 
 /** Each squad's memory files, every version kept. */
@@ -261,7 +273,10 @@ export interface CoachUsageStore {
     readonly model: CoachModel;
     readonly usage: TokenUsage;
     readonly costMicros: number;
+    readonly at: Date;
   }): Promise<void>;
+  /** What was spent since `since`, in US dollars' millionths: by this squad, or by every squad. */
+  spent(input: { readonly squad?: SquadId; readonly since: Date }): Promise<number>;
 }
 
 /** Each wake's tool calls, in order, for the admins to see how the coach worked. */

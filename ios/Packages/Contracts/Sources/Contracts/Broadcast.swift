@@ -77,6 +77,8 @@ public enum AppDestination: Hashable, Sendable {
     case pats
     /// 今天, with the coach's morning note (便条) slid up over it again.
     case coachNote(CoachMemberNote)
+    /// 今天, with the coach's newest waiting morning note slid up over it: a tap on its push.
+    case waitingCoachNote
     /// 我.
     case profile
     /// 通知, behind the bell on 动态.

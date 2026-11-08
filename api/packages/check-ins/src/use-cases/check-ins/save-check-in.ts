@@ -76,7 +76,12 @@ export async function saveCheckIn(
   if (saved.checkIn.kind === 'trained') {
     await planTrainedDay(
       { store: plans },
-      { member, day: saved.checkIn.day, training: saved.checkIn.training },
+      {
+        member,
+        day: saved.checkIn.day,
+        training: saved.checkIn.training,
+        checkIn: saved.checkIn.id,
+      },
     );
   }
   await planRestPost({ store, plans }, saved.checkIn);

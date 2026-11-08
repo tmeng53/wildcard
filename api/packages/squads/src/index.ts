@@ -21,6 +21,7 @@ export {
   type Squad,
   type SquadMember,
 } from './domain/squad.js';
+export { zoneAt, zoneFor, type TimeZoneSetting } from './domain/time-zone.js';
 export {
   DaysPerMember,
   DEFAULT_DAYS_PER_MEMBER,
@@ -41,6 +42,7 @@ export {
   SquadLimitReachedError,
   SquadMemberUnknownError,
   SquadNotJoinedError,
+  SquadTimeZoneUnknownError,
 } from './errors.js';
 export type {
   AiConsentCheck,
@@ -59,4 +61,5 @@ export {
 } from './use-cases/squad-scenes.js';
 export { createSquads, type SquadAt, type Squads } from './use-cases/squads.js';
 export type { InvitePreview, PublicInvitePreview } from './use-cases/squads/preview-invite.js';
+export type { SquadTimeZone } from './use-cases/squads/time-zone.js';
 export type { WeeklyGoal } from './use-cases/squads/weekly-goal.js';

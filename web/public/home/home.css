@@ -55,7 +55,7 @@ h1 .cn { position: relative; top: -.07em; font-family: var(--sans); font-weight:
 }
 footer .wrap { padding-block: 22px calc(22px + env(safe-area-inset-bottom, 0px)); }
 
-/* desktop: the 1440×900 composition Tracy picked, scaled by --u (1px at 1440 wide) and centred past it:
+/* desktop: the approved 1440×900 composition, scaled by --u (1px at 1440 wide) and centred past it:
    headline left; the squad stands on a 200-unit floor to the right, with depth (middle and ends in front,
    2 and 4 a step back); the page grows rather than letting the squad reach the hero on a short window */
 @container site (min-width: 1100px) {

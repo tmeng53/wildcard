@@ -195,6 +195,11 @@ extension View {
     }
 }
 
+/// How far a character standing at `scale` reaches above its feet, its canvas's headroom included.
+func standingHeight(scale: Double) -> Double {
+    StoryRig.height * scale * StoryRig.feetLine
+}
+
 /// The rig's canvas and where its feet stand: the root's pivot, as a share of the height.
 private enum StoryRig {
     private static let rig = try? PlaceholderCharacter.rig()

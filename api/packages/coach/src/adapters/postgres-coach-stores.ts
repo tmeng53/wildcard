@@ -201,6 +201,14 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           .where('id', '=', String(wake))
           .execute();
       },
+
+      async skip(wake, why) {
+        await db
+          .updateTable('coach_wakes')
+          .set({ state: 'skipped', last_error: why.slice(0, 1000) })
+          .where('id', '=', String(wake))
+          .execute();
+      },
     },
 
     memory: {
@@ -340,7 +348,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
     },
 
     usage: {
-      async record({ squad, wake, coach, model, usage, costMicros }) {
+      async record({ squad, wake, coach, model, usage, costMicros, at }) {
         await db
           .insertInto('coach_usage')
           .values({
@@ -355,8 +363,21 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
             cached_input_tokens: usage.cachedInputTokens,
             output_tokens: usage.outputTokens,
             cost_micros: costMicros,
+            at,
           })
           .execute();
+      },
+
+      async spent({ squad, since }) {
+        const row = await db
+          .selectFrom('coach_usage')
+          .select((eb) =>
+            eb.fn.coalesce(eb.fn.sum<string>('cost_micros'), sql<string>`0`).as('spent'),
+          )
+          .where('at', '>=', since)
+          .$if(squad !== undefined, (query) => query.where('squad_id', '=', squad ?? ''))
+          .executeTakeFirstOrThrow();
+        return Number(row.spent);
       },
     },
 

@@ -8,14 +8,16 @@ public struct TitleBadge: Hashable, Sendable {
     /// Its shape (`shield`), drawn by `DesignSystemUI`'s `TitleBadgeView`, which draws one it
     /// doesn't know as a circle.
     public var shape: String
-    /// The scene whose colour it takes, by the scene's id (`track`); the drawing falls back to the
-    /// gym's for one it doesn't know.
+    /// Its colour's id in the badge catalog (`track`).
     public var colour: String
+    /// That colour as `#RRGGBB`, what the badge is painted in; nil from servers before tones,
+    /// when the drawing takes the scene of `colour`'s id, else the gym's.
+    public var tone: String?
     /// The SF Symbol's name; the drawing falls back to a star for one this iOS doesn't have.
     public var glyph: String
 
-    public init(shape: String, colour: String, glyph: String) {
-        (self.shape, self.colour, self.glyph) = (shape, colour, glyph)
+    public init(shape: String, colour: String, tone: String? = nil, glyph: String) {
+        (self.shape, self.colour, self.tone, self.glyph) = (shape, colour, tone, glyph)
     }
 
     /// The badge of a title won before titles came with one.
