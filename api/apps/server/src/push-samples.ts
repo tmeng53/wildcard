@@ -6,6 +6,7 @@ import { SquadId, WeekStart } from '@wildcard/weekly-awards';
 import { coachNoteNotification } from './flows/coach-notes.js';
 import { commentNotification, type CommentNews } from './flows/comment-push.js';
 import { dailyProgressNotification } from './flows/daily-progress-push.js';
+import { planNextWeekNotification } from './flows/plan-next-week-push.js';
 import { awardsReadyNotification, awardsStuckNotification } from './flows/weekly-awards.js';
 import type { PushCopyKey } from './push-copy.js';
 
@@ -65,6 +66,7 @@ export function pushSamples(): Record<PushCopyKey, unknown> {
       coachNoteNotification({ id: 1234, coachName: '毛头', text: '便'.repeat(60) }),
     ),
     'push.weeklyAwards.ready': apnsPayload(awardsReadyNotification(squad, week)),
+    'push.planNextWeek': apnsPayload(planNextWeekNotification('2026-10-26')),
     'push.weeklyAwards.stuck': apnsPayload(
       awardsStuckNotification({
         squad: { id: squad, name: '队'.repeat(20) },

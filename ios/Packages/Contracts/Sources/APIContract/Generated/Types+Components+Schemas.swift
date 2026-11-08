@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `planNextWeek` (the Sunday push asking the caller to plan next week). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -77,7 +77,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/squadId`.
             public var squadId: Swift.String?
-            /// A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
+            /// A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`, `planNextWeek`).
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert`.
             public struct AlertPayload: Codable, Hashable, Sendable {
@@ -106,11 +106,11 @@ extension Components {
                     case args
                 }
             }
-            /// A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
+            /// A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`, `planNextWeek`).
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/alert`.
             public var alert: Components.Schemas.NoticeEntry.AlertPayload?
-            /// The Monday of the week whose 战报 is in (`weeklyAwards`).
+            /// The Monday of the week whose 战报 is in (`weeklyAwards`), or of the week to plan (`planNextWeek`).
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/weekStart`.
             public var weekStart: Swift.String?
@@ -289,11 +289,11 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `planNextWeek` (the Sunday push asking the caller to plan next week). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - squadId: The squad it is about, if any.
-            ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
-            ///   - weekStart: The Monday of the week whose 战报 is in (`weeklyAwards`).
+            ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`, `planNextWeek`).
+            ///   - weekStart: The Monday of the week whose 战报 is in (`weeklyAwards`), or of the week to plan (`planNextWeek`).
             ///   - scene: The scene moved to (`sceneMoved`).
             ///   - by: Who moved it (`sceneMoved`); left out once they deleted their account.
             ///   - byName: Their nickname now (`sceneMoved`), when they have one.

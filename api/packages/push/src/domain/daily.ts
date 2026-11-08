@@ -16,3 +16,12 @@ export interface DailyCandidate {
 export interface DuePush extends DailyCandidate {
   readonly lastHandledAt: Date | undefined;
 }
+
+/**
+ * A member whose Sunday 去安排下周 push may be due, with the week it asks them to plan: the
+ * Monday after their Sunday.
+ */
+export interface PlanReminderCandidate {
+  readonly member: MemberId;
+  readonly week: LocalDay;
+}

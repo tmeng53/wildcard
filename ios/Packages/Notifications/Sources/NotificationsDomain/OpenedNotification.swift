@@ -36,6 +36,11 @@ public enum OpenedNotification: Hashable, Sendable {
             return Notice(
                 id: NoticeID(rawValue: 0), toldAt: told, squad: SquadID(squad),
                 subject: .weeklyAwards(PushAlert(key: ""), week: week))
+        case "planNextWeek":
+            guard let week = event["week"].flatMap({ try? LocalDay($0) }) else { return nil }
+            return Notice(
+                id: NoticeID(rawValue: 0), toldAt: told, squad: nil,
+                subject: .planNextWeek(PushAlert(key: ""), week: week))
         case "comment":
             guard let checkIn = event["checkIn"].flatMap(UUID.init(uuidString:)) else { return nil }
             return Notice(

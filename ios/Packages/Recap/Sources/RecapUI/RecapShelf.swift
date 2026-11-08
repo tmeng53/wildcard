@@ -53,17 +53,20 @@ public final class RecapShelf {
     public private(set) var picks = 0
     /// The scene picked last, and when it filled the screen.
     public private(set) var picked: (scene: SceneTheme, coveredAt: Date)?
+    /// How many times the reader tapped 去安排下周 on a story's last page: the app opens 出赛表 on
+    /// `weekToPlan` each time.
+    public private(set) var planRequests = 0
+    /// The week after the story 去安排下周 was tapped on.
+    public private(set) var weekToPlan: LocalDay?
 
     @ObservationIgnored private let service: any WeekStoryService
     @ObservationIgnored private let readSquad: @MainActor () -> Squad?
-    @ObservationIgnored private let planNextWeek: @MainActor () -> Void
     @ObservationIgnored private let scenePicker: @MainActor (WeekStory) async -> ScenePicker?
     @ObservationIgnored private let scenePicked: @MainActor (SceneTheme) -> Void
     @ObservationIgnored private let seenStore: RecapSeen
 
     /// - Parameters:
     ///   - squad: the squad and its people as the app holds them now; nil before the home loads.
-    ///   - planNextWeek: 排下周 on the last page.
     ///   - scenePicker: the scene pick for the story's last page when the reader picks the scene
     ///     for the week after it (last week's crown winner, else the captain, as the API says)
     ///     and nobody has yet; nil otherwise.
@@ -71,13 +74,11 @@ public final class RecapShelf {
     ///   - seen: where the weeks watched to the end are kept.
     public init(
         service: any WeekStoryService, squad: @escaping @MainActor () -> Squad?, seen: RecapSeen = RecapSeen(),
-        planNextWeek: @escaping @MainActor () -> Void = {},
         scenePicker: @escaping @MainActor (WeekStory) async -> ScenePicker? = { _ in nil },
         scenePicked: @escaping @MainActor (SceneTheme) -> Void = { _ in }
     ) {
         self.service = service
         readSquad = squad
-        self.planNextWeek = planNextWeek
         self.scenePicker = scenePicker
         self.scenePicked = scenePicked
         seenStore = seen
@@ -118,7 +119,8 @@ public final class RecapShelf {
             finished: { [weak self] in self?.watched(story) },
             planNextWeek: { [weak self] in
                 self?.open = nil
-                self?.planNextWeek()
+                self?.weekToPlan = story.week.monday.adding(days: 7)
+                self?.planRequests += 1
             },
             scenePicked: { [weak self] scene, coveredAt in
                 // The story goes at once: the reveal's last frame is the scene home draws.

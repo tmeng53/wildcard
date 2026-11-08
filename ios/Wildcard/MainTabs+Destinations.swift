@@ -63,6 +63,11 @@ extension MainTabs {
             selection = .profile
             closeProfilePages()
             showsSchedule = true
+        case .scheduleWeek(let week):
+            selection = .profile
+            closeProfilePages()
+            schedule.open(week)
+            showsSchedule = true
         case .squad:
             selection = .today
             todayPages = [.squad]

@@ -106,6 +106,12 @@ struct NoticeRow: View {
                 title: Text("每周战报出来了", bundle: .module),
                 detail: Text("第 \(number) 周", bundle: .module),
                 icon: AnyView(CrownIcon()))
+        case .planNextWeek(_, let week):
+            let number = Self.weekNumber(of: week)
+            return Words(
+                title: Text("去安排下周", bundle: .module),
+                detail: Text("第 \(number) 周", bundle: .module),
+                icon: AnyView(NoticeSymbol(systemImage: "calendar")))
         case .sceneMoved(let scene, _, let moverName):
             let theme = SceneTheme(rawValue: scene)
             let place = theme?.name ?? Text("新场地", bundle: .module)

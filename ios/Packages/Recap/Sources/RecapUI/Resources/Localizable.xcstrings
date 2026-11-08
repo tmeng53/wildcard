@@ -417,7 +417,7 @@
         }
       }
     },
-    "排下周": {
+    "去安排下周": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -428,7 +428,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "排下週"
+            "value": "去安排下週"
           }
         }
       }

@@ -1,4 +1,4 @@
-import type { DailyCandidate, DuePush, LocalDay } from '../domain/daily.js';
+import type { DailyCandidate, DuePush, LocalDay, PlanReminderCandidate } from '../domain/daily.js';
 import type { DailyPushSettings } from '../domain/daily-push-settings.js';
 import type { Device, DeviceToken, MemberId } from '../domain/device.js';
 import type { PushNotification } from '../domain/notification.js';
@@ -54,6 +54,13 @@ export interface Push {
     readonly quiet: boolean;
     readonly at: Date;
   }): Promise<boolean>;
+  /**
+   * Of these members, each with the week their Sunday 去安排下周 push asks them to plan, those
+   * it is due for: they haven't turned the daily push off and that week's hasn't been handled.
+   */
+  planReminderDue(candidates: readonly PlanReminderCandidate[]): Promise<PlanReminderCandidate[]>;
+  /** Marks the member's 去安排下周 push for `week` handled; false when another run already did. */
+  claimPlanReminder(handled: PlanReminderCandidate & { readonly at: Date }): Promise<boolean>;
 }
 
 export function createPush(deps: {
@@ -76,5 +83,7 @@ export function createPush(deps: {
     dailyDue: (candidates) => deps.daily.due(candidates),
     dailySettings: () => deps.dailySettings.current(),
     claimDaily: (handled) => deps.daily.claim(handled),
+    planReminderDue: (candidates) => deps.daily.planReminderDue(candidates),
+    claimPlanReminder: (handled) => deps.daily.claimPlanReminder(handled),
   };
 }

@@ -1,6 +1,6 @@
 import type { EquippedTitle, MemberId, Profile, Squadmate } from '../domain/profile.js';
 import { ProfileMissingError } from '../errors.js';
-import type { PastLocalHour, ProfileStore } from '../ports.js';
+import type { LocalTimeQuery, PastLocalHour, ProfileStore } from '../ports.js';
 import { findProfile } from './members/find-profile.js';
 import { saveProfile, type SaveProfileInput } from './members/save-profile.js';
 
@@ -25,7 +25,7 @@ export interface Members {
    * local day (`YYYY-MM-DD`) and when their clock read `hour` o'clock the day before. Members who
    * haven't saved a time zone aren't on it.
    */
-  pastLocalHour(input: { readonly hour: number; readonly now: Date }): Promise<PastLocalHour[]>;
+  pastLocalHour(input: LocalTimeQuery): Promise<PastLocalHour[]>;
 }
 
 export function createMembers(deps: { readonly store: ProfileStore }): Members {

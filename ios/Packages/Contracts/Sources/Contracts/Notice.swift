@@ -20,6 +20,8 @@ public struct Notice: Hashable, Sendable, Identifiable {
         case dailyProgress(PushAlert)
         /// The week starting `week`'s 战报 is in.
         case weeklyAwards(PushAlert, week: LocalDay)
+        /// Sunday evening's 去安排下周, asking about the week starting `week`.
+        case planNextWeek(PushAlert, week: LocalDay)
         /// A teammate moved the squad to `scene`: `mover` and their nickname now, both nil once
         /// they deleted their account.
         case sceneMoved(scene: String, mover: MemberID?, moverName: String?)

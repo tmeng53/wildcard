@@ -1,6 +1,6 @@
 /// Plays the story's pages like a phone story: each page runs for its own time, then the next
 /// one; a tap on the right goes on, on the left goes back; holding pauses. The last page stays
-/// up (its 存图 and 排下周 wait for the reader) once its time has run.
+/// up (its 存图 and 去安排下周 wait for the reader) once its time has run.
 ///
 /// Times are seconds on any clock that only goes forward; the struct never reads one itself.
 public struct StoryPlayback: Hashable, Sendable {

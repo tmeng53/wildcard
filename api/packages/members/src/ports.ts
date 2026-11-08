@@ -20,10 +20,20 @@ export interface ProfileStore {
   /** When the member first saved their profile, right after signing up. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
   /**
-   * Members whose local time at `now` is `hour` o'clock or later on the same calendar day, each
-   * with that day (`YYYY-MM-DD`) and when their clock read `hour` o'clock the day before.
+   * Members whose local time at `now` is `hour` o'clock (and `minute` past it, 0 if left out)
+   * or later on the same calendar day, only on that ISO weekday (1 is Monday, 7 Sunday) when
+   * `isoWeekday` is given, each with that day (`YYYY-MM-DD`) and when their clock read that time
+   * the day before.
    */
-  pastLocalHour(input: { readonly hour: number; readonly now: Date }): Promise<PastLocalHour[]>;
+  pastLocalHour(input: LocalTimeQuery): Promise<PastLocalHour[]>;
+}
+
+/** A time on every member's own clock, and the moment it is asked about. */
+export interface LocalTimeQuery {
+  readonly hour: number;
+  readonly minute?: number;
+  readonly isoWeekday?: number;
+  readonly now: Date;
 }
 
 /** A member past a local hour today. */
@@ -31,6 +41,6 @@ export interface PastLocalHour {
   readonly member: MemberId;
   /** Their local day, `YYYY-MM-DD`. */
   readonly day: string;
-  /** When their clock read the hour the day before. */
+  /** When their clock read the hour (and minute) the day before. */
   readonly hourTheDayBefore: Date;
 }

@@ -1,5 +1,5 @@
 import type { DailyPushSettings } from './domain/daily-push-settings.js';
-import type { DailyCandidate, DuePush, LocalDay } from './domain/daily.js';
+import type { DailyCandidate, DuePush, LocalDay, PlanReminderCandidate } from './domain/daily.js';
 import type { Device, DeviceToken, MemberId } from './domain/device.js';
 import type { PushNotification } from './domain/notification.js';
 import type { PushSettings, PushTopic } from './domain/topic.js';
@@ -52,6 +52,16 @@ export interface DailyPushStore {
     readonly quiet: boolean;
     readonly at: Date;
   }): Promise<boolean>;
+  /**
+   * Of these candidates, those with the daily push switched on (with a phone or not) whose
+   * Sunday 去安排下周 push for that week hasn't been handled yet.
+   */
+  planReminderDue(candidates: readonly PlanReminderCandidate[]): Promise<PlanReminderCandidate[]>;
+  /**
+   * Marks the member's 去安排下周 push for `week` handled `at` that moment. False when it already
+   * was, so it goes once a week however many runs reach it at once.
+   */
+  claimPlanReminder(handled: PlanReminderCandidate & { readonly at: Date }): Promise<boolean>;
 }
 
 /** Where the daily push's settings for everyone are kept: one value, and a log of every change. */

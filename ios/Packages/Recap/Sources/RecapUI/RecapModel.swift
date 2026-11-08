@@ -35,7 +35,7 @@ public final class RecapModel {
     /// - Parameters:
     ///   - close: the reader is done: the ✕, a swipe down, or a tap past the last page.
     ///   - finished: the last page came on screen, once.
-    ///   - planNextWeek: 排下周 on the last page.
+    ///   - planNextWeek: 去安排下周 on the last page.
     ///   - service: where 催一下主办方 goes; nil for the sample, whose nudge only shows.
     ///   - scenePicker: the scene pick on the last page, when the reader picks next week's scene.
     ///   - scenePicked: the reveal of the picked scene filled the screen: the story is done and

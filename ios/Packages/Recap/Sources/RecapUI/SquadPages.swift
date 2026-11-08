@@ -135,7 +135,7 @@ struct BestDisclaimerPage: View {
 }
 
 /// 这一周: the squad's training days against its plans, the AI's headline and line, and its
-/// finale. Never red, never guilt. 存图 and 排下周 wait here.
+/// finale. Never red, never guilt. 存图 and 去安排下周 wait here.
 struct EndingPage: View {
     let ending: Ending
     let page: PageContext
@@ -249,35 +249,70 @@ struct EndingActions {
     let planNextWeek: () -> Void
 }
 
-/// 存图 and 排下周, at the bottom of the last page. 存图 opens the sheet that saves or shares the
-/// page's picture, as 出赛表's does.
+/// 存图 and 去安排下周 side by side at the bottom of the last page, 去安排下周 the main one (Tracy,
+/// 2026-11-08: for everyone, planned or not). 存图 opens the sheet that saves or shares the page's
+/// picture, as 出赛表's does.
 struct EndingButtons: View {
     let actions: EndingActions
     @State private var isSaving = false
 
     var body: some View {
-        VStack(spacing: Space.xs) {
+        EndingRow {
             // 存图 stands from the start, waiting while its picture is drawn.
             Button {
                 isSaving = true
             } label: {
-                Text("存图", bundle: .module).frame(maxWidth: .infinity)
+                Text("存图", bundle: .module).frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .disabled(actions.picture == nil)
-            .buttonStyle(PrimaryButtonStyle(.large))
+            .buttonStyle(SecondaryButtonStyle())
             .accessibilityIdentifier("recap.save")
             .sheet(isPresented: $isSaving) {
                 if let picture = actions.picture {
                     SavePictureSheet(image: picture) { isSaving = false }
                 }
             }
-            Button(action: actions.planNextWeek) { Text("排下周", bundle: .module) }
-                .buttonStyle(TextButtonStyle(.muted))
-                .accessibilityIdentifier("recap.planNextWeek")
+            Button(action: actions.planNextWeek) {
+                Text("去安排下周", bundle: .module).frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .buttonStyle(PrimaryButtonStyle(.large))
+            .accessibilityIdentifier("recap.planNextWeek")
         }
         .padding(.horizontal, Space.m)
         // Over the week's scene: glass, as every button that floats over art is.
         .controlPlacement(.floating)
+    }
+}
+
+/// Two buttons in a row as the design splits it, the second 1.4 times as wide, both as tall as
+/// the taller one.
+private struct EndingRow: Layout {
+    private static let ratio = 1.4
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? subviews.reduce(Space.xs) { $0 + $1.sizeThatFits(.unspecified).width }
+        return CGSize(width: width, height: height(of: subviews, width: width))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var left = bounds.minX
+        for (index, width) in widths(subviews.count, in: bounds.width).enumerated() {
+            subviews[index].place(
+                at: CGPoint(x: left, y: bounds.minY), proposal: ProposedViewSize(width: width, height: bounds.height))
+            left += width + Space.xs
+        }
+    }
+
+    private func widths(_ count: Int, in width: CGFloat) -> [CGFloat] {
+        let shares = (0..<count).map { $0 == count - 1 ? Self.ratio : 1 }
+        let unit = (width - Space.xs * CGFloat(max(count - 1, 0))) / shares.reduce(0, +)
+        return shares.map { $0 * unit }
+    }
+
+    private func height(of subviews: Subviews, width: CGFloat) -> CGFloat {
+        zip(subviews, widths(subviews.count, in: width))
+            .map { $1 > 0 ? $0.sizeThatFits(ProposedViewSize(width: $1, height: nil)).height : 0 }
+            .max() ?? 0
     }
 }
 #endif

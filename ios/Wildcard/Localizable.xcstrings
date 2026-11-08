@@ -257,6 +257,30 @@
         }
       }
     },
+    "push.planNextWeek": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan next week"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "去安排下周"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "去安排下週"
+          }
+        }
+      }
+    },
     "push.weeklyAwards.ready": {
       "comment": "Push notification (APNs loc-key); the API sends the arguments.",
       "extractionState": "manual",

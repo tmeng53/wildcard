@@ -13,7 +13,12 @@ export { createPostgresDailyPushSettings } from './adapters/postgres-daily-push-
 export { createPostgresDailyPushStore } from './adapters/postgres-daily-push-store.js';
 export { createPostgresDeviceStore, type PushTables } from './adapters/postgres-device-store.js';
 export { createPostgresSettingsStore } from './adapters/postgres-settings-store.js';
-export { LocalDay, type DailyCandidate, type DuePush } from './domain/daily.js';
+export {
+  LocalDay,
+  type DailyCandidate,
+  type DuePush,
+  type PlanReminderCandidate,
+} from './domain/daily.js';
 export { DailyPushSettings, DailyPushSettingsChange } from './domain/daily-push-settings.js';
 export { DeviceToken, MemberId, PushEnvironment, type Device } from './domain/device.js';
 export { apnsPayload, type EventValue, type PushNotification } from './domain/notification.js';

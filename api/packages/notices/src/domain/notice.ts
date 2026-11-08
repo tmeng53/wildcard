@@ -37,6 +37,12 @@ export const NoticeSubjects = {
     alert: PushAlert,
     weekStart: z.iso.date(),
   }),
+  /** The Sunday 去安排下周 push: the week it asks the member to plan, by its Monday. */
+  planNextWeek: z.strictObject({
+    version: z.literal(1),
+    alert: PushAlert,
+    weekStart: z.iso.date(),
+  }),
   /** A teammate (or nobody named, once they're gone) moved the squad to another scene. */
   sceneMoved: z.strictObject({
     version: z.literal(1),
@@ -102,6 +108,7 @@ const KindAndSubject = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('comment'), subject: NoticeSubjects.comment }),
   z.object({ kind: z.literal('broadcast'), subject: NoticeSubjects.broadcast }),
   z.object({ kind: z.literal('goalSuggestion'), subject: NoticeSubjects.goalSuggestion }),
+  z.object({ kind: z.literal('planNextWeek'), subject: NoticeSubjects.planNextWeek }),
 ]);
 type KindAndSubject = z.infer<typeof KindAndSubject>;
 

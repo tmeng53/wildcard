@@ -210,6 +210,23 @@
       "weekStart": "2026-10-19"
     }
   },
+  "push.planNextWeek": {
+    "version": 1,
+    "aps": {
+      "alert": {
+        "loc-key": "push.planNextWeek"
+      },
+      "category": "planNextWeek",
+      "thread-id": "planNextWeek",
+      "interruption-level": "active",
+      "sound": "default",
+      "mutable-content": 1
+    },
+    "event": {
+      "kind": "planNextWeek",
+      "week": "2026-10-26"
+    }
+  },
   "push.weeklyAwards.stuck": {
     "version": 1,
     "aps": {

@@ -42,7 +42,16 @@ export interface DailyPushSettingEvents {
 export interface DailyPushSettings {
   hour: number;
   only_row: Generated<boolean>;
+  plan_reminder_hour: Generated<number>;
+  plan_reminder_minute: Generated<number>;
+  plan_reminder_sending: Generated<boolean>;
   sending: boolean;
+}
+
+export interface PlanReminderPushes {
+  handled_at: Generated<Timestamp>;
+  member_id: string;
+  week_start: string;
 }
 
 export interface PushDevices {
@@ -70,6 +79,7 @@ export interface DB {
   daily_push_setting_events: DailyPushSettingEvents;
   daily_push_settings: DailyPushSettings;
   daily_pushes: DailyPushes;
+  plan_reminder_pushes: PlanReminderPushes;
   push_devices: PushDevices;
   push_setting_events: PushSettingEvents;
   push_settings: PushSettings;

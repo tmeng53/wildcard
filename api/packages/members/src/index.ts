@@ -25,5 +25,5 @@ export {
   type Squadmate,
 } from './domain/profile.js';
 export { ProfileMissingError, TimeZoneUnknownError } from './errors.js';
-export type { PastLocalHour, ProfileStore } from './ports.js';
+export type { LocalTimeQuery, PastLocalHour, ProfileStore } from './ports.js';
 export { createMembers, type Members } from './use-cases/members.js';

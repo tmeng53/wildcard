@@ -127,21 +127,24 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
       return row === undefined ? undefined : new Date(row.created_at);
     },
 
-    async pastLocalHour({ hour, now }) {
+    async pastLocalHour({ hour, minute = 0, isoWeekday, now }) {
       // Postgres turns the moment into each member's wall-clock time with its own zone data,
       // the same data that checked the zone when it was saved.
-      // The day before's hour comes from the same zone data, so it moves with a clock change.
+      // The day before's time comes from the same zone data, so it moves with a clock change.
       const local = sql`(${now}::timestamptz at time zone profiles.time_zone)`;
       const rows = await db
         .selectFrom('profiles')
         .select([
           'member_id',
           sql<string>`${local}::date::text`.as('day'),
-          sql<Date>`((${local})::date - 1 + make_time(${hour}::int, 0, 0)) at time zone profiles.time_zone`.as(
+          sql<Date>`((${local})::date - 1 + make_time(${hour}::int, ${minute}::int, 0)) at time zone profiles.time_zone`.as(
             'hour_the_day_before',
           ),
         ])
-        .where(sql<boolean>`extract(hour from ${local}) >= ${hour}`)
+        .where(sql<boolean>`(${local})::time >= make_time(${hour}::int, ${minute}::int, 0)`)
+        .$if(isoWeekday !== undefined, (query) =>
+          query.where(sql<boolean>`extract(isodow from ${local}) = ${isoWeekday}::int`),
+        )
         .orderBy('member_id')
         .execute();
       return rows.map((row) => ({

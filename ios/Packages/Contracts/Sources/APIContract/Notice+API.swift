@@ -31,6 +31,9 @@ extension Notice {
             return alert.map(Subject.dailyProgress)
         case "weeklyAwards":
             return alert.flatMap { weeklyAwards(wire, alert: $0) }
+        case "planNextWeek":
+            guard let alert, let week = wire.weekStart.flatMap({ try? LocalDay($0) }) else { return nil }
+            return .planNextWeek(alert, week: week)
         case "sceneMoved":
             return wire.scene.map {
                 .sceneMoved(scene: $0, mover: wire.by.flatMap { try? MemberID(wire: $0) }, moverName: wire.byName)

@@ -17,6 +17,22 @@
         }
       }
     },
+    "去安排下周": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan next week"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "去安排下週"
+          }
+        }
+      }
+    },
     "今天": {
       "localizations": {
         "en": {

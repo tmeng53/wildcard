@@ -116,7 +116,8 @@ schedule() {
     --uri "$api_url/jobs/$1" --http-method POST --attempt-deadline 300s \
     --oidc-service-account-email "$scheduler" --oidc-token-audience "$api_url" >/dev/null
 }
-# Each member's push goes out at 6pm on their own clock, so the job looks every 15 minutes.
+# Each member's push goes out at 6pm on their own clock, and 去安排下周 at 8:30pm on Sunday, so the job
+# looks every 15 minutes.
 schedule daily-progress-push '*/15 * * * *'
 # A squad's awards that couldn't be written are tried again on the next run.
 schedule weekly-awards '5 * * * *'

@@ -44,9 +44,9 @@ export const NoticeEntry = z
         'squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the ' +
         'caller its morning note, 便条), `unlocked` (a store, prop or piece opened), ' +
         '`comment` (a teammate commented on the caller’s check-in or replied to them), ' +
-        '`broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad ' +
+        '`broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad ' +
         'trained over its weekly goal some weeks in a row, so its captain is suggested a higher ' +
-        'one). ' +
+        'one) or `planNextWeek` (the Sunday push asking the caller to plan next week). ' +
         'More kinds may come: skip one you don’t know.',
     }),
     at: z.iso.datetime().meta({ description: 'When it was told, in UTC.' }),
@@ -58,12 +58,17 @@ export const NoticeEntry = z
       })
       .optional()
       .meta({
-        description: 'A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).',
+        description:
+          'A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`, `planNextWeek`).',
       }),
     weekStart: z.iso
       .date()
       .optional()
-      .meta({ description: 'The Monday of the week whose 战报 is in (`weeklyAwards`).' }),
+      .meta({
+        description:
+          'The Monday of the week whose 战报 is in (`weeklyAwards`), or of the week to plan ' +
+          '(`planNextWeek`).',
+      }),
     scene: z.string().optional().meta({ description: 'The scene moved to (`sceneMoved`).' }),
     by: z.uuid().optional().meta({
       description: 'Who moved it (`sceneMoved`); left out once they deleted their account.',
@@ -354,6 +359,7 @@ function wireNotice(
     case 'dailyProgress':
       return { ...common, alert: notice.subject.alert };
     case 'weeklyAwards':
+    case 'planNextWeek':
       return { ...common, alert: notice.subject.alert, weekStart: notice.subject.weekStart };
     case 'sceneMoved': {
       const { scene, by } = notice.subject;

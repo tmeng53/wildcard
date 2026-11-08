@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import { JobTokenInvalidError, JobsOffError } from '../errors.js';
 import { deliverCoachNotes, type CoachNotesDependencies } from '../flows/coach-notes.js';
 import { sendDailyProgress, type DailyProgressDependencies } from '../flows/daily-progress-push.js';
+import { sendPlanNextWeek } from '../flows/plan-next-week-push.js';
 import { suggestSquadGoals, type SuggestGoal } from '../flows/squad-goal-suggestion.js';
 import { giveWeeklyAwards, type WeeklyAwardsDependencies } from '../flows/weekly-awards.js';
 import { logAlso } from '../log.js';
@@ -12,7 +13,7 @@ import { bearerToken } from '../require-caller.js';
 
 /**
  * Work a scheduler starts, not the app: `POST /jobs/daily-progress-push`, meant to run every 15
- * minutes or so, `POST /jobs/weekly-awards`, meant to run every hour, which also suggests captains
+ * minutes or so, which also sends the Sunday 去安排下周 push, `POST /jobs/weekly-awards`, meant to run every hour, which also suggests captains
  * a higher squad goal (`flows/squad-goal-suggestion.ts`), and `POST /jobs/coach`,
  * meant to run every 10 minutes, which also delivers the coach's morning notes. Each call takes the
  * scheduler's bearer token: Cloud Scheduler's OIDC token on the hosted server, `JOBS_TOKEN`
@@ -42,7 +43,10 @@ export function jobs(deps: {
       logAlso({ job: 'daily-progress-push' });
       const run = await sendDailyProgress(deps.dailyProgress);
       deps.dailyProgress.log.info('daily progress push run', { ...run });
-      return c.json({ version: 1, ...run }, 200);
+      // Sunday's 去安排下周 goes on the same runs, with the daily push's settings and switch.
+      const planNextWeek = await sendPlanNextWeek(deps.dailyProgress);
+      deps.dailyProgress.log.info('plan next week push run', { ...planNextWeek });
+      return c.json({ version: 1, ...run, planNextWeek }, 200);
     })
     .post('/jobs/weekly-awards', async (c) => {
       logAlso({ job: 'weekly-awards' });

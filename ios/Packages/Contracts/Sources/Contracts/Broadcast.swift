@@ -63,6 +63,8 @@ public enum AppDestination: Hashable, Sendable {
     case unlock(Unlock.Kind, item: String)
     /// 出赛表.
     case schedule
+    /// 出赛表 on the week starting `week`.
+    case scheduleWeek(LocalDay)
     /// 小队.
     case squad
     /// 动态.
@@ -92,6 +94,7 @@ extension Notice {
         // The 6pm push names who patted the member: home, where they pat them again.
         case .dailyProgress: .pats
         case .weeklyAwards(_, let week): .recap(squad: squad, week: week)
+        case .planNextWeek(_, let week): .scheduleWeek(week)
         case .sceneMoved: .today
         case .coachReply(let checkIn, _, _, _, _): .post(checkIn)
         case .unlocked(let kind, let item): .unlock(kind, item: item)

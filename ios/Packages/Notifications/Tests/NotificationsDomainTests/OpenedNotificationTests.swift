@@ -12,6 +12,13 @@ import Testing
     #expect(opened == .open(.recap(squad: id, week: try LocalDay("2026-10-19"))))
 }
 
+@Test func thePlanNextWeekPushOpensThatWeeksSchedule() throws {
+    let opened = OpenedNotification(category: "planNextWeek", event: ["kind": "planNextWeek", "week": "2026-11-09"])
+
+    #expect(opened == .open(.scheduleWeek(try LocalDay("2026-11-09"))))
+    #expect(OpenedNotification(category: "planNextWeek", event: ["week": "nope"]) == .other)
+}
+
 @Test func theCommentPushOpensItsPost() throws {
     let checkIn = "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59"
 

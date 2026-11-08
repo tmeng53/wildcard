@@ -65,6 +65,15 @@ import {
 // Supabase. Other tests' members share the database, so each test looks only at its own phones.
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
+/** The push settings as the migrations leave them. */
+const SETTINGS = {
+  version: 2,
+  sending: true,
+  hour: 18,
+  planReminderSending: true,
+  planReminderHour: 20,
+  planReminderMinute: 30,
+} as const;
 const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
@@ -443,19 +452,19 @@ describe('the daily progress push', () => {
     const settings = createPostgresDailyPushSettings(db);
     const by = PushMember.parse(eve.userId);
     try {
-      await settings.save({ version: 1, sending: false, hour: 18 }, by);
+      await settings.save({ ...SETTINGS, sending: false }, by);
       await run();
       expect(sentTo.get(eve.phone)).toBeUndefined();
       // Nobody's day is marked handled while it is off.
       expect(await handled(eve.userId)).toStrictEqual([]);
 
       // At 7am, the morning member's clock is past the hour too.
-      await settings.save({ version: 1, sending: true, hour: 7 }, by);
+      await settings.save({ ...SETTINGS, hour: 7 }, by);
       await run();
       expect(sentTo.get(early.phone)).toHaveLength(1);
       expect(sentTo.get(eve.phone)).toHaveLength(1);
     } finally {
-      await settings.save({ version: 1, sending: true, hour: 18 }, by);
+      await settings.save({ ...SETTINGS, sending: true }, by);
     }
   });
 

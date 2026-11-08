@@ -78,3 +78,16 @@ private func entry(
     let partial = #"{"id": 9, "kind": "goalSuggestion", "at": "2026-11-23T01:00:00Z", "weeks": 3}"#
     #expect(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(partial.utf8))) == nil)
 }
+
+@Test func planNextWeekReadsItsWeekAndOpensThatWeeksSchedule() throws {
+    let json = #"""
+        {"id": 9, "kind": "planNextWeek", "at": "2026-11-09T01:30:00Z",
+         "alert": {"key": "push.planNextWeek", "args": []}, "weekStart": "2026-11-09"}
+        """#
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+    let notice = try #require(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(json.utf8))))
+    let week = try LocalDay("2026-11-09")
+    #expect(notice.subject == .planNextWeek(PushAlert(key: "push.planNextWeek"), week: week))
+    #expect(notice.destination == .scheduleWeek(week))
+}

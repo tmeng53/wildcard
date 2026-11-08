@@ -11,7 +11,7 @@ import ScenePickUI
 import SwiftUI
 
 /// 这一周 for whoever picks next week's scene (冠军开箱, approved 2026-10-22): the squad's count a
-/// size down, 冠军专属's sticker under it, the squad standing in a row above 存图 and 排下周.
+/// size down, 冠军专属's sticker under it, the squad standing in a row above 存图 and 去安排下周.
 /// A phone too short for all of it leaves the row out; the sticker is never part of 存图.
 struct EndingPickPage: View {
     let ending: Ending

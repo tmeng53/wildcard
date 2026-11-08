@@ -140,13 +140,7 @@ struct MainTabs: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await profile.reload() } }
         }
-        .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
-            if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
-        }
-        // A scene picked on the story's last page: its reveal ends where home takes over.
-        .onChange(of: recap.picks) {
-            if let picked = recap.picked { land(on: picked.scene, coveredAt: picked.coveredAt) }
-        }
+        .presentsRecap(recap, land: land, open: open)
         .fullScreenCover(
             isPresented: Binding(get: { wardrobe.editor != nil }, set: { if !$0 { wardrobe.editor = nil } })
         ) {
@@ -185,7 +179,7 @@ struct MainTabs: View {
 
     /// Every scene pick ends on home: the picked scene filled the screen at `coveredAt`, and the
     /// squad drops onto it.
-    private func land(on scene: SceneTheme, coveredAt: Date) {
+    func land(on scene: SceneTheme, coveredAt: Date) {
         // At once: the reveal's last frame is the scene home draws.
         var instant = Transaction()
         instant.disablesAnimations = true

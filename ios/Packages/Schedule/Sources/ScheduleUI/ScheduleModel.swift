@@ -141,6 +141,12 @@ public final class ScheduleModel {
         Task { await store.show(week) }
     }
 
+    /// Opens on the week starting `week`, from a notice or the 战报's 去安排下周: shown at once
+    /// if 出赛表 has loaded, and the week `load()` shows if it hasn't.
+    public func open(_ week: LocalDay) {
+        show(week)
+    }
+
     /// Shows the 每周模板 instead of a week, from its chip.
     func showTemplate() {
         fuelOpen = false

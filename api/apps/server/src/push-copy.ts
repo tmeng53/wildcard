@@ -14,6 +14,7 @@ export const PUSH_COPY = {
   'push.coach.note': ['coach', 'text'],
   'push.comment.mention': ['commenter', 'text'],
   'push.weeklyAwards.ready': [],
+  'push.planNextWeek': [],
   'push.weeklyAwards.stuck': ['squad', 'failures', 'lastError'],
 } as const satisfies Record<string, readonly string[]>;
 
