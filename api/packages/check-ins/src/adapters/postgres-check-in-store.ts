@@ -371,6 +371,13 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
           sql<string | null>`payload ->> 'customSport'`.as('customSport'),
           sql<string | null>`payload ->> 'minutes'`.as('minutes'),
         ])
+        .select(
+          sql<boolean>`exists (
+            select 1 from check_in_squads
+            where check_in_squads.check_in_id = check_ins.id
+              and check_in_squads.squad_id = ${squad ?? null}
+          )`.as('in_squad'),
+        )
         .where('kind', '=', 'trained')
         .where((eb) =>
           squad === undefined || mates.length === 0
@@ -433,6 +440,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
           sport: SportKey.parse(row.sport),
           ...(row.customSport === null ? {} : { customSport: row.customSport }),
           ...(row.minutes === null ? {} : { minutes: Number(row.minutes) }),
+          inSquad: row.in_squad,
         })),
         healthyMealDays: meals.map((row) => row.day),
         received: await reactionCounts('member'),

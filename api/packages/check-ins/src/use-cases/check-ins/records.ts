@@ -66,7 +66,7 @@ export async function records(
     ...(squad === undefined ? {} : { squad }),
     mates,
   });
-  const byMember = new Map<MemberId, RecordTraining[]>();
+  const byMember = new Map<MemberId, (RecordTraining & { readonly inSquad: boolean })[]>();
   for (const training of rows.trainings) {
     byMember.set(training.member, [...(byMember.get(training.member) ?? []), training]);
   }
@@ -79,6 +79,13 @@ export async function records(
     timeZone: await timeZoneOf(member),
   });
   if (squad === undefined) return me;
+  const shared = mine.filter((training) => training.inSquad);
+  const squadMe = memberRecords({
+    trainings: shared,
+    healthyMealDays: [],
+    restDays: new Set(),
+    timeZone: await timeZoneOf(member),
+  });
   const mateRecords = new Map(
     await Promise.all(
       mates.map(async (mate) => {
@@ -104,7 +111,8 @@ export async function records(
     squad: {
       id: squad,
       ...squadRecords({
-        me: { records: me, days: new Set(mine.map((training) => training.day)) },
+        // Measured against squadmates on the same ground: only what the member shared with this squad.
+        me: { records: squadMe, days: new Set(shared.map((training) => training.day)) },
         mates: mateRecords,
         received: rows.received,
         given: rows.given,

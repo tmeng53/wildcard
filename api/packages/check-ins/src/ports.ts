@@ -23,7 +23,11 @@ export type UpdateOutcome =
 
 /** The rows 外卡记录 reads, as `CheckInStore.recordRows` gives them. */
 export interface RecordRows {
-  readonly trainings: readonly (RecordTraining & { readonly member: MemberId })[];
+  /** The member's every 练了, and squadmates' shared with the squad; `inSquad` when shared with it. */
+  readonly trainings: readonly (RecordTraining & {
+    readonly member: MemberId;
+    readonly inSquad: boolean;
+  })[];
   readonly healthyMealDays: readonly LocalDay[];
   /** Reactions on the member's check-ins, by squadmate. */
   readonly received: ReadonlyMap<MemberId, number>;

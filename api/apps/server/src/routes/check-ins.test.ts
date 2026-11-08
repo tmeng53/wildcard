@@ -798,6 +798,36 @@ describe('GET /me/records', () => {
     });
     expect((await call({ method: 'GET', path: '/me/records' })).status).toBe(401);
   });
+
+  it('stands the member against squadmates only on what they shared with the squad', async () => {
+    const [me, coco] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, coco);
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.parse(today) - 24 * 60 * 60_000).toISOString().slice(0, 10);
+    const put = async (
+      who: { readonly token: string },
+      day: string,
+      audience: readonly string[],
+    ) => {
+      const body = {
+        version: 1,
+        day,
+        createdAt: new Date(Date.now() - 60_000).toISOString(),
+        audience,
+        kind: 'trained',
+        training: { sport: 'run' },
+      };
+      const path = `/check-ins/${randomUUID()}`;
+      expect((await call({ method: 'PUT', path, token: who.token, body })).status).toBe(201);
+    };
+    await put(me, today, [squad]);
+    // Kept to myself: mine, but not the squad's to compare.
+    await put(me, yesterday, []);
+    await put(coco, today, [squad]);
+
+    const { body } = await call({ method: 'GET', path: '/me/records', token: me.token });
+    expect(body).toMatchObject({ trainedDays: 2, squad: { firsts: [] } });
+  });
 });
 
 describe('GET /me/check-in-totals', () => {
