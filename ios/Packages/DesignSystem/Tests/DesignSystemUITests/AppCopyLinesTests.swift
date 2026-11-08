@@ -29,6 +29,33 @@ extension TheAppsLanguage {
             #expect(String(copyKey: "商店街", bundle: catalog) == "商店街")
         }
 
+        /// A built catalog whose source is Simplified Chinese: Xcode writes only the other
+        /// languages' tables, since every Chinese line is its key.
+        private static func sourceCatalog(english lines: [String: String]) throws -> Bundle {
+            let root = FileManager.default.temporaryDirectory.appending(path: "AppCopyCatalog/\(UUID().uuidString)")
+            let folder = root.appending(path: "en.lproj")
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let info = try PropertyListSerialization.data(
+                fromPropertyList: ["CFBundleDevelopmentRegion": "zh-Hans"], format: .xml, options: 0)
+            try info.write(to: root.appending(path: "Info.plist"))
+            let data = try PropertyListSerialization.data(fromPropertyList: lines, format: .xml, options: 0)
+            try data.write(to: folder.appending(path: "Localizable.strings"))
+            return try #require(Bundle(url: root))
+        }
+
+        @Test func speaksTheSourceLanguageWhereItHasNoTable() throws {
+            let catalog = try Self.sourceCatalog(english: ["本周小队已练": "Squad this week"])
+            AppCopyLines.install(.none)
+            // The process may speak English (an extension speaks the phone's language): the app's
+            // Chinese still reads as the key.
+            AppLanguage.adopt(from: nil, folder: nil)
+            UserDefaults.standard.set(["en"], forKey: "AppleLanguages")
+            #expect(String(copyKey: "本周小队已练", bundle: catalog) == "本周小队已练")
+            AppLanguage.english.pick()
+            #expect(String(copyKey: "本周小队已练", bundle: catalog) == "Squad this week")
+            AppLanguage.simplifiedChinese.pick()
+        }
+
         @Test func keepsTheCatalogsWordsWithNothingPut() throws {
             AppLanguage.simplifiedChinese.pick()
             let catalog = try Self.catalog(["练了": "练了"])

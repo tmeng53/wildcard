@@ -102,7 +102,19 @@ public enum AppCopyLines {
 
     /// The words for `key`, unfilled: the lines put over it, else `bundle`'s catalog's, else the key.
     static func format(forKey key: String, in bundle: Bundle) -> String {
-        Self.bundle(forKey: key, in: bundle).localizedString(forKey: key, value: nil, table: nil)
+        let found = Self.bundle(forKey: key, in: bundle)
+        // No strings of its own in the language the app speaks, which is the catalog's source
+        // language: Xcode writes no table where every line is its key, so the key is the words.
+        // Asking the bundle would answer in the process's language, which in an extension is the
+        // phone's, not the app's.
+        if found === bundle, speaksSourceLanguage(of: bundle) { return key }
+        return found.localizedString(forKey: key, value: nil, table: nil)
+    }
+
+    /// Whether the app speaks `bundle`'s source language now.
+    private static func speaksSourceLanguage(of bundle: Bundle) -> Bool {
+        guard let source = bundle.developmentLocalization else { return false }
+        return source.caseInsensitiveCompare(AppLanguage.current.rawValue) == .orderedSame
     }
 }
 
