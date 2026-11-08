@@ -88,7 +88,9 @@ export function mentioning(
       const known = week.members.flatMap((each) =>
         each.nickname === undefined ? [] : [roster.get(each.member) ?? ''],
       );
-      return `不能 @ ${name}；能 @ 的是：${known.join('、')}。`;
+      return known.length === 0
+        ? `不能 @ ${name}；现在没有能 @ 的队友。`
+        : `不能 @ ${name}；能 @ 的是：${known.join('、')}。`;
     }
     mentions.push(member);
     if (!line.includes(`@${nickname}`)) prefix.push(`@${nickname} `);
