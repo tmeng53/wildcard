@@ -108,7 +108,7 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
             createdAt: new Date(now.getTime() - 10 * 60_000),
             kind: 'trained',
             sport: '跑步',
-            reactions: 0,
+            reactedBy: [],
             comments: [],
           },
         ],
@@ -1118,7 +1118,7 @@ describe('the coach', () => {
             day: '2026-11-01',
             createdAt: now,
             kind: 'healthyMeal',
-            reactions: 0,
+            reactedBy: [],
             comments: [],
           },
         ],
@@ -1301,7 +1301,8 @@ describe('the coach', () => {
         createdAt: new Date('2026-10-31T20:00:00Z'),
         kind: 'healthyMeal' as const,
         text: '自己做的',
-        reactions: 1,
+        postedTime: '22:05',
+        reactedBy: [mia],
         comments: [],
       };
       await wakes(fixture, {
@@ -1324,7 +1325,7 @@ describe('the coach', () => {
       // A member whose plan it couldn't read still gets a note.
       expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
       expect(daily?.task).toContain(
-        '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 「自己做的」 · 1 个表情',
+        '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 （本人当地 22:05 发） 「自己做的」 · 点了表情：队员1',
       );
     });
   });
@@ -1443,7 +1444,7 @@ describe('the coach', () => {
             day: '2026-11-01',
             createdAt: now,
             kind: 'healthyMeal',
-            reactions: 0,
+            reactedBy: [],
             comments: [],
           },
         ],
@@ -1464,7 +1465,7 @@ describe('the coach', () => {
         createdAt: new Date('2026-11-01T20:00:00Z'),
         kind: 'healthyMeal' as const,
         text,
-        reactions: 0,
+        reactedBy: [],
         comments: [],
       });
       // 10:00 in New York on Monday 2026-11-02, past the daily wake's hour.
