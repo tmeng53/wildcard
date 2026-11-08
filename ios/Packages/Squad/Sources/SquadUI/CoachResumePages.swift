@@ -51,14 +51,14 @@ public struct CoachPage: View {
                 leaving: coach, title: Text("解雇\(coach.name)", bundle: .module),
                 line: Text("小队的记忆会留给下一个教练", bundle: .module),
                 keep: Text("先不解雇", bundle: .module), confirm: Text("确认解雇", bundle: .module),
-                identifier: "coach.fire", isSaving: model.isSaving, failed: failed, back: back,
+                identifier: "coach.fire", parting: .fired, isSaving: model.isSaving, failed: failed, back: back,
                 action: { Task { finish(await model.fireCoach()) } })
         case .swap(let leaving, let coming):
             CoachLeavingPage(
                 leaving: leaving, title: Text("换成\(coming.name)？", bundle: .module),
                 line: Text("\(leaving.name)会离开，\(coming.name)会来", bundle: .module),
                 keep: Text("先不换", bundle: .module), confirm: Text("确认换教练", bundle: .module),
-                identifier: "coach.swap", isSaving: model.isSaving, failed: failed, back: back,
+                identifier: "coach.swap", parting: .swapped, isSaving: model.isSaving, failed: failed, back: back,
                 action: { Task { finish(await model.hire(coming.id)) } })
         }
     }
@@ -254,15 +254,20 @@ struct CoachResumePage: View {
     }
 }
 
-/// A coach leaving, 解雇 or 换教练: the leaving coach crying on its stage, a line under it, a
-/// button to keep it and, in red, the one that lets it go.
+/// A coach leaving, 解雇 or 换教练: the leaving coach on its stage, a line under it, and the
+/// buttons to keep it or let it go. Fired, it cries and letting it go is the red text button
+/// under 先不解雇; swapped, it is a neutral change (Tracy, 2026-11-08): the coach stands at ease
+/// saying its catchphrase, and 确认换教练 is the ink button over a plain 先不换.
 struct CoachLeavingPage: View {
+    enum Parting { case fired, swapped }
+
     let leaving: Coach
     let title: Text
     let line: Text
     let keep: Text
     let confirm: Text
     let identifier: String
+    let parting: Parting
     let isSaving: Bool
     let failed: Bool
     let back: () -> Void
@@ -278,9 +283,10 @@ struct CoachLeavingPage: View {
                     .accessibilityAddTraits(.isHeader)
                 CoachStage(
                     coach: leaving.id,
-                    catchphrase: String(localized: "我才刚记住大家的外号……", bundle: .module.inAppLanguage),
+                    catchphrase: parting == .fired
+                        ? String(localized: "我才刚记住大家的外号……", bundle: .module.inAppLanguage) : leaving.catchphrase,
                     bubble: .center, figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
-                    mood: .crying, surface: .page
+                    mood: parting == .fired ? .crying : .calm, surface: .page
                 )
                 .frame(height: CoachMetrics.fireStage)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
@@ -300,23 +306,34 @@ struct CoachLeavingPage: View {
                 if failed {
                     InlineFailure()
                 }
-                Button(action: back) {
-                    keep.frame(maxWidth: .infinity)
+                switch parting {
+                case .fired:
+                    keepButton.buttonStyle(PrimaryButtonStyle(.large)).accentTone(.ink)
+                    confirmButton.buttonStyle(TextButtonStyle(.danger))
+                case .swapped:
+                    confirmButton.buttonStyle(PrimaryButtonStyle(.large)).accentTone(.ink)
+                    keepButton.buttonStyle(TextButtonStyle(.muted))
                 }
-                .buttonStyle(PrimaryButtonStyle(.large))
-                .accentTone(.ink)
-                .accessibilityIdentifier("\(identifier).keep")
-                Button(action: action) {
-                    confirm.loadingLabel(isSaving)
-                }
-                .buttonStyle(TextButtonStyle(.danger))
-                .disabled(isSaving)
-                .accessibilityIdentifier("\(identifier).confirm")
             }
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(identifier)
+    }
+
+    private var keepButton: some View {
+        Button(action: back) {
+            keep.frame(maxWidth: parting == .fired ? .infinity : nil)
+        }
+        .accessibilityIdentifier("\(identifier).keep")
+    }
+
+    private var confirmButton: some View {
+        Button(action: action) {
+            confirm.loadingLabel(isSaving).frame(maxWidth: parting == .swapped ? .infinity : nil)
+        }
+        .disabled(isSaving)
+        .accessibilityIdentifier("\(identifier).confirm")
     }
 }
 
