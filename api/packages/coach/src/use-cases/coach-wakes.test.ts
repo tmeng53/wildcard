@@ -369,7 +369,7 @@ describe('the coach', () => {
       ]);
       // Every member who agreed to AI use gets a note, whether or not they checked in.
       expect(runs[1]?.task).toContain(
-        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天。\n- 队员2：这周已经练了 0 天。',
+        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天。 用简体中文写。\n- 队员2：这周已经练了 0 天。 用简体中文写。',
       );
       // With yesterday's posts, here none.
       expect(runs[1]?.task).toContain('昨天（周六）小队没人发动态。');
@@ -1389,6 +1389,22 @@ describe('the coach', () => {
       expect(read).toContain('队员1');
       expect(read).not.toContain('米亚');
       expect(read).not.toContain('跑步');
+    });
+  });
+
+  it('writes the 战术板 in the squad’s language and a check-in’s reply in its author’s', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      const week: SquadWeek = {
+        ...fixture.week,
+        members: fixture.week.members.map((member) => ({ ...member, language: 'en' })),
+        language: 'zh-Hant',
+      };
+      await wakes(fixture, { agent, weeks: { [week.weekStart]: week } }).run();
+      const daily = runs.find(({ task }) => task.includes('新的一天'))?.task;
+      const checkIn = runs.find(({ task }) => task.includes('有人打卡'))?.task;
+      expect(daily).toContain('战术板：用繁體中文寫，照台灣的說法。');
+      expect(checkIn?.split('\n\n')).toContain('Write in English.');
     });
   });
 

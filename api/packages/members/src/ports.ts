@@ -1,3 +1,5 @@
+import type { ReaderLanguage } from '@wildcard/language-model';
+
 import type { EquippedTitle, MemberId, Profile, ProfileSave, Squadmate } from './domain/profile.js';
 
 /** Where members' profiles are kept. */
@@ -17,6 +19,14 @@ export interface ProfileStore {
    * has no profile.
    */
   equipTitle(member: MemberId, title: EquippedTitle | null): Promise<boolean>;
+  /**
+   * Saves the language the member's app speaks, logged with the rest of the profile; nothing is
+   * saved or logged when it is the one saved already. Returns `false` when the member has no
+   * profile.
+   */
+  saveLanguage(member: MemberId, language: ReaderLanguage): Promise<boolean>;
+  /** The language each of these members' app speaks, by member. Members without a profile are left out. */
+  languages(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, ReaderLanguage>>;
   /** When the member first saved their profile, right after signing up. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
   /**

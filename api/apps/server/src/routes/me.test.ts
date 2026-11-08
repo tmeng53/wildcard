@@ -8,7 +8,7 @@ import {
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
-import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { createMembers, createPostgresProfileStore, MemberId } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sign } from 'hono/jwt';
@@ -383,6 +383,41 @@ describe('PUT /me/profile', () => {
         { time_zone: zone, catchphrase: '冲冲冲', nickname: '小周', look: { version: 1, ...look } },
         { time_zone: 'America/Toronto', catchphrase: '冲冲冲', nickname: null, look: null },
       ]);
+    } finally {
+      await db.destroy();
+    }
+  });
+
+  it('keeps the language the member’s app asks in, logged with the profile, once it changes', async () => {
+    const { token, userId } = await signUp();
+    const asking = (language?: string) => ({
+      authorization: `Bearer ${token}`,
+      ...(language === undefined ? {} : { 'accept-language': language }),
+    });
+    // Before a profile there is nothing to keep it on.
+    await getMe(asking('en'));
+    const zone = 'America/Los_Angeles';
+    await putProfile(token, { version: 1, timeZone: zone, catchphrase: null });
+    await getMe(asking('zh-Hans'));
+    await getMe(asking('zh-Hant'));
+    await getMe(asking('zh-Hant'));
+    // Neither a language the app doesn't speak nor no header changes it.
+    await getMe(asking('ja'));
+    await getMe(asking());
+    await getMe(asking('en-US'));
+    const db = createDatabase(config.databaseUrl);
+    try {
+      const { rows } = await sql`select time_zone, language from public.profile_events
+        where member_id = ${userId} order by id`.execute(db);
+      expect(rows).toStrictEqual([
+        { time_zone: zone, language: 'zh-Hans' },
+        { time_zone: zone, language: 'zh-Hant' },
+        { time_zone: zone, language: 'en' },
+      ]);
+      const languages = await createMembers({ store: createPostgresProfileStore(db) }).languages([
+        MemberId.parse(userId),
+      ]);
+      expect([...languages.values()]).toStrictEqual(['en']);
     } finally {
       await db.destroy();
     }
