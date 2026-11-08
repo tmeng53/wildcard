@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "品牌色上的次要字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Secondary text on brand"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "品牌色上的次要字"
+          }
+        }
+      }
+    },
     "轻点翻面": {
       "localizations": {
         "en": {

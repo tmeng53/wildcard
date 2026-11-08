@@ -2229,6 +2229,112 @@ internal struct Client: APIProtocol {
             }
         )
     }
+    /// The signed-in member’s records (外卡记录)
+    ///
+    /// 外卡记录, opened from 我’s 训练记录: streaks, when and what they train, and how they stand in their squad, worked out from their check-ins and plans on every read.
+    ///
+    /// - Remark: HTTP `GET /me/records`.
+    /// - Remark: Generated from `#/paths//me/records/get(getMyRecords)`.
+    internal func getMyRecords(_ input: Operations.GetMyRecords.Input) async throws -> Operations.GetMyRecords.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.GetMyRecords.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/me/records",
+                    parameters: []
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.GetMyRecords.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.MemberRecords.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                case 401:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.GetMyRecords.Output.Unauthorized.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .unauthorized(.init(body: body))
+                case 503:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.GetMyRecords.Output.ServiceUnavailable.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .serviceUnavailable(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
     /// The signed-in member’s 训练 for a range of days, for their training record
     ///
     /// 训练记录 on 我: each 训练 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.

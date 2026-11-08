@@ -62,6 +62,28 @@ public struct APIMeService: MeService {
         }
     }
 
+    /// 外卡记录, its squadmates named and drawn from the squad's today. A today that doesn't load
+    /// leaves them as members without a character.
+    public func records() async throws(MeError) -> WildcardRecords {
+        try await me { () throws(APIError) in
+            var characters: [MemberID: MemberCharacter] = [:]
+            if let squad = try await api.mySquad(), let today = try? await api.today(of: squad.id) {
+                for member in today.members {
+                    characters[member.member] = member.character
+                }
+            }
+            return try await api.records { member in
+                RecordMate(
+                    member: member,
+                    character: characters[member].map { character in
+                        MeCharacter(
+                            nickname: character.nickname.text, outfit: Outfit(character.look),
+                            persona: Persona(character.look))
+                    })
+            }
+        }
+    }
+
     /// This week's plan and the days with a 练了, numbered as the 出赛表 numbers weeks.
     private func weekGlance(in timeZone: TimeZone) async throws(APIError) -> WeekGlance {
         let today = LocalDay(at: now(), in: timeZone)

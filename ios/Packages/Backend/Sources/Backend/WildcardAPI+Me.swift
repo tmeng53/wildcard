@@ -29,6 +29,43 @@ extension WildcardAPI {
         return try read { () throws(ContractsError) in try record.trainings.map(TrainingDay.init) }
     }
 
+    /// 外卡记录: the member's records, and how they stand in their squad, its squadmates named by
+    /// `mates` (nil for one who left or made no character).
+    public func records(
+        mates: (MemberID) -> RecordMate
+    ) async throws(APIError) -> WildcardRecords {
+        let wire = try await call { try await client.getMyRecords().ok.body.json }
+        return try read { () throws(ContractsError) in
+            func streak(_ streak: Components.Schemas.RecordStreak?) throws(ContractsError) -> WildcardRecords.Streak? {
+                try streak.map { streak throws(ContractsError) in
+                    .init(days: streak.days, first: try LocalDay(streak.from), last: try LocalDay(streak.to))
+                }
+            }
+            func count(_ wire: Components.Schemas.RecordMateCount?) throws(ContractsError) -> SquadStanding.MateCount? {
+                try wire.map { wire throws(ContractsError) in
+                    guard let id = UUID(uuidString: wire.memberId) else { throw .invalidID(wire.memberId) }
+                    return .init(mate: mates(MemberID(id)), count: wire.count)
+                }
+            }
+            let squad = try wire.squad.map { squad throws(ContractsError) in
+                SquadStanding(
+                    partner: try count(squad.partner),
+                    cheersReceived: .init(count: squad.cheersReceived.count, top: try count(squad.cheersReceived.top)),
+                    cheersGiven: .init(count: squad.cheersGiven.count, top: try count(squad.cheersGiven.top)),
+                    // A kind this build doesn't know is left out, as the API asks.
+                    firsts: squad.firsts.compactMap(SquadStanding.First.init(rawValue:)))
+            }
+            return WildcardRecords(
+                trainedDays: wire.trainedDays, minutes: wire.minutes, longestMinutes: wire.longestMinutes,
+                longestStreak: try streak(wire.longestStreak), mealStreak: try streak(wire.mealStreak),
+                hours: wire.hours, weekdays: wire.weekdays,
+                sports: try wire.sports.map { sport throws(ContractsError) in
+                    .init(activity: try Activity(sport), days: sport.days)
+                },
+                sportCount: wire.sportCount, squad: squad)
+        }
+    }
+
     /// The member's badge board (徽章板): every weekly title they won, with its badge, and the one
     /// they wear.
     public func titleBoard() async throws(APIError) -> TitleBoard {

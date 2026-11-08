@@ -5,26 +5,33 @@ import DesignSystemUI
 import ScheduleDomain
 import SwiftUI
 
-// 出赛表's top bar, under the navigation bar's back button: the week chips with the 我的每周计划
-// after them, and 存图.
+// 出赛表's top bar, under the navigation bar's back button: the page's title and the week chips
+// with the 我的每周计划 after them. 存图 sits in the navigation bar, across from the back button.
 
 extension ScheduleView {
     // MARK: Top bar
 
-    /// The week chips and 存图.
+    /// The title and the week chips.
     var topBar: some View {
-        chipRow
-    }
-
-    private var chipRow: some View {
-        HStack(spacing: Space.xs) {
+        VStack(alignment: .leading, spacing: Space.s) {
+            Text("出赛表", bundle: .module)
+                .typeStyle(TypeRamp.largeTitle)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .padding(.top, Space.xxs)
+                .accessibilityAddTraits(.isHeader)
             CategoryBar(pageChips, selection: pageSelection)
                 .frame(maxWidth: .infinity)
-            // The 我的每周计划 is no one week's poster to share.
+        }
+    }
+
+    /// 存图, in the navigation bar; the 我的每周计划 is no one week's poster to share.
+    var saveItem: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
             if !store.showsTemplate {
                 saveButton
             }
         }
+        .sharedBackgroundVisibility(.hidden)
     }
 
     private var saveButton: some View {
@@ -38,6 +45,8 @@ extension ScheduleView {
                     .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
             }
         }
+        // The navigation bar shows a label's icon alone unless told otherwise.
+        .labelStyle(.titleAndIcon)
         .buttonStyle(SecondaryButtonStyle())
         .disabled(store.sheet == nil || model.saving != .idle && model.saving != .failed)
         .accessibilityIdentifier("schedule.save")
