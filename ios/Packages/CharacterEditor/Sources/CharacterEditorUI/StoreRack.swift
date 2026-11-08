@@ -53,6 +53,7 @@ private struct RackCard<Picture: View, Status: View>: View {
         }
         .padding(.horizontal, Space.xs - Space.xxs / 2)
         .padding(.top, Space.xs + Space.xxs / 2)
+        .padding(.bottom, Space.s)
         .frame(maxWidth: .infinity, minHeight: height, alignment: .top)
         .background(
             Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
@@ -121,7 +122,9 @@ struct RackPiece: View {
                         .opacity(shelf == .owned ? 0.45 : 1)
                 },
                 name: EditorNames.variant(variant, in: slot), muted: shelf == .owned,
-                status: { EmptyView() }
+                // A hidden copy of the line keeps its room in the card, so the real one over it
+                // never covers the name, at any text size.
+                status: { status(shelf, isNew: isNew).hidden() }
             )
         }
         .buttonStyle(PressableButtonStyle())
