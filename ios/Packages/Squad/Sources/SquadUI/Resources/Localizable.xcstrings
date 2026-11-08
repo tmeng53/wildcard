@@ -65,22 +65,6 @@
         }
       }
     },
-    "你走了，小队就散了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Once you go, the squad ends."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你走了，小隊就散了"
-          }
-        }
-      }
-    },
     "保存": {
       "localizations": {
         "en": {
@@ -541,22 +525,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "隊長"
-          }
-        }
-      }
-    },
-    "队长会交给最早加入的队友": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Captain passes to whoever joined first."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隊長會交給最早加入的隊友"
           }
         }
       }
@@ -1203,28 +1171,6 @@
         }
       }
     },
-    "下周起改为%@（%@）": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "From next week: %1$@ (%2$@)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下周起改为%1$@（%2$@）"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下週起改為%1$@（%2$@）"
-          }
-        }
-      }
-    },
     "小队设置": {
       "localizations": {
         "en": {
@@ -1243,6 +1189,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "小隊設定"
+          }
+        }
+      }
+    },
+    "小队会解散": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The squad will end."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小队会解散"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊會解散"
+          }
+        }
+      }
+    },
+    "队长交给最早入队的人": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The earliest member becomes captain."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "队长交给最早入队的人"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隊長交給最早入隊的人"
+          }
+        }
+      }
+    },
+    "下周起：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From next week: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下周起：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下週起：%@"
           }
         }
       }

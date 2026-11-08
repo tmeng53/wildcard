@@ -110,7 +110,7 @@ final class SquadSettingsUITests: XCTestCase {
         let row = app.buttons["squad.timeZone"]
         XCTAssertTrue(row.waitForExistence(timeout: 30), "no 比赛时区 on the captain's 小队设置")
         XCTAssertTrue(app.buttons["squad.leave"].exists, "no 退出小队 on 小队设置")
-        XCTAssertTrue(row.label.contains("Taipei"), "the row doesn't show the squad's zone: \(row.label)")
+        XCTAssertTrue(row.label.contains("台北"), "the row doesn't show the squad's zone: \(row.label)")
         XCTAssertLessThanOrEqual(row.frame.maxX, app.frame.maxX, "the 比赛时区 row runs off the screen")
         settle()
         keepScreenshot(named: "67-squad-time-zone")
@@ -124,8 +124,8 @@ final class SquadSettingsUITests: XCTestCase {
         newYork.tap()
         let next = app.staticTexts["squad.timeZone.next"]
         XCTAssertTrue(next.waitForExistence(timeout: 30), "the change didn't wait for next week")
-        XCTAssertTrue(next.label.contains("New York"), "the next week's zone isn't New York: \(next.label)")
-        XCTAssertTrue(row.label.contains("Taipei"), "this week's zone changed at once")
+        XCTAssertTrue(next.label.contains("北美东部"), "the next week's zone isn't New York's: \(next.label)")
+        XCTAssertTrue(row.label.contains("台北"), "this week's zone changed at once")
         settle()
         keepScreenshot(named: "68-squad-time-zone-next-week")
 

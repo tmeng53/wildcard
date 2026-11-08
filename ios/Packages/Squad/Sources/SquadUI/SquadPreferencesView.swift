@@ -8,7 +8,7 @@ import SwiftUI
 /// 小队设置 (Tracy, 2026-11-08: what is a setting rather than the squad's play leaves 小队), pushed
 /// from the gear on 小队's header: 比赛时区 as a plain row, then 退出小队. The captain's row opens
 /// the system's zone list, the one sign-up's 建小队 shows, and a change counts from next week, which
-/// a line under the row says; everyone else only reads it.
+/// one short line under the row says; everyone else only reads it. No help text (Tracy, 2026-11-08).
 struct SquadPreferencesView: View {
     @Bindable var model: SquadSettingsModel
     let settings: SquadSettings
@@ -59,8 +59,7 @@ struct SquadPreferencesView: View {
             }
             .accessibilityIdentifier("squad.timeZone")
             if model.canChangeTimeZone, zone.nextTimeZone != zone.timeZone {
-                let next = name(zone.nextTimeZone)
-                Text("下周起改为\(next.region)（\(next.city)）", bundle: .module)
+                Text("下周起：\(nextLabel)", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .accessibilityIdentifier("squad.timeZone.next")
@@ -74,10 +73,14 @@ struct SquadPreferencesView: View {
         }
     }
 
-    /// The zone's region and city, so two zones of one region (New York, Toronto) tell apart.
-    private var zoneValue: Text {
+    /// The zone's region (北美东部时间); the zone list shows the cities.
+    private var zoneValue: Text { Text(verbatim: name(zone.timeZone).region) }
+
+    /// Next week's zone by its region, or by its city when the region is the same (New York to Toronto).
+    private var nextLabel: String {
         let now = name(zone.timeZone)
-        return Text(verbatim: "\(now.region) · \(now.city)")
+        let next = name(zone.nextTimeZone)
+        return next.region == now.region ? next.city : next.region
     }
 
     private func name(_ identifier: String) -> ZoneName {
@@ -113,8 +116,8 @@ struct SquadPreferencesView: View {
 
     /// What leaving does beyond the member's own seat, when it does more.
     private var leaveMessage: Text? {
-        if settings.squad.members.count == 1 { return Text("你走了，小队就散了", bundle: .module) }
-        if model.isCaptain { return Text("队长会交给最早加入的队友", bundle: .module) }
+        if settings.squad.members.count == 1 { return Text("小队会解散", bundle: .module) }
+        if model.isCaptain { return Text("队长交给最早入队的人", bundle: .module) }
         return nil
     }
 }
