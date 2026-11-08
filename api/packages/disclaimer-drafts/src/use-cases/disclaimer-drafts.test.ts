@@ -93,6 +93,7 @@ const request = (member: MemberId, reason = '早上没起来') => ({
   member,
   reason: DraftReason.parse(reason),
   style: 'funny' as const,
+  language: 'zh-Hans' as const,
 });
 
 async function reasonOf(promise: Promise<unknown>) {
@@ -110,6 +111,17 @@ describe('createDisclaimerDrafts', () => {
     const member = await newMember();
     expect(await drafts.write(request(member))).toEqual({ kind: 'drafts', drafts: good.drafts });
     expect(prompts).toEqual(['原因：早上没起来\n风格：搞笑']);
+  });
+
+  it('writes in the member’s app language', async () => {
+    const { drafts, prompts } = setup();
+    const member = await newMember();
+    await drafts.write({ ...request(member), language: 'zh-Hant' });
+    await drafts.write({ ...request(member), language: 'en' });
+    expect(prompts).toEqual([
+      '原因：早上没起来\n风格：搞笑\n用繁體中文寫，照台灣的說法。',
+      '原因：早上没起来\n风格：搞笑\nWrite in English.',
+    ]);
   });
 
   it('asks the model the settings name, with their instructions', async () => {

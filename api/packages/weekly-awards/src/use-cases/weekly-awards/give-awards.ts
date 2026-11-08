@@ -1,4 +1,4 @@
-import type { LanguageModel } from '@wildcard/language-model';
+import type { LanguageModel, ReaderLanguage } from '@wildcard/language-model';
 import {
   endingWordsOf,
   modelReplyFor,
@@ -11,7 +11,12 @@ import {
   type Title,
 } from '../../domain/awards.js';
 import { withSportGlyphs, type BadgeCatalog } from '../../domain/badges.js';
-import { promptFor, type PromptMeme } from '../../domain/prompt.js';
+import {
+  awardsLanguageOf,
+  promptFor,
+  type AwardsLanguage,
+  type PromptMeme,
+} from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
 import { offeredMoves, type AwardSettings } from '../../domain/settings.js';
 import { AwardsWriterUnavailableError } from '../../errors.js';
@@ -39,6 +44,8 @@ export interface GiveAwardsInput {
    * page; none when nobody trained.
    */
   readonly ending?: { readonly done: number; readonly plan: number } | undefined;
+  /** The squad's language, its captain's; Simplified Chinese when left out. */
+  readonly language?: ReaderLanguage | undefined;
 }
 
 /**
@@ -58,7 +65,7 @@ export async function giveAwards(
     readonly memes: MemesInUse;
     readonly sportGlyphs: SportGlyphs;
   },
-  { squad, weekStart, members, ending }: GiveAwardsInput,
+  { squad, weekStart, members, ending, language }: GiveAwardsInput,
 ): Promise<Awards> {
   const saved = await deps.store.find(squad, weekStart);
   if (saved?.status === 'given') return saved.awards;
@@ -93,6 +100,7 @@ export async function giveAwards(
         weekStart,
         winners,
         ending,
+        language: language === undefined ? undefined : awardsLanguageOf(language),
       }));
     } catch (error) {
       await deps.store.recordFailure({ squad, weekStart, error: reasonOf(error) });
@@ -156,8 +164,10 @@ async function writeTitles(
     weekStart,
     winners,
     ending,
+    language,
   }: {
     readonly settings: AwardSettings;
+    readonly language: AwardsLanguage | undefined;
     /** The settings' badge catalog with the sports' icons among its glyphs. */
     readonly badges: BadgeCatalog;
     readonly memes: readonly PromptMeme[];
@@ -173,6 +183,7 @@ async function writeTitles(
     moves: settings.moves,
     badges,
     memes,
+    language,
   });
   const reply = modelReplyFor(badges, offeredMoves(settings.moves));
   let cause: unknown;

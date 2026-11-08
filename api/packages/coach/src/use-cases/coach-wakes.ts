@@ -13,6 +13,7 @@ import { holidaysOn, SquadId, type CoachSettings } from '../domain/settings.js';
 import { factsText, planIndexOf, type NoteBrief } from '../domain/member-facts.js';
 import {
   consentedOnly,
+  languageOf,
   rosterOf,
   saidTo,
   weekText,
@@ -564,6 +565,7 @@ async function briefsOf(
     return [
       {
         name,
+        language: languageOf(week, member),
         trainedDays,
         ...(mine === undefined || planned === undefined
           ? {}
