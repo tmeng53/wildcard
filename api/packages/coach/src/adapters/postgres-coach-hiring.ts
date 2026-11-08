@@ -50,11 +50,10 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
           eb.not(
             eb.exists(
               eb
-                .selectFrom('coach_wakes as woke')
-                .select('woke.id')
-                .whereRef('woke.squad_id', '=', 'now.squad_id')
-                .where('woke.state', '=', 'done')
-                .whereRef('woke.claimed_at', '>=', 'now.hired_at'),
+                .selectFrom('coach_usage as ran')
+                .select('ran.id')
+                .whereRef('ran.squad_id', '=', 'now.squad_id')
+                .whereRef('ran.at', '>=', 'now.hired_at'),
             ),
           ),
         )

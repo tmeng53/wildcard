@@ -617,7 +617,7 @@ describe('the coach', () => {
     });
   });
 
-  it('knows a coach hired back until its first wake since', async () => {
+  it('knows a coach hired back until it first runs for the squad', async () => {
     await rolledBack(async ({ trx, squad, mia }) => {
       const by = MemberId.parse(mia);
       const catalog = createPostgresCoachCatalog(trx);
@@ -636,10 +636,16 @@ describe('the coach', () => {
       // The first one hired again is back.
       await hiring.change({ squad, coach: xiaohun, by });
       expect(await store.backAgain(squad)).toBe(true);
-      // Once it has woken for the squad, it is just its coach again.
+      // A wake finished without running (its check-in no longer shared with AI) tells it nothing.
       await sql`
         insert into public.coach_wakes (squad_id, reason, day, state, claimed_at)
         values (${squad}, 'daily', '2026-11-08', 'done', now())`.execute(trx);
+      expect(await store.backAgain(squad)).toBe(true);
+      // Once it has run for the squad, it is just its coach again.
+      await sql`
+        insert into public.coach_usage
+          (squad_id, coach_id, model, requests, input_tokens, output_tokens, cost_micros)
+        values (${squad}, 'xiaohun', 'gpt-test', 1, 10, 10, 1)`.execute(trx);
       expect(await store.backAgain(squad)).toBe(false);
       // No coach, nothing to be back.
       await hiring.fire({ squad, by });
