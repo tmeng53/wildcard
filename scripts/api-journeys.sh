@@ -255,7 +255,7 @@ if want squad; then
   call POST "/squad-invites/$typed/accept" "$newcomer_token"
   expect 400 AI_CONSENT_REQUIRED
   call GET /me/ai-consent "$newcomer_token"
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"copyVersion":2,"current":false}' ] ||
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"copyVersion":3,"current":false}' ] ||
     fail "newcomer should have no consent yet: $body"
   call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":0}'
   expect 400 REQUEST_INVALID
