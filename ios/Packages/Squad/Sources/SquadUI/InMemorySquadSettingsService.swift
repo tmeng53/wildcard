@@ -148,6 +148,7 @@ extension InMemorySquadSettingsService {
     public func setTimeZone(of squad: SquadID, to timeZone: String) async throws(SquadError) -> SquadTimeZone {
         if failsSaving { throw .unavailable }
         guard current.matchTimeZone.canChange, TimeZone(identifier: timeZone) != nil else { throw .outdated }
+        current.matchTimeZone.timeZone = timeZone
         current.matchTimeZone.nextTimeZone = timeZone
         return current.matchTimeZone
     }
