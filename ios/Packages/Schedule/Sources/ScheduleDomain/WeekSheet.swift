@@ -15,10 +15,13 @@ public struct WeekSheet: Hashable, Sendable {
     public let titles: [AwardTitle]
     /// At most `FuelGoal.maxCount`, in the order picked.
     public var fuel: [FuelGoal]
+    /// The scene the squad trained on that week, from its 战报; nil while the week isn't over,
+    /// and for a week the squad has no 战报 of.
+    public let scene: SceneID?
 
     public init(
         weekStart: LocalDay, plan: [PlanDay], marks: [DayMark], titles: [AwardTitle] = [],
-        fuel: [FuelGoal] = []
+        fuel: [FuelGoal] = [], scene: SceneID? = nil
     ) throws(ScheduleError) {
         guard plan.count == WeeklyPlan.dayCount, marks.count == WeeklyPlan.dayCount else { throw .refused }
         guard fuel.count <= FuelGoal.maxCount else { throw .refused }
@@ -27,6 +30,7 @@ public struct WeekSheet: Hashable, Sendable {
         self.marks = marks
         self.titles = titles
         self.fuel = fuel
+        self.scene = scene
     }
 
     /// What the member trains at on day `index` (Monday 0): the sport the poster shows that day

@@ -35,18 +35,18 @@ public struct APIScheduleBackend: ScheduleBackend {
             let plan = try api.read { () throws(ContractsError) in try WeeklyPlan(wire) }
             let checkIns = try await api.myCheckIns(from: weekStart, through: weekStart.adding(days: 6))
             let squad = try await api.mySquad()
-            // The titles show on a week that is over.
-            let titles =
+            // The titles and the week's scene show on a week that is over.
+            let story =
                 if let squad, weekStart < thisWeek {
-                    try await self.titles(of: member.id, in: squad.id, weekStart: weekStart)
+                    try await self.story(of: member.id, in: squad.id, weekStart: weekStart)
                 } else {
-                    [AwardTitle]()
+                    (titles: [AwardTitle](), scene: SceneID?.none)
                 }
             do {
                 return try WeekSheet(
                     weekStart: weekStart, plan: plan.days, marks: Self.marks(of: checkIns, weekStart: weekStart),
-                    titles: titles,
-                    fuel: try wire.fuelGoals.map(FuelGoal.init))
+                    titles: story.titles,
+                    fuel: try wire.fuelGoals.map(FuelGoal.init), scene: story.scene)
             } catch {
                 throw .unreadableResponse
             }
@@ -73,11 +73,11 @@ public struct APIScheduleBackend: ScheduleBackend {
 
     // MARK: - Private
 
-    /// The member's titles in the squad's story of a week; none until they are written. The
-    /// titles only decorate the poster, so a story that can't be read leaves them off rather
-    /// than the week; a signed-out member still fails.
-    private func titles(of member: MemberID, in squad: SquadID, weekStart: LocalDay) async throws(APIError)
-        -> [AwardTitle]
+    /// The member's titles in the squad's story of a week, none until they are written, and the
+    /// scene the squad trained on. The story only decorates the poster, so one that can't be
+    /// read leaves them off rather than the week; a signed-out member still fails.
+    private func story(of member: MemberID, in squad: SquadID, weekStart: LocalDay) async throws(APIError)
+        -> (titles: [AwardTitle], scene: SceneID?)
     {
         let story: Components.Schemas.WeekStory
         do {
@@ -85,11 +85,18 @@ public struct APIScheduleBackend: ScheduleBackend {
         } catch .account(let error) {
             throw .account(error)
         } catch {
-            return []
+            return ([], nil)
         }
-        guard case .case1(let ready) = story else { return [] }
-        let mine = ready.titles.first { UUID(uuidString: $0.member).map(MemberID.init) == member }
-        return mine?.titles.map { AwardTitle(title: $0.title, speech: $0.speech) } ?? []
+        switch story {
+        case .case1(let ready):
+            let mine = ready.titles.first { UUID(uuidString: $0.member).map(MemberID.init) == member }
+            return (
+                mine?.titles.map { AwardTitle(title: $0.title, speech: $0.speech) } ?? [],
+                SceneID(rawValue: ready.sceneId)
+            )
+        case .case2(let pending):
+            return ([], SceneID(rawValue: pending.sceneId))
+        }
     }
 
     /// How each day of the week went: a 练了 over a 请假条, Monday first, with every sport a

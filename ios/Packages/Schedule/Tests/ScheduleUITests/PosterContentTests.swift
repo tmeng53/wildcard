@@ -1,4 +1,5 @@
 import Contracts
+import DesignSystem
 import Foundation
 import ScheduleDomain
 import Testing
@@ -100,6 +101,31 @@ struct PosterContentTests {
         #expect(content.lanes[2].look == .held)
         #expect(content.fuelOpen)
         #expect(content.fuelEditable)
+    }
+
+    @Test func eachWeekWearsItsOwnSceneAndWhatIsNotPickedYetIsGraphite() throws {
+        func paint(_ weekStart: LocalDay, scene: SceneID? = nil) throws -> PosterContent.Paint {
+            let sheet = try WeekSheet(
+                weekStart: weekStart, plan: plan, marks: Array(repeating: .none, count: 7), scene: scene)
+            return PosterContent(
+                sheet: sheet, board: WeekBoard(weekStart: weekStart, days: plan, today: thursday), nickname: "Tracy",
+                weekNumber: 3, fuelOpen: false
+            ).paint
+        }
+        #expect(try paint(monday.adding(days: -7), scene: .tennis) == .scene(.tennis))
+        #expect(try paint(monday.adding(days: -14)) == .scene(.gym), "no 战报: the gym")
+        #expect(try paint(monday) == .thisWeek)
+        #expect(try paint(monday.adding(days: 7)) == .graphite)
+        #expect(
+            PosterContent(template: WeekBoard(template: plan, weekStart: monday), nickname: "Tracy").paint == .graphite)
+
+        let past = PosterContent(
+            sheet: try WeekSheet(
+                weekStart: monday.adding(days: -7), plan: plan, marks: Array(repeating: .none, count: 7),
+                scene: .pool),
+            board: nil, nickname: "Tracy", weekNumber: 2, fuelOpen: false)
+        #expect(past.scene(now: .climbing) == .pool)
+        #expect(past.forSaving.paint == .scene(.pool), "the saved picture wears the same")
     }
 
     @Test func aPastWeekShowsItsTitles() throws {
