@@ -24,7 +24,7 @@ struct PosterContentTests {
     private func sheet(_ weekStart: LocalDay) throws -> WeekSheet {
         try WeekSheet(
             weekStart: weekStart, plan: plan,
-            marks: [.trained(.sport("run")), .disclaimer, .none, .trained(.sport("tennis")), .none, .none, .none],
+            marks: [.trained([.sport("run")]), .disclaimer, .none, .trained([.sport("tennis")]), .none, .none, .none],
             titles: titles, fuel: [.suggested(.water)])
     }
 
@@ -41,17 +41,32 @@ struct PosterContentTests {
         #expect(content.weekEnd == Self.day("2026-10-25"))
     }
 
-    @Test func aDayTrainedShowsTheSportLoggedNotThePlan() throws {
+    @Test func aDayShowsItsPlanTickedOnlyWhenThatSportWasTrained() throws {
         var board = WeekBoard(weekStart: monday, days: plan, today: thursday)
         let content = PosterContent(
             sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false)
-        #expect(content.lanes[0].shown == .train(.sport("run")))
-        #expect(content.lanes[3].shown == .train(.sport("tennis")), "strength was planned, tennis was played")
-        #expect(content.lanes[1].shown == .train(.sport("tennis")), "a 请假条 keeps the plan")
+        #expect(content.lanes[0].face.shown == .train(.sport("run")))
+        #expect(content.lanes[0].face.mark == .trained([.sport("run")]))
+        #expect(content.lanes[3].face.shown == .train(.sport("strength")), "strength was planned, tennis was played")
+        #expect(content.lanes[3].face.mark == .none, "no tick: strength wasn't trained")
+        #expect(content.lanes[1].face.mark == .disclaimer, "a 请假条 keeps the plan")
+
+        // Today changed to the sport played: ticked.
         board.tap(3)
+        board.pick(.sport("tennis"))
+        board.release()
+        let changed = PosterContent(
+            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false)
+        #expect(changed.lanes[3].face.shown == .train(.sport("tennis")))
+        #expect(changed.lanes[3].face.mark == .trained([.sport("tennis")]))
+
+        // Changed again, to a sport not played: shown, not ticked.
+        board.tap(3)
+        board.pick(.sport("yoga"))
         let held = PosterContent(
             sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false)
-        #expect(held.lanes[3].shown == .train(.sport("strength")), "a day being changed shows the plan")
+        #expect(held.lanes[3].face.shown == .train(.sport("yoga")), "a day being changed shows the plan")
+        #expect(held.lanes[3].face.mark == .none)
     }
 
     @Test func aSelectedDayThisWeekIsHeld() throws {

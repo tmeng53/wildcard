@@ -33,10 +33,12 @@ struct PosterContent: Equatable {
         let isEditable: Bool
         var id: Int { index }
 
-        /// What the lane says: the sport logged on a day trained, else the plan. A day being
-        /// changed shows the plan, so the pick reads as made.
-        var shown: PlanDay {
-            if case .trained(let activity) = mark, look != .held { .train(activity) } else { plan }
+        /// What the lane says and how it is marked (`DayMark.face(of:)`). A day being changed
+        /// shows the plan, so the pick reads as made.
+        var face: (shown: PlanDay, mark: DayMark) {
+            let face = mark.face(of: plan)
+            guard look == .held, face.shown != plan else { return face }
+            return (plan, .none)
         }
     }
 

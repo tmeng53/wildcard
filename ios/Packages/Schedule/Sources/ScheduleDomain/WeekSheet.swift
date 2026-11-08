@@ -29,12 +29,12 @@ public struct WeekSheet: Hashable, Sendable {
         self.fuel = fuel
     }
 
-    /// What the member trains at on day `index` (Monday 0): the sport of that day's 练了, else
-    /// `plan`'s (the board's while it changes); nil for a rest day or a day with neither.
+    /// What the member trains at on day `index` (Monday 0): the sport the poster shows that day
+    /// (`plan`'s, the board's while it changes, else the latest 练了's); nil for a rest day with
+    /// no 练了.
     public func activity(on index: Int, plan: [PlanDay]) -> Activity? {
-        guard marks.indices.contains(index) else { return nil }
-        if case .trained(let activity) = marks[index] { return activity }
-        guard plan.indices.contains(index), case .train(let activity?) = plan[index] else { return nil }
+        guard marks.indices.contains(index), plan.indices.contains(index) else { return nil }
+        guard case .train(let activity?) = marks[index].face(of: plan[index]).shown else { return nil }
         return activity
     }
 
@@ -47,13 +47,26 @@ public struct WeekSheet: Hashable, Sendable {
 
 /// How a day went: one status a day, a 练了 over a 请假条.
 public enum DayMark: Hashable, Sendable {
-    /// A 练了, with the sport the day's latest one logged.
-    case trained(Activity)
+    /// One 练了 or more, with the sports they logged, the latest last (never empty).
+    case trained([Activity])
     case disclaimer
     case none
 
     public var isTrained: Bool {
         if case .trained = self { true } else { false }
+    }
+
+    /// What a day's row says and how it is marked (Tracy, 2026-11-08): the plan stays what the
+    /// member made it, so a day planned as a sport shows that sport, ticked only when a 练了 that
+    /// day logged it. A day planned as rest, or with no sport picked, that was trained anyway
+    /// shows the latest sport trained, ticked.
+    public func face(of plan: PlanDay) -> (shown: PlanDay, mark: DayMark) {
+        guard case .trained(let sports) = self else { return (plan, self) }
+        if case .train(let planned?) = plan {
+            return (plan, sports.contains(planned) ? self : .none)
+        }
+        guard let latest = sports.last else { return (plan, .none) }
+        return (.train(latest), self)
     }
 }
 

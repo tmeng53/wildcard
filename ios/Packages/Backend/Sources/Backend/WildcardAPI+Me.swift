@@ -245,8 +245,9 @@ extension MateSchedule {
         let read = try marks.map { mark throws(ContractsError) -> DayMark in
             switch mark.status {
             case .trained:
+                // The card's week sends only the day's latest sport.
                 guard let activity = try Activity(mark) else { throw .strayCustomSport }
-                return .trained(activity)
+                return .trained([activity])
             case .disclaimer: return .disclaimer
             case .none: return .none
             }
