@@ -5124,7 +5124,14 @@
             "enum": [
               true
             ],
-            "description": "Present when finishing the weekly plan first decided a place on the podium (or the last place just off it), so the page can say why."
+            "description": "No longer sent: ties now go to whoever reached the tied days first (`tieBrokenByTime`). Kept so older builds still read the reply."
+          },
+          "tieBrokenByTime": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Present when reaching the tied days trained first decided a place on the podium (or the last place just off it), so the page can say why."
           }
         },
         "required": [
@@ -5133,7 +5140,7 @@
           "planDone"
         ],
         "additionalProperties": false,
-        "description": "领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene) in the middle, up to 2 next beside, left then right. A tie goes to whoever finished their own weekly plan first, then to the earliest to join. Missing when nobody trained."
+        "description": "领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene) in the middle, up to 2 next beside, left then right. A tie goes to whoever reached those days trained first, then to the earliest to join. Missing when nobody trained."
       },
       "StoryMyWeek": {
         "type": "object",
