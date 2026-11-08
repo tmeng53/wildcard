@@ -18,7 +18,8 @@ import Testing
         sports.entry(for: "strength")?.names
             == .init(simplifiedChinese: "力量训练", english: "Strength", traditionalChinese: "重訓"))
     #expect(sports.entry(for: "roadCycling")?.icon == "figure.outdoor.cycle")
-    #expect(sports.entry(for: "roadCycling")?.category == "cycling")
+    #expect(sports.entry(for: "roadCycling")?.category == "cardio")
+    #expect(sports.color(of: "ski") == "#2F86C4")
     #expect(sports.signUpCommon == ["swim", "run", "strength", "tennis", "climb", "yoga"])
     #expect(sports.checkInQuick == ["run", "strength", "yoga", "swim", "spin", "hike", "tennis"])
 }
@@ -112,5 +113,7 @@ import Testing
         account: AccountSession(provider: stack.supabase.auth, store: MemorySessionStore(), now: { Date() }))
     let catalog = CatalogClient(api: api, directory: directory).kept()
     #expect(catalog.sports.entry(for: "padel")?.names.english == "Padel")
+    // Kept from before category colours: its sports wear the gym's steel.
+    #expect(catalog.sports.color(of: "padel") == nil)
     #expect(catalog.diceLines == CatalogClient.bundled.diceLines)
 }

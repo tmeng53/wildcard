@@ -35,7 +35,7 @@ import Testing
     let sports = SportCatalog(
         categories: [("water", "swim"), ("racket", "tennis"), ("outdoorWinter", "climb")].map { category, sport in
             SportCatalog.Category(
-                id: category, names: names,
+                id: category, names: names, color: "#4A6C8C",
                 entries: [
                     SportCatalog.Entry(
                         sport: Sport(stringLiteral: sport), names: names, icon: "figure.run", offered: true,

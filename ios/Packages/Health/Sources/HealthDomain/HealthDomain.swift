@@ -30,11 +30,13 @@ public struct ImportedWorkout: Hashable, Sendable, Identifiable {
 /// `version` as stored JSON.
 public struct HealthSharing: Hashable, Sendable, Codable {
     public var version = 1
+    /// 距离, and a hike's 爬升 and a ski day's 落差.
     public var distance = true
-    /// 配速 for a run or walk, 均速 for a ride.
+    /// 配速 for a run, walk or swim, 均速 for a ride, 最高速 on a ski day.
     public var pace = true
     public var heartRate = true
     public var effort = true
+    /// A swim's 趟数, and a ski day's runs.
     public var laps = true
     public var route = true
 
@@ -43,11 +45,11 @@ public struct HealthSharing: Hashable, Sendable, Codable {
     /// The cells a new post from Health starts with struck.
     public var struck: Set<WorkoutCell> {
         var cells: Set<WorkoutCell> = []
-        if !distance { cells.insert(.distance) }
-        if !pace { cells.formUnion([.pace, .speed]) }
+        if !distance { cells.formUnion([.distance, .descent, .elevationGain]) }
+        if !pace { cells.formUnion([.pace, .swimPace, .speed, .topSpeed]) }
         if !heartRate { cells.formUnion([.averageHeartRate, .maxHeartRate]) }
         if !effort { cells.insert(.effort) }
-        if !laps { cells.insert(.laps) }
+        if !laps { cells.formUnion([.laps, .runs]) }
         return cells
     }
 
