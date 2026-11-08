@@ -27,6 +27,8 @@ struct FeedbackView: View {
 
     /// How long 谢谢你的反馈 stays once the check is drawn, before the page goes back.
     private static let sentHold: Duration = .seconds(1.6)
+    /// The gap between the rating card's stars.
+    private static let starGap = 3.0
 
     var body: some View {
         Group {
@@ -119,7 +121,7 @@ struct FeedbackView: View {
     private var ratingCard: some View {
         HStack(spacing: Space.s) {
             VStack(alignment: .leading, spacing: Space.xs - 2) {
-                HStack(spacing: 3) {
+                HStack(spacing: Self.starGap) {
                     ForEach(0..<5, id: \.self) { _ in
                         Image(systemName: "star.fill").font(.system(size: Sizing.smallIcon))
                     }

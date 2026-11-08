@@ -15,6 +15,9 @@ struct FeedbackTicket: View {
     let addScreenshot: () -> Void
     @Environment(\.sceneTheme) private var theme
 
+    /// Where `TextEditor` starts its first line inside its frame, which the placeholder matches.
+    private static let editorInset = (top: 8.0, leading: 5.0)
+
     /// The words above the tear line, the screenshots on the stub under it.
     var body: some View {
         VStack(spacing: 0) {
@@ -30,8 +33,8 @@ struct FeedbackTicket: View {
                             placeholder
                                 .typeStyle(TypeRamp.body)
                                 .foregroundStyle(Color(role: .fgMuted, in: theme))
-                                .padding(.top, 8)
-                                .padding(.leading, 5)
+                                .padding(.top, Self.editorInset.top)
+                                .padding(.leading, Self.editorInset.leading)
                                 .allowsHitTesting(false)
                         }
                     }
@@ -127,6 +130,8 @@ struct FeedbackTicket: View {
 /// A screenshot on the ticket's stub, with × to take it off.
 private struct Thumbnail: View {
     static let size = CGSize(width: 60, height: 80)
+    /// How far the remove badge sits in from the picture's corner.
+    private static let badgeInset = 3.0
 
     let jpeg: Data
     let remove: () -> Void
@@ -149,7 +154,7 @@ private struct Thumbnail: View {
                     .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                     .frame(width: 20, height: 20)
                     .background(Color(role: .bgBrand, in: theme).opacity(0.75), in: Circle())
-                    .padding(3)
+                    .padding(Self.badgeInset)
                     // A bigger place to tap than the badge, spilling past the picture's corner.
                     .contentShape(Rectangle().inset(by: -8))
             }
