@@ -17,6 +17,7 @@ import { LegacyScene, legacyScene } from '../legacy-scene.js';
 import {
   nudgeOrganisers,
   squadStory,
+  squadStoryWeeks,
   type WeeklyAwardsDependencies,
 } from '../flows/weekly-awards.js';
 import { PhotoPath, type PhotoStorage, type VerifyToken } from '../ports.js';
@@ -346,6 +347,19 @@ export const WeekStoryBody = z
   ])
   .openapi('WeekStory');
 
+const StoryWeeksBody = z
+  .strictObject({
+    version: bodyVersion(1),
+    weeks: z
+      .array(z.strictObject({ weekStart: WeekStart.meta({ description: 'The week’s Monday.' }) }))
+      .meta({
+        description:
+          'Every week the squad has a 战报 for, the latest first; each one opens with ' +
+          '`GET /squads/{squadId}/weeks/{weekStart}/story`. A week nobody checked in has none.',
+      }),
+  })
+  .openapi('WeekStoryWeeks');
+
 /** `GET /squads/{squadId}/weeks/{weekStart}/story`: a squad's Sunday 战报 story. */
 export function weekStory(
   deps: Pick<
@@ -411,7 +425,37 @@ export function weekStory(
     },
   });
 
+  const weeks = createRoute({
+    method: 'get',
+    path: '/squads/{squadId}/stories',
+    operationId: 'listSquadWeekStories',
+    summary: 'The weeks a squad has a 战报 for (往期战报)',
+    description:
+      'For the squad’s page: every week whose 战报 came out, the latest first, including the ' +
+      'one that came out last Sunday at 8pm Eastern. Only for members of the squad now.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params: z.strictObject({ squadId: SquadId }) },
+    responses: {
+      200: {
+        description: 'The weeks',
+        content: { 'application/json': { schema: StoryWeeksBody } },
+      },
+      401: problem('No bearer token, or not a valid one'),
+      403: problem('The member isn’t in this squad'),
+      503: problem('Sign-in can’t be checked right now'),
+    },
+  });
+
   return new OpenAPIHono<SignedIn>()
+    .openapi(weeks, async (c) => {
+      const { squadId } = c.req.valid('param');
+      const found = await squadStoryWeeks(deps, {
+        viewer: c.var.caller.userId,
+        squad: AwardsSquad.parse(squadId),
+      });
+      return c.json({ version: 1 as const, weeks: found.map((weekStart) => ({ weekStart })) }, 200);
+    })
     .openapi(nudge, async (c) => {
       const { squadId, weekStart } = c.req.valid('param');
       await nudgeOrganisers(deps, {

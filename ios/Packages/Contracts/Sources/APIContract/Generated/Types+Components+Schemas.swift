@@ -7671,6 +7671,56 @@ extension Components {
                 case goals
             }
         }
+        /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks`.
+        public struct WeekStoryWeeks: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/version`.
+            public var version: Components.Schemas.WeekStoryWeeks.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/WeeksPayload`.
+            public struct WeeksPayloadPayload: Codable, Hashable, Sendable {
+                /// The week’s Monday.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/WeeksPayload/weekStart`.
+                public var weekStart: Swift.String
+                /// Creates a new `WeeksPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - weekStart: The week’s Monday.
+                public init(weekStart: Swift.String) {
+                    self.weekStart = weekStart
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case weekStart
+                }
+            }
+            /// Every week the squad has a 战报 for, the latest first; each one opens with `GET /squads/{squadId}/weeks/{weekStart}/story`. A week nobody checked in has none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/weeks`.
+            public typealias WeeksPayload = [Components.Schemas.WeekStoryWeeks.WeeksPayloadPayload]
+            /// Every week the squad has a 战报 for, the latest first; each one opens with `GET /squads/{squadId}/weeks/{weekStart}/story`. A week nobody checked in has none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/weeks`.
+            public var weeks: Components.Schemas.WeekStoryWeeks.WeeksPayload
+            /// Creates a new `WeekStoryWeeks`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - weeks: Every week the squad has a 战报 for, the latest first; each one opens with `GET /squads/{squadId}/weeks/{weekStart}/story`. A week nobody checked in has none.
+            public init(
+                version: Components.Schemas.WeekStoryWeeks.VersionPayload,
+                weeks: Components.Schemas.WeekStoryWeeks.WeeksPayload
+            ) {
+                self.version = version
+                self.weeks = weeks
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case weeks
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/WeekStory`.
         @frozen public enum WeekStory: Codable, Hashable, Sendable {
             /// The week’s titles are written.
