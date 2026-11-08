@@ -357,7 +357,6 @@ extension MainTabs {
                     teammate = homeCard(of: $0)
                 }
                 today.openCoach = { showsCoachCard = true }
-                today.openCoachMarket = { todayPages = [.coach(.market)] }
             }
             .navigationDestination(for: TodayPage.self) { page in
                 switch page {

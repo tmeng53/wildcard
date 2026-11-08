@@ -48,10 +48,10 @@ extension TodayModel {
         placeSquad()
     }
 
-    /// The coach's empty spot was tapped: 教练招聘会 opens.
+    /// The coach's empty spot was tapped: 教练招聘会 opens, routed as the app routes a notice.
     func tapVacancy() {
         guard arrival == nil else { return }
-        openCoachMarket()
+        openDestination?(.coaches)
     }
 
     /// The coach was tapped: the waiting note opens, or else it gives its pep talk and its card opens.
