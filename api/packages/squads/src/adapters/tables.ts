@@ -31,6 +31,14 @@ export interface SquadGoalSuggestions {
   week_start: string;
 }
 
+export interface SquadLanguages {
+  id: Generated<Int8>;
+  language: string;
+  set_at: Generated<Timestamp>;
+  set_by: string | null;
+  squad_id: string;
+}
+
 export interface SquadMembers {
   joined_at: Generated<Timestamp>;
   member_id: string;
@@ -84,6 +92,7 @@ export interface SquadWeeklyGoals {
 export interface DB {
   squad_events: SquadEvents;
   squad_goal_suggestions: SquadGoalSuggestions;
+  squad_languages: SquadLanguages;
   squad_members: SquadMembers;
   squad_membership_events: SquadMembershipEvents;
   squad_scene_picks: SquadScenePicks;

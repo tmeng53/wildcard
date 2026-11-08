@@ -4,14 +4,16 @@ import Foundation
 /// added to the rest pose; scales and opacity are factors. Bend is in degrees, clockwise,
 /// at an arm's elbow (`Rig.Elbow`): only a part with one bends.
 public enum Channel: String, Hashable, Sendable, Codable, CaseIterable {
+    // `front` is 1 while an arm with a twin is drawn in front of the head and 0 (its rest) while
+    // it is drawn behind the body, as an animator keys it; held, never eased.
     // swiftlint:disable:next identifier_name - x and y are the clip files' own channel names.
-    case rotation, x, y, scaleX, scaleY, opacity, bend
+    case rotation, x, y, scaleX, scaleY, opacity, bend, front
 
     /// An accent's value that leaves a part as it is.
     var rest: Double {
         switch self {
         case .scaleX, .scaleY: 1
-        case .rotation, .x, .y, .opacity, .bend: 0
+        case .rotation, .x, .y, .opacity, .bend, .front: 0
         }
     }
 }
@@ -177,6 +179,9 @@ public struct Clip: Hashable, Sendable {
             let times = track.keys.map(\.time)
             let ordered = zip(times, times.dropFirst()).allSatisfy { $0 < $1 }
             guard let first = times.first, let last = times.last, ordered, first >= 0, last <= duration else {
+                throw .invalidKeyframes(clip: name, part: track.part, channel: track.channel)
+            }
+            guard track.channel != .front || track.keys.allSatisfy({ $0.value == 0 || $0.value == 1 }) else {
                 throw .invalidKeyframes(clip: name, part: track.part, channel: track.channel)
             }
             guard track.keys.allSatisfy({ $0.easing.isPlayable }) else {
