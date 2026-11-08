@@ -18,10 +18,11 @@ private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920
 @Test func todayIsTheMembersDayNewestFirstWithPostedMarked() throws {
     let morning = try imported("A", endingAt: "2026-11-06T12:10:00Z")
     let evening = try imported("B", endingAt: "2026-11-07T01:40:00Z")
-    // 2:30am in New York the next morning still counts for the 6th.
-    let late = try imported("C", endingAt: "2026-11-07T07:30:00Z")
+    // 11:30pm in New York still counts for the 6th; 12:30am is the 7th.
+    let late = try imported("C", endingAt: "2026-11-07T04:30:00Z")
     let yesterday = try imported("D", endingAt: "2026-11-05T20:00:00Z")
-    let today = [morning, yesterday, late, evening].today(
+    let tomorrow = try imported("E", endingAt: "2026-11-07T05:30:00Z")
+    let today = [morning, yesterday, late, tomorrow, evening].today(
         try LocalDay("2026-11-06"), in: newYork, posted: [late.id])
     #expect(today.map(\.imported.id.id) == ["C", "B", "A"])
     #expect(today.map(\.isPosted) == [true, false, false])

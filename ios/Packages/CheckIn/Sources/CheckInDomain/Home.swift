@@ -14,8 +14,8 @@ public struct Home: Hashable, Sendable {
     /// The member's plan for this week.
     public let plan: WeeklyPlan
     /// The squad's check-ins from two days before the member's day to two days after, so every
-    /// member's own today is in it whatever their time zone (UTC+14 and UTC−12, with the 3am
-    /// grace, are up to two days apart), and the member's own since Monday, whichever squads
+    /// member's own today is in it whatever their time zone (UTC+14 and UTC−12 are up to two
+    /// days apart), and the member's own since Monday, whichever squads
     /// they went to; oldest first.
     public var checkIns: [CheckIn]
 
@@ -124,7 +124,7 @@ public struct Home: Hashable, Sendable {
     }
 
     /// The home with the member's own row moved on to `day` when the copy is from an earlier
-    /// one: after 3am, or opened offline on a new day. Their old status leaves today's counts,
+    /// one: after midnight, or opened offline on a new day. Their old status leaves today's counts,
     /// and in a new week their week and the squad's start from no trained days. Teammates'
     /// rows wait for the next load.
     public func rolled(to day: LocalDay) -> Home {

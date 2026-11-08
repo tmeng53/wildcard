@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -130,14 +130,26 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/checkIn`.
             public var checkIn: Swift.String?
-            /// The coach who answered (`coachReply`) or wrote (`coachNote`).
+            /// The coach who answered (`coachReply`) or wrote (`coachNote`, `coachLetter`).
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/coach`.
             public var coach: Swift.String?
-            /// Its name now (`coachReply`, `coachNote`).
+            /// Its name now (`coachReply`, `coachNote`, `coachLetter`).
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/coachName`.
             public var coachName: Swift.String?
+            /// The coach that took over, whom the letter is to (`coachLetter`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/toCoach`.
+            public var toCoach: Swift.String?
+            /// Its name now (`coachLetter`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/toCoachName`.
+            public var toCoachName: Swift.String?
+            /// The letter’s id (`coachLetter`): the same as the coach activity’s.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/letter`.
+            public var letter: Swift.Int?
             /// Whether the coach wrote a line (`coachReply`); else only its emoji.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/replied`.
@@ -150,11 +162,11 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/note`.
             public var note: Swift.Int?
-            /// The New York day the morning note was written for (`coachNote`).
+            /// The day the morning note was written for (`coachNote`), or the letter is dated (`coachLetter`), on the squad’s clock.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/day`.
             public var day: Swift.String?
-            /// The morning note’s words (`coachNote`).
+            /// The morning note’s (`coachNote`) or letter’s (`coachLetter`) words.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/text`.
             public var text: Swift.String?
@@ -289,7 +301,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - squadId: The squad it is about, if any.
             ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
@@ -298,13 +310,16 @@ extension Components {
             ///   - by: Who moved it (`sceneMoved`); left out once they deleted their account.
             ///   - byName: Their nickname now (`sceneMoved`), when they have one.
             ///   - checkIn: The caller’s check-in the coach answered (`coachReply`), or the check-in commented on (`comment`).
-            ///   - coach: The coach who answered (`coachReply`) or wrote (`coachNote`).
-            ///   - coachName: Its name now (`coachReply`, `coachNote`).
+            ///   - coach: The coach who answered (`coachReply`) or wrote (`coachNote`, `coachLetter`).
+            ///   - coachName: Its name now (`coachReply`, `coachNote`, `coachLetter`).
+            ///   - toCoach: The coach that took over, whom the letter is to (`coachLetter`).
+            ///   - toCoachName: Its name now (`coachLetter`).
+            ///   - letter: The letter’s id (`coachLetter`): the same as the coach activity’s.
             ///   - replied: Whether the coach wrote a line (`coachReply`); else only its emoji.
             ///   - emoji: The coach’s emoji (`coachReply`), if any.
             ///   - note: The morning note’s id (`coachNote`): the same as the coach activity’s.
-            ///   - day: The New York day the morning note was written for (`coachNote`).
-            ///   - text: The morning note’s words (`coachNote`).
+            ///   - day: The day the morning note was written for (`coachNote`), or the letter is dated (`coachLetter`), on the squad’s clock.
+            ///   - text: The morning note’s (`coachNote`) or letter’s (`coachLetter`) words.
             ///   - unlockKind: What opened (`unlocked`): `store`, `prop` or `piece`. Skip another.
             ///   - item: The store’s, prop’s or piece’s id (`unlocked`).
             ///   - broadcast: The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now.
@@ -329,6 +344,9 @@ extension Components {
                 checkIn: Swift.String? = nil,
                 coach: Swift.String? = nil,
                 coachName: Swift.String? = nil,
+                toCoach: Swift.String? = nil,
+                toCoachName: Swift.String? = nil,
+                letter: Swift.Int? = nil,
                 replied: Swift.Bool? = nil,
                 emoji: Swift.String? = nil,
                 note: Swift.Int? = nil,
@@ -358,6 +376,9 @@ extension Components {
                 self.checkIn = checkIn
                 self.coach = coach
                 self.coachName = coachName
+                self.toCoach = toCoach
+                self.toCoachName = toCoachName
+                self.letter = letter
                 self.replied = replied
                 self.emoji = emoji
                 self.note = note
@@ -388,6 +409,9 @@ extension Components {
                 case checkIn
                 case coach
                 case coachName
+                case toCoach
+                case toCoachName
+                case letter
                 case replied
                 case emoji
                 case note
@@ -2476,7 +2500,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            /// The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/day`.
             public var day: Swift.String
@@ -2506,7 +2530,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - day: The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
@@ -2931,7 +2955,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            /// The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/day`.
             public var day: Swift.String
@@ -2961,7 +2985,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - day: The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
@@ -3041,7 +3065,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            /// The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/day`.
             public var day: Swift.String
@@ -3071,7 +3095,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - day: The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
@@ -3124,7 +3148,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            /// The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/day`.
             public var day: Swift.String
@@ -3154,7 +3178,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - day: The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
@@ -5211,7 +5235,7 @@ extension Components {
                 public var character: Components.Schemas.Character?
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/title`.
                 public var title: Components.Schemas.WornTitle?
-                /// The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
+                /// The member’s own today: their local date in their time zone.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/day`.
                 public var day: Swift.String
@@ -5253,7 +5277,7 @@ extension Components {
                 ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line.
                 ///   - character:
                 ///   - title:
-                ///   - day: The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
+                ///   - day: The member’s own today: their local date in their time zone.
                 ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///   - latestMeal: Their latest meal today sent to this squad. Missing when none.
                 ///   - plannedRest: Today is a rest day in their weekly plan, whatever they checked in.
@@ -5843,6 +5867,156 @@ extension Components {
                 case scene
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CoachLetterWritten`.
+        public struct CoachLetterWritten: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachLetterWritten/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachLetterWritten/version`.
+            public var version: Components.Schemas.CoachLetterWritten.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CoachLetterWritten/letter`.
+            public var letter: Components.Schemas.CoachLetter?
+            /// Creates a new `CoachLetterWritten`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - letter:
+            public init(
+                version: Components.Schemas.CoachLetterWritten.VersionPayload,
+                letter: Components.Schemas.CoachLetter? = nil
+            ) {
+                self.version = version
+                self.letter = letter
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case letter
+            }
+        }
+        /// The outgoing coach’s letter to the one that took over, or null when there is none: the squad didn’t just change coach, its coach is off duty for the day, or the coach couldn’t write it. The coach then leaves without one.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CoachLetter`.
+        public struct CoachLetter: Codable, Hashable, Sendable {
+            /// The letter’s id, which `coachLetter` notices name.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachLetter/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CoachLetter/from`.
+            public var from: Components.Schemas.CoachSpeaker
+            /// - Remark: Generated from `#/components/schemas/CoachLetter/to`.
+            public struct ToPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachLetter/to/value1`.
+                public var value1: Components.Schemas.CoachSpeaker
+                /// The coach who took over: its 称呼.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachLetter/to/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `ToPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: The coach who took over: its 称呼.
+                public init(
+                    value1: Components.Schemas.CoachSpeaker,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachLetter/to`.
+            public var to: Components.Schemas.CoachLetter.ToPayload
+            /// The day it is dated, on the squad’s clock.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachLetter/day`.
+            public var day: Swift.String
+            /// Its body, without the 称呼 or 落款; lines apart by `\n`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachLetter/text`.
+            public var text: Swift.String
+            /// When it was written.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachLetter/at`.
+            public var at: Foundation.Date
+            /// Creates a new `CoachLetter`.
+            ///
+            /// - Parameters:
+            ///   - id: The letter’s id, which `coachLetter` notices name.
+            ///   - from:
+            ///   - to:
+            ///   - day: The day it is dated, on the squad’s clock.
+            ///   - text: Its body, without the 称呼 or 落款; lines apart by `\n`.
+            ///   - at: When it was written.
+            public init(
+                id: Swift.Int,
+                from: Components.Schemas.CoachSpeaker,
+                to: Components.Schemas.CoachLetter.ToPayload,
+                day: Swift.String,
+                text: Swift.String,
+                at: Foundation.Date
+            ) {
+                self.id = id
+                self.from = from
+                self.to = to
+                self.day = day
+                self.text = text
+                self.at = at
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case from
+                case to
+                case day
+                case text
+                case at
+            }
+        }
+        /// The coach who wrote it as it left: its 落款.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CoachSpeaker`.
+        public struct CoachSpeaker: Codable, Hashable, Sendable {
+            /// The coach’s id. Never changes.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/id`.
+            public var id: Swift.String
+            /// Its name, shown with the 教练 tag.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/name`.
+            public var name: Swift.String
+            /// The character the app draws, by the art’s id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/look`.
+            public var look: Swift.String
+            /// Creates a new `CoachSpeaker`.
+            ///
+            /// - Parameters:
+            ///   - id: The coach’s id. Never changes.
+            ///   - name: Its name, shown with the 教练 tag.
+            ///   - look: The character the app draws, by the art’s id.
+            public init(
+                id: Swift.String,
+                name: Swift.String,
+                look: Swift.String
+            ) {
+                self.id = id
+                self.name = name
+                self.look = look
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case look
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CoachMarket`.
         public struct CoachMarket: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CoachMarket/version`.
@@ -6318,6 +6492,37 @@ extension Components {
             public var answers: [Components.Schemas.CoachAnswer]
             /// - Remark: Generated from `#/components/schemas/CoachActivity/memberNote`.
             public var memberNote: Components.Schemas.CoachMemberNote?
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/letter`.
+            public struct LetterPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachActivity/letter/value1`.
+                public var value1: Components.Schemas.CoachLetter
+                /// The letter the squad’s coach now was left by the coach before it when the squad changed coach (换教练), for 今天 to open once on each phone and the coach’s 简历 to keep. Left out when it wasn’t left one.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachActivity/letter/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `LetterPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: The letter the squad’s coach now was left by the coach before it when the squad changed coach (换教练), for 今天 to open once on each phone and the coach’s 简历 to keep. Left out when it wasn’t left one.
+                public init(
+                    value1: Components.Schemas.CoachLetter,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachActivity/letter`.
+            public var letter: Components.Schemas.CoachActivity.LetterPayload?
             /// Creates a new `CoachActivity`.
             ///
             /// - Parameters:
@@ -6326,18 +6531,21 @@ extension Components {
             ///   - replies: The coach’s replies to the check-ins asked about; one with none is left out.
             ///   - answers: The coach’s answers to members’ replies to it under the check-ins asked about, oldest first.
             ///   - memberNote:
+            ///   - letter:
             public init(
                 version: Components.Schemas.CoachActivity.VersionPayload,
                 note: Components.Schemas.CoachNote? = nil,
                 replies: [Components.Schemas.CoachReply],
                 answers: [Components.Schemas.CoachAnswer],
-                memberNote: Components.Schemas.CoachMemberNote? = nil
+                memberNote: Components.Schemas.CoachMemberNote? = nil,
+                letter: Components.Schemas.CoachActivity.LetterPayload? = nil
             ) {
                 self.version = version
                 self.note = note
                 self.replies = replies
                 self.answers = answers
                 self.memberNote = memberNote
+                self.letter = letter
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -6345,6 +6553,7 @@ extension Components {
                 case replies
                 case answers
                 case memberNote
+                case letter
             }
         }
         /// The squad’s newest 战术板 line (the app shows it while its day is today), or null.
@@ -6394,41 +6603,6 @@ extension Components {
                 case coach
                 case at
                 case timeZone
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/CoachSpeaker`.
-        public struct CoachSpeaker: Codable, Hashable, Sendable {
-            /// The coach’s id. Never changes.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/id`.
-            public var id: Swift.String
-            /// Its name, shown with the 教练 tag.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/name`.
-            public var name: Swift.String
-            /// The character the app draws, by the art’s id.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CoachSpeaker/look`.
-            public var look: Swift.String
-            /// Creates a new `CoachSpeaker`.
-            ///
-            /// - Parameters:
-            ///   - id: The coach’s id. Never changes.
-            ///   - name: Its name, shown with the 教练 tag.
-            ///   - look: The character the app draws, by the art’s id.
-            public init(
-                id: Swift.String,
-                name: Swift.String,
-                look: Swift.String
-            ) {
-                self.id = id
-                self.name = name
-                self.look = look
-            }
-            public enum CodingKeys: String, CodingKey {
-                case id
-                case name
-                case look
             }
         }
         /// - Remark: Generated from `#/components/schemas/CoachReply`.
