@@ -1,4 +1,4 @@
-import { typedText } from '@wildcard/typed-text';
+import { UNITS_PER_CHARACTER, typedText } from '@wildcard/typed-text';
 import { z } from 'zod';
 
 export const MemberId = z.uuid().brand<'MemberId'>();
@@ -15,10 +15,14 @@ export type FeedbackKind = z.infer<typeof FeedbackKind>;
 /** The longest message, in characters, as the app counts them. */
 export const FEEDBACK_MAX_LENGTH = 1000;
 
-/** What the member wrote: trimmed, 1 to 1000 characters, never blank. */
+/**
+ * What the member wrote: trimmed, 1 to 1000 characters, never blank, with room for 1000 emoji,
+ * since the app counts characters, not UTF-16 units.
+ */
 export const FeedbackBody = typedText({
   max: FEEDBACK_MAX_LENGTH,
   oneLine: false,
+  rawUnits: FEEDBACK_MAX_LENGTH * UNITS_PER_CHARACTER,
   description: 'What the member wrote: 1 to 1000 characters once trimmed.',
 });
 

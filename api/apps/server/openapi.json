@@ -4241,7 +4241,7 @@
           },
           "body": {
             "type": "string",
-            "maxLength": 1000,
+            "maxLength": 16000,
             "description": "What the member wrote: 1 to 1000 characters once trimmed.",
             "x-max-characters": 1000
           },

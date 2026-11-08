@@ -62,6 +62,6 @@ export const ignoredNotices = {
 
 /** 意见反馈, for an app whose test never sends any; no tracker, so nothing is filed. */
 export const unusedFeedback = {
-  feedback: { send: unused, toFile: unused, filed: unused },
+  feedback: { send: unused, toFile: () => Promise.resolve([]), filed: unused },
   issues: undefined,
 };

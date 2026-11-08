@@ -9,7 +9,8 @@ create table public.feedback (
   id uuid primary key,
   member_id uuid not null references auth.users (id) on delete cascade,
   kind text not null,
-  body text not null check (char_length(body) between 1 and 1000),
+  -- 1 to 1000 characters as the app counts them (graphemes); an emoji can take up to 16 code units.
+  body text not null check (char_length(body) between 1 and 16000),
   -- Photo paths in the member's own folder of the photos bucket, at most 3.
   screenshots text[] not null default '{}' check (cardinality(screenshots) <= 3),
   -- The app's version, build, iOS version, device model and language, as the app sent them.

@@ -100,7 +100,10 @@ describe('sending feedback', () => {
     ).rejects.toBeInstanceOf(FeedbackInvalidError);
     await expect(inbox.send(message(member, '字'.repeat(1000)))).resolves.toMatchObject({
       outcome: 'created',
-    });
+    }); // Emoji take up to 16 UTF-16 units each; the app counts each as one character.
+    await expect(
+      inbox.send(message(member, '字'.repeat(990) + '👍🏽'.repeat(6))),
+    ).resolves.toMatchObject({ outcome: 'created' });
   });
 
   it('takes 10 messages a day, still takes a retry, and more the next day', async () => {
