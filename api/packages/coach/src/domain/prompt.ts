@@ -1,5 +1,6 @@
 import { writeIn } from '@wildcard/language-model';
 
+import { challengeLine, type Challenge, type ChallengeAnswer } from './challenge.js';
 import type { Coach } from './coach.js';
 import { briefLine, weekdayOf, type NoteBrief } from './member-facts.js';
 import type { CoachSettings } from './settings.js';
@@ -21,6 +22,16 @@ import type { WakeReason } from './wake.js';
 
 /** The longest 战术板 line, in characters; the database checks the same. */
 export const NOTE_LIMIT = 60;
+
+/** The longest line a gift comes with, in characters; the database checks the same. */
+export const GIFT_LINE_LIMIT = 60;
+
+/** On a daily wake, what the coach may give: the pool, and who may get one this week. */
+export interface GiftOptions {
+  readonly pool: readonly { readonly id: string; readonly description?: string }[];
+  /** The members who may get a gift this week, by id, each with the gift pieces they have. */
+  readonly open: ReadonlyMap<string, readonly string[]>;
+}
 
 /** The standing instructions for a coach. */
 export function instructionsOf(settings: Pick<CoachSettings, 'rules'>, coach: Coach): string {
@@ -102,6 +113,8 @@ export function taskOf({
   yesterday,
   occasions = [],
   canSeePhotos = false,
+  challenge,
+  gifting,
 }: {
   readonly reason: WakeReason;
   readonly week: SquadWeek;
@@ -123,6 +136,10 @@ export function taskOf({
   readonly occasions?: readonly string[];
   /** On a reply's wake, whether the coach can look at the check-in's photos this time. */
   readonly canSeePhotos?: boolean;
+  /** On a check-in's wake, the challenge the coach set its author today and their answer. */
+  readonly challenge?: { readonly challenge: Challenge; readonly answer?: ChallengeAnswer };
+  /** On a daily wake, the gift pool and who may get one this week. */
+  readonly gifting?: GiftOptions;
 }): string | undefined {
   const filesLine = memoryBlock(files);
   const occasion = occasionBlock(occasions);
@@ -135,6 +152,9 @@ export function taskOf({
         : `你最近点过的表情（新的在前）：${recentEmoji.join(' ')}`;
     return [
       `有人打卡：${checkInLine(checkIn, rosterOf(week))}`,
+      ...(challenge === undefined
+        ? []
+        : [challengeLine({ challenge: challenge.challenge, answer: challenge.answer })]),
       ...occasion,
       emoji,
       writeIn(languageOf(week, checkIn.member)),
@@ -204,6 +224,7 @@ export function taskOf({
     notes,
     `战术板：${writeIn(week.language ?? 'zh-Hans')}`,
     noteLine,
+    ...giftBlock(gifting, roster),
   ].join('\n\n');
 }
 
@@ -220,6 +241,22 @@ const DREAM = [
   '- 过时的、一时的、琐碎的，删掉。',
   '改了哪个文件，就用 rewrite_file 把那个文件整个重写一遍；没变的不用动。',
 ].join('\n');
+
+/** The gift pool and who may get one, when anyone may: the give_gift tool's choices. */
+function giftBlock(
+  gifting: GiftOptions | undefined,
+  roster: ReadonlyMap<string, string>,
+): string[] {
+  if (gifting === undefined || gifting.open.size === 0 || gifting.pool.length === 0) return [];
+  const pool = gifting.pool.map(
+    ({ id, description }) => `- ${id}${description === undefined ? '' : `：${description}`}`,
+  );
+  const who = [...gifting.open].map(([member, owned]) => {
+    const name = roster.get(member) ?? '队员';
+    return owned.length === 0 ? `- ${name}` : `- ${name}（已有：${owned.join('、')}）`;
+  });
+  return [`礼物清单：\n${pool.join('\n')}`, `这周还能收礼物的：\n${who.join('\n')}`];
+}
 
 /** What today is, when it is anything: facts only, never how to bring them up. */
 function occasionBlock(occasions: readonly string[]): string[] {

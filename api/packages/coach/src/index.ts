@@ -19,6 +19,13 @@ export {
   createPostgresCoachSettings,
   type CoachTables,
 } from './adapters/postgres-coach-settings.js';
+export {
+  Challenge,
+  ChallengeAnswer,
+  CHALLENGE_AMOUNT_MAX,
+  CHALLENGE_TITLE_LIMIT,
+  CHALLENGE_UNIT_LIMIT,
+} from './domain/challenge.js';
 export { Coach, CoachEdit, CoachId, CoachLook, CoachTier } from './domain/coach.js';
 export {
   CoachModel,
@@ -49,6 +56,7 @@ export type {
   CoachStores,
   CoachMemberFacts,
   CoachMeme,
+  CoachGifting,
   CoachMemes,
   CoachOccasions,
   CoachPhotoUrls,
@@ -63,6 +71,7 @@ export {
   CoachAlreadyHiredError,
   CoachFileMemberNotFoundError,
   CoachNotOfferedError,
+  CoachNoteNoChallengeError,
   CoachNoteNotFoundError,
   CoachSquadNotFoundError,
   NoCoachHiredError,

@@ -7,13 +7,14 @@ import {
   MemberId,
   PieceId,
   UnlockKind,
+  type CoachGift,
   type CoachGifts,
   type Unlocks,
 } from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
-import { problem } from '../problem.js';
+import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const Unlock = z
@@ -117,8 +118,24 @@ const GiftedPiece = z
       description: 'When the coach gave it.',
       example: '2026-11-04T18:30:00.000Z',
     }),
+    line: z.string().optional().meta({
+      description: 'What the coach said with it, shown only to the member; older gifts have none.',
+      example: '天冷了，围上再出门。',
+    }),
+    openedAt: z.iso.datetime({ offset: true }).optional().meta({
+      description: 'When the member opened it (拆开); left out while it waits unopened.',
+      example: '2026-11-05T08:01:00.000Z',
+    }),
+    worn: z.boolean().optional().meta({
+      description: 'Whether the member put it on when they opened it (立刻穿上); only once opened.',
+      example: true,
+    }),
   })
   .openapi('GiftedPiece');
+
+const OpenedGift = z
+  .strictObject({ version: bodyVersion(1), gift: GiftedPiece })
+  .openapi('OpenedGift');
 
 const PieceClaim = z
   .strictObject({
@@ -182,7 +199,7 @@ const MyUnlocks = z
 export function unlocks(deps: {
   readonly verifyToken: VerifyToken;
   readonly unlocks: Unlocks;
-  readonly gifts: Pick<CoachGifts, 'of'>;
+  readonly gifts: Pick<CoachGifts, 'of' | 'open'>;
 }) {
   const route = createRoute({
     method: 'get',
@@ -224,12 +241,64 @@ export function unlocks(deps: {
     },
   });
 
+  const open = createRoute({
+    method: 'put',
+    path: '/me/gifts/{pieceId}/open',
+    operationId: 'openGift',
+    summary: 'Open a gift the signed-in member’s coach gave them',
+    description:
+      '拆开: keeps that the member opened a coach’s gift and whether they put it on then ' +
+      '(立刻穿上) or left it in their wardrobe (一会儿再说). Opening it again keeps the first.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      params: z.strictObject({ pieceId: PieceId }),
+      body: {
+        content: {
+          'application/json': {
+            schema: z
+              .strictObject({
+                version: bodyVersion(1),
+                worn: z.boolean().meta({ description: 'Whether they put it on now.' }),
+              })
+              .openapi('GiftOpening'),
+          },
+        },
+        required: true,
+      },
+    },
+    responses: {
+      200: { description: 'The gift', content: { 'application/json': { schema: OpenedGift } } },
+      400: problem('Not a piece id, or a body that isn’t a gift opening'),
+      401: problem('No bearer token, or not a valid one'),
+      404: problem('A piece the member wasn’t given (`GIFT_NOT_GIVEN`)'),
+      ...jsonBodyFailures,
+      503: problem('Sign-in can’t be checked right now'),
+    },
+  });
+
+  const shownGift = ({ piece, coach, givenAt, line, opened }: CoachGift) => ({
+    id: piece,
+    coach,
+    givenAt: givenAt.toISOString(),
+    ...(line === undefined ? {} : { line }),
+    ...(opened === undefined ? {} : { openedAt: opened.at.toISOString(), worn: opened.worn }),
+  });
+
   const shownClaim = ({ piece, claimedAt }: { piece: string; claimedAt: Date }) => ({
     id: piece,
     claimedAt: claimedAt.toISOString(),
   });
 
   return new OpenAPIHono<SignedIn>()
+    .openapi(open, async (c) => {
+      const gift = await deps.gifts.open(
+        MemberId.parse(c.var.caller.userId),
+        PieceId.parse(c.req.valid('param').pieceId),
+        c.req.valid('json').worn,
+      );
+      return c.json({ version: 1 as const, gift: shownGift(gift) }, 200);
+    })
     .openapi(claim, async (c) => {
       const kept = await deps.unlocks.claim(
         MemberId.parse(c.var.caller.userId),
@@ -260,11 +329,7 @@ export function unlocks(deps: {
             .filter(({ kind }) => kind === 'piece')
             .map(({ id, toGo, sports }) => ({ id, sports: [...sports], checkInsToGo: toGo })),
           claimed: claims.map(shownClaim),
-          gifts: gifts.map(({ piece, coach, givenAt }) => ({
-            id: piece,
-            coach,
-            givenAt: givenAt.toISOString(),
-          })),
+          gifts: gifts.map(shownGift),
           shelf: {
             stores: shelf.stores.map(({ toGo, ...store }) => ({
               ...store,

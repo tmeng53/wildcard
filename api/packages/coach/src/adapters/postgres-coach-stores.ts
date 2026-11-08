@@ -2,6 +2,7 @@ import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely } from 'kysely';
 import { z } from 'zod';
 
+import { ChallengeAnswer, type Challenge } from '../domain/challenge.js';
 import { CoachId } from '../domain/coach.js';
 import { CoachEmoji } from '../domain/reply.js';
 import { memberOfPath } from '../domain/memory.js';
@@ -256,15 +257,45 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
     },
 
     memberNotes: {
-      async save({ squad, member, coach, day, text, wake }) {
+      async save({ squad, member, coach, day, text, challenge, wake }) {
         // Nothing when the member left the squad or deleted their account while the run thought.
         const saved = await sql<{ id: string }>`
-          insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, wake_id)
-          select ${squad}::uuid, ${member}::uuid, ${coach}, ${day}::date, ${text}, ${String(wake)}::bigint
+          insert into public.coach_member_notes
+            (squad_id, member_id, coach_id, day, text, challenge_title, challenge_amount,
+             challenge_unit, wake_id)
+          select ${squad}::uuid, ${member}::uuid, ${coach}, ${day}::date, ${text},
+            ${challenge?.title ?? null}, ${challenge?.amount ?? null}::int,
+            ${challenge?.unit ?? null}, ${String(wake)}::bigint
           where exists (select 1 from auth.users where id = ${member}::uuid)
           on conflict (squad_id, member_id, day) do nothing
           returning id`.execute(db);
         return saved.rows.length > 0;
+      },
+
+      async challengeOf({ squad, member, day }) {
+        const row = await db
+          .selectFrom('coach_member_notes')
+          .leftJoin(
+            'coach_challenge_answers',
+            'coach_challenge_answers.note_id',
+            'coach_member_notes.id',
+          )
+          .select([
+            'coach_member_notes.challenge_title',
+            'coach_member_notes.challenge_amount',
+            'coach_member_notes.challenge_unit',
+            'coach_challenge_answers.answer',
+          ])
+          .where('coach_member_notes.squad_id', '=', squad)
+          .where('coach_member_notes.member_id', '=', member)
+          .where('coach_member_notes.day', '=', day)
+          .executeTakeFirst();
+        const challenge = row === undefined ? undefined : challengeOfRow(row);
+        if (row === undefined || challenge === undefined) return undefined;
+        return {
+          challenge,
+          answer: row.answer === null ? undefined : ChallengeAnswer.parse(row.answer),
+        };
       },
     },
 
@@ -443,10 +474,19 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
           'coach_member_note_deliveries.note_id',
           'coach_member_notes.id',
         )
+        .leftJoin(
+          'coach_challenge_answers',
+          'coach_challenge_answers.note_id',
+          'coach_member_notes.id',
+        )
         .select([
           'coach_member_notes.id',
           sql<string>`to_char(coach_member_notes.day, 'YYYY-MM-DD')`.as('day'),
           'coach_member_notes.text',
+          'coach_member_notes.challenge_title',
+          'coach_member_notes.challenge_amount',
+          'coach_member_notes.challenge_unit',
+          'coach_challenge_answers.answer',
           'coach_member_notes.at',
           'coaches.id as coach_id',
           'coaches.name',
@@ -469,13 +509,39 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         .limit(1)
         .executeTakeFirst();
       if (row === undefined) return undefined;
+      const challenge = challengeOfRow(row);
       return {
         id: Number(row.id),
         day: row.day,
         text: row.text,
+        ...(challenge === undefined ? {} : { challenge }),
+        ...(row.answer === null ? {} : { challengeAnswer: ChallengeAnswer.parse(row.answer) }),
         coach: { id: row.coach_id, name: row.name, look: row.look },
         at: new Date(row.at),
       };
+    },
+
+    async answerChallenge({ squad, member, note, answer }) {
+      const mine = await db
+        .selectFrom('coach_member_notes')
+        .select(['challenge_title'])
+        .where('id', '=', String(note))
+        .where('squad_id', '=', squad)
+        .where('member_id', '=', member)
+        .executeTakeFirst();
+      if (mine === undefined) return 'noNote';
+      if (mine.challenge_title === null) return 'noChallenge';
+      // The first answer stands; a second is the first's.
+      await sql`
+        insert into public.coach_challenge_answers (note_id, answer)
+        values (${String(note)}::bigint, ${answer})
+        on conflict (note_id) do nothing`.execute(db);
+      const kept = await db
+        .selectFrom('coach_challenge_answers')
+        .select('answer')
+        .where('note_id', '=', String(note))
+        .executeTakeFirstOrThrow();
+      return ChallengeAnswer.parse(kept.answer);
     },
 
     async putAway({ squad, member, note }) {
@@ -749,3 +815,18 @@ async function saveFiles(
 }
 
 const FOREIGN_KEY_VIOLATION = '23503';
+
+/** A note row's challenge, if it set one. */
+function challengeOfRow(row: {
+  readonly challenge_title: string | null;
+  readonly challenge_amount: number | null;
+  readonly challenge_unit: string | null;
+}): Challenge | undefined {
+  if (row.challenge_title === null) return undefined;
+  return {
+    title: row.challenge_title,
+    ...(row.challenge_amount === null || row.challenge_unit === null
+      ? {}
+      : { amount: row.challenge_amount, unit: row.challenge_unit }),
+  };
+}

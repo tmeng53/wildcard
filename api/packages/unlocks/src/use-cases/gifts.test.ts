@@ -9,7 +9,12 @@ import { createPostgresGiftStore } from '../adapters/postgres-gift-store.js';
 import type { DB } from '../adapters/tables.js';
 import { CoachId, type CoachGift } from '../domain/gifts.js';
 import { MemberId, PieceId } from '../domain/unlocks.js';
-import { GiftPieceNotOfferedError } from '../errors.js';
+import {
+  GiftAlreadyOwnedError,
+  GiftNotGivenError,
+  GiftPieceNotOfferedError,
+  GiftWeeklyLimitError,
+} from '../errors.js';
 import { createCoachGifts } from './gifts.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
@@ -63,7 +68,9 @@ describe('coach gifts', () => {
     expect(offered).not.toContain(withdrawn);
   });
 
-  it('gives a member an offered piece once, tells it once, and keeps who gave it', async () => {
+  const weekStart = new Date(Date.now() - 86_400_000);
+
+  it('gives a member an offered piece with its line, tells it once, and keeps who gave it', async () => {
     const told: CoachGift[] = [];
     const gifts = giftsWith(told);
     const [member, piece, coach, squad] = [
@@ -72,15 +79,75 @@ describe('coach gifts', () => {
       await aCoach(),
       randomUUID(),
     ];
+    await gifts.putPiece({ id: piece, offered: true, description: '一条毛巾' });
+
+    const gift = await gifts.give({
+      member,
+      piece,
+      coach,
+      squad,
+      line: '练完擦汗',
+      givenBy: 'coach',
+      weekStart,
+    });
+    expect(gift).toMatchObject({ piece, coach, squad, line: '练完擦汗', givenBy: 'coach' });
+    expect(gift.opened).toBeUndefined();
+    expect(told).toStrictEqual([gift]);
+    expect(await gifts.of(member)).toStrictEqual([gift]);
+    expect((await gifts.pieces()).find(({ id }) => id === piece)).toStrictEqual({
+      id: piece,
+      offered: true,
+      description: '一条毛巾',
+    });
+  });
+
+  it('refuses a second gift in the same week and a piece the member already has', async () => {
+    const gifts = giftsWith();
+    const [member, coach, first, second] = [
+      await newMember(),
+      await aCoach(),
+      newPiece(),
+      newPiece(),
+    ];
+    await gifts.putPiece({ id: first, offered: true });
+    await gifts.putPiece({ id: second, offered: true });
+    const request = { member, coach, squad: randomUUID(), line: '给你', givenBy: 'admin' as const };
+    await gifts.give({ ...request, piece: first, weekStart });
+
+    await expect(gifts.give({ ...request, piece: second, weekStart })).rejects.toThrow(
+      GiftWeeklyLimitError,
+    );
+    await expect(
+      gifts.give({ ...request, piece: first, weekStart: new Date(Date.now() + 60_000) }),
+    ).rejects.toThrow(GiftAlreadyOwnedError);
+    // Next week, another piece is fine.
+    const next = await gifts.give({
+      ...request,
+      piece: second,
+      weekStart: new Date(Date.now() + 60_000),
+    });
+    expect(next).toMatchObject({ piece: second, givenBy: 'admin' });
+  });
+
+  it('keeps when a gift was opened and whether it was put on, once', async () => {
+    const gifts = giftsWith();
+    const [member, coach, piece] = [await newMember(), await aCoach(), newPiece()];
     await gifts.putPiece({ id: piece, offered: true });
+    await expect(gifts.open(member, piece, true)).rejects.toThrow(GiftNotGivenError);
+    await gifts.give({
+      member,
+      piece,
+      coach,
+      squad: randomUUID(),
+      line: '给你',
+      givenBy: 'coach',
+      weekStart,
+    });
 
-    const first = await gifts.give({ member, piece, coach, squad });
-    expect(first).toMatchObject({ fresh: true, gift: { piece, coach, squad } });
-    const again = await gifts.give({ member, piece, coach, squad: randomUUID() });
-    expect(again).toStrictEqual({ fresh: false, gift: first.gift });
-
-    expect(told).toStrictEqual([first.gift]);
-    expect(await gifts.of(member)).toStrictEqual([first.gift]);
+    const opened = await gifts.open(member, piece, false);
+    expect(opened.opened).toMatchObject({ worn: false });
+    const again = await gifts.open(member, piece, true);
+    expect(again.opened).toStrictEqual(opened.opened);
   });
 
   it('refuses a piece that is not in the pool or no longer offered', async () => {
@@ -88,9 +155,17 @@ describe('coach gifts', () => {
     const [member, coach, withdrawn] = [await newMember(), await aCoach(), newPiece()];
     await gifts.putPiece({ id: withdrawn, offered: false });
     for (const piece of [newPiece(), withdrawn]) {
-      await expect(gifts.give({ member, piece, coach, squad: randomUUID() })).rejects.toThrow(
-        GiftPieceNotOfferedError,
-      );
+      await expect(
+        gifts.give({
+          member,
+          piece,
+          coach,
+          squad: randomUUID(),
+          line: '给你',
+          givenBy: 'coach',
+          weekStart,
+        }),
+      ).rejects.toThrow(GiftPieceNotOfferedError);
     }
     expect(await gifts.of(member)).toStrictEqual([]);
   });

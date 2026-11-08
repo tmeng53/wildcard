@@ -65,14 +65,16 @@ export interface GiftStore {
   pieces(): Promise<GiftPiece[]>;
   /** Adds a piece to the pool or changes whether it is offered. */
   putPiece(edit: GiftPieceEdit): Promise<void>;
-  /** What `member` was given, the earliest first. */
+  /** What `member` was given, the earliest first, each with when they opened it. */
   giftsOf(member: MemberId): Promise<CoachGift[]>;
-  /**
-   * Keeps `gift` for `member` unless they already have that piece. Answers with the gift as
-   * kept: this one when it is new, or the earlier one.
-   */
+  /** Keeps `gift` for `member`; `undefined` when they already have that piece. */
   give(
     member: MemberId,
-    gift: Omit<CoachGift, 'givenAt'>,
-  ): Promise<{ gift: CoachGift; fresh: boolean }>;
+    gift: Omit<CoachGift, 'givenAt' | 'opened'> & { readonly admin?: MemberId },
+  ): Promise<CoachGift | undefined>;
+  /**
+   * Keeps that `member` opened their gift of `piece` and whether they put it on; false when they
+   * weren't given it. Opening it again keeps the first.
+   */
+  open(member: MemberId, piece: PieceId, worn: boolean): Promise<boolean>;
 }
