@@ -229,7 +229,7 @@ struct CoachLetterOverlay: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityHidden(opening.opened != nil)
             .accessibilityIdentifier("today.letter.seal")
-            .accessibilityAction(perform: openSeal)
+            .accessibilityAction { openSeal() }
         }
         .frame(width: frame.screen.width, height: frame.screen.height, alignment: .topLeading)
     }
