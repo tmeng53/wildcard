@@ -598,7 +598,8 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         insert into public.coach_challenge_completions (note_id, by)
         values (${String(note)}::bigint, 'member')
         on conflict (note_id) do nothing`.execute(db);
-      return (await completionOf(db, note)) ?? 'noChallenge';
+      // The database keeps no completion after a 算了 that won a race with this one.
+      return (await completionOf(db, note)) ?? 'declined';
     },
 
     async putAway({ squad, member, note }) {

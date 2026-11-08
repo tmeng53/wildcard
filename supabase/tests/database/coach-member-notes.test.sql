@@ -1,7 +1,7 @@
 -- The coach's morning note to each member: one a member a squad a day, never changed, gone with
 -- the member or the squad; delivered once.
 begin;
-select plan(30);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('11111111-1111-4111-8111-111111111111', 'mia@example.com'),
@@ -63,6 +63,14 @@ insert into public.coach_member_notes (id, squad_id, member_id, coach_id, day, t
   (4, '33333333-3333-4333-8333-333333333333', '22222222-2222-4222-8222-222222222222', 'xiaohun', '2026-11-06', '早餐加个蛋', '吃鸡蛋');
 insert into public.coach_challenge_answers (note_id, answer, reason) values (4, 'declined', '我鸡蛋过敏');
 select is((select reason from public.coach_challenge_answers where note_id = 4), '我鸡蛋过敏', 'why they let it go is kept');
+insert into public.coach_challenge_completions (note_id, by) values (4, 'member');
+select is((select count(*)::int from public.coach_challenge_completions where note_id = 4), 0,
+  'a challenge let go is not marked done');
+insert into public.coach_member_notes (id, squad_id, member_id, coach_id, day, text, challenge_title)
+  overriding system value values
+  (5, '33333333-3333-4333-8333-333333333333', '22222222-2222-4222-8222-222222222222', 'xiaohun', '2026-11-07', '早睡', '早睡');
+select lives_ok($$insert into public.coach_challenge_answers (note_id, answer, reason)
+  values (5, 'declined', repeat('👨‍👩‍👧‍👦', 60))$$, 'any reason the API takes fits');
 
 -- The line under a challenge's title is short, and only with a challenge.
 select throws_ok($$insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, challenge_line)

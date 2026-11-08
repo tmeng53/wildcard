@@ -69,8 +69,33 @@ create trigger coach_challenge_completions_no_truncate
 
 alter table public.coach_challenge_completions enable row level security;
 
+-- A let-go challenge can't be done. Answers and completions both take the note's row lock
+-- first, so a 算了 and a 我完成了 (or the coach's mark) from two places at once run one after
+-- the other, and a completion that comes after a 算了 is not kept.
+create function public.coach_challenge_lock_note() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  perform 1 from public.coach_member_notes where id = new.note_id for no key update;
+  if tg_table_name = 'coach_challenge_completions' and exists (
+    select 1 from public.coach_challenge_answers
+    where note_id = new.note_id and answer = 'declined'
+  ) then
+    return null;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger coach_challenge_completions_not_declined
+  before insert on public.coach_challenge_completions
+  for each row execute function public.coach_challenge_lock_note();
+create trigger coach_challenge_answers_lock_note
+  before insert on public.coach_challenge_answers
+  for each row execute function public.coach_challenge_lock_note();
+
 -- Why the member let a challenge go, if they said (「我鸡蛋过敏」): only with 算了, for the
--- coach to remember. Never shown to squadmates. Up to 60 characters, which the API counts.
+-- coach to remember. Never shown to squadmates. Up to 60 characters, which the API counts as
+-- people see them; this bound is the API's raw one (1000 UTF-16 units), so whatever it takes fits.
 alter table public.coach_challenge_answers
-  add column reason text check (char_length(reason) between 1 and 400),
+  add column reason text check (char_length(reason) between 1 and 1000),
   add constraint coach_challenge_answers_reason check (reason is null or answer = 'declined');
