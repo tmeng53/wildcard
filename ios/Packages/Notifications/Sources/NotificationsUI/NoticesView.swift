@@ -173,7 +173,7 @@ private struct EmptyNotices: View {
     var body: some View {
         VStack(spacing: Space.s) {
             ZStack(alignment: .bottom) {
-                Circle().fill(Color(role: .bgSubtle, in: .gym))
+                Circle().fill(Color(role: .bgBrand, in: .gym))
                 if let player {
                     CharacterView(player: player)
                         .frame(height: Self.circle * 0.86)
