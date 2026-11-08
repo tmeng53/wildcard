@@ -81,6 +81,9 @@ actor FakeSource: FeedSource {
     }
 
     func fail(with error: FeedError?) { failure = error }
+    /// Comments sent from now on are saved, but their answer never arrives (`notSent`).
+    func loseCommentAnswers() { losesCommentAnswers = true }
+    private var losesCommentAnswers = false
     func setCharacters(_ characters: [MemberID: MemberCharacter]) { self.characters = characters }
     func setPosts(_ posts: [FeedPost]) { self.posts = posts }
     func hold() { holding = true }
@@ -128,8 +131,14 @@ actor FakeSource: FeedSource {
         mentioned.append(mentions)
         await wait()
         if let failure { throw failure }
-        guard posts.contains(where: { $0.id == checkIn }) else { throw .postGone }
-        return Comment(id: id, member: coco, text: text, replyTo: target, mentions: mentions, commentedAt: at(900))
+        guard let index = posts.firstIndex(where: { $0.id == checkIn }) else { throw .postGone }
+        let saved = Comment(id: id, member: coco, text: text, replyTo: target, mentions: mentions, commentedAt: at(900))
+        guard losesCommentAnswers else { return saved }
+        let post = posts[index]
+        if !post.comments.contains(where: { $0.id == id }) {
+            posts[index] = FeedPost(checkIn: post.checkIn, reactions: post.reactions, comments: post.comments + [saved])
+        }
+        throw .notSent
     }
 
     func deleteComment(_ id: CommentID, on checkIn: CheckInID) async throws(FeedError) {

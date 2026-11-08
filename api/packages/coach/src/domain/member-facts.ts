@@ -2,6 +2,8 @@
 // the sport they train most, the weekly titles they won, this week's plan (出赛表) and its
 // 饮食小目标. The model sees each member as 队员N.
 
+import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
+
 /** One day of a member's plan: a sport by its name (or any sport), or rest. */
 export type PlanDayFacts =
   { readonly kind: 'train'; readonly sport?: string } | { readonly kind: 'rest' };
@@ -66,6 +68,8 @@ export function factsText(
 export interface NoteBrief {
   /** The member as the model knows them: 队员N. */
   readonly name: string;
+  /** The language their app speaks, which their note is written in. */
+  readonly language?: ReaderLanguage;
   /** Days this week with a 练了 so far. */
   readonly trainedDays: number;
   /** Today's plan and this week's 饮食小目标, when they could be read. */
@@ -84,10 +88,11 @@ export function weekdayOf(day: string): string {
 
 /** One member's line in the daily task, for their morning note. */
 export function briefLine(brief: NoteBrief): string {
+  const language = brief.language === undefined ? '' : ` ${writeIn(brief.language)}`;
   const trained = `这周已经练了 ${String(brief.trainedDays)} 天`;
-  if (brief.plan === undefined) return `- ${brief.name}：${trained}。`;
+  if (brief.plan === undefined) return `- ${brief.name}：${trained}。${language}`;
   const { today, fuelGoals } = brief.plan;
   const plan =
     today.kind === 'rest' ? '今天出赛表是休息日' : `今天出赛表排了${planDayWords(today)}`;
-  return `- ${brief.name}：${plan}；${fuelWords(fuelGoals)}；${trained}。`;
+  return `- ${brief.name}：${plan}；${fuelWords(fuelGoals)}；${trained}。${language}`;
 }

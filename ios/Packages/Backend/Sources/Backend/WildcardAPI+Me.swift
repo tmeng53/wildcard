@@ -217,10 +217,12 @@ extension MateSchedule {
         let fuel = (wire.fuelGoals ?? []).compactMap { try? FuelGoal($0) }
         let weekStart = try LocalDay(start)
         let first = try wire.firstWeek.map { day throws(ContractsError) in try LocalDay(day) }
+        let today = try wire.today.map { day throws(ContractsError) in try LocalDay(day) }
         // Seven of each, checked above, is all it refuses.
         guard
             let schedule = try? MateSchedule(
-                weekStart: weekStart, days: planned, marks: read, fuel: fuel, firstWeek: first)
+                weekStart: weekStart, days: planned, marks: read, fuel: fuel, firstWeek: first,
+                today: today)
         else { throw .planLength(planned.count) }
         self = schedule
     }

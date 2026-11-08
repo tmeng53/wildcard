@@ -53,6 +53,7 @@ export interface Coaches {
   name: string;
   offered: boolean;
   pay: string;
+  position: number;
   soul: string;
   style: string;
   tags: string[];
@@ -69,6 +70,23 @@ export interface CoachFiles {
   path: string;
   squad_id: string;
   wake_id: Int8 | null;
+}
+
+export interface CoachLetters {
+  at: Generated<Timestamp>;
+  day: string;
+  from_coach: string;
+  hire_event_id: Int8;
+  id: Generated<Int8>;
+  squad_id: string;
+  text: string;
+  to_coach: string;
+}
+
+export interface CoachLetterTries {
+  at: Generated<Timestamp>;
+  hire_event_id: Int8;
+  squad_id: string;
 }
 
 export interface CoachMemberNoteDeliveries {
@@ -123,6 +141,7 @@ export interface CoachSettingEvents {
 export interface CoachSettings {
   cached_input_micros_per_million: Generated<number>;
   coaching: boolean;
+  daily_cap_micros: Generated<number>;
   holidays: Generated<Json>;
   input_micros_per_million: number;
   model: string;
@@ -130,6 +149,7 @@ export interface CoachSettings {
   only_row: Generated<boolean>;
   output_micros_per_million: number;
   rules: string;
+  squad_daily_cap_micros: Generated<number>;
 }
 
 export interface CoachUsage {
@@ -191,6 +211,8 @@ export interface DB {
   coach_answers: CoachAnswers;
   coach_catalog_events: CoachCatalogEvents;
   coach_files: CoachFiles;
+  coach_letter_tries: CoachLetterTries;
+  coach_letters: CoachLetters;
   coach_member_note_deliveries: CoachMemberNoteDeliveries;
   coach_member_note_reads: CoachMemberNoteReads;
   coach_member_notes: CoachMemberNotes;

@@ -1697,18 +1697,18 @@
         }
       }
     },
-    "本周我的训练": {
+    "我的一周": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "My training this week"
+            "value": "My week"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "本週我的訓練"
+            "value": "我的一週"
           }
         }
       }
@@ -1869,22 +1869,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "游泳"
-          }
-        }
-      }
-    },
-    "游泳 1 · 跑步 1": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Swim 1 · Run 1"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "游泳 1 · 跑步 1"
           }
         }
       }
@@ -3345,18 +3329,34 @@
         }
       }
     },
-    "小队本周目标 · 人均 %lld 天": {
+    "小队本周目标": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Squad goal · %lld days each"
+            "value": "Squad goal"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "小隊本週目標 · 人均 %lld 天"
+            "value": "小隊本週目標"
+          }
+        }
+      }
+    },
+    "多练 %lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days over"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "多練 %lld 天"
           }
         }
       }

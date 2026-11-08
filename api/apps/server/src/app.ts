@@ -6,6 +6,7 @@ import {
   SquadId as CoachSquadId,
   type CoachActivity,
   type CoachHiring,
+  type CoachLetters,
   type CoachWakes,
 } from '@wildcard/coach';
 import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
@@ -42,6 +43,7 @@ import type {
   VerifyToken,
 } from './ports.js';
 import { problemResponse } from './problem.js';
+import { rememberReaderLanguage } from './reader-language.js';
 import { requestTrace } from './request-trace.js';
 import { awardTotals } from './routes/award-totals.js';
 import { unlocks } from './routes/unlocks.js';
@@ -89,6 +91,8 @@ export interface AppDependencies {
   readonly switches: Pick<Switches, 'list' | 'statesFor'>;
   /** Each squad's coach, and the coaches it can hire (教练招聘会). */
   readonly coachHiring: CoachHiring;
+  /** The letter a coach leaves the next one when its squad changes coach (换教练). */
+  readonly coachLetters: CoachLetters;
   /** What each squad's coach said: its 战术板 line and its replies to check-ins. */
   readonly coachActivity: CoachActivity;
   /** Squadmates' pokes, which the daily push counts. */
@@ -164,6 +168,8 @@ export function createApp(deps: AppDependencies) {
   });
   // First, so everything a request logs carries its trace, and every response its id.
   app.use(requestTrace());
+  // Before the routes, each signed-in caller's app language is kept for the AI to write in.
+  app.use(rememberReaderLanguage({ ...deps, clock: () => new Date() }));
 
   app.route('/', health(deps));
   app.route('/', catalog({ ...deps.catalog, publicRoutes: deps.publicRoutes }));

@@ -45,7 +45,7 @@ public final class TodayStore {
     /// The home as the server last sent it, with the posts it saved since folded in.
     public internal(set) var savedHome: Home?
     /// Posts not yet saved, oldest first.
-    public private(set) var pending: [PendingCheckIn] = []
+    public internal(set) var pending: [PendingCheckIn] = []
     /// Posts dropped because the server refused them while they went out late.
     public internal(set) var refused: [Refused] = []
     /// Reactions on check-ins loaded with `loadReactions(to:)`, by check-in.
@@ -82,11 +82,14 @@ public final class TodayStore {
     var unlockCheck: Task<Void, Never>?
     /// Photos an edit already uploaded, by the picked photo, so its retry sends each once.
     var editUploads: [UUID: PhotoRef] = [:]
-    private let outbox: any Outbox
+    let outbox: any Outbox
     let now: @Sendable () -> Date
-    private let newID: @Sendable () -> UUID
-    /// Whether the outbox is being sent, so two sends never run at once.
-    private var isDraining = false
+    let newID: @Sendable () -> UUID
+    /// The outbox's send under way, so two never run at once.
+    var draining: Task<Void, Never>?
+    /// Posts someone waits on (`post`, `deliver`), and what the drain found became of them.
+    var awaited: Set<CheckInID> = []
+    var fates: [CheckInID: Fate] = [:]
 
     public init(
         backend: any CheckInBackend, outbox: any Outbox, unlocks ledger: (any UnlockLedger)? = nil,
@@ -112,7 +115,7 @@ public final class TodayStore {
         return home
     }
 
-    /// The member's day now, in their profile's time zone, with the 3am grace.
+    /// The member's day now, in their profile's time zone.
     public var day: LocalDay? {
         savedHome.map { LocalDay(at: now(), in: $0.timeZone) }
     }
@@ -174,124 +177,6 @@ public final class TodayStore {
         } catch {
             phase = .offline
         }
-    }
-
-    // MARK: - Posting
-
-    /// Posts a check-in, shared to the member's squad unless `shared` is false (which keeps it
-    /// to the member), for `chosen`, today or one of the `backfillDays` before it
-    /// (补打卡; today when left out): saved by the server now or, offline, later. Today's post
-    /// counts on the home at once; a past day's once the server has it and the home is read again. Throws when it can never be saved: a 请假条 on a day with a 练了, a day
-    /// out of reach, or a refusal from the server.
-    @discardableResult
-    public func post(_ draft: CheckInDraft, shared: Bool = true, on chosen: LocalDay? = nil)
-        async throws(CheckInError) -> PostOutcome
-    {
-        if let chosen, !postableDays.contains(chosen) { throw .refused }
-        try await check(draft, on: chosen)
-        guard let home, let day else { throw .notSent }
-        let audience: Audience
-        do { audience = try Audience(shared ? [home.squad.id] : []) } catch { throw .refused }
-        let post = PendingCheckIn(
-            id: CheckInID(newID()), member: home.member, day: chosen ?? day, postedDay: day,
-            createdAt: Timestamp(now()), audience: audience, draft: draft)
-        pending.append(post)
-        await outbox.save(pending)
-        switch await drain(watching: post.id) {
-        case .saved(let saved):
-            // A past day's counts (my week, 出赛表) come from the server.
-            if saved.isBackfill { await refresh() }
-            // A 练了 is what opens a store or a prop; the payoff doesn't wait for the answer.
-            if case .trained = saved.entry { Task { await checkUnlocks() } }
-            return .posted(saved)
-        case .refused(let reason): throw reason
-        case .waiting: return .queued
-        }
-    }
-
-    /// Sends every post still waiting, oldest first, and stops at the first that can't go out
-    /// yet. One the server refuses is dropped and listed in `refused`.
-    public func sendPending() async {
-        await drain(watching: nil)
-    }
-
-    /// What became of the post a drain watched.
-    private enum Fate {
-        case saved(CheckIn)
-        case refused(CheckInError)
-        /// Still in the outbox, or going out with a drain already under way.
-        case waiting
-    }
-
-    /// Sends the outbox oldest first, one post at a time, until it is empty or a post can't go
-    /// out yet, so the server sees posts in the order they were made. Only one drain runs at
-    /// once; it reads the outbox afresh after each post, so one made meanwhile goes out with it.
-    /// A refusal is listed in `refused`, except the watched post's, which is returned.
-    @discardableResult
-    private func drain(watching watched: CheckInID?) async -> Fate {
-        guard !isDraining else { return .waiting }
-        isDraining = true
-        defer { isDraining = false }
-        var fate = Fate.waiting
-        while let post = pending.first {
-            do throws(CheckInError) {
-                let saved = try await send(post)
-                if post.id == watched { fate = .saved(saved) }
-            } catch {
-                if error == .notSent || error == .signedOut { return fate }
-                if post.id == watched {
-                    fate = .refused(error)
-                } else {
-                    refused.append(Refused(pending: post, reason: error))
-                }
-            }
-        }
-        return fate
-    }
-
-    /// Uploads the post's photos still to upload, then saves it. A refusal drops it from the
-    /// outbox; a network failure keeps it.
-    private func send(_ waiting: PendingCheckIn) async throws(CheckInError) -> CheckIn {
-        var post = waiting
-        let id = post.id
-        do throws(CheckInError) {
-            for photo in post.photosToUpload {
-                post.uploaded[photo.id] = try await backend.upload(photo)
-                await keep(post)
-            }
-            guard let checkIn = try post.checkIn() else { throw .refused }
-            let saved = try await backend.save(checkIn)
-            // Counted as saved before it leaves the outbox, so the home never shows it as neither.
-            fold(saved)
-            await drop(id)
-            return saved
-        } catch {
-            // Offline or signed out, it waits; refused, it never goes out.
-            if error != .notSent, error != .signedOut { await drop(id) }
-            throw error
-        }
-    }
-
-    /// Counts a check-in the server saved into the home it last sent, so the home doesn't
-    /// wait for the next load: in the squad's today only if it was shared there.
-    private func fold(_ saved: CheckIn) {
-        guard var home = savedHome?.rolled(to: saved.day), saved.member == home.member,
-            !home.checkIns.contains(where: { $0.id == saved.id })
-        else { return }
-        home.today = home.today.countingMine(saved, squadSaw: home.squadSees(on: saved.day))
-        home.checkIns.append(saved)
-        savedHome = home
-    }
-
-    private func keep(_ post: PendingCheckIn) async {
-        guard let index = pending.firstIndex(where: { $0.id == post.id }) else { return }
-        pending[index] = post
-        await outbox.save(pending)
-    }
-
-    func drop(_ id: CheckInID) async {
-        pending.removeAll { $0.id == id }
-        await outbox.save(pending)
     }
 
     // MARK: - Reactions
