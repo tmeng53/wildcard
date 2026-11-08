@@ -12,8 +12,7 @@ import {
 import { CoachId } from '@wildcard/coach';
 
 import { bodyVersion } from '../body-version.js';
-import { answerCoachReply, type CoachAnswerer } from '../flows/coach-answer.js';
-import { notifyComment, type CommentPushDependencies } from '../flows/comment-push.js';
+import type { PublishEvent } from '../events.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
@@ -123,14 +122,12 @@ const failures = {
  * one level deep. `PUT` and `DELETE /check-ins/{checkInId}/comments/{commentId}`, and
  * `GET /check-ins/{checkInId}/comments`.
  */
-export function comments(
-  deps: CommentPushDependencies & {
-    readonly verifyToken: VerifyToken;
-    readonly checkIns: CheckIns;
-    /** Has the coach answer a reply to it; left out, nobody answers until the coach job runs. */
-    readonly coachAnswer?: CoachAnswerer | undefined;
-  },
-) {
+export function comments(deps: {
+  readonly verifyToken: VerifyToken;
+  readonly checkIns: CheckIns;
+  /** Tells what follows a new comment (its pushes, the coach's answer). */
+  readonly publish: PublishEvent;
+}) {
   const write = createRoute({
     method: 'put',
     path: '/check-ins/{checkInId}/comments/{commentId}',
@@ -213,26 +210,23 @@ export function comments(
         mentionsCoach: draft.mentionsCoach,
       });
       const body = { version: 1 as const, ...wireComment(written.comment) };
-      // Sent before answering: Cloud Run gives the server CPU only while a request runs.
       if (written.created) {
-        await notifyComment(deps, {
+        const { comment } = written;
+        await deps.publish({
+          version: 1,
+          kind: 'comment.created',
           checkIn: checkInId,
           comment: commentId,
-          commenter: written.comment.member,
-          text: written.comment.text,
+          commenter: comment.member,
           author: written.author,
-          replyTo: written.comment.replyTo,
-          mentions: written.comment.mentions,
+          text: comment.text,
+          ...(comment.replyTo === undefined ? {} : { replyTo: comment.replyTo }),
+          mentions: [...(comment.mentions ?? [])],
+          ...((comment.replyToCoach ?? comment.mentionsCoach) === undefined
+            ? {}
+            : { coach: comment.replyToCoach ?? comment.mentionsCoach }),
+          squads: [...written.squads],
         });
-        // The coach answers a reply to it or an @ of it while the request runs, for the same
-        // reason; a slow answer is the coach job's to finish.
-        const toCoach = written.comment.replyToCoach ?? written.comment.mentionsCoach;
-        if (toCoach !== undefined && deps.coachAnswer !== undefined) {
-          await answerCoachReply(
-            { answer: deps.coachAnswer, log: deps.log },
-            { checkIn: checkInId, comment: commentId, coach: toCoach, squads: written.squads },
-          );
-        }
       }
       return written.created ? c.json(body, 201) : c.json(body, 200);
     })

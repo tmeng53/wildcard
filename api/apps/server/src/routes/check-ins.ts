@@ -27,8 +27,8 @@ import {
 } from '@wildcard/check-ins';
 
 import { bodyVersion } from '../body-version.js';
-import { coachLooksAtCheckIn, type CoachLooker } from '../flows/coach-answer.js';
 import type { Log } from '../log.js';
+import type { PublishEvent } from '../events.js';
 import type { PhotoStorage, VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
@@ -335,8 +335,8 @@ export function checkIns(deps: {
   readonly checkIns: CheckIns;
   readonly photos: PhotoStorage;
   readonly log: Log;
-  /** Has the squads' coaches look at a new check-in; left out, they look when the coach job runs. */
-  readonly coachLook?: CoachLooker | undefined;
+  /** Tells what follows a new check-in (its squads' coaches look at it). */
+  readonly publish: PublishEvent;
 }) {
   const save = createRoute({
     method: 'put',
@@ -564,13 +564,13 @@ export function checkIns(deps: {
         draft: c.req.valid('json'),
       });
       const body = wire(checkIn, await viewUrls(deps, [checkIn]));
-      // The coaches reply while the request runs, since the server has CPU only then; the app
-      // sends check-ins from its outbox, so nobody waits on it.
-      if (created && checkIn.audience.length > 0 && deps.coachLook !== undefined) {
-        await coachLooksAtCheckIn(
-          { look: deps.coachLook, log: deps.log },
-          { checkIn: checkIn.id, squads: checkIn.audience },
-        );
+      if (created && checkIn.audience.length > 0) {
+        await deps.publish({
+          version: 1,
+          kind: 'check-in.created',
+          checkIn: checkIn.id,
+          squads: [...checkIn.audience],
+        });
       }
       return created ? c.json(body, 201) : c.json(body, 200);
     })

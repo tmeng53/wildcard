@@ -83,6 +83,9 @@ const Environment = z.object({
     .string()
     .regex(/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/)
     .optional(),
+  // `on` sends events (a new check-in, a new comment) through Pub/Sub topics in
+  // GOOGLE_CLOUD_PROJECT, which `scripts/gcp-setup.sh` makes; otherwise they run in the request.
+  PUBSUB_EVENTS: z.enum(['on', 'off']).default('off'),
 });
 
 const APPLE_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY', 'APPLE_CLIENT_ID'];
@@ -143,6 +146,8 @@ export interface Config {
     | undefined;
   /** The Google Cloud project log entries name their traces in; undefined off Google Cloud. */
   readonly traceProject: string | undefined;
+  /** The project whose Pub/Sub topics take events; undefined runs them in the request. */
+  readonly pubSubProject: string | undefined;
 }
 
 /** Reads the server's settings from environment variables; throws naming each bad one. */
@@ -213,6 +218,8 @@ export function readConfig(environment: Record<string, string | undefined>): Con
         ? undefined
         : { dsn: result.data.SENTRY_DSN_API, release: result.data.K_REVISION },
     traceProject: result.data.GOOGLE_CLOUD_PROJECT,
+    pubSubProject:
+      result.data.PUBSUB_EVENTS === 'on' ? result.data.GOOGLE_CLOUD_PROJECT : undefined,
   };
 }
 
