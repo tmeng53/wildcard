@@ -53,6 +53,7 @@ import {
 import {
   ignoredNotices,
   unusedCoachActivity,
+  unusedCoachLetters,
   unusedUnlocks,
   unusedGifts,
   unusedWeekSummaryWords,
@@ -130,6 +131,7 @@ const app = createApp({
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   coachActivity: unusedCoachActivity,
+  coachLetters: unusedCoachLetters,
   notices: createNotices({
     store: createPostgresNoticeStore(db),
     broadcasts: createPostgresBroadcastStore(db),

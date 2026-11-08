@@ -11,16 +11,14 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     private var sheets: [LocalDay: WeekSheet] = [:]
     /// Weeks whose plan the member changed for themselves.
     private var saved: Set<LocalDay> = []
-    private var lifetime: Int
     /// The member's typical week (每周模板), which the weeks ahead follow: the sample's next
     /// week is planned from it.
     private var typicalWeek: [PlanDay] = InMemoryScheduleBackend.planB
 
-    public init(profile: ScheduleProfile, today: LocalDay, sheets: [WeekSheet], lifetimeTrainedDays: Int) {
+    public init(profile: ScheduleProfile, today: LocalDay, sheets: [WeekSheet]) {
         member = profile
         self.today = today
         thisWeek = today.weekStart
-        lifetime = lifetimeTrainedDays
         for sheet in sheets { self.sheets[sheet.weekStart] = sheet }
     }
 
@@ -46,14 +44,13 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
                 }
             }
             let titles = offset < 0 ? Array(sampleTitles.shuffledBy(seed: offset).prefix(1 + (-offset % 3))) : []
-            let squad = offset <= 0 ? SquadCount(trained: 14 + (offset * 5 + 40) % 7, planned: 22) : nil
             let fuel: [FuelGoal] = offset < 1 ? [.suggested(.water), .suggested(.cookAtHome)] : [.suggested(.water)]
             return try? WeekSheet(
-                weekStart: weekStart, plan: plan, marks: marks, titles: titles, squad: squad, fuel: fuel)
+                weekStart: weekStart, plan: plan, marks: marks, titles: titles, fuel: fuel)
         }
         return InMemoryScheduleBackend(
             profile: ScheduleProfile(nickname: "Tracy", timeZone: timeZone, firstWeek: firstWeek), today: today,
-            sheets: sheets, lifetimeTrainedDays: 46)
+            sheets: sheets)
     }
 
     private static let planA: [PlanDay] = [
@@ -106,8 +103,6 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
         sheet.fuel = goals
         sheets[weekStart] = sheet
     }
-
-    public func trainedDays() async throws(ScheduleError) -> Int { lifetime }
 
     public func template() async throws(ScheduleError) -> [PlanDay] { typicalWeek }
 

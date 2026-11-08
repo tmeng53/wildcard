@@ -109,7 +109,7 @@ struct InviteCard: View {
                     Image(systemName: "square.and.arrow.up")
                 }
             }
-            .buttonStyle(SecondaryButtonStyle())
+            .buttonStyle(SecondaryButtonStyle(.onInk))
             .fixedSize()
             .accessibilityIdentifier("squad.share")
         }

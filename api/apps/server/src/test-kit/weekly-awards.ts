@@ -34,6 +34,9 @@ export const unusedCoachHiring = {
   offered: unused,
 };
 
+/** Coaches' letters to the next one, for an app whose test never writes one. */
+export const unusedCoachLetters = { write: unused };
+
 /** What coaches said, for an app whose test never reads it. */
 export const unusedCoachActivity = { squad: unused, putAway: unused, spoke: unused };
 
