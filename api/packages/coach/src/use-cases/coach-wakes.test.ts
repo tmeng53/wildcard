@@ -1325,7 +1325,7 @@ describe('the coach', () => {
       // A member whose plan it couldn't read still gets a note.
       expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
       expect(daily?.task).toContain(
-        '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 （22:05 发） 「自己做的」 · 点了表情：队员1',
+        '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 （本人当地 22:05 发） 「自己做的」 · 点了表情：队员1',
       );
     });
   });

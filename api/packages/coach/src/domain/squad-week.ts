@@ -105,10 +105,10 @@ export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, st
   ];
   if (checkIn.postedDay !== undefined && checkIn.postedDay !== checkIn.day) {
     parts.push(
-      `（补打卡：${dayWords(checkIn.postedDay)}${checkIn.postedTime === undefined ? '' : ` ${checkIn.postedTime}`} 才发）`,
+      `（补打卡：${dayWords(checkIn.postedDay)}${checkIn.postedTime === undefined ? '' : ` 本人当地 ${checkIn.postedTime}`} 才发）`,
     );
   } else if (checkIn.postedTime !== undefined) {
-    parts.push(`（${checkIn.postedTime} 发）`);
+    parts.push(`（本人当地 ${checkIn.postedTime} 发）`);
   }
   if (checkIn.sport !== undefined) parts.push(checkIn.sport);
   if (checkIn.minutes !== undefined) parts.push(`${String(checkIn.minutes)} 分钟`);
