@@ -230,7 +230,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only you can see it, in My posts"
+            "value": "Only you can see this, in My posts"
           }
         },
         "zh-Hant": {
@@ -742,7 +742,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Disciplined, this one…"
+            "value": "A very disciplined meal…"
           }
         },
         "zh-Hant": {
@@ -774,7 +774,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "(quietly) go"
+            "value": "(whispers) you got this"
           }
         },
         "zh-Hant": {
@@ -1661,7 +1661,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "More new notices · Take a look"
+            "value": "More notifications · Take a look"
           }
         },
         "zh-Hant": {
@@ -1933,7 +1933,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Number %lld"
+            "value": "Photo %lld"
           }
         },
         "zh-Hant": {
@@ -1997,7 +1997,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Write one"
+            "value": "Write it for me"
           }
         },
         "zh-Hant": {
@@ -2013,7 +2013,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Another"
+            "value": "Try another"
           }
         },
         "zh-Hant": {
@@ -2029,7 +2029,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Leave"
+            "value": "Day off"
           }
         },
         "zh-Hant": {
@@ -2061,7 +2061,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Leave or rest"
+            "value": "Day off or rest"
           }
         },
         "zh-Hant": {
@@ -2077,7 +2077,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rest today"
+            "value": "Rest day"
           }
         },
         "zh-Hant": {
@@ -2093,7 +2093,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "How are you resting?"
+            "value": "What kind of day off?"
           }
         },
         "zh-Hant": {
@@ -2109,7 +2109,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Post rest"
+            "value": "Post rest day"
           }
         },
         "zh-Hant": {

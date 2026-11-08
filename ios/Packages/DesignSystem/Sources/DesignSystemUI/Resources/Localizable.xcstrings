@@ -854,7 +854,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Brand: opening, sign-up, Me, posting, excuse notes, feed"
+            "value": "Brand: opening, sign-up, Me, posting, day-off notes, feed"
           }
         },
         "zh-Hant": {
@@ -1014,7 +1014,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mei · Excuse"
+            "value": "Mei · Day-off note"
           }
         },
         "zh-Hant": {
@@ -1942,7 +1942,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "On a white page: subtle grey cards"
+            "value": "On a white page: subtle gray cards"
           }
         },
         "zh-Hant": {
@@ -2134,7 +2134,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Legs still sore, lying flat today, training tomorrow for sure."
+            "value": "Legs still sore. Couch day today, training tomorrow for sure."
           }
         },
         "zh-Hant": {
@@ -2438,7 +2438,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Next week's scene: a colour card once visited, a carton until then"
+            "value": "Next week's scene: a color card once visited, a carton until then"
           }
         },
         "zh-Hant": {
@@ -3366,7 +3366,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fold the squad card"
+            "value": "Collapse squad card"
           }
         },
         "zh-Hant": {
@@ -3382,7 +3382,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open the squad card"
+            "value": "Expand squad card"
           }
         },
         "zh-Hant": {

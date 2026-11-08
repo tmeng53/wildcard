@@ -101,7 +101,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dinner earlier"
+            "value": "Earlier dinner"
           }
         },
         "zh-Hans": {
@@ -124,7 +124,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Half the bubble tea"
+            "value": "Half the boba"
           }
         },
         "zh-Hans": {
@@ -464,7 +464,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Days that have started can't change"
+            "value": "Past days can't be changed"
           }
         },
         "zh-Hant": {

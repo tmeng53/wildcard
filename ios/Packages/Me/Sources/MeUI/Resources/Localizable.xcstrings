@@ -150,7 +150,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your consent to the AI is withdrawn too"
+            "value" : "Your AI consent is withdrawn too"
           }
         },
         "zh-Hant" : {
@@ -600,7 +600,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "workouts · %lld clean meals · %lld day-offs"
+            "value" : "workouts · %lld clean meals · %lld days off"
           }
         },
         "zh-Hans" : {

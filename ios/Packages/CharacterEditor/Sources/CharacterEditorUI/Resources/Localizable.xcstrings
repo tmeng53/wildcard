@@ -199,7 +199,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Curtains"
+            "value": "Middle part"
           }
         },
         "zh-Hant": {
@@ -711,7 +711,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Runners"
+            "value": "Sneakers"
           }
         },
         "zh-Hant": {
@@ -1191,7 +1191,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ginger & white"
+            "value": "Orange & white"
           }
         },
         "zh-Hant": {
@@ -1287,7 +1287,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Deadpan"
+            "value": "Chill"
           }
         },
         "zh-Hant": {
@@ -2135,7 +2135,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 basketball"
+            "value": "Unlock: 3 basketball sessions"
           }
         },
         "zh-Hant": {
@@ -2183,7 +2183,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 racket sports"
+            "value": "Unlock: 3 racket sessions"
           }
         },
         "zh-Hant": {
@@ -2391,7 +2391,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gum-sole runners"
+            "value": "Gum-sole sneakers"
           }
         },
         "zh-Hant": {
@@ -2599,7 +2599,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Jacket round the waist"
+            "value": "Jacket around the waist"
           }
         },
         "zh-Hant": {
@@ -2711,7 +2711,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Colour-block windbreaker"
+            "value": "Color-block windbreaker"
           }
         },
         "zh-Hant": {
@@ -3656,7 +3656,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ebi fry snow boots"
+            "value": "Fried shrimp snow boots"
           }
         },
         "zh-Hant": {
@@ -3752,7 +3752,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mint choc tank"
+            "value": "Mint chip tank"
           }
         },
         "zh-Hant": {
@@ -3992,7 +3992,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couldn't claim it. Check your connection"
+            "value": "Couldn't claim it. Check your connection."
           }
         },
         "zh-Hant": {

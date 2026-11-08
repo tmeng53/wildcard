@@ -198,7 +198,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ reacted to you: %2$@"
+            "value" : "%1$@ reacted to your post: %2$@"
           }
         },
         "zh-Hant" : {
