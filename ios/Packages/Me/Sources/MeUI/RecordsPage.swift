@@ -78,6 +78,8 @@ struct RecordsPage: View {
                     .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
             }
         }
+        // The navigation bar shows a label's icon alone unless told otherwise.
+        .labelStyle(.titleAndIcon)
         .buttonStyle(SecondaryButtonStyle())
         .accessibilityIdentifier("records.save")
     }
