@@ -25,7 +25,7 @@ struct NoticeRow: View {
     private static let dot: Double = 6
 
     var body: some View {
-        let words = self.words
+        let words = NoticeWords(entry: entry, unlocked: unlocked).words
         HStack(spacing: Space.s) {
             words.icon
                 .frame(width: Self.icon, height: Self.icon)
@@ -41,7 +41,7 @@ struct NoticeRow: View {
                 }
                 // A broadcast's button: the row's tap opens it.
                 if let action = words.action {
-                    NoticeActionLabel(action, on: .page)
+                    NoticeActionLabel(action)
                         .padding(.top, Space.xxs)
                 }
             }
@@ -85,8 +85,17 @@ struct NoticeRow: View {
             return Text(notice.toldAt, format: .dateTime.month(.abbreviated).day().locale(locale))
         }
     }
+}
 
-    private struct Words {
+/// What 通知 says of a notice, or of what was said on one post in a day: its title, the line
+/// under it, its icon, and a broadcast's button. Its row and its banner both read it.
+struct NoticeWords {
+    let entry: NoticeEntry
+    let unlocked: (Unlock.Kind, String) -> UnlockWords
+
+    private var notice: Notice { entry.notice }
+
+    struct Words {
         let title: Text
         let detail: Text?
         let icon: AnyView
@@ -95,7 +104,7 @@ struct NoticeRow: View {
         var wraps = false
     }
 
-    private var words: Words {
+    var words: Words {
         if entry.isJoined, let talk = Self.talk(entry) { return talk }
         switch notice.subject {
         case .dailyProgress(let alert):
@@ -207,6 +216,33 @@ struct NoticeRow: View {
         calendar.timeZone = .gmt
         let day = DateComponents(calendar: calendar, year: week.year, month: week.month, day: week.day)
         return day.date.map { calendar.component(.weekOfYear, from: $0) } ?? 0
+    }
+}
+
+/// A notice told while the app is open, in the banner that drops in over any page (2026-11-08):
+/// 通知's words for it and a button, 去看看 for a store or a scene, 查看 for the rest, or a
+/// broadcast's own. The app opens its `Notice.destination` on a tap.
+public struct ToldNoticeBanner: View {
+    private let notice: Notice
+    private let unlocked: (Unlock.Kind, String) -> UnlockWords
+
+    /// - Parameter unlocked: how a store, piece or prop is named, as on 通知's rows.
+    public init(_ notice: Notice, unlocked: @escaping (Unlock.Kind, String) -> UnlockWords) {
+        (self.notice, self.unlocked) = (notice, unlocked)
+    }
+
+    public var body: some View {
+        if let entry = NoticeEntry([notice]) {
+            let words = NoticeWords(entry: entry, unlocked: unlocked).words
+            NoticeBanner(words.title, detail: words.detail, action: words.action ?? action) { words.icon }
+        }
+    }
+
+    private var action: Text {
+        switch notice.subject {
+        case .unlocked, .sceneMoved: Text("去看看", bundle: .module)
+        default: Text("查看", bundle: .module)
+        }
     }
 }
 

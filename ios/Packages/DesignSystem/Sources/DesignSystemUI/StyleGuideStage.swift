@@ -82,13 +82,19 @@ struct StageSection: View {
                         on: .page)
                 }
             }
-            GuideGroup(Text("通知条：场上没人能说的事", bundle: .module)) {
+            GuideGroup(Text("通知条：任何页面都会弹", bundle: .module)) {
                 VStack(spacing: Space.s) {
-                    NoticeBanner(Text("小米把小队搬到了跑道", bundle: .module)) { SceneBadge(.track) }
+                    NoticeBanner(Text("小米把小队搬到了跑道", bundle: .module), action: Text("去看看", bundle: .module)) {
+                        SceneBadge(.track)
+                    }
                     NoticeBanner(
                         Text("DEUCE CLUB 开门了", bundle: .module), detail: Text("网球练满 3 次", bundle: .module),
-                        showsChevron: true
+                        action: Text("去看看", bundle: .module)
                     ) { SceneBadge(.tennis) }
+                    NoticeBanner(
+                        Text("阿杰评论了你的动态", bundle: .module), detail: Text("这组深蹲可以啊", bundle: .module),
+                        action: Text("查看", bundle: .module)
+                    ) { NoticeSymbol(systemImage: "bubble.left.fill") }
                     NoticeBanner(
                         Text("商店街上新了", bundle: .module), detail: Text("快去看看吧！", bundle: .module),
                         action: Text("去商店街看看", bundle: .module)

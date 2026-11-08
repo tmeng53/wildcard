@@ -201,6 +201,9 @@ private actor FakeNotices: NoticeSource {
     // Told once, though it came twice; a kind this build can't show is left out.
     #expect(inbox.notices.map(\.id.rawValue) == [3, 2, 1])
     #expect(inbox.hasUnread)
+    // Its banner drops in once; nothing more until another is told.
+    #expect(inbox.takeToldLive().map(\.id.rawValue) == [3])
+    #expect(inbox.takeToldLive().isEmpty)
     following.cancel()
     await following.value
 }
@@ -245,6 +248,8 @@ private actor FakeNotices: NoticeSource {
     #expect(!inbox.hasUnread)
     #expect(await server.marked.last == NoticeID(rawValue: 2))
     #expect(inbox.isUnread(told))
+    // 通知 shows it: no banner over it.
+    #expect(inbox.takeToldLive().isEmpty)
     following.cancel()
     await following.value
 
@@ -363,4 +368,29 @@ private actor FakeNotices: NoticeSource {
     #expect(await quiet.marked == [NoticeID(rawValue: 2)])
     await inbox.open()
     #expect(inbox.notices.map { inbox.isUnread($0) } == [false, false])
+}
+
+@Test @MainActor func aPushInFrontHearsWhatIsNewerThanTheNewestAlreadyHereTheEarliestFirst() async {
+    let server = FakeNotices([notice(1), notice(2)], seen: NoticeID(rawValue: 2))
+    let inbox = NoticeInbox(source: server)
+    await inbox.load()
+    await server.add(notice(3))
+    await server.add(notice(4))
+    await inbox.catchUp()
+    #expect(inbox.takeToldLive().map(\.id.rawValue) == [3, 4])
+    // A second push finds nothing newer.
+    await inbox.catchUp()
+    #expect(inbox.takeToldLive().isEmpty)
+}
+
+@Test @MainActor func aPushBeforeAnythingLoadedOrWith通知OpenHearsNothing() async {
+    let server = FakeNotices([notice(1)])
+    let inbox = NoticeInbox(source: server)
+    // Nothing was here to be newer than: every notice on the page would be heard at once.
+    await inbox.catchUp()
+    #expect(inbox.takeToldLive().isEmpty)
+    await inbox.open()
+    await server.add(notice(2))
+    await inbox.catchUp()
+    #expect(inbox.takeToldLive().isEmpty)
 }

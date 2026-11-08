@@ -16,6 +16,8 @@ struct AppRoot: View {
     @State private var pushDestination: AppDestination?
     /// 预览注册, which an admin opened from 设置: sign-up on the sample squad, saving nothing.
     @State private var signUpPreview: SignUpModel?
+    /// Pushes that arrived while the tabs were in front, which they tell in their own banner.
+    @State private var pushesInFront = 0
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -51,10 +53,10 @@ struct AppRoot: View {
                     today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
                     myPosts: app.myPosts, notices: app.notices, squadmateCards: app.squadmateCards, selection: $tab,
                     destination: $pushDestination,
-                    previewSignUp: app.isAdmin ? { signUpPreview = SignUpPreview.model() } : nil
-                ) {
-                    Task { await app.leftSquad() }
-                }
+                    previewSignUp: app.isAdmin ? { signUpPreview = SignUpPreview.model() } : nil,
+                    pushesInFront: pushesInFront, sceneMoved: { Task { await app.refreshScene() } },
+                    leftSquad: { Task { await app.leftSquad() } }
+                )
                 .onAppear {
                     // A tap that launched the app came before the tabs.
                     if let destination = delegate.takeDestination() {
@@ -104,6 +106,12 @@ struct AppRoot: View {
             }
         }
         .onAppear {
+            // A push while the tabs are up drops in as their banner, not iOS's.
+            delegate.arrived = { [app, $pushesInFront] in
+                guard app.showsTabs else { return false }
+                $pushesInFront.wrappedValue += 1
+                return true
+            }
             delegate.opened = { [app, delegate, $tab, $pushDestination] opened in
                 switch opened {
                 // Where its notice in 通知 goes (MainTabs' `open`), unless the 6pm push's view

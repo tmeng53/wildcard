@@ -135,13 +135,11 @@ public final class TodayModel {
         if store.home == nil { dressMe(hop: false) } else { placeSquad() }
     }
 
-    /// How long after posting a 练了 the week's count flips up: after the ring closes and the
-    /// squad starts cheering (the approved check-in moment's 1.7 seconds).
+    /// How long after a 练了 the week's count flips up: once the ring closes and the squad cheers.
     private static let scoreDelay = 1.7
     /// The squad's home, with the member's own posts counted.
     public var home: Home? { store.home }
-    /// Opens a member's player card with their today over it, from a tap on them on the scene
-    /// (me too); the app sets it.
+    /// Opens a member's player card with their today over it, from a tap on them (me too).
     @ObservationIgnored public var openTeammate: (MemberID) -> Void = { _ in }
     /// Opens the squad's coach's card, from a tap on it on the sideline; the app sets it.
     @ObservationIgnored public var openCoach: () -> Void = {}
@@ -151,19 +149,21 @@ public final class TodayModel {
     var holdsTabBar = false
     /// A takeover scene's opening, over the whole screen until 进场 (`TodayModel+Opening.swift`).
     var opening: OpeningArt.Loaded?
-    /// The squad standing for the opening's group photo, made for it apart from the home's
-    /// figures, which sit, eat or train as their day has them (`TodayModel+Opening.swift`).
+    /// The squad posed for the opening's group photo, apart from the home's figures.
     var openingFigures: [OpeningFigure] = []
-    /// The banner on top or a celebration's card, those waiting, told only while 今天 is in front.
+    /// The banner on top, over any page, or a celebration's card (on 今天 only), and those waiting.
     var notice: Notice?
     var pendingNotices: [Notice] = []
-    /// Posts the server refused that the member has been told of and hasn't opened again, oldest
-    /// first; 重发 opens them one by one.
+    /// Refused posts the member was told of and hasn't opened again, oldest first, for 重发.
     var failed: [PendingCheckIn] = []
     public internal(set) var celebration: Broadcast?
     public var isHomeInFront = true
+    /// A screen covers the tabs (the editor, a 战报), where a banner would drop in unseen.
+    public var isCovered = false
     /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
     @ObservationIgnored var unlockNotices: UnlockNotices?
+    /// Draws the banner of a notice 通知 was told while the app is open (`tell(_:banner:)`).
+    @ObservationIgnored var toldBanner: ((Contracts.Notice) -> AnyView)?
     /// Where a broadcast's banner, or 「还有新通知」, opens its place, as the app routes every notice.
     @ObservationIgnored public var openDestination: ((AppDestination) -> Void)?
     /// Banners shown in a row since the queue was empty, and who hears each from 通知 come on screen.

@@ -50,13 +50,18 @@ enum Push {
 final class AppDelegate: NSObject, UIApplicationDelegate {
     /// What a tapped notification does; the scene sets it.
     var opened: (OpenedNotification) -> Void = { _ in }
+    /// A notification arrived while the app is in front: true when the app tells it in its own
+    /// banner, so iOS shows none. The scene sets it.
+    var arrived: () -> Bool = { false }
     /// Where the 6pm push's view asked to go, kept until the tabs take it: a tap that launched
     /// the app comes before they are there.
     private var destination: PushDestination?
-    private lazy var taps = NotificationTaps { [weak self] in
-        self?.destination = Push.takeDestination()
-        self?.opened($0)
-    }
+    private lazy var taps = NotificationTaps(
+        arrived: { [weak self] in self?.arrived() ?? false },
+        opened: { [weak self] in
+            self?.destination = Push.takeDestination()
+            self?.opened($0)
+        })
 
     /// Whether the last tapped notification's view asked to go somewhere of its own.
     var hasDestination: Bool { destination != nil }

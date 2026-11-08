@@ -5,17 +5,25 @@ import NotificationsDomain
 /// 通知 without a server, for the sample squad, previews and UI tests: notices kept in memory,
 /// read a page at a time, with how far the member has read.
 public actor InMemoryNoticeSource: NoticeSource {
-    private let all: [Notice]
+    private var all: [Notice]
     private var seen: NoticeID?
     private let size: Int
+    /// Told live once, `liveAfter` after the first stream is ready, as a teammate's comment is.
+    private var live: [Notice]
+    private let liveAfter: Duration
 
     /// - Parameters:
     ///   - notices: any order; they are read newest first.
     ///   - seen: the newest the member has seen, nil before they first opened 通知.
-    public init(_ notices: [Notice], seen: NoticeID? = nil, size: Int = 30) {
+    ///   - live: told once while the app is open, `liveAfter` after it starts listening.
+    public init(
+        _ notices: [Notice], seen: NoticeID? = nil, size: Int = 30, live: [Notice] = [],
+        liveAfter: Duration = .seconds(6)
+    ) {
         self.all = notices.sorted { $0.id > $1.id }
         self.seen = seen
         self.size = size
+        (self.live, self.liveAfter) = (live, liveAfter)
     }
 
     public func notices(before: NoticeID?) async throws(NotificationsError) -> NoticePage {
@@ -28,10 +36,21 @@ public actor InMemoryNoticeSource: NoticeSource {
         seen = max(seen ?? through, through)
     }
 
-    /// Nothing is told live here: it says it is ready, as the server's stream does on connecting,
-    /// so the inbox reads its newest page at launch, then listens until the app stops.
+    /// It says it is ready, as the server's stream does on connecting, so the inbox reads its
+    /// newest page at launch; tells what is `live` once, a moment later; then listens until the
+    /// app stops.
     public func listen(_ heard: @escaping @Sendable (LiveNotice) async -> Void) async throws(NotificationsError) {
         await heard(.ready)
+        if !live.isEmpty {
+            try? await Task.sleep(for: liveAfter)
+            guard !Task.isCancelled else { return }
+            let told = live
+            live = []
+            for notice in told {
+                all.insert(notice, at: 0)
+                await heard(.told(notice))
+            }
+        }
         let (quiet, open) = AsyncStream.makeStream(of: Never.self)
         // Ends only when the listening task is cancelled.
         for await _ in quiet {}
@@ -44,6 +63,13 @@ public actor InMemoryNoticeSource: NoticeSource {
     public static func sample(
         now: Date, calendar: Calendar = .current, latest: [Notice.Subject] = []
     ) -> InMemoryNoticeSource {
+        let sample = sampleNotices(now: now, calendar: calendar, latest: latest)
+        return InMemoryNoticeSource(sample.notices, seen: sample.seen)
+    }
+
+    private static func sampleNotices(
+        now: Date, calendar: Calendar = .current, latest: [Notice.Subject] = []
+    ) -> (notices: [Notice], seen: NoticeID) {
         let today = calendar.startOfDay(for: now)
         func at(days: Int, hour: Int, minute: Int = 0) -> Date {
             let day = calendar.date(byAdding: .day, value: days, to: today) ?? today
@@ -93,7 +119,7 @@ public actor InMemoryNoticeSource: NoticeSource {
         let notices = subjects.enumerated().map { index, told in
             Notice(id: NoticeID(rawValue: index + 1), toldAt: told.0, squad: nil, subject: told.1)
         }
-        return InMemoryNoticeSource(notices, seen: NoticeID(rawValue: notices.count - 2 - latest.count))
+        return (notices, NoticeID(rawValue: notices.count - 2 - latest.count))
     }
 
     /// A holiday's pre-holiday broadcast in its celebration style, for the sample squad: TURKEY
@@ -121,6 +147,22 @@ public actor InMemoryNoticeSource: NoticeSource {
         CoachMemberNote(
             id: 1, squad: SquadID(UUID()), day: LocalDay(at: day, in: .current),
             text: "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。", coach: CoachSpeaker(id: "xiaohun", name: "毛头"))
+    }
+
+    /// A teammate's comment on one of the sample member's posts, told just now: for
+    /// `-uitest-live-comment`, the banner that drops in over any page.
+    private static func liveComment(after earlier: Int, now: Date) -> Notice {
+        Notice(
+            id: NoticeID(rawValue: earlier + 1), toldAt: now, squad: nil,
+            subject: .comment(PushAlert(key: "push.comment", args: ["阿杰", "这组深蹲可以啊"]), checkIn: CheckInID(UUID())))
+    }
+
+    /// The sample's notices, with a teammate's comment told live a few seconds after the app
+    /// starts listening.
+    public static func withLiveComment(now: Date) -> InMemoryNoticeSource {
+        let sample = sampleNotices(now: now)
+        return InMemoryNoticeSource(
+            sample.notices, seen: sample.seen, live: [liveComment(after: sample.notices.count, now: now)])
     }
 
     /// No notices at all, as for a member who just joined.

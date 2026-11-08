@@ -4,9 +4,15 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// The home's `NoticeBanner`s, one at a time: the next drops in once the last is gone and the
-/// scene is in view (`TodayModel+Notices.swift`).
-struct HomeNotices: ViewModifier {
+extension View {
+    /// The `NoticeBanner`s `model` tells, one at a time over whatever page is open: the next drops
+    /// in once the last is gone (`TodayModel+Notices.swift`). The app puts it over its tabs.
+    public func todayNotices(_ model: TodayModel) -> some View {
+        modifier(TodayNotices(model: model))
+    }
+}
+
+private struct TodayNotices: ViewModifier {
     @Bindable var model: TodayModel
     private var unlocks: UnlockNotices? { model.unlockNotices }
 
@@ -14,12 +20,18 @@ struct HomeNotices: ViewModifier {
         content
             .noticeBanner(item: $model.notice, hold: model.hold, onTap: tap) { notice in
                 // An edge under it for each still to come, at most two.
-                banner(for: notice).noticesWaiting(model.waitingNotices)
+                banner(for: notice)
+                    .noticesWaiting(model.waitingNotices)
+                    .environment(\.sceneTheme, model.scene)
             }
             // Only an unlock: something the member earned arrives.
             .haptic(.appear, trigger: model.notice?.id) { _, id in id != nil && isUnlock(model.notice) }
             .onChange(of: model.isFreeForNotices, initial: true) { _, free in
                 if free { Task { await model.showNextNotice() } }
+            }
+            // A celebration waiting for 今天.
+            .onChange(of: model.isHomeInFront) { _, front in
+                if front { Task { await model.showNextNotice() } }
             }
             // A 练了 that opened something, or one the last load found: told once each.
             .onChange(of: model.store.unlocked.count, initial: true) { _, count in
@@ -38,7 +50,8 @@ struct HomeNotices: ViewModifier {
             // Who moved the squad, over the new scene's badge.
             NoticeBanner(
                 picker.map { Text("\($0) 把小队搬到了\(scene.name)", bundle: .module) }
-                    ?? Text("小队搬到了\(scene.name)", bundle: .module)
+                    ?? Text("小队搬到了\(scene.name)", bundle: .module),
+                action: Text("去看看", bundle: .module)
             ) { SceneBadge(scene) }
         case .unlocked(let unlock):
             if let unlocks { unlocks.banner(unlock) }
@@ -48,6 +61,7 @@ struct HomeNotices: ViewModifier {
                 Text(verbatim: broadcast.title.localized(in: language)),
                 detail: broadcast.body.map { Text(verbatim: $0.localized(in: language)) },
                 action: broadcast.action.map { Text(verbatim: $0.label.localized(in: language)) }
+                    ?? Text("查看", bundle: .module)
             ) {
                 if let icon = broadcast.icon, let unlocks {
                     unlocks.badge(icon.kind, icon.id)
@@ -67,12 +81,14 @@ struct HomeNotices: ViewModifier {
                     ? Text("有一条发送失败", bundle: .module)
                     : Text("有 \(model.failed.count) 条发送失败", bundle: .module),
                 detail: sendFailedDetail(canResend: canResend),
-                action: canResend ? Text("重发", bundle: .module) : nil
-            ) { NoticeSymbol(systemImage: "arrow.clockwise") }
+                action: canResend ? Text("重发", bundle: .module) : Text("知道了", bundle: .module)
+            ) { NoticeSymbol(systemImage: "arrow.clockwise", tone: .brand) }
         case .more:
-            NoticeBanner(Text("还有新通知 · 去看看", bundle: .module), showsChevron: true) {
-                NoticeSymbol(systemImage: "bell.fill")
+            NoticeBanner(Text("还有新通知", bundle: .module), action: Text("查看", bundle: .module)) {
+                NoticeSymbol(systemImage: "bell.fill", tone: .brand)
             }
+        case .told(let told):
+            model.toldBanner?(told)
         }
     }
 
@@ -90,14 +106,13 @@ struct HomeNotices: ViewModifier {
         switch notice.news {
         case .unlocked(let unlock): unlocks?.open(unlock)
         case .broadcast(let broadcast):
-            if let action = broadcast.action {
-                model.broadcastOpened?(broadcast)
-                model.openDestination?(action.destination)
-            }
+            model.broadcastOpened?(broadcast)
+            model.openDestination?(broadcast.action?.destination ?? .notices)
         case .goalSuggestion: model.openDestination?(.squad)
         case .sendFailed: model.resendFirst()
         case .more: model.openDestination?(.notices)
-        case .moved: break
+        case .moved: model.openDestination?(.today)
+        case .told(let told): model.openDestination?(told.destination)
         }
     }
 

@@ -77,7 +77,6 @@ public struct TodayView: View {
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.step)
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.home)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.payoff)
-        .modifier(HomeNotices(model: model))
         .modifier(HolidayOpening(model: model))
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)

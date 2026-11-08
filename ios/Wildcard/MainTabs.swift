@@ -41,6 +41,11 @@ struct MainTabs: View {
     @Binding var destination: AppDestination?
     /// The member left the squad on its page.
     var leftSquad: () -> Void = {}
+    /// 通知 was told a teammate moved the squad: the app reads the squad's scene again, and the
+    /// home drops onto it and says who moved it.
+    var sceneMoved: () -> Void = {}
+    /// Bumped each time a push arrives while the app is in front, which the app tells itself.
+    var pushesInFront = 0
     /// 设置's 预览注册, for admins; nil for everyone else.
     var previewSignUp: (() -> Void)?
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
@@ -78,8 +83,9 @@ struct MainTabs: View {
         recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
         destination: Binding<AppDestination?> = .constant(nil), previewSignUp: (() -> Void)? = nil,
-        leftSquad: @escaping () -> Void = {}
+        pushesInFront: Int = 0, sceneMoved: @escaping () -> Void = {}, leftSquad: @escaping () -> Void = {}
     ) {
+        (self.pushesInFront, self.sceneMoved) = (pushesInFront, sceneMoved)
         self.previewSignUp = previewSignUp
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
@@ -174,6 +180,13 @@ struct MainTabs: View {
             CoachCardPopup(today: today, squad: squad, close: closeCoachCard, browse: browseCoaches)
                 .environment(\.sceneTheme, today.scene)
         }
+        // Every banner drops in over whatever page is open (2026-11-08), above the cards, but not
+        // under a screen that covers the tabs, where nobody would see it.
+        .todayNotices(today)
+        .onChange(of: tabsCovered, initial: true) { today.isCovered = $1 }
+        // What 通知 is told while the app is open, in place of iOS's banner.
+        .onChange(of: inbox.toldLive) { tellToldLive() }
+        .onChange(of: pushesInFront) { Task { await inbox.catchUp() } }
         .onChange(of: squad.hasLeft) { _, left in
             guard left else { return }
             leftSquad()

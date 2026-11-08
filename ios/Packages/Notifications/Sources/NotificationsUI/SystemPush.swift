@@ -30,11 +30,19 @@ public struct SystemPush: PushSystem {
 /// Shows a notification that arrives while the app is open, and tells the app when the member
 /// taps one. iOS keeps its delegate weakly, so the app delegate holds this.
 public final class NotificationTaps: NSObject, UNUserNotificationCenterDelegate, Sendable {
+    private let arrived: @MainActor @Sendable () -> Bool
     private let opened: @MainActor @Sendable (OpenedNotification) -> Void
 
-    /// - Parameter opened: the member tapped a notification, which opened the app.
-    public init(opened: @escaping @MainActor @Sendable (OpenedNotification) -> Void) {
-        self.opened = opened
+    /// - Parameters:
+    ///   - arrived: a notification arrived while the app is in front; true when the app tells it
+    ///     in its own banner (the one that drops in over any page), so iOS shows only it in
+    ///     Notification Center, false for iOS's banner.
+    ///   - opened: the member tapped a notification, which opened the app.
+    public init(
+        arrived: @escaping @MainActor @Sendable () -> Bool,
+        opened: @escaping @MainActor @Sendable (OpenedNotification) -> Void
+    ) {
+        (self.arrived, self.opened) = (arrived, opened)
     }
 
     // The completion-handler forms, not the async ones: iOS calls these through Objective-C, and
@@ -45,7 +53,10 @@ public final class NotificationTaps: NSObject, UNUserNotificationCenterDelegate,
         _ center: UNUserNotificationCenter, willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        completionHandler([.banner, .list, .sound])
+        let done = PresentationCompletion(call: completionHandler)
+        Task { @MainActor [arrived] in
+            done.call(arrived() ? [.list] : [.banner, .list, .sound])
+        }
     }
 
     public func userNotificationCenter(
@@ -74,5 +85,10 @@ private struct MainThreadCompletion: @unchecked Sendable {  // only called once,
     init(_ call: @escaping () -> Void) {
         self.call = call
     }
+}
+
+// How iOS should show a notification that arrived in front, carried to the main actor likewise.
+private struct PresentationCompletion: @unchecked Sendable {  // only called once, on the main actor
+    let call: (UNNotificationPresentationOptions) -> Void
 }
 #endif

@@ -68,6 +68,9 @@ public final class NoticeInbox {
     private var listened = false
     private var loadingMore: Int?
     private let source: any NoticeSource
+    /// Notices told while the app was in front and 通知 wasn't open, for its banner to drop in
+    /// (`takeToldLive()`), the earliest first.
+    public private(set) var toldLive: [Notice] = []
 
     /// The most pages one load or one scroll reads in a row while none of them has anything this
     /// build can show, before waiting for the member to scroll again.
@@ -150,6 +153,23 @@ public final class NoticeInbox {
         }
     }
 
+    /// A push arrived while the app was in front, which the app tells itself in place of iOS's
+    /// banner: reads the newest page, and what it finds newer than the newest already here is
+    /// heard as if it came live, in case the stream missed it.
+    public func catchUp() async {
+        let newest = notices.first?.id
+        await load()
+        guard !isOpen, let newest else { return }
+        let known = Set(toldLive.map(\.id))
+        toldLive += notices.filter { $0.id > newest && !known.contains($0.id) }.reversed()
+    }
+
+    /// The notices heard since the last call, the earliest first: each is given once.
+    public func takeToldLive() -> [Notice] {
+        defer { toldLive = [] }
+        return toldLive
+    }
+
     /// The page opened: loads the newest notices, keeps which were new for the bold rows, and
     /// marks everything up to the newest read, which takes the bell's dot away.
     public func open() async {
@@ -204,8 +224,8 @@ public final class NoticeInbox {
         case .told(let notice):
             guard let notice, !notices.contains(where: { $0.id == notice.id }) else { return }
             notices.insert(notice, at: notices.firstIndex { $0.id < notice.id } ?? notices.endIndex)
-            // On the open page it shows bold, and is read.
-            if isOpen { await markNewestSeen() }
+            // On the open page it shows bold, and is read; anywhere else its banner drops in.
+            if isOpen { await markNewestSeen() } else { toldLive.append(notice) }
         }
     }
 
