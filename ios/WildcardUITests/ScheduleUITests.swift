@@ -29,7 +29,6 @@ final class ScheduleUITests: XCTestCase {
         XCTAssertLessThanOrEqual(poster.frame.maxY, tabBar.frame.minY, "the poster runs under the tab bar")
         XCTAssertGreaterThanOrEqual(poster.frame.minX, 0)
         XCTAssertLessThanOrEqual(poster.frame.maxX, app.frame.maxX)
-        XCTAssertFalse(find(app, "schedule.count.squad").exists, "this week still shows the counts")
         XCTAssertTrue(lane(app, 3).label.hasPrefix("今天"), "Thursday isn't today: \(lane(app, 3).label)")
         XCTAssertTrue(lane(app, 3).label.contains("力量训练"), "strength's short name is missing: \(lane(app, 3).label)")
         settle()

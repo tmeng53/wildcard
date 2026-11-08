@@ -16,7 +16,7 @@ public final class ScheduleModel {
     /// What shows under the poster.
     public enum Panel: Equatable {
         /// Next week's countdown or a past week's awards; nothing under this week.
-        case counts
+        case weekNote
         /// The picks for the selected day.
         case dayPicks(Int)
         /// Next week's 饮食小目标.
@@ -125,7 +125,7 @@ public final class ScheduleModel {
     var panel: Panel {
         if fuelOpen, store.canEditFuel { return .fuel }
         if case .selected(let index) = store.board?.focus { return .dayPicks(index) }
-        return .counts
+        return .weekNote
     }
 
     // MARK: Weeks

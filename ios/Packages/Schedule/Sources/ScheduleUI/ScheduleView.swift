@@ -67,7 +67,7 @@ public struct ScheduleView: View {
             }
             // On a shorter phone the picks can open below the fold: bring them up over the bar.
             .onChange(of: model.panel) { _, panel in
-                guard panel != .counts else { return }
+                guard panel != .weekNote else { return }
                 withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
                     scroller.scrollTo(Self.panelID, anchor: .bottom)
                 }
@@ -194,8 +194,8 @@ public struct ScheduleView: View {
     private func panel(_ sheet: WeekSheet?) -> some View {
         VStack(alignment: .leading, spacing: Space.s) {
             switch model.panel {
-            case .counts:
-                counts(sheet)
+            case .weekNote:
+                weekNote(sheet)
             case .dayPicks(let index):
                 if let board = store.board {
                     DayPicks(store: store, board: board, index: index, onPick: model.pick, onRest: model.rest) {
@@ -216,7 +216,7 @@ public struct ScheduleView: View {
     /// Under a week with nothing in hand: next week's countdown or a past week's awards; nothing
     /// under this week, which is the poster alone, or the 每周模板, whose note says when it counts.
     @ViewBuilder
-    private func counts(_ sheet: WeekSheet?) -> some View {
+    private func weekNote(_ sheet: WeekSheet?) -> some View {
         switch (store.board?.tense, sheet) {
         case (.upcoming, _): CountdownCard(store: store)
         case (.past, let sheet?), (nil, let sheet?): WeekAwards(titles: sheet.titles)
