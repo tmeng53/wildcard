@@ -20,6 +20,7 @@ const WORDS = {
     terms: '使用条款',
     title: (name) => `加入「${name}」· 外卡`,
     invited: '你收到一张外卡',
+    admit: '入场券',
     members: (n) => `${n} 人已上场，就等你了`,
     full: '这个小队已经满员了',
     join: '领取外卡',
@@ -40,6 +41,7 @@ const WORDS = {
     terms: '使用條款',
     title: (name) => `加入「${name}」· 外卡`,
     invited: '你收到一張外卡',
+    admit: '入場券',
     members: (n) => `${n} 人已上場，就等你了`,
     full: '這個小隊已經滿員了',
     join: '領取外卡',
@@ -60,6 +62,7 @@ const WORDS = {
     terms: 'Terms',
     title: (name) => `Join ${name} · Wildcard`,
     invited: 'You got a wildcard',
+    admit: 'ADMIT ONE',
     members: (n) => `${n} in. Waiting on you.`,
     full: "This squad's full.",
     join: 'Get your wildcard',
@@ -108,9 +111,22 @@ const code = (
   ''
 ).trim();
 
-function show({ eyebrow = '', name, sub, button, withCode = false }) {
+// Today, as the ticket prints it: 2026.11.08.
+function stamp(day) {
+  const two = (n) => String(n).padStart(2, '0');
+  return `${day.getFullYear()}.${two(day.getMonth() + 1)}.${two(day.getDate())}`;
+}
+
+// `ticket` is 'checked' (dealt, then its stub tears off and the squad walks on), 'dealt' (dealt and
+// kept whole: the squad is full) or absent (the words alone, plainly).
+function show({ eyebrow = '', name, sub, button, withCode = false, ticket }) {
   $('eyebrow').textContent = eyebrow;
   $('eyebrow').hidden = eyebrow === '';
+  $('ticket').classList.toggle('plain', ticket === undefined);
+  $('ticket').classList.toggle('checked', ticket === 'checked');
+  $('hero').classList.toggle('dealt', ticket !== undefined);
+  $('stamp').textContent = stamp(new Date());
+  $('stub-words').textContent = words.admit;
   $('name').textContent = name;
   $('sub').textContent = sub;
   $('get-words').textContent = button;
@@ -158,7 +174,8 @@ $('copy').addEventListener('click', async () => {
 // after another with small hops, wave, then idle in their persona; every few seconds one of them
 // waves again. A tap on a figure
 // makes it cheer, and copying the code makes the whole row cheer, left to right.
-const ENTER = { delay: 0.35, stagger: 0.16, walk: 0.95 };
+// They start once the ticket is dealt and checked (join.css's --after).
+const ENTER = { delay: 1.3, stagger: 0.16, walk: 0.95 };
 // How long a move takes to blend in from idle and back.
 const FADE = 0.18;
 let cheerAll = () => {};
@@ -262,6 +279,7 @@ if (squad) {
     sub: squad.full ? words.full : words.members(squad.memberCount),
     button: squad.full ? words.get : words.join,
     withCode: !squad.full,
+    ticket: squad.full ? 'dealt' : 'checked',
   });
   play(squad.looks);
 } else {

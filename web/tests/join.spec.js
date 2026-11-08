@@ -31,8 +31,8 @@ async function stub(page, status, body) {
   return asked;
 }
 
-// Long enough for five to walk in and the hero to rise in.
-const SETTLE = 2600;
+// Long enough for the ticket to be dealt and checked, five to walk in and the hero to rise in.
+const SETTLE = 3900;
 
 const overlaps = (a, b) =>
   a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -92,12 +92,48 @@ test('opens in the language last picked on the site', async ({ page }) => {
   await expect(page.locator('.wc-logo')).toHaveAttribute('href', '/en/');
 });
 
+test('deals the ticket, tears its stub off, then the squad walks on', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await stub(page, 200, squad(4));
+  await page.goto('/join/K7M2QX9P?lang=zh-Hans');
+  await expect(page.locator('#ticket')).toHaveClass(/checked/);
+  await expect(page.locator('#stub-words')).toHaveText('入场券');
+  await expect(page.locator('#stamp')).toHaveText(/^\d{4}\.\d{2}\.\d{2}$/);
+  // While the ticket is checked, the squad waits past the right edge and the button isn't up yet.
+  const xs = () =>
+    page.locator('.lineup svg').evaluateAll((all) => all.map((s) => s.getBoundingClientRect().x));
+  for (const x of await xs()) expect(x).toBeGreaterThan(390);
+  // Dealt (in 0.6 s), with the stub still on.
+  await page.waitForTimeout(700);
+  const ticket = await page.locator('.face').boundingBox();
+  await page.waitForTimeout(SETTLE);
+  // The stub is gone, the ticket didn't move, and everyone is on the floor.
+  expect(await page.locator('#stub').evaluate((s) => getComputedStyle(s).opacity)).toBe('0');
+  expect(await page.locator('.face').boundingBox()).toStrictEqual(ticket);
+  for (const x of await xs()) expect(x).toBeLessThan(390);
+  expect(await page.locator('#get').evaluate((s) => getComputedStyle(s).opacity)).toBe('1');
+});
+
+test('with reduced motion the ticket shows already checked', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await stub(page, 200, squad(3));
+  await page.goto('/join/K7M2QX9P?lang=en');
+  await expect(page.locator('#name')).toHaveText('周末网球');
+  await expect(page.locator('#stub')).toBeHidden();
+  await expect(page.locator('#get')).toBeVisible();
+});
+
 test('a full squad says so and offers the app without the code', async ({ page }) => {
   await stub(page, 200, squad(8, { full: true }));
   await page.goto('/join/K7M2QX9P?lang=en');
   await expect(page.locator('#sub')).toHaveText("This squad's full.");
   await expect(page.locator('#get')).toHaveText('Get your wildcard');
   await expect(page.locator('#code')).toBeHidden();
+  // Its ticket is dealt but never checked: the stub stays on.
+  await expect(page.locator('#ticket')).not.toHaveClass(/checked/);
+  await page.waitForTimeout(SETTLE);
+  await expect(page.locator('#stub-words')).toHaveText('ADMIT ONE');
+  await expect(page.locator('#stub')).toBeVisible();
 });
 
 for (const [status, name] of [
@@ -112,6 +148,9 @@ for (const [status, name] of [
     await expect(page.locator('#get')).toHaveText('领取外卡');
     await expect(page.locator('#eyebrow')).toBeHidden();
     await expect(page.locator('.lineup svg')).toHaveCount(0);
+    // No squad, no ticket: the words alone.
+    await expect(page.locator('#ticket')).toHaveClass(/plain/);
+    await expect(page.locator('#stub')).toBeHidden();
   });
 }
 
