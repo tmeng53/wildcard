@@ -227,12 +227,13 @@ function play(looks) {
     const spots = reduce ? row.rest() : row.spots(t);
     actors.forEach((actor, i) => {
       let { left, lift } = spots[i];
-      if (!reduce && !row.walks) {
-        // Walking in: from past the right edge to the row, hopping, slowing into place.
+      if (!reduce) {
+        // Walking in: from past the right edge to the row (or into the queue's loop), hopping,
+        // slowing into place. No one is on the floor before the ticket is checked.
         const f = Math.min(1, Math.max(0, (t - actor.arrive) / ENTER.walk));
         const from = strip.clientWidth + row.figureWidth * 0.2;
         left = from + (left - from) * ease(f);
-        lift = f < 1 ? Math.abs(Math.sin(f * Math.PI * 3)) * row.figureWidth * 0.08 : 0;
+        if (f < 1) lift = Math.abs(Math.sin(f * Math.PI * 3)) * row.figureWidth * 0.08;
         // Arrived: a wave hello.
         if (f >= 1 && actor.arrived === undefined) {
           actor.arrived = true;

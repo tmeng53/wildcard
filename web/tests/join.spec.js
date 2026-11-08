@@ -114,6 +114,18 @@ test('deals the ticket, tears its stub off, then the squad walks on', async ({ p
   expect(await page.locator('#get').evaluate((s) => getComputedStyle(s).opacity)).toBe('1');
 });
 
+test('a squad that walks through in a loop also waits for the ticket', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await stub(page, 200, squad(7));
+  await page.goto('/join/K7M2QX9P?lang=zh-Hans');
+  await expect(page.locator('.lineup svg')).toHaveCount(7);
+  const xs = () =>
+    page.locator('.lineup svg').evaluateAll((all) => all.map((s) => s.getBoundingClientRect().x));
+  for (const x of await xs()) expect(x).toBeGreaterThan(390);
+  await page.waitForTimeout(SETTLE);
+  expect((await xs()).some((x) => x >= 0 && x < 390)).toBe(true);
+});
+
 test('with reduced motion the ticket shows already checked', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await stub(page, 200, squad(3));
@@ -283,11 +295,13 @@ test('five walk in and stand still in a row; six or more walk through in a loop'
   await stub(page, 200, squad(8));
   await page.goto('/join/K7M2QX9P');
   await expect(page.locator('.lineup svg')).toHaveCount(8);
+  // Once the ticket is checked and they've walked on, the queue loops.
+  await page.waitForTimeout(SETTLE);
   const before = await lefts();
   await page.waitForTimeout(300);
   const after = await lefts();
-  // Everyone walks left at the same pace.
-  after.forEach((x, i) => expect(x).toBeLessThan(before[i]));
+  // Everyone walks left at the same pace (or has just come back in past the right edge).
+  after.forEach((x, i) => expect(x < before[i] || x > before[i] + 200).toBe(true));
 });
 
 test('with reduced motion the queue stands still', async ({ page }) => {
