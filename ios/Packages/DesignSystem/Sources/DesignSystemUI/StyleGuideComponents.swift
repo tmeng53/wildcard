@@ -226,6 +226,15 @@ struct PickSection: View {
                     limit: 10)
                 SearchField(text: $query, prompt: Text("搜索", bundle: .module))
             }
+            GuideGroup(Text("入场券：写字的卡，撕线上写，下面放照片", bundle: .module)) {
+                TicketCard {
+                    Text("昨天练腿，今天下楼都难", bundle: .module)
+                        .typeStyle(TypeRamp.field)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                } stub: {
+                    TicketStamp().frame(maxWidth: .infinity, alignment: .trailing)
+                }
+            }
         }
     }
 

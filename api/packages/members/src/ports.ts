@@ -27,6 +27,8 @@ export interface ProfileStore {
   saveLanguage(member: MemberId, language: ReaderLanguage): Promise<boolean>;
   /** The language each of these members' app speaks, by member. Members without a profile are left out. */
   languages(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, ReaderLanguage>>;
+  /** The time zone each of these members' day follows, by member. Members without a profile are left out. */
+  timeZones(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, string>>;
   /** When the member first saved their profile, right after signing up. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
   /**

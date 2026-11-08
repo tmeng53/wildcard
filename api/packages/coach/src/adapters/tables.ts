@@ -44,6 +44,12 @@ export interface CoachCatalogEvents {
   id: Generated<Int8>;
 }
 
+export interface CoachChallengeAnswers {
+  answer: string;
+  at: Generated<Timestamp>;
+  note_id: Int8;
+}
+
 export interface Coaches {
   background: string;
   catchphrase: string;
@@ -102,6 +108,9 @@ export interface CoachMemberNoteReads {
 
 export interface CoachMemberNotes {
   at: Generated<Timestamp>;
+  challenge_amount: number | null;
+  challenge_title: string | null;
+  challenge_unit: string | null;
   coach_id: string;
   day: string;
   id: Generated<Int8>;
@@ -211,6 +220,7 @@ export interface SquadCoachEvents {
 export interface DB {
   coach_answers: CoachAnswers;
   coach_catalog_events: CoachCatalogEvents;
+  coach_challenge_answers: CoachChallengeAnswers;
   coach_files: CoachFiles;
   coach_letter_tries: CoachLetterTries;
   coach_letters: CoachLetters;

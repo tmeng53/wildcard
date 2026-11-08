@@ -15,6 +15,11 @@ export interface WeekCheckIn {
   /** The member's day when they posted it, when that was after `day` (补打卡). */
   readonly postedDay?: string;
   readonly createdAt: Date;
+  /**
+   * The time on the member's own clock when they posted it, `HH:MM` (24-hour), when their time
+   * zone is known.
+   */
+  readonly postedTime?: string;
   readonly kind: CheckInKind;
   /** A 练了's sport, by its name. */
   readonly sport?: string;
@@ -25,8 +30,8 @@ export interface WeekCheckIn {
   readonly restDay?: true;
   /** Its photos' storage paths, the cover first; the model sees only how many. */
   readonly photos?: readonly string[];
-  /** How many teammates reacted to it. */
-  readonly reactions: number;
+  /** The teammates who reacted to it, by member id, in the order they reacted. */
+  readonly reactedBy: readonly string[];
   /** Teammates' comments, oldest first. */
   readonly comments: readonly WeekComment[];
 }
@@ -99,7 +104,11 @@ export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, st
     `${dayWords(checkIn.day)} ${who} ${checkIn.restDay === true ? PLANNED_REST : KIND_WORDS[checkIn.kind]}`,
   ];
   if (checkIn.postedDay !== undefined && checkIn.postedDay !== checkIn.day) {
-    parts.push(`（补打卡：${dayWords(checkIn.postedDay)} 才发）`);
+    parts.push(
+      `（补打卡：${dayWords(checkIn.postedDay)}${checkIn.postedTime === undefined ? '' : ` 本人当地 ${checkIn.postedTime}`} 才发）`,
+    );
+  } else if (checkIn.postedTime !== undefined) {
+    parts.push(`（本人当地 ${checkIn.postedTime} 发）`);
   }
   if (checkIn.sport !== undefined) parts.push(checkIn.sport);
   if (checkIn.minutes !== undefined) parts.push(`${String(checkIn.minutes)} 分钟`);
@@ -108,7 +117,11 @@ export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, st
     parts.push(`（${String(checkIn.photos.length)} 张照片）`);
   }
   const line = [parts.join(' ')];
-  if (checkIn.reactions > 0) line.push(`${String(checkIn.reactions)} 个表情`);
+  if (checkIn.reactedBy.length > 0) {
+    line.push(
+      `点了表情：${checkIn.reactedBy.map((member) => roster.get(member) ?? '队员').join('、')}`,
+    );
+  }
   if (checkIn.comments.length > 0) {
     const comments = checkIn.comments.map(
       ({ member, text, toCoach, mentionsCoach }) =>
@@ -150,6 +163,7 @@ export function consentedOnly(week: SquadWeek, consented: ReadonlySet<string>): 
       .filter(({ member }) => consented.has(member))
       .map((checkIn) => ({
         ...checkIn,
+        reactedBy: checkIn.reactedBy.filter((member) => consented.has(member)),
         comments: checkIn.comments.filter(({ member }) => consented.has(member)),
       })),
   };

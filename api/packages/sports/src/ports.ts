@@ -25,7 +25,7 @@ export interface SportStore {
   saveSport(sport: SportRecord, order: readonly SportId[]): Promise<void>;
   /** Adds or replaces a category, with `order` every category's id in their new order. */
   saveCategory(
-    category: { readonly id: string; readonly names: LocalizedNames },
+    category: { readonly id: string; readonly names: LocalizedNames; readonly color: string },
     order: readonly string[],
   ): Promise<void>;
   /** Replaces a short list with `sports`, in order. */

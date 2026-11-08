@@ -19,6 +19,7 @@ import type { Members } from '@wildcard/members';
 import type { Scenes } from '@wildcard/scenes';
 import type { Sports } from '@wildcard/sports';
 import { SceneWeek, SquadId as SquadsSquad, type Squads } from '@wildcard/squads';
+import { wallClockAt } from '@wildcard/time-zones';
 import { MemberId as AwardsMember, type WeeklyAwards } from '@wildcard/weekly-awards';
 
 import { squadLanguages } from './squad-language.js';
@@ -53,8 +54,9 @@ export function coachSquadWeek(deps: {
       before: deps.clock(),
       members: inSquad.map((member) => CheckInMember.parse(member)),
     });
-    const [squadmates, languages, catalog, now] = await Promise.all([
+    const [squadmates, timeZones, languages, catalog, now] = await Promise.all([
       deps.members.squadmates(week.members.map(({ member }) => member)),
+      deps.members.timeZones(week.members.map(({ member }) => member)),
       squadLanguages(deps, { squad, members: week.members.map(({ member }) => member) }),
       deps.sports.catalog(),
       deps.squads.squadAt({
@@ -78,10 +80,13 @@ export function coachSquadWeek(deps: {
           ? {}
           : { postedDay: record.postedDay }),
         createdAt: record.createdAt,
+        ...postedTimeOf(record.createdAt, timeZones.get(record.member)),
         kind: record.kind,
         ...entryOf(record, sportNames),
         photos: photosOf(record).map(({ path }) => path),
-        reactions: week.reactions.get(record.id)?.length ?? 0,
+        reactedBy: (week.reactions.get(record.id) ?? [])
+          .toSorted((a, b) => a.reactedAt.getTime() - b.reactedAt.getTime())
+          .map(({ member }) => member),
         comments: (week.comments.get(record.id) ?? []).map(
           ({ id, member, text, commentedAt, replyToCoach, mentionsCoach }) => ({
             id,
@@ -105,6 +110,13 @@ export function coachSquadWeek(deps: {
       checkIns,
     };
   };
+}
+
+/** When a check-in was posted on its author's own clock, `HH:MM`, when their zone is known. */
+function postedTimeOf(createdAt: Date, zone: string | undefined): Pick<WeekCheckIn, 'postedTime'> {
+  if (zone === undefined) return {};
+  const { hour, minute } = wallClockAt(createdAt, zone);
+  return { postedTime: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}` };
 }
 
 /** A check-in's sport, minutes and line, as the coach reads them. */
