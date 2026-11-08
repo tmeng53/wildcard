@@ -7,7 +7,7 @@ describe('a coachLetter notice', () => {
   it('carries the letter as written, with both coaches by their names now', async () => {
     const entries = await noticeEntries(
       {
-        members: {} as never,
+        members: { squadmates: () => Promise.reject(new Error('No squadmates to read.')) },
         coachNames: () =>
           Promise.resolve(
             new Map([

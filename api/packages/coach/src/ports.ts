@@ -91,8 +91,6 @@ export interface CoachAgent {
      * provider keeps that beginning cached for them.
      */
     readonly cacheKey: string;
-    /** How long the whole run may take before it stops as failed, when shorter than a wake's. */
-    readonly timeoutMs?: number;
   }): Promise<AgentRun>;
 }
 

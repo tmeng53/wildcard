@@ -28,12 +28,6 @@ import { offDutyWhy } from './off-duty.js';
  */
 const LETTER_WINDOW_MS = 2 * 60_000;
 
-/**
- * How long the outgoing coach has to write: the app waits 20 seconds on 今天 before the coach
- * leaves without a letter, so the run stops a little before.
- */
-const WRITING_MS = 18_000;
-
 /** A letter just saved, for the server to tell the squad in 通知. */
 export type CoachLettered = (letter: CoachLetter, members: readonly string[]) => Promise<void>;
 
@@ -43,7 +37,7 @@ export interface CoachLetters {
    * just made, now, and it is saved: once a change, while coaching is on and the squad's coach
    * isn't off duty for the day. Answers the letter, the one written already for a retry, or
    * `undefined` when there is none (no change just made, tried before, over the cap, or the
-   * coach couldn't write it in time). The caller checks the asker is the captain.
+   * coach couldn't write it). The caller checks the asker is the captain.
    */
   write(squad: SquadId): Promise<CoachLetter | undefined>;
 }
@@ -104,7 +98,6 @@ export function createCoachLetters(deps: {
           }),
         ],
         cacheKey: `coach:${from.id}`,
-        timeoutMs: WRITING_MS,
       });
       // The tokens were spent whatever comes next: they count toward the squad's cap.
       await deps.usage.record({

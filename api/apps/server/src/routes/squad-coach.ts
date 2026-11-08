@@ -71,8 +71,8 @@ const CoachLetterWritten = z
     letter: CoachLetterBody.nullable().meta({
       description:
         'The outgoing coach’s letter to the one that took over, or null when there is none: ' +
-        'the squad didn’t just change coach, its coach is off duty for the day, or the letter ' +
-        'wasn’t written in time. The coach then leaves without one.',
+        'the squad didn’t just change coach, its coach is off duty for the day, or the coach ' +
+        'couldn’t write it. The coach then leaves without one.',
     }),
   })
   .openapi('CoachLetterWritten');
@@ -225,8 +225,8 @@ export function squadCoach(deps: {
     summary: 'Have the outgoing coach write its letter (换教练)',
     description:
       'For the captain, right after changing coach: the coach that left writes the one that took ' +
-      'over a letter from the squad’s memory, which every member then reads. Answers within ' +
-      'about 20 seconds. Written once a change, so a retry answers the same letter, or none.',
+      'over a letter from the squad’s memory, which every member then reads. Answers once it is ' +
+      'written or failed. Written once a change, so a retry answers the same letter, or none.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params },

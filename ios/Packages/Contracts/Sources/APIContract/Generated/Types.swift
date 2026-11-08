@@ -273,7 +273,7 @@ public protocol APIProtocol: Sendable {
     func pickSquadScene(_ input: Operations.PickSquadScene.Input) async throws -> Operations.PickSquadScene.Output
     /// Have the outgoing coach write its letter (换教练)
     ///
-    /// For the captain, right after changing coach: the coach that left writes the one that took over a letter from the squad’s memory, which every member then reads. Answers within about 20 seconds. Written once a change, so a retry answers the same letter, or none.
+    /// For the captain, right after changing coach: the coach that left writes the one that took over a letter from the squad’s memory, which every member then reads. Answers once it is written or failed. Written once a change, so a retry answers the same letter, or none.
     ///
     /// - Remark: HTTP `POST /squads/{squadId}/coach/letter`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/letter/post(writeCoachLetter)`.
@@ -1041,7 +1041,7 @@ extension APIProtocol {
     }
     /// Have the outgoing coach write its letter (换教练)
     ///
-    /// For the captain, right after changing coach: the coach that left writes the one that took over a letter from the squad’s memory, which every member then reads. Answers within about 20 seconds. Written once a change, so a retry answers the same letter, or none.
+    /// For the captain, right after changing coach: the coach that left writes the one that took over a letter from the squad’s memory, which every member then reads. Answers once it is written or failed. Written once a change, so a retry answers the same letter, or none.
     ///
     /// - Remark: HTTP `POST /squads/{squadId}/coach/letter`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/letter/post(writeCoachLetter)`.

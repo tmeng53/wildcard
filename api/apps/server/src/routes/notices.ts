@@ -321,7 +321,7 @@ export function notices(deps: {
 
 /** The notices as the app reads them, with the names they show as they are now. */
 export async function noticeEntries(
-  deps: { readonly members: Members; readonly coachNames: CoachNames },
+  deps: { readonly members: Pick<Members, 'squadmates'>; readonly coachNames: CoachNames },
   { notices: told, broadcasts }: Pick<Page, 'notices' | 'broadcasts'>,
 ): Promise<z.infer<typeof NoticeEntry>[]> {
   const movers = [

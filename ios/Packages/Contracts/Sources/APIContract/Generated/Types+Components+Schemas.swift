@@ -5847,7 +5847,7 @@ extension Components {
                 case letter
             }
         }
-        /// The outgoing coach’s letter to the one that took over, or null when there is none: the squad didn’t just change coach, its coach is off duty for the day, or the letter wasn’t written in time. The coach then leaves without one.
+        /// The outgoing coach’s letter to the one that took over, or null when there is none: the squad didn’t just change coach, its coach is off duty for the day, or the coach couldn’t write it. The coach then leaves without one.
         ///
         /// - Remark: Generated from `#/components/schemas/CoachLetter`.
         public struct CoachLetter: Codable, Hashable, Sendable {

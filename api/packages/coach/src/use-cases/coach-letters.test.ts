@@ -74,7 +74,7 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
         by,
       );
       const catalog = createPostgresCoachCatalog(trx);
-      const [first] = await catalog.list();
+      const first = (await catalog.list()).find(({ id }) => id === xiaohun);
       if (first === undefined) throw new Error('No coach.');
       await catalog.save({ ...first, id: nuannuan, name: '暖暖', soul: '你是暖暖。' }, by);
       const hiring = createCoachHiring({ hiring: createPostgresCoachHiring(trx), catalog });
@@ -94,17 +94,19 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
     });
 }
 
-/** An agent that hands in `text` with the tool it is given (or fails), and records each run. */
-function writingAgent(texts: readonly (string | 'fail')[]) {
+/**
+ * An agent that hands in each text with the tool it is given (`fail` fails the run), and records
+ * each run.
+ */
+function writingAgent(texts: readonly string[]) {
   const runs: {
     instructions: string;
     task: string;
     tools: string[];
     answers: string[];
-    timeoutMs?: number;
   }[] = [];
   const agent: CoachAgent = {
-    async run({ instructions, task, tools, timeoutMs }): Promise<AgentRun> {
+    async run({ instructions, task, tools }): Promise<AgentRun> {
       const usage = { requests: 1, inputTokens: 4_000, cachedInputTokens: 0, outputTokens: 300 };
       const answers: string[] = [];
       runs.push({
@@ -112,7 +114,6 @@ function writingAgent(texts: readonly (string | 'fail')[]) {
         task,
         tools: tools.map(({ name }) => name),
         answers,
-        ...(timeoutMs === undefined ? {} : { timeoutMs }),
       });
       for (const text of texts) {
         if (text === 'fail') return { ok: false, usage, error: 'TimeoutError: too slow' };
@@ -193,11 +194,10 @@ describe('the outgoing coach’s letter', () => {
         to: { id: 'nuannuan', name: '暖暖' },
         text: '这队交给你了。\n米亚周三雷打不动去游泳。',
       });
-      // 小混's own instructions and only its letter to write, cut short for the app's wait.
+      // 小混's own instructions and only its letter to write.
       expect(runs).toHaveLength(1);
       const [run] = runs;
       expect(run?.tools).toStrictEqual(['write_letter']);
-      expect(run?.timeoutMs).toBe(18_000);
       expect(run?.instructions).toContain('你是小混');
       expect(run?.task).toContain('接手的是暖暖');
       expect(run?.task).toContain('- 队员1：米亚\n- 队员2：阿杰');
