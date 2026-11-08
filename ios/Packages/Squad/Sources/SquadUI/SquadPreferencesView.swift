@@ -12,7 +12,8 @@ import SwiftUI
 /// so. Everyone else only reads it. No help text.
 struct SquadPreferencesView: View {
     @Bindable var model: SquadSettingsModel
-    let settings: SquadSettings
+    /// The page's squad as the model has it now, so a saved change shows here at once.
+    private var settings: SquadSettings? { model.settings }
     @State private var isChoosingZone = false
     @State private var isLeaving = false
     @State private var isLeavingNow = false
@@ -45,7 +46,10 @@ struct SquadPreferencesView: View {
 
     // MARK: 比赛时区
 
-    private var zone: SquadTimeZone { settings.matchTimeZone }
+    private var zone: SquadTimeZone {
+        settings?.matchTimeZone
+            ?? SquadTimeZone(timeZone: SquadTimeZone.newYork, nextTimeZone: SquadTimeZone.newYork, canChange: false)
+    }
 
     private var timeZone: some View {
         VStack(alignment: .leading, spacing: Space.xs) {
@@ -117,7 +121,7 @@ struct SquadPreferencesView: View {
 
     /// What leaving does beyond the member's own seat, when it does more.
     private var leaveMessage: Text? {
-        if settings.squad.members.count == 1 { return Text("小队会解散", bundle: .module) }
+        if settings?.squad.members.count == 1 { return Text("小队会解散", bundle: .module) }
         if model.isCaptain { return Text("队长会交给最早加入的队友", bundle: .module) }
         return nil
     }

@@ -107,7 +107,7 @@ public struct SquadSettingsView: View {
             renameAlert
         }
         .navigationDestination(isPresented: $isPreferencesOpen) {
-            SquadPreferencesView(model: model, settings: settings)
+            SquadPreferencesView(model: model)
         }
     }
 
