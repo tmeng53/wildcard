@@ -196,7 +196,8 @@ public struct PostBlock: View {
 }
 
 /// A post block's colours. Only the design system's: a 练了 takes the scene its sport's category
-/// belongs to, a meal the scene of its kind, and a 请假条 the brand's graphite.
+/// belongs to, a meal the scene of its kind, and a 请假条 the gym's steel. Never the brand's graphite:
+/// a run of 请假条 made 我的动态 a wall of black squares (Tracy, 2026-11-08).
 public struct PostBlockColors: Sendable {
     public let scene: SceneTheme
     public let fill: ColorRole
@@ -207,7 +208,7 @@ public struct PostBlockColors: Sendable {
         case .trained: self.init(scene: activity.map(Self.scene(of:)) ?? .gym)
         case .healthyMeal: self.init(scene: .tennis)
         case .cheatMeal: self.init(scene: .track)
-        case .disclaimer: self.init(scene: .gym, fill: .bgBrand, ink: .fgOnBrand)
+        case .disclaimer: self.init(scene: .gym)
         }
     }
 
@@ -221,10 +222,10 @@ public struct PostBlockColors: Sendable {
         }
     }
 
-    private init(scene: SceneTheme, fill: ColorRole = .bgAccent, ink: ColorRole = .fgOnAccent) {
+    private init(scene: SceneTheme) {
         self.scene = scene
-        self.fill = fill
-        self.ink = ink
+        fill = .bgAccent
+        ink = .fgOnAccent
     }
 
     /// Each category of the sports list on a scene: Tracy's pick (2026-10-31). A category added
