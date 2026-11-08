@@ -1,6 +1,7 @@
 import type { SportId } from '@wildcard/sport-ids';
 
 import type { CoachGift, GiftPiece, GiftPieceEdit } from './domain/gifts.js';
+import type { Reward } from './domain/rewards.js';
 import type {
   Claim,
   MemberId,
@@ -17,6 +18,9 @@ import type {
 
 /** Where the rules and members' unlocks are kept. */
 export interface UnlockStore {
+  /** Every reward with every trigger it has, by kind and id. */
+  rewards(): Promise<Reward[]>;
+  /** The `training` triggers, as rules. */
   rules(): Promise<UnlockRule[]>;
   /** Adds a rule counting from now, or changes one, keeping when it counts from. */
   putRule(edit: UnlockRuleEdit): Promise<void>;

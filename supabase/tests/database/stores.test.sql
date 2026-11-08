@@ -22,7 +22,7 @@ select is(
   0,
   'no piece has a switch of its own to begin with'
 );
-select hasnt_column('public', 'unlock_rules', 'switch_id', 'unlock rules say only how a piece is earned');
+select hasnt_column('public', 'reward_triggers', 'switch_id', 'triggers say only how a piece is earned');
 select throws_ok(
   $$delete from public.pieces where id = 'powder-tuna'$$,
   '42501', null, 'a piece is never deleted'

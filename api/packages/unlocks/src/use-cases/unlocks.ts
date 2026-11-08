@@ -14,6 +14,7 @@ import {
   type Unlock,
   type UnlockRule,
 } from '../domain/unlocks.js';
+import type { Reward } from '../domain/rewards.js';
 import type { PieceEdit, StoreEdit, UnlockGift, UnlockRuleEdit } from '../domain/unlocks.js';
 import {
   PieceNotUnlockedError,
@@ -53,6 +54,8 @@ export interface Unlocks {
 
 /** The rules, for admins. */
 export interface UnlocksAdmin {
+  /** Every reward and every way it is got. */
+  rewards(): Promise<Reward[]>;
   rules(): Promise<UnlockRule[]>;
   /** Adds or changes a rule and answers with every rule now. */
   putRule(edit: UnlockRuleEdit): Promise<UnlockRule[]>;
@@ -184,6 +187,8 @@ export function createUnlocks(deps: {
       );
       for (const { id } of toKeep) await deps.store.claim(member, id);
     },
+
+    rewards: () => deps.store.rewards(),
 
     rules: () => deps.store.rules(),
 
