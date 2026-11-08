@@ -79,7 +79,7 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
                     daysPerMember: 3, nextDaysPerMember: 3, canChange: viewer == ids[0],
                     recent: SquadWeeklyGoal.Recent(weeks: 4, daysPerMember: 3.4)),
                 matchTimeZone: SquadTimeZone(
-                    timeZone: "Asia/Taipei", nextTimeZone: "Asia/Taipei", canChange: viewer == ids[0]),
+                    timeZone: "Asia/Taipei", canChange: viewer == ids[0]),
                 language: SquadLanguage(language: .simplifiedChinese, canChange: viewer == ids[0])))
     }
 
@@ -150,7 +150,6 @@ extension InMemorySquadSettingsService {
         if failsSaving { throw .unavailable }
         guard current.matchTimeZone.canChange, TimeZone(identifier: timeZone) != nil else { throw .outdated }
         current.matchTimeZone.timeZone = timeZone
-        current.matchTimeZone.nextTimeZone = timeZone
         return current.matchTimeZone
     }
 

@@ -165,13 +165,10 @@ public final class SquadSettingsModel {
     /// it at once and goes back if the change doesn't go through.
     public func setTimeZone(_ identifier: String) async {
         guard let settings, canChangeTimeZone, TimeZone(identifier: identifier) != nil,
-            identifier != settings.matchTimeZone.timeZone || identifier != settings.matchTimeZone.nextTimeZone
+            identifier != settings.matchTimeZone.timeZone
         else { return }
         let before = settings.matchTimeZone
-        update {
-            $0.matchTimeZone.timeZone = identifier
-            $0.matchTimeZone.nextTimeZone = identifier
-        }
+        update { $0.matchTimeZone.timeZone = identifier }
         await change { service throws(SquadError) in
             let zone = try await service.setTimeZone(of: settings.squad.id, to: identifier)
             self.update { $0.matchTimeZone = zone }

@@ -25,7 +25,7 @@ public struct SquadSettings: Hashable, Sendable {
         coach: SquadCoach, today: LocalDay, timeZone: TimeZone,
         goal: SquadWeeklyGoal = SquadWeeklyGoal(daysPerMember: 3, nextDaysPerMember: 3, canChange: false, recent: nil),
         matchTimeZone: SquadTimeZone = SquadTimeZone(
-            timeZone: SquadTimeZone.newYork, nextTimeZone: SquadTimeZone.newYork, canChange: false),
+            timeZone: SquadTimeZone.newYork, canChange: false),
         language: SquadLanguage = SquadLanguage(language: .simplifiedChinese, canChange: false)
     ) {
         self.squad = squad

@@ -190,7 +190,7 @@ extension SquadWeeklyGoal {
 
 extension SquadTimeZone {
     public init(_ wire: Components.Schemas.SquadTimeZone) {
-        self.init(timeZone: wire.timeZone, nextTimeZone: wire.nextTimeZone, canChange: wire.canChange)
+        self.init(timeZone: wire.timeZone, canChange: wire.canChange)
     }
 
     /// The body of `PUT /squads/{squadId}/time-zone`.

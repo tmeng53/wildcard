@@ -4010,7 +4010,7 @@
             "type": "string",
             "maxLength": 64,
             "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
-            "description": "Next week’s zone, the same as `timeZone`: a change counts at once. Kept for builds that show a change waiting for next week.",
+            "description": "Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.",
             "example": "Asia/Taipei"
           },
           "canChange": {
