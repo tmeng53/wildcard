@@ -36,7 +36,6 @@ export const CoachWords = z.strictObject({
 });
 export type CoachWords = z.infer<typeof CoachWords>;
 
-/** A coach, whole, as stored, logged and put by an admin. */
 /** Its words in 繁體中文 and English; a language left out shows the Chinese ones. */
 const CoachTranslations = z
   .strictObject({ 'zh-Hant': CoachWords.optional(), en: CoachWords.optional() })
@@ -44,6 +43,7 @@ const CoachTranslations = z
     'Its words in 繁體中文 (Taiwan wording) and English. A language left out shows the Chinese ones.',
   );
 
+/** A coach, whole, as stored, logged and put by an admin. */
 export const Coach = z.strictObject({
   version: z.literal(3),
   id: CoachId.describe('Its id, such as `xiaohun`. Never changes.'),
