@@ -806,8 +806,7 @@ describe('GET /me/records', () => {
     const yesterday = new Date(Date.parse(today) - 24 * 60 * 60_000).toISOString().slice(0, 10);
     const put = async (
       who: { readonly token: string },
-      day: string,
-      audience: readonly string[],
+      { day, audience }: { readonly day: string; readonly audience: readonly string[] },
     ) => {
       const body = {
         version: 1,
@@ -820,10 +819,10 @@ describe('GET /me/records', () => {
       const path = `/check-ins/${randomUUID()}`;
       expect((await call({ method: 'PUT', path, token: who.token, body })).status).toBe(201);
     };
-    await put(me, today, [squad]);
+    await put(me, { day: today, audience: [squad] });
     // Kept to myself: mine, but not the squad's to compare.
-    await put(me, yesterday, []);
-    await put(coco, today, [squad]);
+    await put(me, { day: yesterday, audience: [] });
+    await put(coco, { day: today, audience: [squad] });
 
     const { body } = await call({ method: 'GET', path: '/me/records', token: me.token });
     expect(body).toMatchObject({ trainedDays: 2, squad: { firsts: [] } });
