@@ -1,3 +1,5 @@
+import type { ReaderLanguage } from '@wildcard/language-model';
+
 import type { EquippedTitle, MemberId, Profile, Squadmate } from '../domain/profile.js';
 import { ProfileMissingError } from '../errors.js';
 import type { PastLocalHour, ProfileStore } from '../ports.js';
@@ -18,6 +20,16 @@ export interface Members {
    * the caller's to check. Throws `ProfileMissingError` before they have a profile.
    */
   equipTitle(member: MemberId, title: EquippedTitle | null): Promise<void>;
+  /**
+   * Keeps the language the member's app speaks, for the AI to write to them in. Says whether it
+   * was kept: not before they have a profile.
+   */
+  saveLanguage(member: MemberId, language: ReaderLanguage): Promise<boolean>;
+  /**
+   * The language each of these members' app speaks, by member; Simplified Chinese until their
+   * app says another. Members without a profile are left out.
+   */
+  languages(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, ReaderLanguage>>;
   /** When the member joined (first saved their profile), or `undefined` before that. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
   /**
@@ -36,6 +48,8 @@ export function createMembers(deps: { readonly store: ProfileStore }): Members {
     equipTitle: async (member, title) => {
       if (!(await deps.store.equipTitle(member, title))) throw new ProfileMissingError();
     },
+    saveLanguage: (member, language) => deps.store.saveLanguage(member, language),
+    languages: (members) => deps.store.languages(members),
     joinedAt: (member) => deps.store.joinedAt(member),
     pastLocalHour: (input) => deps.store.pastLocalHour(input),
   };

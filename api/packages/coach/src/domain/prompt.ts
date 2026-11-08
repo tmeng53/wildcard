@@ -1,7 +1,16 @@
+import { writeIn } from '@wildcard/language-model';
+
 import type { Coach } from './coach.js';
 import { briefLine, weekdayOf, type NoteBrief } from './member-facts.js';
 import type { CoachSettings } from './settings.js';
-import { checkInLine, rosterOf, saidTo, type SquadWeek, type WeekCheckIn } from './squad-week.js';
+import {
+  checkInLine,
+  languageOf,
+  rosterOf,
+  saidTo,
+  type SquadWeek,
+  type WeekCheckIn,
+} from './squad-week.js';
 import type { WakeReason } from './wake.js';
 
 // What the model reads: the standing instructions (the rules every coach follows, this coach's
@@ -33,6 +42,7 @@ const WAKES = [
   '做什么、用哪个工具，你自己判断。',
   '你每次醒来都会忘掉以前的一切，只有任务里「你的记性」留得住。',
   '队员看得到的话里用昵称称呼人，不写队员N。',
+  '队员看得到的话用任务说的语言写。',
 ].join('\n');
 
 /** What was said to and by the coach under one check-in, oldest first. */
@@ -127,6 +137,7 @@ export function taskOf({
       `有人打卡：${checkInLine(checkIn, rosterOf(week))}`,
       ...occasion,
       emoji,
+      writeIn(languageOf(week, checkIn.member)),
       filesLine,
     ].join('\n\n');
   }
@@ -158,6 +169,7 @@ export function taskOf({
       `你们在下面的对话：\n${[...ownReply, ...said].join('\n')}`,
       ...photos,
       ...occasion,
+      ...(answering === undefined ? [] : [writeIn(languageOf(week, answering.member))]),
       filesLine,
     ].join('\n\n');
   }
@@ -190,6 +202,7 @@ export function taskOf({
     talksBlock(talks, roster),
     filesLine,
     notes,
+    `战术板：${writeIn(week.language ?? 'zh-Hans')}`,
     noteLine,
   ].join('\n\n');
 }

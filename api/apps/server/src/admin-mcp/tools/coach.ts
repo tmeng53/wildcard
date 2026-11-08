@@ -67,7 +67,8 @@ export function listCoaches({ coaches }: CoachToolDependencies) {
     name: 'list_coaches',
     title: 'List the coaches',
     description:
-      'Lists every AI coach, retired ones (offered false) too: id, tier (entry 入门, advanced ' +
+      'Lists every AI coach, retired ones (offered false) too, in 教练招聘会’s order: id, ' +
+      'position (its place in 教练招聘会, from 1), tier (entry 入门, advanced ' +
       '进阶, pro 专业), name, title (头衔), catchphrase, the fictional 简历 the app shows ' +
       '(background 履历, yearsCoaching and experience for 执教, tags, pay 期望待遇), style, soul ' +
       '(the persona prompt only the model reads), look (the character’s art id) and offered.',
@@ -85,7 +86,8 @@ export function putCoach({ coaches }: CoachToolDependencies) {
     description:
       'Adds an AI coach, or replaces every field of one (read it with list_coaches first: a ' +
       'field left out is refused, not kept). Every squad gets the same coach: its identity and ' +
-      'soul never change per squad. To retire a coach set offered to false. Ids never change ' +
+      'soul never change per squad. position orders 教练招聘会 (from 1; coaches sharing one go by ' +
+      'id). To retire a coach set offered to false. Ids never change ' +
       'and coaches are never deleted. Applies to the next wake. Returns the coach now.',
     changes: true,
     input: CoachEdit,
