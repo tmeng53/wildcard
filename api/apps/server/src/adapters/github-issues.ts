@@ -8,12 +8,20 @@ const API = 'https://api.github.com';
 /** What GitHub answers an issue's creation with, the fields read here. */
 const OpenedIssue = z.object({ number: z.int().positive(), html_url: z.url() });
 
+/** A page of the repository's issues, the fields read here. */
+const IssuePage = z.array(OpenedIssue.extend({ body: z.string().nullable().optional() }));
+
+/** Issues a page when looking one up, GitHub's most, and how many pages to look through. */
+const PAGE = 100;
+const PAGES = 10;
+
 /**
  * The issue tracker on a GitHub repository (members' feedback goes to a private one), through
  * its REST API with a fine-grained token that may write the repository's issues and contents.
  * Attachments are committed to the default branch, `main`, and shown in the issue from there.
  * https://docs.github.com/en/rest/issues/issues#create-an-issue
  * https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents
+ * https://docs.github.com/en/rest/issues/issues#list-repository-issues
  */
 export function createGitHubIssueTracker(options: {
   /** `owner/name`. */
@@ -30,7 +38,7 @@ export function createGitHubIssueTracker(options: {
   }: {
     readonly method: string;
     readonly path: string;
-    readonly body: unknown;
+    readonly body?: unknown;
   }): Promise<Response> {
     try {
       return await send(`${API}/repos/${options.repo}${path}`, {
@@ -42,7 +50,7 @@ export function createGitHubIssueTracker(options: {
           'user-agent': 'wildcard-api',
           'x-github-api-version': '2022-11-28',
         },
-        body: JSON.stringify(body),
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         signal: AbortSignal.timeout(20_000),
       });
     } catch (error) {
@@ -83,6 +91,32 @@ export function createGitHubIssueTracker(options: {
       if (!issue.success)
         throw new IssueTrackerUnavailableError('GitHub answered without an issue');
       return { number: issue.data.number, url: issue.data.html_url };
+    },
+
+    async find({ label, marker, since }) {
+      for (let page = 1; page <= PAGES; page += 1) {
+        const query = new URLSearchParams({
+          labels: label,
+          state: 'all',
+          since: since.toISOString(),
+          per_page: String(PAGE),
+          page: String(page),
+        });
+        const response = await call({ method: 'GET', path: `/issues?${query.toString()}` });
+        if (!response.ok) {
+          throw new IssueTrackerUnavailableError(
+            `GitHub refused the issue list (${String(response.status)})`,
+          );
+        }
+        const issues = IssuePage.safeParse(await response.json().catch(() => undefined));
+        if (!issues.success)
+          throw new IssueTrackerUnavailableError('GitHub answered no issue list');
+        const found = issues.data.find((issue) => issue.body?.includes(marker) === true);
+        if (found !== undefined) return { number: found.number, url: found.html_url };
+        if (issues.data.length < PAGE) return undefined;
+      }
+      // Never guess: past the pages looked through, the message waits for a later run.
+      throw new IssueTrackerUnavailableError('too many issues to look through');
     },
   };
 }

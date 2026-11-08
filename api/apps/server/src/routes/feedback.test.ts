@@ -68,6 +68,15 @@ function trackerKeeping() {
   const opened: Opened[] = [];
   let down = false;
   const tracker: IssueTracker = {
+    find: ({ marker }) => {
+      if (down) return Promise.reject(new IssueTrackerUnavailableError('down'));
+      const index = opened.findIndex((issue) => issue.body.includes(marker));
+      return Promise.resolve(
+        index === -1
+          ? undefined
+          : { number: index + 1, url: `https://github.com/o/r/issues/${String(index + 1)}` },
+      );
+    },
     open: (issue) => {
       if (down) return Promise.reject(new IssueTrackerUnavailableError('down'));
       opened.push(issue);
@@ -267,5 +276,41 @@ describe('POST /feedback', () => {
     expect(mine.map((issue) => issue.labels)).toStrictEqual([['app-feedback', 'new', 'idea']]);
     await fileWaitingFeedback(deps);
     expect(keeping.opened.filter((issue) => issue.folder === `feedback/app-${id}`)).toHaveLength(1);
+  });
+  it('keeps the issue a try opened but couldn’t remember, and opens no other', async () => {
+    const { token } = await signUp();
+    const keeping = trackerKeeping();
+    keeping.setDown(true);
+    let now = new Date('2099-03-01T00:00:00.000Z');
+    const { server, feedback } = appWith(keeping.tracker, () => now);
+    const id = randomUUID();
+    await send({ server, token, body: { id, kind: 'problem', body: 'It froze' } });
+    keeping.setDown(false);
+    now = new Date(now.getTime() + FILE_AFTER_MS + 1000);
+    let forget = true;
+    const forgetful = {
+      toFile: (...args: Parameters<typeof feedback.toFile>) => feedback.toFile(...args),
+      filed: (...args: Parameters<typeof feedback.filed>) => {
+        if (!forget) return feedback.filed(...args);
+        forget = false;
+        return Promise.reject(new Error('database went away'));
+      },
+    };
+    const log = createLog(() => undefined);
+    const mine = () => keeping.opened.filter((issue) => issue.folder === `feedback/app-${id}`);
+    for (let run = 0; run < 10 && mine().length === 0; run += 1) {
+      await fileWaitingFeedback({ feedback: forgetful, issues: keeping.tracker, photos, log });
+    }
+    for (let run = 0; run < 10; run += 1) {
+      const { waiting } = await fileWaitingFeedback({
+        feedback: forgetful,
+        issues: keeping.tracker,
+        photos,
+        log,
+      });
+      if (waiting === 0) break;
+    }
+    expect(mine()).toHaveLength(1);
+    expect(await feedback.toFile(0, 1000)).not.toContainEqual(expect.objectContaining({ id }));
   });
 });

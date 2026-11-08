@@ -76,4 +76,52 @@ describe('the GitHub issue tracker', () => {
     await expect(refused.open(issue)).rejects.toBeInstanceOf(IssueTrackerUnavailableError);
     await expect(unreachable.open(issue)).rejects.toBeInstanceOf(IssueTrackerUnavailableError);
   });
+  it('finds the issue whose body holds the marker, looking past a full page', async () => {
+    const page = Array.from({ length: 100 }, (_, index) => ({
+      number: index + 1,
+      html_url: `https://github.com/o/r/issues/${String(index + 1)}`,
+      body: 'other',
+    }));
+    const { fake, calls } = fetchAnswering(
+      json(200, page),
+      json(200, [
+        { number: 101, html_url: 'https://github.com/o/r/issues/101', body: 'x <!-- m -->' },
+      ]),
+    );
+    const tracker = createGitHubIssueTracker({ repo: 'o/r', token: 'secret', fetch: fake });
+    const since = new Date('2026-11-08T00:00:00.000Z');
+    expect(
+      await tracker.find({ label: 'app-feedback', marker: '<!-- m -->', since }),
+    ).toStrictEqual({ number: 101, url: 'https://github.com/o/r/issues/101' });
+    expect(calls.map(({ method, url }) => [method, url])).toStrictEqual([
+      [
+        'GET',
+        'https://api.github.com/repos/o/r/issues?labels=app-feedback&state=all&since=2026-11-08T00%3A00%3A00.000Z&per_page=100&page=1',
+      ],
+      [
+        'GET',
+        'https://api.github.com/repos/o/r/issues?labels=app-feedback&state=all&since=2026-11-08T00%3A00%3A00.000Z&per_page=100&page=2',
+      ],
+    ]);
+  });
+
+  it('finds nothing on a short page, and is unavailable when GitHub refuses', async () => {
+    const since = new Date();
+    const none = createGitHubIssueTracker({
+      repo: 'o/r',
+      token: 'secret',
+      fetch: fetchAnswering(
+        json(200, [{ number: 1, html_url: 'https://github.com/o/r/issues/1', body: null }]),
+      ).fake,
+    });
+    expect(await none.find({ label: 'l', marker: 'm', since })).toBeUndefined();
+    const refused = createGitHubIssueTracker({
+      repo: 'o/r',
+      token: 'secret',
+      fetch: fetchAnswering(json(403, {})).fake,
+    });
+    await expect(refused.find({ label: 'l', marker: 'm', since })).rejects.toBeInstanceOf(
+      IssueTrackerUnavailableError,
+    );
+  });
 });

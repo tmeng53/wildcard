@@ -201,6 +201,15 @@ export interface IssueTracker {
     readonly folder: string;
     readonly attachments: readonly IssueAttachment[];
   }) => Promise<{ readonly number: number; readonly url: string }>;
+  /**
+   * The issue with `label` whose body holds `marker`, among those updated since `since`, so a
+   * retry finds the one an earlier try opened before it could be remembered.
+   */
+  readonly find: (issue: {
+    readonly label: string;
+    readonly marker: string;
+    readonly since: Date;
+  }) => Promise<{ readonly number: number; readonly url: string } | undefined>;
 }
 
 /** The database: any Postgres, through Kysely. */
