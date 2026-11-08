@@ -6,6 +6,7 @@ import {
   type CoachActivity,
   type CoachReply,
 } from '@wildcard/coach';
+import { MemberId as PushMember, type Push } from '@wildcard/push';
 import { MemberId, SquadId, type Squads } from '@wildcard/squads';
 
 import { bodyVersion } from '../body-version.js';
@@ -107,9 +108,9 @@ const CoachActivityBody = z
     }),
     memberNote: CoachMemberNoteBody.optional().meta({
       description:
-        'The caller’s own newest morning note (便条) from the squad’s coach, for 今天 to show on ' +
-        'the first open after it arrived; only the caller sees it. Left out when there is none ' +
-        'from the last day and a half.',
+        'The caller’s own newest morning note (便条) from the squad’s coach, for 今天 to show when ' +
+        'the caller opens it; only the caller sees it. Left out when there is none ' +
+        'from the last day and a half, or while the caller’s `coach` push switch is off.',
     }),
   })
   .openapi('CoachActivity');
@@ -154,6 +155,8 @@ export function coachActivity(deps: {
   readonly verifyToken: VerifyToken;
   readonly squads: Squads;
   readonly coachActivity: CoachActivity;
+  /** The reader's `coach` switch: switched off, no morning note shows (Tracy, 2026-11-07). */
+  readonly push: Pick<Push, 'settingsOf'>;
 }) {
   const read = createRoute({
     method: 'get',
@@ -228,11 +231,25 @@ export function coachActivity(deps: {
       const { squadId } = c.req.valid('param');
       // Throws `SquadNotJoinedError` for anyone not in the squad.
       await deps.squads.find({ squad: squadId, viewer: MemberId.parse(c.var.caller.userId) });
-      const { note, replies, answers, memberNote } = await deps.coachActivity.squad({
+      const {
+        note,
+        replies,
+        answers,
+        memberNote: written,
+      } = await deps.coachActivity.squad({
         squad: CoachSquadId.parse(squadId),
         checkIns: c.req.valid('query').checkIns,
         reader: c.var.caller.userId,
       });
+      // A switch that can't be read counts as off, so the rest of the activity still shows.
+      const memberNote =
+        written !== undefined &&
+        (await deps.push
+          .settingsOf(PushMember.parse(c.var.caller.userId))
+          .then((settings) => settings.coach)
+          .catch(() => false))
+          ? written
+          : undefined;
       return c.json(
         {
           version: 1 as const,

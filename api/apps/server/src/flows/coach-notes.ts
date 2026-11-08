@@ -36,7 +36,7 @@ export interface CoachNotesRun {
 
 /**
  * Delivers the coach's morning notes (便条) once each member's clock passes the settings' hour:
- * a notice in their bell whatever their switches, and a silent push under their `coach` switch.
+ * a notice in their bell and a silent push, only while their `coach` switch is on.
  * A note written after that hour (a member east of New York) goes at once. Each note is claimed
  * before it is told, so runs that overlap tell it once. Never throws.
  */
@@ -63,6 +63,8 @@ export async function deliverCoachNotes(deps: CoachNotesDependencies): Promise<C
     let pushed = 0;
     for (const note of waiting) {
       if (!morning.has(note.member) || !(await stillIn(note))) continue;
+      // Switched off, the note isn't told at all (Tracy, 2026-11-07).
+      if (!(await wantsNotes(deps, note.member))) continue;
       if (!(await deps.notes.delivered(note.id))) continue;
       delivered += 1;
       await deps.tell([
@@ -107,8 +109,6 @@ async function pushNote(
 ): Promise<boolean> {
   try {
     const to = PushMember.parse(note.member);
-    // The coach's own switch; the note is in the member's bell and on 今天 whatever it is.
-    if (!(await deps.push.settingsOf(to)).coach) return false;
     const outcome = await deps.push.notifyMembers({
       members: [to],
       notification: coachNoteNotification(note),
@@ -122,6 +122,19 @@ async function pushNote(
     return outcome.sent > 0;
   } catch (error) {
     deps.log.warn('coach note push failed', { member: note.member, error });
+    return false;
+  }
+}
+
+/** Whether a member keeps the coach's messages on; a failed read counts as off. */
+async function wantsNotes(
+  deps: Pick<CoachNotesDependencies, 'push' | 'log'>,
+  member: string,
+): Promise<boolean> {
+  try {
+    return (await deps.push.settingsOf(PushMember.parse(member))).coach;
+  } catch (error) {
+    deps.log.warn('coach switch not read', { member, error });
     return false;
   }
 }
