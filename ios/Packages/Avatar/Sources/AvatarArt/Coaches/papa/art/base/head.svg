@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+  <path d="M 137.2 66.5 Q 151.29 32.07 186.22 31.61 Q 209.98 35.99 218.2 77.22 Q 224 108.76 214.77 129.61 Q 209.92 134.94 204.59 130.09 Q 196.83 123.78 189.56 119.41 L 174.06 82.05 Q 158.06 67.48 139.14 74.26 Z" fill="#E2BF74"/>
+  <path d="M 186.22 31.61 Q 209.98 35.99 218.2 77.22 Q 224 108.76 214.77 129.61 Q 209.92 134.94 204.59 130.09 Q 214.31 102.93 205.11 74.3 Q 196.39 47.62 179.91 39.36 Z" fill="#D9B07E"/>
+  <ellipse cx="60" cy="114" rx="9" ry="12" fill="#F5D0B2"/>
+  <ellipse cx="61.5" cy="114" rx="4" ry="6.5" fill="#E6B893"/>
+  <ellipse cx="180" cy="114" rx="9" ry="12" fill="#E6B893"/>
+  <path d="M 62 106 Q 62 50 120 50 Q 178 50 178 106 L 176 130 Q 170 166 120 168 Q 70 166 64 130 Z" fill="#F5D0B2"/>
+  <path d="M 150 58 Q 178 72 178 106 L 176 130 Q 170 166 120 168 Q 160 150 163 112 Q 165 78 150 58 Z" fill="#E6B893"/>
+  <path d="M 60 116 Q 54 50 120 44 Q 176 44 180 108 Q 177 96 170 88 Q 158 74 136 70 Q 110 68 92 84 Q 78 96 66 104 Q 62 110 60 116 Z" fill="#E2BF74"/>
+  <path d="M 160 52 Q 176 64 180 108 Q 177 96 170 88 Q 168 70 160 52 Z" fill="#D9B07E"/>
+  <path d="M 84 70 Q 104 56 128 58" fill="none" stroke="#EBCB8B" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 136.13 59.1 L 142.29 51.23 C 144.67 48.18 149.07 47.64 152.12 50.01 L 152.12 50.01 C 155.16 52.4 155.7 56.8 153.32 59.84 L 147.16 67.72 C 144.78 70.76 140.38 71.3 137.33 68.93 L 137.33 68.93 C 134.29 66.55 133.75 62.15 136.13 59.1 Z" fill="#079BB8"/>
+  <path d="M 136.31 60.51 L 145.76 67.89 M 140 55.77 L 149.45 63.17 M 143.69 51.05 L 153.14 58.43" stroke="#CDEBF1" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 86 102 Q 96 98 107 101" fill="none" stroke="#9E7849" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 133 101 Q 144 98 154 102" fill="none" stroke="#9E7849" stroke-width="4.5" stroke-linecap="round"/>
+  <ellipse cx="97" cy="116" rx="11.34" ry="12.42" fill="#FFFFFF"/>
+  <ellipse cx="97" cy="117.5" rx="8.21" ry="9.29" fill="#6B4630"/>
+  <ellipse cx="97" cy="118" rx="4.97" ry="5.83" fill="#1E2129"/>
+  <ellipse cx="100.02" cy="114.06" rx="2.81" ry="2.81" fill="#FFFFFF"/>
+  <path d="M 87.93 109.17 L 81.66 105.44" stroke="#3B2A24" stroke-width="2.6" stroke-linecap="round"/>
+  <ellipse cx="143" cy="116" rx="11.34" ry="12.42" fill="#FFFFFF"/>
+  <ellipse cx="143" cy="117.5" rx="8.21" ry="9.29" fill="#6B4630"/>
+  <ellipse cx="143" cy="118" rx="4.97" ry="5.83" fill="#1E2129"/>
+  <ellipse cx="146.02" cy="114.06" rx="2.81" ry="2.81" fill="#FFFFFF"/>
+  <path d="M 152.07 109.17 L 158.34 105.44" stroke="#3B2A24" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M 118 124 Q 115.5 132 121 133" fill="none" stroke="#C98E6C" stroke-width="2.3" stroke-linecap="round"/>
+  <ellipse cx="80" cy="136" rx="8" ry="4.5" fill="#F09A8A" fill-opacity="0.35"/>
+  <ellipse cx="160" cy="136" rx="8" ry="4.5" fill="#F09A8A" fill-opacity="0.35"/>
+  <path d="M 106 140 Q 120 143 134 140 Q 133 158 120 159 Q 107 158 106 140 Z" fill="#5A2A2A"/>
+  <path d="M 109 141.4 Q 120 143.6 131 141.4 L 130.4 145 Q 120 146.6 109.6 145 Z" fill="#FFFFFF"/>
+  <path d="M 112 155 Q 120 151 128 155 Q 125 159 120 159 Q 115 159 112 155 Z" fill="#E7756A"/>
+</svg>

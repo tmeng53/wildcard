@@ -112,6 +112,7 @@ export function taskOf({
   noteTo = [],
   yesterday,
   occasions = [],
+  backAgain = false,
   canSeePhotos = false,
   challenge,
   gifting,
@@ -134,6 +135,8 @@ export function taskOf({
   readonly yesterday?: { readonly day: string; readonly checkIns: readonly WeekCheckIn[] };
   /** What is special about the day, such as a holiday, one line each. */
   readonly occasions?: readonly string[];
+  /** Whether the coach coached this squad before, was fired and is back, and speaks for the first time since. */
+  readonly backAgain?: boolean;
   /** On a reply's wake, whether the coach can look at the check-in's photos this time. */
   readonly canSeePhotos?: boolean;
   /** On a check-in's wake, the challenge the coach set its author today and their answer. */
@@ -142,7 +145,7 @@ export function taskOf({
   readonly gifting?: GiftOptions;
 }): string | undefined {
   const filesLine = memoryBlock(files);
-  const occasion = occasionBlock(occasions);
+  const occasion = [...occasionBlock(occasions), ...(backAgain ? [BACK_AGAIN] : [])];
   if (reason.kind === 'checkIn') {
     const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
     if (checkIn === undefined) return undefined;
@@ -227,6 +230,9 @@ export function taskOf({
     ...giftBlock(gifting, roster),
   ].join('\n\n');
 }
+
+/** The fact a coach hired back is told on its first wake since; what it says is its own. */
+const BACK_AGAIN = '你以前带过这个小队，被换掉后，现在又被请回来了。';
 
 /**
  * How a night goes: the whole memory brought to its truest current state, not only added to

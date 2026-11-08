@@ -108,7 +108,7 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
             createdAt: new Date(now.getTime() - 10 * 60_000),
             kind: 'trained',
             sport: '跑步',
-            reactions: 0,
+            reactedBy: [],
             comments: [],
           },
         ],
@@ -642,6 +642,42 @@ describe('the coach', () => {
     });
   });
 
+  it('knows a coach hired back until it first runs for the squad', async () => {
+    await rolledBack(async ({ trx, squad, mia }) => {
+      const by = MemberId.parse(mia);
+      const catalog = createPostgresCoachCatalog(trx);
+      const store = createPostgresCoachHiring(trx);
+      const hiring = createCoachHiring({ hiring: store, catalog });
+      const xiaohun = CoachId.parse('xiaohun');
+      const nuannuan = CoachId.parse('nuannuan');
+      const [first] = await catalog.list();
+      if (first === undefined) throw new Error('No coach.');
+      await catalog.save({ ...first, id: nuannuan, name: '暖暖' }, by);
+
+      // Its first coach is new to the squad, and so is the next.
+      expect(await store.backAgain(squad)).toBe(false);
+      await hiring.change({ squad, coach: nuannuan, by });
+      expect(await store.backAgain(squad)).toBe(false);
+      // The first one hired again is back.
+      await hiring.change({ squad, coach: xiaohun, by });
+      expect(await store.backAgain(squad)).toBe(true);
+      // A wake finished without running (its check-in no longer shared with AI) tells it nothing.
+      await sql`
+        insert into public.coach_wakes (squad_id, reason, day, state, claimed_at)
+        values (${squad}, 'daily', '2026-11-08', 'done', now())`.execute(trx);
+      expect(await store.backAgain(squad)).toBe(true);
+      // Once it has run for the squad, it is just its coach again.
+      await sql`
+        insert into public.coach_usage
+          (squad_id, coach_id, model, requests, input_tokens, output_tokens, cost_micros)
+        values (${squad}, 'xiaohun', 'gpt-test', 1, 10, 10, 1)`.execute(trx);
+      expect(await store.backAgain(squad)).toBe(false);
+      // No coach, nothing to be back.
+      await hiring.fire({ squad, by });
+      expect(await store.backAgain(squad)).toBe(false);
+    });
+  });
+
   it('changes the coach in one step for 换教练, and says when it already had it', async () => {
     await rolledBack(async ({ trx, squad, mia }) => {
       const by = MemberId.parse(mia);
@@ -1082,7 +1118,7 @@ describe('the coach', () => {
             day: '2026-11-01',
             createdAt: now,
             kind: 'healthyMeal',
-            reactions: 0,
+            reactedBy: [],
             comments: [],
           },
         ],
@@ -1265,7 +1301,8 @@ describe('the coach', () => {
         createdAt: new Date('2026-10-31T20:00:00Z'),
         kind: 'healthyMeal' as const,
         text: '自己做的',
-        reactions: 1,
+        postedTime: '22:05',
+        reactedBy: [mia],
         comments: [],
       };
       await wakes(fixture, {
@@ -1288,7 +1325,7 @@ describe('the coach', () => {
       // A member whose plan it couldn't read still gets a note.
       expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
       expect(daily?.task).toContain(
-        '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 「自己做的」 · 1 个表情',
+        '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 （本人当地 22:05 发） 「自己做的」 · 点了表情：队员1',
       );
     });
   });
@@ -1407,7 +1444,7 @@ describe('the coach', () => {
             day: '2026-11-01',
             createdAt: now,
             kind: 'healthyMeal',
-            reactions: 0,
+            reactedBy: [],
             comments: [],
           },
         ],
@@ -1428,7 +1465,7 @@ describe('the coach', () => {
         createdAt: new Date('2026-11-01T20:00:00Z'),
         kind: 'healthyMeal' as const,
         text,
-        reactions: 0,
+        reactedBy: [],
         comments: [],
       });
       // 10:00 in New York on Monday 2026-11-02, past the daily wake's hour.

@@ -135,9 +135,24 @@ jobs:
           persist-credentials: false
       # The Linux image ships Swift (with swift format), as the supabase job relies on.
       - run: swift --version
+      - name: Cache SwiftPM downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/org.swift.swiftpm
+            ~/Library/Caches/org.swift.swiftpm
+          key: swiftpm-${{ runner.os }}-${{ hashFiles('ios/**/Package.resolved') }}
+          restore-keys: swiftpm-${{ runner.os }}-
+      # The pinned SwiftLint, downloaded once per version (scripts/swiftlint-version).
+      - name: Cache SwiftLint
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/swiftlint
+          key: swiftlint-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/swiftlint-version') }}
       # Ahead of the image's own SwiftLint on PATH, which may be a different version.
       - name: Install the pinned SwiftLint
         run: |
+          export PATH="$HOME/.local/bin:$PATH"
           scripts/install-swiftlint.sh "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: scripts/verify.sh swift
@@ -180,10 +195,59 @@ jobs:
         with:
           node-version: 22
       - run: npm install --global pnpm@10.28.0
+      # The Supabase CLI npx installs (its install fetches the binary from GitHub releases).
+      - name: Cache the Supabase CLI
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm/_npx
+          key: npx-supabase-${{ runner.os }}-2.121.0
+      # The Supabase images `supabase start` pulls, saved with `docker save` so a run doesn't pull
+      # them from the registries (rate limits, timeouts). Keyed on the CLI version, which pins the
+      # images, and config.toml, which picks the Postgres version.
+      - name: Restore the Supabase images
+        id: supabase-images
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/supabase-images.tar
+          key: supabase-images-2.121.0-${{ hashFiles('supabase/config.toml') }}
+      - name: Load the Supabase images
+        if: steps.supabase-images.outputs.cache-hit == 'true'
+        run: docker load -i ~/supabase-images.tar && rm ~/supabase-images.tar
+      - run: docker images --format '{{.Repository}}:{{.Tag}}' | sort > "$RUNNER_TEMP/images-before"
       # Only the services the database and API tests use.
       - run: npx --yes supabase@2.121.0 start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime,postgres-meta,realtime
+      - name: Save the Supabase images
+        id: save-images
+        if: steps.supabase-images.outputs.cache-hit != 'true'
+        run: |
+          docker images --format '{{.Repository}}:{{.Tag}}' | sort > "$RUNNER_TEMP/images-after"
+          comm -13 "$RUNNER_TEMP/images-before" "$RUNNER_TEMP/images-after" | grep -v '<none>' > "$RUNNER_TEMP/images-new" || true
+          cat "$RUNNER_TEMP/images-new"
+          if [ -s "$RUNNER_TEMP/images-new" ]; then
+            xargs docker save -o ~/supabase-images.tar < "$RUNNER_TEMP/images-new"
+            echo "saved=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.save-images.outputs.saved == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/supabase-images.tar
+          key: ${{ steps.supabase-images.outputs.cache-primary-key }}
       # The runner image ships Swift, for the app's Backend adapters.
       - run: swift --version
+      - name: Cache SwiftPM downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/org.swift.swiftpm
+            ~/Library/Caches/org.swift.swiftpm
+          key: swiftpm-${{ runner.os }}-${{ hashFiles('ios/**/Package.resolved') }}
+          restore-keys: swiftpm-${{ runner.os }}-
+      # The pinned oasdiff scripts/api-compat.sh downloads into build/tools.
+      - name: Cache oasdiff
+        uses: actions/cache@v4
+        with:
+          path: build/tools
+          key: oasdiff-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/oasdiff-version') }}
       - run: scripts/verify.sh supabase api backend
         env:
           # What scripts/api-compat.sh compares openapi.json with: the PR's base, or main before
@@ -223,6 +287,14 @@ jobs:
         with:
           persist-credentials: false
       - run: xcodebuild -version
+      # The app's Swift packages (sentry-cocoa's xcframeworks included), which the scripts clone into
+      # build/spm. A new sentry-cocoa in the project still resolves; it is saved with the next key.
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: build/spm
+          key: spm-xcode-${{ hashFiles('ios/**/Package.swift', 'ios/**/Package.resolved') }}
+          restore-keys: spm-xcode-
       - run: scripts/ios-test.sh
         env:
           PRINT_PREVIEWS: "1"

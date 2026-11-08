@@ -16,6 +16,8 @@ public enum CoachRoute: Hashable {
     case market
     case resume(Coach)
     case fire(Coach)
+    /// 换教练's confirmation: the squad's coach leaves and the other comes.
+    case swap(leaving: Coach, coming: Coach)
 }
 
 /// 小队设置's 教练 card, on graphite: an empty spot and 招聘, or the coach standing whole (never

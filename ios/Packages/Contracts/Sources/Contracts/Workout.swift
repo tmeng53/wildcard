@@ -120,10 +120,23 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
     /// Lengths of the pool, for a swim with its pool length set.
     public var laps: Int?
     public var poolLengthM: Double?
+    /// Runs down the slope, for a ski or snowboard day: each descent from a lift's top to its
+    /// foot, worked out on the phone from the route.
+    public var runs: Int?
+    /// Metres skied down, every run's drop added up.
+    public var descentM: Double?
+    /// The fastest moment on a run, km/h.
+    public var topSpeedKmh: Double?
+    /// Metres climbed, for a hike.
+    public var elevationGainM: Double?
+    /// Seconds per 100 metres, for an open-water swim.
+    public var paceSecPer100m: Double?
 
     public init(
         durationSec: Int? = nil, distanceM: Double? = nil, paceSecPerKm: Double? = nil, speedKmh: Double? = nil,
-        avgHr: Int? = nil, maxHr: Int? = nil, effort: Double? = nil, laps: Int? = nil, poolLengthM: Double? = nil
+        avgHr: Int? = nil, maxHr: Int? = nil, effort: Double? = nil, laps: Int? = nil, poolLengthM: Double? = nil,
+        runs: Int? = nil, descentM: Double? = nil, topSpeedKmh: Double? = nil, elevationGainM: Double? = nil,
+        paceSecPer100m: Double? = nil
     ) {
         self.durationSec = durationSec
         self.distanceM = distanceM
@@ -134,6 +147,11 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
         self.effort = effort
         self.laps = laps
         self.poolLengthM = poolLengthM
+        self.runs = runs
+        self.descentM = descentM
+        self.topSpeedKmh = topSpeedKmh
+        self.elevationGainM = elevationGainM
+        self.paceSecPer100m = paceSecPer100m
     }
 
     /// Its cells on a 成绩条, in order: 时长 first, then each number it has.
@@ -141,13 +159,19 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
         WorkoutCell.allCases.filter { has($0) }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity - one case a cell.
     public func has(_ cell: WorkoutCell) -> Bool {
         switch cell {
         case .duration: durationSec != nil
         case .laps: laps != nil
+        case .runs: runs != nil
         case .distance: distanceM != nil
+        case .descent: descentM != nil
+        case .elevationGain: elevationGainM != nil
         case .pace: paceSecPerKm != nil
+        case .swimPace: paceSecPer100m != nil
         case .speed: speedKmh != nil
+        case .topSpeed: topSpeedKmh != nil
         case .averageHeartRate: avgHr != nil
         case .maxHeartRate: maxHr != nil
         case .effort: effort != nil
@@ -155,7 +179,7 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
     }
 
     /// Without the `struck` cells. 时长 always stays. Laps take the pool length with them.
-    public func without(_ struck: Set<WorkoutCell>) -> WorkoutSummary {
+    public func without(_ struck: Set<WorkoutCell>) -> WorkoutSummary {  // swiftlint:disable:this cyclomatic_complexity
         var kept = self
         for cell in struck {
             switch cell {
@@ -163,9 +187,14 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
             case .laps:
                 kept.laps = nil
                 kept.poolLengthM = nil
+            case .runs: kept.runs = nil
             case .distance: kept.distanceM = nil
+            case .descent: kept.descentM = nil
+            case .elevationGain: kept.elevationGainM = nil
             case .pace: kept.paceSecPerKm = nil
+            case .swimPace: kept.paceSecPer100m = nil
             case .speed: kept.speedKmh = nil
+            case .topSpeed: kept.topSpeedKmh = nil
             case .averageHeartRate: kept.avgHr = nil
             case .maxHeartRate: kept.maxHr = nil
             case .effort: kept.effort = nil
@@ -177,7 +206,8 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
 
 /// One cell of a 成绩条, in the order the strip shows them.
 public enum WorkoutCell: String, CaseIterable, Hashable, Sendable, Codable {
-    case duration, laps, distance, pace, speed, averageHeartRate, maxHeartRate, effort
+    case duration, laps, runs, distance, descent, elevationGain, pace, swimPace, speed, topSpeed
+    case averageHeartRate, maxHeartRate, effort
 }
 
 /// What a workout's chart draws.

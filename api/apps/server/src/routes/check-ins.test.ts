@@ -1229,6 +1229,45 @@ describe('a 训练 from Apple Health', () => {
     expect(posted.status).toBe(201);
   });
 
+  it('keeps a ski day’s runs, drop and top speed, a hike’s climb and a swim’s pace per 100 m', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const post = async (sport: string, summary: Record<string, unknown>) => {
+      const id = randomUUID();
+      const { status } = await call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: { sport, workout: workout(randomUUID(), { summary }) },
+        },
+      });
+      if (status !== 201) return status;
+      const read = await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token });
+      return z
+        .object({
+          checkIn: z.object({
+            training: z.object({ workout: z.object({ summary: z.unknown() }) }),
+          }),
+        })
+        .parse(read.body).checkIn.training.workout.summary;
+    };
+    const ski = { durationSec: 11_040, runs: 12, descentM: 1860.4, topSpeedKmh: 62.4 };
+    expect(await post('ski', ski)).toStrictEqual(ski);
+    const hike = { durationSec: 12_600, distanceM: 12_600, elevationGainM: 840, avgHr: 118 };
+    expect(await post('hike', hike)).toStrictEqual(hike);
+    const swim = { durationSec: 2520, distanceM: 1800, paceSecPer100m: 140, avgHr: 136 };
+    expect(await post('swim', swim)).toStrictEqual(swim);
+    expect(await post('ski', { runs: 0 })).toBe(400);
+    expect(await post('ski', { topSpeedKmh: 400 })).toBe(400);
+  });
+
   it('refuses a tile without its data, data without its tile, or a tile past the photos', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
