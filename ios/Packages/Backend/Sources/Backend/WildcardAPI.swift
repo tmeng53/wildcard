@@ -246,10 +246,11 @@ public struct WildcardAPI: Sendable {
     /// fresh ones).
     public func photo(_ ref: PhotoRef) async -> Data? {
         if let kept = await photos?.photo(at: ref.path) { return kept }
+        let generation = await photos?.generation
         guard let url = ref.viewURL, let (data, response) = try? await http.data(from: url),
             (response as? HTTPURLResponse)?.statusCode == 200
         else { return nil }
-        await photos?.keep(data, at: ref.path, postedAt: ref.postedAt?.date ?? Date())
+        await photos?.keep(data, at: ref.path, postedAt: ref.postedAt?.date ?? Date(), startedIn: generation)
         return data
     }
 

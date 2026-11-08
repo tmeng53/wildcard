@@ -83,3 +83,15 @@ private func posted(_ day: Int) -> Date { Date(timeIntervalSince1970: 1_793_491_
     #expect(await api.photo(try PhotoRef(path: "kept/1")) == Data([9]))
     #expect(await api.photo(try PhotoRef(path: "missing/1")) == nil)
 }
+
+@Test func aDownloadStartedBeforeSignOutIsNotKept() async {
+    let cache = PhotoCache(directory: emptyFolder(), limit: 100)
+    let started = await cache.generation
+    await cache.forgetAll()
+
+    await cache.keep(Data([1]), at: "late/1", postedAt: posted(1), startedIn: started)
+
+    #expect(await cache.photo(at: "late/1") == nil)
+    await cache.keep(Data([2]), at: "next/1", postedAt: posted(1), startedIn: await cache.generation)
+    #expect(await cache.photo(at: "next/1") == Data([2]))
+}

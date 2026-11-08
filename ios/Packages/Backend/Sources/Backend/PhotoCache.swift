@@ -16,6 +16,8 @@ public actor PhotoCache {
     private let limit: Int
     /// The bytes on disk, once counted; nil until the first write needs them.
     private var total: Int?
+    /// Counts the clears: a download that started before the last one isn't kept.
+    public private(set) var generation = 0
 
     /// - Parameters:
     ///   - directory: where the photos go, such as a folder in Caches; made when first needed.
@@ -32,9 +34,13 @@ public actor PhotoCache {
 
     /// Keeps the photo at `path` of a post posted at `postedAt`, then makes room when the cache is
     /// over its limit, which may drop this photo itself when every other is of a later post.
-    public func keep(_ data: Data, at path: String, postedAt: Date) {
+    /// Given the `generation` its download started in, it keeps nothing once the cache was cleared
+    /// since, so a photo still on its way at sign-out isn't kept for the next account.
+    public func keep(_ data: Data, at path: String, postedAt: Date, startedIn generation: Int? = nil) {
         let file = file(for: path)
-        guard data.count <= limit, !FileManager.default.fileExists(atPath: file.path()) else { return }
+        guard generation.map({ $0 == self.generation }) ?? true, data.count <= limit,
+            !FileManager.default.fileExists(atPath: file.path())
+        else { return }
         let total = self.total ?? counted()
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         guard (try? data.write(to: file, options: .atomic)) != nil else { return }
@@ -47,6 +53,7 @@ public actor PhotoCache {
     public func forgetAll() {
         try? FileManager.default.removeItem(at: directory)
         total = 0
+        generation += 1
     }
 
     /// A path such as `<uuid>/<uuid>` as one file name.
