@@ -30,7 +30,7 @@ extension TodayStore {
 
     /// The server says which challenge is today's, on the squad's clock (which may differ from the
     /// member's), and none once it is gone; what was shown stays only while it can't be reached.
-    private func loadChallenge(in home: Home) async {
+    func loadChallenge(in home: Home) async {
         do {
             loadedChallenge = (home.squad.id, try await backend.todayChallenge(in: home.squad.id))
         } catch {}

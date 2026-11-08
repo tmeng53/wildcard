@@ -169,6 +169,9 @@ public final class TodayStore {
                     fold(saved)
                 }
                 phase = .current
+                // An accepted challenge follows the server each reread: done by the coach meanwhile,
+                // or gone once the squad's day is over.
+                if acceptedChallenge != nil, let home = savedHome { await loadChallenge(in: home) }
             } else {
                 if let squad = savedHome?.squad { lostSquad = squad }
                 savedHome = nil

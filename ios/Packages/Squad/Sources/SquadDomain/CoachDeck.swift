@@ -46,6 +46,8 @@ public final class CoachDeck {
     @ObservationIgnored private let source: any CoachCardSource
     @ObservationIgnored private let wear: @MainActor (String) async -> Void
     @ObservationIgnored private let changed: @MainActor () -> Void
+    /// Cards swiped away whose seen mark didn't reach the server yet; the next read sends them again.
+    @ObservationIgnored private var unmarked: [CoachPageCard.Key] = []
 
     /// `wear` puts a gift on the member's character (立刻穿上) once it is opened; `changed` is
     /// called after a gift is opened or a card seen, so 我's wardrobe and 今天 read again.
@@ -60,6 +62,9 @@ public final class CoachDeck {
     public var top: CoachPageCard? { stack.first }
 
     public func reload() async {
+        for key in unmarked {
+            if (try? await source.markSeen(key, in: squad)) != nil { unmarked.removeAll { $0 == key } }
+        }
         do {
             let cards = try await source.cards(in: squad)
             // A card swiped away while the read was on its way stays in 以前.
@@ -81,9 +86,13 @@ public final class CoachDeck {
         putAway += 1
         if failed == card.key { failed = nil }
         Task {
-            // Not kept, it shows in the stack again on the next read, which is no harm.
-            try? await source.markSeen(gone.key, in: squad)
-            if gone.kind == .note || gone.kind == .challenge { changed() }
+            do {
+                try await source.markSeen(gone.key, in: squad)
+                if gone.kind == .note || gone.kind == .challenge { changed() }
+            } catch {
+                // It stays in 以前 here and is sent again on the next read, so other phones agree.
+                unmarked.append(gone.key)
+            }
         }
     }
 

@@ -44,3 +44,20 @@ private func challenge(_ answer: CoachChallengeAnswer?, on day: LocalDay) -> Day
     #expect(today.acceptedChallenge?.challenge.completedBy == .member)
     #expect(!today.isCompletingChallenge)
 }
+
+@MainActor @Test func aRereadFollowsTheServerOnceAChallengeIsAccepted() async throws {
+    let backend = ScriptedBackend(server: sampleHome())
+    let today = store(backend)
+    await today.load()
+    let day = try #require(today.day)
+    await backend.set(challenge: challenge(.accepted, on: day))
+    await today.loadCoach()
+    // The coach marked it done from a check-in meanwhile.
+    await backend.set(challenge: challenge(.accepted, on: day).completed(by: .coach))
+    await today.refresh()
+    #expect(today.acceptedChallenge?.challenge.completedBy == .coach)
+    // The squad's day is over: none on the server, none here.
+    await backend.set(challenge: nil)
+    await today.refresh()
+    #expect(today.acceptedChallenge == nil)
+}

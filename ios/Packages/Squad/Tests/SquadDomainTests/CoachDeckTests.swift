@@ -40,7 +40,10 @@ private final class CardsInMemory: CoachCardSource {
     }
 
     func markSeen(_ card: CoachPageCard.Key, in squad: SquadID) async throws(SquadError) {
-        state.withLock { $0.seen.append(card) }
+        try state.withLock { state throws(SquadError) in
+            if state.down { throw .unavailable }
+            state.seen.append(card)
+        }
     }
 
     func openGift(_ piece: String, worn: Bool) async throws(SquadError) -> CoachPageCard.Gift {
@@ -182,4 +185,21 @@ func onlyADeclineSendsWhatWasTyped(answer: CoachChallengeAnswer, typed: String, 
     source.state.withLock { $0.down = false }
     await deck.reload()
     #expect(deck.top == board)
+}
+
+@MainActor @Test func aCardSwipedAwayOfflineIsMarkedSeenOnTheNextRead() async throws {
+    let source = CardsInMemory(CoachPageCards(stack: [board, gift], earlier: []))
+    let deck = CoachDeck(squad: deckSquad, source: source)
+    await deck.reload()
+    source.state.withLock { $0.down = true }
+    deck.seen(board)
+    try await Task.sleep(for: .milliseconds(50))
+    #expect(source.state.withLock(\.seen).isEmpty)
+    #expect(deck.earlier.map(\.key) == [board.key])
+    source.state.withLock { $0.down = false }
+    await deck.reload()
+    #expect(source.state.withLock(\.seen) == [board.key])
+    #expect(deck.top == gift)
+    await deck.reload()
+    #expect(source.state.withLock(\.seen) == [board.key])
 }
