@@ -46,6 +46,16 @@ public protocol CheckInBackend: Sendable {
     /// 我完成了: marks a challenge done on its own day; the first completion stands, whoever made
     /// it, and is what comes back.
     func completeChallenge(_ note: String, in squad: SquadID) async throws(CheckInError) -> CoachChallengeCompleter
+    /// Has the coach the squad just let go for another (换教练) write the one that took over its
+    /// letter (交接信); only the captain may, right after the change. Answers once it is written,
+    /// or nil when it couldn't be (the coach is off duty for the day, or the model failed), and
+    /// the same letter, or none, on a retry.
+    func writeLetter(in squad: SquadID) async throws(CheckInError) -> CoachLetter?
+    /// The newest letter opened on this phone, kept on the device, so each opens once a phone;
+    /// nil before any.
+    func openedLetter() async -> Int?
+    /// The member opened `letter` on this phone and put it away (收下).
+    func opened(_ letter: CoachLetter) async
 }
 
 /// Check-ins waiting to go out, kept on the device so a post made offline survives the app

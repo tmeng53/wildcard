@@ -113,7 +113,7 @@ final class CoachHireUITests: XCTestCase {
     }
 
     /// 换教练 asks first, since the coach the squad has leaves: 毛头 crying, that he leaves and
-    /// 帕帕 comes; 先不换 goes back, 确认换教练 changes it.
+    /// 帕帕 comes; 先不换 goes back, 确认换教练 goes back to 今天.
     func testTheCaptainConfirmsChangingTheCoach() {
         let app = launch(extra: ["-squad-seat", "coached"])
         let open = app.buttons["squad.coach.open"]
@@ -140,9 +140,10 @@ final class CoachHireUITests: XCTestCase {
         hireCoach.tap()
         XCTAssertTrue(confirm.waitForExistence(timeout: 30), "换教练 didn't ask again")
         confirm.tap()
-        let week = app.staticTexts["squad.coach.week"]
-        XCTAssertTrue(week.waitForExistence(timeout: 30), "确认换教练 didn't end on 小队 with the new coach")
-        XCTAssertEqual(week.label, "执教第 1 周")
+        // The coaches change places on 今天 (CoachLetterUITests follows the letter).
+        XCTAssertTrue(
+            app.descendants(matching: .any)["today.handover"].waitForExistence(timeout: 30),
+            "确认换教练 didn't go back to 今天 for the handover")
     }
 
     /// A squad without a coach has its empty spot on the home's sideline, 「招聘教练」, which opens

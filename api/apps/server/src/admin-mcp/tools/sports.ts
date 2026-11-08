@@ -57,7 +57,8 @@ export function putSportCategory({ sports }: SportToolDependencies) {
     name: 'put_sport_category',
     title: 'Add or change a sports tab',
     description:
-      'Adds a tab (category) to the sports picker, or renames or moves one. A new tab shows ' +
+      'Adds a tab (category) to the sports picker, or renames, recolours or moves one. Its colour ' +
+      'is what its sports’ 成绩条 and post blocks wear. A new tab shows ' +
       'once a sport is put in it. Apps see it within a minute. Returns the list now.',
     changes: true,
     input: CategoryEdit,

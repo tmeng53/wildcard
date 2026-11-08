@@ -92,6 +92,15 @@ extension MainTabs {
         if feedPages != [page] { feedPages = [page] }
     }
 
+    /// Every post page open now reads itself again when a notice is news of it (the coach answered
+    /// after the comment was saved): 动态's own, and one opened with a model of its own.
+    func refreshOpenPosts(about notice: Notice) {
+        feed.refreshIfOpen(about: notice)
+        for page in [noticePost, post].compactMap({ $0 }) where page.model !== feed {
+            page.model.refresh(page.id, about: notice)
+        }
+    }
+
     /// The post a notice opened, over 通知 when it is open, so back returns to it.
     var noticePost: OpenedPost? {
         get {

@@ -96,6 +96,7 @@ describe('changing the sports list', () => {
         'pickleball',
         'tableTennis',
         'squash',
+        'racquetball',
         'roundnet',
       ]);
       await sports.putSport({ ...roundnet, position: 1 });
@@ -110,7 +111,7 @@ describe('changing the sports list', () => {
       const walk = catalog.categories[0]?.sports.find(({ id }) => id === 'walk');
       if (walk === undefined) throw new Error('walk is seeded');
       await sports.putSport({ ...walk, category: 'everyday', position: 1 });
-      expect(await idsIn(sports, 'runWalk')).toEqual(['run', 'hike', 'trailRun']);
+      expect(await idsIn(sports, 'runWalk')).toEqual(['run', 'hike', 'trailRun', 'triathlon']);
       expect((await idsIn(sports, 'everyday'))?.[0]).toBe('walk');
       const { rows } = await sql<{ category_id: string; positions: number[] }>`
         select category_id, array_agg(position order by position) as positions
@@ -222,12 +223,18 @@ describe('changing the sports list', () => {
     await rolledBack(async (trx) => {
       const sports = createSports({ store: createPostgresSportStore(trx) });
       const names = { zhHans: '新', en: 'New', zhHant: '新' };
-      const added = await sports.putCategory({ id: 'brandNew', names, position: 1 });
-      expect(added.categories[0]).toEqual({ id: 'brandNew', names, sports: [] });
+      const added = await sports.putCategory({
+        id: 'brandNew',
+        names,
+        color: '#2F86C4',
+        position: 1,
+      });
+      expect(added.categories[0]).toEqual({ id: 'brandNew', names, color: '#2F86C4', sports: [] });
       expect(added.categories[1]?.id).toBe('runWalk');
       const moved = await sports.putCategory({
         id: 'runWalk',
         names: { zhHans: '跑走', en: 'Run and walk', zhHant: '跑步健走' },
+        color: '#E65345',
         position: 1,
       });
       expect(moved.categories.slice(0, 2).map(({ id }) => id)).toEqual(['runWalk', 'brandNew']);

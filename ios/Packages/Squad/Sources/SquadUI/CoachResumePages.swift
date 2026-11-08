@@ -1,4 +1,5 @@
 #if os(iOS)
+import CheckInUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -15,14 +16,24 @@ public struct CoachPage: View {
     @Binding private var pages: [CoachRoute]
     /// The coach's 战术板 line of the day, pinned on its own 简历.
     private let note: CoachNote?
+    /// The letter the squad's coach was left when it took over (交接信), which its 简历 opens again.
+    private let letter: CoachLetter?
+    /// 确认换教练 landed, from the first coach to the second: the app goes back to 今天, where they
+    /// change places.
+    private let swapped: (Coach, Coach) -> Void
     /// This page's change didn't get through: it says so until the member moves on.
     @State private var failed = false
 
-    public init(route: CoachRoute, model: SquadSettingsModel, pages: Binding<[CoachRoute]>, note: CoachNote?) {
+    public init(
+        route: CoachRoute, model: SquadSettingsModel, pages: Binding<[CoachRoute]>, note: CoachNote?,
+        letter: CoachLetter? = nil, swapped: @escaping (Coach, Coach) -> Void = { _, _ in }
+    ) {
         self.route = route
         self.model = model
         _pages = pages
         self.note = note
+        self.letter = letter
+        self.swapped = swapped
     }
 
     public var body: some View {
@@ -47,6 +58,7 @@ public struct CoachPage: View {
             CoachResumePage(
                 coach: coach, isCurrent: model.coach?.coach.id == coach.id,
                 note: model.coach?.coach.id == coach.id && note?.coach.id == coach.id ? note : nil,
+                letter: model.coach?.coach.id == coach.id && letter?.recipient.id == coach.id ? letter : nil,
                 canHire: model.canHireCoach,
                 isSaving: model.isSaving, failed: failed,
                 hire: { hire(coach) },
@@ -64,7 +76,13 @@ public struct CoachPage: View {
                 line: Text("\(leaving.name)会离开，\(coming.name)会来", bundle: .module),
                 keep: Text("先不换", bundle: .module), confirm: Text("确认换教练", bundle: .module),
                 identifier: "coach.swap", parting: .swapped, isSaving: model.isSaving, failed: failed, back: back,
-                action: { Task { finish(await model.hire(coming.id)) } })
+                action: {
+                    Task {
+                        let change = await model.hire(coming.id)
+                        if change == .done { swapped(leaving, coming) }
+                        finish(change)
+                    }
+                })
         }
     }
 
@@ -109,6 +127,8 @@ struct CoachResumePage: View {
     let isCurrent: Bool
     /// Its 战术板 line of the day, on the squad's own coach's 简历 while the day lasts.
     let note: CoachNote?
+    /// The letter it was left when it took over, on the squad's own coach's 简历.
+    let letter: CoachLetter?
     let canHire: Bool
     let isSaving: Bool
     let failed: Bool
@@ -117,6 +137,8 @@ struct CoachResumePage: View {
     let change: () -> Void
     let fire: () -> Void
     @Environment(\.sceneTheme) private var theme
+    /// The letter opened again.
+    @State private var reading: CoachLetter?
 
     var body: some View {
         GeometryReader { proxy in
@@ -136,6 +158,11 @@ struct CoachResumePage: View {
             .actionBar { action }
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
+        .sheet(item: $reading) { letter in
+            CoachLetterSheet(letter: letter) { reading = nil }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("coach.resume")
     }
@@ -149,6 +176,14 @@ struct CoachResumePage: View {
             }
             if let note { board(note) }
             CoachResumeFields(coach: coach, labelIdentifier: "coach.resume.label")
+            if let letter {
+                ListRow(
+                    Text("\(letter.from.name)的交接信", bundle: .module), systemImage: "envelope", showsDivider: false
+                ) {
+                    reading = letter
+                }
+                .accessibilityIdentifier("coach.resume.letter")
+            }
         }
         .padding(.horizontal, Space.pageMargin)
         .padding(.top, Space.m + Space.xxs)

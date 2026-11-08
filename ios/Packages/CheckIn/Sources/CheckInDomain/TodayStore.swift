@@ -62,6 +62,13 @@ public final class TodayStore {
     var loadedChallenge: (squad: SquadID, challenge: DayChallenge?)?
     /// 我完成了 is on its way.
     public internal(set) var isCompletingChallenge = false
+    /// The coaches changing on the sideline (换教练), from the captain's confirm until the coach
+    /// that took over stands there.
+    public internal(set) var handover: CoachHandover?
+    /// A letter opened again from 通知 or the coach's 简历.
+    var letterAgain: CoachLetter?
+    /// The newest letter opened on this phone; nil before it is read from the device, or before any.
+    var openedLetterID: Int?
     /// What changed in the squad since the home shown before, not yet told (`takeNews()`).
     public internal(set) var news = SquadNews()
     /// The squad the member was in when the server last said they are in none: they left it, or

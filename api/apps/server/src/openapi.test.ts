@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import {
   createCheckIns,
@@ -36,6 +36,7 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from './test-kit/weekly-awards.js';
 
 describe('openapi.json', () => {
@@ -101,6 +102,7 @@ describe('openapi.json', () => {
       coachActivity: unusedCoachActivity,
       coachLetters: unusedCoachLetters,
       ...ignoredNotices,
+      ...unusedFeedback,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),
       log: createLog(() => undefined),
@@ -155,5 +157,26 @@ describe('openapi.json', () => {
         .map(([method]) => `${method} ${path}`),
     );
     expect(missing).toEqual([]);
+  });
+
+  it('names each schema once, since the document keeps only one of a name', () => {
+    const names = readdirSync(new URL('.', import.meta.url), { recursive: true, encoding: 'utf8' })
+      .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
+      .flatMap((file) =>
+        [
+          ...readFileSync(new URL(file, import.meta.url), 'utf8').matchAll(
+            /\.openapi\('([A-Za-z0-9]+)'\)/gu,
+          ),
+        ].map((match) => match[1]),
+      );
+    const twice = names.filter((name, index) => names.indexOf(name) !== index);
+    expect(twice).toEqual([]);
+  });
+
+  it('writes each pattern as the regex itself, without its JavaScript flags', () => {
+    const document = readFileSync(new URL('../openapi.json', import.meta.url), 'utf8');
+    expect([...document.matchAll(/"pattern": "(.*\/[a-z]+)"/gu)].map((match) => match[1])).toEqual(
+      [],
+    );
   });
 });

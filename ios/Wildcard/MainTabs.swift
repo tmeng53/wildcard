@@ -134,7 +134,7 @@ struct MainTabs: View {
                 try? await Task.sleep(for: .seconds(60))
             }
         }
-        .followsNotices(inbox)
+        .followsNotices(inbox) { refreshOpenPosts(about: $0) }
         // 商店街 read again when the server says it changed and on each return to the front (a
         // switch's day starting tells nothing), so a store that opened shows without a relaunch.
         .onChange(of: inbox.shelfChanges) { Task { await profile.reload() } }
@@ -269,7 +269,7 @@ struct MainTabs: View {
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                     openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
-                    previewSignUp: previewSignUp, health: today.health),
+                    writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health),
                 isSettingsOpen: $showsSettings
             ) {
                 MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
@@ -367,8 +367,18 @@ extension MainTabs {
                     .environment(\.sceneTheme, squad.scene)
                     .task { await recap.refreshPast() }
                 case .coach(let route):
-                    CoachPage(route: route, model: squad, pages: coachPages, note: today.coachLine)
-                        .environment(\.sceneTheme, squad.scene)
+                    CoachPage(
+                        route: route, model: squad, pages: coachPages, note: today.coachLine,
+                        letter: today.coachLetter,
+                        swapped: { leaving, coming in
+                            // Back on 今天, where they change places while the letter is written.
+                            todayPages = []
+                            today.handOver(
+                                from: CoachSpeaker(id: leaving.id, name: leaving.name),
+                                to: CoachSpeaker(id: coming.id, name: coming.name))
+                        }
+                    )
+                    .environment(\.sceneTheme, squad.scene)
                 case .coachDeck, .coachEarlier, .coachCard:
                     coachDeckPage(page)
                         .environment(\.sceneTheme, today.scene)

@@ -51,10 +51,17 @@ const poki = Coach.parse({
 const english = SquadId.parse('5c1f3a2e-0b4d-4e6f-8a9b-1c2d3e4f5a6b');
 const taiwan = SquadId.parse('6d2f4b3e-1c5d-4f6a-9b8c-2d3e4f5a6b7c');
 const ended = SquadId.parse('7e3a5c4f-2d6e-4a7b-8c9d-3e4f5a6b7c8d');
+// Its captain's app speaks English, but the captain picked 繁體 for the squad.
+const picked = SquadId.parse('8f4b6d5a-3e7f-4b8c-9d0e-4f5a6b7c8d9e');
 const captains = new Map([
   [english, MemberId.parse('0a5c1f2e-3b4d-4e6f-8a9b-1c2d3e4f5a6b')],
   [taiwan, MemberId.parse('1b6d2f3e-4c5d-4f6a-9b8c-2d3e4f5a6b7c')],
+  [picked, MemberId.parse('0a5c1f2e-3b4d-4e6f-8a9b-1c2d3e4f5a6b')],
 ]);
+const languagesOf = (squads: readonly SquadId[]) =>
+  Promise.resolve(
+    new Map(squads.filter((squad) => squad === picked).map((squad) => [squad, 'zh-Hant' as const])),
+  );
 const spoken = new Map<string, ReaderLanguage>([
   ['0a5c1f2e-3b4d-4e6f-8a9b-1c2d3e4f5a6b', 'en'],
   ['1b6d2f3e-4c5d-4f6a-9b8c-2d3e4f5a6b7c', 'zh-Hant'],
@@ -73,30 +80,32 @@ const names = coachNamesIn({
         ),
       ),
   },
-  squads: { captainOf: (squad) => Promise.resolve(captains.get(squad)) },
+  squads: { captainOf: (squad) => Promise.resolve(captains.get(squad)), languagesOf },
 });
 
 describe('a coach’s name', () => {
-  it('is the one in its squad’s language, its captain’s', async () => {
+  it('is the one in its squad’s language: the captain’s pick, else the captain’s own', async () => {
     const named = await names([
       { coach: 'xiaohun', squad: english },
       { coach: 'xiaohun', squad: taiwan },
       { coach: 'xiaohun', squad: ended },
+      { coach: 'xiaohun', squad: picked },
     ]);
     expect([
       named('xiaohun', english),
       named('xiaohun', taiwan),
       named('xiaohun', ended),
+      named('xiaohun', picked),
       named('xiaohun', undefined),
       named('gone', english),
-    ]).toStrictEqual(['Poki', '毛頭', '毛头', '毛头', undefined]);
+    ]).toStrictEqual(['Poki', '毛頭', '毛头', '毛頭', '毛头', undefined]);
   });
 
   it('falls back to the stored one, never failing, when it can’t be looked up', async () => {
     const failing = coachNamesIn({
       coaches: { list: () => Promise.resolve([poki]) },
       members: { languages: () => Promise.reject(new Error('down')) },
-      squads: { captainOf: (squad) => Promise.resolve(captains.get(squad)) },
+      squads: { captainOf: (squad) => Promise.resolve(captains.get(squad)), languagesOf },
     });
     expect((await failing([{ coach: 'xiaohun', squad: english }]))('xiaohun', english)).toBe(
       '毛头',
@@ -104,7 +113,7 @@ describe('a coach’s name', () => {
     const noCatalog = coachNamesIn({
       coaches: { list: () => Promise.reject(new Error('down')) },
       members: { languages: () => Promise.resolve(new Map()) },
-      squads: { captainOf: () => Promise.resolve(undefined) },
+      squads: { captainOf: () => Promise.resolve(undefined), languagesOf },
     });
     expect((await noCatalog([{ coach: 'xiaohun', squad: english }]))('xiaohun', english)).toBe(
       undefined,

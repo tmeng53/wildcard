@@ -1,3 +1,4 @@
+import { challengeOpen } from '../domain/challenge.js';
 import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
   shownBody,
@@ -7,7 +8,13 @@ import {
   storedPathOf,
   type StoredPath,
 } from '../domain/memory.js';
-import { instructionsOf, taskOf, type CoachThread, type DayTalk } from '../domain/prompt.js';
+import {
+  instructionsOf,
+  taskOf,
+  type CoachThread,
+  type DayTalk,
+  type YesterdayFacts,
+} from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
 import { holidaysOn, SquadId, type CoachSettings } from '../domain/settings.js';
 import { factsText, planIndexOf, type NoteBrief } from '../domain/member-facts.js';
@@ -18,7 +25,6 @@ import {
   saidTo,
   weekText,
   type SquadWeek,
-  type WeekCheckIn,
 } from '../domain/squad-week.js';
 import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
 import type {
@@ -372,6 +378,7 @@ async function runWake(
       reaction: undefined,
       answer: undefined,
       answerMentions: [],
+      challengeDone: false,
       steps: [],
     };
     // A squad whose coach hasn't written its file yet starts from its name and who is in it,
@@ -398,13 +405,11 @@ async function runWake(
       }),
     );
     // The day the wake is for: the daily wake's own, or the squad's today on its own clock.
+    const zone = (await deps.timeZonesAt?.([wake.squad], now))?.get(wake.squad) ?? NEW_YORK;
     const day =
       wake.reason.kind === 'daily' || wake.reason.kind === 'dream'
         ? wake.reason.day
-        : wallClockAt(
-            now,
-            (await deps.timeZonesAt?.([wake.squad], now))?.get(wake.squad) ?? NEW_YORK,
-          ).day;
+        : wallClockAt(now, zone).day;
     // Who may get a gift today: members who agreed to AI use and got none this week.
     const gifting =
       daily && deps.gifting !== undefined
@@ -440,6 +445,8 @@ async function runWake(
             challenge: {
               challenge: challenge.challenge,
               ...(challenge.answer === undefined ? {} : { answer: challenge.answer }),
+              ...(challenge.reason === undefined ? {} : { reason: challenge.reason }),
+              ...(challenge.completion === undefined ? {} : { completion: challenge.completion }),
             },
           }),
       ...(gifting === undefined ? {} : { gifting }),
@@ -470,6 +477,11 @@ async function runWake(
         draft,
         kind: wake.reason.kind,
         to: author,
+        // Only for a post made today: one from before midnight didn't do today's challenge.
+        openChallenge:
+          challenge !== undefined &&
+          challengeOpen(challenge) &&
+          postedOn({ week, reason: wake.reason, day, zone }),
         ...photosOf(deps.photoUrls, { week, wake }),
         ...factsFor(deps, { week, roster }),
         ...(deps.memes === undefined ? {} : { memes: deps.memes }),
@@ -508,6 +520,7 @@ async function runWake(
         squad: wake.squad,
         wake,
         draft,
+        ...(challenge === undefined ? {} : { challenge: { note: challenge.note, day } }),
         stored,
         roster,
         coach,
@@ -610,15 +623,37 @@ async function briefsOf(
 async function yesterdayOf(
   deps: CoachWakesDependencies,
   { squad, week, day }: { readonly squad: SquadId; readonly week: SquadWeek; readonly day: string },
-): Promise<{ readonly day: string; readonly checkIns: readonly WeekCheckIn[] }> {
+): Promise<YesterdayFacts> {
   const yesterday = dayBefore(day, 1);
   // On a Monday, yesterday was last week.
   const weekStart = weekStartOf(yesterday);
   const its = weekStart === week.weekStart ? week : await weekOf(deps, { squad, weekStart });
+  // The day's challenges and what each member said to them, why they let one go included, only
+  // for members who still agree to AI use.
+  const set = await deps.stores.memberNotes.challengesOn({ squad, day: yesterday });
+  const consented = new Set(await deps.aiConsented(set.map(({ member }) => member)));
   return {
     day: yesterday,
     checkIns: its.checkIns.filter((each) => each.day === yesterday || each.postedDay === yesterday),
+    challenges: set.filter(({ member }) => consented.has(member)),
   };
+}
+
+/** Whether the check-in a wake is about was posted on `day`, on the squad's clock. */
+function postedOn({
+  week,
+  reason,
+  day,
+  zone,
+}: {
+  readonly week: SquadWeek;
+  readonly reason: Wake['reason'];
+  readonly day: string;
+  readonly zone: string;
+}): boolean {
+  if (reason.kind !== 'checkIn') return false;
+  const posted = week.checkIns.find(({ id }) => id === reason.checkIn)?.createdAt;
+  return posted !== undefined && wallClockAt(posted, zone).day === day;
 }
 
 /** `YYYY-MM-DD`, `days` before `day`. */
@@ -653,10 +688,13 @@ async function saveDraft(
     stored,
     roster,
     coach,
+    challenge,
   }: {
     readonly squad: SquadId;
     readonly wake: Wake;
     readonly draft: WakeDraft;
+    /** On a check-in's wake, the note whose challenge its author has today, and that day. */
+    readonly challenge?: { readonly note: number; readonly day: string };
     /** The files as the run found them, as the model read them. */
     readonly stored: ReadonlyMap<StoredPath, string>;
     readonly roster: ReadonlyMap<string, string>;
@@ -692,6 +730,9 @@ async function saveDraft(
         wake: wake.id,
       });
     }
+  }
+  if (wake.reason.kind === 'checkIn' && draft.challengeDone && challenge !== undefined) {
+    await stores.memberNotes.complete({ ...challenge, by: 'coach' });
   }
   if (
     wake.reason.kind === 'checkIn' &&

@@ -207,6 +207,29 @@ actor ScriptedBackend: CheckInBackend {
         serverChallenge = found.completed(by: .member)
         return serverChallenge?.challenge.completedBy ?? .member
     }
+
+    private var written: CoachLetter?
+    private var writing: CheckedContinuation<Void, Never>?
+    private var holdsLetter = false
+    private(set) var lettersAsked = 0
+    private var openedLetterID: Int?
+    /// The letter the coach writes, and whether it waits until `releaseLetter()`.
+    func set(letter: CoachLetter?, holds: Bool = false) { (written, holdsLetter) = (letter, holds) }
+    func releaseLetter() {
+        holdsLetter = false
+        writing?.resume()
+        writing = nil
+    }
+
+    func writeLetter(in squad: SquadID) async throws(CheckInError) -> CoachLetter? {
+        lettersAsked += 1
+        if holdsLetter { await withCheckedContinuation { writing = $0 } }
+        if let failure { throw failure }
+        return written
+    }
+
+    func openedLetter() async -> Int? { openedLetterID }
+    func opened(_ letter: CoachLetter) async { openedLetterID = letter.id }
 }
 
 actor MemoryOutbox: Outbox {

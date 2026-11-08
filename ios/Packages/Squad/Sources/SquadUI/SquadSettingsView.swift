@@ -17,9 +17,10 @@ import UIKit
 /// 小队, the squad's page (approved canvas, 2026-10-22; its cards redone with the weekly goal,
 /// 2026-11-06), opened from the home's squad card (a tab from 2026-11-02 until Tracy took the tab
 /// away on 2026-11-04): 返回, the squad's name, a still row of everyone's heads (the captain's
-/// tagged 队长) with the coach and 「+ 邀请」, then graphite cards: the weekly goal, the match time zone (比赛时区), the coach,
+/// tagged 队长) with the coach and 「+ 邀请」, then graphite cards: the weekly goal, the coach,
 /// this week's scene, 往期战报 (which the app passes in, since the 战报 is another package's),
-/// the invite code; the members, and leaving. The captain renames the
+/// the invite code; then the members. The header's gear pushes 小队设置
+/// (`SquadPreferencesView`: the match time zone and leaving). The captain renames the
 /// squad and manages members from each row's ··· menu; last week's crown winner, or the captain
 /// when nobody won, picks the scene once. It is pushed on 今天's NavigationStack, so the system's
 /// back button and swipe go back, and the coach's pages are pushed over it through `openCoach`;
@@ -37,7 +38,7 @@ public struct SquadSettingsView<PastRecaps: View>: View {
     /// 往期战报, under this week's scene; it shows nothing until the squad has one.
     private let pastRecaps: PastRecaps
     @State private var renaming: String?
-    @State private var isLeaving = false
+    @State private var isPreferencesOpen = false
     @State private var reveal: Reveal?
     /// The change last asked for, so its own control shows the wait while it saves.
     @State private var working: Working?
@@ -109,6 +110,9 @@ public struct SquadSettingsView<PastRecaps: View>: View {
         .alert(Text("改队名", bundle: .module), isPresented: isRenaming) {
             renameAlert
         }
+        .navigationDestination(isPresented: $isPreferencesOpen) {
+            SquadPreferencesView(model: model)
+        }
     }
 
     private func sections(_ settings: SquadSettings) -> some View {
@@ -128,11 +132,6 @@ public struct SquadSettingsView<PastRecaps: View>: View {
                     Task { await model.setGoal(days) }
                 }
             }
-            section(Text("比赛时区", bundle: .module)) {
-                SquadTimeZoneRow(zone: settings.matchTimeZone, canChange: model.canChangeTimeZone) { zone in
-                    Task { await model.setTimeZone(zone) }
-                }
-            }
             section(Text("教练", bundle: .module)) { coachCard }
             section(Text("本周场地", bundle: .module)) { sceneCard }
             pastRecaps
@@ -140,7 +139,6 @@ public struct SquadSettingsView<PastRecaps: View>: View {
             section(Text("队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
                 memberRows
             }
-            leaveButton(settings)
         }
     }
 
@@ -194,40 +192,6 @@ public struct SquadSettingsView<PastRecaps: View>: View {
             Task { await model.remove(member) }
         }
     }
-
-    // MARK: 退出小队
-
-    private func leaveButton(_ settings: SquadSettings) -> some View {
-        Button {
-            isLeaving = true
-        } label: {
-            Text("退出小队", bundle: .module)
-                .loadingLabel(isSaving(.leave))
-        }
-        .buttonStyle(TextButtonStyle(.danger))
-        .frame(maxWidth: .infinity)
-        .accessibilityIdentifier("squad.leave")
-        .glassConfirm(
-            isPresented: $isLeaving,
-            GlassMenuItem(
-                Text("退出小队", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right", role: .destructive,
-                id: "squad.leave.menu",
-                confirm: .init(
-                    Text("退出小队？", bundle: .module), message: leaveMessage(settings),
-                    label: Text("退出小队", bundle: .module), id: "squad.leave.confirm")
-            ) {
-                working = .leave
-                Task { await model.leave() }
-            }
-        )
-    }
-
-    /// What leaving does beyond the member's own seat, when it does more.
-    private func leaveMessage(_ settings: SquadSettings) -> Text? {
-        if settings.squad.members.count == 1 { return Text("你走了，小队就散了", bundle: .module) }
-        if model.isCaptain { return Text("队长会交给最早加入的队友", bundle: .module) }
-        return nil
-    }
 }
 
 extension SquadSettingsView {
@@ -251,6 +215,12 @@ extension SquadSettingsView {
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
             }
+            HeaderButton(Text("小队设置", bundle: .module), systemImage: "gearshape") {
+                isPreferencesOpen = true
+            }
+            .accessibilityIdentifier("squad.preferences.open")
+            .foregroundStyle(Color(role: .fgDefault, in: theme))
+            .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
         }
     }
 
@@ -331,6 +301,5 @@ private struct Reveal {
 enum Working: Hashable {
     case rename
     case member(MemberID)
-    case leave
 }
 #endif

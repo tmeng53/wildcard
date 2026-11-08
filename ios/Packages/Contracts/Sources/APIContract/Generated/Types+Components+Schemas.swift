@@ -739,6 +739,10 @@ extension Components {
                 public var id: Swift.String
                 /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/names`.
                 public var names: Components.Schemas.CatalogNames
+                /// The colour its sports’ 成绩条, post blocks, routes and charts wear, with white on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before colours still reads (its sports then wear the gym’s steel).
+                ///
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/color`.
+                public var color: Swift.String?
                 /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload`.
                 public struct SportsPayloadPayload: Codable, Hashable, Sendable {
                     /// What a 训练 or a planned day sends as `sport`. Never changes, and a sport is never removed.
@@ -856,22 +860,26 @@ extension Components {
                 /// - Parameters:
                 ///   - id:
                 ///   - names:
+                ///   - color: The colour its sports’ 成绩条, post blocks, routes and charts wear, with white on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before colours still reads (its sports then wear the gym’s steel).
                 ///   - sports:
                 ///   - additionalProperties: A container of undocumented properties.
                 public init(
                     id: Swift.String,
                     names: Components.Schemas.CatalogNames,
+                    color: Swift.String? = nil,
                     sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload,
                     additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
                 ) {
                     self.id = id
                     self.names = names
+                    self.color = color
                     self.sports = sports
                     self.additionalProperties = additionalProperties
                 }
                 public enum CodingKeys: String, CodingKey {
                     case id
                     case names
+                    case color
                     case sports
                 }
                 public init(from decoder: any Swift.Decoder) throws {
@@ -884,6 +892,10 @@ extension Components {
                         Components.Schemas.CatalogNames.self,
                         forKey: .names
                     )
+                    self.color = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .color
+                    )
                     self.sports = try container.decode(
                         Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload.self,
                         forKey: .sports
@@ -891,6 +903,7 @@ extension Components {
                     additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                         "id",
                         "names",
+                        "color",
                         "sports"
                     ])
                 }
@@ -903,6 +916,10 @@ extension Components {
                     try container.encode(
                         self.names,
                         forKey: .names
+                    )
+                    try container.encodeIfPresent(
+                        self.color,
+                        forKey: .color
                     )
                     try container.encode(
                         self.sports,
@@ -2750,7 +2767,7 @@ extension Components {
                 case endedAt
             }
         }
-        /// The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim).
+        /// The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike).
         ///
         /// - Remark: Generated from `#/components/schemas/WorkoutSummary`.
         public struct WorkoutSummary: Codable, Hashable, Sendable {
@@ -2772,6 +2789,16 @@ extension Components {
             public var laps: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/WorkoutSummary/poolLengthM`.
             public var poolLengthM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/runs`.
+            public var runs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/descentM`.
+            public var descentM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/topSpeedKmh`.
+            public var topSpeedKmh: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/elevationGainM`.
+            public var elevationGainM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/paceSecPer100m`.
+            public var paceSecPer100m: Swift.Double?
             /// Creates a new `WorkoutSummary`.
             ///
             /// - Parameters:
@@ -2784,6 +2811,11 @@ extension Components {
             ///   - effort:
             ///   - laps:
             ///   - poolLengthM:
+            ///   - runs:
+            ///   - descentM:
+            ///   - topSpeedKmh:
+            ///   - elevationGainM:
+            ///   - paceSecPer100m:
             public init(
                 durationSec: Swift.Int? = nil,
                 distanceM: Swift.Double? = nil,
@@ -2793,7 +2825,12 @@ extension Components {
                 maxHr: Swift.Int? = nil,
                 effort: Swift.Double? = nil,
                 laps: Swift.Int? = nil,
-                poolLengthM: Swift.Double? = nil
+                poolLengthM: Swift.Double? = nil,
+                runs: Swift.Int? = nil,
+                descentM: Swift.Double? = nil,
+                topSpeedKmh: Swift.Double? = nil,
+                elevationGainM: Swift.Double? = nil,
+                paceSecPer100m: Swift.Double? = nil
             ) {
                 self.durationSec = durationSec
                 self.distanceM = distanceM
@@ -2804,6 +2841,11 @@ extension Components {
                 self.effort = effort
                 self.laps = laps
                 self.poolLengthM = poolLengthM
+                self.runs = runs
+                self.descentM = descentM
+                self.topSpeedKmh = topSpeedKmh
+                self.elevationGainM = elevationGainM
+                self.paceSecPer100m = paceSecPer100m
             }
             public enum CodingKeys: String, CodingKey {
                 case durationSec
@@ -2815,6 +2857,11 @@ extension Components {
                 case effort
                 case laps
                 case poolLengthM
+                case runs
+                case descentM
+                case topSpeedKmh
+                case elevationGainM
+                case paceSecPer100m
             }
         }
         /// Sent only when the chart tile was kept.
@@ -6398,6 +6445,88 @@ extension Components {
                 case timeZone
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SquadLanguage`.
+        public struct SquadLanguage: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/version`.
+            public var version: Components.Schemas.SquadLanguage.VersionPayload
+            /// The squad’s language now: the captain’s pick, else the captain’s app language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/language`.
+            @frozen public enum LanguagePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case zhHans = "zh-Hans"
+                case zhHant = "zh-Hant"
+                case en = "en"
+            }
+            /// The squad’s language now: the captain’s pick, else the captain’s app language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/language`.
+            public var language: Components.Schemas.SquadLanguage.LanguagePayload
+            /// True for the captain, the only one who sets it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguage/canChange`.
+            public var canChange: Swift.Bool
+            /// Creates a new `SquadLanguage`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - language: The squad’s language now: the captain’s pick, else the captain’s app language.
+            ///   - canChange: True for the captain, the only one who sets it.
+            public init(
+                version: Components.Schemas.SquadLanguage.VersionPayload,
+                language: Components.Schemas.SquadLanguage.LanguagePayload,
+                canChange: Swift.Bool
+            ) {
+                self.version = version
+                self.language = language
+                self.canChange = canChange
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case language
+                case canChange
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadLanguageChange`.
+        public struct SquadLanguageChange: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/version`.
+            public var version: Components.Schemas.SquadLanguageChange.VersionPayload
+            /// The squad’s language (小队语言): what the AI writes everything the whole squad reads in, its coach’s 战术板 and name and the weekly awards. What one member reads keeps their own app’s language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/language`.
+            @frozen public enum LanguagePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case zhHans = "zh-Hans"
+                case zhHant = "zh-Hant"
+                case en = "en"
+            }
+            /// The squad’s language (小队语言): what the AI writes everything the whole squad reads in, its coach’s 战术板 and name and the weekly awards. What one member reads keeps their own app’s language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadLanguageChange/language`.
+            public var language: Components.Schemas.SquadLanguageChange.LanguagePayload
+            /// Creates a new `SquadLanguageChange`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - language: The squad’s language (小队语言): what the AI writes everything the whole squad reads in, its coach’s 战术板 and name and the weekly awards. What one member reads keeps their own app’s language.
+            public init(
+                version: Components.Schemas.SquadLanguageChange.VersionPayload,
+                language: Components.Schemas.SquadLanguageChange.LanguagePayload
+            ) {
+                self.version = version
+                self.language = language
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case language
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CoachDayChallenge`.
         public struct CoachDayChallenge: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CoachDayChallenge/version`.
@@ -7478,6 +7607,144 @@ extension Components {
                 case version
                 case to
                 case kind
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/FeedbackSent`.
+        public struct FeedbackSent: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FeedbackSent/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/FeedbackSent/version`.
+            public var version: Components.Schemas.FeedbackSent.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/FeedbackSent/id`.
+            public var id: Swift.String
+            /// Creates a new `FeedbackSent`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id:
+            public init(
+                version: Components.Schemas.FeedbackSent.VersionPayload,
+                id: Swift.String
+            ) {
+                self.version = version
+                self.id = id
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/FeedbackDraft`.
+        public struct FeedbackDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/version`.
+            public var version: Components.Schemas.FeedbackDraft.VersionPayload
+            /// Made by the app, so sending again saves it once.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/id`.
+            public var id: Swift.String
+            /// 出问题了 (`problem`) or 提个建议 (`idea`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case problem = "problem"
+                case idea = "idea"
+            }
+            /// 出问题了 (`problem`) or 提个建议 (`idea`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/kind`.
+            public var kind: Components.Schemas.FeedbackDraft.KindPayload
+            /// What the member wrote: 1 to 1000 characters once trimmed.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/body`.
+            public var body: Swift.String
+            /// Up to 3 screenshots, uploaded first through `POST /photo-uploads` and listed by path.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/screenshots`.
+            public var screenshots: [Swift.String]
+            /// Which app sent it (version, build, iOS version, device model, language), so whoever fixes it knows where to look.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app`.
+            public struct AppPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app/appVersion`.
+                public var appVersion: Swift.String
+                /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app/build`.
+                public var build: Swift.String
+                /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app/os`.
+                public var os: Swift.String
+                /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app/device`.
+                public var device: Swift.String
+                /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app/language`.
+                public var language: Swift.String
+                /// Creates a new `AppPayload`.
+                ///
+                /// - Parameters:
+                ///   - appVersion:
+                ///   - build:
+                ///   - os:
+                ///   - device:
+                ///   - language:
+                public init(
+                    appVersion: Swift.String,
+                    build: Swift.String,
+                    os: Swift.String,
+                    device: Swift.String,
+                    language: Swift.String
+                ) {
+                    self.appVersion = appVersion
+                    self.build = build
+                    self.os = os
+                    self.device = device
+                    self.language = language
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case appVersion
+                    case build
+                    case os
+                    case device
+                    case language
+                }
+            }
+            /// Which app sent it (version, build, iOS version, device model, language), so whoever fixes it knows where to look.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FeedbackDraft/app`.
+            public var app: Components.Schemas.FeedbackDraft.AppPayload
+            /// Creates a new `FeedbackDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id: Made by the app, so sending again saves it once.
+            ///   - kind: 出问题了 (`problem`) or 提个建议 (`idea`).
+            ///   - body: What the member wrote: 1 to 1000 characters once trimmed.
+            ///   - screenshots: Up to 3 screenshots, uploaded first through `POST /photo-uploads` and listed by path.
+            ///   - app: Which app sent it (version, build, iOS version, device model, language), so whoever fixes it knows where to look.
+            public init(
+                version: Components.Schemas.FeedbackDraft.VersionPayload,
+                id: Swift.String,
+                kind: Components.Schemas.FeedbackDraft.KindPayload,
+                body: Swift.String,
+                screenshots: [Swift.String],
+                app: Components.Schemas.FeedbackDraft.AppPayload
+            ) {
+                self.version = version
+                self.id = id
+                self.kind = kind
+                self.body = body
+                self.screenshots = screenshots
+                self.app = app
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case kind
+                case body
+                case screenshots
+                case app
             }
         }
         /// - Remark: Generated from `#/components/schemas/NoticePage`.

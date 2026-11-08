@@ -79,3 +79,25 @@ private func entry(
     let partial = #"{"id": 9, "kind": "goalSuggestion", "at": "2026-11-23T01:00:00Z", "weeks": 3}"#
     #expect(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(partial.utf8))) == nil)
 }
+
+@Test func aCoachLetterReadsAndOpensTheLetterAgain() throws {
+    let squad = "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59"
+    let json = #"""
+        {"id": 12, "kind": "coachLetter", "at": "2026-11-08T18:00:00Z", "squadId": "\#(squad)",
+         "letter": 4, "coach": "xiaohun", "coachName": "毛头", "toCoach": "papa", "toCoachName": "帕帕",
+         "day": "2026-11-08", "text": "这队交给你了，我先撤。\n小美周三去游泳。"}
+        """#
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+    let notice = try #require(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(json.utf8))))
+    let letter = CoachLetter(
+        id: 4, squad: SquadID(try #require(UUID(uuidString: squad))), from: CoachSpeaker(id: "xiaohun", name: "毛头"),
+        to: CoachSpeaker(id: "papa", name: "帕帕"), day: try LocalDay("2026-11-08"),
+        text: "这队交给你了，我先撤。\n小美周三去游泳。")
+    #expect(notice.subject == .coachLetter(letter))
+    #expect(notice.destination == .coachLetter(letter))
+    #expect(letter.lines == ["这队交给你了，我先撤。", "小美周三去游泳。"])
+    // Without whom it is to, this build can't show it.
+    let partial = json.replacingOccurrences(of: #""toCoach": "papa", "#, with: "")
+    #expect(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(partial.utf8))) == nil)
+}

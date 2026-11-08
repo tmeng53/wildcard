@@ -5,7 +5,7 @@ import DesignSystemUI
 import SwiftUI
 
 /// A post's face where it has no photo, and the same corners over a photo where it has one: a
-/// block in its sport's scene colour with the post's words on it, the sport or kind top right,
+/// block in its sport category's colour with the post's words on it, the sport or kind top right,
 /// a 训练's minutes bottom left (not on a 动态 card, whose 成绩条 has them) and, on a tile, its
 /// day top left. Every screen that shows a post
 /// without a photo draws this one block: 我的动态's tiles, 动态's cards and the 战报's
@@ -75,11 +75,11 @@ public struct PostBlock: View {
                 maxHeight: layout == .strip ? nil : .infinity, alignment: wordsAlignment
             )
             .background {
-                Color(role: colors.fill, in: colors.scene)
+                Color(colors.fill)
                 if let photo {
                     photo.resizable().scaledToFill()
                 } else if layout == .strip, let activity {
-                    SportPattern(symbol: activity.symbol, color: Color(role: .fgAccent, in: colors.scene))
+                    SportPattern(symbol: activity.symbol, color: Color(colors.shade))
                 }
             }
             .overlay(alignment: .topLeading) {
@@ -107,7 +107,7 @@ public struct PostBlock: View {
                         .accessibilityIdentifier("post.block.minutes")
                 }
             }
-            .foregroundStyle(Color(role: colors.ink, in: colors.scene))
+            .foregroundStyle(Color(colors.ink))
             .clipped()
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("post.block")
@@ -237,54 +237,6 @@ private struct SportPattern: View {
             }
         }
         .accessibilityHidden(true)
-    }
-}
-
-/// A post block's colours: its scene's accent, with the words on it in the accent's ink. A 练了
-/// takes the scene its sport's category belongs to, a meal the scene of its kind, and a 请假条 the
-/// gym's. Never the brand's graphite: a run of 请假条 made 我的动态 a wall of black squares
-/// (Tracy, 2026-11-08).
-public struct PostBlockColors: Sendable {
-    public let scene: SceneTheme
-    public let fill = ColorRole.bgAccent
-    public let ink = ColorRole.fgOnAccent
-
-    public init(kind: CheckInKind, activity: Activity?) {
-        switch kind {
-        case .trained: self.init(scene: activity.map(Self.scene(of:)) ?? .gym)
-        case .healthyMeal: self.init(scene: .tennis)
-        case .cheatMeal: self.init(scene: .track)
-        case .disclaimer: self.init(scene: .gym)
-        }
-    }
-
-    /// A check-in's colours.
-    public init(checkIn: CheckIn) {
-        switch checkIn.entry {
-        case .trained(let training): self.init(kind: .trained, activity: training.activity)
-        case .healthyMeal: self.init(kind: .healthyMeal, activity: nil)
-        case .cheatMeal: self.init(kind: .cheatMeal, activity: nil)
-        case .disclaimer: self.init(kind: .disclaimer, activity: nil)
-        }
-    }
-
-    private init(scene: SceneTheme) {
-        self.scene = scene
-    }
-
-    /// Each category of the sports list on a scene: Tracy's pick (2026-10-31). A category added
-    /// later, or a sport people name themselves, takes the gym's.
-    static let sceneByCategory: [String: SceneTheme] = [
-        "runWalk": .track, "cardio": .track, "cycling": .track, "combat": .track,
-        "water": .pool,
-        "strength": .gym, "everyday": .gym,
-        "racket": .tennis, "ball": .tennis,
-        "outdoorWinter": .climbing, "mindBody": .climbing, "dance": .climbing,
-    ]
-
-    static func scene(of activity: Activity) -> SceneTheme {
-        guard case .sport(let sport) = activity, let category = sport.entry?.category else { return .gym }
-        return sceneByCategory[category] ?? .gym
     }
 }
 #endif

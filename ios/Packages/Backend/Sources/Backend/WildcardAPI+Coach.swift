@@ -33,6 +33,16 @@ extension WildcardAPI {
         return try read { () throws(ContractsError) in try SquadCoach(wire) }
     }
 
+    /// Has the coach the squad just let go for another write the one that took over its letter
+    /// (交接信); only the captain may, right after 换教练. Answers once it is written, or nil when it
+    /// couldn't be; a retry answers the same letter, or none.
+    public func writeLetter(in squad: SquadID) async throws(APIError) -> CoachLetter? {
+        let wire = try await call {
+            try await writing.writeCoachLetter(path: .init(squadId: squad.description)).ok.body.json
+        }
+        return wire.letter.flatMap { try? CoachLetter($0, squad: squad) }
+    }
+
     /// Fires the squad's coach; only the captain may. Safe to repeat.
     public func fireCoach(of squad: SquadID) async throws(APIError) -> SquadCoach {
         let wire = try await call {

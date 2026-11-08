@@ -43,6 +43,10 @@ export const unusedCoachActivity = {
   squad: unused,
   putAway: unused,
   answerChallenge: unused,
+  challenge: unused,
+  completeChallenge: unused,
+  cards: unused,
+  markSeen: unused,
   spoke: unused,
 };
 
@@ -64,7 +68,13 @@ export const unusedGifts = { of: unused, open: unused };
  * told are dropped, since keeping them never decides what a request answers.
  */
 export const ignoredNotices = {
-  notices: { tell: () => Promise.resolve(), page: unused, markSeen: unused },
+  notices: { tell: () => Promise.resolve([]), page: unused, markSeen: unused },
   coachNames: unused,
   liveEvents: { subscribe: unused, close: () => Promise.resolve() },
+};
+
+/** 意见反馈, for an app whose test never sends any; no tracker, so nothing is filed. */
+export const unusedFeedback = {
+  feedback: { send: unused, toFile: () => Promise.resolve([]), filed: unused },
+  issues: undefined,
 };

@@ -32,6 +32,8 @@ public struct TodayView: View {
     /// The day whose 今日赛况 box score is open in the card's place: left open past the day's
     /// end, it doesn't reopen by itself the next evening.
     @State private var openRecapDay: LocalDay?
+    /// Where the coach stands on screen, which its letter flies from.
+    @State private var coachCenter: CGPoint?
 
     /// Opens the post my caption's bubble is from in 动态; nil while it is still waiting to go
     /// out, which opens 动态 at the top.
@@ -108,8 +110,8 @@ public struct TodayView: View {
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
                 pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
                 tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, tapCoach: model.tapCoach,
-                coachHasNote: model.coachHasNote,
-                tapVacancy: model.tapVacancy
+                coachHasNote: model.coachHasNote, coachAt: { coachCenter = $0 },
+                tapVacancy: model.tapVacancy, clock: model.now
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -173,6 +175,8 @@ public struct TodayView: View {
                 .transition(.opacity)
             }
         }
+        .overlay { letter }
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.shownLetter)
     }
 
     /// The card at the top: the squad card, with the 今日赛况 tag as its last row from the evening
@@ -359,4 +363,17 @@ extension TodayView {
     }
 }
 
+extension TodayView {
+    /// The coach's letter, over everything on the scene, the tab bar hidden under it.
+    @ViewBuilder private var letter: some View {
+        if let shown = model.shownLetter {
+            CoachLetterOverlay(
+                shown: shown, shownAt: model.letterShownAt, from: coachCenter, clock: model.now,
+                putAway: model.putAwayLetter
+            )
+            .id(shown)
+            .transition(.opacity)
+        }
+    }
+}
 #endif
