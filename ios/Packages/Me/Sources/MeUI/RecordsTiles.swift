@@ -220,9 +220,13 @@ struct RecordsClock: View {
                     with: .color(white.opacity(0.35)))
             }
             for (hour, name) in Self.quarters {
-                context.draw(
-                    name.font(.wildcard(TypeRamp.caption)).foregroundStyle(white.opacity(0.55)),
-                    at: point(hour, 89), anchor: .center)
+                let label = context.resolve(
+                    name.font(.wildcard(TypeRamp.caption)).foregroundStyle(white.opacity(0.55)))
+                // A longer word (6 PM) slides in rather than past the dial's edge.
+                let half = label.measure(in: CGSize(width: Self.grid, height: Self.grid)).width / 2 + 4
+                var at = point(hour, 89)
+                at.x = min(max(at.x, half), Self.grid - half)
+                context.draw(label, at: at, anchor: .center)
             }
             for hour in hours.indices where hours[hour] > 0 && most > 0 {
                 let isTop = hour == usual
