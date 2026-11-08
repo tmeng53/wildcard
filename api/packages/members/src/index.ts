@@ -6,6 +6,8 @@ export {
 } from './adapters/postgres-profile-store.js';
 export {
   ArtId,
+  BIRTHDAY_EARLIEST,
+  Birthday,
   CATCHPHRASE_MAX_CHARACTERS,
   Catchphrase,
   Character,

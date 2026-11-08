@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { Admins } from '@wildcard/admins';
 import {
+  Birthday,
   Catchphrase,
   JerseyNumber,
   MemberId,
@@ -59,6 +60,12 @@ export const Me = z
     profile: z
       .strictObject({
         ...profileFields,
+        birthday: Birthday.optional().meta({
+          description:
+            'The member’s birthday, `YYYY-MM-DD`, only if they chose to give it ' +
+            '(`PUT /me/birthday`); left out otherwise.',
+          example: '1996-04-18',
+        }),
         joinedAt: z.iso.datetime().meta({
           description:
             'When the member first saved their profile, right after signing up, in UTC: the day ' +
@@ -74,6 +81,17 @@ export const Me = z
     }),
   })
   .openapi('Me');
+
+/** What `PUT /me/birthday` takes and returns. */
+export const BirthdayBody = z
+  .strictObject({
+    version: bodyVersion(1),
+    birthday: Birthday.meta({
+      description: 'The member’s birthday, `YYYY-MM-DD`, from 1900-01-01 to today.',
+      example: '1996-04-18',
+    }),
+  })
+  .openapi('Birthday');
 
 /** What `DELETE /me` takes. */
 export const AccountDeletion = z
@@ -93,8 +111,12 @@ export const AccountDeletion = z
   })
   .openapi('AccountDeletion');
 
-/** The profile as the API sends it: a character only once there is one. */
-function wireProfile({ character, ...profile }: Profile) {
+/**
+ * The profile as `PUT /me/profile` sends it: a character only once there is one. The birthday has
+ * its own route, so only `GET /me` carries it.
+ */
+function wireProfile({ timeZone, catchphrase, character, jerseyNumber }: Profile) {
+  const profile = { timeZone, catchphrase, jerseyNumber };
   return character === null ? profile : { ...profile, character };
 }
 
@@ -104,8 +126,8 @@ const unauthorized = {
 };
 
 /**
- * `GET /me`, `PUT /me/profile` and `DELETE /me`: the signed-in member, their own settings, and
- * deleting their account.
+ * `GET /me`, `PUT /me/profile`, `PUT` and `DELETE /me/birthday`, and `DELETE /me`: the signed-in
+ * member, their own settings, their birthday, and deleting their account.
  */
 export function me(
   deps: {
@@ -149,6 +171,44 @@ export function me(
           'time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)',
       ),
       ...jsonBodyFailures,
+      ...unauthorized,
+    },
+  });
+
+  const putBirthday = createRoute({
+    method: 'put',
+    path: '/me/birthday',
+    operationId: 'putMyBirthday',
+    summary: 'Save the signed-in member’s birthday',
+    description:
+      'Saves the birthday the member chose to give, at sign-up or in 设置, logged with their ' +
+      'profile. Safe to repeat.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      body: { required: true, content: { 'application/json': { schema: BirthdayBody } } },
+    },
+    responses: {
+      200: { description: 'Saved', content: { 'application/json': { schema: BirthdayBody } } },
+      400: problem(
+        'Not a valid date, one before 1900 or after today, or no profile saved yet ' +
+          '(`PROFILE_MISSING`)',
+      ),
+      ...jsonBodyFailures,
+      ...unauthorized,
+    },
+  });
+  const deleteBirthday = createRoute({
+    method: 'delete',
+    path: '/me/birthday',
+    operationId: 'deleteMyBirthday',
+    summary: 'Remove the signed-in member’s birthday',
+    description: 'Forgets the birthday on the profile, logged with it. Safe to repeat.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    responses: {
+      204: { description: 'Removed' },
+      400: problem('No profile saved yet (`PROFILE_MISSING`)'),
       ...unauthorized,
     },
   });
@@ -206,7 +266,11 @@ export function me(
           profile:
             profile === undefined || joinedAt === undefined
               ? null
-              : { ...wireProfile(profile), joinedAt: joinedAt.toISOString() },
+              : {
+                  ...wireProfile(profile),
+                  ...(profile.birthday === null ? {} : { birthday: profile.birthday }),
+                  joinedAt: joinedAt.toISOString(),
+                },
           isAdmin,
         } as const,
         200,
@@ -224,6 +288,15 @@ export function me(
       // stays in the wardrobe after its store closes.
       if (character) await deps.unlocks.keepWorn(member, Object.values(character.look.variants));
       return c.json({ version: 1, ...wireProfile(saved) } as const, 200);
+    })
+    .openapi(putBirthday, async (c) => {
+      const { birthday } = c.req.valid('json');
+      await deps.members.saveBirthday(MemberId.parse(c.var.caller.userId), birthday);
+      return c.json({ version: 1, birthday } as const, 200);
+    })
+    .openapi(deleteBirthday, async (c) => {
+      await deps.members.saveBirthday(MemberId.parse(c.var.caller.userId), null);
+      return c.body(null, 204);
     })
     .openapi(deleteMe, async (c) => {
       const { appleAuthorizationCode } = c.req.valid('json');
