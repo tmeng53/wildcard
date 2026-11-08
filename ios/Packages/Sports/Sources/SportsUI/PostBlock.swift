@@ -272,9 +272,13 @@ private struct IconPattern: View {
 private enum Burger {
     static func path(in box: CGRect) -> Path {
         let unit = box.width / 24
-        func point(_ x: Double, _ y: Double) -> CGPoint { CGPoint(x: box.minX + x * unit, y: box.minY + y * unit) }
-        func rect(_ x: Double, _ y: Double, _ width: Double, _ height: Double) -> CGRect {
-            CGRect(origin: point(x, y), size: CGSize(width: width * unit, height: height * unit))
+        // The drawing's middle sits a point low on the grid; lift it so it centres in its cell.
+        let lift = 1.2
+        func point(_ across: Double, _ down: Double) -> CGPoint {
+            CGPoint(x: box.minX + across * unit, y: box.minY + (down - lift) * unit)
+        }
+        func rect(_ across: Double, _ down: Double, _ width: Double, _ height: Double) -> CGRect {
+            CGRect(origin: point(across, down), size: CGSize(width: width * unit, height: height * unit))
         }
         var path = Path()
         path.move(to: point(2.5, 10))
@@ -282,8 +286,8 @@ private enum Burger {
         path.closeSubpath()
         path.move(to: point(2, 11.6))
         for step in 0..<5 {
-            let x = 2 + Double(step) * 4
-            path.addQuadCurve(to: point(x + 4, 11.6), control: point(x + 2, 14))
+            let left = 2 + Double(step) * 4
+            path.addQuadCurve(to: point(left + 4, 11.6), control: point(left + 2, 14))
         }
         path.addLine(to: point(22, 12.4))
         path.addLine(to: point(2, 12.4))
