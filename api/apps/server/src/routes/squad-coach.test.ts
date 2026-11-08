@@ -479,5 +479,12 @@ describe('POST /squads/{squadId}/coach/letter', () => {
     expect(
       await call({ method: 'GET', path: `/squads/${squad}/coach/activity`, token: mate.token }),
     ).not.toHaveProperty('body.letter');
+    // Leave no squad with a coach: the coach's own tests count every squad that has one.
+    const fired = await call({
+      method: 'DELETE',
+      path: `/squads/${squad}/coach`,
+      token: captain.token,
+    });
+    expect(fired.status).toBe(200);
   });
 });
