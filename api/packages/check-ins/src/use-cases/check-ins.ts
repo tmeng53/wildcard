@@ -33,6 +33,7 @@ import {
   type SquadPost,
 } from './check-ins/list-squad-check-ins.js';
 import { memberWeek, type MemberWeek } from './check-ins/member-week.js';
+import { records, type Records } from './check-ins/records.js';
 import { squadToday, type SquadToday } from './check-ins/squad-today.js';
 import {
   reactToCheckIn,
@@ -97,6 +98,8 @@ export interface CheckIns {
     readonly from: string;
     readonly to: string;
   }): Promise<TrainingDay[]>;
+  /** 外卡记录: the member's records since they joined, and how they stand in their squad. */
+  records(member: MemberId): Promise<Records>;
   react(input: ReactToCheckInInput): Promise<Reacted>;
   removeReaction(input: { readonly checkIn: CheckInId; readonly member: MemberId }): Promise<void>;
   listReactions(input: {
@@ -195,6 +198,7 @@ export function createCheckIns(deps: {
     totals: (member) => deps.store.totals(member),
     trainedSince: (query) => deps.store.trainedSince(query),
     trainings: (query) => deps.store.trainingsForMember(query),
+    records: (member) => records(deps, member),
     react: (input) => reactToCheckIn(deps, input),
     removeReaction: (input) =>
       removeResponse({ ...deps, remove: (...at) => deps.reactions.remove(...at) }, input),

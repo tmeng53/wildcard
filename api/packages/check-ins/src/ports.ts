@@ -1,4 +1,5 @@
-import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
+import type { CheckInId, CheckInRecord, LocalDay, MemberId, SquadId } from './domain/check-in.js';
+import type { RecordTraining } from './domain/records.js';
 import type { CheckInTotals, TrainedCheckIn, TrainingDay } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { CheckInKind, PostCursor } from './domain/post-cursor.js';
@@ -21,6 +22,16 @@ export type UpdateOutcome =
   { readonly saved: true } | { readonly saved: false; readonly taken: 'photo' | 'workout' };
 
 /** Where check-ins are kept. */
+/** The rows 外卡记录 reads, as `CheckInStore.recordRows` gives them. */
+export interface RecordRows {
+  readonly trainings: readonly (RecordTraining & { readonly member: MemberId })[];
+  readonly healthyMealDays: readonly LocalDay[];
+  /** Reactions on the member's check-ins, by squadmate. */
+  readonly received: ReadonlyMap<MemberId, number>;
+  /** The member's reactions on squadmates' check-ins, by squadmate. */
+  readonly given: ReadonlyMap<MemberId, number>;
+}
+
 export interface CheckInStore {
   /** The check-in saved under `id`, whoever made it. */
   find(id: CheckInId): Promise<CheckInRecord | undefined>;
@@ -65,6 +76,16 @@ export interface CheckInStore {
     readonly from: string;
     readonly to: string;
   }): Promise<TrainingDay[]>;
+  /**
+   * What 外卡记录 is worked out from: every 练了 of the member's, and each squadmate's that went
+   * to `squad`; the days the member logged a 健康餐; and the reactions between the member and
+   * each squadmate, counted by squadmate.
+   */
+  recordRows(query: {
+    readonly member: MemberId;
+    readonly squad?: SquadId;
+    readonly mates: readonly MemberId[];
+  }): Promise<RecordRows>;
   /** A member's own check-ins, newest day first. */
   listForMember(query: DayRange & { readonly member: MemberId }): Promise<CheckInRecord[]>;
   /**

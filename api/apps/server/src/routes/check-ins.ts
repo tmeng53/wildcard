@@ -250,6 +250,94 @@ const CheckInTotals = z
   .strictObject({ version: bodyVersion(1), ...checkInTotalsFields })
   .openapi('CheckInTotals');
 
+const customSport = z
+  .string()
+  .optional()
+  .meta({ description: 'The name of a `custom` sport; a listed sport has none.' });
+
+const Streak = z
+  .strictObject({
+    days: count('Days in the run.'),
+    from: LocalDay.meta({ description: 'Its first day.' }),
+    to: LocalDay.meta({ description: 'Its last day.' }),
+  })
+  .openapi('RecordStreak');
+
+const MateCount = z
+  .strictObject({
+    memberId: z.uuid(),
+    count: count('Shared days, or reactions.'),
+  })
+  .openapi('RecordMateCount');
+
+const Cheers = z
+  .strictObject({
+    count: count('Reactions, all time, between the member and their squadmates.'),
+    top: MateCount.optional().meta({ description: 'The squadmate with the most; none at 0.' }),
+  })
+  .openapi('RecordCheers');
+
+const MemberRecords = z
+  .strictObject({
+    version: bodyVersion(1),
+    trainedDays: count('Days with a 练了.'),
+    minutes: count('Minutes of every 练了 that says how long it took.'),
+    longestMinutes: count('The longest single 练了; left out when none says how long.').optional(),
+    longestStreak: Streak.optional().meta({
+      description:
+        'Most days trained in a row; a planned rest day between them neither breaks nor adds. ' +
+        'Left out before the first 练了.',
+    }),
+    mealStreak: Streak.optional().meta({
+      description: 'Most days in a row with a 健康餐; left out before the first.',
+    }),
+    hours: z.array(count('练了 posted in this hour.')).min(24).max(24).meta({
+      description:
+        '练了 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.',
+    }),
+    weekdays: z
+      .array(count('Days trained on this weekday.'))
+      .min(7)
+      .max(7)
+      .meta({ description: 'Days trained by weekday, Monday first.' }),
+    sports: z
+      .array(
+        z
+          .strictObject({
+            sport: storedTrainingFields.sport,
+            customSport,
+            days: count('Days the member trained it.'),
+          })
+          .openapi('RecordSport'),
+      )
+      .max(3)
+      .meta({ description: 'The sports trained on the most days, most first.' }),
+    sportCount: count('How many different sports the member trained.'),
+    squad: z
+      .strictObject({
+        id: z.uuid(),
+        partner: MateCount.optional().meta({
+          description: 'The squadmate who trained on the same days as the member the most.',
+        }),
+        cheersReceived: Cheers,
+        cheersGiven: Cheers,
+        firsts: z.array(z.string()).meta({
+          description:
+            'What the member alone is first at in the squad: `latestTrainer`, ' +
+            '`earliestTrainer`, `topSport` (their most trained sport) or `mostDays`. Never a ' +
+            'tie, never a last place; more may come, so skip an unknown one.',
+        }),
+      })
+      .optional()
+      .meta({
+        description:
+          'How the member stands in their squad, from what squadmates shared with it; left ' +
+          'out outside a squad.',
+      })
+      .openapi('SquadRecords'),
+  })
+  .openapi('MemberRecords');
+
 /**
  * Signs a view URL for every photo of these check-ins, in one call to storage. A check-in whose
  * photo file is gone is logged, and `wire` leaves that photo out rather than failing the list.
@@ -535,6 +623,25 @@ export function checkIns(deps: {
     },
   });
 
+  const memberRecords = createRoute({
+    method: 'get',
+    path: '/me/records',
+    operationId: 'getMyRecords',
+    summary: 'The signed-in member’s records (外卡记录)',
+    description:
+      '外卡记录, opened from 我’s 训练记录: streaks, when and what they train, and how they ' +
+      'stand in their squad, worked out from their check-ins and plans on every read.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    responses: {
+      200: {
+        description: 'The records',
+        content: { 'application/json': { schema: MemberRecords } },
+      },
+      ...signedInFailures,
+    },
+  });
+
   const trainings = createRoute({
     method: 'get',
     path: '/me/trainings',
@@ -670,6 +777,42 @@ export function checkIns(deps: {
     .openapi(totals, async (c) => {
       const counts = await deps.checkIns.totals(MemberId.parse(c.var.caller.userId));
       return c.json({ version: 1 as const, ...counts }, 200);
+    })
+    .openapi(memberRecords, async (c) => {
+      const found = await deps.checkIns.records(MemberId.parse(c.var.caller.userId));
+      const mate = (entry: { readonly member: string; readonly count: number }) => ({
+        memberId: entry.member,
+        count: entry.count,
+      });
+      const cheers = (value: {
+        readonly count: number;
+        readonly top?: { readonly member: string; readonly count: number };
+      }) => ({
+        count: value.count,
+        ...(value.top === undefined ? {} : { top: mate(value.top) }),
+      });
+      const { squad, ...mine } = found;
+      return c.json(
+        {
+          version: 1 as const,
+          ...mine,
+          hours: [...mine.hours],
+          weekdays: [...mine.weekdays],
+          sports: [...mine.sports],
+          ...(squad === undefined
+            ? {}
+            : {
+                squad: {
+                  id: squad.id,
+                  ...(squad.partner === undefined ? {} : { partner: mate(squad.partner) }),
+                  cheersReceived: cheers(squad.cheersReceived),
+                  cheersGiven: cheers(squad.cheersGiven),
+                  firsts: [...squad.firsts],
+                },
+              }),
+        },
+        200,
+      );
     })
     .openapi(trainings, async (c) => {
       const { from, to } = c.req.valid('query');

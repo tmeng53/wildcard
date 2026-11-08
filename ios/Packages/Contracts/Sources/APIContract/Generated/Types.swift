@@ -109,6 +109,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/check-in-totals`.
     /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
     func getMyCheckInTotals(_ input: Operations.GetMyCheckInTotals.Input) async throws -> Operations.GetMyCheckInTotals.Output
+    /// The signed-in member’s records (外卡记录)
+    ///
+    /// 外卡记录, opened from 我’s 训练记录: streaks, when and what they train, and how they stand in their squad, worked out from their check-ins and plans on every read.
+    ///
+    /// - Remark: HTTP `GET /me/records`.
+    /// - Remark: Generated from `#/paths//me/records/get(getMyRecords)`.
+    func getMyRecords(_ input: Operations.GetMyRecords.Input) async throws -> Operations.GetMyRecords.Output
     /// The signed-in member’s 练了 for a range of days, for their training record
     ///
     /// 训练记录 on 我: each 练了 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.
@@ -683,6 +690,15 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
     public func getMyCheckInTotals(headers: Operations.GetMyCheckInTotals.Input.Headers = .init()) async throws -> Operations.GetMyCheckInTotals.Output {
         try await getMyCheckInTotals(Operations.GetMyCheckInTotals.Input(headers: headers))
+    }
+    /// The signed-in member’s records (外卡记录)
+    ///
+    /// 外卡记录, opened from 我’s 训练记录: streaks, when and what they train, and how they stand in their squad, worked out from their check-ins and plans on every read.
+    ///
+    /// - Remark: HTTP `GET /me/records`.
+    /// - Remark: Generated from `#/paths//me/records/get(getMyRecords)`.
+    public func getMyRecords(headers: Operations.GetMyRecords.Input.Headers = .init()) async throws -> Operations.GetMyRecords.Output {
+        try await getMyRecords(Operations.GetMyRecords.Input(headers: headers))
     }
     /// The signed-in member’s 练了 for a range of days, for their training record
     ///
