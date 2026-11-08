@@ -278,7 +278,7 @@ enum StoreCopy {
         "powder": "雪道见，压个弯。",
     ]
     private static let unlocks = [
-        "lap": "跑步或快走 3 次解锁", "nolook": "球类 3 次解锁", "moss": "攀岩或徒步 3 次解锁", "halfmoon": "随便练 3 次解锁",
+        "lap": "跑步、快走或徒步 3 次解锁", "nolook": "球类 3 次解锁", "moss": "攀岩或徒步 3 次解锁", "halfmoon": "随便练 3 次解锁",
         "deuce": "拍类运动 3 次解锁",
     ]
     private static let limits = ["powder": "冬季限定"]

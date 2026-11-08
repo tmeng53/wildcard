@@ -68,7 +68,6 @@ struct StoreStreet: View {
                 Ellipse()
                     .fill(Color(role: .bgInk, in: theme).opacity(0.1))
                     .frame(width: 70, height: 12)
-                    .offset(y: Space.xs - Space.xxs / 2)
             }
             .padding(.bottom, Space.xs - Space.xxs / 2)
     }

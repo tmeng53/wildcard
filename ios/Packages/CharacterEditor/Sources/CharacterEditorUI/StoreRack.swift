@@ -126,6 +126,10 @@ struct RackPiece: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel(EditorNames.variant(variant, in: slot))
+        // What the card's line says, which sits outside the button.
+        .accessibilityValue(
+            isNew ? Text("领取", bundle: .module) : shelf == .owned ? Text("已拥有", bundle: .module) : Text(verbatim: "")
+        )
         .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant)")
         // NEW and the line under the name sit over the card, outside its button, so each is its
         // own element as a UI test finds it.

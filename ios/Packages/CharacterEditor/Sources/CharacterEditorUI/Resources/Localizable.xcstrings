@@ -2098,18 +2098,18 @@
         }
       }
     },
-    "跑步或快走 3 次解锁": {
+    "跑步、快走或徒步 3 次解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 runs or walks"
+            "value": "Unlock: 3 runs, walks or hikes"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "跑步或快走 3 次解鎖"
+            "value": "跑步、快走或徒步 3 次解鎖"
           }
         }
       }
