@@ -5,8 +5,8 @@
 -- with change_coach_settings.
 
 alter table public.coach_settings
-  -- $0.10 a squad a day: about ten times a busy squad's day (2026-11-03 to 11-07: under $0.012).
-  add column squad_daily_cap_micros integer not null default 100000
+  -- $0.05 a squad a day (Tracy, 2026-11-08): a busy squad spent under $0.012 a day (2026-11-03 to 11-07).
+  add column squad_daily_cap_micros integer not null default 50000
     check (squad_daily_cap_micros >= 0),
   -- $5 a day for every squad together, against a bug or abuse.
   add column daily_cap_micros integer not null default 5000000
