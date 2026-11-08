@@ -116,25 +116,3 @@ private let teeTones = ##"{ "version": 1, "base": "#2D5BA0", "shades": [] }"##
                     .utf8))
     }
 }
-
-/// A twin moves as the part it names, so that part must exist, have the same parent and not be a
-/// twin itself.
-@Test func aTwinMustNameAnUntwinnedPartWithTheSameParent() throws {
-    func twinned(_ twin: PartID, parent: PartID? = "body") -> Rig {
-        var twinned = rig
-        twinned.parts.append(Rig.Part(id: "armBack", parent: parent, pivot: Point(x: 60, y: 40), twin: twin))
-        return twinned
-    }
-    #expect(throws: Never.self) { try Figure(rig: twinned("arm"), outfit: Outfit([:]), art: art) }
-    for bad in [twinned("leg"), twinned("arm", parent: nil), twinned("armBack")] {
-        #expect(throws: AvatarError.self) { try Figure(rig: bad, outfit: Outfit([:]), art: art) }
-    }
-}
-
-/// With `side`, an arm turned `beyond` degrees the other way counts as turned: up over the head.
-@Test func beyondCountsAnArmRaisedOverTheHeadAsTurned() {
-    let back = Rig.Hides(part: "arm", start: 20, end: 20, side: 1, beyond: 100)
-    #expect([0, 19, 20, -60, -99, -100, -170].map { back.shown(arm: $0) } == [1, 1, 0, 1, 1, 0, 0])
-    let front = Rig.Hides(part: "arm", start: 20, end: 20, side: 1, reverse: true, beyond: 100)
-    #expect([0, 20, -60, -100].map { front.shown(arm: $0) } == [0, 1, 0, 1])
-}

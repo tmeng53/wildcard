@@ -49,7 +49,7 @@ public struct CharacterStage<Content: View, Stub: View>: View {
 
 /// A ticket: rounded corners and a half-round notch in each side at the tear line, which is
 /// measured from the bottom (the character's ticket, whose stub is fixed) or from the top
-/// (`TicketCard`, whose face is).
+/// (`TicketCard`, whose face is, and `CoverTicket`, whose cover is).
 struct TicketShape: Shape {
     private enum Tear {
         case fromBottom(Double)

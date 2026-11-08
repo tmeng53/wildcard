@@ -66,6 +66,7 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
+import { createFeedbackInbox, createPostgresFeedbackStore } from '@wildcard/feedback';
 import {
   createApnsSender,
   createOffSender,
@@ -143,6 +144,7 @@ import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
 import { artTools } from './admin-mcp/tools/art.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
+import { createGitHubIssueTracker } from './adapters/github-issues.js';
 import { createSupabaseArtStorage } from './adapters/supabase-art-storage.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
@@ -614,6 +616,14 @@ const app = createApp({
   scenes,
   switches,
   nudges,
+  feedback: createFeedbackInbox({
+    store: createPostgresFeedbackStore(db),
+    clock: () => new Date(),
+  }),
+  issues:
+    config.feedbackIssues === undefined
+      ? undefined
+      : createGitHubIssueTracker(config.feedbackIssues),
   notices,
   liveEvents,
   coachNames,

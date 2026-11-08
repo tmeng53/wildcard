@@ -46,6 +46,7 @@ describe('readConfig', () => {
       errorReports: undefined,
       traceProject: undefined,
       pubSubProject: undefined,
+      feedbackIssues: undefined,
     });
   });
 
@@ -73,6 +74,22 @@ describe('readConfig', () => {
       release: undefined,
     });
     expect(() => readConfig({ ...base, SENTRY_DSN_API: 'not a url' })).toThrow(/SENTRY_DSN_API/);
+  });
+
+  it('files feedback only once there is a token, in our feedback repository unless another is named', () => {
+    expect(
+      readConfig({ ...base, FEEDBACK_GITHUB_TOKEN: 'github_pat_x' }).feedbackIssues,
+    ).toStrictEqual({
+      repo: 'tmeng53/wildcard-feedback',
+      token: 'github_pat_x',
+    });
+    expect(
+      readConfig({ ...base, FEEDBACK_GITHUB_TOKEN: 'github_pat_x', FEEDBACK_GITHUB_REPO: 'o/r' })
+        .feedbackIssues?.repo,
+    ).toBe('o/r');
+    expect(() => readConfig({ ...base, FEEDBACK_GITHUB_REPO: 'not a repo' })).toThrow(
+      /FEEDBACK_GITHUB_REPO/,
+    );
   });
 
   it('names log traces in the Google Cloud project the deploy says', () => {

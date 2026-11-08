@@ -289,7 +289,8 @@ final class AppModel {
             noSquad: { [weak self] squad in Task { await self?.removedFromSquad(squad) } })
         let profile = MeModel(
             service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
-            confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() })
+            confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() },
+            feedback: APIFeedbackService(api: api))
         let squad = SquadSettingsModel(
             service: APISquadSettingsService(api: api),
             changed: { [weak self] in Task { await self?.squadChanged() } },

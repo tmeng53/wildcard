@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { JobTokenInvalidError, JobsOffError, RouteNotFoundError } from '../errors.js';
 import { deliver, ServerEvent, Subscriber, type EventHandlers } from '../events.js';
 import { deliverCoachNotes, type CoachNotesDependencies } from '../flows/coach-notes.js';
+import { fileWaitingFeedback, type FeedbackIssueDependencies } from '../flows/feedback-issues.js';
 import { sendDailyProgress, type DailyProgressDependencies } from '../flows/daily-progress-push.js';
 import { suggestSquadGoals, type SuggestGoal } from '../flows/squad-goal-suggestion.js';
 import { giveWeeklyAwards, type WeeklyAwardsDependencies } from '../flows/weekly-awards.js';
@@ -41,7 +42,7 @@ function readEvent(data: string) {
 
 /**
  * Work a scheduler starts, not the app: `POST /jobs/daily-progress-push`, meant to run every 15
- * minutes or so, `POST /jobs/weekly-awards`, meant to run every hour, which also suggests captains
+ * minutes or so, which also files the 意见反馈 messages still waiting for their issue, `POST /jobs/weekly-awards`, meant to run every hour, which also suggests captains
  * a higher squad goal (`flows/squad-goal-suggestion.ts`), and `POST /jobs/coach`,
  * meant to run every 10 minutes, which also delivers the coach's morning notes. Each call takes the
  * scheduler's bearer token: Cloud Scheduler's OIDC token on the hosted server, `JOBS_TOKEN`
@@ -51,6 +52,8 @@ function readEvent(data: string) {
 export function jobs(deps: {
   readonly isScheduler: IsScheduler | undefined;
   readonly dailyProgress: DailyProgressDependencies;
+  /** Files members' feedback that couldn't be filed as it was sent. */
+  readonly feedbackIssues: FeedbackIssueDependencies;
   readonly weeklyAwards: WeeklyAwardsDependencies;
   /** Keeps a higher squad goal suggested to a captain with its notice, after the awards. */
   readonly suggestGoal: SuggestGoal;
@@ -65,7 +68,9 @@ export function jobs(deps: {
       logAlso({ job: 'daily-progress-push' });
       const run = await sendDailyProgress(deps.dailyProgress);
       deps.dailyProgress.log.info('daily progress push run', { ...run });
-      return c.json({ version: 1, ...run }, 200);
+      const feedback = await fileWaitingFeedback(deps.feedbackIssues);
+      if (feedback.waiting > 0) deps.dailyProgress.log.warn('feedback still waiting', feedback);
+      return c.json({ version: 1, ...run, feedback }, 200);
     })
     .post('/jobs/weekly-awards', async (c) => {
       logAlso({ job: 'weekly-awards' });
