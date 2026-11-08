@@ -78,8 +78,8 @@ public struct PostBlock: View {
                 Color(colors.fill)
                 if let photo {
                     photo.resizable().scaledToFill()
-                } else if layout == .strip, let activity {
-                    SportPattern(symbol: activity.symbol, color: Color(colors.shade))
+                } else if layout == .strip {
+                    SportPattern(symbol: activity?.symbol ?? kind.symbol, color: Color(colors.shade))
                 }
             }
             .overlay(alignment: .topLeading) {
@@ -200,8 +200,9 @@ public struct PostBlock: View {
     }
 }
 
-/// A 练了's sport icon, upright, in rows that run diagonally and stagger, filling a strip without
-/// a photo in a shade a step darker than the block (Tracy, 2026-11-08).
+/// A 练了's sport icon, or for any other post its kind's icon (the one on 打卡's buttons), upright,
+/// in rows that run diagonally and stagger, filling a strip without a photo in a shade a step
+/// darker than the block (Tracy, 2026-11-08): every post without a photo wears one.
 private struct SportPattern: View {
     let symbol: String
     let color: Color
