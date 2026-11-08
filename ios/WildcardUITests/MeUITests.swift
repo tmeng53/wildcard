@@ -286,3 +286,43 @@ final class MeUITests: XCTestCase {
         add(attachment)
     }
 }
+
+/// 意见反馈, apart from the class so its body stays short.
+extension MeUITests {
+    /// 意见反馈 is 关于's first row: write a problem, send it, see the check and go back to 设置.
+    func testFeedback() {
+        let app = launch(language: "zh-Hans")
+        let settingsButton = app.buttons["me.settings"]
+        XCTAssertTrue(settingsButton.waitForExistence(timeout: 30), "我 never showed")
+        settingsButton.tap()
+        let settings = app.descendants(matching: .any).matching(identifier: "settings.page").firstMatch
+        XCTAssertTrue(settings.waitForExistence(timeout: 30), "设置 never opened")
+        let row = app.buttons["me.feedback"]
+        if !row.isHittable { app.swipeUp() }
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "设置 has no 意见反馈")
+        row.tap()
+
+        let page = app.descendants(matching: .any).matching(identifier: "feedback.page").firstMatch
+        XCTAssertTrue(page.waitForExistence(timeout: 30), "意见反馈 never opened")
+        XCTAssertTrue(app.buttons["feedback.review"].exists, "写评价 is missing")
+        XCTAssertFalse(app.buttons["feedback.send"].isEnabled, "发送 works with nothing written")
+        settle()
+        keepScreenshot(named: "95-feedback")
+
+        let text = app.textViews["feedback.text"]
+        text.tap()
+        text.typeText("照片一直在转圈")
+        XCTAssertTrue(app.buttons["feedback.send"].isEnabled, "发送 doesn't work once something is written")
+        app.buttons["feedback.idea"].tap()
+        settle()
+        keepScreenshot(named: "96-feedback-written")
+
+        app.buttons["feedback.send"].tap()
+        let sent = app.descendants(matching: .any).matching(identifier: "feedback.sent").firstMatch
+        XCTAssertTrue(sent.waitForExistence(timeout: 30), "sending never said thanks")
+        XCTAssertTrue(app.staticTexts["谢谢你的反馈"].waitForExistence(timeout: 5))
+        settle()
+        keepScreenshot(named: "97-feedback-sent")
+        XCTAssertTrue(settings.waitForExistence(timeout: 30), "the page didn't go back to 设置 by itself")
+    }
+}
