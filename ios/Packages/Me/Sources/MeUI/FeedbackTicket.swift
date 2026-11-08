@@ -6,8 +6,8 @@ import MeDomain
 import SwiftUI
 import UIKit
 
-/// 意见反馈's ticket, as the character editor's: the words above the tear line, with a notch cut
-/// on either side, and the screenshots and the W on the stub under it.
+/// 意见反馈's ticket, on the shared `TicketCard`: the words above the tear line, and the
+/// screenshots and the W stamp on the stub under it.
 struct FeedbackTicket: View {
     @Bindable var model: FeedbackModel
     var isWriting: FocusState<Bool>.Binding
@@ -17,10 +17,12 @@ struct FeedbackTicket: View {
 
     /// Where `TextEditor` starts its first line inside its frame, which the placeholder matches.
     private static let editorInset = (top: 8.0, leading: 5.0)
+    /// The face's height: the editor and the count under it.
+    private static let faceHeight = 132.0
 
     /// The words above the tear line, the screenshots on the stub under it.
     var body: some View {
-        VStack(spacing: 0) {
+        TicketCard {
             VStack(spacing: Space.xxs) {
                 TextEditor(text: $model.text)
                     .typeStyle(TypeRamp.body)
@@ -47,40 +49,15 @@ struct FeedbackTicket: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .accessibilityHidden(true)
             }
-            .padding(.horizontal, Space.m - 4)
-            .padding(.top, Space.s)
-            .padding(.bottom, Space.s)
-            .frame(height: 148)
-            tearLine
+            .frame(height: Self.faceHeight)
+        } stub: {
             stub
         }
-        .background(
-            Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
     }
 
     private var placeholder: Text {
         model.kind == .problem
             ? Text("哪里出问题了？", bundle: .module) : Text("你的建议", bundle: .module)
-    }
-
-    /// The perforation, with a notch cut on either side in the page's colour.
-    private var tearLine: some View {
-        ZStack {
-            Line()
-                .stroke(
-                    Color(role: .fgDefault, in: theme).opacity(0.18),
-                    style: StrokeStyle(lineWidth: 1.5, dash: [4, 4])
-                )
-                .frame(height: 1.5)
-                .padding(.horizontal, Space.m + 2)
-            HStack {
-                Circle().fill(Color(role: .bgCanvas, in: theme)).frame(width: 22, height: 22).offset(x: -11)
-                Spacer()
-                Circle().fill(Color(role: .bgCanvas, in: theme)).frame(width: 22, height: 22).offset(x: 11)
-            }
-        }
-        .frame(height: 22)
-        .accessibilityHidden(true)
     }
 
     private var stub: some View {
@@ -111,19 +88,13 @@ struct FeedbackTicket: View {
             }
             Spacer(minLength: 0)
             VStack(alignment: .trailing, spacing: Space.xs - 2) {
-                Text(verbatim: "W")
-                    .typeStyle(TypeRamp.scoreWeek)
-                    .foregroundStyle(Color(role: .bgBrand, in: theme))
-                    .accessibilityHidden(true)
+                TicketStamp()
                 Text("截图最多 3 张", bundle: .module)
                     .typeStyle(TypeRamp.caption)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .multilineTextAlignment(.trailing)
             }
         }
-        .padding(.horizontal, Space.m)
-        .padding(.top, Space.s + 2)
-        .padding(.bottom, Space.m)
     }
 }
 
@@ -163,16 +134,6 @@ private struct Thumbnail: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("截图", bundle: .module))
-    }
-}
-
-/// A straight line across its frame, for the dashed tear line.
-private struct Line: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.midY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
-        return path
     }
 }
 #endif
