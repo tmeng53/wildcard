@@ -204,8 +204,8 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
 /// a ride 距离 · 均速 · 平均心率, a pool swim 趟数 · 距离 · 平均心率, an open-water swim 距离 · 配速
 /// /100 米 · 平均心率, a ski or snowboard day 趟数 · 落差 · 最高速 (worked out from its route, else as
 /// other kinds), cross-country skiing, rowing, paddling and skating 距离 · 均速 · 平均心率, a
-/// triathlon 距离 · 平均心率 · 最高心率, yoga and the like 平均心率 · 费力, everything else 平均心率 ·
-/// 最高心率 · 费力.
+/// triathlon 距离 · 平均心率 · 最高心率, yoga and the like 平均心率 · 强度, everything else 平均心率 ·
+/// 最高心率 · 强度.
 private enum WorkoutKind: Equatable {
     case onFoot, hike, ride, poolSwim, openWaterSwim, slope, glide, triathlon, calm, other
 

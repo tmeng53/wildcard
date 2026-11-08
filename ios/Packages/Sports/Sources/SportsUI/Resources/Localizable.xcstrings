@@ -297,7 +297,7 @@
         }
       }
     },
-    "费力": {
+    "强度": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -308,7 +308,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "費力"
+            "value": "強度"
           }
         }
       }
