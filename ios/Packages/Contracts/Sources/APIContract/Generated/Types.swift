@@ -203,7 +203,7 @@ public protocol APIProtocol: Sendable {
     func getSquad(_ input: Operations.GetSquad.Input) async throws -> Operations.GetSquad.Output
     /// Create a squad
     ///
-    /// With a name and, optionally, its weekly goal; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    /// With a name and, optionally, its weekly goal and time zone; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
@@ -259,7 +259,7 @@ public protocol APIProtocol: Sendable {
     func getSquadToday(_ input: Operations.GetSquadToday.Input) async throws -> Operations.GetSquadToday.Output
     /// A squad’s scene this week, and who picks it
     ///
-    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
+    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm on the squad’s clock (小队时区) when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/scene`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/scene/get(getSquadScene)`.
@@ -313,6 +313,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/weekly-goal`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weekly-goal/put(setSquadWeeklyGoal)`.
     func setSquadWeeklyGoal(_ input: Operations.SetSquadWeeklyGoal.Input) async throws -> Operations.SetSquadWeeklyGoal.Output
+    /// The squad’s time zone
+    ///
+    /// For its members, in the squad’s week on its own clock.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/time-zone`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/get(getSquadTimeZone)`.
+    func getSquadTimeZone(_ input: Operations.GetSquadTimeZone.Input) async throws -> Operations.GetSquadTimeZone.Output
+    /// Set the squad’s time zone
+    ///
+    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
+    func setSquadTimeZone(_ input: Operations.SetSquadTimeZone.Input) async throws -> Operations.SetSquadTimeZone.Output
     /// Put the caller’s morning note away (收下)
     ///
     /// The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.
@@ -420,7 +434,7 @@ public protocol APIProtocol: Sendable {
     func nudgeSquadWeekStory(_ input: Operations.NudgeSquadWeekStory.Input) async throws -> Operations.NudgeSquadWeekStory.Output
     /// A squad’s weekly 战报 (每周战报), frozen at the week’s awards
     ///
-    /// Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
+    /// Frozen once for the whole squad on Sunday at 8pm on the squad’s clock (小队时区): who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
@@ -862,7 +876,7 @@ extension APIProtocol {
     }
     /// Create a squad
     ///
-    /// With a name and, optionally, its weekly goal; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    /// With a name and, optionally, its weekly goal and time zone; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
@@ -988,7 +1002,7 @@ extension APIProtocol {
     }
     /// A squad’s scene this week, and who picks it
     ///
-    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
+    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm on the squad’s clock (小队时区) when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/scene`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/scene/get(getSquadScene)`.
@@ -1101,6 +1115,38 @@ extension APIProtocol {
         body: Operations.SetSquadWeeklyGoal.Input.Body
     ) async throws -> Operations.SetSquadWeeklyGoal.Output {
         try await setSquadWeeklyGoal(Operations.SetSquadWeeklyGoal.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The squad’s time zone
+    ///
+    /// For its members, in the squad’s week on its own clock.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/time-zone`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/get(getSquadTimeZone)`.
+    public func getSquadTimeZone(
+        path: Operations.GetSquadTimeZone.Input.Path,
+        headers: Operations.GetSquadTimeZone.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadTimeZone.Output {
+        try await getSquadTimeZone(Operations.GetSquadTimeZone.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Set the squad’s time zone
+    ///
+    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
+    public func setSquadTimeZone(
+        path: Operations.SetSquadTimeZone.Input.Path,
+        headers: Operations.SetSquadTimeZone.Input.Headers = .init(),
+        body: Operations.SetSquadTimeZone.Input.Body
+    ) async throws -> Operations.SetSquadTimeZone.Output {
+        try await setSquadTimeZone(Operations.SetSquadTimeZone.Input(
             path: path,
             headers: headers,
             body: body
@@ -1331,7 +1377,7 @@ extension APIProtocol {
     }
     /// A squad’s weekly 战报 (每周战报), frozen at the week’s awards
     ///
-    /// Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
+    /// Frozen once for the whole squad on Sunday at 8pm on the squad’s clock (小队时区): who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.

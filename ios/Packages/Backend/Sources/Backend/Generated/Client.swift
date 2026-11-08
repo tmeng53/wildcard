@@ -4318,7 +4318,7 @@ internal struct Client: APIProtocol {
     }
     /// Create a squad
     ///
-    /// With a name and, optionally, its weekly goal; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    /// With a name and, optionally, its weekly goal and time zone; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
@@ -5624,7 +5624,7 @@ internal struct Client: APIProtocol {
     }
     /// A squad’s scene this week, and who picks it
     ///
-    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
+    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm on the squad’s clock (小队时区) when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/scene`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/scene/get(getSquadScene)`.
@@ -6921,6 +6921,341 @@ internal struct Client: APIProtocol {
                 case 503:
                     let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
                     let body: Operations.SetSquadWeeklyGoal.Output.ServiceUnavailable.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .serviceUnavailable(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// The squad’s time zone
+    ///
+    /// For its members, in the squad’s week on its own clock.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/time-zone`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/get(getSquadTimeZone)`.
+    internal func getSquadTimeZone(_ input: Operations.GetSquadTimeZone.Input) async throws -> Operations.GetSquadTimeZone.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.GetSquadTimeZone.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/squads/{}/time-zone",
+                    parameters: [
+                        input.path.squadId
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .get
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                return (request, nil)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.GetSquadTimeZone.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.SquadTimeZone.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                case 400:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.GetSquadTimeZone.Output.BadRequest.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .badRequest(.init(body: body))
+                case 401:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.GetSquadTimeZone.Output.Unauthorized.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .unauthorized(.init(body: body))
+                case 403:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.GetSquadTimeZone.Output.Forbidden.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .forbidden(.init(body: body))
+                case 503:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.GetSquadTimeZone.Output.ServiceUnavailable.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .serviceUnavailable(.init(body: body))
+                default:
+                    return .undocumented(
+                        statusCode: response.status.code,
+                        .init(
+                            headerFields: response.headerFields,
+                            body: responseBody
+                        )
+                    )
+                }
+            }
+        )
+    }
+    /// Set the squad’s time zone
+    ///
+    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
+    internal func setSquadTimeZone(_ input: Operations.SetSquadTimeZone.Input) async throws -> Operations.SetSquadTimeZone.Output {
+        try await client.send(
+            input: input,
+            forOperation: Operations.SetSquadTimeZone.id,
+            serializer: { input in
+                let path = try converter.renderedPath(
+                    template: "/squads/{}/time-zone",
+                    parameters: [
+                        input.path.squadId
+                    ]
+                )
+                var request: HTTPTypes.HTTPRequest = .init(
+                    soar_path: path,
+                    method: .put
+                )
+                suppressMutabilityWarning(&request)
+                converter.setAcceptHeader(
+                    in: &request.headerFields,
+                    contentTypes: input.headers.accept
+                )
+                let body: OpenAPIRuntime.HTTPBody?
+                switch input.body {
+                case let .json(value):
+                    body = try converter.setRequiredRequestBodyAsJSON(
+                        value,
+                        headerFields: &request.headerFields,
+                        contentType: "application/json; charset=utf-8"
+                    )
+                }
+                return (request, body)
+            },
+            deserializer: { response, responseBody in
+                switch response.status.code {
+                case 200:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SetSquadTimeZone.Output.Ok.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.SquadTimeZone.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .json(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .ok(.init(body: body))
+                case 400:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SetSquadTimeZone.Output.BadRequest.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .badRequest(.init(body: body))
+                case 401:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SetSquadTimeZone.Output.Unauthorized.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .unauthorized(.init(body: body))
+                case 403:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SetSquadTimeZone.Output.Forbidden.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .forbidden(.init(body: body))
+                case 415:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SetSquadTimeZone.Output.UnsupportedMediaType.Body
+                    let chosenContentType = try converter.bestContentType(
+                        received: contentType,
+                        options: [
+                            "application/problem+json"
+                        ]
+                    )
+                    switch chosenContentType {
+                    case "application/problem+json":
+                        body = try await converter.getResponseBodyAsJSON(
+                            Components.Schemas.Problem.self,
+                            from: responseBody,
+                            transforming: { value in
+                                .applicationProblemJson(value)
+                            }
+                        )
+                    default:
+                        preconditionFailure("bestContentType chose an invalid content type.")
+                    }
+                    return .unsupportedMediaType(.init(body: body))
+                case 503:
+                    let contentType = converter.extractContentTypeIfPresent(in: response.headerFields)
+                    let body: Operations.SetSquadTimeZone.Output.ServiceUnavailable.Body
                     let chosenContentType = try converter.bestContentType(
                         received: contentType,
                         options: [
@@ -9309,7 +9644,7 @@ internal struct Client: APIProtocol {
     }
     /// A squad’s weekly 战报 (每周战报), frozen at the week’s awards
     ///
-    /// Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
+    /// Frozen once for the whole squad on Sunday at 8pm on the squad’s clock (小队时区): who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.

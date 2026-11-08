@@ -35,11 +35,13 @@ public struct APISignUpService: SignUpService {
         try await joined(try await signUp { () throws(APIError) in try await api.join(code) })
     }
 
-    public func create(named name: SquadName, daysPerMember: Int) async throws(SignUpError) -> JoinedSquad {
+    public func create(
+        named name: SquadName, daysPerMember: Int, timeZone: String
+    ) async throws(SignUpError) -> JoinedSquad {
         let id = SquadID(newID())
         return try await joined(
             try await signUp { () throws(APIError) in
-                try await api.createSquad(id, named: name, daysPerMember: daysPerMember)
+                try await api.createSquad(id, named: name, daysPerMember: daysPerMember, timeZone: timeZone)
             })
     }
 
