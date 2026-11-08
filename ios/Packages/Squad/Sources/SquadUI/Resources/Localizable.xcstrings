@@ -700,7 +700,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "解雇"
+            "value": "解僱"
           }
         }
       }
@@ -888,7 +888,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "解雇%@"
+            "value": "解僱%@"
           }
         }
       }
@@ -936,7 +936,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "先不解雇"
+            "value": "先不解僱"
           }
         }
       }
@@ -952,7 +952,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "確認解雇"
+            "value": "確認解僱"
           }
         }
       }

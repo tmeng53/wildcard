@@ -56,6 +56,12 @@
             "state": "translated",
             "value": "Page loading: two tickets"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "整頁載入：兩張票"
+          }
         }
       }
     },

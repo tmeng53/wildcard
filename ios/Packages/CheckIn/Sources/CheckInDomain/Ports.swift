@@ -42,6 +42,9 @@ public protocol CheckInBackend: Sendable {
     func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote]
     /// The member put the note away (收下): none of their phones shows it again. Safe to repeat.
     func putAway(_ note: CoachMemberNote) async throws(CheckInError)
+    /// The newest note the member put away on this phone, kept on the device, so its coach's card
+    /// can open it again; nil before any.
+    func openedNote() async -> CoachMemberNote?
 }
 
 /// Check-ins waiting to go out, kept on the device so a post made offline survives the app

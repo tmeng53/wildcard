@@ -44,6 +44,9 @@ struct SquadSceneView: View {
     var arrival: TodayModel.Arrival?
     /// I tapped the coach on the sideline: its 简历 opens.
     var tapCoach: () -> Void = {}
+    /// Whether the coach's note waits unread (its phone shows it), and where it stands on screen.
+    var coachHasNote = false
+    var coachAt: (CGPoint) -> Void = { _ in }
 
     /// The pull whose wake-up (or doze) has played out, after which the scene stops redrawing
     /// for it under Reduce Motion.
@@ -144,13 +147,12 @@ struct SquadSceneView: View {
                 if let coach = cast.coach, case let fall = coachFall(at: timeline.date), fall >= 0 {
                     SidelineCoachFigure(
                         coach: coach, unit: unit, date: timeline.date, reduceMotion: reduceMotion,
-                        lift: DropIn.lift(at: fall, spotY: coach.spot.y, clipLift: 0)
+                        lift: DropIn.lift(at: fall, spotY: coach.spot.y, clipLift: 0), hasNote: coachHasNote
                     )
-                    .onTapGesture(perform: tapCoach)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(Text(verbatim: coach.speaker.name))
-                    .accessibilityIdentifier("today.coach")
-                    .accessibilityAddTraits(.isButton)
+                    .modifier(
+                        SidelineCoachButton(
+                            name: coach.speaker.name, hasNote: coachHasNote, tap: tapCoach, standsAt: coachAt)
+                    )
                     .zIndex(coach.spot.y)
                 }
                 ForEach(Array(Stage.fronts(of: theme).enumerated()), id: \.offset) { index, depth in

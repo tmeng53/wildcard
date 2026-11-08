@@ -25,7 +25,7 @@ final class NoticeBellUITests: XCTestCase {
         XCTAssertTrue(comment.label.contains("Coco 评论了你：这组深蹲太稳了"), "the comment row says \(comment.label)")
         let moved = app.buttons["notices.row.7"]
         XCTAssertTrue(moved.label.contains("阿杰 把小队搬到了跑道"), "the scene row says \(moved.label)")
-        XCTAssertTrue(app.buttons["notices.row.6"].label.contains("教练 毛头 回复了你的打卡"))
+        XCTAssertTrue(app.buttons["notices.row.6"].label.contains("教练 毛头 回复了你的动态"))
         // The 6pm push: the squad's week on top, who patted under it, as the approved design shows.
         let daily = app.buttons["notices.row.5"].label
         XCTAssertTrue(daily.hasPrefix("本周小队已练 9/16 天"), "the 6pm row says \(daily)")

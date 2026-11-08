@@ -26,6 +26,7 @@ import type {
   CoachCatalogStore,
   CoachHiringStore,
   CoachMemberFacts,
+  CoachMemes,
   CoachOccasions,
   CoachPhotoUrls,
   CoachSettingsStore,
@@ -122,12 +123,19 @@ export interface CoachWakesDependencies {
     squads: readonly SquadId[],
     moment: Date,
   ) => Promise<ReadonlyMap<string, string>>;
+  /** Without it the coach has no meme library to draw humour from. */
+  readonly memes?: CoachMemes;
   /** Without it the coach is told of no holiday or other moment. */
   readonly occasions?: CoachOccasions;
   /** Told each reply to a check-in once it is saved; the server tells its author. */
   readonly replied?: CoachReplied;
   /** Told each answer to a member's reply once it is saved; the server tells that member. */
   readonly answered?: CoachAnswered;
+  /**
+   * Of these members, the ones who keep the coach's messages on: only they get a morning note.
+   * Without it every member who agreed to AI use gets one.
+   */
+  readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
 }
 
 /** An answer the coach just saved to a member's reply to it. */
@@ -351,8 +359,14 @@ async function runWake(
       draft.changed.add(SEEDED);
     }
     const daily = wake.reason.kind === 'daily';
-    // Who the daily wake writes a morning note to: every member who agreed to AI use.
-    const noteTo = daily ? await deps.aiConsented(week.members.map(({ member }) => member)) : [];
+    // Who the daily wake writes a morning note to: every member who agreed to AI use and keeps
+    // the coach's messages on (Tracy, 2026-11-07: switched off, the note stops altogether).
+    const noteTo = daily
+      ? await noteReaders(
+          deps,
+          week.members.map(({ member }) => member),
+        )
+      : [];
     const files = new Map(
       shownPaths(roster).map((path) => {
         const at = storedPathOf(path, roster);
@@ -408,6 +422,7 @@ async function runWake(
         kind: wake.reason.kind,
         ...photosOf(deps.photoUrls, { week, wake }),
         ...factsFor(deps, { week, roster }),
+        ...(deps.memes === undefined ? {} : { memes: deps.memes }),
         noteTo,
         pastWeek: async (weeksAgo) =>
           weekText(
@@ -731,4 +746,13 @@ async function threadOf(
     thread: { ...(reply === undefined ? {} : { reply }), said },
     commenter: answering.member,
   };
+}
+
+/** The members a daily wake writes a morning note to. */
+async function noteReaders(
+  deps: Pick<CoachWakesDependencies, 'aiConsented' | 'wantNotes'>,
+  members: readonly string[],
+): Promise<readonly string[]> {
+  const consented = await deps.aiConsented(members);
+  return deps.wantNotes === undefined ? consented : await deps.wantNotes(consented);
 }

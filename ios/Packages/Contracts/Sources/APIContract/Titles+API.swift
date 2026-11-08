@@ -1,11 +1,11 @@
 import Contracts
 
-// 头衔徽章 as the API sends them: the badge's shape, colour and glyph pass through as text, a shape
-// this build doesn't draw becoming a circle.
+// 头衔徽章 as the API sends them: the badge's shape, colour, tone and glyph pass through as text, a
+// shape this build doesn't draw becoming a circle.
 
 extension TitleBadge {
     public init(_ wire: Components.Schemas.TitleBadge) {
-        self.init(shape: wire.shape, colour: wire.colour, glyph: wire.glyph)
+        self.init(shape: wire.shape, colour: wire.colour, tone: wire.tone, glyph: wire.glyph)
     }
 }
 

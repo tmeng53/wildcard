@@ -171,7 +171,7 @@ struct MainTabs: View {
         .celebrationPopup(today)
         .onChange(of: homeInFront, initial: true) { today.isHomeInFront = $1 }
         .cardPopup(isPresented: $showsCoachCard) {
-            CoachCardPopup(note: today.coachLine, squad: squad) { opensFeed in
+            CoachCardPopup(today: today, squad: squad) { opensFeed in
                 showsCoachCard = false
                 if opensFeed { selection = .feed }
             }

@@ -389,6 +389,39 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     expect(afterDelete.body).toMatchObject({ replies: [], answers: [] });
   });
 
+  it('gives the caller its morning note only while its coach switch is on', async () => {
+    const captain = await signUp();
+    const squad = await squadOf(captain);
+    const hired = await call({
+      method: 'PUT',
+      path: `/squads/${squad}/coach`,
+      token: captain.token,
+      body: { version: 1, coach: 'xiaohun' },
+    });
+    expect(hired.status).toBe(201);
+    const written = await sql<{ id: string }>`
+      insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text)
+      values (${squad}, ${captain.userId}, 'xiaohun', current_date, '今天慢慢跑')
+      returning id`.execute(db);
+    const id = written.rows[0]?.id;
+    await sql`insert into public.coach_member_note_deliveries (note_id) values (${id})`.execute(db);
+    const path = `/squads/${squad}/coach/activity`;
+    expect((await call({ method: 'GET', path, token: captain.token })).body).toMatchObject({
+      memberNote: { text: '今天慢慢跑' },
+    });
+
+    const off = await call({
+      method: 'PUT',
+      path: '/me/push-settings',
+      token: captain.token,
+      body: { version: 1, settings: { dailyProgress: true, coach: false } },
+    });
+    expect(off.status).toBe(200);
+    const quiet = await call({ method: 'GET', path, token: captain.token });
+    expect(quiet.status).toBe(200);
+    expect(quiet.body).not.toHaveProperty('memberNote');
+  });
+
   it('refuses anyone outside the squad, and check-in ids that aren’t', async () => {
     const [captain, stranger] = [await signUp(), await signUp()];
     const squad = await squadOf(captain);

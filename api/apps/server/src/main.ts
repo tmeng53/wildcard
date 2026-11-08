@@ -72,6 +72,7 @@ import {
   createPostgresDeviceStore,
   createPostgresSettingsStore,
   createPush,
+  MemberId as PushMember,
 } from '@wildcard/push';
 import {
   SquadId as SquadsSquad,
@@ -240,6 +241,8 @@ const aiConsent = createAiConsent({
   clock: () => new Date(),
 });
 const hasAiConsent = (member: string) => aiConsent.hasCurrent(ConsentMember.parse(member));
+// The sports list every picker shows, kept in the database.
+const sports = createSports({ store: createPostgresSportStore(db) });
 const awards = createWeeklyAwards({
   model: awardsModel,
   settings: createPostgresAwardSettings(db),
@@ -254,6 +257,13 @@ const awards = createWeeklyAwards({
       meaning,
       background,
     })),
+  // Every offered sport's icon, so a title's badge can wear the sport it is about.
+  sportGlyphs: async () =>
+    (await sports.catalog()).categories.flatMap(({ sports: listed }) =>
+      listed
+        .filter(({ offered }) => offered)
+        .map(({ icon, names }) => ({ id: icon, meaning: `${names.zhHans}（运动）` })),
+    ),
 });
 // The scheduler that starts jobs: Cloud Scheduler's signed token on the hosted server, a shared
 // token on a local one.
@@ -275,8 +285,6 @@ const squads = createSquads({
   inviteCodes: randomInviteCodes,
   aiConsent: hasAiConsent,
 });
-// The sports list every picker shows, kept in the database.
-const sports = createSports({ store: createPostgresSportStore(db) });
 // Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
 const switches = switchesOn(db);
@@ -439,6 +447,29 @@ const coachWakes =
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
+        // Only members who keep the coach's messages on get a morning note (Tracy, 2026-11-07).
+        wantNotes: async (members) => {
+          // A switch that can't be read counts as off for that member only.
+          const on = await Promise.all(
+            members.map((member) =>
+              push
+                .settingsOf(PushMember.parse(member))
+                .then((settings) => settings.coach)
+                .catch((error: unknown) => {
+                  log.warn('coach switch not read', { member, error });
+                  return false;
+                }),
+            ),
+          );
+          return members.filter((_, index) => on[index] === true);
+        },
+        // The coach may draw humour from the same meme library as the 请假条 drafts and awards.
+        memes: async () =>
+          (await memes.listInUse()).map(({ phrase, meaning, background }) => ({
+            phrase,
+            meaning,
+            background,
+          })),
         // OpenAI fetches a photo the coach asks to look at from a URL that lasts 10 minutes.
         photoUrls: async (paths) => {
           const parsed = paths.map((path) => PhotoPath.parse(path));

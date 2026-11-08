@@ -136,10 +136,10 @@ enum LaunchOptions {
     /// `-squad-seat winner`: who the member is on the in-memory squad's 小队设置 (`captain`,
     /// `winner`, `member`, `noWinner`, `coached` for the captain of a squad with a coach,
     /// `coachedMember` for a mate in it); the captain by default, of a squad with a coach under
-    /// `-uitest-coach`, so the coach on the home opens its card.
+    /// `-uitest-coach` or `-uitest-coach-note`, so the coach on the home opens its card.
     static var squadSeat: InMemorySquadSettingsService.Seat {
         let arguments = ProcessInfo.processInfo.arguments
-        let fallback: InMemorySquadSettingsService.Seat = sidelineCoach ? .coached : .captain
+        let fallback: InMemorySquadSettingsService.Seat = sidelineCoach || coachNote ? .coached : .captain
         guard let flag = arguments.firstIndex(of: "-squad-seat"), flag + 1 < arguments.count else { return fallback }
         return InMemorySquadSettingsService.Seat(rawValue: arguments[flag + 1]) ?? fallback
     }
@@ -238,8 +238,8 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-coach")
     }
 
-    /// `-uitest-coach-note`: 毛头 also left me today's morning note (便条), which 今天 shows on
-    /// opening until 收下.
+    /// `-uitest-coach-note`: 毛头 also left me today's morning note (便条), waiting for me to open
+    /// it from 毛头's phone, 通知 or its push.
     static var coachNote: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitest-coach-note")
     }

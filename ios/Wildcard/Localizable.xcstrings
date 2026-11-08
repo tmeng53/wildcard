@@ -368,6 +368,22 @@
           }
         }
       }
+    },
+    "今天给你的消息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's message for you"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天給你的訊息"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

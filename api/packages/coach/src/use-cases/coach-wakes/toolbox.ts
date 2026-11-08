@@ -5,7 +5,7 @@ import { NOTE_LIMIT } from '../../domain/prompt.js';
 import { CoachEmoji, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
 import { weekText, type SquadWeek } from '../../domain/squad-week.js';
 import type { WakeReason, WakeStep } from '../../domain/wake.js';
-import type { CoachTool, ToolAnswer } from '../../ports.js';
+import type { CoachMemes, CoachTool, ToolAnswer } from '../../ports.js';
 
 /** What a wake's tools change, kept in memory until the run ends and saved together then. */
 export interface WakeDraft {
@@ -77,6 +77,7 @@ export function toolbox({
   photos,
   facts,
   pastWeek,
+  memes,
   noteTo = [],
 }: {
   readonly week: SquadWeek;
@@ -89,6 +90,8 @@ export function toolbox({
   readonly facts?: () => Promise<string>;
   /** A week before this one, as the model reads it. */
   readonly pastWeek?: (weeksAgo: number) => Promise<string>;
+  /** The memes in use now, for humour. */
+  readonly memes?: CoachMemes;
   /** On a daily wake, the members the coach may write a morning note to, by id. */
   readonly noteTo?: readonly string[];
 }): CoachTool[] {
@@ -170,6 +173,31 @@ export function toolbox({
           } catch {
             return '数据现在查不到，先不提。';
           }
+        },
+      }),
+    );
+  }
+  if (memes !== undefined) {
+    tools.push(
+      defineTool(draft.steps, {
+        name: 'memes',
+        reads: true,
+        description:
+          '梗库：现在大家在玩的梗，每个的意思和来历。想找幽默灵感时看，合适才用，不硬套。',
+        parameters: z.object({}),
+        run: async () => {
+          let list: Awaited<ReturnType<CoachMemes>>;
+          try {
+            list = await memes();
+          } catch {
+            return '梗库现在查不到，先不用。';
+          }
+          if (list.length === 0) return '梗库现在是空的。';
+          return list
+            .map(
+              ({ phrase, meaning, background }) => `- 「${phrase}」：${meaning}（${background}）`,
+            )
+            .join('\n');
         },
       }),
     );

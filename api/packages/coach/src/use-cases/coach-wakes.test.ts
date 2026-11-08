@@ -31,6 +31,7 @@ import type {
   AgentRun,
   CoachAgent,
   CoachMemberFacts,
+  CoachMemes,
   CoachPhotoUrls,
   CoachTool,
 } from '../ports.js';
@@ -161,6 +162,8 @@ function wakes(
     answered,
     photoUrls,
     memberFacts,
+    wantNotes,
+    memes,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
@@ -170,6 +173,8 @@ function wakes(
     readonly answered?: CoachAnswered;
     readonly photoUrls?: CoachPhotoUrls;
     readonly memberFacts?: CoachMemberFacts;
+    readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
+    readonly memes?: CoachMemes;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -196,6 +201,8 @@ function wakes(
     ...(answered === undefined ? {} : { answered }),
     ...(photoUrls === undefined ? {} : { photoUrls }),
     ...(memberFacts === undefined ? {} : { memberFacts }),
+    ...(wantNotes === undefined ? {} : { wantNotes }),
+    ...(memes === undefined ? {} : { memes }),
   });
 }
 
@@ -247,6 +254,27 @@ describe('the coach', () => {
     }).run();
     expect(run).toStrictEqual({ coaching: false, squads: 0, queued: 0, done: 0, failed: 0 });
     expect(runs).toHaveLength(0);
+  });
+
+  it('writes no morning note to a member who switched the coach off', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => [
+        { tool: 'note_to', input: { member: '队员2', text: '今天走走' } },
+      ]);
+      const asked: (readonly string[])[] = [];
+      const wantNotes = (members: readonly string[]) => {
+        asked.push(members);
+        return Promise.resolve(members.filter((member) => member !== fixture.leo));
+      };
+
+      await wakes(fixture, { agent, wantNotes }).run();
+
+      const daily = runs.find(({ task }) => task.includes('新的一天'));
+      expect(asked).toStrictEqual([[fixture.mia, fixture.leo]]);
+      expect(daily?.task).toContain('今天给这些人各写一张便条：\n- 队员1：');
+      expect(daily?.task).not.toContain('- 队员2：这周');
+      expect(daily?.answers).toStrictEqual(['不能给 队员2 写便条；能写的是：队员1。']);
+    });
   });
 
   it('wakes for a check-in and for the day, keeps its memory and its line, and counts tokens', async () => {
@@ -1050,6 +1078,41 @@ describe('the coach', () => {
       expect(asked).toStrictEqual([{ members: [mia], weekStart: fixture.week.weekStart }]);
       expect(runs[0]?.answers[0]).toContain('一共练了 50 天');
       expect(runs[0]?.answers[1]).toContain(`本周从 ${earlier}（周一）开始。`);
+    });
+  });
+
+  it('reads the meme library only when it asks, and keeps the answer by its length', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      let reads = 0;
+      const memes: CoachMemes = () => {
+        reads += 1;
+        return Promise.resolve([
+          { phrase: '对自己很好', meaning: '照顾自己', background: '小红书上流行' },
+        ]);
+      };
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('有人打卡') ? [{ tool: 'memes', input: {} }] : [],
+      );
+      await wakes(fixture, { agent, memes }).checkedIn({ checkIn, squads: [squad] });
+      expect(reads).toBe(1);
+      expect(runs[0]?.tools).toContain('memes');
+      expect(runs[0]?.answers[0]).toBe('- 「对自己很好」：照顾自己（小红书上流行）');
+      const report = await createPostgresCoachReport(fixture.trx).squad(squad, now);
+      expect(report.wakes[0]?.steps[0]).toStrictEqual({
+        tool: 'memes',
+        input: {},
+        output: '（22 字）',
+      });
+    });
+  });
+
+  it('has no meme tool without the library', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent }).checkedIn({ checkIn, squads: [squad] });
+      expect(runs[0]?.tools).not.toContain('memes');
     });
   });
 
