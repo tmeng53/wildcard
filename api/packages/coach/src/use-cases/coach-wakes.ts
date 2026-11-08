@@ -481,7 +481,7 @@ async function runWake(
         openChallenge:
           challenge !== undefined &&
           challengeOpen(challenge) &&
-          postedOn(week, wake.reason, { day, zone }),
+          postedOn({ week, reason: wake.reason, day, zone }),
         ...photosOf(deps.photoUrls, { week, wake }),
         ...factsFor(deps, { week, roster }),
         ...(deps.memes === undefined ? {} : { memes: deps.memes }),
@@ -640,11 +640,17 @@ async function yesterdayOf(
 }
 
 /** Whether the check-in a wake is about was posted on `day`, on the squad's clock. */
-function postedOn(
-  week: SquadWeek,
-  reason: Wake['reason'],
-  { day, zone }: { readonly day: string; readonly zone: string },
-): boolean {
+function postedOn({
+  week,
+  reason,
+  day,
+  zone,
+}: {
+  readonly week: SquadWeek;
+  readonly reason: Wake['reason'];
+  readonly day: string;
+  readonly zone: string;
+}): boolean {
   if (reason.kind !== 'checkIn') return false;
   const posted = week.checkIns.find(({ id }) => id === reason.checkIn)?.createdAt;
   return posted !== undefined && wallClockAt(posted, zone).day === day;

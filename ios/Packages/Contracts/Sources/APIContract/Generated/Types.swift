@@ -348,9 +348,23 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/language`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/language/put(setSquadLanguage)`.
     func setSquadLanguage(_ input: Operations.SetSquadLanguage.Input) async throws -> Operations.SetSquadLanguage.Output
+    /// The caller’s challenge today (今日挑战)
+    ///
+    /// The day’s challenge the squad’s coach set the caller on today’s morning note (today on the squad’s clock), once the note reached them: what it is, what they said to it, and whether it is done, by them (我完成了) or by the coach from their check-ins. Only the caller sees it.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/challenge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/challenge/get(getCoachChallenge)`.
+    func getCoachChallenge(_ input: Operations.GetCoachChallenge.Input) async throws -> Operations.GetCoachChallenge.Output
+    /// Mark the challenge on the caller’s morning note done (我完成了)
+    ///
+    /// The caller did the day’s challenge their morning note sets. Only on its own day, on the squad’s clock, and not once they let it go (算了). The first completion stands, theirs or the coach’s, and is what comes back, so repeating it is safe.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge/completion`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/completion/put(completeCoachChallenge)`.
+    func completeCoachChallenge(_ input: Operations.CompleteCoachChallenge.Input) async throws -> Operations.CompleteCoachChallenge.Output
     /// Accept or decline the challenge on the caller’s morning note
     ///
-    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
@@ -369,6 +383,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.
     func getSquadCoachActivity(_ input: Operations.GetSquadCoachActivity.Input) async throws -> Operations.GetSquadCoachActivity.Output
+    /// What the squad’s coach said to the caller, as cards (the coach page)
+    ///
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts, and its lines to their check-ins and replies. The unseen ones from the last 72 hours are the stack; the rest are 以前.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
+    func getCoachCards(_ input: Operations.GetCoachCards.Input) async throws -> Operations.GetCoachCards.Output
+    /// Mark one of the coach’s cards seen (swiped into 以前)
+    ///
+    /// The caller swiped the card away: it leaves the stack on every phone and stays in 以前. A seen `note` is also put away (收下) on 今天. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/cards/{kind}/{cardId}/seen`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/{kind}/{cardId}/seen/put(markCoachCardSeen)`.
+    func markCoachCardSeen(_ input: Operations.MarkCoachCardSeen.Input) async throws -> Operations.MarkCoachCardSeen.Output
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -1248,9 +1276,41 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// The caller’s challenge today (今日挑战)
+    ///
+    /// The day’s challenge the squad’s coach set the caller on today’s morning note (today on the squad’s clock), once the note reached them: what it is, what they said to it, and whether it is done, by them (我完成了) or by the coach from their check-ins. Only the caller sees it.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/challenge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/challenge/get(getCoachChallenge)`.
+    public func getCoachChallenge(
+        path: Operations.GetCoachChallenge.Input.Path,
+        headers: Operations.GetCoachChallenge.Input.Headers = .init()
+    ) async throws -> Operations.GetCoachChallenge.Output {
+        try await getCoachChallenge(Operations.GetCoachChallenge.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Mark the challenge on the caller’s morning note done (我完成了)
+    ///
+    /// The caller did the day’s challenge their morning note sets. Only on its own day, on the squad’s clock, and not once they let it go (算了). The first completion stands, theirs or the coach’s, and is what comes back, so repeating it is safe.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge/completion`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/completion/put(completeCoachChallenge)`.
+    public func completeCoachChallenge(
+        path: Operations.CompleteCoachChallenge.Input.Path,
+        headers: Operations.CompleteCoachChallenge.Input.Headers = .init(),
+        body: Operations.CompleteCoachChallenge.Input.Body
+    ) async throws -> Operations.CompleteCoachChallenge.Output {
+        try await completeCoachChallenge(Operations.CompleteCoachChallenge.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
     /// Accept or decline the challenge on the caller’s morning note
     ///
-    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
@@ -1294,6 +1354,36 @@ extension APIProtocol {
         try await getSquadCoachActivity(Operations.GetSquadCoachActivity.Input(
             path: path,
             query: query,
+            headers: headers
+        ))
+    }
+    /// What the squad’s coach said to the caller, as cards (the coach page)
+    ///
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts, and its lines to their check-ins and replies. The unseen ones from the last 72 hours are the stack; the rest are 以前.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
+    public func getCoachCards(
+        path: Operations.GetCoachCards.Input.Path,
+        headers: Operations.GetCoachCards.Input.Headers = .init()
+    ) async throws -> Operations.GetCoachCards.Output {
+        try await getCoachCards(Operations.GetCoachCards.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Mark one of the coach’s cards seen (swiped into 以前)
+    ///
+    /// The caller swiped the card away: it leaves the stack on every phone and stays in 以前. A seen `note` is also put away (收下) on 今天. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/cards/{kind}/{cardId}/seen`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/{kind}/{cardId}/seen/put(markCoachCardSeen)`.
+    public func markCoachCardSeen(
+        path: Operations.MarkCoachCardSeen.Input.Path,
+        headers: Operations.MarkCoachCardSeen.Input.Headers = .init()
+    ) async throws -> Operations.MarkCoachCardSeen.Output {
+        try await markCoachCardSeen(Operations.MarkCoachCardSeen.Input(
+            path: path,
             headers: headers
         ))
     }
