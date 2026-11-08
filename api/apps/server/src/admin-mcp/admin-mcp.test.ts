@@ -806,6 +806,15 @@ describe('the admin MCP server', () => {
       expect((await call('edit_coach_files', { squad, path: 'notes.md', body: 'x' })).isError).toBe(
         true,
       );
+      expect(
+        await call('edit_coach_files', { squad: randomUUID(), path: 'memory.md', body: 'x' }),
+      ).toMatchObject({ isError: true, text: 'COACH_SQUAD_NOT_FOUND: No such squad.' });
+      expect(
+        await call('edit_coach_files', { squad, path: `people/${randomUUID()}.md`, body: 'x' }),
+      ).toMatchObject({
+        isError: true,
+        text: 'COACH_FILE_MEMBER_NOT_FOUND: No member with that id: a page is people/<member id>.md.',
+      });
 
       const renamed = await call('put_coach', { ...edit, catchphrase: '先练再说' });
       expect(JSON.parse(renamed.text)).toStrictEqual({ ...xiaohun, catchphrase: '先练再说' });

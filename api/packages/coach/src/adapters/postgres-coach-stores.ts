@@ -1,10 +1,12 @@
 import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely } from 'kysely';
+import { z } from 'zod';
 
 import { CoachId } from '../domain/coach.js';
 import { CoachEmoji } from '../domain/reply.js';
 import { memberOfPath } from '../domain/memory.js';
 import { SquadId } from '../domain/settings.js';
+import { CoachFileMemberNotFoundError, CoachSquadNotFoundError } from '../errors.js';
 import type { NewWake, Wake } from '../domain/wake.js';
 import type {
   CoachActivityStore,
@@ -227,26 +229,9 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
 
       async save({ squad, wake, files }) {
         if (files.length === 0) return;
-        await db
-          .insertInto('coach_files')
-          .values(
-            files.map(({ path, body }) => ({
-              squad_id: squad,
-              path,
-              member_id: memberOfPath(path) ?? null,
-              body,
-              // Null for an admin's edit, or when the wake has gone meanwhile (its check-in was
-              // deleted).
-              wake_id:
-                wake === undefined
-                  ? null
-                  : db.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
-            })),
-          )
-          .execute();
+        await saveFiles(db, { squad, wake, files });
       },
     },
-
     notes: {
       async save({ squad, coach, day, text, wake }) {
         const saved = await db
@@ -712,3 +697,49 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
     },
   };
 }
+
+/**
+ * Saves new versions of a squad's files. A squad or member page's member that doesn't exist (an
+ * admin's typo) is told by name.
+ */
+async function saveFiles(
+  db: Kysely<DB>,
+  {
+    squad,
+    wake,
+    files,
+  }: {
+    readonly squad: string;
+    readonly wake: number | undefined;
+    readonly files: readonly { readonly path: string; readonly body: string }[];
+  },
+): Promise<void> {
+  try {
+    await db
+      .insertInto('coach_files')
+      .values(
+        files.map(({ path, body }) => ({
+          squad_id: squad,
+          path,
+          member_id: memberOfPath(path) ?? null,
+          body,
+          // Null for an admin's edit, or when the wake has gone meanwhile (its check-in was
+          // deleted).
+          wake_id:
+            wake === undefined
+              ? null
+              : db.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
+        })),
+      )
+      .execute();
+  } catch (error) {
+    if (hasErrorCode(error, FOREIGN_KEY_VIOLATION)) {
+      const constraint = z.object({ constraint: z.string() }).safeParse(error).data?.constraint;
+      if (constraint === 'coach_files_squad_id_fkey') throw new CoachSquadNotFoundError();
+      if (constraint === 'coach_files_member_id_fkey') throw new CoachFileMemberNotFoundError();
+    }
+    throw error;
+  }
+}
+
+const FOREIGN_KEY_VIOLATION = '23503';

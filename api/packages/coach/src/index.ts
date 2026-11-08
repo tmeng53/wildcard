@@ -57,6 +57,7 @@ export type {
 } from './ports.js';
 export {
   CoachAlreadyHiredError,
+  CoachFileMemberNotFoundError,
   CoachNotOfferedError,
   CoachNoteNotFoundError,
   CoachSquadNotFoundError,
