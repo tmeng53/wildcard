@@ -12,8 +12,8 @@ import {
   createDisclaimerDrafts,
   createPostgresDraftAllowance,
   createPostgresDraftSettings,
-  type LanguageModel,
 } from '@wildcard/disclaimer-drafts';
+import type { LanguageModel } from '@wildcard/language-model';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';

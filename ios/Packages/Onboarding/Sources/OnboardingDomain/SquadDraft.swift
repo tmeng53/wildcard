@@ -17,12 +17,18 @@ public struct SquadDraft: Hashable, Sendable {
     /// changes it later on 小队.
     public var daysPerMember = SquadWeeklyGoal.defaultDaysPerMember
 
+    /// 比赛时区 for a squad being made, an IANA name: the clock its 战报 freezes on, Sunday 8pm,
+    /// and its coach's daily 战术板 keeps. Each member's own day keeps their phone's.
+    public var timeZone: String
+
     /// `invite`: the code an invite link carried, if sign-up opened from one. `suggestedName`:
-    /// what 建一个小队 starts from, such as 「Tracy 的小队」.
-    public init(invite: InviteCode?, suggestedName: String) {
+    /// what 建一个小队 starts from, such as 「Tracy 的小队」. `timeZone`: the phone's, which a new
+    /// squad keeps unless the creator picks another.
+    public init(invite: InviteCode?, suggestedName: String, timeZone: String) {
         choice = invite == nil ? .create : .join
         typedCode = invite?.text ?? ""
         typedName = suggestedName
+        self.timeZone = timeZone
     }
 
     /// The code once it is a whole one, to look up.

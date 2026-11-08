@@ -9,6 +9,7 @@
   "exclude": ["src/**/*.test.ts"],
   "references": [
     { "path": "../errors" },
+    { "path": "../language-model" },
     { "path": "../disclaimer-styles" },
     { "path": "../typed-text" }
   ]

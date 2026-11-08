@@ -1,3 +1,4 @@
+import type { LanguageModel } from '@wildcard/language-model';
 import {
   endingWordsOf,
   modelReplyFor,
@@ -9,6 +10,7 @@ import {
   type SquadId,
   type Title,
 } from '../../domain/awards.js';
+import { withSportGlyphs, type BadgeCatalog } from '../../domain/badges.js';
 import { promptFor, type PromptMeme } from '../../domain/prompt.js';
 import type { WeekStart } from '../../domain/schedule.js';
 import { offeredMoves, type AwardSettings } from '../../domain/settings.js';
@@ -17,8 +19,8 @@ import type {
   AiConsented,
   AwardSettingsStore,
   AwardsStore,
-  LanguageModel,
   MemesInUse,
+  SportGlyphs,
 } from '../../ports.js';
 
 /** Calls to the model per run: one more when the first answer fails the checks. */
@@ -54,6 +56,7 @@ export async function giveAwards(
     readonly store: AwardsStore;
     readonly aiConsented: AiConsented;
     readonly memes: MemesInUse;
+    readonly sportGlyphs: SportGlyphs;
   },
   { squad, weekStart, members, ending }: GiveAwardsInput,
 ): Promise<Awards> {
@@ -82,8 +85,10 @@ export async function giveAwards(
   let words: EndingWords | undefined;
   if (winners.length > 0) {
     try {
+      const settings = await deps.settings.current();
       ({ titles, words } = await writeTitles(deps.model, {
-        settings: await deps.settings.current(),
+        settings,
+        badges: withSportGlyphs(settings.badges, await deps.sportGlyphs()),
         memes: await deps.memes(),
         weekStart,
         winners,
@@ -146,12 +151,15 @@ async function writeTitles(
   model: LanguageModel,
   {
     settings,
+    badges,
     memes,
     weekStart,
     winners,
     ending,
   }: {
     readonly settings: AwardSettings;
+    /** The settings' badge catalog with the sports' icons among its glyphs. */
+    readonly badges: BadgeCatalog;
     readonly memes: readonly PromptMeme[];
     readonly weekStart: WeekStart;
     readonly winners: readonly MemberWeek[];
@@ -163,10 +171,10 @@ async function writeTitles(
     ending,
     members: winners,
     moves: settings.moves,
-    badges: settings.badges,
+    badges,
     memes,
   });
-  const reply = modelReplyFor(settings.badges, offeredMoves(settings.moves));
+  const reply = modelReplyFor(badges, offeredMoves(settings.moves));
   let cause: unknown;
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     try {

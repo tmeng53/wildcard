@@ -25,20 +25,20 @@ struct InMemorySignUpServiceTests {
     @Test func aNewSquadHasOnlyTheMember() async throws {
         let service = InMemorySignUpService.sampleSquad()
         try await service.agreeToAI()
-        let squad = try await service.create(named: SquadName("周末爬山队"), daysPerMember: 5)
+        let squad = try await service.create(named: SquadName("周末爬山队"), daysPerMember: 5, timeZone: "America/New_York")
         #expect(squad.name == "周末爬山队")
         #expect(squad.teammates.isEmpty)
         #expect(squad.weekGoal == 0)
         #expect(squad.daysPerMember == 5)
         await #expect(throws: SignUpError.rejected) {
-            try await service.create(named: SquadName("周末爬山队"), daysPerMember: 8)
+            try await service.create(named: SquadName("周末爬山队"), daysPerMember: 8, timeZone: "America/New_York")
         }
     }
 
     @Test func theSquadMadePicksItsSceneOnce() async throws {
         let service = InMemorySignUpService.sampleSquad()
         try await service.agreeToAI()
-        let squad = try await service.create(named: SquadName("周末爬山队"), daysPerMember: 3)
+        let squad = try await service.create(named: SquadName("周末爬山队"), daysPerMember: 3, timeZone: "America/New_York")
         try await service.pickScene(.pool, for: squad.id)
         try await service.pickScene(.pool, for: squad.id)
         await #expect(throws: SignUpError.rejected) { try await service.pickScene(.gym, for: squad.id) }
@@ -48,7 +48,7 @@ struct InMemorySignUpServiceTests {
     @Test func noSquadWithoutAgreeingToAI() async throws {
         let service = InMemorySignUpService.sampleSquad()
         await #expect(throws: SignUpError.rejected) {
-            try await service.create(named: SquadName("周末爬山队"), daysPerMember: 3)
+            try await service.create(named: SquadName("周末爬山队"), daysPerMember: 3, timeZone: "America/New_York")
         }
         await #expect(throws: SignUpError.rejected) { try await service.join(InviteCode("K7Q2M9XD")) }
     }

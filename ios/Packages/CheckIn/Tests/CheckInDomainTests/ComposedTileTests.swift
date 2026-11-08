@@ -40,3 +40,17 @@ import Testing
     tiles.append(.workout(.map))
     #expect(tiles.workoutTilePositions == [.chart: 2, .map: 4])
 }
+
+@Test func aPostWrittenOnThePhoneOpensWithItsTileWhereItWasPlaced() {
+    let workout = Workout(
+        source: WorkoutSource(provider: WorkoutSource.appleHealth, id: "run-2"),
+        startedAt: Timestamp(millisecondsSince1970: 1_792_500_000_000),
+        endedAt: Timestamp(millisecondsSince1970: 1_792_501_920_000), summary: WorkoutSummary(durationSec: 1920),
+        route: [RoutePoint(lat: 40.78, lon: -73.96), RoutePoint(lat: 40.79, lon: -73.97)], tilePosition: 2)
+    let first = PreparedPhoto(id: id(601), jpeg: Data([1]), size: nil)
+    let second = PreparedPhoto(id: id(602), jpeg: Data([2]), size: nil)
+    let body = PostBody(photos: [first, second], caption: "晨跑", workout: workout)
+    #expect(
+        ComposedTile.of(body).map(\.id) == ["new:\(first.id.uuidString)", "workout.map", "new:\(second.id.uuidString)"])
+    #expect(ComposedTile.of(PostBody(photos: [], caption: "")).isEmpty)
+}

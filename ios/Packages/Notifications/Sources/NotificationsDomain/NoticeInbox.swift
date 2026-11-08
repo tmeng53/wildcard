@@ -16,65 +16,6 @@ public protocol NoticeSource: Sendable {
     func listen(_ heard: @escaping @Sendable (LiveNotice) async -> Void) async throws(NotificationsError)
 }
 
-/// 通知's groups, in the order the page shows them.
-public enum NoticeHeading: Hashable, Sendable, CaseIterable {
-    /// 今天.
-    case today
-    /// 本周: since Monday, before today.
-    case thisWeek
-    /// 更早.
-    case earlier
-}
-
-/// One group of 通知, newest first.
-public struct NoticeSection: Hashable, Sendable, Identifiable {
-    public let heading: NoticeHeading
-    public let notices: [Notice]
-
-    public var id: NoticeHeading { heading }
-
-    /// `notices`, newest first, under 今天, 本周 and 更早 on the member's calendar at `now`, a
-    /// week starting on Monday. A group with nothing in it is left out. Pieces that came to one
-    /// store together, told within `together` of each other, are one row: the newest, which
-    /// opens all their boxes (Tracy, 2026-11-04).
-    public static func sections(_ notices: [Notice], now: Date, calendar: Calendar) -> [NoticeSection] {
-        let notices = Self.joiningPieces(notices.sorted { $0.id > $1.id })
-        var calendar = calendar
-        calendar.firstWeekday = 2
-        let today = calendar.startOfDay(for: now)
-        let monday = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? today
-        let grouped = Dictionary(grouping: notices) { notice -> NoticeHeading in
-            if notice.toldAt >= today { .today } else if notice.toldAt >= monday { .thisWeek } else { .earlier }
-        }
-        return NoticeHeading.allCases.compactMap { heading in
-            grouped[heading].map { NoticeSection(heading: heading, notices: $0.sorted { $0.id > $1.id }) }
-        }
-    }
-
-    /// How close in time pieces' notices are to count as one arrival.
-    static let together: TimeInterval = 60
-
-    /// `newestFirst` without the pieces' notices that a newer one for the same store stands for.
-    private static func joiningPieces(_ newestFirst: [Notice]) -> [Notice] {
-        var kept: [Notice] = []
-        for notice in newestFirst {
-            if let store = pieceStore(notice), let newer = kept.last, pieceStore(newer) == store,
-                newer.toldAt.timeIntervalSince(notice.toldAt) <= together
-            {
-                continue
-            }
-            kept.append(notice)
-        }
-        return kept
-    }
-
-    /// The store a piece's notice is about: the art names each piece `<store>-<piece>`.
-    private static func pieceStore(_ notice: Notice) -> Substring? {
-        guard case .unlocked(.piece, let item) = notice.subject else { return nil }
-        return item.split(separator: "-").first
-    }
-}
-
 /// 通知's data, behind the bell on 动态: the member's notices a page at a time, newest first, and
 /// whether any is newer than what they have seen (the bell's dot). Opening the page marks every
 /// one read; the ones that were new stay bold while it is open.

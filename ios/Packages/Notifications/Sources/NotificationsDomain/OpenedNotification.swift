@@ -14,6 +14,11 @@ public enum OpenedNotification: Hashable, Sendable {
     ///   - category: the payload's `aps.category`, its notice's kind.
     ///   - event: the payload's `event`; values that aren't text are left out.
     public init(category: String?, event: [String: String]) {
+        // A morning note's push carries only its id: 今天 shows the newest waiting one.
+        if category == "coachNote" {
+            self = .open(.waitingCoachNote)
+            return
+        }
         self = Self.subject(category: category, event: event).flatMap(\.destination).map(Self.open) ?? .other
     }
 

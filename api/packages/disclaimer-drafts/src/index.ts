@@ -23,7 +23,6 @@ export type {
   DiceLinesStore,
   DraftAllowance,
   DraftSettingsStore,
-  LanguageModel,
   MemesInUse,
   Random,
   Reservation,

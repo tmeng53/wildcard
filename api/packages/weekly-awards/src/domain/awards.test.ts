@@ -11,6 +11,7 @@ import {
   topCheckInOf,
   wornOf,
   endingWordsOf,
+  type BoardTitle,
   type ModelReply,
   type TitleWin,
   type WeekCheckIn,
@@ -24,7 +25,7 @@ const catalog = BadgeCatalog.parse({
     { id: 'shield', meaning: '盾牌' },
     { id: 'circle', meaning: '圆' },
   ],
-  colours: [{ id: 'track', meaning: '红' }],
+  colours: [{ id: 'track', tone: '#E65345', meaning: '红' }],
   glyphs: [
     { id: 'sun.max.fill', meaning: '太阳' },
     { id: 'moon.fill', meaning: '月亮' },
@@ -254,6 +255,18 @@ const MOVE_IDS = ['cheer', 'pump', 'flat', 'chin-up', 'swim'];
 const moves = Object.fromEntries(MOVE_IDS.map((move) => [move, `${move} 的样子`]));
 
 describe('promptFor', () => {
+  it('names each colour by what it means and keeps its tone, the app’s to paint, out', () => {
+    const prompt = promptFor({
+      weekStart: WeekStart.parse('2026-10-19'),
+      moves,
+      badges: catalog,
+      memes: [],
+      members: [],
+    });
+    expect(prompt).toContain('{"id":"track","meaning":"红"}');
+    expect(prompt).not.toContain('#E65345');
+  });
+
   it('lists members by letter with their days, times on their own clock, and the moves', () => {
     const prompt = Prompt.parse(
       JSON.parse(
@@ -527,7 +540,7 @@ describe('wornOf', () => {
 
   it('falls back to the latest when the equipped title is no longer on the board', () => {
     expect(wornOf(board, '雨中狠人')?.title).toBe('早八战神');
-    expect(wornOf([], '雨中狠人')).toBeUndefined();
+    expect(wornOf<BoardTitle>([], '雨中狠人')).toBeUndefined();
   });
 });
 

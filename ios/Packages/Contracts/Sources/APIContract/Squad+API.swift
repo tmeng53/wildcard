@@ -187,3 +187,14 @@ extension SquadWeeklyGoal {
         .init(version: ._1, daysPerMember: daysPerMember)
     }
 }
+
+extension SquadTimeZone {
+    public init(_ wire: Components.Schemas.SquadTimeZone) {
+        self.init(timeZone: wire.timeZone, nextTimeZone: wire.nextTimeZone, canChange: wire.canChange)
+    }
+
+    /// The body of `PUT /squads/{squadId}/time-zone`.
+    public static func change(to timeZone: String) -> Components.Schemas.SquadTimeZoneChange {
+        .init(version: ._1, timeZone: timeZone)
+    }
+}

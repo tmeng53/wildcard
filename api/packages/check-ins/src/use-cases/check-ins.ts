@@ -128,7 +128,11 @@ export interface CheckIns {
   /** The home screen's squad: each member's today and the week's counts, for one of them. */
   squadToday(input: { readonly viewer: MemberId; readonly squad: SquadId }): Promise<SquadToday>;
   /** A member's own 本周 x/y, for a squadmate's view of their card, in the member's time zone. */
-  memberWeek(input: { readonly member: MemberId; readonly viewer: MemberId }): Promise<MemberWeek>;
+  memberWeek(input: {
+    readonly member: MemberId;
+    readonly viewer: MemberId;
+    readonly squad: SquadId;
+  }): Promise<MemberWeek>;
   /** The Monday of the member's week now, in their time zone. */
   weekStartNow(member: MemberId): Promise<WeekStart>;
   /**

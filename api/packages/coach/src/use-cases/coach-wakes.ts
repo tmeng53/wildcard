@@ -19,20 +19,14 @@ import {
   type SquadWeek,
   type WeekCheckIn,
 } from '../domain/squad-week.js';
-import {
-  costMicros,
-  newYorkTime,
-  wakesDue,
-  weekStartOf,
-  weeksAround,
-  type Wake,
-} from '../domain/wake.js';
+import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
 import type {
   AiConsented,
   CoachAgent,
   CoachCatalogStore,
   CoachHiringStore,
   CoachMemberFacts,
+  CoachMemes,
   CoachOccasions,
   CoachPhotoUrls,
   CoachSettingsStore,
@@ -41,6 +35,7 @@ import type {
   SquadWeekSource,
 } from '../ports.js';
 import { toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
+import { momentAt, NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 
 /**
  * How long a run keeps claiming wakes, so it ends well inside the scheduler's 5 minutes; the
@@ -120,12 +115,27 @@ export interface CoachWakesDependencies {
   readonly photoUrls?: CoachPhotoUrls;
   /** Without it the coach has no member stats or plans to look up. */
   readonly memberFacts?: CoachMemberFacts;
+  /**
+   * Each squad's time zone at a moment (小队时区), the clock of its daily wake and of the day it
+   * tells the coach; without it, New York's.
+   */
+  readonly timeZonesAt?: (
+    squads: readonly SquadId[],
+    moment: Date,
+  ) => Promise<ReadonlyMap<string, string>>;
+  /** Without it the coach has no meme library to draw humour from. */
+  readonly memes?: CoachMemes;
   /** Without it the coach is told of no holiday or other moment. */
   readonly occasions?: CoachOccasions;
   /** Told each reply to a check-in once it is saved; the server tells its author. */
   readonly replied?: CoachReplied;
   /** Told each answer to a member's reply once it is saved; the server tells that member. */
   readonly answered?: CoachAnswered;
+  /**
+   * Of these members, the ones who keep the coach's messages on: only they get a morning note.
+   * Without it every member who agreed to AI use gets one.
+   */
+  readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
 }
 
 /** An answer the coach just saved to a member's reply to it. */
@@ -164,13 +174,15 @@ export function createCoachWakes(deps: CoachWakesDependencies): CoachWakes {
       const coaches = new Map((await deps.catalog.list()).map((coach) => [coach.id, coach]));
       const squads = [...hired.keys()];
       let queued = 0;
+      const zones = (await deps.timeZonesAt?.(squads, now)) ?? new Map<string, string>();
       for (const squad of squads) {
+        const timeZone = zones.get(squad) ?? NEW_YORK;
         // Near Monday a member's day may be in the week after New York's, or the one before.
         for (const weekStart of weeksAround(now)) {
           const week = await weekOf(deps, { squad, weekStart });
           // A squad everyone left has no one to coach.
           if (week.members.length === 0) continue;
-          queued += await deps.stores.wakes.enqueue(wakesDue({ squad, week, now }), now);
+          queued += await deps.stores.wakes.enqueue(wakesDue({ squad, week, now, timeZone }), now);
         }
       }
       const { done, failed } = await drain(deps, { squads, hired, coaches, settings, now });
@@ -291,6 +303,28 @@ async function wakeWeek(
 }
 
 /**
+ * Why the squad's coach is off duty now, if it is: the squad spent its day's cap (its own day, on
+ * its clock), or every squad together spent theirs (New York's day). The next day it is back.
+ */
+async function offDutyWhy(
+  deps: CoachWakesDependencies,
+  { squad, settings }: { readonly squad: SquadId; readonly settings: CoachSettings },
+): Promise<string | undefined> {
+  const now = deps.clock();
+  const dayStart = (zone: string) => momentAt({ day: wallClockAt(now, zone).day, hour: 0, zone });
+  const zone = (await deps.timeZonesAt?.([squad], now))?.get(squad) ?? NEW_YORK;
+  const squadSpent = await deps.stores.usage.spent({ squad, since: dayStart(zone) });
+  if (squadSpent >= settings.squadDailyCapMicros) {
+    return `off duty: the squad spent ${String(squadSpent)} of its ${String(settings.squadDailyCapMicros)} micros today`;
+  }
+  const allSpent = await deps.stores.usage.spent({ since: dayStart(NEW_YORK) });
+  if (allSpent >= settings.dailyCapMicros) {
+    return `off duty: every squad spent ${String(allSpent)} of the ${String(settings.dailyCapMicros)} micros today`;
+  }
+  return undefined;
+}
+
+/**
  * Runs one wake: the coach reads the squad's week and files and does what it decides. Its
  * tokens are recorded first, whatever happens next; then its changes and the wake's end are
  * saved together. Says whether it worked.
@@ -310,6 +344,11 @@ async function runWake(
   },
 ): Promise<boolean> {
   try {
+    const offDuty = await offDutyWhy(deps, { squad: wake.squad, settings });
+    if (offDuty !== undefined) {
+      await deps.stores.wakes.skip(wake.id, offDuty);
+      return true;
+    }
     const week = await wakeWeek(deps, { wake, now });
     // Nothing to wake for: the check-in went, is no longer shared, or its week is over.
     if (week === undefined) {
@@ -347,16 +386,28 @@ async function runWake(
       draft.changed.add(SEEDED);
     }
     const daily = wake.reason.kind === 'daily';
-    // Who the daily wake writes a morning note to: every member who agreed to AI use.
-    const noteTo = daily ? await deps.aiConsented(week.members.map(({ member }) => member)) : [];
+    // Who the daily wake writes a morning note to: every member who agreed to AI use and keeps
+    // the coach's messages on (Tracy, 2026-11-07: switched off, the note stops altogether).
+    const noteTo = daily
+      ? await noteReaders(
+          deps,
+          week.members.map(({ member }) => member),
+        )
+      : [];
     const files = new Map(
       shownPaths(roster).map((path) => {
         const at = storedPathOf(path, roster);
         return [path, at === undefined ? undefined : draft.files.get(at)];
       }),
     );
-    // The day the wake is for: the daily wake's own, or New York's today.
-    const day = wake.reason.kind === 'daily' ? wake.reason.day : newYorkTime(now).day;
+    // The day the wake is for: the daily wake's own, or the squad's today on its own clock.
+    const day =
+      wake.reason.kind === 'daily'
+        ? wake.reason.day
+        : wallClockAt(
+            now,
+            (await deps.timeZonesAt?.([wake.squad], now))?.get(wake.squad) ?? NEW_YORK,
+          ).day;
     const task = taskOf({
       reason: wake.reason,
       week,
@@ -398,6 +449,7 @@ async function runWake(
         kind: wake.reason.kind,
         ...photosOf(deps.photoUrls, { week, wake }),
         ...factsFor(deps, { week, roster }),
+        ...(deps.memes === undefined ? {} : { memes: deps.memes }),
         noteTo,
         pastWeek: async (weeksAgo) =>
           weekText(
@@ -420,6 +472,7 @@ async function runWake(
       model: settings.model,
       usage: run.usage,
       costMicros: costMicros(run.usage, settings),
+      at: deps.clock(),
     });
     await deps.stores.steps.record({ squad: wake.squad, wake: wake.id, steps: draft.steps });
     if (!run.ok) {
@@ -721,4 +774,13 @@ async function threadOf(
     thread: { ...(reply === undefined ? {} : { reply }), said },
     commenter: answering.member,
   };
+}
+
+/** The members a daily wake writes a morning note to. */
+async function noteReaders(
+  deps: Pick<CoachWakesDependencies, 'aiConsented' | 'wantNotes'>,
+  members: readonly string[],
+): Promise<readonly string[]> {
+  const consented = await deps.aiConsented(members);
+  return deps.wantNotes === undefined ? consented : await deps.wantNotes(consented);
 }

@@ -99,6 +99,42 @@ final class SquadSettingsUITests: XCTestCase {
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the winner can pick twice")
     }
 
+    /// 比赛时区: the captain picks a zone from the system's list, which counts from next week; a
+    /// member reads the row and can't open it.
+    func testTheCaptainChangesTheMatchTimeZone() {
+        let app = launch()
+        let row = app.buttons["squad.timeZone"]
+        for _ in 0..<3 where !row.isHittable { app.swipeUp() }
+        XCTAssertTrue(row.isHittable, "no 比赛时区 on the captain's page")
+        XCTAssertTrue(row.label.contains("Taipei"), "the row doesn't show the squad's zone: \(row.label)")
+        XCTAssertLessThanOrEqual(row.frame.maxX, app.frame.maxX, "the 比赛时区 row runs off the screen")
+        settle()
+        keepScreenshot(named: "67-squad-time-zone")
+        row.tap()
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 30), "the zone list didn't open")
+        search.tap()
+        search.typeText("New York")
+        let newYork = app.buttons["squad.timeZone.America/New_York"]
+        XCTAssertTrue(newYork.waitForExistence(timeout: 30), "searching New York finds no zone")
+        newYork.tap()
+        let next = app.staticTexts["squad.timeZone.next"]
+        XCTAssertTrue(next.waitForExistence(timeout: 30), "the change didn't wait for next week")
+        XCTAssertTrue(next.label.contains("New York"), "the next week's zone isn't New York: \(next.label)")
+        XCTAssertTrue(row.label.contains("Taipei"), "this week's zone changed at once")
+        settle()
+        keepScreenshot(named: "68-squad-time-zone-next-week")
+
+        app.terminate()
+        let member = launch(extra: ["-squad-seat", "member"])
+        let read = member.descendants(matching: .any)["squad.timeZone"]
+        for _ in 0..<3 where !read.isHittable { member.swipeUp() }
+        XCTAssertTrue(read.exists, "a member doesn't see 比赛时区")
+        XCTAssertFalse(member.buttons["squad.timeZone"].exists, "a member can open the zone list")
+        settle()
+        keepScreenshot(named: "69-squad-time-zone-member")
+    }
+
     /// The longest names the rules allow stay inside the screen on the smallest phone.
     func testLongNamesFit() {
         let app = launch(extra: ["-uitest-long-names", "-squad-seat", "noWinner"])

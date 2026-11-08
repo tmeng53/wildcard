@@ -19,6 +19,16 @@ export const PUSH_COPY = {
 
 export type PushCopyKey = keyof typeof PUSH_COPY;
 
+/**
+ * Values a push still sends that its words no longer show. The coach's note stays off the lock
+ * screen (Tracy, 2026-11-07: 「毛头给你发了一条消息」, the note itself only in the app), but builds
+ * from before that change fill `%2$@` with it, and iOS can't fill a placeholder it isn't sent,
+ * so it goes until no such build is installed.
+ */
+export const UNSHOWN_ARGS: Partial<Record<PushCopyKey, readonly string[]>> = {
+  'push.coach.note': ['text'],
+};
+
 /** One text per name in `Names`, as a tuple of the same length. */
 type Values<Names extends readonly string[]> = { readonly [Index in keyof Names]: string };
 

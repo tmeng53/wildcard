@@ -12,6 +12,8 @@ public struct SquadSettings: Hashable, Sendable {
     public var coach: SquadCoach
     /// The squad's weekly goal (人均 N 天) and its recent average.
     public var goal: SquadWeeklyGoal
+    /// The squad's time zone (比赛时区), the clock of its Sunday 8pm 战报.
+    public var matchTimeZone: SquadTimeZone
     /// The member's day and clock when the page was read, for 「执教第 N 周」 and 「带队 N 天」.
     public let today: LocalDay
     public let timeZone: TimeZone
@@ -19,7 +21,9 @@ public struct SquadSettings: Hashable, Sendable {
     public init(
         squad: Squad, viewer: MemberID, characters: [MemberID: MemberCharacter], scene: SquadScene,
         coach: SquadCoach, today: LocalDay, timeZone: TimeZone,
-        goal: SquadWeeklyGoal = SquadWeeklyGoal(daysPerMember: 3, nextDaysPerMember: 3, canChange: false, recent: nil)
+        goal: SquadWeeklyGoal = SquadWeeklyGoal(daysPerMember: 3, nextDaysPerMember: 3, canChange: false, recent: nil),
+        matchTimeZone: SquadTimeZone = SquadTimeZone(
+            timeZone: SquadTimeZone.newYork, nextTimeZone: SquadTimeZone.newYork, canChange: false)
     ) {
         self.squad = squad
         self.viewer = viewer
@@ -27,6 +31,7 @@ public struct SquadSettings: Hashable, Sendable {
         self.scene = scene
         self.coach = coach
         self.goal = goal
+        self.matchTimeZone = matchTimeZone
         self.today = today
         self.timeZone = timeZone
     }
@@ -53,6 +58,9 @@ public protocol SquadSettingsService: Sendable {
     /// Sets the squad's weekly goal (人均 N 天) from next week; only the captain may. Safe to
     /// repeat.
     func setWeeklyGoal(of squad: SquadID, to daysPerMember: Int) async throws(SquadError) -> SquadWeeklyGoal
+    /// Sets the squad's time zone (比赛时区, an IANA name) from the squad's next week; only the
+    /// captain may. Safe to repeat.
+    func setTimeZone(of squad: SquadID, to timeZone: String) async throws(SquadError) -> SquadTimeZone
 }
 
 /// What can go wrong on 小队设置, by what the member can do about it.
