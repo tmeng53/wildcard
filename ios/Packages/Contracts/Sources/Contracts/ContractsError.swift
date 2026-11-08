@@ -42,6 +42,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case jerseyNumberOutOfRange(Int)
     /// A comment that is empty or longer than `CommentText.maxLength` characters.
     case commentLength(Int)
+    /// Feedback that is empty or longer than `FeedbackText.maxLength` characters.
+    case feedbackLength(Int)
     /// A catchphrase that is empty or longer than `Catchphrase.maxLength` characters.
     case catchphraseLength(Int)
     /// A catchphrase with a line break; it is one line.

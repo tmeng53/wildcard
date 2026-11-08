@@ -74,6 +74,9 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
     .transaction()
     .execute(async (trx) => {
       const [mia, leo, squadId, checkIn] = [randomUUID(), randomUUID(), randomUUID(), randomUUID()];
+      // Only this squad has a coach here: squads other test files hired one for (and may leave
+      // behind) would otherwise wake too, since the job looks at every squad with a coach.
+      await sql`delete from public.squad_coaches`.execute(trx);
       for (const id of [mia, leo]) {
         await sql`insert into auth.users (id, email) values (${id}, ${`${id}@example.com`})`.execute(
           trx,

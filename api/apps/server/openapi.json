@@ -4490,6 +4490,113 @@
         ],
         "additionalProperties": false
       },
+      "FeedbackSent": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "version",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "FeedbackDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Made by the app, so sending again saves it once."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "problem",
+              "idea"
+            ],
+            "description": "出问题了 (`problem`) or 提个建议 (`idea`)."
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 16000,
+            "description": "What the member wrote: 1 to 1000 characters once trimmed.",
+            "x-max-characters": 1000
+          },
+          "screenshots": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "maxItems": 3,
+            "description": "Up to 3 screenshots, uploaded first through `POST /photo-uploads` and listed by path."
+          },
+          "app": {
+            "type": "object",
+            "properties": {
+              "appVersion": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              },
+              "build": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              },
+              "os": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "device": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "language": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "appVersion",
+              "build",
+              "os",
+              "device",
+              "language"
+            ],
+            "additionalProperties": false,
+            "description": "Which app sent it (version, build, iOS version, device model, language), so whoever fixes it knows where to look."
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "kind",
+          "body",
+          "screenshots",
+          "app"
+        ],
+        "additionalProperties": false
+      },
       "NoticePage": {
         "type": "object",
         "properties": {
@@ -10726,6 +10833,120 @@
           },
           "503": {
             "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feedback": {
+      "post": {
+        "operationId": "sendFeedback",
+        "summary": "Send us feedback (意见反馈)",
+        "description": "Up to 10 a day; the same id again saves nothing new, so it is safe to repeat. Needs no squad.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sent already",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackSent"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackSent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not valid feedback (`FEEDBACK_INVALID`), or a screenshot not uploaded (`PHOTO_NOT_UPLOADED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "A screenshot in someone else’s folder (`PHOTO_NOT_YOURS`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Another member’s message has this id (`FEEDBACK_ID_TAKEN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "As many messages as a day allows (`FEEDBACK_LIMIT`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in or photo storage can’t be reached right now",
             "content": {
               "application/problem+json": {
                 "schema": {
