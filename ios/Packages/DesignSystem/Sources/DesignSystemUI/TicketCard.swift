@@ -5,7 +5,7 @@ import SwiftUI
 /// 入场券, the one card a member writes on (approved 2026-11-08): a mist ticket with a dashed
 /// tear line and a half-round notch punched in each side of it. What is written goes above the
 /// tear (`face`); what goes with it (photos, a style to write in) goes on the stub below, usually
-/// with `TicketMark` in its corner. 发动态, 请假条 and 意见反馈 all write on it, so never redraw it.
+/// with `TicketStamp` in its corner. 发动态, 请假条 and 意见反馈 all write on it, so never redraw it.
 /// The tear follows the face's height, so the face may grow while typing.
 public struct TicketCard<Face: View, Stub: View>: View {
     @Environment(\.sceneTheme) private var theme
@@ -28,15 +28,15 @@ public struct TicketCard<Face: View, Stub: View>: View {
                 .onGeometryChange(for: Double.self) {
                     $0.size.height
                 } action: {
-                    tear = $0 + Self.tearWidth / 2
+                    tear = $0 + Tear.width / 2
                 }
             TearLine()
                 .stroke(
-                    Color(role: .fgDefault, in: theme).opacity(Self.tearOpacity),
-                    style: StrokeStyle(lineWidth: Self.tearWidth, dash: [4, 4])
+                    Color(role: .fgDefault, in: theme).opacity(Tear.opacity),
+                    style: StrokeStyle(lineWidth: Tear.width, dash: [4, 4])
                 )
-                .frame(height: Self.tearWidth)
-                .padding(.horizontal, Self.tearInset)
+                .frame(height: Tear.width)
+                .padding(.horizontal, Tear.inset)
                 .accessibilityHidden(true)
             stub
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -47,15 +47,18 @@ public struct TicketCard<Face: View, Stub: View>: View {
         .background(Color(role: .bgSubtle, in: theme))
         .clipShape(TicketShape(tearFromTop: tear))
     }
+}
 
+/// The tear line's look; apart from `TicketCard`, since a generic type can't store statics.
+private enum Tear {
     /// The tear line keeps clear of the notches.
-    private static let tearInset: Double = 18
-    private static let tearWidth: Double = 1.5
-    private static let tearOpacity: Double = 0.18
+    static let inset: Double = 18
+    static let width: Double = 1.5
+    static let opacity: Double = 0.18
 }
 
 /// The brand's W, in a ticket stub's corner: the same mark the character's ticket wears, in ink.
-public struct TicketMark: View {
+public struct TicketStamp: View {
     @Environment(\.sceneTheme) private var theme
 
     public init() {}

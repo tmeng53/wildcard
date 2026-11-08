@@ -202,7 +202,7 @@ struct DisclaimerComposer: View {
             choices
             HStack {
                 Spacer()
-                TicketMark()
+                TicketStamp()
             }
         }
     }

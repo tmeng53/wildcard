@@ -65,7 +65,7 @@ struct PhotoTiles: View {
             .scrollClipDisabled()
             if slots <= Self.slotsBesideMark {
                 Spacer(minLength: 0)
-                TicketMark()
+                TicketStamp()
                     .padding(.bottom, Space.xxs)
             }
         }

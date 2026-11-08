@@ -232,7 +232,7 @@ struct PickSection: View {
                         .typeStyle(TypeRamp.field)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                 } stub: {
-                    TicketMark().frame(maxWidth: .infinity, alignment: .trailing)
+                    TicketStamp().frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
         }
