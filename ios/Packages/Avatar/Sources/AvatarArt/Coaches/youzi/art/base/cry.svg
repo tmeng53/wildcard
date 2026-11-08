@@ -4,6 +4,6 @@
   <path d="M 87 109 L 105 116 L 87 123 M 153 109 L 135 116 L 153 123" fill="none" stroke="#3B2A24" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M 91 124 Q 87 137 91 149 Q 95 153 97 147 Q 99 135 97 124 Z" fill="#8FD3E6"/>
   <path d="M 149 124 Q 153 137 149 149 Q 145 153 143 147 Q 141 135 143 124 Z" fill="#8FD3E6"/>
-  <ellipse cx="120" cy="150" rx="16" ry="11" fill="#F5D0B2"/>
+  <path d="M 106 140 Q 120 143 134 140 Q 133 158 120 159 Q 107 158 106 140 Z" stroke-width="2.4" stroke-linejoin="round" stroke="#F5D0B2" fill="#F5D0B2"/>
   <path d="M 110 152 Q 115 147 120 152 Q 125 147 130 152" fill="none" stroke="#5A2A2A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

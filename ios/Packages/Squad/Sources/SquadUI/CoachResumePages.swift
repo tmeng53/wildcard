@@ -47,13 +47,19 @@ public struct CoachPage: View {
                 hire: { hire(coach) },
                 change: { push(.market) }, fire: { push(.fire(coach)) })
         case .fire(let coach):
-            FireCoachPage(
-                coach: coach, isSaving: model.isSaving, failed: failed, back: back,
-                fire: { Task { finish(await model.fireCoach()) } })
+            CoachLeavingPage(
+                leaving: coach, title: Text("解雇\(coach.name)", bundle: .module),
+                line: Text("小队的记忆会留给下一个教练", bundle: .module),
+                keep: Text("先不解雇", bundle: .module), confirm: Text("确认解雇", bundle: .module),
+                identifier: "coach.fire", isSaving: model.isSaving, failed: failed, back: back,
+                action: { Task { finish(await model.fireCoach()) } })
         case .swap(let leaving, let coming):
-            SwapCoachPage(
-                leaving: leaving, coming: coming, isSaving: model.isSaving, failed: failed, back: back,
-                swap: { Task { finish(await model.hire(coming.id)) } })
+            CoachLeavingPage(
+                leaving: leaving, title: Text("换成\(coming.name)？", bundle: .module),
+                line: Text("\(leaving.name)会离开，\(coming.name)会来", bundle: .module),
+                keep: Text("先不换", bundle: .module), confirm: Text("确认换教练", bundle: .module),
+                identifier: "coach.swap", isSaving: model.isSaving, failed: failed, back: back,
+                action: { Task { finish(await model.hire(coming.id)) } })
         }
     }
 
@@ -248,82 +254,25 @@ struct CoachResumePage: View {
     }
 }
 
-/// 解雇: the coach crying on its stage, that the squad's memory stays, 先不解雇 and, in red,
-/// 确认解雇.
-struct FireCoachPage: View {
-    let coach: Coach
-    let isSaving: Bool
-    let failed: Bool
-    let back: () -> Void
-    let fire: () -> Void
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Space.l) {
-                Text("解雇\(coach.name)", bundle: .module)
-                    .typeStyle(TypeRamp.largeTitle)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .accessibilityAddTraits(.isHeader)
-                CoachStage(
-                    coach: coach.id,
-                    catchphrase: String(localized: "我才刚记住大家的外号……", bundle: .module.inAppLanguage),
-                    bubble: .center, figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
-                    mood: .crying, surface: .page
-                )
-                .frame(height: CoachMetrics.fireStage)
-                .clipShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
-                Text("小队的记忆会留给下一个教练", bundle: .module)
-                    .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-            }
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.top, Space.xs)
-            .padding(.bottom, Space.l)
-        }
-        .scrollIndicators(.hidden)
-        .actionBar {
-            VStack(spacing: Space.xs) {
-                if failed {
-                    InlineFailure()
-                }
-                Button(action: back) {
-                    Text("先不解雇", bundle: .module).frame(maxWidth: .infinity)
-                }
-                .buttonStyle(PrimaryButtonStyle(.large))
-                .accentTone(.ink)
-                .accessibilityIdentifier("coach.fire.keep")
-                Button(action: fire) {
-                    Text("确认解雇", bundle: .module).loadingLabel(isSaving)
-                }
-                .buttonStyle(TextButtonStyle(.danger))
-                .disabled(isSaving)
-                .accessibilityIdentifier("coach.fire.confirm")
-            }
-        }
-        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("coach.fire")
-    }
-}
-
-/// 换教练: the leaving coach crying on its stage, that it leaves and the other comes, 先不换 and,
-/// in red, 确认换教练.
-struct SwapCoachPage: View {
+/// A coach leaving, 解雇 or 换教练: the leaving coach crying on its stage, a line under it, a
+/// button to keep it and, in red, the one that lets it go.
+struct CoachLeavingPage: View {
     let leaving: Coach
-    let coming: Coach
+    let title: Text
+    let line: Text
+    let keep: Text
+    let confirm: Text
+    let identifier: String
     let isSaving: Bool
     let failed: Bool
     let back: () -> Void
-    let swap: () -> Void
+    let action: () -> Void
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.l) {
-                Text("换成\(coming.name)？", bundle: .module)
+                title
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
@@ -335,7 +284,7 @@ struct SwapCoachPage: View {
                 )
                 .frame(height: CoachMetrics.fireStage)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
-                Text("\(leaving.name)会离开，\(coming.name)会来", bundle: .module)
+                line
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .multilineTextAlignment(.center)
@@ -352,22 +301,22 @@ struct SwapCoachPage: View {
                     InlineFailure()
                 }
                 Button(action: back) {
-                    Text("先不换", bundle: .module).frame(maxWidth: .infinity)
+                    keep.frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryButtonStyle(.large))
                 .accentTone(.ink)
-                .accessibilityIdentifier("coach.swap.keep")
-                Button(action: swap) {
-                    Text("确认换教练", bundle: .module).loadingLabel(isSaving)
+                .accessibilityIdentifier("\(identifier).keep")
+                Button(action: action) {
+                    confirm.loadingLabel(isSaving)
                 }
                 .buttonStyle(TextButtonStyle(.danger))
                 .disabled(isSaving)
-                .accessibilityIdentifier("coach.swap.confirm")
+                .accessibilityIdentifier("\(identifier).confirm")
             }
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("coach.swap")
+        .accessibilityIdentifier(identifier)
     }
 }
 
