@@ -44,17 +44,37 @@ final class TeammateCardUITests: XCTestCase {
         let openBoard = app.buttons["me.cardBadges"]
         XCTAssertTrue(openBoard.exists, "no badges on her card's back")
         XCTAssertTrue(back.frame.contains(openBoard.frame), "her badges run off her card: \(openBoard.frame)")
+        // Her badges turn the same side to her badge board, on her card, with no 周日揭晓 slot.
         openBoard.tap()
         let badges = app.buttons.matching(identifier: "me.badge")
         XCTAssertTrue(badges.firstMatch.waitForExistence(timeout: 5), "her badge board didn't open")
         Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "57b-teammate-badge-board")
+        assertBoardInPlace(on: back, schedule: schedule, opener: openBoard, in: app)
         badges.element(boundBy: 0).tap()
         let detail = app.descendants(matching: .any).matching(identifier: "me.badgeCard").firstMatch
         XCTAssertTrue(detail.waitForExistence(timeout: 5), "her badge didn't open")
         XCTAssertFalse(app.buttons["me.badgeCard.equip"].exists, "a teammate's badge offers 装备")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "58-teammate-badge-card")
+    }
+
+    /// A teammate's badge board sits on her card's back, with no 周日揭晓 slot, and 「‹ 出赛表」
+    /// brings her 出赛表 back; it ends with the board open again.
+    private func assertBoardInPlace(
+        on back: XCUIElement, schedule: XCUIElement, opener openBoard: XCUIElement, in app: XCUIApplication
+    ) {
+        let badges = app.buttons.matching(identifier: "me.badge")
+        XCTAssertTrue(back.frame.contains(badges.firstMatch.frame), "her board isn't on her card")
+        XCTAssertFalse(
+            app.descendants(matching: .any).matching(identifier: "me.nextBadge").firstMatch.exists,
+            "her board shows the 周日揭晓 slot")
+        let toSchedule = app.buttons["me.cardBackToSchedule"]
+        XCTAssertTrue(toSchedule.exists, "her board has no way back to her 出赛表")
+        toSchedule.tap()
+        XCTAssertTrue(schedule.waitForExistence(timeout: 5), "「‹ 出赛表」 didn't bring her 出赛表 back")
+        openBoard.tap()
+        XCTAssertTrue(badges.firstMatch.waitForExistence(timeout: 5), "her badge board didn't open again")
     }
 
     /// From 小队's member list the card pops up over the dimmed page, and a tap off it closes it
