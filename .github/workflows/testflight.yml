@@ -91,6 +91,14 @@ jobs:
         with:
           persist-credentials: false
       - run: xcodebuild -version
+      # The app's Swift packages (sentry-cocoa's xcframeworks included), which the scripts clone into
+      # build/spm. A new sentry-cocoa in the project still resolves; it is saved with the next key.
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: build/spm
+          key: spm-xcode-${{ hashFiles('ios/**/Package.swift', 'ios/**/Package.resolved') }}
+          restore-keys: spm-xcode-
       - name: Write the API key
         env:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
@@ -135,6 +143,7 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/testflight/Wildcard.xcarchive \
+            -clonedSourcePackagesDirPath build/spm \
             -allowProvisioningUpdates \
             -authenticationKeyPath "$ASC_KEY_PATH" \
             -authenticationKeyID "$ASC_KEY_ID" \
