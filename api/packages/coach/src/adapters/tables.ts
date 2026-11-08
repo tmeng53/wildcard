@@ -53,6 +53,7 @@ export interface Coaches {
   name: string;
   offered: boolean;
   pay: string;
+  position: number;
   soul: string;
   style: string;
   tags: string[];

@@ -372,8 +372,9 @@ describe('when the coach wakes', () => {
 
   it('lets the coach pick its tools, keep memory any time, and say one thing per note', () => {
     const coach = Coach.parse({
-      version: 2,
+      version: 3,
       id: 'nuannuan',
+      position: 2,
       tier: 'entry',
       name: '暖暖',
       title: '暖心教练',
