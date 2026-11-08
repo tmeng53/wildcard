@@ -4,7 +4,11 @@ import type { MemberId, Place } from './domain/place.js';
 /** Where each member roughly is: the latest place only, never a history. */
 export interface PlaceStore {
   /** Keeps `place` as the member's place, replacing the one before. */
-  save(member: MemberId, place: Place, at: Date): Promise<void>;
+  save(input: {
+    readonly member: MemberId;
+    readonly place: Place;
+    readonly at: Date;
+  }): Promise<void>;
   /** Forgets the member's place. Safe to repeat. */
   remove(member: MemberId): Promise<void>;
   /** The places of those of `members` who have one. */
@@ -15,7 +19,11 @@ export interface PlaceStore {
 export interface WeatherDayStore {
   find(place: Place, day: string): Promise<DayWeather | undefined>;
   /** Keeps it for the place and day, replacing any kept; removes days a week older than `day`. */
-  save(place: Place, day: string, weather: DayWeather): Promise<void>;
+  save(input: {
+    readonly place: Place;
+    readonly day: string;
+    readonly weather: DayWeather;
+  }): Promise<void>;
 }
 
 /** The weather provider: one day's forecast at a place, its day on `timeZone`'s clock. */

@@ -19,17 +19,17 @@ const ACCOUNT = {
 
 function replaying(status = 200) {
   const requests: { url: string; authorization: string | null }[] = [];
-  const fetch = (input: string | URL | Request, init?: RequestInit) => {
+  const fetch: typeof globalThis.fetch = (input, init) => {
     requests.push({
-      url: String(input),
+      url: input instanceof Request ? input.url : input.toString(),
       authorization: new Headers(init?.headers).get('authorization'),
     });
     return Promise.resolve(new Response(DAILY, { status }));
   };
-  return { fetch: fetch as typeof globalThis.fetch, requests };
+  return { fetch, requests };
 }
 
-const decode = (part: string) => JSON.parse(Buffer.from(part, 'base64url').toString()) as unknown;
+const decode = (part: string): unknown => JSON.parse(Buffer.from(part, 'base64url').toString());
 
 describe('createWeatherKitForecasts', () => {
   it('reads the day asked for, on the member’s clock', async () => {

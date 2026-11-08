@@ -56,7 +56,7 @@ export function createWeatherKitForecasts(
   const bearer = () => {
     const at = now();
     if (token === undefined || at - token.at >= TOKEN_REFRESH_MS) {
-      token = { value: developerToken(account, key, at), at };
+      token = { value: developerToken({ account, key, at }), at };
     }
     return token.value;
   };
@@ -105,7 +105,15 @@ function dayOn(instant: string, timeZone: string): string {
 }
 
 /** The ES256 JWT WeatherKit's REST API takes. */
-function developerToken(account: WeatherKitAccount, key: KeyObject, at: number): string {
+function developerToken({
+  account,
+  key,
+  at,
+}: {
+  readonly account: WeatherKitAccount;
+  readonly key: KeyObject;
+  readonly at: number;
+}): string {
   const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
   const iat = Math.floor(at / 1000);
   const unsigned = `${encode({

@@ -29,7 +29,7 @@ export function createWeather(deps: {
   return {
     async savePlace(member, coordinates) {
       const place = cellOf(coordinates);
-      await deps.places.save(member, place, deps.clock());
+      await deps.places.save({ member, place, at: deps.clock() });
       return place;
     },
 
@@ -59,7 +59,8 @@ export function createWeather(deps: {
         if (kept !== undefined) return kept;
         try {
           const fetched = await forecasts.dayAt(input);
-          if (fetched !== undefined) await deps.days.save(input.place, input.day, fetched);
+          if (fetched !== undefined)
+            await deps.days.save({ place: input.place, day: input.day, weather: fetched });
           return fetched;
         } catch (error) {
           deps.failed?.(error, input.place);

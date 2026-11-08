@@ -1,7 +1,7 @@
 import { sql, type Kysely } from 'kysely';
 
 import { DayWeather } from '../domain/day-weather.js';
-import type { MemberId, Place } from '../domain/place.js';
+import { MemberId, type Place } from '../domain/place.js';
 import type { PlaceStore, WeatherDayStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -11,7 +11,7 @@ export type WeatherTables = DB;
 /** Members' places on Postgres (`supabase/migrations`): one row a member, the latest. */
 export function createPostgresPlaceStore(db: Kysely<WeatherTables>): PlaceStore {
   return {
-    async save(member, { latitude, longitude }, at) {
+    async save({ member, place: { latitude, longitude }, at }) {
       await db
         .insertInto('member_places')
         .values({ member_id: member, latitude, longitude, updated_at: at })
@@ -34,7 +34,7 @@ export function createPostgresPlaceStore(db: Kysely<WeatherTables>): PlaceStore 
         .execute();
       return new Map(
         rows.map((row) => [
-          row.member_id as MemberId,
+          MemberId.parse(row.member_id),
           { latitude: Number(row.latitude), longitude: Number(row.longitude) },
         ]),
       );
@@ -59,7 +59,7 @@ export function createPostgresWeatherDayStore(db: Kysely<WeatherTables>): Weathe
       return parsed.success ? parsed.data : undefined;
     },
 
-    async save({ latitude, longitude }, day, weather) {
+    async save({ place: { latitude, longitude }, day, weather }) {
       await db
         .insertInto('weather_days')
         .values({ latitude, longitude, day, weather: JSON.stringify(weather) })
