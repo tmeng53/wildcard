@@ -1,29 +1,42 @@
 import type { CoachGift, GiftPiece, GiftPieceEdit, GiftRequest } from '../domain/gifts.js';
-import type { MemberId } from '../domain/unlocks.js';
-import { GiftPieceNotOfferedError } from '../errors.js';
+import type { MemberId, PieceId } from '../domain/unlocks.js';
+import {
+  GiftAlreadyOwnedError,
+  GiftNotGivenError,
+  GiftPieceNotOfferedError,
+  GiftWeeklyLimitError,
+} from '../errors.js';
 import type { GiftStore } from '../ports.js';
 
 /**
- * Gifts from a squad's coach: what a coach may give, and giving it. The coach's own tool calls
- * `give` once a coach decides to (not built yet); the module checks only that the piece is offered,
- * so who may give what to whom is the caller's job.
+ * Gifts from a squad's coach: what a coach may give, and giving it. The rules every gift keeps
+ * are here, whoever gives it (the coach's own tool or an admin in its name): the piece is
+ * offered, the member hasn't got it, and they got no gift since their week began (one a week at
+ * most; Tracy, 2026-11-08). Whether the member may get gifts at all (their AI consent, their
+ * squad) is the caller's to check.
  */
 export interface CoachGifts {
   /** The pieces coaches may give now, by id. */
   offered(): Promise<GiftPiece[]>;
-  /**
-   * Gives `request.piece` to `request.member` from its coach, now. Giving a piece they already
-   * have keeps the first gift and answers `fresh: false`.
-   */
-  give(request: GiftRequest): Promise<{ gift: CoachGift; fresh: boolean }>;
+  /** Gives `request.piece` to `request.member` from its coach, now. */
+  give(request: GiftRequest): Promise<CoachGift>;
   /** What `member` was given, the earliest first. */
   of(member: MemberId): Promise<CoachGift[]>;
+  /**
+   * Keeps that `member` opened their gift of `piece` (拆开) and whether they put it on then.
+   * Opening it again keeps the first; answers with the gift as it stands.
+   */
+  open(opening: {
+    readonly member: MemberId;
+    readonly piece: PieceId;
+    readonly worn: boolean;
+  }): Promise<CoachGift>;
 }
 
 /** The gift pool, for admins. */
 export interface GiftsAdmin {
   pieces(): Promise<GiftPiece[]>;
-  /** Adds a piece to the pool or changes whether it is offered, and answers with the pool now. */
+  /** Adds a piece to the pool or changes it, and answers with the pool now. */
   putPiece(edit: GiftPieceEdit): Promise<GiftPiece[]>;
 }
 
@@ -35,17 +48,42 @@ export function createCoachGifts(deps: {
   return {
     offered: async () => (await deps.store.pieces()).filter(({ offered }) => offered),
 
-    async give({ member, piece, coach, squad }) {
+    async give({ member, piece, coach, squad, line, givenBy, admin, weekStart }) {
       const pool = await deps.store.pieces();
       if (!pool.some(({ id, offered }) => id === piece && offered)) {
         throw new GiftPieceNotOfferedError(piece);
       }
-      const given = await deps.store.give(member, { piece, coach, squad });
-      if (given.fresh) await deps.gifted?.(member, given.gift);
-      return given;
+      const had = await deps.store.giftsOf(member);
+      if (had.some((gift) => gift.piece === piece)) throw new GiftAlreadyOwnedError(piece);
+      const thisWeek = had.filter(({ givenAt }) => givenAt >= weekStart).at(-1);
+      if (thisWeek !== undefined) throw new GiftWeeklyLimitError(thisWeek.givenAt);
+      const gift = await deps.store.give(member, {
+        piece,
+        coach,
+        squad,
+        line,
+        givenBy,
+        ...(admin === undefined ? {} : { admin }),
+        weekStart,
+      });
+      if (gift === undefined) {
+        // Given meanwhile by another call: that piece, or another this week.
+        const now = await deps.store.giftsOf(member);
+        if (now.some((each) => each.piece === piece)) throw new GiftAlreadyOwnedError(piece);
+        throw new GiftWeeklyLimitError(now.at(-1)?.givenAt ?? weekStart);
+      }
+      await deps.gifted?.(member, gift);
+      return gift;
     },
 
     of: (member) => deps.store.giftsOf(member),
+
+    async open({ member, piece, worn }) {
+      if (!(await deps.store.open({ member, piece, worn }))) throw new GiftNotGivenError(piece);
+      const gift = (await deps.store.giftsOf(member)).find((each) => each.piece === piece);
+      if (gift === undefined) throw new GiftNotGivenError(piece);
+      return gift;
+    },
 
     pieces: () => deps.store.pieces(),
 
