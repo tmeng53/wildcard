@@ -190,9 +190,10 @@ public final class SquadSettingsModel {
     public var canChangeLanguage: Bool { isCaptain && settings?.language.canChange == true }
 
     /// The captain picks the squad's language, which counts at once. The row says so at once and
-    /// goes back if the change doesn't go through.
+    /// goes back if the change doesn't go through. Picking the language shown is saved too: until
+    /// the captain picks, the squad only follows the captain's app language, which can change.
     public func setLanguage(_ language: SquadLanguage.Language) async {
-        guard let settings, canChangeLanguage, language != settings.language.language else { return }
+        guard let settings, canChangeLanguage else { return }
         let before = settings.language
         update { $0.language.language = language }
         await change { service throws(SquadError) in

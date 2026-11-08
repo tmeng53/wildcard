@@ -43,6 +43,7 @@ actor Squad3: SquadSettingsService {
     var failing: SquadError?
     private(set) var picks: [SceneID] = []
     private(set) var hires: [CoachID] = []
+    private(set) var languagePicks: [SquadLanguage.Language] = []
 
     init(viewer: MemberID, scene: SquadScene, coach: SquadCoach.Hire? = nil, today: String = "2026-10-27") throws {
         current = SquadSettings(
@@ -135,6 +136,7 @@ actor Squad3: SquadSettingsService {
     {
         if let failing { throw failing }
         guard current.language.canChange else { throw .outdated }
+        languagePicks.append(language)
         current.language.language = language
         return current.language
     }

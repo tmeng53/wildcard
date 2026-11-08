@@ -37,13 +37,16 @@ import Testing
     }
 
     @Test func theCaptainSetsTheSquadsLanguageAtOnceAndAMateOnlyReadsIt() async throws {
-        let captain = SquadSettingsModel(
-            service: try Squad3(viewer: lin, scene: try scene(pickers: .captain(lin), canPick: false)))
+        let service = try Squad3(viewer: lin, scene: try scene(pickers: .captain(lin), canPick: false))
+        let captain = SquadSettingsModel(service: service)
         await captain.reload()
         #expect(captain.canChangeLanguage)
         await captain.setLanguage(.english)
         #expect(captain.language?.language == .english)
         #expect(!captain.changeFailed)
+        // Picking the language shown still saves it, so the squad stops following the captain's app.
+        await captain.setLanguage(.english)
+        #expect(await service.languagePicks == [.english, .english])
 
         let mate = SquadSettingsModel(
             service: try Squad3(viewer: mia, scene: try scene(pickers: .captain(lin), canPick: false)))
