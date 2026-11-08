@@ -2,13 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Admins } from '@wildcard/admins';
 import type { AiConsent } from '@wildcard/ai-consent';
 import type { CheckIns, WeekSummaryWords, WeeklyPlans } from '@wildcard/check-ins';
-import {
-  SquadId as CoachSquadId,
-  type CoachActivity,
-  type CoachHiring,
-  type CoachLetters,
-  type CoachWakes,
-} from '@wildcard/coach';
+import type { CoachActivity, CoachHiring, CoachLetters, CoachWakes } from '@wildcard/coach';
 import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
@@ -29,7 +23,9 @@ import { adminMcp } from './admin-mcp/admin-mcp.js';
 import type { AdminTool } from './admin-mcp/admin-tool.js';
 import { consentPage } from './admin-mcp/consent-page.js';
 import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } from './errors.js';
+import { inProcessEvents, type EventHandlers, type PublishEvent } from './events.js';
 import type { CoachNotesDependencies } from './flows/coach-notes.js';
+import { eventHandlers } from './flows/event-handlers.js';
 import type { InteractionSource } from './flows/daily-progress-push.js';
 import type { SuggestGoal } from './flows/squad-goal-suggestion.js';
 import type { Log } from './log.js';
@@ -56,7 +52,7 @@ import { disclaimerDrafts } from './routes/disclaimer-drafts.js';
 import { events } from './routes/events.js';
 import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
-import { jobs } from './routes/jobs.js';
+import { eventPushes, jobs } from './routes/jobs.js';
 import { me } from './routes/me.js';
 import type { CoachNames } from './flows/coach-names.js';
 import { notices } from './routes/notices.js';
@@ -144,6 +140,11 @@ export interface AppDependencies {
     readonly suggestGoal: SuggestGoal;
     /** The coach's morning notes to deliver, and how to tell them in the bell. */
     readonly coachNotes: Pick<CoachNotesDependencies, 'notes' | 'noteHour' | 'tell' | 'clock'>;
+    /**
+     * How events reach their subscribers (`events.ts`): through Pub/Sub on the hosted server;
+     * left out, they run in the request.
+     */
+    readonly publishEvents?: (handlers: EventHandlers, log: Log) => PublishEvent;
   };
   /** The admin MCP server at `/mcp`. */
   readonly admin: {
@@ -185,30 +186,13 @@ export function createApp(deps: AppDependencies) {
   app.route('/', catalog({ ...deps.catalog, publicRoutes: deps.publicRoutes }));
   app.route('/', me({ ...deps, admins: deps.admin.admins(deps.db) }));
   app.route('/', aiConsent(deps));
-  const { coach } = deps.jobs;
-  app.route(
-    '/',
-    checkIns({
-      ...deps,
-      coachLook:
-        coach === undefined
-          ? undefined
-          : ({ checkIn, squads }) =>
-              coach.checkedIn({
-                checkIn,
-                squads: squads.map((squad) => CoachSquadId.parse(squad)),
-              }),
-    }),
-  );
+  // What follows a new check-in or comment runs after the request saved it.
+  const handlers = eventHandlers({ coach: deps.jobs.coach, commentPush: deps });
+  const publish = (deps.jobs.publishEvents ?? inProcessEvents)(handlers, deps.log);
+  app.route('/', checkIns({ ...deps, publish }));
   app.route('/', photoUploads(deps));
   app.route('/', reactions(deps));
-  app.route(
-    '/',
-    comments({
-      ...deps,
-      coachAnswer: coach === undefined ? undefined : (reply) => coach.answer(reply),
-    }),
-  );
+  app.route('/', comments({ ...deps, publish }));
   app.route('/', devices(deps));
   app.route('/', pushSettings(deps));
   app.route('/', squads(deps));
@@ -260,6 +244,11 @@ export function createApp(deps: AppDependencies) {
         log: deps.log,
       },
     }),
+  );
+  // Not part of the app's contract either: Pub/Sub pushes events to their subscribers here.
+  app.route(
+    '/',
+    eventPushes({ isScheduler: deps.jobs.isScheduler, events: handlers, log: deps.log }),
   );
   // Not part of the app's contract, so not in openapi.json: MCP clients learn its tools from it.
   app.route(

@@ -118,6 +118,7 @@ import {
   createSupabaseTokenVerifier,
   supabaseAuthIssuer,
 } from './adapters/supabase-auth.js';
+import { pubSubEvents } from './adapters/pubsub-events.js';
 import { googleScheduler, jobsTokenScheduler } from './adapters/scheduler.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
@@ -157,7 +158,8 @@ import {
   piecesSection,
 } from './routes/catalog.js';
 import { readConfig } from './config.js';
-import { createLog, redactText, reportingErrors } from './log.js';
+import { inProcessEvents, type EventHandlers } from './events.js';
+import { createLog, redactText, reportingErrors, type Log } from './log.js';
 import { memberCalendar } from './member-calendar.js';
 import type { Database } from './ports.js';
 
@@ -272,6 +274,8 @@ const awards = createWeeklyAwards({
         .map(({ icon, names }) => ({ id: icon, meaning: `${names.zhHans}（运动）` })),
     ),
 });
+// Pub/Sub's project once events go through it (PUBSUB_EVENTS=on).
+const { pubSubProject } = config;
 // The scheduler that starts jobs: Cloud Scheduler's signed token on the hosted server, a shared
 // token on a local one.
 const isScheduler =
@@ -732,6 +736,17 @@ const app = createApp({
         }),
       notices: noticesOn,
     }),
+    // Events go through Pub/Sub once it is set up, and run in the request when it can't take one.
+    ...(pubSubProject === undefined
+      ? {}
+      : {
+          publishEvents: (handlers: EventHandlers, eventLog: Log) =>
+            pubSubEvents({
+              project: pubSubProject,
+              fallback: inProcessEvents(handlers, eventLog),
+              log: eventLog,
+            }),
+        }),
     coachNotes: {
       notes: createCoachNoteDelivery({ store: createPostgresCoachNoteDelivery(db) }),
       noteHour: async () => (await createPostgresCoachSettings(db).current()).noteHour,

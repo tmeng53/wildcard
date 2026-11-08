@@ -45,6 +45,7 @@ describe('readConfig', () => {
       apns: undefined,
       errorReports: undefined,
       traceProject: undefined,
+      pubSubProject: undefined,
       feedbackIssues: undefined,
     });
   });
@@ -97,6 +98,15 @@ describe('readConfig', () => {
     expect(() => readConfig({ ...base, GOOGLE_CLOUD_PROJECT: 'Not/A project' })).toThrow(
       /GOOGLE_CLOUD_PROJECT/,
     );
+  });
+
+  it('sends events through Pub/Sub in the deploy’s project only once PUBSUB_EVENTS is on', () => {
+    const project = 'soy-transducer-512501-h1';
+    expect(readConfig({ ...base, GOOGLE_CLOUD_PROJECT: project }).pubSubProject).toBeUndefined();
+    expect(
+      readConfig({ ...base, GOOGLE_CLOUD_PROJECT: project, PUBSUB_EVENTS: 'on' }).pubSubProject,
+    ).toBe(project);
+    expect(readConfig({ ...base, PUBSUB_EVENTS: 'on' }).pubSubProject).toBeUndefined();
   });
 
   it('keeps each provider’s key, and no longer reads which model writes what', () => {

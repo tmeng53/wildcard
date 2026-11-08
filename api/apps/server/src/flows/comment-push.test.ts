@@ -49,50 +49,73 @@ describe('who hears of a comment', () => {
 });
 
 describe('a comment push', () => {
-  it('stops holding the comment’s answer once APNs is slow, and says so', async () => {
-    const lines: string[] = [];
-    const character = Character.parse({
-      nickname: '安安',
-      look: { persona: 'deadpan', variants: { body: 'peach' }, colors: {} },
-    });
-    const members = {
-      squadmates: () =>
-        Promise.resolve(
-          new Map([
-            [
-              MemberId.parse(writer),
-              {
-                catchphrase: null,
-                character,
-                jerseyNumber: null,
-                joinedAt: new Date(0),
-                equippedTitle: null,
-              },
-            ],
-          ]),
-        ),
-    };
-    const push = {
-      settingsOf: () => Promise.resolve({ dailyProgress: true, coach: true }),
-      // Never answers, as a hung connection wouldn't.
-      notifyMembers: () => new Promise<never>(() => undefined),
-    };
-    const started = Date.now();
+  const character = Character.parse({
+    nickname: '安安',
+    look: { persona: 'deadpan', variants: { body: 'peach' }, colors: {} },
+  });
+  const profile = {
+    catchphrase: null,
+    character,
+    jerseyNumber: null,
+    joinedAt: new Date(0),
+    equippedTitle: null,
+  };
+  const comment = { checkIn: other, comment: other, commenter: writer, text: '加油', author };
 
-    await notifyComment(
-      {
-        members,
-        push,
-        notices: { tell: () => Promise.resolve() },
-        log: createLog((line) => lines.push(line)),
-      },
-      { checkIn: other, comment: other, commenter: writer, text: '加油', author },
+  it('answers once every push went out, and pushes a member already told no more', async () => {
+    const sent: string[] = [];
+    const told = new Set<string>();
+    await Promise.all(
+      [1, 2].map(() =>
+        notifyComment(
+          {
+            members: {
+              squadmates: () => Promise.resolve(new Map([[MemberId.parse(writer), profile]])),
+            },
+            push: {
+              settingsOf: () => Promise.resolve({ dailyProgress: true, coach: true }),
+              notifyMembers: async ({ members }) => {
+                await new Promise((resolve) => setTimeout(resolve, 10));
+                sent.push(...members);
+                return { sent: members.length, gone: 0, off: 0, failures: [] };
+              },
+            },
+            // Written once a member, as the database's unique index keeps it.
+            notices: {
+              tell: (notices) => {
+                const fresh = notices
+                  .map(({ member }) => member)
+                  .filter((member) => !told.has(member));
+                for (const member of fresh) told.add(member);
+                return Promise.resolve(fresh);
+              },
+            },
+            log: createLog(() => undefined),
+          },
+          comment,
+        ),
+      ),
     );
 
-    expect(Date.now() - started).toBeLessThan(4000);
-    expect(lines.some((line) => line.includes('comment push still sending'))).toBe(true);
+    expect(sent).toStrictEqual([author]);
+  });
+
+  it('throws when it can’t read the commenter, so the event comes again', async () => {
+    await expect(
+      notifyComment(
+        {
+          members: { squadmates: () => Promise.reject(new Error('database down')) },
+          push: { settingsOf: unused, notifyMembers: unused },
+          notices: { tell: unused },
+          log: createLog(() => undefined),
+        },
+        comment,
+      ),
+    ).rejects.toThrow('database down');
   });
 });
+
+const unused = () => Promise.reject(new Error('not used'));
 
 describe('a coach’s line pushed', () => {
   it('reads as a teammate’s comment or reply, silently, and never reaches a member who turned the coach’s push off', async () => {
