@@ -109,6 +109,10 @@ struct FeedbackView: View {
                 Text("每一条我们都会看", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
+                Text("公测期间提出反馈，领取神秘奖励", bundle: .module)
+                    .typeStyle(TypeRamp.callout)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .accessibilityIdentifier("feedback.betaReward")
             }
             Spacer(minLength: 0)
             MeStage(character: character, mood: .writing, size: CGSize(width: 90, height: 112))
