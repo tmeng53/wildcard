@@ -17,7 +17,15 @@ export {
   createPostgresCoachSettings,
   type CoachTables,
 } from './adapters/postgres-coach-settings.js';
-export { Coach, CoachEdit, CoachId, CoachLook, CoachTier } from './domain/coach.js';
+export {
+  Coach,
+  CoachEdit,
+  CoachId,
+  CoachLook,
+  CoachTier,
+  CoachWords,
+  coachIn,
+} from './domain/coach.js';
 export {
   CoachModel,
   CoachSettings,

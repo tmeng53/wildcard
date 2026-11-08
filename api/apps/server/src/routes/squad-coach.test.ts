@@ -27,6 +27,7 @@ import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
+import { coachNamesIn } from '../flows/coach-names.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import {
@@ -114,6 +115,15 @@ const app = createApp({
   }),
   coachActivity: createCoachActivity({ store: createPostgresCoachActivity(db) }),
   ...ignoredNotices,
+  coachNames: coachNamesIn({
+    coaches: createPostgresCoachCatalog(db),
+    members,
+    squads: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
+  }),
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),

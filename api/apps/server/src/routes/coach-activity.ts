@@ -1,3 +1,4 @@
+import type { CoachNames } from '../flows/coach-names.js';
 import { NEW_YORK, TimeZone } from '@wildcard/time-zones';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
@@ -153,8 +154,13 @@ const checkInIds = z
     example: '0a5c1f2e-3b4d-4e6f-8a9b-1c2d3e4f5a6b,1b6d2f3e-4c5d-4f6a-9b8c-2d3e4f5a6b7c',
   });
 
-function speaker(coach: CoachReply['coach']) {
-  return { id: coach.id, name: coach.name, look: coach.look };
+/** Who said it, named as the squad calls the coach. */
+function speakerIn(named: (coach: string) => string | undefined) {
+  return (coach: CoachReply['coach']) => ({
+    id: coach.id,
+    name: named(coach.id) ?? coach.name,
+    look: coach.look,
+  });
 }
 
 /**
@@ -168,6 +174,7 @@ export function coachActivity(deps: {
   readonly coachActivity: CoachActivity;
   /** The reader's `coach` switch: switched off, no morning note shows (Tracy, 2026-11-07). */
   readonly push: Pick<Push, 'settingsOf'>;
+  readonly coachNames: CoachNames;
 }) {
   const read = createRoute({
     method: 'get',
@@ -262,6 +269,14 @@ export function coachActivity(deps: {
           .catch(() => false))
           ? written
           : undefined;
+      const coaches = [
+        ...(note === undefined ? [] : [note.coach.id]),
+        ...replies.map((reply) => reply.coach.id),
+        ...answers.map((answer) => answer.coach.id),
+        ...(memberNote === undefined ? [] : [memberNote.coach.id]),
+      ];
+      const named = await deps.coachNames(coaches.map((coach) => ({ coach, squad: squadId })));
+      const speaker = speakerIn((coach) => named(coach, squadId));
       return c.json(
         {
           version: 1 as const,

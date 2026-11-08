@@ -1,3 +1,4 @@
+import { coachNamesIn } from './flows/coach-names.js';
 import { readFileSync } from 'node:fs';
 
 import { serve } from '@hono/node-server';
@@ -407,9 +408,11 @@ const nudges = createNudges({
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
+/** Each coach's name as its squad calls it, in its language. */
+const coachNames = coachNamesIn({ coaches: createPostgresCoachCatalog(db), members, squads });
 /** A coach's name now, as its pushes put it. */
-const coachNameOf = async (coach: string): Promise<string> =>
-  (await createPostgresCoachCatalog(db).list()).find(({ id }) => id === coach)?.name ?? coach;
+const coachNameOf = async (coach: string, squad: string): Promise<string> =>
+  (await coachNames([{ coach, squad }]))(coach, squad) ?? coach;
 /**
  * Tells each teammate a coach's line @s, but those it was already pushed to, as a teammate's @
  * is told: a notice in 通知 and a push (「毛头@了你：…」) under the coach's switch.
@@ -536,7 +539,7 @@ const coachWakes =
             what: 'a coach reply',
           });
           if (text === undefined) return;
-          const coachName = await coachNameOf(coach);
+          const coachName = await coachNameOf(coach, squad);
           await pushCoachLine(
             { push, log },
             { checkIn, member: author, coachName, text, news: 'comment', about: checkIn },
@@ -556,7 +559,7 @@ const coachWakes =
             ],
             what: 'a coach answer',
           });
-          const coachName = await coachNameOf(coach);
+          const coachName = await coachNameOf(coach, squad);
           await pushCoachLine(
             { push, log },
             { checkIn, member: commenter, coachName, text, news: 'reply', about: comment },
@@ -564,7 +567,6 @@ const coachWakes =
           await tellCoachMentions({ squad, checkIn, coachName, text, mentions, told: [commenter] });
         },
       });
-const coachCatalog = createPostgresCoachCatalog(db);
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -585,7 +587,7 @@ const app = createApp({
   nudges,
   notices,
   liveEvents,
-  coachNames: async () => new Map((await coachCatalog.list()).map(({ id, name }) => [id, name])),
+  coachNames,
   aiConsent,
   // Data the app shows that lives in the database. Each module keeps its own section.
   catalog: {

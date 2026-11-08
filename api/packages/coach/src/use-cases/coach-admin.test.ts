@@ -10,7 +10,7 @@ import {
   createPostgresCoachSettings,
   type CoachTables,
 } from '../adapters/postgres-coach-settings.js';
-import { CoachId, type CoachEdit } from '../domain/coach.js';
+import { CoachId, coachIn, type CoachEdit } from '../domain/coach.js';
 import { CoachSettingsChange, MemberId } from '../domain/settings.js';
 import { createCoachCatalog } from './coach-catalog.js';
 import { createCoachSettings } from './coach-settings.js';
@@ -131,6 +131,7 @@ const nuannuan: CoachEdit = {
   soul: '你是暖暖，一个温柔的普拉提教练。',
   look: 'nuannuan',
   offered: true,
+  translations: {},
 };
 
 describe('the coaches', () => {
@@ -181,6 +182,42 @@ describe('the coaches', () => {
         { version: 3, ...retired },
         { version: 3, ...first },
       ]);
+    });
+  });
+
+  it('keep their words in 繁體中文 and English, shown in place of the Chinese ones', async () => {
+    await rolledBack(async (trx, admin) => {
+      const catalog = createCoachCatalog({ store: createPostgresCoachCatalog(trx) });
+      const english = {
+        name: 'Toasty',
+        title: 'Feel-Good Coach',
+        catchphrase: 'You worked hard today',
+        background: 'Certified Pilates coach (for real)',
+        experience: 'Generous with praise',
+        style: 'Gentle, cheers you on',
+        tags: ['Certified', 'Gentle'],
+        pay: 'One bubble tea',
+      };
+      const translated = { ...nuannuan, translations: { en: english } };
+      await catalog.put(nuannuan, admin);
+      await catalog.put(translated, admin);
+      // The same words again save nothing new.
+      await catalog.put({ ...translated, translations: { en: { ...english } } }, admin);
+      const saved = (await catalog.list()).find(({ id }) => id === 'nuannuan');
+      expect(saved?.translations).toStrictEqual({ en: english });
+      expect(await logged(trx, { log: 'coach_catalog_events', by: admin })).toStrictEqual([
+        { version: 3, ...nuannuan },
+        { version: 3, ...translated },
+      ]);
+      if (saved === undefined) throw new Error('not saved');
+      expect(coachIn(saved, 'en')).toMatchObject({
+        ...english,
+        soul: nuannuan.soul,
+        yearsCoaching: 6,
+      });
+      // A language it has no words in shows the Chinese ones.
+      expect(coachIn(saved, 'zh-Hant')).toStrictEqual(saved);
+      expect(coachIn(saved, 'zh-Hans')).toStrictEqual(saved);
     });
   });
 

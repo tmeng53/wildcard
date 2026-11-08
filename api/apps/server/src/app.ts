@@ -55,7 +55,8 @@ import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { jobs } from './routes/jobs.js';
 import { me } from './routes/me.js';
-import { notices, type CoachNames } from './routes/notices.js';
+import type { CoachNames } from './flows/coach-names.js';
+import { notices } from './routes/notices.js';
 import { nudges } from './routes/nudges.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
@@ -239,6 +240,7 @@ export function createApp(deps: AppDependencies) {
         members: deps.members,
         squads: deps.squads,
         push: deps.push,
+        coachNames: deps.coachNames,
         log: deps.log,
       },
     }),

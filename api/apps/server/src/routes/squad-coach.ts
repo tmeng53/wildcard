@@ -1,11 +1,14 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { CoachId, MemberId as CoachMemberId, SquadId as CoachSquadId } from '@wildcard/coach';
-import { NoCoachHiredError, type Coach, type CoachHiring } from '@wildcard/coach';
+import { coachIn, NoCoachHiredError, type Coach, type CoachHiring } from '@wildcard/coach';
+import type { ReaderLanguage } from '@wildcard/language-model';
+import { MemberId as ReaderId, type Members } from '@wildcard/members';
 import { MemberId, NotSquadCaptainError, SquadId, type Squads } from '@wildcard/squads';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
+import { readerLanguageOf } from '../reader-language.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const coachIdField = z
@@ -55,12 +58,31 @@ const SquadCoachBody = z
   })
   .openapi('SquadCoach');
 
+/** The language the reader's app asks in, Simplified Chinese when it says none we speak. */
+const readerOf = (header: string | undefined): ReaderLanguage =>
+  readerLanguageOf(header) ?? 'zh-Hans';
+
 const CoachHireBody = z
   .strictObject({ version: bodyVersion(1), coach: coachIdField })
   .openapi('CoachHire');
 
-/** A coach as the app shows it: never its soul, which only the model reads. */
-function card(coach: Coach) {
+/**
+ * A coach as the app shows it, in the reader's language, and named as its squad calls it (Tracy,
+ * 2026-11-08: the coach's name follows the squad's language): never its soul, which only the model
+ * reads.
+ */
+export function card(
+  coach: Coach,
+  { reader, squad }: { reader: ReaderLanguage; squad: ReaderLanguage },
+) {
+  const words = coachIn(coach, reader);
+  return {
+    ...cardOf(words),
+    name: coachIn(coach, squad).name,
+  };
+}
+
+function cardOf(coach: Coach) {
   return {
     id: coach.id,
     tier: coach.tier,
@@ -86,18 +108,37 @@ export function squadCoach(deps: {
   readonly verifyToken: VerifyToken;
   readonly squads: Squads;
   readonly coachHiring: CoachHiring;
+  readonly members: Pick<Members, 'languages'>;
 }) {
   /** The squad, for one of its members; throws `SquadNotJoinedError` for anyone else. */
   const squadFor = async (squadId: SquadId, userId: string) => {
     const viewer = MemberId.parse(userId);
     const squad = await deps.squads.find({ squad: squadId, viewer });
-    return { viewer, isCaptain: squad.captain === viewer };
+    return { viewer, isCaptain: squad.captain === viewer, captain: squad.captain };
   };
-  const squadCoachOf = async (squadId: SquadId, isCaptain: boolean) => {
+  /** The squad's language: its captain's (Tracy, 2026-11-08). */
+  const squadLanguageOf = async (captain: string | null): Promise<ReaderLanguage> => {
+    if (captain === null) return 'zh-Hans';
+    const id = ReaderId.parse(captain);
+    return (await deps.members.languages([id])).get(id) ?? 'zh-Hans';
+  };
+  const squadCoachOf = async (
+    squadId: SquadId,
+    {
+      isCaptain,
+      captain,
+      reader,
+    }: {
+      isCaptain: boolean;
+      captain: string | null;
+      reader: ReaderLanguage;
+    },
+  ) => {
     const current = await deps.coachHiring.current(CoachSquadId.parse(squadId));
+    const squad = current === undefined ? reader : await squadLanguageOf(captain);
     return {
       version: 1 as const,
-      coach: current === undefined ? null : card(current.coach),
+      coach: current === undefined ? null : card(current.coach, { reader, squad }),
       since: current === undefined ? null : current.since.toISOString(),
       canHire: isCaptain,
     };
@@ -201,13 +242,22 @@ export function squadCoach(deps: {
 
   return new OpenAPIHono<SignedIn>()
     .openapi(market, async (c) => {
+      // Browsed before a squad hires: each coach in the reader's language, name too.
+      const reader = readerOf(c.req.header('accept-language'));
       const coaches = await deps.coachHiring.offered();
-      return c.json({ version: 1 as const, coaches: coaches.map(card) }, 200);
+      return c.json(
+        {
+          version: 1 as const,
+          coaches: coaches.map((coach) => card(coach, { reader, squad: reader })),
+        },
+        200,
+      );
     })
     .openapi(read, async (c) => {
       const { squadId } = c.req.valid('param');
-      const { isCaptain } = await squadFor(squadId, c.var.caller.userId);
-      return c.json(await squadCoachOf(squadId, isCaptain), 200);
+      const { isCaptain, captain } = await squadFor(squadId, c.var.caller.userId);
+      const reader = readerOf(c.req.header('accept-language'));
+      return c.json(await squadCoachOf(squadId, { isCaptain, captain, reader }), 200);
     })
     .openapi(hire, async (c) => {
       const { squadId } = c.req.valid('param');
@@ -218,7 +268,8 @@ export function squadCoach(deps: {
         coach: CoachId.parse(c.req.valid('json').coach),
         by: CoachMemberId.parse(viewer),
       });
-      const body = await squadCoachOf(squadId, true);
+      const reader = readerOf(c.req.header('accept-language'));
+      const body = await squadCoachOf(squadId, { isCaptain: true, captain: viewer, reader });
       return changed ? c.json(body, 201) : c.json(body, 200);
     })
     .openapi(fire, async (c) => {
@@ -234,6 +285,7 @@ export function squadCoach(deps: {
           },
         );
       }
-      return c.json(await squadCoachOf(squadId, true), 200);
+      const reader = readerOf(c.req.header('accept-language'));
+      return c.json(await squadCoachOf(squadId, { isCaptain: true, captain: viewer, reader }), 200);
     });
 }

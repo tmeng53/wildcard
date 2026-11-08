@@ -10,6 +10,7 @@ import { SquadId, type Squads } from '@wildcard/squads';
 
 import type { Log } from '../log.js';
 import { pushAlert } from '../push-copy.js';
+import type { CoachNames } from './coach-names.js';
 
 export interface CoachNotesDependencies {
   readonly notes: CoachNoteDelivery;
@@ -21,6 +22,8 @@ export interface CoachNotesDependencies {
   readonly push: Pick<Push, 'settingsOf' | 'notifyMembers'>;
   /** Keeps notices in the members' bells; never throws. */
   readonly tell: (told: readonly NewNotice[]) => Promise<void>;
+  /** The coach's name in its squad's language, for the push. */
+  readonly coachNames: CoachNames;
   readonly log: Log;
   readonly clock: () => Date;
 }
@@ -104,14 +107,16 @@ export function coachNoteNotification(note: {
 }
 
 async function pushNote(
-  deps: Pick<CoachNotesDependencies, 'push' | 'log'>,
+  deps: Pick<CoachNotesDependencies, 'push' | 'log' | 'coachNames'>,
   note: NoteToDeliver,
 ): Promise<boolean> {
   try {
     const to = PushMember.parse(note.member);
+    const named = await deps.coachNames([{ coach: note.coach, squad: note.squad }]);
+    const coachName = named(note.coach, note.squad) ?? note.coachName;
     const outcome = await deps.push.notifyMembers({
       members: [to],
-      notification: coachNoteNotification(note),
+      notification: coachNoteNotification({ ...note, coachName }),
     });
     if (outcome.failures.length > 0) {
       deps.log.warn('coach note not pushed to every phone', {
