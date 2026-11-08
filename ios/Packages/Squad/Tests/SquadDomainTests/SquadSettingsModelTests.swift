@@ -57,7 +57,7 @@ actor Squad3: SquadSettingsService {
                 daysPerMember: 3, nextDaysPerMember: 3, canChange: viewer == lin,
                 recent: SquadWeeklyGoal.Recent(weeks: 2, daysPerMember: 3.4)),
             matchTimeZone: SquadTimeZone(
-                timeZone: "Asia/Taipei", nextTimeZone: "Asia/Taipei", canChange: viewer == lin),
+                timeZone: "Asia/Taipei", canChange: viewer == lin),
             language: SquadLanguage(language: .traditionalChinese, canChange: viewer == lin))
     }
 
@@ -130,7 +130,6 @@ actor Squad3: SquadSettingsService {
         if let failing { throw failing }
         guard current.matchTimeZone.canChange else { throw .outdated }
         current.matchTimeZone.timeZone = timeZone
-        current.matchTimeZone.nextTimeZone = timeZone
         return current.matchTimeZone
     }
 
