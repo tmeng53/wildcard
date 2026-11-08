@@ -4,8 +4,9 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// The start of a 训练 made by hand, at the front of the 开始 · 时长 row: the time once picked,
-/// 「--:--」 before. A tap opens the flip clock on it, or on the phone's time.
+/// The start of a 训练 made by hand, at the front of the 开始 · 时长 row: 「--:--」 until one is
+/// picked, whose tap opens the flip clock on the phone's time; once picked, the time with a
+/// cross, whose tap clears it, as a second tap clears a length.
 struct StartTimePill: View {
     @Binding var startTime: StartTime?
     @State private var isPicking = false
@@ -13,16 +14,16 @@ struct StartTimePill: View {
     var body: some View {
         PickPill(
             Text(verbatim: startTime?.wire ?? "--:--"), systemImage: "clock", look: .solid,
-            isSelected: startTime != nil
+            isSelected: startTime != nil, isRemovable: startTime != nil
         ) {
-            isPicking = true
+            if startTime == nil { isPicking = true } else { startTime = nil }
         }
         .monospacedDigit()
         .accessibilityLabel(Text("开始时间", bundle: .module))
         .accessibilityValue(Text(verbatim: startTime?.wire ?? ""))
         .accessibilityIdentifier("compose.start")
         .sheet(isPresented: $isPicking) {
-            FlipClockSheet(start: startTime ?? Self.now) { picked in
+            FlipClockSheet(start: Self.now) { picked in
                 startTime = picked
                 isPicking = false
             } cancel: {
@@ -33,7 +34,7 @@ struct StartTimePill: View {
         }
     }
 
-    /// The phone's time, to the minute: where the clock opens before a start is picked.
+    /// The phone's time, to the minute: where the clock opens.
     private static var now: StartTime? {
         let parts = Calendar.current.dateComponents([.hour, .minute], from: .now)
         return try? StartTime(hour: parts.hour ?? 0, minute: parts.minute ?? 0)

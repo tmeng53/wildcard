@@ -1309,7 +1309,7 @@ describe('a 训练 from Apple Health', () => {
     ).toStrictEqual([201, 'saved']);
   });
 
-  it('keeps a 训练’s start time, and an older build’s edit keeps it', async () => {
+  it('keeps a 训练’s start time, and an edit changes or clears it', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
     const { day, createdAt } = todayAndNow();
@@ -1341,11 +1341,11 @@ describe('a 训练 from Apple Health', () => {
           body: { version: 1, kind: 'trained', training },
         })
       ).status;
-    // A build from before start times leaves it out: it stays.
-    expect(await edit({ sport: 'run', caption: '早起' })).toBe(200);
-    expect(await shown()).toBe('06:05');
     expect(await edit({ sport: 'run', startTime: '07:30' })).toBe(200);
     expect(await shown()).toBe('07:30');
+    // An edit that leaves it out clears it.
+    expect(await edit({ sport: 'run', caption: '早起' })).toBe(200);
+    expect(await shown()).toBeUndefined();
   });
 
   it('keeps a map and a chart together, each in its place, and an older build’s edit keeps both', async () => {

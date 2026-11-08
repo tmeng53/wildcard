@@ -74,7 +74,7 @@ export async function editCheckIn(
     {
       ...recordFromDraft(
         {
-          ...keepingStartTime(keepingWorkout(edit, saved), saved),
+          ...keepingWorkout(edit, saved),
           day: saved.day,
           createdAt: saved.createdAt,
           audience: [...saved.audience],
@@ -163,18 +163,6 @@ function keepingWorkout(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
       },
     },
   };
-}
-
-/**
- * The edit with the saved post's start time when it leaves `startTime` out, as builds from
- * before start times do, so editing there never drops it. A build that knows start times has no
- * way to clear one, so it loses nothing by this.
- */
-function keepingStartTime(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
-  if (edit.kind !== 'trained' || saved.kind !== 'trained') return edit;
-  const startTime = saved.training.startTime;
-  if (edit.training.startTime !== undefined || startTime === undefined) return edit;
-  return { ...edit, training: { ...edit.training, startTime } };
 }
 
 /** The record with its photos mapped, left out when there are none. */

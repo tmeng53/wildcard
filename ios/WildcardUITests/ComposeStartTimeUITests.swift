@@ -6,7 +6,7 @@ final class ComposeStartTimeUITests: XCTestCase {
     private static let wait: TimeInterval = 30
 
     /// The pill starts empty and opens the flip clock on the phone's time; turning the hour up
-    /// one and 完成 puts that time on the pill.
+    /// one and 完成 puts that time on the pill, and a tap on it then clears it.
     func testPickAStartOnTheFlipClock() {
         let app = launch()
         let checkIn = app.buttons["today.checkin"]
@@ -41,6 +41,11 @@ final class ComposeStartTimeUITests: XCTestCase {
         app.buttons["start.done"].tap()
         XCTAssertTrue(hour.waitForNonExistence(timeout: Self.wait), "完成 didn't close the flip clock")
         XCTAssertEqual(pill.value as? String, picked, "the pill doesn't show the picked start")
+
+        // A tap on a picked start clears it, as a second tap clears a length.
+        pill.tap()
+        XCTAssertFalse(hour.waitForExistence(timeout: 2), "tapping a picked start opened the clock")
+        XCTAssertEqual(pill.value as? String ?? "", "", "tapping a picked start didn't clear it")
     }
 
     private func launch() -> XCUIApplication {
