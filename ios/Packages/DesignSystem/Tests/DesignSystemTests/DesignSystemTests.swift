@@ -307,7 +307,7 @@ struct TypographyTests {
         }
         let names = [
             "scoreStory", "scoreEnding", "scoreHero", "scoreCard", "scoreWeek", "scoreInline", "scoreSmall",
-            "scoreCaption", "ticketDate", "posterWeek", "launchWord",
+            "scoreCaption", "ticketDate", "ticketStamp", "posterWeek", "launchWord",
         ]
         #expect(scoreboard.map(\.name) == names)
         #expect(TypeRamp.scoreCaption.size == 14 && TypeRamp.scoreCaption.face == .scoreboard(.semibold))
