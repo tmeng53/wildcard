@@ -74,6 +74,13 @@ final class BackfillUITests: XCTestCase {
         let weekAgo = app.buttons["dayStrip.0"]
         XCTAssertTrue(weekAgo.waitForExistence(timeout: Self.wait), "no 日期 strip on the 请假条 page")
         XCTAssertTrue(app.staticTexts["今日请假条"].exists, "today's 请假条 isn't 今日请假条")
+        // The page opens with the keyboard up for the excuse; the 日期 strip sits under the ticket,
+        // so Return puts the keyboard away first.
+        if app.keyboards.firstMatch.exists {
+            app.typeText("\n")
+            waitFor(app.keyboards.firstMatch, "exists == false", "Return left the keyboard up")
+        }
+        XCTAssertTrue(weekAgo.isHittable, "the 日期 strip is covered")
         weekAgo.tap()
         waitFor(weekAgo, "isSelected == true", "tapping a week ago didn't pick it")
         XCTAssertTrue(app.staticTexts["请假条"].waitForExistence(timeout: Self.wait), "the title didn't follow the day")
