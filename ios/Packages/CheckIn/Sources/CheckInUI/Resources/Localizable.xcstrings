@@ -1633,54 +1633,6 @@
         }
       }
     },
-    "收下": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Got it"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "收下"
-          }
-        }
-      }
-    },
-    "给你的 · %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For you · %@"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "給你的 · %@"
-          }
-        }
-      }
-    },
-    "给 %@ 的 · %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For %1$@ · %2$@"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "給 %1$@ 的 · %2$@"
-          }
-        }
-      }
-    },
     "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。": {
       "localizations": {
         "en": {

@@ -1,48 +1,22 @@
 #if os(iOS)
+import AvatarDomain
 import CheckInDomain
 import Contracts
 import Foundation
 
-/// The coach on the home's sideline: a tap starts its pep talk and pops up its card, with its
-/// 战术板 line of the day over it (Tracy, 2026-11-05; no bubble from a tap). While a morning note
-/// waits, its phone shows a dot and buzzes, and a tap opens the note instead (Tracy, 2026-11-07).
+/// The coach on the home's sideline: a tap starts its pep talk and opens its page, the cards it
+/// has for the member (Tracy, 2026-11-08). While a morning note waits unseen, its phone shows a
+/// dot and buzzes.
 extension TodayModel {
-    /// The coach's 战术板 line while its day lasts, for its card and its 简历.
+    /// The coach's 战术板 line while its day lasts, for its 简历.
     public var coachLine: CoachNote? { store.coachLine }
 
-    /// The coach's morning note (便条) the member opened, once the scene is free for it: not while
-    /// a check-in is being written, the burst is open or the squad is dropping in.
-    var coachNote: CoachMemberNote? {
-        guard step == .scene, !isBurstOpen, arrival == nil else { return nil }
-        return store.coachNote
-    }
-
-    /// The member's nickname, for whom the note is.
-    var noteReader: String? { home?.mine?.character?.nickname.text }
-
-    /// 收下: the note goes, and the next squad's (if any) follows.
-    func putAwayNote() {
-        Task { await store.putAwayNote() }
-    }
-
-    /// Shows a morning note again, from its row in 通知.
-    public func showAgain(_ note: CoachMemberNote) {
-        store.showAgain(note)
-    }
-
-    /// Today's note the member already put away, which the coach's card opens again.
-    public var todaysNote: CoachMemberNote? { store.todaysNote }
-
-    /// Whether the coach's phone shows its dot: a morning note waits and none is open.
+    /// Whether the coach's phone shows its dot: a morning note waits unseen.
     var coachHasNote: Bool { store.hasWaitingNote }
 
-    /// Shows the newest waiting morning note, from a tap on its push.
-    public func showWaitingNote() {
-        store.showWaitingNote()
-    }
-
     /// Reads the squad's coach again, after it was hired, changed or fired, and stands the new
-    /// one (or its empty spot) on the sideline.
+    /// one (or its empty spot) on the sideline; also after its page, where a note seen takes the
+    /// dot away.
     public func reloadCoach() async {
         await store.loadCoach()
         placeSquad()
@@ -54,12 +28,29 @@ extension TodayModel {
         openDestination?(.coaches)
     }
 
-    /// The coach was tapped: the waiting note opens, or else it gives its pep talk and its card opens.
+    /// The coach was tapped: it gives its pep talk and its page opens.
     func tapCoach() {
         guard arrival == nil else { return }
-        if store.hasWaitingNote { return store.showWaitingNote() }
         cast.coachTalks()
         openCoach()
     }
+
+    /// The member's own character, as the coach's page stands them by the coach.
+    public var myCharacter: (look: Outfit, persona: Persona) { (myLook, myPersona) }
+
+    /// Everyone else in the squad, as they made their characters (a stand-in before), in the
+    /// order the home lists them, for the coach's line to everyone.
+    public var squadmateCharacters: [(look: Outfit, persona: Persona)] {
+        guard let home else { return [] }
+        return home.today.members.filter { $0.member != home.member }.map {
+            (SquadCast.look(of: $0), SquadCast.persona(of: $0))
+        }
+    }
+
+    /// The coach on the sideline, as last read; nil while the squad has none.
+    public var sidelineCoach: CoachSpeaker? { store.coach?.coach }
+
+    /// The squad on the home, whose coach's page opens.
+    public var squadID: SquadID? { home?.squad.id }
 }
 #endif

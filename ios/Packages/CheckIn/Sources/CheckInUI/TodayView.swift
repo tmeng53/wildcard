@@ -32,8 +32,6 @@ public struct TodayView: View {
     /// The day whose 今日赛况 box score is open in the card's place: left open past the day's
     /// end, it doesn't reopen by itself the next evening.
     @State private var openRecapDay: LocalDay?
-    /// Where the coach stands on screen, which its morning note opens from.
-    @State private var coachCenter: CGPoint?
 
     /// Opens the post my caption's bubble is from in 动态; nil while it is still waiting to go
     /// out, which opens 动态 at the top.
@@ -110,7 +108,7 @@ public struct TodayView: View {
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
                 pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
                 tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, tapCoach: model.tapCoach,
-                coachHasNote: model.coachHasNote, coachAt: { coachCenter = $0 },
+                coachHasNote: model.coachHasNote,
                 tapVacancy: model.tapVacancy
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
@@ -174,18 +172,7 @@ public struct TodayView: View {
                 .ignoresSafeArea(edges: .bottom)
                 .transition(.opacity)
             }
-
-            // The coach's morning note, opened from the coach over everything on the scene.
-            if let note = model.coachNote {
-                CoachMemberNoteOverlay(note: note, reader: model.noteReader, from: coachCenter) {
-                    model.putAwayNote()
-                }
-                .id(note.id)
-                .transition(.opacity)
-                .zIndex(2)
-            }
         }
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.coachNote?.id)
     }
 
     /// The card at the top: the squad card, with the 今日赛况 tag as its last row from the evening

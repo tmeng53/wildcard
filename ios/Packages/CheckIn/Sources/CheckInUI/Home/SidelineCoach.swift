@@ -95,22 +95,15 @@ struct SidelineCoachFigure: View {
 }
 
 /// The coach on the sideline as a button by its name, for VoiceOver and UI tests, saying whether a
-/// note waits; it tells where it stands on screen, for its note to open from.
+/// note waits.
 struct SidelineCoachButton: ViewModifier {
     let name: String
     let hasNote: Bool
     let tap: () -> Void
-    let standsAt: (CGPoint) -> Void
 
     func body(content: Content) -> some View {
         content
             .onTapGesture(perform: tap)
-            .onGeometryChange(for: CGPoint.self) { proxy in
-                let frame = proxy.frame(in: .global)
-                return CGPoint(x: frame.midX, y: frame.midY)
-            } action: {
-                standsAt($0)
-            }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text(verbatim: name))
             .accessibilityValue(hasNote ? Text("有新消息", bundle: .module) : Text(verbatim: ""))

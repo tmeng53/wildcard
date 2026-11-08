@@ -107,7 +107,8 @@ extension WildcardAPI {
                     return StreetStock.Piece(
                         id: piece.id, store: piece.storeId, state: state,
                         sports: piece.sports.compactMap(Sport.init(rawValue:)))
-                }))
+                }),
+            gifts: body.gifts.sorted { $0.givenAt < $1.givenAt }.filter { $0.openedAt != nil }.map(\.id))
     }
 
     /// 领取: puts an unlocked piece in the member's wardrobe, on every phone. Safe to repeat.

@@ -273,7 +273,8 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, notices: LaunchOptions.notices, selection: $tab, destination: $pushDestination
+                myPosts: myPosts, notices: LaunchOptions.notices, coachCards: LaunchOptions.coachCards, selection: $tab,
+                destination: $pushDestination
             )
             .onAppear {
                 // As on the real backend: a push opens where its notice in 通知 goes, unless the

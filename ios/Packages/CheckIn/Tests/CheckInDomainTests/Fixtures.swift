@@ -184,24 +184,12 @@ actor ScriptedBackend: CheckInBackend {
     }
 
     private var serverNotes: [CoachMemberNote] = []
-    private var opened: CoachMemberNote?
-    private(set) var putAway: [Int] = []
     func set(notes: [CoachMemberNote]) { serverNotes = notes }
 
     func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote] {
         if let failure { throw failure }
         return squads.compactMap { squad in serverNotes.first { $0.squad == squad } }
     }
-
-    func putAway(_ note: CoachMemberNote) async throws(CheckInError) {
-        // Kept on the phone even when the server can't be reached.
-        opened = note
-        if let failure { throw failure }
-        putAway.append(note.id)
-        serverNotes.removeAll { $0.id == note.id }
-    }
-
-    func openedNote() async -> CoachMemberNote? { opened }
 }
 
 actor MemoryOutbox: Outbox {

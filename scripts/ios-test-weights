@@ -6,9 +6,9 @@ BadgeBoardUITests 47
 BroadcastCelebrationUITests 50
 BurstUITests 60
 CharacterEditorUITests 230
+CoachDeckUITests 60
 CoachFeedUITests 111
 CoachHireUITests 175
-CoachNoteUITests 20
 CoachSidelineUITests 55
 ComposePhotoUITests 87
 DailyPushUITests 55

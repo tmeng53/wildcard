@@ -196,13 +196,6 @@ public final class SquadSettingsModel {
         return settings.today.weekNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
     }
 
-    /// 「带队 N 天」 on the coach's card: the day the squad hired it counts 1, days on the
-    /// member's clock.
-    public var coachDay: Int? {
-        guard let settings, let hire = settings.coach.hire else { return nil }
-        return settings.today.dayNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
-    }
-
     /// Reads 教练招聘会's coaches, each time it opens.
     public func loadMarket() async {
         market = .loading

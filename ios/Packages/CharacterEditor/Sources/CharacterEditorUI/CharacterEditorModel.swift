@@ -88,10 +88,10 @@ public final class CharacterEditorModel {
     /// in `claimed`.
     public static func placeholder(
         look: Outfit? = nil, persona: Persona = .energetic, nickname: String, tab: EditorTab = .look,
-        unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [],
+        unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], gifts: [String] = [],
         marks: any WardrobeMarks = MemoryWardrobeMarks()
     ) throws(AvatarError) -> CharacterEditorModel {
-        let catalog = try Catalog.placeholder(unlocks: unlocks, stock: stock)
+        let catalog = try Catalog.placeholder(unlocks: unlocks, stock: stock, gifts: gifts)
         var generator = SystemRandomNumberGenerator()
         let arrived = Catalog.arrived(unlocks: unlocks, stock: stock)
         let start =
@@ -106,7 +106,7 @@ public final class CharacterEditorModel {
     /// screen is, for a member who has unlocked nothing yet: a piece the look wears that the street
     /// doesn't offer goes back to what the rig draws there. Undo starts over.
     public func stock(_ stock: StreetStock) throws(AvatarError) {
-        let catalog = try Catalog.placeholder(stock: stock)
+        let catalog = try Catalog.placeholder(stock: stock, gifts: draft.catalog.gifts)
         var look = draft.picks
         for slot in Catalog.clothingSlots {
             guard let worn = look.variants[slot], worn != catalog.defaults[slot],
@@ -177,9 +177,10 @@ public final class CharacterEditorModel {
         let catalog = draft.catalog
         let open = catalog.stores.filter(\.isOpen).map(\.id)
         let racks = open.flatMap { catalog.rack(of: $0) }.filter { owns($0.variant) }
-        // Every slot, an empty one too: its tab says it's still empty (Tracy 2026-11-05).
+        // Every slot, an empty one too: its tab says it's still empty (Tracy 2026-11-05). The
+        // coach's gifts hang after the stores' pieces.
         return Catalog.clothingSlots.map { slot in
-            (slot, racks.filter { $0.slot == slot }.map(\.variant))
+            (slot, racks.filter { $0.slot == slot }.map(\.variant) + catalog.gifts(in: slot))
         }
     }
 
