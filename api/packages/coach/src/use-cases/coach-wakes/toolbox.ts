@@ -105,6 +105,7 @@ export function mentioning(
 ): { readonly line: string; readonly mentions: readonly string[] } | string {
   const mentions: string[] = [];
   const prefix: string[] = [];
+  let said = line;
   for (const name of new Set(at.map((each) => each.trim()))) {
     const member = [...roster].find(([, shown]) => shown === name)?.[0];
     if (member !== undefined && member === to) continue;
@@ -118,9 +119,19 @@ export function mentioning(
         : `不能 @ ${name}；能 @ 的是：${known.join('、')}。`;
     }
     mentions.push(member);
-    if (!line.includes(`@${nickname}`)) prefix.push(`@${nickname} `);
+    if (said.includes(`@${nickname}`)) said = spacedAfter(said, `@${nickname}`);
+    else prefix.push(`@${nickname} `);
   }
-  return { line: prefix.join('') + line, mentions };
+  return { line: prefix.join('') + said, mentions };
+}
+
+/** `line` with a space after each `tag` not already followed by one, so the app sees where the name ends. */
+function spacedAfter(line: string, tag: string): string {
+  const [first = '', ...rest] = line.split(tag);
+  return rest.reduce(
+    (spaced, after) => `${spaced}${tag}${after === '' || /^\s/u.test(after) ? '' : ' '}${after}`,
+    first,
+  );
 }
 
 /** The `at` parameter of a line the coach says under a check-in. */

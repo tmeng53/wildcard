@@ -8,6 +8,9 @@ public struct MentionedWords: Hashable, Sendable {
     public enum Person: Hashable, Sendable {
         case member(MemberID)
         case coach(CoachID)
+        /// Someone the app can't name now, such as a teammate who has left the squad: their
+        /// 「@名字」 shows as written, greyed, and opens nothing.
+        case unnamed(MemberID)
     }
 
     public enum Run: Hashable, Sendable {
@@ -18,9 +21,13 @@ public struct MentionedWords: Hashable, Sendable {
 
     public let runs: [Run]
 
-    /// - Parameter people: whom `text` @s, in the order written, each with the name its 「@」
-    ///   carries. One whose 「@名字」 isn't in the words stays plain, so nothing is made up.
-    public init(_ text: String, people: [(person: Person, name: String)]) {
+    /// - Parameters:
+    ///   - people: whom `text` @s, in the order written, each with the name its 「@」 carries.
+    ///     One whose 「@名字」 isn't in the words stays plain, so nothing is made up.
+    ///   - unnamed: whom `text` @s without a name the app knows, in the order written. Each takes
+    ///     the next 「@」 left over, up to the space the box and the coach put after a name; one
+    ///     longer than a nickname may be stays plain.
+    public init(_ text: String, people: [(person: Person, name: String)], unnamed: [MemberID] = []) {
         var claimed: [Range<String.Index>: Person] = [:]
         // Longest name first, so 「@毛头头」 isn't taken as 「@毛头」 and the rest; the same name
         // keeps its order, so the first of two teammates called Mia gets the first 「@Mia」.
@@ -37,6 +44,11 @@ public struct MentionedWords: Hashable, Sendable {
                 from = found.upperBound
             }
         }
+        var from = text.startIndex
+        for member in unnamed {
+            guard let found = Self.nextUnclaimedAt(in: text, from: &from, claimed: claimed.keys) else { break }
+            claimed[found] = .unnamed(member)
+        }
         var runs: [Run] = []
         var cursor = text.startIndex
         for range in claimed.keys.sorted(by: { $0.lowerBound < $1.lowerBound }) {
@@ -46,5 +58,22 @@ public struct MentionedWords: Hashable, Sendable {
         }
         if cursor < text.endIndex { runs.append(.plain(String(text[cursor...]))) }
         self.runs = runs
+    }
+
+    /// The next 「@名字」 from `from` that no tag has taken: the `@` and what follows it up to a
+    /// space or the end, when that is as long as a nickname may be.
+    private static func nextUnclaimedAt(
+        in text: String, from: inout String.Index, claimed: some Collection<Range<String.Index>>
+    ) -> Range<String.Index>? {
+        while let sign = text[from...].firstIndex(of: "@") {
+            let end = text[sign...].firstIndex(where: \.isWhitespace) ?? text.endIndex
+            let found = sign..<end
+            from = end
+            let length = text.distance(from: sign, to: end) - 1
+            if (1...Nickname.maxLength).contains(length), !claimed.contains(where: { $0.overlaps(found) }) {
+                return found
+            }
+        }
+        return nil
     }
 }

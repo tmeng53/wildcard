@@ -29,20 +29,22 @@ extension FeedModel {
     /// A comment's words, with the 「@名字」 of whom it @s as tags.
     func words(of comment: Comment) -> MentionedWords {
         var people = mentioned(comment.mentions.members)
+        let unnamed = comment.mentions.members.filter { name(of: $0) == nil }
         if let id = comment.mentions.coach,
             let speaker = mentionableCoach?.id == id ? mentionableCoach : coach?.speaker(id)
         {
             people.append((.coach(id), speaker.name))
         }
-        return MentionedWords(comment.text.text, people: people)
+        return MentionedWords(comment.text.text, people: people, unnamed: unnamed)
     }
 
     /// The coach's line or answer, with the 「@名字」 of the teammates it @s as tags.
     func words(of text: String, mentioning members: [MemberID]) -> MentionedWords {
-        MentionedWords(text, people: mentioned(members))
+        MentionedWords(text, people: mentioned(members), unnamed: members.filter { name(of: $0) == nil })
     }
 
-    /// Teammates @'d, by the nickname their 「@」 carries; one without a name yet isn't a tag.
+    /// Teammates @'d, by the nickname their 「@」 carries; one the app can't name (who left the
+    /// squad, or has no name yet) is greyed instead.
     private func mentioned(_ members: [MemberID]) -> [(person: MentionedWords.Person, name: String)] {
         members.compactMap { member in name(of: member).map { (.member(member), $0) } }
     }

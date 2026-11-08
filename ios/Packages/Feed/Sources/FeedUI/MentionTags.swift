@@ -23,7 +23,7 @@ enum MentionLink {
 
 extension MentionedWords {
     /// The words as one text, each 「@名字」 a tag in the scene's accent; a teammate's tag is a
-    /// link to their card. Show it with `mentionTags(_:)`, which draws the tags' capsules and
+    /// link to their card, and one who left is greyed. Show it with `mentionTags(_:)`, which draws the tags' capsules and
     /// opens the card.
     func text(in theme: SceneTheme) -> Text {
         runs.reduce(Text(verbatim: "")) { text, run in
@@ -31,6 +31,10 @@ extension MentionedWords {
             case .plain(let words):
                 let piece = Text(verbatim: words)
                 return Text("\(text)\(piece)", bundle: .module)
+            case .tag(let name, .unnamed):
+                // Someone who left: their name as written, greyed, with no capsule and no card.
+                let word = Text(verbatim: name).foregroundStyle(Color(role: .fgMuted, in: theme))
+                return Text("\(text)\(word)", bundle: .module)
             case .tag(let name, let person):
                 // Thin spaces either side: the capsule's room around the name.
                 var tag = AttributedString("\u{2009}\(name)\u{2009}")
