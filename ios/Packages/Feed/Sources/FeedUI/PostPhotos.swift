@@ -55,6 +55,9 @@ struct PostPhotos: View {
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: tiles.count > 1 ? .always : .never))
+                // The pages are square at the bottom, where the 成绩条 meets them: iOS 26 rounds
+                // a page's corners to its container's shape otherwise, and the card shows through.
+                .containerShape(Rectangle())
             }
             .clipShape(
                 UnevenRoundedRectangle(

@@ -117,6 +117,7 @@ describe('the coach settings', () => {
 
 const nuannuan: CoachEdit = {
   id: CoachId.parse('nuannuan'),
+  position: 2,
   tier: 'entry',
   name: '暖暖',
   title: '暖心教练',
@@ -145,7 +146,8 @@ describe('the coaches', () => {
   it('give the first coach the 简历 Tracy approved', async () => {
     const [first] = await createCoachCatalog({ store: createPostgresCoachCatalog(db) }).list();
     expect(first).toMatchObject({
-      version: 2,
+      version: 3,
+      position: 1,
       title: '混混教练',
       background: '体育学院刚毕业，该学的都学了，就是证还没考下来',
       yearsCoaching: 0,
@@ -159,19 +161,25 @@ describe('the coaches', () => {
     await rolledBack(async (trx, admin) => {
       const catalog = createCoachCatalog({ store: createPostgresCoachCatalog(trx) });
 
-      expect(await catalog.put(nuannuan, admin)).toStrictEqual({ version: 2, ...nuannuan });
+      expect(await catalog.put(nuannuan, admin)).toStrictEqual({ version: 3, ...nuannuan });
       // The same coach again saves nothing new.
       await catalog.put(nuannuan, admin);
       const retired = { ...nuannuan, offered: false };
       await catalog.put(retired, admin);
 
+      // In 教练招聘会's order, not by id.
       expect((await catalog.list()).map(({ id, offered }) => ({ id, offered }))).toStrictEqual([
-        { id: 'nuannuan', offered: false },
         { id: 'xiaohun', offered: true },
+        { id: 'nuannuan', offered: false },
       ]);
+      const first = { ...retired, position: 1 };
+      await catalog.put(first, admin);
+      // Sharing a place, they go by id.
+      expect((await catalog.list()).map(({ id }) => id)).toStrictEqual(['nuannuan', 'xiaohun']);
       expect(await logged(trx, { log: 'coach_catalog_events', by: admin })).toStrictEqual([
-        { version: 2, ...nuannuan },
-        { version: 2, ...retired },
+        { version: 3, ...nuannuan },
+        { version: 3, ...retired },
+        { version: 3, ...first },
       ]);
     });
   });
