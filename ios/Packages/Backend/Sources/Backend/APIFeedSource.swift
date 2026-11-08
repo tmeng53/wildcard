@@ -4,7 +4,7 @@ import FeedDomain
 import Foundation
 
 /// 动态 over our API: the squad's list with each check-in's reactions and comments in one call,
-/// one post's own page, the characters from the squad's today, and each photo from the URL the
+/// one post's own page, the characters from the squad's today, and each photo kept on the phone or else from the URL the
 /// list signed for it.
 public struct APIFeedSource: FeedSource {
     private let api: WildcardAPI
@@ -74,8 +74,7 @@ public struct APIFeedSource: FeedSource {
     }
 
     public func photo(_ ref: PhotoRef) async -> Data? {
-        guard let url = ref.viewURL else { return nil }
-        return await api.photo(at: url)
+        await api.photo(ref)
     }
 
     public func setReaction(_ emoji: Emoji?, on checkIn: CheckInID) async throws(FeedError) {

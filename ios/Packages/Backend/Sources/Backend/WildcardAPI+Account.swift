@@ -17,7 +17,7 @@ extension WildcardAPI {
     /// out under the next account signed in on the device.
     public init(
         url: URL, account: AccountSession, member: MemberID? = nil, language: LanguageTag? = nil,
-        http: URLSession = .wildcard
+        http: URLSession = .wildcard, photos: PhotoCache? = nil
     ) {
         self.init(
             url: url,
@@ -25,6 +25,6 @@ extension WildcardAPI {
                 try await account.accessToken(for: member, rejected: rejected)
             },
             refused: { token in try? await account.signOut(ifCurrent: token) },
-            language: language, http: http)
+            language: language, http: http, photos: photos)
     }
 }

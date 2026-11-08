@@ -13,7 +13,7 @@ export type CoachCardKind = z.infer<typeof CoachCardKind>;
 /** A card's id within its kind: a 战术板 line's day, a note's or a reply's id, a gift's piece. */
 export const CoachCardId = z
   .string()
-  .regex(/^[A-Za-z0-9_.:-]{1,64}$/u)
+  .regex(/^[A-Za-z0-9_.:-]{1,64}$/)
   .meta({ description: 'The card’s id within its kind.', example: '42' });
 export type CoachCardId = z.infer<typeof CoachCardId>;
 

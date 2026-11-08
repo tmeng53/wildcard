@@ -102,7 +102,10 @@ final class AppModel {
         account = AccountSession(
             provider: SupabaseAuth(url: config.authURL, publishableKey: config.authPublishableKey),
             store: KeychainSessionStore(accessGroup: AppGroup.id), now: { Date() })
-        api = WildcardAPI(url: config.apiURL, account: account, language: { AppLanguage.current.rawValue })
+        // Check-in photos seen once are kept, so 动态 doesn't download them again.
+        api = WildcardAPI(
+            url: config.apiURL, account: account, language: { AppLanguage.current.rawValue },
+            photos: PhotoCache(directory: URL.cachesDirectory.appending(path: "Photos", directoryHint: .isDirectory)))
         memberAPI = { [account] member in
             WildcardAPI(
                 url: config.apiURL, account: account, member: member, language: { AppLanguage.current.rawValue })
@@ -353,6 +356,7 @@ final class AppModel {
         SignUpProgress.clear()
         KeptScene.forgetAll()
         folders.forgetAll()
+        await api.forgetPhotos()
         shared?.forget()
         if case .signUp(let model) = screen, model.step == .welcome { return }
         screen = .signUp(newSignUp(hasAgreedToAI: false))

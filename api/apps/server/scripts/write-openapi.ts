@@ -147,6 +147,7 @@ const app = createApp({
       boards: unused,
       story: unused,
       freezeStory: unused,
+      storyWeeks: unused,
       storiesWaiting: unused,
     },
     clock: unused,

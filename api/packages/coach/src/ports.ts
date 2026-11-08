@@ -384,6 +384,12 @@ export interface CoachHiringStore {
   /** Every squad with a coach hired now, with its coach. */
   hired(): Promise<ReadonlyMap<SquadId, CoachId>>;
   /**
+   * Whether the squad's coach was its coach before, was fired and is back, and has not run for it
+   * since it came back (a wake skipped without running, as for a check-in no longer shared with
+   * AI, doesn't count), from the hires and firings log and the usage log.
+   */
+  backAgain(squad: SquadId): Promise<boolean>;
+  /**
    * Hires `coach` for the squad, logged as `by`'s, unless it has a coach: then nothing is
    * saved. `noSquad` when there is no such squad.
    */

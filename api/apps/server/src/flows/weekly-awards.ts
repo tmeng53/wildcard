@@ -359,6 +359,29 @@ export async function squadStory(
 }
 
 /**
+ * The weeks a squad has a 战报 for, the latest first, for one of its members (往期战报 on the
+ * squad's page). The latest week whose awards are due on the squad's clock is frozen first if no
+ * run has yet, so it is listed the moment it comes out. A week nobody checked in has none. Throws
+ * `SquadNotJoinedError` for anyone not in the squad now.
+ */
+export async function squadStoryWeeks(
+  deps: Pick<
+    WeeklyAwardsDependencies,
+    'checkIns' | 'squads' | 'scenes' | 'members' | 'awards' | 'clock'
+  >,
+  { viewer, squad }: { readonly viewer: string; readonly squad: SquadId },
+): Promise<WeekStart[]> {
+  await deps.squads.find({ squad: SquadsSquad.parse(squad), viewer: SquadsMember.parse(viewer) });
+  const now = deps.clock();
+  for (const week of weeksMaybeAwarded(now).reverse()) {
+    if ((await awardsTimeFor(deps, { squad, weekStart: week })) > now) continue;
+    await frozenStory(deps, { squad, weekStart: week });
+    break;
+  }
+  return deps.awards.storyWeeks({ squad });
+}
+
+/**
  * A member nudging the organisers (催一下主办方) about a story whose titles haven't come: the
  * first nudge since the squad-week's last failed try (or before its first) tells every admin,
  * with the failed tries and why; other nudges, nudges once the titles are written, and nudges

@@ -170,4 +170,11 @@ describe('openapi.json', () => {
     const twice = names.filter((name, index) => names.indexOf(name) !== index);
     expect(twice).toEqual([]);
   });
+
+  it('writes each pattern as the regex itself, without its JavaScript flags', () => {
+    const document = readFileSync(new URL('../openapi.json', import.meta.url), 'utf8');
+    expect([...document.matchAll(/"pattern": "(.*\/[a-z]+)"/gu)].map((match) => match[1])).toEqual(
+      [],
+    );
+  });
 });
