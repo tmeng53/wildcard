@@ -3980,7 +3980,7 @@
             "type": "string",
             "maxLength": 64,
             "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
-            "description": "Next week’s zone: a change counts from the next week, so it differs from `timeZone` only after the captain changed it this week.",
+            "description": "Next week’s zone, the same as `timeZone`: a change counts at once. Kept for builds that show a change waiting for next week.",
             "example": "Asia/Taipei"
           },
           "canChange": {
@@ -4019,6 +4019,159 @@
         ],
         "additionalProperties": false
       },
+      "CoachDayChallenge": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "today": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "noteId": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "description": "The morning note that set it, which answering and completing it name."
+              },
+              "day": {
+                "type": "string",
+                "format": "date",
+                "description": "Its day, on the squad’s clock."
+              },
+              "challenge": {
+                "$ref": "#/components/schemas/CoachChallenge"
+              }
+            },
+            "required": [
+              "noteId",
+              "day",
+              "challenge"
+            ],
+            "additionalProperties": false,
+            "description": "The caller’s challenge today, once their morning note reached them; `null` when there is none, or while their `coach` switch is off."
+          }
+        },
+        "required": [
+          "version",
+          "today"
+        ],
+        "additionalProperties": false
+      },
+      "CoachChallenge": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 8,
+            "description": "What to do, in a few words.",
+            "example": "喝水"
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999,
+            "description": "How much, when it has a number; always with `unit`.",
+            "example": 8
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 4,
+            "description": "The amount’s unit, the coach’s own word.",
+            "example": "杯"
+          },
+          "line": {
+            "type": "string",
+            "maxLength": 24,
+            "description": "The coach talking to the member under the title, about why; left out on older notes.",
+            "example": "泳池泡久了也会渴，别等口干。"
+          },
+          "answer": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "declined"
+            ],
+            "description": "What the member said to it; left out until they answer. The first stands."
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 60,
+            "description": "Why the member let it go, when they said; only the member sees it."
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was marked done (已完成); left out until it is. The first stands."
+          },
+          "completedBy": {
+            "type": "string",
+            "enum": [
+              "member",
+              "coach"
+            ],
+            "description": "Who marked it done, with `completedAt`."
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "CoachChallengeCompleted": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "noteId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedBy": {
+            "type": "string",
+            "enum": [
+              "member",
+              "coach"
+            ],
+            "description": "`member` for the member’s own 我完成了, `coach` when the coach saw it in their check-ins."
+          }
+        },
+        "required": [
+          "version",
+          "noteId",
+          "completedAt",
+          "completedBy"
+        ],
+        "additionalProperties": false
+      },
+      "CoachChallengeCompletion": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false
+      },
       "CoachChallengeAnswered": {
         "type": "object",
         "properties": {
@@ -4039,6 +4192,11 @@
               "declined"
             ],
             "description": "`accepted` for 接受挑战, `declined` for 算了."
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 60,
+            "description": "Why they let it go, when they said; the first answer’s."
           }
         },
         "required": [
@@ -4064,6 +4222,12 @@
               "declined"
             ],
             "description": "`accepted` for 接受挑战, `declined` for 算了."
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Why they let it go, if they say; only with `declined`. Their coach remembers it.",
+            "x-max-characters": 60
           }
         },
         "required": [
@@ -4308,49 +4472,6 @@
         "additionalProperties": false,
         "description": "The caller’s own newest morning note (便条) from the squad’s coach, for 今天 to show when the caller opens it; only the caller sees it. Left out when there is none from the last day and a half, or while the caller’s `coach` push switch is off."
       },
-      "CoachChallenge": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string",
-            "maxLength": 8,
-            "description": "What to do, in a few words.",
-            "example": "喝水"
-          },
-          "amount": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 9999,
-            "description": "How much, when it has a number; always with `unit`.",
-            "example": 8
-          },
-          "unit": {
-            "type": "string",
-            "maxLength": 4,
-            "description": "The amount’s unit, the coach’s own word.",
-            "example": "杯"
-          },
-          "line": {
-            "type": "string",
-            "maxLength": 24,
-            "description": "The coach talking to the member under the title, about why; left out on older notes.",
-            "example": "泳池泡久了也会渴，别等口干。"
-          },
-          "answer": {
-            "type": "string",
-            "enum": [
-              "accepted",
-              "declined"
-            ],
-            "description": "What the member said to it; left out until they answer. The first stands."
-          }
-        },
-        "required": [
-          "title"
-        ],
-        "additionalProperties": false,
-        "description": "The day’s challenge (今日挑战) the note sets, if any; only the member sees it."
-      },
       "CoachCards": {
         "type": "object",
         "properties": {
@@ -4387,12 +4508,12 @@
         "properties": {
           "kind": {
             "type": "string",
-            "description": "`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.",
+            "description": "`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.",
             "example": "challenge"
           },
           "id": {
             "type": "string",
-            "description": "The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s too), a gift’s piece, a reply’s or answer’s id.",
+            "description": "The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece, a reply’s or answer’s id.",
             "example": "42"
           },
           "coach": {
@@ -4401,12 +4522,12 @@
           "at": {
             "type": "string",
             "format": "date-time",
-            "description": "When it came: a note when it was delivered."
+            "description": "When it came: a note when it was delivered, a `challengeDone` when marked."
           },
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The squad’s day a `board`, `note` or `challenge` is for."
+            "description": "The squad’s day a `board`, `note`, `challenge` or `challengeDone` is for."
           },
           "text": {
             "type": "string",
@@ -4419,7 +4540,7 @@
                 "$ref": "#/components/schemas/CoachChallenge"
               },
               {
-                "description": "A `challenge`’s challenge."
+                "description": "A `challenge`’s or `challengeDone`’s challenge."
               }
             ]
           },
@@ -4480,14 +4601,8 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
-              "board",
-              "note",
-              "challenge",
-              "gift",
-              "reply",
-              "answer"
-            ]
+            "description": "The card’s kind, as asked; more kinds may come.",
+            "example": "challenge"
           },
           "id": {
             "type": "string",
@@ -10281,7 +10396,7 @@
       "put": {
         "operationId": "setSquadTimeZone",
         "summary": "Set the squad’s time zone",
-        "description": "For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.",
+        "description": "For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.",
         "security": [
           {
             "bearer": []
@@ -10310,7 +10425,7 @@
         },
         "responses": {
           "200": {
-            "description": "The zone, with next week’s changed",
+            "description": "The zone, changed",
             "content": {
               "application/json": {
                 "schema": {
@@ -10372,11 +10487,199 @@
         }
       }
     },
+    "/squads/{squadId}/coach/challenge": {
+      "get": {
+        "operationId": "getCoachChallenge",
+        "summary": "The caller’s challenge today (今日挑战)",
+        "description": "The day’s challenge the squad’s coach set the caller on today’s morning note (today on the squad’s clock), once the note reached them: what it is, what they said to it, and whether it is done, by them (我完成了) or by the coach from their check-ins. Only the caller sees it.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Today’s challenge, or `null`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachDayChallenge"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/coach/notes/{noteId}/challenge/completion": {
+      "put": {
+        "operationId": "completeCoachChallenge",
+        "summary": "Mark the challenge on the caller’s morning note done (我完成了)",
+        "description": "The caller did the day’s challenge their morning note sets. Only on its own day, on the squad’s clock, and not once they let it go (算了). The first completion stands, theirs or the coach’s, and is what comes back, so repeating it is safe.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "name": "noteId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoachChallengeCompletion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The completion that stands",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachChallengeCompleted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad or note id, a note with no challenge (`COACH_NOTE_NO_CHALLENGE`), one the caller let go (`COACH_CHALLENGE_DECLINED`), or another day’s (`COACH_CHALLENGE_DAY_OVER`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not one of the caller’s notes in this squad (`COACH_NOTE_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/squads/{squadId}/coach/notes/{noteId}/challenge": {
       "put": {
         "operationId": "answerCoachChallenge",
         "summary": "Accept or decline the challenge on the caller’s morning note",
-        "description": "接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.",
+        "description": "接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.",
         "security": [
           {
             "bearer": []
@@ -10766,6 +11069,7 @@
                 "board",
                 "note",
                 "challenge",
+                "challengeDone",
                 "gift",
                 "reply",
                 "answer"

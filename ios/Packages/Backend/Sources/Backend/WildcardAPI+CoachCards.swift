@@ -35,14 +35,14 @@ extension WildcardAPI {
 
     /// 接受挑战 or 不接挑战 on a morning note's challenge; the first answer stands.
     public func answerChallenge(
-        of note: Int, in squad: SquadID, with answer: CoachChallengeAnswer, reason: String? = nil
+        of note: Int, in squad: SquadID, with answer: CoachChallengeAnswer, reason: String?
     ) async throws(APIError) -> CoachChallengeAnswer {
         guard let sent = Components.Schemas.CoachChallengeAnswer.AnswerPayload(rawValue: answer.rawValue) else {
             throw .unreadableResponse
         }
         let wire = try await call {
             try await client.answerCoachChallenge(
-                path: .init(squadId: squad.description, noteId: note), body: .json(.init(version: ._1, answer: sent))
+                path: .init(squadId: squad.description, noteId: note), body: .json(.init(version: ._1, answer: sent, reason: reason))
             ).ok.body.json
         }
         return CoachChallengeAnswer(rawValue: wire.answer.rawValue) ?? answer
