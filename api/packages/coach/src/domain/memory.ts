@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import type { SquadWeek } from './squad-week.js';
 
 // A squad's memory: the files its coach keeps. Stored by member id (`people/<id>.md`), shown to
@@ -12,6 +14,13 @@ const SQUAD_FILES = ['squad.md', 'memory.md'] as const;
 
 /** A file's path as stored: `squad.md`, `memory.md` or `people/<member id>.md`. */
 export type StoredPath = string;
+
+/** A stored path as an admin names it. */
+export const CoachFilePath = z
+  .string()
+  .regex(
+    /^(squad\.md|memory\.md|people\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.md)$/,
+  );
 
 /** Every path the model may read or edit for this roster, shown as it sees them. */
 export function shownPaths(roster: ReadonlyMap<string, string>): string[] {

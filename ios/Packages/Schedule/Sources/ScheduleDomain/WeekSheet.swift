@@ -2,7 +2,7 @@ import Contracts
 import Foundation
 
 /// One week of the 出赛表 as the server holds it: the plan, how each day went, the titles the
-/// squad's weekly awards gave the member, the squad's count and the week's 饮食小目标.
+/// squad's weekly awards gave the member and the week's 饮食小目标.
 public struct WeekSheet: Hashable, Sendable {
     /// The week's Monday.
     public let weekStart: LocalDay
@@ -13,13 +13,11 @@ public struct WeekSheet: Hashable, Sendable {
     /// The titles (头衔) the week's awards gave the member, best first. Empty until the awards
     /// are written on Sunday night, and for a week they didn't check in.
     public let titles: [AwardTitle]
-    /// The squad's 练了 against everyone's plans; nil when the member is in no squad.
-    public let squad: SquadCount?
     /// At most `FuelGoal.maxCount`, in the order picked.
     public var fuel: [FuelGoal]
 
     public init(
-        weekStart: LocalDay, plan: [PlanDay], marks: [DayMark], titles: [AwardTitle] = [], squad: SquadCount? = nil,
+        weekStart: LocalDay, plan: [PlanDay], marks: [DayMark], titles: [AwardTitle] = [],
         fuel: [FuelGoal] = []
     ) throws(ScheduleError) {
         guard plan.count == WeeklyPlan.dayCount, marks.count == WeeklyPlan.dayCount else { throw .refused }
@@ -28,7 +26,6 @@ public struct WeekSheet: Hashable, Sendable {
         self.plan = plan
         self.marks = marks
         self.titles = titles
-        self.squad = squad
         self.fuel = fuel
     }
 
@@ -67,16 +64,6 @@ public struct AwardTitle: Hashable, Sendable {
 
     public init(title: String, speech: String) {
         (self.title, self.speech) = (title, speech)
-    }
-}
-
-/// The squad's week: days its members trained against the days their plans train.
-public struct SquadCount: Hashable, Sendable {
-    public let trained: Int
-    public let planned: Int
-
-    public init(trained: Int, planned: Int) {
-        (self.trained, self.planned) = (trained, planned)
     }
 }
 

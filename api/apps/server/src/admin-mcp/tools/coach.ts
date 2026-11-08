@@ -1,11 +1,13 @@
 import {
   CoachEdit,
+  CoachFilePath,
   CoachSettingsChange,
   CoachId,
   MemberId,
   SquadId,
   type CoachCatalogAdmin,
   type CoachHiring,
+  type CoachMemoryAdmin,
   type CoachReportStore,
   type CoachSettingsAdmin,
 } from '@wildcard/coach';
@@ -22,6 +24,7 @@ interface CoachToolDependencies {
   readonly coaches: CoachCatalogAdmin;
   readonly hiring: CoachHiring;
   readonly report: CoachReportStore;
+  readonly memory: CoachMemoryAdmin;
   readonly clock: () => Date;
 }
 
@@ -149,6 +152,26 @@ export function getSquadCoaching({ report, clock }: CoachToolDependencies) {
   });
 }
 
+/** `edit_coach_files`: rewrites one of a squad's coach memory files. */
+export function editCoachFiles({ memory }: CoachToolDependencies) {
+  return adminTool({
+    name: 'edit_coach_files',
+    title: 'Rewrite a squad’s coach memory file',
+    description:
+      'Replaces one of a squad’s coach memory files with a new body, logged as yours; an empty ' +
+      'body clears it. Paths and bodies are as get_squad_coaching shows them: squad.md, ' +
+      'memory.md or people/<member id>.md, members named as {队员:<member id>}. Every version ' +
+      'is kept. The coach reads the new body on its next wake. Returns the squad’s files now.',
+    changes: true,
+    input: z.strictObject({
+      squad: SquadId.describe('The squad’s id.'),
+      path: CoachFilePath.describe('squad.md, memory.md or people/<member id>.md'),
+      body: z.string().max(20_000).describe('The file’s whole new text, Chinese.'),
+    }),
+    run: async (input) => memory.rewrite(input),
+  });
+}
+
 export const coachTools = (deps: CoachToolDependencies) => [
   getCoachSettings(deps),
   changeCoachSettings(deps),
@@ -157,4 +180,5 @@ export const coachTools = (deps: CoachToolDependencies) => [
   hireCoach(deps),
   fireCoach(deps),
   getSquadCoaching(deps),
+  editCoachFiles(deps),
 ];

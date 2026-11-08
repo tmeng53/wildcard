@@ -96,7 +96,7 @@ now="$(node -p 'new Date(Date.now() - 60_000).toISOString()')"
 day="${now:0:10}"
 
 # A time zone where it is about noon now, as "<zone> <its today> <its week's Monday>": a member
-# there is well inside their day (which lasts until 3am), whenever the run happens.
+# there is well inside their day, whenever the run happens.
 noon_zone() {
   node -e '
     const offset = ((12 - new Date().getUTCHours() + 36) % 24) - 12;
@@ -801,9 +801,8 @@ if want account; then
   path="$(jq -r .path <<<"$body")"
   curl -sf -X PUT "$(jq -r .uploadUrl <<<"$body")" -H 'content-type: image/jpeg' --data-binary 'not really a jpeg' >/dev/null ||
     fail "upload to storage failed"
-  # The leaver's own day in Toronto when the check-in was made, which lasts until 3am there:
-  # three hours back on Toronto's clock, so the night the clocks go back still counts right.
-  toronto_day="$(node -p "new Date(Date.parse(new Date('$now').toLocaleString('sv-SE', { timeZone: 'America/Toronto' }) + 'Z') - 3 * 3_600_000).toISOString().slice(0, 10)")"
+  # The leaver's own day in Toronto when the check-in was made: the date on Toronto's clock.
+  toronto_day="$(node -p "new Date('$now').toLocaleDateString('sv-SE', { timeZone: 'America/Toronto' })")"
   call PUT "/check-ins/$(new_id)" "$leaver_token" "$(check_in_of "$squad" "$toronto_day" healthyMeal "\"meal\":{\"photos\":[{\"path\":\"$path\"}]}")"
   expect 201
   echo "account: leaver made a squad with keeper and posted a meal with a photo"
@@ -934,7 +933,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_scenes,put_scene,get_unlock_rules,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,send_test_push" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_scenes,put_scene,get_unlock_rules,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,edit_coach_files,send_test_push" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 

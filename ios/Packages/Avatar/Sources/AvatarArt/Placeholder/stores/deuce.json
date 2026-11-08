@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "persona": "drama",
+  "look": {
+    "body": "lop",
+    "eyes": "round",
+    "mouth": "oh",
+    "cheeks": "rosy",
+    "hat": "deuce-visor",
+    "top": "deuce-dress",
+    "shoes": "deuce-socks",
+    "prop": "racket"
+  }
+}

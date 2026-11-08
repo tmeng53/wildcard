@@ -39,6 +39,7 @@ import {
   unusedWeeklyAwards,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
   unusedUnlocks,
   unusedGifts,
@@ -101,6 +102,7 @@ const app = createApp({
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachLetters: unusedCoachLetters,
   ...ignoredNotices,
   log: createLog(() => undefined),
   admin: adminOn(),
@@ -148,8 +150,8 @@ async function call(
 }
 
 const HOUR = 3_600_000;
-/** Today on a clock `offset` hours ahead of UTC: the date 3 hours earlier (the 3am grace). */
-const today = (offset = 0) => new Date(Date.now() + (offset - 3) * HOUR).toISOString().slice(0, 10);
+/** Today on a clock `offset` hours ahead of UTC. */
+const today = (offset = 0) => new Date(Date.now() + offset * HOUR).toISOString().slice(0, 10);
 
 async function member(timeZone = 'UTC') {
   const signedUp = await signUp();

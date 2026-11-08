@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "persona": "showoff",
+  "look": {
+    "body": "golden",
+    "eyes": "happy",
+    "mouth": "grin",
+    "hat": "trot-turkey",
+    "top": "trot-pie",
+    "bottom": "trot-cranberry",
+    "shoes": "trot-pumpkin",
+    "acc": "trot-bib"
+  }
+}

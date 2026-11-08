@@ -16,9 +16,9 @@ private let newYorkMorning = Date(timeIntervalSince1970: 1_793_714_400)
 @Test func theCoachSaysItsLineWhileItsNewYorkDayLasts() throws {
     let coach = SidelineCoach(coach: maotou, note: try note("2026-11-03"))
     #expect(coach.line(at: newYorkMorning)?.text == "今天随缘，来了就算")
-    // Until 3am the next morning in New York, then it is gone.
-    #expect(coach.line(at: newYorkMorning.addingTimeInterval(17 * 3600)) != nil)
-    #expect(coach.line(at: newYorkMorning.addingTimeInterval(19 * 3600)) == nil)
+    // Until midnight in New York, then it is gone.
+    #expect(coach.line(at: newYorkMorning.addingTimeInterval(14 * 3600)) != nil)
+    #expect(coach.line(at: newYorkMorning.addingTimeInterval(16 * 3600)) == nil)
     #expect(SidelineCoach(coach: maotou, note: try note("2026-11-02")).line(at: newYorkMorning) == nil)
 }
 
