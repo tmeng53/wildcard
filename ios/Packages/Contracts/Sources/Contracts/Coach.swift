@@ -85,22 +85,27 @@ public struct CoachSpeaker: Hashable, Sendable {
 
 /// The squad's 战术板 line: what its coach says to everyone once a day.
 public struct CoachNote: Hashable, Sendable {
-    /// The day it is for, New York's, as every coach's day is.
+    /// The day it is for, on the squad's clock (`timeZone`), as the coach's daily wake keeps it.
     public let day: LocalDay
     public let text: String
     public let coach: CoachSpeaker
     public let writtenAt: Date
+    /// The squad's time zone (小队时区), whose day `day` is.
+    public let timeZone: TimeZone
 
-    public init(day: LocalDay, text: String, coach: CoachSpeaker, writtenAt: Date) {
+    public init(
+        day: LocalDay, text: String, coach: CoachSpeaker, writtenAt: Date, timeZone: TimeZone = CoachNote.timeZone
+    ) {
         (self.day, self.text, self.coach, self.writtenAt) = (day, text, coach, writtenAt)
+        self.timeZone = timeZone
     }
 
-    /// Coaches keep New York's day.
+    /// The clock of a squad that never picked one: New York's.
     public static let timeZone = TimeZone(identifier: "America/New_York") ?? .gmt
 
-    /// Whether it is still the line's day at `moment`, so the home shows it.
+    /// Whether it is still the line's day at `moment` on the squad's clock, so the home shows it.
     public func isCurrent(at moment: Date) -> Bool {
-        LocalDay(at: moment, in: Self.timeZone) == day
+        LocalDay(at: moment, in: timeZone) == day
     }
 }
 

@@ -19,14 +19,7 @@ import {
   type SquadWeek,
   type WeekCheckIn,
 } from '../domain/squad-week.js';
-import {
-  costMicros,
-  newYorkTime,
-  wakesDue,
-  weekStartOf,
-  weeksAround,
-  type Wake,
-} from '../domain/wake.js';
+import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
 import type {
   AiConsented,
   CoachAgent,
@@ -42,6 +35,7 @@ import type {
   SquadWeekSource,
 } from '../ports.js';
 import { toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
+import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 
 /**
  * How long a run keeps claiming wakes, so it ends well inside the scheduler's 5 minutes; the
@@ -121,6 +115,14 @@ export interface CoachWakesDependencies {
   readonly photoUrls?: CoachPhotoUrls;
   /** Without it the coach has no member stats or plans to look up. */
   readonly memberFacts?: CoachMemberFacts;
+  /**
+   * Each squad's time zone at a moment (小队时区), the clock of its daily wake and of the day it
+   * tells the coach; without it, New York's.
+   */
+  readonly timeZonesAt?: (
+    squads: readonly SquadId[],
+    moment: Date,
+  ) => Promise<ReadonlyMap<string, string>>;
   /** Without it the coach has no meme library to draw humour from. */
   readonly memes?: CoachMemes;
   /** Without it the coach is told of no holiday or other moment. */
@@ -172,13 +174,15 @@ export function createCoachWakes(deps: CoachWakesDependencies): CoachWakes {
       const coaches = new Map((await deps.catalog.list()).map((coach) => [coach.id, coach]));
       const squads = [...hired.keys()];
       let queued = 0;
+      const zones = (await deps.timeZonesAt?.(squads, now)) ?? new Map<string, string>();
       for (const squad of squads) {
+        const timeZone = zones.get(squad) ?? NEW_YORK;
         // Near Monday a member's day may be in the week after New York's, or the one before.
         for (const weekStart of weeksAround(now)) {
           const week = await weekOf(deps, { squad, weekStart });
           // A squad everyone left has no one to coach.
           if (week.members.length === 0) continue;
-          queued += await deps.stores.wakes.enqueue(wakesDue({ squad, week, now }), now);
+          queued += await deps.stores.wakes.enqueue(wakesDue({ squad, week, now, timeZone }), now);
         }
       }
       const { done, failed } = await drain(deps, { squads, hired, coaches, settings, now });
@@ -369,8 +373,14 @@ async function runWake(
         return [path, at === undefined ? undefined : draft.files.get(at)];
       }),
     );
-    // The day the wake is for: the daily wake's own, or New York's today.
-    const day = wake.reason.kind === 'daily' ? wake.reason.day : newYorkTime(now).day;
+    // The day the wake is for: the daily wake's own, or the squad's today on its own clock.
+    const day =
+      wake.reason.kind === 'daily'
+        ? wake.reason.day
+        : wallClockAt(
+            now,
+            (await deps.timeZonesAt?.([wake.squad], now))?.get(wake.squad) ?? NEW_YORK,
+          ).day;
     const task = taskOf({
       reason: wake.reason,
       week,

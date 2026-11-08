@@ -45,7 +45,7 @@ function scenesWith(state: { crown: MemberId[]; week: string }) {
   return createSquadScenes({
     squads,
     clock: () => new Date(),
-    sceneWeekAt: () => SceneWeek.parse(state.week),
+    sceneWeekAt: () => Promise.resolve(SceneWeek.parse(state.week)),
     crownHolders: () => Promise.resolve(state.crown),
     openScenes: (week) => Promise.resolve(openIn(week)),
   });
