@@ -15,7 +15,8 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../Avatar"), .package(path: "../Contracts"), .package(path: "../DesignSystem"),
-        .package(path: "../Sports"), .package(path: "../Health"), .package(path: "../Schedule"),
+        .package(path: "../Sports"), .package(path: "../Health"), .package(path: "../Location"),
+        .package(path: "../Schedule"),
     ],
     targets: [
         .target(
@@ -35,6 +36,7 @@ let package = Package(
                 .product(name: "DesignSystemUI", package: "DesignSystem"),
                 .product(name: "SportsUI", package: "Sports"),
                 .product(name: "HealthUI", package: "Health"),
+                .product(name: "LocationDomain", package: "Location"),
                 .product(name: "ScheduleDomain", package: "Schedule"),
                 .product(name: "ScheduleUI", package: "Schedule"),
             ],

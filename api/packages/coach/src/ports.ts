@@ -78,6 +78,16 @@ export interface CoachMeme {
 /** The memes in use now, which the coach may draw humour from. */
 export type CoachMemes = () => Promise<readonly CoachMeme[]>;
 
+/**
+ * Today's weather where each of these members is, in words (`今天雨，8–13°C，降水概率 80%；昨天晴，…`), for
+ * those whose place is known. The model reads only the weather, never where they are.
+ */
+export type CoachWeather = (input: {
+  readonly members: readonly string[];
+  /** The day of the wake, `YYYY-MM-DD`. */
+  readonly day: string;
+}) => Promise<ReadonlyMap<string, string>>;
+
 /** How a wake's run ended, with the tokens it used either way. */
 export type AgentRun =
   | { readonly ok: true; readonly usage: TokenUsage }

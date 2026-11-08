@@ -8,6 +8,7 @@ import DesignSystemUI
 import Foundation
 import DesignSystem
 import HealthUI
+import LocationDomain
 import Observation
 import OnboardingDomain
 import ScenePickDomain
@@ -67,6 +68,8 @@ public final class SignUpModel {
     let health: HealthConnection?
     /// Whether 连上 Apple 健康 is asking the system now.
     var isConnectingHealth = false
+    /// The phone's approximate location, which 打开大概位置 asks for; nil skips that step.
+    let location: LocationSharing?
     /// How many of this week's days are over: 0 on its first day. Home's first week counts only
     /// from today.
     @ObservationIgnored let daysGone: Int
@@ -75,13 +78,15 @@ public final class SignUpModel {
     /// to start the nickname from. `now` in `timeZone` says which week the plan is for and which
     /// of its days are over, by the member's day as the API counts it; weeks start on Monday. `hasAgreedToAI`: the account consented to AI writing
     /// before, so 你的小队 doesn't ask again. `health`: the app's Apple Health, which 连上 Apple 健康
-    /// connects.
+    /// connects. `location`: the app's location for the coach's weather, which 打开大概位置 asks for.
     public init(
         service: any SignUpService, nickname: String, now: Date,
-        in timeZone: TimeZone = .current, hasAgreedToAI: Bool = false, health: HealthConnection? = nil
+        in timeZone: TimeZone = .current, hasAgreedToAI: Bool = false, health: HealthConnection? = nil,
+        location: LocationSharing? = nil
     ) {
         self.service = service
         self.health = health
+        self.location = location
         asksForAIConsent = !hasAgreedToAI
         self.nickname = nickname
         squad = SquadDraft(invite: nil, suggestedName: "", timeZone: timeZone.identifier)
@@ -127,9 +132,8 @@ public final class SignUpModel {
     /// Back a step, but not while a save is on its way: it would move the member on again when
     /// it lands, after they chose to go back.
     func back() {
-        guard !isWorking, !isPickingScene, !isConnectingHealth, reveal == nil else { return }
-        let previous: SignUpStep? = step == .week ? .beforeWeek(hasHealth: hasHealth) : step.previous
-        guard let previous else { return }
+        guard !isWorking, !isPickingScene, !isConnectingHealth, !isAskingLocation, reveal == nil else { return }
+        guard let previous = step.previous(hasHealth: hasHealth, hasLocation: hasLocation) else { return }
         failure = nil
         show(previous, forward: false)
     }
@@ -276,15 +280,11 @@ public final class SignUpModel {
         }
     }
 
-    func finishSports() {
-        show(.afterSports(hasHealth: hasHealth))
-    }
-
     /// 以后再说: on with no sports, so training days name none.
     func skipSports() {
         if sports.wearing != nil { myCharacter?.dress(for: nil) }
         sports = SportPicks()
-        show(.afterSports(hasHealth: hasHealth))
+        show(SignUpStep.sports.next(hasHealth: hasHealth, hasLocation: hasLocation) ?? .week)
     }
 
     // MARK: 本周目标

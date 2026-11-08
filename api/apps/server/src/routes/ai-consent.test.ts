@@ -33,6 +33,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -96,6 +97,7 @@ const app = createApp({
   squads,
   aiConsent,
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
   disclaimerDrafts: createDisclaimerDrafts({
     model: {
       answer: ({ prompt }) => {

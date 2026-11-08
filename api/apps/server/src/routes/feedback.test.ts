@@ -32,6 +32,7 @@ import {
   scenesOn,
   signUp,
   switchesOn,
+  weatherOn,
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
@@ -148,6 +149,7 @@ function appWith(issues: IssueTracker, clock: () => Date = () => new Date()) {
     ...ignoredNotices,
     feedback,
     issues,
+    weather: weatherOn(db),
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     log: createLog(() => undefined),

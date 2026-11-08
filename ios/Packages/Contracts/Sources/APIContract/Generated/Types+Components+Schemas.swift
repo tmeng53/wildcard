@@ -4853,6 +4853,41 @@ extension Components {
                 case settings
             }
         }
+        /// The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach. Squadmates and the AI never see it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/MemberLocation`.
+        public struct MemberLocation: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/version`.
+            public var version: Components.Schemas.MemberLocation.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/latitude`.
+            public var latitude: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/longitude`.
+            public var longitude: Swift.Double
+            /// Creates a new `MemberLocation`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - latitude:
+            ///   - longitude:
+            public init(
+                version: Components.Schemas.MemberLocation.VersionPayload,
+                latitude: Swift.Double,
+                longitude: Swift.Double
+            ) {
+                self.version = version
+                self.latitude = latitude
+                self.longitude = longitude
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case latitude
+                case longitude
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadList`.
         public struct SquadList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadList/version`.

@@ -53,6 +53,8 @@
 		A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C3 /* ScheduleUI */; };
 		A1C0DE0000000000000000D5 /* SportsUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000D4 /* SportsUI */; };
 		A1C0DE000000000000000322 /* HealthUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000321 /* HealthUI */; };
+		A1C0DE000000000000000332 /* LocationUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000331 /* LocationUI */; };
+		A1C0DE000000000000000334 /* LocationDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000333 /* LocationDomain */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -186,6 +188,8 @@
 				A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */,
 				A1C0DE0000000000000000D5 /* SportsUI in Frameworks */,
 				A1C0DE000000000000000322 /* HealthUI in Frameworks */,
+				A1C0DE000000000000000332 /* LocationUI in Frameworks */,
+				A1C0DE000000000000000334 /* LocationDomain in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,6 +305,8 @@
 				A1C0DE0000000000000000C3 /* ScheduleUI */,
 				A1C0DE0000000000000000D4 /* SportsUI */,
 				A1C0DE000000000000000321 /* HealthUI */,
+				A1C0DE000000000000000331 /* LocationUI */,
+				A1C0DE000000000000000333 /* LocationDomain */,
 				A1C0DE0000000000000000D1 /* Sentry */,
 			);
 			productName = Wildcard;
@@ -439,6 +445,7 @@
 				A1C0DE0000000000000000C0 /* XCLocalSwiftPackageReference "Packages/Schedule" */,
 				A1C0DE0000000000000000D3 /* XCLocalSwiftPackageReference "Packages/Sports" */,
 				A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Health" */,
+				A1C0DE000000000000000330 /* XCLocalSwiftPackageReference "Packages/Location" */,
 				A1C0DE0000000000000000D0 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -607,6 +614,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "拍照发动态。";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "读取你在 Apple 健康里的运动，发训练时帮你填好时长、距离、心率和路线。不读取卡路里、体重和睡眠。";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Wildcard 不会往 Apple 健康里写入任何数据，只读取你的运动。";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "教练会看你那边的天气，帮你安排训练。";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "存图时把出赛表海报和战报存到你的相册。";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
@@ -639,6 +647,7 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "拍照发动态。";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "读取你在 Apple 健康里的运动，发训练时帮你填好时长、距离、心率和路线。不读取卡路里、体重和睡眠。";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Wildcard 不会往 Apple 健康里写入任何数据，只读取你的运动。";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "教练会看你那边的天气，帮你安排训练。";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "存图时把出赛表海报和战报存到你的相册。";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
@@ -908,6 +917,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Health;
 		};
+		A1C0DE000000000000000330 /* XCLocalSwiftPackageReference "Packages/Location" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Location;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -1121,6 +1134,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Health" */;
 			productName = HealthUI;
+		};
+		A1C0DE000000000000000331 /* LocationUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000330 /* XCLocalSwiftPackageReference "Packages/Location" */;
+			productName = LocationUI;
+		};
+		A1C0DE000000000000000333 /* LocationDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000330 /* XCLocalSwiftPackageReference "Packages/Location" */;
+			productName = LocationDomain;
 		};
 		A1C0DE0000000000000000D1 /* Sentry */ = {
 			isa = XCSwiftPackageProductDependency;

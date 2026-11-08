@@ -10,6 +10,7 @@ import DesignSystemUI
 import FeedDomain
 import FeedUI
 import Foundation
+import LocationDomain
 import MeDomain
 import NotificationsDomain
 import Observation
@@ -140,7 +141,7 @@ final class AppModel {
             switch state {
             case .signedOut: await signedOut()
             case .signedIn:
-                await registerForPush()
+                await registerDevice()
                 if case .starting = screen, !openingUnderCover { await openHome() }
             }
         }
@@ -347,13 +348,10 @@ final class AppModel {
     /// 通知 over our API.
     var notices: any NoticeSource { APINoticeSource(api: api) }
 
-    private func registerForPush() async {
-        try? await Push.registration.signedIn(APIDeviceRegistry(api: api))
-    }
-
     private func signedOut() async {
         // The next account on this phone reads its own; until then it is no admin.
         isAdmin = false
+        Self.location.signedOut()
         SignUpProgress.clear()
         KeptScene.forgetAll()
         folders.forgetAll()
@@ -394,7 +392,4 @@ extension AppModel {
             options: SceneOption.options(from: scene.history),
             service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
-
-    /// How long the loading screen waits for the squad's scene before opening on the kept one.
-    static let sceneWait = Duration.seconds(3)
 }
