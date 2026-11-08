@@ -826,7 +826,7 @@ describe('the squad’s time zone', () => {
       body: { version: 1, timeZone: change.timeZone },
     });
 
-  it('takes the creator’s pick, and lets only the captain change it from next week', async () => {
+  it('takes the creator’s pick, and lets only the captain change it, at once', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const id = randomUUID();
     const created = await call({
@@ -865,12 +865,11 @@ describe('the squad’s time zone', () => {
       'TIME_ZONE_UNKNOWN',
     ]);
     const changed = await setZone(me.token, { squad: id, timeZone: 'America/Los_Angeles' });
-    expect(changed.body).toStrictEqual({
-      version: 1,
-      timeZone: 'Asia/Taipei',
-      nextTimeZone: 'America/Los_Angeles',
-      canChange: true,
-    });
+    // At once, unless it is Monday in Taipei but still Sunday in Los Angeles: then the squad is
+    // back in last week on Taipei's clock until Monday comes there (the use case's tests pin that).
+    const read = (await zoneOf(me.token, id)).body;
+    expect(changed.body).toStrictEqual(read);
+    expect(changed.body).toMatchObject({ nextTimeZone: 'America/Los_Angeles', canChange: true });
   });
 
   it('keeps the creator’s own zone when an older build sends none', async () => {

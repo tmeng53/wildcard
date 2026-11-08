@@ -2,6 +2,10 @@ import { NEW_YORK, TimeZone } from '@wildcard/time-zones';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   LETTER_LIMIT,
+  CHALLENGE_AMOUNT_MAX,
+  CHALLENGE_TITLE_LIMIT,
+  CHALLENGE_UNIT_LIMIT,
+  ChallengeAnswer,
   MAX_CHECK_INS,
   REPLY_LIMIT,
   SquadId as CoachSquadId,
@@ -15,7 +19,7 @@ import { MemberId, SquadId, type Squads } from '@wildcard/squads';
 import { bodyVersion } from '../body-version.js';
 import type { CoachNames } from '../flows/coach-names.js';
 import type { VerifyToken } from '../ports.js';
-import { problem } from '../problem.js';
+import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 const CoachSpeakerBody = z
@@ -43,6 +47,30 @@ const CoachNoteBody = z
   })
   .openapi('CoachNote');
 
+const ChallengeAnswerBody = ChallengeAnswer.meta({
+  description: '`accepted` for 接受挑战, `declined` for 算了.',
+});
+
+const CoachChallengeBody = z
+  .strictObject({
+    title: z.string().max(CHALLENGE_TITLE_LIMIT).meta({
+      description: 'What to do, in a few words.',
+      example: '喝水',
+    }),
+    amount: z.int().min(1).max(CHALLENGE_AMOUNT_MAX).optional().meta({
+      description: 'How much, when it has a number; always with `unit`.',
+      example: 8,
+    }),
+    unit: z.string().max(CHALLENGE_UNIT_LIMIT).optional().meta({
+      description: 'The amount’s unit, the coach’s own word.',
+      example: '杯',
+    }),
+    answer: ChallengeAnswerBody.optional().meta({
+      description: 'What the member said to it; left out until they answer. The first stands.',
+    }),
+  })
+  .openapi('CoachChallenge');
+
 const CoachMemberNoteBody = z
   .strictObject({
     id: z.int().positive().meta({
@@ -52,6 +80,9 @@ const CoachMemberNoteBody = z
       .date()
       .meta({ description: 'The day, on the squad’s clock, the note was written for.' }),
     text: z.string().meta({ description: 'The note’s words.', example: '昨天那组深蹲我看见了' }),
+    challenge: CoachChallengeBody.optional().meta({
+      description: 'The day’s challenge (今日挑战) the note sets, if any; only the member sees it.',
+    }),
     coach: CoachSpeakerBody,
     at: z.iso.datetime().meta({ description: 'When it was written.' }),
   })
@@ -88,6 +119,13 @@ export function wireLetter(
     at: letter.at.toISOString(),
   };
 }
+const ChallengeAnswered = z
+  .strictObject({
+    version: bodyVersion(1),
+    noteId: z.int().positive(),
+    answer: ChallengeAnswerBody,
+  })
+  .openapi('CoachChallengeAnswered');
 
 const CoachReplyBody = z
   .strictObject({
@@ -273,7 +311,62 @@ export function coachActivity(deps: {
     },
   });
 
+  const answerChallenge = createRoute({
+    method: 'put',
+    path: '/squads/{squadId}/coach/notes/{noteId}/challenge',
+    operationId: 'answerCoachChallenge',
+    summary: 'Accept or decline the challenge on the caller’s morning note',
+    description:
+      '接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer ' +
+      'stands; answering again gets it back. The coach sees it when the member next checks in.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      params: z.strictObject({
+        squadId: SquadId,
+        noteId: z.coerce.number().int().positive().openapi({ type: 'integer' }),
+      }),
+      body: {
+        content: {
+          'application/json': {
+            schema: z
+              .strictObject({ version: bodyVersion(1), answer: ChallengeAnswerBody })
+              .openapi('CoachChallengeAnswer'),
+          },
+        },
+        required: true,
+      },
+    },
+    responses: {
+      200: {
+        description: 'The answer that stands',
+        content: { 'application/json': { schema: ChallengeAnswered } },
+      },
+      400: problem(
+        'Not a valid squad or note id, not an answer, or a note with no challenge ' +
+          '(`COACH_NOTE_NO_CHALLENGE`)',
+      ),
+      401: problem('No bearer token, or not a valid one'),
+      403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
+      404: problem('Not one of the caller’s notes in this squad (`COACH_NOTE_NOT_FOUND`)'),
+      ...jsonBodyFailures,
+      503: problem('Sign-in can’t be checked right now'),
+    },
+  });
+
   return new OpenAPIHono<SignedIn>()
+    .openapi(answerChallenge, async (c) => {
+      const { squadId, noteId } = c.req.valid('param');
+      const member = c.var.caller.userId;
+      await deps.squads.find({ squad: squadId, viewer: MemberId.parse(member) });
+      const answer = await deps.coachActivity.answerChallenge({
+        squad: CoachSquadId.parse(squadId),
+        member,
+        note: noteId,
+        answer: c.req.valid('json').answer,
+      });
+      return c.json({ version: 1 as const, noteId, answer }, 200);
+    })
     .openapi(putAway, async (c) => {
       const { squadId, noteId } = c.req.valid('param');
       const member = c.var.caller.userId;
@@ -353,6 +446,16 @@ export function coachActivity(deps: {
                   id: memberNote.id,
                   day: memberNote.day,
                   text: memberNote.text,
+                  ...(memberNote.challenge === undefined
+                    ? {}
+                    : {
+                        challenge: {
+                          ...memberNote.challenge,
+                          ...(memberNote.challengeAnswer === undefined
+                            ? {}
+                            : { answer: memberNote.challengeAnswer }),
+                        },
+                      }),
                   coach: speaker(memberNote.coach),
                   at: memberNote.at.toISOString(),
                 },

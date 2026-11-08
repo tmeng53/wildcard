@@ -24,15 +24,18 @@ public struct WildcardAPI: Sendable {
     /// heartbeat.
     let live: Client
     private let http: URLSession
+    /// Where photos seen once are kept, so they aren't downloaded again; none keeps nothing.
+    private let photos: PhotoCache?
 
     /// - Parameters:
     ///   - url: where the API is served, such as `https://api.example.com`.
     ///   - refused: called with a freshly renewed token the API refuses too: its session is over.
     ///   - language: the tag (`zh-Hans`, `en`) of the language the 战报's words come in.
+    ///   - photos: where check-in photos are kept once downloaded.
     public init(
         url: URL, accessToken: @escaping AccessToken,
         refused: @escaping @Sendable (_ token: String) async -> Void = { _ in },
-        language: LanguageTag? = nil, http: URLSession = .wildcard
+        language: LanguageTag? = nil, http: URLSession = .wildcard, photos: PhotoCache? = nil
     ) {
         // The first wraps the rest: `Problems` reads the answer after any retry.
         let middlewares: [any ClientMiddleware] =
@@ -47,6 +50,7 @@ public struct WildcardAPI: Sendable {
             serverURL: url, configuration: .api,
             transport: URLSessionTransport(configuration: .init(session: .live)), middlewares: middlewares)
         self.http = http
+        self.photos = photos
     }
 
     // MARK: - The member
@@ -237,13 +241,22 @@ public struct WildcardAPI: Sendable {
 
     // MARK: - Photos
 
-    /// A check-in's photo from the URL the API signed for it, or nil when it can't be had now
-    /// (offline, or the URL ran out: listing again signs fresh ones).
-    public func photo(at url: URL) async -> Data? {
-        guard let (data, response) = try? await http.data(from: url),
+    /// A check-in's photo: the copy kept on the phone, else from the URL the API signed for it,
+    /// then kept. Nil when it can't be had now (offline, or the URL ran out: listing again signs
+    /// fresh ones).
+    public func photo(_ ref: PhotoRef) async -> Data? {
+        if let kept = await photos?.photo(at: ref.path) { return kept }
+        let generation = await photos?.generation
+        guard let url = ref.viewURL, let (data, response) = try? await http.data(from: url),
             (response as? HTTPURLResponse)?.statusCode == 200
         else { return nil }
+        await photos?.keep(data, at: ref.path, postedAt: ref.postedAt?.date ?? Date(), startedIn: generation)
         return data
+    }
+
+    /// Deletes the photos kept on the phone, when the member signs out or deletes their account.
+    public func forgetPhotos() async {
+        await photos?.forgetAll()
     }
 
     /// Uploads a photo straight to storage, never through the API, and returns it for a

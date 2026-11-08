@@ -1,9 +1,12 @@
 import {
+  GIFT_LINE_LIMIT,
   GiftPieceEdit,
   MemberId,
   PieceEdit,
   StoreEdit,
+  PieceId,
   UnlockGift,
+  type CoachGift,
   type GiftPiece,
   type GiftsAdmin,
   UnlockRuleEdit,
@@ -21,6 +24,17 @@ import { adminTool } from '../admin-tool.js';
 interface UnlockToolDependencies {
   readonly unlocks: UnlocksAdmin;
   readonly gifts: GiftsAdmin;
+  /**
+   * Gives a piece from the squad's coach in an admin's name, keeping every gift rule (one a
+   * member a week, offered, not owned) and that the member is in the squad and it has a coach.
+   */
+  readonly giveGift: (input: {
+    readonly squad: string;
+    readonly member: string;
+    readonly piece: string;
+    readonly line: string;
+    readonly admin: string;
+  }) => Promise<CoachGift>;
 }
 
 const shown = (rules: readonly UnlockRule[]) => ({
@@ -162,7 +176,8 @@ export function getGiftPieces({ gifts }: UnlockToolDependencies) {
     description:
       'Shows the clothing pieces a squad’s coach may give a member: pieces no store sells, each ' +
       'by its id in the app’s art and whether it is offered now. A member given one keeps it in ' +
-      'their wardrobe, never in a store.',
+      'their wardrobe, never in a store. Each has a description, what the coach’s model reads ' +
+      'before giving it.',
     changes: false,
     input: z.strictObject({}),
     run: async () => pool(await gifts.pieces()),
@@ -176,12 +191,47 @@ export function putGiftPiece({ gifts }: UnlockToolDependencies) {
     title: 'Add or change a coach gift piece',
     description:
       'Adds a clothing piece a squad’s coach may give, or offers or withdraws one (offered = ' +
-      'false stops new gifts; members who have it keep it). A piece is never deleted. Only the ' +
+      'false stops new gifts; members who have it keep it), with its description for the ' +
+      'coach’s model (left out keeps the one it has). A piece is never deleted. Only the ' +
       'id’s shape is checked, so use an id the app’s art has and no store sells. Returns the ' +
       'pool now.',
     changes: true,
     input: GiftPieceEdit,
     run: async (edit) => pool(await gifts.putPiece(edit)),
+  });
+}
+
+/** `give_gift`: gives a member a piece from their squad's coach, with an admin's own line. */
+export function giveGift({ giveGift: give }: UnlockToolDependencies) {
+  return adminTool({
+    name: 'give_gift',
+    title: 'Give a member a coach gift',
+    description:
+      'Gives a member a piece from the gift pool (get_gift_pieces) in the name of their squad’s ' +
+      'coach, with your own line, which only they see, on the coach page. The same rules as the ' +
+      'coach’s own gifts: an offered piece they don’t have, and at most one gift a member a week ' +
+      '(on the squad’s clock); a refused gift says why. Logged as yours. Never taken back.',
+    changes: true,
+    input: z.strictObject({
+      squad: z.uuid().describe('The squad’s id; its coach gives it.'),
+      member: z.uuid().describe('The member’s id; they must be in the squad now.'),
+      piece: PieceId.describe('The piece’s id in the gift pool.'),
+      line: z
+        .string()
+        .trim()
+        .min(1)
+        .max(GIFT_LINE_LIMIT)
+        .describe(
+          `What the coach says with it, in the member’s language, up to ${String(GIFT_LINE_LIMIT)} characters.`,
+        ),
+    }),
+    run: async (input, { admin }) => {
+      const gift = await give({ ...input, admin });
+      return {
+        version: 1,
+        gift: { ...gift, givenAt: gift.givenAt.toISOString() },
+      };
+    },
   });
 }
 
@@ -195,4 +245,5 @@ export const unlockTools = (deps: UnlockToolDependencies) => [
   putPiece(deps),
   getGiftPieces(deps),
   putGiftPiece(deps),
+  giveGift(deps),
 ];

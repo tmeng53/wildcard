@@ -329,7 +329,7 @@ public protocol APIProtocol: Sendable {
     func getSquadTimeZone(_ input: Operations.GetSquadTimeZone.Input) async throws -> Operations.GetSquadTimeZone.Output
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
@@ -348,6 +348,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/language`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/language/put(setSquadLanguage)`.
     func setSquadLanguage(_ input: Operations.SetSquadLanguage.Input) async throws -> Operations.SetSquadLanguage.Output
+    /// Accept or decline the challenge on the caller’s morning note
+    ///
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
+    func answerCoachChallenge(_ input: Operations.AnswerCoachChallenge.Input) async throws -> Operations.AnswerCoachChallenge.Output
     /// Put the caller’s morning note away (收下)
     ///
     /// The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.
@@ -446,6 +453,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}/fuel-goals`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/fuel-goals/put(saveMyFuelGoals)`.
     func saveMyFuelGoals(_ input: Operations.SaveMyFuelGoals.Input) async throws -> Operations.SaveMyFuelGoals.Output
+    /// The weeks a squad has a 战报 for (往期战报)
+    ///
+    /// For the squad’s page: every week whose 战报 came out, the latest first, including the one that came out last Sunday at 8pm Eastern. Only for members of the squad now.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/stories`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/stories/get(listSquadWeekStories)`.
+    func listSquadWeekStories(_ input: Operations.ListSquadWeekStories.Input) async throws -> Operations.ListSquadWeekStories.Output
     /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
     ///
     /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
@@ -488,6 +502,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/members/{memberId}/card`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/members/{memberId}/card/get(getSquadmateCard)`.
     func getSquadmateCard(_ input: Operations.GetSquadmateCard.Input) async throws -> Operations.GetSquadmateCard.Output
+    /// Open a gift the signed-in member’s coach gave them
+    ///
+    /// 拆开: keeps that the member opened a coach’s gift and whether they put it on then (立刻穿上) or left it in their wardrobe (一会儿再说). Opening it again keeps the first.
+    ///
+    /// - Remark: HTTP `PUT /me/gifts/{pieceId}/open`.
+    /// - Remark: Generated from `#/paths//me/gifts/{pieceId}/open/put(openGift)`.
+    func openGift(_ input: Operations.OpenGift.Input) async throws -> Operations.OpenGift.Output
     /// Claim an unlocked piece into the signed-in member’s wardrobe
     ///
     /// 领取: puts a piece the member unlocked in their wardrobe (我的衣橱), on every phone. Nothing is bought. Claiming it again answers with the first claim.
@@ -1173,7 +1194,7 @@ extension APIProtocol {
     }
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
@@ -1215,6 +1236,23 @@ extension APIProtocol {
         body: Operations.SetSquadLanguage.Input.Body
     ) async throws -> Operations.SetSquadLanguage.Output {
         try await setSquadLanguage(Operations.SetSquadLanguage.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Accept or decline the challenge on the caller’s morning note
+    ///
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
+    public func answerCoachChallenge(
+        path: Operations.AnswerCoachChallenge.Input.Path,
+        headers: Operations.AnswerCoachChallenge.Input.Headers = .init(),
+        body: Operations.AnswerCoachChallenge.Input.Body
+    ) async throws -> Operations.AnswerCoachChallenge.Output {
+        try await answerCoachChallenge(Operations.AnswerCoachChallenge.Input(
             path: path,
             headers: headers,
             body: body
@@ -1428,6 +1466,21 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// The weeks a squad has a 战报 for (往期战报)
+    ///
+    /// For the squad’s page: every week whose 战报 came out, the latest first, including the one that came out last Sunday at 8pm Eastern. Only for members of the squad now.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/stories`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/stories/get(listSquadWeekStories)`.
+    public func listSquadWeekStories(
+        path: Operations.ListSquadWeekStories.Input.Path,
+        headers: Operations.ListSquadWeekStories.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadWeekStories.Output {
+        try await listSquadWeekStories(Operations.ListSquadWeekStories.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
     ///
     /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
@@ -1504,6 +1557,23 @@ extension APIProtocol {
         try await getSquadmateCard(Operations.GetSquadmateCard.Input(
             path: path,
             headers: headers
+        ))
+    }
+    /// Open a gift the signed-in member’s coach gave them
+    ///
+    /// 拆开: keeps that the member opened a coach’s gift and whether they put it on then (立刻穿上) or left it in their wardrobe (一会儿再说). Opening it again keeps the first.
+    ///
+    /// - Remark: HTTP `PUT /me/gifts/{pieceId}/open`.
+    /// - Remark: Generated from `#/paths//me/gifts/{pieceId}/open/put(openGift)`.
+    public func openGift(
+        path: Operations.OpenGift.Input.Path,
+        headers: Operations.OpenGift.Input.Headers = .init(),
+        body: Operations.OpenGift.Input.Body
+    ) async throws -> Operations.OpenGift.Output {
+        try await openGift(Operations.OpenGift.Input(
+            path: path,
+            headers: headers,
+            body: body
         ))
     }
     /// Claim an unlocked piece into the signed-in member’s wardrobe

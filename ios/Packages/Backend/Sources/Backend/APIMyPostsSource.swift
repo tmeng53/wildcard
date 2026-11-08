@@ -4,7 +4,7 @@ import FeedDomain
 import Foundation
 
 /// 历史动态 over our API: the member's own posts a page at a time, each with the reactions they
-/// see, and each photo from the URL the page signed for it.
+/// see, and each photo kept on the phone or else from the URL the page signed for it.
 public struct APIMyPostsSource: MyPostsSource {
     private let api: WildcardAPI
 
@@ -29,8 +29,7 @@ public struct APIMyPostsSource: MyPostsSource {
     }
 
     public func photo(_ ref: PhotoRef) async -> Data? {
-        guard let url = ref.viewURL else { return nil }
-        return await api.photo(at: url)
+        await api.photo(ref)
     }
 }
 

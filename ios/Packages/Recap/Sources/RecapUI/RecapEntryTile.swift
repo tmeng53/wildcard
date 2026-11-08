@@ -7,52 +7,38 @@ import DesignSystemUI
 import RecapDomain
 import SwiftUI
 
-/// The 战报's way in from 动态 (揭开红布): the week's dates, 每周战报, and the podium. Until the
-/// reader watches the story to the end it stays under its cloth with only them peeking, and a
-/// 「新」 beside the dates, so opening it is the surprise; after, it folds to one slim row with
-/// 再看一遍, so a story already seen takes little room in the feed. The tile takes that week's
-/// scene's colours.
+/// The 战报's way in from 动态 (揭开红布): the week's dates with 「新」, 每周战报, and the podium
+/// under its cloth with the reader peeking, so opening it is the surprise. 动态 shows it only
+/// until the reader watches the story to the end; after, the story is on 小队's 往期战报. The
+/// tile takes that week's scene's colours.
 public struct RecapEntryTile: View {
     private let story: WeekStory
     private let viewer: StoryMember?
-    private let seen: Bool
     private let action: @MainActor () -> Void
     @State private var figure: (drawing: FigureDrawing, placements: [Placement])?
 
     /// - Parameters:
-    ///   - viewer: the reader as the story keeps them, who peeks from behind the cloth, or
-    ///     stands on their step once seen.
-    ///   - seen: the reader watched this story to its last page.
-    public init(story: WeekStory, viewer: StoryMember?, seen: Bool, action: @escaping @MainActor () -> Void) {
+    ///   - viewer: the reader as the story keeps them, who peeks from behind the cloth.
+    public init(story: WeekStory, viewer: StoryMember?, action: @escaping @MainActor () -> Void) {
         self.story = story
         self.viewer = viewer
-        self.seen = seen
         self.action = action
     }
 
     private var theme: SceneTheme { story.scene }
 
     public var body: some View {
-        Button(action: action) {
-            if seen { row } else { tile }
-        }
-        .buttonStyle(PressableButtonStyle())
-        .environment(\.sceneTheme, theme)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            seen
-                ? Text("每周战报，\(story.week.label)，已看完", bundle: .module)
-                : Text("每周战报，\(story.week.label)，未读", bundle: .module)
-        )
-        .accessibilityAddTraits(.isButton)
-        .accessibilityIdentifier("recap.entry")
-        .task(id: FigureKey(viewer: viewer, seen: seen)) {
-            figure = seen ? nil : viewer.flatMap(StoryWardrobe.peeking)
-        }
+        Button(action: action) { tile }
+            .buttonStyle(PressableButtonStyle())
+            .environment(\.sceneTheme, theme)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("每周战报，\(story.week.label)，未读", bundle: .module))
+            .accessibilityAddTraits(.isButton)
+            .accessibilityIdentifier("recap.entry")
+            .task(id: viewer) { figure = viewer.flatMap(StoryWardrobe.peeking) }
     }
 
-    /// A story not yet watched: the dates with 「新」, 每周战报, its pages as ticks and the podium
-    /// under its cloth.
+    /// The dates with 「新」, 每周战报, its pages as ticks and the podium under its cloth.
     private var tile: some View {
         ZStack(alignment: .bottomTrailing) {
             VStack(alignment: .leading, spacing: 0) {
@@ -81,39 +67,6 @@ public struct RecapEntryTile: View {
             Color(role: .bgScene, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
     }
 
-    /// A story already watched: one slim row, 每周战报 and its dates, and 再看一遍.
-    private var row: some View {
-        HStack(spacing: Space.xs) {
-            Image(systemName: "trophy.fill")
-                .font(.system(size: Self.rowIcon))
-                .foregroundStyle(Color(role: .fgAccent, in: theme))
-                .accessibilityHidden(true)
-            Text("每周战报", bundle: .module)
-                .typeStyle(TypeRamp.footnoteEmphasis)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-            Text(verbatim: story.week.label)
-                .typeStyle(TypeRamp.scoreCaption)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-            Spacer(minLength: Space.xs)
-            HStack(spacing: Space.xxs) {
-                Text("再看一遍", bundle: .module)
-                Image(systemName: "chevron.right").accessibilityHidden(true)
-            }
-            .typeStyle(TypeRamp.footnoteEmphasis)
-            .foregroundStyle(Color(role: .fgAccent, in: theme))
-        }
-        .lineLimit(1)
-        .padding(.horizontal, Space.s)
-        .frame(height: Self.rowHeight)
-        .background(
-            Color(role: .bgAccentSubtle, in: theme),
-            in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-        )
-        // The pill stays slim, but the tap reaches the minimum target.
-        .frame(minHeight: Sizing.minimumTapTarget)
-        .contentShape(Rectangle())
-    }
-
     /// How many pages the story has, as ticks; never what is on them.
     private var segments: some View {
         HStack(spacing: Space.xxs) {
@@ -138,16 +91,8 @@ public struct RecapEntryTile: View {
         .padding(.trailing, Space.s)
     }
 
-    private struct FigureKey: Hashable {
-        let viewer: StoryMember?
-        let seen: Bool
-    }
-
     /// The design's tile: 343 by 168 on a 390-wide phone.
     private static let height: Double = 168
-    /// A watched story's row, about a line of text tall.
-    private static let rowHeight: Double = 40
-    private static let rowIcon: Double = 14
     private static let peekScale = 0.34
     /// Where a character's feet are on its 240 by 320 canvas, from the top.
     private static let feet = 312.0 / 320
