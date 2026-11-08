@@ -103,7 +103,7 @@ struct CoachResumePage: View {
             ScrollView {
                 VStack(spacing: 0) {
                     CoachStage(
-                        coach: coach.id, catchphrase: coach.catchphrase, bubble: .center,
+                        coach: coach.id, catchphrase: coach.catchphrase,
                         figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.resumeFloor, greets: true
                     )
                     .frame(height: min(CoachMetrics.resumeStage, proxy.size.height * 0.42) + proxy.safeAreaInsets.top)
@@ -221,13 +221,13 @@ struct FireCoachPage: View {
                 CoachStage(
                     coach: coach.id,
                     catchphrase: String(localized: "我才刚记住大家的外号……", bundle: .module.inAppLanguage),
-                    bubble: .center, figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
+                    figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
                     mood: .crying, surface: .page
                 )
                 .frame(height: CoachMetrics.fireStage)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
                 Text("小队的记忆会留给下一个教练", bundle: .module)
-                    .typeStyle(TypeRamp.callout)
+                    .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)

@@ -101,16 +101,10 @@ struct StatusTag: View {
     }
 }
 
-/// The coach standing on its stage, its line in a bubble above.
+/// The coach standing on its stage, its line in a bubble right over its head.
 struct CoachStage: View {
-    enum Bubble {
-        case leading
-        case center
-    }
-
     let coach: CoachID
     let catchphrase: String
-    let bubble: Bubble
     let figureHeight: Double
     let floor: Double
     var mood: CoachSilhouette.Mood = .calm
@@ -126,24 +120,12 @@ struct CoachStage: View {
             Color(role: surface == .page ? .borderDefault : .fgSubtle, in: theme)
                 .opacity(surface == .page ? 1 : CoachMetrics.floorShade)
                 .frame(height: floor)
-            switch bubble {
-            case .leading:
-                // As on the approved card: the line pinned to the stage's top corner, the coach
-                // standing under it in the middle.
+            VStack(spacing: Space.s) {
+                speech
                 figure
-                    .padding(.bottom, floor * CoachMetrics.feet)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                    .overlay(alignment: .topLeading) {
-                        speech.padding(Space.s + 2)
-                    }
-            case .center:
-                VStack(spacing: Space.s) {
-                    speech
-                    figure
-                }
-                .padding(.horizontal, Space.s + 2)
-                .padding(.bottom, floor * CoachMetrics.feet)
             }
+            .padding(.horizontal, Space.s + 2)
+            .padding(.bottom, floor * CoachMetrics.feet)
         }
     }
 
