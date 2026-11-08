@@ -41,6 +41,19 @@ extension TodayModel {
         store.showWaitingNote()
     }
 
+    /// Reads the squad's coach again, after it was hired, changed or fired, and stands the new
+    /// one (or its empty spot) on the sideline.
+    public func reloadCoach() async {
+        await store.loadCoach()
+        placeSquad()
+    }
+
+    /// The coach's empty spot was tapped: 教练招聘会 opens, routed as the app routes a notice.
+    func tapVacancy() {
+        guard arrival == nil else { return }
+        openDestination?(.coaches)
+    }
+
     /// The coach was tapped: the waiting note opens, or else it gives its pep talk and its card opens.
     func tapCoach() {
         guard arrival == nil else { return }

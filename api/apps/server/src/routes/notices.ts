@@ -151,7 +151,7 @@ export const NoticeEntry = z
         destination: z.string().meta({
           description:
             'Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` ' +
-            '(小队), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show ' +
+            '(小队), `coaches` (教练招聘会), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show ' +
             'no button for one you don’t know.',
         }),
       })
