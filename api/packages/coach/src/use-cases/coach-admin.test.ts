@@ -205,6 +205,11 @@ describe('the coaches', () => {
       await catalog.put({ ...translated, translations: { en: { ...english } } }, admin);
       const saved = (await catalog.list()).find(({ id }) => id === 'nuannuan');
       expect(saved?.translations).toStrictEqual({ en: english });
+      // Stored under a version of its own.
+      const { rows } = await sql<{ translations: unknown }>`
+        select translations from public.coaches where id = 'nuannuan'
+      `.execute(trx);
+      expect(rows).toStrictEqual([{ translations: { version: 1, en: english } }]);
       expect(await logged(trx, { log: 'coach_catalog_events', by: admin })).toStrictEqual([
         { version: 3, ...nuannuan },
         { version: 3, ...translated },

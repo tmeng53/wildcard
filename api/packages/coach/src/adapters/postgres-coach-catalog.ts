@@ -1,8 +1,12 @@
 import { sql, type Kysely, type Selectable } from 'kysely';
+import { z } from 'zod';
 
 import { Coach } from '../domain/coach.js';
 import type { CoachCatalogStore } from '../ports.js';
 import type { DB } from './tables.js';
+
+/** The `translations` column: the coach's words by language, under a version of their own. */
+const StoredTranslations = z.looseObject({ version: z.literal(1) });
 
 /** A coach from its row. */
 function coachOf(row: Selectable<DB['coaches']>): Coach {
@@ -23,7 +27,12 @@ function coachOf(row: Selectable<DB['coaches']>): Coach {
     soul: row.soul,
     look: row.look,
     offered: row.offered,
-    translations: row.translations,
+    // The version is the column's own, not the coach's words.
+    translations: Object.fromEntries(
+      Object.entries(StoredTranslations.parse(row.translations)).filter(
+        ([key]) => key !== 'version',
+      ),
+    ),
   });
 }
 
@@ -56,7 +65,7 @@ export function createPostgresCoachCatalog(db: Kysely<DB>): CoachCatalogStore {
         soul: coach.soul,
         look: coach.look,
         offered: coach.offered,
-        translations: JSON.stringify(coach.translations),
+        translations: JSON.stringify({ version: 1, ...coach.translations }),
       };
       // One statement: a new coach is added, a listed one changes only when something differs,
       // and the log gets the whole new value exactly when either happens.
