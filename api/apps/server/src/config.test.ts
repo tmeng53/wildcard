@@ -45,9 +45,28 @@ describe('readConfig', () => {
       apns: undefined,
       errorReports: undefined,
       traceProject: undefined,
+      weatherKit: undefined,
       pubSubProject: undefined,
       feedbackIssues: undefined,
     });
+  });
+
+  it('reads WeatherKit only with all four of its settings', () => {
+    const weatherKit = {
+      WEATHERKIT_TEAM_ID: 'TEAM123456',
+      WEATHERKIT_SERVICE_ID: 'com.wildcardsquad.wildcard',
+      WEATHERKIT_KEY_ID: 'KEY1234567',
+      WEATHERKIT_PRIVATE_KEY: '-----BEGIN PRIVATE KEY-----\\nabc\\n-----END PRIVATE KEY-----',
+    };
+    expect(readConfig({ ...base, ...weatherKit }).weatherKit).toStrictEqual({
+      teamId: 'TEAM123456',
+      serviceId: 'com.wildcardsquad.wildcard',
+      keyId: 'KEY1234567',
+      privateKey: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
+    });
+    expect(() => readConfig({ ...base, ...weatherKit, WEATHERKIT_KEY_ID: undefined })).toThrow(
+      'missing WEATHERKIT_KEY_ID',
+    );
   });
 
   it('listens for live events on the session pooler when the server uses the transaction pooler', () => {

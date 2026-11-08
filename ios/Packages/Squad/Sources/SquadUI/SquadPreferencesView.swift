@@ -32,6 +32,7 @@ struct SquadPreferencesView: View {
                 if model.changeFailed {
                     InlineFailure()
                 }
+                subscription
                 timeZone
                 language
                 leaveButton
@@ -46,6 +47,22 @@ struct SquadPreferencesView: View {
         .disabled(model.isSaving)
         .pushedPage()
         .accessibilityIdentifier("squad.preferences")
+    }
+
+    // MARK: 订阅
+
+    /// Nothing to open yet: the squad's plan is free while the public beta runs.
+    private var subscription: some View {
+        HStack(spacing: Space.s) {
+            Text("订阅", bundle: .module)
+                .typeStyle(TypeRamp.body)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+            Spacer(minLength: 0)
+            InkTag(Text("限时免费", bundle: .module))
+        }
+        .frame(minHeight: Sizing.pickRow)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("squad.subscription")
     }
 
     // MARK: 比赛时区
@@ -99,7 +116,8 @@ struct SquadPreferencesView: View {
     // MARK: 小队语言
 
     private var language: some View {
-        VStack(alignment: .leading, spacing: Space.xs) {
+        // The note sits right under its row: the row's own padding is gap enough.
+        VStack(alignment: .leading, spacing: 0) {
             Group {
                 if model.canChangeLanguage {
                     ListRow(Text("小队语言", bundle: .module), value: languageValue, showsDivider: false) {

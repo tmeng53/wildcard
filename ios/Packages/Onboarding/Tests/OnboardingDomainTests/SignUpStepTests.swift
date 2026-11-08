@@ -3,9 +3,9 @@ import OnboardingDomain
 import Testing
 
 struct SignUpStepTests {
-    @Test func theHeaderCountsFiveTaskSteps() {
-        #expect(SignUpStep.allCases.map(\.number) == [nil, 1, 2, 3, 4, 5, nil, nil])
-        #expect(SignUpStep.counted.count == 5)
+    @Test func theHeaderCountsSixTaskSteps() {
+        #expect(SignUpStep.allCases.map(\.number) == [nil, 1, 2, 3, 4, 5, 6, nil, nil])
+        #expect(SignUpStep.counted.count == 6)
     }
 
     @Test func stepsGoInTheApprovedOrder() {
@@ -13,7 +13,8 @@ struct SignUpStepTests {
         #expect(SignUpStep.character.next == .squad)
         #expect(SignUpStep.squad.next == .sports)
         #expect(SignUpStep.sports.next == .health)
-        #expect(SignUpStep.health.next == .week)
+        #expect(SignUpStep.health.next == .location)
+        #expect(SignUpStep.location.next == .week)
         #expect(SignUpStep.week.next == .scene)
         #expect(SignUpStep.scene.next == .entrance)
         #expect(SignUpStep.entrance.next == nil)
@@ -25,17 +26,22 @@ struct SignUpStepTests {
         #expect(SignUpStep.scene.previous == .week)
     }
 
-    @Test func aDeviceWithoutHealthSkipsItBothWays() {
-        #expect(SignUpStep.afterSports(hasHealth: true) == .health)
-        #expect(SignUpStep.afterSports(hasHealth: false) == .week)
-        #expect(SignUpStep.beforeWeek(hasHealth: true) == .health)
-        #expect(SignUpStep.beforeWeek(hasHealth: false) == .sports)
+    @Test func aStepThatCantBeDoneIsSkippedBothWays() {
+        #expect(SignUpStep.sports.next(hasHealth: true, hasLocation: true) == .health)
+        #expect(SignUpStep.sports.next(hasHealth: false, hasLocation: true) == .location)
+        #expect(SignUpStep.sports.next(hasHealth: false, hasLocation: false) == .week)
+        #expect(SignUpStep.health.next(hasHealth: true, hasLocation: false) == .week)
+        #expect(SignUpStep.week.previous(hasHealth: true, hasLocation: true) == .location)
+        #expect(SignUpStep.week.previous(hasHealth: true, hasLocation: false) == .health)
+        #expect(SignUpStep.week.previous(hasHealth: false, hasLocation: false) == .sports)
+        #expect(SignUpStep.location.previous(hasHealth: false, hasLocation: true) == .sports)
     }
 
     @Test func thereIsNoGoingBackFromTheOpenScreenOrTheEntrance() {
         #expect(SignUpStep.welcome.previous == nil)
         #expect(SignUpStep.entrance.previous == nil)
-        #expect(SignUpStep.week.previous == .health)
+        #expect(SignUpStep.week.previous == .location)
+        #expect(SignUpStep.location.previous == .health)
         #expect(SignUpStep.health.previous == .sports)
         #expect(SignUpStep.character.previous == .welcome)
     }

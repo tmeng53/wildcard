@@ -62,9 +62,11 @@ public final class CoachDeck {
     public var top: CoachPageCard? { stack.first }
 
     public func reload() async {
+        var stillUnmarked: [CoachPageCard.Key] = []
         for key in unmarked {
-            if (try? await source.markSeen(key, in: squad)) != nil { unmarked.removeAll { $0 == key } }
+            do { try await source.markSeen(key, in: squad) } catch { stillUnmarked.append(key) }
         }
+        unmarked = stillUnmarked
         do {
             let cards = try await source.cards(in: squad)
             // A card swiped away while the read was on its way stays in 以前.

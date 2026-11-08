@@ -22,6 +22,7 @@ import {
   aiConsentOn,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   scenesOn,
   switchesOn,
@@ -105,6 +106,7 @@ describe('openapi.json', () => {
       ...unusedFeedback,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),
+      weather: weatherOn(db),
       log: createLog(() => undefined),
       jobs: noJobs,
       admin: {

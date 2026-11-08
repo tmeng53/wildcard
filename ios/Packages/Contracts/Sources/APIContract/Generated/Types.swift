@@ -189,6 +189,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/push-settings`.
     /// - Remark: Generated from `#/paths//me/push-settings/put(saveMyPushSettings)`.
     func saveMyPushSettings(_ input: Operations.SaveMyPushSettings.Input) async throws -> Operations.SaveMyPushSettings.Output
+    /// Say roughly where the member is
+    ///
+    /// The app sends the approximate location iOS gives it when it opens, while the member allows it. Replaces the one before. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/location`.
+    /// - Remark: Generated from `#/paths//me/location/put(saveMyLocation)`.
+    func saveMyLocation(_ input: Operations.SaveMyLocation.Input) async throws -> Operations.SaveMyLocation.Output
+    /// Forget where the member is
+    ///
+    /// For when the member stops allowing location. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /me/location`.
+    /// - Remark: Generated from `#/paths//me/location/delete(forgetMyLocation)`.
+    func forgetMyLocation(_ input: Operations.ForgetMyLocation.Input) async throws -> Operations.ForgetMyLocation.Output
     /// The signed-in member’s squads
     ///
     /// - Remark: HTTP `GET /me/squads`.
@@ -928,6 +942,30 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// Say roughly where the member is
+    ///
+    /// The app sends the approximate location iOS gives it when it opens, while the member allows it. Replaces the one before. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/location`.
+    /// - Remark: Generated from `#/paths//me/location/put(saveMyLocation)`.
+    public func saveMyLocation(
+        headers: Operations.SaveMyLocation.Input.Headers = .init(),
+        body: Operations.SaveMyLocation.Input.Body
+    ) async throws -> Operations.SaveMyLocation.Output {
+        try await saveMyLocation(Operations.SaveMyLocation.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Forget where the member is
+    ///
+    /// For when the member stops allowing location. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /me/location`.
+    /// - Remark: Generated from `#/paths//me/location/delete(forgetMyLocation)`.
+    public func forgetMyLocation(headers: Operations.ForgetMyLocation.Input.Headers = .init()) async throws -> Operations.ForgetMyLocation.Output {
+        try await forgetMyLocation(Operations.ForgetMyLocation.Input(headers: headers))
     }
     /// The signed-in member’s squads
     ///

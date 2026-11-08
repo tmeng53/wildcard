@@ -5,6 +5,7 @@ import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import FeedUI
+import LocationDomain
 import MeDomain
 import MeUI
 import NotificationsDomain
@@ -43,6 +44,8 @@ struct MainTabs: View {
     var leftSquad: () -> Void = {}
     /// 设置's 预览注册, for admins; nil for everyone else.
     var previewSignUp: (() -> Void)?
+    /// 设置 › 位置: the phone's approximate location for the coach's weather.
+    let location: LocationSharing?
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
     @State var inbox: NoticeInbox
     /// The pages pushed over 动态: 通知, once the bell is tapped, and a post a notice opens, over
@@ -79,9 +82,10 @@ struct MainTabs: View {
         recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource, coachCards: any CoachCardSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
         destination: Binding<AppDestination?> = .constant(nil), previewSignUp: (() -> Void)? = nil,
-        leftSquad: @escaping () -> Void = {}
+        location: LocationSharing? = nil, leftSquad: @escaping () -> Void = {}
     ) {
         self.previewSignUp = previewSignUp
+        self.location = location
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
         (self.squadmateCards, self.coachCards) = (squadmateCards, coachCards)
@@ -269,7 +273,8 @@ struct MainTabs: View {
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                     openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
-                    writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health),
+                    writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health,
+                    location: location),
                 isSettingsOpen: $showsSettings
             ) {
                 MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }

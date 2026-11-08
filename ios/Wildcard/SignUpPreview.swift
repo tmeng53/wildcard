@@ -1,6 +1,7 @@
 import DesignSystem
 import DesignSystemUI
 import Foundation
+import LocationUI
 import OnboardingUI
 import SwiftUI
 
@@ -14,7 +15,8 @@ struct SignUpPreview: View {
 
     /// A new sign-up on the sample squad, as a newcomer meets it now.
     static func model() -> SignUpModel {
-        SignUpModel(service: InMemorySignUpService.sampleSquad(), nickname: "", now: Date())
+        SignUpModel(
+            service: InMemorySignUpService.sampleSquad(), nickname: "", now: Date(), location: .sample())
     }
 
     var body: some View {

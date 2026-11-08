@@ -44,6 +44,7 @@ actor Squad3: SquadSettingsService {
     private(set) var picks: [SceneID] = []
     private(set) var hires: [CoachID] = []
     private(set) var languagePicks: [SquadLanguage.Language] = []
+    private var market: [Coach] = [maotou, nuannuan]
 
     init(viewer: MemberID, scene: SquadScene, coach: SquadCoach.Hire? = nil, today: String = "2026-10-27") throws {
         current = SquadSettings(
@@ -103,8 +104,10 @@ actor Squad3: SquadSettingsService {
 
     func coaches() async throws(SquadError) -> [Coach] {
         if let failing { throw failing }
-        return [maotou, nuannuan]
+        return market
     }
+
+    func offer(_ coaches: [Coach]) { market = coaches }
 
     func hire(_ coach: CoachID, for squad: SquadID) async throws(SquadError) -> SquadCoach {
         if let failing { throw failing }
@@ -359,5 +362,22 @@ actor Squad3: SquadSettingsService {
         await service.fail(with: .unavailable)
         await model.loadMarket()
         #expect(model.market == .failed(.unavailable))
+    }
+
+    @Test func comingBackToTheMarketKeepsTheListUp() async throws {
+        let service = try Squad3(viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false))
+        let model = SquadSettingsModel(service: service)
+        await model.loadMarket()
+        #expect(model.market == .loaded([maotou, nuannuan]))
+
+        // Back from a 简历, the list is read again in place.
+        await service.offer([nuannuan])
+        await model.loadMarket()
+        #expect(model.market == .loaded([nuannuan]))
+
+        // A read again that fails leaves the list the member was looking at.
+        await service.fail(with: .unavailable)
+        await model.loadMarket()
+        #expect(model.market == .loaded([nuannuan]))
     }
 }
