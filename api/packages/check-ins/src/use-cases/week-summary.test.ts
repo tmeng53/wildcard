@@ -332,12 +332,12 @@ describe('a squad’s week summary', () => {
     // Sunday 1pm in Los Angeles, already Monday 5am in Tokyo.
     const sunday = checkInsAt(new Date('2026-10-25T20:00:00.000Z'));
     expect((await sunday.weekSummary({ viewer: tokyo, squad, weekStart: week })).final).toBe(false);
-    // Monday 2:59am in Los Angeles is still Sunday there.
-    const lateSunday = checkInsAt(new Date('2026-10-26T09:59:00.000Z'));
+    // Sunday 11:59pm in Los Angeles.
+    const lateSunday = checkInsAt(new Date('2026-10-26T06:59:00.000Z'));
     expect((await lateSunday.weekSummary({ viewer: la, squad, weekStart: week })).final).toBe(
       false,
     );
-    const monday = checkInsAt(new Date('2026-10-26T10:00:00.000Z'));
+    const monday = checkInsAt(new Date('2026-10-26T07:00:00.000Z'));
     expect((await monday.weekSummary({ viewer: la, squad, weekStart: week })).final).toBe(true);
   });
 
