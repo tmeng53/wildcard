@@ -37,6 +37,7 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
 } from '../test-kit/weekly-awards.js';
@@ -99,6 +100,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachLetters: unusedCoachLetters,
     ...ignoredNotices,
     ...unusedFeedback,
     aiConsent: aiConsentOn(db),

@@ -39,6 +39,7 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
 } from '../test-kit/weekly-awards.js';
@@ -101,6 +102,7 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachLetters: unusedCoachLetters,
   ...ignoredNotices,
   ...unusedFeedback,
   log: createLog(() => undefined),

@@ -6,6 +6,7 @@ import {
   SquadId as CoachSquadId,
   type CoachActivity,
   type CoachHiring,
+  type CoachLetters,
   type CoachWakes,
 } from '@wildcard/coach';
 import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
@@ -93,6 +94,8 @@ export interface AppDependencies {
   readonly switches: Pick<Switches, 'list' | 'statesFor'>;
   /** Each squad's coach, and the coaches it can hire (教练招聘会). */
   readonly coachHiring: CoachHiring;
+  /** The letter a coach leaves the next one when its squad changes coach (换教练). */
+  readonly coachLetters: CoachLetters;
   /** What each squad's coach said: its 战术板 line and its replies to check-ins. */
   readonly coachActivity: CoachActivity;
   /** Squadmates' pokes, which the daily push counts. */

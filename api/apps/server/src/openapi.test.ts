@@ -34,6 +34,7 @@ import {
   unusedGifts,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
 } from './test-kit/weekly-awards.js';
@@ -99,6 +100,7 @@ describe('openapi.json', () => {
       weekSummaryWords: unusedWeekSummaryWords,
       coachHiring: unusedCoachHiring,
       coachActivity: unusedCoachActivity,
+      coachLetters: unusedCoachLetters,
       ...ignoredNotices,
       ...unusedFeedback,
       aiConsent: aiConsentOn(db),

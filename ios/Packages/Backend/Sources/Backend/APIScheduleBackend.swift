@@ -4,7 +4,7 @@ import Foundation
 import ScheduleDomain
 
 /// 出赛表 over our API: the member's weekly plans with their 饮食小目标 and their typical week
-/// (每周模板), the days they checked in, the titles the weekly awards gave them and, for this week, their squad's count.
+/// (每周模板), the days they checked in and the titles the weekly awards gave them.
 public struct APIScheduleBackend: ScheduleBackend {
     private let api: WildcardAPI
     private let now: @Sendable () -> Date
@@ -35,13 +35,7 @@ public struct APIScheduleBackend: ScheduleBackend {
             let plan = try api.read { () throws(ContractsError) in try WeeklyPlan(wire) }
             let checkIns = try await api.myCheckIns(from: weekStart, through: weekStart.adding(days: 6))
             let squad = try await api.mySquad()
-            // The squad's count shows on this week; the titles on a week that is over.
-            let squadCount =
-                if let squad, weekStart == thisWeek {
-                    try await api.today(of: squad.id).squadWeek
-                } else {
-                    WeekCount?.none
-                }
+            // The titles show on a week that is over.
             let titles =
                 if let squad, weekStart < thisWeek {
                     try await self.titles(of: member.id, in: squad.id, weekStart: weekStart)
@@ -52,7 +46,6 @@ public struct APIScheduleBackend: ScheduleBackend {
                 return try WeekSheet(
                     weekStart: weekStart, plan: plan.days, marks: Self.marks(of: checkIns, weekStart: weekStart),
                     titles: titles,
-                    squad: squadCount.map { SquadCount(trained: $0.trainedDays, planned: $0.plannedDays) },
                     fuel: try wire.fuelGoals.map(FuelGoal.init))
             } catch {
                 throw .unreadableResponse
@@ -68,10 +61,6 @@ public struct APIScheduleBackend: ScheduleBackend {
         try await schedule { () throws(APIError) in
             try await api.saveFuelGoalsWire(goals.map(\.wire), weekStart: weekStart)
         }
-    }
-
-    public func trainedDays() async throws(ScheduleError) -> Int {
-        try await schedule { () throws(APIError) in try await api.checkInTotals().trainedDays }
     }
 
     public func template() async throws(ScheduleError) -> [PlanDay] {

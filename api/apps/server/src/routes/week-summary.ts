@@ -134,7 +134,7 @@ export function weekSummary(deps: {
     summary: 'A squad’s week: its awards and counts (周日战报)',
     description:
       'From check-ins sent to the squad by everyone in it now, against their weekly plans. A ' +
-      'week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only ' +
+      'week runs Monday to Sunday on each member’s own clock. Only ' +
       'winners are named and only the signed-in member’s own counts are shown, so nobody is ' +
       'ranked last. Reactions count only from members of the squad now. Any week that has ' +
       'started can be read; until `final`, it is still being played. Only for members of the ' +

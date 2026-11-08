@@ -24,7 +24,9 @@ import {
 import {
   createCoachCatalog,
   createCoachHiring,
+  createCoachMemory,
   createCoachActivity,
+  createCoachLetters,
   createCoachSettings,
   createCoachNoteDelivery,
   createCoachWakes,
@@ -32,6 +34,7 @@ import {
   createPostgresCoachCatalog,
   createPostgresCoachNoteDelivery,
   createPostgresCoachHiring,
+  createPostgresCoachLetters,
   createPostgresCoachReport,
   createPostgresCoachSettings,
   createPostgresCoachStores,
@@ -124,7 +127,7 @@ import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
-import { pushCoachLine } from './flows/comment-push.js';
+import { coachLineAlert, pushCoachLine } from './flows/comment-push.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { suggestGoalIn } from './flows/squad-goal-suggestion.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
@@ -411,33 +414,77 @@ const nudges = createNudges({
 /** A coach's name now, as its pushes put it. */
 const coachNameOf = async (coach: string): Promise<string> =>
   (await createPostgresCoachCatalog(db).list()).find(({ id }) => id === coach)?.name ?? coach;
+/**
+ * Tells each teammate a coach's line @s, but those it was already pushed to, as a teammate's @
+ * is told: a notice in 通知 and a push (「毛头@了你：…」) under the coach's switch.
+ */
+const tellCoachMentions = async ({
+  squad,
+  checkIn,
+  coachName,
+  text,
+  mentions,
+  told,
+}: {
+  readonly squad: string;
+  readonly checkIn: string;
+  readonly coachName: string;
+  readonly text: string;
+  readonly mentions: readonly string[];
+  readonly told: readonly string[];
+}) => {
+  const members = mentions.filter((member) => !told.includes(member));
+  if (members.length === 0) return;
+  const alert = coachLineAlert({ coachName, text, news: 'mention' });
+  await tellAfter(db, {
+    told: members.map((member) => ({
+      member: NoticeMember.parse(member),
+      squad: NoticeSquad.parse(squad),
+      kind: 'comment',
+      subject: { version: 1, alert: { key: alert.key, args: [...(alert.args ?? [])] }, checkIn },
+    })),
+    what: 'a coach mention',
+  });
+  for (const member of members) {
+    await pushCoachLine(
+      { push, log },
+      { checkIn, member, coachName, text, news: 'mention', about: checkIn },
+    );
+  }
+};
 const weeklyPlans = createWeeklyPlans({
   store: createPostgresWeeklyPlanStore(db),
   sports,
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
 });
+/** A squad's week as the coach reads it. */
+const coachWeek = coachSquadWeek({
+  checkIns,
+  members,
+  squads,
+  sports,
+  scenes,
+  clock: () => new Date(),
+});
+/** Only the words of members who agreed to the current AI copy reach the model. */
+const coachConsented = (ids: readonly string[]) =>
+  aiConsent.currentAmong(ids.map((member) => ConsentMember.parse(member)));
+/** The coach's model: without OpenAI's key the coach never wakes or writes. */
+const coachAgent =
+  openaiKey === undefined ? undefined : createOpenAICoachAgent({ apiKey: openaiKey });
 // The AI coach runs on OpenAI: without its key the coach never wakes, whatever the settings say.
 const coachWakes =
-  openaiKey === undefined
+  coachAgent === undefined
     ? undefined
     : createCoachWakes({
         settings: createPostgresCoachSettings(db),
         catalog: createPostgresCoachCatalog(db),
         stores: createPostgresCoachStores(db),
         transaction: postgresCoachTransaction(db),
-        agent: createOpenAICoachAgent({ apiKey: openaiKey }),
-        squadWeek: coachSquadWeek({
-          checkIns,
-          members,
-          squads,
-          sports,
-          scenes,
-          clock: () => new Date(),
-        }),
-        // Only the words of members who agreed to the current AI copy reach the model.
-        aiConsented: (members) =>
-          aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
+        agent: coachAgent,
+        squadWeek: coachWeek,
+        aiConsented: coachConsented,
         hiring: createPostgresCoachHiring(db),
         clock: () => new Date(),
         // The daily wake and its 战术板 keep each squad's own clock (小队时区).
@@ -480,7 +527,7 @@ const coachWakes =
         },
         // The check-in's author finds the reply in 通知, and a line is pushed to them like a
         // teammate's comment (Tracy, 2026-11-03).
-        replied: async ({ squad, checkIn, author, coach, text, emoji }) => {
+        replied: async ({ squad, checkIn, author, coach, text, emoji, mentions }) => {
           await tellAfter(db, {
             told: [
               {
@@ -499,20 +546,15 @@ const coachWakes =
             what: 'a coach reply',
           });
           if (text === undefined) return;
+          const coachName = await coachNameOf(coach);
           await pushCoachLine(
             { push, log },
-            {
-              checkIn,
-              member: author,
-              coachName: await coachNameOf(coach),
-              text,
-              answer: false,
-              about: checkIn,
-            },
+            { checkIn, member: author, coachName, text, news: 'comment', about: checkIn },
           );
+          await tellCoachMentions({ squad, checkIn, coachName, text, mentions, told: [author] });
         },
         // So does the member whose reply to the coach it answered.
-        answered: async ({ squad, checkIn, comment, commenter, coach, text }) => {
+        answered: async ({ squad, checkIn, comment, commenter, coach, text, mentions }) => {
           await tellAfter(db, {
             told: [
               {
@@ -524,17 +566,12 @@ const coachWakes =
             ],
             what: 'a coach answer',
           });
+          const coachName = await coachNameOf(coach);
           await pushCoachLine(
             { push, log },
-            {
-              checkIn,
-              member: commenter,
-              coachName: await coachNameOf(coach),
-              text,
-              answer: true,
-              about: comment,
-            },
+            { checkIn, member: commenter, coachName, text, news: 'reply', about: comment },
           );
+          await tellCoachMentions({ squad, checkIn, coachName, text, mentions, told: [commenter] });
         },
       });
 const coachCatalog = createPostgresCoachCatalog(db);
@@ -618,6 +655,41 @@ const app = createApp({
   coachHiring: createCoachHiring({
     hiring: createPostgresCoachHiring(db),
     catalog: createPostgresCoachCatalog(db),
+  }),
+  coachLetters: createCoachLetters({
+    settings: createPostgresCoachSettings(db),
+    catalog: createPostgresCoachCatalog(db),
+    letters: createPostgresCoachLetters(db),
+    memory: createPostgresCoachStores(db).memory,
+    usage: createPostgresCoachStores(db).usage,
+    squadWeek: coachWeek,
+    aiConsented: coachConsented,
+    clock: () => new Date(),
+    ...(coachAgent === undefined ? {} : { agent: coachAgent }),
+    timeZonesAt: (ids, moment) =>
+      squads.timeZonesAt(
+        ids.map((squad) => SquadsSquad.parse(squad)),
+        moment,
+      ),
+    // Every member finds the letter in 通知, to read again.
+    lettered: async (letter, told) => {
+      await tellAfter(db, {
+        told: told.map((member) => ({
+          member: NoticeMember.parse(member),
+          squad: NoticeSquad.parse(letter.squad),
+          kind: 'coachLetter' as const,
+          subject: {
+            version: 1 as const,
+            letter: letter.id,
+            from: letter.from.id,
+            to: letter.to.id,
+            day: letter.day,
+            text: letter.text,
+          },
+        })),
+        what: 'a coach letter',
+      });
+    },
   }),
   coachActivity,
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
@@ -706,6 +778,7 @@ const app = createApp({
           catalog: createPostgresCoachCatalog(scope),
         }),
         report: createPostgresCoachReport(scope),
+        memory: createCoachMemory({ memory: createPostgresCoachStores(scope).memory }),
         clock: () => new Date(),
       }),
       ...testPushTools({ push, squads, checkIns, members, clock: () => new Date() }),

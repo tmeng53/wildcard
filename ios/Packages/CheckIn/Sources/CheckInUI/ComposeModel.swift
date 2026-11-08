@@ -49,7 +49,7 @@ public final class ComposeModel {
     /// The days a new post can count for (补打卡), today last; none for an edit, whose day stays.
     let postableDays: [LocalDay]
     /// The past day a new post counts for, once the member picks one; nil is today, whatever
-    /// day it is when it posts (the page may stay open past 3am).
+    /// day it is when it posts (the page may stay open past midnight).
     var day: LocalDay?
     let suggestedActivity: Activity
     let recentActivities: [Activity]

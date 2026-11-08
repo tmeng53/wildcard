@@ -34,9 +34,10 @@ export function instructionsOf(settings: Pick<CoachSettings, 'rules'>, coach: Co
 
 /** How each kind of wake goes: the same for every squad, so it is part of the instructions. */
 const WAKES = [
-  '你会在三种时候醒来，任务会告诉你是哪一种：',
+  '你会在四种时候醒来，任务会告诉你是哪一种：',
   '- 有人打卡。',
   '- 有人回复你或 @ 你。',
+  '- 夜里：整理你的记性，什么都不说。',
   '- 新的一天：给全队写今天的战术板，给任务里列出的每个人各写一张只有他看得到的便条。一张便条只说一件事，每个人不一样。',
   '做什么、用哪个工具，你自己判断。',
   '你每次醒来都会忘掉以前的一切，只有任务里「你的记性」留得住。',
@@ -75,7 +76,7 @@ export interface DayTalk {
  * What the coach remembers, as every task shows it: each file with its text, the empty ones
  * named together. The coach forgets everything else between wakes, so it sees this every time.
  */
-function memoryBlock(files: ReadonlyMap<string, string | undefined>): string {
+export function memoryBlock(files: ReadonlyMap<string, string | undefined>): string {
   const written = [...files].filter(([, body]) => body !== undefined && body.trim() !== '');
   const empty = [...files].filter(([, body]) => body === undefined || body.trim() === '');
   return [
@@ -172,6 +173,20 @@ export function taskOf({
       filesLine,
     ].join('\n\n');
   }
+  const roster = rosterOf(week);
+  if (reason.kind === 'dream') {
+    // Nothing new to learn from: the memory stays as it is, and the night costs nothing.
+    if (talks.length === 0 && (yesterday === undefined || yesterday.checkIns.length === 0)) {
+      return undefined;
+    }
+    return [
+      '夜里，整理你的记性。',
+      ...(yesterday === undefined ? [] : [yesterdayBlock(yesterday, roster)]),
+      talksBlock(talks, roster),
+      filesLine,
+      DREAM,
+    ].join('\n\n');
+  }
   const notes =
     recentNotes.length === 0
       ? '你还没在战术板上写过。'
@@ -180,7 +195,6 @@ export function taskOf({
     noteTo.length === 0
       ? '今天没有要写便条的人。'
       : `今天给这些人各写一张便条：\n${noteTo.map(briefLine).join('\n')}`;
-  const roster = rosterOf(week);
   return [
     `新的一天：${reason.day}，${weekdayOf(reason.day)}。`,
     ...occasion,
@@ -192,6 +206,20 @@ export function taskOf({
     noteLine,
   ].join('\n\n');
 }
+
+/**
+ * How a night goes: the whole memory brought to its truest current state, not only added to
+ * (Tracy, 2026-11-08), as Claude's dreams do: merge, replace what changed, drop what stopped
+ * mattering.
+ */
+const DREAM = [
+  '把记性整理成现在最准的样子：',
+  '- 从上面学到的、过很久还成立的事，记进去。',
+  '- 重复的合成一条。',
+  '- 前后矛盾的，留最新的。',
+  '- 过时的、一时的、琐碎的，删掉。',
+  '改了哪个文件，就用 rewrite_file 把那个文件整个重写一遍；没变的不用动。',
+].join('\n');
 
 /** What today is, when it is anything: facts only, never how to bring them up. */
 function occasionBlock(occasions: readonly string[]): string[] {

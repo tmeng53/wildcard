@@ -33,6 +33,7 @@ import {
   unusedGifts,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
 } from '../test-kit/weekly-awards.js';
@@ -96,6 +97,7 @@ async function getHealth(db: Database) {
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachLetters: unusedCoachLetters,
     ...ignoredNotices,
     ...unusedFeedback,
     aiConsent: aiConsentOn(db),
@@ -190,6 +192,7 @@ describe('an unknown route', () => {
       weekSummaryWords: unusedWeekSummaryWords,
       coachHiring: unusedCoachHiring,
       coachActivity: unusedCoachActivity,
+      coachLetters: unusedCoachLetters,
       scenes: scenesOn(db),
       switches: switchesOn(db),
       ...ignoredNotices,

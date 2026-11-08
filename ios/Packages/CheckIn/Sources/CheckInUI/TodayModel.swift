@@ -32,9 +32,11 @@ public final class TodayModel {
 
     /// What lands on the scene after a post: the bubble's line, and the post it opens once saved.
     struct Payoff: Equatable {
+        let id: CheckInID
         let kind: CheckInKind
         let line: String?
-        let post: CheckIn?
+        /// The post as the server saved it, once it has; its bubble opens it.
+        var post: CheckIn?
     }
 
     /// Opening it closes a teammate's bubble, which would otherwise stay sharp over the blur.
@@ -66,10 +68,12 @@ public final class TodayModel {
 
     /// The open compose page's state.
     private(set) var compose: ComposeModel?
-    private(set) var payoff: Payoff?
+    var payoff: Payoff?  // Its post is set by `deliver` once saved.
     /// Counts posts, so the one strong haptic fires on each.
     private(set) var posts = 0
     private(set) var isSending = false
+    /// The latest post going out behind the scene, on 打卡's spot until it is told (`deliver`).
+    var outgoing: Outgoing?
     /// The last post didn't go out; the open step says so and can try again.
     private(set) var sendFailed = false
 
@@ -316,8 +320,9 @@ public final class TodayModel {
         await writer.suggestions(for: reason, style: style)
     }
 
-    /// Posts `draft` to the member's squad, or only to them when not `shared`, for `day` (today
-    /// when left out). False when it can't be posted; the open page says so.
+    /// Posts `draft` to the squad (or only to me when not `shared`) for `day`, today when left out.
+    /// The page closes and the payoff plays once it is queued; it goes out behind the scene
+    /// (`deliver`). False when it can never be posted; the open page says so.
     @discardableResult
     func post(_ draft: CheckInDraft, shared: Bool, on day: LocalDay? = nil) async -> Bool {
         guard !isSending else { return false }
@@ -325,33 +330,33 @@ public final class TodayModel {
         sendFailed = false
         defer { isSending = false }
         let before = cardWeek
+        // A past day's post (补打卡) leaves today's ring and kit as they are.
+        let isBackfill = day.map { $0 != store.postableDays.last } ?? false
+        let queued: PendingCheckIn
         do {
-            // Posted or waiting to go out, it counts on the scene now.
-            // A past day's post (补打卡) leaves today's ring and kit as they are.
-            let isBackfill = day.map { $0 != store.postableDays.last } ?? false
-            let outcome = try await store.post(draft, shared: shared, on: day)
-            // A 练了's kit goes on after its cheer.
-            if draft.kind == .trained, !isBackfill {
-                dressHolds += 1
-                dressHeldBy = dressHolds
-            }
-            placeSquad()
-            step = .scene
-            compose = nil
-            land(draft, weekBefore: before, saved: outcome, isBackfill: isBackfill)
-            posted()
-            return true
+            queued = try await store.queue(draft, shared: shared, on: day)
         } catch {
             sendFailed = true
             return false
         }
+        // Waiting to go out, it counts on the scene now. A 练了's kit goes on after its cheer.
+        if draft.kind == .trained, !isBackfill {
+            dressHolds += 1
+            dressHeldBy = dressHolds
+        }
+        placeSquad()
+        step = .scene
+        compose = nil
+        land(draft, id: queued.id, weekBefore: before, isBackfill: isBackfill)
+        posted()
+        deliver(queued.id)
+        return true
     }
 
     /// Stays on the scene: the character celebrates and the line appears over it. The photos stay
     /// in the post, off the scene (the product owner: too busy).
     private func land(
-        _ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?, saved: TodayStore.PostOutcome,
-        isBackfill: Bool
+        _ draft: CheckInDraft, id: CheckInID, weekBefore: (squad: WeekCount, mine: WeekCount)?, isBackfill: Bool
     ) {
         let line: String?
         switch draft {
@@ -361,8 +366,7 @@ public final class TodayModel {
             line = disclaimer.text
         }
         posts += 1
-        let post: CheckIn? = if case .posted(let checkIn) = saved { checkIn } else { nil }
-        payoff = Payoff(kind: draft.kind, line: line, post: post)
+        payoff = Payoff(id: id, kind: draft.kind, line: line)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
         let cheer =
             draft.kind == .disclaimer
