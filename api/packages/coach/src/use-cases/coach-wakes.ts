@@ -573,7 +573,15 @@ async function think(
         : [],
     talks: looksBack ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
     ...(wake.reason.kind === 'daily'
-      ? { noteTo: await briefsOf(deps, { week, roster, members: noteTo, day: wake.reason.day }) }
+      ? {
+          noteTo: await briefsOf(deps, {
+            squad: wake.squad,
+            week,
+            roster,
+            members: noteTo,
+            day: wake.reason.day,
+          }),
+        }
       : {}),
     ...(looksBack ? { yesterday: await yesterdayOf(deps, { squad: wake.squad, week, day }) } : {}),
   });
@@ -595,7 +603,7 @@ async function think(
         challengeOpen(challenge) &&
         postedOn({ week, reason: wake.reason, day, zone }),
       ...photosOf(deps.photoUrls, { week, wake }),
-      ...factsFor(deps, { week, roster }),
+      ...factsFor(deps, { squad: wake.squad, week, roster }),
       ...(deps.memes === undefined ? {} : { memes: deps.memes }),
       noteTo,
       ...(gifting === undefined ? {} : { gifting }),
@@ -706,7 +714,15 @@ async function runWake(
  */
 function factsFor(
   deps: CoachWakesDependencies,
-  { week, roster }: { readonly week: SquadWeek; readonly roster: ReadonlyMap<string, string> },
+  {
+    squad,
+    week,
+    roster,
+  }: {
+    readonly squad: string;
+    readonly week: SquadWeek;
+    readonly roster: ReadonlyMap<string, string>;
+  },
 ): { readonly facts?: () => Promise<string> } {
   const { memberFacts } = deps;
   if (memberFacts === undefined) return {};
@@ -715,7 +731,7 @@ function factsFor(
       const all = week.members.map(({ member }) => member);
       const consented = new Set(await deps.aiConsented(all));
       const members = all.filter((member) => consented.has(member));
-      return factsText(await memberFacts({ members, weekStart: week.weekStart }), roster);
+      return factsText(await memberFacts({ squad, members, weekStart: week.weekStart }), roster);
     },
   };
 }
@@ -728,11 +744,13 @@ function factsFor(
 async function briefsOf(
   deps: CoachWakesDependencies,
   {
+    squad,
     week,
     roster,
     members,
     day,
   }: {
+    readonly squad: string;
     readonly week: SquadWeek;
     readonly roster: ReadonlyMap<string, string>;
     readonly members: readonly string[];
@@ -742,7 +760,7 @@ async function briefsOf(
   const facts =
     members.length === 0 || deps.memberFacts === undefined
       ? []
-      : await deps.memberFacts({ members, weekStart: week.weekStart }).catch(() => []);
+      : await deps.memberFacts({ squad, members, weekStart: week.weekStart }).catch(() => []);
   const today = planIndexOf(day);
   // The weather is a nice-to-have: a morning note goes out without it.
   const weather =

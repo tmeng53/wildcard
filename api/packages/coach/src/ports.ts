@@ -63,6 +63,8 @@ export type CoachPhotoUrls = (paths: readonly string[]) => Promise<readonly stri
 
 /** What the coach can look up about these members: their counts, titles and this week's plan. */
 export type CoachMemberFacts = (input: {
+  /** The squad whose coach asks: counts only what each member shared to it. */
+  readonly squad: string;
   readonly members: readonly string[];
   /** The Monday of the week whose plan to give. */
   readonly weekStart: string;

@@ -1239,7 +1239,7 @@ describe('the coach', () => {
           [earlier]: { weekStart: earlier, members: fixture.week.members, checkIns: [] },
         },
       }).checkedIn({ checkIn, squads: [squad] });
-      expect(asked).toStrictEqual([{ members: [mia], weekStart: fixture.week.weekStart }]);
+      expect(asked).toStrictEqual([{ squad, members: [mia], weekStart: fixture.week.weekStart }]);
       expect(runs[0]?.answers[0]).toContain('一共练了 50 天');
       expect(runs[0]?.answers[1]).toContain(`本周从 ${earlier}（周一）开始。`);
     });
@@ -1282,7 +1282,7 @@ describe('the coach', () => {
 
   it('gives the daily wake each member’s day: today’s plan, 饮食小目标 and yesterday’s posts', async () => {
     await rolledBack(async (fixture) => {
-      const { mia, leo } = fixture;
+      const { squad, mia, leo } = fixture;
       const asked: unknown[] = [];
       const rest = { kind: 'rest' } as const;
       const memberFacts: CoachMemberFacts = (input) => {
@@ -1325,7 +1325,11 @@ describe('the coach', () => {
       }).run();
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       // Asked once, by the server, for everyone it writes to.
-      expect(asked[0]).toStrictEqual({ members: [mia, leo], weekStart: fixture.week.weekStart });
+      expect(asked[0]).toStrictEqual({
+        squad,
+        members: [mia, leo],
+        weekStart: fixture.week.weekStart,
+      });
       expect(daily?.task).toContain('新的一天：2026-11-01，周日。');
       expect(daily?.task).toContain(
         '- 队员1：今天出赛表排了游泳；这周的饮食小目标：喝够水；这周已经练了 1 天。',
