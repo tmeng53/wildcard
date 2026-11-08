@@ -59,16 +59,14 @@ export function createFeedbackInbox(deps: {
           `A message has at most ${String(FEEDBACK_MAX_SCREENSHOTS)} screenshots.`,
         );
       }
-      const sender = await deps.store.senderOf(id);
-      if (sender !== undefined && sender !== member) throw new FeedbackIdTakenError(id);
       const at = deps.clock();
       const feedback: Feedback = { id, member, kind, body: words.data, screenshots, app, at };
       // A retry of a message already saved passes, whatever the limit.
-      if (sender === undefined) {
-        const sent = await deps.store.countSince(member, new Date(at.getTime() - DAY_MS));
-        if (sent >= FEEDBACK_DAILY_LIMIT) throw new FeedbackLimitError(FEEDBACK_DAILY_LIMIT);
-      }
-      const saved = await deps.store.add(feedback);
+      const saved = await deps.store.add(feedback, {
+        limit: FEEDBACK_DAILY_LIMIT,
+        since: new Date(at.getTime() - DAY_MS),
+      });
+      if (saved.outcome === 'limited') throw new FeedbackLimitError(FEEDBACK_DAILY_LIMIT);
       if (saved.outcome === 'unchanged' && saved.member !== member) {
         throw new FeedbackIdTakenError(id);
       }

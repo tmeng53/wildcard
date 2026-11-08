@@ -118,6 +118,20 @@ describe('sending feedback', () => {
     await expect(inbox.send(message(member))).resolves.toMatchObject({ outcome: 'created' });
   });
 
+  it('takes no more than 10 from a burst sent at once', async () => {
+    const member = await newMember();
+    const { inbox } = inboxAt('2026-11-08T04:00:00.000Z');
+    const tries = await Promise.allSettled(
+      Array.from({ length: FEEDBACK_DAILY_LIMIT + 2 }, () => inbox.send(message(member))),
+    );
+    const created = tries.filter((t) => t.status === 'fulfilled');
+    const refused = tries.filter(
+      (t) => t.status === 'rejected' && t.reason instanceof FeedbackLimitError,
+    );
+    expect(created).toHaveLength(FEEDBACK_DAILY_LIMIT);
+    expect(refused).toHaveLength(2);
+  });
+
   it('refuses another member’s id', async () => {
     const [ann, bo] = [await newMember(), await newMember()];
     const { inbox } = inboxAt('2026-11-08T04:00:00.000Z');

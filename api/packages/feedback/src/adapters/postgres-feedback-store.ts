@@ -1,4 +1,4 @@
-import type { Kysely } from 'kysely';
+import { sql, type Kysely } from 'kysely';
 
 import {
   FeedbackId,
@@ -16,47 +16,51 @@ export type FeedbackTables = DB;
 /** The feedback store on Postgres (`supabase/migrations`). */
 export function createPostgresFeedbackStore(db: Kysely<FeedbackTables>): FeedbackStore {
   return {
-    async add({ id, member, kind, body, screenshots, app, at }) {
-      const inserted = await db
-        .insertInto('feedback')
-        .values({
-          id,
-          member_id: member,
-          kind,
-          body,
-          screenshots: [...screenshots],
-          app: JSON.stringify({ version: 1, ...app }),
-          at,
-        })
-        .onConflict((conflict) => conflict.column('id').doNothing())
-        .returning('id')
-        .executeTakeFirst();
-      if (inserted !== undefined) return { outcome: 'created' };
-      const row = await db
-        .selectFrom('feedback')
-        .select('member_id')
-        .where('id', '=', id)
-        .executeTakeFirstOrThrow();
-      return { outcome: 'unchanged', member: MemberId.parse(row.member_id) };
-    },
-
-    async senderOf(id) {
-      const row = await db
-        .selectFrom('feedback')
-        .select('member_id')
-        .where('id', '=', id)
-        .executeTakeFirst();
-      return row === undefined ? undefined : MemberId.parse(row.member_id);
-    },
-
-    async countSince(member, since) {
-      const row = await db
-        .selectFrom('feedback')
-        .select((eb) => eb.fn.countAll<string>().as('count'))
-        .where('member_id', '=', member)
-        .where('at', '>', since)
-        .executeTakeFirstOrThrow();
-      return Number(row.count);
+    add({ id, member, kind, body, screenshots, app, at }, { limit, since }) {
+      return db.transaction().execute(async (trx) => {
+        // One member's messages are counted and saved one at a time, so a burst can't all pass
+        // the limit together.
+        await sql`select pg_advisory_xact_lock(hashtext('feedback'), hashtext(${member}))`.execute(
+          trx,
+        );
+        const existing = await trx
+          .selectFrom('feedback')
+          .select('member_id')
+          .where('id', '=', id)
+          .executeTakeFirst();
+        if (existing !== undefined) {
+          return { outcome: 'unchanged', member: MemberId.parse(existing.member_id) } as const;
+        }
+        const sent = await trx
+          .selectFrom('feedback')
+          .select((eb) => eb.fn.countAll<string>().as('count'))
+          .where('member_id', '=', member)
+          .where('at', '>', since)
+          .executeTakeFirstOrThrow();
+        if (Number(sent.count) >= limit) return { outcome: 'limited' } as const;
+        const inserted = await trx
+          .insertInto('feedback')
+          .values({
+            id,
+            member_id: member,
+            kind,
+            body,
+            screenshots: [...screenshots],
+            app: JSON.stringify({ version: 1, ...app }),
+            at,
+          })
+          .onConflict((conflict) => conflict.column('id').doNothing())
+          .returning('id')
+          .executeTakeFirst();
+        if (inserted !== undefined) return { outcome: 'created' } as const;
+        // Another member's message took the id between the look and the save.
+        const row = await trx
+          .selectFrom('feedback')
+          .select('member_id')
+          .where('id', '=', id)
+          .executeTakeFirstOrThrow();
+        return { outcome: 'unchanged', member: MemberId.parse(row.member_id) } as const;
+      });
     },
 
     async unfiled(before, limit) {
