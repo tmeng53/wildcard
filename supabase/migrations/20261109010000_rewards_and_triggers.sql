@@ -211,6 +211,17 @@ select kind, item_id, 'training', sports, after, counts_from, counts_from from p
 insert into public.reward_triggers (reward_kind, reward_id, kind, offered, description, added_at)
 select 'piece', piece_id, 'coach', offered, description, added_at from public.gift_pieces;
 
+-- A piece a member was both given by a coach and unlocked another way keeps the coach's gift, which
+-- is what they were shown and opened; they hold it either way.
+insert into public.grants (
+  member_id, reward_kind, reward_id, via, coach_id, squad_id, line, week_from, given_by, admin_id,
+  at, granted_at
+)
+select member_id, 'piece', piece_id, 'coach', coach_id, squad_id, line, week_from, given_by,
+  admin_id, given_at, given_at
+from public.coach_gifts
+order by given_at, member_id, piece_id;
+
 insert into public.grants (
   member_id, reward_kind, reward_id, via, sports, after, check_in_id, admin_id, at, granted_at
 )
@@ -220,16 +231,8 @@ select member_id, kind, item_id,
   given_by,
   unlocked_at, granted_at
 from public.member_unlocks
-order by granted_at, member_id, kind, item_id;
-
-insert into public.grants (
-  member_id, reward_kind, reward_id, via, coach_id, squad_id, line, week_from, given_by, admin_id,
-  at, granted_at
-)
-select member_id, 'piece', piece_id, 'coach', coach_id, squad_id, line, week_from, given_by,
-  admin_id, given_at, given_at
-from public.coach_gifts
-order by given_at, member_id, piece_id;
+order by granted_at, member_id, kind, item_id
+on conflict (member_id, reward_kind, reward_id) do nothing;
 
 insert into public.grant_opens (grant_id, worn, at)
 select g.id, o.worn, o.at
