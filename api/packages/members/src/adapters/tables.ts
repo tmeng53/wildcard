@@ -31,6 +31,7 @@ export interface ProfileEvents {
   equipped_title: string | null;
   id: Generated<Int8>;
   jersey_number: number | null;
+  language: Generated<string>;
   look: Json | null;
   member_id: string;
   nickname: string | null;
@@ -42,6 +43,7 @@ export interface Profiles {
   created_at: Generated<Timestamp>;
   equipped_title: string | null;
   jersey_number: number | null;
+  language: Generated<string>;
   look: Json | null;
   member_id: string;
   nickname: string | null;

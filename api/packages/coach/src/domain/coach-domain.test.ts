@@ -372,8 +372,9 @@ describe('when the coach wakes', () => {
 
   it('lets the coach pick its tools, keep memory any time, and say one thing per note', () => {
     const coach = Coach.parse({
-      version: 2,
+      version: 3,
       id: 'nuannuan',
+      position: 2,
       tier: 'entry',
       name: '暖暖',
       title: '暖心教练',
@@ -412,6 +413,8 @@ describe('when the coach wakes', () => {
         // What it remembers, in full: it forgets everything else between wakes.
         '你的记性（你只记得这些）：\n【memory.md】\n米亚爱跑步\n还是空的：squad.md',
         '你最近写过：\n- 2026-10-31：周末也要动一动',
+        // The 战术板 in the squad's language: Simplified Chinese until the week says another.
+        '战术板：用简体中文写。',
         '今天没有要写便条的人。',
       ].join('\n\n'),
     );
@@ -509,7 +512,7 @@ describe('when the coach wakes', () => {
         recentNotes: [],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
     // The emoji it reacted with lately, so it varies them.
     expect(
@@ -521,7 +524,45 @@ describe('when the coach wakes', () => {
         recentEmoji: ['🔥', '🔥', '💪'],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+    );
+  });
+
+  it('writes what one member reads in their language, and the 战术板 in the squad’s', () => {
+    const multilingual: SquadWeek = {
+      ...week,
+      members: [
+        { member: mia, nickname: '米亚', language: 'zh-Hant' },
+        { member: leo, language: 'en' },
+      ],
+      language: 'zh-Hant',
+    };
+    // A check-in's reply in its author's language (队员2 posted c2).
+    expect(
+      taskOf({
+        reason: { kind: 'checkIn', checkIn: 'c2' },
+        week: multilingual,
+        files: new Map(),
+        recentNotes: [],
+      })?.split('\n\n'),
+    ).toContain('Write in English.');
+    const daily = taskOf({
+      reason: { kind: 'daily', day: '2026-11-01' },
+      week: multilingual,
+      files: new Map(),
+      recentNotes: [],
+      noteTo: [
+        { name: '队员1', language: 'zh-Hant', trainedDays: 1 },
+        { name: '队员2', language: 'en', trainedDays: 0 },
+      ],
+    })?.split('\n\n');
+    expect(daily).toContain('战术板：用繁體中文寫，照台灣的說法。');
+    expect(daily?.at(-1)).toBe(
+      [
+        '今天给这些人各写一张便条：',
+        '- 队员1：这周已经练了 1 天。 用繁體中文寫，照台灣的說法。',
+        '- 队员2：这周已经练了 0 天。 Write in English.',
+      ].join('\n'),
     );
   });
 

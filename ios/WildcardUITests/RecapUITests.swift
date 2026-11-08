@@ -50,7 +50,7 @@ final class RecapUITests: XCTestCase {
         let nudge = app.buttons["recap.nudge"]
         XCTAssertTrue(nudge.waitForExistence(timeout: Self.wait), "no 催一下主办方")
         nudge.tap()
-        XCTAssertTrue(app.staticTexts["已催主办方充值 token"].waitForExistence(timeout: Self.wait), "the nudge didn't land")
+        XCTAssertTrue(app.staticTexts["已经催过了，颁奖一会儿就到"].waitForExistence(timeout: Self.wait), "the nudge didn't land")
         keepScreenshot(named: "79-recap-pending-nudged")
         next(in: app)
         show("myWeek", in: app)
