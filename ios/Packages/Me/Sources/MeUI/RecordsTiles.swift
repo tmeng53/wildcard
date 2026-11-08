@@ -224,9 +224,9 @@ struct RecordsClock: View {
                     name.font(.wildcard(TypeRamp.caption)).foregroundStyle(white.opacity(0.55)))
                 // A longer word (6 PM) slides in rather than past the dial's edge.
                 let half = label.measure(in: CGSize(width: Self.grid, height: Self.grid)).width / 2 + 4
-                var at = point(hour, 89)
-                at.x = min(max(at.x, half), Self.grid - half)
-                context.draw(label, at: at, anchor: .center)
+                var spot = point(hour, 89)
+                spot.x = min(max(spot.x, half), Self.grid - half)
+                context.draw(label, at: spot, anchor: .center)
             }
             for hour in hours.indices where hours[hour] > 0 && most > 0 {
                 let isTop = hour == usual
