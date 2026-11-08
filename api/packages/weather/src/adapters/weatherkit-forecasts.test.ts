@@ -32,15 +32,27 @@ function replaying(status = 200) {
 const decode = (part: string): unknown => JSON.parse(Buffer.from(part, 'base64url').toString());
 
 describe('createWeatherKitForecasts', () => {
-  it('reads the day asked for, on the member’s clock', async () => {
+  it('reads the day asked for and the day before from one answer, on the member’s clock', async () => {
     const { fetch, requests } = replaying();
     const forecasts = createWeatherKitForecasts(ACCOUNT, { fetch, now: () => 1_794_000_000_000 });
-    const day = await forecasts.dayAt({
+    const days = await forecasts.daysAt({
       place: { latitude: 40.7, longitude: -74 },
       day: '2026-11-09',
       timeZone: 'America/New_York',
     });
-    expect(day).toStrictEqual({
+    expect(days.yesterday).toStrictEqual({
+      version: 1,
+      condition: 'PartlyCloudy',
+      high: 14.6,
+      low: 6.2,
+      precipitationChance: 0.05,
+      precipitationAmount: 0,
+      snowfallAmount: 0,
+      maxUvIndex: 3,
+      sunrise: '2026-11-08T11:36:00Z',
+      sunset: '2026-11-08T21:46:00Z',
+    });
+    expect(days.today).toStrictEqual({
       version: 1,
       condition: 'Rain',
       high: 12.8,
@@ -54,7 +66,7 @@ describe('createWeatherKitForecasts', () => {
       daytime: { condition: 'Rain', windSpeed: 21.4, windDirection: 315, humidity: 0.88 },
       overnight: { condition: 'MostlyCloudy', windSpeed: 12, windDirection: 300, humidity: 0.8 },
     });
-    // From the day before, so yesterday can be read the same way.
+    // One ask, from the day before.
     expect(requests.map(({ url }) => url)).toStrictEqual([
       'https://weatherkit.apple.com/api/v1/weather/en/40.7/-74?dataSets=forecastDaily&timezone=America%2FNew_York&dailyStart=2026-11-08T00%3A00%3A00.000Z',
     ]);
@@ -62,7 +74,7 @@ describe('createWeatherKitForecasts', () => {
 
   it('signs in with the developer token WeatherKit takes', async () => {
     const { fetch, requests } = replaying();
-    await createWeatherKitForecasts(ACCOUNT, { fetch, now: () => 1_794_000_000_000 }).dayAt({
+    await createWeatherKitForecasts(ACCOUNT, { fetch, now: () => 1_794_000_000_000 }).daysAt({
       place: { latitude: 40.7, longitude: -74 },
       day: '2026-11-08',
       timeZone: 'America/New_York',
@@ -90,20 +102,20 @@ describe('createWeatherKitForecasts', () => {
     ).toBe(true);
   });
 
-  it('has nothing for a day outside the forecast', async () => {
+  it('has nothing for days outside the forecast', async () => {
     const { fetch } = replaying();
-    const day = await createWeatherKitForecasts(ACCOUNT, { fetch }).dayAt({
+    const days = await createWeatherKitForecasts(ACCOUNT, { fetch }).daysAt({
       place: { latitude: 40.7, longitude: -74 },
       day: '2026-12-25',
       timeZone: 'America/New_York',
     });
-    expect(day).toBeUndefined();
+    expect(days).toStrictEqual({});
   });
 
   it('throws when WeatherKit refuses', async () => {
     const { fetch } = replaying(401);
     await expect(
-      createWeatherKitForecasts(ACCOUNT, { fetch }).dayAt({
+      createWeatherKitForecasts(ACCOUNT, { fetch }).daysAt({
         place: { latitude: 40.7, longitude: -74 },
         day: '2026-11-09',
         timeZone: 'America/New_York',

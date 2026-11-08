@@ -31,28 +31,24 @@ const DayPartForecast = z.object({
   humidity: z.number().min(0).max(1).optional(),
 });
 
-// Only what we read; WeatherKit sends much more, and adds fields over time.
+// One of WeatherKit's days, only what we read; it sends much more, and adds fields over time.
+const ForecastDay = z.object({
+  forecastStart: z.string(),
+  conditionCode: z.string().min(1).max(64).optional(),
+  temperatureMax: z.number(),
+  temperatureMin: z.number(),
+  precipitationChance: z.number().min(0).max(1).optional(),
+  precipitationAmount: z.number().min(0).optional(),
+  snowfallAmount: z.number().min(0).optional(),
+  maxUvIndex: z.number().int().min(0).optional(),
+  sunrise: z.iso.datetime().optional(),
+  sunset: z.iso.datetime().optional(),
+  daytimeForecast: DayPartForecast.optional(),
+  overnightForecast: DayPartForecast.optional(),
+});
+
 const DailyForecast = z.object({
-  forecastDaily: z
-    .object({
-      days: z.array(
-        z.object({
-          forecastStart: z.string(),
-          conditionCode: z.string().min(1).max(64).optional(),
-          temperatureMax: z.number(),
-          temperatureMin: z.number(),
-          precipitationChance: z.number().min(0).max(1).optional(),
-          precipitationAmount: z.number().min(0).optional(),
-          snowfallAmount: z.number().min(0).optional(),
-          maxUvIndex: z.number().int().min(0).optional(),
-          sunrise: z.iso.datetime().optional(),
-          sunset: z.iso.datetime().optional(),
-          daytimeForecast: DayPartForecast.optional(),
-          overnightForecast: DayPartForecast.optional(),
-        }),
-      ),
-    })
-    .optional(),
+  forecastDaily: z.object({ days: z.array(ForecastDay) }).optional(),
 });
 
 /** Apple WeatherKit's REST API as the weather provider. */
@@ -77,14 +73,14 @@ export function createWeatherKitForecasts(
   };
 
   return {
-    async dayAt({ place, day, timeZone }) {
+    async daysAt({ place, day, timeZone }) {
       const url = new URL(
         `/api/v1/weather/en/${String(place.latitude)}/${String(place.longitude)}`,
         ORIGIN,
       );
       url.searchParams.set('dataSets', 'forecastDaily');
       url.searchParams.set('timezone', timeZone);
-      // From the day before, so yesterday can be asked for too.
+      // From the day before, so one answer holds yesterday too.
       url.searchParams.set('dailyStart', dayBefore(day));
       const response = await fetchFn(url, {
         headers: { authorization: `Bearer ${bearer()}` },
@@ -94,30 +90,41 @@ export function createWeatherKitForecasts(
         throw new Error(`WeatherKit answered ${String(response.status)}`);
       }
       const days = DailyForecast.parse(await response.json()).forecastDaily?.days ?? [];
-      const found = days.find((each) => dayOn(each.forecastStart, timeZone) === day);
-      if (found === undefined) return undefined;
-      const daytime = dayPart(found.daytimeForecast);
-      const overnight = dayPart(found.overnightForecast);
-      const weather: DayWeather = {
-        version: 1,
-        ...(found.conditionCode === undefined ? {} : { condition: found.conditionCode }),
-        high: found.temperatureMax,
-        low: found.temperatureMin,
-        ...(found.precipitationChance === undefined
-          ? {}
-          : { precipitationChance: found.precipitationChance }),
-        ...(found.precipitationAmount === undefined
-          ? {}
-          : { precipitationAmount: found.precipitationAmount }),
-        ...(found.snowfallAmount === undefined ? {} : { snowfallAmount: found.snowfallAmount }),
-        ...(found.maxUvIndex === undefined ? {} : { maxUvIndex: found.maxUvIndex }),
-        ...(found.sunrise === undefined ? {} : { sunrise: found.sunrise }),
-        ...(found.sunset === undefined ? {} : { sunset: found.sunset }),
-        ...(daytime === undefined ? {} : { daytime }),
-        ...(overnight === undefined ? {} : { overnight }),
+      const on = (wanted: string) => {
+        const found = days.find((each) => dayOn(each.forecastStart, timeZone) === wanted);
+        return found === undefined ? undefined : dayWeather(found);
       };
-      return weather;
+      const today = on(day);
+      const yesterday = on(dayBefore(day).slice(0, 10));
+      return {
+        ...(today === undefined ? {} : { today }),
+        ...(yesterday === undefined ? {} : { yesterday }),
+      };
     },
+  };
+}
+
+/** One of WeatherKit's days as `DayWeather` keeps it. */
+function dayWeather(day: z.infer<typeof ForecastDay>): DayWeather {
+  const daytime = dayPart(day.daytimeForecast);
+  const overnight = dayPart(day.overnightForecast);
+  return {
+    version: 1,
+    ...(day.conditionCode === undefined ? {} : { condition: day.conditionCode }),
+    high: day.temperatureMax,
+    low: day.temperatureMin,
+    ...(day.precipitationChance === undefined
+      ? {}
+      : { precipitationChance: day.precipitationChance }),
+    ...(day.precipitationAmount === undefined
+      ? {}
+      : { precipitationAmount: day.precipitationAmount }),
+    ...(day.snowfallAmount === undefined ? {} : { snowfallAmount: day.snowfallAmount }),
+    ...(day.maxUvIndex === undefined ? {} : { maxUvIndex: day.maxUvIndex }),
+    ...(day.sunrise === undefined ? {} : { sunrise: day.sunrise }),
+    ...(day.sunset === undefined ? {} : { sunset: day.sunset }),
+    ...(daytime === undefined ? {} : { daytime }),
+    ...(overnight === undefined ? {} : { overnight }),
   };
 }
 

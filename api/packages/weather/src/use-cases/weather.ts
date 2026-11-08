@@ -15,8 +15,8 @@ export interface Weather {
   forgetPlace(member: MemberId): Promise<void>;
   /**
    * The weather on `day`, and on the day before, where each of these members is, for those with
-   * a place. Each place's day is fetched once, whoever asks; a place the provider can't answer
-   * for today is left out, and told to `failed`.
+   * a place. Each place is asked for once a day, both days in one ask, whoever asks; a place the
+   * provider can't answer for today is left out, and an error is told to `failed`.
    */
   dayFor(input: {
     readonly members: readonly { readonly member: MemberId; readonly timeZone: string }[];
@@ -46,50 +46,53 @@ export function createWeather(deps: {
       if (forecasts === undefined || members.length === 0) return new Map();
       const places = await deps.places.placesOf(members.map(({ member }) => member));
       const yesterday = dayBefore(day);
-      // One look-up a place a day, however many members share it.
-      const byPlace = new Map<string, Promise<DayWeather | undefined>>();
-      const weatherAt = ({
-        place,
-        on,
-        timeZone,
-      }: {
-        readonly place: Place;
-        readonly on: string;
-        readonly timeZone: string;
-      }) => {
-        const key = `${String(place.latitude)},${String(place.longitude)},${on}`;
+      // One look-up a place a day, however many members share it, and one ask holds both days.
+      const byPlace = new Map<string, Promise<Partial<MemberWeather>>>();
+      const weatherAt = (place: Place, timeZone: string) => {
+        const key = `${String(place.latitude)},${String(place.longitude)}`;
         let found = byPlace.get(key);
         if (found === undefined) {
-          found = fetchOnce({ place, day: on, timeZone });
+          found = fetchOnce({ place, timeZone });
           byPlace.set(key, found);
         }
         return found;
       };
-      const fetchOnce = async (input: {
+      const fetchOnce = async ({
+        place,
+        timeZone,
+      }: {
         readonly place: Place;
-        readonly day: string;
         readonly timeZone: string;
-      }) => {
-        const kept = await deps.days.find(input.place, input.day);
-        if (kept !== undefined) return kept;
+      }): Promise<Partial<MemberWeather>> => {
+        const [kept, keptBefore] = await Promise.all([
+          deps.days.find(place, day),
+          deps.days.find(place, yesterday),
+        ]);
+        if (kept !== undefined)
+          return keptBefore === undefined
+            ? { today: kept }
+            : { today: kept, yesterday: keptBefore };
         try {
-          const fetched = await forecasts.dayAt(input);
-          if (fetched !== undefined)
-            await deps.days.save({ place: input.place, day: input.day, weather: fetched });
-          return fetched;
+          const fetched = await forecasts.daysAt({ place, day, timeZone });
+          if (fetched.today !== undefined)
+            await deps.days.save({ place, day, weather: fetched.today });
+          if (fetched.yesterday !== undefined)
+            await deps.days.save({ place, day: yesterday, weather: fetched.yesterday });
+          const before = fetched.yesterday ?? keptBefore;
+          return {
+            ...(fetched.today === undefined ? {} : { today: fetched.today }),
+            ...(before === undefined ? {} : { yesterday: before }),
+          };
         } catch (error) {
-          deps.failed?.(error, input.place);
-          return undefined;
+          deps.failed?.(error, place);
+          return keptBefore === undefined ? {} : { yesterday: keptBefore };
         }
       };
       const answers = await Promise.all(
         members.map(async ({ member, timeZone }) => {
           const place = places.get(member);
           if (place === undefined) return undefined;
-          const [today, before] = await Promise.all([
-            weatherAt({ place, on: day, timeZone }),
-            weatherAt({ place, on: yesterday, timeZone }),
-          ]);
+          const { today, yesterday: before } = await weatherAt(place, timeZone);
           if (today === undefined) return undefined;
           const weather: MemberWeather =
             before === undefined ? { today } : { today, yesterday: before };

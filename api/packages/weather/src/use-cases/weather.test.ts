@@ -45,15 +45,16 @@ const RAIN: DayWeather = {
   precipitationChance: 0.82,
 };
 
-/** A provider that answers `RAIN` and counts what it was asked. */
+/** A provider that answers `RAIN` for both days and counts what it was asked. */
 function countingForecasts(
-  answer: (input: { day: string }) => Promise<DayWeather | undefined> = () => Promise.resolve(RAIN),
+  answer: () => ReturnType<Forecasts['daysAt']> = () =>
+    Promise.resolve({ today: RAIN, yesterday: RAIN }),
 ) {
   const asked: { place: Place; day: string; timeZone: string }[] = [];
   const forecasts: Forecasts = {
-    dayAt: (input) => {
+    daysAt: (input) => {
       asked.push({ ...input });
-      return answer(input);
+      return answer();
     },
   };
   return { forecasts, asked };
@@ -116,7 +117,7 @@ describe('places', () => {
 });
 
 describe('the day’s weather', () => {
-  it('asks once a place a day, whoever shares it, and leaves out members without a place', async () => {
+  it('asks once a place a day for both days, whoever shares it, and leaves out members without a place', async () => {
     const [ana, bo, cy] = [await newMember(), await newMember(), await newMember()];
     const cell = freshCell();
     const { forecasts, asked } = countingForecasts();
@@ -134,17 +135,28 @@ describe('the day’s weather', () => {
     // The next wake that day reads what was kept.
     const again = await weather.dayFor({ members, day: '2026-11-09' });
     expect(again.get(ana)).toStrictEqual(both);
-    expect(asked).toStrictEqual([
-      { place: cell, day: '2026-11-09', timeZone: 'America/New_York' },
-      { place: cell, day: '2026-11-08', timeZone: 'America/New_York' },
-    ]);
+    expect(asked).toStrictEqual([{ place: cell, day: '2026-11-09', timeZone: 'America/New_York' }]);
+  });
+
+  it('keeps yesterday from the ask it came in, and reads it from there the next day', async () => {
+    const member = await newMember();
+    const cell = freshCell();
+    const SUN: DayWeather = { version: 1, condition: 'Clear', high: 15, low: 5 };
+    let answer = { today: RAIN, yesterday: SUN };
+    const { forecasts, asked } = countingForecasts(() => Promise.resolve(answer));
+    const weather = weatherWith(forecasts);
+    await weather.savePlace(member, cell);
+    const members = [{ member, timeZone: 'America/New_York' }];
+    await weather.dayFor({ members, day: '2026-11-09' });
+    answer = { today: SUN, yesterday: RAIN };
+    const next = await weather.dayFor({ members, day: '2026-11-10' });
+    expect(next.get(member)).toStrictEqual({ today: SUN, yesterday: RAIN });
+    expect(asked.map(({ day }) => day)).toStrictEqual(['2026-11-09', '2026-11-10']);
   });
 
   it('gives today without yesterday when the provider has only today', async () => {
     const member = await newMember();
-    const { forecasts } = countingForecasts(({ day }) =>
-      Promise.resolve(day === '2026-11-09' ? RAIN : undefined),
-    );
+    const { forecasts } = countingForecasts(() => Promise.resolve({ today: RAIN }));
     const weather = weatherWith(forecasts);
     await weather.savePlace(member, freshCell());
     const day = await weather.dayFor({
@@ -167,10 +179,7 @@ describe('the day’s weather', () => {
       day: '2026-11-09',
     });
     expect(day.size).toBe(0);
-    expect(errors).toStrictEqual([
-      new Error('WeatherKit answered 503'),
-      new Error('WeatherKit answered 503'),
-    ]);
+    expect(errors).toStrictEqual([new Error('WeatherKit answered 503')]);
   });
 
   it('has no weather without a provider', async () => {

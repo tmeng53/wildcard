@@ -26,12 +26,12 @@ export interface WeatherDayStore {
   }): Promise<void>;
 }
 
-/** The weather provider: one day's forecast at a place, its day on `timeZone`'s clock. */
+/** The weather provider: a place's day and the day before it, in one ask, on `timeZone`'s clock. */
 export interface Forecasts {
-  /** Undefined when the provider has no forecast for that day; throws when it can't answer. */
-  dayAt(input: {
+  /** Leaves out a day the provider has nothing for; throws when it can't answer. */
+  daysAt(input: {
     readonly place: Place;
     readonly day: string;
     readonly timeZone: string;
-  }): Promise<DayWeather | undefined>;
+  }): Promise<{ readonly today?: DayWeather; readonly yesterday?: DayWeather }>;
 }
