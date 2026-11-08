@@ -1,4 +1,3 @@
-import type { CoachNames } from '../flows/coach-names.js';
 import { NEW_YORK, TimeZone } from '@wildcard/time-zones';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
@@ -12,6 +11,7 @@ import { MemberId as PushMember, type Push } from '@wildcard/push';
 import { MemberId, SquadId, type Squads } from '@wildcard/squads';
 
 import { bodyVersion } from '../body-version.js';
+import type { CoachNames } from '../flows/coach-names.js';
 import type { VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';

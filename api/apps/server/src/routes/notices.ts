@@ -1,4 +1,3 @@
-import type { CoachNames } from '../flows/coach-names.js';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { MemberId as ProfileMember, type Members } from '@wildcard/members';
 import {
@@ -12,14 +11,13 @@ import {
 } from '@wildcard/notices';
 
 import { bodyVersion } from '../body-version.js';
+import type { CoachNames } from '../flows/coach-names.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 /** Notices on a page when the app doesn't say. */
 const DEFAULT_PAGE = 30;
-
-/** The coaches' names now, by coach id, retired ones too. */
 
 const WireNoticeId = z.int().positive();
 

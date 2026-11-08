@@ -1,4 +1,3 @@
-import { coachNamesIn } from './flows/coach-names.js';
 import { readFileSync } from 'node:fs';
 
 import { serve } from '@hono/node-server';
@@ -124,6 +123,7 @@ import { coachTools } from './admin-mcp/tools/coach.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
+import { coachNamesIn } from './flows/coach-names.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
 import { coachLineAlert, pushCoachLine } from './flows/comment-push.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
