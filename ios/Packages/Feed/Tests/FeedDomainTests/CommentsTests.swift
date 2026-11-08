@@ -130,9 +130,11 @@ private final class CommentIDs: @unchecked Sendable {  // Only the main-actor st
     await source.fail(with: nil)
     #expect(await feed.comment(text("加油"), replyingTo: .member(jay), on: jaysRun.id))
     #expect(await feed.comment(text("再来"), replyingTo: .member(jay), on: jaysRun.id))
+    // Between the two sends, the post is read again to see whether the first was saved after all.
     #expect(
-        await source.calls.suffix(3) == [
+        await source.calls.suffix(4) == [
             .comment(commentID(1), "加油", .member(jay), jaysRun.id),
+            .post(jaysRun.id),
             .comment(commentID(1), "加油", .member(jay), jaysRun.id),
             .comment(commentID(2), "再来", .member(jay), jaysRun.id),
         ])
@@ -206,4 +208,39 @@ private final class CommentIDs: @unchecked Sendable {  // Only the main-actor st
     await feed.loadPost(miasSlip.id)
     #expect(feed.phase == .current)
     #expect(feed.post(miasSlip.id) == nil)
+}
+
+@MainActor @Test func aCommentSavedWhoseAnswerWasLostCountsAsSent() async {
+    let source = FakeSource([jaysRun])
+    let feed = store(source)
+    await feed.load()
+    await source.loseCommentAnswers()
+    #expect(await feed.comment(text("我下周怎么练"), replyingTo: .member(jay), on: jaysRun.id))
+    #expect(feed.post(jaysRun.id)?.comments.map(\.id) == [commentID(1)])
+    #expect(feed.unsentComment(on: jaysRun.id) == nil)
+    #expect(feed.failure == nil)
+}
+
+@MainActor @Test func aCommentThatFailedLeavesUnsentOnceALaterReadListsIt() async {
+    let source = FakeSource([jaysRun])
+    let ids = CommentIDs()
+    let feed = FeedStore(
+        source: source, squad: squad, viewer: coco, today: { thursday }, now: { at(500) },
+        newCommentID: { ids() })
+    await feed.load()
+    // Neither the answer nor the read after it arrived (the app was in the background)...
+    await source.fail(with: .notSent)
+    #expect(await feed.comment(text("我下周怎么练"), replyingTo: nil, on: jaysRun.id) == false)
+    #expect(feed.unsentComment(on: jaysRun.id)?.id == commentID(1))
+    // ...but the server had saved it, as the next read shows.
+    let saved = FeedPost(
+        checkIn: jaysRun.checkIn, reactions: jaysRun.reactions, comments: [comment(1, by: coco, "我下周怎么练", at: 900)])
+    await source.setPosts([saved])
+    await source.fail(with: nil)
+    await feed.loadPost(jaysRun.id)
+    #expect(feed.unsentComment(on: jaysRun.id) == nil)
+    #expect(feed.post(jaysRun.id)?.comments.map(\.id) == [commentID(1)])
+    // The same words again are a new comment, not the one the server already has.
+    #expect(await feed.comment(text("我下周怎么练"), replyingTo: nil, on: jaysRun.id))
+    #expect(await source.calls.last == .comment(commentID(2), "我下周怎么练", nil, jaysRun.id))
 }

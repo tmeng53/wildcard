@@ -43,6 +43,7 @@ import type { Log } from '../log.js';
 import { pushAlert } from '../push-copy.js';
 import { squadsAwardedIn } from './awarded-squads.js';
 import { noticeAlert } from './daily-progress-push.js';
+import { squadLanguages } from './squad-language.js';
 
 // The weekly awards and the frozen 战报 across modules: who was in the squad and its scene from
 // squads, the week's check-ins and pages from check-ins, members' clocks and characters from
@@ -189,7 +190,17 @@ async function giveWeek(
               before,
               members: story.members.map(({ member }) => member),
             });
-            await deps.awards.give({ squad, weekStart: week, members, ending: story.story.ending });
+            const { squad: language } = await squadLanguages(deps, {
+              squad,
+              members: story.members.map(({ member }) => member),
+            });
+            await deps.awards.give({
+              squad,
+              weekStart: week,
+              members,
+              ending: story.story.ending,
+              language,
+            });
             given += 1;
           }
           if (await deps.awards.claimReadyPush({ squad, weekStart: week })) {

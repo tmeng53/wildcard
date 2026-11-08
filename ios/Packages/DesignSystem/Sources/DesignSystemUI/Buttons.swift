@@ -59,46 +59,46 @@ struct ControlSurface: ViewModifier {
     }
 }
 
-/// A second action beside or under the primary one (换一组): a light grey capsule, 44 tall. Inside
-/// a grey card it turns white (`.inCard`). `.danger` is for an action that can't be taken back
-/// (解雇): only its words turn red. Floating, it is clear interactive Liquid Glass.
+/// A second action beside or under the primary one (换一组, 存图): the brand's graphite capsule
+/// with white words, 44 tall, on a page or in a card alike (Tracy, 2026-11-08: one colour for
+/// every secondary button). On graphite itself (`.onInk`: an `inkCard`, a graphite bar) it turns
+/// white with ink words. An action that can't be taken back is a `TextButtonStyle(.danger)`,
+/// never this. Floating, it is clear interactive Liquid Glass.
 public struct SecondaryButtonStyle: ButtonStyle {
-    public enum Placement: Sendable {
-        case onPage
-        case inCard
+    public enum Surface: Sendable {
+        /// The page, or a grey card on it.
+        case page
+        /// Graphite: an `inkCard` or a graphite bar.
+        case onInk
     }
 
     @Environment(\.sceneTheme) private var theme
     @Environment(\.controlPlacement) private var controlPlacement
-    private let placement: Placement
-    private let tone: ButtonTone
+    private let surface: Surface
 
-    public init(_ placement: Placement = .onPage, tone: ButtonTone = .plain) {
-        self.placement = placement
-        self.tone = tone
+    public init(_ surface: Surface = .page) {
+        self.surface = surface
+    }
+
+    private var words: ColorRole {
+        if controlPlacement == .floating { return .fgDefault }
+        return surface == .onInk ? .fgDefault : .fgOnBrand
     }
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .typeStyle(TypeRamp.calloutEmphasis)
             .lineLimit(1)
-            .foregroundStyle(Color(role: tone == .danger ? .fgDanger : .fgDefault, in: theme))
+            .foregroundStyle(Color(role: words, in: theme))
             .padding(.horizontal, Space.m + Space.xxs)
             .frame(minHeight: Sizing.control)
             .modifier(
                 ControlSurface(
-                    placement: controlPlacement, fill: placement == .inCard ? .bgCanvas : .bgSubtle, tinted: false)
+                    placement: controlPlacement, fill: surface == .onInk ? .bgCanvas : .bgBrand, tinted: false)
             )
             .contentShape(Capsule())
             .modifier(PressFeedback(isPressed: configuration.isPressed))
     }
-}
-
-/// The words of a secondary or text button: plain ink, or `.danger` red for an action that can't
-/// be taken back (解雇, 确认解雇). The main action of a page is never red.
-public enum ButtonTone: Sendable {
-    case plain
-    case danger
 }
 
 /// Confirming with Apple (用 Apple 确认注销), in Apple's own black as its button guidelines ask.

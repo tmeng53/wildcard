@@ -307,10 +307,9 @@ struct DisclaimerComposer: View {
 }
 
 /// The generate button: 编一句 before a line from the member's words and style is up, 换一句
-/// after; it is the only thing that asks the writer. A white capsule outlined in ink, so it reads
+/// after; it is the only thing that asks the writer. A graphite secondary button, so it reads
 /// before the style pills beside it.
 private struct WriteButton: View {
-    @Environment(\.sceneTheme) private var theme
     let isAgain: Bool
     let isWriting: Bool
     let action: () -> Void
@@ -330,12 +329,7 @@ private struct WriteButton: View {
                 }
             }
         }
-        .buttonStyle(SecondaryButtonStyle(.inCard))
-        .overlay {
-            Capsule()
-                .strokeBorder(Color(role: .fgDefault, in: theme), lineWidth: Sizing.selectionStroke)
-                .allowsHitTesting(false)
-        }
+        .buttonStyle(SecondaryButtonStyle())
         .fixedSize()
         .disabled(isWriting)
         .accessibilityIdentifier("disclaimer.write")

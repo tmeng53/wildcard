@@ -39,7 +39,7 @@ public struct SquadmateToday: Hashable, Sendable {
     public let catchphrase: Catchphrase?
     /// Their nickname and character's look; nil until they make it in sign-up.
     public let character: MemberCharacter?
-    /// Their own today, in their time zone, with the 3am grace.
+    /// Their own today, in their time zone.
     public let day: LocalDay
     public var training: TrainingStatus
     public var latestMeal: MealKind?

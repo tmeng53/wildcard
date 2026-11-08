@@ -35,7 +35,10 @@ final class NotificationPromptUITests: XCTestCase {
 
     /// 打卡 → 健康餐 → 发布, landing back on the scene.
     private func postHealthyMeal(in app: XCUIApplication) {
-        app.buttons["today.checkin"].tap()
+        // After a post, 打卡 comes back once 已发出 has been told.
+        let checkIn = app.buttons["today.checkin"]
+        XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "打卡 didn't come back")
+        checkIn.tap()
         let capsule = app.buttons["today.capsule.healthyMeal"]
         XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no 健康餐 capsule")
         capsule.tap()

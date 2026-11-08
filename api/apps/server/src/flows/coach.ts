@@ -21,6 +21,8 @@ import type { Sports } from '@wildcard/sports';
 import { SceneWeek, SquadId as SquadsSquad, type Squads } from '@wildcard/squads';
 import { MemberId as AwardsMember, type WeeklyAwards } from '@wildcard/weekly-awards';
 
+import { squadLanguages } from './squad-language.js';
+
 // The coach across modules: who is in a squad from squads, its week from check-ins, its members'
 // nicknames from members and sports' names from sports, in the shape the coach reads.
 
@@ -51,8 +53,9 @@ export function coachSquadWeek(deps: {
       before: deps.clock(),
       members: inSquad.map((member) => CheckInMember.parse(member)),
     });
-    const [squadmates, catalog, now] = await Promise.all([
+    const [squadmates, languages, catalog, now] = await Promise.all([
       deps.members.squadmates(week.members.map(({ member }) => member)),
+      squadLanguages(deps, { squad, members: week.members.map(({ member }) => member) }),
       deps.sports.catalog(),
       deps.squads.squadAt({
         squad: SquadsSquad.parse(squad),
@@ -95,8 +98,10 @@ export function coachSquadWeek(deps: {
       ...(now === undefined ? {} : { name: now.name }),
       members: week.members.map(({ member }) => {
         const nickname = squadmates.get(member)?.character?.nickname;
-        return nickname === undefined ? { member } : { member, nickname };
+        const language = languages.of(member);
+        return nickname === undefined ? { member, language } : { member, nickname, language };
       }),
+      language: languages.squad,
       checkIns,
     };
   };

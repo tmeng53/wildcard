@@ -53,6 +53,7 @@ import {
 import {
   ignoredNotices,
   unusedCoachActivity,
+  unusedCoachLetters,
   unusedUnlocks,
   unusedGifts,
   unusedWeekSummaryWords,
@@ -130,6 +131,7 @@ const app = createApp({
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   coachActivity: unusedCoachActivity,
+  coachLetters: unusedCoachLetters,
   notices: createNotices({
     store: createPostgresNoticeStore(db),
     broadcasts: createPostgresBroadcastStore(db),
@@ -387,7 +389,7 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     });
 
     // Today is a rest day on their plan, so a 练了 makes it a training day of its sport.
-    const now = new Date(Date.now() - 3 * 3_600_000);
+    const now = new Date();
     const monday = new Date(now.getTime() - ((now.getUTCDay() + 6) % 7) * 86_400_000)
       .toISOString()
       .slice(0, 10);
@@ -415,8 +417,8 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       token: mate.token,
       body: {
         version: 1,
-        // Their zone is UTC, and a day starts at 3am.
-        day: new Date(createdAt.getTime() - 3 * 3_600_000).toISOString().slice(0, 10),
+        // Their zone is UTC.
+        day: createdAt.toISOString().slice(0, 10),
         createdAt: createdAt.toISOString(),
         audience: [elsewhere],
         kind: 'trained',
@@ -424,7 +426,7 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       },
     });
     expect(trained.status).toBe(201);
-    const today = new Date(createdAt.getTime() - 3 * 3_600_000);
+    const today = createdAt;
     const weekday = (today.getUTCDay() + 6) % 7;
     const weekStart = new Date(today.getTime() - weekday * 86_400_000).toISOString().slice(0, 10);
     const fuel = await call({
@@ -487,12 +489,17 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     // The back is their 出赛表 for this week only: the plan, the day's 练了 with its sport, and
     // the week's 饮食小目标.
     expect(week.weekStart).toBe(weekStart);
-    // They joined just now: their W1 is this week (or, before 3am on a Monday, the one before).
+    // They joined just now: their W1 is this week (or, just after midnight on a Monday, the one before).
     const { firstWeek } = z
       .object({ week: z.object({ firstWeek: WeekStartText }) })
       .parse(card.body).week;
     expect(firstWeek <= weekStart).toBe(true);
     expect(Date.parse(weekStart) - Date.parse(firstWeek)).toBeLessThanOrEqual(7 * 86_400_000);
+    // Their today, on their calendar, is the row their 出赛表 shades.
+    const { today: cardToday } = z
+      .object({ week: z.object({ today: z.iso.date() }) })
+      .parse(card.body).week;
+    expect(cardToday).toBe(today.toISOString().slice(0, 10));
     expect(week.days).toHaveLength(7);
     expect(week.marks).toHaveLength(7);
     // The run went only to the other squad, so this squad's card never says what it was.

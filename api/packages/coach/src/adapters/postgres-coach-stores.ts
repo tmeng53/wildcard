@@ -1,10 +1,12 @@
 import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely } from 'kysely';
+import { z } from 'zod';
 
 import { CoachId } from '../domain/coach.js';
 import { CoachEmoji } from '../domain/reply.js';
 import { memberOfPath } from '../domain/memory.js';
 import { SquadId } from '../domain/settings.js';
+import { CoachFileMemberNotFoundError, CoachSquadNotFoundError } from '../errors.js';
 import type { NewWake, Wake } from '../domain/wake.js';
 import type {
   CoachActivityStore,
@@ -14,6 +16,7 @@ import type {
   CoachTransaction,
   UsageTotal,
 } from '../ports.js';
+import { letterWhere } from './postgres-coach-letters.js';
 import type { DB } from './tables.js';
 
 /** How long a claimed wake may run before another run takes it back. */
@@ -39,8 +42,8 @@ function wakeOf(row: {
 }): Wake {
   const squad = SquadId.parse(row.squad_id);
   const id = Number(row.id);
-  if (row.reason === 'daily' && row.day !== null) {
-    return { id, squad, reason: { kind: 'daily', day: row.day } };
+  if ((row.reason === 'daily' || row.reason === 'dream') && row.day !== null) {
+    return { id, squad, reason: { kind: row.reason, day: row.day } };
   }
   if (row.reason === 'comment' && row.comment_id !== null && row.check_in_id !== null) {
     return {
@@ -84,10 +87,11 @@ function insertWake(
         .execute(db)
         .then(({ rows }) => rows);
     case 'daily':
+    case 'dream':
       return insert
-        .values({ squad_id: squad, reason: 'daily', day: reason.day, created_at: now })
+        .values({ squad_id: squad, reason: reason.kind, day: reason.day, created_at: now })
         .onConflict((conflict) =>
-          conflict.columns(['squad_id', 'day']).where('reason', '=', 'daily').doNothing(),
+          conflict.columns(['squad_id', 'day']).where('reason', '=', reason.kind).doNothing(),
         )
         .returning('id')
         .execute();
@@ -201,6 +205,14 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           .where('id', '=', String(wake))
           .execute();
       },
+
+      async skip(wake, why) {
+        await db
+          .updateTable('coach_wakes')
+          .set({ state: 'skipped', last_error: why.slice(0, 1000) })
+          .where('id', '=', String(wake))
+          .execute();
+      },
     },
 
     memory: {
@@ -218,22 +230,9 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
 
       async save({ squad, wake, files }) {
         if (files.length === 0) return;
-        await db
-          .insertInto('coach_files')
-          .values(
-            files.map(({ path, body }) => ({
-              squad_id: squad,
-              path,
-              member_id: memberOfPath(path) ?? null,
-              body,
-              // Null when the wake has gone meanwhile (its check-in was deleted).
-              wake_id: db.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
-            })),
-          )
-          .execute();
+        await saveFiles(db, { squad, wake, files });
       },
     },
-
     notes: {
       async save({ squad, coach, day, text, wake }) {
         const saved = await db
@@ -340,14 +339,17 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
     },
 
     usage: {
-      async record({ squad, wake, coach, model, usage, costMicros }) {
+      async record({ squad, wake, coach, model, usage, costMicros, at }) {
         await db
           .insertInto('coach_usage')
           .values({
             squad_id: squad,
-            // Null when the wake has gone meanwhile (its check-in was deleted).
+            // Null for a letter, which has no wake, and when the wake has gone meanwhile (its
+            // check-in was deleted).
             wake_id: (eb) =>
-              eb.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
+              wake === undefined
+                ? sql<string | null>`null`
+                : eb.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
             coach_id: coach,
             model,
             requests: usage.requests,
@@ -355,8 +357,21 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
             cached_input_tokens: usage.cachedInputTokens,
             output_tokens: usage.outputTokens,
             cost_micros: costMicros,
+            at,
           })
           .execute();
+      },
+
+      async spent({ squad, since }) {
+        const row = await db
+          .selectFrom('coach_usage')
+          .select((eb) =>
+            eb.fn.coalesce(eb.fn.sum<string>('cost_micros'), sql<string>`0`).as('spent'),
+          )
+          .where('at', '>=', since)
+          .$if(squad !== undefined, (query) => query.where('squad_id', '=', squad ?? ''))
+          .executeTakeFirstOrThrow();
+        return Number(row.spent);
       },
     },
 
@@ -385,6 +400,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
 /** What a squad's coaches have said, read from Postgres for its members. */
 export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore {
   return {
+    letter: (squad) => letterWhere(db, { toCoachNowOf: squad }),
+
     async latestNote(squad) {
       const row = await db
         .selectFrom('coach_notes')
@@ -669,7 +686,10 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
         files: files.map(({ path, body, at }) => ({ path, body, at: new Date(at) })),
         notes,
         wakes: wakes.map((wake) => ({
-          reason: wake.reason === 'daily' || wake.reason === 'comment' ? wake.reason : 'checkIn',
+          reason:
+            wake.reason === 'daily' || wake.reason === 'comment' || wake.reason === 'dream'
+              ? wake.reason
+              : 'checkIn',
           state: wake.state,
           tries: wake.tries,
           lastError: wake.last_error,
@@ -683,3 +703,49 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
     },
   };
 }
+
+/**
+ * Saves new versions of a squad's files. A squad or member page's member that doesn't exist (an
+ * admin's typo) is told by name.
+ */
+async function saveFiles(
+  db: Kysely<DB>,
+  {
+    squad,
+    wake,
+    files,
+  }: {
+    readonly squad: string;
+    readonly wake: number | undefined;
+    readonly files: readonly { readonly path: string; readonly body: string }[];
+  },
+): Promise<void> {
+  try {
+    await db
+      .insertInto('coach_files')
+      .values(
+        files.map(({ path, body }) => ({
+          squad_id: squad,
+          path,
+          member_id: memberOfPath(path) ?? null,
+          body,
+          // Null for an admin's edit, or when the wake has gone meanwhile (its check-in was
+          // deleted).
+          wake_id:
+            wake === undefined
+              ? null
+              : db.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
+        })),
+      )
+      .execute();
+  } catch (error) {
+    if (hasErrorCode(error, FOREIGN_KEY_VIOLATION)) {
+      const constraint = z.object({ constraint: z.string() }).safeParse(error).data?.constraint;
+      if (constraint === 'coach_files_squad_id_fkey') throw new CoachSquadNotFoundError();
+      if (constraint === 'coach_files_member_id_fkey') throw new CoachFileMemberNotFoundError();
+    }
+    throw error;
+  }
+}
+
+const FOREIGN_KEY_VIOLATION = '23503';

@@ -16,13 +16,12 @@ struct ScheduleStoreTests {
         return ScheduleStore(backend: backend, now: { now })
     }
 
-    @Test func loadShowsThisWeekWithTheLifetimeCount() async throws {
+    @Test func loadShowsThisWeek() async throws {
         let backend = FakeBackend()
         await backend.set(
             try WeekSheet(
                 weekStart: thisWeek, plan: Fixtures.plan,
-                marks: [.trained(.sport("run")), .disclaimer, .none, .trained(.sport("run")), .none, .none, .none],
-                squad: SquadCount(trained: 14, planned: 22)))
+                marks: [.trained(.sport("run")), .disclaimer, .none, .trained(.sport("run")), .none, .none, .none]))
         let store = store(backend)
         await store.load()
         #expect(store.phase == .ready)
@@ -30,8 +29,6 @@ struct ScheduleStoreTests {
         #expect(store.board?.tense == .current)
         #expect(store.sheet?.trainedDays == 2)
         #expect(store.sheet?.plannedDays == 5)
-        #expect(store.sheet?.squad == SquadCount(trained: 14, planned: 22))
-        #expect(store.lifetimeTrainedDays == 46)
     }
 
     @Test func weeksRunFromTheJoinedWeekToNextWeek() async {
