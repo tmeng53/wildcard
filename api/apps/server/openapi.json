@@ -2875,6 +2875,36 @@
         ],
         "additionalProperties": false
       },
+      "MemberLocation": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "example": 40.7
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "example": -74
+          }
+        },
+        "required": [
+          "version",
+          "latitude",
+          "longitude"
+        ],
+        "additionalProperties": false,
+        "description": "The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach. Squadmates and the AI never see it."
+      },
       "SquadList": {
         "type": "object",
         "properties": {
@@ -8496,6 +8526,115 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/location": {
+      "put": {
+        "operationId": "saveMyLocation",
+        "summary": "Say roughly where the member is",
+        "description": "The app sends the approximate location iOS gives it when it opens, while the member allows it. Replaces the one before. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberLocation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kept, as the cell the server keeps",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLocation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid body",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "forgetMyLocation",
+        "summary": "Forget where the member is",
+        "description": "For when the member stops allowing location. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Forgotten"
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {

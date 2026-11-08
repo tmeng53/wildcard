@@ -1,6 +1,28 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "NSLocationWhenInUseUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your coach checks the weather where you are to help plan your training."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教练会看你那边的天气，帮你安排训练。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教練會看你那邊的天氣，幫你安排訓練。"
+          }
+        }
+      }
+    },
     "CFBundleDisplayName" : {
       "localizations" : {
         "en" : {

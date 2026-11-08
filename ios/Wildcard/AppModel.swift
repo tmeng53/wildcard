@@ -10,6 +10,7 @@ import DesignSystemUI
 import FeedDomain
 import FeedUI
 import Foundation
+import LocationDomain
 import MeDomain
 import NotificationsDomain
 import Observation
@@ -138,6 +139,7 @@ final class AppModel {
             case .signedOut: await signedOut()
             case .signedIn:
                 await registerForPush()
+                await Self.location.signedIn(APILocationRegistry(api: api))
                 if case .starting = screen, !openingUnderCover { await openHome() }
             }
         }
@@ -350,6 +352,7 @@ final class AppModel {
     private func signedOut() async {
         // The next account on this phone reads its own; until then it is no admin.
         isAdmin = false
+        Self.location.signedOut()
         SignUpProgress.clear()
         KeptScene.forgetAll()
         folders.forgetAll()

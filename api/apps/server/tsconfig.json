@@ -26,6 +26,9 @@
       "path": "../../packages/nudges"
     },
     {
+      "path": "../../packages/weather"
+    },
+    {
       "path": "../../packages/check-ins"
     },
     {

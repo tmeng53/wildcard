@@ -66,6 +66,15 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
+import { NEW_YORK } from '@wildcard/time-zones';
+import {
+  createPostgresPlaceStore,
+  createPostgresWeatherDayStore,
+  createWeather,
+  createWeatherKitForecasts,
+  MemberId as WeatherMember,
+  weatherWords,
+} from '@wildcard/weather';
 import {
   createApnsSender,
   createOffSender,
@@ -418,6 +427,22 @@ const nudges = createNudges({
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
+// Roughly where each member is, for the weather the coach reads; without WeatherKit's key the
+// places are still kept, and no one has weather.
+const weather = createWeather({
+  places: createPostgresPlaceStore(db),
+  days: createPostgresWeatherDayStore(db),
+  ...(config.weatherKit === undefined
+    ? {}
+    : { forecasts: createWeatherKitForecasts(config.weatherKit) }),
+  clock: () => new Date(),
+  failed: (error) => {
+    log.warn('weather not read', { error });
+  },
+});
+if (config.weatherKit === undefined) {
+  log.info('no WeatherKit key: the coach knows no one’s weather');
+}
 /** Each coach's name as its squad calls it, in its language. */
 const coachNames = coachNamesIn({ coaches: createPostgresCoachCatalog(db), members, squads });
 /** A coach's name now, as its pushes put it. */
@@ -505,6 +530,18 @@ const coachWakes =
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
+        // Today's weather where each member is, on their own clock (Tracy, 2026-11-08).
+        weatherOf: async ({ members: ids, day }) => {
+          const zoned = await Promise.all(
+            ids.map(async (member) => ({
+              member: WeatherMember.parse(member),
+              timeZone:
+                (await members.findProfile(ProfileMember.parse(member)))?.timeZone ?? NEW_YORK,
+            })),
+          );
+          const days = await weather.dayFor({ members: zoned, day });
+          return new Map([...days].map(([member, each]) => [member, weatherWords(each)]));
+        },
         // Only members who keep the coach's messages on get a morning note (Tracy, 2026-11-07).
         wantNotes: async (members) => {
           // A switch that can't be read counts as off for that member only.
@@ -610,6 +647,7 @@ const app = createApp({
   scenes,
   switches,
   nudges,
+  weather,
   notices,
   liveEvents,
   coachNames,

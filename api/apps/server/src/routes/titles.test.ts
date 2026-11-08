@@ -47,6 +47,7 @@ import {
   switchesOn,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -115,6 +116,7 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
   weeklyAwards: {
     awards: createWeeklyAwards({
       model: { answer: () => Promise.reject(new Error('unused')) },

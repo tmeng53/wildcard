@@ -29,6 +29,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -104,6 +105,7 @@ const app = createApp({
   ...ignoredNotices,
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
   log: createLog(() => undefined),
   jobs: {
     ...noJobs,

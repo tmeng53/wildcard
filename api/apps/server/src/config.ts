@@ -66,6 +66,23 @@ const Environment = z.object({
     .transform((key) => key.replaceAll('\\n', '\n'))
     .pipe(z.string().includes('-----BEGIN PRIVATE KEY-----'))
     .optional(),
+  // Apple WeatherKit's REST API, for each member's weather the coach reads: a key made in Apple
+  // Developer with WeatherKit ticked, and the identifier WeatherKit is enabled for (the app's
+  // bundle id). All four, or none: without them the coach knows no one's weather.
+  WEATHERKIT_TEAM_ID: z
+    .string()
+    .regex(/^[A-Z0-9]{10}$/)
+    .optional(),
+  WEATHERKIT_SERVICE_ID: z.string().min(1).optional(),
+  WEATHERKIT_KEY_ID: z
+    .string()
+    .regex(/^[A-Z0-9]{10}$/)
+    .optional(),
+  WEATHERKIT_PRIVATE_KEY: z
+    .string()
+    .transform((key) => key.replaceAll('\\n', '\n'))
+    .pipe(z.string().includes('-----BEGIN PRIVATE KEY-----'))
+    .optional(),
   // What the scheduler sends to start jobs such as the daily progress push. Without it no job
   // runs. Long and random, like any secret.
   JOBS_TOKEN: z.string().min(32).optional(),
@@ -93,6 +110,12 @@ const APNS = [
   'APNS_SANDBOX_PRIVATE_KEY',
   'APNS_PRODUCTION_KEY_ID',
   'APNS_PRODUCTION_PRIVATE_KEY',
+] as const;
+const WEATHERKIT = [
+  'WEATHERKIT_TEAM_ID',
+  'WEATHERKIT_SERVICE_ID',
+  'WEATHERKIT_KEY_ID',
+  'WEATHERKIT_PRIVATE_KEY',
 ] as const;
 
 export interface Config {
@@ -122,6 +145,15 @@ export interface Config {
         readonly keyId: string;
         readonly privateKey: string;
         readonly clientId: string;
+      }
+    | undefined;
+  /** Apple WeatherKit's key; undefined until it is set up, and then no one has weather. */
+  readonly weatherKit:
+    | {
+        readonly teamId: string;
+        readonly serviceId: string;
+        readonly keyId: string;
+        readonly privateKey: string;
       }
     | undefined;
   /** How the scheduler proves itself; undefined until one is set up, and then no job runs. */
@@ -186,6 +218,27 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     );
   }
   const apns = readApns(result.data);
+  const weatherSet = WEATHERKIT.filter((name) => result.data[name] !== undefined);
+  if (weatherSet.length > 0 && weatherSet.length < WEATHERKIT.length) {
+    const missing = WEATHERKIT.filter((name) => !weatherSet.includes(name));
+    throw new Error(
+      `Bad server environment: set all of ${WEATHERKIT.join(', ')} or none (missing ${missing.join(', ')})`,
+    );
+  }
+  const { WEATHERKIT_TEAM_ID, WEATHERKIT_SERVICE_ID, WEATHERKIT_KEY_ID, WEATHERKIT_PRIVATE_KEY } =
+    result.data;
+  const weatherKit =
+    WEATHERKIT_TEAM_ID !== undefined &&
+    WEATHERKIT_SERVICE_ID !== undefined &&
+    WEATHERKIT_KEY_ID !== undefined &&
+    WEATHERKIT_PRIVATE_KEY !== undefined
+      ? {
+          teamId: WEATHERKIT_TEAM_ID,
+          serviceId: WEATHERKIT_SERVICE_ID,
+          keyId: WEATHERKIT_KEY_ID,
+          privateKey: WEATHERKIT_PRIVATE_KEY,
+        }
+      : undefined;
   return {
     port: result.data.PORT,
     databaseUrl: result.data.DATABASE_URL,
@@ -208,6 +261,7 @@ export function readConfig(environment: Record<string, string | undefined>): Con
           ? { kind: 'token', token: result.data.JOBS_TOKEN }
           : undefined,
     apns,
+    weatherKit,
     errorReports:
       result.data.SENTRY_DSN_API === undefined
         ? undefined

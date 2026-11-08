@@ -29,6 +29,8 @@ env:
   SERVICE: wildcard-api
   # The app's bundle id, which APNs calls the topic.
   APNS_TOPIC: com.wildcardsquad.wildcard
+  # The WeatherKit service id: the app's bundle id, whose App ID has WeatherKit turned on.
+  WEATHERKIT_SERVICE_ID: com.wildcardsquad.wildcard
   # Cloud Run's domain mapping for the service; the app and Supabase Auth use this address.
   PUBLIC_URL: https://api.wildcardsquad.com
 
@@ -161,17 +163,33 @@ jobs:
           apns=(apns-team-id apns-sandbox-key-id apns-sandbox-private-key apns-production-key-id apns-production-private-key)
           found=0
           for key in "${apns[@]}"; do if present "$key"; then found=$((found + 1)); fi; done
-          remove_env=()
+          remove_vars=""
           if [ "$found" -eq "${#apns[@]}" ]; then
             for key in "${apns[@]}"; do secrets="$secrets,$(variable "$key")=$key:latest"; done
             env="$env,APNS_TOPIC=$APNS_TOPIC"
           elif [ "$found" -eq 0 ]; then
             for key in "${apns[@]}"; do absent="${absent:+$absent,}$(variable "$key")"; done
-            remove_env=(--remove-env-vars APNS_TOPIC)
+            remove_vars="APNS_TOPIC"
           else
             echo "::error::Set all of ${apns[*]} in Secret Manager, or none"
             exit 1
           fi
+          # The coach's weather through WeatherKit: all of its keys or none, as with APNs.
+          weatherkit=(weatherkit-team-id weatherkit-key-id weatherkit-private-key)
+          found=0
+          for key in "${weatherkit[@]}"; do if present "$key"; then found=$((found + 1)); fi; done
+          if [ "$found" -eq "${#weatherkit[@]}" ]; then
+            for key in "${weatherkit[@]}"; do secrets="$secrets,$(variable "$key")=$key:latest"; done
+            env="$env,WEATHERKIT_SERVICE_ID=$WEATHERKIT_SERVICE_ID"
+          elif [ "$found" -eq 0 ]; then
+            for key in "${weatherkit[@]}"; do absent="${absent:+$absent,}$(variable "$key")"; done
+            remove_vars="${remove_vars:+$remove_vars,}WEATHERKIT_SERVICE_ID"
+          else
+            echo "::error::Set all of ${weatherkit[*]} in Secret Manager, or none"
+            exit 1
+          fi
+          remove_env=()
+          if [ -n "$remove_vars" ]; then remove_env=(--remove-env-vars "$remove_vars"); fi
           # Names only, never values: which optional features this revision has.
           echo "Optional secrets absent (feature off): ${absent:-none}"
           remove=()

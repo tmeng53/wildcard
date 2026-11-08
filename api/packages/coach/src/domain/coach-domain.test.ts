@@ -476,10 +476,11 @@ describe('when the coach wakes', () => {
             name: '队员1',
             trainedDays: 2,
             plan: { today: { kind: 'train', sport: '游泳' }, fuelGoals: ['喝够水', '少吃外卖'] },
+            weather: '雨，8–13°C，降水概率 80%',
           },
           { name: '队员2', trainedDays: 0, plan: { today: { kind: 'rest' }, fuelGoals: [] } },
           // Plans that couldn't be read: only the days trained.
-          { name: '队员3', trainedDays: 1 },
+          { name: '队员3', trainedDays: 1, weather: '晴，-2–5°C' },
         ],
       })
         ?.split('\n\n')
@@ -487,9 +488,9 @@ describe('when the coach wakes', () => {
     ).toBe(
       [
         '今天给这些人各写一张便条：',
-        '- 队员1：今天出赛表排了游泳；这周的饮食小目标：喝够水、少吃外卖；这周已经练了 2 天。',
+        '- 队员1：今天出赛表排了游泳；这周的饮食小目标：喝够水、少吃外卖；这周已经练了 2 天；当地今天雨，8–13°C，降水概率 80%。',
         '- 队员2：今天出赛表是休息日；这周没定饮食小目标；这周已经练了 0 天。',
-        '- 队员3：这周已经练了 1 天。',
+        '- 队员3：这周已经练了 1 天；当地今天晴，-2–5°C。',
       ].join('\n'),
     );
     // Yesterday's posts, for the notes to pick up on, and a day nobody posted.

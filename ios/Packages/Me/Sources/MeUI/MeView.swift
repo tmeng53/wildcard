@@ -6,6 +6,7 @@ import Contracts
 import DesignSystem
 import DesignSystemUI
 import HealthUI
+import LocationDomain
 import MeDomain
 import SwiftUI
 
@@ -28,15 +29,18 @@ public struct MeDestinations {
     public var previewSignUp: (() -> Void)?
     /// Apple Health, for 设置 › Apple 健康; nil where the phone has none.
     public var health: HealthConnection?
+    /// The phone's approximate location for the coach's weather, for 设置 › 位置; nil shows no row.
+    public var location: LocationSharing?
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
         street: @escaping () -> Void = {}, streetHasNews: Bool = false,
         openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL,
-        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil
+        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil, location: LocationSharing? = nil
     ) {
         self.previewSignUp = previewSignUp
         self.health = health
+        self.location = location
         self.editCharacter = editCharacter
         self.schedule = schedule
         self.street = street

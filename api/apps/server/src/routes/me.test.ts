@@ -29,6 +29,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -99,13 +100,14 @@ async function send(
     ...ignoredNotices,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
+    weather: weatherOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,
     admin: adminOn(),
   });
   try {
     const response = await app.request(path, init);
-    return [response.status, await response.json()];
+    return [response.status, response.status === 204 ? null : await response.json()];
   } finally {
     await db.destroy();
   }
@@ -709,5 +711,53 @@ describe('PUT /me/profile', () => {
         body: JSON.stringify({ version: 1, timeZone: 'America/Los_Angeles', catchphrase: null }),
       }),
     ).toStrictEqual([401, problem('AUTH_TOKEN_MISSING', 'Sign in to do this.')]);
+  });
+});
+
+describe('PUT and DELETE /me/location', () => {
+  const putLocation = (token: string, body: unknown) =>
+    send('/me/location', {
+      method: 'PUT',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  const placeOf = async (member: string) => {
+    const db = createDatabase(config.databaseUrl);
+    try {
+      return await db
+        .selectFrom('member_places')
+        .select(['latitude', 'longitude'])
+        .where('member_id', '=', member)
+        .execute();
+    } finally {
+      await db.destroy();
+    }
+  };
+
+  it('keeps only the 0.1° cell, the latest one, and forgets it', async () => {
+    const { token, userId } = await signUp();
+    expect(
+      await putLocation(token, { version: 1, latitude: 40.71283, longitude: -74.00601 }),
+    ).toStrictEqual([200, { version: 1, latitude: 40.7, longitude: -74 }]);
+    await putLocation(token, { version: 1, latitude: 25.0339, longitude: 121.5645 });
+    expect(await placeOf(userId)).toStrictEqual([{ latitude: '25.0', longitude: '121.6' }]);
+    const forget = () =>
+      send('/me/location', { method: 'DELETE', headers: { authorization: `Bearer ${token}` } });
+    expect(await forget()).toStrictEqual([204, null]);
+    expect(await forget()).toStrictEqual([204, null]);
+    expect(await placeOf(userId)).toStrictEqual([]);
+  });
+
+  it('refuses a place off the globe', async () => {
+    const { token } = await signUp();
+    const [status] = await putLocation(token, { version: 1, latitude: 91, longitude: 0 });
+    expect(status).toBe(400);
+  });
+
+  it('asks a caller with no token to sign in', async () => {
+    expect(await send('/me/location', { method: 'DELETE' })).toStrictEqual([
+      401,
+      problem('AUTH_TOKEN_MISSING', 'Sign in to do this.'),
+    ]);
   });
 });

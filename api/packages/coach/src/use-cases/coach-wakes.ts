@@ -29,6 +29,7 @@ import type {
   CoachHiringStore,
   CoachMemberFacts,
   CoachMemes,
+  CoachWeather,
   CoachOccasions,
   CoachPhotoUrls,
   CoachSettingsStore,
@@ -128,6 +129,8 @@ export interface CoachWakesDependencies {
   ) => Promise<ReadonlyMap<string, string>>;
   /** Without it the coach has no meme library to draw humour from. */
   readonly memes?: CoachMemes;
+  /** Without it the coach doesn't know anyone's weather. */
+  readonly weatherOf?: CoachWeather;
   /** Without it the coach is told of no holiday or other moment. */
   readonly occasions?: CoachOccasions;
   /** Told each reply to a check-in once it is saved; the server tells its author. */
@@ -583,6 +586,11 @@ async function briefsOf(
       ? []
       : await deps.memberFacts({ members, weekStart: week.weekStart }).catch(() => []);
   const today = planIndexOf(day);
+  // The weather is a nice-to-have: a morning note goes out without it.
+  const weather =
+    members.length === 0 || deps.weatherOf === undefined
+      ? new Map<string, string>()
+      : await deps.weatherOf({ members, day }).catch(() => new Map<string, string>());
   return members.flatMap((member): NoteBrief[] => {
     const name = roster.get(member);
     if (name === undefined) return [];
@@ -598,6 +606,7 @@ async function briefsOf(
         name,
         language: languageOf(week, member),
         trainedDays,
+        ...(weather.has(member) ? { weather: weather.get(member) } : {}),
         ...(mine === undefined || planned === undefined
           ? {}
           : { plan: { today: planned, fuelGoals: mine.fuelGoals } }),

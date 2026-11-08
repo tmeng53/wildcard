@@ -26,6 +26,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -103,6 +104,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
     ...ignoredNotices,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
+    weather: weatherOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,
     admin: adminOn(),

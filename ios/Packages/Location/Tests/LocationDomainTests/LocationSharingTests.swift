@@ -1,0 +1,139 @@
+import Foundation
+import LocationDomain
+import Testing
+
+/// A phone whose location access and place the test sets.
+private final class FakeReader: LocationReader, @unchecked Sendable {  // Only the main actor's model calls it.
+    var access: LocationAccess
+    /// What the member picks on the system's prompt.
+    var answer: LocationAccess = .allowed
+    var place: Coordinates? = Coordinates(latitude: 40.71283, longitude: -74.00601)
+    private(set) var asked = 0
+
+    init(_ access: LocationAccess) { self.access = access }
+
+    func access() async -> LocationAccess { access }
+    func ask() async -> LocationAccess {
+        asked += 1
+        if access == .notAsked { access = answer }
+        return access
+    }
+    func current() async -> Coordinates? { place }
+}
+
+/// The server, recording what it was sent.
+private final class FakeRegistry: LocationRegistry, @unchecked Sendable {  // Only the main actor's model calls it.
+    enum Call: Equatable {
+        case save(Coordinates)
+        case forget
+    }
+    private(set) var calls: [Call] = []
+    var fails: LocationError?
+
+    func save(_ coordinates: Coordinates) async throws(LocationError) {
+        if let fails { throw fails }
+        calls.append(.save(coordinates))
+    }
+    func forget() async throws(LocationError) {
+        if let fails { throw fails }
+        calls.append(.forget)
+    }
+}
+
+private final class MemorySent: SentPlaceStore, @unchecked Sendable {  // Only the main actor's model calls it.
+    var place: SentPlace?
+    func load() -> SentPlace? { place }
+    func save(_ place: SentPlace?) { self.place = place }
+}
+
+/// A clock the test moves.
+private final class TestClock: @unchecked Sendable {  // Only the main actor's model reads it.
+    var now = Date(timeIntervalSince1970: 1_794_000_000)
+}
+
+private let newYork = Coordinates(latitude: 40.7, longitude: -74)
+
+@MainActor
+struct LocationSharingTests {
+    private let sent = MemorySent()
+    private let clock = TestClock()
+
+    private func sharing(_ reader: FakeReader) -> LocationSharing {
+        LocationSharing(reader: reader, sent: sent, now: { [clock] in clock.now })
+    }
+
+    @Test func allowingSendsTheCellOnce() async {
+        let reader = FakeReader(.notAsked)
+        let registry = FakeRegistry()
+        let model = sharing(reader)
+        await model.signedIn(registry)
+        #expect(registry.calls.isEmpty)
+        await model.ask()
+        #expect(model.access == .allowed)
+        #expect(registry.calls == [.save(newYork)])
+        // Back in the app, the same cell: nothing to send.
+        reader.place = Coordinates(latitude: 40.68, longitude: -73.97)
+        await model.refresh()
+        #expect(registry.calls == [.save(newYork)])
+    }
+
+    @Test func aMoveOrADaySendsAgain() async {
+        let reader = FakeReader(.allowed)
+        let registry = FakeRegistry()
+        let model = sharing(reader)
+        await model.signedIn(registry)
+        reader.place = Coordinates(latitude: 25.0339, longitude: 121.5645)
+        await model.refresh()
+        clock.now += 25 * 60 * 60
+        await model.refresh()
+        let taipei = Coordinates(latitude: 25, longitude: 121.6)
+        #expect(registry.calls == [.save(newYork), .save(taipei), .save(taipei)])
+    }
+
+    @Test func refusingSendsNothingAndStoppingForgetsIt() async {
+        let reader = FakeReader(.notAsked)
+        reader.answer = .refused
+        let registry = FakeRegistry()
+        let model = sharing(reader)
+        await model.signedIn(registry)
+        await model.ask()
+        #expect(model.access == .refused)
+        #expect(registry.calls.isEmpty)
+        // Allowed in iOS Settings later, then turned off again.
+        reader.access = .allowed
+        await model.refresh()
+        reader.access = .refused
+        await model.refresh()
+        await model.refresh()
+        #expect(registry.calls == [.save(newYork), .forget])
+    }
+
+    @Test func aFailedSendIsTriedOnTheNextOpen() async {
+        let reader = FakeReader(.allowed)
+        let registry = FakeRegistry()
+        registry.fails = .unavailable
+        let model = sharing(reader)
+        await model.signedIn(registry)
+        registry.fails = nil
+        await model.refresh()
+        #expect(registry.calls == [.save(newYork)])
+    }
+
+    @Test func theNextMemberOnThePhoneSendsTheirOwn() async {
+        let reader = FakeReader(.allowed)
+        let model = sharing(reader)
+        await model.signedIn(FakeRegistry())
+        model.signedOut()
+        let next = FakeRegistry()
+        await model.signedIn(next)
+        #expect(next.calls == [.save(newYork)])
+    }
+
+    @Test func nothingGoesOutBeforeSignIn() async {
+        let reader = FakeReader(.notAsked)
+        let model = sharing(reader)
+        await model.ask()
+        #expect(model.access == .allowed)
+        #expect(sent.place == nil)
+    }
+}

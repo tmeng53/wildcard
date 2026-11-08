@@ -72,6 +72,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -173,6 +174,7 @@ beforeAll(async () => {
           photos,
           aiConsent: aiConsentOn(db),
           nudges: nudgesOn(db),
+          weather: weatherOn(db),
           scenes: scenesOn(db),
           switches: switchesOn(db),
           weeklyAwards: unusedWeeklyAwards,

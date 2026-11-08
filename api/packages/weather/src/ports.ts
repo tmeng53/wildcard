@@ -1,0 +1,29 @@
+import type { DayWeather } from './domain/day-weather.js';
+import type { MemberId, Place } from './domain/place.js';
+
+/** Where each member roughly is: the latest place only, never a history. */
+export interface PlaceStore {
+  /** Keeps `place` as the member's place, replacing the one before. */
+  save(member: MemberId, place: Place, at: Date): Promise<void>;
+  /** Forgets the member's place. Safe to repeat. */
+  remove(member: MemberId): Promise<void>;
+  /** The places of those of `members` who have one. */
+  placesOf(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, Place>>;
+}
+
+/** The days' weather fetched already, one a place a day, kept a week. */
+export interface WeatherDayStore {
+  find(place: Place, day: string): Promise<DayWeather | undefined>;
+  /** Keeps it for the place and day, replacing any kept; removes days a week older than `day`. */
+  save(place: Place, day: string, weather: DayWeather): Promise<void>;
+}
+
+/** The weather provider: one day's forecast at a place, its day on `timeZone`'s clock. */
+export interface Forecasts {
+  /** Undefined when the provider has no forecast for that day; throws when it can't answer. */
+  dayAt(input: {
+    readonly place: Place;
+    readonly day: string;
+    readonly timeZone: string;
+  }): Promise<DayWeather | undefined>;
+}

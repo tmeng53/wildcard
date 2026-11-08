@@ -14,6 +14,8 @@ import FeedDomain
 import FeedUI
 import Foundation
 import HealthUI
+import LocationDomain
+import LocationUI
 import MeDomain
 import MeUI
 import NotificationsUI
@@ -122,7 +124,7 @@ struct WildcardApp: App {
             _signUp = State(
                 initialValue: SignUpModel(
                     service: InMemorySignUpService.sampleSquad(), nickname: "",
-                    now: LaunchOptions.signUpTime, health: Self.sampleHealth()))
+                    now: LaunchOptions.signUpTime, health: Self.sampleHealth(), location: Self.sampleLocation))
         }
         let feedSource = Self.feedSource(viewer: member, squad: squad)
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource))
@@ -130,6 +132,9 @@ struct WildcardApp: App {
     }
 
     /// The sample member's 出赛表.
+    /// Approximate location on the sample squad: not asked yet, allowed when asked, in New York.
+    static let sampleLocation = LocationSharing.sample()
+
     /// Apple Health on the sample squad: the sample day once connected (`-health-sample`).
     private static func sampleHealth() -> HealthConnection {
         HealthConnection(
@@ -273,7 +278,8 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, notices: LaunchOptions.notices, selection: $tab, destination: $pushDestination
+                myPosts: myPosts, notices: LaunchOptions.notices, selection: $tab, destination: $pushDestination,
+                location: Self.sampleLocation
             )
             .onAppear {
                 // As on the real backend: a push opens where its notice in 通知 goes, unless the

@@ -2,12 +2,15 @@
 import DesignSystem
 import DesignSystemUI
 import HealthUI
+import LocationDomain
 import MeDomain
 import SwiftUI
+import UIKit
 
 /// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
 /// small group labels (偏好, 关于, 账号), with no icons, a chevron on each row that opens a page,
-/// and an ink switch; 偏好's Apple 健康 pushes its own page. Signing out and deleting the account come last. It holds only the app's
+/// and an ink switch; 偏好's Apple 健康 pushes its own page, and 位置 asks for approximate location
+/// once, then opens iOS Settings. Signing out and deleting the account come last. It holds only the app's
 /// own settings: what belongs to the squad or the week lives with them (2026-11-02), and 球衣号码
 /// with the character editor (2026-11-03).
 struct SettingsView: View {
@@ -102,6 +105,21 @@ struct SettingsView: View {
                 .accessibilityIdentifier("me.health")
                 .task { await health.refresh() }
             }
+            if let location = destinations.location {
+                ListRow(
+                    Text("位置", bundle: .module),
+                    value: location.access == .allowed ? Text("已打开", bundle: .module) : Text("未打开", bundle: .module)
+                ) {
+                    // Only the first time can the app ask; after that, iOS Settings changes it.
+                    if location.access == .notAsked {
+                        Task { await location.ask() }
+                    } else if let settings = URL(string: UIApplication.openSettingsURLString) {
+                        openURL(settings)
+                    }
+                }
+                .accessibilityIdentifier("me.location")
+                .task { await location.refresh() }
+            }
             ListRow(
                 Text("语言", bundle: .module), value: Text(verbatim: AppLanguage.current.name), showsDivider: false
             ) {
@@ -112,16 +130,23 @@ struct SettingsView: View {
         }
     }
 
+    /// Apple Weather's data sources, which WeatherKit asks apps that show its weather to link.
+    private static let weatherSources = URL(string: "https://developer.apple.com/weatherkit/data-source-attribution/")
     private var aboutGroup: some View {
         MenuGroup(Text("关于", bundle: .module)) {
             ListRow(Text("隐私政策", bundle: .module)) {
                 openURL(destinations.privacyPolicy)
             }
             .accessibilityIdentifier("me.privacy")
-            ListRow(Text("用户条款", bundle: .module), showsDivider: false) {
+            ListRow(Text("用户条款", bundle: .module)) {
                 openURL(destinations.terms)
             }
             .accessibilityIdentifier("me.terms")
+            // WeatherKit's terms: the coach's weather credits Apple Weather and links its sources.
+            ListRow(Text("天气数据：Apple 天气", bundle: .module), showsDivider: false) {
+                if let sources = Self.weatherSources { openURL(sources) }
+            }
+            .accessibilityIdentifier("me.weatherSources")
         }
     }
 

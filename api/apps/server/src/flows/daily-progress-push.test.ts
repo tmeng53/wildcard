@@ -41,6 +41,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -146,6 +147,7 @@ const deps = {
   publicRoutes: unlimitedPublicRoutes,
   aiConsent: aiConsentOn(db),
   nudges,
+  weather: weatherOn(db),
 };
 const app = createApp(deps);
 

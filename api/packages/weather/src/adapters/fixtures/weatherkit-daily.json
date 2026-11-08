@@ -1,0 +1,47 @@
+{
+  "forecastDaily": {
+    "name": "DailyForecast",
+    "metadata": {
+      "attributionURL": "https://developer.apple.com/weatherkit/data-source-attribution/",
+      "expireTime": "2026-11-08T12:00:00Z",
+      "latitude": 40.7,
+      "longitude": -74.0,
+      "readTime": "2026-11-08T11:00:00Z",
+      "reportedTime": "2026-11-08T10:00:00Z",
+      "units": "m",
+      "version": 1
+    },
+    "days": [
+      {
+        "forecastStart": "2026-11-08T05:00:00Z",
+        "forecastEnd": "2026-11-09T05:00:00Z",
+        "conditionCode": "PartlyCloudy",
+        "maxUvIndex": 3,
+        "moonPhase": "waningCrescent",
+        "precipitationAmount": 0,
+        "precipitationChance": 0.05,
+        "precipitationType": "clear",
+        "snowfallAmount": 0,
+        "sunrise": "2026-11-08T11:36:00Z",
+        "sunset": "2026-11-08T21:46:00Z",
+        "temperatureMax": 14.6,
+        "temperatureMin": 6.2
+      },
+      {
+        "forecastStart": "2026-11-09T05:00:00Z",
+        "forecastEnd": "2026-11-10T05:00:00Z",
+        "conditionCode": "Rain",
+        "maxUvIndex": 1,
+        "moonPhase": "waningCrescent",
+        "precipitationAmount": 9.4,
+        "precipitationChance": 0.82,
+        "precipitationType": "rain",
+        "snowfallAmount": 0,
+        "sunrise": "2026-11-09T11:37:00Z",
+        "sunset": "2026-11-09T21:45:00Z",
+        "temperatureMax": 12.8,
+        "temperatureMin": 7.9
+      }
+    ]
+  }
+}
