@@ -5,13 +5,13 @@ import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 
-/// Shrinks a picked photo before it goes anywhere: at most 1080 px on the long edge, JPEG at
-/// quality 0.7, so a check-in photo is a few hundred KB and the free storage tier lasts.
+/// Shrinks a picked photo before it goes anywhere: to `PhotoUploadSize` (at most 1080 px on the
+/// short edge and 1920 on the long), JPEG at quality 0.7, so a check-in photo is a few hundred KB
+/// and the free storage tier lasts.
 /// Runs off the main actor: decoding a camera photo takes long enough to drop frames.
 /// The JPEG is written from the pixels alone, so it carries none of the original's metadata
 /// (EXIF, GPS, maker notes, XMP); the orientation is applied to the pixels instead.
 public enum PhotoPreparation {
-    public static let maxPixelSize = 1080
     public static let jpegQuality = 0.7
 
     /// Decodes `data` (HEIC, JPEG, PNG…), downsamples it and re-encodes it as JPEG.
@@ -20,12 +20,16 @@ public enum PhotoPreparation {
         guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions) else {
             throw .unreadablePhoto
         }
+        let original = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] ?? [:]
+        let longEdge = PhotoUploadSize.longEdge(
+            width: original[kCGImagePropertyPixelWidth] as? Int ?? 0,
+            height: original[kCGImagePropertyPixelHeight] as? Int ?? 0)
         let thumbnailOptions =
             [
                 kCGImageSourceCreateThumbnailFromImageAlways: true,
                 kCGImageSourceCreateThumbnailWithTransform: true,
                 kCGImageSourceShouldCacheImmediately: true,
-                kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+                kCGImageSourceThumbnailMaxPixelSize: longEdge,
             ] as CFDictionary
         guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, thumbnailOptions) else {
             throw .unreadablePhoto
