@@ -435,6 +435,8 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     const quiet = await call({ method: 'GET', path, token: captain.token });
     expect(quiet.status).toBe(200);
     expect(quiet.body).not.toHaveProperty('memberNote');
+    // Fired again, so no other test's coach run finds this squad hired.
+    await call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
   });
 
   it('refuses anyone outside the squad, and check-in ids that aren’t', async () => {

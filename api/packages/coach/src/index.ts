@@ -39,6 +39,7 @@ export type {
   CoachCatalogStore,
   CoachHiringStore,
   CoachLetterStore,
+  CoachMemoryStore,
   CoachMemberNoteShown,
   CoachNoteDeliveryStore,
   CoachNoteShown,
@@ -60,6 +61,7 @@ export type {
 } from './ports.js';
 export {
   CoachAlreadyHiredError,
+  CoachFileMemberNotFoundError,
   CoachNotOfferedError,
   CoachNoteNotFoundError,
   CoachSquadNotFoundError,
@@ -83,6 +85,8 @@ export {
   type CoachLettered,
   type CoachLetters,
 } from './use-cases/coach-letters.js';
+export { createCoachMemory, type CoachMemoryAdmin } from './use-cases/coach-memory.js';
+export { CoachFilePath } from './domain/memory.js';
 export { createCoachSettings, type CoachSettingsAdmin } from './use-cases/coach-settings.js';
 export {
   createCoachWakes,

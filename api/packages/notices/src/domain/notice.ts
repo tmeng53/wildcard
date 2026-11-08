@@ -75,14 +75,15 @@ export const NoticeSubjects = {
     text: z.string().min(1),
   }),
   /**
-   * A teammate commented on the member's check-in, or replied to them: the push's words as it was
-   * put (sent or not, by the member's switch), and the post to open.
+   * A teammate commented on the member's check-in, replied to them or @'d them, or the coach @'d
+   * them: the push's words as it was put (sent or not, by the member's switch), and the post to
+   * open. The coach's lines aren't comments, so they have no comment id.
    */
   comment: z.strictObject({
     version: z.literal(1),
     alert: PushAlert,
     checkIn: z.uuid(),
-    comment: z.uuid(),
+    comment: z.uuid().optional(),
   }),
   /**
    * The squad trained over its weekly goal `weeks` finished weeks in a row: its captain is
