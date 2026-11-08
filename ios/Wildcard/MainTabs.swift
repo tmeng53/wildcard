@@ -362,15 +362,13 @@ extension MainTabs {
                 switch page {
                 case .squad:
                     SquadSettingsView(
-                        model: squad, picked: land(on:coveredAt:),
-                        openCoach: { todayPages.append(.coach($0)) },
+                        model: squad, picked: land(on:coveredAt:), openCoach: { todayPages.append(.coach($0)) },
                         revealing: $squadRevealing,
-                        openTeammate: {
-                            teammateOnHome = false
-                            teammate = squadCard(of: $0)
-                        }
+                        openTeammate: { (teammateOnHome, teammate) = (false, squadCard(of: $0)) },
+                        pastRecaps: { PastRecaps(shelf: recap) }
                     )
                     .environment(\.sceneTheme, squad.scene)
+                    .task { await recap.refreshPast() }
                 case .coach(let route):
                     CoachPage(route: route, model: squad, pages: coachPages, note: today.coachLine)
                         .environment(\.sceneTheme, squad.scene)

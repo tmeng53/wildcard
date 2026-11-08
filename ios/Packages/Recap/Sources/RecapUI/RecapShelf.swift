@@ -9,11 +9,11 @@ import RecapDomain
 import ScenePickDomain
 import SwiftUI
 
-/// Where the app keeps the squad's latest 战报 (每周战报): the story 动态's tile opens. A tapped
-/// awards push only reads it again, so the member opens the new story from the tile. It reads the
-/// story from its service, which carries the squad as it was that week, and the reader and their
-/// day from the app. It remembers on this phone which weeks the reader watched to the end, for the
-/// tile.
+/// Where the app keeps the squad's 战报 (每周战报): the latest, which 动态's tile opens until the
+/// reader watched it to the end, and every one before it, which 往期战报 on 小队 opens. It reads
+/// them from its service, which carries the squad as it was each week, and the reader and their
+/// day from the app. It remembers on this phone which weeks the reader watched to the end, for
+/// the tile and the covers.
 @MainActor @Observable
 public final class RecapShelf {
     /// The squad the reader is in and their day, as the app last read them.
@@ -33,6 +33,9 @@ public final class RecapShelf {
     /// The newest story out: this week's once Sunday's awards are in, else last week's. Nil
     /// until one is read, or when neither week's 战报 came out (a squad too new to have one).
     public private(set) var latest: WeekStory?
+    /// Every story the squad has, the latest first (往期战报); empty until read, and for a squad
+    /// whose first week isn't over.
+    public private(set) var past: [WeekStory] = []
     /// The story on screen.
     public var open: RecapModel?
     /// Who was in the squad that week, for the tile's reader.
@@ -40,11 +43,13 @@ public final class RecapShelf {
         guard let latest, let viewer else { return nil }
         return StoryCast(story: latest, viewer: viewer)
     }
-    /// The reader watched the newest story to its last page on this phone: the tile shows it
-    /// uncovered, with 再看一遍.
+    /// The reader watched the newest story to its last page on this phone: 动态 stops showing its
+    /// tile, and the story stays on 小队's 往期战报.
     public var latestIsSeen: Bool {
-        latest.map { seen.contains(RecapSeen.key($0)) } ?? false
+        latest.map(isSeen) ?? false
     }
+    /// The squadmate reading, as each story keeps them.
+    public var reader: MemberID? { viewer }
     private var viewer: MemberID?
     private var seen: Set<String>
     /// How many scenes the reader picked on a story's last page, counted as each reveal fills
@@ -102,6 +107,61 @@ public final class RecapShelf {
         }
     }
 
+    /// Reads every story the squad has, for 往期战报, each time: a story's photo links last an
+    /// hour, and a deleted post or photo leaves it. A week that fails to read keeps the copy
+    /// already shown, else is left out until the next read.
+    public func refreshPast() async {
+        guard let squad = readSquad() else { return }
+        viewer = squad.viewer
+        let weeks: [LocalDay]
+        do {
+            weeks = try await service.weeks(squad: squad.id)
+        } catch {
+            return
+        }
+        let shown = Dictionary(
+            past.filter { $0.squad == squad.id }.map { ($0.week.monday, $0) },
+            uniquingKeysWith: { first, _ in first })
+        let service = service
+        let read = await withTaskGroup(of: (LocalDay, WeekStory?).self) { group in
+            for week in weeks {
+                group.addTask { (week, try? await service.story(squad: squad.id, week: week)) }
+            }
+            var read: [LocalDay: WeekStory] = [:]
+            for await (week, story) in group { read[week] = story }
+            return read
+        }
+        past = weeks.compactMap { read[$0] ?? shown[$0] }.filter(\.isPublished)
+    }
+
+    /// Whether the reader watched this story to its last page on this phone.
+    public func isSeen(_ story: WeekStory) -> Bool {
+        seen.contains(RecapSeen.key(story))
+    }
+
+    /// Opens one of the squad's stories, from its cover on 往期战报, read again first so its
+    /// photo links are fresh and what was deleted is gone; the copy on the cover if that fails.
+    public func open(_ story: WeekStory) async {
+        guard let viewer else { return }
+        let fresh = try? await service.story(squad: story.squad, week: story.week.monday)
+        show(fresh ?? story, viewer: viewer)
+    }
+
+    /// Opens the squad's story for the week starting `monday`, from a tapped awards push or its
+    /// 通知 row: read now, else the copy already read. Nothing opens for a week without one, or
+    /// for another squad's (one the reader has left).
+    public func open(week monday: LocalDay, of squadID: SquadID? = nil) async {
+        guard let squad = readSquad(), squadID == nil || squadID == squad.id else { return }
+        viewer = squad.viewer
+        if let story = try? await service.story(squad: squad.id, week: monday) {
+            show(story, viewer: squad.viewer)
+        } else if let known = ([latest].compactMap { $0 } + past).first(where: {
+            $0.squad == squad.id && $0.week.monday == monday
+        }) {
+            show(known, viewer: squad.viewer)
+        }
+    }
+
     /// Opens the newest story, from 动态's tile.
     public func openLatest() {
         guard let latest, let viewer else { return }
@@ -144,12 +204,12 @@ public final class RecapShelf {
     }
 }
 
-/// The weeks whose 战报 the reader watched to the end on this phone, the newest few. Only the
-/// tile reads it, so losing it only covers the podium again.
+/// The weeks whose 战报 the reader watched to the end on this phone, the latest ten years' worth.
+/// Only the tile and the covers read it, so losing it only shows them as new again.
 public struct RecapSeen: Sendable {
     private let defaults: @Sendable () -> UserDefaults
     private static let entry = "recap.seen"
-    private static let kept = 12
+    private static let kept = 520
 
     public init(defaults: @escaping @Sendable () -> UserDefaults = { .standard }) {
         self.defaults = defaults
@@ -200,7 +260,12 @@ extension RecapSample {
         public init() {}
 
         public func story(squad: SquadID, week monday: LocalDay) async throws(RecapError) -> WeekStory? {
-            RecapSample.story()
+            guard let past = RecapSample.pastWeeks.firstIndex(of: monday) else { return RecapSample.story() }
+            return RecapSample.story(monday: monday, scene: RecapSample.pastScenes[past])
+        }
+
+        public func weeks(squad: SquadID) async throws(RecapError) -> [LocalDay] {
+            RecapSample.pastWeeks
         }
 
         public func nudge(squad: SquadID, week monday: LocalDay) async throws(RecapError) {}

@@ -66,6 +66,8 @@ export interface WeeklyAwards {
    * stands.
    */
   freezeStory(story: WeekStory): Promise<WeekStory>;
+  /** The weeks a squad has a 战报 frozen for, the latest first. */
+  storyWeeks(input: { readonly squad: SquadId }): Promise<WeekStart[]>;
   /** The squads whose 战报 for the week is frozen and still waits for its awards. */
   storiesWaiting(input: { readonly weekStart: WeekStart }): Promise<SquadId[]>;
 }
@@ -102,6 +104,7 @@ export function createWeeklyAwards(deps: {
       );
     },
     story: ({ squad, weekStart }) => deps.stories.find(squad, weekStart),
+    storyWeeks: ({ squad }) => deps.stories.weeks(squad),
     storiesWaiting: ({ weekStart }) => deps.stories.waitingForAwards(weekStart),
     freezeStory: async (story) => {
       await deps.stories.freeze(story);
