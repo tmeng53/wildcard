@@ -140,7 +140,7 @@ struct EntranceScreen<Tabs: View>: View {
             SquadCard(
                 squad: SquadWeek(
                     name: joined.name, done: joined.weekDone, goal: stage.countFlipped ? goal.after : goal.before,
-                    daysPerMember: joined.daysPerMember, members: stage.cardMembers),
+                    members: stage.cardMembers),
                 mine: myWeek, page: $cardPage
             ) { member in
                 if let player = stage.player(for: member) {
@@ -166,7 +166,7 @@ struct EntranceScreen<Tabs: View>: View {
     private var myWeek: DesignSystemUI.MyWeek {
         let days = model.week?.days ?? Array(repeating: .rest, count: WeeklyPlan.dayCount)
         return DesignSystemUI.MyWeek(
-            summary: "", done: 0, planned: model.plannedThisWeek,
+            done: 0, planned: model.plannedThisWeek,
             days: days.map { $0 == .rest ? .restDay : .open }, today: model.daysGone,
             details: [])
     }

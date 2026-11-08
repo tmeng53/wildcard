@@ -426,8 +426,8 @@ describe('a week’s 饮食小目标', () => {
   });
 
   it('gives the Monday of the week the member joined, in their time zone', async () => {
-    // Monday 2026-10-19 01:00 in Los Angeles is still Sunday there, before the 3am turn.
-    const member = await newMember({ joinedAt: new Date('2026-10-19T08:00:00.000Z') });
+    // 2026-10-19 06:30 UTC is 23:30 on Sunday the 18th in Los Angeles.
+    const member = await newMember({ joinedAt: new Date('2026-10-19T06:30:00.000Z') });
     expect(await plans.find({ member, weekStart: thisWeek })).toMatchObject({
       firstWeek: '2026-10-12',
     });

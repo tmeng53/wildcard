@@ -25,16 +25,13 @@ public struct SquadWeek: Sendable, Hashable {
     public let name: String
     public let done: Int
     public let goal: Int
-    /// The goal its captain set, 人均 N 天.
-    public let daysPerMember: Int
     /// Up to 8, checked in first by time, then resting, then everyone else.
     public let members: [SquadMember]
 
-    public init(name: String, done: Int, goal: Int, daysPerMember: Int = 3, members: [SquadMember]) {
+    public init(name: String, done: Int, goal: Int, members: [SquadMember]) {
         self.name = name
         self.done = done
         self.goal = goal
-        self.daysPerMember = daysPerMember
         self.members = members
     }
 }
@@ -86,8 +83,6 @@ public struct WeekDayDetail: Sendable, Hashable {
 /// My week: what I trained, my count against my plan, and Monday to Sunday, each day with what it
 /// holds. No calories or body numbers.
 public struct MyWeek: Sendable, Hashable {
-    /// What I trained this week, as the app words it (游泳 1 · 跑步 1).
-    public let summary: String
     public let done: Int
     public let planned: Int
     /// Monday first, seven days.
@@ -99,9 +94,8 @@ public struct MyWeek: Sendable, Hashable {
     public let details: [WeekDayDetail]
 
     public init(
-        summary: String, done: Int, planned: Int, days: [WeekDayStatus], today: Int?, details: [WeekDayDetail]
+        done: Int, planned: Int, days: [WeekDayStatus], today: Int?, details: [WeekDayDetail]
     ) {
-        self.summary = summary
         self.done = done
         self.planned = planned
         self.days = days
@@ -257,11 +251,12 @@ extension SquadCard where Footer == EmptyView {
 private struct PageHeader: View {
     @Environment(\.sceneTheme) private var theme
     let label: Text
-    let title: String
+    /// Under the label; a page whose label says enough leaves it out.
+    let title: String?
     let count: Int
     let goal: Int
-    /// A word after the score (天).
-    var unit: Text?
+    var unit: Text?  // A word after the score (天).
+    var showsExtra = false  // Days past the goal as a small 「+N」 tag after the score.
     var open: (() -> Void)?
 
     var body: some View {
@@ -281,7 +276,7 @@ private struct PageHeader: View {
                     }
                     .buttonStyle(PressableButtonStyle())
                     .accessibilityIdentifier("squadcard.squad")
-                } else {
+                } else if title != nil {
                     titleText
                 }
             }
@@ -293,12 +288,17 @@ private struct PageHeader: View {
                         .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreHero))
                         .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 }
+                if showsExtra, count > goal {
+                    InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)
+                        .accessibilityLabel(Text("多练 \(count - goal) 天", bundle: .module))
+                        .accessibilityIdentifier("squadcard.extra")
+                }
             }
         }
     }
 
     private var titleText: some View {
-        Text(verbatim: title)
+        Text(verbatim: title ?? "")
             .typeStyle(TypeRamp.headline)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .lineLimit(1)
@@ -316,8 +316,8 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
         let gap = footer == nil ? Space.s : Space.xs
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
-                label: Text("小队本周目标 · 人均 \(squad.daysPerMember) 天", bundle: .module), title: squad.name,
-                count: squad.done, goal: squad.goal, unit: Text("天", bundle: .module), open: openSquad)
+                label: Text("小队本周目标", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal,
+                unit: Text("天", bundle: .module), showsExtra: true, open: openSquad)
             Spacer(minLength: gap)
             DayCells(filled: squad.done, total: squad.goal)
             Spacer(minLength: gap)
@@ -362,7 +362,7 @@ private struct MyWeekPage: View {
         let picked = shownDay
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
-                label: Text("本周我的训练", bundle: .module), title: mine.summary, count: mine.done, goal: mine.planned)
+                label: Text("我的一周", bundle: .module), title: nil, count: mine.done, goal: mine.planned)
             Spacer(minLength: Space.s)
             HStack(spacing: 0) {
                 ForEach(Array(mine.days.enumerated()), id: \.offset) { index, status in

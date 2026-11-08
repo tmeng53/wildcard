@@ -69,7 +69,7 @@ struct CoachCard: View {
                 } label: {
                     Text("招聘", bundle: .module)
                 }
-                .buttonStyle(SecondaryButtonStyle(.inCard))
+                .buttonStyle(SecondaryButtonStyle(.onInk))
                 .fixedSize()
                 .accessibilityIdentifier("squad.coach.hire")
             } else {
@@ -85,7 +85,7 @@ struct CoachCard: View {
         } label: {
             Text("逛逛招聘会", bundle: .module).frame(maxWidth: .infinity)
         }
-        .buttonStyle(SecondaryButtonStyle(.inCard))
+        .buttonStyle(SecondaryButtonStyle(.onInk))
         .accessibilityIdentifier("squad.coach.browse")
     }
 

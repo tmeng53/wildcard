@@ -27,10 +27,9 @@ struct ScheduleBack: View {
     private var ink: Color { Color(role: .fgOnInk, in: theme) }
     private var muted: Color { Color(role: .fgOnInkMuted, in: theme) }
 
-    /// Today's place in the week, Monday 0; nil when this phone's today isn't in it.
+    /// Their today's place in the week, Monday 0, on their calendar.
     private var todayIndex: Int? {
-        let today = LocalDay(at: Date(), in: .current)
-        return today.weekStart == schedule.weekStart ? today.weekday - 1 : nil
+        schedule.todayIndex(else: LocalDay(at: Date(), in: .current))
     }
 
     var body: some View {

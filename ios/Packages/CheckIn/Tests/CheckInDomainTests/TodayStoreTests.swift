@@ -218,16 +218,20 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(today.myStatus == .notCheckedIn)
 }
 
-@MainActor @Test func beforeThreeInTheMorningItIsStillYesterday() async throws {
-    // Wednesday 02:30 in Los Angeles.
-    let today = store(ScriptedBackend(), now: tuesdayMorning.addingTimeInterval(16.5 * 3600))
+@MainActor @Test func theDayTurnsAtMidnight() async throws {
+    // Tuesday 23:30 in Los Angeles.
+    let late = store(ScriptedBackend(), now: tuesdayMorning.addingTimeInterval(13.5 * 3600))
+    await late.load()
+    #expect(late.day?.description == "2026-10-20")
+    // Wednesday 00:30 there.
+    let today = store(ScriptedBackend(), now: tuesdayMorning.addingTimeInterval(14.5 * 3600))
     await today.load()
-    #expect(today.day?.description == "2026-10-20")
+    #expect(today.day?.description == "2026-10-21")
     guard case .posted(let saved) = try await today.post(run) else {
         Issue.record("expected posted")
         return
     }
-    #expect(saved.day.description == "2026-10-20")
+    #expect(saved.day.description == "2026-10-21")
 }
 
 @MainActor @Test func aNewTrainingStartsWithTodaysPlannedSport() async {
@@ -354,12 +358,18 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     await backend.holdSaves()
     let sending = Task { await today.sendPending() }
     while await backend.savesWaiting == 0 { await Task.yield() }
-    // Never sent ahead of the 请假条 already on its way.
-    #expect(try await today.post(run) == .queued)
+    // Never sent ahead of the 请假条 already on its way: it waits for that send and goes out with it.
+    let posting = Task { try await today.post(run) }
+    while today.pending.count < 2 { await Task.yield() }
     #expect(await backend.saves.isEmpty)
 
     await backend.releaseSaves()
     await sending.value
+    guard case .posted(let saved) = try await posting.value else {
+        Issue.record("expected the 练了 saved")
+        return
+    }
+    #expect(saved.id == CheckInID(id(101)))
     #expect(await backend.saves.map(\.id) == [CheckInID(id(100)), CheckInID(id(101))])
     #expect(today.pending.isEmpty)
     #expect(today.refused.isEmpty)

@@ -1,12 +1,18 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { CoachId, MemberId as CoachMemberId, SquadId as CoachSquadId } from '@wildcard/coach';
-import { NoCoachHiredError, type Coach, type CoachHiring } from '@wildcard/coach';
+import {
+  NoCoachHiredError,
+  type Coach,
+  type CoachHiring,
+  type CoachLetters,
+} from '@wildcard/coach';
 import { MemberId, NotSquadCaptainError, SquadId, type Squads } from '@wildcard/squads';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
+import { CoachLetterBody, wireLetter } from './coach-activity.js';
 
 const coachIdField = z
   .string()
@@ -59,6 +65,18 @@ const CoachHireBody = z
   .strictObject({ version: bodyVersion(1), coach: coachIdField })
   .openapi('CoachHire');
 
+const CoachLetterWritten = z
+  .strictObject({
+    version: bodyVersion(1),
+    letter: CoachLetterBody.nullable().meta({
+      description:
+        'The outgoing coach’s letter to the one that took over, or null when there is none: ' +
+        'the squad didn’t just change coach, its coach is off duty for the day, or the coach ' +
+        'couldn’t write it. The coach then leaves without one.',
+    }),
+  })
+  .openapi('CoachLetterWritten');
+
 /** A coach as the app shows it: never its soul, which only the model reads. */
 function card(coach: Coach) {
   return {
@@ -86,6 +104,7 @@ export function squadCoach(deps: {
   readonly verifyToken: VerifyToken;
   readonly squads: Squads;
   readonly coachHiring: CoachHiring;
+  readonly coachLetters: CoachLetters;
 }) {
   /** The squad, for one of its members; throws `SquadNotJoinedError` for anyone else. */
   const squadFor = async (squadId: SquadId, userId: string) => {
@@ -199,7 +218,43 @@ export function squadCoach(deps: {
     },
   });
 
+  const writeLetter = createRoute({
+    method: 'post',
+    path: '/squads/{squadId}/coach/letter',
+    operationId: 'writeCoachLetter',
+    summary: 'Have the outgoing coach write its letter (换教练)',
+    description:
+      'For the captain, right after changing coach: the coach that left writes the one that took ' +
+      'over a letter from the squad’s memory, which every member then reads. Answers once it is ' +
+      'written or failed. Written once a change, so a retry answers the same letter, or none.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params },
+    responses: {
+      200: {
+        description: 'The letter, or null',
+        content: { 'application/json': { schema: CoachLetterWritten } },
+      },
+      400: problem('Not a valid squad id'),
+      403: problem(
+        'The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain ' +
+          '(`NOT_SQUAD_CAPTAIN`)',
+      ),
+      ...signedInFailures,
+    },
+  });
+
   return new OpenAPIHono<SignedIn>()
+    .openapi(writeLetter, async (c) => {
+      const { squadId } = c.req.valid('param');
+      const { isCaptain } = await squadFor(squadId, c.var.caller.userId);
+      if (!isCaptain) throw new NotSquadCaptainError();
+      const letter = await deps.coachLetters.write(CoachSquadId.parse(squadId));
+      return c.json(
+        { version: 1 as const, letter: letter === undefined ? null : wireLetter(letter) },
+        200,
+      );
+    })
     .openapi(market, async (c) => {
       const coaches = await deps.coachHiring.offered();
       return c.json({ version: 1 as const, coaches: coaches.map(card) }, 200);

@@ -10,15 +10,18 @@ import SwiftUI
 /// One row of 通知: a round icon (the same set the notice banner uses), one line of title, an
 /// optional muted line under it, and when it was told. A row that was new is bold, with a dot.
 /// A broadcast's words are an admin's message, written for this, so its row shows them whole.
+/// What was said on one post in one day is one row: who said it and the newest line.
 struct NoticeRow: View {
     @Environment(\.locale) private var locale
-    let notice: Notice
+    let entry: NoticeEntry
     let heading: NoticeHeading
     let isUnread: Bool
     let now: Date
     let unlocked: (Unlock.Kind, String) -> UnlockWords
 
     static let icon: Double = 36
+
+    private var notice: Notice { entry.notice }
     private static let dot: Double = 6
 
     var body: some View {
@@ -93,6 +96,7 @@ struct NoticeRow: View {
     }
 
     private var words: Words {
+        if entry.isJoined, let talk = Self.talk(entry) { return talk }
         switch notice.subject {
         case .dailyProgress(let alert):
             let parts = Self.pushParts(alert)
@@ -148,6 +152,34 @@ struct NoticeRow: View {
                 title: Text("连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
                 detail: Text("改成人均 \(suggestion.daysPerMember) 天？", bundle: .module),
                 icon: AnyView(NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis")))
+        }
+    }
+
+    /// What was said on one post in one day: 「Coco、毛头和另外 2 人评论了你的动态」, or 「…回复了你」
+    /// when any of it answers the member, with the newest line under it.
+    private static func talk(_ entry: NoticeEntry) -> Words? {
+        let names = entry.voices.map(name)
+        guard names.count >= 2 else { return nil }
+        let (first, second, others) = (names[0], names[1], names.count - 2)
+        let title: Text =
+            switch (entry.answersMember, others) {
+            case (false, 0): Text("\(first) 和 \(second) 评论了你的动态", bundle: .module)
+            case (false, _): Text("\(first)、\(second) 和另外 \(others) 人评论了你的动态", bundle: .module)
+            case (true, 0): Text("\(first) 和 \(second) 回复了你", bundle: .module)
+            case (true, _): Text("\(first)、\(second) 和另外 \(others) 人回复了你", bundle: .module)
+            }
+        let line = entry.latestLine.map { (who: name($0.voice), text: $0.text) }
+        return Words(
+            title: title,
+            detail: line.map { line in Text("\(line.who)：\(line.text)", bundle: .module) },
+            icon: AnyView(NoticeSymbol(systemImage: "bubble.left.and.bubble.right.fill")))
+    }
+
+    /// A voice's name: a teammate's as the push gave it, the coach's, or 教练.
+    private static func name(_ voice: NoticeEntry.Voice) -> String {
+        switch voice {
+        case .teammate(let name), .coach(let name?): name
+        case .coach(nil): String(localized: "教练", bundle: .module.inAppLanguage)
         }
     }
 

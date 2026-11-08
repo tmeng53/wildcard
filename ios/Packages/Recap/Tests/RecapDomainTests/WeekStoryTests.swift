@@ -105,6 +105,13 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(week.reactions == 8)
     #expect(week.disclaimers == nil)
     #expect(week.time == SquadWeek.TrainingTime(minutes: 245, longest: .init(member: id(2), minutes: 90)))
+    #expect(week.members(training: ["run"]) == [id(1), id(2)])
+    #expect(week.members(training: ["yoga"]) == [id(1), id(3)])
+    #expect(week.members(training: ["run", "yoga"]) == [id(1), id(2), id(3)])
+    #expect(week.members(training: ["swim"]) == [])
+    #expect(week.members(trainedOn: 2) == [id(1), id(2), id(3)])
+    #expect(week.members(trainedOn: 0) == [id(1)])
+    #expect(week.members(trainedOn: 5) == [])
 }
 
 @Test func aFewMinutesOrOneDayInARowAreNoFunNumber() {
@@ -174,12 +181,10 @@ private func ids(_ pages: [StoryPage]) -> [String] {
         healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)
     #expect(week.trainedDays == 3)
     #expect(week.topSport.weekClip == .sport("run"))
-    #expect(week.standsOn == 3)
     let rested = MyWeek(
         plan: 4, days: [.init(day: try day(13), kind: .rest), .init(day: try day(14), kind: .trained(nil))],
         healthyMeals: 0, cheatMeals: 0, reactionsReceived: 0)
     #expect(rested.topSport.weekClip == .award(.cheer))
-    #expect(rested.standsOn == 1)
     #expect(StoryClip.eat(.cheat).name == "eat-treat")
     #expect(StoryClip.tossFlyer.name == "toss-flyer")
 }
@@ -193,11 +198,9 @@ private func ids(_ pages: [StoryPage]) -> [String] {
     #expect(Ending(done: 19, plan: 22).finale(castSize: 5) == .warmup)
 }
 
-@Test func theEndingCountsWhatIsMissingAndFillsItsBarToFull() throws {
+@Test func theEndingHitsItsPlanAndFillsItsBarToFull() throws {
     #expect(Ending(done: 19, plan: 22).isHit == false)
-    #expect(Ending(done: 19, plan: 22).shortBy == 3)
     #expect(Ending(done: 23, plan: 22).isHit)
-    #expect(Ending(done: 23, plan: 22).shortBy == 0)
     #expect(Ending(done: 23, plan: 22).fraction == 1)
     #expect(Ending(done: 11, plan: 22).fraction == 0.5)
 }

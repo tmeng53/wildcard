@@ -47,6 +47,9 @@ final class TodayUITests: XCTestCase {
         // Frames of the check-in moment from when the scene is back, named with when each was
         // taken, for a recording of it.
         XCTAssertTrue(post.waitForNonExistence(timeout: Self.wait), "the compose page didn't close after posting")
+        // The post goes out behind the scene, told on 打卡's spot.
+        let outgoing = app.buttons["today.outgoing"]
+        XCTAssertTrue(outgoing.waitForExistence(timeout: Self.wait), "nothing told the post was going out")
         let posted = Date()
         for frame in 0..<12 {
             let after = Int(Date().timeIntervalSince(posted) * 1000)
@@ -62,6 +65,8 @@ final class TodayUITests: XCTestCase {
         keepScreenshot(named: "16-today-trained-payoff")
         tapMeInMyKit(in: app)
 
+        // 已发出 gives 打卡 its spot back.
+        XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "打卡 didn't come back after 已发出")
         checkIn.tap()
         XCTAssertTrue(app.buttons["today.capsule.trained"].waitForExistence(timeout: Self.wait))
         settle()
@@ -215,7 +220,7 @@ final class TodayUITests: XCTestCase {
         let mine = app.buttons["squadcard.page.mine"]
         XCTAssertTrue(mine.waitForExistence(timeout: Self.wait), "no dot for my week")
         mine.tap()
-        XCTAssertTrue(labeled("本周我的训练", in: app).waitForExistence(timeout: Self.wait), "my week never showed")
+        XCTAssertTrue(labeled("我的一周", in: app).waitForExistence(timeout: Self.wait), "my week never showed")
         settle()
         keepScreenshot(named: "13-today-my-week")
         // Tapping a day shows its line under the calendar.

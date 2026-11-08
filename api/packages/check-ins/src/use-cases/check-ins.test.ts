@@ -465,12 +465,12 @@ describe('saving a check-in', () => {
         ),
       clock: () => now,
     });
-    // 13:31 UTC on the 18th is 02:31 on the 18th in Pago Pago (UTC-11): still the 17th there.
+    // 10:31 UTC on the 18th is 23:31 on the 17th in Pago Pago (UTC-11).
     const save = (day: string) =>
       inPagoPago.save({
         id: CheckInId.parse(randomUUID()),
         member,
-        draft: draft({ audience: [squad], createdAt: '2026-10-18T13:31:00.000Z', day }),
+        draft: draft({ audience: [squad], createdAt: '2026-10-18T10:31:00.000Z', day }),
       });
     await expect(save('2026-10-18')).rejects.toMatchObject({ reason: 'CHECK_IN_DAY_MISMATCH' });
     expect((await save('2026-10-17')).created).toBe(true);

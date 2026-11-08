@@ -332,12 +332,12 @@ describe('a squad’s week summary', () => {
     // Sunday 1pm in Los Angeles, already Monday 5am in Tokyo.
     const sunday = checkInsAt(new Date('2026-10-25T20:00:00.000Z'));
     expect((await sunday.weekSummary({ viewer: tokyo, squad, weekStart: week })).final).toBe(false);
-    // Monday 2:59am in Los Angeles is still Sunday there.
-    const lateSunday = checkInsAt(new Date('2026-10-26T09:59:00.000Z'));
+    // Sunday 11:59pm in Los Angeles.
+    const lateSunday = checkInsAt(new Date('2026-10-26T06:59:00.000Z'));
     expect((await lateSunday.weekSummary({ viewer: la, squad, weekStart: week })).final).toBe(
       false,
     );
-    const monday = checkInsAt(new Date('2026-10-26T10:00:00.000Z'));
+    const monday = checkInsAt(new Date('2026-10-26T07:00:00.000Z'));
     expect((await monday.weekSummary({ viewer: la, squad, weekStart: week })).final).toBe(true);
   });
 
@@ -426,7 +426,7 @@ describe('a squad’s week for its awards', () => {
           member: ace,
           plannedDays: 5,
           trainedDays: 5,
-          planFinishedAt: '2026-10-24T18:00:00.000Z',
+          reachedAt: '2026-10-24T18:00:00.000Z',
           days: days('run', 'run', 'rest', 'run', 'run', 'run', 'rest'),
           healthyMeals: 0,
           cheatMeals: 0,
@@ -437,7 +437,7 @@ describe('a squad’s week for its awards', () => {
           member: tokyo,
           plannedDays: 3,
           trainedDays: 3,
-          planFinishedAt: '2026-10-21T18:00:00.000Z',
+          reachedAt: '2026-10-21T18:00:00.000Z',
           days: days('run', 'run', 'run', 'rest', 'rest', 'rest', 'rest'),
           healthyMeals: 0,
           cheatMeals: 0,
@@ -448,6 +448,7 @@ describe('a squad’s week for its awards', () => {
           member: me,
           plannedDays: 5,
           trainedDays: 1,
+          reachedAt: '2026-10-19T18:00:00.000Z',
           days: days('run', 'none', 'disclaimer', 'none', 'none', 'none', 'rest'),
           healthyMeals: 1,
           cheatMeals: 2,

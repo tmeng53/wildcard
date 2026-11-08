@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -120,11 +120,24 @@
           },
           "coach": {
             "type": "string",
-            "description": "The coach who answered (`coachReply`) or wrote (`coachNote`)."
+            "description": "The coach who answered (`coachReply`) or wrote (`coachNote`, `coachLetter`)."
           },
           "coachName": {
             "type": "string",
-            "description": "Its name now (`coachReply`, `coachNote`)."
+            "description": "Its name now (`coachReply`, `coachNote`, `coachLetter`)."
+          },
+          "toCoach": {
+            "type": "string",
+            "description": "The coach that took over, whom the letter is to (`coachLetter`)."
+          },
+          "toCoachName": {
+            "type": "string",
+            "description": "Its name now (`coachLetter`)."
+          },
+          "letter": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The letter’s id (`coachLetter`): the same as the coach activity’s."
           },
           "replied": {
             "type": "boolean",
@@ -142,11 +155,11 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The New York day the morning note was written for (`coachNote`)."
+            "description": "The day the morning note was written for (`coachNote`), or the letter is dated (`coachLetter`), on the squad’s clock."
           },
           "text": {
             "type": "string",
-            "description": "The morning note’s words (`coachNote`)."
+            "description": "The morning note’s (`coachNote`) or letter’s (`coachLetter`) words."
           },
           "unlockKind": {
             "type": "string",
@@ -1123,7 +1136,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -1458,7 +1471,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -1541,7 +1554,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -1605,7 +1618,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -2977,6 +2990,13 @@
             "maximum": 7,
             "description": "The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.",
             "example": 3
+          },
+          "timeZone": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
+            "description": "The squad’s time zone (小队时区), the creator’s pick, counting from their week now; their own profile’s zone when left out. The captain changes it later with `PUT /squads/{squadId}/time-zone`.",
+            "example": "Asia/Taipei"
           }
         },
         "required": [
@@ -3163,7 +3183,7 @@
                 "day": {
                   "type": "string",
                   "format": "date",
-                  "description": "The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before."
+                  "description": "The member’s own today: their local date in their time zone."
                 },
                 "training": {
                   "type": "string",
@@ -3381,7 +3401,7 @@
           "week": {
             "type": "string",
             "format": "date",
-            "description": "The Monday of the week open for picking now: from Sunday 8pm Eastern, when a week’s awards are given, the week after it.",
+            "description": "The Monday of the week open for picking now: from Sunday 8pm on the squad’s clock (小队时区), when a week’s awards are given, the week after it.",
             "example": "2026-10-26"
           },
           "scene": {
@@ -3581,6 +3601,103 @@
           "scene"
         ],
         "additionalProperties": false
+      },
+      "CoachLetterWritten": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "letter": {
+            "$ref": "#/components/schemas/CoachLetter"
+          }
+        },
+        "required": [
+          "version",
+          "letter"
+        ],
+        "additionalProperties": false
+      },
+      "CoachLetter": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The letter’s id, which `coachLetter` notices name."
+          },
+          "from": {
+            "$ref": "#/components/schemas/CoachSpeaker"
+          },
+          "to": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CoachSpeaker"
+              },
+              {
+                "description": "The coach who took over: its 称呼."
+              }
+            ]
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "The day it is dated, on the squad’s clock."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Its body, without the 称呼 or 落款; lines apart by `\\n`.",
+            "example": "这队交给你了，我先撤。"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was written."
+          }
+        },
+        "required": [
+          "id",
+          "from",
+          "to",
+          "day",
+          "text",
+          "at"
+        ],
+        "additionalProperties": false,
+        "description": "The outgoing coach’s letter to the one that took over, or null when there is none: the squad didn’t just change coach, its coach is off duty for the day, or the coach couldn’t write it. The coach then leaves without one."
+      },
+      "CoachSpeaker": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The coach’s id. Never changes.",
+            "example": "xiaohun"
+          },
+          "name": {
+            "type": "string",
+            "description": "Its name, shown with the 教练 tag.",
+            "example": "毛头"
+          },
+          "look": {
+            "type": "string",
+            "description": "The character the app draws, by the art’s id."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "look"
+        ],
+        "additionalProperties": false,
+        "description": "The coach who wrote it as it left: its 落款."
       },
       "CoachMarket": {
         "type": "object",
@@ -3842,6 +3959,65 @@
         ],
         "additionalProperties": false
       },
+      "SquadTimeZone": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "timeZone": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
+            "description": "This week’s zone.",
+            "example": "Asia/Taipei"
+          },
+          "nextTimeZone": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
+            "description": "Next week’s zone: a change counts from the next week, so it differs from `timeZone` only after the captain changed it this week.",
+            "example": "Asia/Taipei"
+          },
+          "canChange": {
+            "type": "boolean",
+            "description": "True for the captain, the only one who sets it."
+          }
+        },
+        "required": [
+          "version",
+          "timeZone",
+          "nextTimeZone",
+          "canChange"
+        ],
+        "additionalProperties": false
+      },
+      "SquadTimeZoneChange": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "timeZone": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
+            "description": "The squad’s time zone (小队时区), an IANA name: the clock of what the whole squad shares, its 战报 and awards freezing Sunday 8pm and its coach’s daily 战术板. Each member’s own day, 6pm push and coach’s note keep their own profile’s zone.",
+            "example": "Asia/Taipei"
+          }
+        },
+        "required": [
+          "version",
+          "timeZone"
+        ],
+        "additionalProperties": false
+      },
       "CoachNotePutAway": {
         "type": "object",
         "properties": {
@@ -3890,6 +4066,16 @@
           },
           "memberNote": {
             "$ref": "#/components/schemas/CoachMemberNote"
+          },
+          "letter": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CoachLetter"
+              },
+              {
+                "description": "The letter the squad’s coach now was left by the coach before it when the squad changed coach (换教练), for 今天 to open once on each phone and the coach’s 简历 to keep. Left out when it wasn’t left one."
+              }
+            ]
           }
         },
         "required": [
@@ -3909,7 +4095,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The day (New York) the line is for."
+            "description": "The day the line is for, on the squad’s clock (`timeZone`)."
           },
           "text": {
             "type": "string",
@@ -3922,41 +4108,24 @@
           "at": {
             "type": "string",
             "format": "date-time"
+          },
+          "timeZone": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
+            "description": "The squad’s time zone (小队时区) now, whose day `day` is: the app shows the line while it is still that day there.",
+            "example": "Asia/Taipei"
           }
         },
         "required": [
           "day",
           "text",
           "coach",
-          "at"
+          "at",
+          "timeZone"
         ],
         "additionalProperties": false,
         "description": "The squad’s newest 战术板 line (the app shows it while its day is today), or null."
-      },
-      "CoachSpeaker": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The coach’s id. Never changes.",
-            "example": "xiaohun"
-          },
-          "name": {
-            "type": "string",
-            "description": "Its name, shown with the 教练 tag.",
-            "example": "毛头"
-          },
-          "look": {
-            "type": "string",
-            "description": "The character the app draws, by the art’s id."
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "look"
-        ],
-        "additionalProperties": false
       },
       "CoachReply": {
         "type": "object",
@@ -4056,7 +4225,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The day (New York) the note was written for."
+            "description": "The day, on the squad’s clock, the note was written for."
           },
           "text": {
             "type": "string",
@@ -5124,7 +5293,14 @@
             "enum": [
               true
             ],
-            "description": "Present when finishing the weekly plan first decided a place on the podium (or the last place just off it), so the page can say why."
+            "description": "No longer sent: ties now go to whoever reached the tied days first (`tieBrokenByTime`). Kept so older builds still read the reply."
+          },
+          "tieBrokenByTime": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Present when reaching the tied days trained first decided a place on the podium (or the last place just off it), so the page can say why."
           }
         },
         "required": [
@@ -5133,7 +5309,7 @@
           "planDone"
         ],
         "additionalProperties": false,
-        "description": "领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene) in the middle, up to 2 next beside, left then right. A tie goes to whoever finished their own weekly plan first, then to the earliest to join. Missing when nobody trained."
+        "description": "领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who picks next week’s scene) in the middle, up to 2 next beside, left then right. A tie goes to whoever reached those days trained first, then to the earliest to join. Missing when nobody trained."
       },
       "StoryMyWeek": {
         "type": "object",
@@ -5724,6 +5900,12 @@
                 "format": "date",
                 "description": "The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.",
                 "example": "2026-10-12"
+              },
+              "today": {
+                "type": "string",
+                "format": "date",
+                "description": "Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.",
+                "example": "2026-10-29"
               }
             },
             "required": [
@@ -8199,7 +8381,7 @@
       "put": {
         "operationId": "createSquad",
         "summary": "Create a squad",
-        "description": "With a name and, optionally, its weekly goal; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.",
+        "description": "With a name and, optionally, its weekly goal and time zone; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.",
         "security": [
           {
             "bearer": []
@@ -8248,7 +8430,7 @@
             }
           },
           "400": {
-            "description": "Not a valid name, the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
+            "description": "Not a valid name, a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`), the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8945,7 +9127,7 @@
       "get": {
         "operationId": "getSquadScene",
         "summary": "A squad’s scene this week, and who picks it",
-        "description": "Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.",
+        "description": "Last week’s crown winners pick the scene once a week, from Sunday 8pm on the squad’s clock (小队时区) when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.",
         "security": [
           {
             "bearer": []
@@ -9122,6 +9304,81 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/coach/letter": {
+      "post": {
+        "operationId": "writeCoachLetter",
+        "summary": "Have the outgoing coach write its letter (换教练)",
+        "description": "For the captain, right after changing coach: the coach that left writes the one that took over a letter from the squad’s memory, which every member then reads. Answers once it is written or failed. Written once a change, so a retry answers the same letter, or none.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The letter, or null",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachLetterWritten"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -9606,6 +9863,174 @@
         }
       }
     },
+    "/squads/{squadId}/time-zone": {
+      "get": {
+        "operationId": "getSquadTimeZone",
+        "summary": "The squad’s time zone",
+        "description": "For its members, in the squad’s week on its own clock.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The zone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadTimeZone"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "setSquadTimeZone",
+        "summary": "Set the squad’s time zone",
+        "description": "For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SquadTimeZoneChange"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The zone, with next week’s changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadTimeZone"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id, or a zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/squads/{squadId}/coach/notes/{noteId}/put-away": {
       "put": {
         "operationId": "putAwayCoachMemberNote",
@@ -9703,7 +10128,7 @@
       "get": {
         "operationId": "getSquadCoachActivity",
         "summary": "What the squad’s coach said (战术板, replies and reactions)",
-        "description": "The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note. Only for the squad’s members. They stay after the squad fires its coach.",
+        "description": "The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note, and the letter the coach now was left when it took over. Only for the squad’s members. They stay after the squad fires its coach.",
         "security": [
           {
             "bearer": []
@@ -10198,7 +10623,7 @@
       "get": {
         "operationId": "getSquadWeekSummary",
         "summary": "A squad’s week: its awards and counts (周日战报)",
-        "description": "From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.",
+        "description": "From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.",
         "security": [
           {
             "bearer": []
@@ -10551,7 +10976,7 @@
       "put": {
         "operationId": "saveMyWeeklyPlan",
         "summary": "Save the signed-in member’s plan for a week",
-        "description": "Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, and today and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.",
+        "description": "Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, and today and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone.",
         "security": [
           {
             "bearer": []
@@ -10791,7 +11216,7 @@
             }
           },
           "404": {
-            "description": "Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)",
+            "description": "Before the week’s awards on Sunday at 8pm on the squad’s clock (小队时区) (`WEEK_STORY_NOT_READY`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -10817,7 +11242,7 @@
       "get": {
         "operationId": "getSquadWeekStory",
         "summary": "A squad’s weekly 战报 (每周战报), frozen at the week’s awards",
-        "description": "Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.",
+        "description": "Frozen once for the whole squad on Sunday at 8pm on the squad’s clock (小队时区): who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.",
         "security": [
           {
             "bearer": []
@@ -10888,7 +11313,7 @@
             }
           },
           "404": {
-            "description": "Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)",
+            "description": "Before the week’s awards on Sunday at 8pm on the squad’s clock (小队时区) (`WEEK_STORY_NOT_READY`)",
             "content": {
               "application/problem+json": {
                 "schema": {
