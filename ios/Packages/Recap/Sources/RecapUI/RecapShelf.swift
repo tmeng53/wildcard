@@ -43,8 +43,8 @@ public final class RecapShelf {
         guard let latest, let viewer else { return nil }
         return StoryCast(story: latest, viewer: viewer)
     }
-    /// The reader watched the newest story to its last page on this phone: the tile shows it
-    /// uncovered, with 再看一遍.
+    /// The reader watched the newest story to its last page on this phone: 动态 stops showing its
+    /// tile, and the story stays on 小队's 往期战报.
     public var latestIsSeen: Bool {
         latest.map(isSeen) ?? false
     }
