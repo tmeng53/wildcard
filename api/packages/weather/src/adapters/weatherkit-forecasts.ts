@@ -23,6 +23,14 @@ const TOKEN_LIFETIME_S = 60 * 60;
 const TOKEN_REFRESH_MS = 50 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 10_000;
 
+// WeatherKit's day part (7am to 7pm, or the night after), as much as we read of it.
+const DayPartForecast = z.object({
+  conditionCode: z.string().min(1).max(64).optional(),
+  windSpeed: z.number().min(0).optional(),
+  windDirection: z.number().min(0).max(360).optional(),
+  humidity: z.number().min(0).max(1).optional(),
+});
+
 // Only what we read; WeatherKit sends much more, and adds fields over time.
 const DailyForecast = z.object({
   forecastDaily: z
@@ -34,6 +42,13 @@ const DailyForecast = z.object({
           temperatureMax: z.number(),
           temperatureMin: z.number(),
           precipitationChance: z.number().min(0).max(1).optional(),
+          precipitationAmount: z.number().min(0).optional(),
+          snowfallAmount: z.number().min(0).optional(),
+          maxUvIndex: z.number().int().min(0).optional(),
+          sunrise: z.iso.datetime().optional(),
+          sunset: z.iso.datetime().optional(),
+          daytimeForecast: DayPartForecast.optional(),
+          overnightForecast: DayPartForecast.optional(),
         }),
       ),
     })
@@ -69,6 +84,8 @@ export function createWeatherKitForecasts(
       );
       url.searchParams.set('dataSets', 'forecastDaily');
       url.searchParams.set('timezone', timeZone);
+      // From the day before, so yesterday can be asked for too.
+      url.searchParams.set('dailyStart', dayBefore(day));
       const response = await fetchFn(url, {
         headers: { authorization: `Bearer ${bearer()}` },
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -79,6 +96,8 @@ export function createWeatherKitForecasts(
       const days = DailyForecast.parse(await response.json()).forecastDaily?.days ?? [];
       const found = days.find((each) => dayOn(each.forecastStart, timeZone) === day);
       if (found === undefined) return undefined;
+      const daytime = dayPart(found.daytimeForecast);
+      const overnight = dayPart(found.overnightForecast);
       const weather: DayWeather = {
         version: 1,
         ...(found.conditionCode === undefined ? {} : { condition: found.conditionCode }),
@@ -87,10 +106,35 @@ export function createWeatherKitForecasts(
         ...(found.precipitationChance === undefined
           ? {}
           : { precipitationChance: found.precipitationChance }),
+        ...(found.precipitationAmount === undefined
+          ? {}
+          : { precipitationAmount: found.precipitationAmount }),
+        ...(found.snowfallAmount === undefined ? {} : { snowfallAmount: found.snowfallAmount }),
+        ...(found.maxUvIndex === undefined ? {} : { maxUvIndex: found.maxUvIndex }),
+        ...(found.sunrise === undefined ? {} : { sunrise: found.sunrise }),
+        ...(found.sunset === undefined ? {} : { sunset: found.sunset }),
+        ...(daytime === undefined ? {} : { daytime }),
+        ...(overnight === undefined ? {} : { overnight }),
       };
       return weather;
     },
   };
+}
+
+/** A day part as `DayWeather` keeps it. */
+function dayPart(part: z.infer<typeof DayPartForecast> | undefined): DayWeather['daytime'] {
+  if (part === undefined) return undefined;
+  return {
+    ...(part.conditionCode === undefined ? {} : { condition: part.conditionCode }),
+    ...(part.windSpeed === undefined ? {} : { windSpeed: part.windSpeed }),
+    ...(part.windDirection === undefined ? {} : { windDirection: part.windDirection }),
+    ...(part.humidity === undefined ? {} : { humidity: part.humidity }),
+  };
+}
+
+/** Midnight UTC of the day before `day`, which WeatherKit's `dailyStart` takes. */
+function dayBefore(day: string): string {
+  return new Date(Date.parse(`${day}T00:00:00Z`) - 24 * 60 * 60 * 1000).toISOString();
 }
 
 /** The `YYYY-MM-DD` an instant falls on, on `timeZone`'s clock. */

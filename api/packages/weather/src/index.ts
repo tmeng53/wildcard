@@ -13,4 +13,4 @@ export {
 export { DayWeather, weatherWords } from './domain/day-weather.js';
 export { cellOf, Coordinates, MemberId, type Place } from './domain/place.js';
 export type { Forecasts, PlaceStore, WeatherDayStore } from './ports.js';
-export { createWeather, type Weather } from './use-cases/weather.js';
+export { createWeather, type MemberWeather, type Weather } from './use-cases/weather.js';

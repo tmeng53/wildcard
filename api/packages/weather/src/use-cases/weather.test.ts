@@ -47,13 +47,13 @@ const RAIN: DayWeather = {
 
 /** A provider that answers `RAIN` and counts what it was asked. */
 function countingForecasts(
-  answer: () => Promise<DayWeather | undefined> = () => Promise.resolve(RAIN),
+  answer: (input: { day: string }) => Promise<DayWeather | undefined> = () => Promise.resolve(RAIN),
 ) {
   const asked: { place: Place; day: string; timeZone: string }[] = [];
   const forecasts: Forecasts = {
     dayAt: (input) => {
       asked.push({ ...input });
-      return answer();
+      return answer(input);
     },
   };
   return { forecasts, asked };
@@ -129,11 +129,29 @@ describe('the day’s weather', () => {
       { member: cy, timeZone: 'America/New_York' },
     ];
     const first = await weather.dayFor({ members, day: '2026-11-09' });
-    expect(Object.fromEntries(first)).toStrictEqual({ [ana]: RAIN, [bo]: RAIN });
+    const both = { today: RAIN, yesterday: RAIN };
+    expect(Object.fromEntries(first)).toStrictEqual({ [ana]: both, [bo]: both });
     // The next wake that day reads what was kept.
     const again = await weather.dayFor({ members, day: '2026-11-09' });
-    expect(again.get(ana)).toStrictEqual(RAIN);
-    expect(asked).toStrictEqual([{ place: cell, day: '2026-11-09', timeZone: 'America/New_York' }]);
+    expect(again.get(ana)).toStrictEqual(both);
+    expect(asked).toStrictEqual([
+      { place: cell, day: '2026-11-09', timeZone: 'America/New_York' },
+      { place: cell, day: '2026-11-08', timeZone: 'America/New_York' },
+    ]);
+  });
+
+  it('gives today without yesterday when the provider has only today', async () => {
+    const member = await newMember();
+    const { forecasts } = countingForecasts(({ day }) =>
+      Promise.resolve(day === '2026-11-09' ? RAIN : undefined),
+    );
+    const weather = weatherWith(forecasts);
+    await weather.savePlace(member, freshCell());
+    const day = await weather.dayFor({
+      members: [{ member, timeZone: 'America/New_York' }],
+      day: '2026-11-09',
+    });
+    expect(day.get(member)).toStrictEqual({ today: RAIN });
   });
 
   it('leaves out a place the provider can’t answer for, and tells why', async () => {
@@ -149,7 +167,10 @@ describe('the day’s weather', () => {
       day: '2026-11-09',
     });
     expect(day.size).toBe(0);
-    expect(errors).toStrictEqual([new Error('WeatherKit answered 503')]);
+    expect(errors).toStrictEqual([
+      new Error('WeatherKit answered 503'),
+      new Error('WeatherKit answered 503'),
+    ]);
   });
 
   it('has no weather without a provider', async () => {
@@ -164,7 +185,30 @@ describe('the day’s weather', () => {
 
 describe('weatherWords', () => {
   it('says the condition, the low and high, and a real chance of rain', () => {
-    expect(weatherWords(RAIN)).toBe('雨，8–13°C，降水概率 82%');
+    expect(weatherWords(RAIN)).toBe('今天雨，8–13°C，降水概率 82%');
+  });
+
+  it('says what fell, the wind, humidity, UV, sun and night, then yesterday', () => {
+    expect(
+      weatherWords(
+        {
+          ...RAIN,
+          precipitationAmount: 9.4,
+          snowfallAmount: 0,
+          maxUvIndex: 4,
+          sunrise: '2026-11-09T11:37:00Z',
+          sunset: '2026-11-09T21:45:00Z',
+          daytime: { condition: 'Rain', windSpeed: 21.4, windDirection: 315, humidity: 0.88 },
+          overnight: { condition: 'MostlyCloudy', windSpeed: 12 },
+        },
+        {
+          yesterday: { version: 1, condition: 'HeavySnow', high: -1, low: -8, snowfallAmount: 250 },
+          timeZone: 'America/New_York',
+        },
+      ),
+    ).toBe(
+      '今天雨，8–13°C，降水概率 82%，降水 9.4 毫米，白天西北风 21 公里/小时，湿度 88%，夜里多云，紫外线 4，日出 6:37，日落 16:45；昨天大雪，-8–-1°C，降雪 25 厘米',
+    );
   });
 
   it('leaves out a small chance and a condition it doesn’t know', () => {
@@ -176,6 +220,6 @@ describe('weatherWords', () => {
         low: -6.6,
         precipitationChance: 0.1,
       }),
-    ).toBe('-7–0°C');
+    ).toBe('今天-7–0°C');
   });
 });

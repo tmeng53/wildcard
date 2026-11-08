@@ -74,7 +74,7 @@ export interface NoteBrief {
   readonly trainedDays: number;
   /** Today's plan and this week's 饮食小目标, when they could be read. */
   readonly plan?: { readonly today: PlanDayFacts; readonly fuelGoals: readonly string[] };
-  /** Today's weather where they are, in words, when their place and its forecast are known. */
+  /** Today's (and yesterday's) weather where they are, in words starting 今天, when known. */
   readonly weather?: string;
 }
 
@@ -92,7 +92,7 @@ export function weekdayOf(day: string): string {
 export function briefLine(brief: NoteBrief): string {
   const language = brief.language === undefined ? '' : ` ${writeIn(brief.language)}`;
   const trained = `这周已经练了 ${String(brief.trainedDays)} 天`;
-  const weather = brief.weather === undefined ? '' : `；当地今天${brief.weather}`;
+  const weather = brief.weather === undefined ? '' : `；当地${brief.weather}`;
   if (brief.plan === undefined) return `- ${brief.name}：${trained}${weather}。${language}`;
   const { today, fuelGoals } = brief.plan;
   const plan =

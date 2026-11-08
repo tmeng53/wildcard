@@ -46,9 +46,17 @@ describe('createWeatherKitForecasts', () => {
       high: 12.8,
       low: 7.9,
       precipitationChance: 0.82,
+      precipitationAmount: 9.4,
+      snowfallAmount: 0,
+      maxUvIndex: 1,
+      sunrise: '2026-11-09T11:37:00Z',
+      sunset: '2026-11-09T21:45:00Z',
+      daytime: { condition: 'Rain', windSpeed: 21.4, windDirection: 315, humidity: 0.88 },
+      overnight: { condition: 'MostlyCloudy', windSpeed: 12, windDirection: 300, humidity: 0.8 },
     });
+    // From the day before, so yesterday can be read the same way.
     expect(requests.map(({ url }) => url)).toStrictEqual([
-      'https://weatherkit.apple.com/api/v1/weather/en/40.7/-74?dataSets=forecastDaily&timezone=America%2FNew_York',
+      'https://weatherkit.apple.com/api/v1/weather/en/40.7/-74?dataSets=forecastDaily&timezone=America%2FNew_York&dailyStart=2026-11-08T00%3A00%3A00.000Z',
     ]);
   });
 

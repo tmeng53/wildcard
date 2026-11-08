@@ -1341,7 +1341,7 @@ describe('the coach', () => {
       const weatherOf: CoachWeather = (input) => {
         asked.push(input);
         // Only 队员1 shared where they are.
-        return Promise.resolve(new Map([[mia, '雨，8–13°C，降水概率 80%']]));
+        return Promise.resolve(new Map([[mia, '今天雨，8–13°C，降水概率 80%']]));
       };
       const { agent, runs } = scriptedAgent(() => []);
       await wakes(fixture, { agent, weatherOf }).run();

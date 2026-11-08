@@ -40,7 +40,33 @@
         "sunrise": "2026-11-09T11:37:00Z",
         "sunset": "2026-11-09T21:45:00Z",
         "temperatureMax": 12.8,
-        "temperatureMin": 7.9
+        "temperatureMin": 7.9,
+        "daytimeForecast": {
+          "forecastStart": "2026-11-09T12:00:00Z",
+          "forecastEnd": "2026-11-10T00:00:00Z",
+          "cloudCover": 0.95,
+          "conditionCode": "Rain",
+          "humidity": 0.88,
+          "precipitationAmount": 7.1,
+          "precipitationChance": 0.8,
+          "precipitationType": "rain",
+          "snowfallAmount": 0,
+          "windDirection": 315,
+          "windSpeed": 21.4
+        },
+        "overnightForecast": {
+          "forecastStart": "2026-11-10T00:00:00Z",
+          "forecastEnd": "2026-11-10T12:00:00Z",
+          "cloudCover": 0.6,
+          "conditionCode": "MostlyCloudy",
+          "humidity": 0.8,
+          "precipitationAmount": 0.4,
+          "precipitationChance": 0.3,
+          "precipitationType": "rain",
+          "snowfallAmount": 0,
+          "windDirection": 300,
+          "windSpeed": 12.0
+        }
       }
     ]
   }

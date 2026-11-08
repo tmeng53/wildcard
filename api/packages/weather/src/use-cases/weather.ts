@@ -2,20 +2,26 @@ import type { DayWeather } from '../domain/day-weather.js';
 import { cellOf, type MemberId, type Place } from '../domain/place.js';
 import type { Forecasts, PlaceStore, WeatherDayStore } from '../ports.js';
 
+/** A member's weather: today's, and yesterday's when the provider has it. */
+export interface MemberWeather {
+  readonly today: DayWeather;
+  readonly yesterday?: DayWeather;
+}
+
 export interface Weather {
   /** Keeps where the member roughly is, as its 0.1° cell, and answers that cell. */
   savePlace(member: MemberId, coordinates: Place): Promise<Place>;
   /** Forgets where the member is. Safe to repeat. */
   forgetPlace(member: MemberId): Promise<void>;
   /**
-   * The weather on `day` where each of these members is, for those with a place. Each place is
-   * fetched once a day, whoever asks; a place the provider can't answer for is left out, and
-   * told to `failed`.
+   * The weather on `day`, and on the day before, where each of these members is, for those with
+   * a place. Each place's day is fetched once, whoever asks; a place the provider can't answer
+   * for today is left out, and told to `failed`.
    */
   dayFor(input: {
     readonly members: readonly { readonly member: MemberId; readonly timeZone: string }[];
     readonly day: string;
-  }): Promise<ReadonlyMap<MemberId, DayWeather>>;
+  }): Promise<ReadonlyMap<MemberId, MemberWeather>>;
 }
 
 export function createWeather(deps: {
@@ -39,13 +45,22 @@ export function createWeather(deps: {
       const { forecasts } = deps;
       if (forecasts === undefined || members.length === 0) return new Map();
       const places = await deps.places.placesOf(members.map(({ member }) => member));
-      // One look-up a place, however many members share it.
+      const yesterday = dayBefore(day);
+      // One look-up a place a day, however many members share it.
       const byPlace = new Map<string, Promise<DayWeather | undefined>>();
-      const weatherAt = (place: Place, timeZone: string) => {
-        const key = `${String(place.latitude)},${String(place.longitude)}`;
+      const weatherAt = ({
+        place,
+        on,
+        timeZone,
+      }: {
+        readonly place: Place;
+        readonly on: string;
+        readonly timeZone: string;
+      }) => {
+        const key = `${String(place.latitude)},${String(place.longitude)},${on}`;
         let found = byPlace.get(key);
         if (found === undefined) {
-          found = fetchOnce({ place, day, timeZone });
+          found = fetchOnce({ place, day: on, timeZone });
           byPlace.set(key, found);
         }
         return found;
@@ -71,11 +86,22 @@ export function createWeather(deps: {
         members.map(async ({ member, timeZone }) => {
           const place = places.get(member);
           if (place === undefined) return undefined;
-          const weather = await weatherAt(place, timeZone);
-          return weather === undefined ? undefined : ([member, weather] as const);
+          const [today, before] = await Promise.all([
+            weatherAt({ place, on: day, timeZone }),
+            weatherAt({ place, on: yesterday, timeZone }),
+          ]);
+          if (today === undefined) return undefined;
+          const weather: MemberWeather =
+            before === undefined ? { today } : { today, yesterday: before };
+          return [member, weather] as const;
         }),
       );
       return new Map(answers.filter((each) => each !== undefined));
     },
   };
+}
+
+/** The `YYYY-MM-DD` before `day`. */
+function dayBefore(day: string): string {
+  return new Date(Date.parse(`${day}T00:00:00Z`) - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }

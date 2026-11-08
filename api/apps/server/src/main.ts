@@ -540,7 +540,16 @@ const coachWakes =
             })),
           );
           const days = await weather.dayFor({ members: zoned, day });
-          return new Map([...days].map(([member, each]) => [member, weatherWords(each)]));
+          const zones = new Map(zoned.map(({ member, timeZone }) => [member, timeZone]));
+          return new Map(
+            [...days].map(([member, { today, yesterday }]) => [
+              member,
+              weatherWords(today, {
+                ...(yesterday === undefined ? {} : { yesterday }),
+                timeZone: zones.get(member) ?? NEW_YORK,
+              }),
+            ]),
+          );
         },
         // Only members who keep the coach's messages on get a morning note (Tracy, 2026-11-07).
         wantNotes: async (members) => {
