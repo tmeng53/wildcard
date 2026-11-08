@@ -23,6 +23,9 @@ public struct WildcardAPI: Sendable {
     /// longer than a call may; always that session, whatever `http` is, since it outwaits the
     /// heartbeat.
     let live: Client
+    /// The same API on `URLSession.writing`, for the coach's letter, which takes the model as long
+    /// as it takes; always that session, whatever `http` is.
+    let writing: Client
     private let http: URLSession
 
     /// - Parameters:
@@ -46,6 +49,9 @@ public struct WildcardAPI: Sendable {
         live = Client(
             serverURL: url, configuration: .api,
             transport: URLSessionTransport(configuration: .init(session: .live)), middlewares: middlewares)
+        writing = Client(
+            serverURL: url, configuration: .api,
+            transport: URLSessionTransport(configuration: .init(session: .writing)), middlewares: middlewares)
         self.http = http
     }
 
