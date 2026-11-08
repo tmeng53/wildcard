@@ -256,21 +256,23 @@ struct CoachLetterOverlay: View {
         let start: CGSize
 
         init(_ proxy: GeometryProxy, from: CGPoint?) {
-            screen = proxy.size
-            width = min(proxy.size.width - 2 * Space.pageMargin, 340)
-            scale = width / 300
-            height = min(572, proxy.size.height - 2 * Space.l)
-            envelope = CGSize(width: 292 * scale, height: 184 * scale)
+            let width = min(proxy.size.width - 2 * Space.pageMargin, 340)
+            let scale = width / 300
+            let height = min(572, proxy.size.height - 2 * Space.l)
+            let envelope = CGSize(width: 292 * scale, height: 184 * scale)
             let middle = proxy.size.height / 2
-            envelopeTop = middle + 42 * scale - envelope.height / 2
-            letterTop = middle - height / 2
+            let envelopeTop = middle + 42 * scale - envelope.height / 2
             let global = proxy.frame(in: .global)
-            start =
+            let start =
                 from.map {
                     CGSize(
                         width: $0.x - global.minX - proxy.size.width / 2,
                         height: $0.y - global.minY - (envelopeTop + envelope.height / 2))
                 } ?? CGSize(width: -94 * scale, height: 40 * scale)
+            (screen, self.width, self.scale, self.height) = (proxy.size, width, scale, height)
+            (self.envelope, self.envelopeTop, letterTop, self.start) = (
+                envelope, envelopeTop, middle - height / 2, start
+            )
         }
     }
 }
