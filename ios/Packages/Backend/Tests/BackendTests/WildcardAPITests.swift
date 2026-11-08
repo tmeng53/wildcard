@@ -23,10 +23,10 @@ func moment(now: Date = Date()) throws -> (day: LocalDay, createdAt: Timestamp) 
     return (day, createdAt)
 }
 
-@Test func theDayStartsAtThreeInTheMorning() throws {
-    // 00:30 UTC on the 24th is still the 23rd; 03:30 is the 24th.
-    #expect(try moment(now: Date(timeIntervalSince1970: 1_792_801_800)).day == LocalDay(year: 2026, month: 10, day: 23))
-    #expect(try moment(now: Date(timeIntervalSince1970: 1_792_812_600)).day == LocalDay(year: 2026, month: 10, day: 24))
+@Test func theDayStartsAtMidnight() throws {
+    // A minute before 00:00:30 UTC on the 24th is still the 23rd; a minute before 00:01 is the 24th.
+    #expect(try moment(now: Date(timeIntervalSince1970: 1_792_800_030)).day == LocalDay(year: 2026, month: 10, day: 23))
+    #expect(try moment(now: Date(timeIntervalSince1970: 1_792_800_060)).day == LocalDay(year: 2026, month: 10, day: 24))
 }
 
 func checkIn(by member: SignedInMember, to squad: SquadID, _ entry: CheckIn.Entry) throws -> CheckIn {
