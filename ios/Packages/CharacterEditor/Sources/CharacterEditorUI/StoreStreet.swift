@@ -8,13 +8,12 @@ import DesignSystemUI
 import SportsUI
 import SwiftUI
 
-/// 商店街 as a street (逛街版, approved 2026-11-06): the stores side by side, one storefront at a
-/// time in the middle with its neighbours peeking in, paged by the system's scroll. The member
-/// stands on the sidewalk under it, and under the sidewalk is the street's map (every store's
-/// badge, a dot where something new waits, a tap walks there). The centred store's sports and its
-/// button are `StreetCounter`, pinned at the page's bottom. The street takes the height it is
-/// given: the storefronts' windows grow on a tall phone, from the size the lockup needs, so the
-/// street fills the page.
+/// 商店街 as a street (逛街版, approved 2026-11-06; drawn as a scene 2026-11-08): the stores side by
+/// side under a pale sky, one storefront at a time in the middle with its neighbours peeking in,
+/// paged by the system's scroll. The member stands on the paved street under it. The street's map,
+/// the centred store's sports and its button are `StreetCounter`, a white sheet pinned at the
+/// page's bottom. The street takes the height it is given: the storefronts' windows grow on a tall
+/// phone, from the size the lockup needs, so the street fills the page.
 struct StoreStreet: View {
     let model: StreetModel
     /// The store in the middle, which the page's counter shows.
@@ -27,65 +26,64 @@ struct StoreStreet: View {
     /// How much of each neighbour peeks in at the screen's edges.
     private let peek: Double = 48
     private let character = CGSize(width: 100, height: 134)
-    private let sidewalk: Double = 140
+    /// The paved street showing above the counter, its kerb included.
+    private let street: Double = 142
 
     var body: some View {
         let stores = model.catalog.stores
-        let shown = stores.first { $0.id == current } ?? stores.first
-        VStack(spacing: Space.l) {
-            ZStack(alignment: .bottom) {
-                Rectangle()
-                    .fill(Color(role: .bgSubtle, in: theme))
-                    .frame(height: sidewalk)
-                    .overlay(alignment: .top) {
-                        Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: Space.xxs)
+        ZStack(alignment: .bottom) {
+            ShopPavement()
+                .frame(height: street)
+            ScrollView(.horizontal) {
+                LazyHStack(alignment: .bottom, spacing: Space.s) {
+                    ForEach(stores) { store in
+                        Storefront(model: model, store: store)
+                            // The container is the scroll view less its content margins, so a
+                            // storefront as wide as it leaves a neighbour peeking in either side.
+                            .containerRelativeFrame(.horizontal)
+                            .id(store.id)
                     }
-                ScrollView(.horizontal) {
-                    LazyHStack(alignment: .bottom, spacing: Space.s) {
-                        ForEach(stores) { store in
-                            Storefront(model: model, store: store)
-                                // The container is the scroll view less its content margins, so a
-                                // storefront as wide as it leaves a neighbour peeking in either side.
-                                .containerRelativeFrame(.horizontal)
-                                .id(store.id)
-                        }
-                    }
-                    .scrollTargetLayout()
                 }
-                .scrollTargetBehavior(.viewAligned)
-                .scrollPosition(id: $current)
-                .contentMargins(.horizontal, peek, for: .scrollContent)
-                .scrollIndicators(.hidden)
-                .onScrollPhaseChange { _, phase in walking = phase.isScrolling }
-                .padding(.bottom, sidewalk - Space.m)
-                walker
+                .scrollTargetLayout()
             }
-            .frame(maxHeight: .infinity, alignment: .bottom)
-            StreetMap(model: model, current: shown?.id) { id in
-                withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { current = id }
-            }
+            .scrollTargetBehavior(.viewAligned)
+            .scrollPosition(id: $current)
+            .contentMargins(.horizontal, peek, for: .scrollContent)
+            .scrollIndicators(.hidden)
+            .onScrollPhaseChange { _, phase in walking = phase.isScrolling }
+            .padding(.bottom, street)
+            walker
         }
+        .frame(maxHeight: .infinity, alignment: .bottom)
         // The street runs to the screen's edges, past the page's margins.
         .padding(.horizontal, -Space.pageMargin)
     }
 
-    /// The member with their shopping bags on the sidewalk under the store in the middle,
-    /// strolling while the street slides and, once it stops, spotting something in the window.
+    /// The member with their shopping bags on the street under the store in the middle, strolling
+    /// while the street slides and, once it stops, spotting something in the window.
     private var walker: some View {
         ShopperView(look: model.draft.outfit, persona: model.draft.persona, walking: walking && !reduceMotion)
             .frame(width: character.width, height: character.height)
-            .padding(.bottom, Space.xxs)
+            .background(alignment: .bottom) {
+                Ellipse()
+                    .fill(Color(role: .bgInk, in: theme).opacity(0.1))
+                    .frame(width: 70, height: 12)
+            }
+            .padding(.bottom, Space.xs - Space.xxs / 2)
     }
 }
 
-/// The centred store's sports and its button, pinned at the bottom of 商店街 above the tab bar:
-/// 进店 when open, how it unlocks when not.
+/// The street's counter, a white sheet pinned at the bottom of 商店街 above the tab bar: the map,
+/// the centred store's sports and its button, 进店 when open, how it unlocks when not.
 struct StreetCounter: View {
     let model: StreetModel
     let store: EditorChoices.Store
+    /// Walks the street to a store, from its badge on the map.
+    let walk: (String) -> Void
 
     var body: some View {
-        VStack(spacing: Space.m) {
+        VStack(spacing: Space.s) {
+            StreetMap(model: model, current: store.id, walk: walk)
             sports(store.id)
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("street.sports")
@@ -109,16 +107,29 @@ struct StreetCounter: View {
             }
         }
         .padding(.horizontal, Space.pageMargin)
+        .padding(.top, Space.xs)
         .padding(.bottom, Space.s)
     }
 
     /// The sports its pieces' rules count as pills, as its tip lists them, or its own line's
-    /// sports where none has one.
+    /// sports where none has one. It always takes two lines' room, so the street above stays put
+    /// as it pages from a store with one line of sports to one with two.
     private func sports(_ store: String) -> some View {
+        ZStack {
+            VStack(spacing: Space.xs) {
+                SportPill(word: Text(verbatim: " "))
+                SportPill(word: Text(verbatim: " "))
+            }
+            .hidden()
+            sportPills(store)
+        }
+    }
+
+    private func sportPills(_ store: String) -> some View {
         FlowRow(spacing: Space.xs, centred: true) {
             if let sports = model.sports(of: store) {
                 if sports.isEmpty {
-                    SportPill(word: Text("练什么都算", bundle: .module))
+                    SportPill(word: Text("什么运动都行", bundle: .module))
                 } else {
                     ForEach(sports, id: \.self) { SportPill(word: $0.name) }
                 }
@@ -129,131 +140,123 @@ struct StreetCounter: View {
     }
 }
 
-/// One store's front: a graphite cap and its striped awning in the store's colour, then the wall
-/// with its window (the store's badge, name, Chinese name and line on the glass, 冬季限定 in the
-/// corner) and a glass door. A store with something new hangs NEW from its awning; a closed one
-/// has its shutter down, saying how it unlocks. A tap on an open one walks in.
+/// One store's front, drawn like the App Store screenshots' shops (approved 2026-11-08): a cap in
+/// the store's dark colour, its sign, the striped awning, the wall in a tint of its colour with
+/// the window (the model on its plinth) and the door, and a step down to the street. A store with something new hangs NEW on its door; a closed one is grey,
+/// says 「? ? ?」 and has its shutter down. A tap on an open one walks in.
 private struct Storefront: View {
     let model: StreetModel
     let store: EditorChoices.Store
     @Environment(\.sceneTheme) private var theme
+    @State private var width: Double = 0
 
-    private let awning: Double = 34
-    private let window: ClosedRange<Double> = 220...420
+    /// The wall grows with the street's height, from what the window's model needs.
+    private let wall: ClosedRange<Double> = 196...330
     private let frame: Double = 6
-    private let door = CGSize(width: 50, height: 176)
-    private let badge: Double = 48
+    private let door: Double = 64
+    private let figure = CGSize(width: 116, height: 155)
 
     var body: some View {
-        let color = StoreLook.color(store.id, in: theme)
+        let open = store.isOpen
+        let color = open ? StoreLook.color(store.id, in: theme) : Color(role: .fgMuted, in: theme)
+        let dark = StoreLook.dark(store.id, open: open, in: theme)
+        let shape = UnevenRoundedRectangle(topLeadingRadius: Radius.ticket, topTrailingRadius: Radius.ticket)
         Button {
             model.visit(store)
         } label: {
             VStack(spacing: 0) {
-                UnevenRoundedRectangle(topLeadingRadius: Radius.pick, topTrailingRadius: Radius.pick)
-                    .fill(Color(role: store.isOpen ? .bgBrand : .fgMuted, in: theme))
-                    .frame(height: Space.xs + Space.xxs / 2)
-                Awning(color: color)
-                    .frame(height: awning)
+                Rectangle().fill(dark).frame(height: Space.s)
+                StoreSign(store: store)
+                    .padding(.horizontal, Space.xs)
+                    .padding(.top, Space.xs - Space.xxs / 2)
+                ShopAwning(color: color)
+                    .frame(height: ShopAwning.height(for: width))
+                    .padding(.top, Space.xs - Space.xxs / 2)
                     .zIndex(1)
-                wall(color)
-                    .padding(.top, -Space.xs)
+                front(color: color, dark: dark)
+                // The step down to the street.
+                Rectangle()
+                    .fill(ShopPavement.kerb)
+                    .frame(height: ShopPavement.kerbHeight)
             }
-            .overlay(alignment: .topLeading) {
-                if store.isOpen && model.hasNews(store.id) {
-                    VStack(spacing: 0) {
-                        Rectangle()
-                            .fill(Color(role: .bgBrand, in: theme))
-                            .frame(width: Sizing.selectionStroke, height: Space.s)
-                        InkTag.new
-                    }
-                    .padding(.leading, Space.l)
-                    .padding(.top, Space.xs + Space.xxs / 2 + awning)
-                }
+            .background(StoreLook.wall(store.id, open: open, in: theme))
+            .clipShape(shape)
+            .onGeometryChange(for: Double.self) {
+                Double($0.size.width)
+            } action: {
+                width = $0
             }
-            .contentShape(Rectangle())
+            .contentShape(shape)
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityElement(children: .combine)
-        .accessibilityHint(store.isOpen ? Text("进店", bundle: .module) : Text("还没开门", bundle: .module))
+        .accessibilityHint(open ? Text("进店", bundle: .module) : Text("还没开门", bundle: .module))
         .accessibilityIdentifier("street.store.\(store.id)")
     }
 
-    private func wall(_ color: Color) -> some View {
-        HStack(alignment: .bottom, spacing: Space.s) {
-            glass(color)
-            DoorView(width: door.width)
-                // As tall as the window allows, never taller than a door.
-                .frame(maxHeight: door.height)
-        }
-        .padding(.horizontal, Space.s + Space.xxs / 2)
-        .padding(.top, Space.m)
-        .frame(maxWidth: .infinity)
-        .background(Color(role: .bgSubtle, in: theme).overlay(color.opacity(0.06)))
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Color(role: .bgBrand, in: theme))
-                .overlay(color.opacity(0.3))
-                .frame(height: frame)
-        }
-        .overlay {
-            if !store.isOpen {
-                Shutter(store: store)
-                    .padding(.horizontal, Space.s + Space.xxs / 2)
-                    .padding(.top, Space.m)
-                    .padding(.bottom, frame)
+    /// The window and the door, or a closed store's shutter across both.
+    @ViewBuilder
+    private func front(color: Color, dark: Color) -> some View {
+        Group {
+            if store.isOpen {
+                HStack(spacing: Space.s) {
+                    window(color)
+                    ShopDoor(color: dark)
+                        .frame(width: door)
+                        .overlay(alignment: .top) { news }
+                }
+            } else {
+                // How far it is from opening is said once, on the button under the street.
+                ShopShutter()
+                    .accessibilityRepresentation { StoreCopy.opens(store) }
             }
         }
+        .padding(.horizontal, Space.s)
+        .padding(.vertical, Space.xs + Space.xxs / 2)
+        .frame(maxWidth: .infinity, minHeight: wall.lowerBound, maxHeight: wall.upperBound)
     }
 
-    /// The window: a graphite frame, glass with a hint of the store's colour and two glints, and
-    /// the store's lockup on it.
-    private func glass(_ color: Color) -> some View {
-        let shape = UnevenRoundedRectangle(topLeadingRadius: Radius.pick, topTrailingRadius: Radius.pick)
-        return ZStack {
-            Color(role: .bgCanvas, in: theme).overlay(color.opacity(0.06))
-            Glints()
-            VStack(spacing: Space.xxs) {
-                StoreBadge(store: store.id)
-                    .padding(Space.xs - Space.xxs / 2)
-                    .frame(width: badge, height: badge)
-                    .background(
-                        Color(role: .bgCanvas, in: theme),
-                        in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+    /// The window: a white frame round the glass and the model on its plinth.
+    private func window(_ color: Color) -> some View {
+        ZStack(alignment: .bottom) {
+            ShopGlass()
+            WindowModel(store: store.id, color: color)
+                .frame(width: figure.width, height: figure.height)
+                .padding(.bottom, Space.xxs)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
+        .padding(frame)
+        .background(
+            Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// NEW hung on the door's glass like a shop's open sign, while the store has something the
+    /// member hasn't seen.
+    @ViewBuilder private var news: some View {
+        if model.hasNews(store.id) {
+            VStack(spacing: -Sizing.hairline) {
+                DoorSignString()
+                    .stroke(
+                        Color(role: .bgInk, in: theme),
+                        style: StrokeStyle(lineWidth: Sizing.selectionStroke, lineJoin: .round)
                     )
-                    .padding(.bottom, Space.xs)
-                StoreCopy.name(store.id)
-                    .typeStyle(TypeRamp.scoreInline)
-                    .foregroundStyle(StoreLook.wordmark(store.id, in: theme))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                StoreCopy.local(store.id)
-                    .typeStyle(TypeRamp.caption)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .lineLimit(1)
-                StoreCopy.tagline(store.id)
-                    .typeStyle(TypeRamp.footnoteEmphasis)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .multilineTextAlignment(.center)
-                    .lineLimit(3)
-                    .padding(.top, Space.s)
+                    .frame(width: Space.l + Space.xxs / 2, height: Space.s)
+                InkTag.new
             }
-            .padding(.horizontal, Space.s)
-            .opacity(store.isOpen ? 1 : 0)
+            .padding(.top, Space.s + Space.xxs)
         }
-        // As tall as the street has room for, never shorter than the lockup on the glass needs.
-        .frame(maxWidth: .infinity, minHeight: window.lowerBound, maxHeight: window.upperBound)
-        .clipShape(shape)
-        .overlay {
-            shape.strokeBorder(Color(role: store.isOpen ? .bgBrand : .fgMuted, in: theme), lineWidth: frame)
-                .padding(.bottom, -frame)
-                .clipShape(shape)
-        }
-        .overlay(alignment: .topTrailing) {
-            // A limited store says so, never its dates.
-            if store.isOpen, let tag = LimitedTag(store: store.id) {
-                tag.padding(Space.s)
-            }
+    }
+}
+
+/// The string NEW hangs from on the door: up to a nail and down again.
+private struct DoorSignString: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.midX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
         }
     }
 }
@@ -313,11 +316,34 @@ enum StoreLook {
         PlaceholderCharacter.storeColor(store).map { Color($0) } ?? Color(role: .bgBrand, in: theme)
     }
 
-    /// The name on the glass in the store's colour, or ink where that colour is too light to read
-    /// on white (HALF MOON's mint).
-    static func wordmark(_ store: String, in theme: SceneTheme) -> Color {
-        guard let rgba = PlaceholderCharacter.storeColor(store) else { return Color(role: .fgDefault, in: theme) }
-        return isLight(rgba) ? Color(role: .fgDefault, in: theme) : Color(rgba)
+    /// The name on the sign: white on the store's colour, or ink where that colour is too light
+    /// for white to read (HALF MOON's mint).
+    static func signInk(_ store: String, in theme: SceneTheme) -> Color {
+        PlaceholderCharacter.storeColor(store).map(isLight) == true
+            ? Color(role: .fgDefault, in: theme) : Color(role: .fgOnBrand, in: theme)
+    }
+
+    /// The cap and the door: the store's colour darkened (a light one more,
+    /// so white reads on it); graphite for a badge without a colour, grey for a closed store.
+    static func dark(_ store: String, open: Bool, in theme: SceneTheme) -> Color {
+        guard open else { return Color(role: .fgMuted, in: theme) }
+        guard let rgba = PlaceholderCharacter.storeColor(store) else { return Color(role: .bgBrand, in: theme) }
+        return Color(mix(rgba, toward: 0, by: isLight(rgba) ? 0.45 : 0.3))
+    }
+
+    /// The wall: a pale tint of the store's colour; mist for a closed store or one without a
+    /// colour.
+    static func wall(_ store: String, open: Bool, in theme: SceneTheme) -> Color {
+        guard open, let rgba = PlaceholderCharacter.storeColor(store) else { return Color(role: .bgSubtle, in: theme) }
+        return Color(mix(rgba, toward: 255, by: 0.82))
+    }
+
+    /// `rgba` moved `amount` of the way to the grey `level` (0 black, 255 white).
+    private static func mix(_ rgba: RGBAColor, toward level: UInt8, by amount: Double) -> RGBAColor {
+        func channel(_ value: UInt8) -> UInt8 {
+            UInt8((Double(value) + (Double(level) - Double(value)) * amount).rounded())
+        }
+        return RGBAColor(red: channel(rgba.red), green: channel(rgba.green), blue: channel(rgba.blue))
     }
 
     /// The colour of a limited store's tag, so each kind of limit wears its own (冬季限定 blue,

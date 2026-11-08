@@ -121,6 +121,22 @@ public enum Palette {
     public static let bulbLitLine = SRGBColor(red: 0xF2, green: 0xC1, blue: 0x4E)
     public static let bulbFilament = SRGBColor(red: 0xE0, green: 0xA5, blue: 0x26)
 
+    // MARK: Shopfront: a store on 商店街, drawn like the App Store's illustrated shops
+
+    /// The window's and the door's glass.
+    public static let shopGlass = SRGBColor(red: 0xE3, green: 0xED, blue: 0xF4)
+    /// The door's brass knob.
+    public static let shopKnob = SRGBColor(red: 0xF6, green: 0xC3, blue: 0x44)
+    /// A closed store's rolling shutter, its slats' seams, and the 「?」 on it.
+    public static let shutter = SRGBColor(red: 0xC3, green: 0xC7, blue: 0xCF)
+    public static let shutterSeam = SRGBColor(red: 0xB4, green: 0xB9, blue: 0xC2)
+    public static let shutterMark = SRGBColor(red: 0x8A, green: 0x8F, blue: 0x9A)
+    /// The sky over the street, the paving stones, their joints and the kerb's edge.
+    public static let streetSky = SRGBColor(red: 0xEE, green: 0xF2, blue: 0xF7)
+    public static let pavement = SRGBColor(red: 0xE6, green: 0xE2, blue: 0xDA)
+    public static let paveJoint = SRGBColor(red: 0xDC, green: 0xD7, blue: 0xCE)
+    public static let kerb = SRGBColor(red: 0xCF, green: 0xCA, blue: 0xC0)
+
     // MARK: Clothes: outfit swatches for the character only, never UI color
 
     public static let cobalt = SRGBColor(red: 0x2D, green: 0x5B, blue: 0xA0)

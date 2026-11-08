@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "persona": "energetic",
+  "look": {
+    "body": "shiba",
+    "eyes": "happy",
+    "mouth": "cat",
+    "cheeks": "rosy",
+    "hat": "powder-salmonhelmet",
+    "top": "powder-salmon",
+    "bottom": "powder-rice",
+    "shoes": "powder-ebifry",
+    "prop": "snowboard"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "persona": "showoff",
+  "look": {
+    "body": "peach",
+    "hair": "curls",
+    "eyes": "sharp",
+    "mouth": "grin",
+    "brows": "bold",
+    "hat": "nolook-headband",
+    "top": "nolook-jersey",
+    "bottom": "nolook-shorts",
+    "shoes": "nolook-hightop",
+    "prop": "basketball"
+  },
+  "colors": {
+    "body": "#9A6544",
+    "hair": "#2A2333",
+    "brows": "#2A2333"
+  }
+}

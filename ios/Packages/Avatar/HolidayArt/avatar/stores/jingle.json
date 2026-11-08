@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "persona": "energetic",
+  "look": {
+    "body": "cat",
+    "eyes": "sparkle",
+    "mouth": "cat",
+    "cheeks": "rosy",
+    "hat": "jingle-antlers",
+    "top": "jingle-ugly",
+    "bottom": "jingle-cane",
+    "shoes": "jingle-elf"
+  }
+}
