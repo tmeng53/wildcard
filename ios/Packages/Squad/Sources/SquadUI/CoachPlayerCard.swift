@@ -71,19 +71,8 @@ private struct CoachPlayerCardBack: View {
                 .foregroundStyle(muted)
                 .lineLimit(2)
                 .padding(.top, Space.xxs)
-            Hairline(on: .ink)
+            CoachResumeFields(coach: coach, onInk: true, valueLines: 2, labelIdentifier: "coachCard.label")
                 .padding(.top, Space.s)
-            Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: Space.m, verticalSpacing: 0) {
-                row(Text("履历", bundle: .module)) { Text(verbatim: coach.background) }
-                row(Text("执教", bundle: .module)) {
-                    HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                        Text(verbatim: "\(coach.yearsCoaching)").typeStyle(TypeRamp.scoreSmall)
-                        Text("年，\(coach.experience)", bundle: .module)
-                    }
-                }
-                row(Text("风格", bundle: .module)) { Text(verbatim: coach.style) }
-                row(Text("期望待遇", bundle: .module)) { Text(verbatim: coach.pay) }
-            }
             if !coach.tags.isEmpty {
                 Text(verbatim: coach.tags.joined(separator: " · "))
                     .typeStyle(TypeRamp.footnote)
@@ -114,31 +103,6 @@ private struct CoachPlayerCardBack: View {
         .padding(.horizontal, Space.xs)
         .padding(.top, Space.xs)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-
-    /// A field: its name on one line, muted, and its value in white, with a hairline under it.
-    private func row(_ label: Text, @ViewBuilder value: () -> some View) -> some View {
-        Group {
-            GridRow {
-                label
-                    .typeStyle(TypeRamp.label)
-                    .foregroundStyle(muted)
-                    .lineLimit(1)
-                    .fixedSize()
-                    .padding(.vertical, Space.s - 2)
-                    .accessibilityIdentifier("coachCard.label")
-                value()
-                    .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(ink)
-                    .lineLimit(3)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.vertical, Space.s - 2)
-            }
-            Hairline(on: .ink)
-                .gridCellColumns(2)
-                .gridCellUnsizedAxes(.horizontal)
-        }
     }
 }
 

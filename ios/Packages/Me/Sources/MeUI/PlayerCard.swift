@@ -23,7 +23,6 @@ struct PlayerCard: View {
     @State private var opened: BoardTitle?
     /// The badge board, opened from the 出赛表 on a squadmate's card's back.
     @State private var showsBoard = false
-    @Environment(\.sceneTheme) private var theme
     static var size: CGSize { TradingCard.size }
 
     var body: some View {

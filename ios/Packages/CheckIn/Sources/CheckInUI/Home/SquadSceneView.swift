@@ -368,7 +368,7 @@ private struct StageFigure: View {
 /// the character (`scale`); its line stays the same on everyone (`unit`, one stage point).
 private struct GroundRing: View {
     @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let ring: RingStatus
     let scale: Double
     let unit: Double
