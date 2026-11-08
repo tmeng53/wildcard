@@ -20,14 +20,20 @@ export async function letterWhere(
       ? letters.where('coach_letters.hire_event_id', '=', String(which.hireEvent))
       : letters.where((eb) =>
           eb.exists(
+            // Written for the hire that made the coach now: not for a time it coached the squad
+            // before, nor for a change the squad has since made again.
             eb
               .selectFrom('squad_coaches')
-              .select('squad_coaches.squad_id')
+              .innerJoin('squad_coach_events as hire', (join) =>
+                join
+                  .onRef('hire.squad_id', '=', 'squad_coaches.squad_id')
+                  .onRef('hire.coach_id', '=', 'squad_coaches.coach_id')
+                  .onRef('hire.at', '=', 'squad_coaches.hired_at')
+                  .on('hire.kind', '=', 'hired'),
+              )
+              .select('hire.id')
               .where('squad_coaches.squad_id', '=', which.toCoachNowOf)
-              .whereRef('squad_coaches.squad_id', '=', 'coach_letters.squad_id')
-              .whereRef('squad_coaches.coach_id', '=', 'coach_letters.to_coach')
-              // Left it on this hire, not on a time it coached the squad before.
-              .whereRef('squad_coaches.hired_at', '<=', 'coach_letters.at'),
+              .whereRef('hire.id', '=', 'coach_letters.hire_event_id'),
           ),
         );
   const row = await narrowed

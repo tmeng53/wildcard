@@ -133,11 +133,14 @@ function letters(
     at = new Date(began.getTime() + 5_000),
     consented = [mia, leo],
     lettered,
+    consentUnread = false,
   }: {
     readonly agent?: CoachAgent;
     readonly at?: Date;
     readonly consented?: readonly string[];
     readonly lettered?: CoachLettered;
+    /** The consents can't be read, as when the database is briefly away. */
+    readonly consentUnread?: boolean;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -157,7 +160,9 @@ function letters(
     usage: stores.usage,
     squadWeek: () => Promise.resolve(week),
     aiConsented: (members) =>
-      Promise.resolve(members.filter((member) => consented.includes(member))),
+      consentUnread
+        ? Promise.reject(new Error('The consents can’t be read.'))
+        : Promise.resolve(members.filter((member) => consented.includes(member))),
     clock: () => at,
     ...(agent === undefined ? {} : { agent }),
     ...(lettered === undefined ? {} : { lettered }),
@@ -291,6 +296,50 @@ describe('the outgoing coach’s letter', () => {
       expect(await letters(fixture, { agent: after.agent }).write(squad)).toBeUndefined();
       expect(after.runs).toHaveLength(0);
       expect(await usageRows(fixture)).toHaveLength(1);
+    });
+    await rolledBack(async (fixture) => {
+      const { squad, by, hiring } = fixture;
+      await hiring.change({ squad, coach: nuannuan, by });
+      // What the coach reads failing to load leaves the change's one try for the retry.
+      const unread = writingAgent(['交给你了。']);
+      await expect(
+        letters(fixture, { agent: unread.agent, consentUnread: true }).write(squad),
+      ).rejects.toThrow('can’t be read');
+      expect(unread.runs).toHaveLength(0);
+      const retry = writingAgent(['交给你了。']);
+      expect((await letters(fixture, { agent: retry.agent }).write(squad))?.text).toBe(
+        '交给你了。',
+      );
+    });
+  });
+
+  it('is read only for the hire it was written for', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, trx, by } = fixture;
+      const coachNow = async (coach: string, since: string) => {
+        await sql`delete from public.squad_coaches where squad_id = ${squad}`.execute(trx);
+        await sql`insert into public.squad_coaches (squad_id, coach_id, hired_by, hired_at)
+          values (${squad}, ${coach}, ${by}, now() - ${since}::interval)`.execute(trx);
+      };
+      // 小混 is changed for 暖暖 two hours ago.
+      await sql`insert into public.squad_coach_events (squad_id, kind, coach_id, changed_by, at) values
+        (${squad}, 'fired', 'xiaohun', ${by}, now() - interval '2 hours'),
+        (${squad}, 'hired', 'nuannuan', ${by}, now() - interval '2 hours')`.execute(trx);
+      await coachNow('nuannuan', '2 hours');
+      const store = createPostgresCoachLetters(trx);
+      const handover = await store.handover(squad);
+      if (handover === undefined) throw new Error('No change.');
+      // While its letter is being written, 暖暖 is fired and hired again, with no change.
+      await sql`insert into public.squad_coach_events (squad_id, kind, coach_id, changed_by, at) values
+        (${squad}, 'fired', 'nuannuan', ${by}, now() - interval '90 minutes'),
+        (${squad}, 'hired', 'nuannuan', ${by}, now() - interval '1 hour')`.execute(trx);
+      await coachNow('nuannuan', '1 hour');
+      await store.claim(handover);
+      await store.save({ handover, day: '2026-11-08', text: '交给你了。' });
+      // Saved after that hire, it still belongs to the change before.
+      expect(await store.ofHandover(handover.hireEvent)).toBeDefined();
+      const activity = createCoachActivity({ store: createPostgresCoachActivity(trx) });
+      expect((await activity.squad({ squad, checkIns: [] })).letter).toBeUndefined();
     });
   });
 

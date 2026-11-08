@@ -75,16 +75,16 @@ export function createCoachLetters(deps: {
         { squad, settings },
       );
       if (offDuty !== undefined) return undefined;
-      // One try a change: a second tap, or a retry while the first is writing, pays for nothing.
-      if (!(await deps.letters.claim(handover))) return undefined;
-
       const coaches = new Map((await deps.catalog.list()).map((coach) => [coach.id, coach]));
       const from = coaches.get(handover.from);
       const to = coaches.get(handover.to);
       if (from === undefined || to === undefined) return undefined;
       const zone = (await deps.timeZonesAt?.([squad], now))?.get(squad) ?? NEW_YORK;
       const day = wallClockAt(now, zone).day;
+      // Read before the try is claimed, so a failed read leaves the change one to try again.
       const task = await taskFor(deps, { squad, to, coaches, zone, day });
+      // One try a change: a second tap, or a retry while the first is writing, pays for nothing.
+      if (!(await deps.letters.claim(handover))) return undefined;
 
       let text: string | undefined;
       const run = await agent.run({
