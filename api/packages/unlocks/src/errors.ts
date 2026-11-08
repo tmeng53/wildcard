@@ -55,6 +55,39 @@ export class GiftPieceNotOfferedError extends AppError {
   }
 }
 
+/** Thrown when a member is given a piece they already have. */
+export class GiftAlreadyOwnedError extends AppError {
+  override readonly name = 'GiftAlreadyOwnedError';
+  readonly reason = 'GIFT_ALREADY_OWNED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly piece: string) {
+    super(`The member already has ${piece}.`);
+  }
+}
+
+/** Thrown when a member who was given a gift this week is given another (one a week at most). */
+export class GiftWeeklyLimitError extends AppError {
+  override readonly name = 'GiftWeeklyLimitError';
+  readonly reason = 'GIFT_WEEKLY_LIMIT';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly lastGivenAt: Date) {
+    super(`The member was given a gift this week already (${lastGivenAt.toISOString()}).`);
+  }
+}
+
+/** Thrown when a member opens a gift they weren't given. */
+export class GiftNotGivenError extends AppError {
+  override readonly name = 'GiftNotGivenError';
+  readonly reason = 'GIFT_NOT_GIVEN';
+  readonly status = 'NOT_FOUND';
+
+  constructor(readonly piece: string) {
+    super(`The member wasn't given ${piece}.`);
+  }
+}
+
 /** Thrown when a member claims a piece they haven't unlocked. */
 export class PieceNotUnlockedError extends AppError {
   override readonly name = 'PieceNotUnlockedError';
@@ -63,5 +96,25 @@ export class PieceNotUnlockedError extends AppError {
 
   constructor(readonly piece: string) {
     super(`${piece} is not unlocked yet.`);
+  }
+}
+
+export class GiftNoCoachError extends AppError {
+  override readonly name = 'GiftNoCoachError';
+  readonly reason = 'GIFT_NO_COACH';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('The squad has no coach to give it from (hire_coach first).');
+  }
+}
+
+export class GiftMemberNotInSquadError extends AppError {
+  override readonly name = 'GiftMemberNotInSquadError';
+  readonly reason = 'GIFT_MEMBER_NOT_IN_SQUAD';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('The member is not in that squad now.');
   }
 }
