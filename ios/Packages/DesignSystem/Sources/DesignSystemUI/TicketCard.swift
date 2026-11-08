@@ -108,42 +108,26 @@ private struct TearStroke: View {
     }
 }
 
-/// The brand's W, in a ticket stub's corner: the same mark the character's ticket wears, in ink.
+/// The brand's W, in a ticket stub's corner: the wordmark's letter, the same stamp the
+/// character's ticket wears, in ink.
 public struct TicketStamp: View {
     @Environment(\.sceneTheme) private var theme
 
     public init() {}
 
     public var body: some View {
-        WMark()
-            .stroke(
-                Color(role: .fgDefault, in: theme),
-                style: StrokeStyle(lineWidth: Self.weight, lineJoin: .miter, miterLimit: 4)
-            )
-            .frame(width: Self.width, height: Self.height)
-            .accessibilityHidden(true)
+        TicketW()
+            .foregroundStyle(Color(role: .fgDefault, in: theme))
     }
-
-    private static let width: Double = 22
-    private static let height: Double = 22
-    private static let weight: Double = 4
 }
 
-/// The W's four strokes, corner to corner in its frame (inset by half a stroke at the top and
-/// bottom, so the points aren't cut).
-struct WMark: Shape {
-    func path(in rect: CGRect) -> Path {
-        let inset = 2.0
-        let top = rect.minY + inset
-        let bottom = rect.maxY - inset
-        let xs = (0...4).map { rect.minX + rect.width * Double($0) / 4 }
-        return Path { path in
-            path.move(to: CGPoint(x: xs[0], y: top))
-            path.addLine(to: CGPoint(x: xs[1], y: bottom))
-            path.addLine(to: CGPoint(x: xs[2], y: top))
-            path.addLine(to: CGPoint(x: xs[3], y: bottom))
-            path.addLine(to: CGPoint(x: xs[4], y: top))
-        }
+/// The W itself, in the colour around it. A picture on the ticket, so it keeps its size.
+struct TicketW: View {
+    var body: some View {
+        Text(verbatim: "W")
+            .typeStyle(TypeRamp.ticketStamp)
+            .dynamicTypeSize(.large)
+            .accessibilityHidden(true)
     }
 }
 

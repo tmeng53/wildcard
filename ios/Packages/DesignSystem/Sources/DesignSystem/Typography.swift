@@ -115,6 +115,11 @@ public enum TypeRamp {
     /// drawn at a fixed size, so it doesn't scale with Dynamic Type.
     public static let ticketDate = TypeStyle(face: .scoreboard(.semibold), size: 15, tracking: 1.2, anchor: .footnote)
 
+    /// The brand's W stamped on a ticket (发动态, 请假条, 意见反馈 and the character's ticket): the
+    /// wordmark's Barlow Condensed, extra bold and italic, as the approved ticket designs set it.
+    /// A stamp is part of the ticket's picture, so it doesn't scale with Dynamic Type.
+    public static let ticketStamp = TypeStyle(face: .scoreboard(.extraBoldItalic), size: 28, anchor: .title2)
+
     /// The week's number across the 出赛表 poster (W42), italic and set tight. The poster is a
     /// picture saved at a fixed size, so it doesn't scale with Dynamic Type.
     public static let posterWeek = TypeStyle(
@@ -146,7 +151,8 @@ public enum TypeRamp {
         ("scoreHero", scoreHero),
         ("scoreCard", scoreCard), ("scoreWeek", scoreWeek),
         ("scoreInline", scoreInline), ("scoreSmall", scoreSmall), ("scoreCaption", scoreCaption),
-        ("ticketDate", ticketDate), ("posterWeek", posterWeek), ("launchWord", launchWord), ("cardTitle", cardTitle),
+        ("ticketDate", ticketDate), ("ticketStamp", ticketStamp), ("posterWeek", posterWeek),
+        ("launchWord", launchWord), ("cardTitle", cardTitle),
         ("badgeTitle", badgeTitle),
     ]
 }

@@ -72,12 +72,21 @@ public struct SecondaryButtonStyle: ButtonStyle {
         case onInk
     }
 
+    /// How tall: 44, or as tall as the system's segmented control beside it in a card's row
+    /// (请假条's 编一句), so the two read as one row.
+    public enum Size: Sendable {
+        case regular
+        case compact
+    }
+
     @Environment(\.sceneTheme) private var theme
     @Environment(\.controlPlacement) private var controlPlacement
     private let surface: Surface
+    private let size: Size
 
-    public init(_ surface: Surface = .page) {
+    public init(_ surface: Surface = .page, size: Size = .regular) {
         self.surface = surface
+        self.size = size
     }
 
     private var words: ColorRole {
@@ -87,11 +96,11 @@ public struct SecondaryButtonStyle: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .typeStyle(TypeRamp.calloutEmphasis)
+            .typeStyle(size == .regular ? TypeRamp.calloutEmphasis : TypeRamp.footnoteEmphasis)
             .lineLimit(1)
             .foregroundStyle(Color(role: words, in: theme))
-            .padding(.horizontal, Space.m + Space.xxs)
-            .frame(minHeight: Sizing.control)
+            .padding(.horizontal, size == .regular ? Space.m + Space.xxs : Space.s)
+            .frame(minHeight: size == .regular ? Sizing.control : Sizing.segmentedControl)
             .modifier(
                 ControlSurface(
                     placement: controlPlacement, fill: surface == .onInk ? .bgCanvas : .bgBrand, tinted: false)
