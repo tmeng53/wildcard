@@ -15,7 +15,7 @@ import { instructionsOf, taskOf } from './prompt.js';
 import { lineProblem } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
-import { costMicros, newYorkTime, wakesDue, weekStartOf, weeksAround } from './wake.js';
+import { costMicros, wakesDue, weekStartOf, weeksAround } from './wake.js';
 
 const mia = '11111111-1111-4111-8111-111111111111';
 const leo = '22222222-2222-4222-8222-222222222222';
@@ -184,16 +184,7 @@ describe('the memory files', () => {
 });
 
 describe('when the coach wakes', () => {
-  it('reads New York’s day and hour, and the Monday of a day’s week', () => {
-    // 2026-11-01 is the day daylight saving ends; 5:30 UTC is still 1:30 EDT.
-    expect(newYorkTime(new Date('2026-11-01T05:30:00Z'))).toStrictEqual({
-      day: '2026-11-01',
-      hour: 1,
-    });
-    expect(newYorkTime(new Date('2026-11-01T03:30:00Z'))).toStrictEqual({
-      day: '2026-10-31',
-      hour: 23,
-    });
+  it('finds the Monday of a day’s week', () => {
     expect(weekStartOf('2026-11-01')).toBe('2026-10-26');
     expect(weekStartOf('2026-10-26')).toBe('2026-10-26');
   });
@@ -212,14 +203,32 @@ describe('when the coach wakes', () => {
     expect(weeksAround(new Date('2026-11-04T17:00:00Z'))).toStrictEqual(['2026-11-02']);
   });
 
-  it('wakes for check-ins of the last hour, and once a day from 6am New York', () => {
+  it('wakes for check-ins of the last hour, and once a day from 6am on the squad’s clock', () => {
     // 10:00 EST: c2 was made 10 minutes ago, c1 days ago.
-    expect(wakesDue({ squad, week, now: new Date('2026-11-01T14:00:00Z') })).toStrictEqual([
+    expect(
+      wakesDue({
+        squad,
+        week,
+        now: new Date('2026-11-01T14:00:00Z'),
+        timeZone: 'America/New_York',
+      }),
+    ).toStrictEqual([
       { squad, reason: { kind: 'checkIn', checkIn: 'c2' } },
       { squad, reason: { kind: 'daily', day: '2026-11-01' } },
     ]);
+    // 6:00 in Taipei is 17:00 the day before in New York: the squad's own clock.
+    expect(
+      wakesDue({ squad, week, now: new Date('2026-10-31T22:00:00Z'), timeZone: 'Asia/Taipei' }),
+    ).toStrictEqual([{ squad, reason: { kind: 'daily', day: '2026-11-01' } }]);
     // 5:59 EST: no daily wake yet.
-    expect(wakesDue({ squad, week, now: new Date('2026-11-01T10:59:00Z') })).toStrictEqual([]);
+    expect(
+      wakesDue({
+        squad,
+        week,
+        now: new Date('2026-11-01T10:59:00Z'),
+        timeZone: 'America/New_York',
+      }),
+    ).toStrictEqual([]);
   });
 
   it('wakes for replies to the coach of the last hour, even under an older check-in', () => {
@@ -246,17 +255,27 @@ describe('when the coach wakes', () => {
         c2,
       ],
     };
-    expect(wakesDue({ squad, week: replied, now: new Date('2026-11-01T14:00:00Z') })).toStrictEqual(
-      [
-        { squad, reason: { kind: 'checkIn', checkIn: 'c2' } },
-        { squad, reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' } },
-        { squad, reason: { kind: 'daily', day: '2026-11-01' } },
-      ],
-    );
+    expect(
+      wakesDue({
+        squad,
+        week: replied,
+        now: new Date('2026-11-01T14:00:00Z'),
+        timeZone: 'America/New_York',
+      }),
+    ).toStrictEqual([
+      { squad, reason: { kind: 'checkIn', checkIn: 'c2' } },
+      { squad, reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' } },
+      { squad, reason: { kind: 'daily', day: '2026-11-01' } },
+    ]);
     // Two hours on, it is the coach job's no more: it was answered when written, or never.
-    expect(wakesDue({ squad, week: replied, now: new Date('2026-11-01T16:00:00Z') })).toStrictEqual(
-      [{ squad, reason: { kind: 'daily', day: '2026-11-01' } }],
-    );
+    expect(
+      wakesDue({
+        squad,
+        week: replied,
+        now: new Date('2026-11-01T16:00:00Z'),
+        timeZone: 'America/New_York',
+      }),
+    ).toStrictEqual([{ squad, reason: { kind: 'daily', day: '2026-11-01' } }]);
   });
 
   it('gives a reply’s wake the talk under the check-in, the reply to answer marked', () => {

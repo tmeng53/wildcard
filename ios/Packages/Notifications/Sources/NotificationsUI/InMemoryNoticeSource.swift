@@ -38,9 +38,9 @@ public actor InMemoryNoticeSource: NoticeSource {
         open.finish()
     }
 
-    /// The sample squad's last two weeks, told before `now`: a teammate's comment, a scene move
-    /// and the coach's reply today, the 6pm push yesterday, the 战报 and a store opening this week or
-    /// last, and older ones, then `latest`, told just now. The newest two are new.
+    /// The sample squad's last two weeks, told before `now`: the coach's reply, a scene move and
+    /// a teammate's comment on the same post today (one row), the 6pm push yesterday, the 战报 and
+    /// a store opening this week or last, and older ones, then `latest`, told just now. The newest two are new.
     public static func sample(
         now: Date, calendar: Calendar = .current, latest: [Notice.Subject] = []
     ) -> InMemoryNoticeSource {
@@ -56,6 +56,7 @@ public actor InMemoryNoticeSource: NoticeSource {
         let monday = week.dateInterval(of: .weekOfYear, for: now)?.start ?? today
         let lastMonday = calendar.date(byAdding: .day, value: -7, to: monday) ?? monday
         let parts = calendar.dateComponents([.year, .month, .day], from: lastMonday)
+        let post = CheckInID(UUID())
         let lastWeek = (try? LocalDay(year: parts.year ?? 2026, month: parts.month ?? 1, day: parts.day ?? 1))
         let subjects: [(Date, Notice.Subject)] =
             [
@@ -79,12 +80,12 @@ public actor InMemoryNoticeSource: NoticeSource {
                 (
                     at(days: 0, hour: 9, minute: 30),
                     .coachReply(
-                        checkIn: CheckInID(UUID()), coach: "xiaohun", coachName: "毛头", replied: true, emoji: nil)
+                        checkIn: post, coach: "xiaohun", coachName: "毛头", replied: true, emoji: nil)
                 ),
                 (at(days: 0, hour: 10, minute: 12), .sceneMoved(scene: "track", mover: nil, moverName: "阿杰")),
                 (
                     at(days: 0, hour: 11, minute: 5),
-                    .comment(PushAlert(key: "push.comment", args: ["Coco", "这组深蹲太稳了"]), checkIn: CheckInID(UUID()))
+                    .comment(PushAlert(key: "push.comment", args: ["Coco", "这组深蹲太稳了"]), checkIn: post)
                 ),
                 // The coach's morning note, told last so the rows before it keep their numbers.
                 (at(days: 0, hour: 11, minute: 30), .coachNote(sampleNote(on: at(days: 0, hour: 11)))),

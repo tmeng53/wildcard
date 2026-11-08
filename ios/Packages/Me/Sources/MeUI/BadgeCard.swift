@@ -73,7 +73,7 @@ struct BadgeCard: View {
     /// The top in the badge's colour, the squad it was last won in and 每周战报 on its left (just
     /// 每周战报 when the API names no squad), ×N on its right, and the badge sitting over the seam.
     private var top: some View {
-        TitleBadgeView.enamel(title.badge.colour)
+        TitleBadgeView.faceColor(colour: title.badge.colour, tone: title.badge.tone)
             .frame(height: Self.topHeight)
             .overlay(alignment: .top) {
                 // One row, so a long squad name shrinks and stops before ×N instead of under it.
@@ -106,7 +106,8 @@ struct BadgeCard: View {
             }
             .overlay(alignment: .bottom) {
                 TitleBadgeView(
-                    shape: title.badge.shape, colour: title.badge.colour, glyph: title.badge.glyph,
+                    shape: title.badge.shape, colour: title.badge.colour, tone: title.badge.tone,
+                    glyph: title.badge.glyph,
                     size: Self.badgeSize
                 )
                 .offset(y: Self.overlap)

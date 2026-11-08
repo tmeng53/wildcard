@@ -5,7 +5,7 @@ import XCTest
 final class PostManageUITests: XCTestCase {
     private static let wait: TimeInterval = 30
     /// More than the sample squad's posts need to reach mine.
-    private static let maxSwipes = 12
+    private static let maxSwipes = 24
 
     /// 编辑 opens the compose page as posted; 保存 shows the new line on the card.
     func testEditMyPost() {
@@ -62,10 +62,13 @@ final class PostManageUITests: XCTestCase {
         let manage = app.descendants(matching: .any).matching(identifier: "post.manage").firstMatch
         let feed = app.scrollViews.firstMatch
         XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "no 动态")
-        var swipes = 0
-        while swipes < Self.maxSwipes, !manage.exists || !manage.isHittable {
-            feed.swipeUp()
-            swipes += 1
+        // Short drags, not swipes: a swipe's fling can stop with the 「…」 under the tab bar.
+        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
+        var drags = 0
+        while drags < Self.maxSwipes, !(manage.exists && manage.isHittable && manage.frame.maxY <= tabBarTop) {
+            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            drags += 1
         }
         XCTAssertTrue(manage.isHittable, "my post shows no 「…」")
         assertClearOfTheTabBar(manage, in: app)

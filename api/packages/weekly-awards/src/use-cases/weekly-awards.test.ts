@@ -13,6 +13,7 @@ import {
   type WeeklyAwardTables,
 } from '../adapters/postgres-awards-store.js';
 import { MemberId, SquadId, type MemberWeek, type ModelReply } from '../domain/awards.js';
+import type { SportGlyph } from '../domain/badges.js';
 import type { PromptMeme } from '../domain/prompt.js';
 import { WeekStart } from '../domain/schedule.js';
 import { AwardsModelMissingError, AwardsWriterUnavailableError } from '../errors.js';
@@ -53,7 +54,12 @@ function setup(
   {
     agreed = () => true,
     memes = [],
-  }: { agreed?: (member: MemberId) => boolean; memes?: readonly PromptMeme[] } = {},
+    sportGlyphs = [],
+  }: {
+    agreed?: (member: MemberId) => boolean;
+    memes?: readonly PromptMeme[];
+    sportGlyphs?: readonly SportGlyph[];
+  } = {},
 ) {
   const asked: string[] = [];
   const settingsAsked: { model: string; instructions: string }[] = [];
@@ -77,6 +83,7 @@ function setup(
       return Promise.resolve(members.filter(agreed));
     },
     memes: () => Promise.resolve(memes),
+    sportGlyphs: () => Promise.resolve(sportGlyphs),
   });
   return { awards, asked, settingsAsked, consentAsked };
 }
@@ -233,11 +240,14 @@ describe('createWeeklyAwards', () => {
     await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
     expect(asked[0]).toContain('{"id":"shield","meaning":"盾牌：守住了、扛住了、说到做到"}');
     expect(asked[0]).toContain('{"id":"sun.max.fill","meaning":"太阳：早起、白天练"}');
+    // The model picks a colour by what it means; its tone is only the app's.
+    expect(asked[0]).toContain('{"id":"track","meaning":"跑道红：热烈、速度、上头"}');
+    expect(asked[0]).not.toContain('#E65345');
     const boards = await awards.boards([ana, cy]);
     expect(boards.get(ana)).toStrictEqual([
       {
         title: '雨中狠人',
-        badge,
+        badge: { ...badge, tone: '#E65345' },
         weeks: [{ squad, weekStart: week, speech: '周三下着雨还去跑了。' }],
       },
     ]);
@@ -246,6 +256,27 @@ describe('createWeeklyAwards', () => {
       count: 1,
       latest: { title: '雨中狠人', times: 1 },
     });
+  });
+
+  it('offers every sport’s icon as a glyph, and keeps a badge that wears one', async () => {
+    const running = {
+      ...reply,
+      awards: reply.awards.map((award) => ({
+        ...award,
+        titles: award.titles.map((title) => ({
+          ...title,
+          badge: { ...badge, glyph: 'figure.outdoor.cycle' },
+        })),
+      })),
+    };
+    const { awards, asked } = setup([() => Promise.resolve(running)], {
+      sportGlyphs: [{ id: 'figure.outdoor.cycle', meaning: '骑行（运动）' }],
+    });
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    const given = await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
+    expect(asked).toHaveLength(1);
+    expect(asked[0]).toContain('{"id":"figure.outdoor.cycle","meaning":"骑行（运动）"}');
+    expect(given.members[0]?.titles[0]?.badge?.glyph).toBe('figure.outdoor.cycle');
   });
 
   it('refuses a badge the catalog doesn’t offer, asking once more', async () => {
@@ -492,7 +523,7 @@ describe('the frozen 战报', () => {
     healthyMeals: 0,
     cheatMeals: 1,
     reactionsReceived: 2,
-    planFinishedAt: '2026-10-22T09:00:00.000Z',
+    reachedAt: '2026-10-22T09:00:00.000Z',
   });
 
   it('is kept once: a second freeze leaves the first, and a deleted account takes its part', async () => {

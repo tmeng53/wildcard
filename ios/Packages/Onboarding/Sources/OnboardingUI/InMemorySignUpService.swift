@@ -57,8 +57,11 @@ public actor InMemorySignUpService: SignUpService {
         return sample
     }
 
-    public func create(named name: SquadName, daysPerMember: Int) async throws(SignUpError) -> JoinedSquad {
-        guard agreedToAI, SquadWeeklyGoal.choices.contains(daysPerMember) else { throw .rejected }
+    public func create(
+        named name: SquadName, daysPerMember: Int, timeZone: String
+    ) async throws(SignUpError) -> JoinedSquad {
+        guard agreedToAI, SquadWeeklyGoal.choices.contains(daysPerMember), TimeZone(identifier: timeZone) != nil
+        else { throw .rejected }
         let made = JoinedSquad(
             id: SquadID(UUID()), name: name.text, teammates: [], weekGoal: 0, weekDone: 0, daysPerMember: daysPerMember)
         squad = made

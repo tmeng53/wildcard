@@ -80,16 +80,16 @@ function setUp(waiting: readonly NoteToDeliver[]) {
 }
 
 describe('the coach’s morning notes delivered', () => {
-  it('reach each member past the hour once: in the bell always, by a silent push under the coach’s switch', async () => {
+  it('reach each member past the hour once, in the bell and by a silent push, and never a member who switched the coach off', async () => {
     const { deps, told, sent, hours } = setUp([
       note({ id: 1, member: east, text: '昨天那组深蹲我看见了' }),
       note({ id: 2, member: west, text: '今天别硬撑' }),
       note({ id: 3, member: quiet, text: '慢慢来' }),
     ]);
 
-    expect(await deliverCoachNotes(deps)).toStrictEqual({ waiting: 3, delivered: 2, pushed: 1 });
-    // A second run finds only the note still waiting for its member's morning.
-    expect(await deliverCoachNotes(deps)).toStrictEqual({ waiting: 1, delivered: 0, pushed: 0 });
+    expect(await deliverCoachNotes(deps)).toStrictEqual({ waiting: 3, delivered: 1, pushed: 1 });
+    // A second run finds the note still waiting for its member's morning, and the one never told.
+    expect(await deliverCoachNotes(deps)).toStrictEqual({ waiting: 2, delivered: 0, pushed: 0 });
 
     expect(hours).toStrictEqual([8, 8]);
     expect(told).toStrictEqual([
@@ -104,12 +104,6 @@ describe('the coach’s morning notes delivered', () => {
           day: '2026-11-05',
           text: '昨天那组深蹲我看见了',
         },
-      },
-      {
-        member: quiet,
-        squad,
-        kind: 'coachNote',
-        subject: { version: 1, note: 3, coach: 'xiaohun', day: '2026-11-05', text: '慢慢来' },
       },
     ]);
     expect(sent).toStrictEqual([

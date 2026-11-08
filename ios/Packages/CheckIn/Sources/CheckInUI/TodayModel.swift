@@ -12,17 +12,6 @@ import HealthUI
 import Observation
 import SwiftUI
 
-extension CheckInDraft {
-    var kind: CheckInKind {
-        switch self {
-        case .trained: .trained
-        case .healthyMeal: .healthyMeal
-        case .cheatMeal: .cheatMeal
-        case .disclaimer: .disclaimer
-        }
-    }
-}
-
 /// Where photos for a 练了 or a meal come from.
 public enum PhotoSource: Sendable {
     /// The member adds them on the compose page: the camera or the system photo picker.
@@ -43,7 +32,6 @@ public final class TodayModel {
 
     /// What lands on the scene after a post: the bubble's line, and the post it opens once saved.
     struct Payoff: Equatable {
-        /// The post it plays for.
         let id: CheckInID
         let kind: CheckInKind
         let line: String?
@@ -80,8 +68,7 @@ public final class TodayModel {
 
     /// The open compose page's state.
     private(set) var compose: ComposeModel?
-    /// Set here and, once the post is saved, by `deliver` (`TodayModel+Sending.swift`).
-    var payoff: Payoff?
+    var payoff: Payoff?  // Its post is set by `deliver` once saved.
     /// Counts posts, so the one strong haptic fires on each.
     private(set) var posts = 0
     private(set) var isSending = false
@@ -170,6 +157,9 @@ public final class TodayModel {
     /// The banner on top or a celebration's card, those waiting, told only while 今天 is in front.
     var notice: Notice?
     var pendingNotices: [Notice] = []
+    /// Posts the server refused that the member has been told of and hasn't opened again, oldest
+    /// first; 重发 opens them one by one.
+    var failed: [PendingCheckIn] = []
     public internal(set) var celebration: Broadcast?
     public var isHomeInFront = true
     /// Tells a store or prop the member unlocked (`tellUnlocks(with:)`); nil tells none.
@@ -308,6 +298,18 @@ public final class TodayModel {
         }
     }
 
+    /// The compose page for a post the server refused, with its photos, words, sport, workout and
+    /// day as the member made it, to change and send again.
+    func resend(_ post: PendingCheckIn) {
+        sendFailed = false
+        payoff = nil
+        let kind = post.draft.kind
+        let model = newPost(kind, from: nil)
+        model.restore(post)
+        compose = model
+        step = .composing(kind)
+    }
+
     func cancel() {
         step = .scene
         compose = nil
@@ -318,10 +320,9 @@ public final class TodayModel {
         await writer.suggestions(for: reason, style: style)
     }
 
-    /// Posts `draft` to the member's squad, or only to them when not `shared`, for `day` (today
-    /// when left out). The page closes and the payoff plays as soon as the post is queued on the
-    /// phone; it goes out behind the scene, shown on 打卡's spot (`outgoing`). False when it can
-    /// never be posted; the open page says so.
+    /// Posts `draft` to the squad (or only to me when not `shared`) for `day`, today when left out.
+    /// The page closes and the payoff plays once it is queued; it goes out behind the scene
+    /// (`deliver`). False when it can never be posted; the open page says so.
     @discardableResult
     func post(_ draft: CheckInDraft, shared: Bool, on day: LocalDay? = nil) async -> Bool {
         guard !isSending else { return false }

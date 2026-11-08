@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -34,6 +35,10 @@ struct FactCard: View {
     /// How many are in the squad, to say when everyone trained the same day.
     let everyone: Int
     let nickname: (MemberID) -> String
+    /// Whose heads go before the line under the number (who trained that day or sport, whose
+    /// streak it was), none on 你的一周.
+    var people: [MemberID] = []
+    var head: (MemberID) -> CharacterPlayer? = { _ in nil }
     /// On the white ground (你的一周) the card is mist; on the scene it is see-through white.
     var onGround = false
     @Environment(\.sceneTheme) private var theme
@@ -47,11 +52,16 @@ struct FactCard: View {
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-            note
-                .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+            HStack(spacing: Space.xs) {
+                if !people.isEmpty {
+                    HeadStack(people.map(head), size: Self.head, on: ground, limit: Self.headLimit)
+                }
+                note
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, Space.m)
@@ -62,6 +72,15 @@ struct FactCard: View {
         )
         .accessibilityElement(children: .combine)
     }
+
+    /// The card's ground, for the rim between overlapping heads.
+    private var ground: ColorRole { onGround ? .bgSubtle : .bgCanvas }
+
+    private static let head: Double = 22
+    /// Heads before 「+N」.
+    private static let headLimit = 3
+    /// Who trained is named beside the heads only up to this many.
+    private static let namedPeople = 2
 
     private var label: Text {
         switch fact {
@@ -102,8 +121,14 @@ struct FactCard: View {
         case .bestDay(let best):
             if best.members == everyone {
                 Text("全员都训练了", bundle: .module)
-            } else {
+            } else if people.isEmpty || people.count > Self.namedPeople {
+                // More than two names don't fit beside the heads; the heads say who.
                 Text("\(best.members) 人训练了", bundle: .module)
+            } else {
+                // 「Tracy，Fran」: who trained, beside their heads.
+                Text(
+                    verbatim: people.map(nickname).filter { !$0.isEmpty }.joined(
+                        separator: String(localized: "，", bundle: .module.inAppLanguage)))
             }
         case .streak(let days, let from, let member):
             streakNote(from: from, through: from + days - 1, by: member)

@@ -55,11 +55,16 @@ public final class TodayStore {
     /// The squad's coach on the sideline as last loaded, and the squad it was loaded for.
     /// Set only by `loadCoach()`.
     var loadedCoach: (squad: SquadID, coach: SidelineCoach?)?
-    /// The coaches' morning notes (便条) waiting on 今天, as last loaded, the one to show first;
-    /// one at a time, each until it is put away (`putAwayNote()`).
+    /// The coaches' morning notes (便条) waiting for the member, as last loaded, newest first;
+    /// one shows only when the member opens it (`showWaitingNote()`), never by itself
+    /// (Tracy, 2026-11-07), each until it is put away (`putAwayNote()`).
     public internal(set) var coachNotes: [CoachMemberNote] = []
     /// A note shown again from 通知, before any waiting.
     var noteAgain: CoachMemberNote?
+    /// Whether the member opened the waiting note (a tap on its push).
+    var showsWaitingNote = false
+    /// The newest note put away, from this launch or kept on the phone, for the coach's card.
+    var openedNote: CoachMemberNote?
     /// Notes put away on this phone since launch, kept out of a load that crossed the put-away.
     var putAway: Set<Int> = []
     /// What changed in the squad since the home shown before, not yet told (`takeNews()`).
