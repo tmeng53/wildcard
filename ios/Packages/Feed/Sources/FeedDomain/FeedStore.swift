@@ -322,14 +322,6 @@ private struct Wish: Hashable, Sendable {
     }
 }
 
-/// A teammate's reaction on one of the member's own posts.
-public struct Arrival: Hashable, Sendable {
-    public let post: CheckInID
-    public let member: MemberID
-    public let emoji: Emoji
-    public let moment: Timestamp
-}
-
 // MARK: - Comments
 
 extension FeedStore {
@@ -360,6 +352,11 @@ extension FeedStore {
             }
             return true
         } catch {
+            // No answer (a timeout, the app in the background) may still be saved: read it again.
+            if error == .notSent {
+                await refresh(id)
+                if isListed(comment.id, on: id) { return true }
+            }
             // The member's own post the server hasn't saved yet takes comments once it has.
             let error = error == .postGone && ownNotYetListed[id] != nil ? FeedError.notSent : error
             if error == .postGone { forget(id) } else { unsentComments[id] = comment }
@@ -384,6 +381,16 @@ extension FeedStore {
             if error == .postGone { forget(id) }
             failure = error
         }
+    }
+
+    /// The member's last comment on a post that didn't go out, until a read lists it after all.
+    public func unsentComment(on id: CheckInID) -> Comment? {
+        guard let unsent = unsentComments[id], !isListed(unsent.id, on: id) else { return nil }
+        return unsent
+    }
+
+    private func isListed(_ comment: CommentID, on id: CheckInID) -> Bool {
+        loaded[id]?.comments.contains { $0.id == comment } ?? false
     }
 
     /// True while the member's comment is still going out.
