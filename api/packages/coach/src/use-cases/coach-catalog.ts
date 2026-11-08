@@ -4,7 +4,7 @@ import type { CoachCatalogStore } from '../ports.js';
 
 /** The coaches, for the admins to read, add and change. */
 export interface CoachCatalogAdmin {
-  /** Every coach, retired ones too, by id. */
+  /** Every coach, retired ones too, in 教练招聘会's order. */
   list(): Promise<readonly Coach[]>;
   /**
    * Adds `edit` as a new coach, or replaces the coach with its id whole, logged as `by`'s
@@ -17,7 +17,7 @@ export function createCoachCatalog(deps: { readonly store: CoachCatalogStore }):
   return {
     list: () => deps.store.list(),
     put: async (edit, by) => {
-      const coach = Coach.parse({ version: 2, ...edit });
+      const coach = Coach.parse({ version: 3, ...edit });
       await deps.store.save(coach, by);
       return coach;
     },

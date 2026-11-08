@@ -1,3 +1,4 @@
+import type { ReaderLanguage } from '@wildcard/language-model';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -17,7 +18,7 @@ import {
   type WeekCheckIn,
 } from './awards.js';
 import { BadgeCatalog, DEFAULT_BADGE } from './badges.js';
-import { PROMPT_COMMENTS, promptFor } from './prompt.js';
+import { awardsLanguageOf, PROMPT_COMMENTS, promptFor } from './prompt.js';
 import { WeekStart } from './schedule.js';
 
 const catalog = BadgeCatalog.parse({
@@ -324,6 +325,25 @@ describe('promptFor', () => {
     expect(prompt.moves).toHaveLength(MOVE_IDS.length);
     expect(JSON.stringify(prompt)).not.toContain(ana);
     expect(prompt.memes).toBeUndefined();
+  });
+
+  it('asks for the squad’s language when it isn’t Simplified Chinese, English waiting on its limits', () => {
+    const writeInOf = (language: ReaderLanguage) =>
+      z.object({ writeIn: z.string().optional() }).parse(
+        JSON.parse(
+          promptFor({
+            weekStart: WeekStart.parse('2026-10-19'),
+            moves,
+            badges: catalog,
+            memes: [],
+            members: [],
+            language: awardsLanguageOf(language),
+          }),
+        ),
+      ).writeIn;
+    expect(writeInOf('zh-Hans')).toBeUndefined();
+    expect(writeInOf('zh-Hant')).toBe('用繁體中文寫，照台灣的說法。');
+    expect(writeInOf('en')).toBeUndefined();
   });
 
   it('calls a planned rest 计划休息, not a 请假条', () => {

@@ -120,10 +120,11 @@ export interface CoachWakeStore {
 export interface CoachMemoryStore {
   /** The squad's files now, by stored path. */
   files(squad: SquadId): Promise<ReadonlyMap<StoredPath, string>>;
-  /** Saves new versions of the squad's files, as one wake's changes. */
+  /** Saves new versions of the squad's files, as one wake's changes, or an admin's. */
   save(input: {
     readonly squad: SquadId;
-    readonly wake: number;
+    /** The wake that changed them; left out for an admin's edit. */
+    readonly wake?: number;
     readonly files: readonly { readonly path: StoredPath; readonly body: string }[];
   }): Promise<void>;
 }
@@ -363,7 +364,7 @@ export interface SquadCoaching {
   readonly notes: readonly { readonly day: string; readonly text: string }[];
   /** The last wakes, newest first, with why a failed one failed. */
   readonly wakes: readonly {
-    readonly reason: 'checkIn' | 'comment' | 'daily';
+    readonly reason: 'checkIn' | 'comment' | 'daily' | 'dream';
     readonly state: string;
     readonly tries: number;
     readonly lastError: string | null;
