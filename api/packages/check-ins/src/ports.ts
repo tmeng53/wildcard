@@ -21,7 +21,6 @@ export type InsertOutcome =
 export type UpdateOutcome =
   { readonly saved: true } | { readonly saved: false; readonly taken: 'photo' | 'workout' };
 
-/** Where check-ins are kept. */
 /** The rows 外卡记录 reads, as `CheckInStore.recordRows` gives them. */
 export interface RecordRows {
   readonly trainings: readonly (RecordTraining & { readonly member: MemberId })[];
@@ -32,6 +31,7 @@ export interface RecordRows {
   readonly given: ReadonlyMap<MemberId, number>;
 }
 
+/** Where check-ins are kept. */
 export interface CheckInStore {
   /** The check-in saved under `id`, whoever made it. */
   find(id: CheckInId): Promise<CheckInRecord | undefined>;

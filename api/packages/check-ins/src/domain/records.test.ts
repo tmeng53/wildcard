@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { longestRun, memberRecords, squadRecords, type RecordTraining } from './records.js';
+import {
+  longestRun,
+  memberRecords,
+  sportDays,
+  squadRecords,
+  type RecordTraining,
+} from './records.js';
 import { SportKey } from './sports.js';
 
 const NEW_YORK = 'America/New_York';
@@ -98,11 +104,12 @@ describe('squadRecords', () => {
     restDays: new Set(),
     timeZone: NEW_YORK,
   });
+  const cocoTrainings = [
+    training({ day: '2026-11-02', hourUtc: 13, sport: 'yoga' }),
+    training({ day: '2026-11-03', hourUtc: 13, sport: 'yoga' }),
+  ];
   const coco = memberRecords({
-    trainings: [
-      training({ day: '2026-11-02', hourUtc: 13, sport: 'yoga' }),
-      training({ day: '2026-11-03', hourUtc: 13, sport: 'yoga' }),
-    ],
+    trainings: cocoTrainings,
     healthyMealDays: [],
     restDays: new Set(),
     timeZone: NEW_YORK,
@@ -111,7 +118,16 @@ describe('squadRecords', () => {
   it('names the partner, the cheers and what the member is first at', () => {
     const squad = squadRecords({
       me: { records: me, days: new Set(['2026-11-02', '2026-11-03', '2026-11-04']) },
-      mates: new Map([['coco', { records: coco, days: new Set(['2026-11-02', '2026-11-03']) }]]),
+      mates: new Map([
+        [
+          'coco',
+          {
+            records: coco,
+            days: new Set(['2026-11-02', '2026-11-03']),
+            sportDays: sportDays(cocoTrainings),
+          },
+        ],
+      ]),
       received: new Map([['coco', 23]]),
       given: new Map([['coco', 41]]),
     });
@@ -119,6 +135,32 @@ describe('squadRecords', () => {
     expect(squad.cheersReceived).toEqual({ count: 23, top: { member: 'coco', count: 23 } });
     expect(squad.cheersGiven).toEqual({ count: 41, top: { member: 'coco', count: 41 } });
     expect(squad.firsts).toEqual(['latestTrainer', 'topSport', 'mostDays']);
+  });
+
+  it('counts a squadmate’s every sport, not only their top ones, for the top sport', () => {
+    const days = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04', '2026-10-05'];
+    const trainings = [
+      ...['yoga', 'swim', 'cycling'].flatMap((sport) =>
+        days.map((day) => training({ day, hourUtc: 13, sport })),
+      ),
+      ...days.slice(0, 4).map((day) => training({ day, hourUtc: 13 })),
+    ];
+    const busy = memberRecords({
+      trainings,
+      healthyMealDays: [],
+      restDays: new Set(),
+      timeZone: NEW_YORK,
+    });
+    expect(busy.sports.map((sport) => sport.sport)).not.toContain('run');
+    const squad = squadRecords({
+      me: { records: me, days: new Set(['2026-11-02', '2026-11-03', '2026-11-04']) },
+      mates: new Map([
+        ['busy', { records: busy, days: new Set(days), sportDays: sportDays(trainings) }],
+      ]),
+      received: new Map(),
+      given: new Map(),
+    });
+    expect(squad.firsts).not.toContain('topSport');
   });
 
   it('is first at nothing alone', () => {

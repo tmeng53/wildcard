@@ -57,6 +57,16 @@ export const TOP_SPORTS = 3;
 const sportKey = (training: { readonly sport: string; readonly customSport?: string }) =>
   training.sport === 'custom' ? `custom:${training.customSport ?? ''}` : training.sport;
 
+/** Days trained at each sport, every sport counted, for comparing beyond a member's top ones. */
+export function sportDays(trainings: readonly RecordTraining[]): ReadonlyMap<string, number> {
+  const days = new Map<string, Set<LocalDay>>();
+  for (const training of trainings) {
+    const key = sportKey(training);
+    days.set(key, (days.get(key) ?? new Set()).add(training.day));
+  }
+  return new Map([...days].map(([key, set]) => [key, set.size]));
+}
+
 /** 1 for Monday to 7 for Sunday. */
 function weekdayOf(day: LocalDay): number {
   const weekday = new Date(Date.parse(day)).getUTCDay();
@@ -205,7 +215,12 @@ export function squadRecords(input: {
   /** Each squadmate's records and trained days, from what they shared with the squad. */
   readonly mates: ReadonlyMap<
     string,
-    { readonly records: MemberRecords; readonly days: ReadonlySet<LocalDay> }
+    {
+      readonly records: MemberRecords;
+      readonly days: ReadonlySet<LocalDay>;
+      /** Days trained at each sport, from `sportDays`. */
+      readonly sportDays: ReadonlyMap<string, number>;
+    }
   >;
   /** Reactions on the member's check-ins, by squadmate. */
   readonly received: ReadonlyMap<string, number>;
@@ -222,7 +237,7 @@ export function squadRecords(input: {
   const receivedTop = top(input.received);
   const givenTop = top(input.given);
   const mates = [...input.mates.values()].map((mate) => mate.records);
-  // The day runs from 3am, so 1am is later than 11pm.
+  // Night runs past midnight: training at 1am is later than at 11pm.
   const lateness = (records: MemberRecords) => {
     const hour = usualHour(records.hours);
     return hour === undefined ? undefined : (hour + 21) % 24;
@@ -230,8 +245,6 @@ export function squadRecords(input: {
   const myHour = lateness(input.me.records);
   const theirHours = mates.map(lateness);
   const myTop = input.me.records.sports[0];
-  const daysOf = (records: MemberRecords, sport: SportDays) =>
-    records.sports.find((candidate) => sportKey(candidate) === sportKey(sport))?.days ?? 0;
   const firsts: SquadFirst[] = [];
   if (firstAlone(myHour, theirHours)) firsts.push('latestTrainer');
   if (
@@ -246,7 +259,7 @@ export function squadRecords(input: {
     myTop !== undefined &&
     firstAlone(
       myTop.days,
-      mates.map((records) => daysOf(records, myTop)),
+      [...input.mates.values()].map((mate) => mate.sportDays.get(sportKey(myTop)) ?? 0),
     )
   ) {
     firsts.push('topSport');

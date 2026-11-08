@@ -1,6 +1,7 @@
 import type { LocalDay, MemberId, SquadId } from '../../domain/check-in.js';
 import {
   memberRecords,
+  sportDays,
   squadRecords,
   type MemberRecords,
   type RecordTraining,
@@ -92,6 +93,7 @@ export async function records(
               timeZone: await timeZoneOf(mate),
             }),
             days: new Set(trainings.map((training) => training.day)),
+            sportDays: sportDays(trainings),
           },
         ] as const;
       }),
