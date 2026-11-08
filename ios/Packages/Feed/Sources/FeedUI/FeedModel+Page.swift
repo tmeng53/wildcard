@@ -17,7 +17,13 @@ extension FeedModel {
     /// Reads a post's page again when news of it comes while it is open (the coach answered, a
     /// teammate commented), so the page shows it without a pull.
     public func refreshIfOpen(about notice: Notice) {
-        guard case .post(let post) = notice.destination, opened == post else { return }
+        if let opened { refresh(opened, about: notice) }
+    }
+
+    /// Reads `post`'s page again when `notice` is news of it, for a page shown with its own model
+    /// (opened from 通知, a push, 我的动态 or 训练记录).
+    public func refresh(_ post: CheckInID, about notice: Notice) {
+        guard case .post(let about) = notice.destination, about == post else { return }
         Task { await loadPage(post) }
     }
 

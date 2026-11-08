@@ -65,26 +65,32 @@ async function send(deps: CommentPushDependencies, comment: NewComment): Promise
       member,
       notification: commentNotification({ ...comment, nickname, news }),
     }));
-    await tellNotices(deps, { ...comment, notifications });
+    const fresh = await tellNotices(deps, { ...comment, notifications });
     await Promise.all(
-      notifications.map(async ({ member, notification }) => {
-        const to = PushMember.parse(member);
-        if (!(await deps.push.settingsOf(to)).dailyProgress) return;
-        const outcome = await deps.push.notifyMembers({ members: [to], notification });
-        if (outcome.failures.length > 0) {
-          deps.log.warn('comment push not sent to every phone', {
-            member,
-            failures: outcome.failures,
-          });
-        }
-      }),
+      notifications
+        .filter(({ member }) => fresh.has(member))
+        .map(async ({ member, notification }) => {
+          const to = PushMember.parse(member);
+          if (!(await deps.push.settingsOf(to)).dailyProgress) return;
+          const outcome = await deps.push.notifyMembers({ members: [to], notification });
+          if (outcome.failures.length > 0) {
+            deps.log.warn('comment push not sent to every phone', {
+              member,
+              failures: outcome.failures,
+            });
+          }
+        }),
     );
   } catch (error) {
     deps.log.error('comment push not sent', { checkIn: comment.checkIn, error });
   }
 }
 
-/** Keeps each push in its member's 通知 before it is sent. Never fails the push. */
+/**
+ * Keeps each push in its member's 通知 before it is sent, and answers with the members to push:
+ * those told now, so a comment delivered twice is pushed once. Never fails the push: when the
+ * notices can't be written, everyone is pushed.
+ */
 async function tellNotices(
   deps: CommentPushDependencies,
   {
@@ -97,17 +103,19 @@ async function tellNotices(
       readonly notification: PushNotification;
     }[];
   },
-): Promise<void> {
+): Promise<ReadonlySet<string>> {
   try {
-    await deps.notices.tell(
+    const told = await deps.notices.tell(
       notifications.map(({ member, notification }) => ({
         member: NoticeMember.parse(member),
         kind: 'comment',
         subject: { version: 1, alert: noticeAlert(notification), checkIn, comment },
       })),
     );
+    return new Set<string>(told);
   } catch (error) {
     deps.log.warn('comment push not kept in notices', { checkIn, error });
+    return new Set(notifications.map(({ member }) => member));
   }
 }
 

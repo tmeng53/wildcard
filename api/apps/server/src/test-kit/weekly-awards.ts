@@ -55,7 +55,7 @@ export const unusedGifts = { of: unused };
  * told are dropped, since keeping them never decides what a request answers.
  */
 export const ignoredNotices = {
-  notices: { tell: () => Promise.resolve(), page: unused, markSeen: unused },
+  notices: { tell: () => Promise.resolve([]), page: unused, markSeen: unused },
   coachNames: unused,
   liveEvents: { subscribe: unused, close: () => Promise.resolve() },
 };

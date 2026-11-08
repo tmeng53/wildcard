@@ -83,7 +83,7 @@ describe('a comment push', () => {
       {
         members,
         push,
-        notices: { tell: () => Promise.resolve() },
+        notices: { tell: (told) => Promise.resolve(told.map(({ member }) => member)) },
         log: createLog((line) => lines.push(line)),
       },
       { checkIn: other, comment: other, commenter: writer, text: '加油', author },
