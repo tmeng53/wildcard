@@ -43,7 +43,7 @@ struct SquadTimeZoneRow: View {
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                         .accessibilityIdentifier("squad.timeZone.next")
                 }
-                Text("每周日晚 8 点按这个时区结算本周比赛，选大多数队员所在的时区", bundle: .module)
+                Text("用于全队都能看到的内容，比如周日晚 8 点的战报", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
             }

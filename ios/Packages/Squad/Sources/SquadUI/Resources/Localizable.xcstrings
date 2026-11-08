@@ -1203,24 +1203,24 @@
         }
       }
     },
-    "每周日晚 8 点按这个时区结算本周比赛，选大多数队员所在的时区": {
+    "用于全队都能看到的内容，比如周日晚 8 点的战报": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Each week's match settles Sunday at 8pm in this time zone. Pick where most of the squad lives."
+            "value": "For what the whole squad sees, like the Sunday 8pm recap."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "每周日晚 8 点按这个时区结算本周比赛，选大多数队员所在的时区"
+            "value": "用于全队都能看到的内容，比如周日晚 8 点的战报"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "每週日晚 8 點按這個時區結算本週比賽，選大多數隊員所在的時區"
+            "value": "用於全隊都能看到的內容，比如週日晚 8 點的戰報"
           }
         }
       }
