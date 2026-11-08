@@ -26,7 +26,7 @@ struct PlayerCard: View {
     @State private var turn: Double = 0
     @State private var isTurning = false
     @State private var opened: BoardTitle?
-    /// The badge board, opened from the 出赛表 on a squadmate's card's back.
+    /// A squadmate's card's back shows their badge board in place of their 出赛表.
     @State private var showsBoard = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -59,9 +59,6 @@ struct PlayerCard: View {
                     .accessibilityHidden(true)
             }
         }
-        .sheet(isPresented: $showsBoard) {
-            BadgeBoardSheet(face: face)
-        }
         .sheet(item: $opened) { title in
             BadgeCard(
                 title: title, isWorn: face.board.worn == title.title,
@@ -74,13 +71,16 @@ struct PlayerCard: View {
         }
     }
 
-    /// A squadmate's card turns over to their 出赛表 this week, whose badges open the board; the
-    /// member's own (and one from an older server) to the board itself.
+    /// A squadmate's card turns over to their 出赛表 this week, whose badges turn the same side to
+    /// their badge board and 出赛表 back again (Tracy, 2026-11-08, A); the member's own (and one
+    /// from an older server) to the board itself.
     @ViewBuilder private var back: some View {
-        if let schedule = face.schedule {
+        if let schedule = face.schedule, !showsBoard {
             ScheduleBack(face: face, schedule: schedule) { showsBoard = true }
+        } else if face.schedule != nil {
+            CardBack(face: face, toSchedule: { showsBoard = false }, open: { opened = $0 })
         } else {
-            CardBack(face: face) { opened = $0 }
+            CardBack(face: face, open: { opened = $0 })
         }
     }
 
@@ -95,6 +95,7 @@ struct PlayerCard: View {
         guard !isTurning else { return }
         if reduceMotion {
             withAnimation(.wildcard(Motion.page, reduceMotion: true)) { showsBack.toggle() }
+            showsBoard = false
             return
         }
         isTurning = true
@@ -103,6 +104,8 @@ struct PlayerCard: View {
             turn = 90
         } completion: {
             showsBack.toggle()
+            // Turned over again, a squadmate's back opens on their 出赛表.
+            showsBoard = false
             turn = -90
             withAnimation(.easeOut(duration: half)) {
                 turn = 0
@@ -258,35 +261,32 @@ private struct FrontStat<Value: View>: View {
     }
 }
 
-/// A squadmate's badge board, opened from their card's 出赛表 back: the card's back as it was
-/// before (the career count and the board) on the card's stock, whose badges open their own cards.
-private struct BadgeBoardSheet: View {
-    let face: PlayerCardFace
-    @State private var opened: BoardTitle?
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        CardBack(face: face) { opened = $0 }
-            .tradingCardStock(fillsWidth: false)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
-            .accessibilityIdentifier("me.badgeBoard")
-            .sheet(item: $opened) { title in
-                BadgeCard(title: title, isWorn: face.board.worn == title.title, equip: nil)
-            }
-    }
-}
-
 /// The back: the name and number, the career count of 练了 large with 健康餐 and 请假条 beside
-/// it, then the badge board, three to a row, ending on the dashed slot of the next Sunday's.
+/// it, then the badge board, three to a row, ending on the dashed slot of the next Sunday's. On a
+/// squadmate's card it is opened from their 出赛表, with 「‹ 出赛表」 back to it and no next slot.
 private struct CardBack: View {
     let face: PlayerCardFace
+    /// Back to a squadmate's 出赛表; nil on the member's own card.
+    var toSchedule: (() -> Void)?
     let open: (BoardTitle) -> Void
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            if let toSchedule {
+                Button(action: toSchedule) {
+                    Label {
+                        Text("出赛表", bundle: .module)
+                    } icon: {
+                        Image(systemName: "chevron.left")
+                    }
+                    .typeStyle(TypeRamp.caption)
+                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
+                }
+                .buttonStyle(PressableButtonStyle())
+                .padding(.bottom, Space.xxs)
+                .accessibilityIdentifier("me.cardBackToSchedule")
+            }
             HStack(alignment: .firstTextBaseline) {
                 Text(face.character.nickname)
                     .typeStyle(TypeRamp.headline)
@@ -335,7 +335,7 @@ private struct CardBack: View {
                         .buttonStyle(PressableButtonStyle())
                         .accessibilityIdentifier("me.badge")
                     }
-                    NextBadgeCell()
+                    if toSchedule == nil { NextBadgeCell() }
                 }
                 .padding(.vertical, Space.s)
             }
