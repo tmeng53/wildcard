@@ -20,6 +20,9 @@ public struct SquadWeeklyGoal: Hashable, Sendable {
     /// The goals a captain picks from.
     public static let choices = 1...7
 
+    /// What a new squad starts from, and a squad nobody set a goal for has: the API's.
+    public static let defaultDaysPerMember = 3
+
     /// This week's goal.
     public var daysPerMember: Int
     /// Next week's: a captain's change counts from the next week.

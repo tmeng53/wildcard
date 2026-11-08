@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "招聘教练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hire a coach"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "招聘教練"
+          }
+        }
+      }
+    },
     "继续编辑": {
       "localizations": {
         "en": {
@@ -44,7 +60,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "沒儲存上，再點一次儲存"
+            "value": "沒存到，再點一次儲存"
           }
         }
       }
@@ -60,7 +76,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "放棄這條動態？"
+            "value": "放棄這則動態？"
           }
         }
       }
@@ -230,7 +246,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only you can see it, in My posts"
+            "value": "Only you can see this, in My posts"
           }
         },
         "zh-Hant": {
@@ -657,22 +673,6 @@
         }
       }
     },
-    "编个借口吧…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Make up an excuse…"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "找個藉口吧…"
-          }
-        }
-      }
-    },
     "美国和加拿大都能拨 988，24 小时，免费。美国的线路可以要中文翻译。": {
       "localizations": {
         "en": {
@@ -742,7 +742,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Disciplined, this one…"
+            "value": "A very disciplined meal…"
           }
         },
         "zh-Hant": {
@@ -774,7 +774,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "(quietly) go"
+            "value": "(whispers) you got this"
           }
         },
         "zh-Hant": {
@@ -988,7 +988,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "在吃放縱餐"
+            "value": "在吃欺騙餐"
           }
         }
       }
@@ -1244,7 +1244,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "健康餐 %1$lld · 放縱餐 %2$lld"
+            "value": "健康餐 %1$lld · 欺騙餐 %2$lld"
           }
         }
       }
@@ -1276,7 +1276,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "放縱餐"
+            "value": "欺騙餐"
           }
         }
       }
@@ -1457,22 +1457,6 @@
         }
       }
     },
-    "全屏看": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opens full screen"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "全螢幕看"
-          }
-        }
-      }
-    },
     "新队友 %@ 上场": {
       "localizations": {
         "en": {
@@ -1638,7 +1622,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "More new notices · Take a look"
+            "value": "More notifications · Take a look"
           }
         },
         "zh-Hant": {
@@ -1910,7 +1894,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Number %lld"
+            "value": "Photo %lld"
           }
         },
         "zh-Hant": {
@@ -1974,13 +1958,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Write one"
+            "value": "Write it for me"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "編一句"
+            "value": "幫我寫一句"
           }
         }
       }
@@ -1990,7 +1974,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Another"
+            "value": "Try another"
           }
         },
         "zh-Hant": {
@@ -2006,7 +1990,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Leave"
+            "value": "Day off"
           }
         },
         "zh-Hant": {
@@ -2038,7 +2022,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Leave or rest"
+            "value": "Day off or rest"
           }
         },
         "zh-Hant": {
@@ -2054,7 +2038,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rest today"
+            "value": "Rest day"
           }
         },
         "zh-Hant": {
@@ -2070,7 +2054,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "How are you resting?"
+            "value": "What kind of day off?"
           }
         },
         "zh-Hant": {
@@ -2086,7 +2070,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Post rest"
+            "value": "Post rest day"
           }
         },
         "zh-Hant": {
@@ -2108,7 +2092,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "有一條發送失敗"
+            "value": "有一則發送失敗"
           }
         }
       }
@@ -2124,7 +2108,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "有 %lld 條發送失敗"
+            "value": "有 %lld 則發送失敗"
           }
         }
       }
@@ -2156,7 +2140,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "先重發最早的一條"
+            "value": "先重發最早的一則"
           }
         }
       }

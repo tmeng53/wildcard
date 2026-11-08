@@ -150,7 +150,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your consent to the AI is withdrawn too"
+            "value" : "Your AI consent is withdrawn too"
           }
         },
         "zh-Hant" : {
@@ -204,7 +204,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "外卡運動員、暱稱和口頭禪都會刪除"
+            "value" : "外卡運動員和暱稱都會刪除"
           }
         }
       }
@@ -381,22 +381,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "帳號"
-          }
-        }
-      }
-    },
-    "轻点翻面" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap to flip the card"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "點一下翻面"
           }
         }
       }
@@ -600,7 +584,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "workouts · %lld clean meals · %lld day-offs"
+            "value" : "workouts · %lld clean meals · %lld days off"
           }
         },
         "zh-Hans" : {
@@ -980,7 +964,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "教練的訊息和回覆，靜默推送。關掉後通知裡照樣有。"
+            "value" : "教練的訊息和回覆，靜默推播。關掉後通知裡照樣有。"
           }
         }
       }
@@ -996,7 +980,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "訓練記錄"
+            "value" : "訓練紀錄"
           }
         }
       }

@@ -20,11 +20,13 @@ private final class Schema: Decodable, Sendable {
     let maxItems: Int?
     let maxCharacters: Int?
     let minimum: Int?
+    let defaultValue: Int?
     let maximum: Int?
     let ref: String?
 
     enum CodingKeys: String, CodingKey {
         case properties, minItems, maxItems, minimum, maximum
+        case defaultValue = "default"
         case ref = "$ref"
         case maxCharacters = "x-max-characters"
     }
@@ -107,6 +109,17 @@ func audienceSizeIsTheAPIs(schema: String) throws {
     let audience = try property("audience", of: schema)
     #expect(audience?.minItems == nil)
     #expect(audience?.maxItems == Audience.maxSquads)
+}
+
+@Test(arguments: ["NewSquad", "SquadWeeklyGoal", "SquadWeeklyGoalChange"])
+func squadWeeklyGoalIsTheAPIs(schema: String) throws {
+    let days = try property("daysPerMember", of: schema)
+    #expect(days?.minimum == SquadWeeklyGoal.choices.lowerBound)
+    #expect(days?.maximum == SquadWeeklyGoal.choices.upperBound)
+}
+
+@Test func newSquadDefaultGoalIsTheAPIs() throws {
+    #expect(try property("daysPerMember", of: "NewSquad")?.defaultValue == SquadWeeklyGoal.defaultDaysPerMember)
 }
 
 @Test(arguments: ["WeeklyPlan", "WeeklyPlanDraft", "PlanTemplate", "PlanTemplateDraft"])

@@ -132,3 +132,19 @@ struct LaunchWaveTests {
         #expect(near(LaunchWave.letter(0, at: top + 0.9).offset, -7))
     }
 }
+
+struct ShopfrontTests {
+    /// The shops' glass, brass and steel, from the App Store screenshots' storefronts (2026-11-08).
+    @Test func theShopsAreTheScreenshots() {
+        #expect(
+            [Palette.shopGlass, Palette.shopKnob, Palette.shutter, Palette.shutterSeam, Palette.shutterMark].map(\.hex)
+                == ["#E3EDF4", "#F6C344", "#C3C7CF", "#B4B9C2", "#8A8F9A"])
+    }
+
+    /// The street's sky and paving, from the approved 商店街 (2026-11-08).
+    @Test func theStreetIsTheApprovedOne() {
+        #expect(
+            [Palette.streetSky, Palette.pavement, Palette.paveJoint, Palette.kerb].map(\.hex)
+                == ["#EEF2F7", "#E6E2DA", "#DCD7CE", "#CFCAC0"])
+    }
+}

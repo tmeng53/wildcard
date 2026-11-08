@@ -76,7 +76,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "發到小隊時默認帶上"
+            "value" : "發到小隊時預設帶上"
           }
         }
       }
@@ -172,7 +172,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "打開 Google Health，點右上角頭像"
+            "value" : "打開 Google Health，點右上角大頭貼"
           }
         }
       }
@@ -300,7 +300,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每次發的時候還可以在成績條上點掉。路線會自動去掉起點和終點各 200 米。"
+            "value" : "每次發的時候還可以在成績條上點掉。路線會自動去掉起點和終點各 200 公尺。"
           }
         }
       }
@@ -342,7 +342,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wear Fitbit, WHOOP or Oura?"
+            "value" : "Wear a Fitbit, WHOOP or Oura?"
           }
         },
         "zh-Hant" : {
@@ -365,22 +365,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "裝置"
-          }
-        }
-      }
-    },
-    "设置" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Settings"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "設定"
           }
         }
       }

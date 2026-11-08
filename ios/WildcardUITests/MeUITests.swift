@@ -172,7 +172,7 @@ final class MeUITests: XCTestCase {
     }
 
     /// 出赛表 opens inside 我 from the tile under the card, with this week's number and count, and its
-    /// 每周模板 is one of its own chips; 返回 goes back to 我 with the tab bar there all along.
+    /// 我的每周计划 is one of its own chips; 返回 goes back to 我 with the tab bar there all along.
     func testScheduleOpensInsideMe() {
         let app = launch(language: "zh-Hans")
         let row = app.buttons["me.schedule"]
@@ -186,7 +186,7 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(tabButton("tab.me", in: app).isSelected, "出赛表 left 我")
         app.buttons["schedule.template"].tap()
         let note = app.descendants(matching: .any)["schedule.template.note"]
-        XCTAssertTrue(note.waitForExistence(timeout: 30), "the 每周模板 chip didn't open the template")
+        XCTAssertTrue(note.waitForExistence(timeout: 30), "the 我的每周计划 chip didn't open the template")
         settle()
         keepScreenshot(named: "48-me-schedule-template")
         backButton(in: app).tap()

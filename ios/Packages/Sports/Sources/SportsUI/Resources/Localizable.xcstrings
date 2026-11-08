@@ -84,7 +84,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "放縱餐"
+            "value": "欺騙餐"
           }
         }
       }
@@ -132,7 +132,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld 米泳池"
+            "value": "%lld 公尺泳池"
           }
         }
       }
@@ -356,7 +356,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "米"
+            "value": "公尺"
           }
         }
       }

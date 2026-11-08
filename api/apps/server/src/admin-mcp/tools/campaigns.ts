@@ -129,7 +129,7 @@ async function plan(
     const rule = ruleOf(id);
     if (rule === undefined) return 'opens only as a gift (a broadcast’s gifts)';
     const sports = rule.sports.length === 0 ? '' : ` in ${rule.sports.join(', ')}`;
-    return `unlocks after ${String(rule.after)} 练了${sports} on these days`;
+    return `unlocks after ${String(rule.after)} 训练${sports} on these days`;
   };
   const who = {
     draft: 'Nobody sees it.',
@@ -207,7 +207,7 @@ export function putCampaign(deps: CampaignToolDependencies) {
       'is what every squad’s home shows while its switch is on; one without may be picked), the ' +
       'limited stores and pieces on them (a store or piece whose switchId is one of the ' +
       'campaign’s switches, or a piece in such a store) and the unlock rules of those pieces: ' +
-      'only 练了 on its days count, and a piece stays the member’s all year. A piece without a ' +
+      'only 训练 on its days count, and a piece stays the member’s all year. A piece without a ' +
       'rule opens only as a broadcast’s gift; a starter is out for everyone. A new campaign is a draft no member can open (its names and colours are in the public catalog, as every limited scene’s and store’s are); a changed ' +
       'one keeps its status. Each is put whole, as put_scene, put_store, put_piece and ' +
       'put_unlock_rule do; art goes up first with put_art. Broadcast notices (the 「快到了」 notice, the holiday-day ' +

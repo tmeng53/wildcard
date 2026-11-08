@@ -78,9 +78,9 @@ export async function memberWeek(
 }
 
 /**
- * The plan's days as the squad may see them. A 练了 on a planned rest day turns that day into a
- * training day of its sport, so a day a 练了 turned that the squad can't see (sent elsewhere, or
- * deleted) shows as the rest day it was, or as the sport of a 练了 that did come to this squad.
+ * The plan's days as the squad may see them. A 训练 on a planned rest day turns that day into a
+ * training day of its sport, so a day a 训练 turned that the squad can't see (sent elsewhere, or
+ * deleted) shows as the rest day it was, or as the sport of a 训练 that did come to this squad.
  */
 function daysSeenBy({
   plan,

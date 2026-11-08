@@ -7,7 +7,9 @@ import {
   createPostgresReactionStore,
   createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
+  createWeekSummaryWords,
   createWeeklyPlans,
+  MemberId,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
@@ -296,6 +298,54 @@ describe('GET /squads/{squadId}/weeks/{weekStart}/summary', () => {
       ],
     });
     expect(english.body).toHaveProperty('squadTotals.stats.0.label', 'Days trained');
+
+    // Words saved before Traditional Chinese came read as Simplified there, until an admin gives
+    // them theirs.
+    const words = createWeekSummaryWords({ store: createPostgresWeekSummaryWords(db) });
+    const stored = await words.current();
+    const untranslated = await call('GET', {
+      path: summaryOf(squad, monday),
+      token: me.token,
+      language: 'zh-Hant',
+    });
+    expect(untranslated.body).toHaveProperty(
+      'awards.1.title',
+      stored.awards.crown.title['zh-Hant'] ?? stored.awards.crown.title['zh-Hans'],
+    );
+    const counted = (word: string) => ({ one: word, other: word });
+    const award = (
+      kind: 'planCompleted' | 'crown' | 'bestDisclaimer',
+      phrases: [string, string],
+    ) => ({
+      ...stored.awards[kind],
+      title: { ...stored.awards[kind].title, 'zh-Hant': phrases[0] },
+      winner: { ...stored.awards[kind].winner, 'zh-Hant': counted(phrases[1]) },
+    });
+    await words.change(
+      {
+        awards: {
+          planCompleted: award('planCompleted', ['頒獎台', '訓練 {n} 天']),
+          crown: award('crown', ['皇冠', '訓練 {n} 天']),
+          bestDisclaimer: award('bestDisclaimer', ['本週最佳假單', '{n} 個回應']),
+        },
+        stats: { disclaimers: { ...stored.stats.disclaimers, 'zh-Hant': '假單' } },
+      },
+      MemberId.parse(me.userId),
+    );
+    const traditional = await call('GET', {
+      path: summaryOf(squad, monday),
+      token: me.token,
+      language: 'zh-Hant',
+    });
+    expect(traditional.body).toMatchObject({
+      language: 'zh-Hant',
+      awards: [
+        { title: '頒獎台', winners: [{ text: '訓練 1 天' }] },
+        { title: '皇冠', winners: [{ text: '訓練 1 天' }] },
+        { title: '本週最佳假單', winners: [{ text: '1 個回應' }] },
+      ],
+    });
+    expect(traditional.body).toHaveProperty('squadTotals.stats.3.label', '假單');
   });
 
   it('refuses a day that isn’t a Monday, a week not started, and non-members', async () => {

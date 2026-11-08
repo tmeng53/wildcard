@@ -9,6 +9,13 @@ extension TodayStore {
         return loadedCoach.coach
     }
 
+    /// Whether the squad on the home is known to have no coach, so its sideline is free for one:
+    /// false before its coach is loaded, or when that load failed.
+    public var isHiringCoach: Bool {
+        guard let loadedCoach, loadedCoach.squad == savedHome?.squad.id else { return false }
+        return loadedCoach.coach == nil
+    }
+
     /// Loads the squad's coach and its line; keeps what was shown when the server can't be
     /// reached.
     public func loadCoach() async {

@@ -48,6 +48,8 @@ final class SquadCast {
     /// The coach the squad hired; nil without one, or for a coach this build has no character for,
     /// who stays off the scene.
     private(set) var coach: Coach?
+    /// Where the coach would stand while the squad has none: an empty spot that opens 教练招聘会.
+    private(set) var vacancy: StagePoint?
     /// Bumps each time the squad cheers me, with who joins in, nearest first.
     private(set) var cheer = Cheer(count: 0, order: [])
     /// What the coach last saw on the home, for its next cue, and whose eyes they were.
@@ -75,10 +77,14 @@ final class SquadCast {
     /// a quick second pull never lets the first one's move play after it.
     private var lightsMoves: [MemberID: Task<Void, Never>] = [:]
 
-    /// Places the squad from the store's home: everyone but `me`, and `coach` on the sideline.
-    func update(home: Home, scene: SceneTheme, phase: DayPhase, coach speaker: CoachSpeaker? = nil) {
+    /// Places the squad from the store's home: everyone but `me`, and `coach` on the sideline, or,
+    /// `hiring` (the squad has no coach), its empty spot there.
+    func update(
+        home: Home, scene: SceneTheme, phase: DayPhase, coach speaker: CoachSpeaker? = nil, hiring: Bool = false
+    ) {
         if stage.layout != .of(scene) { stage = SquadStage(layout: .of(scene)) }
         coach = sideline(speaker)
+        vacancy = hiring && coach == nil ? stage.layout.sideline : nil
         watch(home, by: speaker)
         let teammates = home.today.members.filter { $0.member != home.member }
         let members = teammates.map { mate in
@@ -90,7 +96,7 @@ final class SquadCast {
                 firstCheckInAt: mate.firstCheckInAt,
                 keepsToTheBack: Self.persona(of: mate) == .shy, eating: home.todaysMeal(of: mate.member))
         }
-        stage.arrange(members, coach: coach != nil)
+        stage.arrange(members, coach: coach != nil || vacancy != nil)
         mates = zip(teammates, members).compactMap { mate, member in
             let persona = Self.persona(of: mate)
             let look = Self.look(of: mate)
