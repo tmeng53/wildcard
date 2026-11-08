@@ -19,7 +19,7 @@ const MemberToday = z.strictObject({
     .nullable()
     .meta({
       description:
-        'What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). ' +
+        'What the member’s character shouts when the squad cheers a teammate’s 训练 (口头禅). ' +
         'Null when they haven’t picked one: the app uses their persona’s own line.',
     }),
   // Missing until they make their character. Left out rather than null: the Swift generator
@@ -35,7 +35,7 @@ const MemberToday = z.strictObject({
   }),
   training: z.enum(['trained', 'disclaimer', 'notCheckedIn']).meta({
     description:
-      'Where their today stands, from check-ins sent to this squad. A 练了 wins over a ' +
+      'Where their today stands, from check-ins sent to this squad. A 训练 wins over a ' +
       '请假条 posted earlier the same day.',
   }),
   latestMeal: z
@@ -67,8 +67,8 @@ export const SquadToday = z
     }),
     today: z.strictObject({
       trained: count('Members whose today is trained.'),
-      disclaimer: count('Members whose today is a 请假条 with no 练了.'),
-      resting: count('Members on a planned rest day with no 练了 or 请假条 today.'),
+      disclaimer: count('Members whose today is a 请假条 with no 训练.'),
+      resting: count('Members on a planned rest day with no 训练 or 请假条 today.'),
       everyoneTrained: z.boolean().meta({
         description:
           'At least one member trained today and every member who did not train is on a planned rest day, ' +
@@ -80,11 +80,11 @@ export const SquadToday = z
         from: LocalDay,
         to: LocalDay,
         trainedDays: count(
-          'Days this week with a 练了, wherever it was sent. Several on one day count once.',
+          'Days this week with a 训练, wherever it was sent. Several on one day count once.',
         ),
         plannedDays: count('Training days in this week’s plan: the y in 本周 x/y.'),
       }),
-      lifetimeTrainedDays: count('Days ever with a 练了.'),
+      lifetimeTrainedDays: count('Days ever with a 训练.'),
     }),
     squadWeek: z.strictObject({
       trainedDays: count(

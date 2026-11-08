@@ -16,6 +16,8 @@ public enum CoachRoute: Hashable {
     case market
     case resume(Coach)
     case fire(Coach)
+    /// 换教练's confirmation: the squad's coach leaves and the other comes.
+    case swap(leaving: Coach, coming: Coach)
 }
 
 /// 小队设置's 教练 card, on graphite: an empty spot and 招聘, or the coach standing whole (never
@@ -127,8 +129,8 @@ struct CoachCard: View {
     }
 }
 
-/// 教练招聘会: an ink header, a card per coach with its catchphrase, tags and 期望待遇, and the
-/// coaches still to come.
+/// 教练招聘会: an ink header on a white page, a card per coach (its stage, then its name, tags and
+/// 期望待遇 on graphite, like the coach's card on 今天) and the coaches still to come.
 struct CoachMarketPage: View {
     let market: CoachMarketLoad
     /// The squad's coach now, which the market marks instead of 求职中.
@@ -156,7 +158,7 @@ struct CoachMarketPage: View {
             .scrollIndicators(.hidden)
             .ignoresSafeArea(edges: [.top, .bottom])
         }
-        .background(Color(role: .bgSubtle, in: theme).ignoresSafeArea())
+        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("coach.market")
     }
@@ -214,7 +216,7 @@ private struct MarketCard: View {
         Button(action: open) {
             VStack(alignment: .leading, spacing: 0) {
                 CoachStage(
-                    coach: coach.id, catchphrase: coach.catchphrase, bubble: .leading,
+                    coach: coach.id, catchphrase: coach.catchphrase,
                     figureHeight: CoachMetrics.marketFigure,
                     floor: CoachMetrics.marketFloor
                 )
@@ -223,40 +225,40 @@ private struct MarketCard: View {
                     StatusTag(isCurrent: isCurrent).padding(Space.s + 2)
                 }
                 VStack(alignment: .leading, spacing: Space.s - 2) {
-                    CoachName(coach: coach, name: TypeRamp.title, title: TypeRamp.callout)
+                    CoachName(coach: coach, name: TypeRamp.title, title: TypeRamp.callout, onInk: true)
                     FlowRow {
                         ForEach(coach.tags, id: \.self) { tag in
                             Text(verbatim: tag)
                                 .typeStyle(TypeRamp.label)
-                                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                                .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                                 .lineLimit(1)
                                 .padding(.horizontal, Space.s - 2)
                                 .padding(.vertical, Space.xxs)
-                                .background(Color(role: .bgSubtle, in: theme), in: Capsule())
+                                .background(Color(role: .borderOnInk, in: theme), in: Capsule())
                         }
                     }
                     HStack(spacing: Space.s) {
                         Text("期望待遇：\(coach.pay)", bundle: .module)
                             .typeStyle(TypeRamp.footnote)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                            .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                             .lineLimit(1)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Text("看简历 ›", bundle: .module)
                             .typeStyle(TypeRamp.calloutEmphasis)
-                            .foregroundStyle(Color(role: .fgDefault, in: theme))
+                            .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                             .lineLimit(1)
                             .fixedSize()
                     }
                     .padding(.top, Space.s)
                     .overlay(alignment: .top) {
-                        Hairline()
+                        Hairline(on: .ink)
                     }
                 }
                 .padding(.horizontal, Space.m)
                 .padding(.top, Space.s + 2)
                 .padding(.bottom, Space.m)
+                .background(Color(role: .bgBrand, in: theme))
             }
-            .background(Color(role: .bgCanvas, in: theme))
             .clipShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
             .contentShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
         }
@@ -265,7 +267,7 @@ private struct MarketCard: View {
     }
 }
 
-/// 更多教练在路上: the coaches still to come.
+/// 更多教练在路上: the coaches still to come, a dashed outline on the white page.
 private struct MoreCoaches: View {
     @Environment(\.sceneTheme) private var theme
 
@@ -285,8 +287,12 @@ private struct MoreCoaches: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(Space.m)
-        .background(Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.ticket))
-        .opacity(0.7)
+        .overlay {
+            RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous)
+                .strokeBorder(
+                    Color(role: .borderDefault, in: theme),
+                    style: StrokeStyle(lineWidth: Sizing.selectionStroke, dash: [6, 4]))
+        }
     }
 }
 
@@ -304,7 +310,7 @@ enum CoachMetrics {
     static let figureAspect = 0.5
     /// How far the market's cards ride up over its ink header.
     static let marketOverlap = 40.0
-    static let marketCardStage = 250.0
+    static let marketCardStage = 268.0
     /// The coach's height on its stage, here and on the 简历 and 解雇 pages.
     static let marketFigure = 190.0
     static let marketFloor = 40.0

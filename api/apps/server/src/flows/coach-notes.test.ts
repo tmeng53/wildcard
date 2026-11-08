@@ -73,6 +73,8 @@ function setUp(waiting: readonly NoteToDeliver[]) {
       told.push(...notices);
       return Promise.resolve();
     },
+    // The catalog's name, when the squad's language has none of its own.
+    coachNames: () => Promise.resolve(() => undefined),
     log: createLog(() => undefined),
     clock: () => now,
   };
@@ -143,5 +145,24 @@ describe('the coach’s morning notes delivered', () => {
     expect(run).toStrictEqual({ waiting: 1, delivered: 0, pushed: 0 });
     expect(told).toStrictEqual([]);
     expect(sent).toStrictEqual([]);
+  });
+
+  it('pushes the note with the coach named as its squad calls it', async () => {
+    const { deps, sent } = setUp([note({ id: 1, member: east, text: 'Easy day today' })]);
+    const asked: unknown[] = [];
+    const named = {
+      ...deps,
+      coachNames: (pairs: readonly { coach: string; squad: string | undefined }[]) => {
+        asked.push(...pairs);
+        return Promise.resolve(() => 'Poki');
+      },
+    };
+    expect(await deliverCoachNotes(named)).toStrictEqual({ waiting: 1, delivered: 1, pushed: 1 });
+    expect(asked).toStrictEqual([
+      { coach: 'xiaohun', squad: note({ id: 1, member: east, text: '' }).squad },
+    ]);
+    expect(sent.map(({ notification }) => notification.alert.args)).toStrictEqual([
+      ['Poki', 'Easy day today'],
+    ]);
   });
 });

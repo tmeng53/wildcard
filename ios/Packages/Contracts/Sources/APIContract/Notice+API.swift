@@ -121,24 +121,22 @@ extension AppDestination {
     /// A broadcast's button's place, as the API names it; nil for one this build doesn't know,
     /// which shows no button.
     init?(path: String) {
-        switch path {
-        case "stores": self = .stores
-        case "notices": self = .notices
-        case "schedule": self = .schedule
-        case "squad": self = .squad
-        case "feed": self = .feed
-        case "today": self = .today
-        case "me": self = .profile
-        default:
-            if path.hasPrefix("store/"), path.count > "store/".count {
-                self = .store(String(path.dropFirst("store/".count)))
-            } else if path.hasPrefix("post/"), let id = try? CheckInID(wire: String(path.dropFirst("post/".count))) {
-                self = .post(id)
-            } else {
-                return nil
-            }
+        if let place = Self.places[path] {
+            self = place
+        } else if path.hasPrefix("store/"), path.count > "store/".count {
+            self = .store(String(path.dropFirst("store/".count)))
+        } else if path.hasPrefix("post/"), let id = try? CheckInID(wire: String(path.dropFirst("post/".count))) {
+            self = .post(id)
+        } else {
+            return nil
         }
     }
+
+    /// The places named by a word alone.
+    private static let places: [String: AppDestination] = [
+        "stores": .stores, "notices": .notices, "schedule": .schedule, "squad": .squad, "coaches": .coaches,
+        "feed": .feed, "today": .today, "me": .profile,
+    ]
 }
 
 extension NoticeID {

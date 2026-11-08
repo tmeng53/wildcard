@@ -128,17 +128,25 @@
     return [c, s, -s, c, cx - c * cx + s * cy, cy - s * cx - c * cy];
   };
 
-  // How much of a part that gives way to an arm shows with the arm turned by `degrees`.
-  function gives({ start, end }, degrees) {
-    const turned = Math.abs(degrees);
-    if (end <= start) return turned < end ? 1 : 0;
-    const f = Math.max(0, Math.min(1, (turned - start) / (end - start)));
-    return 1 - f * f * (3 - 2 * f);
+  // How much of a part that gives way to an arm shows with the arm turned by `degrees`: either
+  // way, or only toward `side`; `reverse` shows it only once the arm has turned that far.
+  function gives({ start, end, side, reverse, beyond }, degrees) {
+    let turned = side ? Math.max(degrees * side, 0) : Math.abs(degrees);
+    if (side && beyond !== undefined && -degrees * side >= beyond) turned = Infinity;
+    let resting;
+    if (end <= start) resting = turned < end ? 1 : 0;
+    else {
+      const f = Math.max(0, Math.min(1, (turned - start) / (end - start)));
+      resting = 1 - f * f * (3 - 2 * f);
+    }
+    return reverse ? 1 - resting : resting;
   }
 
   function layout(poses) {
     const matrices = new Array(PARTS.length);
     const opacities = new Array(PARTS.length);
+    // How opaque each part's children are drawn: its own opacity, less its giving way.
+    const carried = new Array(PARTS.length);
     // What each part's children move with: past the elbow for a bent arm.
     const carriers = new Array(PARTS.length);
     const place = (i) => {
@@ -157,11 +165,12 @@
         const j = INDEX[part.parent];
         place(j);
         matrices[i] = multiply(carriers[j], m);
-        opacities[i] = q.opacity * shown * opacities[j];
+        carried[i] = q.opacity * carried[j];
       } else {
         matrices[i] = m;
-        opacities[i] = q.opacity * shown;
+        carried[i] = q.opacity;
       }
+      opacities[i] = carried[i] * shown;
       carriers[i] =
         part.elbow && q.bend ? multiply(matrices[i], turn(q.bend, part.elbow.at)) : matrices[i];
     };
@@ -313,7 +322,9 @@
 
   // SVG markup of one cast member in a pose.
   function figure(member, poses) {
-    const posed = leveled(poses, member.level);
+    // A twin (an arm drawn again behind the body) moves as its twin does.
+    const twinned = poses.map((q, i) => (PARTS[i].twin ? poses[INDEX[PARTS[i].twin]] : q));
+    const posed = leveled(twinned, member.level);
     const { matrices, opacities } = layout(posed);
     let svg = '';
     PARTS.forEach((part, i) => {

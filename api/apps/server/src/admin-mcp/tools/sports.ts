@@ -57,7 +57,8 @@ export function putSportCategory({ sports }: SportToolDependencies) {
     name: 'put_sport_category',
     title: 'Add or change a sports tab',
     description:
-      'Adds a tab (category) to the sports picker, or renames or moves one. A new tab shows ' +
+      'Adds a tab (category) to the sports picker, or renames, recolours or moves one. Its colour ' +
+      'is what its sports’ 成绩条 and post blocks wear. A new tab shows ' +
       'once a sport is put in it. Apps see it within a minute. Returns the list now.',
     changes: true,
     input: CategoryEdit,
@@ -72,7 +73,7 @@ export function setSportPicks({ sports }: SportToolDependencies) {
     title: 'Set a short list of sports',
     description:
       'Replaces one short list, whole and in order: signUpCommon (sign-up’s most common ' +
-      'sports) or checkInQuick (练了’s quick picks). Each must be a sport the pickers offer. ' +
+      'sports) or checkInQuick (训练’s quick picks). Each must be a sport the pickers offer. ' +
       'Apps see it within a minute. Returns the list now.',
     changes: true,
     input: PicksEdit,

@@ -84,7 +84,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "放縱餐"
+            "value": "欺騙餐"
           }
         }
       }
@@ -132,7 +132,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld 米泳池"
+            "value": "%lld 公尺泳池"
           }
         }
       }
@@ -149,38 +149,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "km/h"
-          }
-        }
-      }
-    },
-    "不发": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Left out"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "不發"
-          }
-        }
-      }
-    },
-    "发": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Posted"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "發"
           }
         }
       }
@@ -313,38 +281,6 @@
         }
       }
     },
-    "点一下划掉": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap to leave it out"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "點一下劃掉"
-          }
-        }
-      }
-    },
-    "点一下恢复": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap to bring it back"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "點一下恢復"
-          }
-        }
-      }
-    },
     "米": {
       "localizations": {
         "en": {
@@ -356,7 +292,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "米"
+            "value": "公尺"
           }
         }
       }
@@ -469,6 +405,122 @@
           "stringUnit": {
             "state": "translated",
             "value": "休息"
+          }
+        }
+      }
+    },
+    "/100 米": {
+      "comment": "After an open-water swim’s pace: per 100 metres.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/100m"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/100 米"
+          }
+        }
+      }
+    },
+    "score.runs": {
+      "comment": "A ski or snowboard day’s runs down the slope, on the 成绩条.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "趟数"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "趟數"
+          }
+        }
+      }
+    },
+    "score.runs.unit": {
+      "comment": "The unit after a ski day’s number of runs.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "runs"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "趟"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "趟"
+          }
+        }
+      }
+    },
+    "最高速": {
+      "comment": "The fastest moment on a ski day, on the 成绩条.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top speed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最高速"
+          }
+        }
+      }
+    },
+    "爬升": {
+      "comment": "Metres climbed on a hike, on the 成绩条.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elevation"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "爬升"
+          }
+        }
+      }
+    },
+    "落差": {
+      "comment": "Metres skied down on a ski day, on the 成绩条.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vertical"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "落差"
           }
         }
       }

@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "招聘教练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hire a coach"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "招聘教練"
+          }
+        }
+      }
+    },
     "继续编辑": {
       "localizations": {
         "en": {
@@ -44,7 +60,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "沒儲存上，再點一次儲存"
+            "value": "沒存到，再點一次儲存"
           }
         }
       }
@@ -60,7 +76,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "放棄這條動態？"
+            "value": "放棄這則動態？"
           }
         }
       }
@@ -225,22 +241,6 @@
         }
       }
     },
-    "仅自己可见，只在「我的动态」里": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Only you can see it, in My posts"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "僅自己可見，只在「我的動態」裡"
-          }
-        }
-      }
-    },
     "今日请假条": {
       "localizations": {
         "en": {
@@ -253,22 +253,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "今日假單"
-          }
-        }
-      }
-    },
-    "关闭": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Close"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "關閉"
           }
         }
       }
@@ -333,22 +317,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "發布"
-          }
-        }
-      }
-    },
-    "发布请假条": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Post day-off note"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "送出假單"
           }
         }
       }
@@ -593,22 +561,6 @@
         }
       }
     },
-    "没发出去，再点一次打卡": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Didn't go through. Tap Check in again."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "沒送出去，再點一次打卡"
-          }
-        }
-      }
-    },
     "泪目了": {
       "localizations": {
         "en": {
@@ -653,22 +605,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "改回我寫的"
-          }
-        }
-      }
-    },
-    "编个借口吧…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Make up an excuse…"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "找個藉口吧…"
           }
         }
       }
@@ -742,7 +678,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Disciplined, this one…"
+            "value": "A very disciplined meal…"
           }
         },
         "zh-Hant": {
@@ -774,7 +710,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "(quietly) go"
+            "value": "(whispers) you got this"
           }
         },
         "zh-Hant": {
@@ -988,7 +924,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "在吃放縱餐"
+            "value": "在吃欺騙餐"
           }
         }
       }
@@ -1244,7 +1180,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "健康餐 %1$lld · 放縱餐 %2$lld"
+            "value": "健康餐 %1$lld · 欺騙餐 %2$lld"
           }
         }
       }
@@ -1276,7 +1212,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "放縱餐"
+            "value": "欺騙餐"
           }
         }
       }
@@ -1457,22 +1393,6 @@
         }
       }
     },
-    "全屏看": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opens full screen"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "全螢幕看"
-          }
-        }
-      }
-    },
     "新队友 %@ 上场": {
       "localizations": {
         "en": {
@@ -1638,7 +1558,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "More new notices · Take a look"
+            "value": "More notifications · Take a look"
           }
         },
         "zh-Hant": {
@@ -1857,22 +1777,6 @@
         }
       }
     },
-    "点一格可以不发": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap one to leave it out"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "點一格可以不發"
-          }
-        }
-      }
-    },
     "路线地图，%@": {
       "localizations": {
         "en": {
@@ -1910,29 +1814,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Number %lld"
+            "value": "Photo %lld"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "第 %lld 張"
-          }
-        }
-      }
-    },
-    "Apple 健康": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apple Health"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apple 健康"
           }
         }
       }
@@ -1953,34 +1841,18 @@
         }
       }
     },
-    "今天 Apple 健康里的运动": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Today in Apple Health"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今天 Apple 健康裡的運動"
-          }
-        }
-      }
-    },
     "编一句": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Write one"
+            "value": "Write it for me"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "編一句"
+            "value": "幫我寫一句"
           }
         }
       }
@@ -1990,7 +1862,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Another"
+            "value": "Try another"
           }
         },
         "zh-Hant": {
@@ -2006,7 +1878,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Leave"
+            "value": "Day off"
           }
         },
         "zh-Hant": {
@@ -2038,7 +1910,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Leave or rest"
+            "value": "Day off or rest"
           }
         },
         "zh-Hant": {
@@ -2054,7 +1926,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rest today"
+            "value": "Rest day"
           }
         },
         "zh-Hant": {
@@ -2070,29 +1942,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "How are you resting?"
+            "value": "What kind of day off?"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "今天怎麼歇？"
-          }
-        }
-      }
-    },
-    "发布休息": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Post rest"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "發布休息"
           }
         }
       }
@@ -2108,7 +1964,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "有一條發送失敗"
+            "value": "有一則發送失敗"
           }
         }
       }
@@ -2124,7 +1980,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "有 %lld 條發送失敗"
+            "value": "有 %lld 則發送失敗"
           }
         }
       }
@@ -2156,7 +2012,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "先重發最早的一條"
+            "value": "先重發最早的一則"
           }
         }
       }
@@ -2221,6 +2077,118 @@
           "stringUnit": {
             "state": "translated",
             "value": "有新訊息"
+          }
+        }
+      }
+    },
+    "检测到的运动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detected workouts"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "偵測到的運動"
+          }
+        }
+      }
+    },
+    "仅自己可见": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only you can see this"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "僅自己可見"
+          }
+        }
+      }
+    },
+    "帮我编一句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write one for me"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "幫我編一句"
+          }
+        }
+      }
+    },
+    "发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posted"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "發"
+          }
+        }
+      }
+    },
+    "不发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left out"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不發"
+          }
+        }
+      }
+    },
+    "点一下恢复": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to bring it back"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點一下恢復"
+          }
+        }
+      }
+    },
+    "点一下划掉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to leave it out"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點一下劃掉"
           }
         }
       }

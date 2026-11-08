@@ -1,4 +1,4 @@
-// @wildcard/check-ins: daily check-ins (练了, 健康餐, 坦白放纵餐, 今日请假条), teammates'
+// @wildcard/check-ins: daily check-ins (训练, 健康餐, 坦白放纵餐, 今日请假条), teammates'
 // reactions and comments, the weekly plans 本周 counts them against, their rules and their tables.
 
 export {
@@ -105,6 +105,7 @@ export {
   Language,
   WeekSummaryWords,
   WeekSummaryWordsChange,
+  inLanguage,
   winnerText,
 } from './domain/week-summary-words.js';
 export {

@@ -51,11 +51,11 @@ extension MainTabs {
         switch destination {
         case .feed:
             selection = .feed
-        case .recap(_, let week):
+        case .recap(let squad, let week):
             selection = .feed
             Task {
                 await recap.refresh()
-                if recap.latest?.week.monday == week { recap.openLatest() }
+                await recap.open(week: week, of: squad)
             }
         case .today, .pats, .coachNote, .waitingCoachNote:
             openToday(destination)
@@ -66,6 +66,9 @@ extension MainTabs {
         case .squad:
             selection = .today
             todayPages = [.squad]
+        case .coaches:
+            selection = .today
+            todayPages = [.coach(.market)]
         case .profile:
             selection = .profile
         case .notices:

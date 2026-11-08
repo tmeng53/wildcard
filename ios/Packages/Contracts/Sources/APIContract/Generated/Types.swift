@@ -109,9 +109,9 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/check-in-totals`.
     /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
     func getMyCheckInTotals(_ input: Operations.GetMyCheckInTotals.Input) async throws -> Operations.GetMyCheckInTotals.Output
-    /// The signed-in member’s 练了 for a range of days, for their training record
+    /// The signed-in member’s 训练 for a range of days, for their training record
     ///
-    /// 训练记录 on 我: each 练了 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.
+    /// 训练记录 on 我: each 训练 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.
     ///
     /// - Remark: HTTP `GET /me/trainings`.
     /// - Remark: Generated from `#/paths//me/trainings/get(listMyTrainings)`.
@@ -329,11 +329,18 @@ public protocol APIProtocol: Sendable {
     func getSquadTimeZone(_ input: Operations.GetSquadTimeZone.Input) async throws -> Operations.GetSquadTimeZone.Output
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
     func setSquadTimeZone(_ input: Operations.SetSquadTimeZone.Input) async throws -> Operations.SetSquadTimeZone.Output
+    /// Accept or decline the challenge on the caller’s morning note
+    ///
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
+    func answerCoachChallenge(_ input: Operations.AnswerCoachChallenge.Input) async throws -> Operations.AnswerCoachChallenge.Output
     /// Put the caller’s morning note away (收下)
     ///
     /// The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.
@@ -432,6 +439,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}/fuel-goals`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/fuel-goals/put(saveMyFuelGoals)`.
     func saveMyFuelGoals(_ input: Operations.SaveMyFuelGoals.Input) async throws -> Operations.SaveMyFuelGoals.Output
+    /// The weeks a squad has a 战报 for (往期战报)
+    ///
+    /// For the squad’s page: every week whose 战报 came out, the latest first, including the one that came out last Sunday at 8pm Eastern. Only for members of the squad now.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/stories`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/stories/get(listSquadWeekStories)`.
+    func listSquadWeekStories(_ input: Operations.ListSquadWeekStories.Input) async throws -> Operations.ListSquadWeekStories.Output
     /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
     ///
     /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
@@ -474,6 +488,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/members/{memberId}/card`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/members/{memberId}/card/get(getSquadmateCard)`.
     func getSquadmateCard(_ input: Operations.GetSquadmateCard.Input) async throws -> Operations.GetSquadmateCard.Output
+    /// Open a gift the signed-in member’s coach gave them
+    ///
+    /// 拆开: keeps that the member opened a coach’s gift and whether they put it on then (立刻穿上) or left it in their wardrobe (一会儿再说). Opening it again keeps the first.
+    ///
+    /// - Remark: HTTP `PUT /me/gifts/{pieceId}/open`.
+    /// - Remark: Generated from `#/paths//me/gifts/{pieceId}/open/put(openGift)`.
+    func openGift(_ input: Operations.OpenGift.Input) async throws -> Operations.OpenGift.Output
     /// Claim an unlocked piece into the signed-in member’s wardrobe
     ///
     /// 领取: puts a piece the member unlocked in their wardrobe (我的衣橱), on every phone. Nothing is bought. Claiming it again answers with the first claim.
@@ -483,7 +504,7 @@ public protocol APIProtocol: Sendable {
     func claimPiece(_ input: Operations.ClaimPiece.Input) async throws -> Operations.ClaimPiece.Output
     /// The stores, props and pieces the signed-in member unlocked
     ///
-    /// Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
+    /// Stores on the character editor’s 商店街, props and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
     ///
     /// - Remark: HTTP `GET /me/unlocks`.
     /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.
@@ -691,9 +712,9 @@ extension APIProtocol {
     public func getMyCheckInTotals(headers: Operations.GetMyCheckInTotals.Input.Headers = .init()) async throws -> Operations.GetMyCheckInTotals.Output {
         try await getMyCheckInTotals(Operations.GetMyCheckInTotals.Input(headers: headers))
     }
-    /// The signed-in member’s 练了 for a range of days, for their training record
+    /// The signed-in member’s 训练 for a range of days, for their training record
     ///
-    /// 训练记录 on 我: each 练了 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.
+    /// 训练记录 on 我: each 训练 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.
     ///
     /// - Remark: HTTP `GET /me/trainings`.
     /// - Remark: Generated from `#/paths//me/trainings/get(listMyTrainings)`.
@@ -1159,7 +1180,7 @@ extension APIProtocol {
     }
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
@@ -1169,6 +1190,23 @@ extension APIProtocol {
         body: Operations.SetSquadTimeZone.Input.Body
     ) async throws -> Operations.SetSquadTimeZone.Output {
         try await setSquadTimeZone(Operations.SetSquadTimeZone.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Accept or decline the challenge on the caller’s morning note
+    ///
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
+    public func answerCoachChallenge(
+        path: Operations.AnswerCoachChallenge.Input.Path,
+        headers: Operations.AnswerCoachChallenge.Input.Headers = .init(),
+        body: Operations.AnswerCoachChallenge.Input.Body
+    ) async throws -> Operations.AnswerCoachChallenge.Output {
+        try await answerCoachChallenge(Operations.AnswerCoachChallenge.Input(
             path: path,
             headers: headers,
             body: body
@@ -1382,6 +1420,21 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// The weeks a squad has a 战报 for (往期战报)
+    ///
+    /// For the squad’s page: every week whose 战报 came out, the latest first, including the one that came out last Sunday at 8pm Eastern. Only for members of the squad now.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/stories`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/stories/get(listSquadWeekStories)`.
+    public func listSquadWeekStories(
+        path: Operations.ListSquadWeekStories.Input.Path,
+        headers: Operations.ListSquadWeekStories.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadWeekStories.Output {
+        try await listSquadWeekStories(Operations.ListSquadWeekStories.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
     ///
     /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
@@ -1460,6 +1513,23 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// Open a gift the signed-in member’s coach gave them
+    ///
+    /// 拆开: keeps that the member opened a coach’s gift and whether they put it on then (立刻穿上) or left it in their wardrobe (一会儿再说). Opening it again keeps the first.
+    ///
+    /// - Remark: HTTP `PUT /me/gifts/{pieceId}/open`.
+    /// - Remark: Generated from `#/paths//me/gifts/{pieceId}/open/put(openGift)`.
+    public func openGift(
+        path: Operations.OpenGift.Input.Path,
+        headers: Operations.OpenGift.Input.Headers = .init(),
+        body: Operations.OpenGift.Input.Body
+    ) async throws -> Operations.OpenGift.Output {
+        try await openGift(Operations.OpenGift.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
     /// Claim an unlocked piece into the signed-in member’s wardrobe
     ///
     /// 领取: puts a piece the member unlocked in their wardrobe (我的衣橱), on every phone. Nothing is bought. Claiming it again answers with the first claim.
@@ -1477,7 +1547,7 @@ extension APIProtocol {
     }
     /// The stores, props and pieces the signed-in member unlocked
     ///
-    /// Stores on the character editor’s 商店街, props and clothing pieces open by 练了 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
+    /// Stores on the character editor’s 商店街, props and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
     ///
     /// - Remark: HTTP `GET /me/unlocks`.
     /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.

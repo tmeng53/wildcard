@@ -2,7 +2,7 @@ import { SPORT_ID_PATTERN } from '@wildcard/sport-ids';
 import { z } from 'zod';
 
 /**
- * A 练了's `sport`: a listed sport's id, or `custom` with the member's own name in
+ * A 训练's `sport`: a listed sport's id, or `custom` with the member's own name in
  * `customSport`. The list itself is data the sports module keeps (`GET /public/catalog`), so the
  * shape is all the contract says; saving asks the list whether the id is in it.
  */

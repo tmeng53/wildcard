@@ -105,8 +105,8 @@ private struct JoinPanel: View {
     }
 }
 
-/// One letter of the invite code, in big Barlow on a subtle box; the box the next letter goes
-/// into takes the accent border while typing.
+/// One letter of the invite code, in big Barlow on a white box with a hairline, like the rows
+/// around it; the box the next letter goes into takes the accent border while typing.
 private struct CodeBox: View {
     let letter: Character?
     let isNext: Bool
@@ -121,17 +121,19 @@ private struct CodeBox: View {
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .frame(maxWidth: .infinity)
             .frame(height: height)
-            .background(Color(role: .bgSubtle, in: theme), in: shape)
+            .background(Color(role: .bgCanvas, in: theme), in: shape)
             .overlay {
                 if isNext {
                     shape.strokeBorder(Color(role: tone.fill, in: theme), lineWidth: Sizing.selectionStroke)
+                } else {
+                    shape.strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline)
                 }
             }
     }
 }
 
-/// The squad a whole code finds: its name, its members' heads and how many are in it, or why
-/// there's none.
+/// The squad a whole code finds, on graphite like 小队's invite card: its name, its members' heads
+/// and how many are in it, or why there's none.
 private struct SquadFound: View {
     let lookup: SignUpModel.Lookup
     let heads: [CastMember]
@@ -145,22 +147,22 @@ private struct SquadFound: View {
             HStack(spacing: Space.xs) {
                 // The card says what is happening, so its dots show at once.
                 LoadingDots(delay: 0)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                 Text("正在找这个小队", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .card()
+            .inkCard()
         case .found(let squad):
             VStack(alignment: .leading, spacing: Space.xs) {
                 Text(verbatim: squad.name)
                     .typeStyle(TypeRamp.headline)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                     .lineLimit(1)
                 HStack(spacing: Space.xs) {
                     if !heads.isEmpty {
-                        HeadStack(heads.map(\.player), size: Sizing.characterHead, on: .bgSubtle)
+                        HeadStack(heads.map(\.player), size: Sizing.characterHead, on: .bgBrand)
                     }
                     Group {
                         if squad.isFull {
@@ -170,11 +172,11 @@ private struct SquadFound: View {
                         }
                     }
                     .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .card()
+            .inkCard()
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("squad.found")
         case .failed(_, let failure):

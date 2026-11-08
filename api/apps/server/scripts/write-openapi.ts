@@ -123,7 +123,7 @@ const app = createApp({
     currentAmong: unused,
   },
   coachHiring: { hire: unused, fire: unused, change: unused, current: unused, offered: unused },
-  coachActivity: { squad: unused, putAway: unused, spoke: unused },
+  coachActivity: { squad: unused, putAway: unused, answerChallenge: unused, spoke: unused },
   coachLetters: { write: unused },
   weekSummaryWords: () => Promise.reject(new Error('unused')),
   scenes: createScenes({
@@ -140,12 +140,13 @@ const app = createApp({
       boards: unused,
       story: unused,
       freezeStory: unused,
+      storyWeeks: unused,
       storiesWaiting: unused,
     },
     clock: unused,
   },
   unlocks: { of: unused, standing: unused, claimsOf: unused, claim: unused, keepWorn: unused },
-  gifts: { of: unused },
+  gifts: { of: unused, open: unused },
   log: createLog(unused),
   jobs: {
     isScheduler: undefined,

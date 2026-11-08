@@ -12,14 +12,14 @@ export { TimeZone };
 export const CATCHPHRASE_MAX_CHARACTERS = 10;
 
 /**
- * What the member's character shouts when the squad cheers a teammate's 练了 (口头禅): trimmed, 1
+ * What the member's character shouts when the squad cheers a teammate's 训练 (口头禅): trimmed, 1
  * to 10 characters on one line, emoji welcome, no links. Only the squad sees it, so no other check.
  */
 export const Catchphrase = typedText({
   max: CATCHPHRASE_MAX_CHARACTERS,
   oneLine: true,
   description:
-    'What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to ' +
+    'What the member’s character shouts when the squad cheers a teammate’s 训练 (口头禅): 1 to ' +
     `${String(CATCHPHRASE_MAX_CHARACTERS)} characters on one line, emoji welcome, no links.`,
 }).refine((text) => !containsLink(text), { message: 'Must not hold a link' });
 export type Catchphrase = z.infer<typeof Catchphrase>;

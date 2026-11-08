@@ -198,7 +198,7 @@ const count = (description: string) => z.int().nonnegative().meta({ description 
 
 /** A member's lifetime counts by kind, wherever the API shows them. */
 export const checkInTotalsFields = {
-  trainedDays: count('Days with a 练了; several 练了 on one day count once.'),
+  trainedDays: count('Days with a 训练; several 训练 on one day count once.'),
   healthyMeals: count('健康餐 check-ins.'),
   cheatMeals: count('坦白放纵餐 check-ins.'),
   disclaimers: count('今日请假条 check-ins taken as leave; a 休息 (`restDay`) is not one.'),
@@ -209,13 +209,13 @@ export const checkInTotalsFields = {
         .string()
         .optional()
         .meta({ description: 'The name of a `custom` sport; a listed sport has none.' }),
-      checkIns: count('练了 check-ins of this sport.'),
+      checkIns: count('训练 check-ins of this sport.'),
     })
     .optional()
     .meta({
       description:
-        'The sport with the most 练了 (最常练; a custom sport counts by its name), the latest ' +
-        'one on a tie. Left out before the first 练了.',
+        'The sport with the most 训练 (最常练; a custom sport counts by its name), the latest ' +
+        'one on a tie. Left out before the first 训练.',
     })
     .openapi('TopSport'),
 };
@@ -242,7 +242,7 @@ const TrainingRecord = z
           })
           .openapi('TrainingDay'),
       )
-      .meta({ description: 'Each 练了 in the range, by day, the earliest made first.' }),
+      .meta({ description: 'Each 训练 in the range, by day, the earliest made first.' }),
   })
   .openapi('TrainingRecord');
 
@@ -328,7 +328,7 @@ const signedInFailures = {
  * delete the member's own, and `GET` reads it as a post (its own page), `GET /squads/{squadId}/check-ins` (the squad's feed, with reactions and
  * comments) and `GET /me/check-ins` read them back for a range of days, and
  * `GET /me/check-in-totals` counts all of the member's own, and `GET /me/trainings` lists their
- * 练了 by day for 我's training record.
+ * 训练 by day for 我's training record.
  */
 export function checkIns(deps: {
   readonly verifyToken: VerifyToken;
@@ -539,9 +539,9 @@ export function checkIns(deps: {
     method: 'get',
     path: '/me/trainings',
     operationId: 'listMyTrainings',
-    summary: 'The signed-in member’s 练了 for a range of days, for their training record',
+    summary: 'The signed-in member’s 训练 for a range of days, for their training record',
     description:
-      '训练记录 on 我: each 练了 the member posted for a day in the range, wherever it went, ' +
+      '训练记录 on 我: each 训练 the member posted for a day in the range, wherever it went, ' +
       'with its sport and minutes only. At most 371 days at a time.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,

@@ -43,11 +43,21 @@ export const SportsCatalog = z
         z.looseObject({
           id: z.string().meta({ example: 'runWalk' }),
           names: Names,
+          color: z
+            .string()
+            .optional()
+            .meta({
+              description:
+                'The colour its sports’ 成绩条, post blocks, routes and charts wear, with white ' +
+                'on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before ' +
+                'colours still reads (its sports then wear the gym’s steel).',
+              example: '#E65345',
+            }),
           sports: z.array(
             z.looseObject({
               id: z.string().meta({
                 description:
-                  'What a 练了 or a planned day sends as `sport`. Never changes, and a sport is ' +
+                  'What a 训练 or a planned day sends as `sport`. Never changes, and a sport is ' +
                   'never removed.',
                 example: 'run',
               }),
@@ -73,7 +83,7 @@ export const SportsCatalog = z
     picks: z
       .looseObject({
         signUpCommon: sportIds('Sign-up’s 最常见 grid.'),
-        checkInQuick: sportIds('A 练了’s quick picks, before the whole list.'),
+        checkInQuick: sportIds('A 训练’s quick picks, before the whole list.'),
       })
       .meta({ description: 'The short lists some screens show before the whole list.' }),
   })
@@ -89,9 +99,10 @@ export function sportsSection(sports: Sports): CatalogSection<typeof SportsCatal
 }
 
 const wireSports = (catalog: SportCatalog): z.input<typeof SportsCatalog> => ({
-  categories: catalog.categories.map(({ id, names, sports }) => ({
+  categories: catalog.categories.map(({ id, names, color, sports }) => ({
     id,
     names: { ...names },
+    color,
     sports: sports.map(({ shortNames, ...sport }) => ({
       ...sport,
       names: { ...sport.names },
@@ -305,7 +316,7 @@ export const StoresCatalog = z
           switchId: switchRef('the store'),
           free: z.boolean().meta({
             description:
-              'Open to everyone with no 练了 (no unlock rule), such as WARM-UP; any other store ' +
+              'Open to everyone with no 训练 (no unlock rule), such as WARM-UP; any other store ' +
               'is earned.',
           }),
         }),

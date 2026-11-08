@@ -34,7 +34,7 @@ const week: SquadWeek = {
       sport: '跑步',
       minutes: 30,
       text: '腿废了',
-      reactions: 2,
+      reactedBy: [leo],
       comments: [{ id: 'k1', member: leo, text: '强', at: new Date('2026-10-27T12:30:00Z') }],
     },
     {
@@ -44,7 +44,7 @@ const week: SquadWeek = {
       createdAt: new Date('2026-11-01T13:50:00Z'),
       kind: 'disclaimer',
       text: '下雨',
-      reactions: 0,
+      reactedBy: [],
       comments: [],
     },
   ],
@@ -60,14 +60,14 @@ describe('the squad’s week, as the model reads it', () => {
       [leo, '队员2'],
     ]);
     expect(checkInLine(first, roster)).toBe(
-      '10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 2 个表情 · 评论：队员2「强」',
+      '10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2 · 评论：队员2「强」',
     );
     expect(weekText(week)).toBe(
       [
         '本周从 2026-10-26（周一）开始。',
         '队员：队员1（昵称：米亚），队员2',
         '打卡：',
-        '- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 2 个表情 · 评论：队员2「强」',
+        '- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2 · 评论：队员2「强」',
         '- 11-01 周日 队员2 请假条 「下雨」',
       ].join('\n'),
     );
@@ -96,17 +96,26 @@ describe('the squad’s week, as the model reads it', () => {
         '本周从 2026-10-26（周一）开始。',
         '队员：队员1（昵称：米亚），队员2',
         '打卡：',
-        '- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 2 个表情',
+        '- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」',
       ].join('\n'),
     );
+    // Who reacted keeps only members who agreed, too.
+    expect(weekText(consentedOnly(week, new Set([mia, leo])))).toContain('点了表情：队员2');
   });
 
   it('names the squad, and says when a check-in was posted days after the day it counts for', () => {
     const [first] = week.checkIns;
     if (first === undefined) throw new Error('no check-in');
-    const backdated = { ...first, comments: [], reactions: 0, postedDay: '2026-10-29' };
+    const backdated = { ...first, comments: [], reactedBy: [], postedDay: '2026-10-29' };
     expect(checkInLine(backdated, rosterOf(week))).toBe(
       '10-27 周二 队员1 训练 （补打卡：10-29 周四 才发） 跑步 30 分钟 「腿废了」',
+    );
+    // With the author's zone known, the time on their clock too.
+    expect(checkInLine({ ...backdated, postedTime: '23:40' }, rosterOf(week))).toBe(
+      '10-27 周二 队员1 训练 （补打卡：10-29 周四 本人当地 23:40 才发） 跑步 30 分钟 「腿废了」',
+    );
+    expect(checkInLine({ ...first, postedTime: '23:40' }, rosterOf(week))).toBe(
+      '10-27 周二 队员1 训练 （本人当地 23:40 发） 跑步 30 分钟 「腿废了」 · 点了表情：队员2 · 评论：队员2「强」',
     );
     expect(weekText({ ...week, name: '周末不睡懒觉', checkIns: [] })).toBe(
       [
@@ -312,7 +321,7 @@ describe('when the coach wakes', () => {
     });
     expect(task).toBe(
       [
-        '有人回复你。这条打卡：10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 2 个表情',
+        '有人回复你。这条打卡：10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2',
         // The rest of the post's comments, so the coach knows what was said around it.
         '这条下面别人的评论（先后顺序）：\n- 队员2：「强」',
         '你们在下面的对话：\n- 你：「腿废了也算练」\n- 队员2：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1：「那你喊大声点」（要回的这句）',
@@ -447,6 +456,23 @@ describe('when the coach wakes', () => {
         ?.split('\n\n')
         .slice(0, 2),
     ).toStrictEqual(['新的一天：2026-11-26，周四。', '今天：感恩节']);
+    // A coach hired back is told so, once, after the day's facts; what it says is its own.
+    expect(
+      taskOf({
+        reason: { kind: 'daily', day: '2026-11-26' },
+        week,
+        files: new Map(),
+        recentNotes: [],
+        occasions: ['感恩节'],
+        backAgain: true,
+      })
+        ?.split('\n\n')
+        .slice(0, 3),
+    ).toStrictEqual([
+      '新的一天：2026-11-26，周四。',
+      '今天：感恩节',
+      '你以前带过这个小队，被换掉后，现在又被请回来了。',
+    ]);
     // Whom it writes a morning note to, by the names it knows them by.
     expect(
       taskOf({
@@ -487,7 +513,7 @@ describe('when the coach wakes', () => {
         yesterday: { day: '2026-10-27', checkIns: [posted] },
       })?.split('\n\n')[1],
     ).toBe(
-      '昨天（周二）小队的动态：\n- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 2 个表情 · 评论：队员2「强」',
+      '昨天（周二）小队的动态：\n- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2 · 评论：队员2「强」',
     );
     expect(
       taskOf({
@@ -519,7 +545,7 @@ describe('when the coach wakes', () => {
         ],
       })?.split('\n\n')[1],
     ).toBe(
-      '过去一天打卡下面的对话（先后顺序）：\n- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 2 个表情\n  你：「腿废了也算练」\n  队员2：「我下周膝盖手术」\n  你：「那这周先歇着」',
+      '过去一天打卡下面的对话（先后顺序）：\n- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2\n  你：「腿废了也算练」\n  队员2：「我下周膝盖手术」\n  你：「那这周先歇着」',
     );
     expect(
       taskOf({
@@ -690,7 +716,7 @@ describe('what the coach looks up', () => {
     if (first === undefined) throw new Error('no check-in');
     expect(
       checkInLine({ ...first, photos: ['a.jpg', 'b.jpg'], comments: [] }, rosterOf(week)),
-    ).toBe('10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 （2 张照片） · 2 个表情');
+    ).toBe('10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 （2 张照片） · 点了表情：队员2');
   });
 });
 

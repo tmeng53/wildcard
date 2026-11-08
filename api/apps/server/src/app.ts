@@ -52,7 +52,8 @@ import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { eventPushes, jobs } from './routes/jobs.js';
 import { me } from './routes/me.js';
-import { notices, type CoachNames } from './routes/notices.js';
+import type { CoachNames } from './flows/coach-names.js';
+import { notices } from './routes/notices.js';
 import { nudges } from './routes/nudges.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
@@ -115,7 +116,7 @@ export interface AppDependencies {
   /** The stores, props and pieces members unlock by training. */
   readonly unlocks: Unlocks;
   /** What squads' coaches gave members, for `/me/unlocks`. */
-  readonly gifts: Pick<CoachGifts, 'of'>;
+  readonly gifts: Pick<CoachGifts, 'of' | 'open'>;
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */
   readonly jobs: {
@@ -226,6 +227,7 @@ export function createApp(deps: AppDependencies) {
         members: deps.members,
         squads: deps.squads,
         push: deps.push,
+        coachNames: deps.coachNames,
         log: deps.log,
       },
     }),

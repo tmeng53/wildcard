@@ -7,7 +7,7 @@ import FeedDomain
 import SwiftUI
 
 /// The box at the bottom of a post's own page, floating in Liquid Glass over the comments as
-/// the approved chat composer does: 回复 Mia with × when replying to someone, 「@毛头」 while the
+/// the approved comment composer does: 回复 Mia with × when replying to someone, 「@毛头」 while the
 /// squad has a coach, the words (up to four lines, with the count near the limit) and the send
 /// button; typing `@` opens the @ list over it, the coach first. Sent words leave the box at
 /// once; if they couldn't go out they come back with a line saying so, and leave again once a
@@ -106,7 +106,8 @@ struct CommentComposer: View {
                 .lineLimit(1)
                 .padding(.horizontal, Space.s)
                 .frame(height: Sizing.compactControl)
-                .background(Color(role: .bgSubtle, in: theme), in: Capsule())
+                .background(Color(role: .bgCanvas, in: theme), in: Capsule())
+                .overlay { Capsule().strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline) }
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityIdentifier("post.mentionCoach")
@@ -152,8 +153,13 @@ struct CommentComposer: View {
         .padding(.vertical, Space.xs)
         .frame(minHeight: Sizing.compactControl)
         .background(
-            Color(role: .bgSubtle, in: theme),
-            in: RoundedRectangle(cornerRadius: Sizing.compactControl / 2, style: .continuous))
+            Color(role: .bgCanvas, in: theme),
+            in: RoundedRectangle(cornerRadius: Sizing.compactControl / 2, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: Sizing.compactControl / 2, style: .continuous)
+                .strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline)
+        }
     }
 
     private var sendButton: some View {

@@ -1,7 +1,8 @@
 import type { CoachLetter } from '../domain/letter.js';
 import type { CoachAnswer, CoachReply } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
-import { CoachNoteNotFoundError } from '../errors.js';
+import type { ChallengeAnswer } from '../domain/challenge.js';
+import { CoachNoteNoChallengeError, CoachNoteNotFoundError } from '../errors.js';
 import type { CoachActivityStore, CoachMemberNoteShown, CoachNoteShown } from '../ports.js';
 
 /** The most check-ins one read asks about: a page of 动态. */
@@ -53,6 +54,17 @@ export interface CoachActivity {
     readonly member: string;
     readonly note: number;
   }): Promise<void>;
+  /**
+   * The reader's answer to their morning note's challenge (接受挑战 or 算了), answered with the
+   * one that stands: the first. Throws `CoachNoteNotFoundError` when the note isn't theirs in
+   * this squad, `CoachNoteNoChallengeError` when it sets none.
+   */
+  answerChallenge(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly note: number;
+    readonly answer: ChallengeAnswer;
+  }): Promise<ChallengeAnswer>;
   spoke(input: {
     readonly squads: readonly SquadId[];
     readonly checkIn: string;
@@ -81,6 +93,12 @@ export function createCoachActivity(deps: { readonly store: CoachActivityStore }
     },
     putAway: async (input) => {
       if (!(await deps.store.putAway(input))) throw new CoachNoteNotFoundError();
+    },
+    answerChallenge: async (input) => {
+      const kept = await deps.store.answerChallenge(input);
+      if (kept === 'noNote') throw new CoachNoteNotFoundError();
+      if (kept === 'noChallenge') throw new CoachNoteNoChallengeError();
+      return kept;
     },
     spoke: async ({ squads, checkIn, coach }) => {
       const replies = await Promise.all(

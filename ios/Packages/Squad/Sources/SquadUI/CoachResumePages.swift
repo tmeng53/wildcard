@@ -37,19 +37,44 @@ public struct CoachPage: View {
                 retry: { Task { await model.loadMarket() } },
                 open: { coach in push(.resume(coach)) }
             )
-            .task { await model.loadMarket() }
+            .task {
+                // Opened straight from 今天, past 小队: who may hire comes from the squad, so read
+                // it again when it never loaded.
+                await model.loadMarket()
+                if model.settings == nil { await model.reload() }
+            }
         case .resume(let coach):
             CoachResumePage(
                 coach: coach, isCurrent: model.coach?.coach.id == coach.id,
                 note: model.coach?.coach.id == coach.id && note?.coach.id == coach.id ? note : nil,
                 canHire: model.canHireCoach,
                 isSaving: model.isSaving, failed: failed,
-                hire: { Task { finish(await model.hire(coach.id)) } },
+                hire: { hire(coach) },
                 change: { push(.market) }, fire: { push(.fire(coach)) })
         case .fire(let coach):
-            FireCoachPage(
-                coach: coach, isSaving: model.isSaving, failed: failed, back: back,
-                fire: { Task { finish(await model.fireCoach()) } })
+            CoachLeavingPage(
+                leaving: coach, title: Text("解雇\(coach.name)", bundle: .module),
+                line: Text("小队的记忆会留给下一个教练", bundle: .module),
+                keep: Text("先不解雇", bundle: .module), confirm: Text("确认解雇", bundle: .module),
+                identifier: "coach.fire", parting: .fired, isSaving: model.isSaving, failed: failed, back: back,
+                action: { Task { finish(await model.fireCoach()) } })
+        case .swap(let leaving, let coming):
+            CoachLeavingPage(
+                leaving: leaving, title: Text("换成\(coming.name)？", bundle: .module),
+                line: Text("\(leaving.name)会离开，\(coming.name)会来", bundle: .module),
+                keep: Text("先不换", bundle: .module), confirm: Text("确认换教练", bundle: .module),
+                identifier: "coach.swap", parting: .swapped, isSaving: model.isSaving, failed: failed, back: back,
+                action: { Task { finish(await model.hire(coming.id)) } })
+        }
+    }
+
+    /// 招聘 hires at once into an empty spot; with a coach in it, it asks first, since that
+    /// coach leaves.
+    private func hire(_ coach: Coach) {
+        if let current = model.coach?.coach, current.id != coach.id {
+            push(.swap(leaving: current, coming: coach))
+        } else {
+            Task { finish(await model.hire(coach.id)) }
         }
     }
 
@@ -98,7 +123,7 @@ struct CoachResumePage: View {
             ScrollView {
                 VStack(spacing: 0) {
                     CoachStage(
-                        coach: coach.id, catchphrase: coach.catchphrase, bubble: .center,
+                        coach: coach.id, catchphrase: coach.catchphrase,
                         figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.resumeFloor, greets: true
                     )
                     .frame(height: min(CoachMetrics.resumeStage, proxy.size.height * 0.42) + proxy.safeAreaInsets.top)
@@ -123,18 +148,7 @@ struct CoachResumePage: View {
                 StatusTag(isCurrent: isCurrent)
             }
             if let note { board(note) }
-            Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: Space.m, verticalSpacing: 0) {
-                row(Text("履历", bundle: .module)) { Text(verbatim: coach.background) }
-                row(Text("执教", bundle: .module)) {
-                    HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                        Text(verbatim: "\(coach.yearsCoaching)").typeStyle(TypeRamp.scoreSmall)
-                        Text("年，\(coach.experience)", bundle: .module)
-                    }
-                }
-                row(Text("风格", bundle: .module)) { Text(verbatim: coach.style) }
-                row(Text("期望待遇", bundle: .module)) { Text(verbatim: coach.pay) }
-                hairline
-            }
+            CoachResumeFields(coach: coach, labelIdentifier: "coach.resume.label")
         }
         .padding(.horizontal, Space.pageMargin)
         .padding(.top, Space.m + Space.xxs)
@@ -169,33 +183,6 @@ struct CoachResumePage: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("coach.resume.board")
-    }
-
-    private func row(_ label: Text, @ViewBuilder value: () -> some View) -> some View {
-        Group {
-            hairline
-            GridRow {
-                label
-                    .typeStyle(TypeRamp.body)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .lineLimit(1)
-                    .fixedSize()
-                    .padding(.vertical, Space.s - 1)
-                    .accessibilityIdentifier("coach.resume.label")
-                value()
-                    .typeStyle(TypeRamp.body)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.vertical, Space.s - 1)
-            }
-        }
-    }
-
-    private var hairline: some View {
-        Hairline()
-            .gridCellColumns(2)
-            .gridCellUnsizedAxes(.horizontal)
     }
 
     @ViewBuilder private var action: some View {
@@ -234,33 +221,44 @@ struct CoachResumePage: View {
     }
 }
 
-/// 解雇: the coach crying on its stage, that the squad's memory stays, 先不解雇 and, in red,
-/// 确认解雇.
-struct FireCoachPage: View {
-    let coach: Coach
+/// A coach leaving, 解雇 or 换教练: the leaving coach on its stage, a line under it, and the
+/// buttons to keep it or let it go. Fired, it cries and letting it go is the red text button
+/// under 先不解雇; swapped, it is a neutral change (Tracy, 2026-11-08): the coach stands at ease
+/// saying its catchphrase, and 确认换教练 is the ink button over a plain 先不换.
+struct CoachLeavingPage: View {
+    enum Parting { case fired, swapped }
+
+    let leaving: Coach
+    let title: Text
+    let line: Text
+    let keep: Text
+    let confirm: Text
+    let identifier: String
+    let parting: Parting
     let isSaving: Bool
     let failed: Bool
     let back: () -> Void
-    let fire: () -> Void
+    let action: () -> Void
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.l) {
-                Text("解雇\(coach.name)", bundle: .module)
+                title
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
                 CoachStage(
-                    coach: coach.id,
-                    catchphrase: String(localized: "我才刚记住大家的外号……", bundle: .module.inAppLanguage),
-                    bubble: .center, figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
-                    mood: .crying, surface: .page
+                    coach: leaving.id,
+                    catchphrase: parting == .fired
+                        ? String(localized: "我才刚记住大家的外号……", bundle: .module.inAppLanguage) : leaving.catchphrase,
+                    figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
+                    mood: parting == .fired ? .crying : .calm, surface: .page
                 )
                 .frame(height: CoachMetrics.fireStage)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
-                Text("小队的记忆会留给下一个教练", bundle: .module)
-                    .typeStyle(TypeRamp.callout)
+                line
+                    .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
@@ -275,23 +273,34 @@ struct FireCoachPage: View {
                 if failed {
                     InlineFailure()
                 }
-                Button(action: back) {
-                    Text("先不解雇", bundle: .module).frame(maxWidth: .infinity)
+                switch parting {
+                case .fired:
+                    keepButton.buttonStyle(PrimaryButtonStyle(.large)).accentTone(.ink)
+                    confirmButton.buttonStyle(TextButtonStyle(.danger))
+                case .swapped:
+                    confirmButton.buttonStyle(PrimaryButtonStyle(.large)).accentTone(.ink)
+                    keepButton.buttonStyle(TextButtonStyle(.muted))
                 }
-                .buttonStyle(PrimaryButtonStyle(.large))
-                .accentTone(.ink)
-                .accessibilityIdentifier("coach.fire.keep")
-                Button(action: fire) {
-                    Text("确认解雇", bundle: .module).loadingLabel(isSaving)
-                }
-                .buttonStyle(TextButtonStyle(.danger))
-                .disabled(isSaving)
-                .accessibilityIdentifier("coach.fire.confirm")
             }
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("coach.fire")
+        .accessibilityIdentifier(identifier)
+    }
+
+    private var keepButton: some View {
+        Button(action: back) {
+            keep.frame(maxWidth: parting == .fired ? .infinity : nil)
+        }
+        .accessibilityIdentifier("\(identifier).keep")
+    }
+
+    private var confirmButton: some View {
+        Button(action: action) {
+            confirm.loadingLabel(isSaving).frame(maxWidth: parting == .swapped ? .infinity : nil)
+        }
+        .disabled(isSaving)
+        .accessibilityIdentifier("\(identifier).confirm")
     }
 }
 

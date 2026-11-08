@@ -65,3 +65,13 @@ export class CoachNoteNotFoundError extends AppError {
     super('No such morning note for the member in this squad.');
   }
 }
+
+export class CoachNoteNoChallengeError extends AppError {
+  override readonly name = 'CoachNoteNoChallengeError';
+  readonly reason = 'COACH_NOTE_NO_CHALLENGE';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('The morning note sets no challenge.');
+  }
+}

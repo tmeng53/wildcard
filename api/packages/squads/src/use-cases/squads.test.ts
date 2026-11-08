@@ -606,7 +606,7 @@ describe('a squad’s time zone', () => {
     ).rejects.toMatchObject({ reason: 'TIME_ZONE_UNKNOWN' });
   });
 
-  it('lets only the captain change it, from next week, logged with who set it', async () => {
+  it('lets only the captain change it, at once, logged with who set it', async () => {
     const [ann, bo] = [await newMember(), await newMember()];
     const squad = await newSquad(ann);
     await squads.join({ inviteCode: squad.inviteCode, member: bo });
@@ -620,7 +620,10 @@ describe('a squad’s time zone', () => {
         timeZone: 'Asia/Taipei',
         moment: during,
       }),
-    ).toStrictEqual({ timeZone: 'America/New_York', nextTimeZone: 'Asia/Taipei' });
+    ).toStrictEqual({ timeZone: 'Asia/Taipei', nextTimeZone: 'Asia/Taipei' });
+    expect(await squads.timeZonesFor([squad.id], thisWeek)).toStrictEqual(
+      new Map([[squad.id, 'Asia/Taipei']]),
+    );
     // The same again changes nothing.
     await squads.setTimeZone({
       squad: squad.id,
@@ -633,13 +636,33 @@ describe('a squad’s time zone', () => {
       where squad_id = ${squad.id} order by id`.execute(db);
     expect(rows.rows).toStrictEqual([
       { time_zone: 'America/New_York', week_start: thisWeek, set_by: ann },
-      { time_zone: 'Asia/Taipei', week_start: '2026-11-09', set_by: ann },
+      { time_zone: 'Asia/Taipei', week_start: thisWeek, set_by: ann },
     ]);
     await expect(
       sql`update squad_time_zones set time_zone = 'UTC' where squad_id = ${squad.id}`.execute(db),
     ).rejects.toMatchObject({ code: '42501' });
   });
-  it('counts a change from the squad’s next week on its own clock, not the captain’s', async () => {
+
+  it('sets a change that waited for next week again, so the new one stands', async () => {
+    const ann = await newMember();
+    const squad = await newSquad(ann);
+    // A change from when changes waited for the next week.
+    await sql`insert into squad_time_zones (squad_id, time_zone, week_start, set_by)
+      values (${squad.id}, 'Asia/Taipei', '2026-11-09', ${ann})`.execute(db);
+    expect(
+      await squads.setTimeZone({
+        squad: squad.id,
+        member: ann,
+        timeZone: 'America/Los_Angeles',
+        moment: during,
+      }),
+    ).toStrictEqual({ timeZone: 'America/Los_Angeles', nextTimeZone: 'America/Los_Angeles' });
+    expect(await squads.timeZonesFor([squad.id], '2026-11-16')).toStrictEqual(
+      new Map([[squad.id, 'America/Los_Angeles']]),
+    );
+  });
+
+  it('counts a change from the squad’s own week, not the captain’s', async () => {
     const ann = await newMember();
     const { squad } = await squads.create({
       week: thisWeek,
@@ -649,7 +672,8 @@ describe('a squad’s time zone', () => {
       timeZone: 'Asia/Taipei',
     });
     // Monday 2026-11-09 02:00 in Taipei: the squad's week 11-09 has begun, the captain's
-    // (Sunday in New York) has not.
+    // (Sunday in New York) has not. The change counts from 11-09, so the squad is back in its
+    // week 11-02 on Taipei's clock until Monday comes in New York.
     expect(
       await squads.setTimeZone({
         squad: squad.id,
@@ -658,10 +682,10 @@ describe('a squad’s time zone', () => {
         moment: new Date('2026-11-08T18:00:00Z'),
       }),
     ).toStrictEqual({ timeZone: 'Asia/Taipei', nextTimeZone: 'America/New_York' });
-    expect(await squads.timeZonesFor([squad.id], '2026-11-09')).toStrictEqual(
+    expect(await squads.timeZonesFor([squad.id], '2026-11-02')).toStrictEqual(
       new Map([[squad.id, 'Asia/Taipei']]),
     );
-    expect(await squads.timeZonesFor([squad.id], '2026-11-16')).toStrictEqual(
+    expect(await squads.timeZonesFor([squad.id], '2026-11-09')).toStrictEqual(
       new Map([[squad.id, 'America/New_York']]),
     );
   });

@@ -60,7 +60,7 @@ public enum AppLanguage: String, CaseIterable, Sendable {
     /// For an extension, before it draws or looks a string up: speaks the language the app last
     /// shared from now on, read from the shared folder's file first, then the shared settings.
     /// With nothing shared (the app hasn't run since it was installed or updated) it speaks
-    /// Simplified Chinese, the language the app opens in until the member picks another.
+    /// Simplified Chinese (an extension runs only after the app has, which shares its language).
     public static func adopt(from shared: UserDefaults?, folder: URL?) {
         let fromFile = folder.flatMap { try? Data(contentsOf: $0.appending(path: fileName)) }
             .flatMap { String(bytes: $0, encoding: .utf8) }

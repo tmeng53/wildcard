@@ -34,10 +34,11 @@ export type CommentNews = 'comment' | 'reply' | 'mention';
 /**
  * Tells the check-in's author about a new comment on it, the member it replies to about the
  * reply and each member it @s about the @, never the commenter: in their 通知 (the bell), and by
- * one push per comment unless they turned off push (the app's one 通知 switch, `dailyProgress`),
- * which only stops the phone. It runs as the `comment-push` event's subscriber, after the comment
- * was saved, and waits for every push: a failure throws, so the event is delivered again, and a
- * member already told (the notice is written once a member) is not pushed again.
+ * one push per comment unless they turned off push (the `dailyProgress` switch, which also covers
+ * comment pushes; the coach's are under `coach`), which only stops the phone. It runs as the
+ * `comment-push` event's subscriber, after the comment was saved, and waits for every push: a
+ * failure throws, so the event is delivered again, and a member already told (the notice is
+ * written once a member) is not pushed again.
  */
 export async function notifyComment(
   deps: CommentPushDependencies,

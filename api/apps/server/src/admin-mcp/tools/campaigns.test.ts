@@ -182,7 +182,7 @@ describe('a campaign', () => {
       expect(asked).toMatchObject({ changed: false });
       expect(asked.plan).toContain('every squad’s home shows the tgTown scene');
       expect(asked.plan).toContain('store trot opens on the 商店街');
-      expect(asked.plan).toContain('piece trot-pie unlocks after 2 练了 on these days');
+      expect(asked.plan).toContain('piece trot-pie unlocks after 2 训练 on these days');
       expect(asked.plan).toContain('piece trot-bib opens only as a gift');
       expect(asked.plan).toContain('Warning, art not uploaded yet');
       expect(await modes()).toEqual({ tgDay: 'off', tgWeek: 'off' });

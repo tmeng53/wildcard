@@ -12,6 +12,7 @@ export const unusedWeeklyAwards = {
     titlesWon: unused,
     story: unused,
     freezeStory: unused,
+    storyWeeks: unused,
     storiesWaiting: unused,
     // The squad's today reads boards: nobody has won anything.
     boards: (members: readonly MemberId[]) =>
@@ -38,7 +39,12 @@ export const unusedCoachHiring = {
 export const unusedCoachLetters = { write: unused };
 
 /** What coaches said, for an app whose test never reads it. */
-export const unusedCoachActivity = { squad: unused, putAway: unused, spoke: unused };
+export const unusedCoachActivity = {
+  squad: unused,
+  putAway: unused,
+  answerChallenge: unused,
+  spoke: unused,
+};
 
 /** What members unlocked, for an app whose test never reads it. */
 export const unusedUnlocks = {
@@ -51,7 +57,7 @@ export const unusedUnlocks = {
 };
 
 /** What coaches gave members, for an app whose test never reads it. */
-export const unusedGifts = { of: unused };
+export const unusedGifts = { of: unused, open: unused };
 
 /**
  * What members were told, and their live events, for an app whose test never reads them: notices

@@ -139,7 +139,8 @@ public struct Caption: Hashable, Sendable {
 /// The squads a check-in is shared to: at most `maxSquads`, no repeats. A post is the
 /// member's own; one shared to no squad only they see.
 public struct Audience: Hashable, Sendable {
-    /// The most squads one post can be shared to, as the API allows; a member is in one at a time.
+    /// The most squads one post can be shared to, as the API allows. A member is in one squad at a time now, but
+    /// posts made earlier may list several, and they must still read.
     public static let maxSquads = 3
 
     /// In the order the member picked them.
@@ -166,17 +167,6 @@ public struct Photos: Hashable, Sendable {
         guard Set(photos.map(\.path)).count == photos.count else { throw .repeatedPhoto }
         all = photos
     }
-
-    /// For a reordering of photos already checked, which keeps count and distinctness.
-    private init(reordering photos: [PhotoRef]) { all = photos }
-
-    /// The same photos with `photo` moved to the front as the cover; nil if it isn't one of them.
-    public func withCover(_ photo: PhotoRef) -> Photos? {
-        guard let index = all.firstIndex(where: { $0.path == photo.path }) else { return nil }
-        var reordered = all
-        reordered.insert(reordered.remove(at: index), at: 0)
-        return Photos(reordering: reordered)
-    }
 }
 
 /// A check-in photo: its name in storage, as `POST /photo-uploads` gave it, its size, and on a
@@ -190,12 +180,18 @@ public struct PhotoRef: Hashable, Sendable {
     /// Where to `GET` the photo, on check-ins the API sent. It stops working after a while;
     /// listing again gives fresh ones. Nil on a check-in the app is about to send.
     public let viewURL: URL?
+    /// When the check-in it is on was posted, on check-ins the API sent: the phone keeps the
+    /// photos of the latest posts first, since 动态 opens on them.
+    public let postedAt: Timestamp?
 
-    public init(path: String, size: PhotoSize? = nil, viewURL: URL? = nil) throws(ContractsError) {
+    public init(
+        path: String, size: PhotoSize? = nil, viewURL: URL? = nil, postedAt: Timestamp? = nil
+    ) throws(ContractsError) {
         guard !path.isEmpty else { throw .emptyPhotoPath }
         self.path = path
         self.size = size
         self.viewURL = viewURL
+        self.postedAt = postedAt
     }
 
     public static func == (lhs: PhotoRef, rhs: PhotoRef) -> Bool { lhs.path == rhs.path }
@@ -205,7 +201,7 @@ public struct PhotoRef: Hashable, Sendable {
 
 /// A photo's width and height in pixels, each within `sideRange`.
 public struct PhotoSize: Hashable, Sendable {
-    /// The API's bounds, well past the 1080 pixels the app uploads.
+    /// The API's bounds, well past the 1920 pixels the app uploads at most.
     public static let sideRange = 1...10_000
 
     public let width: Int

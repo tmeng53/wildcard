@@ -150,7 +150,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your consent to the AI is withdrawn too"
+            "value" : "Your AI consent is withdrawn too"
           }
         },
         "zh-Hant" : {
@@ -204,7 +204,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "外卡運動員、暱稱和口頭禪都會刪除"
+            "value" : "外卡運動員和暱稱都會刪除"
           }
         }
       }
@@ -381,22 +381,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "帳號"
-          }
-        }
-      }
-    },
-    "轻点翻面" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap to flip the card"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "點一下翻面"
           }
         }
       }
@@ -600,7 +584,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "workouts · %lld clean meals · %lld day-offs"
+            "value" : "workouts · %lld clean meals · %lld days off"
           }
         },
         "zh-Hans" : {
@@ -969,22 +953,6 @@
         }
       }
     },
-    "教练的消息和回复，静默推送。关掉后通知里照样有。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your coach's messages and replies, delivered quietly. Turned off, they're still in Notifications."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "教練的訊息和回覆，靜默推送。關掉後通知裡照樣有。"
-          }
-        }
-      }
-    },
     "训练记录" : {
       "localizations" : {
         "en" : {
@@ -996,7 +964,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "訓練記錄"
+            "value" : "訓練紀錄"
           }
         }
       }
