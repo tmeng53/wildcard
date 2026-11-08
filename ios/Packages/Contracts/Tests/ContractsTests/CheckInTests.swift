@@ -21,10 +21,13 @@ private let squadB = SquadID(UUID(uuidString: "44444444-4444-4444-4444-444444444
     #expect(upper.description == "abcdef01-abcd-abcd-abcd-abcdef012345")
 }
 
-@Test func audienceIsOneSquadAtMost() throws {
-    #expect(try Audience([squadA]).squads == [squadA])
+@Test func audienceIsUpToThreeDistinctSquads() throws {
+    let squadC = SquadID(UUID(uuidString: "55555555-5555-5555-5555-555555555555")!)
+    let squadD = SquadID(UUID(uuidString: "66666666-6666-6666-6666-666666666666")!)
+    #expect(try Audience([squadA, squadB, squadC]).squads == [squadA, squadB, squadC])
     #expect(try Audience([]).squads == [])
-    #expect(throws: ContractsError.audienceSize(2)) { try Audience([squadA, squadB]) }
+    #expect(throws: ContractsError.audienceSize(4)) { try Audience([squadA, squadB, squadC, squadD]) }
+    #expect(throws: ContractsError.repeatedSquad) { try Audience([squadA, squadA]) }
 }
 
 @Test func captionIsOneLineOfUpToSixtyCharacters() throws {

@@ -14,6 +14,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case multilineCaption
     /// A check-in sent to no squads, or more than `Audience.maxSquads`.
     case audienceSize(Int)
+    /// A check-in that lists the same squad twice.
+    case repeatedSquad
     /// A weekly plan that doesn't have exactly seven days.
     case planLength(Int)
     /// A photo path that is empty.

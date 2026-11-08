@@ -105,11 +105,10 @@ func photoSideRangeIsTheAPIs(side: String) throws {
 }
 
 @Test(arguments: ["TrainedCheckInDraft", "HealthyMealCheckInDraft", "CheatMealCheckInDraft", "DisclaimerCheckInDraft"])
-func audienceSizeFitsTheAPI(schema: String) throws {
-    // The API keeps room for several squads; a member is in one at a time, so the app sends one.
+func audienceSizeIsTheAPIs(schema: String) throws {
     let audience = try property("audience", of: schema)
     #expect(audience?.minItems == nil)
-    #expect((audience?.maxItems ?? 0) >= Audience.maxSquads)
+    #expect(audience?.maxItems == Audience.maxSquads)
 }
 
 @Test(arguments: ["NewSquad", "SquadWeeklyGoal", "SquadWeeklyGoalChange"])
