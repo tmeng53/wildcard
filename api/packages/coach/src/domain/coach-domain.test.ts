@@ -203,7 +203,7 @@ describe('when the coach wakes', () => {
     expect(weeksAround(new Date('2026-11-04T17:00:00Z'))).toStrictEqual(['2026-11-02']);
   });
 
-  it('wakes for check-ins of the last hour, and once a day from 6am on the squad’s clock', () => {
+  it('wakes for check-ins of the last hour, to dream from 3am and once a day from 6am on the squad’s clock', () => {
     // 10:00 EST: c2 was made 10 minutes ago, c1 days ago.
     expect(
       wakesDue({
@@ -214,18 +214,31 @@ describe('when the coach wakes', () => {
       }),
     ).toStrictEqual([
       { squad, reason: { kind: 'checkIn', checkIn: 'c2' } },
+      { squad, reason: { kind: 'dream', day: '2026-11-01' } },
       { squad, reason: { kind: 'daily', day: '2026-11-01' } },
     ]);
     // 6:00 in Taipei is 17:00 the day before in New York: the squad's own clock.
     expect(
       wakesDue({ squad, week, now: new Date('2026-10-31T22:00:00Z'), timeZone: 'Asia/Taipei' }),
-    ).toStrictEqual([{ squad, reason: { kind: 'daily', day: '2026-11-01' } }]);
-    // 5:59 EST: no daily wake yet.
+    ).toStrictEqual([
+      { squad, reason: { kind: 'dream', day: '2026-11-01' } },
+      { squad, reason: { kind: 'daily', day: '2026-11-01' } },
+    ]);
+    // 5:59 EST: the dream, no daily wake yet.
     expect(
       wakesDue({
         squad,
         week,
         now: new Date('2026-11-01T10:59:00Z'),
+        timeZone: 'America/New_York',
+      }),
+    ).toStrictEqual([{ squad, reason: { kind: 'dream', day: '2026-11-01' } }]);
+    // 2:59 EST: nothing yet.
+    expect(
+      wakesDue({
+        squad,
+        week,
+        now: new Date('2026-11-01T07:59:00Z'),
         timeZone: 'America/New_York',
       }),
     ).toStrictEqual([]);
@@ -265,6 +278,7 @@ describe('when the coach wakes', () => {
     ).toStrictEqual([
       { squad, reason: { kind: 'checkIn', checkIn: 'c2' } },
       { squad, reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' } },
+      { squad, reason: { kind: 'dream', day: '2026-11-01' } },
       { squad, reason: { kind: 'daily', day: '2026-11-01' } },
     ]);
     // Two hours on, it is the coach job's no more: it was answered when written, or never.
@@ -275,7 +289,10 @@ describe('when the coach wakes', () => {
         now: new Date('2026-11-01T16:00:00Z'),
         timeZone: 'America/New_York',
       }),
-    ).toStrictEqual([{ squad, reason: { kind: 'daily', day: '2026-11-01' } }]);
+    ).toStrictEqual([
+      { squad, reason: { kind: 'dream', day: '2026-11-01' } },
+      { squad, reason: { kind: 'daily', day: '2026-11-01' } },
+    ]);
   });
 
   it('gives a reply’s wake the talk under the check-in, the reply to answer marked', () => {

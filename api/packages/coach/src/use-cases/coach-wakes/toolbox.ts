@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { editBody, storedPathOf, type StoredPath } from '../../domain/memory.js';
+import { editBody, FILE_LIMIT, storedPathOf, type StoredPath } from '../../domain/memory.js';
 import { NOTE_LIMIT } from '../../domain/prompt.js';
 import { CoachEmoji, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
 import { weekText, type SquadWeek } from '../../domain/squad-week.js';
@@ -19,10 +19,14 @@ export interface WakeDraft {
   readonly memberNotes: Map<string, string>;
   /** What the run said to the check-in, on its wake. */
   reply: string | undefined;
+  /** Whom that line @s, by member id. */
+  replyMentions: readonly string[];
   /** The emoji the run reacted to the check-in with, on its wake. */
   reaction: CoachEmoji | undefined;
   /** What the run answered a member's reply to it, on that reply's wake. */
   answer: string | undefined;
+  /** Whom that answer @s, by member id. */
+  answerMentions: readonly string[];
   /** Every tool call of the run, in order. */
   readonly steps: WakeStep[];
 }
@@ -63,6 +67,43 @@ function defineTool<Shape extends z.ZodObject>(
     },
   };
 }
+
+/**
+ * A line that @s teammates (队员N, as the model names them): each gets 「@昵称」 at the front
+ * unless the line already has it, and their ids, or why it can't be said.
+ */
+export function mentioning(
+  { line, at }: { readonly line: string; readonly at: readonly string[] },
+  {
+    week,
+    roster,
+  }: { readonly week: Pick<SquadWeek, 'members'>; readonly roster: ReadonlyMap<string, string> },
+): { readonly line: string; readonly mentions: readonly string[] } | string {
+  const mentions: string[] = [];
+  const prefix: string[] = [];
+  for (const name of new Set(at.map((each) => each.trim()))) {
+    const member = [...roster].find(([, shown]) => shown === name)?.[0];
+    const nickname = week.members.find((each) => each.member === member)?.nickname;
+    if (member === undefined || nickname === undefined) {
+      const known = week.members.flatMap((each) =>
+        each.nickname === undefined ? [] : [roster.get(each.member) ?? ''],
+      );
+      return `不能 @ ${name}；能 @ 的是：${known.join('、')}。`;
+    }
+    mentions.push(member);
+    if (!line.includes(`@${nickname}`)) prefix.push(`@${nickname} `);
+  }
+  return { line: prefix.join('') + line, mentions };
+}
+
+/** The `at` parameter of a line the coach says under a check-in. */
+const atParameter = z
+  .array(z.string())
+  .max(3)
+  .optional()
+  .describe(
+    '要 @ 的队友，填 队员N（不只是发帖的人，评论区里谁都能 @）；对方会收到推送，句首自动加上「@昵称」',
+  );
 
 /**
  * The tools a coach has on a wake: reading the squad's week, remembering and tidying its files,
@@ -241,18 +282,44 @@ export function toolbox({
       }),
     );
   }
+  if (kind === 'dream') {
+    tools.push(
+      defineTool(draft.steps, {
+        name: 'rewrite_file',
+        description: `把记性里的一个文件整个换成新写的内容：留下的照写，删掉的不写。body 为空就是清空。不超过 ${String(FILE_LIMIT)} 字。`,
+        parameters: z.object({
+          path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
+          body: z.string().describe('这个文件的全部新内容，用队员N称呼人'),
+        }),
+        kept: ({ path, body }) => ({ path, body: `（${String(body.length)} 字）` }),
+        run: ({ path, body }) => {
+          const stored = storedPathOf(path, roster);
+          if (stored === undefined) return unknownPath(path);
+          const next = body.trim();
+          if (next.length > FILE_LIMIT) {
+            return `文件最多 ${String(FILE_LIMIT)} 字，再精简一些。`;
+          }
+          draft.files.set(stored, next);
+          draft.changed.add(stored);
+          return `已重写 ${path}，现在 ${String(next.length)} 字。`;
+        },
+      }),
+    );
+  }
   if (kind === 'checkIn') {
     tools.push(
       defineTool(draft.steps, {
         name: 'reply',
         description: `回这条打卡一句：显示在这条动态的评论里，带「教练」标志，全队都看得到。一条打卡只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
-        parameters: z.object({ text: z.string().describe('回的这一句') }),
-        run: ({ text }) => {
-          const line = text.trim();
-          const problem = lineProblem(line, REPLY_LIMIT);
+        parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
+        run: ({ text, at = [] }) => {
+          const said = mentioning({ line: text.trim(), at }, { week, roster });
+          if (typeof said === 'string') return said;
+          const problem = lineProblem(said.line, REPLY_LIMIT);
           if (problem !== undefined) return problem;
           const replaced = draft.reply !== undefined;
-          draft.reply = line;
+          draft.reply = said.line;
+          draft.replyMentions = said.mentions;
           return replaced ? '已换成这句。' : '已回复。';
         },
       }),
@@ -273,13 +340,15 @@ export function toolbox({
       defineTool(draft.steps, {
         name: 'answer',
         description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
-        parameters: z.object({ text: z.string().describe('回的这一句') }),
-        run: ({ text }) => {
-          const line = text.trim();
-          const problem = lineProblem(line, REPLY_LIMIT);
+        parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
+        run: ({ text, at = [] }) => {
+          const said = mentioning({ line: text.trim(), at }, { week, roster });
+          if (typeof said === 'string') return said;
+          const problem = lineProblem(said.line, REPLY_LIMIT);
           if (problem !== undefined) return problem;
           const replaced = draft.answer !== undefined;
-          draft.answer = line;
+          draft.answer = said.line;
+          draft.answerMentions = said.mentions;
           return replaced ? '已换成这句。' : '已回复。';
         },
       }),

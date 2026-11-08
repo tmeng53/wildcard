@@ -35,6 +35,7 @@ export type {
   CoachAgent,
   CoachCatalogStore,
   CoachHiringStore,
+  CoachMemoryStore,
   CoachMemberNoteShown,
   CoachNoteDeliveryStore,
   CoachNoteShown,
@@ -74,6 +75,8 @@ export {
 } from './use-cases/coach-note-delivery.js';
 export { createCoachCatalog, type CoachCatalogAdmin } from './use-cases/coach-catalog.js';
 export { createCoachHiring, type CoachHiring } from './use-cases/coach-hiring.js';
+export { createCoachMemory, type CoachMemoryAdmin } from './use-cases/coach-memory.js';
+export { CoachFilePath } from './domain/memory.js';
 export { createCoachSettings, type CoachSettingsAdmin } from './use-cases/coach-settings.js';
 export {
   createCoachWakes,

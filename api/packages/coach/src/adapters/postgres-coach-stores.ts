@@ -39,8 +39,8 @@ function wakeOf(row: {
 }): Wake {
   const squad = SquadId.parse(row.squad_id);
   const id = Number(row.id);
-  if (row.reason === 'daily' && row.day !== null) {
-    return { id, squad, reason: { kind: 'daily', day: row.day } };
+  if ((row.reason === 'daily' || row.reason === 'dream') && row.day !== null) {
+    return { id, squad, reason: { kind: row.reason, day: row.day } };
   }
   if (row.reason === 'comment' && row.comment_id !== null && row.check_in_id !== null) {
     return {
@@ -84,10 +84,11 @@ function insertWake(
         .execute(db)
         .then(({ rows }) => rows);
     case 'daily':
+    case 'dream':
       return insert
-        .values({ squad_id: squad, reason: 'daily', day: reason.day, created_at: now })
+        .values({ squad_id: squad, reason: reason.kind, day: reason.day, created_at: now })
         .onConflict((conflict) =>
-          conflict.columns(['squad_id', 'day']).where('reason', '=', 'daily').doNothing(),
+          conflict.columns(['squad_id', 'day']).where('reason', '=', reason.kind).doNothing(),
         )
         .returning('id')
         .execute();
@@ -234,8 +235,12 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
               path,
               member_id: memberOfPath(path) ?? null,
               body,
-              // Null when the wake has gone meanwhile (its check-in was deleted).
-              wake_id: db.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
+              // Null for an admin's edit, or when the wake has gone meanwhile (its check-in was
+              // deleted).
+              wake_id:
+                wake === undefined
+                  ? null
+                  : db.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
             })),
           )
           .execute();
@@ -690,7 +695,10 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
         files: files.map(({ path, body, at }) => ({ path, body, at: new Date(at) })),
         notes,
         wakes: wakes.map((wake) => ({
-          reason: wake.reason === 'daily' || wake.reason === 'comment' ? wake.reason : 'checkIn',
+          reason:
+            wake.reason === 'daily' || wake.reason === 'comment' || wake.reason === 'dream'
+              ? wake.reason
+              : 'checkIn',
           state: wake.state,
           tries: wake.tries,
           lastError: wake.last_error,
