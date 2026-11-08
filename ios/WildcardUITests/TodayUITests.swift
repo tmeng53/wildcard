@@ -220,7 +220,7 @@ final class TodayUITests: XCTestCase {
         let mine = app.buttons["squadcard.page.mine"]
         XCTAssertTrue(mine.waitForExistence(timeout: Self.wait), "no dot for my week")
         mine.tap()
-        XCTAssertTrue(labeled("本周我的训练", in: app).waitForExistence(timeout: Self.wait), "my week never showed")
+        XCTAssertTrue(labeled("我的一周", in: app).waitForExistence(timeout: Self.wait), "my week never showed")
         settle()
         keepScreenshot(named: "13-today-my-week")
         // Tapping a day shows its line under the calendar.
