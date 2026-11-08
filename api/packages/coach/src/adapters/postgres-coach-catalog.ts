@@ -7,8 +7,9 @@ import type { DB } from './tables.js';
 /** A coach from its row. */
 function coachOf(row: DB['coaches']): Coach {
   return Coach.parse({
-    version: 2,
+    version: 3,
     id: row.id,
+    position: row.position,
     tier: row.tier,
     name: row.name,
     title: row.title,
@@ -29,12 +30,18 @@ function coachOf(row: DB['coaches']): Coach {
 export function createPostgresCoachCatalog(db: Kysely<DB>): CoachCatalogStore {
   return {
     async list() {
-      const rows = await db.selectFrom('coaches').selectAll().orderBy('id').execute();
+      const rows = await db
+        .selectFrom('coaches')
+        .selectAll()
+        .orderBy('position')
+        .orderBy('id')
+        .execute();
       return rows.map(coachOf);
     },
 
     async save(coach, by) {
       const columns = {
+        position: coach.position,
         tier: coach.tier,
         name: coach.name,
         title: coach.title,
@@ -61,7 +68,7 @@ export function createPostgresCoachCatalog(db: Kysely<DB>): CoachCatalogStore {
                 .column('id')
                 .doUpdateSet(columns)
                 .where(
-                  sql<boolean>`(coaches.tier, coaches.name, coaches.title, coaches.catchphrase, coaches.background, coaches.years_coaching, coaches.experience, coaches.tags, coaches.pay, coaches.style, coaches.soul, coaches.look, coaches.offered) is distinct from (excluded.tier, excluded.name, excluded.title, excluded.catchphrase, excluded.background, excluded.years_coaching, excluded.experience, excluded.tags, excluded.pay, excluded.style, excluded.soul, excluded.look, excluded.offered)`,
+                  sql<boolean>`(coaches.position, coaches.tier, coaches.name, coaches.title, coaches.catchphrase, coaches.background, coaches.years_coaching, coaches.experience, coaches.tags, coaches.pay, coaches.style, coaches.soul, coaches.look, coaches.offered) is distinct from (excluded.position, excluded.tier, excluded.name, excluded.title, excluded.catchphrase, excluded.background, excluded.years_coaching, excluded.experience, excluded.tags, excluded.pay, excluded.style, excluded.soul, excluded.look, excluded.offered)`,
                 ),
             )
             .returning('id'),
