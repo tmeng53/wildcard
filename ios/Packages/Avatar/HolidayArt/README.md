@@ -2,7 +2,8 @@
 
 Pieces for the holiday-limited stores (TURKEY TROT `trot-…`, JINGLE JOG `jingle-…`), at the paths
 the app downloads them to. They are not bundled: an admin puts each file with the `put_art`
-admin tool at its path here (`avatar/art/<slot>/<piece>/<part>.svg`), and the stores and unlock
+admin tool at its path here (`avatar/art/<slot>/<piece>/<part>.svg`, and each store's window model
+at `avatar/stores/<store>.json`), and the stores and unlock
 rules that open them are data too. `ArtTreeTests` reads every file here the way a phone would
 before it is used, so a file that fails would fail there first.
 

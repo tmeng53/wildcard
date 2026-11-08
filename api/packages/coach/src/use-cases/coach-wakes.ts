@@ -1,4 +1,4 @@
-import type { Coach, CoachId } from '../domain/coach.js';
+import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
   shownBody,
   shownPaths,
@@ -25,6 +25,7 @@ import type {
   AiConsented,
   CoachAgent,
   CoachCatalogStore,
+  CoachGifting,
   CoachHiringStore,
   CoachMemberFacts,
   CoachMemes,
@@ -138,6 +139,10 @@ export interface CoachWakesDependencies {
    * Without it every member who agreed to AI use gets one.
    */
   readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
+  /** Without it the coach gives no gifts. */
+  readonly gifting?: CoachGifting;
+  /** Told what went wrong after a wake's save, such as a gift that couldn't be given. */
+  readonly warn?: (message: string, details: Record<string, unknown>) => void;
 }
 
 /** An answer the coach just saved to a member's reply to it. */
@@ -361,6 +366,7 @@ async function runWake(
       changed: new Set(),
       note: undefined,
       memberNotes: new Map(),
+      gifts: new Map(),
       reply: undefined,
       replyMentions: [],
       reaction: undefined,
@@ -399,6 +405,20 @@ async function runWake(
             now,
             (await deps.timeZonesAt?.([wake.squad], now))?.get(wake.squad) ?? NEW_YORK,
           ).day;
+    // Who may get a gift today: members who agreed to AI use and got none this week.
+    const gifting =
+      daily && deps.gifting !== undefined
+        ? await deps.gifting.options({
+            squad: wake.squad,
+            members: await deps.aiConsented(week.members.map(({ member }) => member)),
+          })
+        : undefined;
+    // On a check-in's wake, the challenge its author got on today's note and what they said.
+    const author = addresseeOf(week, wake.reason);
+    const challenge =
+      wake.reason.kind === 'checkIn' && author !== undefined
+        ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: author, day })
+        : undefined;
     const task = taskOf({
       reason: wake.reason,
       week,
@@ -413,6 +433,15 @@ async function runWake(
       recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
       ...(thread === undefined ? {} : { thread: thread.thread }),
       canSeePhotos: deps.photoUrls !== undefined,
+      ...(challenge === undefined
+        ? {}
+        : {
+            challenge: {
+              challenge: challenge.challenge,
+              ...(challenge.answer === undefined ? {} : { answer: challenge.answer }),
+            },
+          }),
+      ...(gifting === undefined ? {} : { gifting }),
       recentEmoji:
         wake.reason.kind === 'checkIn'
           ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
@@ -431,18 +460,20 @@ async function runWake(
     }
     const run = await deps.agent.run({
       model: settings.model,
-      instructions: instructionsOf(settings, coach),
+      // It goes by its name in the squad's language (Tracy, 2026-11-08: Poki in English).
+      instructions: instructionsOf(settings, coachIn(coach, week.language ?? 'zh-Hans')),
       task,
       tools: toolbox({
         week,
         roster,
         draft,
         kind: wake.reason.kind,
-        to: addresseeOf(week, wake.reason),
+        to: author,
         ...photosOf(deps.photoUrls, { week, wake }),
         ...factsFor(deps, { week, roster }),
         ...(deps.memes === undefined ? {} : { memes: deps.memes }),
         noteTo,
+        ...(gifting === undefined ? {} : { gifting }),
         pastWeek: async (weeksAgo) =>
           weekText(
             await weekOf(deps, {
@@ -485,12 +516,20 @@ async function runWake(
     });
     // After the save, and never undoing it: telling the member is the caller's to log if it fails.
     const { reply, answer } = saved;
-    const author = week.checkIns.find(({ id }) => id === reply?.checkIn)?.member;
     if (reply !== undefined && author !== undefined) {
       await deps.replied?.({ ...reply, author }).catch(() => undefined);
     }
     if (answer !== undefined && thread !== undefined) {
       await deps.answered?.({ ...answer, commenter: thread.commenter }).catch(() => undefined);
+    }
+    // Gifts are the unlocks module's, given after the run's save; one refused is only noted.
+    for (const [member, { piece, line }] of draft.gifts) {
+      const refused = await deps.gifting
+        ?.give({ squad: wake.squad, member, coach: coach.id, piece, line })
+        .catch((error: unknown) => (error instanceof Error ? error.message : String(error)));
+      if (refused !== undefined) {
+        deps.warn?.('coach gift not given', { squad: wake.squad, member, piece, refused });
+      }
     }
     return true;
   } catch (error) {
@@ -641,13 +680,14 @@ async function saveDraft(
     });
   }
   if (wake.reason.kind === 'daily') {
-    for (const [member, text] of draft.memberNotes) {
+    for (const [member, { text, challenge }] of draft.memberNotes) {
       await stores.memberNotes.save({
         squad,
         member,
         coach: coach.id,
         day: wake.reason.day,
         text,
+        ...(challenge === undefined ? {} : { challenge }),
         wake: wake.id,
       });
     }
@@ -750,7 +790,7 @@ async function threadOf(
   const comments = week.checkIns.find(({ id }) => id === reason.checkIn)?.comments ?? [];
   const answering = comments.find(({ id }) => id === reason.comment);
   if (answering === undefined || saidTo(answering) !== coach.id) return undefined;
-  // A check-in shared to several squads is answered only in the writer's own.
+  // A comment is answered only in a squad its writer belongs to.
   if (!week.members.some(({ member }) => member === answering.member)) return undefined;
   const found = await deps.stores.replies.find(wake.squad, reason.checkIn);
   const reply = found?.coach === coach.id ? found.text : undefined;

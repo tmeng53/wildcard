@@ -68,7 +68,7 @@ const Hottest = z
     day: LocalDay,
     kind: CheckInKind,
     sport: z.string().optional().meta({
-      description: 'For a 练了: the listed sport’s key, or the name of the member’s own.',
+      description: 'For a 训练: the listed sport’s key, or the name of the member’s own.',
     }),
     caption: z.string().optional(),
     text: z.string().optional().meta({ description: 'For a 请假条: its text.' }),
@@ -103,11 +103,11 @@ const StoryDay = z
   .strictObject({
     day: LocalDay,
     kind: z.enum(['trained', 'rest', 'disclaimer', 'none']).meta({
-      description: 'A 练了 wins over a 请假条, which wins over a planned rest day.',
+      description: 'A 训练 wins over a 请假条, which wins over a planned rest day.',
     }),
     sport: z.string().optional().meta({
       description:
-        'For a trained day: its first 练了’s listed sport; missing for a sport of the member’s own.',
+        'For a trained day: its first 训练’s listed sport; missing for a sport of the member’s own.',
     }),
     minutes: z
       .int()
@@ -115,7 +115,7 @@ const StoryDay = z
       .optional()
       .meta({
         description:
-          'For a trained day: the minutes its 练了 logged, summed; missing when none did (minutes ' +
+          'For a trained day: the minutes its 训练 logged, summed; missing when none did (minutes ' +
           'are optional) or in a week frozen before they were kept.',
       }),
   })

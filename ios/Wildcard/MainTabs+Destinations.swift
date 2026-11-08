@@ -66,6 +66,9 @@ extension MainTabs {
         case .squad:
             selection = .today
             todayPages = [.squad]
+        case .coaches:
+            selection = .today
+            todayPages = [.coach(.market)]
         case .profile:
             selection = .profile
         case .notices:

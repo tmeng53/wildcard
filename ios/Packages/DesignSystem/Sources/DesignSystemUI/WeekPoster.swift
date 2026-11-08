@@ -47,11 +47,11 @@ public struct WeekPosterLayout: Sendable, Equatable {
 public enum WeekPosterHeading {
     /// The week's number, shown as W43.
     case week(Int)
-    /// A name with its symbol over the rows instead of a number: the 每周模板, which is no one
+    /// A name with its symbol over the rows instead of a number: the 我的每周计划, which is no one
     /// week.
     case named(Text, systemImage: String)
 
-    /// The 每周模板's symbol, wherever it is shown (出赛表, sign-up's poster): it comes round every
+    /// The 我的每周计划's symbol, wherever it is shown (出赛表, sign-up's poster): it comes round every
     /// week.
     public static let templateSymbol = "repeat"
 }

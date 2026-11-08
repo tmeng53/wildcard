@@ -31,6 +31,7 @@ import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
 import { createApp } from '../app.js';
+import { coachNamesIn } from '../flows/coach-names.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import {
@@ -129,6 +130,15 @@ const app = createApp({
     clock: () => new Date(),
   }),
   ...ignoredNotices,
+  coachNames: coachNamesIn({
+    coaches: createPostgresCoachCatalog(db),
+    members,
+    squads: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
+  }),
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -436,6 +446,47 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     expect(quiet.status).toBe(200);
     expect(quiet.body).not.toHaveProperty('memberNote');
     // Fired again, so no other test's coach run finds this squad hired.
+    await call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
+  });
+
+  it('shows the note’s challenge and keeps the caller’s first answer to it', async () => {
+    const [captain, mate] = [await signUp(), await signUp()];
+    const squad = await squadOf(captain);
+    await call({
+      method: 'PUT',
+      path: `/squads/${squad}/coach`,
+      token: captain.token,
+      body: { version: 1, coach: 'xiaohun' },
+    });
+    const written = await sql<{ id: string }>`
+      insert into public.coach_member_notes
+        (squad_id, member_id, coach_id, day, text, challenge_title, challenge_amount, challenge_unit)
+      values (${squad}, ${captain.userId}, 'xiaohun', current_date, '今天多喝水', '喝水', 8, '杯')
+      returning id`.execute(db);
+    const id = Number(written.rows[0]?.id);
+    await sql`insert into public.coach_member_note_deliveries (note_id) values (${id})`.execute(db);
+    const path = `/squads/${squad}/coach/activity`;
+    expect((await call({ method: 'GET', path, token: captain.token })).body).toMatchObject({
+      memberNote: { id, text: '今天多喝水', challenge: { title: '喝水', amount: 8, unit: '杯' } },
+    });
+    const answer = (token: string, said: string) =>
+      call({
+        method: 'PUT',
+        path: `/squads/${squad}/coach/notes/${String(id)}/challenge`,
+        token,
+        body: { version: 1, answer: said },
+      });
+    expect(await answer(captain.token, 'accepted')).toMatchObject({
+      status: 200,
+      body: { version: 1, noteId: id, answer: 'accepted' },
+    });
+    expect((await answer(captain.token, 'declined')).body).toMatchObject({ answer: 'accepted' });
+    expect((await answer(captain.token, 'maybe')).status).toBe(400);
+    // Only the member it was written to, in their squad.
+    expect((await answer(mate.token, 'accepted')).status).toBe(403);
+    expect((await call({ method: 'GET', path, token: captain.token })).body).toMatchObject({
+      memberNote: { challenge: { title: '喝水', answer: 'accepted' } },
+    });
     await call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
   });
 

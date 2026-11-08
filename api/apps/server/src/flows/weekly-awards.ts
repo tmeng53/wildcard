@@ -85,7 +85,7 @@ export interface WeeklyAwardsRun {
 
 /**
  * The squad's push when its 战报 is ready, to everyone in it. It says only that the awards are
- * in, never who won what, so opening the story is the surprise. A later one for the same week (a member in two squads) replaces it.
+ * in, never who won what, so opening the story is the surprise. A later one for the same week replaces it.
  */
 export function awardsReadyNotification(squad: SquadId, week: WeekStart): PushNotification {
   return {

@@ -37,7 +37,12 @@ public struct CoachPage: View {
                 retry: { Task { await model.loadMarket() } },
                 open: { coach in push(.resume(coach)) }
             )
-            .task { await model.loadMarket() }
+            .task {
+                // Opened straight from 今天, past 小队: who may hire comes from the squad, so read
+                // it again when it never loaded.
+                await model.loadMarket()
+                if model.settings == nil { await model.reload() }
+            }
         case .resume(let coach):
             CoachResumePage(
                 coach: coach, isCurrent: model.coach?.coach.id == coach.id,
@@ -98,7 +103,7 @@ struct CoachResumePage: View {
             ScrollView {
                 VStack(spacing: 0) {
                     CoachStage(
-                        coach: coach.id, catchphrase: coach.catchphrase, bubble: .center,
+                        coach: coach.id, catchphrase: coach.catchphrase,
                         figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.resumeFloor, greets: true
                     )
                     .frame(height: min(CoachMetrics.resumeStage, proxy.size.height * 0.42) + proxy.safeAreaInsets.top)
@@ -123,18 +128,7 @@ struct CoachResumePage: View {
                 StatusTag(isCurrent: isCurrent)
             }
             if let note { board(note) }
-            Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: Space.m, verticalSpacing: 0) {
-                row(Text("履历", bundle: .module)) { Text(verbatim: coach.background) }
-                row(Text("执教", bundle: .module)) {
-                    HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                        Text(verbatim: "\(coach.yearsCoaching)").typeStyle(TypeRamp.scoreSmall)
-                        Text("年，\(coach.experience)", bundle: .module)
-                    }
-                }
-                row(Text("风格", bundle: .module)) { Text(verbatim: coach.style) }
-                row(Text("期望待遇", bundle: .module)) { Text(verbatim: coach.pay) }
-                hairline
-            }
+            CoachResumeFields(coach: coach, labelIdentifier: "coach.resume.label")
         }
         .padding(.horizontal, Space.pageMargin)
         .padding(.top, Space.m + Space.xxs)
@@ -169,33 +163,6 @@ struct CoachResumePage: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("coach.resume.board")
-    }
-
-    private func row(_ label: Text, @ViewBuilder value: () -> some View) -> some View {
-        Group {
-            hairline
-            GridRow {
-                label
-                    .typeStyle(TypeRamp.body)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .lineLimit(1)
-                    .fixedSize()
-                    .padding(.vertical, Space.s - 1)
-                    .accessibilityIdentifier("coach.resume.label")
-                value()
-                    .typeStyle(TypeRamp.body)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.vertical, Space.s - 1)
-            }
-        }
-    }
-
-    private var hairline: some View {
-        Hairline()
-            .gridCellColumns(2)
-            .gridCellUnsizedAxes(.horizontal)
     }
 
     @ViewBuilder private var action: some View {
@@ -254,13 +221,13 @@ struct FireCoachPage: View {
                 CoachStage(
                     coach: coach.id,
                     catchphrase: String(localized: "我才刚记住大家的外号……", bundle: .module.inAppLanguage),
-                    bubble: .center, figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
+                    figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
                     mood: .crying, surface: .page
                 )
                 .frame(height: CoachMetrics.fireStage)
                 .clipShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
                 Text("小队的记忆会留给下一个教练", bundle: .module)
-                    .typeStyle(TypeRamp.callout)
+                    .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)

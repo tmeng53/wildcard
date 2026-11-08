@@ -7,7 +7,7 @@ import DesignSystemUI
 import SportsUI
 import SwiftUI
 
-/// The 今天 tab: the whole squad on its scene with the week's card on top, me front and centre,
+/// The 小队 tab (`.today`): the whole squad on its scene with the week's card on top, me front and centre,
 /// and 打卡. Every check-in starts and ends here: the burst opens over the lightly blurred scene,
 /// and after posting you stay on the scene for the payoff (the approved home, version 15).
 public struct TodayView: View {
@@ -110,7 +110,8 @@ public struct TodayView: View {
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
                 pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
                 tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, tapCoach: model.tapCoach,
-                coachHasNote: model.coachHasNote, coachAt: { coachCenter = $0 }
+                coachHasNote: model.coachHasNote, coachAt: { coachCenter = $0 },
+                tapVacancy: model.tapVacancy
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)

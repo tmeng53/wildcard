@@ -50,7 +50,7 @@ export interface UnlockStore {
  */
 export type Unlocked = (member: MemberId, unlocks: readonly Unlock[]) => Promise<void>;
 
-/** The member's 练了 check-ins made from `since` on, the earliest made first. */
+/** The member's 训练 check-ins made from `since` on, the earliest made first. */
 export type TrainedSince = (query: {
   readonly member: MemberId;
   readonly since: Date;
@@ -65,14 +65,26 @@ export interface GiftStore {
   pieces(): Promise<GiftPiece[]>;
   /** Adds a piece to the pool or changes whether it is offered. */
   putPiece(edit: GiftPieceEdit): Promise<void>;
-  /** What `member` was given, the earliest first. */
+  /** What `member` was given, the earliest first, each with when they opened it. */
   giftsOf(member: MemberId): Promise<CoachGift[]>;
   /**
-   * Keeps `gift` for `member` unless they already have that piece. Answers with the gift as
-   * kept: this one when it is new, or the earlier one.
+   * Keeps `gift` for `member`, counting for the week that began at `weekStart`; `undefined`
+   * when they already have that piece or a gift for that week.
    */
   give(
     member: MemberId,
-    gift: Omit<CoachGift, 'givenAt'>,
-  ): Promise<{ gift: CoachGift; fresh: boolean }>;
+    gift: Omit<CoachGift, 'givenAt' | 'opened'> & {
+      readonly admin?: MemberId;
+      readonly weekStart: Date;
+    },
+  ): Promise<CoachGift | undefined>;
+  /**
+   * Keeps that `member` opened their gift of `piece` and whether they put it on; false when they
+   * weren't given it. Opening it again keeps the first.
+   */
+  open(opening: {
+    readonly member: MemberId;
+    readonly piece: PieceId;
+    readonly worn: boolean;
+  }): Promise<boolean>;
 }

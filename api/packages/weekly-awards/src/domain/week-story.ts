@@ -10,13 +10,13 @@ import type { WeekStart } from './schedule.js';
 // deleted account takes its words and photos with it, and each post on a page is a row of its
 // own, so a deleted post does too.
 
-/** What a day of a member's week was: a 练了 wins over a 请假条, which wins over a rest day. */
+/** What a day of a member's week was: a 训练 wins over a 请假条, which wins over a rest day. */
 const StoryDay = z.strictObject({
   day: z.iso.date(),
   kind: z.enum(['trained', 'rest', 'disclaimer', 'none']),
-  /** For a trained day: its first 练了's listed sport; missing for a sport of the member's own. */
+  /** For a trained day: its first 训练's listed sport; missing for a sport of the member's own. */
   sport: z.string().optional(),
-  /** For a trained day: the minutes its 练了 logged; missing when none did, or frozen before. */
+  /** For a trained day: the minutes its 训练 logged; missing when none did, or frozen before. */
   minutes: z.int().min(1).optional(),
 });
 export type StoryDay = z.infer<typeof StoryDay>;

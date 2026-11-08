@@ -38,7 +38,7 @@ export function putSwitch({ switches }: SwitchToolDependencies) {
       'Adds a switch, or replaces every field of one (read it with get_switches first). mode on ' +
       'or off holds until changed; schedule needs a window and turns on every year in it. ' +
       'Everything with this switchId follows at once: a limited scene opens or closes (a squad on ' +
-      'it goes back to the gym the next week), a store opens or closes and its pieces count 练了 ' +
+      'it goes back to the gym the next week), a store opens or closes and its pieces count 训练 ' +
       'only while it is on. Pieces members unlocked are kept. Apps see it within a minute. Returns the switches now.',
     changes: true,
     input: SwitchEdit,

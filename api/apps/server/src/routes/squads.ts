@@ -2,6 +2,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { cors } from 'hono/cors';
 import {
   DaysPerMember,
+  DEFAULT_DAYS_PER_MEMBER,
   InviteCode,
   InviteCodeUnknownError,
   MemberId,
@@ -85,6 +86,7 @@ const NewSquad = z
       description:
         'The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 ' +
         'when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.',
+      default: DEFAULT_DAYS_PER_MEMBER,
     }),
     timeZone: squadTimeZoneField.optional().meta({
       description:

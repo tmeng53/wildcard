@@ -15,9 +15,9 @@ import SquadDomain
 import SquadUI
 import SwiftUI
 
-/// The app once the member is signed in and in a squad: the three tabs (今天, 动态, 我) in the
-/// system's Liquid Glass tab bar (`AppTabs`), with 小队 opened inside 今天 from the home's squad
-/// card (Tracy took 小队's own tab away on 2026-11-04).
+/// The app once the member is signed in and in a squad: the three tabs (小队, 动态, 我) in the
+/// system's Liquid Glass tab bar (`AppTabs`); the squad's settings open inside 小队 from the
+/// home's squad card.
 /// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
 /// them draws the bar itself. Each tab is a NavigationStack: every page that opens over a tab's
 /// screen is pushed on it, so going back (the back button, a swipe right) is the system's.
@@ -171,11 +171,8 @@ struct MainTabs: View {
         .celebrationPopup(today)
         .onChange(of: homeInFront, initial: true) { today.isHomeInFront = $1 }
         .cardPopup(isPresented: $showsCoachCard) {
-            CoachCardPopup(today: today, squad: squad) { opensFeed in
-                showsCoachCard = false
-                if opensFeed { selection = .feed }
-            }
-            .environment(\.sceneTheme, today.scene)
+            CoachCardPopup(today: today, squad: squad, close: closeCoachCard, browse: browseCoaches)
+                .environment(\.sceneTheme, today.scene)
         }
         .onChange(of: squad.hasLeft) { _, left in
             guard left else { return }
@@ -380,19 +377,7 @@ extension MainTabs {
         }
         // 小队 opens on what was read last.
         .task { if squad.load == .loading { await squad.reload() } }
-    }
-
-    /// The coach's pages on 今天's stack; taking them away goes back to 小队.
-    private var coachPages: Binding<[CoachRoute]> {
-        Binding(
-            get: {
-                todayPages.compactMap { page -> CoachRoute? in
-                    guard case .coach(let route) = page else { return nil }
-                    return route
-                }
-            },
-            set: { routes in
-                todayPages = todayPages.filter { $0 == .squad } + routes.map(TodayPage.coach)
-            })
+        // A coach hired, changed or fired, from 小队 or the sideline's empty spot, stands there.
+        .onChange(of: squad.coach?.coach.id) { Task { await today.reloadCoach() } }
     }
 }

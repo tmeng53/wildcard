@@ -24,7 +24,7 @@ export function weekOf(day: LocalDay): Week {
 export type TrainingStatus = 'trained' | 'disclaimer' | 'notCheckedIn';
 
 /**
- * A 练了 wins over a 请假条 posted earlier the same day. A 休息 is no 请假条: it made the day a
+ * A 训练 wins over a 请假条 posted earlier the same day. A 休息 is no 请假条: it made the day a
  * rest day in the plan, which is how the day shows.
  */
 export function trainingOn(checkIns: readonly CheckInRecord[], day: LocalDay): TrainingStatus {
@@ -34,13 +34,13 @@ export function trainingOn(checkIns: readonly CheckInRecord[], day: LocalDay): T
   return 'notCheckedIn';
 }
 
-/** How a day went for training, as the 出赛表 marks it: the sport of the day's latest 练了. */
+/** How a day went for training, as the 出赛表 marks it: the sport of the day's latest 训练. */
 export type DayMark =
   | { readonly status: 'trained'; readonly sport: SportKey; readonly customSport?: string }
   | { readonly status: 'disclaimer' }
   | { readonly status: 'none' };
 
-/** A 练了 wins over a 请假条, and the latest 练了 of the day names its sport. */
+/** A 训练 wins over a 请假条, and the latest 训练 of the day names its sport. */
 export function markOn(checkIns: readonly CheckInRecord[], day: LocalDay): DayMark {
   let latest: (CheckInRecord & { readonly kind: 'trained' }) | undefined;
   for (const each of checkIns) {
@@ -67,14 +67,14 @@ export function latestMealOn(
   return latest?.kind === 'healthyMeal' || latest?.kind === 'cheatMeal' ? latest.kind : undefined;
 }
 
-/** Days among `days` with a 练了. Several 练了 on one day count once. */
+/** Days among `days` with a 训练. Several 训练 on one day count once. */
 export function trainedDays(checkIns: readonly CheckInRecord[], days: readonly LocalDay[]): number {
   return days.filter((day) => trainingOn(checkIns, day) === 'trained').length;
 }
 
 /**
- * When a member reached their `count`-th day trained: the moment the 练了 that made it was
- * checked in (the first 练了 of each day counts, the count-th earliest of them). `undefined`
+ * When a member reached their `count`-th day trained: the moment the 训练 that made it was
+ * checked in (the first 训练 of each day counts, the count-th earliest of them). `undefined`
  * for a count under 1, or while they have trained fewer days.
  */
 export function trainedDaysReachedAt(

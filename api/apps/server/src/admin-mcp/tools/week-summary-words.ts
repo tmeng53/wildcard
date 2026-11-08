@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { adminTool } from '../admin-tool.js';
 
 // The words of the Sunday summary (周日战报): each award's name, symbol and what a winner won it
-// by, and each count's name, in Chinese and English. A change shows on the next summary anyone
+// by, and each count's name, in Simplified Chinese, English and Traditional Chinese. A change shows on the next summary anyone
 // opens, with no app release and no deploy, and each one is logged with the whole new value.
 
 interface WeekSummaryWordToolDependencies {
@@ -19,7 +19,7 @@ export function getWeekSummaryWords({ words }: WeekSummaryWordToolDependencies) 
     description:
       'Shows the words of the Sunday summary (周日战报) now: for each award its SF Symbol, its ' +
       'name and what a winner won it by (`{n}` is the number; `one` when it is 1, `other` ' +
-      'otherwise), and each count’s name, in zh-Hans and en.',
+      'otherwise), and each count’s name, in zh-Hans, en and zh-Hant.',
     changes: false,
     input: z.strictObject({}),
     run: async () => words.current(),
@@ -33,7 +33,7 @@ export function changeWeekSummaryWords({ words }: WeekSummaryWordToolDependencie
     title: 'Change the 战报 words',
     description:
       'Replaces the words of the awards and counts it names, each whole (symbol, name and ' +
-      'winner words for an award; both languages for a count); the rest stay as they are. The ' +
+      'winner words for an award; every language for a count); the rest stay as they are. The ' +
       'awards and counts themselves are rules in code, so none can be added here. Shows on the ' +
       'next summary anyone opens. Returns the words now.',
     changes: true,

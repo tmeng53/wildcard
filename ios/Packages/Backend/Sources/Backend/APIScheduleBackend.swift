@@ -4,7 +4,7 @@ import Foundation
 import ScheduleDomain
 
 /// 出赛表 over our API: the member's weekly plans with their 饮食小目标 and their typical week
-/// (每周模板), the days they checked in and the titles the weekly awards gave them.
+/// (我的每周计划), the days they checked in and the titles the weekly awards gave them.
 public struct APIScheduleBackend: ScheduleBackend {
     private let api: WildcardAPI
     private let now: @Sendable () -> Date
