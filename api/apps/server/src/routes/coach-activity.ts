@@ -1,9 +1,12 @@
+import { NEW_YORK, TimeZone } from '@wildcard/time-zones';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
+  LETTER_LIMIT,
   MAX_CHECK_INS,
   REPLY_LIMIT,
   SquadId as CoachSquadId,
   type CoachActivity,
+  type CoachLetter,
   type CoachReply,
 } from '@wildcard/coach';
 import { MemberId as PushMember, type Push } from '@wildcard/push';
@@ -24,10 +27,18 @@ const CoachSpeakerBody = z
 
 const CoachNoteBody = z
   .strictObject({
-    day: z.iso.date().meta({ description: 'The day (New York) the line is for.' }),
+    day: z.iso.date().meta({
+      description: 'The day the line is for, on the squad’s clock (`timeZone`).',
+    }),
     text: z.string().meta({ description: 'The 战术板 line.', example: '今天谁先动，谁就是队长' }),
     coach: CoachSpeakerBody,
     at: z.iso.datetime(),
+    timeZone: TimeZone.meta({
+      description:
+        'The squad’s time zone (小队时区) now, whose day `day` is: the app shows the line while ' +
+        'it is still that day there.',
+      example: 'Asia/Taipei',
+    }),
   })
   .openapi('CoachNote');
 
@@ -36,12 +47,43 @@ const CoachMemberNoteBody = z
     id: z.int().positive().meta({
       description: 'The note’s id, which putting it away (收下) and `coachNote` notices name.',
     }),
-    day: z.iso.date().meta({ description: 'The day (New York) the note was written for.' }),
+    day: z.iso
+      .date()
+      .meta({ description: 'The day, on the squad’s clock, the note was written for.' }),
     text: z.string().meta({ description: 'The note’s words.', example: '昨天那组深蹲我看见了' }),
     coach: CoachSpeakerBody,
     at: z.iso.datetime().meta({ description: 'When it was written.' }),
   })
   .openapi('CoachMemberNote');
+
+export const CoachLetterBody = z
+  .strictObject({
+    id: z
+      .int()
+      .positive()
+      .meta({ description: 'The letter’s id, which `coachLetter` notices name.' }),
+    from: CoachSpeakerBody.meta({ description: 'The coach who wrote it as it left: its 落款.' }),
+    to: CoachSpeakerBody.meta({ description: 'The coach who took over: its 称呼.' }),
+    day: z.iso.date().meta({ description: 'The day it is dated, on the squad’s clock.' }),
+    text: z.string().max(LETTER_LIMIT).meta({
+      description: 'Its body, without the 称呼 or 落款; lines apart by `\\n`.',
+      example: '这队交给你了，我先撤。',
+    }),
+    at: z.iso.datetime().meta({ description: 'When it was written.' }),
+  })
+  .openapi('CoachLetter');
+
+/** A letter as the app reads it. */
+export function wireLetter(letter: CoachLetter): z.infer<typeof CoachLetterBody> {
+  return {
+    id: letter.id,
+    from: speaker(letter.from),
+    to: speaker(letter.to),
+    day: letter.day,
+    text: letter.text,
+    at: letter.at.toISOString(),
+  };
+}
 
 const CoachReplyBody = z
   .strictObject({
@@ -112,6 +154,12 @@ const CoachActivityBody = z
         'the caller opens it; only the caller sees it. Left out when there is none ' +
         'from the last day and a half, or while the caller’s `coach` push switch is off.',
     }),
+    letter: CoachLetterBody.optional().meta({
+      description:
+        'The letter the squad’s coach now was left by the coach before it when the squad changed ' +
+        'coach (换教练), for 今天 to open once on each phone and the coach’s 简历 to keep. Left ' +
+        'out when it wasn’t left one.',
+    }),
   })
   .openapi('CoachActivity');
 
@@ -166,7 +214,7 @@ export function coachActivity(deps: {
     description:
       'The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the ' +
       'check-ins asked about that has one, its answers to members’ replies to it there, and the ' +
-      'caller’s own morning note. ' +
+      'caller’s own morning note, and the letter the coach now was left when it took over. ' +
       'Only for the squad’s members. They stay after the squad fires its coach.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -231,11 +279,13 @@ export function coachActivity(deps: {
       const { squadId } = c.req.valid('param');
       // Throws `SquadNotJoinedError` for anyone not in the squad.
       await deps.squads.find({ squad: squadId, viewer: MemberId.parse(c.var.caller.userId) });
+      const zone = (await deps.squads.timeZonesAt([squadId], new Date())).get(squadId) ?? NEW_YORK;
       const {
         note,
         replies,
         answers,
         memberNote: written,
+        letter,
       } = await deps.coachActivity.squad({
         squad: CoachSquadId.parse(squadId),
         checkIns: c.req.valid('query').checkIns,
@@ -261,6 +311,7 @@ export function coachActivity(deps: {
                   text: note.text,
                   coach: speaker(note.coach),
                   at: note.at.toISOString(),
+                  timeZone: zone,
                 },
           replies: replies.map((reply) => ({
             checkInId: reply.checkIn,
@@ -287,6 +338,7 @@ export function coachActivity(deps: {
                   at: memberNote.at.toISOString(),
                 },
               }),
+          ...(letter === undefined ? {} : { letter: wireLetter(letter) }),
         },
         200,
       );

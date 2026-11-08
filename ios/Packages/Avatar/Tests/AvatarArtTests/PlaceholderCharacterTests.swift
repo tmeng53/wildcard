@@ -14,7 +14,8 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "earL", "earR", "head", "flapL", "flapR", "crown", "award", "nose", "eyes", "brows", "browsSad", "browsMad",
             "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp", "drool", "vein", "steamL", "steamR",
             "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR", "sparkle", "tearL", "tearR", "food0",
-            "food1", "food2", "chin", "armL", "propL", "gripL", "armR", "chinFrontL", "chinFrontR", "propR", "gripR",
+            "food1", "food2", "chin", "armL", "jawL", "propL", "gripL", "armR", "jawR", "chinFrontL", "chinFrontR",
+            "propR", "gripR",
             "flexL",
             "muscleL",
             "flexR", "muscleR", "heart", "propFront", "propOver", "desk",
@@ -71,7 +72,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 64)
+    #expect(figure.parts.count == 66)
 }
 
 @Test(arguments: Persona.allCases)

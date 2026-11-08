@@ -44,6 +44,17 @@ export class CoachSquadNotFoundError extends AppError {
   }
 }
 
+/** Thrown when an admin writes a coach memory page for someone who has no account. */
+export class CoachFileMemberNotFoundError extends AppError {
+  override readonly name = 'CoachFileMemberNotFoundError';
+  readonly reason = 'COACH_FILE_MEMBER_NOT_FOUND';
+  readonly status = 'NOT_FOUND';
+
+  constructor() {
+    super('No member with that id: a page is people/<member id>.md.');
+  }
+}
+
 /** Thrown when a member puts away a morning note that isn't theirs in that squad, or isn't there. */
 export class CoachNoteNotFoundError extends AppError {
   override readonly name = 'CoachNoteNotFoundError';

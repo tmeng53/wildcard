@@ -86,7 +86,7 @@ public enum RecapSample {
                 authorMove: ready ? .flat : nil, squadMove: ready ? .laugh : nil),
             ending: missed
                 ? Ending(
-                    done: 19, plan: 22, headline: ready ? "差一点" : nil, line: ready ? "还差 3 天。下周的腿已经在热身了" : nil,
+                    done: 19, plan: 22, headline: ready ? "差一点" : nil, line: ready ? "下周的腿已经在热身了" : nil,
                     move: ready ? .warmup : nil)
                 : Ending(
                     done: 23, plan: 22, headline: ready ? "稳了" : nil, line: ready ? "超额 1 次，多出来那次算利息" : nil,

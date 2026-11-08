@@ -5,7 +5,11 @@ import { logAlso } from './log.js';
 import type { Caller, VerifyToken } from './ports.js';
 
 export interface SignedIn {
-  Variables: { caller: Caller };
+  Variables: {
+    caller: Caller;
+    /** Told each caller once signed in, before the route runs: `rememberReaderLanguage`'s. */
+    signedIn?: (caller: Caller) => Promise<void>;
+  };
 }
 
 /**
@@ -19,6 +23,7 @@ export function requireCaller(verifyToken: VerifyToken) {
     if (caller.oauthClient !== undefined) throw new AppSignInRequiredError();
     c.set('caller', caller);
     logAlso({ member: caller.userId });
+    await c.get('signedIn')?.(caller);
     await next();
   });
 }

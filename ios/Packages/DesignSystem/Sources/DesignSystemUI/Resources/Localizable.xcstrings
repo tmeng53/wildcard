@@ -1681,18 +1681,18 @@
         }
       }
     },
-    "本周我的训练": {
+    "我的一周": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "My training this week"
+            "value": "My week"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "本週我的訓練"
+            "value": "我的一週"
           }
         }
       }
@@ -1853,22 +1853,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "游泳"
-          }
-        }
-      }
-    },
-    "游泳 1 · 跑步 1": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Swim 1 · Run 1"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "游泳 1 · 跑步 1"
           }
         }
       }
@@ -3329,18 +3313,34 @@
         }
       }
     },
-    "小队本周目标 · 人均 %lld 天": {
+    "小队本周目标": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Squad goal · %lld days each"
+            "value": "Squad goal"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "小隊本週目標 · 人均 %lld 天"
+            "value": "小隊本週目標"
+          }
+        }
+      }
+    },
+    "多练 %lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days over"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "多練 %lld 天"
           }
         }
       }
@@ -3421,6 +3421,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "場景上：毛玻璃卡片，可收起"
+          }
+        }
+      }
+    },
+    "比赛时区": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Match time zone"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "比赛时区"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "比賽時區"
+          }
+        }
+      }
+    },
+    "搜索城市或时区": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search cities or time zones"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索城市或时区"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜尋城市或時區"
           }
         }
       }

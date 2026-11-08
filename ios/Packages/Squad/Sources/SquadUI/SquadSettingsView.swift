@@ -17,7 +17,7 @@ import UIKit
 /// 小队, the squad's page (approved canvas, 2026-10-22; its cards redone with the weekly goal,
 /// 2026-11-06), opened from the home's squad card (a tab from 2026-11-02 until Tracy took the tab
 /// away on 2026-11-04): 返回, the squad's name, a still row of everyone's heads (the captain's
-/// tagged 队长) with the coach and 「+ 邀请」, then graphite cards: the weekly goal, the coach,
+/// tagged 队长) with the coach and 「+ 邀请」, then graphite cards: the weekly goal, the match time zone (比赛时区), the coach,
 /// this week's scene, 往期战报 (which the app passes in, since the 战报 is another package's),
 /// the invite code; the members, and leaving. The captain renames the
 /// squad and manages members from each row's ··· menu; last week's crown winner, or the captain
@@ -126,6 +126,11 @@ public struct SquadSettingsView<PastRecaps: View>: View {
             section(Text("每周目标", bundle: .module)) {
                 SquadGoalCard(goal: settings.goal, canChange: model.canChangeGoal) { days in
                     Task { await model.setGoal(days) }
+                }
+            }
+            section(Text("比赛时区", bundle: .module)) {
+                SquadTimeZoneRow(zone: settings.matchTimeZone, canChange: model.canChangeTimeZone) { zone in
+                    Task { await model.setTimeZone(zone) }
                 }
             }
             section(Text("教练", bundle: .module)) { coachCard }
@@ -281,7 +286,7 @@ extension SquadSettingsView {
                         } label: {
                             Text("换场地", bundle: .module)
                         }
-                        .buttonStyle(SecondaryButtonStyle(.inCard))
+                        .buttonStyle(SecondaryButtonStyle(.onInk))
                         .fixedSize()
                         .accessibilityIdentifier("squad.changeScene")
                     }

@@ -43,6 +43,7 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
@@ -108,6 +109,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachLetters: unusedCoachLetters,
     ...ignoredNotices,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,
@@ -173,12 +175,9 @@ async function memberWithEverything(call: ReturnType<typeof appWith>['call']) {
   // One photo on a check-in, one uploaded and never used.
   const [onCheckIn] = [await upload(), await upload()];
   const now = new Date(Date.now() - 60_000);
-  // Each author's own day: mine in Toronto, which lasts until 3am there; the friend has no time
-  // zone yet, so theirs is the UTC day.
-  // Three hours back on Toronto's clock, not in absolute time, so the night clocks go back still
-  // gives the day the server counts.
-  const torontoClock = new Date(now.toLocaleString('sv-SE', { timeZone: 'America/Toronto' }) + 'Z');
-  const torontoDay = new Date(torontoClock.getTime() - 3 * 3_600_000).toISOString().slice(0, 10);
+  // Each author's own day: mine the date on Toronto's clock; the friend has no time zone yet, so
+  // theirs is the UTC day.
+  const torontoDay = now.toLocaleDateString('sv-SE', { timeZone: 'America/Toronto' });
   const checkIn = (author: { token: string; day: string }, training: Record<string, unknown>) =>
     call('PUT', `/check-ins/${randomUUID()}`, author.token, {
       version: 1,

@@ -161,13 +161,9 @@ public struct TodayView: View {
             if model.step != .disclaimer {
                 VStack {
                     Spacer()
-                    CheckInBurst(
-                        isOpen: $model.isBurstOpen, unavailable: model.unavailable, identifierPrefix: "today"
-                    ) { kind in
-                        model.pick(kind)
-                    }
-                    .padding(.bottom, Space.l)
-                    .modifier(Arriving(arrival: model.arrival) { $0.buttonOffset(at: $1) })
+                    checkInSpot
+                        .padding(.bottom, Space.l)
+                        .modifier(Arriving(arrival: model.arrival) { $0.buttonOffset(at: $1) })
                     // Room for the app's tab bar, which floats over this screen, measured from the
                     // screen's bottom edge.
                     Color.clear
@@ -220,7 +216,6 @@ public struct TodayView: View {
         } else {
             let squad = SquadWeek(
                 name: home.squad.name, done: week.squad.trainedDays, goal: week.squad.plannedDays,
-                daysPerMember: home.today.squadDaysPerMember,
                 members: home.today.members.map { mate in
                     SquadMember(
                         id: mate.member.description,
@@ -345,6 +340,30 @@ private struct Arriving: ViewModifier {
         TimelineView(.animation(minimumInterval: nil, paused: !moving)) { timeline in
             content.offset(y: moving ? arrival.map { offset($0.drop, $0.elapsed(at: timeline.date)) } ?? 0 : 0)
         }
+    }
+}
+
+extension TodayView {
+    /// 打卡 and its burst, or, while my post goes out behind the scene, what became of it.
+    fileprivate var checkInSpot: some View {
+        Group {
+            if let outgoing = model.outgoing {
+                OutgoingPill(
+                    outgoing: outgoing, progress: model.outgoingProgress, open: { openPost($0) },
+                    dismiss: { model.dismissOutgoing() }
+                )
+                .frame(height: Sizing.primaryControl)
+                .transition(.blurReplace)
+            } else {
+                CheckInBurst(
+                    isOpen: $model.isBurstOpen, unavailable: model.unavailable, identifierPrefix: "today"
+                ) { kind in
+                    model.pick(kind)
+                }
+                .transition(.blurReplace)
+            }
+        }
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.outgoing == nil)
     }
 }
 

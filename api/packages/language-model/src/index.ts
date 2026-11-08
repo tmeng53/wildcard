@@ -1,5 +1,5 @@
 import { AppError } from '@wildcard/errors';
-import type { z } from 'zod';
+import { z } from 'zod';
 
 // @wildcard/language-model: how a module asks a language model for an answer in a set JSON
 // shape, whoever provides it. Each AI module (the 请假条 drafts, the weekly awards) takes one of
@@ -32,4 +32,20 @@ export class LanguageModelUnavailableError extends AppError {
   constructor(options?: ErrorOptions) {
     super('The language model can’t answer right now.', options);
   }
+}
+
+/** The languages the app speaks, as its language picker tags them. */
+export const ReaderLanguage = z.enum(['zh-Hans', 'zh-Hant', 'en']);
+export type ReaderLanguage = z.infer<typeof ReaderLanguage>;
+
+/** The line telling a model which language to write in: Traditional Chinese as Taiwan says it. */
+const WRITE_IN: Readonly<Record<ReaderLanguage, string>> = {
+  'zh-Hans': '用简体中文写。',
+  'zh-Hant': '用繁體中文寫，照台灣的說法。',
+  en: 'Write in English.',
+};
+
+/** The line telling a model which language its reader reads, for words written for them. */
+export function writeIn(language: ReaderLanguage): string {
+  return WRITE_IN[language];
 }
