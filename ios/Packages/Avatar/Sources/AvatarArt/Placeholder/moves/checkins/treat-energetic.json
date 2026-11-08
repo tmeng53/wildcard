@@ -1108,6 +1108,8 @@
      "ease": "easeInOut"
     }
    ]
-  }
+  },
+  {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.083, "v": 1, "ease": "hold"}, {"t": 2.667, "v": 0, "ease": "hold"}]},
+  {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.083, "v": 1, "ease": "hold"}, {"t": 1.717, "v": 0, "ease": "hold"}, {"t": 1.867, "v": 1, "ease": "hold"}, {"t": 2.6, "v": 0, "ease": "hold"}]}
  ]
 }

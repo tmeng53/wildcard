@@ -52,6 +52,10 @@ public struct Figure: Hashable, Sendable {
         public let elbow: Rig.Elbow?
         /// The arm whose raising fades this part out, as an index into `parts` (`Rig.Hides`).
         public internal(set) var hides: Hiding?
+        /// The arm this part draws again behind the body, as an index into `parts` (`Rig.Part.twin`).
+        public internal(set) var twin: Int?
+        /// Whether a twin draws this arm again behind the body, so it shows only when in front.
+        public internal(set) var hasTwin = false
         /// Back to front.
         public internal(set) var art: [Artwork]
         /// The slot each of `art` is worn in, nil for the rig's own art.
@@ -300,23 +304,22 @@ public struct Figure: Hashable, Sendable {
         var placements = [Placement](repeating: Placement(transform: .identity, opacity: 1), count: parts.count)
         /// What each part's children move with: its own placement, past the elbow for an arm.
         var carriers = [Transform](repeating: .identity, count: parts.count)
+        /// How opaque each part's children are drawn: its own opacity, less its giving way.
+        var carried = [Double](repeating: 1, count: parts.count)
         for index in evaluationOrder {
             let part = parts[index]
-            let move = pose.parts[index]
+            let move = pose.parts[part.twin ?? index]
             // Turn and scale around the pivot, then shift by the clip's offset.
             let local = Transform.translation(x: -part.pivot.x, y: -part.pivot.y)
                 .then(.scale(x: move.scaleX, y: move.scaleY))
                 .then(.rotation(degrees: move.rotation))
                 .then(.translation(x: part.pivot.x + move.x, y: part.pivot.y + move.y))
             // A part that gives way to an arm fades as the arm rises.
-            let shown = part.hides.map { $0.rule.shown(arm: pose.parts[$0.arm].rotation) } ?? 1
-            if let parent = parents[index] {
-                placements[index] = Placement(
-                    transform: local.then(carriers[parent]),
-                    opacity: move.opacity * shown * placements[parent].opacity)
-            } else {
-                placements[index] = Placement(transform: local, opacity: move.opacity * shown)
-            }
+            let shown = (part.hides.map { $0.rule.shown(arm: pose.parts[$0.arm].rotation) } ?? 1) * depth(index, pose)
+            let parent = parents[index]
+            carried[index] = move.opacity * (parent.map { carried[$0] } ?? 1)
+            let transform = parent.map { local.then(carriers[$0]) } ?? local
+            placements[index] = Placement(transform: transform, opacity: carried[index] * shown)
             carriers[index] = placements[index].transform
             if let elbow = part.elbow, move.bend != 0 {
                 let bend = Bend(shoulder: part.pivot, elbow: elbow, degrees: move.bend)

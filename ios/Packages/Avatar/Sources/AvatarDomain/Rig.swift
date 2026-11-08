@@ -89,13 +89,17 @@ public struct Rig: Hashable, Sendable {
         public var elbow: Elbow?
         /// The arm whose raising fades this part out, if any.
         public var hides: Hides?
+        /// The arm this part draws again behind the body: it moves exactly as that arm, which clips
+        /// move, with the same pivot and elbow, and only one of the two shows, as the arm's `front`
+        /// channel says (0, the rest, behind; 1 in front).
+        public var twin: PartID?
 
         public init(
             id: PartID, parent: PartID? = nil, pivot: Point, opacity: Double = 1, layers: [Layer] = [],
-            elbow: Elbow? = nil, hides: Hides? = nil
+            elbow: Elbow? = nil, hides: Hides? = nil, twin: PartID? = nil
         ) {
             (self.id, self.parent, self.pivot, self.opacity, self.layers) = (id, parent, pivot, opacity, layers)
-            (self.elbow, self.hides) = (elbow, hides)
+            (self.elbow, self.hides, self.twin) = (elbow, hides, twin)
         }
     }
 
@@ -164,7 +168,7 @@ public struct Rig: Hashable, Sendable {
                     id: part.id, parent: part.parent, pivot: part.pivot.point,
                     opacity: part.opacity ?? 1, layers: part.layers ?? [],
                     elbow: part.elbow.map { Elbow(point: $0.point.point, hand: $0.hand.point) },
-                    hides: part.hides.map { Hides(part: $0.part, start: $0.start, end: $0.end) })
+                    hides: part.hides.map { Hides(part: $0.part, start: $0.start, end: $0.end) }, twin: part.twin)
             },
             defaults: Dictionary(uniqueKeysWithValues: (file.defaults ?? [:]).map { (Slot($0.key), $0.value) }),
             skin: try file.skin.map { skin throws(AvatarError) in
@@ -190,7 +194,7 @@ private struct RigFile: Decodable {
         "skin": .object(["fill": .value, "stroke": .value]),
         "parts": .array(
             .object([
-                "id": .value, "parent": .value, "pivot": .value, "opacity": .value,
+                "id": .value, "parent": .value, "pivot": .value, "opacity": .value, "twin": .value,
                 "layers": .array(.object(["slot": .value, "art": .value, "hand": .value])),
                 "elbow": .object(["at": .value, "hand": .value]),
                 "hides": .object(["part": .value, "start": .value, "end": .value]),
@@ -215,6 +219,7 @@ private struct RigFile: Decodable {
         let layers: [Rig.Layer]?
         let elbow: ElbowFile?
         let hides: HidesFile?
+        let twin: PartID?
     }
 
     struct HidesFile: Decodable {
