@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "persona": "deadpan",
+  "look": {
+    "body": "calico",
+    "eyes": "sleepy",
+    "mouth": "smirk",
+    "hat": "moss-mushroom",
+    "top": "moss-fleece",
+    "bottom": "moss-climb",
+    "shoes": "moss-boots",
+    "prop": "chalkbag"
+  }
+}

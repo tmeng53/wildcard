@@ -118,4 +118,13 @@ struct SidelineCoachButton: ViewModifier {
             .accessibilityAddTraits(.isButton)
     }
 }
+
+extension SquadSceneView {
+    /// How far into its drop the coach is at `date`, in seconds (below zero while it waits),
+    /// or infinity once it stands, as it does whenever nobody is dropping in.
+    func coachFall(at date: Date) -> Double {
+        guard let arrival, !reduceMotion else { return .infinity }
+        return arrival.coachFall(at: date)
+    }
+}
 #endif

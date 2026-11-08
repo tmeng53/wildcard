@@ -26,7 +26,15 @@ export {
   CHALLENGE_TITLE_LIMIT,
   CHALLENGE_UNIT_LIMIT,
 } from './domain/challenge.js';
-export { Coach, CoachEdit, CoachId, CoachLook, CoachTier } from './domain/coach.js';
+export {
+  Coach,
+  CoachEdit,
+  CoachId,
+  CoachLook,
+  CoachTier,
+  CoachWords,
+  coachIn,
+} from './domain/coach.js';
 export {
   CoachModel,
   CoachSettings,

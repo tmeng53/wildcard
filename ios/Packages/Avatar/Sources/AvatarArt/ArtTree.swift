@@ -46,8 +46,8 @@ public enum ArtTree {
     /// Whether `data` is art this build reads at `path` (`avatar/…`, `coaches/…`, `scenes/…`,
     /// `openings/…`, `guides/…`),
     /// read the way the screens will: SVG through the parser, each JSON file through its own
-    /// decoder (the rig, clips, tones, holds, `editor.json`, `kits.json`, `names.json`, an
-    /// opening's `timeline.json`), a PNG by its signature.
+    /// decoder (the rig, clips, tones, holds, `editor.json`, `kits.json`, `names.json`, a store's
+    /// window, an opening's `timeline.json`), a PNG by its signature.
     /// A downloaded file that fails is left out, so its path keeps the bundled file.
     public static func reads(_ data: Data, at path: String) -> Bool {
         let name = path.split(separator: "/").last.map(String.init) ?? ""
@@ -57,7 +57,14 @@ public enum ArtTree {
             return (try? Artwork.read(svg: svg, path: path)) != nil
         }
         guard path.hasSuffix(".json") else { return false }
-        let parts = path.split(separator: "/").map(String.init)
+        return readsJSON(data, parts: path.split(separator: "/").map(String.init), name: name)
+    }
+
+    /// A JSON file through the decoder its path and name say.
+    private static func readsJSON(_ data: Data, parts: [String], name: String) -> Bool {
+        if parts.count == 3 && parts[0] == "avatar" && parts[1] == "stores" {
+            return (try? StoreWindow.decode(data)) != nil
+        }
         switch name {
         case "rig.json": return (try? Rig.decode(data)) != nil
         case "timeline.json": return parts.first == "openings" && parts.count == 3 && (try? Opening.decode(data)) != nil

@@ -33,6 +33,62 @@ struct CoachName: View {
     }
 }
 
+/// A coach's 简历 fields, 履历, 执教, 风格 and 期望待遇, with a hairline over each row and under the
+/// last; each name keeps one line and the names' column grows to the longest. On a page (its 简历)
+/// or on ink (the back of its card, smaller and with `valueLines` so the card never overflows).
+struct CoachResumeFields: View {
+    let coach: Coach
+    var onInk = false
+    /// The most lines a value takes; nil for as many as it needs.
+    var valueLines: Int?
+    /// Each name's accessibility identifier, for the UI tests that keep them on one line.
+    let labelIdentifier: String
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: Space.m, verticalSpacing: 0) {
+            row(Text("履历", bundle: .module)) { Text(verbatim: coach.background) }
+            row(Text("执教", bundle: .module)) {
+                HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
+                    Text(verbatim: "\(coach.yearsCoaching)").typeStyle(TypeRamp.scoreSmall)
+                    Text("年，\(coach.experience)", bundle: .module)
+                }
+            }
+            row(Text("风格", bundle: .module)) { Text(verbatim: coach.style) }
+            row(Text("期望待遇", bundle: .module)) { Text(verbatim: coach.pay) }
+            hairline
+        }
+    }
+
+    private func row(_ label: Text, @ViewBuilder value: () -> some View) -> some View {
+        Group {
+            hairline
+            GridRow {
+                label
+                    .typeStyle(onInk ? TypeRamp.label : TypeRamp.body)
+                    .foregroundStyle(Color(role: onInk ? .fgOnInkMuted : .fgMuted, in: theme))
+                    .lineLimit(1)
+                    .fixedSize()
+                    .padding(.vertical, Space.s - 1)
+                    .accessibilityIdentifier(labelIdentifier)
+                value()
+                    .typeStyle(onInk ? TypeRamp.callout : TypeRamp.body)
+                    .foregroundStyle(Color(role: onInk ? .fgOnInk : .fgDefault, in: theme))
+                    .lineLimit(valueLines)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.vertical, Space.s - 1)
+            }
+        }
+    }
+
+    private var hairline: some View {
+        Hairline(on: onInk ? .ink : .page)
+            .gridCellColumns(2)
+            .gridCellUnsizedAxes(.horizontal)
+    }
+}
+
 /// 求职中 on a coach looking for a squad; 你们的教练 on the squad's own.
 struct StatusTag: View {
     let isCurrent: Bool
@@ -45,16 +101,10 @@ struct StatusTag: View {
     }
 }
 
-/// The coach standing on its stage, its line in a bubble above.
+/// The coach standing on its stage, its line in a bubble right over its head.
 struct CoachStage: View {
-    enum Bubble {
-        case leading
-        case center
-    }
-
     let coach: CoachID
     let catchphrase: String
-    let bubble: Bubble
     let figureHeight: Double
     let floor: Double
     var mood: CoachSilhouette.Mood = .calm
@@ -70,24 +120,12 @@ struct CoachStage: View {
             Color(role: surface == .page ? .borderDefault : .fgSubtle, in: theme)
                 .opacity(surface == .page ? 1 : CoachMetrics.floorShade)
                 .frame(height: floor)
-            switch bubble {
-            case .leading:
-                // As on the approved card: the line pinned to the stage's top corner, the coach
-                // standing under it in the middle.
+            VStack(spacing: Space.s) {
+                speech
                 figure
-                    .padding(.bottom, floor * CoachMetrics.feet)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                    .overlay(alignment: .topLeading) {
-                        speech.padding(Space.s + 2)
-                    }
-            case .center:
-                VStack(spacing: Space.s) {
-                    speech
-                    figure
-                }
-                .padding(.horizontal, Space.s + 2)
-                .padding(.bottom, floor * CoachMetrics.feet)
             }
+            .padding(.horizontal, Space.s + 2)
+            .padding(.bottom, floor * CoachMetrics.feet)
         }
     }
 

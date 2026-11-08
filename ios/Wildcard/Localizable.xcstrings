@@ -84,7 +84,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@給你發了一條訊息"
+            "value": "%1$@給你發了一則訊息"
           }
         }
       }
@@ -108,7 +108,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 評論了你：%2$@"
+            "value": "%1$@ 在你的動態留言：%2$@"
           }
         }
       }

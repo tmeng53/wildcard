@@ -255,7 +255,7 @@ if want squad; then
   call POST "/squad-invites/$typed/accept" "$newcomer_token"
   expect 400 AI_CONSENT_REQUIRED
   call GET /me/ai-consent "$newcomer_token"
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"copyVersion":2,"current":false}' ] ||
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"copyVersion":3,"current":false}' ] ||
     fail "newcomer should have no consent yet: $body"
   call PUT /me/ai-consent "$newcomer_token" '{"version":1,"copyVersion":0}'
   expect 400 REQUEST_INVALID
@@ -982,10 +982,10 @@ if want admin-mcp; then
 
   tool get_week_summary_words '{}'
   [ "$(jq -r '.awards.crown.title["zh-Hans"]' <<<"$result")" = 皇冠 ] || fail "get_week_summary_words: $result"
-  tool change_week_summary_words '{"stats":{"checkIns":{"zh-Hans":"打卡次数","en":"Check-ins"}}}'
+  tool change_week_summary_words '{"stats":{"checkIns":{"zh-Hans":"打卡次数","en":"Check-ins","zh-Hant":"打卡次數"}}}'
   [ "$(jq -r '.stats.checkIns["zh-Hans"]' <<<"$result")" = 打卡次数 ] || fail "change_week_summary_words: $result"
-  tool change_week_summary_words '{"stats":{"checkIns":{"zh-Hans":"打卡","en":"Check-ins"}}}'
-  tool change_week_summary_words '{"awards":{"medal":{"symbol":"medal","title":{"zh-Hans":"奖牌","en":"Medal"},"winner":{"zh-Hans":{"one":"{n}","other":"{n}"},"en":{"one":"{n}","other":"{n}"}}}}}'
+  tool change_week_summary_words '{"stats":{"checkIns":{"zh-Hans":"打卡","en":"Check-ins","zh-Hant":"打卡"}}}'
+  tool change_week_summary_words '{"awards":{"medal":{"symbol":"medal","title":{"zh-Hans":"奖牌","en":"Medal","zh-Hant":"獎牌"},"winner":{"zh-Hans":{"one":"{n}","other":"{n}"},"en":{"one":"{n}","other":"{n}"},"zh-Hant":{"one":"{n}","other":"{n}"}}}}}'
   [ "$is_error" = true ] || fail "an award the API doesn't have: $result"
   words="$(psql "$DB_URL" -tAc "select string_agg(words#>>'{stats,checkIns,zh-Hans}', ',' order by id) from public.week_summary_word_events where changed_by = '$admin'")"
   [ "$words" = "打卡次数,打卡" ] || fail "the words log should hold the two changes, not the refusal: $words"

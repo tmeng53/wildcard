@@ -29,7 +29,7 @@ public struct APISignUpService: SignUpService {
         try await signUp { () throws(APIError) in try await api.agreeToAI(copyVersion: Self.aiConsentCopyVersion) }
     }
 
-    static let aiConsentCopyVersion = 2
+    static let aiConsentCopyVersion = 3
 
     public func join(_ code: InviteCode) async throws(SignUpError) -> JoinedSquad {
         try await joined(try await signUp { () throws(APIError) in try await api.join(code) })
