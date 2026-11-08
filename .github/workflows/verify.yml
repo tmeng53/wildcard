@@ -9,8 +9,8 @@
 # runs on main only, on a schedule every 3 hours for what main changed since the last scheduled
 # run (nothing when main didn't change) and on a manual run (Actions -> verify -> Run workflow),
 # which the merge queue starts before each TestFlight and whose breaks are fixed forward. The
-# macOS `verify` runs on those two too, and `avatar-preview` (GIFs for reviewers, no checks of
-# its own) on manual runs only. Pushes to main and every PR run the Linux checks only (`verify`
+# macOS `verify` and `avatar-preview` (GIFs for reviewers, no checks of its own) run on manual
+# runs only: a scheduled run checks what main's pushes already ran on Linux. Pushes to main and every PR run the Linux checks only (`verify`
 # on Linux builds and tests the Swift packages).
 # Every job runs only when the files a change touches can break what it checks: `verify` for the
 # app's Swift (and the OpenAPI file its generated types come from), `supabase` for the database,
