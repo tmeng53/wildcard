@@ -100,7 +100,7 @@ struct SidelineCoachFigure: View {
 }
 
 /// The coach on the sideline as a button by its name, for VoiceOver and UI tests, saying whether a
-/// note waits; it tells where it stands on screen, for its note to open from.
+/// note waits; it tells where it stands on screen, for its letter to fly from.
 struct SidelineCoachButton: ViewModifier {
     let name: String
     let hasNote: Bool

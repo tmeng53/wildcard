@@ -220,13 +220,6 @@ public final class SquadSettingsModel {
         return settings.today.weekNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
     }
 
-    /// 「带队 N 天」 on the coach's card: the day the squad hired it counts 1, days on the
-    /// member's clock.
-    public var coachDay: Int? {
-        guard let settings, let hire = settings.coach.hire else { return nil }
-        return settings.today.dayNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
-    }
-
     /// Reads 教练招聘会's coaches, each time it opens, and again on coming back from a 简历. A list
     /// already shown stays up while it is read again (and when that read fails), so the page keeps
     /// its place instead of falling back to the spinner and the top.

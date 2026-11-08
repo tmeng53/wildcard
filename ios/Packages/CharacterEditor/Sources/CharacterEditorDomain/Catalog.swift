@@ -25,19 +25,28 @@ public struct Catalog: Hashable, Sendable {
     /// hang on their store's rack as 「？」 boxes and are never in `variants`, so no pick, shuffle
     /// or random look can wear one.
     public var locked: [Slot: [String: Int]]
+    /// The coach's gifts the member opened: in `variants` (or `props`) like any piece they own,
+    /// but on no store's rack, so the wardrobe lists them apart.
+    public var gifts: [String]
 
     public init(
         species: [EditorChoices.Species], variants: [Slot: [String]], props: [String],
         swatches: [Slot: [String: [RGBAColor]]], originals: [Slot: [String: RGBAColor]],
         defaults: [Slot: String] = [:], stores: [EditorChoices.Store] = [], storeOf: [String: String] = [:],
-        locked: [Slot: [String: Int]] = [:]
+        locked: [Slot: [String: Int]] = [:], gifts: [String] = []
     ) {
+        self.gifts = gifts
         (self.species, self.variants, self.props) = (species, variants, props)
         (self.swatches, self.originals, self.defaults) = (swatches, originals, defaults)
         (self.stores, self.storeOf, self.locked) = (stores, storeOf, locked)
     }
 
     /// What `store`'s rack holds, tops first, then bottoms, shoes, hats and accessories.
+    /// The member's gifts worn in `slot`, the earliest given first.
+    public func gifts(in slot: Slot) -> [String] {
+        gifts.filter { (variants[slot] ?? []).contains($0) }
+    }
+
     public func rack(of store: String) -> [(slot: Slot, variant: String)] {
         Self.clothingSlots.flatMap { slot in
             (variants[slot] ?? []).filter { storeOf[$0] == store }.map { (slot: slot, variant: $0) }

@@ -57,7 +57,7 @@ public struct APIMeService: MeService {
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
                 board: board,
                 unlocks: standing.unlocks,
-                stock: standing.stock, claimed: standing.claimed, weekGlance: glance,
+                stock: standing.stock, claimed: standing.claimed, gifts: standing.gifts, weekGlance: glance,
                 record: record)
         }
     }

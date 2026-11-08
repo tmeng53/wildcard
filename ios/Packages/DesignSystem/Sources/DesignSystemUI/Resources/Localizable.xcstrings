@@ -3548,6 +3548,38 @@
           }
         }
       }
+    },
+    "我完成了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I did it"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我完成了"
+          }
+        }
+      }
+    },
+    "已完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已完成"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

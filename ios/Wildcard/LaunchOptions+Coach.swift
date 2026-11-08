@@ -1,9 +1,11 @@
 import Foundation
+import SquadDomain
+import SquadUI
 
 /// The sample squad's coach for the UI tests.
 extension LaunchOptions {
-    /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, over its card
-    /// opened from the home and pinned on 动态, and replied to three of its posts.
+    /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, pinned on
+    /// 动态 and on its page from the home, and replied to three of its posts.
     static var sidelineCoach: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitest-coach")
     }
@@ -18,5 +20,18 @@ extension LaunchOptions {
     /// it from 毛头's phone, 通知 or its push.
     static var coachNote: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitest-coach-note")
+    }
+
+    /// The coach's cards on the sample squad: the sample deck, or with `-uitest-coach-seen`
+    /// everything seen already, in 以前.
+    static var coachCards: any CoachCardSource {
+        InMemoryCoachCardSource.sample(
+            now: now(), empty: ProcessInfo.processInfo.arguments.contains("-uitest-coach-seen"))
+    }
+
+    /// `-uitest-challenge`: I accepted 毛头's challenge for today (拉伸 5 分钟), not yet done, so
+    /// 我的一周 shows it with 我完成了.
+    static var challenge: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-challenge")
     }
 }

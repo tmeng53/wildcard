@@ -121,14 +121,17 @@ public struct MeOverview: Hashable, Sendable {
     public var stock: StreetStock?
     /// The unlocked pieces the member claimed (领取) into their wardrobe.
     public var claimed: Set<String>
+    /// The coach's gifts the member opened, in their wardrobe on no store's rack.
+    public var gifts: [String]
 
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
         dailyPushOn: Bool, coachPushOn: Bool = true, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil,
         board: TitleBoard = .empty,
-        unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], weekGlance: WeekGlance? = nil,
-        record: TrainingRecord? = nil
+        unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], gifts: [String] = [],
+        weekGlance: WeekGlance? = nil, record: TrainingRecord? = nil
     ) {
+        self.gifts = gifts
         self.weekGlance = weekGlance
         self.record = record
         self.character = character

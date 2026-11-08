@@ -1,3 +1,4 @@
+import AvatarArt
 import CharacterEditorUI
 import Contracts
 import MeDomain
@@ -40,7 +41,25 @@ final class Wardrobe {
         let character = overview.character
         editor = try? CharacterEditorModel.placeholder(
             look: character.outfit, persona: character.persona, nickname: character.nickname,
-            unlocks: overview.unlocks, stock: overview.stock, claimed: overview.claimed, marks: marks)
+            unlocks: overview.unlocks, stock: overview.stock, claimed: overview.claimed, gifts: overview.gifts,
+            marks: marks)
+    }
+
+    /// 立刻穿上 on the coach's page: the member's character saved wearing the gift in its slot,
+    /// read again first so the gift is theirs.
+    func wear(_ piece: String) async {
+        await profile.reload()
+        guard var character = profile.overview?.character, let slot = PlaceholderCharacter.slot(holding: piece)
+        else { return }
+        character.outfit.variants[slot] = piece
+        await profile.save(character)
+    }
+
+    /// 去衣橱看看 after a gift is opened: the editor on the member's character, wearing it.
+    func showGift(_ piece: String) async {
+        await profile.reload()
+        editCharacter()
+        editor?.tryOn(piece)
     }
 
     /// 我's shopfront: the street as it was last made at once, then read again, so a store that

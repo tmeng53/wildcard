@@ -42,9 +42,9 @@ struct SquadSceneView: View {
     let patMate: (MemberID) -> Void
     /// The squad dropping onto a newly picked scene: nobody is on it until their turn.
     var arrival: TodayModel.Arrival?
-    /// I tapped the coach on the sideline: its 简历 opens.
+    /// I tapped the coach on the sideline: its page opens.
     var tapCoach: () -> Void = {}
-    /// Whether the coach's note waits unread (its phone shows it), and where it stands on screen.
+    /// Whether the coach's note waits unseen (its phone shows it), and where it stands on screen.
     var coachHasNote = false
     var coachAt: (CGPoint) -> Void = { _ in }
     /// I tapped the coach's empty spot, there while the squad has no coach: 教练招聘会 opens.
