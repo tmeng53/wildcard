@@ -447,6 +447,23 @@ describe('when the coach wakes', () => {
         ?.split('\n\n')
         .slice(0, 2),
     ).toStrictEqual(['新的一天：2026-11-26，周四。', '今天：感恩节']);
+    // A coach hired back is told so, once, after the day's facts; what it says is its own.
+    expect(
+      taskOf({
+        reason: { kind: 'daily', day: '2026-11-26' },
+        week,
+        files: new Map(),
+        recentNotes: [],
+        occasions: ['感恩节'],
+        backAgain: true,
+      })
+        ?.split('\n\n')
+        .slice(0, 3),
+    ).toStrictEqual([
+      '新的一天：2026-11-26，周四。',
+      '今天：感恩节',
+      '你以前带过这个小队，被换掉后，现在又被请回来了。',
+    ]);
     // Whom it writes a morning note to, by the names it knows them by.
     expect(
       taskOf({

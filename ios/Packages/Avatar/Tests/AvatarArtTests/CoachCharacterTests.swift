@@ -4,7 +4,7 @@ import Testing
 
 /// Every bundled coach builds, plays each move from rest, and stays on the canvas.
 @Test func everyCoachPlaysEveryMove() throws {
-    #expect(CoachCharacter.bundled == ["xiaohun"])
+    #expect(CoachCharacter.bundled == ["papa", "xiaohun"])
     for coach in CoachCharacter.bundled {
         let figure = try CoachCharacter.figure(coach)
         for move in CoachCharacter.Move.allCases {

@@ -430,6 +430,7 @@ async function runWake(
           ...((await deps.occasions?.(day)) ?? []),
         ]),
       ],
+      backAgain: await deps.hiring.backAgain(wake.squad),
       recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
       ...(thread === undefined ? {} : { thread: thread.thread }),
       canSeePhotos: deps.photoUrls !== undefined,
