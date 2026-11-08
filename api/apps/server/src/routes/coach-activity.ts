@@ -315,6 +315,7 @@ export function coachActivity(deps: {
         ...replies.map((reply) => reply.coach.id),
         ...answers.map((answer) => answer.coach.id),
         ...(memberNote === undefined ? [] : [memberNote.coach.id]),
+        ...(letter === undefined ? [] : [letter.from.id, letter.to.id]),
       ];
       const named = await deps.coachNames(coaches.map((coach) => ({ coach, squad: squadId })));
       const speaker = speakerIn((coach) => named(coach, squadId));
