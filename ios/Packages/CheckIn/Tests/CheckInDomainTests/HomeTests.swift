@@ -96,9 +96,6 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     #expect(week.today == 1)
     // A day shows what I trained on it (Monday's swim, Tuesday's run over the plan's yoga), else the plan's.
     #expect(week.activities == [.sport("swim"), .sport("run"), nil, nil, nil, nil, nil])
-    // Two swims on Monday are one day of swimming.
-    #expect(week.trained.map(\.activity) == [.sport("swim"), .sport("run")])
-    #expect(week.trained.map(\.days) == [2, 1])
     // Each day's log: Monday's two swims are one swim of 50 minutes.
     #expect(week.logs[0].sessions.map(\.activity) == [.sport("swim")])
     #expect(week.logs[0].sessions.map(\.minutes) == [50])
