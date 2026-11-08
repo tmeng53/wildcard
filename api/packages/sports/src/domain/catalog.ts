@@ -26,6 +26,11 @@ export interface ListedSport {
 export interface SportCategory {
   readonly id: string;
   readonly names: LocalizedNames;
+  /**
+   * The colour its sports' 成绩条, post blocks, routes and charts wear, with white on it:
+   * `#RRGGBB`, upper case.
+   */
+  readonly color: string;
   readonly sports: readonly ListedSport[];
 }
 
