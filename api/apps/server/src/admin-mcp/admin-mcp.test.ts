@@ -30,10 +30,12 @@ import {
 import {
   createCoachCatalog,
   createCoachHiring,
+  createCoachMemory,
   createCoachSettings,
   createPostgresCoachCatalog,
   createPostgresCoachHiring,
   createPostgresCoachReport,
+  createPostgresCoachStores,
   createPostgresCoachSettings,
 } from '@wildcard/coach';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
@@ -257,6 +259,7 @@ beforeAll(async () => {
                   catalog: createPostgresCoachCatalog(scope),
                 }),
                 report: createPostgresCoachReport(scope),
+                memory: createCoachMemory({ memory: createPostgresCoachStores(scope).memory }),
                 clock: () => new Date(),
               }),
               // A tool that changes something, standing in for the meme tools.
@@ -449,6 +452,7 @@ describe('the admin MCP server', () => {
       ['hire_coach', false],
       ['fire_coach', false],
       ['get_squad_coaching', true],
+      ['edit_coach_files', false],
       ['rename_thing', false],
     ]);
     await client.close();
@@ -790,6 +794,28 @@ describe('the admin MCP server', () => {
         { kind: 'fired', coach_id: 'xiaohun', changed_by: admin.userId },
       ]);
 
+      // The squad's memory, rewritten a file at a time; the coach reads it on its next wake.
+      expect(
+        JSON.parse(
+          (await call('edit_coach_files', { squad, path: 'memory.md', body: '- 三个城市\n' })).text,
+        ),
+      ).toStrictEqual({ version: 1, files: [{ path: 'memory.md', body: '- 三个城市' }] });
+      expect(await coaching()).toMatchObject({
+        files: [{ path: 'memory.md', body: '- 三个城市' }],
+      });
+      expect((await call('edit_coach_files', { squad, path: 'notes.md', body: 'x' })).isError).toBe(
+        true,
+      );
+      expect(
+        await call('edit_coach_files', { squad: randomUUID(), path: 'memory.md', body: 'x' }),
+      ).toMatchObject({ isError: true, text: 'COACH_SQUAD_NOT_FOUND: No such squad.' });
+      expect(
+        await call('edit_coach_files', { squad, path: `people/${randomUUID()}.md`, body: 'x' }),
+      ).toMatchObject({
+        isError: true,
+        text: 'COACH_FILE_MEMBER_NOT_FOUND: No member with that id: a page is people/<member id>.md.',
+      });
+
       const renamed = await call('put_coach', { ...edit, catchphrase: '先练再说' });
       expect(JSON.parse(renamed.text)).toStrictEqual({ ...xiaohun, catchphrase: '先练再说' });
 
@@ -815,6 +841,7 @@ describe('the admin MCP server', () => {
         'change_coach_settings',
         'hire_coach',
         'fire_coach',
+        'edit_coach_files',
         'put_coach',
       ]);
     } finally {

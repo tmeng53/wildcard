@@ -148,6 +148,8 @@ export type CoachAnswered = (answer: {
   readonly commenter: string;
   readonly coach: CoachId;
   readonly text: string;
+  /** Whom it @s, by member id: the server tells them too. */
+  readonly mentions: readonly string[];
 }) => Promise<void>;
 
 /** A reply the coach just saved to a check-in: its line, its emoji or both. */
@@ -159,6 +161,8 @@ export type CoachReplied = (reply: {
   readonly coach: CoachId;
   readonly text: string | undefined;
   readonly emoji: CoachEmoji | undefined;
+  /** Whom its line @s, by member id: the server tells them too. */
+  readonly mentions: readonly string[];
 }) => Promise<void>;
 
 export function createCoachWakes(deps: CoachWakesDependencies): CoachWakes {
@@ -290,7 +294,7 @@ async function wakeWeek(
   { wake, now }: { readonly wake: Wake; readonly now: Date },
 ): Promise<SquadWeek | undefined> {
   const { reason } = wake;
-  if (reason.kind === 'daily') {
+  if (reason.kind === 'daily' || reason.kind === 'dream') {
     return weekOf(deps, { squad: wake.squad, weekStart: weekStartOf(reason.day) });
   }
   // A check-in may count for a day up to a week before it was posted (补打卡), so its week may
@@ -376,8 +380,10 @@ async function runWake(
       note: undefined,
       memberNotes: new Map(),
       reply: undefined,
+      replyMentions: [],
       reaction: undefined,
       answer: undefined,
+      answerMentions: [],
       steps: [],
     };
     // A squad whose coach hasn't written its file yet starts from its name and who is in it,
@@ -387,6 +393,8 @@ async function runWake(
       draft.changed.add(SEEDED);
     }
     const daily = wake.reason.kind === 'daily';
+    // The daily wake and the night's dream both look back at the day before.
+    const looksBack = daily || wake.reason.kind === 'dream';
     // Who the daily wake writes a morning note to: every member who agreed to AI use and keeps
     // the coach's messages on (Tracy, 2026-11-07: switched off, the note stops altogether).
     const noteTo = daily
@@ -403,7 +411,7 @@ async function runWake(
     );
     // The day the wake is for: the daily wake's own, or the squad's today on its own clock.
     const day =
-      wake.reason.kind === 'daily'
+      wake.reason.kind === 'daily' || wake.reason.kind === 'dream'
         ? wake.reason.day
         : wallClockAt(
             now,
@@ -427,12 +435,12 @@ async function runWake(
         wake.reason.kind === 'checkIn'
           ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
           : [],
-      talks: daily ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
+      talks: looksBack ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
       ...(wake.reason.kind === 'daily'
-        ? {
-            noteTo: await briefsOf(deps, { week, roster, members: noteTo, day: wake.reason.day }),
-            yesterday: await yesterdayOf(deps, { squad: wake.squad, week, day: wake.reason.day }),
-          }
+        ? { noteTo: await briefsOf(deps, { week, roster, members: noteTo, day: wake.reason.day }) }
+        : {}),
+      ...(looksBack
+        ? { yesterday: await yesterdayOf(deps, { squad: wake.squad, week, day }) }
         : {}),
     });
     if (task === undefined) {
@@ -448,6 +456,7 @@ async function runWake(
         roster,
         draft,
         kind: wake.reason.kind,
+        to: addresseeOf(week, wake.reason),
         ...photosOf(deps.photoUrls, { week, wake }),
         ...factsFor(deps, { week, roster }),
         ...(deps.memes === undefined ? {} : { memes: deps.memes }),
@@ -600,7 +609,9 @@ function photosOf(
   photoUrls: CoachPhotoUrls | undefined,
   { week, wake }: { readonly week: SquadWeek; readonly wake: Wake },
 ): { readonly photos?: () => Promise<readonly string[]> } {
-  if (photoUrls === undefined || wake.reason.kind === 'daily') return {};
+  if (photoUrls === undefined || wake.reason.kind === 'daily' || wake.reason.kind === 'dream') {
+    return {};
+  }
   const { checkIn } = wake.reason;
   const paths = week.checkIns.find(({ id }) => id === checkIn)?.photos ?? [];
   return paths.length === 0 ? {} : { photos: () => photoUrls(paths) };
@@ -670,7 +681,9 @@ async function saveDraft(
       text: draft.reply,
       emoji: draft.reaction,
     };
-    if (await stores.replies.save({ ...reply, wake: wake.id })) return { reply };
+    if (await stores.replies.save({ ...reply, wake: wake.id })) {
+      return { reply: { ...reply, mentions: draft.replyMentions } };
+    }
   }
   if (wake.reason.kind === 'comment' && draft.answer !== undefined) {
     const answer = {
@@ -680,7 +693,9 @@ async function saveDraft(
       coach: coach.id,
       text: draft.answer,
     };
-    if (await stores.answers.save({ ...answer, wake: wake.id })) return { answer };
+    if (await stores.answers.save({ ...answer, wake: wake.id })) {
+      return { answer: { ...answer, mentions: draft.answerMentions } };
+    }
   }
   return {};
 }
@@ -785,4 +800,17 @@ async function noteReaders(
 ): Promise<readonly string[]> {
   const consented = await deps.aiConsented(members);
   return deps.wantNotes === undefined ? consented : await deps.wantNotes(consented);
+}
+
+/** Whom a line on this wake answers: the check-in's author, or the member who wrote to the coach. */
+function addresseeOf(week: SquadWeek, reason: Wake['reason']): string | undefined {
+  if (reason.kind === 'checkIn') {
+    return week.checkIns.find(({ id }) => id === reason.checkIn)?.member;
+  }
+  if (reason.kind === 'comment') {
+    return week.checkIns
+      .find(({ id }) => id === reason.checkIn)
+      ?.comments.find(({ id }) => id === reason.comment)?.member;
+  }
+  return undefined;
 }

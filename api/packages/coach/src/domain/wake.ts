@@ -4,7 +4,8 @@ import type { CoachSettings, SquadId } from './settings.js';
 import { saidTo, type SquadWeek } from './squad-week.js';
 
 // When a coach wakes: for each check-in shared to its squad, to learn from it, for each reply a
-// member writes to it under a check-in, to answer, and once a day for the squad's 战术板 line.
+// member writes to it under a check-in, to answer, once a day for the squad's 战术板 line, and
+// once a night before that to tidy its memory (its dream: Tracy, 2026-11-08).
 // The daily wake keeps the squad's own clock (小队时区), as its 战报 does; each member's note then
 // reaches them on their own clock.
 
@@ -12,7 +13,9 @@ import { saidTo, type SquadWeek } from './squad-week.js';
 export type WakeReason =
   | { readonly kind: 'checkIn'; readonly checkIn: string }
   | { readonly kind: 'comment'; readonly checkIn: string; readonly comment: string }
-  | { readonly kind: 'daily'; readonly day: string };
+  | { readonly kind: 'daily'; readonly day: string }
+  /** The night before `day`'s daily wake: the coach rewrites its memory from the day before. */
+  | { readonly kind: 'dream'; readonly day: string };
 
 export interface NewWake {
   readonly squad: SquadId;
@@ -25,6 +28,9 @@ export interface Wake extends NewWake {
 
 /** From this hour on the squad's clock, its daily wake is due. */
 export const DAILY_HOUR = 6;
+
+/** From this hour on the squad's clock, when its day begins, its dream is due. */
+export const DREAM_HOUR = 3;
 
 /** How far back a run looks for check-ins to wake for, so a missed run or two loses none. */
 export const CHECK_IN_WINDOW_MS = 60 * 60_000;
@@ -48,9 +54,9 @@ export const weekStartOf = mondayOf;
 /**
  * The wakes due for a squad at `now`: one for each check-in made in the last
  * `CHECK_IN_WINDOW_MS`, one for each reply to the coach written in it (each is queued as it is
- * written, too; this catches one that wasn't), and the day's own from `DAILY_HOUR` on the squad's
- * clock, `timeZone`. Saving them
- * again is harmless, since a squad has one wake per check-in, one per reply and one a day.
+ * written, too; this catches one that wasn't), the night's dream from `DREAM_HOUR` and the
+ * day's own from `DAILY_HOUR` on the squad's clock, `timeZone`. Saving them again is harmless,
+ * since a squad has one wake per check-in, one per reply, one dream and one daily wake a day.
  */
 export function wakesDue({
   squad,
@@ -75,6 +81,8 @@ export function wakesDue({
     }
   }
   const { day, hour } = wallClockAt(now, timeZone);
+  // The dream first, so the daily wake reads the memory it tidied.
+  if (hour >= DREAM_HOUR) wakes.push({ squad, reason: { kind: 'dream', day } });
   if (hour >= DAILY_HOUR) wakes.push({ squad, reason: { kind: 'daily', day } });
   return wakes;
 }
