@@ -314,7 +314,7 @@ function yesterdayBlock(
           : answer === 'declined'
             ? reason === undefined
               ? '没接'
-              : `没接，因为「${reason}」`
+              : `没接，因为「${reason}」（他只告诉了你）`
             : '没回应';
     return `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」：${how}`;
   });

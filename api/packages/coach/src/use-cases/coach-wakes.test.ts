@@ -1750,12 +1750,18 @@ describe('the coach', () => {
         answer: 'declined',
         reason: '我鸡蛋过敏',
       });
+      // The coach can't mark one let go, or one of another day.
+      const notes = createPostgresCoachStores(trx).memberNotes;
+      const coachDone = (member: string, day: string) =>
+        notes.complete({ note: Number(noteOf(member)), by: 'coach', day });
+      expect(await coachDone(leo, '2026-11-01')).toBe(false);
+      expect(await coachDone(mia, '2026-11-02')).toBe(false);
       await sql`insert into public.coach_challenge_completions (note_id, by)
         values (${noteOf(mia)}, 'member')`.execute(trx);
       await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
       const dream = runs.find(({ task }) => task.startsWith('夜里'));
       expect(dream?.task).toContain(
-        '昨天的挑战：\n- 队员1「喝水 8 杯」：完成了\n- 队员2「吃鸡蛋」：没接，因为「我鸡蛋过敏」',
+        '昨天的挑战：\n- 队员1「喝水 8 杯」：完成了\n- 队员2「吃鸡蛋」：没接，因为「我鸡蛋过敏」（他只告诉了你）',
       );
     });
   });

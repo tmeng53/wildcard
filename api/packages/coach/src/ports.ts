@@ -191,9 +191,13 @@ export interface CoachMemberNoteStore {
   }): Promise<DayChallenge | undefined>;
   /**
    * Marks the challenge on a note done, by the coach from the day's check-ins; false when it
-   * set none or was done already (the first one stands).
+   * set none, isn't for `day` (the squad's), was let go or was done already (the first stands).
    */
-  complete(input: { readonly note: number; readonly by: ChallengeDoneBy }): Promise<boolean>;
+  complete(input: {
+    readonly note: number;
+    readonly by: ChallengeDoneBy;
+    readonly day: string;
+  }): Promise<boolean>;
   /** The challenges on the squad's notes of `day` that reached their members, by member. */
   challengesOn(input: {
     readonly squad: SquadId;

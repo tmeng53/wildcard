@@ -81,7 +81,7 @@ export function challengeLine({
           : answer === 'declined'
             ? reason === undefined
               ? '他说算了'
-              : `他说算了，因为「${reason}」`
+              : `他说算了，因为「${reason}」（他只告诉了你，别在回复里说）`
             : '他还没回应';
   return `你今天给他的挑战：「${challengeText(challenge)}」，${said}。`;
 }
