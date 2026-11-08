@@ -216,12 +216,18 @@ public struct PhotoRef: Hashable, Sendable {
     /// Where to `GET` the photo, on check-ins the API sent. It stops working after a while;
     /// listing again gives fresh ones. Nil on a check-in the app is about to send.
     public let viewURL: URL?
+    /// When the check-in it is on was posted, on check-ins the API sent: the phone keeps the
+    /// photos of the latest posts first, since 动态 opens on them.
+    public let postedAt: Timestamp?
 
-    public init(path: String, size: PhotoSize? = nil, viewURL: URL? = nil) throws(ContractsError) {
+    public init(
+        path: String, size: PhotoSize? = nil, viewURL: URL? = nil, postedAt: Timestamp? = nil
+    ) throws(ContractsError) {
         guard !path.isEmpty else { throw .emptyPhotoPath }
         self.path = path
         self.size = size
         self.viewURL = viewURL
+        self.postedAt = postedAt
     }
 
     public static func == (lhs: PhotoRef, rhs: PhotoRef) -> Bool { lhs.path == rhs.path }
@@ -231,7 +237,7 @@ public struct PhotoRef: Hashable, Sendable {
 
 /// A photo's width and height in pixels, each within `sideRange`.
 public struct PhotoSize: Hashable, Sendable {
-    /// The API's bounds, well past the 1080 pixels the app uploads.
+    /// The API's bounds, well past the 1920 pixels the app uploads at most.
     public static let sideRange = 1...10_000
 
     public let width: Int

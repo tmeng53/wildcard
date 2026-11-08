@@ -34,12 +34,10 @@ struct StartTimePill: View {
     }
 
     /// The phone's time, to the minute: where the clock opens before a start is picked.
-    private static var now: StartTime {
+    private static var now: StartTime? {
         let parts = Calendar.current.dateComponents([.hour, .minute], from: .now)
-        return (try? StartTime(hour: parts.hour ?? 0, minute: parts.minute ?? 0)) ?? midnight
+        return try? StartTime(hour: parts.hour ?? 0, minute: parts.minute ?? 0)
     }
-
-    private static let midnight = try? StartTime(hour: 0, minute: 0)
 }
 
 /// 开始时间: a short sheet with the hour and the minute on graphite flip cards. Each turns a
@@ -184,6 +182,8 @@ private struct FlipCard: View {
     let value: Int
     @State private var leaving: Int?
     @State private var fall: Double = 0
+    /// Counts the flips, so an earlier flip that ends during a later one leaves its page alone.
+    @State private var flips = 0
 
     var body: some View {
         ZStack {
@@ -214,10 +214,12 @@ private struct FlipCard: View {
             guard !reduceMotion else { return }
             leaving = old
             fall = 0
+            flips += 1
+            let flip = flips
             withAnimation(.wildcard(Motion.press)) {
                 fall = 1
             } completion: {
-                leaving = nil
+                if flip == flips { leaving = nil }
             }
         }
     }

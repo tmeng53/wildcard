@@ -6,7 +6,7 @@ import Foundation
 /// records the ones already uploaded.
 public struct PreparedPhoto: Hashable, Sendable, Identifiable {
     public let id: UUID
-    /// JPEG, at most `PhotoPreparation.maxPixelSize` on the long edge.
+    /// JPEG, at most `PhotoUploadSize` (1080 px on the short edge, 1920 on the long).
     public let jpeg: Data
     /// The JPEG's size in pixels, sent with the check-in so the feed shows the photo at its
     /// shape. Nil only on a post kept from before sizes were sent.
