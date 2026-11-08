@@ -81,6 +81,7 @@ export function createPostgresSportStore(db: Kysely<SportTables>): SportStore {
             en: category.name_en,
             zhHant: category.name_zh_hant,
           },
+          color: category.color,
           sports: sports
             .filter((sport) => sport.category_id === category.id)
             .map((sport) => ({
@@ -152,6 +153,7 @@ export function createPostgresSportStore(db: Kysely<SportTables>): SportStore {
         name_zh_hans: category.names.zhHans,
         name_en: category.names.en,
         name_zh_hant: category.names.zhHant,
+        color: category.color,
       };
       const existing = await db
         .selectFrom('sport_categories')

@@ -21,13 +21,12 @@ struct PostTile: View {
         )
         .overlay(alignment: .bottomTrailing) {
             if let top = post.reactions.groups.first {
-                let colors = PostBlockColors(checkIn: post.checkIn)
                 Text(verbatim: "\(top.kind.text) \(post.reactions.all.count)")
                     .typeStyle(TypeRamp.caption)
-                    .foregroundStyle(Color(role: .fgDefault, in: colors.scene))
+                    .foregroundStyle(Color(role: .fgDefault, in: .gym))
                     .padding(.horizontal, Space.xs)
                     .padding(.vertical, Space.xxs / 2)
-                    .background(Color(role: .bgCanvas, in: colors.scene), in: Capsule())
+                    .background(Color(role: .bgCanvas, in: .gym), in: Capsule())
                     .padding(Space.xxs)
             }
         }

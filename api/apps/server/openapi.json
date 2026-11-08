@@ -422,6 +422,11 @@
                 "names": {
                   "$ref": "#/components/schemas/CatalogNames"
                 },
+                "color": {
+                  "type": "string",
+                  "description": "The colour its sports’ 成绩条, post blocks, routes and charts wear, with white on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before colours still reads (its sports then wear the gym’s steel).",
+                  "example": "#E65345"
+                },
                 "sports": {
                   "type": "array",
                   "items": {
@@ -1377,10 +1382,35 @@
             "type": "number",
             "exclusiveMinimum": 0,
             "maximum": 100
+          },
+          "runs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "descentM": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "topSpeedKmh": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 300
+          },
+          "elevationGainM": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "paceSecPer100m": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 86400
           }
         },
         "additionalProperties": false,
-        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim)."
+        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike)."
       },
       "WorkoutSeries": {
         "type": "object",
