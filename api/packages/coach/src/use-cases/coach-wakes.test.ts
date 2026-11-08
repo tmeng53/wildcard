@@ -90,6 +90,9 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
         { coaching: true, inputMicrosPerMillion: 250_000, outputMicrosPerMillion: 2_000_000 },
         MemberId.parse(mia),
       );
+      // A run wakes every squad with a coach: other test files' squads, committed while this
+      // one runs, would count too.
+      await sql`delete from public.squad_coaches`.execute(trx);
       await createCoachHiring({
         hiring: createPostgresCoachHiring(trx),
         catalog: createPostgresCoachCatalog(trx),

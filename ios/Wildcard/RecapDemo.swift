@@ -7,11 +7,10 @@ import SwiftUI
 /// `-recap`: the 战报's entry tile on a plain page, opening the sample week's story, which UI
 /// tests walk and screenshot. `-recap-pending` and `-recap-missed` pick the other states,
 /// `-recap-picker` puts 冠军专属's sticker on the last page, and `-recap-reveal` opens the story
-/// with the reveal held on one moment. Once the story is watched to the end, the tile shows it
-/// uncovered, as 动态 does.
+/// with the reveal held on one moment. The tile stays after the story is watched, so tests can
+/// open it again.
 struct RecapDemo: View {
     @State private var model: RecapModel?
-    @State private var seen = false
 
     init() {
         // A held reveal never ends, so there is nothing to close.
@@ -26,8 +25,8 @@ struct RecapDemo: View {
             missed: LaunchOptions.recapMissed)
         let cast = RecapSample.cast
         VStack {
-            RecapEntryTile(story: story, viewer: cast.reader, seen: seen) {
-                model = Self.story(close: { model = nil }, finished: { seen = true })
+            RecapEntryTile(story: story, viewer: cast.reader) {
+                model = Self.story(close: { model = nil }, finished: {})
             }
             .padding(.horizontal, Space.pageMargin)
             Spacer()

@@ -30,14 +30,14 @@ extension MainTabs {
     ]
 }
 
-/// The squad's newest 战报, once there is one, opening it.
+/// The squad's newest 战报, once there is one and until the reader watched it to the end (Tracy,
+/// 2026-11-08), opening it. Watched, it stays on 小队's 往期战报.
 struct RecapTile: View {
     let recap: RecapShelf
 
     var body: some View {
-        if let story = recap.latest {
-            RecapEntryTile(
-                story: story, viewer: recap.cast?.reader, seen: recap.latestIsSeen, action: recap.openLatest)
+        if let story = recap.latest, !recap.latestIsSeen {
+            RecapEntryTile(story: story, viewer: recap.cast?.reader, action: recap.openLatest)
         }
     }
 }
