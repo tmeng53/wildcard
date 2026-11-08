@@ -7044,7 +7044,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachReply/emoji`.
             public var emoji: Swift.String?
-            /// Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows in bold and opens that member’s card from. One whose account is deleted is gone.
+            /// Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachReply/mentions`.
             public var mentions: [Swift.String]?
@@ -7057,7 +7057,7 @@ extension Components {
             ///   - coach:
             ///   - text: Its line, shown first among the post’s comments with the 教练 tag, which members may reply to (a comment with `replyToCoach`), or null when it only reacted.
             ///   - emoji: Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions.
-            ///   - mentions: Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows in bold and opens that member’s card from. One whose account is deleted is gone.
+            ///   - mentions: Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
             ///   - at:
             public init(
                 checkInId: Swift.String,
@@ -7126,7 +7126,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachAnswer/text`.
             public var text: Swift.String
-            /// Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows in bold and opens that member’s card from. One whose account is deleted is gone.
+            /// Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachAnswer/mentions`.
             public var mentions: [Swift.String]?
@@ -7139,7 +7139,7 @@ extension Components {
             ///   - commentId: The member’s reply to the coach (`replyToCoach`) this answers.
             ///   - coach:
             ///   - text: Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag.
-            ///   - mentions: Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows in bold and opens that member’s card from. One whose account is deleted is gone.
+            ///   - mentions: Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
             ///   - at:
             public init(
                 checkInId: Swift.String,

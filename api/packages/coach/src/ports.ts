@@ -145,8 +145,6 @@ export interface CoachNoteStore {
     readonly coach: CoachId;
     readonly day: string;
     readonly text: string;
-    /** Whom it @s, in the order written. */
-    readonly mentions?: readonly string[];
     readonly wake: number;
   }): Promise<boolean>;
   /** The squad's last lines, newest first. */

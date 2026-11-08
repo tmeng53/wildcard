@@ -235,7 +235,7 @@ const CoachReplyBody = z
       .meta({
         description:
           'Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, ' +
-          'which the app shows in bold and opens that member’s card from. One whose account is ' +
+          'which the app shows as a tag that opens that member’s card. One whose account is ' +
           'deleted is gone.',
       }),
     at: z.iso.datetime(),
@@ -265,7 +265,7 @@ const CoachAnswerBody = z
       .meta({
         description:
           'Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, ' +
-          'which the app shows in bold and opens that member’s card from. One whose account is ' +
+          'which the app shows as a tag that opens that member’s card. One whose account is ' +
           'deleted is gone.',
       }),
     at: z.iso.datetime(),
