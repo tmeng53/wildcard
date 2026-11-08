@@ -26,6 +26,8 @@ struct PlayerCard: View {
     @State private var turn: Double = 0
     @State private var isTurning = false
     @State private var opened: BoardTitle?
+    /// The badge board, opened from the 出赛表 on a squadmate's card's back.
+    @State private var showsBoard = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     static var size: CGSize { TradingCard.size }
@@ -36,7 +38,7 @@ struct PlayerCard: View {
                 if showsBack {
                     // The back's badges are buttons of their own, so the back is no button: a
                     // tap anywhere else on it turns it over.
-                    sided(CardBack(face: face) { opened = $0 })
+                    sided(back)
                         .onTapGesture(perform: flip)
                         .accessibilityElement(children: .contain)
                         .accessibilityAction(named: Text("轻点翻面", bundle: .module), flip)
@@ -57,6 +59,9 @@ struct PlayerCard: View {
                     .accessibilityHidden(true)
             }
         }
+        .sheet(isPresented: $showsBoard) {
+            BadgeBoardSheet(face: face)
+        }
         .sheet(item: $opened) { title in
             BadgeCard(
                 title: title, isWorn: face.board.worn == title.title,
@@ -66,6 +71,16 @@ struct PlayerCard: View {
                         opened = nil
                     }
                 })
+        }
+    }
+
+    /// A squadmate's card turns over to their 出赛表 this week, whose badges open the board; the
+    /// member's own (and one from an older server) to the board itself.
+    @ViewBuilder private var back: some View {
+        if let schedule = face.schedule {
+            ScheduleBack(face: face, schedule: schedule) { showsBoard = true }
+        } else {
+            CardBack(face: face) { opened = $0 }
         }
     }
 
@@ -240,6 +255,26 @@ private struct FrontStat<Value: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// A squadmate's badge board, opened from their card's 出赛表 back: the card's back as it was
+/// before (the career count and the board) on the card's stock, whose badges open their own cards.
+private struct BadgeBoardSheet: View {
+    let face: PlayerCardFace
+    @State private var opened: BoardTitle?
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        CardBack(face: face) { opened = $0 }
+            .tradingCardStock(fillsWidth: false)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .accessibilityIdentifier("me.badgeBoard")
+            .sheet(item: $opened) { title in
+                BadgeCard(title: title, isWorn: face.board.worn == title.title, equip: nil)
+            }
     }
 }
 

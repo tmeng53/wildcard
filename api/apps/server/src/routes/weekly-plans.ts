@@ -13,14 +13,14 @@ import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
-const days = PlanDays.meta({
+export const planDays = PlanDays.meta({
   id: 'PlanDays',
   description:
     'Seven days, Monday first: `{"kind": "train"}`, optionally with a `sport` (and ' +
     '`customSport` for `"custom"`), or `{"kind": "rest"}`.',
 });
 
-const fuelGoals = FuelGoals.meta({
+export const fuelGoalsBody = FuelGoals.meta({
   id: 'FuelGoals',
   description:
     'The week’s 饮食小目标, at most 3 in the order picked, each once: ' +
@@ -35,7 +35,7 @@ export const WeeklyPlanBody = z
     version: bodyVersion(1),
     member: z.uuid().meta({ description: 'The member whose plan it is.' }),
     weekStart: WeekStart.meta({ description: 'The week’s Monday.', example: '2026-10-19' }),
-    days,
+    days: planDays,
     // Builds already installed decode this strictly, so a week following the typical week keeps
     // the name it had when such a week followed an earlier one.
     source: z.enum(['saved', 'carriedOver', 'default']).meta({
@@ -44,7 +44,7 @@ export const WeeklyPlanBody = z
         'member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) ' +
         'before they make one.',
     }),
-    fuelGoals,
+    fuelGoals: fuelGoalsBody,
     firstWeek: WeekStart.optional().meta({
       description:
         'The Monday of the week the member joined, in their time zone: the earliest week the ' +
@@ -55,14 +55,14 @@ export const WeeklyPlanBody = z
   .openapi('WeeklyPlan');
 
 const WeeklyPlanDraft = z
-  .strictObject({ version: bodyVersion(1), days })
+  .strictObject({ version: bodyVersion(1), days: planDays })
   .openapi('WeeklyPlanDraft');
 
 /** The member's typical week (每周模板), which each week follows until it is changed for itself. */
 const PlanTemplateBody = z
   .strictObject({
     version: bodyVersion(1),
-    days,
+    days: planDays,
     source: z.enum(['saved', 'default']).meta({
       description:
         '`saved` for the member’s own; `default` (rest on Wednesday and Sunday) before they ' +
@@ -72,11 +72,11 @@ const PlanTemplateBody = z
   .openapi('PlanTemplate');
 
 const PlanTemplateDraft = z
-  .strictObject({ version: bodyVersion(1), days })
+  .strictObject({ version: bodyVersion(1), days: planDays })
   .openapi('PlanTemplateDraft');
 
 const FuelGoalsDraft = z
-  .strictObject({ version: bodyVersion(1), goals: fuelGoals })
+  .strictObject({ version: bodyVersion(1), goals: fuelGoalsBody })
   .openapi('FuelGoalsDraft');
 
 const wire = (member: string, { firstWeek, source, ...week }: PlannedWeek) => ({
