@@ -43,6 +43,7 @@ import type {
   VerifyToken,
 } from './ports.js';
 import { problemResponse } from './problem.js';
+import { rememberReaderLanguage } from './reader-language.js';
 import { requestTrace } from './request-trace.js';
 import { awardTotals } from './routes/award-totals.js';
 import { unlocks } from './routes/unlocks.js';
@@ -167,6 +168,8 @@ export function createApp(deps: AppDependencies) {
   });
   // First, so everything a request logs carries its trace, and every response its id.
   app.use(requestTrace());
+  // Before the routes, each signed-in caller's app language is kept for the AI to write in.
+  app.use(rememberReaderLanguage({ ...deps, clock: () => new Date() }));
 
   app.route('/', health(deps));
   app.route('/', catalog({ ...deps.catalog, publicRoutes: deps.publicRoutes }));

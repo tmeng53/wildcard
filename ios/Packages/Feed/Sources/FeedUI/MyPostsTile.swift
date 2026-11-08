@@ -41,7 +41,7 @@ public struct MyPostsTile: View {
 }
 
 /// One newest post on the tile: the shared `PostBlock` at thumbnail size, with a faint edge so a
-/// 请假条's graphite shows on the graphite tile.
+/// dark photo still shows on the graphite tile.
 private struct PostThumbnail: View {
     let store: PostWallStore
     let post: FeedPost
