@@ -375,8 +375,18 @@ extension MainTabs {
                     .environment(\.sceneTheme, squad.scene)
                     .task { await recap.refreshPast() }
                 case .coach(let route):
-                    CoachPage(route: route, model: squad, pages: coachPages, note: today.coachLine)
-                        .environment(\.sceneTheme, squad.scene)
+                    CoachPage(
+                        route: route, model: squad, pages: coachPages, note: today.coachLine,
+                        letter: today.coachLetter,
+                        swapped: { leaving, coming in
+                            // Back on 今天, where they change places while the letter is written.
+                            todayPages = []
+                            today.handOver(
+                                from: CoachSpeaker(id: leaving.id, name: leaving.name),
+                                to: CoachSpeaker(id: coming.id, name: coming.name))
+                        }
+                    )
+                    .environment(\.sceneTheme, squad.scene)
                 }
             }
         }

@@ -232,18 +232,6 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
     }
 
-    /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, over its card
-    /// opened from the home and pinned on 动态, and replied to three of its posts.
-    static var sidelineCoach: Bool {
-        ProcessInfo.processInfo.arguments.contains("-uitest-coach")
-    }
-
-    /// `-uitest-coach-note`: 毛头 also left me today's morning note (便条), waiting for me to open
-    /// it from 毛头's phone, 通知 or its push.
-    static var coachNote: Bool {
-        ProcessInfo.processInfo.arguments.contains("-uitest-coach-note")
-    }
-
     /// `-uitest-together wave|stack|bump`: the sample squad's home opens on that celebration
     /// (人浪, 叠罗汉, 撞头). Without it the sample squad never celebrates together, so other UI
     /// tests meet a home that holds still.

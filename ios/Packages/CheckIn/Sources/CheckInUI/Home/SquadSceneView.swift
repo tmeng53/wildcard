@@ -49,6 +49,8 @@ struct SquadSceneView: View {
     var coachAt: (CGPoint) -> Void = { _ in }
     /// I tapped the coach's empty spot, there while the squad has no coach: 教练招聘会 opens.
     var tapVacancy: () -> Void = {}
+    /// The home's clock, which the coaches changing places (换教练) play against.
+    var clock: () -> Date = Date.init
 
     /// The pull whose wake-up (or doze) has played out, after which the scene stops redrawing
     /// for it under Reduce Motion.
@@ -145,18 +147,7 @@ struct SquadSceneView: View {
                         .accessibilityHidden(nickname(of: figure.id) == nil)
                         .zIndex(figure.depth)
                 }
-                // The coach drops in last, after me; under Reduce Motion it is simply there.
-                if let coach = cast.coach, case let fall = coachFall(at: timeline.date), fall >= 0 {
-                    SidelineCoachFigure(
-                        coach: coach, unit: unit, date: timeline.date, reduceMotion: reduceMotion,
-                        lift: DropIn.lift(at: fall, spotY: coach.spot.y, clipLift: 0), hasNote: coachHasNote
-                    )
-                    .modifier(
-                        SidelineCoachButton(
-                            name: coach.speaker.name, hasNote: coachHasNote, tap: tapCoach, standsAt: coachAt)
-                    )
-                    .zIndex(coach.spot.y)
-                }
+                sidelineCoach(unit: unit, date: timeline.date)
                 // Nobody drops into the empty spot: it shows once the squad stands.
                 if let spot = cast.vacancy, coachFall(at: timeline.date) >= 0 {
                     SidelineVacancy(spot: spot, unit: unit, tap: tapVacancy)

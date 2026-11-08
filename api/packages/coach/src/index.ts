@@ -22,7 +22,12 @@ export {
 export {
   Challenge,
   ChallengeAnswer,
+  ChallengeDoneBy,
+  DECLINE_REASON_LIMIT,
+  DeclineReason,
+  type ChallengeCompletion,
   CHALLENGE_AMOUNT_MAX,
+  CHALLENGE_LINE_LIMIT,
   CHALLENGE_TITLE_LIMIT,
   CHALLENGE_UNIT_LIMIT,
 } from './domain/challenge.js';
@@ -56,6 +61,8 @@ export type {
   CoachLetterStore,
   CoachMemoryStore,
   CoachMemberNoteShown,
+  DayChallenge,
+  ChallengeAnswered,
   CoachNoteDeliveryStore,
   CoachNoteShown,
   CoachReportStore,
@@ -80,6 +87,9 @@ export {
   CoachAlreadyHiredError,
   CoachFileMemberNotFoundError,
   CoachNotOfferedError,
+  CoachCardIdError,
+  CoachChallengeDayOverError,
+  CoachChallengeDeclinedError,
   CoachNoteNoChallengeError,
   CoachNoteNotFoundError,
   CoachSquadNotFoundError,
@@ -114,3 +124,11 @@ export {
   type CoachWakes,
   type CoachWakesDependencies,
 } from './use-cases/coach-wakes.js';
+export {
+  CARDS_DAYS,
+  CoachCardId,
+  CoachCardKind,
+  STACK_HOURS,
+  cardKey,
+  type CoachOwnCard,
+} from './domain/cards.js';
