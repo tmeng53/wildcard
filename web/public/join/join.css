@@ -23,7 +23,8 @@ h1 { margin: 8px 0 0; font-size: clamp(36px, 11cqw, 88px); line-height: 1.1; fon
    the top, who sent it and the squad's name, and a stub under the tear line. It is dealt in, then
    checked (检票): the stub tears off, and the squad takes the floor. A page with no squad shows its
    words plainly, with no ticket. */
-.ticket { --notch: 11px; --stub: 44px; position: relative; width: min(100%, 340px); }
+.ticket { --notch: 11px; --stub: 44px; position: relative; }
+.ticket:not(.plain) { width: min(100%, 340px); }
 .ticket.plain .marks, .ticket.plain .stub { display: none; }
 .face { position: relative; padding: 18px 20px 24px; border-radius: 14px 14px 0 0; background: var(--brand); color: var(--on-brand); }
 .ticket.plain .face { padding: 0; background: none; color: var(--ink); }

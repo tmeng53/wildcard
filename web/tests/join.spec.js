@@ -148,9 +148,15 @@ for (const [status, name] of [
     await expect(page.locator('#get')).toHaveText('领取外卡');
     await expect(page.locator('#eyebrow')).toBeHidden();
     await expect(page.locator('.lineup svg')).toHaveCount(0);
-    // No squad, no ticket: the words alone.
+    // No squad, no ticket: the words alone, as wide as the page lets them be.
     await expect(page.locator('#ticket')).toHaveClass(/plain/);
     await expect(page.locator('#stub')).toBeHidden();
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const { height } = await page.locator('#name').boundingBox();
+    const line = await page
+      .locator('#name')
+      .evaluate((h) => parseFloat(getComputedStyle(h).lineHeight));
+    expect(Math.round(height / line)).toBe(1);
   });
 }
 
