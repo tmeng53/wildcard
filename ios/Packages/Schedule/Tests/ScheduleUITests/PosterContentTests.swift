@@ -25,7 +25,7 @@ struct PosterContentTests {
         try WeekSheet(
             weekStart: weekStart, plan: plan,
             marks: [.trained(.sport("run")), .disclaimer, .none, .trained(.sport("tennis")), .none, .none, .none],
-            titles: titles, squad: SquadCount(trained: 14, planned: 22), fuel: [.suggested(.water)])
+            titles: titles, fuel: [.suggested(.water)])
     }
 
     @Test func thisWeekShadesTodayAndCountsTrainedDays() throws {
@@ -149,7 +149,6 @@ struct InMemoryScheduleBackendTests {
         #expect(this.titles.isEmpty)
         #expect(this.marks[3].isTrained, "today is trained")
         #expect(this.marks[4...].allSatisfy { $0 == .none }, "nothing is marked ahead of today")
-        #expect(try await backend.trainedDays() == 46)
     }
 
     @Test func thisWeekKeepsItsStartedDaysAndChangesTheRest() async throws {

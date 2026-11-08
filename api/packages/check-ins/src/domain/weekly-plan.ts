@@ -13,9 +13,6 @@ import { CustomSportName } from './text.js';
 
 const DAY = 86_400_000;
 
-/** Hours after midnight that still count for the day before, as in the app's 3am day (`Contracts/LocalDay+Clock.swift`). */
-const GRACE_HOURS = 3;
-
 /** How many weeks ahead of the current one a member may plan. */
 export const WEEKS_AHEAD = 4;
 
@@ -144,8 +141,9 @@ export function weekStartOf(day: LocalDay): WeekStart {
 }
 
 /**
- * The member's day at `moment` on the wall clock of `timeZone` (an IANA name). Before 3am it
- * is still the day before, so a late workout logged after midnight counts for the day it was done.
+ * The member's day at `moment`: its date on the wall clock of `timeZone` (an IANA name), which
+ * turns at midnight (Tracy, 2026-11-08). A late post after midnight goes on the day before
+ * through 补打卡.
  */
 export function localDayAt(moment: Date, timeZone: string): LocalDay {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -153,13 +151,10 @@ export function localDayAt(moment: Date, timeZone: string): LocalDay {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-    hour: '2-digit',
-    hourCycle: 'h23',
   }).formatToParts(moment);
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((candidate) => candidate.type === type)?.value ?? '';
-  const calendarDay = LocalDay.parse(`${part('year')}-${part('month')}-${part('day')}`);
-  return Number(part('hour')) < GRACE_HOURS ? addDays(calendarDay, -1) : calendarDay;
+  return LocalDay.parse(`${part('year')}-${part('month')}-${part('day')}`);
 }
 
 /**

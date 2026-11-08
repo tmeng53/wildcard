@@ -114,8 +114,6 @@ actor FakeBackend: ScheduleBackend {
         sheets[weekStart] = sheet
     }
 
-    func trainedDays() async throws(ScheduleError) -> Int { 46 }
-
     func template() async throws(ScheduleError) -> [PlanDay] {
         if let templateError { throw templateError }
         return templateDays

@@ -24,14 +24,11 @@ final class ScheduleUITests: XCTestCase {
         let app = launch()
         let tabBar = tabButton("tab.me", in: app)
         XCTAssertTrue(tabBar.isSelected)
-        // The poster and the counts under it sit clear of the tab bar.
+        // The poster sits clear of the tab bar, alone: this week has nothing under it.
         let poster = find(app, "schedule.poster")
         XCTAssertLessThanOrEqual(poster.frame.maxY, tabBar.frame.minY, "the poster runs under the tab bar")
         XCTAssertGreaterThanOrEqual(poster.frame.minX, 0)
         XCTAssertLessThanOrEqual(poster.frame.maxX, app.frame.maxX)
-        let squad = find(app, "schedule.count.squad")
-        XCTAssertTrue(squad.waitForExistence(timeout: 10))
-        XCTAssertLessThanOrEqual(squad.frame.maxY, tabBar.frame.minY, "the counts sit under the tab bar")
         XCTAssertTrue(lane(app, 3).label.hasPrefix("今天"), "Thursday isn't today: \(lane(app, 3).label)")
         XCTAssertTrue(lane(app, 3).label.contains("力量训练"), "strength's short name is missing: \(lane(app, 3).label)")
         settle()
@@ -132,12 +129,11 @@ final class ScheduleUITests: XCTestCase {
 
         XCTAssertFalse(lane(app, 4).isEnabled, "a past week can change")
         XCTAssertTrue(find(app, "schedule.title.0").waitForExistence(timeout: 10), "last week has no title")
-        // The 颁奖词 sit under the poster, clear of the lanes, in place of the counts.
+        // The 颁奖词 sit under the poster, clear of the lanes.
         let award = find(app, "schedule.award.0")
         XCTAssertTrue(award.waitForExistence(timeout: 10), "the award has no card under the poster")
         XCTAssertGreaterThanOrEqual(
             award.frame.minY, find(app, "schedule.poster").frame.maxY, "the award covers the poster")
-        XCTAssertFalse(find(app, "schedule.count.squad").exists, "a past week still shows its counts")
         settle()
         keepScreenshot(named: "67-schedule-past-week-award")
         // Scrolled up, the 颁奖词 read whole above the tab bar, and the weeks and 存图 stay put

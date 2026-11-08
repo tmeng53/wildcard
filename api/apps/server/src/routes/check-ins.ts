@@ -41,7 +41,7 @@ const checkInFields = {
   member: z.uuid().meta({ description: 'The member who made it.' }),
   day: LocalDay.meta({
     description:
-      'The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).',
+      'The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).',
   }),
   postedDay: LocalDay.optional().meta({
     description:

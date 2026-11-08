@@ -10,7 +10,8 @@ import SwiftUI
 /// the approved comment composer does: 回复 Mia with × when replying to someone, 「@毛头」 while the
 /// squad has a coach, the words (up to four lines, with the count near the limit) and the send
 /// button; typing `@` opens the @ list over it, the coach first. Sent words leave the box at
-/// once; if they couldn't go out they come back with a line saying so.
+/// once; if they couldn't go out they come back with a line saying so, and leave again once a
+/// later read shows the server had them after all.
 struct CommentComposer: View {
     @Environment(\.sceneTheme) private var theme
     let model: FeedModel
@@ -18,8 +19,6 @@ struct CommentComposer: View {
     var isTyping: FocusState<Bool>.Binding
     @State private var draft = CommentDraft()
     @State private var isSending = false
-    /// The words that couldn't go out, back in the box; the line saying so shows until they change.
-    @State private var unsent: String?
 
     /// Past this many characters the box shows how many are used.
     private static let countFrom = CommentText.maxLength - 20
@@ -38,7 +37,8 @@ struct CommentComposer: View {
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            if let unsent, unsent == draft.text {
+            // Only while the box holds the very words the store still has as not gone out.
+            if let unsent = model.store.unsentComment(on: post.id), holds(unsent) {
                 InlineFailure(Text("网络开小差了，没发出去", bundle: .module))
                     .accessibilityIdentifier("post.sendFailed")
             }
@@ -60,6 +60,15 @@ struct CommentComposer: View {
         }
         .padding(.horizontal, Space.pageMargin)
         .padding(.bottom, Space.xs)
+        // Saved after all (the answer was lost, a later read lists it): the words leave the box.
+        .onChange(of: model.store.unsentComment(on: post.id)) { before, after in
+            if let before, after == nil, holds(before) { draft.clear() }
+        }
+    }
+
+    /// Whether the box holds these words, as they were sent (trimmed, as `CommentText` keeps them).
+    private func holds(_ comment: Comment) -> Bool {
+        (try? CommentText(draft.text)) == comment.text
     }
 
     private func replying(to recipient: String) -> some View {
@@ -173,16 +182,12 @@ struct CommentComposer: View {
     private func send(_ text: CommentText, on post: CheckInID) {
         let typed = draft
         draft.clear()
-        unsent = nil
         isSending = true
         Task {
             let sent = await model.comment(text, mentioning: typed.mentions, on: post)
             isSending = false
             // Words typed meanwhile stay: the unsent ones come back only to an empty box.
-            if !sent, draft.text.isEmpty {
-                draft = typed
-                unsent = typed.text
-            }
+            if !sent, draft.text.isEmpty { draft = typed }
         }
     }
 }

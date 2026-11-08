@@ -63,6 +63,18 @@ export const NoticeSubjects = {
     text: z.string().min(1),
   }),
   /**
+   * The squad changed coach and the coach that left wrote the one that took over a letter: its
+   * words as written, since the letter never changes and stays readable after the next change.
+   */
+  coachLetter: z.strictObject({
+    version: z.literal(1),
+    letter: z.int().positive(),
+    from: z.string().min(1),
+    to: z.string().min(1),
+    day: z.iso.date(),
+    text: z.string().min(1),
+  }),
+  /**
    * A teammate commented on the member's check-in, replied to them or @'d them, or the coach @'d
    * them: the push's words as it was put (sent or not, by the member's switch), and the post to
    * open. The coach's lines aren't comments, so they have no comment id.
@@ -99,6 +111,7 @@ const KindAndSubject = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('sceneMoved'), subject: NoticeSubjects.sceneMoved }),
   z.object({ kind: z.literal('coachReply'), subject: NoticeSubjects.coachReply }),
   z.object({ kind: z.literal('coachNote'), subject: NoticeSubjects.coachNote }),
+  z.object({ kind: z.literal('coachLetter'), subject: NoticeSubjects.coachLetter }),
   z.object({ kind: z.literal('unlocked'), subject: NoticeSubjects.unlocked }),
   z.object({ kind: z.literal('comment'), subject: NoticeSubjects.comment }),
   z.object({ kind: z.literal('broadcast'), subject: NoticeSubjects.broadcast }),

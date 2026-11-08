@@ -7,29 +7,6 @@ import ScheduleDomain
 import SportsUI
 import SwiftUI
 
-/// The counts under this week: lifetime trained days, and the squad's this week.
-struct ScheduleCounts: View {
-    let store: ScheduleStore
-    let sheet: WeekSheet
-
-    var body: some View {
-        HStack(alignment: .top, spacing: Space.cardGap) {
-            CountCard(
-                label: Text("一共训练", bundle: .module), count: store.lifetimeTrainedDays ?? 0, goal: nil,
-                unit: Text("天", bundle: .module)
-            )
-            .accessibilityIdentifier("schedule.count.lifetime")
-            if let squad = sheet.squad {
-                CountCard(
-                    label: Text("小队本周目标", bundle: .module), count: squad.trained, goal: squad.planned,
-                    unit: Text("天", bundle: .module)
-                )
-                .accessibilityIdentifier("schedule.count.squad")
-            }
-        }
-    }
-}
-
 /// Under a past week: each title the week's awards gave the member, with its 颁奖词. The poster
 /// carries the stickers; their words sit here, clear of the lanes.
 struct WeekAwards: View {
@@ -179,30 +156,6 @@ struct PanelNote: View {
                 .noteStyle(theme)
                 .accessibilityIdentifier("schedule.failure")
         }
-    }
-}
-
-/// A label over a number and its unit, on a grey card: 一共练了 46 天, 本周小队训练 14/22 次.
-struct CountCard: View {
-    let label: Text
-    let count: Int
-    let goal: Int?
-    let unit: Text
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(label)
-            HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                Score(count: count, goal: goal, size: .card)
-                unit
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .card(on: .page)
-        .accessibilityElement(children: .combine)
     }
 }
 

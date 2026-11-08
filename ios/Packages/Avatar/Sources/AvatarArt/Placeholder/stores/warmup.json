@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "persona": "energetic",
+  "look": {
+    "body": "corgi",
+    "eyes": "happy",
+    "mouth": "grin",
+    "hat": "warmup-cap",
+    "top": "warmup-hoodie",
+    "bottom": "warmup-joggers",
+    "shoes": "warmup-hightop",
+    "prop": "dumbbell"
+  }
+}

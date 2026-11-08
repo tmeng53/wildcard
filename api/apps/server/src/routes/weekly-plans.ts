@@ -132,8 +132,7 @@ export function weeklyPlans(deps: {
       'read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the ' +
       'current week, from the day the member joined: days before today stay as they were, ' +
       'and today and later days change freely. On the day a member joins, a week still on ' +
-      'the default changes freely. Days are read in the member’s profile time zone, and a ' +
-      'day lasts until 3am.',
+      'the default changes freely. Days are read in the member’s profile time zone.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {

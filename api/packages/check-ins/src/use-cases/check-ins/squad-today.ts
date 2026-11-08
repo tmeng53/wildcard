@@ -21,7 +21,7 @@ import { zonesOf } from './member-zones.js';
 
 export interface SquadMemberToday {
   readonly member: MemberId;
-  /** The member's own today, in their time zone, with the 3am grace. */
+  /** The member's own today, in their time zone. */
   readonly day: LocalDay;
   /** From check-ins sent to this squad only. */
   readonly training: TrainingStatus;
