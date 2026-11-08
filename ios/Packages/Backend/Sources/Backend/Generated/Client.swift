@@ -2229,7 +2229,6 @@ internal struct Client: APIProtocol {
             }
         )
     }
-<<<<<<< HEAD
     /// The signed-in member’s records (外卡记录)
     ///
     /// 外卡记录, opened from 我’s 训练记录: streaks, when and what they train, and how they stand in their squad, worked out from their check-ins and plans on every read.
@@ -2336,10 +2335,7 @@ internal struct Client: APIProtocol {
             }
         )
     }
-    /// The signed-in member’s 练了 for a range of days, for their training record
-=======
     /// The signed-in member’s 训练 for a range of days, for their training record
->>>>>>> origin/main
     ///
     /// 训练记录 on 我: each 训练 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.
     ///
