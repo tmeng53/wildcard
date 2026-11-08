@@ -1,13 +1,24 @@
 import { randomUUID } from 'node:crypto';
 
 import { AdminId } from '@wildcard/admins';
+import {
+  createCheckIns,
+  createPostgresCheckInStore,
+  createPostgresCommentStore,
+  createPostgresReactionStore,
+  createPostgresWeeklyPlanStore,
+} from '@wildcard/check-ins';
+import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { createDatabase } from '../../adapters/postgres.js';
+import { createSupabasePhotoStorage } from '../../adapters/supabase-storage.js';
 import { TestPushNoSquadError } from '../../errors.js';
+import { memberCalendar } from '../../member-calendar.js';
 import { config, pushOn, signUp } from '../../test-kit/local-supabase.js';
 import { sendTestPush } from './test-push.js';
 
@@ -19,6 +30,21 @@ const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
   aiConsent: () => Promise.resolve(true),
+});
+const members = createMembers({ store: createPostgresProfileStore(db) });
+const checkIns = createCheckIns({
+  sports: createSports({ store: createPostgresSportStore(db) }),
+  store: createPostgresCheckInStore(db),
+  membership: squads,
+  reactions: createPostgresReactionStore(db),
+  comments: createPostgresCommentStore(db),
+  plans: createPostgresWeeklyPlanStore(db),
+  photos: createSupabasePhotoStorage({
+    supabaseUrl: config.supabaseUrl,
+    secretKey: config.supabaseSecretKey,
+  }),
+  calendarOf: memberCalendar(members),
+  clock: () => NOW,
 });
 
 // Saturday 2026-10-31 in New York; the latest awards are the week of 10-19's.
@@ -56,6 +82,8 @@ function setup(answer: 'sent' | 'off' = 'sent') {
       },
     }),
     squads,
+    checkIns,
+    members,
     clock: () => NOW,
   });
   return { tool, sent };
@@ -93,6 +121,10 @@ describe('send_test_push', () => {
       squad,
     ]);
     expect(sent[2]?.notification.event.weekStart).toBe('2026-10-19');
+    // The daily ones carry the squad's real day, so the long-press view has it to show.
+    for (const { notification } of sent.slice(0, 2)) {
+      expect(notification.event.today).toMatchObject({ posts: [], more: 0 });
+    }
     // Never collapsing into the real push of the day or week on the phone.
     expect(sent.map(({ notification }) => notification.collapseId)).toStrictEqual([
       `test-dailyProgress-${String(NOW.getTime())}`,

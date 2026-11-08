@@ -1,7 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
-import { CheckInId, Disclaimer, Meal, MemberId, Training, type CheckInRecord } from './check-in.js';
-import { latestMealOn, planFinishedAt, trainedDays, trainingOn, weekOf } from './days.js';
+import {
+  CheckInId,
+  Disclaimer,
+  Meal,
+  MemberId,
+  Training,
+  isLeave,
+  type CheckInRecord,
+} from './check-in.js';
+import {
+  latestMealOn,
+  markOn,
+  trainedDays,
+  trainedDaysReachedAt,
+  trainingOn,
+  weekOf,
+} from './days.js';
 
 const at = (iso: string) => new Date(iso);
 const member = MemberId.parse('00000000-0000-4000-8000-000000000001');
@@ -67,6 +82,19 @@ describe('a day’s check-ins', () => {
     expect(trainingOn([checkIn('trained', { day: '2026-10-18' })], day)).toBe('notCheckedIn');
   });
 
+  it('leaves a 休息 out: the plan shows the day as a rest day', () => {
+    const day = '2026-10-19';
+    const rest: CheckInRecord = {
+      ...checkIn('disclaimer', { day }),
+      kind: 'disclaimer',
+      disclaimer: Disclaimer.parse({ text: '歇一天', restDay: true }),
+    };
+    expect(isLeave(rest)).toBe(false);
+    expect(isLeave(checkIn('disclaimer', { day }))).toBe(true);
+    expect(trainingOn([rest], day)).toBe('notCheckedIn');
+    expect(trainingOn([rest, checkIn('disclaimer', { day })], day)).toBe('disclaimer');
+  });
+
   it('gives the latest meal', () => {
     const day = '2026-10-19';
     const healthy = checkIn('healthyMeal', { day: day, createdAt: '2026-10-19T18:00:00.000Z' });
@@ -89,10 +117,10 @@ describe('a day’s check-ins', () => {
   });
 });
 
-describe('when a plan was finished', () => {
+describe('when a count of days trained was reached', () => {
   const { days } = weekOf('2026-10-21');
 
-  it('is the moment the last planned day got its first 练了', () => {
+  it('is the moment the count-th day got its first 练了', () => {
     const checkIns = [
       checkIn('trained', { day: '2026-10-19' }),
       checkIn('trained', { day: '2026-10-19', createdAt: '2026-10-19T08:00:00.000Z' }),
@@ -100,25 +128,44 @@ describe('when a plan was finished', () => {
       checkIn('trained', { day: '2026-10-21' }),
       checkIn('trained', { day: '2026-10-23' }),
     ];
-    // Three planned days: the 19th (first made 08:00), the 21st and the 23rd.
-    expect(planFinishedAt(checkIns, { days, plannedDays: 3 })).toStrictEqual(
+    // Three days: the 19th (first made 08:00), the 21st and the 23rd.
+    expect(trainedDaysReachedAt(checkIns, { days, count: 3 })).toStrictEqual(
       at('2026-10-23T18:00:00.000Z'),
     );
-    // Two planned: done once the 21st was.
-    expect(planFinishedAt(checkIns, { days, plannedDays: 2 })).toStrictEqual(
+    // Two: reached once the 21st was.
+    expect(trainedDaysReachedAt(checkIns, { days, count: 2 })).toStrictEqual(
       at('2026-10-21T18:00:00.000Z'),
     );
   });
 
-  it('counts a day made up later by when it was posted, and is missing while short or without a plan', () => {
+  it('counts a day made up later by when it was posted, and is missing while short or for no days', () => {
     const checkIns = [
       checkIn('trained', { day: '2026-10-19' }),
       checkIn('trained', { day: '2026-10-20', createdAt: '2026-10-22T07:00:00.000Z' }),
     ];
-    expect(planFinishedAt(checkIns, { days, plannedDays: 2 })).toStrictEqual(
+    expect(trainedDaysReachedAt(checkIns, { days, count: 2 })).toStrictEqual(
       at('2026-10-22T07:00:00.000Z'),
     );
-    expect(planFinishedAt(checkIns, { days, plannedDays: 3 })).toBeUndefined();
-    expect(planFinishedAt(checkIns, { days, plannedDays: 0 })).toBeUndefined();
+    expect(trainedDaysReachedAt(checkIns, { days, count: 3 })).toBeUndefined();
+    expect(trainedDaysReachedAt(checkIns, { days, count: 0 })).toBeUndefined();
+  });
+});
+
+describe('a day’s mark on the 出赛表', () => {
+  it('names the latest 练了’s sport, wins over a 请假条, and is none without either', () => {
+    const swim = {
+      ...checkIn('trained', { day: '2026-11-03', createdAt: '2026-11-03T20:00:00.000Z' }),
+      training: Training.parse({ sport: 'swim' }),
+    };
+    const checkIns = [
+      checkIn('disclaimer', { day: '2026-11-03', createdAt: '2026-11-03T08:00:00.000Z' }),
+      checkIn('trained', { day: '2026-11-03', createdAt: '2026-11-03T12:00:00.000Z' }),
+      swim,
+      checkIn('disclaimer', { day: '2026-11-04' }),
+      checkIn('healthyMeal', { day: '2026-11-05' }),
+    ];
+    expect(markOn(checkIns, '2026-11-03')).toStrictEqual({ status: 'trained', sport: 'swim' });
+    expect(markOn(checkIns, '2026-11-04')).toStrictEqual({ status: 'disclaimer' });
+    expect(markOn(checkIns, '2026-11-05')).toStrictEqual({ status: 'none' });
   });
 });

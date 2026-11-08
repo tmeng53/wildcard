@@ -81,18 +81,18 @@
         }
       }
     },
-    "所有打卡、照片和请假条会删掉" : {
+    "你发过的动态和照片都会删掉" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "All your check-ins, photos and day-off notes go"
+            "value" : "Everything you posted, photos included, goes"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "所有打卡、照片和假單都會刪除"
+            "value" : "你發過的動態和照片都會刪除"
           }
         }
       }
@@ -1117,6 +1117,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "管理員"
+          }
+        }
+      }
+    },
+    "饮食小目标" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Food goals"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "飲食小目標"
           }
         }
       }

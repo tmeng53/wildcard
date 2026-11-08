@@ -19,6 +19,9 @@ const KIND_NAMES: Record<WeekCheckIn['kind'], string> = {
   disclaimer: '请假条',
 };
 
+/** A 请假条 the member marked as a planned rest (休息): part of the plan, not leave. */
+const PLANNED_REST = '计划休息';
+
 /** How a comment's writer, or whom it replies to, goes when they aren't listed. */
 const TEAMMATE = '队友';
 
@@ -74,7 +77,7 @@ export function promptFor(week: {
       checkIns: checkIns.map((each) => ({
         day: `${each.day} ${WEEKDAYS[new Date(Date.parse(each.day)).getUTCDay()] ?? ''}`,
         time: timeOfDay(each.createdAt, timeZone),
-        kind: KIND_NAMES[each.kind],
+        kind: each.restDay === true ? PLANNED_REST : KIND_NAMES[each.kind],
         ...(each.sport === undefined ? {} : { sport: each.sport }),
         ...(each.text === undefined ? {} : { reason: each.text }),
         ...(each.caption === undefined ? {} : { caption: each.caption }),
@@ -92,7 +95,11 @@ export function promptFor(week: {
     })),
     // By id, whatever order the database keeps them in, so the same settings make the same prompt.
     moves: offeredMoves(week.moves).map((id) => ({ id, description: week.moves[id] })),
-    badges: week.badges,
+    // The tones are the app's to paint; the model picks by what each colour means.
+    badges: {
+      ...week.badges,
+      colours: week.badges.colours.map(({ id, meaning }) => ({ id, meaning })),
+    },
     ...(week.memes.length === 0
       ? {}
       : {

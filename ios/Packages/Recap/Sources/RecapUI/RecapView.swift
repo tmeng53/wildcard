@@ -128,7 +128,9 @@ public struct RecapView: View {
                     .accessibilityIdentifier("recap.close")
             }
         }
-        .padding(.horizontal, Space.s)
+        // The pages' own inset, so the squad's name, the bar and 关闭 line up with each page's
+        // title and cards, as the design has them.
+        .padding(.horizontal, Space.l)
         .padding(.top, Space.xs)
     }
 

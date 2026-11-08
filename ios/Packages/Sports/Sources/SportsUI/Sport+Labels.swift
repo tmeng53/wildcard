@@ -32,7 +32,7 @@ extension Sport {
     }
 
     /// For a sport whose own symbol this iOS lacks, and for sports people name themselves.
-    static let generalSymbol = "figure.mixed.cardio"
+    public static let generalSymbol = "figure.mixed.cardio"
 }
 
 extension SportCatalog.Category {

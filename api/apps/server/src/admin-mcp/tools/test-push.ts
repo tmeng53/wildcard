@@ -1,10 +1,18 @@
+import {
+  MemberId as CheckInMember,
+  SquadId as CheckInSquad,
+  type CheckIns,
+} from '@wildcard/check-ins';
+import type { Members } from '@wildcard/members';
 import { MemberId as PushMember, type Push } from '@wildcard/push';
 import { MemberId as SquadMember, type Squads } from '@wildcard/squads';
+import { NEW_YORK } from '@wildcard/time-zones';
 import { SquadId, latestAwardedWeek } from '@wildcard/weekly-awards';
 import { z } from 'zod';
 
 import { TestPushNoSquadError } from '../../errors.js';
-import { dailyProgressNotification } from '../../flows/daily-progress-push.js';
+import { dailyProgressNotification, roomForToday } from '../../flows/daily-progress-push.js';
+import { pushToday } from '../../flows/daily-push-today.js';
 import { awardsReadyNotification } from '../../flows/weekly-awards.js';
 import { adminTool } from '../admin-tool.js';
 
@@ -14,6 +22,9 @@ import { adminTool } from '../admin-tool.js';
 interface TestPushToolDependencies {
   readonly push: Push;
   readonly squads: Squads;
+  /** The squad's real day, for the long-press view, as the 6pm push carries it. */
+  readonly checkIns: Pick<CheckIns, 'squadToday' | 'listForSquad'>;
+  readonly members: Pick<Members, 'squadmates'>;
   readonly clock: () => Date;
 }
 
@@ -24,7 +35,7 @@ const TestPushKind = z.enum(['dailyProgress', 'poke', 'weeklyAwards']);
 const SAMPLE_POKER = '测试队友';
 
 /** `send_test_push`: sends the admin one push of a kind, to their own phones only. */
-export function sendTestPush({ push, squads, clock }: TestPushToolDependencies) {
+export function sendTestPush({ push, squads, checkIns, members, clock }: TestPushToolDependencies) {
   return adminTool({
     name: 'send_test_push',
     title: 'Send yourself a test push',
@@ -44,14 +55,14 @@ export function sendTestPush({ push, squads, clock }: TestPushToolDependencies) 
       const now = clock();
       const built =
         kind === 'weeklyAwards'
-          ? awardsReadyNotification(SquadId.parse(squad.id), latestAwardedWeek(now))
-          : dailyProgressNotification({
-              day: now.toISOString().slice(0, 10),
-              squad: squad.id,
-              squadWeek: { trainedDays: 3, plannedDays: 5 },
-              received: kind === 'poke' ? new Map([['poke', new Set([SAMPLE_POKER])]]) : new Map(),
-              named: kind === 'poke' ? { kind: 'poke', nickname: SAMPLE_POKER } : undefined,
-            });
+          ? awardsReadyNotification(
+              SquadId.parse(squad.id),
+              latestAwardedWeek(
+                now,
+                (await squads.timeZonesAt([squad.id], now)).get(squad.id) ?? NEW_YORK,
+              ),
+            )
+          : await dailyProgress(kind, { admin, squad: squad.id, now });
       // Its own collapse id, so on the phone it never replaces the real push of the day or week,
       // nor is replaced by it.
       const notification = { ...built, collapseId: `test-${kind}-${String(now.getTime())}` };
@@ -72,6 +83,33 @@ export function sendTestPush({ push, squads, clock }: TestPushToolDependencies) 
       };
     },
   });
+
+  /** The 6pm push with sample counts and sender, carrying the squad's real day as the real one does. */
+  async function dailyProgress(
+    kind: 'dailyProgress' | 'poke',
+    { admin, squad, now }: { readonly admin: string; readonly squad: string; readonly now: Date },
+  ) {
+    const told = {
+      day: now.toISOString().slice(0, 10),
+      squad,
+      squadWeek: { trainedDays: 3, plannedDays: 5 },
+      received:
+        kind === 'poke'
+          ? new Map([['poke', new Set([SAMPLE_POKER])]])
+          : new Map<string, Set<string>>(),
+      named: kind === 'poke' ? { kind: 'poke' as const, nickname: SAMPLE_POKER } : undefined,
+    };
+    const squadId = CheckInSquad.parse(squad);
+    const today = await checkIns.squadToday({ viewer: CheckInMember.parse(admin), squad: squadId });
+    return dailyProgressNotification({
+      ...told,
+      // Without it the long-press view has nothing to show; a failure still sends the words.
+      today: await pushToday(
+        { checkIns, members },
+        { viewer: admin, squad: squadId, today, pokers: [], bytes: roomForToday(told) },
+      ).catch(() => undefined),
+    });
+  }
 }
 
 export const testPushTools = (deps: TestPushToolDependencies) => [sendTestPush(deps)];

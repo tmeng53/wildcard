@@ -5,8 +5,8 @@ import DesignSystemUI
 import ScheduleDomain
 import SwiftUI
 
-/// One day's swim lane on the poster: its number, weekday, plan and mark, shaded by how it is
-/// held. A button, so the member picks the day by tapping it.
+/// One day's swim lane on the poster: its `ScheduleDayRow` (weekday, the sport's disc, plan and
+/// mark), shaded by how it is held. A button, so the member picks the day by tapping it.
 struct PosterLane: View {
     static let height: Double = 40
 
@@ -19,17 +19,8 @@ struct PosterLane: View {
     /// Lanes alternate with a faint shade; today's is darker.
     private let stripeShade = 0.06
     private let todayShade = 0.18
-    /// Days off fade back, so the training days read first.
-    private let restOpacity = 0.55
-    private let restNumberOpacity = 0.4
-    private let numberOpacity = 0.9
-    private let markSize: Double = 17
-    private let leaveTagHeight: Double = 20
-    private let numberWidth: Double = 20
-    private let weekdayWidth: Double = 30
 
     private var isHeld: Bool { lane.look == .held }
-    private var isFaded: Bool { lane.shown == .rest && !isHeld }
     private var ink: Color { Color(role: colors.ink, in: theme) }
     private var shade: Color { Color(role: colors.shade, in: theme) }
 
@@ -56,36 +47,19 @@ struct PosterLane: View {
         .buttonStyle(PressableButtonStyle())
         .zIndex(isHeld ? 1 : 0)
         .disabled(!lane.isEditable)
-        .accessibilityLabel(accessibilityLabel)
+        .accessibilityLabel(row.accessibilityText)
         .accessibilityAddTraits(isHeld ? .isSelected : [])
         .accessibilityIdentifier("schedule.lane.\(lane.index)")
     }
 
-    private var row: some View {
-        HStack(spacing: Space.s - 2) {
-            Text(verbatim: "\(lane.index + 1)")
-                .typeStyle(TypeRamp.scoreInline)
-                .frame(width: numberWidth, alignment: .leading)
-                .opacity(isFaded ? restNumberOpacity : numberOpacity)
-            Group {
-                if lane.isToday {
-                    Text(copy: "今天", bundle: .module)
-                } else {
-                    ScheduleLabels.weekday(lane.day)
-                }
-            }
-            .typeStyle(TypeRamp.label)
-            // English's "Today" is a touch wider than the column: it shrinks rather than wraps.
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .frame(width: weekdayWidth, alignment: .leading)
-            ScheduleLabels.plan(lane.shown)
-                .typeStyle(TypeRamp.headline)
-                .lineLimit(1)
-                .opacity(isFaded ? restOpacity : 1)
-            mark
-            Spacer(minLength: 0)
-        }
+    private var row: ScheduleDayRow {
+        let glyph = Color(role: colors.onInk, in: theme)
+        return ScheduleDayRow(
+            day: lane.day, isToday: lane.isToday, shown: lane.shown, mark: lane.mark,
+            colors: isHeld
+                ? .init(ink: glyph, onInk: ink, markDisc: Color(role: colors.heldDisc, in: theme), markGlyph: glyph)
+                : .init(ink: ink, onInk: glyph, markDisc: ink, markGlyph: glyph),
+            fadesRest: !isHeld)
     }
 
     @ViewBuilder
@@ -95,42 +69,6 @@ struct PosterLane: View {
         case .today: shade.opacity(todayShade)
         case .plain: lane.index.isMultiple(of: 2) ? Color.clear : shade.opacity(stripeShade)
         }
-    }
-
-    /// A tick for a day trained, 请假 for a 请假条.
-    @ViewBuilder
-    private var mark: some View {
-        let disc = isHeld ? Color(role: colors.heldDisc, in: theme) : ink
-        let glyph = Color(role: colors.onInk, in: theme)
-        switch lane.mark {
-        case .trained:
-            Image(systemName: "checkmark")
-                .font(.system(size: markSize * 0.55, weight: .heavy))
-                .foregroundStyle(glyph)
-                .frame(width: markSize, height: markSize)
-                .background(disc, in: Circle())
-                .accessibilityHidden(true)
-        case .disclaimer:
-            Text(copy: "请假", bundle: .module)
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(glyph)
-                .padding(.horizontal, Space.xs - 1)
-                .frame(height: leaveTagHeight)
-                .background(disc, in: Capsule())
-        case .none:
-            EmptyView()
-        }
-    }
-
-    private var accessibilityLabel: Text {
-        let day = lane.isToday ? Text(copy: "今天", bundle: .module) : ScheduleLabels.weekday(lane.day)
-        let status: Text =
-            switch lane.mark {
-            case .trained: Text(copy: "，训练", bundle: .module)
-            case .disclaimer: Text(copy: "，请假", bundle: .module)
-            case .none: Text(verbatim: "")
-            }
-        return Text(copy: "\(day) \(ScheduleLabels.plan(lane.shown))\(status)", bundle: .module)
     }
 }
 

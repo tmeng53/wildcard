@@ -26,7 +26,7 @@ import type {
 } from '../../ports.js';
 import { checkPhotos } from '../check-photos.js';
 import { checkSport } from '../check-sport.js';
-import { planTrainedDay } from '../weekly-plans.js';
+import { planRestDay, planTrainedDay } from '../weekly-plans.js';
 
 export interface SaveCheckInInput {
   readonly id: CheckInId;
@@ -45,7 +45,8 @@ export interface SavedCheckIn {
  * again is a success, different contents under a saved id are refused. A retry is recognised
  * before the time checks, so a late retry of a saved check-in still succeeds. A 练了 on a day the
  * member's plan has as a rest day makes it a training day of that sport, on a retry too, so a
- * save that stopped between the two still ends with both.
+ * save that stopped between the two still ends with both. A 休息 makes its day a rest day the
+ * same way.
  */
 export async function saveCheckIn(
   {
@@ -75,10 +76,34 @@ export async function saveCheckIn(
   if (saved.checkIn.kind === 'trained') {
     await planTrainedDay(
       { store: plans },
-      { member, day: saved.checkIn.day, training: saved.checkIn.training },
+      {
+        member,
+        day: saved.checkIn.day,
+        training: saved.checkIn.training,
+        checkIn: saved.checkIn.id,
+      },
     );
   }
+  await planRestPost({ store, plans }, saved.checkIn);
   return saved;
+}
+
+/**
+ * Makes a 休息's day a rest day in the member's plan, unless they trained that day: a 练了 after
+ * the 休息 made it a training day, and a retry or an edit of the 休息 must not undo that.
+ */
+export async function planRestPost(
+  { store, plans }: { readonly store: CheckInStore; readonly plans: WeeklyPlanStore },
+  checkIn: CheckInRecord,
+): Promise<void> {
+  if (checkIn.kind !== 'disclaimer' || checkIn.disclaimer.restDay !== true) return;
+  const sameDay = await store.listForMember({
+    member: checkIn.member,
+    from: checkIn.day,
+    to: checkIn.day,
+  });
+  if (sameDay.some(({ kind }) => kind === 'trained')) return;
+  await planRestDay({ store: plans }, { member: checkIn.member, day: checkIn.day });
 }
 
 async function insertCheckIn(

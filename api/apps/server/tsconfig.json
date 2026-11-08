@@ -14,6 +14,9 @@
       "path": "../../packages/app-copy"
     },
     {
+      "path": "../../packages/language-model"
+    },
+    {
       "path": "../../packages/admins"
     },
     {
@@ -51,6 +54,9 @@
     },
     {
       "path": "../../packages/sport-ids"
+    },
+    {
+      "path": "../../packages/time-zones"
     },
     {
       "path": "../../packages/sports"

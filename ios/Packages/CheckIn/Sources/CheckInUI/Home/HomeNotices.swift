@@ -25,6 +25,10 @@ struct HomeNotices: ViewModifier {
             .onChange(of: model.store.unlocked.count, initial: true) { _, count in
                 if count > 0 { model.tellUnlocks() }
             }
+            // A late post the server refused: told once, with a button to send it again.
+            .onChange(of: model.store.refused.count, initial: true) { _, count in
+                if count > 0 { model.tellRefused() }
+            }
     }
 
     @ViewBuilder
@@ -57,11 +61,29 @@ struct HomeNotices: ViewModifier {
                 detail: Text(copy: "改成人均 \(suggestion.daysPerMember) 天？", bundle: .module),
                 action: Text(copy: "去改目标", bundle: .module)
             ) { NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis") }
+        case .sendFailed(let canResend):
+            NoticeBanner(
+                model.failed.count == 1
+                    ? Text(copy: "有一条发送失败", bundle: .module)
+                    : Text(copy: "有 \(model.failed.count) 条发送失败", bundle: .module),
+                detail: sendFailedDetail(canResend: canResend),
+                action: canResend ? Text(copy: "重发", bundle: .module) : nil
+            ) { NoticeSymbol(systemImage: "arrow.clockwise") }
         case .more:
             NoticeBanner(Text(copy: "还有新通知 · 去看看", bundle: .module), showsChevron: true) {
                 NoticeSymbol(systemImage: "bell.fill")
             }
         }
+    }
+
+    private func sendFailedDetail(canResend: Bool) -> Text {
+        guard canResend else { return Text(copy: "没能发出去", bundle: .module) }
+        let failed = model.failed
+        if failed.count > 1 { return Text(copy: "先重发最早的一条", bundle: .module) }
+        if let line = failed.first?.draft.line, !line.isEmpty {
+            return Text(copy: "「\(line)」没能发出去，改一下再试试", bundle: .module)
+        }
+        return Text(copy: "改一下再试试", bundle: .module)
     }
 
     private func tap(_ notice: TodayModel.Notice) {
@@ -73,6 +95,7 @@ struct HomeNotices: ViewModifier {
                 model.openDestination?(action.destination)
             }
         case .goalSuggestion: model.openDestination?(.squad)
+        case .sendFailed: model.resendFirst()
         case .more: model.openDestination?(.notices)
         case .moved: break
         }

@@ -78,6 +78,11 @@ enum ScheduleLabels {
         }
     }
 }
+extension FuelGoal {
+    /// The goal's words, as the poster writes them.
+    public var label: Text { ScheduleLabels.fuel(self) }
+}
+
 #endif
 
 extension FuelSuggestion {

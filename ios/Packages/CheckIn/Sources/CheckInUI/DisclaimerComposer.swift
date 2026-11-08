@@ -6,14 +6,13 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// 今日请假条 (spec rev 186, section 1), laid out like an editorial page: the excuse itself is
-/// the hero, in large type in the middle of the page, and tapping it edits it. Above the button,
-/// the four styles as a row of text tabs, three lines on offer and 编几句, which asks the writer
-/// for lines from the member's own words in the picked style. Only that button asks the writer,
-/// so typing and picking a style cost nothing. Up to `Disclaimer.maxLength` characters.
+/// 今日请假条 (spec rev 186, section 1, made calmer 2026-11-06): the excuse is the page's one
+/// line, in the middle of the page, and tapping it edits it. Above the button, one row: the four
+/// styles (a segmented control) and 编一句, which puts a line from the member's own words in the picked style in its
+/// place; then 换一句 shows the next. The writer answers three lines at a time, so only every
+/// third 换一句 (or a new style or new words) asks it again, and typing and picking a style cost
+/// nothing. Up to `Disclaimer.maxLength` characters.
 struct DisclaimerComposer: View {
-    private static let tabUnderline: Double = 2
-    private static let accentBar = CGSize(width: 28, height: 4)
 
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -21,8 +20,10 @@ struct DisclaimerComposer: View {
     @State private var text = ""
     @State private var entry = DisclaimerEntry()
     @State private var style = DisclaimerStyle.funny
-    /// The three lines on offer.
+    /// The writer's last three lines, shown one at a time.
     @State private var drafts: [String] = []
+    /// The next of `drafts` 换一句 shows; past the end, it asks the writer again.
+    @State private var next = 0
     /// The words and style the lines on offer were written from; nil for random lines.
     @State private var draftsFrom: Origin?
     @State private var isWriting = false
@@ -33,6 +34,8 @@ struct DisclaimerComposer: View {
     /// The past day it counts for (补打卡); nil is today, whatever day it is when it posts. It
     /// opens on today, or on the latest day before it without a 练了 when today can't take one.
     @State private var day: LocalDay?
+    /// 休息, a rest the member planned, rather than leave (请假): picked at the top.
+    @State private var restDay = false
     @FocusState private var isEditing: Bool
 
     init(model: TodayModel) {
@@ -45,7 +48,7 @@ struct DisclaimerComposer: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            DisclaimerHeader(model: model, day: $day)
+            DisclaimerHeader(model: model, day: $day, restDay: $restDay)
                 .padding(.bottom, Space.l)
             // The excuse sits in the middle of the room the choices leave.
             Spacer(minLength: 0)
@@ -68,7 +71,7 @@ struct DisclaimerComposer: View {
                     .padding(.bottom, Space.xs)
             }
             // The page's last line, over nothing else: it floats, in glass.
-            PostButton(model: model, disclaimer: entry.disclaimer, isShared: isShared, day: day)
+            PostButton(model: model, disclaimer: entry.disclaimer(restDay: restDay), isShared: isShared, day: day)
                 .controlPlacement(.floating)
         }
         .padding(.horizontal, Space.l)
@@ -81,22 +84,24 @@ struct DisclaimerComposer: View {
         .haptic(.pick, trigger: style)
         .haptic(.appear, trigger: landed)
         .task {
+            // Before the member types, 编一句 shows dice lines.
             drafts = DiceDisclaimerWriter.rollDefault(3)
             // Writing the reason comes first: the page opens with the keyboard up.
             isEditing = true
         }
     }
 
-    /// The excuse in large type: the field itself, so tapping it edits it.
+    /// The excuse: the field itself, so tapping it edits it.
     private var hero: some View {
-        VStack(alignment: .leading, spacing: Space.s) {
-            Capsule()
-                .fill(Color(role: .fgDefault, in: theme))
-                .frame(width: Self.accentBar.width, height: Self.accentBar.height)
+        VStack(alignment: .leading, spacing: Space.xs) {
             TextField(text: $text, axis: .vertical) {
-                Text(copy: "为什么没练？", bundle: .module)
+                if restDay {
+                    Text(copy: "今天怎么歇？", bundle: .module)
+                } else {
+                    Text(copy: "为什么没练？", bundle: .module)
+                }
             }
-            .typeStyle(TypeRamp.largeTitle)
+            .typeStyle(TypeRamp.title)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .lineLimit(1...4)
             .focused($isEditing)
@@ -114,110 +119,76 @@ struct DisclaimerComposer: View {
                 entry.write(fitted)
                 // Lines from older words don't answer the new ones.
                 drafts = []
+                next = 0
             }
-            HStack(spacing: Space.s) {
-                // The count while typing; otherwise 编辑, which starts typing.
+            // The count while typing; otherwise 用回我写的 once a line replaced the member's words.
+            Group {
                 if isEditing {
                     Text(verbatim: "\(entry.text.count)/\(Disclaimer.maxLength)")
                         .typeStyle(TypeRamp.label)
                         .foregroundStyle(Color(role: .fgSubtle, in: theme))
                         .monospacedDigit()
                         .accessibilityIdentifier("disclaimer.count")
-                } else {
-                    Button {
-                        isEditing = true
-                    } label: {
-                        Text(copy: "编辑", bundle: .module)
-                            .typeStyle(TypeRamp.label)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
-                            .frame(minHeight: Sizing.minimumTapTarget)
-                    }
-                    .accessibilityIdentifier("disclaimer.edit")
-                }
-                if entry.canRestore {
+                } else if entry.canRestore {
                     Button {
                         entry.restore()
                         text = entry.text
                     } label: {
-                        Text(copy: "用回我写的", bundle: .module)
-                            .typeStyle(TypeRamp.label)
-                            .foregroundStyle(Color(role: .fgMuted, in: theme))
-                            .underline()
-                            .frame(minHeight: Sizing.minimumTapTarget)
+                        Label {
+                            Text(copy: "用回我写的", bundle: .module)
+                        } icon: {
+                            Image(systemName: "arrow.uturn.backward")
+                        }
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .frame(minHeight: Sizing.minimumTapTarget)
                     }
                     .accessibilityIdentifier("disclaimer.restore")
                 }
             }
-            .frame(minHeight: Sizing.minimumTapTarget)
+            .frame(minHeight: Sizing.minimumTapTarget, alignment: .leading)
         }
     }
 
-    /// What the lines are made from, the style tabs, the lines on offer and the button that asks
-    /// for more. Lines are out of the way while the member types, so the keyboard leaves room.
+    /// The styles and the button that puts a line up, on one row where it fits (else, at large
+    /// text sizes, the button goes under the styles). Hidden while the member types, so the keyboard leaves room.
     @ViewBuilder private var choices: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            source
-                .padding(.bottom, Space.xxs)
-            tabs
-            if !isEditing {
-                ForEach(Array(drafts.enumerated()), id: \.element) { index, draft in
-                    DraftRow(line: draft, isPicked: draft == entry.text) { take(draft) }
-                        .opacity(isWriting ? Loading.waitingOpacity : 1)
-                        .animation(.wildcard(Motion.fadeIn), value: isWriting)
-                        .transition(.arrival(index, reduceMotion: reduceMotion))
-                        .accessibilityIdentifier("disclaimer.draft.\(index + 1)")
+        if !isEditing {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: Space.xs) {
+                    styles
+                    Spacer(minLength: 0)
+                    write
                 }
-                WriteButton(isAgain: draftsAnswer, isWriting: isWriting) {
-                    Task { await refill() }
+                VStack(alignment: .leading, spacing: Space.xxs) {
+                    styles
+                    write
                 }
             }
+            .padding(.bottom, Space.s)
+            .transition(.opacity)
         }
-        .padding(.bottom, Space.s)
     }
 
-    /// 「照着「deadline」编」, or 「随便编几句」 before the member typed anything.
-    private var source: some View {
-        Group {
-            if entry.mine.isEmpty {
-                Text(copy: "随便编几句", bundle: .module)
-            } else {
-                Text(copy: "照着「\(entry.mine)」编", bundle: .module)
-            }
-        }
-        .typeStyle(TypeRamp.footnote)
-        .foregroundStyle(Color(role: .fgMuted, in: theme))
-        .lineLimit(1)
-        .accessibilityIdentifier("disclaimer.source")
-    }
-
-    /// The four styles as text, the picked one underlined in ink.
-    private var tabs: some View {
-        HStack(spacing: Space.l) {
+    /// The four styles as the system's segmented control, which stays narrow enough to share
+    /// the row with 编一句. Picking only picks: it asks nothing.
+    private var styles: some View {
+        Picker(selection: $style) {
             ForEach(DisclaimerStyle.allCases, id: \.self) { option in
-                Button {
-                    style = option
-                    isEditing = false
-                } label: {
-                    option.label
-                        .typeStyle(TypeRamp.callout)
-                        .foregroundStyle(Color(role: option == style ? .fgDefault : .fgMuted, in: theme))
-                        .frame(minHeight: Sizing.minimumTapTarget)
-                        .overlay(alignment: .bottom) {
-                            if option == style {
-                                Rectangle()
-                                    .fill(Color(role: .fgDefault, in: theme))
-                                    .frame(height: Self.tabUnderline)
-                            }
-                        }
-                }
-                .disabled(isWriting)
-                .accessibilityAddTraits(option == style ? .isSelected : [])
-                .accessibilityIdentifier("disclaimer.style.\(option.rawValue)")
+                option.label.tag(option)
             }
+        } label: {
+            Text(copy: "风格", bundle: .module)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: 1)
+        .pickerStyle(.segmented)
+        .fixedSize()
+        .disabled(isWriting)
+        .accessibilityIdentifier("disclaimer.style")
+    }
+
+    private var write: some View {
+        WriteButton(isAgain: draftsAnswer && next > 0, isWriting: isWriting) {
+            Task { await showNext() }
         }
     }
 
@@ -234,25 +205,31 @@ struct DisclaimerComposer: View {
         let style: DisclaimerStyle
     }
 
-    /// The lines on offer already answer the words and style on screen, so the button offers
-    /// another set (换一组) rather than the first (编几句).
+    /// The writer's lines answer the words and style on screen, so 换一句 can show the next one.
     private var draftsAnswer: Bool {
         guard !drafts.isEmpty else { return false }
         guard let draftsFrom else { return entry.mine.isEmpty }
         return draftsFrom == Origin(words: entry.mine, style: style)
     }
 
-    /// Three new lines in the picked style, the first of them in the hero at once.
-    private func refill() async {
+    /// The next of the writer's lines, or, once they ran out or answer other words or another
+    /// style, three new ones, the first of them at once.
+    private func showNext() async {
+        if draftsAnswer, drafts.indices.contains(next) {
+            take(drafts[next])
+            next += 1
+            return
+        }
         let asked = Origin(words: entry.mine, style: style)
         let lines = await fetch(style: asked.style)
-        guard !lines.isEmpty else { return }
+        guard let first = lines.first else { return }
         drafts = Array(lines.prefix(3))
         draftsFrom = asked.words.isEmpty ? nil : asked
-        if let first = drafts.first { take(first) }
+        next = 1
+        take(first)
     }
 
-    /// Up to three lines on offer, none of them already shown: from the member's own words, or
+    /// Up to three new lines, none of them the ones just offered: from the member's own words, or
     /// at random when they typed none, topped up with dice lines when the writer has too few new ones.
     private func fetch(style: DisclaimerStyle) async -> [String] {
         let shown = Set(drafts + [entry.text])
@@ -276,41 +253,9 @@ struct DisclaimerComposer: View {
     }
 }
 
-/// A line on offer: a row with a hairline under it, an ink dot once it's picked.
-private struct DraftRow: View {
-    private static let dot: Double = 6
-    @Environment(\.sceneTheme) private var theme
-    let line: String
-    let isPicked: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: Space.s) {
-                Circle()
-                    .fill(isPicked ? Color(role: .fgDefault, in: theme) : .clear)
-                    .frame(width: Self.dot, height: Self.dot)
-                Text(verbatim: line)
-                    .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: isPicked ? .fgDefault : .fgMuted, in: theme))
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.vertical, Space.s)
-            .frame(minHeight: Sizing.minimumTapTarget)
-            .contentShape(Rectangle())
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: 1)
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isPicked ? .isSelected : [])
-    }
-}
-
-/// 编几句 before the lines answer the member's words and style, 换一组 after; it is the only
-/// thing that asks the writer.
+/// The generate button: 编一句 before a line from the member's words and style is up, 换一句
+/// after; it is the only thing that asks the writer. A white capsule outlined in ink, so it reads
+/// before the style pills beside it.
 private struct WriteButton: View {
     @Environment(\.sceneTheme) private var theme
     let isAgain: Bool
@@ -320,24 +265,25 @@ private struct WriteButton: View {
     var body: some View {
         Button(action: action) {
             Label {
-                Group {
-                    if isAgain {
-                        Text(copy: "换一组", bundle: .module)
-                    } else {
-                        Text(copy: "编几句", bundle: .module)
-                    }
+                if isAgain {
+                    Text(copy: "换一句", bundle: .module)
+                } else {
+                    Text(copy: "编一句", bundle: .module)
                 }
-                .foregroundStyle(Color(role: isWriting ? .fgSubtle : .fgDefault, in: theme))
             } icon: {
                 // While the writer works, 三拍 in the icon's place (loader design A).
                 LoadingSwap(isWriting) {
-                    Image(systemName: isAgain ? "arrow.clockwise" : "pencil.line")
+                    Image(systemName: isAgain ? "arrow.clockwise" : "wand.and.sparkles")
                 }
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
             }
-            .typeStyle(TypeRamp.footnote)
-            .frame(minHeight: Sizing.minimumTapTarget)
         }
+        .buttonStyle(SecondaryButtonStyle(.inCard))
+        .overlay {
+            Capsule()
+                .strokeBorder(Color(role: .fgDefault, in: theme), lineWidth: Sizing.selectionStroke)
+                .allowsHitTesting(false)
+        }
+        .fixedSize()
         .disabled(isWriting)
         .accessibilityIdentifier("disclaimer.write")
     }
@@ -356,9 +302,15 @@ private struct PostButton: View {
             guard let disclaimer, !model.isSending else { return }
             Task { await model.post(.disclaimer(disclaimer), shared: isShared, on: day) }
         } label: {
-            Text(copy: "发布请假条", bundle: .module)
-                .loadingLabel(model.isSending)
-                .frame(maxWidth: .infinity)
+            Group {
+                if disclaimer?.restDay == true {
+                    Text(copy: "发布休息", bundle: .module)
+                } else {
+                    Text(copy: "发布请假条", bundle: .module)
+                }
+            }
+            .loadingLabel(model.isSending)
+            .frame(maxWidth: .infinity)
         }
         .buttonStyle(PrimaryButtonStyle())
         // Still enabled while sending, so it stays the brand color under its dots; the action

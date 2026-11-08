@@ -1,10 +1,10 @@
+import type { LanguageModel } from '@wildcard/language-model';
 import type { DraftsOutcome } from '../domain/drafts.js';
 import type {
   AiConsentCheck,
   Clock,
   DraftAllowance,
   DraftSettingsStore,
-  LanguageModel,
   MemesInUse,
   Random,
 } from '../ports.js';

@@ -1,5 +1,11 @@
-import type { CheckInId, CheckInRecord, LocalDay, MemberId } from './check-in.js';
-import { byTrainedThenFinished, planFinishedAt } from './days.js';
+import {
+  isLeave,
+  type CheckInId,
+  type CheckInRecord,
+  type LocalDay,
+  type MemberId,
+} from './check-in.js';
+import { byTrainedThenReached, trainedDaysReachedAt } from './days.js';
 import {
   statsOf,
   weekAwards,
@@ -38,8 +44,8 @@ export interface MemberPage {
   readonly reactionsReceived: number;
   /** Whether they checked in anything that week. */
   readonly checkedIn: boolean;
-  /** When they finished their plan (ISO time), if they did: it breaks ties on the podium. */
-  readonly planFinishedAt?: string;
+  /** When they reached their days trained (ISO time), if they trained: it breaks ties on the podium. */
+  readonly reachedAt?: string;
 }
 
 export interface WeekPages {
@@ -67,44 +73,45 @@ const PODIUM_MAX = 3;
 
 /** 领奖台: who stands on it, and which of them trained every day they planned. */
 export interface Podium<Member> {
-  /** The most days trained, in the middle with the crown; on a tie whoever finished their plan first. */
+  /** The most days trained, in the middle with the crown; on a tie whoever reached them first. */
   readonly champion: Member;
   /** Up to 2 next by days trained (ties as for the champion), left then right. */
   readonly sides: readonly Member[];
   /** Those on it who trained at least as many days as they planned (练够计划). */
   readonly planDone: readonly Member[];
-  /** Whether finishing the plan first decided a place on it or the last place just off it. */
-  readonly tieBrokenByPlan: boolean;
+  /** Whether reaching the tied days first decided a place on it or the last place just off it. */
+  readonly tieBrokenByTime: boolean;
 }
 
 /**
  * The podium of a week: the top 3 by days trained, at least one, every week, whether or not
- * they finished their plan. The champion holds the week's crown (`weekAwards`), so they pick
- * next week's scene. `undefined` when nobody trained. Members come in the order they joined.
+ * they finished their plan, a tie going to whoever reached those days first. The champion holds
+ * the week's crown (`weekAwards`), so they pick next week's scene. `undefined` when nobody
+ * trained. Members come in the order they joined.
  */
 export function podiumOf<Member>(
   members: readonly {
     readonly member: Member;
     readonly trainedDays: number;
     readonly plannedDays: number;
-    /** When they finished their plan (an ISO time), if they did. */
-    readonly planFinishedAt?: string | undefined;
+    /** When they reached their days trained (an ISO time), if they trained. */
+    readonly reachedAt?: string | undefined;
   }[],
 ): Podium<Member> | undefined {
   const ranked = members
     .filter(({ trainedDays }) => trainedDays > 0)
-    .toSorted(byTrainedThenFinished);
+    .toSorted(byTrainedThenReached);
   const top = ranked.slice(0, PODIUM_MAX);
   const [champion, ...sides] = top;
   if (champion === undefined) return undefined;
-  // The plan decided a place when, without it, join order would put someone else on the podium
+  // The time decided a place when, without it, join order would put someone else on the podium
   // or in another place on it.
   const byDays = members
     .filter(({ trainedDays }) => trainedDays > 0)
     .toSorted((a, b) => b.trainedDays - a.trainedDays);
-  const tieBrokenByPlan = top.some((each, index) => each !== byDays[index]);
+  const tieBrokenByTime = top.some((each, index) => each !== byDays[index]);
   return {
-    tieBrokenByPlan,
+    tieBrokenByTime,
     champion: champion.member,
     sides: sides.map(({ member }) => member),
     planDone: top
@@ -129,9 +136,9 @@ export function weekPagesOf(
     const stats = statsOf(facts, [each]);
     const stat = (kind: StatKind) => count(stats, kind);
     const plan = plans.get(member) ?? [];
-    const finished = planFinishedAt(checkIns, {
+    const reached = trainedDaysReachedAt(checkIns, {
       days: facts.week.days,
-      plannedDays: stat('plannedDays'),
+      count: stat('trainedDays'),
     });
     return {
       member,
@@ -142,7 +149,7 @@ export function weekPagesOf(
       cheatMeals: stat('cheatMeals'),
       reactionsReceived: stat('reactionsReceived'),
       checkedIn: checkIns.length > 0,
-      ...(finished === undefined ? {} : { planFinishedAt: finished.toISOString() }),
+      ...(reached === undefined ? {} : { reachedAt: reached.toISOString() }),
     };
   });
 
@@ -184,7 +191,7 @@ export function weekPagesOf(
   };
 }
 
-/** A member's day: their first 练了's sport, else a 请假条, else a planned rest day. */
+/** A member's day: their first 练了's sport, else a 请假条, else a rest (planned, or a 休息). */
 function dayOf(
   checkIns: readonly CheckInRecord[],
   { day, planned }: { readonly day: LocalDay; readonly planned: PlanDay | undefined },
@@ -205,7 +212,9 @@ function dayOf(
       ...(minutes === 0 ? {} : { minutes }),
     };
   }
-  if (posts.some(({ kind }) => kind === 'disclaimer')) return { day, kind: 'disclaimer' };
-  if (planned?.kind === 'rest') return { day, kind: 'rest' };
+  if (posts.some(isLeave)) return { day, kind: 'disclaimer' };
+  if (planned?.kind === 'rest' || posts.some(({ kind }) => kind === 'disclaimer')) {
+    return { day, kind: 'rest' };
+  }
   return { day, kind: 'none' };
 }

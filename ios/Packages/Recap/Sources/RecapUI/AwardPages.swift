@@ -71,7 +71,7 @@ struct PodiumPage: View {
             PageTitle(
                 label: Text(copy: "本周", bundle: .module), systemImage: "checkmark.seal.fill",
                 title: Text(copy: "领奖台", bundle: .module),
-                note: podium.tieBrokenByPlan ? Text(copy: "天数一样，先练完计划的排前面", bundle: .module) : nil)
+                note: podium.tieBrokenByTime ? Text(copy: "天数一样，先练到的排前面", bundle: .module) : nil)
         }
         .haptic(.crown, trigger: page.time >= Self.crownLands) { old, new in !old && new }
     }
@@ -148,7 +148,7 @@ struct TitlesPage: View {
                         .opacity(page.ramp(start, start + 0.15))
                 }
             }
-            .padding(.horizontal, Space.m)
+            .padding(.horizontal, Space.l)
             Spacer(minLength: 0)
         }
     }

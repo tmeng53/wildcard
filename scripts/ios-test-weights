@@ -1,0 +1,42 @@
+# Seconds each UI test class took on CI (combined run for #519, 2026-11-07), so SHARD in
+# scripts/ios-test.sh splits the suite into parts that take about as long. A class missing here
+# counts as 60; refresh the numbers when a part runs much longer than the others.
+BackfillUITests 138
+BadgeBoardUITests 47
+BroadcastCelebrationUITests 50
+BurstUITests 60
+CharacterEditorUITests 230
+CoachFeedUITests 111
+CoachHireUITests 150
+CoachNoteUITests 20
+CoachSidelineUITests 35
+ComposePhotoUITests 87
+DailyPushUITests 55
+FeedUITests 430
+LanguageUITests 116
+LightsUITests 64
+LoadingUITests 82
+MeUITests 322
+NightlyRecapUITests 33
+NoticeBellUITests 137
+NoticeUITests 30
+NotificationPromptUITests 58
+OpeningUITests 37
+PatUITests 93
+PostManageUITests 142
+PushBannerUITests 174
+PushLongPressUITests 46
+RecapUITests 152
+ScenePickUITests 202
+ScheduleUITests 283
+ShoppingStreetUITests 90
+SignUpUITests 186
+SquadSceneUITests 28
+SquadSettingsUITests 88
+TabsUITests 96
+TeammateCardUITests 83
+TodayCapsuleUITests 100
+TodayUITests 269
+TogetherUITests 81
+UnlockNoticeUITests 337
+WelcomeUITests 42

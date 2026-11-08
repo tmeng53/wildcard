@@ -5,7 +5,7 @@ import { NOTE_LIMIT } from '../../domain/prompt.js';
 import { CoachEmoji, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
 import { weekText, type SquadWeek } from '../../domain/squad-week.js';
 import type { WakeReason, WakeStep } from '../../domain/wake.js';
-import type { CoachTool, ToolAnswer } from '../../ports.js';
+import type { CoachMemes, CoachTool, ToolAnswer } from '../../ports.js';
 
 /** What a wake's tools change, kept in memory until the run ends and saved together then. */
 export interface WakeDraft {
@@ -77,6 +77,7 @@ export function toolbox({
   photos,
   facts,
   pastWeek,
+  memes,
   noteTo = [],
 }: {
   readonly week: SquadWeek;
@@ -89,6 +90,8 @@ export function toolbox({
   readonly facts?: () => Promise<string>;
   /** A week before this one, as the model reads it. */
   readonly pastWeek?: (weeksAgo: number) => Promise<string>;
+  /** The memes in use now, for humour. */
+  readonly memes?: CoachMemes;
   /** On a daily wake, the members the coach may write a morning note to, by id. */
   readonly noteTo?: readonly string[];
 }): CoachTool[] {
@@ -98,7 +101,7 @@ export function toolbox({
       name: 'squad_week',
       reads: true,
       description:
-        '小队一周的情况：队员和外号，每个人的打卡、表情和评论。默认这周；weeks_ago 填 1 到 4 看前几周，想知道以前的事（比如上次跑步是什么时候）才用。',
+        '小队一周的情况：队员和外号，每个人的打卡、表情和评论。默认这周，weeks_ago 填 1 到 4 看前几周。',
       parameters: z.object({
         weeks_ago: z.number().int().min(0).max(4).optional().describe('看几周前，0 或不填是这周'),
       }),
@@ -108,7 +111,7 @@ export function toolbox({
     defineTool(draft.steps, {
       name: 'remember',
       description:
-        '把一件以后还用得着的事记进你的记性。你每次醒来都会忘掉以前的一切，只有记性里的留得住，没记的下次就不知道了。听到外号、小队的梗、长期的习惯和偏好、伤病、里程碑、队员纠正你的事、你答应过的事，就马上记，一次记一件，一句话。',
+        '把一件事记进你的记性，一次一件，一句话。值得记的是过很久还成立、会改变你以后怎么跟他们说话的事。短期的、琐碎的、记性里已经有的，不记。',
       parameters: z.object({
         path: z
           .string()
@@ -133,7 +136,7 @@ export function toolbox({
     defineTool(draft.steps, {
       name: 'edit_file',
       description:
-        '整理记性：把一个文件里 find 的原文换成 replace，用来合并重复的、改掉记错的、删掉过时的（replace 为空就是删）。find 照抄任务里「你的记性」的原文，必须正好出现一次。记新的事用 remember。',
+        '改记性，让它保持准确、不重复：把一个文件里 find 的原文换成 replace，replace 为空就是删。find 照抄任务里「你的记性」的原文，必须正好出现一次。',
       parameters: z.object({
         path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
         find: z.string().describe('要换掉的原文，照抄'),
@@ -162,7 +165,7 @@ export function toolbox({
         name: 'member_stats',
         reads: true,
         description:
-          '每个队员的数据：从加入到现在一共练了几天、健康餐、放纵餐、请假条各几次，最常练的运动，拿过几个周奖，还有这周的出赛表（每天计划练什么）和饮食小目标。想说「这是你第几次」「你最爱的运动」或者对照计划时才用。',
+          '每个队员的数据：从加入到现在一共练了几天，健康餐、放纵餐、请假条各几次，最常练的运动，拿过几个周奖，还有这周的出赛表和饮食小目标。',
         parameters: z.object({}),
         run: async () => {
           try {
@@ -170,6 +173,31 @@ export function toolbox({
           } catch {
             return '数据现在查不到，先不提。';
           }
+        },
+      }),
+    );
+  }
+  if (memes !== undefined) {
+    tools.push(
+      defineTool(draft.steps, {
+        name: 'memes',
+        reads: true,
+        description:
+          '梗库：现在大家在玩的梗，每个的意思和来历。想找幽默灵感时看，合适才用，不硬套。',
+        parameters: z.object({}),
+        run: async () => {
+          let list: Awaited<ReturnType<CoachMemes>>;
+          try {
+            list = await memes();
+          } catch {
+            return '梗库现在查不到，先不用。';
+          }
+          if (list.length === 0) return '梗库现在是空的。';
+          return list
+            .map(
+              ({ phrase, meaning, background }) => `- 「${phrase}」：${meaning}（${background}）`,
+            )
+            .join('\n');
         },
       }),
     );
@@ -264,16 +292,18 @@ export function toolbox({
 }
 
 /**
- * Looks at the photos of the check-in this wake is about. Only on demand: pictures cost far
- * more than words, so the model is told to call it only when someone asks about a photo or the
- * talk is clearly about one. The step keeps how many it looked at, never the pictures.
+ * Looks at the photos of the check-in this wake is about, on demand (at low detail each costs
+ * about as much as a short comment). A check-in's reply needs it only when the post is about
+ * what its photos show; a reply to the coach about the post (what's in it, what they ate) needs
+ * it every time, since the words alone don't say what the photos show. The step keeps how many
+ * it looked at, never the pictures.
  */
 function lookAtPhotos(steps: WakeStep[], photos: () => Promise<readonly string[]>): CoachTool {
   const name = 'look_at_photos';
   return {
     name,
     description:
-      '看这条打卡的照片。看照片很贵：只在队员问到照片、或者话里明显在说照片时才用，平时不用，不看照片也能照常回。一次wake最多用一次。',
+      '看这条打卡的照片。照片里有什么，只有看了才知道。看照片比读文字贵很多，一次醒来最多看一次。',
     parameters: z.object({}),
     run: async (): Promise<ToolAnswer> => {
       const looked = steps.some(({ tool }) => tool === name);

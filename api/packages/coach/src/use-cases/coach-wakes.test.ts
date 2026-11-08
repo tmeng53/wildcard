@@ -31,6 +31,7 @@ import type {
   AgentRun,
   CoachAgent,
   CoachMemberFacts,
+  CoachMemes,
   CoachPhotoUrls,
   CoachTool,
 } from '../ports.js';
@@ -81,6 +82,8 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
       await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
         values (${checkIn}, ${mia}, '2026-11-01', ${new Date(now.getTime() - 10 * 60_000)}, 'trained',
           '{"version": 1, "sport": "run"}')`.execute(trx);
+      // Route tests that ran before may have left squads with a coach; this run wakes only its own.
+      await sql`delete from public.squad_coaches`.execute(trx);
       const squad = SquadId.parse(squadId);
       await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
         { coaching: true, inputMicrosPerMillion: 250_000, outputMicrosPerMillion: 2_000_000 },
@@ -161,6 +164,8 @@ function wakes(
     answered,
     photoUrls,
     memberFacts,
+    wantNotes,
+    memes,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
@@ -170,6 +175,8 @@ function wakes(
     readonly answered?: CoachAnswered;
     readonly photoUrls?: CoachPhotoUrls;
     readonly memberFacts?: CoachMemberFacts;
+    readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
+    readonly memes?: CoachMemes;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -196,6 +203,8 @@ function wakes(
     ...(answered === undefined ? {} : { answered }),
     ...(photoUrls === undefined ? {} : { photoUrls }),
     ...(memberFacts === undefined ? {} : { memberFacts }),
+    ...(wantNotes === undefined ? {} : { wantNotes }),
+    ...(memes === undefined ? {} : { memes }),
   });
 }
 
@@ -247,6 +256,27 @@ describe('the coach', () => {
     }).run();
     expect(run).toStrictEqual({ coaching: false, squads: 0, queued: 0, done: 0, failed: 0 });
     expect(runs).toHaveLength(0);
+  });
+
+  it('writes no morning note to a member who switched the coach off', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => [
+        { tool: 'note_to', input: { member: '队员2', text: '今天走走' } },
+      ]);
+      const asked: (readonly string[])[] = [];
+      const wantNotes = (members: readonly string[]) => {
+        asked.push(members);
+        return Promise.resolve(members.filter((member) => member !== fixture.leo));
+      };
+
+      await wakes(fixture, { agent, wantNotes }).run();
+
+      const daily = runs.find(({ task }) => task.includes('新的一天'));
+      expect(asked).toStrictEqual([[fixture.mia, fixture.leo]]);
+      expect(daily?.task).toContain('今天给这些人各写一张便条：\n- 队员1：');
+      expect(daily?.task).not.toContain('- 队员2：这周');
+      expect(daily?.answers).toStrictEqual(['不能给 队员2 写便条；能写的是：队员1。']);
+    });
   });
 
   it('wakes for a check-in and for the day, keeps its memory and its line, and counts tokens', async () => {
@@ -350,6 +380,10 @@ describe('the coach', () => {
       expect(runs[1]?.instructions).toContain('不提谁没打卡');
       // How each wake goes is in the instructions, the same every time, so it can be cached.
       expect(runs[1]?.instructions).toContain('你会在三种时候醒来');
+      // The seeded wakes let the coach pick its tools and say one thing per note, never "I remember".
+      expect(runs[1]?.instructions).toContain('一张便条只说一件事');
+      expect(runs[1]?.instructions).toContain('做什么、用哪个工具，你自己判断。');
+      expect(runs[1]?.instructions).not.toContain('再加上记性里记着他的');
       // The 简历 is for the app only: the model never reads the coach's missing license.
       expect(runs[1]?.instructions).not.toContain('证还没考下来');
       expect(runs[0]?.instructions).toBe(runs[1]?.instructions);
@@ -896,6 +930,67 @@ describe('the coach', () => {
     });
   });
 
+  it('is off duty for the rest of the day once the squad spent its cap, and back the next', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      // One wake costs 12,000 input and 800 output tokens: 4,600 micros at the fixture's prices.
+      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
+        { squadDailyCapMicros: 4_600 },
+        MemberId.parse(mia),
+      );
+      const { agent, runs } = scriptedAgent(() => []);
+      expect(await wakes(fixture, { agent }).run()).toMatchObject({ done: 2, failed: 0 });
+      expect(runs).toHaveLength(1);
+      const tomorrow = new Date(now.getTime() + 86_400_000);
+      await wakes(fixture, { agent, at: tomorrow }).run();
+      expect(runs).toHaveLength(2);
+      const states = await sql<{ reason: string; state: string; last_error: string | null }>`
+        select reason, state, last_error from public.coach_wakes where squad_id = ${squad} order by id`.execute(
+        trx,
+      );
+      expect(states.rows).toStrictEqual([
+        { reason: 'checkIn', state: 'done', last_error: null },
+        {
+          reason: 'daily',
+          state: 'skipped',
+          last_error: 'off duty: the squad spent 4600 of its 4600 micros today',
+        },
+        { reason: 'daily', state: 'done', last_error: null },
+      ]);
+    });
+  });
+
+  it('is off duty everywhere once every squad together spent the day’s cap', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      const other = SquadId.parse(randomUUID());
+      await sql`insert into public.squads (id, name, invite_code) values (${other}, 'other', ${other})`.execute(
+        trx,
+      );
+      // Another squad spent the whole day's cap this morning.
+      await sql`insert into public.coach_usage
+          (squad_id, coach_id, model, requests, input_tokens, output_tokens, cost_micros, at)
+        values (${other}, 'xiaohun', 'openai/gpt-6-luna', 1, 1, 1, 9000, ${new Date(now.getTime() - 3_600_000)})`.execute(
+        trx,
+      );
+      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
+        { dailyCapMicros: 9_000 },
+        MemberId.parse(mia),
+      );
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent }).run();
+      expect(runs).toHaveLength(0);
+      const states = await sql<{ state: string; last_error: string }>`
+        select state, last_error from public.coach_wakes where squad_id = ${squad} order by id`.execute(
+        trx,
+      );
+      expect(states.rows.map(({ state }) => state)).toStrictEqual(['skipped', 'skipped']);
+      expect(states.rows[0]?.last_error).toBe(
+        'off duty: every squad spent 9000 of the 9000 micros today',
+      );
+    });
+  });
+
   it('looks at a check-in at once, shows its recent emoji, and keeps every tool call', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, mia, checkIn } = fixture;
@@ -1053,6 +1148,41 @@ describe('the coach', () => {
     });
   });
 
+  it('reads the meme library only when it asks, and keeps the answer by its length', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      let reads = 0;
+      const memes: CoachMemes = () => {
+        reads += 1;
+        return Promise.resolve([
+          { phrase: '对自己很好', meaning: '照顾自己', background: '小红书上流行' },
+        ]);
+      };
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('有人打卡') ? [{ tool: 'memes', input: {} }] : [],
+      );
+      await wakes(fixture, { agent, memes }).checkedIn({ checkIn, squads: [squad] });
+      expect(reads).toBe(1);
+      expect(runs[0]?.tools).toContain('memes');
+      expect(runs[0]?.answers[0]).toBe('- 「对自己很好」：照顾自己（小红书上流行）');
+      const report = await createPostgresCoachReport(fixture.trx).squad(squad, now);
+      expect(report.wakes[0]?.steps[0]).toStrictEqual({
+        tool: 'memes',
+        input: {},
+        output: '（22 字）',
+      });
+    });
+  });
+
+  it('has no meme tool without the library', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent }).checkedIn({ checkIn, squads: [squad] });
+      expect(runs[0]?.tools).not.toContain('memes');
+    });
+  });
+
   it('gives the daily wake each member’s day: today’s plan, 饮食小目标 and yesterday’s posts', async () => {
     await rolledBack(async (fixture) => {
       const { mia, leo } = fixture;
@@ -1145,6 +1275,63 @@ describe('the coach', () => {
       // Only the consented member gets a note.
       expect(daily?.task).toContain('今天给这些人各写一张便条：\n- 队员1：这周已经练了 0 天。');
       expect(daily?.task).not.toContain('- 队员2：');
+    });
+  });
+
+  it('tells an @ about a post with photos that it hasn’t seen them, only when it can look', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, leo, checkIn } = fixture;
+      const asked = await commentOn(fixture, {
+        member: leo,
+        text: '@小混 你看看我们吃了啥',
+        at: new Date(now.getTime() + 60_000),
+        mentionsCoach: 'xiaohun',
+      });
+      const week: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) =>
+          each.id === checkIn
+            ? { ...each, photos: ['m/a.jpg', 'm/b.jpg'], comments: [asked] }
+            : each,
+        ),
+      };
+      const hint =
+        '这条打卡有 2 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。';
+      const seeing = scriptedAgent(() => []);
+      await wakes(
+        { ...fixture, week },
+        {
+          agent: seeing.agent,
+          photoUrls: (paths) => Promise.resolve(paths.map((path) => `https://photos.test/${path}`)),
+          at: new Date(now.getTime() + 2 * 60_000),
+        },
+      ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
+      expect(seeing.runs[0]?.task).toContain(hint);
+      expect(seeing.runs[0]?.tools).toContain('look_at_photos');
+    });
+    await rolledBack(async (fixture) => {
+      const { squad, leo, checkIn } = fixture;
+      const asked = await commentOn(fixture, {
+        member: leo,
+        text: '@小混 你看看我们吃了啥',
+        at: new Date(now.getTime() + 60_000),
+        mentionsCoach: 'xiaohun',
+      });
+      const week: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) =>
+          each.id === checkIn ? { ...each, photos: ['m/a.jpg'], comments: [asked] } : each,
+        ),
+      };
+      // Without photo URLs it can't look, so it isn't told to.
+      const blind = scriptedAgent(() => []);
+      await wakes(
+        { ...fixture, week },
+        { agent: blind.agent, at: new Date(now.getTime() + 2 * 60_000) },
+      ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
+      expect(blind.runs[0]?.task).toContain('有人在评论里 @ 你。');
+      expect(blind.runs[0]?.task).not.toContain('look_at_photos');
+      expect(blind.runs[0]?.tools).not.toContain('look_at_photos');
     });
   });
 

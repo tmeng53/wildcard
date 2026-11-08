@@ -11,6 +11,8 @@ import {
   checkPlanChange,
   localDayAt,
   plannedTrainingDays,
+  restedOnDay,
+  trainedByKept,
   trainedOnRestDay,
   weekStartOf,
   type PlanDays as Days,
@@ -227,6 +229,31 @@ describe('trainedOnRestDay', () => {
   });
 });
 
+describe('restedOnDay', () => {
+  const plan: WeeklyPlan = {
+    weekStart: '2026-10-19',
+    days: [train, run, rest, train, train, train, rest],
+    source: 'saved',
+  };
+
+  it('makes a planned training day a rest day', () => {
+    expect(restedOnDay({ plan, day: '2026-10-20' })).toStrictEqual([
+      train,
+      rest,
+      rest,
+      train,
+      train,
+      train,
+      rest,
+    ]);
+  });
+
+  it('leaves a rest day, or a day outside the week, as planned', () => {
+    expect(restedOnDay({ plan, day: '2026-10-21' })).toBeUndefined();
+    expect(restedOnDay({ plan, day: '2026-10-27' })).toBeUndefined();
+  });
+});
+
 describe('checkFuelGoalsChange', () => {
   const on = (today: string, weekStart: string) => {
     try {
@@ -303,5 +330,26 @@ describe('plannedTrainingDays', () => {
     expect(plannedTrainingDays(DEFAULT_PLAN_DAYS, { weekDays: week, joinedOn: '2026-09-01' })).toBe(
       5,
     );
+  });
+});
+
+describe('trainedByKept', () => {
+  it('keeps the days a 练了 turned only while the member leaves them as they are', () => {
+    const run = { kind: 'train', sport: 'run' } as const;
+    const current: Days = [train, run, rest, train, train, train, rest];
+    const trainedBy = { '1': '00000000-0000-4000-8000-000000000001' };
+    expect(trainedByKept({ current, next: [...current], trainedBy })).toStrictEqual(trainedBy);
+    const next: Days = [rest, run, rest, train, train, train, rest];
+    expect(trainedByKept({ current, next, trainedBy })).toStrictEqual(trainedBy);
+    const changed: Days = [
+      train,
+      { kind: 'train', sport: 'swim' },
+      rest,
+      train,
+      train,
+      train,
+      rest,
+    ];
+    expect(trainedByKept({ current, next: changed, trainedBy })).toStrictEqual({});
   });
 });

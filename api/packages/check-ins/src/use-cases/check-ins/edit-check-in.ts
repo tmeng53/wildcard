@@ -26,6 +26,7 @@ import { checkPhotos } from '../check-photos.js';
 import { checkSport } from '../check-sport.js';
 import { planTrainedDay } from '../weekly-plans.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
+import { planRestPost } from './save-check-in.js';
 
 interface Deps {
   readonly store: CheckInStore;
@@ -108,9 +109,10 @@ export async function editCheckIn(
   if (edited.kind === 'trained') {
     await planTrainedDay(
       { store: deps.plans },
-      { member, day: edited.day, training: edited.training },
+      { member, day: edited.day, training: edited.training, checkIn: edited.id },
     );
   }
+  await planRestPost({ store: deps.store, plans: deps.plans }, edited);
   await deleteDroppedPhotos(deps, edited.id);
   return edited;
 }

@@ -45,7 +45,7 @@ mkdir -p /tmp/verify-wildcard/$(git rev-parse --short HEAD)
 
 ## 2. Launch the stack
 
-**The iOS app.** A Linux cloud session can't run the simulator, so the app runs in CI: the `ios` job of the `verify` workflow builds the head commit, runs the UI tests on an iPhone simulator (`scripts/ios-test.sh`) and uploads the screenshots the tests keep as the artifact `ios-screenshots-<full head SHA>`. Find the workflow run for the head commit and download that artifact into `/tmp/verify-wildcard/<short sha>/screenshots/`. If your network can't download artifacts (cloud sessions often can't reach GitHub's artifact storage), the job's `scripts/ios-test.sh` step log also carries a small JPEG preview of each screenshot as base64 between `----- preview begin: <name>.jpg -----` and `----- preview end -----`; decode it with `base64 -d`. On a Mac, run `scripts/ios-test.sh` in the worktree instead; it writes the same files to `build/ios/screenshots/`.
+**The iOS app.** A Linux cloud session can't run the simulator, so the app runs in CI: the `ios` job of the `verify` workflow builds the head commit, runs the UI tests on an iPhone simulator (`scripts/ios-test.sh`) and uploads the screenshots the tests keep as the artifact `ios-screenshots-<full head SHA>`. Find the workflow run for the head commit and download that artifact into `/tmp/verify-wildcard/<short sha>/screenshots/`. If your network can't download artifacts (cloud sessions often can't reach GitHub's artifact storage), each of the job's three parts (`ios (1)` to `ios (3)`) carries in its `scripts/ios-test.sh` step log a small JPEG preview of each screenshot as base64 between `----- preview begin: <name>.jpg -----` and `----- preview end -----`; decode it with `base64 -d`. On a Mac, run `scripts/ios-test.sh` in the worktree instead; it writes the same files to `build/ios/screenshots/`.
 
 **Local Supabase.** In a cloud session the session-start hook starts Docker and local Supabase and prints `Ready: … Docker local Supabase.` A running stack serves whichever checkout started it, so from your worktree restart it to serve the code under test, and note that in the verdict:
 
@@ -61,10 +61,10 @@ All must pass before you drive anything:
 
 **The iOS app** (CI skips the `ios` job on a PR that changes nothing under `ios/`, its script or the workflow; then there is no app to check, so skip this part and say so in the verdict):
 
-- The `ios` job ran on exactly the head commit you pinned and concluded `success`; its log has the line `ios-test: ok` (printed before the screenshot previews).
+- All three parts of the `ios` job (`ios (1)` to `ios (3)`) ran on exactly the head commit you pinned and concluded `success`; each part's log has the line `ios-test: ok` (printed before its screenshot previews), and `ios-screenshots` merged their screenshots.
 - The screenshots artifact has one PNG per screenshot the UI tests name (`XCTAttachment` names in `ios/WildcardUITests/`), each named after it, e.g. `01-scene-pool.png`.
 
-If the job failed or the artifact is missing, stop: the verdict is FAIL, reason "the app didn't build or launch", with the failing step's log saved to `/tmp/verify-wildcard/<short sha>/`. A failed run also uploads `ios-xcresult-<full head SHA>`.
+If the job failed or the artifact is missing, stop: the verdict is FAIL, reason "the app didn't build or launch", with the failing step's log saved to `/tmp/verify-wildcard/<short sha>/`. A failed part also uploads `ios-xcresult-<full head SHA>-part<k>`.
 
 **Local Supabase:**
 

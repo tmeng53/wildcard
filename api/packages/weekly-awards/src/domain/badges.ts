@@ -1,17 +1,27 @@
 import { z } from 'zod';
 
 // 头衔徽章: every weekly title comes with a badge, a shape in a colour with a glyph on it, which the
-// model picks from a catalog kept in the award settings. Shapes and colours are drawn by the app,
-// so a new one needs the app first; glyphs are SF Symbol names, so a new one is a settings change.
+// model picks from a catalog kept in the award settings. Shapes are drawn by the app, so a new one
+// needs the app first; colours carry their tone and glyphs are SF Symbol names, so a new one of
+// either is a settings change. Every offered sport's icon is a glyph too, from the sports list.
 // Replies carry each as plain text, and an app that doesn't know one draws its own default.
 
 /** The shapes the app draws a badge in. */
 export const BadgeShape = z.enum(['shield', 'hexagon', 'circle', 'scallop']);
 export type BadgeShape = z.infer<typeof BadgeShape>;
 
-/** The colours a badge comes in: the scenes' own, by scene. */
-export const BadgeColour = z.enum(['pool', 'track', 'gym', 'tennis', 'climbing']);
+/** A colour's id in the catalog, such as `track`. */
+export const BadgeColour = z
+  .string()
+  .regex(/^[a-z][a-z0-9-]{0,31}$/u, 'Must be a lower-case id, such as track');
 export type BadgeColour = z.infer<typeof BadgeColour>;
+
+/** A colour's tone, as `#RRGGBB`. */
+export const BadgeTone = z
+  .string()
+  .regex(/^#[0-9A-F]{6}$/, 'Must be #RRGGBB in capitals, such as #E65345')
+  .meta({ description: 'The colour itself, as #RRGGBB: what the app paints the badge in.' });
+export type BadgeTone = z.infer<typeof BadgeTone>;
 
 /** An SF Symbol's name, such as `sun.max.fill`. */
 export const BadgeGlyph = z
@@ -26,6 +36,12 @@ export type Badge = z.infer<typeof Badge>;
 
 /** The badge a title won before titles came with one. */
 export const DEFAULT_BADGE: Badge = { shape: 'circle', colour: 'gym', glyph: 'star.fill' };
+
+/**
+ * A badge as it is shown: with its colour's tone from the catalog, when the catalog gives one.
+ * Without one the app paints it as builds before tones did, by the scene of its colour's id.
+ */
+export type ShownBadge = Badge & { readonly tone?: BadgeTone };
 
 const meaning = z
   .string()
@@ -44,8 +60,11 @@ export const BadgeCatalog = z.strictObject({
     .min(1)
     .refine(distinct, 'Must not list a shape twice'),
   colours: z
-    .array(z.strictObject({ id: BadgeColour, meaning }))
+    // A colour saved before colours had tones (as the API before them still reads it) has none,
+    // and is sent without one until it is set.
+    .array(z.strictObject({ id: BadgeColour, tone: BadgeTone.optional(), meaning }))
     .min(1)
+    .max(24)
     .refine(distinct, 'Must not list a colour twice'),
   glyphs: z
     .array(z.strictObject({ id: BadgeGlyph, meaning }))
@@ -75,4 +94,33 @@ export function badgeReplyFor(catalog: BadgeCatalog) {
         'The title’s badge (徽章): a shape, a colour and a glyph from `badges` in the prompt, ' +
         'picked to suit the title.',
     });
+}
+
+/** A sport's icon on offer as a glyph: its SF Symbol and what it means, from the sports list. */
+export interface SportGlyph {
+  readonly id: BadgeGlyph;
+  readonly meaning: string;
+}
+
+/**
+ * The catalog the model picks from: the settings' own, with every sport's icon among the glyphs
+ * after them. A glyph the settings list already keeps their meaning.
+ */
+export function withSportGlyphs(
+  catalog: BadgeCatalog,
+  sports: readonly SportGlyph[],
+): BadgeCatalog {
+  const listed = new Set(catalog.glyphs.map(({ id }) => id));
+  const added = sports.filter(({ id }) => {
+    if (listed.has(id) || !BadgeGlyph.safeParse(id).success) return false;
+    listed.add(id);
+    return true;
+  });
+  return { ...catalog, glyphs: [...catalog.glyphs, ...added] };
+}
+
+/** `badge` with its colour's tone from `catalog`, or without one for a colour it doesn't list or lists without one. */
+export function shownBadge(badge: Badge, catalog: BadgeCatalog): ShownBadge {
+  const tone = catalog.colours.find(({ id }) => id === badge.colour)?.tone;
+  return tone === undefined ? badge : { ...badge, tone };
 }

@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import { Badge, DEFAULT_BADGE, badgeReplyFor, type BadgeCatalog } from './badges.js';
+import {
+  Badge,
+  DEFAULT_BADGE,
+  badgeReplyFor,
+  type BadgeCatalog,
+  type ShownBadge,
+} from './badges.js';
 import { AwardMove } from './moves.js';
 import type { WeekStart } from './schedule.js';
 
@@ -29,6 +35,8 @@ export interface WeekCheckIn {
   readonly caption?: string | undefined;
   /** For a 请假条: its text. */
   readonly text?: string | undefined;
+  /** For a 请假条: true when it is a planned rest (休息), not leave. */
+  readonly restDay?: true | undefined;
   /** Its photos' paths, the cover first. */
   readonly photos: readonly string[];
   /** Teammates' reactions on it, by emoji; an emoji nobody left is left out. */
@@ -203,6 +211,11 @@ export interface BoardTitle {
   }[];
 }
 
+/** A title on a board as it is shown: its badge with its colour's tone. */
+export interface ShownBoardTitle extends BoardTitle {
+  readonly badge: ShownBadge;
+}
+
 /**
  * A member's badge board from their wins, the latest first: one entry per title by its words,
  * the latest won first, each with the badge it was last won with.
@@ -226,10 +239,10 @@ export function boardOf(wins: readonly TitleWin[]): BoardTitle[] {
  * The title a member wears: the one they equipped while it is on their board, else the latest
  * they won; `undefined` before their first.
  */
-export function wornOf(
-  board: readonly BoardTitle[],
+export function wornOf<Entry extends BoardTitle>(
+  board: readonly Entry[],
   equipped: string | null | undefined,
-): BoardTitle | undefined {
+): Entry | undefined {
   return board.find(({ title }) => title === equipped) ?? board[0];
 }
 

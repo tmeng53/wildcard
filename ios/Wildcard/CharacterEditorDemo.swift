@@ -16,6 +16,6 @@ enum CharacterEditorDemo {
     }
 
     static var context: EditorContext {
-        ProcessInfo.processInfo.arguments.contains("-character-editor-profile") ? .profile : .signUp(step: 2, total: 4)
+        ProcessInfo.processInfo.arguments.contains("-character-editor-profile") ? .profile : .signUp(step: 2, total: 5)
     }
 }

@@ -30,6 +30,18 @@ public enum ComposedTile: Hashable, Sendable, Identifiable {
             }
         }
     }
+
+    /// A post written on the phone, as the compose page shows it again: its photos with the
+    /// workout's map and chart each at its place among them.
+    public static func of(_ body: PostBody) -> [ComposedTile] {
+        var tiles = body.photos.map { ComposedTile.photo(.new($0)) }
+        guard let workout = body.workout else { return tiles }
+        let placed = workout.tiles.compactMap { tile in workout.position(of: tile).map { (tile, $0) } }
+        for (tile, position) in placed.sorted(by: { $0.1 < $1.1 }) {
+            tiles.insert(.workout(tile), at: min(max(position - 1, 0), tiles.count))
+        }
+        return tiles
+    }
 }
 
 extension [ComposedTile] {

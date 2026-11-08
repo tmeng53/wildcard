@@ -198,7 +198,8 @@ struct PostRow: View {
             model.buttons[post.id] = frame
         }
         .accessibilityLabel(
-            mine.map { Text(copy: "我的回应 \($0.text)，换一个", bundle: .module) } ?? Text(copy: "回应", bundle: .module)
+            mine.map { Text(copy: "我的回应 \($0.text)，换一个", bundle: .module) }
+                ?? Text(copy: "回应", bundle: .module)
         )
         .accessibilityIdentifier("dailyPush.react")
     }

@@ -2,9 +2,11 @@ import Contracts
 
 /// What the home tells once: the squad's news, the member's new unlocks and refused posts.
 extension TodayStore {
-    /// The member has seen why these posts were dropped.
-    public func dismissRefused() {
-        refused = []
+    /// The posts the server refused, once: the home tells them, and the next call has none until
+    /// another is refused. Oldest first.
+    public func takeRefused() -> [Refused] {
+        defer { refused = [] }
+        return refused
     }
 
     /// The squad's news, once: the home tells it, and the next call has none until something else

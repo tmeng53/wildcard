@@ -29,6 +29,12 @@
       "path": "packages/sport-ids"
     },
     {
+      "path": "packages/time-zones"
+    },
+    {
+      "path": "packages/language-model"
+    },
+    {
       "path": "packages/sports"
     },
     {

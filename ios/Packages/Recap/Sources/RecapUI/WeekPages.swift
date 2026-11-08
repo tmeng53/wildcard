@@ -7,10 +7,10 @@ import SportsUI
 import SwiftUI
 
 /// 你的一周: the count and the AI's line, and on the ground's edge the whole week at once,
-/// Monday to Sunday, each day's dot with what it was under it. Nothing staged: the page reads the
-/// moment it opens. The reader's character stands over the last day of the sport they trained
-/// most and does its move, in its kit; its fun numbers sit on cards under the week (two on a
-/// short phone, four on a tall one).
+/// Monday to Sunday, each day's dot on the edge with what it was under it. Nothing staged: the
+/// page reads the moment it opens. The reader's character stands in the middle, right under the
+/// count, and does the move of the sport they trained most, in its kit; the week sits under its
+/// feet and its fun numbers on cards under the week, two to a row, as many rows as the page holds.
 struct MyWeekPage: View {
     let week: RecapDomain.MyWeek
     let page: PageContext
@@ -19,16 +19,15 @@ struct MyWeekPage: View {
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
-            let rows = proxy.size.height >= Self.twoRowsFrom ? 2 : 1
-            let ground = rows == 2 ? Self.groundTwoRows : StoryLayout.groundWeek
-            let row = proxy.size.height - ground
+            let row = rowY(height: proxy.size.height)
+            let rows = cardRows(below: row, height: proxy.size.height)
             let spacing = (width - 2 * Space.l) / 7
             let spots = (0..<7).map { Space.l + spacing * (Double($0) + 0.5) }
             ZStack(alignment: .topLeading) {
-                Ground(height: ground)
+                Ground(height: proxy.size.height - row)
                 page.character(page.cast.viewer, act: Act(clip: week.topSport.weekClip, start: 0.3))
                     .standing(
-                        feetAt: CGPoint(x: spots[min(week.standsOn, 6)], y: row - DayDot.size / 2 - Space.xxs),
+                        feetAt: CGPoint(x: width / 2, y: row - Self.feetAboveRow),
                         scale: Self.scale)
                 ForEach(Array(week.days.prefix(7).enumerated()), id: \.offset) { index, day in
                     let start = Double(index) * 0.04
@@ -66,32 +65,59 @@ struct MyWeekPage: View {
             }
         }
         .overlay(alignment: .top) {
-            VStack(alignment: .leading, spacing: Space.l) {
+            VStack(alignment: .leading, spacing: 0) {
                 PageTitle(label: Text(copy: "本周", bundle: .module), title: Text(copy: "你的一周", bundle: .module))
-                HStack(alignment: .top, spacing: Space.l) {
-                    VStack(alignment: .leading, spacing: Space.xxs) {
+                VStack(alignment: .leading, spacing: Space.xxs) {
+                    HStack(alignment: .center, spacing: Space.l) {
                         Score(count: week.trainedDays, goal: week.plan, size: .story)
-                        Text(copy: "训练天数", bundle: .module).typeStyle(TypeRamp.footnote)
+                            // The count's line is far taller than its digits, blank above and
+                            // below: the digits sit up under the title, the line beside their
+                            // middle and 训练天数 right under them, as the design has it.
+                            .padding(.vertical, -Self.scoreLeading)
+                        if let line = week.line {
+                            Text(verbatim: line).typeStyle(TypeRamp.headline)
+                        }
                     }
-                    if let line = week.line {
-                        Text(verbatim: line)
-                            .typeStyle(TypeRamp.headline)
-                            .padding(.top, Space.xl)
-                    }
+                    Text(copy: "训练天数", bundle: .module).typeStyle(TypeRamp.footnote)
                 }
                 .padding(.horizontal, Space.l)
             }
             .foregroundStyle(Color(role: .fgOnScene, in: theme))
+            .onGeometryChange(for: Double.self) {
+                $0.size.height
+            } action: {
+                header = $0
+            }
         }
     }
 
+    /// The header's height, title and count, as laid out.
+    @State private var header: Double = 0
+
+    /// The week's line: the character stands right under the count, its feet on the ground's
+    /// edge, unless that leaves the ground too short for a row of cards.
+    private func rowY(height: Double) -> Double {
+        let underHeader = header + standingHeight(scale: Self.scale) + Self.feetAboveRow
+        return min(underHeader, height - Self.cardsBelowRow - Self.cardHeight - Space.l)
+    }
+
+    /// How many rows of cards fit under the week (one at least, two at most), and no more than
+    /// the facts fill.
+    private func cardRows(below row: Double, height: Double) -> Int {
+        let room = height - row - Self.cardsBelowRow - Space.l
+        let fit = room >= 2 * Self.cardHeight + Space.s ? 2 : 1
+        return min(fit, max(1, (facts.count + 1) / 2))
+    }
+
     private static let scale = 0.5
-    /// The page's height from which the cards take two rows (four cards) under the week, with
-    /// the ground raised to hold them; a shorter phone gets one row.
-    private static let twoRowsFrom = 720.0
-    private static let groundTwoRows = 320.0
+    /// The character's feet over the week's line, just above the dots.
+    private static let feetAboveRow = DayDot.size / 2 + Space.xxs
     /// The cards' top under the ground's edge, clear of the days' names.
     private static let cardsBelowRow = 56.0
+    /// A fun-number card's height, for how many rows the ground holds.
+    private static let cardHeight = 100.0
+    /// The blank the count's line leaves over its digits.
+    private static let scoreLeading = Space.l
 
     /// The reader's fun numbers: 坚持运动最久, 一共训练了 once half the days logged minutes (else
     /// the sport they trained most), 收到加油 and 吃得健康, each left out when the week doesn't

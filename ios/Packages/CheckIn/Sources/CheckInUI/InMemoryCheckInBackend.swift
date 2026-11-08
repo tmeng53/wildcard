@@ -13,6 +13,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private var squadPokes: SquadPokes
     private let sidelineCoach: SidelineCoach?
     private var memberNotes: [CoachMemberNote]
+    private var opened: CoachMemberNote?
 
     public init(
         home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, notes: [CoachMemberNote] = []
@@ -301,7 +302,10 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     public func putAway(_ note: CoachMemberNote) async throws(CheckInError) {
         memberNotes.removeAll { $0.id == note.id }
+        opened = note
     }
+
+    public func openedNote() async -> CoachMemberNote? { opened }
 }
 
 /// Posts waiting to go out, kept in memory: for previews, UI tests and tests.

@@ -32,6 +32,8 @@ public struct PostBlock: View {
     private let day: Int?
     private let photo: Image?
     private let layout: Layout
+    /// A 请假条 posted as 休息, a rest the member planned.
+    private var restDay = false
 
     /// `activity` is a 练了's sport; `day` (the day of the month) shows top left where given;
     /// with a `photo` the block is that photo and leaves its words to the caller.
@@ -61,6 +63,7 @@ public struct PostBlock: View {
             self.init(kind: .cheatMeal, words: meal.caption?.text, day: day, photo: photo, layout: layout)
         case .disclaimer(let disclaimer):
             self.init(kind: .disclaimer, words: disclaimer.text, day: day, photo: photo, layout: layout)
+            restDay = disclaimer.restDay
         }
     }
 
@@ -134,7 +137,8 @@ public struct PostBlock: View {
         case .trained: activity?.cardName ?? Text(copy: "训练", bundle: .module)
         case .healthyMeal: Text(copy: "健康餐", bundle: .module)
         case .cheatMeal: Text(copy: "放纵餐", bundle: .module)
-        case .disclaimer: Text(copy: "请假条", bundle: .module)
+        case .disclaimer:
+            if restDay { Text(copy: "休息", bundle: .module) } else { Text(copy: "请假条", bundle: .module) }
         }
     }
 

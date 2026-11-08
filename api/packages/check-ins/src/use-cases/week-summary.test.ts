@@ -426,7 +426,7 @@ describe('a squad’s week for its awards', () => {
           member: ace,
           plannedDays: 5,
           trainedDays: 5,
-          planFinishedAt: '2026-10-24T18:00:00.000Z',
+          reachedAt: '2026-10-24T18:00:00.000Z',
           days: days('run', 'run', 'rest', 'run', 'run', 'run', 'rest'),
           healthyMeals: 0,
           cheatMeals: 0,
@@ -437,7 +437,7 @@ describe('a squad’s week for its awards', () => {
           member: tokyo,
           plannedDays: 3,
           trainedDays: 3,
-          planFinishedAt: '2026-10-21T18:00:00.000Z',
+          reachedAt: '2026-10-21T18:00:00.000Z',
           days: days('run', 'run', 'run', 'rest', 'rest', 'rest', 'rest'),
           healthyMeals: 0,
           cheatMeals: 0,
@@ -448,6 +448,7 @@ describe('a squad’s week for its awards', () => {
           member: me,
           plannedDays: 5,
           trainedDays: 1,
+          reachedAt: '2026-10-19T18:00:00.000Z',
           days: days('run', 'none', 'disclaimer', 'none', 'none', 'none', 'rest'),
           healthyMeals: 1,
           cheatMeals: 2,
@@ -469,6 +470,27 @@ describe('a squad’s week for its awards', () => {
       bestDisclaimer: { checkIn: note, author: me, text: '下雨', reactions: 1 },
       ending: { done: 9, plan: 18 },
     });
+  });
+
+  it('shows a 休息 as a rest day, never a 请假条, and gives it no best 请假条', async () => {
+    const rester = await newMember('America/Los_Angeles');
+    const fan = await newMember('America/Los_Angeles');
+    const squad = await newSquad(rester, fan);
+    const rested = await checkedIn(rester, {
+      kind: 'disclaimer',
+      day: '2026-10-20',
+      audience: [squad],
+      payload: { version: 1, text: '腿酸，歇一天', restDay: true },
+    });
+    await reacted(fan, [rested, '😂', new Date('2026-10-21T00:00:00.000Z')]);
+    const { pages } = await checkIns.squadWeekCheckIns({
+      squad,
+      weekStart: week,
+      before,
+      members: [rester, fan],
+    });
+    expect(pages.members[0]?.days[1]).toStrictEqual({ day: '2026-10-20', kind: 'rest' });
+    expect(pages).not.toHaveProperty('bestDisclaimer');
   });
 
   it('leaves out the pages a quiet week has nothing for', async () => {

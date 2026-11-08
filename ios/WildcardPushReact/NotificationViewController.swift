@@ -20,7 +20,7 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
 
     func didReceive(_ notification: UNNotification) {
         // The language the member picked in the app, before anything is looked up or drawn.
-        AppLanguage.adopt(from: AppGroup.defaults)
+        AppLanguage.adopt(from: AppGroup.defaults, folder: AppGroup.directory)
         if let copy = SharedCopy.inAppGroup?.read() { AppCopyLines.install(copy) }
         let content = notification.request.content
         guard let event = Self.event(content.userInfo), let push = try? DailyPush(event: event) else {
@@ -52,6 +52,8 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
         let hosting = UIHostingController(rootView: AnyView(content.environment(\.locale, AppLanguage.current.locale)))
         hosting.sizingOptions = .preferredContentSize
         hosting.view.backgroundColor = .clear
+        // The language it speaks, for UI tests to tell it from the system's own words.
+        hosting.view.accessibilityIdentifier = "pushReact.\(AppLanguage.current.rawValue)"
         addChild(hosting)
         hosting.view.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(hosting.view)

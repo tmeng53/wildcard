@@ -21,8 +21,10 @@ import Testing
     #expect(opened == .open(.post(CheckInID(try #require(UUID(uuidString: checkIn))))))
 }
 
-@Test func theDailyPushOpensTheFeedAsItsNoticeDoes() {
-    #expect(OpenedNotification(category: "dailyProgress", event: [:]) == .open(.feed))
+@Test func theDailyPushOpensTodayWhereItsPatsPlayAgain() {
+    #expect(OpenedNotification(category: "dailyProgress", event: [:]) == .open(.pats))
+    // A morning note's push opens 今天 on the newest waiting note.
+    #expect(OpenedNotification(category: "coachNote", event: ["note": "7"]) == .open(.waitingCoachNote))
 }
 
 @Test func aPushOpensWhereItsNoticeInTheBellGoes() throws {

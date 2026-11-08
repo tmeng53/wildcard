@@ -13,7 +13,7 @@ final class NotificationService: UNNotificationServiceExtension {
     override func didReceive(
         _ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void
     ) {
-        AppLanguage.adopt(from: AppGroup.defaults)
+        AppLanguage.adopt(from: AppGroup.defaults, folder: AppGroup.directory)
         if let copy = SharedCopy.inAppGroup?.read() { AppCopyLines.install(copy) }
         contentHandler(Self.inAppLanguage(request.content))
     }

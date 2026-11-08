@@ -6,7 +6,7 @@ import type { PhotoPath } from './domain/photos.js';
 import type { Comment, CommentId } from './domain/comment.js';
 import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
 import type { FuelGoals } from './domain/fuel-goal.js';
-import type { PlanDays, WeekStart } from './domain/weekly-plan.js';
+import type { PlanDays, TrainedBy, WeekStart } from './domain/weekly-plan.js';
 import type { WeekSummaryWords } from './domain/week-summary-words.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
@@ -216,12 +216,18 @@ export interface WeeklyPlanStore {
     readonly fromWeek: WeekStart;
     readonly days: PlanDays;
   }): Promise<void>;
-  /** Saves the member's plan for a week, replacing any saved before. */
+  /**
+   * Saves the member's plan for a week, replacing any saved before, with the days a 练了 turned
+   * into training (none when left out).
+   */
   save(plan: {
     readonly member: MemberId;
     readonly weekStart: WeekStart;
     readonly days: PlanDays;
+    readonly trainedBy?: TrainedBy;
   }): Promise<void>;
+  /** The days of the member's saved plan for `weekStart` a 练了 turned into training. */
+  trainedBy(member: MemberId, weekStart: WeekStart): Promise<TrainedBy>;
   /** The member's 饮食小目标 saved for `weekStart`; goals don't carry over to later weeks. */
   fuelGoals(member: MemberId, weekStart: WeekStart): Promise<FuelGoals | undefined>;
   /** Saves the member's 饮食小目标 for a week, replacing any saved before. */

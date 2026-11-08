@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// The language the app speaks. iOS keeps an app's language in its `AppleLanguages` and reads it
 /// once, as the app starts, so a pick made in the app (the open screen's globe, 设置's 语言) would
@@ -27,6 +28,7 @@ public enum AppLanguage: String, CaseIterable, Sendable {
     /// Hong Kong's and Macau's `zh-TW`, `zh-HK`, `zh-MO`) reads as Traditional, any other Chinese
     /// as Simplified; a list with neither Chinese nor English, as Simplified.
     public static var current: AppLanguage {
+        if let adopted = adopted.withLock({ $0 }) { return adopted }
         let preferred = UserDefaults.standard.stringArray(forKey: key) ?? Locale.preferredLanguages
         for tag in preferred {
             if tag.hasPrefix("zh-Hant") || ["zh-TW", "zh-HK", "zh-MO"].contains(tag) { return .traditionalChinese }
@@ -38,25 +40,44 @@ public enum AppLanguage: String, CaseIterable, Sendable {
 
     /// Speaks this language from now on, and from the next launch.
     public func pick() {
+        Self.adopted.withLock { $0 = nil }
         UserDefaults.standard.set([rawValue], forKey: Self.key)
         NotificationCenter.default.post(name: Self.didChange, object: nil)
     }
 
-    /// Records this language for the app's extensions (the 6pm push's view), in the settings the
-    /// app shares with them: an extension is a process of its own, with its own `AppleLanguages`,
-    /// so it would otherwise speak the phone's language. Nil (no shared settings) records nothing.
-    public func share(in shared: UserDefaults?) {
+    /// Records this language for the app's extensions (the 6pm push's view and the service that
+    /// rewrites every push's words): an extension is a process of its own, with its own
+    /// `AppleLanguages`, so it would otherwise speak the phone's language. It goes both in the
+    /// settings the app shares with them and in a file in the folder it shares, which the
+    /// extensions read first, since the squad's file there reaches them where the shared settings
+    /// didn't on a member's phone. Nil for either records nothing there.
+    public func share(in shared: UserDefaults?, folder: URL?) {
         shared?.set(rawValue, forKey: Self.sharedKey)
+        guard let folder else { return }
+        try? Data(rawValue.utf8).write(to: folder.appending(path: Self.fileName), options: .atomic)
     }
 
     /// For an extension, before it draws or looks a string up: speaks the language the app last
-    /// shared from now on. With nothing shared (no shared settings, or the app hasn't recorded
-    /// one yet) it keeps its own.
-    public static func adopt(from shared: UserDefaults?) {
-        guard let tag = shared?.string(forKey: sharedKey), let language = AppLanguage(rawValue: tag) else { return }
-        UserDefaults.standard.set([language.rawValue], forKey: key)
+    /// shared from now on, read from the shared folder's file first, then the shared settings.
+    /// With nothing shared (the app hasn't run since it was installed or updated) it speaks
+    /// Simplified Chinese, the language the app opens in until the member picks another.
+    public static func adopt(from shared: UserDefaults?, folder: URL?) {
+        let fromFile = folder.flatMap { try? Data(contentsOf: $0.appending(path: fileName)) }
+            .flatMap { String(bytes: $0, encoding: .utf8) }
+            .flatMap(AppLanguage.init(rawValue:))
+        let language = fromFile ?? shared?.string(forKey: sharedKey).flatMap(AppLanguage.init(rawValue:))
+        let speaks = language ?? .simplifiedChinese
+        // Kept in the process too, so nothing in it depends on the extension's own `AppleLanguages`
+        // reading back what was written: with only that, the 6pm push's view still spoke the
+        // phone's language.
+        adopted.withLock { $0 = speaks }
+        UserDefaults.standard.set([speaks.rawValue], forKey: key)
     }
 
+    /// The language an extension adopted, which `current` speaks before any setting.
+    private static let adopted = Mutex<AppLanguage?>(nil)
+
+    private static let fileName = "app-language"
     private static let sharedKey = "appLanguage"
 
     /// Posted after a pick, for the app's root to draw everything again.

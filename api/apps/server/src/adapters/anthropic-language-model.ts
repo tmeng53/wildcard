@@ -1,8 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { DisclaimerWriterUnavailableError } from '@wildcard/disclaimer-drafts';
-
-import type { ProviderModels } from './language-models.js';
+import { LanguageModelUnavailableError, type LanguageModel } from '@wildcard/language-model';
 
 /**
  * A member is waiting with the button pressed: past this, the app's dice are the better answer.
@@ -30,7 +28,7 @@ export function createAnthropicLanguageModel(options: {
   readonly baseURL?: string;
   /** Tests only: answers requests from recorded responses. */
   readonly fetch?: typeof fetch;
-}): ProviderModels {
+}): LanguageModel {
   const client = new Anthropic({
     apiKey: options.apiKey,
     // Never the environment's: an ANTHROPIC_BASE_URL meant for another tool must not redirect
@@ -53,11 +51,11 @@ export function createAnthropicLanguageModel(options: {
           output_config: { effort: 'low', format: zodOutputFormat(reply) },
         });
       } catch (error) {
-        throw new DisclaimerWriterUnavailableError({ cause: error });
+        throw new LanguageModelUnavailableError({ cause: error });
       }
       // A refusal or a cut-off answer has nothing to parse.
       if (message.stop_reason !== 'end_turn' || message.parsed_output === null) {
-        throw new DisclaimerWriterUnavailableError({
+        throw new LanguageModelUnavailableError({
           cause: new Error(`The model stopped with ${String(message.stop_reason)}`),
         });
       }

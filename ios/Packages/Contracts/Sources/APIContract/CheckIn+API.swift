@@ -32,7 +32,9 @@ extension CheckIn {
                 createdAt: checkIn.createdAt,
                 audience: checkIn.audience,
                 entry: .disclaimer(
-                    Disclaimer(checkIn.disclaimer.text, photos: try Photos(wire: checkIn.disclaimer.photos))))
+                    Disclaimer(
+                        checkIn.disclaimer.text, restDay: checkIn.disclaimer.restDay == true,
+                        photos: try Photos(wire: checkIn.disclaimer.photos))))
         }
     }
 
@@ -104,7 +106,7 @@ extension Meal {
 }
 
 extension Disclaimer {
-    var wire: Components.Schemas.Disclaimer { .init(text: text, photos: photos?.wire) }
+    var wire: Components.Schemas.Disclaimer { .init(text: text, restDay: restDay ? true : nil, photos: photos?.wire) }
 }
 
 extension Training {
@@ -170,6 +172,12 @@ extension Activity {
     /// The sport the member trained most (最常练).
     public init(_ wire: Components.Schemas.TopSport) throws(ContractsError) {
         try self.init(sport: wire.sport, customSport: wire.customSport)
+    }
+
+    /// The sport of a day's 练了 on a squadmate's 出赛表; nil for a day without one.
+    public init?(_ wire: Components.Schemas.DayMark) throws(ContractsError) {
+        guard wire.status == .trained, let sport = wire.sport else { return nil }
+        try self.init(sport: sport, customSport: wire.customSport)
     }
 
     init(sport: Components.Schemas.Sport, customSport: String?) throws(ContractsError) {

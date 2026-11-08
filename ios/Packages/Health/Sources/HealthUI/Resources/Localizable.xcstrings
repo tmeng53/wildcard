@@ -1,6 +1,22 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "App 设置 › 集成" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Settings › Integrations"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 設定 › 整合"
+          }
+        }
+      }
+    },
     "Apple 健康" : {
       "localizations" : {
         "en" : {
@@ -13,6 +29,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple 健康"
+          }
+        }
+      }
+    },
+    "先同步到 Apple 健康" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync to Apple Health first"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先同步到 Apple 健康"
+          }
+        }
+      }
+    },
+    "关闭" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉"
           }
         }
       }
@@ -97,6 +145,134 @@
         }
       }
     },
+    "打开 Google Health" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Google Health"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開 Google Health"
+          }
+        }
+      }
+    },
+    "打开 Google Health，点右上角头像" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Google Health and tap your photo at the top right"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開 Google Health，點右上角頭像"
+          }
+        }
+      }
+    },
+    "打开 Oura" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Oura"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開 Oura"
+          }
+        }
+      }
+    },
+    "打开 Oura，点左上角菜单 › 设置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Oura and tap the menu at the top left › Settings"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開 Oura，點左上角選單 › 設定"
+          }
+        }
+      }
+    },
+    "打开 WHOOP" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open WHOOP"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開 WHOOP"
+          }
+        }
+      }
+    },
+    "打开 WHOOP，点「更多」" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open WHOOP and tap More"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開 WHOOP，點「更多」"
+          }
+        }
+      }
+    },
+    "打开「连接健康」，再全部允许" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on Connect to Health, then allow all"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟「連接健康」，再全部允許"
+          }
+        }
+      }
+    },
+    "数据共享 › Apple 健康" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data sharing › Apple Health"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "資料分享 › Apple 健康"
+          }
+        }
+      }
+    },
     "时长" : {
       "localizations" : {
         "en" : {
@@ -141,6 +317,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "沒看到運動？在 設定 › 健康 › 資料取用與裝置 › 外卡 裡打開讀取。"
+          }
+        }
+      }
+    },
+    "点「合作伙伴应用」" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap Partner apps"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點「合作夥伴應用程式」"
+          }
+        }
+      }
+    },
+    "用 Fitbit、WHOOP 或 Oura？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wear Fitbit, WHOOP or Oura?"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 Fitbit、WHOOP 或 Oura？"
+          }
+        }
+      }
+    },
+    "设备" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "裝置"
           }
         }
       }
@@ -237,6 +461,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "連接 Apple 健康"
+          }
+        }
+      }
+    },
+    "选 Apple 健康，点「全部打开」" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick Apple Health and tap Turn On All"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選 Apple 健康，點「全部開啟」"
           }
         }
       }

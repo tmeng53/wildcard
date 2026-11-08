@@ -11,7 +11,7 @@ import { ArtRefusedError } from '../errors.js';
 export const ArtPath = z
   .string()
   .regex(
-    /^(avatar|coaches|scenes|openings)(\/[A-Za-z0-9][A-Za-z0-9_@.-]{0,63}){1,6}\.(svg|json|png)$/,
+    /^(avatar|coaches|scenes|openings|guides)(\/[A-Za-z0-9][A-Za-z0-9_@.-]{0,63}){1,6}\.(svg|json|png)$/,
   )
   .refine((path) => !path.includes('..'), 'A path never leaves the art tree.')
   .brand<'ArtPath'>()
@@ -23,7 +23,8 @@ export const ArtPath = z
       'stores, {"version":1,"variants":{"<id>":{"zhHans","en","zhHant"}},"stores":{"<id>":{"name",' +
       '"local","sports"?,"tagline"?,"unlock"?,"limited"?}}}, never bundled), coaches/… the coaches’ characters (<coach id>/…), scenes/… the ' +
       'home scene pictures (<scene>-day@3x.png), openings/… the opening animations (<opening id>/…: SVG ' +
-      'layers and a timeline JSON).',
+      'layers and a timeline JSON), guides/… the screenshots of the Apple Health sync guide ' +
+      '(<fitbit|whoop|oura>-<step>@3x.png, the tap target marked on them; never bundled).',
     example: 'avatar/art/top/warmup-tee/torso.svg',
   });
 export type ArtPath = z.infer<typeof ArtPath>;

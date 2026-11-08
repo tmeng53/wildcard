@@ -26,8 +26,9 @@ public enum ArtTree {
             ? mine : bundled.appending(path: path)
     }
 
-    /// The downloaded file at `path` within `tree` (`scenes`, for the home's pictures), if any;
-    /// nil keeps the bundled one.
+    /// The downloaded file at `path` within `tree` (`scenes`, for the home's pictures; `guides`,
+    /// for the Apple Health sync guide's screenshots, which nothing bundles), if any; nil keeps
+    /// the bundled one.
     public static func downloadedFile(_ path: String, in tree: String) -> URL? {
         let mine = downloaded.appending(path: tree).appending(path: path)
         return FileManager.default.fileExists(atPath: mine.path(percentEncoded: false)) ? mine : nil
@@ -43,7 +44,7 @@ public enum ArtTree {
     }
 
     /// Whether `data` is art this build reads at `path` (`avatar/…`, `coaches/…`, `scenes/…`,
-    /// `openings/…`),
+    /// `openings/…`, `guides/…`),
     /// read the way the screens will: SVG through the parser, each JSON file through its own
     /// decoder (the rig, clips, tones, holds, `editor.json`, `kits.json`, `names.json`, an
     /// opening's `timeline.json`), a PNG by its signature.

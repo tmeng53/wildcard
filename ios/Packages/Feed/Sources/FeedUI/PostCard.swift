@@ -222,7 +222,8 @@ struct PostCard: View {
         case .trained(let training): Text(copy: "训练 · \(training.activity.name)", bundle: .module)
         case .healthyMeal: Text(copy: "健康餐", bundle: .module)
         case .cheatMeal: Text(copy: "坦白放纵餐", bundle: .module)
-        case .disclaimer: Text(copy: "请假条", bundle: .module)
+        case .disclaimer(let note):
+            if note.restDay { Text(copy: "休息", bundle: .module) } else { Text(copy: "请假条", bundle: .module) }
         }
     }
 

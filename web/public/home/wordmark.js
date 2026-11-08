@@ -1,4 +1,4 @@
-// Wildcard wordmark, variant B 冲线 (approved by Tracy 2026-10-23).
+// Wildcard wordmark, variant B 冲线 (approved 2026-10-23).
 // The word sprints in leaning, dips its chest into a vertical tape, the tape breaks and
 // topples under gravity, the word brakes and rocks back upright. About 1 s.
 // Usage: playWordmarkB(wordEl, { tapeColor, floorY, onBreak, onSettle })

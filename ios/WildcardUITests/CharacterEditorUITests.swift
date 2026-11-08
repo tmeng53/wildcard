@@ -16,7 +16,7 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertTrue(done.waitForExistence(timeout: Self.wait), "the editor never appeared")
         XCTAssertEqual(done.label, "确认")
         let steps = app.descendants(matching: .any).matching(identifier: "editor.steps").firstMatch
-        XCTAssertEqual(steps.label, "第 2 步，共 4 步")
+        XCTAssertEqual(steps.label, "第 2 步，共 5 步")
         XCTAssertTrue(app.buttons["editor.tile.body.peach"].isSelected, "the sample isn't a person")
         XCTAssertFalse(app.buttons["editor.undo"].isEnabled, "undo is on before any change")
         settle()

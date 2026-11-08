@@ -13,7 +13,9 @@ import {
   SquadName,
   type Squad,
 } from '../domain/squad.js';
+import { zoneFor, type TimeZoneSetting } from '../domain/time-zone.js';
 import { DaysPerMember, goalFor } from '../domain/weekly-goal.js';
+import { SquadTimeZoneUnknownError } from '../errors.js';
 import type { CaptainOutcome, CreateOutcome, JoinOutcome, SquadStore } from '../ports.js';
 import type { DB, Squads } from './tables.js';
 
@@ -266,7 +268,7 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       return new Set(rows.map((row) => MemberId.parse(row.member_id)));
     },
 
-    async create({ id, name, inviteCode, creator, goal }): Promise<CreateOutcome> {
+    async create({ id, name, inviteCode, creator, goal, timeZone }): Promise<CreateOutcome> {
       try {
         return await db.transaction().execute(async (trx): Promise<CreateOutcome> => {
           await lockMember(trx, creator);
@@ -304,6 +306,15 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
               set_by: creator,
             })
             .execute();
+          await trx
+            .insertInto('squad_time_zones')
+            .values({
+              squad_id: id,
+              time_zone: timeZone.zone,
+              week_start: timeZone.week,
+              set_by: creator,
+            })
+            .execute();
           return { created: true };
         });
       } catch (error) {
@@ -311,6 +322,8 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
         const refused = constraint === undefined ? undefined : UNIQUE_RULES[constraint];
         if (hasErrorCode(error, '23505') && refused !== undefined)
           return { created: false, refused };
+        // invalid_parameter_value from the trigger that checks Postgres knows the zone.
+        if (hasErrorCode(error, '22023')) throw new SquadTimeZoneUnknownError(timeZone.zone);
         throw error;
       }
     },
@@ -432,6 +445,71 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
             set_by: actor,
           })
           .execute();
+        return 'changed';
+      });
+    },
+
+    async timeZones(squads) {
+      if (squads.length === 0) return new Map();
+      const rows = await db
+        .selectFrom('squad_time_zones')
+        .select([
+          'squad_id',
+          sql<string>`week_start::text`.as('week_start'),
+          'time_zone',
+          'set_by',
+          'set_at',
+        ])
+        .where('squad_id', 'in', squads)
+        .orderBy('week_start')
+        .orderBy('id')
+        .execute();
+      const settings = new Map<SquadId, TimeZoneSetting[]>();
+      for (const row of rows) {
+        const squad = SquadId.parse(row.squad_id);
+        const list = settings.get(squad) ?? [];
+        list.push({
+          week: SceneWeek.parse(row.week_start),
+          timeZone: row.time_zone,
+          by: row.set_by === null ? null : MemberId.parse(row.set_by),
+          at: row.set_at,
+        });
+        settings.set(squad, list);
+      }
+      return settings;
+    },
+
+    setTimeZone({ squad, actor, timeZone, week }) {
+      return asCaptain({ squad, actor }, async (trx) => {
+        const settings = (
+          await trx
+            .selectFrom('squad_time_zones')
+            .select([sql<string>`week_start::text`.as('week_start'), 'time_zone'])
+            .where('squad_id', '=', squad)
+            .orderBy('week_start')
+            .orderBy('id')
+            .execute()
+        ).map((row) => ({
+          week: SceneWeek.parse(row.week_start),
+          timeZone: row.time_zone,
+          by: null,
+          at: new Date(0),
+        }));
+        // A later week's setting would stand over this one, so only the latest week may change.
+        const latest = settings.at(-1)?.week;
+        if (zoneFor(settings, week) === timeZone && (latest === undefined || latest <= week)) {
+          return 'unchanged';
+        }
+        try {
+          await trx
+            .insertInto('squad_time_zones')
+            .values({ squad_id: squad, time_zone: timeZone, week_start: week, set_by: actor })
+            .execute();
+        } catch (error) {
+          // invalid_parameter_value from the trigger that checks Postgres knows the zone.
+          if (hasErrorCode(error, '22023')) throw new SquadTimeZoneUnknownError(timeZone);
+          throw error;
+        }
         return 'changed';
       });
     },

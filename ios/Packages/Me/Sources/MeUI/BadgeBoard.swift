@@ -14,7 +14,8 @@ struct BadgeCell: View {
     var body: some View {
         VStack(spacing: Space.xxs) {
             TitleBadgeView(
-                shape: title.badge.shape, colour: title.badge.colour, glyph: title.badge.glyph, size: BoardMetrics.badge
+                shape: title.badge.shape, colour: title.badge.colour, tone: title.badge.tone, glyph: title.badge.glyph,
+                size: BoardMetrics.badge
             )
             .frame(width: BoardMetrics.slot, height: BoardMetrics.slot)
             .overlay(alignment: .topTrailing) {

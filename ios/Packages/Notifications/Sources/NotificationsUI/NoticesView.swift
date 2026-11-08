@@ -31,7 +31,8 @@ public struct UnlockWords {
 }
 
 /// 通知, opened from the bell on 动态 (the approved bell design): everything the member was told,
-/// under 今天, 本周 and 更早, newest first, the ones that were new in bold with a dot. Opening it
+/// under 今天, 本周 and 更早, newest first (what was said on one post in a day is one row), the
+/// ones that were new in bold with a dot. Opening it
 /// marks them all read. A tap on a row goes where it points. Empty, the member's character
 /// stands there with 还没有通知.
 public struct NoticesView: View {
@@ -100,27 +101,26 @@ public struct NoticesView: View {
             } else if inbox.phase == .current {
                 EmptyNotices(viewer: viewer)
             } else if inbox.phase == .offline {
-                tryAgain { await inbox.open() }
-                    .frame(maxWidth: .infinity, minHeight: Sizing.control)
+                StateView.offline(retryIdentifier: "notices.retry") { Task { await inbox.open() } }
                     .padding(.top, Space.xxl)
-                    .accessibilityIdentifier("notices.retry")
             }
         } else {
             let shownAt = now()
             ForEach(NoticeSection.sections(inbox.notices, now: shownAt, calendar: .current)) { section in
                 SectionLabel(section.heading.title)
                     .padding(.top, Space.s)
-                ForEach(section.notices) { notice in
+                ForEach(section.entries) { entry in
                     Button {
                         // The same place its banner and its push open.
-                        if let destination = notice.destination { open(destination) }
+                        if let destination = entry.notice.destination { open(destination) }
                     } label: {
                         NoticeRow(
-                            notice: notice, heading: section.heading, isUnread: inbox.isUnread(notice), now: shownAt,
-                            unlocked: unlocked)
+                            entry: entry, heading: section.heading,
+                            isUnread: entry.notices.contains(where: inbox.isUnread),
+                            now: shownAt, unlocked: unlocked)
                     }
                     .buttonStyle(PressableButtonStyle())
-                    .accessibilityIdentifier("notices.row.\(notice.id.rawValue)")
+                    .accessibilityIdentifier("notices.row.\(entry.id.rawValue)")
                 }
             }
             if inbox.hasMore {
@@ -134,7 +134,14 @@ public struct NoticesView: View {
     @ViewBuilder private var more: some View {
         Group {
             if inbox.moreFailed {
-                tryAgain { await inbox.loadMore() }
+                // As 我的动态's wall: the page so far stays, with a way to read on.
+                Button {
+                    Task { await inbox.loadMore() }
+                } label: {
+                    Text(copy: "再试一次", bundle: .module)
+                }
+                .buttonStyle(SecondaryButtonStyle())
+                .accessibilityIdentifier("notices.loadMore")
             } else {
                 // Again after each page read, while the end is still in view, even one that had
                 // nothing this build can show.
@@ -143,17 +150,6 @@ public struct NoticesView: View {
             }
         }
         .frame(maxWidth: .infinity, minHeight: Sizing.control)
-    }
-
-    /// 加载失败，点一下再试: a read that didn't reach the server, tried again on a tap.
-    private func tryAgain(_ retry: @escaping @MainActor () async -> Void) -> some View {
-        Button {
-            Task { await retry() }
-        } label: {
-            Text(copy: "加载失败，点一下再试", bundle: .module)
-                .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: .gym))
-        }
     }
 }
 

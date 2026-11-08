@@ -378,6 +378,41 @@ describe('saving a check-in', () => {
     expect(await plans.savedFor(other, { weekStart: week })).toBeUndefined();
   });
 
+  it('makes a 休息’s day a rest day, never undoing a 练了 on it', async () => {
+    const member = await newMember();
+    const squad = await newSquad(member);
+    const plans = createPostgresWeeklyPlanStore(db);
+    const week = WeekStart.parse('2026-10-12');
+    // The 17th is a Saturday, a training day in the default plan.
+    const restId = CheckInId.parse(randomUUID());
+    const rest = draft({
+      audience: [squad],
+      day: '2026-10-17',
+      kind: 'disclaimer',
+      disclaimer: { text: '歇一天', restDay: true },
+    });
+    await checkIns.save({ id: restId, member, draft: rest });
+    expect((await plans.savedFor(member, { weekStart: week }))?.[5]).toStrictEqual({
+      kind: 'rest',
+    });
+    // A 练了 later that day makes it a training day again; a retry or an edit of the 休息 keeps it.
+    await checkIns.save({
+      id: CheckInId.parse(randomUUID()),
+      member,
+      draft: draft({ audience: [squad], day: '2026-10-17' }),
+    });
+    await checkIns.save({ id: restId, member, draft: rest });
+    await checkIns.edit({
+      id: restId,
+      member,
+      edit: edit({ kind: 'disclaimer', disclaimer: { text: '歇了半天', restDay: true } }),
+    });
+    expect((await plans.savedFor(member, { weekStart: week }))?.[5]).toStrictEqual({
+      kind: 'train',
+      sport: 'run',
+    });
+  });
+
   it('refuses a squad the member isn’t in, or one that doesn’t exist', async () => {
     const member = await newMember();
     const mine = await newSquad(member);

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import type { CheckInId, CheckInRecord, MemberId } from './check-in.js';
-import { byTrainedThenFinished, planFinishedAt, trainedDays, type Week } from './days.js';
+import { isLeave, type CheckInId, type CheckInRecord, type MemberId } from './check-in.js';
+import { byTrainedThenReached, trainedDays, trainedDaysReachedAt, type Week } from './days.js';
 import type { Emoji, Reaction } from './reaction.js';
 
 // The Sunday summary (周日战报): a squad's week as awards and counts. Every award and every
@@ -38,10 +38,12 @@ export interface Winner {
 /**
  * The awards of a week. `planCompleted` (练够计划): everyone who trained at least as many days
  * as they planned, and at least one, by their trained days. `crown` (皇冠): whoever trained the
- * most days, at least one, whether or not they finished their plan; on a tie whoever finished
- * their own plan first, else the earliest to join, so it is the podium's champion (`podiumOf`) and the one who picks next week's scene.
+ * most days, at least one, whether or not they finished their plan; on a tie whoever reached
+ * that many days first, else the earliest to join, so it is the podium's champion (`podiumOf`)
+ * and the one who picks next week's scene.
  * `bestDisclaimer` (本周最佳请假条): the
  * 请假条 with the most reactions, at least one, the earliest posted on a tie, by its reactions.
+ * A 休息 (a planned rest) is not a 请假条: it counts in neither.
  */
 export const AwardKind = z.enum(['planCompleted', 'crown', 'bestDisclaimer']);
 export type AwardKind = z.infer<typeof AwardKind>;
@@ -87,19 +89,16 @@ const AWARDS: Record<AwardKind, AwardRule> = {
         member,
         value,
         trainedDays: value,
-        planFinishedAt: planFinishedAt(member.checkIns, {
-          days: facts.week.days,
-          plannedDays: member.plannedDays,
-        }),
+        reachedAt: trainedDaysReachedAt(member.checkIns, { days: facts.week.days, count: value }),
       }))
-      .toSorted(byTrainedThenFinished);
+      .toSorted(byTrainedThenReached);
     return first === undefined ? [] : [{ member: first.member.member, value: first.value }];
   },
   bestDisclaimer: (facts) => {
     let best: Required<Winner> | undefined;
     let bestAt = 0;
     for (const each of facts.members.flatMap(({ checkIns }) => checkIns)) {
-      if (each.kind !== 'disclaimer') continue;
+      if (!isLeave(each)) continue;
       const value = reactionsOn(facts, each.id);
       const at = each.createdAt.getTime();
       const better =
@@ -118,7 +117,7 @@ const STATS: Record<StatKind, StatRule> = {
   trainedDays: trainedDaysOf,
   plannedDays: (member) => member.plannedDays,
   checkIns: (member) => member.checkIns.length,
-  disclaimers: ofKind('disclaimer'),
+  disclaimers: (member) => member.checkIns.filter(isLeave).length,
   healthyMeals: ofKind('healthyMeal'),
   cheatMeals: ofKind('cheatMeal'),
   reactionsReceived: (member, facts) =>

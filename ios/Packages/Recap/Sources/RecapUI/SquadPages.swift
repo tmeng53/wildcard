@@ -41,18 +41,21 @@ struct MealsPage: View {
         .overlay(alignment: .top) {
             VStack(alignment: .leading, spacing: Space.l) {
                 PageTitle(label: Text(copy: "全队", bundle: .module), title: Text(copy: "吃了", bundle: .module))
-                HStack(alignment: .top, spacing: Space.xl) {
-                    count(meals.healthy, Text(copy: "健康餐", bundle: .module), size: .story)
-                    count(meals.cheat, Text(copy: "放纵餐", bundle: .module), size: .hero)
+                // PageTitle keeps its own inset; the counts and the line take the same.
+                VStack(alignment: .leading, spacing: Space.l) {
+                    HStack(alignment: .top, spacing: Space.xl) {
+                        count(meals.healthy, Text(copy: "健康餐", bundle: .module), size: .story)
+                        count(meals.cheat, Text(copy: "放纵餐", bundle: .module), size: .hero)
+                    }
+                    if let line = meals.line {
+                        Text(verbatim: line)
+                            .typeStyle(TypeRamp.headline)
+                            .opacity(page.ramp(0.6, 0.9))
+                    }
                 }
-                if let line = meals.line {
-                    Text(verbatim: line)
-                        .typeStyle(TypeRamp.headline)
-                        .opacity(page.ramp(0.6, 0.9))
-                }
+                .padding(.horizontal, Space.l)
             }
             .foregroundStyle(Color(role: .fgOnScene, in: theme))
-            .padding(.horizontal, Space.l)
         }
     }
 
@@ -105,7 +108,7 @@ struct BestDisclaimerPage: View {
                     label: Text(copy: "本周", bundle: .module), systemImage: "bubble.left.fill",
                     title: Text(copy: "最佳请假条", bundle: .module))
                 card
-                    .padding(.horizontal, Space.m)
+                    .padding(.horizontal, Space.l)
                     .offset(y: 24 * (1 - page.pop(0, 0.5)))
                     .opacity(page.ramp(0, 0.2))
             }
@@ -276,7 +279,7 @@ struct EndingButtons: View {
                 .buttonStyle(TextButtonStyle(.muted))
                 .accessibilityIdentifier("recap.planNextWeek")
         }
-        .padding(.horizontal, Space.m)
+        .padding(.horizontal, Space.l)
         // Over the week's scene: glass, as every button that floats over art is.
         .controlPlacement(.floating)
     }

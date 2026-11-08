@@ -122,6 +122,7 @@ const pages = [
     legal: '/zh/',
     privacy: '隐私政策',
     terms: '使用条款',
+    health: '健康数据',
   },
   {
     file: 'zh-hant/index.html',
@@ -137,6 +138,7 @@ const pages = [
     legal: '/zh-hant/',
     privacy: '隱私權政策',
     terms: '使用條款',
+    health: '健康資料',
   },
   {
     file: 'en/index.html',
@@ -152,6 +154,7 @@ const pages = [
     legal: '/',
     privacy: 'Privacy',
     terms: 'Terms',
+    health: 'Health Data',
   },
 ];
 const template = readFileSync(join(web, 'pages', 'home.html'), 'utf8');

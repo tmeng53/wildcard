@@ -1,4 +1,4 @@
-import type { LocalDay, MemberId } from '../domain/check-in.js';
+import type { CheckInId, LocalDay, MemberId } from '../domain/check-in.js';
 import type { FuelGoals } from '../domain/fuel-goal.js';
 import {
   DEFAULT_PLAN_DAYS,
@@ -6,7 +6,10 @@ import {
   addDays,
   checkFuelGoalsChange,
   checkPlanChange,
+  dayIndex,
   localDayAt,
+  restedOnDay,
+  trainedByKept,
   trainedOnRestDay,
   weekStartOf,
   type PlanDays,
@@ -102,7 +105,8 @@ export async function findWeeklyPlan(
 
 /**
  * Makes `day` a training day of the 练了's sport in the member's plan when it was a rest day, so
- * training on a planned rest day counts in the week like any training day. Safe to repeat.
+ * training on a planned rest day counts in the week like any training day, and notes which 练了
+ * did it. Safe to repeat.
  */
 export async function planTrainedDay(
   { store }: { readonly store: WeeklyPlanStore },
@@ -110,15 +114,44 @@ export async function planTrainedDay(
     member,
     day,
     training,
+    checkIn,
   }: {
     readonly member: MemberId;
     readonly day: LocalDay;
     readonly training: Parameters<typeof trainedOnRestDay>[0]['training'];
+    readonly checkIn: CheckInId;
   },
 ): Promise<void> {
   const plan = await findWeeklyPlan({ store }, { member, weekStart: weekStartOf(day) });
   const days = trainedOnRestDay({ plan, day, training });
-  if (days !== undefined) await store.save({ member, weekStart: plan.weekStart, days });
+  if (days === undefined) return;
+  const trainedBy = plan.source === 'saved' ? await store.trainedBy(member, plan.weekStart) : {};
+  await store.save({
+    member,
+    weekStart: plan.weekStart,
+    days,
+    trainedBy: { ...trainedBy, [dayIndex(plan.weekStart, day)]: checkIn },
+  });
+}
+
+/**
+ * Makes `day` a rest day in the member's plan when it was a training day, so a 休息 they post
+ * takes the day out of their week's plan. Safe to repeat.
+ */
+export async function planRestDay(
+  { store }: { readonly store: WeeklyPlanStore },
+  { member, day }: { readonly member: MemberId; readonly day: LocalDay },
+): Promise<void> {
+  const plan = await findWeeklyPlan({ store }, { member, weekStart: weekStartOf(day) });
+  const days = restedOnDay({ plan, day });
+  if (days === undefined) return;
+  const trainedBy = plan.source === 'saved' ? await store.trainedBy(member, plan.weekStart) : {};
+  await store.save({
+    member,
+    weekStart: plan.weekStart,
+    days,
+    trainedBy: trainedByKept({ current: plan.days, next: days, trainedBy }),
+  });
 }
 
 export function createWeeklyPlans(deps: Deps): WeeklyPlans {
@@ -164,7 +197,14 @@ export function createWeeklyPlans(deps: Deps): WeeklyPlans {
       const current = await findWeeklyPlan(deps, { member, weekStart });
       checkPlanChange({ current, next: days, today, joinedOn });
       await checkSports(days);
-      await deps.store.save({ member, weekStart, days });
+      const trainedBy =
+        current.source === 'saved' ? await deps.store.trainedBy(member, weekStart) : {};
+      await deps.store.save({
+        member,
+        weekStart,
+        days,
+        trainedBy: trainedByKept({ current: current.days, next: days, trainedBy }),
+      });
       return plannedWeek({ member, joinedOn }, { weekStart, days, source: 'saved' });
     },
     async template({ member }) {

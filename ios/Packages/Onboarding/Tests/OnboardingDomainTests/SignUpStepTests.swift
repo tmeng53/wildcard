@@ -3,16 +3,17 @@ import OnboardingDomain
 import Testing
 
 struct SignUpStepTests {
-    @Test func theHeaderCountsFourTaskSteps() {
-        #expect(SignUpStep.allCases.map(\.number) == [nil, 1, 2, 3, 4, nil, nil])
-        #expect(SignUpStep.counted.count == 4)
+    @Test func theHeaderCountsFiveTaskSteps() {
+        #expect(SignUpStep.allCases.map(\.number) == [nil, 1, 2, 3, 4, 5, nil, nil])
+        #expect(SignUpStep.counted.count == 5)
     }
 
     @Test func stepsGoInTheApprovedOrder() {
         #expect(SignUpStep.welcome.next == .character)
         #expect(SignUpStep.character.next == .squad)
         #expect(SignUpStep.squad.next == .sports)
-        #expect(SignUpStep.sports.next == .week)
+        #expect(SignUpStep.sports.next == .health)
+        #expect(SignUpStep.health.next == .week)
         #expect(SignUpStep.week.next == .scene)
         #expect(SignUpStep.scene.next == .entrance)
         #expect(SignUpStep.entrance.next == nil)
@@ -24,31 +25,40 @@ struct SignUpStepTests {
         #expect(SignUpStep.scene.previous == .week)
     }
 
+    @Test func aDeviceWithoutHealthSkipsItBothWays() {
+        #expect(SignUpStep.afterSports(hasHealth: true) == .health)
+        #expect(SignUpStep.afterSports(hasHealth: false) == .week)
+        #expect(SignUpStep.beforeWeek(hasHealth: true) == .health)
+        #expect(SignUpStep.beforeWeek(hasHealth: false) == .sports)
+    }
+
     @Test func thereIsNoGoingBackFromTheOpenScreenOrTheEntrance() {
         #expect(SignUpStep.welcome.previous == nil)
         #expect(SignUpStep.entrance.previous == nil)
-        #expect(SignUpStep.week.previous == .sports)
+        #expect(SignUpStep.week.previous == .health)
+        #expect(SignUpStep.health.previous == .sports)
         #expect(SignUpStep.character.previous == .welcome)
     }
 }
 
 struct SquadDraftTests {
     @Test func anInviteOpensOnJoinWithItsCode() throws {
-        let draft = SquadDraft(invite: try InviteCode("K7M2QX9P"), suggestedName: "Tracy 的小队")
+        let draft = SquadDraft(invite: try InviteCode("K7M2QX9P"), suggestedName: "Tracy 的小队", timeZone: "Asia/Taipei")
         #expect(draft.choice == .join)
         #expect(draft.code == (try InviteCode("K7M2QX9P")))
         #expect(draft.codeLetters == Array("K7M2QX9P"))
     }
 
     @Test func withoutAnInviteItOpensOnCreateWithTheSuggestedName() throws {
-        let draft = SquadDraft(invite: nil, suggestedName: "Tracy 的小队")
+        let draft = SquadDraft(invite: nil, suggestedName: "Tracy 的小队", timeZone: "Asia/Taipei")
         #expect(draft.choice == .create)
         #expect(draft.name == (try SquadName("Tracy 的小队")))
+        #expect(draft.timeZone == "Asia/Taipei")
         #expect(draft.code == nil)
     }
 
     @Test func aHalfTypedCodeShowsButIsNoCodeYet() {
-        var draft = SquadDraft(invite: nil, suggestedName: "")
+        var draft = SquadDraft(invite: nil, suggestedName: "", timeZone: "Asia/Taipei")
         draft.typedCode = "k7m-2"
         #expect(draft.codeLetters == Array("K7M2"))
         #expect(draft.code == nil)
@@ -58,7 +68,7 @@ struct SquadDraftTests {
     }
 
     @Test func aNameTooLongIsNoName() {
-        var draft = SquadDraft(invite: nil, suggestedName: "")
+        var draft = SquadDraft(invite: nil, suggestedName: "", timeZone: "Asia/Taipei")
         #expect(draft.name == nil)
         draft.typedName = String(repeating: "腿", count: SquadName.maxLength + 1)
         #expect(draft.name == nil)

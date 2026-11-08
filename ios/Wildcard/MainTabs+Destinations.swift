@@ -33,6 +33,19 @@ extension MainTabs {
         }
     }
 
+    /// 今天 itself, with today's pats on me again or the coach's note shown again.
+    private func openToday(_ destination: AppDestination) {
+        selection = .today
+        todayPages = []
+        switch destination {
+        case .pats: today.replayPatsOnMe()
+        // On the home itself, where the coach stands.
+        case .coachNote(let note): today.showAgain(note)
+        case .waitingCoachNote: today.showWaitingNote()
+        default: break
+        }
+    }
+
     /// A place that is a tab, or on one: 通知 closes, unless it is the place.
     private func openTab(for destination: AppDestination) {
         switch destination {
@@ -44,14 +57,8 @@ extension MainTabs {
                 await recap.refresh()
                 if recap.latest?.week.monday == week { recap.openLatest() }
             }
-        case .today:
-            selection = .today
-            todayPages = []
-        case .coachNote(let note):
-            // On the home itself, where the coach stands.
-            selection = .today
-            todayPages = []
-            today.showAgain(note)
+        case .today, .pats, .coachNote, .waitingCoachNote:
+            openToday(destination)
         case .schedule:
             selection = .profile
             closeProfilePages()
@@ -66,6 +73,24 @@ extension MainTabs {
             showsNotices = true
         case .post, .unlock, .stores, .store:
             break
+        }
+    }
+
+    /// The tab that wears the bar's dot: 动态, with news since the member last looked.
+    var dots: Set<Tab> { feed.hasNews ? [.feed] : [] }
+
+    /// A tab back on its own page, with every page pushed over it closed: the tab left, and the
+    /// open one tapped again in the bar (Tracy, 2026-11-06). A scene pick's reveal playing over
+    /// 小队 stays until it lands.
+    func backToRoot(_ tab: Tab) {
+        switch tab {
+        case .today:
+            if !squadRevealing { todayPages = [] }
+        case .feed:
+            feed.opened = nil
+            feedPages = []
+        case .profile:
+            closeProfilePages()
         }
     }
 
