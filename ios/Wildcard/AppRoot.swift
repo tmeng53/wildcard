@@ -4,6 +4,7 @@ import Contracts
 import DesignSystem
 import DesignSystemUI
 import FeedUI
+import LocationDomain
 import OnboardingUI
 import SwiftUI
 
@@ -51,7 +52,8 @@ struct AppRoot: View {
                     today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
                     myPosts: app.myPosts, notices: app.notices, squadmateCards: app.squadmateCards, selection: $tab,
                     destination: $pushDestination,
-                    previewSignUp: app.isAdmin ? { signUpPreview = SignUpPreview.model() } : nil
+                    previewSignUp: app.isAdmin ? { signUpPreview = SignUpPreview.model() } : nil,
+                    location: AppModel.location
                 ) {
                     Task { await app.leftSquad() }
                 }
@@ -101,6 +103,7 @@ struct AppRoot: View {
             if phase == .active {
                 Task { await app.refreshCatalog() }
                 Task { await app.refreshScene() }
+                Task { await AppModel.location.refresh() }
             }
         }
         .onAppear {

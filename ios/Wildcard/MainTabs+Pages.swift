@@ -30,14 +30,14 @@ extension MainTabs {
     ]
 }
 
-/// The squad's newest 战报, once there is one, opening it.
+/// The squad's newest 战报, once there is one and until the reader watched it to the end (Tracy,
+/// 2026-11-08), opening it. Watched, it stays on 小队's 往期战报.
 struct RecapTile: View {
     let recap: RecapShelf
 
     var body: some View {
-        if let story = recap.latest {
-            RecapEntryTile(
-                story: story, viewer: recap.cast?.reader, seen: recap.latestIsSeen, action: recap.openLatest)
+        if let story = recap.latest, !recap.latestIsSeen {
+            RecapEntryTile(story: story, viewer: recap.cast?.reader, action: recap.openLatest)
         }
     }
 }
@@ -86,6 +86,15 @@ extension MainTabs {
         if feedPages != [page] { feedPages = [page] }
     }
 
+    /// Every post page open now reads itself again when a notice is news of it (the coach answered
+    /// after the comment was saved): 动态's own, and one opened with a model of its own.
+    func refreshOpenPosts(about notice: Notice) {
+        feed.refreshIfOpen(about: notice)
+        for page in [noticePost, post].compactMap({ $0 }) where page.model !== feed {
+            page.model.refresh(page.id, about: notice)
+        }
+    }
+
     /// The post a notice opened, over 通知 when it is open, so back returns to it.
     var noticePost: OpenedPost? {
         get {
@@ -106,5 +115,34 @@ extension MainTabs {
             title: UnlockNames.title(kind, item: item),
             detail: kind == .prop ? nil : unlock.map(UnlockNames.detail),
             icon: AnyView(WardrobeBadge(kind, item: item)))
+    }
+}
+
+extension MainTabs {
+    /// Puts the coach's card away, opening 动态 when the card's 战术板 was tapped.
+    func closeCoachCard(opensFeed: Bool) {
+        showsCoachCard = false
+        if opensFeed { selection = .feed }
+    }
+
+    /// 逛逛招聘会 on the coach's card's back: the card goes and 教练招聘会 opens over 今天.
+    func browseCoaches() {
+        showsCoachCard = false
+        todayPages = [.coach(.market)]
+    }
+
+    /// The coach's pages on 今天's stack; taking them away goes back to 小队, or to 今天 when they
+    /// opened from the sideline's empty spot.
+    var coachPages: Binding<[CoachRoute]> {
+        Binding(
+            get: {
+                todayPages.compactMap { page -> CoachRoute? in
+                    guard case .coach(let route) = page else { return nil }
+                    return route
+                }
+            },
+            set: { routes in
+                todayPages = todayPages.filter { $0 == .squad } + routes.map(TodayPage.coach)
+            })
     }
 }

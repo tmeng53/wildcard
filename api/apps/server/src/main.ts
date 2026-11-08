@@ -26,6 +26,7 @@ import {
   createCoachHiring,
   createCoachMemory,
   createCoachActivity,
+  createCoachLetters,
   createCoachSettings,
   createCoachNoteDelivery,
   createCoachWakes,
@@ -33,6 +34,7 @@ import {
   createPostgresCoachCatalog,
   createPostgresCoachNoteDelivery,
   createPostgresCoachHiring,
+  createPostgresCoachLetters,
   createPostgresCoachReport,
   createPostgresCoachSettings,
   createPostgresCoachStores,
@@ -64,6 +66,16 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
+import { NEW_YORK } from '@wildcard/time-zones';
+import {
+  createPostgresPlaceStore,
+  createPostgresWeatherDayStore,
+  createWeather,
+  createWeatherKitForecasts,
+  MemberId as WeatherMember,
+  weatherWords,
+} from '@wildcard/weather';
+import { createFeedbackInbox, createPostgresFeedbackStore } from '@wildcard/feedback';
 import {
   createApnsSender,
   createOffSender,
@@ -115,6 +127,7 @@ import {
   createSupabaseTokenVerifier,
   supabaseAuthIssuer,
 } from './adapters/supabase-auth.js';
+import { pubSubEvents } from './adapters/pubsub-events.js';
 import { googleScheduler, jobsTokenScheduler } from './adapters/scheduler.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
@@ -123,7 +136,9 @@ import { coachTools } from './admin-mcp/tools/coach.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
+import { coachNamesIn } from './flows/coach-names.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
+import { coachGifting, giveGiftAsAdmin, squadWeekStart } from './flows/coach-gifts.js';
 import { coachLineAlert, pushCoachLine } from './flows/comment-push.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { suggestGoalIn } from './flows/squad-goal-suggestion.js';
@@ -138,6 +153,7 @@ import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
 import { artTools } from './admin-mcp/tools/art.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
+import { createGitHubIssueTracker } from './adapters/github-issues.js';
 import { createSupabaseArtStorage } from './adapters/supabase-art-storage.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
@@ -151,7 +167,8 @@ import {
   piecesSection,
 } from './routes/catalog.js';
 import { readConfig } from './config.js';
-import { createLog, redactText, reportingErrors } from './log.js';
+import { inProcessEvents, type EventHandlers } from './events.js';
+import { createLog, redactText, reportingErrors, type Log } from './log.js';
 import { memberCalendar } from './member-calendar.js';
 import type { Database } from './ports.js';
 
@@ -266,6 +283,8 @@ const awards = createWeeklyAwards({
         .map(({ icon, names }) => ({ id: icon, meaning: `${names.zhHans}（运动）` })),
     ),
 });
+// Pub/Sub's project once events go through it (PUBSUB_EVENTS=on).
+const { pubSubProject } = config;
 // The scheduler that starts jobs: Cloud Scheduler's signed token on the hosted server, a shared
 // token on a local one.
 const isScheduler =
@@ -286,6 +305,13 @@ const squads = createSquads({
   inviteCodes: randomInviteCodes,
   aiConsent: hasAiConsent,
 });
+// A coach's gift week runs on its squad's clock, as the coach's day does.
+const giftWeekStart = squadWeekStart((ids, moment) =>
+  squads.timeZonesAt(
+    ids.map((squad) => SquadsSquad.parse(squad)),
+    moment,
+  ),
+);
 // Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
 const switches = switchesOn(db);
@@ -329,7 +355,7 @@ const unlockSources = (scope: Database) => ({
   sportListed: (id: string) => sports.isListed(id),
   switchListed: async (id: string) =>
     (await switchesOn(scope).list()).some((each) => each.id === id),
-  // A rule counts only 练了 made while its store's and piece's switches were on, by the New York
+  // A rule counts only 训练 made while its store's and piece's switches were on, by the New York
   // day and as each switch was set then, so turning one on or off by hand changes only what
   // follows; a previewer also counts those in preview, on their pretend day.
   switches: async (member: string) => {
@@ -386,7 +412,7 @@ const tellAfter = async (
   }
 };
 // What members unlock by training: the unlocks module keeps the rules and who earned what, and
-// asks check-ins for the 练了 that count and the sports module which sports exist.
+// asks check-ins for the 训练 that count and the sports module which sports exist.
 const unlocksOn = (scope: Database) =>
   createUnlocks({
     ...unlockSources(scope),
@@ -407,9 +433,27 @@ const nudges = createNudges({
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
+// Roughly where each member is, for the weather the coach reads; without WeatherKit's key the
+// places are still kept, and no one has weather.
+const weather = createWeather({
+  places: createPostgresPlaceStore(db),
+  days: createPostgresWeatherDayStore(db),
+  ...(config.weatherKit === undefined
+    ? {}
+    : { forecasts: createWeatherKitForecasts(config.weatherKit) }),
+  clock: () => new Date(),
+  failed: (error) => {
+    log.warn('weather not read', { error });
+  },
+});
+if (config.weatherKit === undefined) {
+  log.info('no WeatherKit key: the coach knows no one’s weather');
+}
+/** Each coach's name as its squad calls it, in its language. */
+const coachNames = coachNamesIn({ coaches: createPostgresCoachCatalog(db), members, squads });
 /** A coach's name now, as its pushes put it. */
-const coachNameOf = async (coach: string): Promise<string> =>
-  (await createPostgresCoachCatalog(db).list()).find(({ id }) => id === coach)?.name ?? coach;
+const coachNameOf = async (coach: string, squad: string): Promise<string> =>
+  (await coachNames([{ coach, squad }]))(coach, squad) ?? coach;
 /**
  * Tells each teammate a coach's line @s, but those it was already pushed to, as a teammate's @
  * is told: a notice in 通知 and a push (「毛头@了你：…」) under the coach's switch.
@@ -454,27 +498,33 @@ const weeklyPlans = createWeeklyPlans({
   calendarOf: memberCalendar(members),
   clock: () => new Date(),
 });
+/** A squad's week as the coach reads it. */
+const coachWeek = coachSquadWeek({
+  checkIns,
+  members,
+  squads,
+  sports,
+  scenes,
+  clock: () => new Date(),
+});
+/** Only the words of members who agreed to the current AI copy reach the model. */
+const coachConsented = (ids: readonly string[]) =>
+  aiConsent.currentAmong(ids.map((member) => ConsentMember.parse(member)));
+/** The coach's model: without OpenAI's key the coach never wakes or writes. */
+const coachAgent =
+  openaiKey === undefined ? undefined : createOpenAICoachAgent({ apiKey: openaiKey });
 // The AI coach runs on OpenAI: without its key the coach never wakes, whatever the settings say.
 const coachWakes =
-  openaiKey === undefined
+  coachAgent === undefined
     ? undefined
     : createCoachWakes({
         settings: createPostgresCoachSettings(db),
         catalog: createPostgresCoachCatalog(db),
         stores: createPostgresCoachStores(db),
         transaction: postgresCoachTransaction(db),
-        agent: createOpenAICoachAgent({ apiKey: openaiKey }),
-        squadWeek: coachSquadWeek({
-          checkIns,
-          members,
-          squads,
-          sports,
-          scenes,
-          clock: () => new Date(),
-        }),
-        // Only the words of members who agreed to the current AI copy reach the model.
-        aiConsented: (members) =>
-          aiConsent.currentAmong(members.map((member) => ConsentMember.parse(member))),
+        agent: coachAgent,
+        squadWeek: coachWeek,
+        aiConsented: coachConsented,
         hiring: createPostgresCoachHiring(db),
         clock: () => new Date(),
         // The daily wake and its 战术板 keep each squad's own clock (小队时区).
@@ -486,6 +536,27 @@ const coachWakes =
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
+        // Today's weather where each member is, on their own clock (Tracy, 2026-11-08).
+        weatherOf: async ({ members: ids, day }) => {
+          const zoned = await Promise.all(
+            ids.map(async (member) => ({
+              member: WeatherMember.parse(member),
+              timeZone:
+                (await members.findProfile(ProfileMember.parse(member)))?.timeZone ?? NEW_YORK,
+            })),
+          );
+          const days = await weather.dayFor({ members: zoned, day });
+          const zones = new Map(zoned.map(({ member, timeZone }) => [member, timeZone]));
+          return new Map(
+            [...days].map(([member, { today, yesterday }]) => [
+              member,
+              weatherWords(today, {
+                ...(yesterday === undefined ? {} : { yesterday }),
+                timeZone: zones.get(member) ?? NEW_YORK,
+              }),
+            ]),
+          );
+        },
         // Only members who keep the coach's messages on get a morning note (Tracy, 2026-11-07).
         wantNotes: async (members) => {
           // A switch that can't be read counts as off for that member only.
@@ -501,6 +572,15 @@ const coachWakes =
             ),
           );
           return members.filter((_, index) => on[index] === true);
+        },
+        // At most one gift a member a week, from the pool admins keep (Tracy, 2026-11-08).
+        gifting: coachGifting({
+          gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
+          weekStart: giftWeekStart,
+          clock: () => new Date(),
+        }),
+        warn: (message, details) => {
+          log.warn(message, details);
         },
         // The coach may draw humour from the same meme library as the 请假条 drafts and awards.
         memes: async () =>
@@ -536,7 +616,7 @@ const coachWakes =
             what: 'a coach reply',
           });
           if (text === undefined) return;
-          const coachName = await coachNameOf(coach);
+          const coachName = await coachNameOf(coach, squad);
           await pushCoachLine(
             { push, log },
             { checkIn, member: author, coachName, text, news: 'comment', about: checkIn },
@@ -556,7 +636,7 @@ const coachWakes =
             ],
             what: 'a coach answer',
           });
-          const coachName = await coachNameOf(coach);
+          const coachName = await coachNameOf(coach, squad);
           await pushCoachLine(
             { push, log },
             { checkIn, member: commenter, coachName, text, news: 'reply', about: comment },
@@ -564,7 +644,6 @@ const coachWakes =
           await tellCoachMentions({ squad, checkIn, coachName, text, mentions, told: [commenter] });
         },
       });
-const coachCatalog = createPostgresCoachCatalog(db);
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -583,9 +662,18 @@ const app = createApp({
   scenes,
   switches,
   nudges,
+  weather,
+  feedback: createFeedbackInbox({
+    store: createPostgresFeedbackStore(db),
+    clock: () => new Date(),
+  }),
+  issues:
+    config.feedbackIssues === undefined
+      ? undefined
+      : createGitHubIssueTracker(config.feedbackIssues),
   notices,
   liveEvents,
-  coachNames: async () => new Map((await coachCatalog.list()).map(({ id, name }) => [id, name])),
+  coachNames,
   aiConsent,
   // Data the app shows that lives in the database. Each module keeps its own section.
   catalog: {
@@ -638,6 +726,41 @@ const app = createApp({
     hiring: createPostgresCoachHiring(db),
     catalog: createPostgresCoachCatalog(db),
   }),
+  coachLetters: createCoachLetters({
+    settings: createPostgresCoachSettings(db),
+    catalog: createPostgresCoachCatalog(db),
+    letters: createPostgresCoachLetters(db),
+    memory: createPostgresCoachStores(db).memory,
+    usage: createPostgresCoachStores(db).usage,
+    squadWeek: coachWeek,
+    aiConsented: coachConsented,
+    clock: () => new Date(),
+    ...(coachAgent === undefined ? {} : { agent: coachAgent }),
+    timeZonesAt: (ids, moment) =>
+      squads.timeZonesAt(
+        ids.map((squad) => SquadsSquad.parse(squad)),
+        moment,
+      ),
+    // Every member finds the letter in 通知, to read again.
+    lettered: async (letter, told) => {
+      await tellAfter(db, {
+        told: told.map((member) => ({
+          member: NoticeMember.parse(member),
+          squad: NoticeSquad.parse(letter.squad),
+          kind: 'coachLetter' as const,
+          subject: {
+            version: 1 as const,
+            letter: letter.id,
+            from: letter.from.id,
+            to: letter.to.id,
+            day: letter.day,
+            text: letter.text,
+          },
+        })),
+        what: 'a coach letter',
+      });
+    },
+  }),
   coachActivity,
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
@@ -660,6 +783,17 @@ const app = createApp({
         }),
       notices: noticesOn,
     }),
+    // Events go through Pub/Sub once it is set up, and run in the request when it can't take one.
+    ...(pubSubProject === undefined
+      ? {}
+      : {
+          publishEvents: (handlers: EventHandlers, eventLog: Log) =>
+            pubSubEvents({
+              project: pubSubProject,
+              fallback: inProcessEvents(handlers, eventLog),
+              log: eventLog,
+            }),
+        }),
     coachNotes: {
       notes: createCoachNoteDelivery({ store: createPostgresCoachNoteDelivery(db) }),
       noteHour: async () => (await createPostgresCoachSettings(db).current()).noteHour,
@@ -699,6 +833,7 @@ const app = createApp({
       ...unlockTools({
         unlocks: unlocksOn(scope),
         gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
+        giveGift: giveGiftAsAdmin(scope, giftWeekStart),
       }),
       ...broadcastTools({
         broadcasts: noticesOn(scope),

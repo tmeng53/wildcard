@@ -1,7 +1,15 @@
 import { z } from 'zod';
 
 import { editBody, FILE_LIMIT, storedPathOf, type StoredPath } from '../../domain/memory.js';
-import { NOTE_LIMIT } from '../../domain/prompt.js';
+import {
+  Challenge,
+  CHALLENGE_AMOUNT_MAX,
+  CHALLENGE_LINE_LIMIT,
+  CHALLENGE_TITLE_LIMIT,
+  CHALLENGE_UNIT_LIMIT,
+  challengeText,
+} from '../../domain/challenge.js';
+import { GIFT_LINE_LIMIT, NOTE_LIMIT, type GiftOptions } from '../../domain/prompt.js';
 import { CoachEmoji, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
 import { weekText, type SquadWeek } from '../../domain/squad-week.js';
 import type { WakeReason, WakeStep } from '../../domain/wake.js';
@@ -15,8 +23,13 @@ export interface WakeDraft {
   readonly changed: Set<StoredPath>;
   /** The 战术板 line the run posted, on a daily wake. */
   note: string | undefined;
-  /** The morning note (便条) the run wrote to each member, by member id, on a daily wake. */
-  readonly memberNotes: Map<string, string>;
+  /**
+   * The morning note (便条) the run wrote to each member, by member id, on a daily wake, with the
+   * day's challenge it sets, if any.
+   */
+  readonly memberNotes: Map<string, { readonly text: string; readonly challenge?: Challenge }>;
+  /** The gift the run gives each member, by member id, on a daily wake. */
+  readonly gifts: Map<string, { readonly piece: string; readonly line: string }>;
   /** What the run said to the check-in, on its wake. */
   reply: string | undefined;
   /** Whom that line @s, by member id. */
@@ -27,6 +40,8 @@ export interface WakeDraft {
   answer: string | undefined;
   /** Whom that answer @s, by member id. */
   answerMentions: readonly string[];
+  /** Whether the run marked the check-in's author's challenge today done, on its wake. */
+  challengeDone: boolean;
   /** Every tool call of the run, in order. */
   readonly steps: WakeStep[];
 }
@@ -132,7 +147,9 @@ export function toolbox({
   pastWeek,
   memes,
   noteTo = [],
+  gifting,
   to,
+  openChallenge = false,
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
@@ -148,8 +165,12 @@ export function toolbox({
   readonly memes?: CoachMemes;
   /** On a daily wake, the members the coach may write a morning note to, by id. */
   readonly noteTo?: readonly string[];
+  /** On a daily wake, the gift pool and who may get a gift this week. */
+  readonly gifting?: GiftOptions;
   /** Whom a line on this wake answers, by member id: the post's author or the replier. */
   readonly to?: string | undefined;
+  /** On a check-in's wake, whether its author has a challenge today that can still be done. */
+  readonly openChallenge?: boolean;
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
   const tools = [
@@ -157,7 +178,7 @@ export function toolbox({
       name: 'squad_week',
       reads: true,
       description:
-        '小队一周的情况：队员和外号，每个人的打卡、表情和评论。默认这周，weeks_ago 填 1 到 4 看前几周。',
+        '小队一周的情况：队员和外号，每个人的打卡（几点发的是发的人自己当地的时间）、谁点了表情和评论。默认这周，weeks_ago 填 1 到 4 看前几周。',
       parameters: z.object({
         weeks_ago: z.number().int().min(0).max(4).optional().describe('看几周前，0 或不填是这周'),
       }),
@@ -279,10 +300,42 @@ export function toolbox({
         parameters: z.object({
           member: z.string().describe('写给谁：队员N'),
           text: z.string().describe('便条上的这一句'),
+          challenge: z
+            .object({
+              title: z
+                .string()
+                .describe(
+                  `做什么，只写动作，数量和单位不写进来，不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字`,
+                ),
+              amount: z
+                .number()
+                .int()
+                .optional()
+                .describe(`多少，正整数，不超过 ${String(CHALLENGE_AMOUNT_MAX)}；没有数量就不填`),
+              unit: z
+                .string()
+                .optional()
+                .describe(
+                  `数量的单位，不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字；和 amount 一起填`,
+                ),
+              line: z
+                .string()
+                .describe(
+                  `标题下面的一句小字，对他说为什么是这件事，不超过 ${String(CHALLENGE_LINE_LIMIT)} 字`,
+                ),
+            })
+            .optional()
+            .describe(
+              '今日挑战，可以不给。只给一件今天做得到、真能让他练得更好或吃得更好的小事，从他今天的计划、饮食小目标和最近的训练里找；没有合适的就不给。要比他平时多走一小步，数量要真有意思，别把他的目标原样再说一遍。不加练量，不提体重和热量；休息日、请假或身体不舒服的人不给。他可以接受或说算了，之后他发打卡时你会知道。',
+            ),
         }),
         // Kept by length: it is about the member, and stays in its own table.
-        kept: ({ member, text }) => ({ member, text: `（${String(text.length)} 字）` }),
-        run: ({ member, text }) => {
+        kept: ({ member, text, challenge }) => ({
+          member,
+          text: `（${String(text.length)} 字）`,
+          ...(challenge === undefined ? {} : { challenge }),
+        }),
+        run: ({ member, text, challenge }) => {
           const id = [...roster].find(([, name]) => name === member.trim())?.[0];
           if (id === undefined || !noteTo.includes(id)) {
             return `不能给 ${member} 写便条；能写的是：${noteTo.map((each) => roster.get(each) ?? '').join('、')}。`;
@@ -290,12 +343,36 @@ export function toolbox({
           const line = text.trim();
           const problem = lineProblem(line, NOTE_LIMIT);
           if (problem !== undefined) return problem;
+          // A blank title is no challenge: the model sends one, with a zero amount, for a rest day.
+          // A blank line under it is none too.
+          const set =
+            challenge === undefined || challenge.title.trim() === ''
+              ? undefined
+              : Challenge.safeParse({
+                  ...challenge,
+                  line: challenge.line.trim() === '' ? undefined : challenge.line,
+                });
+          if (set !== undefined && !set.success) {
+            return `挑战不对：title 不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数，unit 不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字，两个一起填或都不填；line 不超过 ${String(CHALLENGE_LINE_LIMIT)} 字。`;
+          }
           const replaced = draft.memberNotes.has(id);
-          draft.memberNotes.set(id, line);
-          return replaced ? `已换成这张，给 ${member}。` : `便条写好了，给 ${member}。`;
+          draft.memberNotes.set(id, {
+            text: line,
+            ...(set === undefined ? {} : { challenge: set.data }),
+          });
+          const done = replaced ? `已换成这张，给 ${member}` : `便条写好了，给 ${member}`;
+          return set === undefined ? `${done}。` : `${done}，挑战「${challengeText(set.data)}」。`;
         },
       }),
     );
+  }
+  if (
+    kind === 'daily' &&
+    gifting !== undefined &&
+    gifting.open.size > 0 &&
+    gifting.pool.length > 0
+  ) {
+    tools.push(giveGift(draft, { roster, gifting }));
   }
   if (kind === 'dream') {
     tools.push(
@@ -346,6 +423,21 @@ export function toolbox({
           const replaced = draft.reaction !== undefined;
           draft.reaction = emoji;
           return replaced ? `已换成 ${emoji}。` : `已点 ${emoji}。`;
+        },
+      }),
+    );
+  }
+  if (kind === 'checkIn' && openChallenge) {
+    tools.push(
+      defineTool(draft.steps, {
+        name: 'complete_challenge',
+        description:
+          '这条打卡做到了你今天给他的挑战，就记他完成：他自己的页面上会显示「已完成」。没做到就不用。',
+        parameters: z.object({}),
+        run: () => {
+          const again = draft.challengeDone;
+          draft.challengeDone = true;
+          return again ? '已经记过了。' : '已记他完成。';
         },
       }),
     );
@@ -410,4 +502,47 @@ function lookAtPhotos(steps: WakeStep[], photos: () => Promise<readonly string[]
       return { text: `这条打卡的 ${String(urls.length)} 张照片，第一张是封面：`, images: urls };
     },
   };
+}
+
+/**
+ * Gives a member a piece from the gift pool, with a line only they see: at most one a member a
+ * week (Tracy, 2026-11-08), so only to those the task lists, and never a piece they have. Given
+ * once the run's other changes are saved.
+ */
+function giveGift(
+  draft: WakeDraft,
+  {
+    roster,
+    gifting,
+  }: { readonly roster: ReadonlyMap<string, string>; readonly gifting: GiftOptions },
+): CoachTool {
+  const open = [...gifting.open.keys()];
+  return defineTool(draft.steps, {
+    name: 'give_gift',
+    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字。`,
+    parameters: z.object({
+      member: z.string().describe('送给谁：队员N'),
+      piece: z.string().describe('送哪件：任务里礼物清单的 id'),
+      line: z.string().describe('送的时候说的一句'),
+    }),
+    kept: ({ member, piece, line }) => ({ member, piece, line: `（${String(line.length)} 字）` }),
+    run: ({ member, piece, line }) => {
+      const id = [...roster].find(([, name]) => name === member.trim())?.[0];
+      const owned = id === undefined ? undefined : gifting.open.get(id);
+      if (id === undefined || owned === undefined) {
+        return `${member} 这周不能收礼物；能收的是：${open.map((each) => roster.get(each) ?? '').join('、')}。`;
+      }
+      const chosen = piece.trim();
+      if (!gifting.pool.some(({ id: each }) => each === chosen)) {
+        return `没有 ${chosen} 这件；能送的见任务里的礼物清单。`;
+      }
+      if (owned.includes(chosen)) return `${member} 已经有 ${chosen} 了，换一件。`;
+      const said = line.trim();
+      const problem = lineProblem(said, GIFT_LINE_LIMIT);
+      if (problem !== undefined) return problem;
+      const replaced = draft.gifts.has(id);
+      draft.gifts.set(id, { piece: chosen, line: said });
+      return replaced ? `已换成 ${chosen}，给 ${member}。` : `${chosen} 送给 ${member} 了。`;
+    },
+  });
 }

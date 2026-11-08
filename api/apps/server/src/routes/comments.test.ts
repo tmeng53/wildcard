@@ -45,6 +45,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -56,7 +57,9 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 // Comments on check-ins, through the routes the app calls, on local Supabase.
@@ -133,6 +136,8 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
+  ...unusedFeedback,
   scenes: scenesOn(db),
   switches: switchesOn(db),
   weeklyAwards: unusedWeeklyAwards,
@@ -141,6 +146,7 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachLetters: unusedCoachLetters,
   // Real, so a comment's notices are read back from 通知.
   notices: createNotices({
     store: createPostgresNoticeStore(db),

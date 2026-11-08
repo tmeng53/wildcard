@@ -36,12 +36,33 @@ export interface CoachAnswers {
   wake_id: Int8 | null;
 }
 
+export interface CoachCardSeen {
+  at: Generated<Timestamp>;
+  card_id: string;
+  kind: string;
+  member_id: string;
+  squad_id: string;
+}
+
 export interface CoachCatalogEvents {
   at: Generated<Timestamp>;
   changed_by: string | null;
   coach: Json;
   coach_id: string;
   id: Generated<Int8>;
+}
+
+export interface CoachChallengeAnswers {
+  answer: string;
+  at: Generated<Timestamp>;
+  note_id: Int8;
+  reason: string | null;
+}
+
+export interface CoachChallengeCompletions {
+  at: Generated<Timestamp>;
+  by: string;
+  note_id: Int8;
 }
 
 export interface Coaches {
@@ -59,6 +80,7 @@ export interface Coaches {
   tags: string[];
   tier: string;
   title: string;
+  translations: Generated<Json>;
   years_coaching: number;
 }
 
@@ -70,6 +92,23 @@ export interface CoachFiles {
   path: string;
   squad_id: string;
   wake_id: Int8 | null;
+}
+
+export interface CoachLetters {
+  at: Generated<Timestamp>;
+  day: string;
+  from_coach: string;
+  hire_event_id: Int8;
+  id: Generated<Int8>;
+  squad_id: string;
+  text: string;
+  to_coach: string;
+}
+
+export interface CoachLetterTries {
+  at: Generated<Timestamp>;
+  hire_event_id: Int8;
+  squad_id: string;
 }
 
 export interface CoachMemberNoteDeliveries {
@@ -84,6 +123,10 @@ export interface CoachMemberNoteReads {
 
 export interface CoachMemberNotes {
   at: Generated<Timestamp>;
+  challenge_amount: number | null;
+  challenge_line: string | null;
+  challenge_title: string | null;
+  challenge_unit: string | null;
   coach_id: string;
   day: string;
   id: Generated<Int8>;
@@ -192,8 +235,13 @@ export interface SquadCoachEvents {
 
 export interface DB {
   coach_answers: CoachAnswers;
+  coach_card_seen: CoachCardSeen;
   coach_catalog_events: CoachCatalogEvents;
+  coach_challenge_answers: CoachChallengeAnswers;
+  coach_challenge_completions: CoachChallengeCompletions;
   coach_files: CoachFiles;
+  coach_letter_tries: CoachLetterTries;
+  coach_letters: CoachLetters;
   coach_member_note_deliveries: CoachMemberNoteDeliveries;
   coach_member_note_reads: CoachMemberNoteReads;
   coach_member_notes: CoachMemberNotes;

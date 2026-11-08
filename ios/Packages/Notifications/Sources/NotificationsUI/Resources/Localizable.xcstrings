@@ -316,7 +316,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "隊友評論了你的動態"
+            "value": "隊友在你的動態留言了"
           }
         }
       }
@@ -396,7 +396,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 和 %2$@ 評論了你的動態"
+            "value": "%1$@ 和 %2$@ 在你的動態留言"
           }
         }
       }
@@ -412,7 +412,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@、%2$@ 和另外 %3$lld 人評論了你的動態"
+            "value": "%1$@、%2$@ 和另外 %3$lld 人在你的動態留言"
           }
         }
       }
@@ -461,6 +461,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "教練"
+          }
+        }
+      }
+    },
+    "%@给%@留了一封交接信": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ left %2$@ a handover letter"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@給%2$@留了一封交接信"
           }
         }
       }

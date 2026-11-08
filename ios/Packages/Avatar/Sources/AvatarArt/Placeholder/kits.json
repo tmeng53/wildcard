@@ -21,11 +21,12 @@
   ],
   "categories": {
     "runWalk": "run", "cardio": "run", "strength": "strength", "combat": "boxing", "mindBody": "yoga",
-    "water": "swim", "racket": "tennis", "cycling": "cycling"
+    "water": "swim", "racket": "tennis"
   },
   "sports": {
     "climb": "climb", "kettlebell": "kettlebell", "badminton": "badminton", "pickleball": "pickleball",
-    "tableTennis": "pingpong", "spin": "cycling", "bikeCommute": "cycling", "basketball": "basketball",
+    "tableTennis": "pingpong", "spin": "cycling", "roadCycling": "cycling",
+    "mountainBiking": "cycling", "bikeCommute": "cycling", "basketball": "basketball",
     "soccer": "soccer", "ski": "ski", "crossCountrySki": "ski", "snowboard": "snowboard"
   },
   "otherwise": "warmup"

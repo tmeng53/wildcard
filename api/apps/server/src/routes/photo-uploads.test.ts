@@ -26,6 +26,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -37,7 +38,9 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 // The whole journey against local Supabase: sign in, ask for an upload URL, upload to it.
@@ -98,9 +101,12 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachLetters: unusedCoachLetters,
     ...ignoredNotices,
+    ...unusedFeedback,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
+    weather: weatherOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,
     admin: adminOn(),

@@ -7,7 +7,7 @@ import DesignSystemUI
 import SportsUI
 import SwiftUI
 
-/// The 今天 tab: the whole squad on its scene with the week's card on top, me front and centre,
+/// The 小队 tab (`.today`): the whole squad on its scene with the week's card on top, me front and centre,
 /// and 打卡. Every check-in starts and ends here: the burst opens over the lightly blurred scene,
 /// and after posting you stay on the scene for the payoff (the approved home, version 15).
 public struct TodayView: View {
@@ -110,7 +110,8 @@ public struct TodayView: View {
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
                 pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
                 tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, tapCoach: model.tapCoach,
-                coachHasNote: model.coachHasNote, coachAt: { coachCenter = $0 }
+                coachHasNote: model.coachHasNote, coachAt: { coachCenter = $0 },
+                tapVacancy: model.tapVacancy, clock: model.now
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -185,6 +186,8 @@ public struct TodayView: View {
             }
         }
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.coachNote?.id)
+        .overlay { letter }
+        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.shownLetter)
     }
 
     /// The card at the top: the squad card, with the 今日赛况 tag as its last row from the evening
@@ -367,4 +370,17 @@ extension TodayView {
     }
 }
 
+extension TodayView {
+    /// The coach's letter, over everything on the scene, the tab bar hidden under it.
+    @ViewBuilder private var letter: some View {
+        if let shown = model.shownLetter {
+            CoachLetterOverlay(
+                shown: shown, shownAt: model.letterShownAt, from: coachCenter, clock: model.now,
+                putAway: model.putAwayLetter
+            )
+            .id(shown)
+            .transition(.opacity)
+        }
+    }
+}
 #endif

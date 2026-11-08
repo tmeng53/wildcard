@@ -4,7 +4,7 @@ import Foundation
 import ScenePickDomain
 import SquadDomain
 
-/// 小队设置 over our API: the member's first squad with its members' characters, the week's
+/// 小队设置 over our API: the member's squad with its members' characters, the week's
 /// scene and its coach, and the captain's changes, leaving, the scene pick and the coach.
 public struct APISquadSettingsService: SquadSettingsService {
     private let api: WildcardAPI
@@ -24,6 +24,7 @@ public struct APISquadSettingsService: SquadSettingsService {
             let coach = try await api.coach(of: first.id)
             let goal = try await api.weeklyGoal(of: first.id)
             let matchTimeZone = try await api.timeZone(of: first.id)
+            let language = try await api.language(of: first.id)
             var characters: [MemberID: MemberCharacter] = [:]
             for mate in today.members {
                 if let character = mate.character { characters[mate.member] = character }
@@ -32,7 +33,7 @@ public struct APISquadSettingsService: SquadSettingsService {
             return SquadSettings(
                 squad: first, viewer: member.id, characters: characters, scene: scene, coach: coach,
                 today: LocalDay(at: now(), in: timeZone), timeZone: timeZone, goal: goal,
-                matchTimeZone: matchTimeZone)
+                matchTimeZone: matchTimeZone, language: language)
         }
     }
 
@@ -70,6 +71,12 @@ public struct APISquadSettingsService: SquadSettingsService {
 
     public func setTimeZone(of squad: SquadID, to timeZone: String) async throws(SquadError) -> SquadTimeZone {
         try await self.squad { () throws(APIError) in try await api.setTimeZone(of: squad, to: timeZone) }
+    }
+
+    public func setLanguage(of squad: SquadID, to language: SquadLanguage.Language) async throws(SquadError)
+        -> SquadLanguage
+    {
+        try await self.squad { () throws(APIError) in try await api.setLanguage(of: squad, to: language) }
     }
 
     private func squad<T>(_ call: () async throws(APIError) -> T) async throws(SquadError) -> T {

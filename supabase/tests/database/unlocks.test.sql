@@ -1,7 +1,7 @@
 -- What members unlock: the rules are logged and never deleted, and a member's unlocks are
 -- append-only until their account goes.
 begin;
-select plan(23);
+select plan(29);
 
 insert into auth.users (id, email) values ('e0000000-0000-0000-0000-000000000001', 'una@example.com');
 
@@ -86,6 +86,48 @@ select throws_ok(
     values ('e0000000-0000-0000-0000-000000000001', 'gift-nowhere', (select id from public.coaches limit 1),
       'e2000000-0000-0000-0000-000000000001')$$,
   '23503', null, 'a gift is a piece in the pool'
+);
+
+-- One gift a member a week, whoever gives it; opened once, and the opening stays.
+insert into public.gift_pieces (piece_id, offered) values ('gift-cap', true), ('gift-scarf-2', true);
+insert into public.coach_gifts (member_id, piece_id, coach_id, squad_id, week_from)
+values ('e0000000-0000-0000-0000-000000000001', 'gift-cap', (select id from public.coaches limit 1),
+  'e2000000-0000-0000-0000-000000000001', '2026-11-02T05:00:00Z');
+select throws_ok(
+  $$insert into public.coach_gifts (member_id, piece_id, coach_id, squad_id, week_from, given_by)
+    values ('e0000000-0000-0000-0000-000000000001', 'gift-scarf-2', (select id from public.coaches limit 1),
+      'e2000000-0000-0000-0000-000000000001', '2026-11-02T05:00:00Z', 'admin')$$,
+  '23505', null, 'one gift a member a week'
+);
+insert into public.coach_gift_opens (member_id, piece_id, worn)
+values ('e0000000-0000-0000-0000-000000000001', 'gift-cap', true);
+select throws_ok(
+  $$insert into public.coach_gift_opens (member_id, piece_id, worn)
+    values ('e0000000-0000-0000-0000-000000000001', 'gift-cap', false)$$,
+  '23505', null, 'a gift is opened once'
+);
+select throws_ok($$update public.coach_gift_opens set worn = false$$, '42501', null, 'an opening stays');
+select throws_ok(
+  $$insert into public.coach_gift_opens (member_id, piece_id, worn)
+    values ('e0000000-0000-0000-0000-000000000001', 'gift-nowhere', true)$$,
+  '23503', null, 'only a gift the member was given is opened'
+);
+
+-- An admin who gave a gift can still delete their account: the gift stays, without them.
+insert into auth.users (id, email) values ('e0000000-0000-0000-0000-000000000009', 'ada@example.com');
+insert into public.gift_pieces (piece_id, offered) values ('gift-mitt', true);
+insert into public.coach_gifts (member_id, piece_id, coach_id, squad_id, given_by, admin_id, week_from)
+values ('e0000000-0000-0000-0000-000000000001', 'gift-mitt', (select id from public.coaches limit 1),
+  'e2000000-0000-0000-0000-000000000001', 'admin', 'e0000000-0000-0000-0000-000000000009',
+  '2026-11-09T05:00:00Z');
+select throws_ok(
+  $$update public.coach_gifts set admin_id = null where piece_id = 'gift-mitt'$$,
+  '42501', null, 'the giver stays while their account does'
+);
+delete from auth.users where id = 'e0000000-0000-0000-0000-000000000009';
+select is(
+  (select admin_id from public.coach_gifts where piece_id = 'gift-mitt'), null,
+  'deleting the admin keeps the gift without them'
 );
 
 -- 领取: only a piece the member unlocked, and never undone.

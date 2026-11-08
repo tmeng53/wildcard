@@ -36,6 +36,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -48,7 +49,9 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 // The whole server as main.ts wires it: local Supabase's Auth and database (the draft settings
@@ -140,6 +143,7 @@ function appWith(model: LanguageModel, modelName?: string) {
     push: pushOn(db),
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
+    weather: weatherOn(db),
     scenes: scenesOn(db),
     switches: switchesOn(db),
     weeklyAwards: unusedWeeklyAwards,
@@ -148,7 +152,9 @@ function appWith(model: LanguageModel, modelName?: string) {
     weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachLetters: unusedCoachLetters,
     ...ignoredNotices,
+    ...unusedFeedback,
     log: createLog((line) => logged.push(JSON.parse(line))),
     jobs: noJobs,
     admin: adminOn(),

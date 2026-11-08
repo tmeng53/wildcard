@@ -67,6 +67,13 @@ public final class TodayStore {
     var openedNote: CoachMemberNote?
     /// Notes put away on this phone since launch, kept out of a load that crossed the put-away.
     var putAway: Set<Int> = []
+    /// The coaches changing on the sideline (换教练), from the captain's confirm until the coach
+    /// that took over stands there.
+    public internal(set) var handover: CoachHandover?
+    /// A letter opened again from 通知 or the coach's 简历.
+    var letterAgain: CoachLetter?
+    /// The newest letter opened on this phone; nil before it is read from the device, or before any.
+    var openedLetterID: Int?
     /// What changed in the squad since the home shown before, not yet told (`takeNews()`).
     public internal(set) var news = SquadNews()
     /// The squad the member was in when the server last said they are in none: they left it, or

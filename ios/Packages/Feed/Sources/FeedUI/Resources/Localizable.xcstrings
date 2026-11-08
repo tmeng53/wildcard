@@ -198,7 +198,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ reacted to you: %2$@"
+            "value" : "%1$@ reacted to your post: %2$@"
           }
         },
         "zh-Hant" : {
@@ -364,7 +364,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "刪掉這條動態？"
+            "value" : "刪掉這則動態？"
           }
         }
       }
@@ -509,22 +509,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "寫留言"
-          }
-        }
-      }
-    },
-    "分钟" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "min"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "分鐘"
           }
         }
       }
@@ -828,7 +812,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "坦白放縱餐"
+            "value" : "坦白欺騙餐"
           }
         }
       }
@@ -1100,7 +1084,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "網路開小差了，沒傳出去"
+            "value" : "網路怪怪的，沒傳出去"
           }
         }
       }
@@ -1244,7 +1228,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "隊友的回應和評論也會一起刪掉"
+            "value" : "隊友的回應和留言也會一起刪掉"
           }
         }
       }
@@ -1292,7 +1276,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "發過 %1$lld 條 · 收到 %2$lld 個表情"
+            "value" : "發過 %1$lld 則 · 收到 %2$lld 個表情"
           }
         }
       }
@@ -1308,7 +1292,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "放縱餐"
+            "value" : "欺騙餐"
           }
         }
       }
@@ -1324,7 +1308,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "第一條動態，從今天開始"
+            "value" : "第一則動態，從今天開始"
           }
         }
       }

@@ -28,13 +28,20 @@ export const WorkoutSummary = z
     effort: z.number().min(1).max(10).optional(),
     laps: z.int().min(1).max(10_000).optional(),
     poolLengthM: z.number().positive().max(100).optional(),
+    runs: z.int().min(1).max(1000).optional(),
+    descentM: z.number().nonnegative().max(100_000).optional(),
+    topSpeedKmh: z.number().nonnegative().max(300).optional(),
+    elevationGainM: z.number().nonnegative().max(20_000).optional(),
+    paceSecPer100m: z.number().positive().max(DAY_SECONDS).optional(),
   })
   .meta({
     id: 'WorkoutSummary',
     description:
       'The numbers the member posted, as the provider gave them. Each is left out when the ' +
       'provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), ' +
-      'speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim).',
+      'speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per ' +
+      '100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, ' +
+      'snowboard: worked out on the phone from the route), metres climbed (hike).',
   });
 export type WorkoutSummary = z.infer<typeof WorkoutSummary>;
 

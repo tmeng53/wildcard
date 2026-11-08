@@ -1,0 +1,98 @@
+import { typedText } from '@wildcard/typed-text';
+import { z } from 'zod';
+
+// The day's challenge (今日挑战) a coach may set a member on their morning note (Tracy,
+// 2026-11-08): one doable thing that makes today better, taken from their plan, 饮食小目标 and
+// recent training. A title, and a number with its unit when it has one (「喝水 8 杯」, 「拉伸 10
+// 分钟」, or just 「早点睡」). The member accepts it (接受挑战) or lets it go (算了), and it is
+// done once the member says so (我完成了) or the coach sees it in that day's check-ins, only on
+// its own day; the first one stands.
+
+/** The longest title, in characters; the database checks the same. */
+export const CHALLENGE_TITLE_LIMIT = 8;
+/** The longest unit, in characters; the database checks the same. */
+export const CHALLENGE_UNIT_LIMIT = 4;
+/** The biggest amount; the database checks the same. */
+export const CHALLENGE_AMOUNT_MAX = 9999;
+/** The longest line under the title, in characters; the database checks the same. */
+export const CHALLENGE_LINE_LIMIT = 24;
+
+export const Challenge = z
+  .strictObject({
+    title: z.string().trim().min(1).max(CHALLENGE_TITLE_LIMIT),
+    amount: z.int().min(1).max(CHALLENGE_AMOUNT_MAX).optional(),
+    unit: z.string().trim().min(1).max(CHALLENGE_UNIT_LIMIT).optional(),
+    /** The coach talking to the member under the title, about why (「昨天跑完腿还紧，睡前拉一拉。」). */
+    line: z.string().trim().min(1).max(CHALLENGE_LINE_LIMIT).optional(),
+  })
+  .refine(({ amount, unit }) => (amount === undefined) === (unit === undefined), {
+    message: 'amount and unit come together, or neither',
+  });
+export type Challenge = z.infer<typeof Challenge>;
+
+/** What the member said to it: accepted (接受挑战), declined (算了) or nothing yet. */
+export const ChallengeAnswer = z.enum(['accepted', 'declined']);
+export type ChallengeAnswer = z.infer<typeof ChallengeAnswer>;
+
+/** The longest reason for letting a challenge go, in characters. */
+export const DECLINE_REASON_LIMIT = 60;
+
+/** Why the member let a challenge go (算了), if they said: 「我鸡蛋过敏」. */
+export const DeclineReason = typedText({
+  max: DECLINE_REASON_LIMIT,
+  oneLine: true,
+  description: 'Why they let it go, if they say; only with `declined`. Their coach remembers it.',
+});
+
+/** Who marked a challenge done: the member (我完成了) or the coach, from their check-ins. */
+export const ChallengeDoneBy = z.enum(['member', 'coach']);
+export type ChallengeDoneBy = z.infer<typeof ChallengeDoneBy>;
+
+/** A challenge marked done: by whom and when. */
+export interface ChallengeCompletion {
+  readonly by: ChallengeDoneBy;
+  readonly at: Date;
+}
+
+/** A challenge as the model reads it: 「喝水 8 杯」. */
+export function challengeText({ title, amount, unit }: Challenge): string {
+  return amount === undefined || unit === undefined ? title : `${title} ${String(amount)} ${unit}`;
+}
+
+/** The member's challenge today and what they said to it, as a check-in's wake tells the coach. */
+export function challengeLine({
+  challenge,
+  answer,
+  reason,
+  completion,
+}: {
+  readonly challenge: Challenge;
+  readonly answer?: ChallengeAnswer | undefined;
+  readonly reason?: string | undefined;
+  readonly completion?: ChallengeCompletion | undefined;
+}): string {
+  const said =
+    completion?.by === 'member'
+      ? '他说已经完成了'
+      : completion?.by === 'coach'
+        ? '你已经记他完成了'
+        : answer === 'accepted'
+          ? '他接受了'
+          : answer === 'declined'
+            ? reason === undefined
+              ? '他说算了'
+              : `他说算了，因为「${reason}」（他只告诉了你，别在回复里说）`
+            : '他还没回应';
+  return `你今天给他的挑战：「${challengeText(challenge)}」，${said}。`;
+}
+
+/** Whether a challenge can still be marked done: not let go (算了) and not done yet. */
+export function challengeOpen({
+  answer,
+  completion,
+}: {
+  readonly answer?: ChallengeAnswer | undefined;
+  readonly completion?: ChallengeCompletion | undefined;
+}): boolean {
+  return answer !== 'declined' && completion === undefined;
+}

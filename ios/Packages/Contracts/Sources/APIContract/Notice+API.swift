@@ -50,6 +50,8 @@ extension Notice {
         switch wire.kind {
         case "coachNote":
             return coachNote(wire)
+        case "coachLetter":
+            return coachLetter(wire).map(Subject.coachLetter)
         case "unlocked":
             return unlocked(wire)
         case "broadcast":
@@ -92,6 +94,18 @@ extension Notice {
                 coach: CoachSpeaker(id: coach, name: wire.coachName ?? "")))
     }
 
+    /// The letter as 今天 opens it again from 通知; the coaches' names are as they are now.
+    fileprivate static func coachLetter(_ wire: Components.Schemas.NoticeEntry) -> CoachLetter? {
+        guard let id = wire.letter, let from = wire.coach.flatMap(CoachID.init(rawValue:)),
+            let recipient = wire.toCoach.flatMap(CoachID.init(rawValue:)),
+            let day = wire.day.flatMap({ try? LocalDay($0) }), let text = wire.text,
+            let squad = wire.squadId.flatMap({ try? SquadID(wire: $0) })
+        else { return nil }
+        return CoachLetter(
+            id: id, squad: squad, from: CoachSpeaker(id: from, name: wire.coachName ?? ""),
+            to: CoachSpeaker(id: recipient, name: wire.toCoachName ?? ""), day: day, text: text)
+    }
+
     fileprivate static func broadcast(_ wire: Components.Schemas.NoticeEntry) -> Broadcast? {
         guard let id = wire.broadcast, let title = wire.title.map(CatalogNames.init) else { return nil }
         let action = wire.action.flatMap { action in
@@ -121,24 +135,22 @@ extension AppDestination {
     /// A broadcast's button's place, as the API names it; nil for one this build doesn't know,
     /// which shows no button.
     init?(path: String) {
-        switch path {
-        case "stores": self = .stores
-        case "notices": self = .notices
-        case "schedule": self = .schedule
-        case "squad": self = .squad
-        case "feed": self = .feed
-        case "today": self = .today
-        case "me": self = .profile
-        default:
-            if path.hasPrefix("store/"), path.count > "store/".count {
-                self = .store(String(path.dropFirst("store/".count)))
-            } else if path.hasPrefix("post/"), let id = try? CheckInID(wire: String(path.dropFirst("post/".count))) {
-                self = .post(id)
-            } else {
-                return nil
-            }
+        if let place = Self.places[path] {
+            self = place
+        } else if path.hasPrefix("store/"), path.count > "store/".count {
+            self = .store(String(path.dropFirst("store/".count)))
+        } else if path.hasPrefix("post/"), let id = try? CheckInID(wire: String(path.dropFirst("post/".count))) {
+            self = .post(id)
+        } else {
+            return nil
         }
     }
+
+    /// The places named by a word alone.
+    private static let places: [String: AppDestination] = [
+        "stores": .stores, "notices": .notices, "schedule": .schedule, "squad": .squad, "coaches": .coaches,
+        "feed": .feed, "today": .today, "me": .profile,
+    ]
 }
 
 extension NoticeID {

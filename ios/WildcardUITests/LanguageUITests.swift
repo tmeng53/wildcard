@@ -1,7 +1,8 @@
 import XCTest
 
-/// The app's language: Simplified Chinese from the first launch, whatever the phone is set to,
-/// until the member picks another in the app, which then speaks it at once.
+/// The app's language: from the first launch, Traditional Chinese on a phone set to it and
+/// Simplified Chinese on any other, until the member picks another in the app, which then speaks
+/// it at once.
 @MainActor
 final class LanguageUITests: XCTestCase {
     /// How long a check waits for the UI on a busy CI runner.
@@ -46,11 +47,25 @@ final class LanguageUITests: XCTestCase {
         let skipHealth = app.buttons["health.skip"]
         XCTAssertTrue(skipHealth.waitForExistence(timeout: Self.wait), "连上 Apple 健康 never appeared")
         skipHealth.tap()
+        let skipLocation = app.buttons["location.skip"]
+        XCTAssertTrue(skipLocation.waitForExistence(timeout: Self.wait), "打开大概位置 never appeared")
+        skipLocation.tap()
         let monday = app.buttons["week.day.0"]
         XCTAssertTrue(monday.waitForExistence(timeout: Self.wait), "本周目标 never appeared")
         XCTAssertTrue(monday.label.contains("周一"), "the week's days aren't in Chinese: \(monday.label)")
         settle()
         keepScreenshot(named: "53-first-launch-week")
+    }
+
+    /// A new install on a phone set to Traditional Chinese opens in Traditional Chinese, the sign-in
+    /// button (a system control) included.
+    func testFirstLaunchOnATraditionalChinesePhoneIsTraditional() {
+        let app = launchFirstTime(["-onboarding", "-uitest-monday", "-uitest-phone-language", "zh-Hant-TW"])
+        let signIn = app.buttons["signup.signIn"]
+        XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
+        XCTAssertEqual(signIn.label, "使用 Apple 繼續")
+        settle()
+        keepScreenshot(named: "51b-first-launch-open-zh-hant")
     }
 
     /// The open screen's globe switches the whole app to English before signing up: the
@@ -91,6 +106,9 @@ final class LanguageUITests: XCTestCase {
         let skipHealth = app.buttons["health.skip"]
         XCTAssertTrue(skipHealth.waitForExistence(timeout: Self.wait), "连上 Apple 健康 never appeared")
         skipHealth.tap()
+        let skipLocation = app.buttons["location.skip"]
+        XCTAssertTrue(skipLocation.waitForExistence(timeout: Self.wait), "打开大概位置 never appeared")
+        skipLocation.tap()
         let monday = app.buttons["week.day.0"]
         XCTAssertTrue(monday.waitForExistence(timeout: Self.wait), "the week step never appeared")
         XCTAssertTrue(monday.label.contains("Mon"), "the week's days stayed Chinese: \(monday.label)")

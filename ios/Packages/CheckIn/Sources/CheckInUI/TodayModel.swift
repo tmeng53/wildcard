@@ -59,7 +59,7 @@ public final class TodayModel {
     /// anywhere outside its capsules closes it), a check-in is being written (the compose and
     /// 请假条 pages take the whole screen) or the squad is dropping in, until 打卡 is back.
     public var showsTabBar: Bool {
-        guard !holdsTabBar, opening == nil else { return false }
+        guard !holdsTabBar, opening == nil, shownLetter == nil else { return false }
         return switch step {
         case .scene: !isBurstOpen
         case .composing, .disclaimer: false
@@ -151,14 +151,12 @@ public final class TodayModel {
     var holdsTabBar = false
     /// A takeover scene's opening, over the whole screen until 进场 (`TodayModel+Opening.swift`).
     var opening: OpeningArt.Loaded?
-    /// The squad standing for the opening's group photo, made for it apart from the home's
-    /// figures, which sit, eat or train as their day has them (`TodayModel+Opening.swift`).
+    /// The squad standing for the opening's group photo, apart from the home's figures (`+Opening`).
     var openingFigures: [OpeningFigure] = []
     /// The banner on top or a celebration's card, those waiting, told only while 今天 is in front.
     var notice: Notice?
     var pendingNotices: [Notice] = []
-    /// Posts the server refused that the member has been told of and hasn't opened again, oldest
-    /// first; 重发 opens them one by one.
+    /// Refused posts the member was told of and hasn't opened again, oldest first, for 重发.
     var failed: [PendingCheckIn] = []
     public internal(set) var celebration: Broadcast?
     public var isHomeInFront = true
@@ -228,7 +226,9 @@ public final class TodayModel {
             }
         }
         if !holdsDress || player == nil { dressMe(hop: false) }
-        cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach)
+        cast.update(
+            home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach, hiring: store.isHiringCoach,
+            handover: store.handover)
         if opening != nil { standOpeningSquad() }
     }
 

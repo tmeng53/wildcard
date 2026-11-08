@@ -54,6 +54,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -61,9 +62,11 @@ import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   unusedUnlocks,
   unusedGifts,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 // The weekly awards end to end on local Supabase: check-ins, squads, members, photos and the
@@ -196,6 +199,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachLetters: unusedCoachLetters,
     notices: createNotices({
       store: createPostgresNoticeStore(db),
       broadcasts: createPostgresBroadcastStore(db),
@@ -205,6 +209,8 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     liveEvents: ignoredNotices.liveEvents,
     aiConsent,
     nudges: nudgesOn(db),
+    weather: weatherOn(db),
+    ...unusedFeedback,
     log: createLog(() => undefined),
     jobs: { ...noJobs, isScheduler: jobsTokenScheduler(JOBS_TOKEN) },
     admin: adminOn(),
@@ -233,6 +239,15 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     });
     return response.status;
   };
+  const weeks = async ({ token, squad }: { readonly token: string; readonly squad: string }) => {
+    const response = await app.request(`/squads/${squad}/stories`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    return {
+      status: response.status,
+      body: z.record(z.string(), z.unknown()).parse(await response.json()),
+    };
+  };
   return {
     // As the scheduler starts it, every hour.
     run: async () => {
@@ -246,6 +261,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     app,
     read,
     nudge,
+    weeks,
     prompts,
     sent,
     at: (moment: Date) => {
@@ -736,6 +752,37 @@ describe('weekly awards', () => {
         where squad_id = ${squad}`.execute(db)
       ).rows[0]?.n,
     ).toBe(0);
+  });
+
+  it('lists the weeks the squad has a 战报 for, the latest first, freezing the one just out', async () => {
+    const { weeks, at } = setup();
+    const [ana, bo, stranger] = [await member(), await member(), await member()];
+    const squad = await squadOf(ana, bo);
+    const quiet = await squadOf(stranger);
+    await trained(ana, {
+      squad,
+      day: '2026-10-14',
+      createdAt: new Date('2026-10-14T14:00:00.000Z'),
+    });
+    await trained(bo, { squad, day: '2026-10-20' });
+
+    // Before Sunday 8pm the week isn't out: only the week before, frozen as it is listed.
+    at(new Date(AWARDS_AT.getTime() - 60_000));
+    expect((await weeks({ token: ana.token, squad })).body.weeks).toStrictEqual([
+      { weekStart: '2026-10-12' },
+    ]);
+
+    // From 8pm the week just out is listed, though no run or read froze it yet.
+    at(new Date(AWARDS_AT.getTime() + 60_000));
+    const listed = await weeks({ token: bo.token, squad });
+    expect(listed).toStrictEqual({
+      status: 200,
+      body: { version: 1, weeks: [{ weekStart: WEEK }, { weekStart: '2026-10-12' }] },
+    });
+    // A squad that never checked in has none, and only members may ask.
+    expect((await weeks({ token: stranger.token, squad: quiet })).body.weeks).toStrictEqual([]);
+    const refused = await weeks({ token: stranger.token, squad });
+    expect([refused.status, refused.body.reason]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
   });
 
   it('is frozen at the awards: later joins, leaves, check-ins and scenes don’t change it', async () => {

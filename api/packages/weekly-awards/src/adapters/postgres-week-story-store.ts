@@ -1,6 +1,7 @@
-import type { Kysely } from 'kysely';
+import { sql, type Kysely } from 'kysely';
 
 import { MemberId, SquadId } from '../domain/awards.js';
+import { WeekStart } from '../domain/schedule.js';
 import {
   StoredStory,
   StoredStoryMember,
@@ -60,6 +61,16 @@ export function createPostgresWeekStoryStore(db: Kysely<WeeklyAwardTables>): Wee
           };
         }),
       };
+    },
+
+    async weeks(squad) {
+      const rows = await db
+        .selectFrom('week_stories')
+        .select(sql<string>`week_start::text`.as('week'))
+        .where('squad_id', '=', squad)
+        .orderBy('week_start', 'desc')
+        .execute();
+      return rows.map(({ week }) => WeekStart.parse(week));
     },
 
     async waitingForAwards(weekStart) {

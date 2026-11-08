@@ -30,11 +30,15 @@ public struct SportCatalog: Hashable, Sendable {
     public struct Category: Hashable, Sendable, Identifiable {
         public let id: String
         public let names: CatalogNames
+        /// The colour its sports' 成绩条, post blocks, routes and charts wear, `#RRGGBB`, with white
+        /// on it. Data, so it changes with no release (Tracy, 2026-11-08); nil in a copy kept from
+        /// before colours, whose sports then wear the gym's steel.
+        public let color: String?
         /// Its sports in order, the ones no longer offered included.
         public let entries: [Entry]
 
-        public init(id: String, names: CatalogNames, entries: [Entry]) {
-            (self.id, self.names, self.entries) = (id, names, entries)
+        public init(id: String, names: CatalogNames, color: String?, entries: [Entry]) {
+            (self.id, self.names, self.color, self.entries) = (id, names, color, entries)
         }
 
         /// The sports a picker shows under this tab.
@@ -65,6 +69,13 @@ public struct SportCatalog: Hashable, Sendable {
     /// The sport's names, icon and category; nil for an id this list doesn't have (one the
     /// server added after this list was read).
     public func entry(for sport: Sport) -> Entry? { entries[sport] }
+
+    /// The colour of the sport's category, `#RRGGBB`; nil for a sport this list doesn't have, or
+    /// one in a copy kept from before colours.
+    public func color(of sport: Sport) -> String? {
+        guard let category = entries[sport]?.category else { return nil }
+        return categories.first { $0.id == category }?.color
+    }
 
     /// Every sport the pickers offer, in list order.
     public var offered: [Sport] { categories.flatMap(\.offered) }

@@ -325,7 +325,7 @@ struct HapticTests {
         #expect(
             Haptic.allCases.map(\.rawValue) == [
                 "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "crown", "poke", "unbox",
-                "lights",
+                "lights", "unseal",
             ])
         #expect(Haptic.ringTicks == 3)
     }

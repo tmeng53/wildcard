@@ -193,17 +193,17 @@ final class ScheduleUITests: XCTestCase {
         app.descendants(matching: .any)[identifier].firstMatch
     }
 
-    /// 每周模板: its chip after the weeks opens a graphite poster with every day open and no
+    /// 我的每周计划: its chip after the weeks opens a graphite poster with every day open and no
     /// 存图; a change to next week offers to change the template too.
     func testTemplatePlansEveryWeekAndAWeekOffersIt() {
         let app = launch()
         let tabBar = tabButton("tab.me", in: app)
         let template = app.buttons["schedule.template"]
-        XCTAssertTrue(template.waitForExistence(timeout: 10), "no 每周模板 chip")
+        XCTAssertTrue(template.waitForExistence(timeout: 10), "no 我的每周计划 chip")
         if !template.isHittable { app.buttons["下周"].swipeLeft() }
-        waitFor(template, "hittable == true", "每周模板 isn't in view", timeout: 10)
+        waitFor(template, "hittable == true", "我的每周计划 isn't in view", timeout: 10)
         template.tap()
-        waitFor(template, "isSelected == true", "每周模板 didn't open", timeout: 10)
+        waitFor(template, "isSelected == true", "我的每周计划 didn't open", timeout: 10)
         XCTAssertFalse(app.buttons["schedule.save"].exists, "存图 shows on the template")
         let note = find(app, "schedule.template.note")
         XCTAssertTrue(note.waitForExistence(timeout: 10), "no note on when the template counts")

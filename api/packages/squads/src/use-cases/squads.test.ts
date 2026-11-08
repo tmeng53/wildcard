@@ -538,7 +538,6 @@ describe('a squad’s time zone', () => {
     const plain = await newSquad(ann, '默认');
     expect(await squads.timeZone({ squad: plain.id, viewer: ann, moment: during })).toStrictEqual({
       timeZone: 'America/New_York',
-      nextTimeZone: 'America/New_York',
     });
     const bo = await newMember();
     const { squad: taipei } = await squads.create({
@@ -550,7 +549,6 @@ describe('a squad’s time zone', () => {
     });
     expect(await squads.timeZone({ squad: taipei.id, viewer: bo, moment: during })).toStrictEqual({
       timeZone: 'Asia/Taipei',
-      nextTimeZone: 'Asia/Taipei',
     });
     // Before the squad's first week it kept New York, as every squad did.
     expect(await squads.timeZonesFor([taipei.id, plain.id], '2026-10-26')).toStrictEqual(
@@ -606,7 +604,7 @@ describe('a squad’s time zone', () => {
     ).rejects.toMatchObject({ reason: 'TIME_ZONE_UNKNOWN' });
   });
 
-  it('lets only the captain change it, from next week, logged with who set it', async () => {
+  it('lets only the captain change it, at once, logged with who set it', async () => {
     const [ann, bo] = [await newMember(), await newMember()];
     const squad = await newSquad(ann);
     await squads.join({ inviteCode: squad.inviteCode, member: bo });
@@ -620,7 +618,10 @@ describe('a squad’s time zone', () => {
         timeZone: 'Asia/Taipei',
         moment: during,
       }),
-    ).toStrictEqual({ timeZone: 'America/New_York', nextTimeZone: 'Asia/Taipei' });
+    ).toStrictEqual({ timeZone: 'Asia/Taipei' });
+    expect(await squads.timeZonesFor([squad.id], thisWeek)).toStrictEqual(
+      new Map([[squad.id, 'Asia/Taipei']]),
+    );
     // The same again changes nothing.
     await squads.setTimeZone({
       squad: squad.id,
@@ -633,13 +634,33 @@ describe('a squad’s time zone', () => {
       where squad_id = ${squad.id} order by id`.execute(db);
     expect(rows.rows).toStrictEqual([
       { time_zone: 'America/New_York', week_start: thisWeek, set_by: ann },
-      { time_zone: 'Asia/Taipei', week_start: '2026-11-09', set_by: ann },
+      { time_zone: 'Asia/Taipei', week_start: thisWeek, set_by: ann },
     ]);
     await expect(
       sql`update squad_time_zones set time_zone = 'UTC' where squad_id = ${squad.id}`.execute(db),
     ).rejects.toMatchObject({ code: '42501' });
   });
-  it('counts a change from the squad’s next week on its own clock, not the captain’s', async () => {
+
+  it('sets a change that waited for next week again, so the new one stands', async () => {
+    const ann = await newMember();
+    const squad = await newSquad(ann);
+    // A change from when changes waited for the next week.
+    await sql`insert into squad_time_zones (squad_id, time_zone, week_start, set_by)
+      values (${squad.id}, 'Asia/Taipei', '2026-11-09', ${ann})`.execute(db);
+    expect(
+      await squads.setTimeZone({
+        squad: squad.id,
+        member: ann,
+        timeZone: 'America/Los_Angeles',
+        moment: during,
+      }),
+    ).toStrictEqual({ timeZone: 'America/Los_Angeles' });
+    expect(await squads.timeZonesFor([squad.id], '2026-11-16')).toStrictEqual(
+      new Map([[squad.id, 'America/Los_Angeles']]),
+    );
+  });
+
+  it('counts a change at once on the new clock, even when that clock is a day behind', async () => {
     const ann = await newMember();
     const { squad } = await squads.create({
       week: thisWeek,
@@ -648,21 +669,53 @@ describe('a squad’s time zone', () => {
       name: name('台北队'),
       timeZone: 'Asia/Taipei',
     });
-    // Monday 2026-11-09 02:00 in Taipei: the squad's week 11-09 has begun, the captain's
-    // (Sunday in New York) has not.
+    // Monday 2026-11-09 02:00 in Taipei, still Sunday 11-08 in New York: the squad is back in
+    // its week 11-02, now on New York's clock, and the new zone shows at once.
+    const moment = new Date('2026-11-08T18:00:00Z');
     expect(
       await squads.setTimeZone({
         squad: squad.id,
         member: ann,
         timeZone: 'America/New_York',
-        moment: new Date('2026-11-08T18:00:00Z'),
+        moment,
       }),
-    ).toStrictEqual({ timeZone: 'Asia/Taipei', nextTimeZone: 'America/New_York' });
-    expect(await squads.timeZonesFor([squad.id], '2026-11-09')).toStrictEqual(
-      new Map([[squad.id, 'Asia/Taipei']]),
-    );
-    expect(await squads.timeZonesFor([squad.id], '2026-11-16')).toStrictEqual(
+    ).toStrictEqual({ timeZone: 'America/New_York' });
+    expect(await squads.timeZonesAt([squad.id], moment)).toStrictEqual(
       new Map([[squad.id, 'America/New_York']]),
     );
+    expect(await squads.timeZonesFor([squad.id], '2026-11-02')).toStrictEqual(
+      new Map([[squad.id, 'America/New_York']]),
+    );
+    expect(await squads.timeZonesFor([squad.id], '2026-11-09')).toStrictEqual(
+      new Map([[squad.id, 'America/New_York']]),
+    );
+  });
+});
+
+describe('the squad’s language', () => {
+  it('lets only the captain pick it, counting at once, logged with who set it', async () => {
+    const [ann, bo] = [await newMember(), await newMember()];
+    const squad = await newSquad(ann);
+    await squads.join({ inviteCode: squad.inviteCode, member: bo });
+    expect(await squads.languagesOf([squad.id])).toStrictEqual(new Map());
+    await expect(
+      squads.setLanguage({ squad: squad.id, member: bo, language: 'en' }),
+    ).rejects.toMatchObject({ reason: 'NOT_SQUAD_CAPTAIN' });
+    await squads.setLanguage({ squad: squad.id, member: ann, language: 'zh-Hant' });
+    // The same again changes nothing.
+    await squads.setLanguage({ squad: squad.id, member: ann, language: 'zh-Hant' });
+    await squads.setLanguage({ squad: squad.id, member: ann, language: 'en' });
+    expect(await squads.languagesOf([squad.id])).toStrictEqual(new Map([[squad.id, 'en']]));
+    const rows = await sql<{ language: string; set_by: string }>`
+      select language, set_by from squad_languages where squad_id = ${squad.id} order by id`.execute(
+      db,
+    );
+    expect(rows.rows).toStrictEqual([
+      { language: 'zh-Hant', set_by: ann },
+      { language: 'en', set_by: ann },
+    ]);
+    await expect(
+      sql`update squad_languages set language = 'zh-Hans' where squad_id = ${squad.id}`.execute(db),
+    ).rejects.toMatchObject({ code: '42501' });
   });
 });

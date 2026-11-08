@@ -21,6 +21,7 @@ import { CoachId } from '../domain/coach.js';
 import { MemberId, SquadId } from '../domain/settings.js';
 import {
   CoachAlreadyHiredError,
+  CoachNoteNoChallengeError,
   CoachNoteNotFoundError,
   CoachNotOfferedError,
   CoachSquadNotFoundError,
@@ -30,10 +31,13 @@ import { weekText, type SquadWeek } from '../domain/squad-week.js';
 import type {
   AgentRun,
   CoachAgent,
+  CoachGifting,
+  CoachHiringStore,
   CoachMemberFacts,
   CoachMemes,
   CoachPhotoUrls,
   CoachTool,
+  CoachWeather,
 } from '../ports.js';
 import { createCoachActivity } from './coach-activity.js';
 import { createCoachNoteDelivery } from './coach-note-delivery.js';
@@ -71,6 +75,9 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
     .transaction()
     .execute(async (trx) => {
       const [mia, leo, squadId, checkIn] = [randomUUID(), randomUUID(), randomUUID(), randomUUID()];
+      // Only this squad has a coach here: squads other test files hired one for (and may leave
+      // behind) would otherwise wake too, since the job looks at every squad with a coach.
+      await sql`delete from public.squad_coaches`.execute(trx);
       for (const id of [mia, leo]) {
         await sql`insert into auth.users (id, email) values (${id}, ${`${id}@example.com`})`.execute(
           trx,
@@ -87,6 +94,9 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
         { coaching: true, inputMicrosPerMillion: 250_000, outputMicrosPerMillion: 2_000_000 },
         MemberId.parse(mia),
       );
+      // A run wakes every squad with a coach: other test files' squads, committed while this
+      // one runs, would count too.
+      await sql`delete from public.squad_coaches`.execute(trx);
       await createCoachHiring({
         hiring: createPostgresCoachHiring(trx),
         catalog: createPostgresCoachCatalog(trx),
@@ -102,7 +112,7 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
             createdAt: new Date(now.getTime() - 10 * 60_000),
             kind: 'trained',
             sport: '跑步',
-            reactions: 0,
+            reactedBy: [],
             comments: [],
           },
         ],
@@ -152,7 +162,7 @@ function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
  * every week) and whose members all agreed to AI use unless `consented` says who did.
  */
 function wakes(
-  { trx, week }: Fixture,
+  { trx, squad, week }: Fixture,
   {
     agent,
     at = now,
@@ -164,6 +174,8 @@ function wakes(
     memberFacts,
     wantNotes,
     memes,
+    gifting,
+    weatherOf,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
@@ -175,6 +187,8 @@ function wakes(
     readonly memberFacts?: CoachMemberFacts;
     readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
     readonly memes?: CoachMemes;
+    readonly gifting?: CoachGifting;
+    readonly weatherOf?: CoachWeather;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -195,7 +209,7 @@ function wakes(
       Promise.resolve(
         consented === undefined ? members : members.filter((member) => consented.includes(member)),
       ),
-    hiring: createPostgresCoachHiring(trx),
+    hiring: ownSquadOnly(createPostgresCoachHiring(trx), squad),
     clock: () => at,
     ...(replied === undefined ? {} : { replied }),
     ...(answered === undefined ? {} : { answered }),
@@ -203,7 +217,21 @@ function wakes(
     ...(memberFacts === undefined ? {} : { memberFacts }),
     ...(wantNotes === undefined ? {} : { wantNotes }),
     ...(memes === undefined ? {} : { memes }),
+    ...(gifting === undefined ? {} : { gifting }),
+    ...(weatherOf === undefined ? {} : { weatherOf }),
   });
+}
+
+/**
+ * The hiring store, seeing only the fixture's squad among the squads with a coach: other
+ * test files commit squads that keep theirs, and a run would wake those too.
+ */
+function ownSquadOnly(hiring: CoachHiringStore, squad: SquadId): CoachHiringStore {
+  return {
+    ...hiring,
+    hired: async () =>
+      new Map([...(await hiring.hired())].filter(([hiredSquad]) => hiredSquad === squad)),
+  };
 }
 
 /** A comment under the fixture's check-in, as the check-ins module saves it. */
@@ -618,6 +646,42 @@ describe('the coach', () => {
         trx,
       );
       expect(hires.rows.map(({ kind }) => kind)).toStrictEqual(['hired', 'fired', 'hired']);
+    });
+  });
+
+  it('knows a coach hired back until it first runs for the squad', async () => {
+    await rolledBack(async ({ trx, squad, mia }) => {
+      const by = MemberId.parse(mia);
+      const catalog = createPostgresCoachCatalog(trx);
+      const store = createPostgresCoachHiring(trx);
+      const hiring = createCoachHiring({ hiring: store, catalog });
+      const xiaohun = CoachId.parse('xiaohun');
+      const nuannuan = CoachId.parse('nuannuan');
+      const [first] = await catalog.list();
+      if (first === undefined) throw new Error('No coach.');
+      await catalog.save({ ...first, id: nuannuan, name: '暖暖' }, by);
+
+      // Its first coach is new to the squad, and so is the next.
+      expect(await store.backAgain(squad)).toBe(false);
+      await hiring.change({ squad, coach: nuannuan, by });
+      expect(await store.backAgain(squad)).toBe(false);
+      // The first one hired again is back.
+      await hiring.change({ squad, coach: xiaohun, by });
+      expect(await store.backAgain(squad)).toBe(true);
+      // A wake finished without running (its check-in no longer shared with AI) tells it nothing.
+      await sql`
+        insert into public.coach_wakes (squad_id, reason, day, state, claimed_at)
+        values (${squad}, 'daily', '2026-11-08', 'done', now())`.execute(trx);
+      expect(await store.backAgain(squad)).toBe(true);
+      // Once it has run for the squad, it is just its coach again.
+      await sql`
+        insert into public.coach_usage
+          (squad_id, coach_id, model, requests, input_tokens, output_tokens, cost_micros)
+        values (${squad}, 'xiaohun', 'gpt-test', 1, 10, 10, 1)`.execute(trx);
+      expect(await store.backAgain(squad)).toBe(false);
+      // No coach, nothing to be back.
+      await hiring.fire({ squad, by });
+      expect(await store.backAgain(squad)).toBe(false);
     });
   });
 
@@ -1061,7 +1125,7 @@ describe('the coach', () => {
             day: '2026-11-01',
             createdAt: now,
             kind: 'healthyMeal',
-            reactions: 0,
+            reactedBy: [],
             comments: [],
           },
         ],
@@ -1244,7 +1308,8 @@ describe('the coach', () => {
         createdAt: new Date('2026-10-31T20:00:00Z'),
         kind: 'healthyMeal' as const,
         text: '自己做的',
-        reactions: 1,
+        postedTime: '22:05',
+        reactedBy: [mia],
         comments: [],
       };
       await wakes(fixture, {
@@ -1267,8 +1332,224 @@ describe('the coach', () => {
       // A member whose plan it couldn't read still gets a note.
       expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
       expect(daily?.task).toContain(
-        '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 「自己做的」 · 1 个表情',
+        '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 （本人当地 22:05 发） 「自己做的」 · 点了表情：队员1',
       );
+    });
+  });
+
+  it('tells the daily wake each member’s weather, and writes the notes without it when it fails', async () => {
+    await rolledBack(async (fixture) => {
+      const { mia, leo } = fixture;
+      const asked: unknown[] = [];
+      const weatherOf: CoachWeather = (input) => {
+        asked.push(input);
+        // Only 队员1 shared where they are.
+        return Promise.resolve(new Map([[mia, '今天雨，8–13°C，降水概率 80%']]));
+      };
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent, weatherOf }).run();
+      const daily = runs.find(({ task }) => task.includes('新的一天'));
+      expect(asked).toStrictEqual([{ members: [mia, leo], day: '2026-11-01' }]);
+      expect(daily?.task).toContain(
+        '- 队员1：这周已经练了 1 天；当地今天雨，8–13°C，降水概率 80%。',
+      );
+      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
+    });
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, {
+        agent,
+        weatherOf: () => Promise.reject(new Error('no weather')),
+      }).run();
+      expect(runs.find(({ task }) => task.includes('新的一天'))?.task).toContain(
+        '- 队员1：这周已经练了 1 天。',
+      );
+    });
+  });
+
+  it('sets a day’s challenge on a note, gives a gift, and tells a check-in’s wake the answer', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia, leo } = fixture;
+      const given: unknown[] = [];
+      const gifting: CoachGifting = {
+        // 队员2 got one this week already; 队员1 has the cap.
+        options: ({ members }) =>
+          Promise.resolve({
+            pool: [{ id: 'gift-scarf', description: '红围巾' }, { id: 'gift-cap' }],
+            open: new Map(
+              members.filter((each) => each === mia).map((each) => [each, ['gift-cap']]),
+            ),
+          }),
+        give: (input) => {
+          given.push(input);
+          return Promise.resolve(undefined);
+        },
+      };
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('新的一天')
+          ? [
+              {
+                tool: 'note_to',
+                input: {
+                  member: '队员1',
+                  text: '今天多喝水',
+                  challenge: { title: '喝水', amount: 8, line: '天干，别等口渴' },
+                },
+              },
+              {
+                tool: 'note_to',
+                input: {
+                  member: '队员1',
+                  text: '今天多喝水',
+                  challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干，别等口渴' },
+                },
+              },
+              // A rest day's blank challenge, as the model sends it, is none.
+              {
+                tool: 'note_to',
+                input: {
+                  member: '队员2',
+                  text: '今天走走',
+                  challenge: { title: ' ', amount: 0, unit: '', line: '' },
+                },
+              },
+              { tool: 'give_gift', input: { member: '队员2', piece: 'gift-scarf', line: '冷' } },
+              { tool: 'give_gift', input: { member: '队员1', piece: 'gift-cap', line: '戴上' } },
+              { tool: 'give_gift', input: { member: '队员1', piece: 'gift-hat', line: '戴上' } },
+              {
+                tool: 'give_gift',
+                input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' },
+              },
+            ]
+          : task.includes('你今天给他的挑战')
+            ? [{ tool: 'complete_challenge', input: {} }]
+            : [],
+      );
+      await wakes(fixture, { agent, gifting }).run();
+      const daily = runs.find(({ task }) => task.includes('新的一天'));
+      expect(daily?.tools).toContain('give_gift');
+      expect(daily?.task).toContain('礼物清单：\n- gift-scarf：红围巾\n- gift-cap');
+      expect(daily?.task).toContain('这周还能收礼物的：\n- 队员1（已有：gift-cap）');
+      expect(daily?.answers.slice(0, 7)).toStrictEqual([
+        '挑战不对：title 不超过 8 字；amount 是 1 到 9999 的整数，unit 不超过 4 字，两个一起填或都不填；line 不超过 24 字。',
+        '便条写好了，给 队员1，挑战「喝水 8 杯」。',
+        '便条写好了，给 队员2。',
+        '队员2 这周不能收礼物；能收的是：队员1。',
+        '队员1 已经有 gift-cap 了，换一件。',
+        '没有 gift-hat 这件；能送的见任务里的礼物清单。',
+        'gift-scarf 送给 队员1 了。',
+      ]);
+      expect(given).toStrictEqual([
+        { squad, member: mia, coach: 'xiaohun', piece: 'gift-scarf', line: '天冷了' },
+      ]);
+      const notes = await sql<{ member_id: string; challenge_title: string | null }>`
+        select member_id, challenge_title, challenge_amount, challenge_unit, challenge_line
+        from public.coach_member_notes where squad_id = ${squad} order by member_id = ${mia} desc
+      `.execute(trx);
+      expect(notes.rows).toStrictEqual([
+        {
+          member_id: mia,
+          challenge_title: '喝水',
+          challenge_amount: 8,
+          challenge_unit: '杯',
+          challenge_line: '天干，别等口渴',
+        },
+        {
+          member_id: leo,
+          challenge_title: null,
+          challenge_amount: null,
+          challenge_unit: null,
+          challenge_line: null,
+        },
+      ]);
+
+      // The member accepts it (the first answer stands), and the next check-in's wake knows.
+      const activity = createCoachActivity({ store: createPostgresCoachActivity(trx) });
+      const [mine, theirs] = await sql<{ id: string }>`
+        select id from public.coach_member_notes where squad_id = ${squad} order by member_id = ${mia} desc
+      `
+        .execute(trx)
+        .then(({ rows }) => rows.map(({ id }) => Number(id)));
+      // Answered only once the note reached them.
+      const early = (note: number | undefined) =>
+        activity.answerChallenge({ squad, member: mia, note: note ?? 0, answer: 'accepted' });
+      await expect(early(mine)).rejects.toThrow(CoachNoteNotFoundError);
+      await sql`insert into public.coach_member_note_deliveries (note_id)
+        select id from public.coach_member_notes where squad_id = ${squad}`.execute(trx);
+      const answer = (
+        member: string,
+        { note, said }: { note: number | undefined; said: 'accepted' | 'declined' },
+      ) => activity.answerChallenge({ squad, member, note: note ?? 0, answer: said });
+      expect(await answer(mia, { note: mine, said: 'accepted' })).toStrictEqual({
+        answer: 'accepted',
+      });
+      expect(await answer(mia, { note: mine, said: 'declined' })).toStrictEqual({
+        answer: 'accepted',
+      });
+      await expect(answer(leo, { note: mine, said: 'accepted' })).rejects.toThrow(
+        CoachNoteNotFoundError,
+      );
+      await expect(answer(leo, { note: theirs, said: 'accepted' })).rejects.toThrow(
+        CoachNoteNoChallengeError,
+      );
+      const later = randomUUID();
+      await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+        values (${later}, ${mia}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(
+        trx,
+      );
+      const week: SquadWeek = {
+        ...fixture.week,
+        checkIns: [
+          ...fixture.week.checkIns,
+          {
+            id: later,
+            member: mia,
+            day: '2026-11-01',
+            createdAt: now,
+            kind: 'healthyMeal',
+            reactedBy: [],
+            comments: [],
+          },
+        ],
+      };
+      await wakes({ ...fixture, week }, { agent }).checkedIn({ checkIn: later, squads: [squad] });
+      expect(runs.at(-1)?.task).toContain('你今天给他的挑战：「喝水 8 杯」，他接受了。');
+      // The coach saw it done in the check-in and marked it, once.
+      expect(runs.at(-1)?.tools).toContain('complete_challenge');
+      expect(runs.at(-1)?.answers).toStrictEqual(['已记他完成。']);
+      const done = await sql<{ note_id: string; by: string }>`
+        select note_id, by from public.coach_challenge_completions
+        where note_id in (${String(mine)}, ${String(theirs)})`.execute(trx);
+      expect(done.rows).toStrictEqual([{ note_id: String(mine), by: 'coach' }]);
+      // The next check-in's wake knows, with nothing left to mark.
+      const again = randomUUID();
+      await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+        values (${again}, ${mia}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(
+        trx,
+      );
+      await wakes(
+        {
+          ...fixture,
+          week: {
+            ...week,
+            checkIns: [
+              ...week.checkIns,
+              {
+                id: again,
+                member: mia,
+                day: '2026-11-01',
+                createdAt: now,
+                kind: 'healthyMeal',
+                reactedBy: [],
+                comments: [],
+              },
+            ],
+          },
+        },
+        { agent },
+      ).checkedIn({ checkIn: again, squads: [squad] });
+      expect(runs.at(-1)?.task).toContain('你今天给他的挑战：「喝水 8 杯」，你已经记他完成了。');
+      expect(runs.at(-1)?.tools).not.toContain('complete_challenge');
     });
   });
 
@@ -1283,7 +1564,7 @@ describe('the coach', () => {
         createdAt: new Date('2026-11-01T20:00:00Z'),
         kind: 'healthyMeal' as const,
         text,
-        reactions: 0,
+        reactedBy: [],
         comments: [],
       });
       // 10:00 in New York on Monday 2026-11-02, past the daily wake's hour.
@@ -1482,6 +1763,75 @@ describe('the coach', () => {
         { reason: 'dream', state: 'done' },
         { reason: 'daily', state: 'done' },
       ]);
+    });
+  });
+
+  it('tells the night how yesterday’s challenges went, and why one was let go', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia, leo } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      const noted = await sql<{ id: string; member_id: string }>`
+        insert into public.coach_member_notes
+          (squad_id, member_id, coach_id, day, text, challenge_title, challenge_amount, challenge_unit)
+        values (${squad}, ${mia}, 'xiaohun', '2026-11-01', '多喝水', '喝水', 8, '杯'),
+          (${squad}, ${leo}, 'xiaohun', '2026-11-01', '早餐加个蛋', '吃鸡蛋', null, null)
+        returning id, member_id`.execute(trx);
+      const noteOf = (member: string) =>
+        noted.rows.find((row) => row.member_id === member)?.id ?? '';
+      await sql`insert into public.coach_member_note_deliveries (note_id)
+        select id from public.coach_member_notes where squad_id = ${squad}`.execute(trx);
+      const activity = createCoachActivity({ store: createPostgresCoachActivity(trx) });
+      await activity.answerChallenge({
+        squad,
+        member: leo,
+        note: Number(noteOf(leo)),
+        answer: 'declined',
+        reason: '我鸡蛋过敏',
+      });
+      // A check-in's wake that day is told why it was let go, and not to repeat it.
+      const meal = randomUUID();
+      await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+        values (${meal}, ${leo}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(
+        trx,
+      );
+      await wakes(
+        {
+          ...fixture,
+          week: {
+            ...fixture.week,
+            checkIns: [
+              ...fixture.week.checkIns,
+              {
+                id: meal,
+                member: leo,
+                day: '2026-11-01',
+                createdAt: now,
+                kind: 'healthyMeal',
+                reactedBy: [],
+                comments: [],
+              },
+            ],
+          },
+        },
+        { agent },
+      ).checkedIn({ checkIn: meal, squads: [squad] });
+      expect(runs.at(-1)?.task).toContain(
+        '你今天给他的挑战：「吃鸡蛋」，他说算了，因为「我鸡蛋过敏」（他只告诉了你，别在回复里说）。',
+      );
+      expect(runs.at(-1)?.tools).not.toContain('complete_challenge');
+      // The coach can't mark one let go, or one of another day.
+      const notes = createPostgresCoachStores(trx).memberNotes;
+      const coachDone = (member: string, day: string) =>
+        notes.complete({ note: Number(noteOf(member)), by: 'coach', day });
+      expect(await coachDone(leo, '2026-11-01')).toBe(false);
+      expect(await coachDone(mia, '2026-11-02')).toBe(false);
+      await sql`insert into public.coach_challenge_completions (note_id, by)
+        values (${noteOf(mia)}, 'member')`.execute(trx);
+      await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
+      const dream = runs.find(({ task }) => task.startsWith('夜里'));
+      expect(dream?.task).toContain(
+        '昨天的挑战：\n- 队员1「喝水 8 杯」：完成了\n- 队员2「吃鸡蛋」：没接，因为「我鸡蛋过敏」（他只告诉了你）',
+      );
     });
   });
 

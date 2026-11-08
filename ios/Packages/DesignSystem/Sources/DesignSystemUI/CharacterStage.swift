@@ -47,15 +47,33 @@ public struct CharacterStage<Content: View, Stub: View>: View {
     }
 }
 
-/// A ticket: rounded corners and a half-round notch in each side at the tear line.
+/// A ticket: rounded corners and a half-round notch in each side at the tear line, which is
+/// measured from the bottom (the character's ticket, whose stub is fixed) or from the top
+/// (`TicketCard`, whose face is, and `CoverTicket`, whose cover is).
 struct TicketShape: Shape {
-    /// How far above the bottom the notches' centers are.
-    let notchFromBottom: Double
+    private enum Tear {
+        case fromBottom(Double)
+        case fromTop(Double)
+    }
+
+    private let tear: Tear
     private let notch: Double = 11
+
+    init(notchFromBottom: Double) {
+        tear = .fromBottom(notchFromBottom)
+    }
+
+    init(tearFromTop: Double) {
+        tear = .fromTop(tearFromTop)
+    }
 
     func path(in rect: CGRect) -> Path {
         let ticket = Path(roundedRect: rect, cornerRadius: Radius.ticket, style: .continuous)
-        let y = rect.maxY - notchFromBottom
+        let y =
+            switch tear {
+            case .fromBottom(let distance): rect.maxY - distance
+            case .fromTop(let distance): rect.minY + distance
+            }
         var notches = Path()
         for side in [rect.minX, rect.maxX] {
             notches.addEllipse(in: CGRect(x: side - notch, y: y - notch, width: notch * 2, height: notch * 2))
@@ -131,13 +149,9 @@ struct TicketArt: View {
             context.stroke(
                 tearLine, with: .color(light.opacity(0.28)), style: StrokeStyle(lineWidth: 2, dash: [4, 5]))
 
-            // The W mark in the top corner.
-            var mark = Path()
-            let strokes: [(Double, Double)] = [(0, 0), (5, 22), (10, 0), (15, 22), (20, 0)]
-            for (index, point) in strokes.enumerated() {
-                let corner = CGPoint(x: Self.edge + point.0 * 0.8, y: 18 + point.1 * 0.8)
-                if index == 0 { mark.move(to: corner) } else { mark.addLine(to: corner) }
-            }
+            // The W mark in the top corner, 16 × 17.6 from y 18 (`WMark` keeps 2 points clear above
+            // and below its points).
+            let mark = WMark().path(in: CGRect(x: Self.edge, y: 16, width: 16, height: 21.6))
             context.stroke(
                 mark, with: .color(light.opacity(0.85)),
                 style: StrokeStyle(lineWidth: 3.68, lineJoin: .miter, miterLimit: 4))

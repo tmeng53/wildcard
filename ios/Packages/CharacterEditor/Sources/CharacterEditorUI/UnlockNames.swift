@@ -11,7 +11,7 @@ import SwiftUI
 /// What a store opening or a prop unlocking says outside the editor, in the editor's own names,
 /// the same on the home's banner and in 通知: 「DEUCE CLUB 开门了 · 网球练满 3 次」,
 /// 「解锁了网球拍 · 第一次打网球」. A piece is told by its store's wordmark, never its own name, so
-/// the box keeps it a surprise until the store opens it: 「LAP NINE 到新货了 · 跑步练满 5 次」.
+/// it stays a surprise until the store shows it: 「LAP NINE 到新货了 · 跑步练满 5 次」.
 public enum UnlockNames {
     public static func title(_ kind: Unlock.Kind, item: String) -> Text {
         switch kind {

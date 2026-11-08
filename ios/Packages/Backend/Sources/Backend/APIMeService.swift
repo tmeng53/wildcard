@@ -6,7 +6,7 @@ import Foundation
 import MeDomain
 
 /// 我 over our API: the profile's character and card number, the card's records, the squad, the
-/// 每周模板's count, the daily push switch, and deleting the account.
+/// 我的每周计划's count, the daily push switch, and deleting the account.
 public struct APIMeService: MeService {
     private let api: WildcardAPI
     private let beforeDeleting: @Sendable () async -> Void

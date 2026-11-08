@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "persona": "shy",
+  "look": {
+    "body": "peach",
+    "hair": "spacebuns",
+    "eyes": "sparkle",
+    "mouth": "smile",
+    "cheeks": "flushed",
+    "glasses": "round",
+    "hat": "halfmoon-clip",
+    "top": "halfmoon-mintchip",
+    "bottom": "halfmoon-flare",
+    "shoes": "halfmoon-studio",
+    "prop": "yogamat"
+  },
+  "colors": {
+    "hair": "#2A2333"
+  }
+}

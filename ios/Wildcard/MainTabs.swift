@@ -5,6 +5,7 @@ import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import FeedUI
+import LocationDomain
 import MeDomain
 import MeUI
 import NotificationsDomain
@@ -15,9 +16,9 @@ import SquadDomain
 import SquadUI
 import SwiftUI
 
-/// The app once the member is signed in and in a squad: the three tabs (今天, 动态, 我) in the
-/// system's Liquid Glass tab bar (`AppTabs`), with 小队 opened inside 今天 from the home's squad
-/// card (Tracy took 小队's own tab away on 2026-11-04).
+/// The app once the member is signed in and in a squad: the three tabs (小队, 动态, 我) in the
+/// system's Liquid Glass tab bar (`AppTabs`); the squad's settings open inside 小队 from the
+/// home's squad card.
 /// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
 /// them draws the bar itself. Each tab is a NavigationStack: every page that opens over a tab's
 /// screen is pushed on it, so going back (the back button, a swipe right) is the system's.
@@ -43,6 +44,8 @@ struct MainTabs: View {
     var leftSquad: () -> Void = {}
     /// 设置's 预览注册, for admins; nil for everyone else.
     var previewSignUp: (() -> Void)?
+    /// 设置 › 位置: the phone's approximate location for the coach's weather.
+    let location: LocationSharing?
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
     @State var inbox: NoticeInbox
     /// The pages pushed over 动态: 通知, once the bell is tapped, and a post a notice opens, over
@@ -78,9 +81,10 @@ struct MainTabs: View {
         recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
         destination: Binding<AppDestination?> = .constant(nil), previewSignUp: (() -> Void)? = nil,
-        leftSquad: @escaping () -> Void = {}
+        location: LocationSharing? = nil, leftSquad: @escaping () -> Void = {}
     ) {
         self.previewSignUp = previewSignUp
+        self.location = location
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
         self.squadmateCards = squadmateCards
@@ -133,7 +137,7 @@ struct MainTabs: View {
                 try? await Task.sleep(for: .seconds(60))
             }
         }
-        .followsNotices(inbox)
+        .followsNotices(inbox) { refreshOpenPosts(about: $0) }
         // 商店街 read again when the server says it changed and on each return to the front (a
         // switch's day starting tells nothing), so a store that opened shows without a relaunch.
         .onChange(of: inbox.shelfChanges) { Task { await profile.reload() } }
@@ -171,11 +175,8 @@ struct MainTabs: View {
         .celebrationPopup(today)
         .onChange(of: homeInFront, initial: true) { today.isHomeInFront = $1 }
         .cardPopup(isPresented: $showsCoachCard) {
-            CoachCardPopup(today: today, squad: squad) { opensFeed in
-                showsCoachCard = false
-                if opensFeed { selection = .feed }
-            }
-            .environment(\.sceneTheme, today.scene)
+            CoachCardPopup(today: today, squad: squad, close: closeCoachCard, browse: browseCoaches)
+                .environment(\.sceneTheme, today.scene)
         }
         .onChange(of: squad.hasLeft) { _, left in
             guard left else { return }
@@ -275,7 +276,8 @@ struct MainTabs: View {
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                     openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
-                    previewSignUp: previewSignUp, health: today.health),
+                    writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health,
+                    location: location),
                 isSettingsOpen: $showsSettings
             ) {
                 MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
@@ -365,36 +367,32 @@ extension MainTabs {
                 switch page {
                 case .squad:
                     SquadSettingsView(
-                        model: squad, picked: land(on:coveredAt:),
-                        openCoach: { todayPages.append(.coach($0)) },
+                        model: squad, picked: land(on:coveredAt:), openCoach: { todayPages.append(.coach($0)) },
                         revealing: $squadRevealing,
-                        openTeammate: {
-                            teammateOnHome = false
-                            teammate = squadCard(of: $0)
+                        openTeammate: { (teammateOnHome, teammate) = (false, squadCard(of: $0)) },
+                        pastRecaps: { PastRecaps(shelf: recap) }
+                    )
+                    .environment(\.sceneTheme, squad.scene)
+                    .task { await recap.refreshPast() }
+                case .coach(let route):
+                    CoachPage(
+                        route: route, model: squad, pages: coachPages, note: today.coachLine,
+                        letter: today.coachLetter,
+                        swapped: { leaving, coming in
+                            // Back on 今天, where they change places while the letter is written.
+                            todayPages = []
+                            today.handOver(
+                                from: CoachSpeaker(id: leaving.id, name: leaving.name),
+                                to: CoachSpeaker(id: coming.id, name: coming.name))
                         }
                     )
                     .environment(\.sceneTheme, squad.scene)
-                case .coach(let route):
-                    CoachPage(route: route, model: squad, pages: coachPages, note: today.coachLine)
-                        .environment(\.sceneTheme, squad.scene)
                 }
             }
         }
         // 小队 opens on what was read last.
         .task { if squad.load == .loading { await squad.reload() } }
-    }
-
-    /// The coach's pages on 今天's stack; taking them away goes back to 小队.
-    private var coachPages: Binding<[CoachRoute]> {
-        Binding(
-            get: {
-                todayPages.compactMap { page -> CoachRoute? in
-                    guard case .coach(let route) = page else { return nil }
-                    return route
-                }
-            },
-            set: { routes in
-                todayPages = todayPages.filter { $0 == .squad } + routes.map(TodayPage.coach)
-            })
+        // A coach hired, changed or fired, from 小队 or the sideline's empty spot, stands there.
+        .onChange(of: squad.coach?.coach.id) { Task { await today.reloadCoach() } }
     }
 }

@@ -61,7 +61,32 @@ final class SquadSettingsUITests: XCTestCase {
         app.swipeUp()
         settle()
         keepScreenshot(named: "62-squad-bottom")
-        XCTAssertFalse(app.buttons["squad.pastRecaps"].exists, "往期战报 is back on 小队; the 战报 live in 动态")
+    }
+
+    /// 往期战报: every week's 战报 as a cover in a row under this week's scene, the latest first and
+    /// new until watched; a cover plays its week.
+    func testPastRecapsOpenTheirWeek() {
+        let app = launch()
+        let row = app.descendants(matching: .any)["squad.pastRecaps"]
+        for _ in 0..<4 where !row.isHittable { app.swipeUp() }
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 往期战报 on 小队")
+        let covers = app.buttons.matching(identifier: "squad.pastRecap")
+        XCTAssertEqual(covers.count, 4, "not one cover per week")
+        let latest = covers.element(boundBy: 0)
+        XCTAssertTrue(latest.label.contains("10.12"), "the latest week isn't first: \(latest.label)")
+        XCTAssertTrue(latest.label.contains("Coco"), "the cover doesn't name the champion")
+        XCTAssertEqual(latest.value as? String, "未读", "a week not yet watched isn't new")
+        // A new cover's frame takes in its ring, which sits 3 points outside the card.
+        XCTAssertGreaterThanOrEqual(
+            latest.frame.minX, app.frame.minX + 16 - 3, "the first cover isn't on the page's margin")
+        settle()
+        keepScreenshot(named: "67-squad-past-recaps")
+
+        covers.element(boundBy: 1).tap()
+        let close = app.buttons["recap.close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 30), "the cover didn't play its week")
+        close.tap()
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "✕ didn't go back to 小队")
     }
 
     func testTheWinnerPicksTheSceneOnce() {
@@ -99,14 +124,18 @@ final class SquadSettingsUITests: XCTestCase {
         XCTAssertFalse(app.buttons["squad.changeScene"].exists, "the winner can pick twice")
     }
 
-    /// 比赛时区: the captain picks a zone from the system's list, which counts from next week; a
-    /// member reads the row and can't open it.
+    /// 比赛时区, on 小队设置 from the header's gear: the captain picks a zone from the system's
+    /// list, which counts at once; a member reads the row and can't open it.
     func testTheCaptainChangesTheMatchTimeZone() {
         let app = launch()
+        XCTAssertFalse(app.descendants(matching: .any)["squad.timeZone"].exists, "比赛时区 is still on 小队")
+        let gear = app.buttons["squad.preferences.open"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 30), "no 小队设置 on 小队's header")
+        gear.tap()
         let row = app.buttons["squad.timeZone"]
-        for _ in 0..<3 where !row.isHittable { app.swipeUp() }
-        XCTAssertTrue(row.isHittable, "no 比赛时区 on the captain's page")
-        XCTAssertTrue(row.label.contains("Taipei"), "the row doesn't show the squad's zone: \(row.label)")
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 比赛时区 on the captain's 小队设置")
+        XCTAssertTrue(app.buttons["squad.leave"].exists, "no 退出小队 on 小队设置")
+        XCTAssertTrue(row.label.contains(region("Asia/Taipei")), "the row doesn't show the squad's zone: \(row.label)")
         XCTAssertLessThanOrEqual(row.frame.maxX, app.frame.maxX, "the 比赛时区 row runs off the screen")
         settle()
         keepScreenshot(named: "67-squad-time-zone")
@@ -118,21 +147,60 @@ final class SquadSettingsUITests: XCTestCase {
         let newYork = app.buttons["squad.timeZone.America/New_York"]
         XCTAssertTrue(newYork.waitForExistence(timeout: 30), "searching New York finds no zone")
         newYork.tap()
-        let next = app.staticTexts["squad.timeZone.next"]
-        XCTAssertTrue(next.waitForExistence(timeout: 30), "the change didn't wait for next week")
-        XCTAssertTrue(next.label.contains("New York"), "the next week's zone isn't New York: \(next.label)")
-        XCTAssertTrue(row.label.contains("Taipei"), "this week's zone changed at once")
+        waitFor(row, "label CONTAINS '\(region("America/New_York"))'", "the change didn't count at once", timeout: 30)
         settle()
-        keepScreenshot(named: "68-squad-time-zone-next-week")
+        keepScreenshot(named: "68-squad-time-zone-changed")
 
         app.terminate()
         let member = launch(extra: ["-squad-seat", "member"])
+        let memberGear = member.buttons["squad.preferences.open"]
+        XCTAssertTrue(memberGear.waitForExistence(timeout: 30), "a member has no 小队设置")
+        memberGear.tap()
         let read = member.descendants(matching: .any)["squad.timeZone"]
-        for _ in 0..<3 where !read.isHittable { member.swipeUp() }
-        XCTAssertTrue(read.exists, "a member doesn't see 比赛时区")
+        XCTAssertTrue(read.waitForExistence(timeout: 30), "a member doesn't see 比赛时区")
         XCTAssertFalse(member.buttons["squad.timeZone"].exists, "a member can open the zone list")
         settle()
         keepScreenshot(named: "69-squad-time-zone-member")
+    }
+
+    func testTheCaptainPicksTheSquadsLanguage() {
+        let app = launch()
+        let gear = app.buttons["squad.preferences.open"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 30), "no 小队设置 on 小队's header")
+        gear.tap()
+        let row = app.buttons["squad.language"]
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "no 小队语言 on the captain's 小队设置")
+        XCTAssertTrue(row.label.contains("简体中文"), "the row doesn't show the squad's language: \(row.label)")
+        let use = app.staticTexts["squad.language.use"]
+        XCTAssertTrue(use.exists, "nothing says what 小队语言 is for")
+        for element in [row, use] {
+            XCTAssertLessThanOrEqual(element.frame.maxX, app.frame.maxX, "小队语言 runs off the screen")
+        }
+        XCTAssertLessThan(use.frame.height, 30, "the line under 小队语言 wraps")
+        settle()
+        keepScreenshot(named: "70-squad-language")
+        row.tap()
+        let english = app.buttons.matching(identifier: "squad.language.en").firstMatch
+        XCTAssertTrue(english.waitForExistence(timeout: 30), "the language menu didn't open")
+        english.tap()
+        waitFor(row, "label CONTAINS 'English'", "the change didn't count at once", timeout: 30)
+        settle()
+        keepScreenshot(named: "71-squad-language-changed")
+
+        app.terminate()
+        let member = launch(extra: ["-squad-seat", "member"])
+        let memberGear = member.buttons["squad.preferences.open"]
+        XCTAssertTrue(memberGear.waitForExistence(timeout: 30), "a member has no 小队设置")
+        memberGear.tap()
+        let read = member.descendants(matching: .any)["squad.language"]
+        XCTAssertTrue(read.waitForExistence(timeout: 30), "a member doesn't see 小队语言")
+        XCTAssertFalse(member.buttons["squad.language"].exists, "a member can change 小队语言")
+    }
+
+    /// A zone's name as 小队设置 shows it in Simplified Chinese (北美东部时间).
+    private func region(_ identifier: String) -> String {
+        TimeZone(identifier: identifier)?.localizedName(for: .generic, locale: Locale(identifier: "zh-Hans"))
+            ?? identifier
     }
 
     /// The longest names the rules allow stay inside the screen on the smallest phone.

@@ -87,12 +87,12 @@ export interface CheckIns {
   listMyPosts(input: ListMyPostsInput): Promise<MyPostsPage>;
   /** Everything the member ever checked in, counted by kind, wherever it went. */
   totals(member: MemberId): Promise<CheckInTotals>;
-  /** The member's 练了 check-ins made from `since` on, the earliest made first. */
+  /** The member's 训练 check-ins made from `since` on, the earliest made first. */
   trainedSince(query: {
     readonly member: MemberId;
     readonly since: Date;
   }): Promise<TrainedCheckIn[]>;
-  /** The member's 练了 for a range of days (训练记录 on 我), by day, the earliest made first. */
+  /** The member's 训练 for a range of days (训练记录 on 我), by day, the earliest made first. */
   trainings(query: {
     readonly member: MemberId;
     readonly from: string;
@@ -180,7 +180,7 @@ export function createCheckIns(deps: {
   /** Whether a squad has a coach hired now, so members may @ it. */
   readonly coachHired?: CoachHired;
   readonly photos: PhotoFiles;
-  /** Which sports a 练了 may name. */
+  /** Which sports a 训练 may name. */
   readonly sports: SportList;
   readonly plans: WeeklyPlanStore;
   readonly calendarOf: MemberCalendar;

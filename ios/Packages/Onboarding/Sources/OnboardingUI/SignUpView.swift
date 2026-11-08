@@ -53,6 +53,9 @@ public struct SignUpView<SignIn: View, Tabs: View>: View {
             case .health:
                 HealthStep(model: model)
                     .transition(transition)
+            case .location:
+                LocationStep(model: model)
+                    .transition(transition)
             case .week:
                 WeekStep(model: model)
                     .transition(transition)

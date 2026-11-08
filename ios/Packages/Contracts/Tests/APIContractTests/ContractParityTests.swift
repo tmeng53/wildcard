@@ -20,11 +20,13 @@ private final class Schema: Decodable, Sendable {
     let maxItems: Int?
     let maxCharacters: Int?
     let minimum: Int?
+    let defaultValue: Int?
     let maximum: Int?
     let ref: String?
 
     enum CodingKeys: String, CodingKey {
         case properties, minItems, maxItems, minimum, maximum
+        case defaultValue = "default"
         case ref = "$ref"
         case maxCharacters = "x-max-characters"
     }
@@ -109,6 +111,17 @@ func audienceSizeIsTheAPIs(schema: String) throws {
     #expect(audience?.maxItems == Audience.maxSquads)
 }
 
+@Test(arguments: ["NewSquad", "SquadWeeklyGoal", "SquadWeeklyGoalChange"])
+func squadWeeklyGoalIsTheAPIs(schema: String) throws {
+    let days = try property("daysPerMember", of: schema)
+    #expect(days?.minimum == SquadWeeklyGoal.choices.lowerBound)
+    #expect(days?.maximum == SquadWeeklyGoal.choices.upperBound)
+}
+
+@Test func newSquadDefaultGoalIsTheAPIs() throws {
+    #expect(try property("daysPerMember", of: "NewSquad")?.defaultValue == SquadWeeklyGoal.defaultDaysPerMember)
+}
+
 @Test(arguments: ["WeeklyPlan", "WeeklyPlanDraft", "PlanTemplate", "PlanTemplateDraft"])
 func planLengthIsTheAPIs(schema: String) throws {
     let days = try property("days", of: schema)
@@ -128,4 +141,9 @@ func planLengthIsTheAPIs(schema: String) throws {
         Int($0.split(separator: "=").last?.trimmingCharacters(in: .init(charactersIn: " ;")) ?? "")
     }
     #expect(days == CheckIn.backfillDays)
+}
+
+@Test func feedbackLimitsAreTheAPIs() throws {
+    #expect(try property("body", of: "FeedbackDraft")?.maxCharacters == FeedbackText.maxLength)
+    #expect(try property("screenshots", of: "FeedbackDraft")?.maxItems == FeedbackText.maxScreenshots)
 }

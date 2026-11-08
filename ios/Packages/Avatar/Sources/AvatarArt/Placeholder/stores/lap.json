@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "persona": "energetic",
+  "look": {
+    "body": "bear",
+    "eyes": "dot",
+    "mouth": "grin",
+    "hat": "lap-baguette",
+    "top": "lap-singlet",
+    "bottom": "lap-split",
+    "shoes": "lap-spikes",
+    "prop": "bottle"
+  }
+}

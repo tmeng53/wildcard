@@ -38,6 +38,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -47,7 +48,9 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -114,9 +117,12 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachLetters: unusedCoachLetters,
   ...ignoredNotices,
+  ...unusedFeedback,
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -357,20 +363,50 @@ describe('GET /me/unlocks', () => {
     const [me, friend] = [await signUp(), await signUp()];
     const piece = PieceId.parse(`gift-${randomUUID().slice(0, 8)}`);
     await gifts.putPiece({ id: piece, offered: true });
-    const { gift } = await gifts.give({
+    const gift = await gifts.give({
       member: MemberId.parse(me.userId),
       piece,
       coach: CoachId.parse('xiaohun'),
       squad: randomUUID(),
+      line: '天冷了，围上再出门。',
+      givenBy: 'coach',
+      weekStart: new Date(0),
     });
     const mine = await call({ method: 'GET', path: '/me/unlocks', token: me.token });
     expect(mine.body).toMatchObject({
       version: 1,
       unlocks: [],
       pieces: [],
-      gifts: [{ id: piece, coach: 'xiaohun', givenAt: gift.givenAt.toISOString() }],
+      gifts: [
+        {
+          id: piece,
+          coach: 'xiaohun',
+          givenAt: gift.givenAt.toISOString(),
+          line: '天冷了，围上再出门。',
+        },
+      ],
     });
     const theirs = await call({ method: 'GET', path: '/me/unlocks', token: friend.token });
     expect(theirs.body).toMatchObject({ gifts: [] });
+
+    // 拆开: the first opening stands, and only the member it was given to can open it.
+    const open = (token: string, worn: boolean) =>
+      call({
+        method: 'PUT',
+        path: `/me/gifts/${piece}/open`,
+        token,
+        body: { version: 1, worn },
+      });
+    const opened = await open(me.token, true);
+    expect(opened).toMatchObject({
+      status: 200,
+      body: { version: 1, gift: { id: piece, worn: true } },
+    });
+    expect(JSON.stringify(opened.body)).toContain('"openedAt"');
+    expect((await open(me.token, false)).body).toStrictEqual(opened.body);
+    expect(await open(friend.token, true)).toMatchObject({
+      status: 404,
+      body: { reason: 'GIFT_NOT_GIVEN' },
+    });
   });
 });

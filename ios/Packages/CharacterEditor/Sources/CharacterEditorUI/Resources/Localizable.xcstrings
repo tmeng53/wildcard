@@ -199,7 +199,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Curtains"
+            "value": "Middle part"
           }
         },
         "zh-Hant": {
@@ -711,7 +711,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Runners"
+            "value": "Sneakers"
           }
         },
         "zh-Hant": {
@@ -1191,7 +1191,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ginger & white"
+            "value": "Orange & white"
           }
         },
         "zh-Hant": {
@@ -1287,7 +1287,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Deadpan"
+            "value": "Chill"
           }
         },
         "zh-Hant": {
@@ -1586,18 +1586,18 @@
         }
       }
     },
-    "篮球 排球": {
+    "篮球 排球 足球": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Basketball, volleyball"
+            "value": "Basketball, volleyball, soccer"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "籃球 排球"
+            "value": "籃球 排球 足球"
           }
         }
       }
@@ -1618,34 +1618,34 @@
         }
       }
     },
-    "练什么都算": {
+    "什么运动都行": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Any sport counts"
+            "value": "Any sport"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "練什麼都算"
+            "value": "什麼運動都行"
           }
         }
       }
     },
-    "网球 匹克球 壁球": {
+    "网球 匹克球 羽毛球": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tennis, pickleball, squash"
+            "value": "Tennis, pickleball, badminton"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網球 匹克球 壁球"
+            "value": "網球 匹克球 羽球"
           }
         }
       }
@@ -1794,34 +1794,18 @@
         }
       }
     },
-    "走路 跑步 力量训练": {
+    "跑步 快走 徒步": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Walking, running, strength"
+            "value": "Running, walking, hiking"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "走路 跑步 重訓"
-          }
-        }
-      }
-    },
-    "跑步 走路": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Running, walking"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "跑步 走路"
+            "value": "跑步 快走 健行"
           }
         }
       }
@@ -2114,34 +2098,34 @@
         }
       }
     },
-    "跑步 3 次解锁": {
+    "跑步、快走或徒步 3 次解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 runs"
+            "value": "Unlock: 3 runs, walks or hikes"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "跑步 3 次解鎖"
+            "value": "跑步、快走或健行 3 次解鎖"
           }
         }
       }
     },
-    "篮球 3 次解锁": {
+    "球类 3 次解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 basketball"
+            "value": "Unlock: 3 ball games"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "籃球 3 次解鎖"
+            "value": "球類 3 次解鎖"
           }
         }
       }
@@ -2157,7 +2141,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "攀岩或徒步 3 次解鎖"
+            "value": "攀岩或健行 3 次解鎖"
           }
         }
       }
@@ -2178,18 +2162,18 @@
         }
       }
     },
-    "网球类 3 次解锁": {
+    "拍类运动 3 次解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 racket sports"
+            "value": "Unlock: 3 racket sessions"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網球類 3 次解鎖"
+            "value": "拍類運動 3 次解鎖"
           }
         }
       }
@@ -2338,6 +2322,22 @@
         }
       }
     },
+    "神秘款": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mystery piece"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "神秘款"
+          }
+        }
+      }
+    },
     "神秘款，再练 %lld 次解锁": {
       "localizations": {
         "en": {
@@ -2391,7 +2391,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gum-sole runners"
+            "value": "Gum-sole sneakers"
           }
         },
         "zh-Hant": {
@@ -2445,7 +2445,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "高幫綁帶球鞋"
+            "value": "高筒綁帶球鞋"
           }
         }
       }
@@ -2477,7 +2477,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "半拉鍊衝鋒衣"
+            "value": "半拉鍊防風外套"
           }
         }
       }
@@ -2541,7 +2541,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "斜挎小包"
+            "value": "斜背小包"
           }
         }
       }
@@ -2573,7 +2573,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "高腰喇叭瑜伽褲"
+            "value": "高腰喇叭瑜珈褲"
           }
         }
       }
@@ -2599,7 +2599,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Jacket round the waist"
+            "value": "Jacket around the waist"
           }
         },
         "zh-Hant": {
@@ -2685,7 +2685,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "空頂遮陽帽"
+            "value": "中空遮陽帽"
           }
         }
       }
@@ -2711,7 +2711,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Colour-block windbreaker"
+            "value": "Color-block windbreaker"
           }
         },
         "zh-Hant": {
@@ -2909,7 +2909,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "搖粒絨半拉鍊"
+            "value": "刷毛半拉鍊"
           }
         }
       }
@@ -2925,7 +2925,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "蜂蜜黃羽絨馬甲"
+            "value": "蜂蜜黃羽絨背心"
           }
         }
       }
@@ -2957,7 +2957,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "攀巖卷邊褲"
+            "value": "攀岩捲邊褲"
           }
         }
       }
@@ -2973,7 +2973,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "高幫徒步靴"
+            "value": "高筒健行靴"
           }
         }
       }
@@ -3037,7 +3037,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "高腰騎行短褲"
+            "value": "高腰單車褲"
           }
         }
       }
@@ -3069,7 +3069,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "防滑瑜伽襪"
+            "value": "防滑瑜珈襪"
           }
         }
       }
@@ -3101,7 +3101,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "瑜伽墊托特包"
+            "value": "瑜珈墊托特包"
           }
         }
       }
@@ -3117,7 +3117,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "絞花毛衣背心"
+            "value": "麻花毛衣背心"
           }
         }
       }
@@ -3133,7 +3133,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網球連衣裙"
+            "value": "網球洋裝"
           }
         }
       }
@@ -3213,7 +3213,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "基礎長袖 T"
+            "value": "基本款長袖 T"
           }
         }
       }
@@ -3245,7 +3245,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "海魂條紋 T"
+            "value": "海軍條紋 T"
           }
         }
       }
@@ -3261,7 +3261,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "工裝揹帶褲"
+            "value": "工裝吊帶褲"
           }
         }
       }
@@ -3277,7 +3277,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "高幫帆布鞋"
+            "value": "高筒帆布鞋"
           }
         }
       }
@@ -3309,7 +3309,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "頭戴耳機"
+            "value": "耳罩式耳機"
           }
         }
       }
@@ -3422,7 +3422,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "三文魚滑雪服"
+            "value": "鮭魚滑雪服"
           }
         }
       }
@@ -3438,7 +3438,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "吞拿魚滑雪服"
+            "value": "鮪魚滑雪服"
           }
         }
       }
@@ -3486,7 +3486,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "紫菜捲滑雪服"
+            "value": "海苔捲滑雪服"
           }
         }
       }
@@ -3502,7 +3502,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "米飯雪褲"
+            "value": "白飯雪褲"
           }
         }
       }
@@ -3550,7 +3550,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "三文魚雪盔"
+            "value": "鮭魚雪盔"
           }
         }
       }
@@ -3566,7 +3566,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "魚子毛線帽"
+            "value": "魚卵毛線帽"
           }
         }
       }
@@ -3614,7 +3614,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "青花魚雪靴"
+            "value": "鯖魚雪靴"
           }
         }
       }
@@ -3656,7 +3656,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ebi fry snow boots"
+            "value": "Fried shrimp snow boots"
           }
         },
         "zh-Hant": {
@@ -3679,22 +3679,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "海苔圍巾"
-          }
-        }
-      }
-    },
-    "先不了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not now"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "先不了"
           }
         }
       }
@@ -3752,7 +3736,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mint choc tank"
+            "value": "Mint chip tank"
           }
         },
         "zh-Hant": {
@@ -3775,22 +3759,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "網球毛線帽"
-          }
-        }
-      }
-    },
-    "一键全开": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open them all"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一鍵全開"
           }
         }
       }
@@ -3992,13 +3960,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couldn't claim it. Check your connection"
+            "value": "Couldn't claim it. Check your connection."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網路開小差了，沒領上"
+            "value": "網路怪怪的，沒領到"
           }
         }
       }
@@ -4014,7 +3982,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "騎行頭盔"
+            "value": "單車安全帽"
           }
         }
       }

@@ -125,7 +125,7 @@ async function runAt(now: number, squad: string) {
         tell: (notices) => {
           if (noticesDown) return Promise.reject(new Error('notices are down'));
           told.push(...notices);
-          return Promise.resolve();
+          return Promise.resolve([]);
         },
       }),
     }),

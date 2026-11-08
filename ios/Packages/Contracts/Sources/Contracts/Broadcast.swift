@@ -65,6 +65,8 @@ public enum AppDestination: Hashable, Sendable {
     case schedule
     /// 小队.
     case squad
+    /// 教练招聘会, over 今天.
+    case coaches
     /// 动态.
     case feed
     /// The squad's 战报 for the week starting `week`.
@@ -77,6 +79,8 @@ public enum AppDestination: Hashable, Sendable {
     case pats
     /// 今天, with the coach's morning note (便条) slid up over it again.
     case coachNote(CoachMemberNote)
+    /// 今天, with the letter the coach that left wrote the one that took over (交接信) opened over it again.
+    case coachLetter(CoachLetter)
     /// 今天, with the coach's newest waiting morning note slid up over it: a tap on its push.
     case waitingCoachNote
     /// 我.
@@ -97,6 +101,7 @@ extension Notice {
         case .unlocked(let kind, let item): .unlock(kind, item: item)
         case .comment(_, let checkIn): .post(checkIn)
         case .coachNote(let note): .coachNote(note)
+        case .coachLetter(let letter): .coachLetter(letter)
         case .broadcast(let broadcast): broadcast.action?.destination
         // 小队, whose first card is the weekly goal.
         case .goalSuggestion: .squad

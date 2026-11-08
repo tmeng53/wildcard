@@ -22,6 +22,14 @@ public struct APIWeekStoryService: WeekStoryService {
         }
     }
 
+    public func weeks(squad: SquadID) async throws(RecapError) -> [LocalDay] {
+        do {
+            return try await api.weekStoryWeeks(of: squad)
+        } catch {
+            throw Self.reason(error)
+        }
+    }
+
     public func nudge(squad: SquadID, week monday: LocalDay) async throws(RecapError) {
         do {
             try await api.nudgeWeekStory(of: squad, week: monday)

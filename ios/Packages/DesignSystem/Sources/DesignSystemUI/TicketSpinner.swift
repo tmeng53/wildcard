@@ -48,6 +48,29 @@ public struct TicketSpinner: View {
     }
 }
 
+/// The logo's two tickets standing still: a mark, such as the seal on the coach's letter (交接信)
+/// and its letterhead. `ground` is what it stands on, the back ticket filled with it; `ink` draws
+/// the front ticket and the back one's outline.
+public struct TicketLogo: View {
+    private let ground: ColorRole
+    private let ink: ColorRole
+    @Environment(\.sceneTheme) private var theme
+
+    public init(on ground: ColorRole = .bgCanvas, ink: ColorRole = .bgBrand) {
+        self.ground = ground
+        self.ink = ink
+    }
+
+    public var body: some View {
+        Canvas { context, canvas in
+            TicketMark.draw(
+                in: &context, size: canvas, rock: 0, ground: Color(role: ground, in: theme),
+                ink: Color(role: ink, in: theme))
+        }
+        .accessibilityHidden(true)
+    }
+}
+
 /// The logo drawn on its 100 × 100 grid (brand-logo `b6-mark`): an outlined ticket behind, turned
 /// 12°, and a filled one in front, turned −10°, with notches, a perforation and a W, both turning
 /// about a point below them.
@@ -55,8 +78,14 @@ enum TicketMark {
     /// The logo's ticket corners, on its 100-point canvas.
     private static let corner: Double = 8
 
-    /// - Parameter rock: how far into `TicketRock`'s rock the tickets are.
-    static func draw(in context: inout GraphicsContext, size: CGSize, rock: Double, ground: Color, ink: Color) {
+    /// - Parameters:
+    ///   - rock: how far into `TicketRock`'s rock the tickets are.
+    ///   - letter: how much of the W shows, 1 for all of it.
+    ///   - check: how much of `TicketCheck`'s check is drawn where the W was.
+    static func draw(
+        in context: inout GraphicsContext, size: CGSize, rock: Double, ground: Color, ink: Color,
+        letter letterOpacity: Double = 1, check: Double = 0
+    ) {
         context.scaleBy(x: size.width / 100, y: size.height / 100)
         let pivot = CGPoint(x: 50, y: 92)
 
@@ -85,6 +114,7 @@ enum TicketMark {
         perforation.addLine(to: CGPoint(x: 65, y: 62))
         front.stroke(perforation, with: .color(ground), style: StrokeStyle(lineWidth: 2, dash: [3, 3]))
         var letter = front
+        letter.opacity = letterOpacity
         letter.clip(to: Path(CGRect(x: 0, y: 29, width: 100, height: 22)))
         var letterW = Path()
         letterW.addLines([
@@ -92,6 +122,13 @@ enum TicketMark {
             CGPoint(x: 60.5, y: 24),
         ])
         letter.stroke(letterW, with: .color(ground), style: StrokeStyle(lineWidth: 5, lineJoin: .miter, miterLimit: 10))
+        if check > 0 {
+            var mark = Path()
+            mark.addLines([CGPoint(x: 38, y: 38), CGPoint(x: 47, y: 47), CGPoint(x: 63, y: 29)])
+            front.stroke(
+                mark.trimmedPath(from: 0, to: min(check, 1)), with: .color(ground),
+                style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
+        }
     }
 
     private static func turn(_ context: inout GraphicsContext, by degrees: Double, about pivot: CGPoint) {

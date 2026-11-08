@@ -33,8 +33,11 @@ export const PAGE_LIMIT = 50;
  * forever so one missed can be found again, and how far each member has read.
  */
 export interface Notices {
-  /** Writes notices told now. Never changes one already written. */
-  tell(notices: readonly NewNotice[]): Promise<void>;
+  /**
+   * Writes notices told now and answers with the members it told; a comment's notice already
+   * told to a member (its event delivered twice) is not told again. Never changes one written.
+   */
+  tell(notices: readonly NewNotice[]): Promise<readonly MemberId[]>;
   /**
    * The member's notices, newest first, `limit` at a time (at most `PAGE_LIMIT`). The newest
    * page (no `before`) first tells them every broadcast running now they weren't told yet.
@@ -106,8 +109,8 @@ export function createNotices(deps: {
   };
   return {
     async tell(notices) {
-      if (notices.length === 0) return;
-      await deps.store.add(notices);
+      if (notices.length === 0) return [];
+      return deps.store.add(notices);
     },
 
     async page({ member, before, limit }) {

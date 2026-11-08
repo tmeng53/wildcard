@@ -35,7 +35,7 @@ export interface PlannedWeek extends WeeklyPlan {
   readonly firstWeek: WeekStart | undefined;
 }
 
-/** A member's typical week (每周模板): the plan each week follows until it is changed for itself. */
+/** A member's typical week (我的每周计划): the plan each week follows until it is changed for itself. */
 export interface PlanTemplate {
   readonly days: PlanDays;
   /** `default` before the member makes one. */
@@ -104,8 +104,8 @@ export async function findWeeklyPlan(
 }
 
 /**
- * Makes `day` a training day of the 练了's sport in the member's plan when it was a rest day, so
- * training on a planned rest day counts in the week like any training day, and notes which 练了
+ * Makes `day` a training day of the 训练's sport in the member's plan when it was a rest day, so
+ * training on a planned rest day counts in the week like any training day, and notes which 训练
  * did it. Safe to repeat.
  */
 export async function planTrainedDay(

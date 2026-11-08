@@ -2,16 +2,17 @@
 import DesignSystem
 import SwiftUI
 
-/// Where a card sits, which decides its fill: layers differ by fill, never by shadow or border.
+/// Where a card sits, which decides its look. Never a grey block on a white page (Tracy,
+/// 2026-11-08): the brand is white and graphite.
 public enum CardSurface: Sendable {
-    /// On a white page: a subtle grey block set into it.
+    /// On a white page: white, edged with a hairline.
     case page
     /// On the scene: solid white, straight on the art.
     case scene
 }
 
 extension View {
-    /// A card: 16 points of padding, 12-point corners, no border and no shadow.
+    /// A card: 16 points of padding, 12-point corners, no shadow; on a page, a hairline edge.
     public func card(on surface: CardSurface = .page) -> some View {
         modifier(CardBackground(surface: surface))
     }
@@ -40,11 +41,15 @@ private struct CardBackground: ViewModifier {
     let surface: CardSurface
 
     func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
         content
             .padding(Space.cardPadding)
-            .background(
-                Color(role: surface == .page ? .bgSubtle : .bgCanvas, in: theme),
-                in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            .background(Color(role: .bgCanvas, in: theme), in: shape)
+            .overlay {
+                if surface == .page {
+                    shape.strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline)
+                }
+            }
     }
 }
 #endif

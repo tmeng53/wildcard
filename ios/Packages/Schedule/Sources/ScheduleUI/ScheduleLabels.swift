@@ -43,14 +43,6 @@ enum ScheduleLabels {
         }
     }
 
-    static func planName(_ day: PlanDay) -> String {
-        switch day {
-        case .rest: String(localized: "休息", bundle: .module.inAppLanguage)
-        case .train(let activity?): activity.localizedName
-        case .train(nil): String(localized: "训练", bundle: .module.inAppLanguage)
-        }
-    }
-
     static func fuel(_ goal: FuelGoal) -> Text {
         switch goal {
         case .suggested(let suggestion): Text(LocalizedStringKey(suggestion.key), bundle: .module)

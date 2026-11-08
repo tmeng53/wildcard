@@ -7,9 +7,10 @@ BroadcastCelebrationUITests 50
 BurstUITests 60
 CharacterEditorUITests 230
 CoachFeedUITests 111
-CoachHireUITests 150
+CoachHireUITests 175
+CoachLetterUITests 110
 CoachNoteUITests 20
-CoachSidelineUITests 35
+CoachSidelineUITests 55
 ComposePhotoUITests 87
 DailyPushUITests 55
 FeedUITests 430

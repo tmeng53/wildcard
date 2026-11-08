@@ -6,7 +6,7 @@ import SwiftUI
 public struct CategoryBarItem<ID: Hashable>: Identifiable {
     public let id: ID
     public let title: Text
-    /// A symbol in front of the title, for an item unlike the rest (出赛表's 每周模板).
+    /// A symbol in front of the title, for an item unlike the rest (出赛表's 我的每周计划).
     public let systemImage: String?
     /// Sets the item apart from the ones before it with a hairline.
     public let startsGroup: Bool

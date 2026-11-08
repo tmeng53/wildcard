@@ -12,7 +12,7 @@ public struct ListRow: View {
     private let value: Text?
     private let showsDivider: Bool
     private let showsChevron: Bool
-    private let action: () -> Void
+    private let action: (() -> Void)?
 
     public init(
         _ title: Text, systemImage: String? = nil, value: Text? = nil, showsDivider: Bool = true,
@@ -26,24 +26,40 @@ public struct ListRow: View {
         self.action = action
     }
 
+    /// A row that only shows its value, for someone who can't change it: no chevron, no tap.
+    public init(_ title: Text, systemImage: String? = nil, value: Text, showsDivider: Bool = true) {
+        self.title = title
+        self.systemImage = systemImage
+        self.value = value
+        self.showsDivider = showsDivider
+        self.showsChevron = false
+        self.action = nil
+    }
+
     public var body: some View {
-        Button(action: action) {
-            RowShell(title: title, systemImage: systemImage, showsDivider: showsDivider) {
-                if let value {
-                    value
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .lineLimit(1)
-                }
-                if showsChevron {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
-                        .foregroundStyle(Color(role: .fgSubtle, in: theme))
-                        .accessibilityHidden(true)
-                }
+        if let action {
+            Button(action: action) { shell }
+                .buttonStyle(.plain)
+        } else {
+            shell.accessibilityElement(children: .combine)
+        }
+    }
+
+    private var shell: some View {
+        RowShell(title: title, systemImage: systemImage, showsDivider: showsDivider) {
+            if let value {
+                value
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .lineLimit(1)
+            }
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
+                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                    .accessibilityHidden(true)
             }
         }
-        .buttonStyle(.plain)
     }
 }
 

@@ -11,15 +11,13 @@ import {
 } from '@wildcard/notices';
 
 import { bodyVersion } from '../body-version.js';
+import type { CoachNames } from '../flows/coach-names.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 /** Notices on a page when the app doesn't say. */
 const DEFAULT_PAGE = 30;
-
-/** The coaches' names now, by coach id, retired ones too. */
-export type CoachNames = () => Promise<ReadonlyMap<string, string>>;
 
 const WireNoticeId = z.int().positive();
 
@@ -42,7 +40,8 @@ export const NoticeEntry = z
         'What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is ' +
         'in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the ' +
         'squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the ' +
-        'caller its morning note, 便条), `unlocked` (a store, prop or piece opened), ' +
+        'caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that ' +
+        'left wrote the next a letter), `unlocked` (a store, prop or piece opened), ' +
         '`comment` (a teammate commented on the caller’s check-in or replied to them), ' +
         '`broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad ' +
         'trained over its weekly goal some weeks in a row, so its captain is suggested a higher ' +
@@ -80,14 +79,21 @@ export const NoticeEntry = z
           'The caller’s check-in the coach answered (`coachReply`), or the check-in commented ' +
           'on (`comment`).',
       }),
-    coach: z
-      .string()
-      .optional()
-      .meta({ description: 'The coach who answered (`coachReply`) or wrote (`coachNote`).' }),
+    coach: z.string().optional().meta({
+      description: 'The coach who answered (`coachReply`) or wrote (`coachNote`, `coachLetter`).',
+    }),
     coachName: z
       .string()
       .optional()
-      .meta({ description: 'Its name now (`coachReply`, `coachNote`).' }),
+      .meta({ description: 'Its name now (`coachReply`, `coachNote`, `coachLetter`).' }),
+    toCoach: z
+      .string()
+      .optional()
+      .meta({ description: 'The coach that took over, whom the letter is to (`coachLetter`).' }),
+    toCoachName: z.string().optional().meta({ description: 'Its name now (`coachLetter`).' }),
+    letter: WireNoticeId.optional().meta({
+      description: 'The letter’s id (`coachLetter`): the same as the coach activity’s.',
+    }),
     replied: z
       .boolean()
       .optional()
@@ -99,8 +105,15 @@ export const NoticeEntry = z
     day: z.iso
       .date()
       .optional()
-      .meta({ description: 'The New York day the morning note was written for (`coachNote`).' }),
-    text: z.string().optional().meta({ description: 'The morning note’s words (`coachNote`).' }),
+      .meta({
+        description:
+          'The day the morning note was written for (`coachNote`), or the letter is dated ' +
+          '(`coachLetter`), on the squad’s clock.',
+      }),
+    text: z
+      .string()
+      .optional()
+      .meta({ description: 'The morning note’s (`coachNote`) or letter’s (`coachLetter`) words.' }),
     unlockKind: z
       .string()
       .optional()
@@ -136,7 +149,7 @@ export const NoticeEntry = z
         destination: z.string().meta({
           description:
             'Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` ' +
-            '(小队), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show ' +
+            '(小队), `coaches` (教练招聘会), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show ' +
             'no button for one you don’t know.',
         }),
       })
@@ -306,7 +319,7 @@ export function notices(deps: {
 
 /** The notices as the app reads them, with the names they show as they are now. */
 export async function noticeEntries(
-  deps: { readonly members: Members; readonly coachNames: CoachNames },
+  deps: { readonly members: Pick<Members, 'squadmates'>; readonly coachNames: CoachNames },
   { notices: told, broadcasts }: Pick<Page, 'notices' | 'broadcasts'>,
 ): Promise<z.infer<typeof NoticeEntry>[]> {
   const movers = [
@@ -316,17 +329,25 @@ export async function noticeEntries(
       ),
     ),
   ];
+  const coachAsked = told.flatMap((notice) =>
+    notice.kind === 'coachReply' || notice.kind === 'coachNote'
+      ? [{ coach: notice.subject.coach, squad: notice.squad }]
+      : notice.kind === 'coachLetter'
+        ? [
+            { coach: notice.subject.from, squad: notice.squad },
+            { coach: notice.subject.to, squad: notice.squad },
+          ]
+        : [],
+  );
   const [profiles, coaches] = await Promise.all([
     movers.length === 0
       ? undefined
       : deps.members.squadmates(movers.map((each) => ProfileMember.parse(each))),
-    told.some(({ kind }) => kind === 'coachReply' || kind === 'coachNote')
-      ? deps.coachNames()
-      : undefined,
+    coachAsked.length === 0 ? undefined : deps.coachNames(coachAsked),
   ]);
   const names = {
     member: (id: string) => profiles?.get(ProfileMember.parse(id))?.character?.nickname,
-    coach: (id: string) => coaches?.get(id),
+    coach: (id: string, squad: string | undefined) => coaches?.(id, squad),
     broadcast: (id: Broadcast['id']) => broadcasts.get(id),
   };
   // A broadcast since lost has nothing to say, so it is left out.
@@ -340,7 +361,7 @@ function wireNotice(
   notice: Notice,
   names: {
     readonly member: (id: string) => string | undefined;
-    readonly coach: (id: string) => string | undefined;
+    readonly coach: (id: string, squad: string | undefined) => string | undefined;
     readonly broadcast: (id: Broadcast['id']) => Broadcast | undefined;
   },
 ): z.infer<typeof NoticeEntry> | undefined {
@@ -367,7 +388,7 @@ function wireNotice(
     }
     case 'coachReply': {
       const { checkIn, coach, replied, emoji } = notice.subject;
-      const coachName = names.coach(coach);
+      const coachName = names.coach(coach, notice.squad);
       return {
         ...common,
         checkIn,
@@ -379,7 +400,7 @@ function wireNotice(
     }
     case 'coachNote': {
       const { note, coach, day, text } = notice.subject;
-      const coachName = names.coach(coach);
+      const coachName = names.coach(coach, notice.squad);
       return {
         ...common,
         note,
@@ -387,6 +408,21 @@ function wireNotice(
         day,
         text,
         ...(coachName === undefined ? {} : { coachName }),
+      };
+    }
+    case 'coachLetter': {
+      const { letter, from, to, day, text } = notice.subject;
+      const coachName = names.coach(from, notice.squad);
+      const toCoachName = names.coach(to, notice.squad);
+      return {
+        ...common,
+        letter,
+        coach: from,
+        toCoach: to,
+        day,
+        text,
+        ...(coachName === undefined ? {} : { coachName }),
+        ...(toCoachName === undefined ? {} : { toCoachName }),
       };
     }
     case 'unlocked':

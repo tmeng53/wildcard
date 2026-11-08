@@ -41,6 +41,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -52,7 +53,9 @@ import {
   unusedGifts,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 import {
   dailyProgressNotification,
@@ -134,6 +137,7 @@ const deps = {
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachLetters: unusedCoachLetters,
   notices,
   coachNames: () => Promise.reject(new Error('unused')),
   liveEvents: ignoredNotices.liveEvents,
@@ -144,6 +148,8 @@ const deps = {
   publicRoutes: unlimitedPublicRoutes,
   aiConsent: aiConsentOn(db),
   nudges,
+  weather: weatherOn(db),
+  ...unusedFeedback,
 };
 const app = createApp(deps);
 

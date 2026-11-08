@@ -85,7 +85,7 @@ export interface WeeklyAwardsRun {
 
 /**
  * The squad's push when its 战报 is ready, to everyone in it. It says only that the awards are
- * in, never who won what, so opening the story is the surprise. A later one for the same week (a member in two squads) replaces it.
+ * in, never who won what, so opening the story is the surprise. A later one for the same week replaces it.
  */
 export function awardsReadyNotification(squad: SquadId, week: WeekStart): PushNotification {
   return {
@@ -356,6 +356,29 @@ export async function squadStory(
     ...(best === undefined ? {} : { bestDisclaimer: best }),
     ...(mine === undefined ? {} : { mine }),
   };
+}
+
+/**
+ * The weeks a squad has a 战报 for, the latest first, for one of its members (往期战报 on the
+ * squad's page). The latest week whose awards are due on the squad's clock is frozen first if no
+ * run has yet, so it is listed the moment it comes out. A week nobody checked in has none. Throws
+ * `SquadNotJoinedError` for anyone not in the squad now.
+ */
+export async function squadStoryWeeks(
+  deps: Pick<
+    WeeklyAwardsDependencies,
+    'checkIns' | 'squads' | 'scenes' | 'members' | 'awards' | 'clock'
+  >,
+  { viewer, squad }: { readonly viewer: string; readonly squad: SquadId },
+): Promise<WeekStart[]> {
+  await deps.squads.find({ squad: SquadsSquad.parse(squad), viewer: SquadsMember.parse(viewer) });
+  const now = deps.clock();
+  for (const week of weeksMaybeAwarded(now).reverse()) {
+    if ((await awardsTimeFor(deps, { squad, weekStart: week })) > now) continue;
+    await frozenStory(deps, { squad, weekStart: week });
+    break;
+  }
+  return deps.awards.storyWeeks({ squad });
 }
 
 /**

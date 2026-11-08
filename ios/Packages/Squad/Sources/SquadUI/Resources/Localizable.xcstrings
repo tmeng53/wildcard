@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "「%@」": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@”"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」"
+          }
+        }
+      }
+    },
     "逛逛招聘会": {
       "localizations": {
         "en": {
@@ -12,7 +28,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "逛逛招聘會"
+            "value": "逛逛徵才會"
           }
         }
       }
@@ -61,22 +77,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "上週冠軍"
-          }
-        }
-      }
-    },
-    "你走了，小队就散了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Once you go, the squad ends."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你走了，小隊就散了"
           }
         }
       }
@@ -262,7 +262,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Switch"
+            "value": "Change spot"
           }
         },
         "zh-Hant": {
@@ -545,22 +545,6 @@
         }
       }
     },
-    "队长会交给最早加入的队友": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Captain passes to whoever joined first."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隊長會交給最早加入的隊友"
-          }
-        }
-      }
-    },
     "阿杰": {
       "localizations": {
         "en": {
@@ -636,7 +620,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "招聘"
+            "value": "徵才"
           }
         }
       }
@@ -716,7 +700,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "教練招聘會"
+            "value": "教練徵才會"
           }
         }
       }
@@ -921,6 +905,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "小隊的記憶會留給下一個教練"
+          }
+        }
+      }
+    },
+    "换成%@？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch to %@?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "換成%@？"
+          }
+        }
+      }
+    },
+    "%@会离开，%@会来": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ will leave, and %2$@ will come"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@會離開，%2$@會來"
+          }
+        }
+      }
+    },
+    "先不换": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先不換"
+          }
+        }
+      }
+    },
+    "确认换教练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch coach"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "確認換教練"
           }
         }
       }
@@ -1203,68 +1251,172 @@
         }
       }
     },
-    "用于全队都能看到的内容，比如周日晚 8 点的战报": {
+    "订阅": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "For what the whole squad sees, like the Sunday 8pm recap."
+            "value": "Plan"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "用于全队都能看到的内容，比如周日晚 8 点的战报"
+            "value": "订阅"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "用於全隊都能看到的內容，比如週日晚 8 點的戰報"
+            "value": "訂閱"
           }
         }
       }
     },
-    "下周起改为%@（%@）": {
+    "限时免费": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "From next week: %1$@ (%2$@)"
+            "value": "Free for now"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "下周起改为%1$@（%2$@）"
+            "value": "限时免费"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "下週起改為%1$@（%2$@）"
+            "value": "限時免費"
           }
         }
       }
     },
-    "周日 20:00 结算": {
+    "小队语言": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Settles Sunday 8pm"
+            "value": "Squad language"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "周日 20:00 结算"
+            "value": "小队语言"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "週日 20:00 結算"
+            "value": "小隊語言"
+          }
+        }
+      }
+    },
+    "教练和战报用这个语言": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your coach and weekly recap use this language"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "教练和战报用这个语言"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "教練和戰報用這個語言"
+          }
+        }
+      }
+    },
+    "小队设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squad settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小队设置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊設定"
+          }
+        }
+      }
+    },
+    "小队会解散": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The squad will end."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小队会解散"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小隊會解散"
+          }
+        }
+      }
+    },
+    "队长会交给最早加入的队友": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captain passes to whoever joined first."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "队长会交给最早加入的队友"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隊長會交給最早加入的隊友"
+          }
+        }
+      }
+    },
+    "%@的交接信": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Handover letter from %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@的交接信"
           }
         }
       }

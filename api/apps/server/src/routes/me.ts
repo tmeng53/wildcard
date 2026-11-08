@@ -27,7 +27,7 @@ const profileFields = {
     .default(null)
     .meta({
       description:
-        'What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅): 1 to ' +
+        'What the member’s character shouts when the squad cheers a teammate’s 训练 (口头禅): 1 to ' +
         '10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; ' +
         'the app then uses their persona’s own line. Squadmates read it on the squad’s today.',
       example: '冲就完了🔥',

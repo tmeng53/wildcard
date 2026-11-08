@@ -92,7 +92,7 @@ final class TodayUITests: XCTestCase {
         settle()
         // With the keyboard up, the excuse and 发布 stay in view.
         XCTAssertTrue(field.isHittable, "the excuse is hidden under the keyboard")
-        XCTAssertTrue(post.isHittable, "发布请假条 is hidden under the keyboard")
+        XCTAssertTrue(post.isHittable, "发布 is hidden under the keyboard")
         XCTAssertFalse(app.buttons["disclaimer.restore"].exists, "用回我写的 shows before anything replaced the words")
 
         // Picking a style only picks it; 编一句 puts a line from the typed words up, in place of
@@ -123,7 +123,7 @@ final class TodayUITests: XCTestCase {
         settle()
         let line = field.value as? String ?? ""
         XCTAssertNotEqual(line, "deadline", "换一句 left the typed words")
-        // Tapping the excuse starts typing again, and the count shows while typing.
+        // Tapping the excuse starts typing again; the count follows the excuse.
         editAtEnd(field, in: app)
         XCTAssertEqual(
             app.staticTexts["disclaimer.count"].label.split(separator: "/").first, "\(line.count)",
@@ -305,9 +305,9 @@ extension TodayUITests {
         keepScreenshot(named: "15-compose-minutes-other")
         let window = app.windows.firstMatch.frame
         XCTAssertTrue(window.contains(ruler.frame), "the minutes ruler is cut off: \(ruler.frame)")
-        app.buttons["compose.minutes.45"].tap()
-        XCTAssertTrue(app.buttons["compose.minutes.45"].isSelected, "45 minutes isn't picked")
-        XCTAssertTrue(ruler.waitForNonExistence(timeout: Self.wait), "the ruler stayed open after picking 45")
+        app.buttons["compose.minutes.60"].tap()
+        XCTAssertTrue(app.buttons["compose.minutes.60"].isSelected, "60 minutes isn't picked")
+        XCTAssertTrue(ruler.waitForNonExistence(timeout: Self.wait), "the ruler stayed open after picking 60")
     }
 }
 
@@ -343,7 +343,7 @@ extension TodayUITests {
 
 /// The 请假条 page's steps.
 extension TodayUITests {
-    /// Puts the keyboard away (the styles and 编一句 show only then), picks a style, checks that
+    /// Puts the keyboard away, picks a style, checks that
     /// picking alone asks nothing, then taps 编一句 and returns the line it put up.
     private func writeFunnyLine(in app: XCUIApplication, field: XCUIElement) -> String {
         dismissKeyboard(in: app)

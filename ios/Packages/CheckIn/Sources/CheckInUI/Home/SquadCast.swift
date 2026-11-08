@@ -48,6 +48,13 @@ final class SquadCast {
     /// The coach the squad hired; nil without one, or for a coach this build has no character for,
     /// who stays off the scene.
     private(set) var coach: Coach?
+    /// The coach the squad just changed to (换教练), walking in beside `coach` while the one that
+    /// left writes its letter; nil the rest of the time.
+    private(set) var incoming: Coach?
+    /// The coaches changing places, which `coach` and `incoming` play.
+    private(set) var handover: CoachHandover?
+    /// Where the coach would stand while the squad has none: an empty spot that opens 教练招聘会.
+    private(set) var vacancy: StagePoint?
     /// Bumps each time the squad cheers me, with who joins in, nearest first.
     private(set) var cheer = Cheer(count: 0, order: [])
     /// What the coach last saw on the home, for its next cue, and whose eyes they were.
@@ -75,11 +82,20 @@ final class SquadCast {
     /// a quick second pull never lets the first one's move play after it.
     private var lightsMoves: [MemberID: Task<Void, Never>] = [:]
 
-    /// Places the squad from the store's home: everyone but `me`, and `coach` on the sideline.
-    func update(home: Home, scene: SceneTheme, phase: DayPhase, coach speaker: CoachSpeaker? = nil) {
+    /// Places the squad from the store's home: everyone but `me`, and `coach` on the sideline, or,
+    /// `hiring` (the squad has no coach), its empty spot there; during a `handover`, the coach
+    /// that left there and the one that took over walking in.
+    func update(
+        home: Home, scene: SceneTheme, phase: DayPhase, coach speaker: CoachSpeaker? = nil, hiring: Bool = false,
+        handover: CoachHandover? = nil
+    ) {
         if stage.layout != .of(scene) { stage = SquadStage(layout: .of(scene)) }
-        coach = sideline(speaker)
-        watch(home, by: speaker)
+        let standing = handover?.leaving ?? speaker
+        coach = sideline(standing)
+        incoming = handover.flatMap { sideline($0.coming) }
+        self.handover = incoming == nil ? nil : handover
+        vacancy = hiring && coach == nil && incoming == nil ? stage.layout.sideline : nil
+        watch(home, by: standing)
         let teammates = home.today.members.filter { $0.member != home.member }
         let members = teammates.map { mate in
             StageMember(
@@ -90,7 +106,7 @@ final class SquadCast {
                 firstCheckInAt: mate.firstCheckInAt,
                 keepsToTheBack: Self.persona(of: mate) == .shy, eating: home.todaysMeal(of: mate.member))
         }
-        stage.arrange(members, coach: coach != nil)
+        stage.arrange(members, coach: coach != nil || incoming != nil || vacancy != nil)
         mates = zip(teammates, members).compactMap { mate, member in
             let persona = Self.persona(of: mate)
             let look = Self.look(of: mate)
@@ -181,11 +197,12 @@ final class SquadCast {
         }
     }
 
-    /// The coach on this scene's sideline, its character made once per coach.
+    /// The coach on this scene's sideline, its character made once per coach: the one that walked
+    /// in keeps its own as it steps onto the spot.
     private func sideline(_ speaker: CoachSpeaker?) -> Coach? {
         guard let speaker, let spot = stage.layout.sideline else { return nil }
-        if let coach, coach.speaker.id == speaker.id {
-            return Coach(speaker: speaker, player: coach.player, spot: spot)
+        if let made = [coach, incoming].compactMap { $0 }.first(where: { $0.speaker.id == speaker.id }) {
+            return Coach(speaker: speaker, player: made.player, spot: spot)
         }
         let id = speaker.id.rawValue
         guard CoachCharacter.exists(id),

@@ -1,6 +1,134 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "下雨天也有安排": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rain or shine, you have a plan"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下雨天也有安排"
+          }
+        }
+      }
+    },
+    "今天下午 小雨": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light rain this afternoon"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天下午 小雨"
+          }
+        }
+      }
+    },
+    "8–13°C · 降水 80%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "46–55°F · 80% chance of rain"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8–13°C · 降水 80%"
+          }
+        }
+      }
+    },
+    "原计划": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planned"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原計畫"
+          }
+        }
+      }
+    },
+    "跑步 5 公里": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 km run"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跑步 5 公里"
+          }
+        }
+      }
+    },
+    "可以改成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could be"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以改成"
+          }
+        }
+      }
+    },
+    "早上跑，或者室内练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A morning run, or train indoors"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "早上跑，或者室內練"
+          }
+        }
+      }
+    },
+    "只用到大概在哪个城市，队友看不到。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only your rough city is used. Teammates can’t see it."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只用到大概在哪個城市，隊友看不到。"
+          }
+        }
+      }
+    },
     "语言": {
       "localizations": {
         "en": {
@@ -242,7 +370,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Welcome. Your own pace"
+            "value": "Welcome. Go at your own pace"
           }
         },
         "zh-Hans": {
@@ -286,7 +414,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Here? That's nice"
+            "value": "Oh, you're here. Nice"
           }
         },
         "zh-Hans": {
@@ -352,7 +480,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A meeting of destiny"
+            "value": "Destiny brought us here"
           }
         },
         "zh-Hans": {
@@ -440,7 +568,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "I wouldn't allow you not to come"
+            "value": "Not coming was never an option"
           }
         },
         "zh-Hans": {
@@ -1578,7 +1706,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Skip Leg Day Wednesdays Club"
+            "value": "Skip Leg Day Club"
           }
         },
         "zh-Hans": {
@@ -1688,7 +1816,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Start squad"
+            "value": "Start a squad"
           }
         },
         "zh-Hans": {
@@ -1710,7 +1838,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Change this Wildcard athlete"
+            "value": "Try another Wildcard athlete"
           }
         },
         "zh-Hans": {
@@ -2062,7 +2190,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Where this week?"
+            "value": "Where to this week?"
           }
         },
         "zh-Hans": {
@@ -2271,6 +2399,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "用於全隊都能看到的內容，比如週日晚 8 點的戰報"
+          }
+        }
+      }
+    },
+    "允许": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允許"
+          }
+        }
+      }
+    },
+    "已打开大概位置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rough location on"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已打開大概位置"
           }
         }
       }

@@ -6,7 +6,7 @@ import ScheduleDomain
 import SwiftUI
 
 // 出赛表's top bar, under the navigation bar's back button: the page's title and the week chips
-// with the 每周模板 after them. 存图 sits in the navigation bar, across from the back button.
+// with the 我的每周计划 after them. 存图 sits in the navigation bar, across from the back button.
 
 extension ScheduleView {
     // MARK: Top bar
@@ -24,7 +24,7 @@ extension ScheduleView {
         }
     }
 
-    /// 存图, in the navigation bar; the 每周模板 is no one week's poster to share.
+    /// 存图, in the navigation bar; the 我的每周计划 is no one week's poster to share.
     var saveItem: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             if !store.showsTemplate {
@@ -52,7 +52,7 @@ extension ScheduleView {
         .accessibilityIdentifier("schedule.save")
     }
 
-    /// The weeks, then the 每周模板 after a hairline.
+    /// The weeks, then the 我的每周计划 after a hairline.
     private var pageChips: [CategoryBarItem<SchedulePage>] {
         guard !store.weeks.isEmpty else { return [] }
         return weekChips + [

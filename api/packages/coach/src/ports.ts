@@ -1,9 +1,17 @@
 import type { z } from 'zod';
 
+import type { CoachCardKind, CoachOwnCard } from './domain/cards.js';
+import type {
+  Challenge,
+  ChallengeAnswer,
+  ChallengeCompletion,
+  ChallengeDoneBy,
+} from './domain/challenge.js';
 import type { Coach, CoachId } from './domain/coach.js';
 import type { StoredPath } from './domain/memory.js';
 import type { CoachModel, CoachSettings, MemberId, SquadId } from './domain/settings.js';
 import type { MemberFacts } from './domain/member-facts.js';
+import type { CoachLetter, Handover } from './domain/letter.js';
 import type { CoachAnswer, CoachEmoji, CoachReply } from './domain/reply.js';
 import type { SquadWeek } from './domain/squad-week.js';
 import type { NewWake, TokenUsage, Wake, WakeStep } from './domain/wake.js';
@@ -69,6 +77,16 @@ export interface CoachMeme {
 
 /** The memes in use now, which the coach may draw humour from. */
 export type CoachMemes = () => Promise<readonly CoachMeme[]>;
+
+/**
+ * Today's weather where each of these members is, in words (`今天雨，8–13°C，降水概率 80%；昨天晴，…`), for
+ * those whose place is known. The model reads only the weather, never where they are.
+ */
+export type CoachWeather = (input: {
+  readonly members: readonly string[];
+  /** The day of the wake, `YYYY-MM-DD`. */
+  readonly day: string;
+}) => Promise<ReadonlyMap<string, string>>;
 
 /** How a wake's run ended, with the tokens it used either way. */
 export type AgentRun =
@@ -155,6 +173,8 @@ export interface MemberNote {
   /** The squad's day it was written for, `YYYY-MM-DD` (New York). */
   readonly day: string;
   readonly text: string;
+  /** The day's challenge (今日挑战) the note sets, if any. */
+  readonly challenge?: Challenge;
   readonly at: Date;
 }
 
@@ -167,8 +187,51 @@ export interface CoachMemberNoteStore {
     readonly coach: CoachId;
     readonly day: string;
     readonly text: string;
+    readonly challenge?: Challenge;
     readonly wake: number;
   }): Promise<boolean>;
+  /**
+   * The challenge the member's note of `day` (the squad's day) set, and what they said to it;
+   * `undefined` when that note set none, there is no note, or it hasn't reached them yet.
+   */
+  challengeOf(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly day: string;
+  }): Promise<DayChallenge | undefined>;
+  /**
+   * Marks the challenge on a note done, by the coach from the day's check-ins; false when it
+   * set none, isn't for `day` (the squad's), was let go or was done already (the first stands).
+   */
+  complete(input: {
+    readonly note: number;
+    readonly by: ChallengeDoneBy;
+    readonly day: string;
+  }): Promise<boolean>;
+  /** The challenges on the squad's notes of `day` that reached their members, by member. */
+  challengesOn(input: {
+    readonly squad: SquadId;
+    readonly day: string;
+  }): Promise<readonly (DayChallenge & { readonly member: string })[]>;
+}
+
+/** What a member said to a challenge, and why they let it go if they said. */
+export interface ChallengeAnswered {
+  readonly answer: ChallengeAnswer;
+  readonly reason?: string;
+}
+
+/** A member's challenge on one day's note, as they and their coach read it. */
+export interface DayChallenge {
+  /** The note that set it. */
+  readonly note: number;
+  /** The squad's day it is for, `YYYY-MM-DD`. */
+  readonly day: string;
+  readonly challenge: Challenge;
+  readonly answer: ChallengeAnswer | undefined;
+  /** Why they let it go, if they said. */
+  readonly reason: string | undefined;
+  readonly completion: ChallengeCompletion | undefined;
 }
 
 /** What coaches said to check-ins: a line, an emoji or both, one a squad a check-in. */
@@ -225,6 +288,9 @@ export interface CoachMemberNoteShown {
   readonly id: number;
   readonly day: string;
   readonly text: string;
+  /** The day's challenge it sets, if any, and what the member said to it. */
+  readonly challenge?: Challenge;
+  readonly challengeAnswer?: ChallengeAnswer;
   readonly coach: CoachReply['coach'];
   readonly at: Date;
 }
@@ -250,12 +316,67 @@ export interface CoachActivityStore {
     readonly member: string;
     readonly since: Date;
   }): Promise<CoachMemberNoteShown | undefined>;
+  /** The letter the squad's coach now was left when it took over (换教练), if it was left one. */
+  letter(squad: SquadId): Promise<CoachLetter | undefined>;
+  /**
+   * The member's answer to their note's challenge (接受挑战 or 算了); `noNote` when the note
+   * isn't theirs in the squad or hasn't reached them yet, `noChallenge` when it set none. The
+   * first answer stands.
+   */
+  answerChallenge(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly note: number;
+    readonly answer: ChallengeAnswer;
+    /** Why they let it go, with `declined` only. */
+    readonly reason?: string;
+  }): Promise<ChallengeAnswered | 'noNote' | 'noChallenge'>;
+  /**
+   * The member's challenge on their note of `day` (the squad's day), once delivered; the same
+   * as the coach's `challengeOf`.
+   */
+  challengeOf(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly day: string;
+  }): Promise<DayChallenge | undefined>;
+  /**
+   * The member marks their note's challenge done (我完成了) on `today`, the squad's day:
+   * `noNote` when the note isn't theirs in the squad or hasn't reached them, `noChallenge` when
+   * it set none, `declined` when they let it go, `dayOver` when it was another day's. The first
+   * one stands, the coach's too, and is what comes back.
+   */
+  completeChallenge(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly note: number;
+    readonly today: string;
+  }): Promise<ChallengeCompletion | 'noNote' | 'noChallenge' | 'declined' | 'dayOver'>;
   /** The member put their note away (收下); false when it isn't theirs in the squad. Once. */
   putAway(input: {
     readonly squad: SquadId;
     readonly member: string;
     readonly note: number;
   }): Promise<boolean>;
+  /**
+   * The coach's own cards for the member in the squad since `since`, oldest first: its 战术板
+   * lines, the member's delivered notes and their challenges, its lines to the member's
+   * check-ins and its answers to the member's replies.
+   */
+  cards(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly since: Date;
+  }): Promise<readonly CoachOwnCard[]>;
+  /** The keys (`cardKey`) of the cards the member has seen in the squad. */
+  seenCards(input: { readonly squad: SquadId; readonly member: string }): Promise<Set<string>>;
+  /** Marks a card seen for the member; once, however many times it is called. */
+  markSeen(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly kind: CoachCardKind;
+    readonly id: string;
+  }): Promise<void>;
   /** The squad's replies to these check-ins, in no order; a check-in with none is left out. */
   replies(squad: SquadId, checkIns: readonly string[]): Promise<readonly CoachReply[]>;
   /** The squad's answers to replies under these check-ins, oldest first. */
@@ -269,7 +390,8 @@ export interface CoachActivityStore {
 export interface CoachUsageStore {
   record(entry: {
     readonly squad: SquadId;
-    readonly wake: number;
+    /** The wake that used them; none for a letter, which runs outside the queue. */
+    readonly wake?: number;
     readonly coach: CoachId;
     readonly model: CoachModel;
     readonly usage: TokenUsage;
@@ -331,6 +453,12 @@ export interface CoachHiringStore {
   /** Every squad with a coach hired now, with its coach. */
   hired(): Promise<ReadonlyMap<SquadId, CoachId>>;
   /**
+   * Whether the squad's coach was its coach before, was fired and is back, and has not run for it
+   * since it came back (a wake skipped without running, as for a check-in no longer shared with
+   * AI, doesn't count), from the hires and firings log and the usage log.
+   */
+  backAgain(squad: SquadId): Promise<boolean>;
+  /**
    * Hires `coach` for the squad, logged as `by`'s, unless it has a coach: then nothing is
    * saved. `noSquad` when there is no such squad.
    */
@@ -351,6 +479,33 @@ export interface CoachHiringStore {
     readonly coach: CoachId;
     readonly by: MemberId;
   }): Promise<'hired' | 'same' | 'noSquad'>;
+}
+
+/** The letters coaches leave the next one when their squad changes coach (换教练). */
+export interface CoachLetterStore {
+  /**
+   * The squad's change of coach that brought its coach now, when it came by one (fired the coach
+   * before it and hired it in one step); `undefined` for a coach hired with none before it.
+   */
+  handover(squad: SquadId): Promise<Handover | undefined>;
+  /** The squad's hires and firings, oldest first. */
+  history(squad: SquadId): Promise<
+    readonly {
+      readonly kind: 'hired' | 'fired';
+      readonly coach: CoachId;
+      readonly at: Date;
+    }[]
+  >;
+  /** Claims the one try at a change's letter; false when it was tried already. */
+  claim(handover: Handover): Promise<boolean>;
+  /** Saves the letter for a change it claimed. */
+  save(letter: {
+    readonly handover: Handover;
+    readonly day: string;
+    readonly text: string;
+  }): Promise<void>;
+  /** The letter written for a change, by its hire, if one was. */
+  ofHandover(hireEvent: number): Promise<CoachLetter | undefined>;
 }
 
 /** What a squad's coach has done, for the admins: its files, lines, wakes and tokens. */
@@ -390,4 +545,27 @@ export interface UsageTotal {
 /** Reads what a squad's coach has done. */
 export interface CoachReportStore {
   squad(squad: SquadId, now: Date): Promise<SquadCoaching>;
+}
+
+/**
+ * Coaches' gifts, kept by the unlocks module: the pool a coach may give from, who in a squad may
+ * get one now (one a member a week at most, on the squad's clock; Tracy, 2026-11-08), and giving.
+ */
+export interface CoachGifting {
+  /**
+   * The pieces offered now with what each is, and of these members those who may get a gift
+   * this week, each with the gift pieces they already have.
+   */
+  options(input: { readonly squad: SquadId; readonly members: readonly string[] }): Promise<{
+    readonly pool: readonly { readonly id: string; readonly description?: string }[];
+    readonly open: ReadonlyMap<string, readonly string[]>;
+  }>;
+  /** Gives the piece with the coach's line; why not, when it was refused. */
+  give(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly coach: CoachId;
+    readonly piece: string;
+    readonly line: string;
+  }): Promise<string | undefined>;
 }

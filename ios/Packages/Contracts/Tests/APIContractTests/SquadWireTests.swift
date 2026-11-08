@@ -144,7 +144,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
         ])
 }
 
-@Test func aSceneAddedSinceKeepsItsIdAndABadOneIsTheLegacyOne() throws {
+@Test func aSceneAddedSinceKeepsItsIdAndABadOneIsTheGym() throws {
     func scene(_ id: String) throws -> SceneID {
         try SquadScene(
             Components.Schemas.SquadScene(
@@ -153,7 +153,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
         ).scene
     }
     #expect(try scene("trot").rawValue == "trot")
-    #expect(try scene("Not-An-Id") == .pool)
+    #expect(try scene("Not-An-Id") == .gym)
     let plain = Components.Schemas.SquadScene(
         version: ._1, week: "2026-12-07", scene: .pool, sceneId: "pool", takeover: false,
         pickers: .init(by: .captain, members: []), picked: nil, canPick: true, scenes: [], options: [])

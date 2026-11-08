@@ -20,7 +20,7 @@ private func names(_ simplifiedChinese: String, _ english: String, _ traditional
 private let catalog = SportCatalog(
     categories: [
         SportCatalog.Category(
-            id: "runWalk", names: names("跑走", "Run and walk", "跑步健走"),
+            id: "runWalk", names: names("跑走", "Run and walk", "跑步健走"), color: "#E65345",
             entries: [
                 SportCatalog.Entry(
                     sport: "run", names: names("跑步", "Run", "跑步"), icon: "figure.run", offered: true,
@@ -30,7 +30,7 @@ private let catalog = SportCatalog(
                     category: "runWalk"),
             ]),
         SportCatalog.Category(
-            id: "racket", names: names("球拍", "Racket", "球拍"),
+            id: "racket", names: names("球拍", "Racket", "球拍"), color: "#4F6B22",
             entries: [
                 SportCatalog.Entry(
                     sport: "tableTennis", names: names("乒乓球", "Table tennis", "桌球"), icon: "figure.table.tennis",
@@ -46,6 +46,12 @@ private let catalog = SportCatalog(
     #expect(catalog.categories[0].offered == ["run"])
     // A short list keeps only sports the pickers offer.
     #expect(catalog.signUpCommon == ["run"])
+}
+
+@Test func givesASportItsCategorysColour() {
+    #expect(catalog.color(of: "racewalk") == "#E65345")
+    #expect(catalog.color(of: "tableTennis") == "#4F6B22")
+    #expect(catalog.color(of: "quidditch") == nil)
 }
 
 @Test func searchesEveryLanguageAndTheId() {

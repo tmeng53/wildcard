@@ -2,6 +2,13 @@ import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely } from 'kysely';
 import { z } from 'zod';
 
+import {
+  ChallengeAnswer,
+  ChallengeDoneBy,
+  type Challenge,
+  type ChallengeCompletion,
+} from '../domain/challenge.js';
+import { cardKey, CoachCardKind } from '../domain/cards.js';
 import { CoachId } from '../domain/coach.js';
 import { CoachEmoji } from '../domain/reply.js';
 import { memberOfPath } from '../domain/memory.js';
@@ -14,8 +21,10 @@ import type {
   CoachReportStore,
   CoachStores,
   CoachTransaction,
+  DayChallenge,
   UsageTotal,
 } from '../ports.js';
+import { letterWhere } from './postgres-coach-letters.js';
 import type { DB } from './tables.js';
 
 /** How long a claimed wake may run before another run takes it back. */
@@ -255,15 +264,46 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
     },
 
     memberNotes: {
-      async save({ squad, member, coach, day, text, wake }) {
+      async save({ squad, member, coach, day, text, challenge, wake }) {
         // Nothing when the member left the squad or deleted their account while the run thought.
         const saved = await sql<{ id: string }>`
-          insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, wake_id)
-          select ${squad}::uuid, ${member}::uuid, ${coach}, ${day}::date, ${text}, ${String(wake)}::bigint
+          insert into public.coach_member_notes
+            (squad_id, member_id, coach_id, day, text, challenge_title, challenge_amount,
+             challenge_unit, challenge_line, wake_id)
+          select ${squad}::uuid, ${member}::uuid, ${coach}, ${day}::date, ${text},
+            ${challenge?.title ?? null}, ${challenge?.amount ?? null}::int,
+            ${challenge?.unit ?? null}, ${challenge?.line ?? null}, ${String(wake)}::bigint
           where exists (select 1 from auth.users where id = ${member}::uuid)
           on conflict (squad_id, member_id, day) do nothing
           returning id`.execute(db);
         return saved.rows.length > 0;
+      },
+
+      challengeOf: (input) => dayChallenge(db, input),
+
+      async complete({ note, by, day }) {
+        // Only a challenge, on its own day, not let go, and only the first time: the member may
+        // have said 算了 while the run thought.
+        const done = await sql`
+          insert into public.coach_challenge_completions (note_id, by)
+          select m.id, ${by} from public.coach_member_notes m
+          where m.id = ${String(note)}::bigint and m.challenge_title is not null
+            and m.day = ${day}::date
+            and not exists (
+              select 1 from public.coach_challenge_answers a
+              where a.note_id = m.id and a.answer = 'declined'
+            )
+          on conflict (note_id) do nothing
+          returning note_id`.execute(db);
+        return done.rows.length > 0;
+      },
+
+      async challengesOn({ squad, day }) {
+        const rows = await dayChallenges(db, { squad, day }).execute();
+        return rows.flatMap((row) => {
+          const challenge = dayChallengeOfRow(row, day);
+          return challenge === undefined ? [] : [{ ...challenge, member: row.member_id }];
+        });
       },
     },
 
@@ -343,9 +383,12 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           .insertInto('coach_usage')
           .values({
             squad_id: squad,
-            // Null when the wake has gone meanwhile (its check-in was deleted).
+            // Null for a letter, which has no wake, and when the wake has gone meanwhile (its
+            // check-in was deleted).
             wake_id: (eb) =>
-              eb.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
+              wake === undefined
+                ? sql<string | null>`null`
+                : eb.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
             coach_id: coach,
             model,
             requests: usage.requests,
@@ -396,6 +439,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
 /** What a squad's coaches have said, read from Postgres for its members. */
 export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore {
   return {
+    letter: (squad) => letterWhere(db, { toCoachNowOf: squad }),
+
     async latestNote(squad) {
       const row = await db
         .selectFrom('coach_notes')
@@ -437,10 +482,20 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
           'coach_member_note_deliveries.note_id',
           'coach_member_notes.id',
         )
+        .leftJoin(
+          'coach_challenge_answers',
+          'coach_challenge_answers.note_id',
+          'coach_member_notes.id',
+        )
         .select([
           'coach_member_notes.id',
           sql<string>`to_char(coach_member_notes.day, 'YYYY-MM-DD')`.as('day'),
           'coach_member_notes.text',
+          'coach_member_notes.challenge_title',
+          'coach_member_notes.challenge_amount',
+          'coach_member_notes.challenge_unit',
+          'coach_member_notes.challenge_line',
+          'coach_challenge_answers.answer',
           'coach_member_notes.at',
           'coaches.id as coach_id',
           'coaches.name',
@@ -463,13 +518,88 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         .limit(1)
         .executeTakeFirst();
       if (row === undefined) return undefined;
+      const challenge = challengeOfRow(row);
       return {
         id: Number(row.id),
         day: row.day,
         text: row.text,
+        ...(challenge === undefined ? {} : { challenge }),
+        ...(row.answer === null ? {} : { challengeAnswer: ChallengeAnswer.parse(row.answer) }),
         coach: { id: row.coach_id, name: row.name, look: row.look },
         at: new Date(row.at),
       };
+    },
+
+    async answerChallenge({ squad, member, note, answer, reason }) {
+      // Only a note that reached the member: one still waiting isn't theirs to answer yet.
+      const mine = await db
+        .selectFrom('coach_member_notes')
+        .innerJoin(
+          'coach_member_note_deliveries',
+          'coach_member_note_deliveries.note_id',
+          'coach_member_notes.id',
+        )
+        .select(['coach_member_notes.challenge_title'])
+        .where('coach_member_notes.id', '=', String(note))
+        .where('coach_member_notes.squad_id', '=', squad)
+        .where('coach_member_notes.member_id', '=', member)
+        .executeTakeFirst();
+      if (mine === undefined) return 'noNote';
+      if (mine.challenge_title === null) return 'noChallenge';
+      // The first answer stands; a second is the first's.
+      await sql`
+        insert into public.coach_challenge_answers (note_id, answer, reason)
+        values (${String(note)}::bigint, ${answer}, ${answer === 'declined' ? (reason ?? null) : null})
+        on conflict (note_id) do nothing`.execute(db);
+      const kept = await db
+        .selectFrom('coach_challenge_answers')
+        .select(['answer', 'reason'])
+        .where('note_id', '=', String(note))
+        .executeTakeFirstOrThrow();
+      return {
+        answer: ChallengeAnswer.parse(kept.answer),
+        ...(kept.reason === null ? {} : { reason: kept.reason }),
+      };
+    },
+
+    challengeOf: (input) => dayChallenge(db, input),
+
+    async completeChallenge({ squad, member, note, today }) {
+      // Only a note that reached the member, as with answering it.
+      const mine = await db
+        .selectFrom('coach_member_notes')
+        .innerJoin(
+          'coach_member_note_deliveries',
+          'coach_member_note_deliveries.note_id',
+          'coach_member_notes.id',
+        )
+        .leftJoin(
+          'coach_challenge_answers',
+          'coach_challenge_answers.note_id',
+          'coach_member_notes.id',
+        )
+        .select([
+          'coach_member_notes.challenge_title',
+          sql<string>`to_char(coach_member_notes.day, 'YYYY-MM-DD')`.as('day'),
+          'coach_challenge_answers.answer',
+        ])
+        .where('coach_member_notes.id', '=', String(note))
+        .where('coach_member_notes.squad_id', '=', squad)
+        .where('coach_member_notes.member_id', '=', member)
+        .executeTakeFirst();
+      if (mine === undefined) return 'noNote';
+      if (mine.challenge_title === null) return 'noChallenge';
+      const done = await completionOf(db, note);
+      // The first one stands, whoever marked it, even once the day is over.
+      if (done !== undefined) return done;
+      if (mine.answer === 'declined') return 'declined';
+      if (mine.day !== today) return 'dayOver';
+      await sql`
+        insert into public.coach_challenge_completions (note_id, by)
+        values (${String(note)}::bigint, 'member')
+        on conflict (note_id) do nothing`.execute(db);
+      // The database keeps no completion after a 算了 that won a race with this one.
+      return (await completionOf(db, note)) ?? 'declined';
     },
 
     async putAway({ squad, member, note }) {
@@ -487,6 +617,146 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         .where('member_id', '=', member)
         .executeTakeFirst();
       return mine !== undefined;
+    },
+
+    async cards({ squad, member, since }) {
+      // Each kind from its own table, for this member in this squad: the squad's 战术板 lines,
+      // the member's notes (and their challenges) once delivered, the coach's lines to the
+      // member's check-ins, and its answers to the member's replies.
+      const rows = await sql<{
+        kind: 'board' | 'note' | 'challenge' | 'challengeDone' | 'reply' | 'answer';
+        id: string;
+        day: string | null;
+        text: string | null;
+        check_in_id: string | null;
+        comment_id: string | null;
+        challenge_title: string | null;
+        challenge_amount: number | null;
+        challenge_unit: string | null;
+        challenge_line: string | null;
+        answer: string | null;
+        reason: string | null;
+        done_by: string | null;
+        done_at: Date | null;
+        at: Date;
+        coach_id: string;
+        name: string;
+        look: string;
+      }>`
+        with mine as (
+          select 'board' as kind, to_char(n.day, 'YYYY-MM-DD') as id,
+            to_char(n.day, 'YYYY-MM-DD') as day, n.text, null::uuid as check_in_id,
+            null::uuid as comment_id, null as challenge_title, null::int as challenge_amount,
+            null as challenge_unit, null as challenge_line, null as answer, null as reason,
+            null as done_by,
+            null::timestamptz as done_at, n.at, n.coach_id
+          from public.coach_notes n
+          where n.squad_id = ${squad}::uuid and n.at >= ${since}
+          union all
+          select 'note', m.id::text, to_char(m.day, 'YYYY-MM-DD'), m.text, null, null, null,
+            null, null, null, null, null, null, null, d.at, m.coach_id
+          from public.coach_member_notes m
+          join public.coach_member_note_deliveries d on d.note_id = m.id
+          where m.squad_id = ${squad}::uuid and m.member_id = ${member}::uuid and d.at >= ${since}
+          union all
+          select 'challenge', m.id::text, to_char(m.day, 'YYYY-MM-DD'), null, null, null,
+            m.challenge_title, m.challenge_amount, m.challenge_unit, m.challenge_line, a.answer,
+            a.reason, done.by, done.at, d.at, m.coach_id
+          from public.coach_member_notes m
+          join public.coach_member_note_deliveries d on d.note_id = m.id
+          left join public.coach_challenge_answers a on a.note_id = m.id
+          left join public.coach_challenge_completions done on done.note_id = m.id
+          where m.squad_id = ${squad}::uuid and m.member_id = ${member}::uuid
+            and m.challenge_title is not null and d.at >= ${since}
+          union all
+          select 'challengeDone', m.id::text, to_char(m.day, 'YYYY-MM-DD'), null, null, null,
+            m.challenge_title, m.challenge_amount, m.challenge_unit, m.challenge_line, null, null,
+            done.by, done.at, done.at, m.coach_id
+          from public.coach_member_notes m
+          join public.coach_member_note_deliveries d on d.note_id = m.id
+          join public.coach_challenge_completions done on done.note_id = m.id
+          where m.squad_id = ${squad}::uuid and m.member_id = ${member}::uuid
+            and done.by = 'coach' and done.at >= ${since}
+          union all
+          select 'reply', r.id::text, null, r.text, r.check_in_id, null, null, null, null, null,
+            null, null, null, null, r.at, r.coach_id
+          from public.coach_replies r
+          join public.check_ins c on c.id = r.check_in_id
+          where r.squad_id = ${squad}::uuid and c.member_id = ${member}::uuid
+            and r.text is not null and r.at >= ${since}
+          union all
+          select 'answer', a.id::text, null, a.text, a.check_in_id, a.comment_id, null, null,
+            null, null, null, null, null, null, a.at, a.coach_id
+          from public.coach_answers a
+          join public.check_in_comments cc on cc.id = a.comment_id
+          where a.squad_id = ${squad}::uuid and cc.member_id = ${member}::uuid and a.at >= ${since}
+        )
+        select mine.*, coaches.name, coaches.look
+        from mine join public.coaches on coaches.id = mine.coach_id
+        order by mine.at,
+          array_position(array['board', 'note', 'challenge', 'challengeDone', 'reply', 'answer'], mine.kind),
+          mine.id`.execute(db);
+      return rows.rows.map((row) => {
+        const base = {
+          id: row.id,
+          coach: { id: row.coach_id, name: row.name, look: row.look },
+          at: new Date(row.at),
+        };
+        switch (row.kind) {
+          case 'board':
+          case 'note':
+            return { ...base, kind: row.kind, day: row.day ?? '', text: row.text ?? '' };
+          case 'challenge':
+            return {
+              ...base,
+              kind: row.kind,
+              day: row.day ?? '',
+              challenge: challengeOfRow(row) ?? { title: '' },
+              answer: row.answer === null ? undefined : ChallengeAnswer.parse(row.answer),
+              reason: row.reason ?? undefined,
+              completion: completionOfRow(row),
+            };
+          case 'challengeDone':
+            return {
+              ...base,
+              kind: row.kind,
+              day: row.day ?? '',
+              challenge: challengeOfRow(row) ?? { title: '' },
+            };
+          case 'reply':
+            return {
+              ...base,
+              kind: row.kind,
+              checkIn: row.check_in_id ?? '',
+              text: row.text ?? '',
+            };
+          case 'answer':
+            return {
+              ...base,
+              kind: row.kind,
+              checkIn: row.check_in_id ?? '',
+              comment: row.comment_id ?? '',
+              text: row.text ?? '',
+            };
+        }
+      });
+    },
+
+    async seenCards({ squad, member }) {
+      const rows = await db
+        .selectFrom('coach_card_seen')
+        .select(['kind', 'card_id'])
+        .where('squad_id', '=', squad)
+        .where('member_id', '=', member)
+        .execute();
+      return new Set(rows.map((row) => cardKey(CoachCardKind.parse(row.kind), row.card_id)));
+    },
+
+    async markSeen({ squad, member, kind, id }) {
+      await sql`
+        insert into public.coach_card_seen (member_id, squad_id, kind, card_id)
+        values (${member}::uuid, ${squad}::uuid, ${kind}, ${id})
+        on conflict do nothing`.execute(db);
     },
 
     async replies(squad, checkIns) {
@@ -743,3 +1013,114 @@ async function saveFiles(
 }
 
 const FOREIGN_KEY_VIOLATION = '23503';
+
+/** A note row's challenge, if it set one. */
+function challengeOfRow(row: {
+  readonly challenge_title: string | null;
+  readonly challenge_amount: number | null;
+  readonly challenge_unit: string | null;
+  readonly challenge_line: string | null;
+}): Challenge | undefined {
+  if (row.challenge_title === null) return undefined;
+  return {
+    title: row.challenge_title,
+    ...(row.challenge_amount === null || row.challenge_unit === null
+      ? {}
+      : { amount: row.challenge_amount, unit: row.challenge_unit }),
+    ...(row.challenge_line === null ? {} : { line: row.challenge_line }),
+  };
+}
+
+/** A completion row, if the challenge was marked done. */
+function completionOfRow(row: {
+  readonly done_by: string | null;
+  readonly done_at: Date | string | null;
+}): ChallengeCompletion | undefined {
+  if (row.done_by === null || row.done_at === null) return undefined;
+  return { by: ChallengeDoneBy.parse(row.done_by), at: new Date(row.done_at) };
+}
+
+/** Who marked a note's challenge done and when, if anyone did. */
+async function completionOf(db: Kysely<DB>, note: number) {
+  const row = await db
+    .selectFrom('coach_challenge_completions')
+    .select(['by as done_by', 'at as done_at'])
+    .where('note_id', '=', String(note))
+    .executeTakeFirst();
+  return row === undefined ? undefined : completionOfRow(row);
+}
+
+/** The squad's notes of a day that reached their members, with their challenges' answers. */
+function dayChallenges(
+  db: Kysely<DB>,
+  { squad, day }: { readonly squad: SquadId; readonly day: string },
+) {
+  return db
+    .selectFrom('coach_member_notes')
+    .innerJoin(
+      'coach_member_note_deliveries',
+      'coach_member_note_deliveries.note_id',
+      'coach_member_notes.id',
+    )
+    .leftJoin('coach_challenge_answers', 'coach_challenge_answers.note_id', 'coach_member_notes.id')
+    .leftJoin(
+      'coach_challenge_completions',
+      'coach_challenge_completions.note_id',
+      'coach_member_notes.id',
+    )
+    .select([
+      'coach_member_notes.id',
+      'coach_member_notes.member_id',
+      'coach_member_notes.challenge_title',
+      'coach_member_notes.challenge_amount',
+      'coach_member_notes.challenge_unit',
+      'coach_member_notes.challenge_line',
+      'coach_challenge_answers.answer',
+      'coach_challenge_answers.reason',
+      'coach_challenge_completions.by as done_by',
+      'coach_challenge_completions.at as done_at',
+    ])
+    .where('coach_member_notes.squad_id', '=', squad)
+    .where('coach_member_notes.day', '=', day)
+    .orderBy('coach_member_notes.id');
+}
+
+/** A note row's challenge as its member and coach read it, if it set one. */
+function dayChallengeOfRow(
+  row: Parameters<typeof challengeOfRow>[0] &
+    Parameters<typeof completionOfRow>[0] & {
+      readonly id: string;
+      readonly answer: string | null;
+      readonly reason: string | null;
+    },
+  day: string,
+): DayChallenge | undefined {
+  const challenge = challengeOfRow(row);
+  if (challenge === undefined) return undefined;
+  return {
+    note: Number(row.id),
+    day,
+    challenge,
+    answer: row.answer === null ? undefined : ChallengeAnswer.parse(row.answer),
+    reason: row.reason ?? undefined,
+    completion: completionOfRow(row),
+  };
+}
+
+/**
+ * The member's challenge on their note of `day`, once the note reached them (before then they
+ * can't have seen it), with their answer and whether it is done.
+ */
+async function dayChallenge(
+  db: Kysely<DB>,
+  {
+    squad,
+    member,
+    day,
+  }: { readonly squad: SquadId; readonly member: string; readonly day: string },
+): Promise<DayChallenge | undefined> {
+  const row = await dayChallenges(db, { squad, day })
+    .where('coach_member_notes.member_id', '=', member)
+    .executeTakeFirst();
+  return row === undefined ? undefined : dayChallengeOfRow(row, day);
+}
