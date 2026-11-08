@@ -53,7 +53,8 @@ public struct ShoppingStreetPage: View {
             // The street's 进店 stays at the bottom, above the tab bar, however tall the phone.
             .safeAreaInset(edge: .bottom) { if store == nil { counter } }
             .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text("商店街", bundle: .module))
-            .background(Color(role: .bgCanvas, in: theme))
+            // The street stands under a pale sky; a store's rack is a white page.
+            .background(store == nil ? ShopPavement.sky : Color(role: .bgCanvas, in: theme))
             // The pop-up is modal: VoiceOver (and a UI test) reaches only it, not the rack under it.
             .accessibilityHidden(model.arrival != nil)
             .overlay {
@@ -85,9 +86,18 @@ public struct ShoppingStreetPage: View {
     private var counter: some View {
         let stores = model.catalog.stores
         if let shown = stores.first(where: { $0.id == centred }) ?? stores.first {
-            StreetCounter(model: model, store: shown)
-                // Opaque, so the street scrolling under it on a short phone doesn't show through.
-                .background(Color(role: .bgCanvas, in: theme))
+            StreetCounter(model: model, store: shown) { id in
+                withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { centred = id }
+            }
+            // A white sheet with round top corners laid over the street, opaque, so the street
+            // scrolling under it on a short phone doesn't show through; the street's stones fill
+            // its corners.
+            .background {
+                UnevenRoundedRectangle(topLeadingRadius: Radius.menu, topTrailingRadius: Radius.menu)
+                    .fill(Color(role: .bgCanvas, in: theme))
+                    .ignoresSafeArea(edges: .bottom)
+            }
+            .background(alignment: .top) { ShopPavement.stone.frame(height: Radius.menu) }
         }
     }
 
@@ -98,8 +108,8 @@ public struct ShoppingStreetPage: View {
     private func content(_ store: EditorChoices.Store?) -> some View {
         if let store {
             ScrollView {
-                VStack(alignment: .leading, spacing: Space.xs) {
-                    HStack(spacing: Space.xs) { RackHeader(model: model, store: store) }
+                VStack(alignment: .leading, spacing: Space.s) {
+                    RackHeader(model: model, store: store)
                     claimFailed
                     StoreRack(model: model, store: store)
                 }
@@ -118,7 +128,6 @@ public struct ShoppingStreetPage: View {
                             .padding(.top, Space.xl)
                     }
                     .padding(.horizontal, Space.pageMargin)
-                    .padding(.bottom, Space.l)
                     .frame(minHeight: page.size.height, idealHeight: page.size.height, alignment: .top)
                 }
                 .scrollBounceBehavior(.basedOnSize)
@@ -139,25 +148,37 @@ public struct ShoppingStreetPage: View {
     }
 }
 
-/// The open store's name, its Chinese name, its 冬季限定 tag if it is limited, and ⓘ, which opens 「练这些运动解锁」 where its pieces
-/// have rules.
+/// The open store's logo (its badge and name, with its 冬季限定 tag if it is limited), ⓘ, which
+/// opens 「练这些运动解锁」 where its pieces have rules, and its slogan under them (approved
+/// 2026-11-08).
 private struct RackHeader: View {
     let model: StreetModel
     let store: EditorChoices.Store
     @Environment(\.sceneTheme) private var theme
+    private let badge: Double = 52
 
     var body: some View {
-        StoreCopy.name(store.id)
-            .typeStyle(TypeRamp.scoreSmall)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .lineLimit(1)
-            .accessibilityAddTraits(.isHeader)
-        StoreCopy.local(store.id)
-            .typeStyle(TypeRamp.footnote)
-            .foregroundStyle(Color(role: .fgMuted, in: theme))
-            .lineLimit(1)
-        if let tag = LimitedTag(store: store.id) { tag }
-        Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: Space.xs) {
+            HStack(spacing: Space.s) {
+                StoreBadge(store: store.id)
+                    .frame(width: badge, height: badge)
+                StoreCopy.name(store.id)
+                    .typeStyle(TypeRamp.scoreCard)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .accessibilityAddTraits(.isHeader)
+                if let tag = LimitedTag(store: store.id) { tag }
+                Spacer(minLength: 0)
+                info
+            }
+            StoreCopy.tagline(store.id)
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(Color(role: .fgMuted, in: theme))
+        }
+    }
+
+    @ViewBuilder private var info: some View {
         if let sports = model.sports(of: store.id) {
             Button {
                 model.tip = store.id
@@ -207,7 +228,7 @@ enum StoreCopy {
             ?? sportLines[store].map { Bundle.module.inAppLanguage.localizedString(forKey: $0, value: nil, table: nil) }
             ?? ""
         let commas = CharacterSet(charactersIn: ",，")
-        // A Latin line without commas is one phrase (Any sport counts, Winter sports); Chinese
+        // A Latin line without commas is one phrase (Any sport, Winter sports); Chinese
         // lists its sports with spaces.
         let latin = line.unicodeScalars.contains { $0.isASCII && CharacterSet.letters.contains($0) }
         let separators: CharacterSet =
@@ -248,8 +269,8 @@ enum StoreCopy {
         "powder": "粉雪日",
     ]
     private static let sportLines = [
-        "warmup": "走路 跑步 力量训练", "lap": "跑步 走路", "nolook": "篮球 排球", "moss": "徒步 越野跑 攀岩",
-        "halfmoon": "练什么都算", "deuce": "网球 匹克球 壁球", "powder": "冬季运动",
+        "warmup": "什么运动都行", "lap": "跑步 快走 徒步", "nolook": "篮球 排球 足球", "moss": "徒步 越野跑 攀岩",
+        "halfmoon": "什么运动都行", "deuce": "网球 匹克球 羽毛球", "powder": "冬季运动",
     ]
     private static let taglines = [
         "warmup": "先热身，再上场。", "lap": "操场第九圈，才是今天真正开始的地方。", "nolook": "眼睛看左边，球已经到右边了。",
@@ -257,8 +278,8 @@ enum StoreCopy {
         "powder": "雪道见，压个弯。",
     ]
     private static let unlocks = [
-        "lap": "跑步 3 次解锁", "nolook": "篮球 3 次解锁", "moss": "攀岩或徒步 3 次解锁", "halfmoon": "随便练 3 次解锁",
-        "deuce": "网球类 3 次解锁",
+        "lap": "跑步、快走或徒步 3 次解锁", "nolook": "球类 3 次解锁", "moss": "攀岩或徒步 3 次解锁", "halfmoon": "随便练 3 次解锁",
+        "deuce": "拍类运动 3 次解锁",
     ]
     private static let limits = ["powder": "冬季限定"]
     /// Each bundled limit's tag colour (冬季限定: glacier blue); an uploaded store names its own
