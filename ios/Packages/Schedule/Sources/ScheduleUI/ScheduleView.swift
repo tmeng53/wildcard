@@ -14,7 +14,7 @@ import SwiftUI
 /// safe area the app gives it, and the system's back button and swipe go back to 我.
 public struct ScheduleView: View {
     let model: ScheduleModel
-    @Environment(\.sceneTheme) private var theme
+    @Environment(\.sceneTheme) var theme
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var picksAll = false
@@ -75,7 +75,7 @@ public struct ScheduleView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
-        // The weeks and 存图 stay put while the poster scrolls, so nothing slides under the
+        // The title and the weeks stay put while the poster scrolls, so nothing slides under the
         // status bar.
         .safeAreaInset(edge: .top, spacing: 0) {
             VStack(alignment: .leading, spacing: Space.xs) {
@@ -107,6 +107,7 @@ public struct ScheduleView: View {
             }
             store.dismissTemplateOffer()
         }
+        .toolbar { saveItem }
         .pushedPage()
         .task { await model.load() }
         // Today's sport changed (a 练了 read in, today's plan saved): the character follows it.
