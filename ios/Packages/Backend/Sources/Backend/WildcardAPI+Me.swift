@@ -38,7 +38,7 @@ extension WildcardAPI {
         return try read { () throws(ContractsError) in
             func streak(_ streak: Components.Schemas.RecordStreak?) throws(ContractsError) -> WildcardRecords.Streak? {
                 try streak.map { streak throws(ContractsError) in
-                    .init(days: streak.days, from: try LocalDay(streak.from), to: try LocalDay(streak.to))
+                    .init(days: streak.days, first: try LocalDay(streak.from), last: try LocalDay(streak.to))
                 }
             }
             func count(_ wire: Components.Schemas.RecordMateCount?) throws(ContractsError) -> SquadStanding.MateCount? {

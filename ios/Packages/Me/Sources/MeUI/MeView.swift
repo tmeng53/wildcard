@@ -58,6 +58,8 @@ public struct MeView<PostsTile: View>: View {
     private let postsTile: PostsTile
     /// 设置 is pushed; the app keeps it, so a notice that opens another place on 我 closes it.
     @Binding private var isSettingsOpen: Bool
+    /// 外卡记录, pushed from 训练记录's 全部数据; a new model each time it opens.
+    @State private var records: RecordsModel?
     @Environment(\.sceneTheme) private var theme
 
     /// `postsTile` is 我的动态's tile, which the feed draws (`GlanceTile` with the newest posts).
@@ -77,6 +79,14 @@ public struct MeView<PostsTile: View>: View {
             .navigationDestination(isPresented: $isSettingsOpen) {
                 SettingsView(model: model, destinations: destinations)
                     .accentTone(.ink)
+            }
+            .navigationDestination(
+                isPresented: Binding(get: { records != nil }, set: { if !$0 { records = nil } })
+            ) {
+                if let records {
+                    RecordsPage(model: records, character: model.overview?.character)
+                        .pushedPage()
+                }
             }
             .task { await model.reload() }
     }
@@ -129,7 +139,7 @@ public struct MeView<PostsTile: View>: View {
                     if let record = overview.record {
                         TrainingRecordView(
                             record: record, trainedDays: overview.counts.trainedDays,
-                            openPost: destinations.openPost
+                            openPost: destinations.openPost, openRecords: { records = model.recordsModel() }
                         )
                         .padding(.top, Space.s)
                     }

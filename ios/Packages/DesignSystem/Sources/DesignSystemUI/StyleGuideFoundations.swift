@@ -17,6 +17,7 @@ struct ColorSection: View {
     private let brand: [(role: ColorRole, name: Text)] = [
         (.bgBrand, Text("品牌色：主操作、选中", bundle: .module)),
         (.fgOnBrand, Text("品牌色上的字", bundle: .module)),
+        (.fgOnBrandMuted, Text("品牌色上的次要字", bundle: .module)),
     ]
 
     private let accents: [(role: ColorRole, name: Text)] = [

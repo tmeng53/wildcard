@@ -69,6 +69,12 @@ enum TicketMark {
         var front = context
         front.translateBy(x: 0, y: -TicketRock.frontLift * rock)
         turn(&front, by: -10 + TicketRock.frontTurn * rock, about: pivot)
+        drawFront(in: &front, ground: ground, ink: ink)
+    }
+
+    /// The front ticket, upright on the logo's 100-point grid: filled in `ink`, with notches, a
+    /// perforation and a W in `ground`.
+    static func drawFront(in front: inout GraphicsContext, ground: Color, ink: Color) {
         front.fill(
             Path(roundedRect: CGRect(x: 26, y: 14, width: 48, height: 70), cornerRadius: corner), with: .color(ink))
         for notch in [26.0, 74] {
@@ -92,6 +98,35 @@ enum TicketMark {
         context.translateBy(x: pivot.x, y: pivot.y)
         context.rotate(by: .degrees(degrees))
         context.translateBy(x: -pivot.x, y: -pivot.y)
+    }
+}
+
+/// The logo's front ticket standing alone, 25 × 36 points: a day on 外卡记录's
+/// streaks, punched in one at a time. White with graphite cut-outs on a graphite tile.
+public struct LogoTicket: View {
+    private let ground: ColorRole
+    private let ink: ColorRole
+    @Environment(\.sceneTheme) private var theme
+
+    /// `ink` fills the ticket; `ground`, what it stands on, shows through its notches, perforation
+    /// and W.
+    public init(ink: ColorRole = .fgOnBrand, on ground: ColorRole = .bgBrand) {
+        (self.ink, self.ground) = (ink, ground)
+    }
+
+    /// The ticket's area on the logo's grid, with half a point to spare around it.
+    private static let area = CGRect(x: 25, y: 13, width: 50, height: 72)
+    public static let size = CGSize(width: 25, height: 36)
+
+    public var body: some View {
+        Canvas { context, canvas in
+            context.scaleBy(x: canvas.width / Self.area.width, y: canvas.height / Self.area.height)
+            context.translateBy(x: -Self.area.minX, y: -Self.area.minY)
+            TicketMark.drawFront(
+                in: &context, ground: Color(role: ground, in: theme), ink: Color(role: ink, in: theme))
+        }
+        .frame(width: Self.size.width, height: Self.size.height)
+        .accessibilityHidden(true)
     }
 }
 #endif

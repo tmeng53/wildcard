@@ -89,6 +89,8 @@ public enum TypeRamp {
     public static let tabSelected = TypeStyle(face: .text(.semibold), size: 12, anchor: .caption)
     /// A small name under a tile (跑道 under its scene): 12, regular; picked, `tabSelected`.
     public static let caption = TypeStyle(face: .text(.regular), size: 12, anchor: .caption)
+    /// A caption picked out from the ones beside it (外卡记录's 周二最多): `caption`, semibold.
+    public static let captionEmphasis = TypeStyle(face: .text(.semibold), size: 12, anchor: .caption)
     /// Secondary and text buttons, and the selected switch or pill: `callout`, one weight heavier.
     public static let calloutEmphasis = TypeStyle(face: .text(.semibold), size: 15, anchor: .callout)
 

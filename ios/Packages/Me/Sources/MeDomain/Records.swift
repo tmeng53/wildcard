@@ -6,11 +6,11 @@ public struct WildcardRecords: Hashable, Sendable {
     /// A run of days in a row.
     public struct Streak: Hashable, Sendable {
         public var days: Int
-        public var from: LocalDay
-        public var to: LocalDay
+        public var first: LocalDay
+        public var last: LocalDay
 
-        public init(days: Int, from: LocalDay, to: LocalDay) {
-            (self.days, self.from, self.to) = (days, from, to)
+        public init(days: Int, first: LocalDay, last: LocalDay) {
+            (self.days, self.first, self.last) = (days, first, last)
         }
     }
 
