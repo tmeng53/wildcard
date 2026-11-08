@@ -76,8 +76,9 @@ final class SquadSettingsUITests: XCTestCase {
         XCTAssertTrue(latest.label.contains("10.12"), "the latest week isn't first: \(latest.label)")
         XCTAssertTrue(latest.label.contains("Coco"), "the cover doesn't name the champion")
         XCTAssertEqual(latest.value as? String, "未读", "a week not yet watched isn't new")
+        // A new cover's frame takes in its ring, which sits 3 points outside the card.
         XCTAssertGreaterThanOrEqual(
-            latest.frame.minX, app.frame.minX + 16, "the first cover isn't on the page's margin")
+            latest.frame.minX, app.frame.minX + 16 - 3, "the first cover isn't on the page's margin")
         settle()
         keepScreenshot(named: "67-squad-past-recaps")
 
