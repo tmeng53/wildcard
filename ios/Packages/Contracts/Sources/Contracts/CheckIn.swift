@@ -139,7 +139,8 @@ public struct Caption: Hashable, Sendable {
 /// The squads a check-in is shared to: at most `maxSquads`, no repeats. A post is the
 /// member's own; one shared to no squad only they see.
 public struct Audience: Hashable, Sendable {
-    /// The most squads one post can be shared to, as the API allows; a member is in one at a time.
+    /// The most squads one post can be shared to, as the API allows. A member is in one squad at a time now, but
+    /// posts made earlier may list several, and they must still read.
     public static let maxSquads = 3
 
     /// In the order the member picked them.
@@ -165,17 +166,6 @@ public struct Photos: Hashable, Sendable {
         guard (1...Self.maxCount).contains(photos.count) else { throw .photoCount(photos.count) }
         guard Set(photos.map(\.path)).count == photos.count else { throw .repeatedPhoto }
         all = photos
-    }
-
-    /// For a reordering of photos already checked, which keeps count and distinctness.
-    private init(reordering photos: [PhotoRef]) { all = photos }
-
-    /// The same photos with `photo` moved to the front as the cover; nil if it isn't one of them.
-    public func withCover(_ photo: PhotoRef) -> Photos? {
-        guard let index = all.firstIndex(where: { $0.path == photo.path }) else { return nil }
-        var reordered = all
-        reordered.insert(reordered.remove(at: index), at: 0)
-        return Photos(reordering: reordered)
     }
 }
 

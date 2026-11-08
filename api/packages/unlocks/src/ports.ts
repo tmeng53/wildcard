@@ -50,7 +50,7 @@ export interface UnlockStore {
  */
 export type Unlocked = (member: MemberId, unlocks: readonly Unlock[]) => Promise<void>;
 
-/** The member's 练了 check-ins made from `since` on, the earliest made first. */
+/** The member's 训练 check-ins made from `since` on, the earliest made first. */
 export type TrainedSince = (query: {
   readonly member: MemberId;
   readonly since: Date;

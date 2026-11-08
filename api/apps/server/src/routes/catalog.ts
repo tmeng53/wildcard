@@ -47,7 +47,7 @@ export const SportsCatalog = z
             z.looseObject({
               id: z.string().meta({
                 description:
-                  'What a 练了 or a planned day sends as `sport`. Never changes, and a sport is ' +
+                  'What a 训练 or a planned day sends as `sport`. Never changes, and a sport is ' +
                   'never removed.',
                 example: 'run',
               }),
@@ -73,7 +73,7 @@ export const SportsCatalog = z
     picks: z
       .looseObject({
         signUpCommon: sportIds('Sign-up’s 最常见 grid.'),
-        checkInQuick: sportIds('A 练了’s quick picks, before the whole list.'),
+        checkInQuick: sportIds('A 训练’s quick picks, before the whole list.'),
       })
       .meta({ description: 'The short lists some screens show before the whole list.' }),
   })
@@ -305,7 +305,7 @@ export const StoresCatalog = z
           switchId: switchRef('the store'),
           free: z.boolean().meta({
             description:
-              'Open to everyone with no 练了 (no unlock rule), such as WARM-UP; any other store ' +
+              'Open to everyone with no 训练 (no unlock rule), such as WARM-UP; any other store ' +
               'is earned.',
           }),
         }),

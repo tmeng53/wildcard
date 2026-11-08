@@ -136,7 +136,7 @@ const EquipTitle = z
 const DayMarkBody = z
   .strictObject({
     status: z.enum(['trained', 'disclaimer', 'none']),
-    sport: SportKey.optional().meta({ description: 'The 练了’s sport; only for `trained`.' }),
+    sport: SportKey.optional().meta({ description: 'The 训练’s sport; only for `trained`.' }),
     customSport: z.string().optional().meta({
       description: 'The custom sport’s name, for `sport: "custom"`.',
     }),
@@ -182,7 +182,7 @@ const PlayerCardBody = z
           .meta({
             description:
               'How each day of this week went, Monday first: `trained` with the sport of the ' +
-              'day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` ' +
+              'day’s latest 训练 (a 训练 wins over a 请假条), `disclaimer` for a 请假条, `none` ' +
               'for neither yet, from only the check-ins shared to this squad. Left out by older ' +
               'servers.',
           }),

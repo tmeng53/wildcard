@@ -15,9 +15,9 @@ import SquadDomain
 import SquadUI
 import SwiftUI
 
-/// The app once the member is signed in and in a squad: the three tabs (今天, 动态, 我) in the
-/// system's Liquid Glass tab bar (`AppTabs`), with 小队 opened inside 今天 from the home's squad
-/// card (Tracy took 小队's own tab away on 2026-11-04).
+/// The app once the member is signed in and in a squad: the three tabs (小队, 动态, 我) in the
+/// system's Liquid Glass tab bar (`AppTabs`); the squad's settings open inside 小队 from the
+/// home's squad card.
 /// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
 /// them draws the bar itself. Each tab is a NavigationStack: every page that opens over a tab's
 /// screen is pushed on it, so going back (the back button, a swipe right) is the system's.

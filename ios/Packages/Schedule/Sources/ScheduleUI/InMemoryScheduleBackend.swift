@@ -11,7 +11,7 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     private var sheets: [LocalDay: WeekSheet] = [:]
     /// Weeks whose plan the member changed for themselves.
     private var saved: Set<LocalDay> = []
-    /// The member's typical week (每周模板), which the weeks ahead follow: the sample's next
+    /// The member's typical week (我的每周计划), which the weeks ahead follow: the sample's next
     /// week is planned from it.
     private var typicalWeek: [PlanDay] = InMemoryScheduleBackend.planB
 

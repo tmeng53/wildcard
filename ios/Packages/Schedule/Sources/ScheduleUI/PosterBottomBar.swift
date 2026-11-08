@@ -16,7 +16,7 @@ struct PosterBottomBar: View {
 
     var body: some View {
         HStack(spacing: Space.xs) {
-            // The 每周模板 has no 饮食小目标: each week picks its own.
+            // The 我的每周计划 has no 饮食小目标: each week picks its own.
             if !content.isTemplate {
                 fuelButton
             }

@@ -5,7 +5,7 @@ import SwiftUI
 
 /// The @ list over a composer (提到谁): one row per person, a head, the name and the 教练 tag for
 /// a coach, the first row marked as the one a tap picks. A solid white card with a hairline and a
-/// soft shadow, as the approved chat design draws it (the composer under it is the glass). At
+/// soft shadow, as the approved comment design draws it (the composer under it is the glass). At
 /// most four and a half rows show; more scroll. The caller draws the heads (`AvatarUI` is above
 /// this package).
 public struct PersonPicker<Person: Identifiable, Head: View>: View {

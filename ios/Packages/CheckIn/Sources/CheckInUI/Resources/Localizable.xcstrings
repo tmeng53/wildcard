@@ -673,22 +673,6 @@
         }
       }
     },
-    "编个借口吧…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Make up an excuse…"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "找個藉口吧…"
-          }
-        }
-      }
-    },
     "美国和加拿大都能拨 988，24 小时，免费。美国的线路可以要中文翻译。": {
       "localizations": {
         "en": {
@@ -1469,22 +1453,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "訓練日"
-          }
-        }
-      }
-    },
-    "全屏看": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opens full screen"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "全螢幕看"
           }
         }
       }

@@ -8,7 +8,7 @@ public enum WeekTense: Hashable, Sendable {
     case current
     /// Next week or later: every day changes freely.
     case upcoming
-    /// Not a week but the member's typical one (每周模板): every day changes freely, and the
+    /// Not a week but the member's typical one (我的每周计划): every day changes freely, and the
     /// weeks from next week on follow it.
     case template
 }
@@ -61,7 +61,7 @@ public struct WeekBoard: Hashable, Sendable {
         }
     }
 
-    /// The member's typical week (每周模板). `weekStart` names its days (Monday first) and is
+    /// The member's typical week (我的每周计划). `weekStart` names its days (Monday first) and is
     /// the first week it applies to.
     public init(template days: [PlanDay], weekStart: LocalDay) {
         self.weekStart = weekStart

@@ -47,7 +47,7 @@ export type PushPost = {
   readonly kind: 'trained' | 'healthyMeal' | 'cheatMeal' | 'disclaimer';
   readonly sport?: string;
   readonly customSport?: string;
-  /** A 练了's minutes, when the member gave them. */
+  /** A 训练's minutes, when the member gave them. */
   readonly minutes?: number;
   readonly at: string;
   /** The caption, or the 请假条's text, cut to `POST_TEXT` and `POST_TEXT_BYTES`. */

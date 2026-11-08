@@ -751,7 +751,7 @@ async function threadOf(
   const comments = week.checkIns.find(({ id }) => id === reason.checkIn)?.comments ?? [];
   const answering = comments.find(({ id }) => id === reason.comment);
   if (answering === undefined || saidTo(answering) !== coach.id) return undefined;
-  // A check-in shared to several squads is answered only in the writer's own.
+  // A comment is answered only in a squad its writer belongs to.
   if (!week.members.some(({ member }) => member === answering.member)) return undefined;
   const found = await deps.stores.replies.find(wake.squad, reason.checkIn);
   const reply = found?.coach === coach.id ? found.text : undefined;
