@@ -479,6 +479,7 @@ describe('the coach', () => {
             coach: xiaohun,
             text: '周日也跑，腿还在吗',
             emoji: '🔥',
+            mentions: [],
             at: 'at',
           },
         ],
