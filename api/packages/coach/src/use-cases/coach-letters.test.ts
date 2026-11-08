@@ -337,7 +337,7 @@ describe('the outgoing coach’s letter', () => {
       await store.claim(handover);
       await store.save({ handover, day: '2026-11-08', text: '交给你了。' });
       // Saved after that hire, it still belongs to the change before.
-      expect(await store.ofHandover(handover.hireEvent)).toBeDefined();
+      expect((await store.ofHandover(handover.hireEvent))?.text).toBe('交给你了。');
       const activity = createCoachActivity({ store: createPostgresCoachActivity(trx) });
       expect((await activity.squad({ squad, checkIns: [] })).letter).toBeUndefined();
     });
