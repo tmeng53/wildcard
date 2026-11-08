@@ -69,7 +69,7 @@ const CoachCardBody = z
       .optional()
       .meta({ description: 'A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.' }),
   })
-  .openapi('CoachCard');
+  .openapi('CoachPageCard');
 
 const CoachCardsBody = z
   .strictObject({

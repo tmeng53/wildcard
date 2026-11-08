@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import {
   createCheckIns,
@@ -155,5 +155,19 @@ describe('openapi.json', () => {
         .map(([method]) => `${method} ${path}`),
     );
     expect(missing).toEqual([]);
+  });
+
+  it('names each schema once, since the document keeps only one of a name', () => {
+    const names = readdirSync(new URL('.', import.meta.url), { recursive: true, encoding: 'utf8' })
+      .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
+      .flatMap((file) =>
+        [
+          ...readFileSync(new URL(file, import.meta.url), 'utf8').matchAll(
+            /\.openapi\('([A-Za-z0-9]+)'\)/gu,
+          ),
+        ].map((match) => match[1]),
+      );
+    const twice = names.filter((name, index) => names.indexOf(name) !== index);
+    expect(twice).toEqual([]);
   });
 });

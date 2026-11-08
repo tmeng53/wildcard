@@ -4363,14 +4363,14 @@
           "stack": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CoachCard"
+              "$ref": "#/components/schemas/CoachPageCard"
             },
             "description": "The cards not seen yet from the last 72 hours, oldest first: the stack."
           },
           "earlier": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CoachCard"
+              "$ref": "#/components/schemas/CoachPageCard"
             },
             "description": "Every other card from the last 30 days, newest first: 以前."
           }
@@ -4379,6 +4379,93 @@
           "version",
           "stack",
           "earlier"
+        ],
+        "additionalProperties": false
+      },
+      "CoachPageCard": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.",
+            "example": "challenge"
+          },
+          "id": {
+            "type": "string",
+            "description": "The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s too), a gift’s piece, a reply’s or answer’s id.",
+            "example": "42"
+          },
+          "coach": {
+            "$ref": "#/components/schemas/CoachSpeaker"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it came: a note when it was delivered."
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "The squad’s day a `board`, `note` or `challenge` is for."
+          },
+          "text": {
+            "type": "string",
+            "description": "What the coach said, on a `board`, `note`, `reply` or `answer`.",
+            "example": "配速比上周快了，不错。"
+          },
+          "challenge": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CoachChallenge"
+              },
+              {
+                "description": "A `challenge`’s challenge."
+              }
+            ]
+          },
+          "checkInId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The caller’s check-in a `reply` is on, or an `answer`’s post."
+          },
+          "commentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The caller’s reply an `answer` answers."
+          },
+          "gift": {
+            "type": "object",
+            "properties": {
+              "pieceId": {
+                "type": "string",
+                "description": "The piece, by the art’s id."
+              },
+              "line": {
+                "type": "string",
+                "description": "What the coach said with it."
+              },
+              "openedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the caller opened it (拆开); left out while it waits boxed."
+              },
+              "worn": {
+                "type": "boolean",
+                "description": "Whether they put it on when they opened it; only once opened."
+              }
+            },
+            "required": [
+              "pieceId"
+            ],
+            "additionalProperties": false,
+            "description": "A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`."
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "coach",
+          "at"
         ],
         "additionalProperties": false
       },

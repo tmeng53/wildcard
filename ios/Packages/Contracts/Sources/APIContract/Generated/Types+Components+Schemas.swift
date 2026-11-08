@@ -6912,11 +6912,11 @@ extension Components {
             /// The cards not seen yet from the last 72 hours, oldest first: the stack.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachCards/stack`.
-            public var stack: [Components.Schemas.CoachCard]
+            public var stack: [Components.Schemas.CoachPageCard]
             /// Every other card from the last 30 days, newest first: 以前.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachCards/earlier`.
-            public var earlier: [Components.Schemas.CoachCard]
+            public var earlier: [Components.Schemas.CoachPageCard]
             /// Creates a new `CoachCards`.
             ///
             /// - Parameters:
@@ -6925,8 +6925,8 @@ extension Components {
             ///   - earlier: Every other card from the last 30 days, newest first: 以前.
             public init(
                 version: Components.Schemas.CoachCards.VersionPayload,
-                stack: [Components.Schemas.CoachCard],
-                earlier: [Components.Schemas.CoachCard]
+                stack: [Components.Schemas.CoachPageCard],
+                earlier: [Components.Schemas.CoachPageCard]
             ) {
                 self.version = version
                 self.stack = stack
@@ -6936,6 +6936,167 @@ extension Components {
                 case version
                 case stack
                 case earlier
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachPageCard`.
+        public struct CoachPageCard: Codable, Hashable, Sendable {
+            /// `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/kind`.
+            public var kind: Swift.String
+            /// The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s too), a gift’s piece, a reply’s or answer’s id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/coach`.
+            public var coach: Components.Schemas.CoachSpeaker
+            /// When it came: a note when it was delivered.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/at`.
+            public var at: Foundation.Date
+            /// The squad’s day a `board`, `note` or `challenge` is for.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/day`.
+            public var day: Swift.String?
+            /// What the coach said, on a `board`, `note`, `reply` or `answer`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/text`.
+            public var text: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/challenge`.
+            public struct ChallengePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/challenge/value1`.
+                public var value1: Components.Schemas.CoachChallenge
+                /// A `challenge`’s challenge.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/challenge/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `ChallengePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: A `challenge`’s challenge.
+                public init(
+                    value1: Components.Schemas.CoachChallenge,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/challenge`.
+            public var challenge: Components.Schemas.CoachPageCard.ChallengePayload?
+            /// The caller’s check-in a `reply` is on, or an `answer`’s post.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/checkInId`.
+            public var checkInId: Swift.String?
+            /// The caller’s reply an `answer` answers.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/commentId`.
+            public var commentId: Swift.String?
+            /// A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift`.
+            public struct GiftPayload: Codable, Hashable, Sendable {
+                /// The piece, by the art’s id.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift/pieceId`.
+                public var pieceId: Swift.String
+                /// What the coach said with it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift/line`.
+                public var line: Swift.String?
+                /// When the caller opened it (拆开); left out while it waits boxed.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift/openedAt`.
+                public var openedAt: Foundation.Date?
+                /// Whether they put it on when they opened it; only once opened.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift/worn`.
+                public var worn: Swift.Bool?
+                /// Creates a new `GiftPayload`.
+                ///
+                /// - Parameters:
+                ///   - pieceId: The piece, by the art’s id.
+                ///   - line: What the coach said with it.
+                ///   - openedAt: When the caller opened it (拆开); left out while it waits boxed.
+                ///   - worn: Whether they put it on when they opened it; only once opened.
+                public init(
+                    pieceId: Swift.String,
+                    line: Swift.String? = nil,
+                    openedAt: Foundation.Date? = nil,
+                    worn: Swift.Bool? = nil
+                ) {
+                    self.pieceId = pieceId
+                    self.line = line
+                    self.openedAt = openedAt
+                    self.worn = worn
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case pieceId
+                    case line
+                    case openedAt
+                    case worn
+                }
+            }
+            /// A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift`.
+            public var gift: Components.Schemas.CoachPageCard.GiftPayload?
+            /// Creates a new `CoachPageCard`.
+            ///
+            /// - Parameters:
+            ///   - kind: `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.
+            ///   - id: The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s too), a gift’s piece, a reply’s or answer’s id.
+            ///   - coach:
+            ///   - at: When it came: a note when it was delivered.
+            ///   - day: The squad’s day a `board`, `note` or `challenge` is for.
+            ///   - text: What the coach said, on a `board`, `note`, `reply` or `answer`.
+            ///   - challenge:
+            ///   - checkInId: The caller’s check-in a `reply` is on, or an `answer`’s post.
+            ///   - commentId: The caller’s reply an `answer` answers.
+            ///   - gift: A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
+            public init(
+                kind: Swift.String,
+                id: Swift.String,
+                coach: Components.Schemas.CoachSpeaker,
+                at: Foundation.Date,
+                day: Swift.String? = nil,
+                text: Swift.String? = nil,
+                challenge: Components.Schemas.CoachPageCard.ChallengePayload? = nil,
+                checkInId: Swift.String? = nil,
+                commentId: Swift.String? = nil,
+                gift: Components.Schemas.CoachPageCard.GiftPayload? = nil
+            ) {
+                self.kind = kind
+                self.id = id
+                self.coach = coach
+                self.at = at
+                self.day = day
+                self.text = text
+                self.challenge = challenge
+                self.checkInId = checkInId
+                self.commentId = commentId
+                self.gift = gift
+            }
+            public enum CodingKeys: String, CodingKey {
+                case kind
+                case id
+                case coach
+                case at
+                case day
+                case text
+                case challenge
+                case checkInId
+                case commentId
+                case gift
             }
         }
         /// - Remark: Generated from `#/components/schemas/CoachCardSeen`.
