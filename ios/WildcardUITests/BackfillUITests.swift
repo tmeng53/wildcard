@@ -18,8 +18,7 @@ final class BackfillUITests: XCTestCase {
         meal.tap()
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
         XCTAssertTrue(caption.waitForExistence(timeout: Self.wait), "the compose page never opened")
-        // The caption is a text view whose placeholder is drawn over it and read as its label.
-        XCTAssertEqual(caption.label, "这顿很自律…")
+        XCTAssertEqual(caption.placeholderValue, "这顿很自律…")
         XCTAssertFalse(app.buttons["compose.sport.run"].exists, "a meal shows the sport row")
         XCTAssertTrue(
             app.descendants(matching: .any).matching(identifier: "compose.cover").firstMatch.exists,
