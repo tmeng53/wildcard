@@ -11,8 +11,11 @@
 --   coach     a squad's AI coach may give it (a piece; with the description its model reads), at
 --             most one a member a week, whoever gives it;
 --   team      only the Wildcard team gives it, through admin tools; no coach or rule ever does.
--- Admins may also give anything that has a trigger (give_unlocks, a broadcast's gifts): that grant
--- is `team` too, whatever the reward's other ways.
+-- Admins may also give what has a training trigger (give_unlocks, a broadcast's gifts): that grant
+-- is `team` too. A member holds each reward once, whichever way they got it.
+--
+-- The log rows moved from `unlock_rule_events` and `gift_piece_events` keep their values as they
+-- were (`kind`/`item_id`, `piece_id`), tagged with `replaces`: replaying the log maps them by it.
 
 -- What a member can get, by kind and id. A row is added when its first trigger is, and is never
 -- changed or removed, so it is its own log.

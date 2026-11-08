@@ -53,7 +53,7 @@ extension ScoreCell.Label {
         case .speed: Text("均速", bundle: .module)
         case .averageHeartRate: Text("平均心率", bundle: .module)
         case .maxHeartRate: Text("最高心率", bundle: .module)
-        case .effort: Text("费力", bundle: .module)
+        case .effort: Text("强度", bundle: .module)
         case .runs: Text("score.runs", bundle: .module)
         case .descent: Text("落差", bundle: .module)
         case .topSpeed: Text("最高速", bundle: .module)

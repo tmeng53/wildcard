@@ -37,6 +37,7 @@ import type {
   CoachMemes,
   CoachPhotoUrls,
   CoachTool,
+  CoachWeather,
 } from '../ports.js';
 import { createCoachActivity } from './coach-activity.js';
 import { createCoachNoteDelivery } from './coach-note-delivery.js';
@@ -174,6 +175,7 @@ function wakes(
     wantNotes,
     memes,
     gifting,
+    weatherOf,
   }: {
     readonly agent: CoachAgent;
     readonly at?: Date;
@@ -186,6 +188,7 @@ function wakes(
     readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
     readonly memes?: CoachMemes;
     readonly gifting?: CoachGifting;
+    readonly weatherOf?: CoachWeather;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -215,6 +218,7 @@ function wakes(
     ...(wantNotes === undefined ? {} : { wantNotes }),
     ...(memes === undefined ? {} : { memes }),
     ...(gifting === undefined ? {} : { gifting }),
+    ...(weatherOf === undefined ? {} : { weatherOf }),
   });
 }
 
@@ -1329,6 +1333,36 @@ describe('the coach', () => {
       expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
       expect(daily?.task).toContain(
         '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 （本人当地 22:05 发） 「自己做的」 · 点了表情：队员1',
+      );
+    });
+  });
+
+  it('tells the daily wake each member’s weather, and writes the notes without it when it fails', async () => {
+    await rolledBack(async (fixture) => {
+      const { mia, leo } = fixture;
+      const asked: unknown[] = [];
+      const weatherOf: CoachWeather = (input) => {
+        asked.push(input);
+        // Only 队员1 shared where they are.
+        return Promise.resolve(new Map([[mia, '今天雨，8–13°C，降水概率 80%']]));
+      };
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent, weatherOf }).run();
+      const daily = runs.find(({ task }) => task.includes('新的一天'));
+      expect(asked).toStrictEqual([{ members: [mia, leo], day: '2026-11-01' }]);
+      expect(daily?.task).toContain(
+        '- 队员1：这周已经练了 1 天；当地今天雨，8–13°C，降水概率 80%。',
+      );
+      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
+    });
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, {
+        agent,
+        weatherOf: () => Promise.reject(new Error('no weather')),
+      }).run();
+      expect(runs.find(({ task }) => task.includes('新的一天'))?.task).toContain(
+        '- 队员1：这周已经练了 1 天。',
       );
     });
   });

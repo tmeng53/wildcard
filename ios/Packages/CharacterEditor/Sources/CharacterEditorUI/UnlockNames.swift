@@ -27,6 +27,11 @@ public enum UnlockNames {
         }
     }
 
+    /// A piece's own name, as 我的衣橱 says it, such as a coach's gift once it is opened.
+    public static func piece(_ piece: String) -> Text {
+        EditorNames.variant(piece, in: PlaceholderCharacter.slot(holding: piece) ?? Slot("prop"))
+    }
+
     /// The store a piece hangs in, by the bundled art; nil for a piece this build doesn't have.
     public static func storeOf(piece: String) -> String? {
         (try? PlaceholderCharacter.editorChoices())?.wear.values.joined().first { $0.id == piece }?.store
@@ -100,7 +105,7 @@ public struct WardrobePicture: View {
         Group {
             if kind == .store {
                 StoreBadge(store: item)
-            } else if let slot = (try? PlaceholderCharacter.editorChoices())?.slot(of: item) {
+            } else if let slot = PlaceholderCharacter.slot(holding: item) {
                 Thumbnail(
                     outfit: wearing(item, in: slot), only: slot, crop: ThumbnailCrop.of(slot), cache: Self.thumbnails)
             }

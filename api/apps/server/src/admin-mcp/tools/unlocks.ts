@@ -55,9 +55,8 @@ export function getRewards({ unlocks }: UnlockToolDependencies) {
       'one trigger per way: training (sports, empty = any; after 训练 check-ins, counted from ' +
       'countsFrom; change with put_unlock_rule), coach (a squad’s AI coach may give it, one a ' +
       'member a week; offered and the description its model reads; change with put_gift_piece) ' +
-      'or team (only the Wildcard team gives it; no coach or rule ever does). Admins may also ' +
-      'give anything with a trigger (give_unlocks). Starter pieces and the tumbler and dumbbell ' +
-      'need none.',
+      'or team (only the Wildcard team gives it; no coach or rule ever does). give_unlocks gives ' +
+      'what has a training trigger. Starter pieces and the tumbler and dumbbell need none.',
     changes: false,
     input: z.strictObject({}),
     run: async () => ({

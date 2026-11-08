@@ -1,4 +1,4 @@
-/// Where a new member is in sign-up, in order. The open screen and 上场 frame the five task
+/// Where a new member is in sign-up, in order. The open screen and 上场 frame the six task
 /// steps the header counts. Whoever made their squad then picks where it trains, and drops onto
 /// it rather than playing 上场.
 public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
@@ -14,6 +14,9 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
     /// Fitbit, WHOOP or Oura wearer learns there how theirs reaches Apple Health first. Skipped
     /// on a device without Health.
     case health
+    /// 打开大概位置 (Tracy, 2026-11-08): the system's prompt for approximate location, so the
+    /// squad's coach knows the member's weather.
+    case location
     /// 本周目标, on the week's poster.
     case week
     /// 这周在哪练？: only for whoever made the squad. Five cartons; the one picked opens, and the
@@ -23,8 +26,8 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
     /// 上场: the entrance into a squad joined, then home.
     case entrance
 
-    /// The steps the header counts, 「第 1 步，共 5 步」 to 「第 5 步，共 5 步」.
-    public static let counted: [SignUpStep] = [.character, .squad, .sports, .health, .week]
+    /// The steps the header counts, 「第 1 步，共 6 步」 to 「第 6 步，共 6 步」.
+    public static let counted: [SignUpStep] = [.character, .squad, .sports, .health, .location, .week]
 
     /// This step's number in the header, or nil for the open screen, 这周在哪练？ and 上场.
     public var number: Int? {
@@ -40,14 +43,27 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
         madeTheSquad ? .scene : .entrance
     }
 
-    /// Where 平时练什么？ goes: 连上 Apple 健康, or straight to 本周目标 on a device without Health.
-    public static func afterSports(hasHealth: Bool) -> SignUpStep {
-        hasHealth ? .health : .week
+    /// The step after this one on a phone with or without Health, and where location can be
+    /// asked or not: 连上 Apple 健康 and 打开大概位置 are left out where they can't be done.
+    public func next(hasHealth: Bool, hasLocation: Bool) -> SignUpStep? {
+        var step = next
+        while let each = step, !each.isShown(hasHealth: hasHealth, hasLocation: hasLocation) { step = each.next }
+        return step
     }
 
-    /// Where back from 本周目标 goes: the mirror of `afterSports(hasHealth:)`.
-    public static func beforeWeek(hasHealth: Bool) -> SignUpStep {
-        hasHealth ? .health : .sports
+    /// The step back from this one, the mirror of `next(hasHealth:hasLocation:)`.
+    public func previous(hasHealth: Bool, hasLocation: Bool) -> SignUpStep? {
+        var step = previous
+        while let each = step, !each.isShown(hasHealth: hasHealth, hasLocation: hasLocation) { step = each.previous }
+        return step
+    }
+
+    private func isShown(hasHealth: Bool, hasLocation: Bool) -> Bool {
+        switch self {
+        case .health: hasHealth
+        case .location: hasLocation
+        default: true
+        }
     }
 
     /// Where back goes: the open screen signs out, so there is no back from it, and none from

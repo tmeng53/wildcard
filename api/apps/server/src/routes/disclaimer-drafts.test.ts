@@ -36,6 +36,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -142,6 +143,7 @@ function appWith(model: LanguageModel, modelName?: string) {
     push: pushOn(db),
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
+    weather: weatherOn(db),
     scenes: scenesOn(db),
     switches: switchesOn(db),
     weeklyAwards: unusedWeeklyAwards,

@@ -53,8 +53,9 @@ export function createCoachGifts(deps: {
       if (!pool.some(({ id, offered }) => id === piece && offered)) {
         throw new GiftPieceNotOfferedError(piece);
       }
+      // A member holds each piece once, whichever way they got it.
+      if (await deps.store.holds(member, piece)) throw new GiftAlreadyOwnedError(piece);
       const had = await deps.store.giftsOf(member);
-      if (had.some((gift) => gift.piece === piece)) throw new GiftAlreadyOwnedError(piece);
       const thisWeek = had.filter(({ givenAt }) => givenAt >= weekStart).at(-1);
       if (thisWeek !== undefined) throw new GiftWeeklyLimitError(thisWeek.givenAt);
       const gift = await deps.store.give(member, {
@@ -68,8 +69,8 @@ export function createCoachGifts(deps: {
       });
       if (gift === undefined) {
         // Given meanwhile by another call: that piece, or another this week.
+        if (await deps.store.holds(member, piece)) throw new GiftAlreadyOwnedError(piece);
         const now = await deps.store.giftsOf(member);
-        if (now.some((each) => each.piece === piece)) throw new GiftAlreadyOwnedError(piece);
         throw new GiftWeeklyLimitError(now.at(-1)?.givenAt ?? weekStart);
       }
       await deps.gifted?.(member, gift);

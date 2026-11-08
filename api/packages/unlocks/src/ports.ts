@@ -71,6 +71,8 @@ export interface GiftStore {
   putPiece(edit: GiftPieceEdit): Promise<void>;
   /** What `member` was given, the earliest first, each with when they opened it. */
   giftsOf(member: MemberId): Promise<CoachGift[]>;
+  /** Whether `member` holds `piece` by any way (training, a coach, the team). */
+  holds(member: MemberId, piece: PieceId): Promise<boolean>;
   /**
    * Keeps `gift` for `member`, counting for the week that began at `weekStart`; `undefined`
    * when they already have that piece or a gift for that week.

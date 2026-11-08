@@ -2,6 +2,7 @@ import type { AdminTables } from '@wildcard/admins';
 import type { AiConsentTables } from '@wildcard/ai-consent';
 import type { NoticeTables } from '@wildcard/notices';
 import type { NudgeTables } from '@wildcard/nudges';
+import type { WeatherTables } from '@wildcard/weather';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { CoachTables } from '@wildcard/coach';
 import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
@@ -167,6 +168,7 @@ export type Tables = CheckInTables &
   AdminTables &
   AiConsentTables &
   NudgeTables &
+  WeatherTables &
   WeeklyAwardTables &
   SportTables &
   SceneTables &

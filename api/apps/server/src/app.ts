@@ -13,6 +13,7 @@ import type { Push } from '@wildcard/push';
 import type { Scenes } from '@wildcard/scenes';
 import type { Switches } from '@wildcard/switches';
 import type { Squads } from '@wildcard/squads';
+import type { Weather } from '@wildcard/weather';
 import type { WeeklyAwards } from '@wildcard/weekly-awards';
 import type { CoachGifts, Unlocks } from '@wildcard/unlocks';
 import { HTTPException } from 'hono/http-exception';
@@ -60,6 +61,7 @@ import { nudges } from './routes/nudges.js';
 import { feedback } from './routes/feedback.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
+import { location } from './routes/location.js';
 import { comments } from './routes/comments.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
@@ -118,6 +120,7 @@ export interface AppDependencies {
   readonly photos: PhotoStorage;
   readonly disclaimerDrafts: DisclaimerDrafts;
   readonly push: Push;
+  readonly weather: Weather;
   /** The Sunday summary's words now, kept in the database. */
   readonly weekSummaryWords: () => Promise<WeekSummaryWords>;
   /** Each squad's weekly awards, and the clock that says when they are due. */
@@ -195,6 +198,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', comments({ ...deps, publish }));
   app.route('/', devices(deps));
   app.route('/', pushSettings(deps));
+  app.route('/', location(deps));
   app.route('/', squads(deps));
   app.route('/', squadToday({ ...deps, awards: deps.weeklyAwards.awards }));
   app.route(

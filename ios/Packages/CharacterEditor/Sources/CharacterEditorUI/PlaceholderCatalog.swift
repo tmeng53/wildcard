@@ -11,11 +11,13 @@ extension Catalog {
     /// props they hold (the starters, with nothing unlocked), every bundled hair and face part,
     /// and their preset colors. A closed store (its switch off) stays on the street only as the
     /// member's own rack, when they own something there.
-    public static func placeholder(unlocks: [Unlock] = [], stock: StreetStock? = nil) throws(AvatarError) -> Catalog {
+    public static func placeholder(
+        unlocks: [Unlock] = [], stock: StreetStock? = nil, gifts: [String] = []
+    ) throws(AvatarError) -> Catalog {
         let stock = stock ?? StarterStock.shared.current
         let choices = try PlaceholderCharacter.editorChoices()
         let unlockedProps = Set(unlocks.filter { $0.kind == .prop }.map(\.id))
-        let props = choices.props.filter { $0.isOpen || unlockedProps.contains($0.id) }.map(\.id)
+        var props = choices.props.filter { $0.isOpen || unlockedProps.contains($0.id) }.map(\.id)
         let owned = Set(stock.pieces.filter { $0.state == .owned }.map(\.id))
         let boxed: [(String, Int)] = stock.pieces.compactMap { piece in
             guard case .locked(let left) = piece.state, !owned.contains(piece.id) else { return nil }
@@ -29,6 +31,7 @@ extension Catalog {
             let onRack: [(String, Int)] = pieces.compactMap { piece in toGo[piece.id].map { (piece.id, $0) } }
             return Dictionary(onRack, uniquingKeysWith: min)
         }.filter { !$0.value.isEmpty }
+        let given = hang(gifts, variants: &variants, props: &props)
         for slot in ["hair"] + PlaceholderCharacter.faceSlots {
             variants[slot] = PlaceholderCharacter.variants(for: slot)
         }
@@ -58,7 +61,23 @@ extension Catalog {
             species: choices.species, variants: variants, props: props, swatches: swatches,
             originals: originals,
             defaults: try PlaceholderCharacter.rig().defaults.filter { Catalog.dressSlots.contains($0.key) },
-            stores: stores, storeOf: storeOf, locked: stillLocked)
+            stores: stores, storeOf: storeOf, locked: stillLocked, gifts: given)
+    }
+
+    /// Hangs the coach's gifts the member opened in the slot whose art holds each, and gives back
+    /// the ones hung; one this build has no art for yet is left out.
+    private static func hang(_ gifts: [String], variants: inout [Slot: [String]], props: inout [String]) -> [String] {
+        var given: [String] = []
+        for gift in gifts {
+            guard let slot = PlaceholderCharacter.slot(holding: gift) else { continue }
+            given.append(gift)
+            if slot == "prop" {
+                if !props.contains(gift) { props.append(gift) }
+            } else if !(variants[slot] ?? []).contains(gift) {
+                variants[slot, default: []].append(gift)
+            }
+        }
+        return given
     }
 
     /// The pieces that came to the member and wait on 商店街 until claimed (领取): the ones they

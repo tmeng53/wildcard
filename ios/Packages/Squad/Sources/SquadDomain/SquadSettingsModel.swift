@@ -165,13 +165,10 @@ public final class SquadSettingsModel {
     /// it at once and goes back if the change doesn't go through.
     public func setTimeZone(_ identifier: String) async {
         guard let settings, canChangeTimeZone, TimeZone(identifier: identifier) != nil,
-            identifier != settings.matchTimeZone.timeZone || identifier != settings.matchTimeZone.nextTimeZone
+            identifier != settings.matchTimeZone.timeZone
         else { return }
         let before = settings.matchTimeZone
-        update {
-            $0.matchTimeZone.timeZone = identifier
-            $0.matchTimeZone.nextTimeZone = identifier
-        }
+        update { $0.matchTimeZone.timeZone = identifier }
         await change { service throws(SquadError) in
             let zone = try await service.setTimeZone(of: settings.squad.id, to: identifier)
             self.update { $0.matchTimeZone = zone }
@@ -223,21 +220,17 @@ public final class SquadSettingsModel {
         return settings.today.weekNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
     }
 
-    /// 「带队 N 天」 on the coach's card: the day the squad hired it counts 1, days on the
-    /// member's clock.
-    public var coachDay: Int? {
-        guard let settings, let hire = settings.coach.hire else { return nil }
-        return settings.today.dayNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
-    }
-
-    /// Reads 教练招聘会's coaches, each time it opens.
+    /// Reads 教练招聘会's coaches, each time it opens, and again on coming back from a 简历. A list
+    /// already shown stays up while it is read again (and when that read fails), so the page keeps
+    /// its place instead of falling back to the spinner and the top.
     public func loadMarket() async {
-        market = .loading
+        if case .loaded = market {} else { market = .loading }
         do {
             market = .loaded(try await service.coaches())
         } catch {
             // Closed before the coaches came, it didn't fail.
             guard !Task.isCancelled else { return }
+            if case .loaded = market, error != .signedOut { return }
             market = .failed(error)
             if error == .signedOut { await signOut() }
         }

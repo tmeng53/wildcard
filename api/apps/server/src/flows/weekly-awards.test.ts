@@ -54,6 +54,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -208,6 +209,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     liveEvents: ignoredNotices.liveEvents,
     aiConsent,
     nudges: nudgesOn(db),
+    weather: weatherOn(db),
     ...unusedFeedback,
     log: createLog(() => undefined),
     jobs: { ...noJobs, isScheduler: jobsTokenScheduler(JOBS_TOKEN) },

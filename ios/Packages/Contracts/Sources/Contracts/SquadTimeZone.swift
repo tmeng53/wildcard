@@ -6,17 +6,13 @@ public struct SquadTimeZone: Hashable, Sendable {
     /// Every squad's clock before it had one of its own.
     public static let newYork = "America/New_York"
 
-    /// This week's zone (an IANA name such as `Asia/Taipei`).
+    /// The zone (an IANA name such as `Asia/Taipei`); a captain's change counts at once.
     public var timeZone: String
-    /// Next week's: the same as `timeZone` since a captain's change counts at once; it differs only
-    /// in the hours a change made on the squad's Monday waits for Monday on the new clock.
-    public var nextTimeZone: String
     /// The viewer is the captain, the only one who sets it.
     public let canChange: Bool
 
-    public init(timeZone: String, nextTimeZone: String, canChange: Bool) {
+    public init(timeZone: String, canChange: Bool) {
         self.timeZone = timeZone
-        self.nextTimeZone = nextTimeZone
         self.canChange = canChange
     }
 }

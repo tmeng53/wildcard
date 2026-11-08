@@ -93,6 +93,17 @@ export function createPostgresGiftStore(db: Kysely<DB>): GiftStore {
       return rows.map(shown);
     },
 
+    async holds(member, piece) {
+      const held = await db
+        .selectFrom('grants')
+        .select('id')
+        .where('member_id', '=', member)
+        .where('reward_kind', '=', 'piece')
+        .where('reward_id', '=', piece)
+        .executeTakeFirst();
+      return held !== undefined;
+    },
+
     async give(member, { piece, coach, squad, line, givenBy, admin, weekStart }) {
       const inserted = await db
         .insertInto('grants')

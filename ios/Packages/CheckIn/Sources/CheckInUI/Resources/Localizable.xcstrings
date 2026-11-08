@@ -1585,38 +1585,6 @@
         }
       }
     },
-    "给你的 · %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For you · %@"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "給你的 · %@"
-          }
-        }
-      }
-    },
-    "给 %@ 的 · %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For %1$@ · %2$@"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "給 %1$@ 的 · %2$@"
-          }
-        }
-      }
-    },
     "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。": {
       "localizations": {
         "en": {
@@ -2349,6 +2317,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "這隊交給你了，我先撤。\n小美週三雷打不動去游泳，週五一定請假，別問，問就是加班。\n阿傑在備戰半馬，跑完要人誇，誇具體點，他聽得出來是不是敷衍。\n大鵬不愛說話，練完只發圖，回個表情就夠了。\n這隊週日晚上最熱鬧，戰報一出全在線。\n器材室那條毯子留給你，午覺在那兒睡最舒服。"
+          }
+        }
+      }
+    },
+    "%@ · 今日挑战": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · Today's challenge"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · 今日挑戰"
+          }
+        }
+      }
+    },
+    "拉伸": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stretch"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "伸展"
           }
         }
       }

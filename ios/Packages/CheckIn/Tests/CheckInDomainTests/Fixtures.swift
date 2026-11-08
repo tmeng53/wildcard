@@ -184,8 +184,6 @@ actor ScriptedBackend: CheckInBackend {
     }
 
     private var serverNotes: [CoachMemberNote] = []
-    private var opened: CoachMemberNote?
-    private(set) var putAway: [Int] = []
     func set(notes: [CoachMemberNote]) { serverNotes = notes }
 
     func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote] {
@@ -193,15 +191,22 @@ actor ScriptedBackend: CheckInBackend {
         return squads.compactMap { squad in serverNotes.first { $0.squad == squad } }
     }
 
-    func putAway(_ note: CoachMemberNote) async throws(CheckInError) {
-        // Kept on the phone even when the server can't be reached.
-        opened = note
+    var serverChallenge: DayChallenge?
+    var completionFails = false
+    func set(challenge: DayChallenge?) { serverChallenge = challenge }
+    func set(completionFails: Bool) { self.completionFails = completionFails }
+
+    func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? {
         if let failure { throw failure }
-        putAway.append(note.id)
-        serverNotes.removeAll { $0.id == note.id }
+        return serverChallenge
     }
 
-    func openedNote() async -> CoachMemberNote? { opened }
+    func completeChallenge(_ note: String, in squad: SquadID) async throws(CheckInError) -> CoachChallengeCompleter {
+        if completionFails { throw .refused }
+        guard let found = serverChallenge, found.note == note else { throw .refused }
+        serverChallenge = found.completed(by: .member)
+        return serverChallenge?.challenge.completedBy ?? .member
+    }
 
     private var written: CoachLetter?
     private var writing: CheckedContinuation<Void, Never>?

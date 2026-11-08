@@ -207,13 +207,13 @@ struct DisclaimerComposer: View {
         }
     }
 
-    /// The styles and the button that puts a line up, on one row where it fits (else, at large
-    /// text sizes, the button goes under the styles).
+    /// The styles and the button that puts a line up, one height on one row where it fits, the
+    /// styles taking the room the button leaves (else, at large text sizes, the button goes under
+    /// the styles).
     private var choices: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: Space.xs) {
-                styles
-                Spacer(minLength: 0)
+                styles.frame(maxWidth: .infinity)
                 write
             }
             VStack(alignment: .leading, spacing: Space.xxs) {
@@ -223,8 +223,8 @@ struct DisclaimerComposer: View {
         }
     }
 
-    /// The four styles as the system's segmented control, which stays narrow enough to share
-    /// the row with 编一句. Picking only picks: it asks nothing.
+    /// The four styles as the system's segmented control, as tall as 编一句 beside it. Picking
+    /// only picks: it asks nothing.
     private var styles: some View {
         Picker(selection: $style) {
             ForEach(DisclaimerStyle.allCases, id: \.self) { option in
@@ -234,7 +234,6 @@ struct DisclaimerComposer: View {
             Text("风格", bundle: .module)
         }
         .pickerStyle(.segmented)
-        .fixedSize()
         .disabled(isWriting)
         .accessibilityIdentifier("disclaimer.style")
     }
@@ -329,7 +328,7 @@ private struct WriteButton: View {
                 }
             }
         }
-        .buttonStyle(SecondaryButtonStyle())
+        .buttonStyle(SecondaryButtonStyle(size: .compact))
         .fixedSize()
         .disabled(isWriting)
         .accessibilityIdentifier("disclaimer.write")

@@ -4853,6 +4853,41 @@ extension Components {
                 case settings
             }
         }
+        /// The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach. Squadmates and the AI never see it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/MemberLocation`.
+        public struct MemberLocation: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/version`.
+            public var version: Components.Schemas.MemberLocation.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/latitude`.
+            public var latitude: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/longitude`.
+            public var longitude: Swift.Double
+            /// Creates a new `MemberLocation`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - latitude:
+            ///   - longitude:
+            public init(
+                version: Components.Schemas.MemberLocation.VersionPayload,
+                latitude: Swift.Double,
+                longitude: Swift.Double
+            ) {
+                self.version = version
+                self.latitude = latitude
+                self.longitude = longitude
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case latitude
+                case longitude
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadList`.
         public struct SquadList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadList/version`.
@@ -6383,7 +6418,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/timeZone`.
             public var timeZone: Swift.String
-            /// Next week’s zone, the same as `timeZone`: a change counts at once. Kept for builds that show a change waiting for next week.
+            /// Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/nextTimeZone`.
             public var nextTimeZone: Swift.String
@@ -6396,7 +6431,7 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - timeZone: This week’s zone.
-            ///   - nextTimeZone: Next week’s zone, the same as `timeZone`: a change counts at once. Kept for builds that show a change waiting for next week.
+            ///   - nextTimeZone: Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.
             ///   - canChange: True for the captain, the only one who sets it.
             public init(
                 version: Components.Schemas.SquadTimeZone.VersionPayload,

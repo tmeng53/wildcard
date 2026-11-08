@@ -84,6 +84,9 @@ extension AppModel {
         await today.land(on: kept.scene, move: kept.move, takeover: read.takeover)
     }
 
+    /// How long the loading screen waits for the squad's scene before opening on the kept one.
+    static let sceneWait = Duration.seconds(3)
+
     /// The squad's scene this week from the server, unless it takes longer than `Self.sceneWait`.
     func openingScene(of squad: SquadID) async -> SquadScene? {
         let wait = Self.sceneWait

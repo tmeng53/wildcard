@@ -73,6 +73,7 @@ export type {
   CoachMeme,
   CoachGifting,
   CoachMemes,
+  CoachWeather,
   CoachOccasions,
   CoachPhotoUrls,
   CoachTool,
