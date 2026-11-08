@@ -70,7 +70,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Healthy meal"
+            "value": "Clean meal"
           }
         },
         "zh-Hant": {
@@ -124,7 +124,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "坦白放縱餐"
+            "value": "坦白欺騙餐"
           }
         }
       }

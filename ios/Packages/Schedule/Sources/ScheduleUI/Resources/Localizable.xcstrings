@@ -101,7 +101,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dinner earlier"
+            "value": "Earlier dinner"
           }
         },
         "zh-Hans": {
@@ -124,7 +124,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Half the bubble tea"
+            "value": "Half the boba"
           }
         },
         "zh-Hans": {
@@ -448,7 +448,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Days that have started can't change"
+            "value": "Past days can't be changed"
           }
         },
         "zh-Hant": {
@@ -566,7 +566,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網路開小差了，沒存上"
+            "value": "網路怪怪的，沒存到"
           }
         }
       }

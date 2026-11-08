@@ -9,28 +9,32 @@ import SwiftUI
 /// The coach's card, opened from a tap on the coach on the home and popped up like a teammate's
 /// player card (the approved 教练卡, Tracy 2026-11-05): the same ink stock, with the coach
 /// standing on the sideline (a scoreboard, a bench, a water bottle) in its window, the 教练 tag
-/// and its title where a member's number goes, then its name, the squad and 「带队 N 天」. It has
-/// no back and no buttons; 换教练 and 解雇 stay on its 简历 on 小队. While the squad is read, or if
-/// it can't be, a solid card of the same size stands in.
+/// and its title where a member's number goes, then its name, the squad and 「带队 N 天」. A tap
+/// turns it over to its 简历 and 逛逛招聘会 (Tracy, 2026-11-08); 换教练 and 解雇 stay on the 简历 on
+/// 小队. While the squad is read, or if it can't be, a solid card of the same size stands in.
 public struct CoachPlayerCard: View {
     @Bindable private var model: SquadSettingsModel
     /// The squad turned out to have no coach any more (fired from another phone): the app puts
     /// the card away.
     private let gone: () -> Void
+    /// 逛逛招聘会, from the card's back: the app puts the card away and opens 教练招聘会.
+    private let browse: () -> Void
     @Environment(\.sceneTheme) private var theme
 
-    public init(model: SquadSettingsModel, gone: @escaping () -> Void) {
+    public init(model: SquadSettingsModel, gone: @escaping () -> Void, browse: @escaping () -> Void) {
         self.model = model
         self.gone = gone
+        self.browse = browse
     }
 
     public var body: some View {
         Group {
             if let settings = model.settings, let hire = settings.coach.hire {
-                CoachPlayerCardFront(coach: hire.coach, squad: settings.squad.name, day: model.coachDay)
-                    .tradingCardStock()
-                    .accessibilityElement(children: .combine)
-                    .accessibilityIdentifier("coachCard")
+                FlippingCard(hint: .fgOnInk, identifier: "coachCard") {
+                    CoachPlayerCardFront(coach: hire.coach, squad: settings.squad.name, day: model.coachDay)
+                } back: {
+                    CoachPlayerCardBack(coach: hire.coach, browse: browse)
+                }
             } else if model.settings != nil {
                 Color.clear.onAppear(perform: gone)
             } else if case .failed = model.load {
@@ -46,6 +50,59 @@ public struct CoachPlayerCard: View {
         content()
             .frame(width: TradingCard.size.width, height: TradingCard.size.height)
             .background(Color(role: .bgCanvas, in: theme), in: TradingCard.shape)
+    }
+}
+
+/// The back: the coach's 简历 (its name and title, catchphrase, 履历, 执教, 风格, 期望待遇 and
+/// tags), and at the bottom 逛逛招聘会, a quiet row like the 徽章 one on a member's card.
+private struct CoachPlayerCardBack: View {
+    let coach: Coach
+    let browse: () -> Void
+    @Environment(\.sceneTheme) private var theme
+
+    private var ink: Color { Color(role: .fgOnInk, in: theme) }
+    private var muted: Color { Color(role: .fgOnInkMuted, in: theme) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            CoachName(coach: coach, name: TypeRamp.headline, title: TypeRamp.footnote, onInk: true)
+            Text("「\(coach.catchphrase)」", bundle: .module)
+                .typeStyle(TypeRamp.footnote)
+                .foregroundStyle(muted)
+                .lineLimit(2)
+                .padding(.top, Space.xxs)
+            CoachResumeFields(coach: coach, onInk: true, valueLines: 2, labelIdentifier: "coachCard.label")
+                .padding(.top, Space.s)
+            if !coach.tags.isEmpty {
+                Text(verbatim: coach.tags.joined(separator: " · "))
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(muted)
+                    .lineLimit(2)
+                    .padding(.top, Space.s)
+            }
+            Spacer(minLength: Space.xs)
+            Hairline(on: .ink)
+            Button(action: browse) {
+                HStack(spacing: Space.xs) {
+                    Text("逛逛招聘会", bundle: .module)
+                        .typeStyle(TypeRamp.calloutEmphasis)
+                        .foregroundStyle(ink)
+                    Spacer(minLength: Space.xs)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: Sizing.smallIcon * 0.8, weight: .semibold))
+                        .foregroundStyle(muted)
+                        .accessibilityHidden(true)
+                }
+                .padding(.horizontal, Space.xxs)
+                .padding(.vertical, Space.s)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PressableButtonStyle())
+            .accessibilityIdentifier("coachCard.browse")
+        }
+        .padding(.horizontal, Space.xs)
+        .padding(.top, Space.xs)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 

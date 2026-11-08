@@ -228,7 +228,7 @@ public final class TodayModel {
             }
         }
         if !holdsDress || player == nil { dressMe(hop: false) }
-        cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach)
+        cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach, hiring: store.isHiringCoach)
         if opening != nil { standOpeningSquad() }
     }
 
