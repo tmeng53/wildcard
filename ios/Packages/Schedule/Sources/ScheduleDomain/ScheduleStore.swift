@@ -44,8 +44,6 @@ public final class ScheduleStore {
     /// The week whose plan just changed and now differs from the template, while the screen
     /// offers to put it into the template too (只改了这一周 · 也改到模板).
     public private(set) var templateOffer: LocalDay?
-    /// Every day the member ever trained, once loaded.
-    public private(set) var lifetimeTrainedDays: Int?
     /// Why a part of the last change didn't go through; nil once a change goes through whole.
     public private(set) var failure: ScheduleError?
     /// Weeks as the server holds them: as last sent, with every save it took folded in.
@@ -122,7 +120,7 @@ public final class ScheduleStore {
 
     // MARK: - Loading
 
-    /// Loads who the member is, their lifetime count and this week, and shows this week.
+    /// Loads who the member is and this week, and shows this week.
     public func load() async {
         do {
             profile = try await backend.profile()
@@ -139,7 +137,6 @@ public final class ScheduleStore {
         } else if let start = shownWeek ?? today?.weekStart {
             await show(start)
         }
-        lifetimeTrainedDays = try? await backend.trainedDays()
         // Known before a week changes, so the offer to change it too shows only when it differs.
         if template == nil, let loaded = try? await backend.template(), templateDraft == nil, template == nil {
             template = loaded

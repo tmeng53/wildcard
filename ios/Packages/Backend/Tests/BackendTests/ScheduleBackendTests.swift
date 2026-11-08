@@ -7,7 +7,7 @@ import Testing
 @testable import Backend
 
 // 出赛表's adapter against the built API and local Supabase: who the poster is for, a week with
-// the days checked in and the squad's count, and saving a plan and 饮食小目标.
+// the days checked in, and saving a plan and 饮食小目标.
 
 private func scheduleMember(_ stack: LocalStack) async throws -> (SignedInMember, APIScheduleBackend) {
     let member = try await stack.signedInMember()
@@ -47,20 +47,15 @@ private var thisWeek: LocalDay {
     #expect(week.plan.count == 7)
     #expect(week.titles.isEmpty)
     #expect(week.fuel.isEmpty)
-    if trained.day.weekStart == (try thisWeek) {
-        #expect(week.squad?.trained == 1)
-    }
-    #expect(try await backend.trainedDays() == 1)
 }
 
-@Test func aPastWeekHasNoSquadCountAndNoTitlesUntilTheAwards() async throws {
+@Test func aPastWeekHasNoTitlesUntilTheAwards() async throws {
     let stack = try LocalStack()
     let (member, backend) = try await scheduleMember(stack)
     _ = try await stack.squad(of: member)
 
     let week = try await backend.week(starting: try thisWeek.adding(days: -7))
 
-    #expect(week.squad == nil)
     #expect(week.titles.isEmpty)
     #expect(week.marks == Array(repeating: .none, count: 7))
 }
@@ -80,7 +75,6 @@ private var thisWeek: LocalDay {
     let week = try await backend.week(starting: nextWeek)
     #expect(week.plan == plan)
     #expect(week.fuel == goals)
-    #expect(week.squad == nil)
 }
 
 @Test func thisWeeksFoodGoalsChangeAndLastWeeksDont() async throws {

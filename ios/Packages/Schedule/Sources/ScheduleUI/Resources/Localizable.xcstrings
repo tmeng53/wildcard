@@ -187,22 +187,6 @@
         }
       }
     },
-    "一共训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trained in all"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "總共訓練"
-          }
-        }
-      }
-    },
     "下周": {
       "localizations": {
         "en": {
@@ -823,22 +807,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "每週訓練"
-          }
-        }
-      }
-    },
-    "小队本周目标": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Squad goal"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小隊本週目標"
           }
         }
       }
