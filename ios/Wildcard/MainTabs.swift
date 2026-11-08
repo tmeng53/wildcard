@@ -234,6 +234,8 @@ struct MainTabs: View {
                 accessory: AnyView(NoticeBell(inbox: inbox) { showsNotices = true })
             ) { selection = .today }
             .navigationRoot()
+            // A tap on a teammate's @ tag in a comment pops up their card, as on the home.
+            .onAppear { feed.openTeammate = { (teammateOnHome, teammate) = (false, homeCard(of: $0)) } }
             .task { await recap.refresh() }
             // The bell's dot, read each time 动态 opens, and the member 通知 shows: their character
             // when it is empty and their unlocks for how a store opened.

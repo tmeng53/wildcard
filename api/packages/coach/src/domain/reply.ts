@@ -35,6 +35,8 @@ export interface CoachReply {
   readonly text: string | undefined;
   /** Its emoji, or `undefined` when it only spoke. */
   readonly emoji: string | undefined;
+  /** Whom its line @s, in the order written; empty when none. */
+  readonly mentions: readonly string[];
   readonly at: Date;
 }
 
@@ -45,5 +47,7 @@ export interface CoachAnswer {
   readonly comment: string;
   readonly coach: CoachReply['coach'];
   readonly text: string;
+  /** Whom it @s, in the order written; empty when none. */
+  readonly mentions: readonly string[];
   readonly at: Date;
 }

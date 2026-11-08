@@ -4,7 +4,7 @@ import DesignSystemUI
 import FeedDomain
 import Foundation
 
-// @ in comments: whom the box offers, and the 「@名字」 a comment shows in bold.
+// @ in comments: whom the box offers, and the 「@名字」 tags a comment or the coach's line shows.
 extension FeedModel {
     /// The squad's coach now, which the box's 「@毛头」 and the @ list's first row @.
     var mentionableCoach: CoachSpeaker? { coach?.hired }
@@ -26,15 +26,25 @@ extension FeedModel {
         return draft.canMentionMore ? all : all.filter(\.isCoach)
     }
 
-    /// A comment's words with the 「@名字」 of whom it @s in bold.
-    func words(of comment: Comment) -> AttributedString {
-        var names = comment.mentions.members.compactMap { name(of: $0) }
+    /// A comment's words, with the 「@名字」 of whom it @s as tags.
+    func words(of comment: Comment) -> MentionedWords {
+        var people = mentioned(comment.mentions.members)
         if let id = comment.mentions.coach,
             let speaker = mentionableCoach?.id == id ? mentionableCoach : coach?.speaker(id)
         {
-            names.append(speaker.name)
+            people.append((.coach(id), speaker.name))
         }
-        return MentionHighlight.attributed(comment.text.text, names: names)
+        return MentionedWords(comment.text.text, people: people)
+    }
+
+    /// The coach's line or answer, with the 「@名字」 of the teammates it @s as tags.
+    func words(of text: String, mentioning members: [MemberID]) -> MentionedWords {
+        MentionedWords(text, people: mentioned(members))
+    }
+
+    /// Teammates @'d, by the nickname their 「@」 carries; one without a name yet isn't a tag.
+    private func mentioned(_ members: [MemberID]) -> [(person: MentionedWords.Person, name: String)] {
+        members.compactMap { member in name(of: member).map { (.member(member), $0) } }
     }
 }
 #endif

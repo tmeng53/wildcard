@@ -229,6 +229,15 @@ const CoachReplyBody = z
           'Its reaction, shown first among the post’s reactions with the 教练 tag, or null when ' +
           'it only spoke. Not counted in the post’s reactions.',
       }),
+    mentions: z
+      .array(z.uuid())
+      .optional()
+      .meta({
+        description:
+          'Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, ' +
+          'which the app shows in bold and opens that member’s card from. One whose account is ' +
+          'deleted is gone.',
+      }),
     at: z.iso.datetime(),
   })
   .openapi('CoachReply');
@@ -249,6 +258,15 @@ const CoachAnswerBody = z
         description:
           'Its answer, shown among the post’s comments right after the reply it answers, as a ' +
           'reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag.',
+      }),
+    mentions: z
+      .array(z.uuid())
+      .optional()
+      .meta({
+        description:
+          'Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, ' +
+          'which the app shows in bold and opens that member’s card from. One whose account is ' +
+          'deleted is gone.',
       }),
     at: z.iso.datetime(),
   })
@@ -643,6 +661,7 @@ export function coachActivity(deps: {
             coach: speaker(reply.coach),
             text: reply.text ?? null,
             emoji: reply.emoji ?? null,
+            ...(reply.mentions.length === 0 ? {} : { mentions: [...reply.mentions] }),
             at: reply.at.toISOString(),
           })),
           answers: answers.map((answer) => ({
@@ -650,6 +669,7 @@ export function coachActivity(deps: {
             commentId: answer.comment,
             coach: speaker(answer.coach),
             text: answer.text,
+            ...(answer.mentions.length === 0 ? {} : { mentions: [...answer.mentions] }),
             at: answer.at.toISOString(),
           })),
           ...(memberNote === undefined

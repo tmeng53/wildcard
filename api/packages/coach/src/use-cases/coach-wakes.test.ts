@@ -1676,6 +1676,10 @@ describe('the coach', () => {
         '已回复。',
       ]);
       expect(told).toMatchObject([{ author: fixture.mia, text: '@小乐 一起跑', mentions: [leo] }]);
+      // Kept with the line, so the app can show the @ as a tag that opens 小乐's card.
+      const checkIn = told[0]?.checkIn ?? '';
+      const read = await createPostgresCoachActivity(fixture.trx).replies(fixture.squad, [checkIn]);
+      expect(read).toMatchObject([{ checkIn, text: '@小乐 一起跑', mentions: [leo] }]);
     });
   });
 
