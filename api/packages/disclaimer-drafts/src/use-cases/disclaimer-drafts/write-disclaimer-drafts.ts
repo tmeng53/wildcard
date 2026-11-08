@@ -1,4 +1,8 @@
-import { LanguageModelUnavailableError, type LanguageModel } from '@wildcard/language-model';
+import {
+  LanguageModelUnavailableError,
+  type LanguageModel,
+  type ReaderLanguage,
+} from '@wildcard/language-model';
 import type { DisclaimerStyle } from '@wildcard/disclaimer-styles';
 
 import type { DraftReason, MemberId, PromptMeme } from '../../domain/draft-request.js';
@@ -26,6 +30,8 @@ export interface WriteDisclaimerDraftsInput {
   readonly member: MemberId;
   readonly reason: DraftReason;
   readonly style: DisclaimerStyle;
+  /** The language the member's app speaks, which the drafts are written in. */
+  readonly language: ReaderLanguage;
 }
 
 /**
@@ -66,7 +72,12 @@ export async function writeDisclaimerDrafts(
       .answer({
         model: settings.model,
         instructions: settings.instructions,
-        prompt: promptFor({ reason: input.reason, style: input.style, meme }),
+        prompt: promptFor({
+          reason: input.reason,
+          style: input.style,
+          meme,
+          language: input.language,
+        }),
         reply: ModelReply,
       })
       .catch((error: unknown) => {

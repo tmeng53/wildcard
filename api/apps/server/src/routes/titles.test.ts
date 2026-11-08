@@ -493,6 +493,11 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       .parse(card.body).week;
     expect(firstWeek <= weekStart).toBe(true);
     expect(Date.parse(weekStart) - Date.parse(firstWeek)).toBeLessThanOrEqual(7 * 86_400_000);
+    // Their today, on their calendar, is the row their 出赛表 shades.
+    const { today: cardToday } = z
+      .object({ week: z.object({ today: z.iso.date() }) })
+      .parse(card.body).week;
+    expect(cardToday).toBe(today.toISOString().slice(0, 10));
     expect(week.days).toHaveLength(7);
     expect(week.marks).toHaveLength(7);
     // The run went only to the other squad, so this squad's card never says what it was.

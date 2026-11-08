@@ -1,4 +1,5 @@
 import { hasErrorCode } from '@wildcard/errors';
+import { ReaderLanguage } from '@wildcard/language-model';
 import { sql, type Kysely } from 'kysely';
 import { z } from 'zod';
 
@@ -44,6 +45,7 @@ const LOGGED = [
   'look',
   'jersey_number',
   'equipped_title',
+  'language',
 ] as const;
 
 /** The profile store on Postgres (`supabase/migrations`). */
@@ -116,6 +118,42 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
         .where('member_id', '=', member)
         .executeTakeFirst();
       return row !== undefined;
+    },
+
+    async saveLanguage(member, language) {
+      // One statement, like a save: the change and its log entry together, neither when it is
+      // the language saved already.
+      await db
+        .with('saved', (cte) =>
+          cte
+            .updateTable('profiles')
+            .set({ language })
+            .where('member_id', '=', member)
+            .where('language', '<>', language)
+            .returning(LOGGED),
+        )
+        .insertInto('profile_events')
+        .columns(LOGGED)
+        .expression((eb) => eb.selectFrom('saved').select(LOGGED))
+        .execute();
+      const row = await db
+        .selectFrom('profiles')
+        .select('member_id')
+        .where('member_id', '=', member)
+        .executeTakeFirst();
+      return row !== undefined;
+    },
+
+    async languages(members) {
+      if (members.length === 0) return new Map();
+      const rows = await db
+        .selectFrom('profiles')
+        .select(['member_id', 'language'])
+        .where('member_id', 'in', members)
+        .execute();
+      return new Map(
+        rows.map((row) => [MemberId.parse(row.member_id), ReaderLanguage.parse(row.language)]),
+      );
     },
 
     async joinedAt(member) {

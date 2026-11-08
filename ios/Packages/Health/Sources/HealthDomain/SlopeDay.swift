@@ -28,70 +28,92 @@ public struct SlopeDay: Hashable, Sendable {
         }
     }
 
-    /// The day from its readings, earliest first; nil without a single run. GPS height wobbles by
-    /// a few metres, so the turns are found on smoothed heights, a turn counts only past `turnMeters`, and a run
-    /// only from `runMeters` down; speeds are taken three readings at a time, so one bad fix can't
-    /// make the top speed, and none past `speedCeiling` counts.
+    /// The day from its readings, earliest first; nil without a single run. Heights from GPS
+    /// wobble, so the turns are found on smoothed heights and count only past `turnMeters`; a new
+    /// run starts only after a climb of `liftMeters` (a lift), so a traverse uphill or wobble
+    /// mid-run doesn't split it; a run is a run from `runMeters` down. Speeds are taken five
+    /// readings at a time, so up to two bad fixes in a row can't make the top speed, and none past
+    /// `speedCeiling` counts.
     public init?(_ samples: [Sample]) {
         let heights = Self.smoothed(samples.map(\.altitude))
-        var runs: [(top: Int, foot: Int)] = []
-        var top = 0
-        var low = 0
-        var high = 0
-        var goingDown = false
-        for index in heights.indices {
-            if goingDown {
-                if heights[index] < heights[low] { low = index }
-                if heights[index] - heights[low] >= Self.turnMeters {
-                    runs.append((top, low))
-                    goingDown = false
-                    high = index
-                }
+        var runs: [Run] = []
+        for leg in Self.descents(heights) {
+            if let last = runs.last, heights[leg.top] - heights[last.foot] < Self.liftMeters {
+                // No lift between them: the same run, from the higher top to the lower foot.
+                runs[runs.count - 1] = Run(
+                    top: heights[leg.top] > heights[last.top] ? leg.top : last.top,
+                    foot: heights[leg.foot] < heights[last.foot] ? leg.foot : last.foot)
             } else {
-                if heights[index] > heights[high] { high = index }
-                if heights[high] - heights[index] >= Self.turnMeters {
-                    top = high
-                    low = index
-                    goingDown = true
-                }
+                runs.append(leg)
             }
         }
-        if goingDown { runs.append((top, low)) }
-        // The turns are found on the smoothed heights, and each run measured on the readings
-        // there, which smoothing would cut short at a sharp top or foot.
-        let drop = { (run: (top: Int, foot: Int)) in samples[run.top].altitude - samples[run.foot].altitude }
+        let drop = { (run: Run) in heights[run.top] - heights[run.foot] }
         let counted = runs.filter { drop($0) >= Self.runMeters }
         guard !counted.isEmpty else { return nil }
         self.runs = counted.count
         descentM = counted.map(drop).reduce(0, +).rounded()
-        let fastest = counted.compactMap { run in Self.steadiest(samples[run.top...run.foot].map(\.speed)) }.max()
+        let fastest = counted.compactMap { run in
+            Self.steadiest(samples[min(run.top, run.foot)...max(run.top, run.foot)].map(\.speed))
+        }.max()
         topSpeedKmh = fastest.map { ($0 * 3.6 * 10).rounded() / 10 }
     }
 
     /// A rise or fall smaller than this is GPS wobble or a flat, not a turn.
     static let turnMeters = 20.0
+    /// The least climb between two runs: a lift, not a traverse.
+    static let liftMeters = 50.0
     /// The least drop that counts as a run.
     static let runMeters = 30.0
     /// About 160 km/h: anything faster is a bad fix.
     static let speedCeiling = 45.0
 
-    /// Each height the average of it and its two neighbours on each side.
+    private struct Run {
+        let top: Int
+        let foot: Int
+    }
+
+    /// Each stretch going down, from a top to the foot after it, found with `turnMeters` of
+    /// hysteresis.
+    private static func descents(_ heights: [Double]) -> [Run] {
+        var legs: [Run] = []
+        var (top, low, high) = (0, 0, 0)
+        var goingDown = false
+        for index in heights.indices {
+            if goingDown {
+                if heights[index] < heights[low] { low = index }
+                if heights[index] - heights[low] >= turnMeters {
+                    legs.append(Run(top: top, foot: low))
+                    goingDown = false
+                    high = index
+                }
+            } else {
+                if heights[index] > heights[high] { high = index }
+                if heights[high] - heights[index] >= turnMeters {
+                    (top, low) = (high, index)
+                    goingDown = true
+                }
+            }
+        }
+        if goingDown { legs.append(Run(top: top, foot: low)) }
+        return legs
+    }
+
+    /// Each height the average of it and its three neighbours on each side.
     private static func smoothed(_ heights: [Double]) -> [Double] {
         heights.indices.map { index in
-            let window = heights[max(0, index - 2)...min(heights.count - 1, index + 2)]
+            let window = heights[max(0, index - 3)...min(heights.count - 1, index + 3)]
             return window.reduce(0, +) / Double(window.count)
         }
     }
 
-    /// The highest speed held over three readings in a row (the middle of each three), leaving
-    /// out readings with none or past the ceiling.
+    /// The highest speed held over five readings in a row (the middle of each five once sorted),
+    /// leaving out readings with none or past the ceiling.
     private static func steadiest(_ speeds: [Double?]) -> Double? {
         let kept = speeds.compactMap { $0 }.filter { $0 >= 0 && $0 <= speedCeiling }
-        guard kept.count >= 3 else { return nil }
+        guard kept.count >= 5 else { return nil }
         var best = 0.0
-        for middle in 1..<(kept.count - 1) {
-            let three = [kept[middle - 1], kept[middle], kept[middle + 1]].sorted()
-            best = max(best, three[1])
+        for start in 0...(kept.count - 5) {
+            best = max(best, kept[start..<(start + 5)].sorted()[2])
         }
         return best
     }

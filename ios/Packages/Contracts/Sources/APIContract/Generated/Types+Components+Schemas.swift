@@ -8997,6 +8997,10 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/firstWeek`.
                 public var firstWeek: Swift.String?
+                /// Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/today`.
+                public var today: Swift.String?
                 /// Creates a new `WeekPayload`.
                 ///
                 /// - Parameters:
@@ -9007,6 +9011,7 @@ extension Components {
                 ///   - marks: How each day of this week went, Monday first: `trained` with the sport of the day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet, from only the check-ins shared to this squad. Left out by older servers.
                 ///   - fuelGoals:
                 ///   - firstWeek: The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.
+                ///   - today: Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.
                 public init(
                     trainedDays: Swift.Int,
                     plannedDays: Swift.Int,
@@ -9014,7 +9019,8 @@ extension Components {
                     days: Components.Schemas.PlanDays? = nil,
                     marks: [Components.Schemas.DayMark]? = nil,
                     fuelGoals: Components.Schemas.FuelGoals? = nil,
-                    firstWeek: Swift.String? = nil
+                    firstWeek: Swift.String? = nil,
+                    today: Swift.String? = nil
                 ) {
                     self.trainedDays = trainedDays
                     self.plannedDays = plannedDays
@@ -9023,6 +9029,7 @@ extension Components {
                     self.marks = marks
                     self.fuelGoals = fuelGoals
                     self.firstWeek = firstWeek
+                    self.today = today
                 }
                 public enum CodingKeys: String, CodingKey {
                     case trainedDays
@@ -9032,6 +9039,7 @@ extension Components {
                     case marks
                     case fuelGoals
                     case firstWeek
+                    case today
                 }
             }
             /// Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.

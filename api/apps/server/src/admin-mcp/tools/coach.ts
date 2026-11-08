@@ -1,11 +1,13 @@
 import {
   CoachEdit,
+  CoachFilePath,
   CoachSettingsChange,
   CoachId,
   MemberId,
   SquadId,
   type CoachCatalogAdmin,
   type CoachHiring,
+  type CoachMemoryAdmin,
   type CoachReportStore,
   type CoachSettingsAdmin,
 } from '@wildcard/coach';
@@ -22,6 +24,7 @@ interface CoachToolDependencies {
   readonly coaches: CoachCatalogAdmin;
   readonly hiring: CoachHiring;
   readonly report: CoachReportStore;
+  readonly memory: CoachMemoryAdmin;
   readonly clock: () => Date;
 }
 
@@ -64,7 +67,8 @@ export function listCoaches({ coaches }: CoachToolDependencies) {
     name: 'list_coaches',
     title: 'List the coaches',
     description:
-      'Lists every AI coach, retired ones (offered false) too: id, tier (entry 入门, advanced ' +
+      'Lists every AI coach, retired ones (offered false) too, in 教练招聘会’s order: id, ' +
+      'position (its place in 教练招聘会, from 1), tier (entry 入门, advanced ' +
       '进阶, pro 专业), name, title (头衔), catchphrase, the fictional 简历 the app shows ' +
       '(background 履历, yearsCoaching and experience for 执教, tags, pay 期望待遇), style, soul ' +
       '(the persona prompt only the model reads), look (the character’s art id) and offered.',
@@ -82,7 +86,8 @@ export function putCoach({ coaches }: CoachToolDependencies) {
     description:
       'Adds an AI coach, or replaces every field of one (read it with list_coaches first: a ' +
       'field left out is refused, not kept). Every squad gets the same coach: its identity and ' +
-      'soul never change per squad. To retire a coach set offered to false. Ids never change ' +
+      'soul never change per squad. position orders 教练招聘会 (from 1; coaches sharing one go by ' +
+      'id). To retire a coach set offered to false. Ids never change ' +
       'and coaches are never deleted. Applies to the next wake. Returns the coach now.',
     changes: true,
     input: CoachEdit,
@@ -147,6 +152,26 @@ export function getSquadCoaching({ report, clock }: CoachToolDependencies) {
   });
 }
 
+/** `edit_coach_files`: rewrites one of a squad's coach memory files. */
+export function editCoachFiles({ memory }: CoachToolDependencies) {
+  return adminTool({
+    name: 'edit_coach_files',
+    title: 'Rewrite a squad’s coach memory file',
+    description:
+      'Replaces one of a squad’s coach memory files with a new body, logged as yours; an empty ' +
+      'body clears it. Paths and bodies are as get_squad_coaching shows them: squad.md, ' +
+      'memory.md or people/<member id>.md, members named as {队员:<member id>}. Every version ' +
+      'is kept. The coach reads the new body on its next wake. Returns the squad’s files now.',
+    changes: true,
+    input: z.strictObject({
+      squad: SquadId.describe('The squad’s id.'),
+      path: CoachFilePath.describe('squad.md, memory.md or people/<member id>.md'),
+      body: z.string().max(20_000).describe('The file’s whole new text, Chinese.'),
+    }),
+    run: async (input) => memory.rewrite(input),
+  });
+}
+
 export const coachTools = (deps: CoachToolDependencies) => [
   getCoachSettings(deps),
   changeCoachSettings(deps),
@@ -155,4 +180,5 @@ export const coachTools = (deps: CoachToolDependencies) => [
   hireCoach(deps),
   fireCoach(deps),
   getSquadCoaching(deps),
+  editCoachFiles(deps),
 ];

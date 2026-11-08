@@ -751,9 +751,10 @@ if want weekly-awards; then
   expect 401 JOB_TOKEN_INVALID
   call POST /jobs/weekly-awards "$jobs_token"
   expect 200
-  [ "$(jq -c '[.version, (.weeks | length), ([.squads, .given, .failed, .told] | map(type == "number") | all)]' <<<"$body")" = '[1,2,true]' ] ||
-    fail "the run says which two weeks it gave and how many squads: $body"
-  echo "weekly-awards: a member's token refused (401); the scheduler's run answered for the last two awarded weeks"
+  # Two weeks, or three while Sunday 8pm has passed in the earliest zone but not the latest.
+  [ "$(jq -c '[.version, (.weeks | length | . == 2 or . == 3), ([.squads, .given, .failed, .told] | map(type == "number") | all)]' <<<"$body")" = '[1,true,true]' ] ||
+    fail "the run says which weeks it gave and how many squads: $body"
+  echo "weekly-awards: a member's token refused (401); the scheduler's run answered for the latest awarded weeks"
 fi
 
 if want coach; then
@@ -933,7 +934,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_scenes,put_scene,get_unlock_rules,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,send_test_push" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_scenes,put_scene,get_unlock_rules,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,edit_coach_files,send_test_push" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
