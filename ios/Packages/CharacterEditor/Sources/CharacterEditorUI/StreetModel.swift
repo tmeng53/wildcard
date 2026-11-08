@@ -8,28 +8,18 @@ import Observation
 
 /// 商店街, its own page from 我 (the approved wardrobe design, 2026-11-04): where the member gets
 /// clothes. Each store is a storefront along the street, then the open store's rack. A piece the
-/// member unlocked waits there with NEW until they claim it (领取) into their wardrobe; one this
-/// phone hasn't opened waits in its 「？」 box first. Nothing is bought: clothes come only by training.
+/// member unlocked waits there as itself with NEW until they claim it (领取) into their wardrobe,
+/// with no box to open first (Tracy, 2026-11-08). Nothing is bought: clothes come only by training.
 @MainActor @Observable
 public final class StreetModel {
     /// One piece on a rack, as the member finds it.
     enum Shelf: Equatable {
         /// Still locked: a 「？」 box and how many 练了 open it.
         case locked(toGo: Int)
-        /// Unlocked, its box not opened on this phone: in the pop-up's boxes; on its rack it shows
-        /// as itself with NEW, and a tap opens it and offers 领取.
-        case boxed
-        /// Unlocked and opened, not claimed: NEW, and a tap offers 领取.
+        /// Unlocked, not claimed: NEW, and a tap offers 领取.
         case new
         /// In the wardrobe (claimed, or it came with its store): 已拥有, and a tap tries it on.
         case owned
-    }
-
-    /// The boxes waiting, in the pop-up over the street.
-    struct Arrival: Hashable {
-        let pieces: [String]
-        /// The one store they all came to, or nil when they came to several.
-        let store: String?
     }
 
     /// The member's look, so each piece shows in the colors it would be worn in.
@@ -41,8 +31,6 @@ public final class StreetModel {
     var sheet: String?
     /// The store whose 「练这些运动解锁」 tip is up.
     var tip: String?
-    /// The boxes in the pop-up, until opened or left.
-    private(set) var arrival: Arrival?
     /// The piece just claimed, for the 「已放进衣橱」 notice.
     var claimedNotice: ClaimedPiece?
     /// How long the 「已放进衣橱」 notice stays up, in seconds; nil for the banner's own default.
@@ -63,7 +51,6 @@ public final class StreetModel {
     /// What counts towards each piece with a rule, locked or unlocked: its sports, empty for any.
     private let sportsOf: [String: [Sport]]
     private var claimed: Set<String>
-    private var opened: Set<String>
     /// The pieces waiting when the street last opened, so 我's dot clears at once.
     private var noticed: Set<String>
 
@@ -102,7 +89,6 @@ public final class StreetModel {
         // A piece the member already wears was found before boxes came in: it is theirs.
         let worn = Set(draft.picks.variants.values)
         self.claimed = claimed.union(worn)
-        opened = marks.opened.union(claimed).union(worn)
         noticed = marks.noticed
     }
 
@@ -111,18 +97,18 @@ public final class StreetModel {
     func shelf(_ piece: String) -> Shelf {
         if let toGo = catalog.locked.values.lazy.compactMap({ $0[piece] }).first { return .locked(toGo: toGo) }
         guard arrived.contains(piece), !claimed.contains(piece) else { return .owned }
-        return opened.contains(piece) ? .new : .boxed
+        return .new
     }
 
     /// The pieces that came in and wait unclaimed, in street order.
     var waiting: [String] {
         catalog.stores.filter(\.isOpen).flatMap { catalog.rack(of: $0.id).map(\.variant) }
-            .filter { [.new, .boxed].contains(shelf($0)) }
+            .filter { shelf($0) == .new }
     }
 
     /// Whether the store has a piece waiting for the member, for NEW by its name on the street.
     func hasNews(_ store: String) -> Bool {
-        catalog.rack(of: store).contains { [.new, .boxed].contains(shelf($0.variant)) }
+        catalog.rack(of: store).contains { shelf($0.variant) == .new }
     }
 
     /// The sports that open the store's pieces with a rule, the same list its 「练这些运动解锁」 tip
@@ -172,55 +158,23 @@ public final class StreetModel {
         (store, tip, sheet) = (nil, nil, nil)
     }
 
-    /// Opens on what training unlocked, from its notice: a store opens on its rack; new pieces open
-    /// their store with the pop-up of every box this phone hasn't opened over it.
+    /// Opens on what training unlocked, from its notice: a store, or the store new pieces came to,
+    /// on its rack, where they wear NEW.
     public func show(_ kind: Unlock.Kind, item: String) {
-        switch kind {
-        case .store:
-            if let store = catalog.stores.first(where: { $0.id == item && $0.isOpen }) { visit(store) }
-        case .piece:
-            if let id = catalog.storeOf[item], let store = catalog.stores.first(where: { $0.id == id && $0.isOpen }) {
-                visit(store)
+        let id: String? =
+            switch kind {
+            case .store: item
+            case .piece: catalog.storeOf[item]
+            case .prop: nil
             }
-            showArrivals()
-        case .prop:
-            break
-        }
+        if let id, let store = catalog.stores.first(where: { $0.id == id && $0.isOpen }) { visit(store) }
     }
 
-    /// Puts the pop-up up with every box this phone hasn't opened, if any.
-    func showArrivals() {
-        let pieces = waiting.filter { shelf($0) == .boxed }
-        guard !pieces.isEmpty else { return }
-        let stores = Set(pieces.compactMap { catalog.storeOf[$0] })
-        arrival = Arrival(pieces: pieces, store: stores.count == 1 ? stores.first : nil)
-    }
-
-    /// 一键全开, once the boxes' opening has played: every box opens and each piece wears NEW on its
-    /// rack, the store they came to open (the street, when they came to several).
-    func openArrival() {
-        guard let arrival else { return }
-        self.arrival = nil
-        marks.open(Set(arrival.pieces))
-        opened.formUnion(arrival.pieces)
-        if arrival.store == nil { store = nil }
-    }
-
-    /// 先不了: the pieces wait on their racks with NEW, each offering 领取 when tapped.
-    func leaveArrival() {
-        arrival = nil
-    }
-
-    /// A tap on a piece: one that came in offers 领取 (its box, if this phone hadn't opened it,
-    /// opens on the way), one in the wardrobe is tried on in the editor.
+    /// A tap on a piece: one that came in offers 领取, one in the wardrobe is tried on in the editor.
     func tap(_ piece: String) {
         switch shelf(piece) {
         case .new: sheet = piece
         case .owned: tryOnPiece(piece)
-        case .boxed:
-            marks.open([piece])
-            opened.insert(piece)
-            sheet = piece
         case .locked: tip = catalog.storeOf[piece]
         }
     }

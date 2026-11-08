@@ -12,8 +12,7 @@ import SwiftUI
 /// 商店街, its own page from 我: the stores side by side along a street (`StoreStreet`, approved
 /// 2026-11-06); a store's rack is pushed over it, and the system's back button and swipe go back,
 /// from a store to the street and from the street to 我. A piece that came in wears NEW until the
-/// member claims it (领取) from a sheet; the 「已放进衣橱」 notice then offers to try it on. Boxes
-/// that came in open from a pop-up over the page.
+/// member claims it (领取) from a sheet; the 「已放进衣橱」 notice then offers to try it on.
 public struct ShoppingStreetPage: View {
     let model: StreetModel
     /// The store in the middle of the street, whose 进店 is pinned at the bottom.
@@ -42,7 +41,7 @@ public struct ShoppingStreetPage: View {
         Binding(get: { model.store }, set: { if $0 == nil { model.leaveStore() } })
     }
 
-    /// The street (`store` nil) or a store's rack. The pop-up, the 领取 sheet and the notice
+    /// The street (`store` nil) or a store's rack. The 领取 sheet and the notice
     /// belong to the page on top, which the model says (a store open is its rack), so exactly one
     /// page shows them. Telling it from the pages' appearing let both show them at once, as when
     /// 商店街 and a rack are pushed together from a notice or the editor covers the rack, and a
@@ -55,16 +54,6 @@ public struct ShoppingStreetPage: View {
             .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text("商店街", bundle: .module))
             // The street stands under a pale sky; a store's rack is a white page.
             .background(store == nil ? ShopPavement.sky : Color(role: .bgCanvas, in: theme))
-            // The pop-up is modal: VoiceOver (and a UI test) reaches only it, not the rack under it.
-            .accessibilityHidden(model.arrival != nil)
-            .overlay {
-                if isOnTop, let arrival = model.arrival {
-                    ArrivalPopup(model: model, arrival: arrival)
-                        .id(ArrivalPopup.Key(model: ObjectIdentifier(model), arrival: arrival))
-                        .transition(.opacity)
-                }
-            }
-            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.arrival)
             .sheet(
                 item: Binding(
                     get: { isOnTop ? model.sheet.map(ClaimSheet.Piece.init) : nil }, set: { model.sheet = $0?.id })
@@ -79,7 +68,7 @@ public struct ShoppingStreetPage: View {
                 onTap: { model.tryOn($0.id) },
                 content: { claimed in ClaimedBanner(model: model, piece: claimed.id) }
             )
-            // A container, so its identifier doesn't replace the pop-up's (editor.arrival) and the rest.
+            // A container, so its identifier doesn't replace its pieces' own.
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("street.page")
     }
