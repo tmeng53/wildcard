@@ -133,6 +133,7 @@ import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
+import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
@@ -864,6 +865,10 @@ const app = createApp({
         clock: () => new Date(),
       }),
       ...testPushTools({ push, squads, checkIns, members, clock: () => new Date() }),
+      // Only with OpenAI's key, as the coach itself.
+      ...(coachWakes === undefined
+        ? []
+        : [previewCoachDaily({ preview: (input) => coachWakes.preview(input), squads })]),
     ],
     publicUrl: config.publicUrl,
     authorizationServer: supabaseAuthIssuer(config.supabaseUrl),
