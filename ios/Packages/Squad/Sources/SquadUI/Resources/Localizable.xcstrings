@@ -1215,28 +1215,6 @@
         }
       }
     },
-    "队长交给最早入队的人": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The earliest member becomes captain."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "队长交给最早入队的人"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隊長交給最早入隊的人"
-          }
-        }
-      }
-    },
     "下周起：%@": {
       "localizations": {
         "en": {
@@ -1255,6 +1233,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "下週起：%@"
+          }
+        }
+      }
+    },
+    "队长会交给最早加入的队友": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captain passes to whoever joined first."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "队长会交给最早加入的队友"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隊長會交給最早加入的隊友"
           }
         }
       }

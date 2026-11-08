@@ -495,15 +495,22 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           by: null,
           at: new Date(0),
         }));
-        // A later week's setting would stand over this one, so only the latest week may change.
+        // A later week's setting (one made when a change waited for next week) would stand over
+        // this one, so it is set again there too.
         const latest = settings.at(-1)?.week;
-        if (zoneFor(settings, week) === timeZone && (latest === undefined || latest <= week)) {
-          return 'unchanged';
-        }
+        const weeks = latest !== undefined && latest > week ? [week, latest] : [week];
+        if (weeks.every((each) => zoneFor(settings, each) === timeZone)) return 'unchanged';
         try {
           await trx
             .insertInto('squad_time_zones')
-            .values({ squad_id: squad, time_zone: timeZone, week_start: week, set_by: actor })
+            .values(
+              weeks.map((each) => ({
+                squad_id: squad,
+                time_zone: timeZone,
+                week_start: each,
+                set_by: actor,
+              })),
+            )
             .execute();
         } catch (error) {
           // invalid_parameter_value from the trigger that checks Postgres knows the zone.

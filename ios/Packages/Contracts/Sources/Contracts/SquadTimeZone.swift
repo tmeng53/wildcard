@@ -8,7 +8,8 @@ public struct SquadTimeZone: Hashable, Sendable {
 
     /// This week's zone (an IANA name such as `Asia/Taipei`).
     public var timeZone: String
-    /// Next week's: a captain's change counts from the next week.
+    /// Next week's: the same as `timeZone` since a captain's change counts at once; it differs only
+    /// in the hours a change made on the squad's Monday waits for Monday on the new clock.
     public var nextTimeZone: String
     /// The viewer is the captain, the only one who sets it.
     public let canChange: Bool

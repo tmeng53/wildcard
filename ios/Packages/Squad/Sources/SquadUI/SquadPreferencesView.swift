@@ -7,8 +7,9 @@ import SwiftUI
 
 /// 小队设置 (Tracy, 2026-11-08: what is a setting rather than the squad's play leaves 小队), pushed
 /// from the gear on 小队's header: 比赛时区 as a plain row, then 退出小队. The captain's row opens
-/// the system's zone list, the one sign-up's 建小队 shows, and a change counts from next week, which
-/// one short line under the row says; everyone else only reads it. No help text (Tracy, 2026-11-08).
+/// the system's zone list, the one sign-up's 建小队 shows, and a change counts at once (Tracy,
+/// 2026-11-08); in the hours it waits for Monday on the new clock, one short line under the row says
+/// so. Everyone else only reads it. No help text.
 struct SquadPreferencesView: View {
     @Bindable var model: SquadSettingsModel
     let settings: SquadSettings
@@ -117,7 +118,7 @@ struct SquadPreferencesView: View {
     /// What leaving does beyond the member's own seat, when it does more.
     private var leaveMessage: Text? {
         if settings.squad.members.count == 1 { return Text("小队会解散", bundle: .module) }
-        if model.isCaptain { return Text("队长交给最早入队的人", bundle: .module) }
+        if model.isCaptain { return Text("队长会交给最早加入的队友", bundle: .module) }
         return nil
     }
 }

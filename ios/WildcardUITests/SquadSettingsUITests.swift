@@ -100,7 +100,7 @@ final class SquadSettingsUITests: XCTestCase {
     }
 
     /// 比赛时区, on 小队设置 from the header's gear: the captain picks a zone from the system's
-    /// list, which counts from next week; a member reads the row and can't open it.
+    /// list, which counts at once; a member reads the row and can't open it.
     func testTheCaptainChangesTheMatchTimeZone() {
         let app = launch()
         XCTAssertFalse(app.descendants(matching: .any)["squad.timeZone"].exists, "比赛时区 is still on 小队")
@@ -110,7 +110,7 @@ final class SquadSettingsUITests: XCTestCase {
         let row = app.buttons["squad.timeZone"]
         XCTAssertTrue(row.waitForExistence(timeout: 30), "no 比赛时区 on the captain's 小队设置")
         XCTAssertTrue(app.buttons["squad.leave"].exists, "no 退出小队 on 小队设置")
-        XCTAssertTrue(row.label.contains("台北"), "the row doesn't show the squad's zone: \(row.label)")
+        XCTAssertTrue(row.label.contains(region("Asia/Taipei")), "the row doesn't show the squad's zone: \(row.label)")
         XCTAssertLessThanOrEqual(row.frame.maxX, app.frame.maxX, "the 比赛时区 row runs off the screen")
         settle()
         keepScreenshot(named: "67-squad-time-zone")
@@ -122,12 +122,10 @@ final class SquadSettingsUITests: XCTestCase {
         let newYork = app.buttons["squad.timeZone.America/New_York"]
         XCTAssertTrue(newYork.waitForExistence(timeout: 30), "searching New York finds no zone")
         newYork.tap()
-        let next = app.staticTexts["squad.timeZone.next"]
-        XCTAssertTrue(next.waitForExistence(timeout: 30), "the change didn't wait for next week")
-        XCTAssertTrue(next.label.contains("北美东部"), "the next week's zone isn't New York's: \(next.label)")
-        XCTAssertTrue(row.label.contains("台北"), "this week's zone changed at once")
+        waitFor(row, "label CONTAINS '\(region("America/New_York"))'", "the change didn't count at once", timeout: 30)
+        XCTAssertFalse(app.staticTexts["squad.timeZone.next"].exists, "the change waits for next week")
         settle()
-        keepScreenshot(named: "68-squad-time-zone-next-week")
+        keepScreenshot(named: "68-squad-time-zone-changed")
 
         app.terminate()
         let member = launch(extra: ["-squad-seat", "member"])
@@ -139,6 +137,12 @@ final class SquadSettingsUITests: XCTestCase {
         XCTAssertFalse(member.buttons["squad.timeZone"].exists, "a member can open the zone list")
         settle()
         keepScreenshot(named: "69-squad-time-zone-member")
+    }
+
+    /// A zone's name as 小队设置 shows it in Simplified Chinese (北美东部时间).
+    private func region(_ identifier: String) -> String {
+        TimeZone(identifier: identifier)?.localizedName(for: .generic, locale: Locale(identifier: "zh-Hans"))
+            ?? identifier
     }
 
     /// The longest names the rules allow stay inside the screen on the smallest phone.
