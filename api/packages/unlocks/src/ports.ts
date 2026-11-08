@@ -67,10 +67,16 @@ export interface GiftStore {
   putPiece(edit: GiftPieceEdit): Promise<void>;
   /** What `member` was given, the earliest first, each with when they opened it. */
   giftsOf(member: MemberId): Promise<CoachGift[]>;
-  /** Keeps `gift` for `member`; `undefined` when they already have that piece. */
+  /**
+   * Keeps `gift` for `member`, counting for the week that began at `weekStart`; `undefined`
+   * when they already have that piece or a gift for that week.
+   */
   give(
     member: MemberId,
-    gift: Omit<CoachGift, 'givenAt' | 'opened'> & { readonly admin?: MemberId },
+    gift: Omit<CoachGift, 'givenAt' | 'opened'> & {
+      readonly admin?: MemberId;
+      readonly weekStart: Date;
+    },
   ): Promise<CoachGift | undefined>;
   /**
    * Keeps that `member` opened their gift of `piece` and whether they put it on; false when they

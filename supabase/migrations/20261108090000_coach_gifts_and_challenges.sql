@@ -2,7 +2,7 @@
 --
 -- Gifts: a coach (on its daily wake) or an admin, in the coach's name, gives a member a piece
 -- from the pool with a line of its own. At most one gift a member a week, checked in code where
--- it is given. A gift is a first-class record: its line, who gave it (the coach, or an admin as
+-- it is given and held by a unique index. A gift is a first-class record: its line, who gave it (the coach, or an admin as
 -- the coach) and when the member opened it (拆开), kept apart because a gift row is never changed.
 --
 -- Challenges: the morning note (便条) may carry one small challenge for the day: a title, and an
@@ -13,10 +13,15 @@ alter table public.gift_pieces
   add column description text check (char_length(description) between 1 and 200);
 
 -- Older gifts (none were given before this) have no line and were given by the coach.
+-- `week_from` is the start of the week it counts for (the squad's Monday at midnight, on its
+-- clock): one gift a member a week holds here too, so two givers at once can't both give.
 alter table public.coach_gifts
   add column line text check (char_length(line) between 1 and 60),
   add column given_by text not null default 'coach' check (given_by in ('coach', 'admin')),
-  add column admin_id uuid references auth.users (id) on delete set null;
+  add column admin_id uuid references auth.users (id) on delete set null,
+  add column week_from timestamptz;
+
+create unique index coach_gifts_one_a_week on public.coach_gifts (member_id, week_from);
 
 -- When the member opened each gift (拆开), and whether they put it on then (立刻穿上) or kept it
 -- for later (一会儿再说). Once a gift; it goes only with its gift.

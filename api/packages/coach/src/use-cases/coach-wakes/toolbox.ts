@@ -343,7 +343,12 @@ export function toolbox({
       }),
     );
   }
-  if (kind === 'daily' && gifting !== undefined && gifting.open.size > 0) {
+  if (
+    kind === 'daily' &&
+    gifting !== undefined &&
+    gifting.open.size > 0 &&
+    gifting.pool.length > 0
+  ) {
     tools.push(giveGift(draft, { roster, gifting }));
   }
   if (kind === 'dream') {

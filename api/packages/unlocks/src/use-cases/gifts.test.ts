@@ -129,6 +129,29 @@ describe('coach gifts', () => {
     expect(next).toMatchObject({ piece: second, givenBy: 'admin' });
   });
 
+  it('gives only one of two gifts made at once in the same week', async () => {
+    const gifts = giftsWith();
+    const [member, coach, first, second] = [
+      await newMember(),
+      await aCoach(),
+      newPiece(),
+      newPiece(),
+    ];
+    await gifts.putPiece({ id: first, offered: true });
+    await gifts.putPiece({ id: second, offered: true });
+    const request = { member, coach, squad: randomUUID(), line: '给你', givenBy: 'coach' as const };
+    const both = await Promise.allSettled([
+      gifts.give({ ...request, piece: first, weekStart }),
+      gifts.give({ ...request, piece: second, weekStart }),
+    ]);
+    expect(both.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
+    const refused = both.find((each) => each.status === 'rejected');
+    expect(refused?.status === 'rejected' ? String(refused.reason) : '').toContain(
+      'GiftWeeklyLimitError: The member was given a gift this week already',
+    );
+    expect(await gifts.of(member)).toHaveLength(1);
+  });
+
   it('keeps when a gift was opened and whether it was put on, once', async () => {
     const gifts = giftsWith();
     const [member, coach, piece] = [await newMember(), await aCoach(), newPiece()];

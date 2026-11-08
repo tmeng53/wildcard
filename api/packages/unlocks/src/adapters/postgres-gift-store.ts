@@ -76,7 +76,7 @@ export function createPostgresGiftStore(db: Kysely<DB>): GiftStore {
       return rows.map(shown);
     },
 
-    async give(member, { piece, coach, squad, line, givenBy, admin }) {
+    async give(member, { piece, coach, squad, line, givenBy, admin, weekStart }) {
       const inserted = await db
         .insertInto('coach_gifts')
         .values({
@@ -87,8 +87,10 @@ export function createPostgresGiftStore(db: Kysely<DB>): GiftStore {
           line: line ?? null,
           given_by: givenBy,
           admin_id: admin ?? null,
+          week_from: weekStart.toISOString(),
         })
-        .onConflict((conflict) => conflict.columns(['member_id', 'piece_id']).doNothing())
+        // Either the piece or the week: the caller reads which.
+        .onConflict((conflict) => conflict.doNothing())
         .returningAll()
         .executeTakeFirst();
       return inserted === undefined ? undefined : shown(inserted);

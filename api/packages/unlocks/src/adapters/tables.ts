@@ -27,6 +27,7 @@ export interface CoachGifts {
   member_id: string;
   piece_id: string;
   squad_id: string;
+  week_from: Timestamp | null;
 }
 
 export interface GiftPieces {

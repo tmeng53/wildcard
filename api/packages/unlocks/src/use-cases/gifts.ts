@@ -64,9 +64,14 @@ export function createCoachGifts(deps: {
         line,
         givenBy,
         ...(admin === undefined ? {} : { admin }),
+        weekStart,
       });
-      // Given meanwhile by another call.
-      if (gift === undefined) throw new GiftAlreadyOwnedError(piece);
+      if (gift === undefined) {
+        // Given meanwhile by another call: that piece, or another this week.
+        const now = await deps.store.giftsOf(member);
+        if (now.some((each) => each.piece === piece)) throw new GiftAlreadyOwnedError(piece);
+        throw new GiftWeeklyLimitError(now.at(-1)?.givenAt ?? weekStart);
+      }
       await deps.gifted?.(member, gift);
       return gift;
     },
