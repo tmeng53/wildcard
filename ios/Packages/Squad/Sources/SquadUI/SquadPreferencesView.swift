@@ -116,7 +116,8 @@ struct SquadPreferencesView: View {
     // MARK: 小队语言
 
     private var language: some View {
-        VStack(alignment: .leading, spacing: Space.xs) {
+        // The note sits right under its row: the row's own padding is gap enough.
+        VStack(alignment: .leading, spacing: 0) {
             Group {
                 if model.canChangeLanguage {
                     ListRow(Text("小队语言", bundle: .module), value: languageValue, showsDivider: false) {
