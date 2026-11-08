@@ -59,10 +59,8 @@ struct PostPhotos: View {
                 // a page's corners to its container's shape otherwise, and the card shows through.
                 .containerShape(Rectangle())
             }
-            .clipShape(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: Radius.card, topTrailingRadius: Radius.card, style: .continuous)
-            )
+            // The ticket rounds and notches it.
+            .clipped()
             .onTapGesture(count: 2, coordinateSpace: .named(FeedView.space)) { location in
                 guard post.canRespond(model.viewer) else { return }
                 model.react(.doubleTap, on: post, from: location)

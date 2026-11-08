@@ -132,8 +132,8 @@ private struct CodeBox: View {
     }
 }
 
-/// The squad a whole code finds, on graphite like 小队's invite card: its name, its members' heads
-/// and how many are in it, or why there's none.
+/// The squad a whole code finds, on a white card with a hairline like the rows around it (Tracy,
+/// 2026-11-08): its name, its members' heads and how many are in it, or why there's none.
 private struct SquadFound: View {
     let lookup: SignUpModel.Lookup
     let heads: [CastMember]
@@ -147,22 +147,22 @@ private struct SquadFound: View {
             HStack(spacing: Space.xs) {
                 // The card says what is happening, so its dots show at once.
                 LoadingDots(delay: 0)
-                    .foregroundStyle(Color(role: .fgOnBrand, in: theme))
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Text("正在找这个小队", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .inkCard()
+            .card()
         case .found(let squad):
             VStack(alignment: .leading, spacing: Space.xs) {
                 Text(verbatim: squad.name)
                     .typeStyle(TypeRamp.headline)
-                    .foregroundStyle(Color(role: .fgOnBrand, in: theme))
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .lineLimit(1)
                 HStack(spacing: Space.xs) {
                     if !heads.isEmpty {
-                        HeadStack(heads.map(\.player), size: Sizing.characterHead, on: .bgBrand)
+                        HeadStack(heads.map(\.player), size: Sizing.characterHead, on: .bgCanvas)
                     }
                     Group {
                         if squad.isFull {
@@ -172,11 +172,11 @@ private struct SquadFound: View {
                         }
                     }
                     .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .inkCard()
+            .card()
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("squad.found")
         case .failed(_, let failure):
