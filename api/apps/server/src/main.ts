@@ -127,6 +127,7 @@ import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { coachNamesIn } from './flows/coach-names.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
+import { coachGifting, giveGiftAsAdmin, squadWeekStart } from './flows/coach-gifts.js';
 import { coachLineAlert, pushCoachLine } from './flows/comment-push.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { suggestGoalIn } from './flows/squad-goal-suggestion.js';
@@ -289,6 +290,13 @@ const squads = createSquads({
   inviteCodes: randomInviteCodes,
   aiConsent: hasAiConsent,
 });
+// A coach's gift week runs on its squad's clock, as the coach's day does.
+const giftWeekStart = squadWeekStart((ids, moment) =>
+  squads.timeZonesAt(
+    ids.map((squad) => SquadsSquad.parse(squad)),
+    moment,
+  ),
+);
 // Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
 const switches = switchesOn(db);
@@ -512,6 +520,15 @@ const coachWakes =
             ),
           );
           return members.filter((_, index) => on[index] === true);
+        },
+        // At most one gift a member a week, from the pool admins keep (Tracy, 2026-11-08).
+        gifting: coachGifting({
+          gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
+          weekStart: giftWeekStart,
+          clock: () => new Date(),
+        }),
+        warn: (message, details) => {
+          log.warn(message, details);
         },
         // The coach may draw humour from the same meme library as the 请假条 drafts and awards.
         memes: async () =>
@@ -744,6 +761,7 @@ const app = createApp({
       ...unlockTools({
         unlocks: unlocksOn(scope),
         gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
+        giveGift: giveGiftAsAdmin(scope, giftWeekStart),
       }),
       ...broadcastTools({
         broadcasts: noticesOn(scope),

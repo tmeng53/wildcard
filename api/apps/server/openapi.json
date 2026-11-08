@@ -4019,6 +4019,59 @@
         ],
         "additionalProperties": false
       },
+      "CoachChallengeAnswered": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "noteId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "answer": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "declined"
+            ],
+            "description": "`accepted` for 接受挑战, `declined` for 算了."
+          }
+        },
+        "required": [
+          "version",
+          "noteId",
+          "answer"
+        ],
+        "additionalProperties": false
+      },
+      "CoachChallengeAnswer": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "answer": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "declined"
+            ],
+            "description": "`accepted` for 接受挑战, `declined` for 算了."
+          }
+        },
+        "required": [
+          "version",
+          "answer"
+        ],
+        "additionalProperties": false
+      },
       "CoachNotePutAway": {
         "type": "object",
         "properties": {
@@ -4233,6 +4286,9 @@
             "description": "The note’s words.",
             "example": "昨天那组深蹲我看见了"
           },
+          "challenge": {
+            "$ref": "#/components/schemas/CoachChallenge"
+          },
           "coach": {
             "$ref": "#/components/schemas/CoachSpeaker"
           },
@@ -4251,6 +4307,43 @@
         ],
         "additionalProperties": false,
         "description": "The caller’s own newest morning note (便条) from the squad’s coach, for 今天 to show when the caller opens it; only the caller sees it. Left out when there is none from the last day and a half, or while the caller’s `coach` push switch is off."
+      },
+      "CoachChallenge": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 8,
+            "description": "What to do, in a few words.",
+            "example": "喝水"
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999,
+            "description": "How much, when it has a number; always with `unit`.",
+            "example": 8
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 4,
+            "description": "The amount’s unit, the coach’s own word.",
+            "example": "杯"
+          },
+          "answer": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "declined"
+            ],
+            "description": "What the member said to it; left out until they answer. The first stands."
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false,
+        "description": "The day’s challenge (今日挑战) the note sets, if any; only the member sees it."
       },
       "SquadNudges": {
         "type": "object",
@@ -5966,6 +6059,91 @@
         ],
         "additionalProperties": false
       },
+      "OpenedGift": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "gift": {
+            "$ref": "#/components/schemas/GiftedPiece"
+          }
+        },
+        "required": [
+          "version",
+          "gift"
+        ],
+        "additionalProperties": false
+      },
+      "GiftedPiece": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "gift-scarf"
+          },
+          "coach": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$",
+            "description": "The coach who gave it.",
+            "example": "xiaohun"
+          },
+          "givenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the coach gave it.",
+            "example": "2026-11-04T18:30:00.000Z"
+          },
+          "line": {
+            "type": "string",
+            "description": "What the coach said with it, shown only to the member; older gifts have none.",
+            "example": "天冷了，围上再出门。"
+          },
+          "openedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the member opened it (拆开); left out while it waits unopened.",
+            "example": "2026-11-05T08:01:00.000Z"
+          },
+          "worn": {
+            "type": "boolean",
+            "description": "Whether the member put it on when they opened it (立刻穿上); only once opened.",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "coach",
+          "givenAt"
+        ],
+        "additionalProperties": false
+      },
+      "GiftOpening": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "worn": {
+            "type": "boolean",
+            "description": "Whether they put it on now."
+          }
+        },
+        "required": [
+          "version",
+          "worn"
+        ],
+        "additionalProperties": false
+      },
       "ClaimedPiece": {
         "type": "object",
         "properties": {
@@ -6193,36 +6371,6 @@
           "id",
           "sports",
           "checkInsToGo"
-        ],
-        "additionalProperties": false
-      },
-      "GiftedPiece": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "maxLength": 48,
-            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
-            "description": "The piece’s id in the app’s art.",
-            "example": "gift-scarf"
-          },
-          "coach": {
-            "type": "string",
-            "pattern": "^[a-z][a-z0-9-]{1,39}$",
-            "description": "The coach who gave it.",
-            "example": "xiaohun"
-          },
-          "givenAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When the coach gave it.",
-            "example": "2026-11-04T18:30:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "coach",
-          "givenAt"
         ],
         "additionalProperties": false
       },
@@ -10032,6 +10180,119 @@
         }
       }
     },
+    "/squads/{squadId}/coach/notes/{noteId}/challenge": {
+      "put": {
+        "operationId": "answerCoachChallenge",
+        "summary": "Accept or decline the challenge on the caller’s morning note",
+        "description": "接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "required": true,
+            "name": "noteId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoachChallengeAnswer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The answer that stands",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachChallengeAnswered"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad or note id, not an answer, or a note with no challenge (`COACH_NOTE_NO_CHALLENGE`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not one of the caller’s notes in this squad (`COACH_NOTE_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/squads/{squadId}/coach/notes/{noteId}/put-away": {
       "put": {
         "operationId": "putAwayCoachMemberNote",
@@ -11571,6 +11832,102 @@
           },
           "404": {
             "description": "That member isn’t in this squad (`SQUAD_MEMBER_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/gifts/{pieceId}/open": {
+      "put": {
+        "operationId": "openGift",
+        "summary": "Open a gift the signed-in member’s coach gave them",
+        "description": "拆开: keeps that the member opened a coach’s gift and whether they put it on then (立刻穿上) or left it in their wardrobe (一会儿再说). Opening it again keeps the first.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 48,
+              "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$"
+            },
+            "required": true,
+            "name": "pieceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GiftOpening"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The gift",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenedGift"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a piece id, or a body that isn’t a gift opening",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A piece the member wasn’t given (`GIFT_NOT_GIVEN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
