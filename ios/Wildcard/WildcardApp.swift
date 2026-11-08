@@ -131,10 +131,10 @@ struct WildcardApp: App {
         _myPosts = State(initialValue: feedSource)
     }
 
-    /// The sample member's 出赛表.
     /// Approximate location on the sample squad: not asked yet, allowed when asked, in New York.
     static let sampleLocation = LocationSharing.sample()
 
+    /// The sample member's 出赛表.
     /// Apple Health on the sample squad: the sample day once connected (`-health-sample`).
     private static func sampleHealth() -> HealthConnection {
         HealthConnection(

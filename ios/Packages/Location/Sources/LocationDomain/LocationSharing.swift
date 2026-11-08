@@ -81,6 +81,10 @@ public final class LocationSharing {
     @ObservationIgnored private let sent: any SentPlaceStore
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var registry: (any LocationRegistry)?
+    /// The server was told to forget the place since this member signed in on this launch. A
+    /// place this phone no longer remembers sending (signed out, reinstalled) may still be kept
+    /// there, so a member who doesn't allow location is forgotten once each launch.
+    @ObservationIgnored private var forgotten = false
 
     /// A place sent longer ago than this is sent again, in case the server lost it.
     static let resendAfter: TimeInterval = 24 * 60 * 60
@@ -94,12 +98,14 @@ public final class LocationSharing {
     /// Someone signed in: their place goes to their account from now on.
     public func signedIn(_ registry: any LocationRegistry) async {
         self.registry = registry
+        forgotten = false
         await refresh()
     }
 
     /// Signed out: the next member sends their own, so what this phone sent is forgotten here.
     public func signedOut() {
         registry = nil
+        forgotten = false
         sent.save(nil)
     }
 
@@ -130,11 +136,12 @@ public final class LocationSharing {
                 }
                 try await registry.save(cell)
                 sent.save(SentPlace(cell: cell, sentAt: time))
+                forgotten = false
             case .refused, .notAsked:
-                // Only a place this phone sent needs forgetting.
-                guard sent.load() != nil else { return }
+                guard sent.load() != nil || !forgotten else { return }
                 try await registry.forget()
                 sent.save(nil)
+                forgotten = true
             }
         } catch {
             // Tried again the next time the app comes to the front.

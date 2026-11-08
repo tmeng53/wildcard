@@ -67,14 +67,14 @@ struct LocationSharingTests {
         let registry = FakeRegistry()
         let model = sharing(reader)
         await model.signedIn(registry)
-        #expect(registry.calls.isEmpty)
+        #expect(registry.calls == [.forget])
         await model.ask()
         #expect(model.access == .allowed)
-        #expect(registry.calls == [.save(newYork)])
+        #expect(registry.calls == [.forget, .save(newYork)])
         // Back in the app, the same cell: nothing to send.
         reader.place = Coordinates(latitude: 40.68, longitude: -73.97)
         await model.refresh()
-        #expect(registry.calls == [.save(newYork)])
+        #expect(registry.calls == [.forget, .save(newYork)])
     }
 
     @Test func aMoveOrADaySendsAgain() async {
@@ -96,16 +96,43 @@ struct LocationSharingTests {
         let registry = FakeRegistry()
         let model = sharing(reader)
         await model.signedIn(registry)
+        // Not asked yet: whatever an earlier install sent is forgotten, once.
+        #expect(registry.calls == [.forget])
         await model.ask()
         #expect(model.access == .refused)
-        #expect(registry.calls.isEmpty)
+        #expect(registry.calls == [.forget])
         // Allowed in iOS Settings later, then turned off again.
         reader.access = .allowed
         await model.refresh()
         reader.access = .refused
         await model.refresh()
         await model.refresh()
+        #expect(registry.calls == [.forget, .save(newYork), .forget])
+    }
+
+    @Test func aPlaceSentBeforeSigningOutIsForgottenWhenLocationIsOffAtTheNextSignIn() async {
+        let reader = FakeReader(.allowed)
+        let registry = FakeRegistry()
+        let model = sharing(reader)
+        await model.signedIn(registry)
+        model.signedOut()
+        reader.access = .refused
+        await model.signedIn(registry)
+        await model.refresh()
         #expect(registry.calls == [.save(newYork), .forget])
+    }
+
+    @Test func aForgetThatFailsIsTriedOnTheNextOpen() async {
+        let reader = FakeReader(.refused)
+        let registry = FakeRegistry()
+        registry.fails = .unavailable
+        let model = sharing(reader)
+        await model.signedIn(registry)
+        registry.fails = nil
+        // The failed one isn't recorded; the next open's goes through, and once is enough.
+        await model.refresh()
+        await model.refresh()
+        #expect(registry.calls == [.forget])
     }
 
     @Test func aFailedSendIsTriedOnTheNextOpen() async {
