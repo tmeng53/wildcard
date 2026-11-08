@@ -1188,6 +1188,22 @@
         }
       }
     },
+    "公测期间提出反馈，领取神秘奖励" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send feedback during the beta and claim a mystery reward"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公測期間提出回饋，領取神祕獎勵"
+          }
+        }
+      }
+    },
     "意见反馈" : {
       "localizations" : {
         "en" : {
