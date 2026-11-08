@@ -65,6 +65,8 @@ public enum Refusal: Equatable, Sendable {
     case weekClosed
     /// A day of this week that has started keeps its plan.
     case planDayStarted
+    /// The member sent as much 意见反馈 as a day allows.
+    case feedbackLimit
     /// Any other refusal, with its `reason`: a request this build should never send.
     case invalid(reason: String)
 
@@ -98,5 +100,6 @@ public enum Refusal: Equatable, Sendable {
         "SCENE_WEEK_CLOSED": .sceneWeekClosed,
         "WEEK_OVER": .weekClosed,
         "PLAN_DAY_STARTED": .planDayStarted,
+        "FEEDBACK_LIMIT": .feedbackLimit,
     ]
 }

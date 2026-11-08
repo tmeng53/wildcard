@@ -130,6 +130,13 @@ export class MediaTypeUnsupportedError extends AppError {
   }
 }
 
+/** Thrown when the issue tracker feedback is filed in can't be reached, or refuses. */
+export class IssueTrackerUnavailableError extends AppError {
+  override readonly name = 'IssueTrackerUnavailableError';
+  readonly reason = 'ISSUE_TRACKER_UNAVAILABLE';
+  readonly status = 'UNAVAILABLE';
+}
+
 /** Thrown when photo storage doesn't answer. Retry later. */
 export class PhotoStorageUnavailableError extends AppError {
   override readonly name = 'PhotoStorageUnavailableError';

@@ -41,6 +41,7 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 // Reactions and push devices, through the routes the app calls, on local Supabase.
@@ -103,6 +104,7 @@ const app = createApp({
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
   ...ignoredNotices,
+  ...unusedFeedback,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),

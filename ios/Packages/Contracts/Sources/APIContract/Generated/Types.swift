@@ -334,6 +334,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
     func setSquadTimeZone(_ input: Operations.SetSquadTimeZone.Input) async throws -> Operations.SetSquadTimeZone.Output
+    /// The squad’s language
+    ///
+    /// For its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/get(getSquadLanguage)`.
+    func getSquadLanguage(_ input: Operations.GetSquadLanguage.Input) async throws -> Operations.GetSquadLanguage.Output
+    /// Set the squad’s language
+    ///
+    /// For the captain. It counts at once, for what the AI writes next. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/put(setSquadLanguage)`.
+    func setSquadLanguage(_ input: Operations.SetSquadLanguage.Input) async throws -> Operations.SetSquadLanguage.Output
     /// Accept or decline the challenge on the caller’s morning note
     ///
     /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
@@ -369,6 +383,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /squads/{squadId}/nudges`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/post(nudgeSquadmate)`.
     func nudgeSquadmate(_ input: Operations.NudgeSquadmate.Input) async throws -> Operations.NudgeSquadmate.Output
+    /// Send us feedback (意见反馈)
+    ///
+    /// Up to 10 a day; the same id again saves nothing new, so it is safe to repeat. Needs no squad.
+    ///
+    /// - Remark: HTTP `POST /feedback`.
+    /// - Remark: Generated from `#/paths//feedback/post(sendFeedback)`.
+    func sendFeedback(_ input: Operations.SendFeedback.Input) async throws -> Operations.SendFeedback.Output
     /// The caller’s notices (通知)
     ///
     /// Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.
@@ -1195,6 +1216,38 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// The squad’s language
+    ///
+    /// For its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/get(getSquadLanguage)`.
+    public func getSquadLanguage(
+        path: Operations.GetSquadLanguage.Input.Path,
+        headers: Operations.GetSquadLanguage.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadLanguage.Output {
+        try await getSquadLanguage(Operations.GetSquadLanguage.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Set the squad’s language
+    ///
+    /// For the captain. It counts at once, for what the AI writes next. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/put(setSquadLanguage)`.
+    public func setSquadLanguage(
+        path: Operations.SetSquadLanguage.Input.Path,
+        headers: Operations.SetSquadLanguage.Input.Headers = .init(),
+        body: Operations.SetSquadLanguage.Input.Body
+    ) async throws -> Operations.SetSquadLanguage.Output {
+        try await setSquadLanguage(Operations.SetSquadLanguage.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
     /// Accept or decline the challenge on the caller’s morning note
     ///
     /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
@@ -1274,6 +1327,21 @@ extension APIProtocol {
     ) async throws -> Operations.NudgeSquadmate.Output {
         try await nudgeSquadmate(Operations.NudgeSquadmate.Input(
             path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Send us feedback (意见反馈)
+    ///
+    /// Up to 10 a day; the same id again saves nothing new, so it is safe to repeat. Needs no squad.
+    ///
+    /// - Remark: HTTP `POST /feedback`.
+    /// - Remark: Generated from `#/paths//feedback/post(sendFeedback)`.
+    public func sendFeedback(
+        headers: Operations.SendFeedback.Input.Headers = .init(),
+        body: Operations.SendFeedback.Input.Body
+    ) async throws -> Operations.SendFeedback.Output {
+        try await sendFeedback(Operations.SendFeedback.Input(
             headers: headers,
             body: body
         ))

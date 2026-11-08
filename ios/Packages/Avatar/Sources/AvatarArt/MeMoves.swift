@@ -1,6 +1,9 @@
 import AvatarDomain
 
 extension PlaceholderCharacter {
+    /// The pencil 意见反馈's character writes with: held only at that desk, never an editor pick.
+    public static let writingPencil = "pencil"
+
     /// `look` at a small desk behind a laptop, as 我 shows it. The desk stands in front of the
     /// character, so its hand prop comes off: nothing is held while typing.
     public static func atDesk(_ look: Outfit) -> Outfit {
@@ -9,6 +12,22 @@ extension PlaceholderCharacter {
         seated.variants["prop"] = nil
         seated.colors["prop"] = nil
         return seated
+    }
+
+    /// `look` at the same desk writing in an open notebook, pencil in hand, as 意见反馈 shows it.
+    public static func atDeskWriting(_ look: Outfit) -> Outfit {
+        var seated = look
+        seated.variants["desk"] = "notebook"
+        seated.variants["prop"] = writingPencil
+        seated.colors["prop"] = nil
+        return seated
+    }
+
+    /// Writing in the notebook, looping (`moves/writing.json`): the pencil hand scribbles with the
+    /// head bowed over the page, then the pencil lifts and the eyes look up to think. Dress the
+    /// look `atDeskWriting` first. Played at `persona`'s tempo.
+    public static func writing(persona: Persona) throws(AvatarError) -> Clip {
+        try Clip.decode(file("moves/writing.json")).atTempo(persona.accentTempo)
     }
 
     /// Typing at the laptop, looping (`moves/typing.json`): a quick bob as the hands tap, and now

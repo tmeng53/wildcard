@@ -8,10 +8,11 @@ import SportsUI
 import SwiftUI
 import UIKit
 
-/// One post (Tracy, 2026-11-07, design E): its cover on top (its photos and a 训练's map or
-/// chart, swiped, the first being the cover), or without any the shared colour block with its
-/// words; a 训练's 成绩条 under it with no seam; then the author's whole character standing at the
-/// left, beside a column of their name, the time and what it was, the caption under a cover, and
+/// One post, a ticket like the one it was written on (Tracy, 2026-11-08): its cover on top (its
+/// photos and a 训练's map or chart, swiped, the first being the cover), or without any the shared
+/// colour block with its words; the tear under it; on the stub a 训练's 成绩条 first, across the
+/// card's width; then the author's whole character standing at the left, its head level with
+/// their name, beside a column of their name, the time and what it was, the caption under a cover, and
 /// at its foot who reacted with the comment and emoji buttons, so a reaction lands next to the
 /// character that answers it; then, under a hairline, the coach's line and the latest comments. A
 /// teammate reacts with the smiley button, by holding the card and sliding to an emoji, or with
@@ -28,6 +29,9 @@ struct PostCard: View {
     /// The rig's own margin left of the body, 30 of its 240 points, pulled into the card's
     /// padding so the body lines up with the cover's edge rather than the drawing's.
     static let characterInset: Double = characterColumn * 30 / 240
+    /// The character's head starts this far down its drawing (the rig's 50 of 240 points), less the
+    /// name's own room above its letters: lifted by it, the head is level with the name.
+    static let characterLift: Double = characterColumn * 50 / 240 - Space.xs
     /// How long a press on the card takes to open the emoji bar.
     static let holdToPick: Double = 0.45
     /// Moving this far first makes the press a scroll.
@@ -51,38 +55,44 @@ struct PostCard: View {
     /// Teammates' comments, or the coach's line.
     private var hasComments: Bool { !post.comments.isEmpty || model.coachReply(on: post.id)?.text != nil }
 
+    /// A 训练's 成绩条, when it has numbers to show.
+    private var strip: (cells: [ScoreCell], activity: Contracts.Activity)? {
+        guard case .trained(let training) = post.checkIn.entry else { return nil }
+        let cells = ScoreCell.cells(of: training)
+        return cells.isEmpty ? nil : (cells, training.activity)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        CoverTicket(tear: strip == nil ? .mist : .color) {
             if tiles.isEmpty {
                 block
             } else {
                 PostPhotos(model: model, post: post, tiles: tiles)
             }
-            if case .trained(let training) = post.checkIn.entry {
-                let cells = ScoreCell.cells(of: training)
-                if !cells.isEmpty { ScoreStrip(cells: cells, activity: training.activity) }
-            }
-            details
-            if hasComments && !showsAllComments {
-                Rectangle()
-                    .fill(Color(role: .borderDefault, in: theme))
-                    .frame(height: 1)
-                    .padding(.horizontal, Space.s)
-                CardComments(model: model, post: post)
-                    .padding(.horizontal, Space.s)
-                    .padding(.top, Space.xs)
-                    .padding(.bottom, Space.s)
+        } stub: {
+            VStack(alignment: .leading, spacing: 0) {
+                if let strip {
+                    ScoreStrip(cells: strip.cells, activity: strip.activity, bottom: .square)
+                }
+                details
+                if hasComments && !showsAllComments {
+                    Rectangle()
+                        .fill(Color(role: .borderDefault, in: theme))
+                        .frame(height: 1)
+                        .padding(.horizontal, Space.s)
+                    CardComments(model: model, post: post)
+                        .padding(.horizontal, Space.s)
+                        .padding(.top, Space.xs)
+                        .padding(.bottom, Space.s)
+                }
             }
         }
-        .background(
-            Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-        )
         .overlay(alignment: .topTrailing) {
             if model.canManage(post) {
                 manageMenu.padding(Space.s)
             }
         }
-        .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
         .gesture(HoldAndSlide(isEnabled: canRespond, held: hold(at:), letGo: letGo(at:)))
         .scaleEffect(isLifted && !reduceMotion ? Self.liftScale : 1)
         .blur(radius: model.lifted && !isLifted ? Scrim.blurRadius : 0)
@@ -153,10 +163,6 @@ struct PostCard: View {
     /// double tap reacts as on a photo.
     private var block: some View {
         PostBlock(checkIn: post.checkIn, layout: .strip)
-            .clipShape(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: Radius.card, topTrailingRadius: Radius.card, style: .continuous)
-            )
             .onTapGesture(count: 2, coordinateSpace: .named(FeedView.space)) { location in
                 guard canRespond else { return }
                 model.react(.doubleTap, on: post, from: location)
@@ -168,6 +174,7 @@ struct PostCard: View {
     private var details: some View {
         HStack(alignment: .top, spacing: Space.xs) {
             PostCharacter(model: model, post: post, width: Self.characterColumn)
+                .padding(.top, -Self.characterLift)
             VStack(alignment: .leading, spacing: Space.xxs) {
                 byline
                 if !tiles.isEmpty { words.padding(.top, Space.xxs) }

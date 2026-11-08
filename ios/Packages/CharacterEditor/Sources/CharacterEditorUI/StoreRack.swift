@@ -111,7 +111,7 @@ struct RackPiece: View {
 
     var body: some View {
         let shelf = model.shelf(variant)
-        let isNew = shelf == .new || shelf == .boxed
+        let isNew = shelf == .new
         Button {
             model.tap(variant)
         } label: {
