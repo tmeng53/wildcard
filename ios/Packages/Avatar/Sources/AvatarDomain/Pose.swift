@@ -80,13 +80,16 @@ public struct Pose: Hashable, Sendable {
 }
 
 /// Where a part is drawn: its art's transform from canvas to canvas, and its opacity
-/// including its parents'. A bent arm's art is bent first (`bend`), then transformed.
+/// including its parents'. A bent arm's art is bent first (`bend`), then transformed. A
+/// part drawn only in part shows only what lies inside `clip`, a polygon in its art's own
+/// coordinates (an arm in front of the head shows its forearm alone).
 public struct Placement: Hashable, Sendable {
     public var transform: Transform
     public var opacity: Double
     public var bend: Bend?
+    public var clip: [Point]?
 
-    public init(transform: Transform, opacity: Double, bend: Bend? = nil) {
-        (self.transform, self.opacity, self.bend) = (transform, opacity, bend)
+    public init(transform: Transform, opacity: Double, bend: Bend? = nil, clip: [Point]? = nil) {
+        (self.transform, self.opacity, self.bend, self.clip) = (transform, opacity, bend, clip)
     }
 }

@@ -11,11 +11,12 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     #expect(
         figure.parts.map(\.id.rawValue) == [
             "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "armLBack", "armRBack",
-            "torso", "medal", "acc", "earL", "earR", "head", "flapL", "flapR", "brows", "browsSad", "browsMad",
+            "torso", "medal", "acc", "armLFore", "armRFore", "earL", "earR", "head", "flapL", "flapR", "brows",
+            "browsSad", "browsMad",
             "crown", "award", "nose", "eyes", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp",
             "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR",
-            "sparkle", "tearL", "tearR", "food0", "food1", "food2", "chin", "armL", "jawL", "propL", "gripL", "armR",
-            "jawR", "chinFrontL", "chinFrontR", "propR", "gripR", "flexL", "muscleL", "flexR", "muscleR", "heart",
+            "sparkle", "tearL", "tearR", "food0", "food1", "food2", "chin", "armL", "propL", "gripL", "armR",
+            "propR", "gripR", "flexL", "muscleL", "flexR", "muscleR", "heart",
             "propFront", "propOver", "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
@@ -70,7 +71,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 68)
+    #expect(figure.parts.count == 66)
 }
 
 @Test(arguments: Persona.allCases)

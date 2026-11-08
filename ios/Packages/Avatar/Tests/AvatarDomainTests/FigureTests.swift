@@ -131,20 +131,38 @@ private let teeTones = ##"{ "version": 1, "base": "#2D5BA0", "shades": [] }"##
     }
 }
 
-/// An arm with a twin shows once: its twin, behind the body, while the arm's `front` is 0 (its
-/// rest), and itself, in front, while it is 1. A part without a twin ignores `front`.
-@Test func frontPicksWhichOfAnArmsTwoCopiesShows() throws {
-    var twinned = rig
-    twinned.parts.insert(Rig.Part(id: "armBack", parent: "body", pivot: Point(x: 60, y: 40), twin: "arm"), at: 1)
-    let figure = try Figure(rig: twinned, outfit: Outfit([:]), art: art)
-    let (body, arm) = (0, 2)  // armBack is 1
+/// A part that draws only some of an arm (`reach`) shows only while the arm's `front` is 1, not at
+/// 0 (its rest), whether it is the arm or its twin; the arm's whole twin and every other part
+/// ignore `front`.
+@Test func frontShowsOnlyThePartsThatReach() throws {
+    let elbow = Rig.Elbow(point: Point(x: 60, y: 60), hand: Point(x: 60, y: 80))
+    var reaching = rig
+    reaching.parts[1].elbow = elbow
+    reaching.parts[1].reach = .hand
+    reaching.parts.insert(
+        Rig.Part(id: "armBack", parent: "body", pivot: Point(x: 60, y: 40), elbow: elbow, twin: "arm"), at: 1)
+    reaching.parts.insert(
+        Rig.Part(id: "armFore", parent: "body", pivot: Point(x: 60, y: 40), elbow: elbow, twin: "arm", reach: .forearm),
+        at: 2)
+    let figure = try Figure(rig: reaching, outfit: Outfit([:]), art: art)
+    let (body, arm) = (0, 3)  // armBack is 1, armFore 2
     func shown(front: Double) -> [Double] {
         var pose = figure.restPose
         pose.parts[arm].front = front
         pose.parts[body].front = front
         return figure.layout(pose).map(\.opacity)
     }
-    #expect(shown(front: 0) == [1, 1, 0])
-    #expect(shown(front: 0.4) == [1, 1, 0])
-    #expect(shown(front: 1) == [1, 0, 1])
+    #expect(shown(front: 0) == [1, 1, 0, 0])
+    #expect(shown(front: 0.4) == [1, 1, 0, 0])
+    #expect(shown(front: 1) == [1, 1, 1, 1])
+    #expect(figure.layout(figure.restPose).map { $0.clip != nil } == [false, false, true, true])
+}
+
+/// Only an arm draws some of itself: a reach needs an elbow to measure it from.
+@Test func aReachNeedsAnElbow() throws {
+    var reaching = rig
+    reaching.parts[1].reach = .hand
+    #expect(throws: AvatarError.malformedJSON(".parts: arm has a reach but no elbow")) {
+        try Figure(rig: reaching, outfit: Outfit([:]), art: art)
+    }
 }
