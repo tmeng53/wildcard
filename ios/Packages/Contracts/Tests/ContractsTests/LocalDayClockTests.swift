@@ -4,20 +4,20 @@ import Testing
 
 // The same moments as the API's `localDayAt` tests, so the app picks the day the API checks.
 @Test(arguments: [
-    // 2026-10-19 08:00 UTC is 01:00 in Los Angeles: still Sunday the 18th.
-    ("2026-10-19T08:00:00.000Z", "America/Los_Angeles", "2026-10-18"),
-    // 03:00 there: Monday has begun.
-    ("2026-10-19T10:00:00.000Z", "America/Los_Angeles", "2026-10-19"),
-    ("2026-10-19T09:59:59.999Z", "America/Los_Angeles", "2026-10-18"),
-    ("2026-10-19T02:59:00.000Z", "UTC", "2026-10-18"),
-    ("2026-10-19T03:00:00.000Z", "UTC", "2026-10-19"),
+    // 2026-10-19 06:59 UTC is 23:59 in Los Angeles: still Sunday the 18th.
+    ("2026-10-19T06:59:59.999Z", "America/Los_Angeles", "2026-10-18"),
+    // Midnight there: Monday has begun.
+    ("2026-10-19T07:00:00.000Z", "America/Los_Angeles", "2026-10-19"),
+    ("2026-10-19T08:00:00.000Z", "America/Los_Angeles", "2026-10-19"),
+    ("2026-10-18T23:59:00.000Z", "UTC", "2026-10-18"),
+    ("2026-10-19T00:00:00.000Z", "UTC", "2026-10-19"),
     // 2026-10-19 00:30 UTC is 08:30 in Shanghai.
     ("2026-10-19T00:30:00.000Z", "Asia/Shanghai", "2026-10-19"),
-    // The night US clocks fall back (2026-11-01, 02:00 → 01:00): 02:30 PST is 10:30 UTC.
-    ("2026-11-01T10:30:00.000Z", "America/Los_Angeles", "2026-10-31"),
-    ("2026-11-01T11:00:00.000Z", "America/Los_Angeles", "2026-11-01"),
+    // The night US clocks fall back (2026-11-01, 02:00 → 01:00): the second 01:30, PST, is 09:30 UTC.
+    ("2026-11-01T06:59:00.000Z", "America/Los_Angeles", "2026-10-31"),
+    ("2026-11-01T09:30:00.000Z", "America/Los_Angeles", "2026-11-01"),
 ])
-func theDayLastsUntilThreeOnTheWallClock(moment: String, zone: String, day: String) throws {
+func theDayTurnsAtMidnightOnTheWallClock(moment: String, zone: String, day: String) throws {
     let timeZone = try #require(TimeZone(identifier: zone))
     #expect(LocalDay(at: try Timestamp(moment).date, in: timeZone).description == day)
 }

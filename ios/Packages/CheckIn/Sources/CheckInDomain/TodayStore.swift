@@ -112,7 +112,7 @@ public final class TodayStore {
         return home
     }
 
-    /// The member's day now, in their profile's time zone, with the 3am grace.
+    /// The member's day now, in their profile's time zone.
     public var day: LocalDay? {
         savedHome.map { LocalDay(at: now(), in: $0.timeZone) }
     }

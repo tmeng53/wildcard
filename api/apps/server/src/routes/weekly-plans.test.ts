@@ -140,9 +140,9 @@ function monday(weeks: number) {
   return new Date(today.getTime() + (7 * weeks - sinceMonday) * DAY).toISOString().slice(0, 10);
 }
 
-/** This week's Monday on a UTC clock where a day lasts until 3am: the week a new member joined. */
+/** This week's Monday on a UTC clock: the week a new member joined. */
 function joinedWeek() {
-  const today = new Date(Date.now() - 3 * 3_600_000);
+  const today = new Date();
   const sinceMonday = (today.getUTCDay() + 6) % 7;
   return new Date(today.getTime() - sinceMonday * DAY).toISOString().slice(0, 10);
 }

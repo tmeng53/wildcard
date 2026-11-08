@@ -2459,7 +2459,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            /// The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/day`.
             public var day: Swift.String
@@ -2489,7 +2489,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - day: The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
@@ -2884,7 +2884,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            /// The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/day`.
             public var day: Swift.String
@@ -2914,7 +2914,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - day: The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
@@ -2994,7 +2994,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            /// The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/day`.
             public var day: Swift.String
@@ -3024,7 +3024,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - day: The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
@@ -3077,7 +3077,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/member`.
             public var member: Swift.String
-            /// The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            /// The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/day`.
             public var day: Swift.String
@@ -3107,7 +3107,7 @@ extension Components {
             ///   - version:
             ///   - id:
             ///   - member: The member who made it.
-            ///   - day: The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡).
+            ///   - day: The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡).
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
@@ -5164,7 +5164,7 @@ extension Components {
                 public var character: Components.Schemas.Character?
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/title`.
                 public var title: Components.Schemas.WornTitle?
-                /// The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
+                /// The member’s own today: their local date in their time zone.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/MembersPayload/day`.
                 public var day: Swift.String
@@ -5206,7 +5206,7 @@ extension Components {
                 ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 练了 (口头禅). Null when they haven’t picked one: the app uses their persona’s own line.
                 ///   - character:
                 ///   - title:
-                ///   - day: The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before.
+                ///   - day: The member’s own today: their local date in their time zone.
                 ///   - training: Where their today stands, from check-ins sent to this squad. A 练了 wins over a 请假条 posted earlier the same day.
                 ///   - latestMeal: Their latest meal today sent to this squad. Missing when none.
                 ///   - plannedRest: Today is a rest day in their weekly plan, whatever they checked in.

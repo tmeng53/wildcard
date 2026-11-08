@@ -1123,7 +1123,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -1458,7 +1458,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -1541,7 +1541,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -1605,7 +1605,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -3170,7 +3170,7 @@
                 "day": {
                   "type": "string",
                   "format": "date",
-                  "description": "The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before."
+                  "description": "The member’s own today: their local date in their time zone."
                 },
                 "training": {
                   "type": "string",
@@ -10447,7 +10447,7 @@
       "get": {
         "operationId": "getSquadWeekSummary",
         "summary": "A squad’s week: its awards and counts (周日战报)",
-        "description": "From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.",
+        "description": "From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.",
         "security": [
           {
             "bearer": []
@@ -10800,7 +10800,7 @@
       "put": {
         "operationId": "saveMyWeeklyPlan",
         "summary": "Save the signed-in member’s plan for a week",
-        "description": "Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, and today and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.",
+        "description": "Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, and today and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone.",
         "security": [
           {
             "bearer": []

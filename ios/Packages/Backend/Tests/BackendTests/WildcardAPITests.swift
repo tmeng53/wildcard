@@ -12,13 +12,12 @@ import FoundationNetworking
 // The app's API client against the built API and local Supabase, never a stand-in: members sign
 // up and in through Supabase Auth, check-ins land in Postgres, photos in Supabase Storage.
 
-/// A minute before `now`, inside the API's 48-hour window, and its day for a member in UTC: the
-/// API's day starts at 3am, so before 3am UTC it is still the day before.
+/// A minute before `now`, inside the API's 48-hour window, and its day for a member in UTC.
 func moment(now: Date = Date()) throws -> (day: LocalDay, createdAt: Timestamp) {
     let createdAt = Timestamp(now.addingTimeInterval(-60))
     var utc = Calendar(identifier: .gregorian)
     utc.timeZone = try #require(TimeZone(identifier: "UTC"))
-    let parts = utc.dateComponents([.year, .month, .day], from: createdAt.date.addingTimeInterval(-3 * 3600))
+    let parts = utc.dateComponents([.year, .month, .day], from: createdAt.date)
     let day = try LocalDay(
         year: try #require(parts.year), month: try #require(parts.month), day: try #require(parts.day))
     return (day, createdAt)
