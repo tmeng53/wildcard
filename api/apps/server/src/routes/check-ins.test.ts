@@ -1266,6 +1266,45 @@ describe('a 训练 from Apple Health', () => {
     ).toStrictEqual([201, 'saved']);
   });
 
+  it('keeps a 训练’s start time, and an older build’s edit keeps it', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const put = async (training: Record<string, unknown>, at = id) =>
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${at}`,
+          token: me.token,
+          body: { version: 1, day, createdAt, audience: [squad], kind: 'trained', training },
+        })
+      ).status;
+    expect(await put({ sport: 'run', startTime: '24:00' }, randomUUID())).toBe(400);
+    expect(await put({ sport: 'run', minutes: 30, startTime: '06:05' })).toBe(201);
+    const shown = async () =>
+      z
+        .object({ checkIn: z.object({ training: z.object({ startTime: z.string().optional() }) }) })
+        .parse((await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).body)
+        .checkIn.training.startTime;
+    expect(await shown()).toBe('06:05');
+
+    const edit = async (training: Record<string, unknown>) =>
+      (
+        await call({
+          method: 'PATCH',
+          path: `/check-ins/${id}`,
+          token: me.token,
+          body: { version: 1, kind: 'trained', training },
+        })
+      ).status;
+    // A build from before start times leaves it out: it stays.
+    expect(await edit({ sport: 'run', caption: '早起' })).toBe(200);
+    expect(await shown()).toBe('06:05');
+    expect(await edit({ sport: 'run', startTime: '07:30' })).toBe(200);
+    expect(await shown()).toBe('07:30');
+  });
+
   it('keeps a map and a chart together, each in its place, and an older build’s edit keeps both', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
