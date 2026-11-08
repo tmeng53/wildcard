@@ -20,6 +20,7 @@ extension TodayStore {
     /// reached.
     public func loadCoach() async {
         guard let home = savedHome, phase == .current else { return }
+        await loadOpenedLetter()
         do {
             loadedCoach = (home.squad.id, try await backend.coach(in: home.squad.id))
         } catch {}

@@ -1382,6 +1382,22 @@
           }
         }
       }
+    },
+    "%@的交接信": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Handover letter from %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@的交接信"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

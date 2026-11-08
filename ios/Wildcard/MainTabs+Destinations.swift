@@ -41,6 +41,7 @@ extension MainTabs {
         case .pats: today.replayPatsOnMe()
         // On the home itself, where the coach stands.
         case .coachNote(let note): today.showAgain(note)
+        case .coachLetter(let letter): today.showAgain(letter)
         case .waitingCoachNote: today.showWaitingNote()
         default: break
         }
@@ -57,7 +58,7 @@ extension MainTabs {
                 await recap.refresh()
                 await recap.open(week: week, of: squad)
             }
-        case .today, .pats, .coachNote, .waitingCoachNote:
+        case .today, .pats, .coachNote, .coachLetter, .waitingCoachNote:
             openToday(destination)
         case .schedule:
             selection = .profile

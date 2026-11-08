@@ -11,9 +11,10 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private var reactionsByCheckIn: [CheckInID: [Reaction]] = [:]
     private var photoCount = 0
     private var squadPokes: SquadPokes
-    private let sidelineCoach: SidelineCoach?
+    private var sidelineCoach: SidelineCoach?
     private var memberNotes: [CoachMemberNote]
     private var opened: CoachMemberNote?
+    private var openedLetterID: Int?
 
     public init(
         home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, notes: [CoachMemberNote] = []
@@ -36,7 +37,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// run like 小米, and `.bump` has me trained too.
     public static func sampleSquad(
         now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID()),
-        patted: Bool = false, coach: Bool = false, coachNote: Bool = false,
+        patted: Bool = false, coach: Bool = false, coachNote: Bool = false, coachLetter: Bool = false,
         together: SquadCelebration.Kind? = nil, meals: Bool = false
     ) -> InMemoryCheckInBackend {
         let (zone, day) = (TimeZone.current, LocalDay(at: now, in: TimeZone.current))
@@ -90,7 +91,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     plan: plan, checkIns: checkIns)
             },
             pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none,
-            coach: coach || coachNote ? sampleCoach(now: now) : nil, notes: sampleNotes(coachNote, now, squadID))
+            coach: sideline(coach || coachNote, coachLetter, now, squadID), notes: sampleNotes(coachNote, now, squadID))
     }
 
     /// The squad's week at 人均 3 天, the default goal: 14 days so far, or the whole goal once
@@ -109,17 +110,6 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                 text: words.localizedString(forKey: "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。", value: nil, table: nil),
                 coach: CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil)))
         ]
-    }
-
-    /// 毛头 with today's line, as the approved home shows it.
-    private static func sampleCoach(now: Date) -> SidelineCoach {
-        let words = Bundle.module.inAppLanguage
-        let coach = CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil))
-        let line = words.localizedString(forKey: "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。", value: nil, table: nil)
-        let note = CoachNote(
-            day: LocalDay(at: now, in: CoachNote.timeZone), text: line, coach: coach,
-            writtenAt: now.addingTimeInterval(-3600))
-        return SidelineCoach(coach: coach, note: note)
     }
 
     /// A sample title, its words from the catalog.
@@ -306,6 +296,18 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     }
 
     public func openedNote() async -> CoachMemberNote? { opened }
+
+    /// 毛头 takes a few seconds over its letter to 帕帕, as the model would, so 「交接中」 shows.
+    public func writeLetter(in squad: SquadID) async throws(CheckInError) -> CoachLetter? {
+        try? await Task.sleep(for: .seconds(3))
+        let letter = Self.sampleLetter(in: squad, now: .now)
+        sidelineCoach = SidelineCoach(coach: letter.recipient, note: nil, letter: letter)
+        return letter
+    }
+
+    public func openedLetter() async -> Int? { openedLetterID }
+
+    public func opened(_ letter: CoachLetter) async { openedLetterID = letter.id }
 }
 
 /// Posts waiting to go out, kept in memory: for previews, UI tests and tests.
