@@ -92,7 +92,7 @@ final class Wardrobe {
     }
 
     /// Where an unlock opens, read again first so what just opened is open there: a store on its
-    /// rack on 商店街, pieces there with their boxes' pop-up over it, a prop on the editor's 道具.
+    /// rack on 商店街, pieces on their store's rack wearing NEW, a prop on the editor's 道具.
     func open(_ kind: Unlock.Kind, item: String) async {
         await profile.reload()
         if kind == .prop {
