@@ -455,6 +455,7 @@ async function runWake(
         roster,
         draft,
         kind: wake.reason.kind,
+        to: addresseeOf(week, wake.reason),
         ...photosOf(deps.photoUrls, { week, wake }),
         ...factsFor(deps, { week, roster }),
         ...(deps.memes === undefined ? {} : { memes: deps.memes }),
@@ -797,4 +798,17 @@ async function noteReaders(
 ): Promise<readonly string[]> {
   const consented = await deps.aiConsented(members);
   return deps.wantNotes === undefined ? consented : await deps.wantNotes(consented);
+}
+
+/** Whom a line on this wake answers: the check-in's author, or the member who wrote to the coach. */
+function addresseeOf(week: SquadWeek, reason: Wake['reason']): string | undefined {
+  if (reason.kind === 'checkIn') {
+    return week.checkIns.find(({ id }) => id === reason.checkIn)?.member;
+  }
+  if (reason.kind === 'comment') {
+    return week.checkIns
+      .find(({ id }) => id === reason.checkIn)
+      ?.comments.find(({ id }) => id === reason.comment)?.member;
+  }
+  return undefined;
 }

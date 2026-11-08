@@ -73,7 +73,16 @@ function defineTool<Shape extends z.ZodObject>(
  * unless the line already has it, and their ids, or why it can't be said.
  */
 export function mentioning(
-  { line, at }: { readonly line: string; readonly at: readonly string[] },
+  {
+    line,
+    at,
+    to,
+  }: {
+    readonly line: string;
+    readonly at: readonly string[];
+    /** Whom the line answers, by member id: they get it anyway, so they are never @'d. */
+    readonly to?: string | undefined;
+  },
   {
     week,
     roster,
@@ -83,6 +92,7 @@ export function mentioning(
   const prefix: string[] = [];
   for (const name of new Set(at.map((each) => each.trim()))) {
     const member = [...roster].find(([, shown]) => shown === name)?.[0];
+    if (member !== undefined && member === to) continue;
     const nickname = week.members.find((each) => each.member === member)?.nickname;
     if (member === undefined || nickname === undefined) {
       const known = week.members.flatMap((each) =>
@@ -104,7 +114,7 @@ const atParameter = z
   .max(3)
   .optional()
   .describe(
-    '要 @ 的队友，填 队员N（不只是发帖的人，评论区里谁都能 @）；对方会收到推送，句首自动加上「@昵称」',
+    '要 @ 的队友，填 队员N（评论区里谁都能 @；你回的那个人不用 @）；对方会收到推送，句首自动加上「@昵称」',
   );
 
 /**
@@ -122,6 +132,7 @@ export function toolbox({
   pastWeek,
   memes,
   noteTo = [],
+  to,
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
@@ -137,6 +148,8 @@ export function toolbox({
   readonly memes?: CoachMemes;
   /** On a daily wake, the members the coach may write a morning note to, by id. */
   readonly noteTo?: readonly string[];
+  /** Whom a line on this wake answers, by member id: the post's author or the replier. */
+  readonly to?: string | undefined;
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
   const tools = [
@@ -315,7 +328,7 @@ export function toolbox({
         description: `回这条打卡一句：显示在这条动态的评论里，带「教练」标志，全队都看得到。一条打卡只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
         parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
         run: ({ text, at = [] }) => {
-          const said = mentioning({ line: text.trim(), at }, { week, roster });
+          const said = mentioning({ line: text.trim(), at, to }, { week, roster });
           if (typeof said === 'string') return said;
           const problem = lineProblem(said.line, REPLY_LIMIT);
           if (problem !== undefined) return problem;
@@ -344,7 +357,7 @@ export function toolbox({
         description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
         parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
         run: ({ text, at = [] }) => {
-          const said = mentioning({ line: text.trim(), at }, { week, roster });
+          const said = mentioning({ line: text.trim(), at, to }, { week, roster });
           if (typeof said === 'string') return said;
           const problem = lineProblem(said.line, REPLY_LIMIT);
           if (problem !== undefined) return problem;

@@ -1408,7 +1408,8 @@ describe('the coach', () => {
         task.startsWith('有人打卡')
           ? [
               { tool: 'reply', input: { text: '一起跑', at: ['队员3'] } },
-              { tool: 'reply', input: { text: '一起跑', at: ['队员2'] } },
+              // The post's author gets the reply anyway: never @'d.
+              { tool: 'reply', input: { text: '一起跑', at: ['队员1', '队员2'] } },
             ]
           : [],
       );
