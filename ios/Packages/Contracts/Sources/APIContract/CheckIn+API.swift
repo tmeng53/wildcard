@@ -13,19 +13,21 @@ extension CheckIn {
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
                 createdAt: checkIn.createdAt,
-                audience: checkIn.audience, entry: .trained(Training(checkIn.training)))
+                audience: checkIn.audience, entry: .trained(Training(checkIn.training, postedAt: checkIn.createdAt)))
         case .healthyMeal(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
                 createdAt: checkIn.createdAt,
                 audience: checkIn.audience,
-                entry: .healthyMeal(Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos)))
+                entry: .healthyMeal(
+                    Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos, postedAt: checkIn.createdAt)))
         case .cheatMeal(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
                 createdAt: checkIn.createdAt,
                 audience: checkIn.audience,
-                entry: .cheatMeal(Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos)))
+                entry: .cheatMeal(
+                    Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos, postedAt: checkIn.createdAt)))
         case .disclaimer(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
@@ -34,7 +36,7 @@ extension CheckIn {
                 entry: .disclaimer(
                     Disclaimer(
                         checkIn.disclaimer.text, restDay: checkIn.disclaimer.restDay == true,
-                        photos: try Photos(wire: checkIn.disclaimer.photos))))
+                        photos: try Photos(wire: checkIn.disclaimer.photos, postedAt: checkIn.createdAt))))
         }
     }
 
@@ -110,10 +112,11 @@ extension Disclaimer {
 }
 
 extension Training {
-    init(_ wire: Components.Schemas.TrainingView) throws(ContractsError) {
+    init(_ wire: Components.Schemas.TrainingView, postedAt: Date) throws(ContractsError) {
         self.init(
             activity: try Activity(sport: wire.sport, customSport: wire.customSport),
-            minutes: try wire.minutes.map(WorkoutMinutes.init), photos: try Photos(wire: wire.photos),
+            minutes: try wire.minutes.map(WorkoutMinutes.init),
+            photos: try Photos(wire: wire.photos, postedAt: postedAt),
             caption: try wire.caption.map(Caption.init), workout: wire.workout.map(Workout.init))
     }
 }
@@ -163,8 +166,8 @@ extension WorkoutSeries {
 }
 
 extension Meal {
-    init(caption: String?, photos: [Components.Schemas.PhotoView]?) throws(ContractsError) {
-        self.init(photos: try Photos(wire: photos), caption: try caption.map(Caption.init))
+    init(caption: String?, photos: [Components.Schemas.PhotoView]?, postedAt: Date) throws(ContractsError) {
+        self.init(photos: try Photos(wire: photos, postedAt: postedAt), caption: try caption.map(Caption.init))
     }
 }
 
@@ -204,8 +207,8 @@ extension Activity {
 }
 
 extension Photos {
-    /// Nil when the API listed none.
-    init?(wire: [Components.Schemas.PhotoView]?) throws(ContractsError) {
+    /// Nil when the API listed none. `postedAt` is when their check-in was posted.
+    init?(wire: [Components.Schemas.PhotoView]?, postedAt: Date) throws(ContractsError) {
         guard let wire else { return nil }
         var photos: [PhotoRef] = []
         for photo in wire {
@@ -213,7 +216,7 @@ extension Photos {
             let size = try photo.size.map { size throws(ContractsError) in
                 try PhotoSize(width: size.width, height: size.height)
             }
-            photos.append(try PhotoRef(path: photo.path, size: size, viewURL: url))
+            photos.append(try PhotoRef(path: photo.path, size: size, viewURL: url, postedAt: Timestamp(wire: postedAt)))
         }
         try self.init(photos)
     }

@@ -27,7 +27,7 @@ final class HealthUITests: XCTestCase {
         let chart = app.buttons["compose.chartTile"]
         XCTAssertTrue(map.exists, "the ride's map isn't in the photo row")
         XCTAssertTrue(chart.exists, "the ride's heart rate isn't beside its map")
-        XCTAssertFalse(app.buttons["compose.minutes.45"].exists, "the minutes show beside the 成绩条")
+        XCTAssertFalse(app.buttons["compose.minutes.60"].exists, "the minutes show beside the 成绩条")
         settle()
         keepScreenshot(named: "71-health-compose-ride")
 
@@ -42,7 +42,7 @@ final class HealthUITests: XCTestCase {
         // Tapped again, it lets go: the minutes come back.
         app.buttons["compose.health.sample-swim"].tap()
         XCTAssertTrue(
-            app.buttons["compose.minutes.45"].waitForExistence(timeout: Self.wait),
+            app.buttons["compose.minutes.60"].waitForExistence(timeout: Self.wait),
             "letting go didn't bring the minutes back")
         XCTAssertFalse(chart.exists, "the tile stayed after letting go")
 
