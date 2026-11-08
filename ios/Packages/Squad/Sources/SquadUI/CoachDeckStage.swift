@@ -277,10 +277,11 @@ private struct BoxBody: View {
     var body: some View {
         Canvas { context, size in
             let unit = size.width / 40
+            let corner = 3 * unit
             context.fill(
                 Path(
                     roundedRect: CGRect(x: 6 * unit, y: 16 * unit, width: 28 * unit, height: 20 * unit),
-                    cornerRadius: 3 * unit),
+                    cornerRadius: corner),
                 with: .color(ink))
             context.fill(
                 Path(CGRect(x: 18 * unit, y: 16 * unit, width: 4 * unit, height: 20 * unit)), with: .color(ribbon))
@@ -296,10 +297,11 @@ private struct BoxLid: View {
     var body: some View {
         Canvas { context, size in
             let unit = size.width / 40
+            let corner = 2 * unit
             context.fill(
                 Path(
                     roundedRect: CGRect(x: 4 * unit, y: 10 * unit, width: 32 * unit, height: 8 * unit),
-                    cornerRadius: 2 * unit),
+                    cornerRadius: corner),
                 with: .color(ink))
             context.fill(
                 Path(CGRect(x: 18 * unit, y: 10 * unit, width: 4 * unit, height: 8 * unit)), with: .color(ribbon))
