@@ -3313,18 +3313,18 @@
         }
       }
     },
-    "小队本周目标 · 人均 %lld 天": {
+    "小队本周目标": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Squad goal · %lld days each"
+            "value": "Squad goal"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "小隊本週目標 · 人均 %lld 天"
+            "value": "小隊本週目標"
           }
         }
       }
