@@ -101,7 +101,7 @@ final class SignUpUITests: XCTestCase {
         XCTAssertGreaterThanOrEqual(app.buttons["week.day.0"].frame.height, 38, "a day is as tall as the board's row")
         XCTAssertTrue(app.staticTexts["我的每周计划"].exists, "step 4 isn't titled 我的每周计划")
         XCTAssertEqual(app.buttons["week.done"].label, "上场", "a joiner doesn't go 上场 from step 5")
-        XCTAssertTrue(app.buttons["week.day.0"].isEnabled, "Monday can't change on the 每周模板")
+        XCTAssertTrue(app.buttons["week.day.0"].isEnabled, "Monday can't change on the 我的每周计划")
         rest.tap()
         settle()
         keepScreenshot(named: "46-signup-week-changed")
@@ -130,7 +130,7 @@ final class SignUpUITests: XCTestCase {
         keepScreenshot(named: "48-signup-home")
     }
 
-    /// Making a squad, skipping sports and the week, in English. With no sport picked the 每周模板
+    /// Making a squad, skipping sports and the week, in English. With no sport picked the 我的每周计划
     /// trains the squad's 人均 3 天 with no sport named: 3/7.
     func testStartingASquadInEnglish() {
         let app = launch(language: "en")
@@ -151,7 +151,7 @@ final class SignUpUITests: XCTestCase {
         let squadDone = app.buttons["squad.done"]
         XCTAssertTrue(squadDone.waitForExistence(timeout: Self.wait), "the squad step never appeared")
         XCTAssertEqual(app.textFields["squad.name"].value as? String, "Sam's squad")
-        XCTAssertEqual(squadDone.label, "Start squad")
+        XCTAssertEqual(squadDone.label, "Start a squad")
         keepScreenshot(named: "49-signup-squad-en")
         waitFor(squadDone, "isEnabled == true", "Start squad stays off with a name")
         squadDone.tap()

@@ -8,7 +8,8 @@ import type { Log } from '../log.js';
 import type { LiveEvents, VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
-import { NoticeEntry, noticeEntries, type CoachNames } from './notices.js';
+import type { CoachNames } from '../flows/coach-names.js';
+import { NoticeEntry, noticeEntries } from './notices.js';
 
 /** How long the app waits before reconnecting after the stream ends, in milliseconds. */
 const RETRY_MS = 3_000;

@@ -15,14 +15,11 @@ public struct SquadDraft: Hashable, Sendable {
     public var typedName: String
     /// 小队目标 for a squad being made: each member's days a week, 人均 N 天. The captain
     /// changes it later on 小队.
-    public var daysPerMember = SquadDraft.defaultDaysPerMember
+    public var daysPerMember = SquadWeeklyGoal.defaultDaysPerMember
 
     /// 比赛时区 for a squad being made, an IANA name: the clock its 战报 freezes on, Sunday 8pm,
     /// and its coach's daily 战术板 keeps. Each member's own day keeps their phone's.
     public var timeZone: String
-
-    /// What a new squad starts from, as the API's.
-    public static let defaultDaysPerMember = 3
 
     /// `invite`: the code an invite link carried, if sign-up opened from one. `suggestedName`:
     /// what 建一个小队 starts from, such as 「Tracy 的小队」. `timeZone`: the phone's, which a new

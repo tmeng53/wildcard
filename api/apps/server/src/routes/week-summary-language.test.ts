@@ -7,7 +7,12 @@ describe('languageOf', () => {
     expect(languageOf(undefined)).toBe('zh-Hans');
     expect(languageOf('')).toBe('zh-Hans');
     expect(languageOf('fr-FR, en;q=0.8')).toBe('en');
-    expect(languageOf('zh-Hant-TW,en')).toBe('zh-Hans');
+    expect(languageOf('zh-Hant-TW,en')).toBe('zh-Hant');
+    expect(languageOf('zh-Hant')).toBe('zh-Hant');
+    expect(languageOf('zh-TW')).toBe('zh-Hant');
+    expect(languageOf('zh-HK, en;q=0.5')).toBe('zh-Hant');
+    expect(languageOf('zh-Hans-TW')).toBe('zh-Hans');
+    expect(languageOf('zh-CN')).toBe('zh-Hans');
     expect(languageOf('EN-gb')).toBe('en');
     expect(languageOf('ja, fr')).toBe('zh-Hans');
     expect(languageOf('en;q=0, zh')).toBe('zh-Hans');

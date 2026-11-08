@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "轻点翻面": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to flip the card"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點一下翻面"
+          }
+        }
+      }
+    },
     "取消": {
       "localizations": {
         "en": {
@@ -854,7 +870,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Brand: opening, sign-up, Me, posting, excuse notes, feed"
+            "value": "Brand: opening, sign-up, Me, posting, day-off notes, feed"
           }
         },
         "zh-Hant": {
@@ -956,7 +972,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "坦白放縱餐"
+            "value": "坦白欺騙餐"
           }
         }
       }
@@ -1014,7 +1030,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mei · Excuse"
+            "value": "Mei · Day-off note"
           }
         },
         "zh-Hant": {
@@ -1564,7 +1580,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "放縱餐"
+            "value": "欺騙餐"
           }
         }
       }
@@ -1740,7 +1756,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "標籤列：玻璃，選取的是淺灰塊"
+            "value": "標籤列：系統的液態玻璃，選取的是墨色"
           }
         }
       }
@@ -1926,7 +1942,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "On a white page: subtle grey cards"
+            "value": "On a white page: subtle gray cards"
           }
         },
         "zh-Hant": {
@@ -2118,7 +2134,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Legs still sore, lying flat today, training tomorrow for sure."
+            "value": "Legs still sore. Couch day today, training tomorrow for sure."
           }
         },
         "zh-Hant": {
@@ -2422,7 +2438,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Next week's scene: a colour card once visited, a carton until then"
+            "value": "Next week's scene: a color card once visited, a carton until then"
           }
         },
         "zh-Hant": {
@@ -2860,7 +2876,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "保存到相簿"
+            "value": "儲存到相簿"
           }
         }
       }
@@ -2892,7 +2908,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "沒存上，再試一次"
+            "value": "沒存到，再試一次"
           }
         }
       }
@@ -3004,7 +3020,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網路開小差了"
+            "value": "網路怪怪的"
           }
         }
       }
@@ -3036,7 +3052,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網路開小差了，沒存上"
+            "value": "網路怪怪的，沒存到"
           }
         }
       }
@@ -3366,7 +3382,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fold the squad card"
+            "value": "Collapse squad card"
           }
         },
         "zh-Hant": {
@@ -3382,7 +3398,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open the squad card"
+            "value": "Expand squad card"
           }
         },
         "zh-Hant": {

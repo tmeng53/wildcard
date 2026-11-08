@@ -17,6 +17,8 @@ struct CoachCardPopup: View {
     let squad: SquadSettingsModel
     /// Puts the card away, opening 动态 when true.
     let close: (_ opensFeed: Bool) -> Void
+    /// Puts the card away and opens 教练招聘会, from 逛逛招聘会 on the card's back.
+    let browse: () -> Void
 
     var body: some View {
         VStack(spacing: Space.xs) {
@@ -30,7 +32,7 @@ struct CoachCardPopup: View {
                 .frame(width: TradingCard.size.width)
                 .accessibilityIdentifier("coachCard.board")
             }
-            CoachPlayerCard(model: squad) { close(false) }
+            CoachPlayerCard(model: squad, gone: { close(false) }, browse: browse)
             if let memberNote = today.todaysNote {
                 Button {
                     close(false)

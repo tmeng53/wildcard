@@ -182,11 +182,13 @@ struct PostRow: View {
                 }
             }
             .frame(width: Sizing.minimumTapTarget, height: Sizing.compactControl - 2)
-            .background(Color(role: mine == nil ? .bgSubtle : .bgCanvas, in: .gym), in: Capsule())
-            // Once I reacted, white with a dark outline, as on 动态 (a brand screen: no scene colour).
+            .background(Color(role: .bgCanvas, in: .gym), in: Capsule())
+            // White with a hairline; once I reacted, a dark outline, as on 动态 (a brand screen: no scene colour).
             .overlay {
                 if mine != nil {
                     Capsule().strokeBorder(Color(role: .fgDefault, in: .gym), lineWidth: Self.mineStroke)
+                } else {
+                    Capsule().strokeBorder(Color(role: .borderDefault, in: .gym), lineWidth: Sizing.hairline)
                 }
             }
             .contentShape(Capsule())
