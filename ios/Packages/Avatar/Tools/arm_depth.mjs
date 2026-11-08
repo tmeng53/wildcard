@@ -96,7 +96,7 @@ function inFront(poses, matrices, arm) {
 const STEP = 1 / 60;
 const SHORTEST = 0.12; // a flip shorter than this is noise, not a gesture
 
-export function draft(clip) {
+export function draft(clip, accent = false) {
   const keyed = {};
   for (const arm of ["armL", "armR"]) {
     const states = [];
@@ -122,9 +122,13 @@ export function draft(clip) {
       runs.push({ t: clip.duration, v: 0 });
     if (runs.every((r) => r.v === 0)) continue;
     const r3 = (n) => Math.round(n * 1000) / 1000;
-    keyed[arm] = runs.map((r, i) =>
+    const keys = runs.map((r, i) =>
       i === 0 ? { t: 0, v: r.v } : { t: r3(r.t), v: r.v, ease: "hold" },
     );
+    // An accent's tracks start and end at rest at its duration (Clip.accented(by:)).
+    if (accent && keys.at(-1).t < clip.duration)
+      keys.push({ t: clip.duration, v: 0, ease: "hold" });
+    keyed[arm] = keys;
   }
   return keyed;
 }
@@ -200,7 +204,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       const hasFront = clip.tracks.some((t) => t.channel === "front");
       if (keep && hasFront) continue;
       const others = clip.tracks.filter((t) => t.channel !== "front");
-      const keyed = draft({ ...clip, tracks: others });
+      const keyed = draft({ ...clip, tracks: others }, dir === "accents");
       const summary = Object.entries(keyed)
         .map(
           ([arm, keys]) =>
