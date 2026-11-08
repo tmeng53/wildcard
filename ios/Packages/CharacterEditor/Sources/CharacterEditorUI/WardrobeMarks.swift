@@ -1,7 +1,8 @@
 import Foundation
 
-/// What this phone remembers of the member's new pieces (Tracy, 2026-11-04): which claimed pieces they have tapped in their wardrobe since (NEW until then), and
-/// which waiting pieces 商店街 has shown (我's shopfront dot clears then). Kept on the phone only:
+/// What this phone remembers of the member's new pieces (Tracy, 2026-11-04): which claimed
+/// pieces they have tapped in their wardrobe since (NEW until then), and which waiting pieces
+/// 商店街 has shown (我's shopfront dot clears then). Kept on the phone only:
 /// another phone shows NEW again; what is claimed is the server's.
 @MainActor
 public protocol WardrobeMarks: AnyObject {
