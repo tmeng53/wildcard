@@ -1,3462 +1,3506 @@
 {
-  "sourceLanguage": "zh-Hans",
-  "strings": {
-    "取消": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancel"
+  "sourceLanguage" : "zh-Hans",
+  "strings" : {
+    "取消" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
           }
         }
       }
     },
-    "加载中": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loading"
+    "加载中" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "載入中"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "載入中"
           }
         }
       }
     },
-    "提到谁": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mention someone"
+    "提到谁" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mention someone"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "提到誰"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提到誰"
           }
         }
       }
     },
-    "整页加载：两张票": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Page loading: two tickets"
+    "整页加载：两张票" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page loading: two tickets"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "整頁載入：兩張票"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整頁載入：兩張票"
           }
         }
       }
     },
-    "语言": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Language"
+    "语言" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Language"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "語言"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "語言"
           }
         }
       }
     },
-    "一": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "M"
+    "一" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "M"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一"
           }
         }
       }
     },
-    "三": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "W"
+    "三" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "W"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "三"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "三"
           }
         }
       }
     },
-    "下一步": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Next"
+    "下一步" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下一步"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一步"
           }
         }
       }
     },
-    "中性色": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Neutrals"
+    "中性色" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neutrals"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "中性色"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中性色"
           }
         }
       }
     },
-    "主按钮，一屏一个": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Primary button, one per screen"
+    "主按钮，一屏一个" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Primary button, one per screen"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "主按鈕，一個畫面一個"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主按鈕，一個畫面一個"
           }
         }
       }
     },
-    "主按钮：当前场景色": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Primary button: the scene's color"
+    "主按钮：当前场景色" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Primary button: the scene's color"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "主按鈕：目前的場景色"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主按鈕：目前的場景色"
           }
         }
       }
     },
-    "主操作、选中": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Primary action, selected"
+    "主操作、选中" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Primary action, selected"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "主要操作、已選取"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主要操作、已選取"
           }
         }
       }
     },
-    "主文字": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Text"
+    "主文字" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "主文字"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主文字"
           }
         }
       }
     },
-    "二": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "T"
+    "二" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "T"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "二"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "二"
           }
         }
       }
     },
-    "五": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "F"
+    "五" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "F"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "五"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "五"
           }
         }
       }
     },
-    "今天": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Today"
+    "今天" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今天"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天"
           }
         }
       }
     },
-    "今天 3 人训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "3 trained today"
+    "今天 3 人训练" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 trained today"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今天 3 人訓練"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天 3 人訓練"
           }
         }
       }
     },
-    "今天游了 2 公里，水有点凉": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Swam 2 km today, the water was a bit cold"
+    "今天游了 2 公里，水有点凉" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swam 2 km today, the water was a bit cold"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今天游了 2 公里，水有點冰"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天游了 2 公里，水有點冰"
           }
         }
       }
     },
-    "今日请假条": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Today's day-off note"
+    "今日请假条" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today's day-off note"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今日假單"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日假單"
           }
         }
       }
     },
-    "以后再选": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Later"
+    "以后再选" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "之後再選"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "之後再選"
           }
         }
       }
     },
-    "任务页标题和控件": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Task titles and controls"
+    "任务页标题和控件" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Task titles and controls"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "任務頁標題和控制項"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "任務頁標題和控制項"
           }
         }
       }
     },
-    "休息日": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rest day"
+    "休息日" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest day"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "休息日"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "休息日"
           }
         }
       }
     },
-    "假": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Off"
+    "假" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "假"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "假"
           }
         }
       }
     },
-    "健康餐": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clean meal"
+    "健康餐" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clean meal"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "健康餐"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "健康餐"
           }
         }
       }
     },
-    "健身房": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gym"
+    "健身房" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gym"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "健身房"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "健身房"
           }
         }
       }
     },
-    "全屏：换页": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Page: changing screens"
+    "全屏：换页" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page: changing screens"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "全螢幕：換頁"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全螢幕：換頁"
           }
         }
       }
     },
-    "全部": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "All"
+    "全部" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "全部"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部"
           }
         }
       }
     },
-    "六": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "S"
+    "六" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "六"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "六"
           }
         }
       }
     },
-    "六级中文字号，最粗 600": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Six text sizes, Semibold at most"
+    "六级中文字号，最粗 600" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Six text sizes, Semibold at most"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "六級中文字級，最粗 600"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "六級中文字級，最粗 600"
           }
         }
       }
     },
-    "关闭": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Close"
+    "关闭" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "關閉"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉"
           }
         }
       }
     },
-    "内块、未选中": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Blocks, unselected"
+    "内块、未选中" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blocks, unselected"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "內區塊、未選取"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "內區塊、未選取"
           }
         }
       }
     },
-    "冲冲冲！": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Let's go!"
+    "冲冲冲！" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let's go!"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "衝衝衝！"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "衝衝衝！"
           }
         }
       }
     },
-    "出赛表": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lineup"
+    "出赛表" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lineup"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "出賽表"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "出賽表"
           }
         }
       }
     },
-    "分钟": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Minutes"
+    "分钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutes"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "分鐘"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分鐘"
           }
         }
       }
     },
-    "分隔线、未完成": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dividers, to do"
+    "分隔线、未完成" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividers, to do"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "分隔線、未完成"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分隔線、未完成"
           }
         }
       }
     },
-    "切换和选择": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Switches and picks"
+    "切换和选择" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switches and picks"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "切換和選擇"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切換和選擇"
           }
         }
       }
     },
-    "列表": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lists"
+    "列表" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lists"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "列表"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "列表"
           }
         }
       }
     },
-    "删除": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete"
+    "删除" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "刪除"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除"
           }
         }
       }
     },
-    "刻度尺：滑动选数字，每过一格轻震一下": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ruler: slide to a number, one light tick per mark"
+    "刻度尺：滑动选数字，每过一格轻震一下" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruler: slide to a number, one light tick per mark"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "刻度尺：滑動選數字，每過一格輕震一下"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刻度尺：滑動選數字，每過一格輕震一下"
           }
         }
       }
     },
-    "力量": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Strength"
+    "力量" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strength"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重訓"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重訓"
           }
         }
       }
     },
-    "动态": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Feed"
+    "动态" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feed"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "動態"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動態"
           }
         }
       }
     },
-    "动效": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Motion"
+    "动效" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Motion"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "動態效果"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動態效果"
           }
         }
       }
     },
-    "半屏：展开、弹出": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sheet: opening in place"
+    "半屏：展开、弹出" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sheet: opening in place"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "半螢幕：展開、彈出"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "半螢幕：展開、彈出"
           }
         }
       }
     },
-    "卡片": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cards"
+    "卡片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cards"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "卡片"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "卡片"
           }
         }
       }
     },
-    "卡片、状态圈、进度": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cards, status rings, progress"
+    "卡片、状态圈、进度" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cards, status rings, progress"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "卡片、狀態圈、進度"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "卡片、狀態圈、進度"
           }
         }
       }
     },
-    "去打卡": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check in"
+    "去打卡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check in"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "去打卡"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "去打卡"
           }
         }
       }
     },
-    "发布": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Post"
+    "发布" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Post"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "發布"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "發布"
           }
         }
       }
     },
-    "变色：选中、切换，不回弹": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Change: selection, switches, no bounce"
+    "变色：选中、切换，不回弹" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change: selection, switches, no bounce"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "變色：選取、切換，不回彈"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "變色：選取、切換，不回彈"
           }
         }
       }
     },
-    "口头禅": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Catchphrase"
+    "口头禅" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Catchphrase"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "口頭禪"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "口頭禪"
           }
         }
       }
     },
-    "可以": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sure"
+    "可以" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sure"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可以"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以"
           }
         }
       }
     },
-    "周三不练腿俱乐部": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skip Leg Day Club"
+    "周三不练腿俱乐部" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip Leg Day Club"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "週三不練腿俱樂部"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週三不練腿俱樂部"
           }
         }
       }
     },
-    "品牌色上的字": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Text on brand"
+    "品牌色上的字" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text on brand"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "品牌色上的字"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "品牌色上的字"
           }
         }
       }
     },
-    "品牌色：主操作、选中": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Brand: primary actions, selection"
+    "品牌色：主操作、选中" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brand: primary actions, selection"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "品牌色：主要操作、選取"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "品牌色：主要操作、選取"
           }
         }
       }
     },
-    "品牌：开场、注册、我、发动态、请假条、动态": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Brand: opening, sign-up, Me, posting, excuse notes, feed"
+    "品牌：开场、注册、我、发动态、请假条、动态" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brand: opening, sign-up, Me, posting, excuse notes, feed"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "品牌：開場、註冊、我、發動態、假單、動態"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "品牌：開場、註冊、我、發動態、假單、動態"
           }
         }
       }
     },
-    "四": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "T"
+    "四" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "T"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "四"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "四"
           }
         }
       }
     },
-    "回到起点": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Back to start"
+    "回到起点" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back to start"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "回到起點"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回到起點"
           }
         }
       }
     },
-    "图片选项和色块": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Picture picks and swatches"
+    "图片选项和色块" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Picture picks and swatches"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "圖片選項和色塊"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "圖片選項和色塊"
           }
         }
       }
     },
-    "圆角：只有按钮是胶囊": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corners: only buttons are capsules"
+    "圆角：只有按钮是胶囊" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corners: only buttons are capsules"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "圓角：只有按鈕是膠囊"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "圓角：只有按鈕是膠囊"
           }
         }
       }
     },
-    "场景底": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Scene floor"
+    "场景底" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scene floor"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "場景底"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "場景底"
           }
         }
       }
     },
-    "坦白放纵餐": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cheat meal"
+    "坦白放纵餐" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cheat meal"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "坦白放縱餐"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "坦白放縱餐"
           }
         }
       }
     },
-    "字体": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Type"
+    "字体" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "字體"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字體"
           }
         }
       }
     },
-    "小林": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lin"
+    "小林" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lin"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小林"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小林"
           }
         }
       }
     },
-    "小人舞台和气泡": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The character's stage and speech bubble"
+    "小人舞台和气泡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The character's stage and speech bubble"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小人舞台和對話泡泡"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小人舞台和對話泡泡"
           }
         }
       }
     },
-    "小美 · 请假条": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mei · Excuse"
+    "小美 · 请假条" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mei · Excuse"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小美 · 假單"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小美 · 假單"
           }
         }
       }
     },
-    "小队": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Squad"
+    "小队" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Squad"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小隊"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小隊"
           }
         }
       }
     },
-    "平时练什么？": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What do you usually do?"
+    "平时练什么？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What do you usually do?"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平常都練什麼？"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "平常都練什麼？"
           }
         }
       }
     },
-    "庆祝：只在打卡成功那一下回弹": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Celebrate: bounces only when a check-in lands"
+    "庆祝：只在打卡成功那一下回弹" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celebrate: bounces only when a check-in lands"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "慶祝：只在打卡成功那一下回彈"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "慶祝：只在打卡成功那一下回彈"
           }
         }
       }
     },
-    "弱文字、占位": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Placeholders"
+    "弱文字、占位" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placeholders"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "弱文字、預留位置"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "弱文字、預留位置"
           }
         }
       }
     },
-    "强调上的字": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On accent"
+    "强调上的字" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On accent"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "強調色上的字"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "強調色上的字"
           }
         }
       }
     },
-    "强调浅底": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Accent wash"
+    "强调浅底" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accent wash"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "強調淺底"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "強調淺底"
           }
         }
       }
     },
-    "强调色文字": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Accent text"
+    "强调色文字" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accent text"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "強調色文字"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "強調色文字"
           }
         }
       }
     },
-    "强调：当前场景色，一屏只有这一种": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Accent: the scene's color, one per screen"
+    "强调：当前场景色，一屏只有这一种" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accent: the scene's color, one per screen"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "強調：目前的場景色，一個畫面只有這一種"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "強調：目前的場景色，一個畫面只有這一種"
           }
         }
       }
     },
-    "徒步": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hiking"
+    "徒步" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiking"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "健行"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "健行"
           }
         }
       }
     },
-    "性格": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Personality"
+    "性格" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personality"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "個性"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "個性"
           }
         }
       }
     },
-    "我": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Me"
+    "我" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Me"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我"
           }
         }
       }
     },
-    "我在哪：墨色胶囊": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Where I am: ink capsule"
+    "我在哪：墨色胶囊" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where I am: ink capsule"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我在哪：墨色膠囊"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我在哪：墨色膠囊"
           }
         }
       }
     },
-    "我打卡了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "I checked in"
+    "我打卡了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I checked in"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我打卡了"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我打卡了"
           }
         }
       }
     },
-    "我这周": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "My week"
+    "我这周" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My week"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我這週"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我這週"
           }
         }
       }
     },
-    "我选了啥：白底细线，选中是场景色描边加勾": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What I picked: hairline, then an accent border and a check"
+    "我选了啥：白底细线，选中是场景色描边加勾" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What I picked: hairline, then an accent border and a check"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我選了什麼：白底細線，選取後是場景色外框加勾"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我選了什麼：白底細線，選取後是場景色外框加勾"
           }
         }
       }
     },
-    "打卡": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check in"
+    "打卡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check in"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打卡"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打卡"
           }
         }
       }
     },
-    "打卡了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Checked in"
+    "打卡了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checked in"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打卡了"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打卡了"
           }
         }
       }
     },
-    "打卡四类": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check-in kinds"
+    "打卡四类" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-in kinds"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打卡四類"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打卡四類"
           }
         }
       }
     },
-    "打卡四类图标": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check-in kind icons"
+    "打卡四类图标" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-in kind icons"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打卡四類圖示"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打卡四類圖示"
           }
         }
       }
     },
-    "打卡四类：用场景浅底": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check-in kinds: the scene's wash"
+    "打卡四类：用场景浅底" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-in kinds: the scene's wash"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打卡四類：用場景淺底"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打卡四類：用場景淺底"
           }
         }
       }
     },
-    "打卡展开": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check-in, opened"
+    "打卡展开" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-in, opened"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打卡展開"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打卡展開"
           }
         }
       }
     },
-    "按下：所有按钮": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Press: every button"
+    "按下：所有按钮" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press: every button"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "按下：所有按鈕"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按下：所有按鈕"
           }
         }
       }
     },
-    "按钮": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buttons"
+    "按钮" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buttons"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "按鈕"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按鈕"
           }
         }
       }
     },
-    "按钮、页头、标签栏": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buttons, headers and tab bar"
+    "按钮、页头、标签栏" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buttons, headers and tab bar"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "按鈕、頁首、標籤列"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按鈕、頁首、標籤列"
           }
         }
       }
     },
-    "换一组": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shuffle"
+    "换一组" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shuffle"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "換一組"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "換一組"
           }
         }
       }
     },
-    "控件高度：只有三种": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Control heights: three only"
+    "控件高度：只有三种" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control heights: three only"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "控制項高度：只有三種"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "控制項高度：只有三種"
           }
         }
       }
     },
-    "搜索": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search"
+    "搜索" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜尋"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜尋"
           }
         }
       }
     },
-    "播放": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play"
+    "播放" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "播放"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放"
           }
         }
       }
     },
-    "攀岩馆": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Climbing"
+    "攀岩馆" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Climbing"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "攀岩館"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "攀岩館"
           }
         }
       }
     },
-    "收起": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Close"
+    "收起" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "收起"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收起"
           }
         }
       }
     },
-    "教练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Coach"
+    "教练" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "教練"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教練"
           }
         }
       }
     },
-    "放在场景底": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On the scene floor"
+    "放在场景底" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On the scene floor"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "放在場景底"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放在場景底"
           }
         }
       }
     },
-    "放在白底": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On white"
+    "放在白底" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On white"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "放在白底"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放在白底"
           }
         }
       }
     },
-    "放纵餐": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cheat meal"
+    "放纵餐" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cheat meal"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "放縱餐"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放縱餐"
           }
         }
       }
     },
-    "数字：Barlow Condensed，只给数字": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Numbers: Barlow Condensed, for numbers only"
+    "数字：Barlow Condensed，只给数字" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Numbers: Barlow Condensed, for numbers only"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "數字：Barlow Condensed，只給數字"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "數字：Barlow Condensed，只給數字"
           }
         }
       }
     },
-    "日": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "S"
+    "日" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "日"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日"
           }
         }
       }
     },
-    "时长 · 分钟": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Minutes"
+    "时长 · 分钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutes"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "時長 · 分鐘"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "時長 · 分鐘"
           }
         }
       }
     },
-    "普拉提": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pilates"
+    "普拉提" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilates"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "皮拉提斯"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "皮拉提斯"
           }
         }
       }
     },
-    "普通按钮、输入框、页头按钮": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buttons, fields, header buttons"
+    "普通按钮、输入框、页头按钮" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buttons, fields, header buttons"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一般按鈕、輸入框、頁首按鈕"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一般按鈕、輸入框、頁首按鈕"
           }
         }
       }
     },
-    "本周": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This week"
+    "本周" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This week"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本週"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本週"
           }
         }
       }
     },
-    "本周小队训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Squad this week"
+    "本周小队训练" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Squad this week"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本週小隊訓練"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本週小隊訓練"
           }
         }
       }
     },
-    "本周我的训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "My training this week"
+    "本周我的训练" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My training this week"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本週我的訓練"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本週我的訓練"
           }
         }
       }
     },
-    "标签": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tags"
+    "标签" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tags"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "標籤"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標籤"
           }
         }
       }
     },
-    "标签和切换": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tags and switches"
+    "标签和切换" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tags and switches"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "標籤和切換"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標籤和切換"
           }
         }
       }
     },
-    "标签栏：系统的液态玻璃，选中是墨色": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tab bar: the system's Liquid Glass, the selected tab in ink"
+    "标签栏：系统的液态玻璃，选中是墨色" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab bar: the system's Liquid Glass, the selected tab in ink"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "標籤列：玻璃，選取的是淺灰塊"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標籤列：玻璃，選取的是淺灰塊"
           }
         }
       }
     },
-    "次要按钮、文字按钮": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Secondary and text buttons"
+    "次要按钮、文字按钮" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secondary and text buttons"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "次要按鈕、文字按鈕"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次要按鈕、文字按鈕"
           }
         }
       }
     },
-    "次要文字": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Secondary text"
+    "次要文字" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secondary text"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "次要文字"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次要文字"
           }
         }
       }
     },
-    "每周计划": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Weekly plan"
+    "每周计划" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly plan"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每週計畫"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每週計畫"
           }
         }
       }
     },
-    "每日提醒": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Daily reminder"
+    "每日提醒" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily reminder"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每日提醒"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每日提醒"
           }
         }
       }
     },
-    "淡人": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chill"
+    "淡人" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chill"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "佛系"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "佛系"
           }
         }
       }
     },
-    "清除": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clear"
+    "清除" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "清除"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除"
           }
         }
       }
     },
-    "游泳": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Swimming"
+    "游泳" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swimming"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "游泳"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "游泳"
           }
         }
       }
     },
-    "游泳 1 · 跑步 1": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Swim 1 · Run 1"
+    "游泳 1 · 跑步 1" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swim 1 · Run 1"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "游泳 1 · 跑步 1"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "游泳 1 · 跑步 1"
           }
         }
       }
     },
-    "游泳池": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pool"
+    "游泳池" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pool"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "游泳池"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "游泳池"
           }
         }
       }
     },
-    "点人看状态：整段显示": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap a person: their status, all of it"
+    "点人看状态：整段显示" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a person: their status, all of it"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "點人看狀態：整段顯示"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點人看狀態：整段顯示"
           }
         }
       }
     },
-    "状态圈": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Status ring"
+    "状态圈" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status ring"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "狀態圈"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "狀態圈"
           }
         }
       }
     },
-    "用 Apple 确认": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Confirm with Apple"
+    "用 Apple 确认" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirm with Apple"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用 Apple 確認"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 Apple 確認"
           }
         }
       }
     },
-    "白底页上：浅灰卡片": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On a white page: subtle grey cards"
+    "白底页上：浅灰卡片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On a white page: subtle grey cards"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "白底頁面上：淺灰卡片"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "白底頁面上：淺灰卡片"
           }
         }
       }
     },
-    "移除这一项": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Removes this choice"
+    "移除这一项" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removes this choice"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "移除這一項"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除這一項"
           }
         }
       }
     },
-    "穿搭": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Outfit"
+    "穿搭" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outfit"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "穿搭"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "穿搭"
           }
         }
       }
     },
-    "第 %lld 步，共 %lld 步": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Step %1$lld of %2$lld"
+    "第 %lld 步，共 %lld 步" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Step %1$lld of %2$lld"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第 %1$lld 步，共 %2$lld 步"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %1$lld 步，共 %2$lld 步"
           }
         }
       }
     },
-    "等待：三拍，整页是两张票": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Waiting: three hopping dots; a whole page, two tickets"
+    "等待：三拍，整页是两张票" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting: three hopping dots; a whole page, two tickets"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "等待：三拍，整頁是兩張票"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等待：三拍，整頁是兩張票"
           }
         }
       }
     },
-    "篮球": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Basketball"
+    "篮球" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basketball"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "籃球"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "籃球"
           }
         }
       }
     },
-    "练 5 休 2": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "5 on, 2 off"
+    "练 5 休 2" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 on, 2 off"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "練 5 休 2"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "練 5 休 2"
           }
         }
       }
     },
-    "训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trained"
+    "训练" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trained"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "訓練"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訓練"
           }
         }
       }
     },
-    "缩略图": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Thumbnails"
+    "缩略图" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thumbnails"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "縮圖"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮圖"
           }
         }
       }
     },
-    "网球": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tennis"
+    "网球" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tennis"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網球"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網球"
           }
         }
       }
     },
-    "网球场": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tennis"
+    "网球场" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tennis"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網球場"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網球場"
           }
         }
       }
     },
-    "羽毛球": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Badminton"
+    "羽毛球" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Badminton"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "羽球"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "羽球"
           }
         }
       }
     },
-    "腿还在酸，今天先躺平，明天一定练。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Legs still sore, lying flat today, training tomorrow for sure."
+    "腿还在酸，今天先躺平，明天一定练。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legs still sore, lying flat today, training tomorrow for sure."
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "腿還在痠，今天先耍廢，明天一定練。"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "腿還在痠，今天先耍廢，明天一定練。"
           }
         }
       }
     },
-    "拍一拍": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pat"
+    "拍一拍" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pat"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "拍一拍"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拍一拍"
           }
         }
       }
     },
-    "设置": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Settings"
+    "设置" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "設定"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定"
           }
         }
       }
     },
-    "请假": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Day off"
+    "请假" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day off"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "請假"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請假"
           }
         }
       }
     },
-    "跑步": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Running"
+    "跑步" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Running"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "跑步"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跑步"
           }
         }
       }
     },
-    "跑道": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Track"
+    "跑道" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "跑道"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跑道"
           }
         }
       }
     },
-    "输入框": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fields"
+    "输入框" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fields"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "輸入框"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸入框"
           }
         }
       }
     },
-    "返回": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Back"
+    "返回" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "返回"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
           }
         }
       }
     },
-    "还没打卡": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not checked in yet"
+    "还没打卡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not checked in yet"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "還沒打卡"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還沒打卡"
           }
         }
       }
     },
-    "还没练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not yet"
+    "还没练" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not yet"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "還沒練"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還沒練"
           }
         }
       }
     },
-    "选项、输入框": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Picks, fields"
+    "选项、输入框" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Picks, fields"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "選項、輸入框"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選項、輸入框"
           }
         }
       }
     },
-    "重来": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reset"
+    "重来" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重來"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重來"
           }
         }
       }
     },
-    "间距、圆角、控件高度": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spacing, corners, control heights"
+    "间距、圆角、控件高度" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spacing, corners, control heights"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "間距、圓角、控制項高度"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "間距、圓角、控制項高度"
           }
         }
       }
     },
-    "间距：4 的倍数，7 档": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spacing: seven steps of 4"
+    "间距：4 的倍数，7 档" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spacing: seven steps of 4"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "間距：4 的倍數，7 級"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "間距：4 的倍數，7 級"
           }
         }
       }
     },
-    "随机换一个": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shuffle"
+    "随机换一个" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shuffle"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隨機換一個"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隨機換一個"
           }
         }
       }
     },
-    "页头：44 的圆，右边最多一个": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Headers: 44-point circles, at most one on the right"
+    "页头：44 的圆，右边最多一个" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Headers: 44-point circles, at most one on the right"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "頁首：44 的圓，右邊最多一個"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "頁首：44 的圓，右邊最多一個"
           }
         }
       }
     },
-    "页面底": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Page"
+    "页面底" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "頁面底"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "頁面底"
           }
         }
       }
     },
-    "颜色": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Color"
+    "颜色" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "顏色"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顏色"
           }
         }
       }
     },
-    "骑车": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cycling"
+    "骑车" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cycling"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "騎車"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "騎車"
           }
         }
       }
     },
-    "下周场地：去过的是色卡，没开过的是纸箱": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Next week's scene: a colour card once visited, a carton until then"
+    "下周场地：去过的是色卡，没开过的是纸箱" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next week's scene: a colour card once visited, a carton until then"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下週場地：去過的是色卡，還沒開過的是紙箱"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下週場地：去過的是色卡，還沒開過的是紙箱"
           }
         }
       }
     },
-    "点队友：状态和拍一拍": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap a teammate: status and a pat"
+    "点队友：状态和拍一拍" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a teammate: status and a pat"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "點隊友：狀態和拍一拍"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點隊友：狀態和拍一拍"
           }
         }
       }
     },
-    "小米 · 跑步 中": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mia · Running"
+    "小米 · 跑步 中" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mia · Running"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小米 · 跑步 中"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小米 · 跑步 中"
           }
         }
       }
     },
-    "今天训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trained today"
+    "今天训练" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trained today"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今天訓練"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天訓練"
           }
         }
       }
     },
-    "阿杰 · 今天还没打卡": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Jay · Not checked in yet"
+    "阿杰 · 今天还没打卡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jay · Not checked in yet"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "阿傑 · 今天還沒打卡"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "阿傑 · 今天還沒打卡"
           }
         }
       }
     },
-    "拍过了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Patted"
+    "拍过了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Patted"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "拍過了"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拍過了"
           }
         }
       }
     },
-    "开灯": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lights on"
+    "开灯" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lights on"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "開燈"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開燈"
           }
         }
       }
     },
-    "关灯": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lights off"
+    "关灯" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lights off"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "關燈"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關燈"
           }
         }
       }
     },
-    "开灯的拉绳：关着是白的，开着是暖黄": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The light cord: white when off, warm when on"
+    "开灯的拉绳：关着是白的，开着是暖黄" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The light cord: white when off, warm when on"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "開燈的拉繩：關著是白的，開著是暖黃"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開燈的拉繩：關著是白的，開著是暖黃"
           }
         }
       }
     },
-    "周一": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mon"
+    "周一" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mon"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "週一"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週一"
           }
         }
       }
     },
-    "周三": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wed"
+    "周三" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wed"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "週三"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週三"
           }
         }
       }
     },
-    "周二": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tue"
+    "周二" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tue"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "週二"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週二"
           }
         }
       }
     },
-    "周五": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fri"
+    "周五" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fri"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "週五"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週五"
           }
         }
       }
     },
-    "周六": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sat"
+    "周六" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sat"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "週六"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週六"
           }
         }
       }
     },
-    "周四": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Thu"
+    "周四" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thu"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "週四"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週四"
           }
         }
       }
     },
-    "周日": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sun"
+    "周日" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sun"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "週日"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週日"
           }
         }
       }
     },
-    "游泳 45 分钟": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Swimming 45 min"
+    "游泳 45 分钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swimming 45 min"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "游泳 45 分鐘"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "游泳 45 分鐘"
           }
         }
       }
     },
-    "瑜伽": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yoga"
+    "瑜伽" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yoga"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "瑜珈"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "瑜珈"
           }
         }
       }
     },
-    "请假了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Day off"
+    "请假了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day off"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "請假了"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請假了"
           }
         }
       }
     },
-    "跑步 32 分钟": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Running 32 min"
+    "跑步 32 分钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Running 32 min"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "跑步 32 分鐘"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跑步 32 分鐘"
           }
         }
       }
     },
-    "第 %lld 周": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Week %lld"
+    "第 %lld 周" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week %lld"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第 %lld 週"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %lld 週"
           }
         }
       }
     },
-    "一周海报：一天一行，角色站在角落": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Week poster: a row a day, the character in the corner"
+    "一周海报：一天一行，角色站在角落" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week poster: a row a day, the character in the corner"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一週海報：一天一行，角色站在角落"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一週海報：一天一行，角色站在角落"
           }
         }
       }
     },
-    "周一 跑步": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mon Run"
+    "周一 跑步" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mon Run"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "週一 跑步"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週一 跑步"
           }
         }
       }
     },
-    "周二 力量": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tue Strength"
+    "周二 力量" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tue Strength"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "週二 重訓"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週二 重訓"
           }
         }
       }
     },
-    "周三 休息": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wed Rest"
+    "周三 休息" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wed Rest"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "週三 休息"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週三 休息"
           }
         }
       }
     },
-    "每周训练 2/7 天": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Training 2/7 days a week"
+    "每周训练 2/7 天" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Training 2/7 days a week"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每週訓練 2/7 天"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每週訓練 2/7 天"
           }
         }
       }
     },
-    "第 %lld 张，共 %lld 张": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Photo %1$lld of %2$lld"
+    "第 %lld 张，共 %lld 张" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo %1$lld of %2$lld"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第 %1$lld 張，共 %2$lld 張"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %1$lld 張，共 %2$lld 張"
           }
         }
       }
     },
-    "保存到相册": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Save to Photos"
+    "保存到相册" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save to Photos"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "保存到相簿"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存到相簿"
           }
         }
       }
     },
-    "已存到相册": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saved to Photos"
+    "已存到相册" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved to Photos"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已存到相簿"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已存到相簿"
           }
         }
       }
     },
-    "没存上，再试一次": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not saved, try again"
+    "没存上，再试一次" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not saved, try again"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "沒存上，再試一次"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒存上，再試一次"
           }
         }
       }
     },
-    "分享": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Share"
+    "分享" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "分享"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享"
           }
         }
       }
     },
-    "通知条：从顶上落下": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notice: drops from the top"
+    "通知条：从顶上落下" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notice: drops from the top"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "通知條：從頂上落下"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知條：從頂上落下"
           }
         }
       }
     },
-    "通知条：场上没人能说的事": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notices: news nobody on the scene can tell"
+    "通知条：场上没人能说的事" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notices: news nobody on the scene can tell"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "通知條：場上沒人能說的事"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知條：場上沒人能說的事"
           }
         }
       }
     },
-    "DEUCE CLUB 开门了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DEUCE CLUB is open"
+    "DEUCE CLUB 开门了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DEUCE CLUB is open"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DEUCE CLUB 開門了"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DEUCE CLUB 開門了"
           }
         }
       }
     },
-    "网球练满 3 次": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "3 tennis sessions"
+    "网球练满 3 次" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 tennis sessions"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網球練滿 3 次"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網球練滿 3 次"
           }
         }
       }
     },
-    "小米把小队搬到了跑道": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mi moved the squad to Track"
+    "小米把小队搬到了跑道" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mi moved the squad to Track"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小米把小隊搬到了跑道"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小米把小隊搬到了跑道"
           }
         }
       }
     },
-    "网络开小差了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Can't connect right now"
+    "网络开小差了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can't connect right now"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網路開小差了"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網路開小差了"
           }
         }
       }
     },
-    "再试一次": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Try again"
+    "再试一次" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "再試一次"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再試一次"
           }
         }
       }
     },
-    "网络开小差了，没存上": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't save. Check your connection"
+    "网络开小差了，没存上" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't save. Check your connection"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網路開小差了，沒存上"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網路開小差了，沒存上"
           }
         }
       }
     },
-    "浮着的按钮：液态玻璃": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Floating buttons: Liquid Glass"
+    "浮着的按钮：液态玻璃" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Floating buttons: Liquid Glass"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "浮著的按鈕：液態玻璃"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浮著的按鈕：液態玻璃"
           }
         }
       }
     },
-    "空状态和出错": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Empty and error states"
+    "空状态和出错" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empty and error states"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "空狀態和出錯"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "空狀態和出錯"
           }
         }
       }
     },
-    "再看一遍": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Watch again"
+    "再看一遍" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watch again"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "再看一遍"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再看一遍"
           }
         }
       }
     },
-    "存图": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Save image"
+    "存图" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save image"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "存圖"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存圖"
           }
         }
       }
     },
-    "更多表情": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "More emoji"
+    "更多表情" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More emoji"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "更多表情"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更多表情"
           }
         }
       }
     },
-    "选一个回应": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pick a reaction"
+    "选一个回应" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick a reaction"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "選一個回應"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選一個回應"
           }
         }
       }
     },
-    "全部表情": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "All emoji"
+    "全部表情" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All emoji"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "全部表情"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部表情"
           }
         }
       }
     },
-    "最近": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recent"
+    "最近" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最近"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近"
           }
         }
       }
     },
-    "搜索表情": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search emoji"
+    "搜索表情" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search emoji"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜尋表情符號"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜尋表情符號"
           }
         }
       }
     },
-    "雪场": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ski"
+    "雪场" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ski"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "雪場"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "雪場"
           }
         }
       }
     },
-    "NEW": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NEW"
+    "NEW" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NEW"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NEW"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NEW"
           }
         }
       }
     },
-    "菜单：液态玻璃，从「···」或长按打开": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Menu: Liquid Glass, from ··· or a long press"
+    "菜单：液态玻璃，从「···」或长按打开" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu: Liquid Glass, from ··· or a long press"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "選單：液態玻璃，從「···」或長按開啟"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選單：液態玻璃，從「···」或長按開啟"
           }
         }
       }
     },
-    "编辑": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit"
+    "编辑" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "編輯"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯"
           }
         }
       }
     },
-    "删除这条？": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete this one?"
+    "删除这条？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this one?"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "刪除這則？"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除這則？"
           }
         }
       }
     },
-    "商店街上新了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New in the stores"
+    "商店街上新了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New in the stores"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "商店街上新了"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "商店街上新了"
           }
         }
       }
     },
-    "快去看看吧！": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Take a look!"
+    "快去看看吧！" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take a look!"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "快去看看吧！"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快去看看吧！"
           }
         }
       }
     },
-    "去商店街看看": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Visit the stores"
+    "去商店街看看" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visit the stores"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "去商店街看看"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "去商店街看看"
           }
         }
       }
     },
-    "小队本周目标 · 人均 %lld 天": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Squad goal · %lld days each"
+    "小队本周目标 · 人均 %lld 天" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Squad goal · %lld days each"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小隊本週目標 · 人均 %lld 天"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小隊本週目標 · 人均 %lld 天"
           }
         }
       }
     },
-    "天": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "days"
+    "天" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "days"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "天"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "天"
           }
         }
       }
     },
-    "收起小队卡片": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fold the squad card"
+    "收起小队卡片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fold the squad card"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "收起小隊卡片"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收起小隊卡片"
           }
         }
       }
     },
-    "展开小队卡片": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open the squad card"
+    "展开小队卡片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open the squad card"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "展開小隊卡片"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "展開小隊卡片"
           }
         }
       }
     },
-    "%@，本周 %lld/%lld 天；我这周 %lld/%lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@, %2$lld/%3$lld days this week; my week %4$lld/%5$lld"
+    "%@，本周 %lld/%lld 天；我这周 %lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$lld/%3$lld days this week; my week %4$lld/%5$lld"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@，本週 %lld/%lld 天；我這週 %lld/%lld"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@，本週 %lld/%lld 天；我這週 %lld/%lld"
           }
         }
       }
     },
-    "场景上：毛玻璃卡片，可收起": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On a scene: a glass card that folds"
+    "场景上：毛玻璃卡片，可收起" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On a scene: a glass card that folds"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "場景上：毛玻璃卡片，可收起"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "場景上：毛玻璃卡片，可收起"
           }
         }
       }
     },
-    "完成：两张票打勾": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Done: tickets with a check"
+    "比赛时区" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Match time zone"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "完成：兩張票打勾"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "比赛时区"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "比賽時區"
+          }
+        }
+      }
+    },
+    "搜索城市或时区" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search cities or time zones"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索城市或时区"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜尋城市或時區"
+          }
+        }
+      }
+    },
+    "完成：两张票打勾" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done: tickets with a check"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成：兩張票打勾"
+          }
         }
       }
     },
-    "完成": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Done"
+    "完成" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
           }
         },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "完成"
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成"
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

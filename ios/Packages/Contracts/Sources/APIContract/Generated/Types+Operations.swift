@@ -9378,7 +9378,7 @@ public enum Operations {
     }
     /// Create a squad
     ///
-    /// With a name and, optionally, its weekly goal; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
+    /// With a name and, optionally, its weekly goal and time zone; the caller is its first member, and needs a current AI consent (`GET /me/ai-consent`). The app makes the id, so a create can be retried: the same squad again answers 200, another name or member under that id 409.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
@@ -9563,7 +9563,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid name, the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)
+            /// Not a valid name, a time zone that doesn’t exist (`TIME_ZONE_UNKNOWN`), the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the member hasn’t agreed to the current AI terms (`AI_CONSENT_REQUIRED`)
             ///
             /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)/responses/400`.
             ///
@@ -12305,7 +12305,7 @@ public enum Operations {
     }
     /// A squad’s scene this week, and who picks it
     ///
-    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm Eastern when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
+    /// Last week’s crown winners pick the scene once a week, from Sunday 8pm on the squad’s clock (小队时区) when the week is awarded; when nobody won the crown, the captain picks. A squad trains on its latest pick until the next one, and on the gym before its first. Only for its members.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/scene`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/scene/get(getSquadScene)`.
@@ -15196,6 +15196,746 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.serviceUnavailable`.
             /// - SeeAlso: `.serviceUnavailable`.
             public var serviceUnavailable: Operations.SetSquadWeeklyGoal.Output.ServiceUnavailable {
+                get throws {
+                    switch self {
+                    case let .serviceUnavailable(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "serviceUnavailable",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case applicationProblemJson
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                case "application/problem+json":
+                    self = .applicationProblemJson
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                case .applicationProblemJson:
+                    return "application/problem+json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json,
+                    .applicationProblemJson
+                ]
+            }
+        }
+    }
+    /// The squad’s time zone
+    ///
+    /// For its members, in the squad’s week on its own clock.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/time-zone`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/get(getSquadTimeZone)`.
+    public enum GetSquadTimeZone {
+        public static let id: Swift.String = "getSquadTimeZone"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/path/squadId`.
+                public var squadId: Swift.String
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - squadId:
+                public init(squadId: Swift.String) {
+                    self.squadId = squadId
+                }
+            }
+            public var path: Operations.GetSquadTimeZone.Input.Path
+            /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GetSquadTimeZone.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.GetSquadTimeZone.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.GetSquadTimeZone.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.GetSquadTimeZone.Input.Path,
+                headers: Operations.GetSquadTimeZone.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SquadTimeZone)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SquadTimeZone {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetSquadTimeZone.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GetSquadTimeZone.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            /// The zone
+            ///
+            /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/get(getSquadTimeZone)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.GetSquadTimeZone.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.GetSquadTimeZone.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct BadRequest: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/responses/400/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/responses/400/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetSquadTimeZone.Output.BadRequest.Body
+                /// Creates a new `BadRequest`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GetSquadTimeZone.Output.BadRequest.Body) {
+                    self.body = body
+                }
+            }
+            /// Not a valid squad id
+            ///
+            /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/get(getSquadTimeZone)/responses/400`.
+            ///
+            /// HTTP response code: `400 badRequest`.
+            case badRequest(Operations.GetSquadTimeZone.Output.BadRequest)
+            /// The associated value of the enum case if `self` is `.badRequest`.
+            ///
+            /// - Throws: An error if `self` is not `.badRequest`.
+            /// - SeeAlso: `.badRequest`.
+            public var badRequest: Operations.GetSquadTimeZone.Output.BadRequest {
+                get throws {
+                    switch self {
+                    case let .badRequest(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "badRequest",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Unauthorized: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/responses/401/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/responses/401/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetSquadTimeZone.Output.Unauthorized.Body
+                /// Creates a new `Unauthorized`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GetSquadTimeZone.Output.Unauthorized.Body) {
+                    self.body = body
+                }
+            }
+            /// No bearer token, or not a valid one
+            ///
+            /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/get(getSquadTimeZone)/responses/401`.
+            ///
+            /// HTTP response code: `401 unauthorized`.
+            case unauthorized(Operations.GetSquadTimeZone.Output.Unauthorized)
+            /// The associated value of the enum case if `self` is `.unauthorized`.
+            ///
+            /// - Throws: An error if `self` is not `.unauthorized`.
+            /// - SeeAlso: `.unauthorized`.
+            public var unauthorized: Operations.GetSquadTimeZone.Output.Unauthorized {
+                get throws {
+                    switch self {
+                    case let .unauthorized(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "unauthorized",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Forbidden: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/responses/403/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/responses/403/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetSquadTimeZone.Output.Forbidden.Body
+                /// Creates a new `Forbidden`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GetSquadTimeZone.Output.Forbidden.Body) {
+                    self.body = body
+                }
+            }
+            /// The member isn’t in this squad (`SQUAD_NOT_JOINED`)
+            ///
+            /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/get(getSquadTimeZone)/responses/403`.
+            ///
+            /// HTTP response code: `403 forbidden`.
+            case forbidden(Operations.GetSquadTimeZone.Output.Forbidden)
+            /// The associated value of the enum case if `self` is `.forbidden`.
+            ///
+            /// - Throws: An error if `self` is not `.forbidden`.
+            /// - SeeAlso: `.forbidden`.
+            public var forbidden: Operations.GetSquadTimeZone.Output.Forbidden {
+                get throws {
+                    switch self {
+                    case let .forbidden(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "forbidden",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct ServiceUnavailable: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/responses/503/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/GET/responses/503/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.GetSquadTimeZone.Output.ServiceUnavailable.Body
+                /// Creates a new `ServiceUnavailable`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.GetSquadTimeZone.Output.ServiceUnavailable.Body) {
+                    self.body = body
+                }
+            }
+            /// Sign-in can’t be checked right now
+            ///
+            /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/get(getSquadTimeZone)/responses/503`.
+            ///
+            /// HTTP response code: `503 serviceUnavailable`.
+            case serviceUnavailable(Operations.GetSquadTimeZone.Output.ServiceUnavailable)
+            /// The associated value of the enum case if `self` is `.serviceUnavailable`.
+            ///
+            /// - Throws: An error if `self` is not `.serviceUnavailable`.
+            /// - SeeAlso: `.serviceUnavailable`.
+            public var serviceUnavailable: Operations.GetSquadTimeZone.Output.ServiceUnavailable {
+                get throws {
+                    switch self {
+                    case let .serviceUnavailable(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "serviceUnavailable",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case applicationProblemJson
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                case "application/problem+json":
+                    self = .applicationProblemJson
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                case .applicationProblemJson:
+                    return "application/problem+json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json,
+                    .applicationProblemJson
+                ]
+            }
+        }
+    }
+    /// Set the squad’s time zone
+    ///
+    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
+    public enum SetSquadTimeZone {
+        public static let id: Swift.String = "setSquadTimeZone"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/path/squadId`.
+                public var squadId: Swift.String
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - squadId:
+                public init(squadId: Swift.String) {
+                    self.squadId = squadId
+                }
+            }
+            public var path: Operations.SetSquadTimeZone.Input.Path
+            /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SetSquadTimeZone.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SetSquadTimeZone.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SetSquadTimeZone.Input.Headers
+            /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.SquadTimeZoneChange)
+            }
+            public var body: Operations.SetSquadTimeZone.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.SetSquadTimeZone.Input.Path,
+                headers: Operations.SetSquadTimeZone.Input.Headers = .init(),
+                body: Operations.SetSquadTimeZone.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SquadTimeZone)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SquadTimeZone {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SetSquadTimeZone.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SetSquadTimeZone.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            /// The zone, with next week’s changed
+            ///
+            /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SetSquadTimeZone.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SetSquadTimeZone.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct BadRequest: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/400/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/400/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SetSquadTimeZone.Output.BadRequest.Body
+                /// Creates a new `BadRequest`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SetSquadTimeZone.Output.BadRequest.Body) {
+                    self.body = body
+                }
+            }
+            /// Not a valid squad id, or a zone that doesn’t exist (`TIME_ZONE_UNKNOWN`)
+            ///
+            /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)/responses/400`.
+            ///
+            /// HTTP response code: `400 badRequest`.
+            case badRequest(Operations.SetSquadTimeZone.Output.BadRequest)
+            /// The associated value of the enum case if `self` is `.badRequest`.
+            ///
+            /// - Throws: An error if `self` is not `.badRequest`.
+            /// - SeeAlso: `.badRequest`.
+            public var badRequest: Operations.SetSquadTimeZone.Output.BadRequest {
+                get throws {
+                    switch self {
+                    case let .badRequest(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "badRequest",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Unauthorized: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/401/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/401/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SetSquadTimeZone.Output.Unauthorized.Body
+                /// Creates a new `Unauthorized`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SetSquadTimeZone.Output.Unauthorized.Body) {
+                    self.body = body
+                }
+            }
+            /// No bearer token, or not a valid one
+            ///
+            /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)/responses/401`.
+            ///
+            /// HTTP response code: `401 unauthorized`.
+            case unauthorized(Operations.SetSquadTimeZone.Output.Unauthorized)
+            /// The associated value of the enum case if `self` is `.unauthorized`.
+            ///
+            /// - Throws: An error if `self` is not `.unauthorized`.
+            /// - SeeAlso: `.unauthorized`.
+            public var unauthorized: Operations.SetSquadTimeZone.Output.Unauthorized {
+                get throws {
+                    switch self {
+                    case let .unauthorized(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "unauthorized",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Forbidden: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/403/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/403/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SetSquadTimeZone.Output.Forbidden.Body
+                /// Creates a new `Forbidden`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SetSquadTimeZone.Output.Forbidden.Body) {
+                    self.body = body
+                }
+            }
+            /// The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)
+            ///
+            /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)/responses/403`.
+            ///
+            /// HTTP response code: `403 forbidden`.
+            case forbidden(Operations.SetSquadTimeZone.Output.Forbidden)
+            /// The associated value of the enum case if `self` is `.forbidden`.
+            ///
+            /// - Throws: An error if `self` is not `.forbidden`.
+            /// - SeeAlso: `.forbidden`.
+            public var forbidden: Operations.SetSquadTimeZone.Output.Forbidden {
+                get throws {
+                    switch self {
+                    case let .forbidden(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "forbidden",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct UnsupportedMediaType: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/415/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/415/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SetSquadTimeZone.Output.UnsupportedMediaType.Body
+                /// Creates a new `UnsupportedMediaType`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SetSquadTimeZone.Output.UnsupportedMediaType.Body) {
+                    self.body = body
+                }
+            }
+            /// The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)
+            ///
+            /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)/responses/415`.
+            ///
+            /// HTTP response code: `415 unsupportedMediaType`.
+            case unsupportedMediaType(Operations.SetSquadTimeZone.Output.UnsupportedMediaType)
+            /// The associated value of the enum case if `self` is `.unsupportedMediaType`.
+            ///
+            /// - Throws: An error if `self` is not `.unsupportedMediaType`.
+            /// - SeeAlso: `.unsupportedMediaType`.
+            public var unsupportedMediaType: Operations.SetSquadTimeZone.Output.UnsupportedMediaType {
+                get throws {
+                    switch self {
+                    case let .unsupportedMediaType(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "unsupportedMediaType",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct ServiceUnavailable: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/503/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/squads/{squadId}/time-zone/PUT/responses/503/content/application\/problem+json`.
+                    case applicationProblemJson(Components.Schemas.Problem)
+                    /// The associated value of the enum case if `self` is `.applicationProblemJson`.
+                    ///
+                    /// - Throws: An error if `self` is not `.applicationProblemJson`.
+                    /// - SeeAlso: `.applicationProblemJson`.
+                    public var applicationProblemJson: Components.Schemas.Problem {
+                        get throws {
+                            switch self {
+                            case let .applicationProblemJson(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SetSquadTimeZone.Output.ServiceUnavailable.Body
+                /// Creates a new `ServiceUnavailable`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SetSquadTimeZone.Output.ServiceUnavailable.Body) {
+                    self.body = body
+                }
+            }
+            /// Sign-in can’t be checked right now
+            ///
+            /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)/responses/503`.
+            ///
+            /// HTTP response code: `503 serviceUnavailable`.
+            case serviceUnavailable(Operations.SetSquadTimeZone.Output.ServiceUnavailable)
+            /// The associated value of the enum case if `self` is `.serviceUnavailable`.
+            ///
+            /// - Throws: An error if `self` is not `.serviceUnavailable`.
+            /// - SeeAlso: `.serviceUnavailable`.
+            public var serviceUnavailable: Operations.SetSquadTimeZone.Output.ServiceUnavailable {
                 get throws {
                     switch self {
                     case let .serviceUnavailable(response):
@@ -20860,7 +21600,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)
+            /// Before the week’s awards on Sunday at 8pm on the squad’s clock (小队时区) (`WEEK_STORY_NOT_READY`)
             ///
             /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/nudge/post(nudgeSquadWeekStory)/responses/404`.
             ///
@@ -20967,7 +21707,7 @@ public enum Operations {
     }
     /// A squad’s weekly 战报 (每周战报), frozen at the week’s awards
     ///
-    /// Frozen once for the whole squad on Sunday at 8pm Eastern: who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
+    /// Frozen once for the whole squad on Sunday at 8pm on the squad’s clock (小队时区): who was in the squad then, that week’s scene, and every page from the check-ins and reactions made before then. Nothing that happens later changes it (a member joining or leaving, a late check-in or reaction, a new look or scene), except that a deleted account or post takes its own words and photos with it. The AI’s titles for each member who checked in come within the hour (`pending` until then). Check-ins made later still count for the week’s summary, only not here. Only for members of the squad now.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
@@ -21254,7 +21994,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Before the week’s awards on Sunday at 8pm Eastern (`WEEK_STORY_NOT_READY`)
+            /// Before the week’s awards on Sunday at 8pm on the squad’s clock (小队时区) (`WEEK_STORY_NOT_READY`)
             ///
             /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)/responses/404`.
             ///
