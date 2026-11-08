@@ -108,9 +108,10 @@ final class LanguageUITests: XCTestCase {
         XCTAssertTrue(monday.label.contains("Mon"), "the week's days stayed Chinese: \(monday.label)")
     }
 
-    /// 设置's 语言 switches the app too, and back.
+    /// 设置's 语言 switches the app too, and back. The phone is English here whatever the simulator
+    /// was left speaking, so the app opens in Simplified Chinese.
     func testSettingsSwitchesTheLanguage() {
-        let app = launchFirstTime(["-tab", "me", "-uitest-no-push"])
+        let app = launchFirstTime(["-tab", "me", "-uitest-no-push", "-uitest-phone-language", "en-US"])
         let settingsButton = app.buttons["me.settings"]
         XCTAssertTrue(settingsButton.waitForExistence(timeout: Self.wait), "我 never showed")
         settingsButton.tap()
