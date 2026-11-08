@@ -162,10 +162,10 @@ private let sampleCoach = Coach(
 private let sampleCoaches = [
     sampleCoach,
     Coach(
-        id: "papa", name: "帕帕", title: "跟练教练", catchphrase: "最后八个",
+        id: "papa", name: "帕帕", title: "跟练教练", catchphrase: "马了等于做了，收藏等于瘦了",
         background: "跟练视频收藏的人比练的人多，评论区一半在打卡第一天", yearsCoaching: 5,
         experience: "个人纪录：一组「最后八个」做了 64 个", style: "全程微笑，一口气不歇，像个人形 AI",
-        tags: ["收藏等于练过", "打卡第一天", "这才一半", "健身界严母"], pay: "先把你收藏夹里的练完"),
+        tags: ["最后八个", "打卡第一天", "这才一半", "健身界严母"], pay: "先把你收藏夹里的练完"),
 ]
 
 extension Squad {
