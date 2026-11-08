@@ -45,6 +45,8 @@ extension ScheduleView {
                     .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
             }
         }
+        // The navigation bar shows a label's icon alone unless told otherwise.
+        .labelStyle(.titleAndIcon)
         .buttonStyle(SecondaryButtonStyle())
         .disabled(store.sheet == nil || model.saving != .idle && model.saving != .failed)
         .accessibilityIdentifier("schedule.save")

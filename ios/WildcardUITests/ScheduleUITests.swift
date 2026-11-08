@@ -82,6 +82,9 @@ final class ScheduleUITests: XCTestCase {
         waitFor(nextWeek, "isSelected == true", "下周 didn't open", timeout: 10)
         let countdown = find(app, "schedule.countdown")
         XCTAssertTrue(countdown.waitForExistence(timeout: 10), "no countdown on next week")
+        // The poster scrolls under the title and the weeks; its foot clears the tab bar.
+        app.swipeUp()
+        settle()
         XCTAssertLessThanOrEqual(countdown.frame.maxY, tabBar.frame.minY, "the countdown sits under the tab bar")
         settle()
         keepScreenshot(named: "63-schedule-next-week")
