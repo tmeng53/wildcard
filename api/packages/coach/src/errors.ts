@@ -85,3 +85,25 @@ export class CoachCardIdError extends AppError {
     super('Not the id of a card of that kind.');
   }
 }
+
+/** Thrown when a member marks done a challenge they let go (算了). */
+export class CoachChallengeDeclinedError extends AppError {
+  override readonly name = 'CoachChallengeDeclinedError';
+  readonly reason = 'COACH_CHALLENGE_DECLINED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('The member let this challenge go.');
+  }
+}
+
+/** Thrown when a member marks done a challenge after its own day. */
+export class CoachChallengeDayOverError extends AppError {
+  override readonly name = 'CoachChallengeDayOverError';
+  readonly reason = 'COACH_CHALLENGE_DAY_OVER';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('The challenge was for another day.');
+  }
+}

@@ -56,6 +56,13 @@ export interface CoachChallengeAnswers {
   answer: string;
   at: Generated<Timestamp>;
   note_id: Int8;
+  reason: string | null;
+}
+
+export interface CoachChallengeCompletions {
+  at: Generated<Timestamp>;
+  by: string;
+  note_id: Int8;
 }
 
 export interface Coaches {
@@ -231,6 +238,7 @@ export interface DB {
   coach_card_seen: CoachCardSeen;
   coach_catalog_events: CoachCatalogEvents;
   coach_challenge_answers: CoachChallengeAnswers;
+  coach_challenge_completions: CoachChallengeCompletions;
   coach_files: CoachFiles;
   coach_letter_tries: CoachLetterTries;
   coach_letters: CoachLetters;

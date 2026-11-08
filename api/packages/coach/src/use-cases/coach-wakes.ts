@@ -1,3 +1,4 @@
+import { challengeOpen } from '../domain/challenge.js';
 import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
   shownBody,
@@ -7,7 +8,13 @@ import {
   storedPathOf,
   type StoredPath,
 } from '../domain/memory.js';
-import { instructionsOf, taskOf, type CoachThread, type DayTalk } from '../domain/prompt.js';
+import {
+  instructionsOf,
+  taskOf,
+  type CoachThread,
+  type DayTalk,
+  type YesterdayFacts,
+} from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
 import { holidaysOn, SquadId, type CoachSettings } from '../domain/settings.js';
 import { factsText, planIndexOf, type NoteBrief } from '../domain/member-facts.js';
@@ -18,7 +25,6 @@ import {
   saidTo,
   weekText,
   type SquadWeek,
-  type WeekCheckIn,
 } from '../domain/squad-week.js';
 import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
 import type {
@@ -372,6 +378,7 @@ async function runWake(
       reaction: undefined,
       answer: undefined,
       answerMentions: [],
+      challengeDone: false,
       steps: [],
     };
     // A squad whose coach hasn't written its file yet starts from its name and who is in it,
@@ -440,6 +447,7 @@ async function runWake(
             challenge: {
               challenge: challenge.challenge,
               ...(challenge.answer === undefined ? {} : { answer: challenge.answer }),
+              ...(challenge.completion === undefined ? {} : { completion: challenge.completion }),
             },
           }),
       ...(gifting === undefined ? {} : { gifting }),
@@ -470,6 +478,7 @@ async function runWake(
         draft,
         kind: wake.reason.kind,
         to: author,
+        openChallenge: challenge !== undefined && challengeOpen(challenge),
         ...photosOf(deps.photoUrls, { week, wake }),
         ...factsFor(deps, { week, roster }),
         ...(deps.memes === undefined ? {} : { memes: deps.memes }),
@@ -508,6 +517,7 @@ async function runWake(
         squad: wake.squad,
         wake,
         draft,
+        ...(challenge === undefined ? {} : { challengeNote: challenge.note }),
         stored,
         roster,
         coach,
@@ -610,14 +620,19 @@ async function briefsOf(
 async function yesterdayOf(
   deps: CoachWakesDependencies,
   { squad, week, day }: { readonly squad: SquadId; readonly week: SquadWeek; readonly day: string },
-): Promise<{ readonly day: string; readonly checkIns: readonly WeekCheckIn[] }> {
+): Promise<YesterdayFacts> {
   const yesterday = dayBefore(day, 1);
   // On a Monday, yesterday was last week.
   const weekStart = weekStartOf(yesterday);
   const its = weekStart === week.weekStart ? week : await weekOf(deps, { squad, weekStart });
+  // The day's challenges and what each member said to them, why they let one go included, only
+  // for members who still agree to AI use.
+  const set = await deps.stores.memberNotes.challengesOn({ squad, day: yesterday });
+  const consented = new Set(await deps.aiConsented(set.map(({ member }) => member)));
   return {
     day: yesterday,
     checkIns: its.checkIns.filter((each) => each.day === yesterday || each.postedDay === yesterday),
+    challenges: set.filter(({ member }) => consented.has(member)),
   };
 }
 
@@ -653,10 +668,13 @@ async function saveDraft(
     stored,
     roster,
     coach,
+    challengeNote,
   }: {
     readonly squad: SquadId;
     readonly wake: Wake;
     readonly draft: WakeDraft;
+    /** On a check-in's wake, the note whose challenge its author has today. */
+    readonly challengeNote?: number;
     /** The files as the run found them, as the model read them. */
     readonly stored: ReadonlyMap<StoredPath, string>;
     readonly roster: ReadonlyMap<string, string>;
@@ -692,6 +710,9 @@ async function saveDraft(
         wake: wake.id,
       });
     }
+  }
+  if (wake.reason.kind === 'checkIn' && draft.challengeDone && challengeNote !== undefined) {
+    await stores.memberNotes.complete({ note: challengeNote, by: 'coach' });
   }
   if (
     wake.reason.kind === 'checkIn' &&

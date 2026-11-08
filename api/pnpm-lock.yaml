@@ -296,6 +296,9 @@ importers:
       '@wildcard/time-zones':
         specifier: workspace:*
         version: link:../time-zones
+      '@wildcard/typed-text':
+        specifier: workspace:*
+        version: link:../typed-text
       kysely:
         specifier: 0.29.7
         version: 0.29.7

@@ -1,6 +1,12 @@
 import { writeIn } from '@wildcard/language-model';
 
-import { challengeLine, type Challenge, type ChallengeAnswer } from './challenge.js';
+import {
+  challengeLine,
+  challengeText,
+  type Challenge,
+  type ChallengeAnswer,
+  type ChallengeCompletion,
+} from './challenge.js';
 import type { Coach } from './coach.js';
 import { briefLine, weekdayOf, type NoteBrief } from './member-facts.js';
 import type { CoachSettings } from './settings.js';
@@ -132,7 +138,7 @@ export function taskOf({
   /** On a daily wake, who to write a morning note to, with their day's plan. */
   readonly noteTo?: readonly NoteBrief[];
   /** On a daily wake, the squad's posts of the day before, oldest first. */
-  readonly yesterday?: { readonly day: string; readonly checkIns: readonly WeekCheckIn[] };
+  readonly yesterday?: YesterdayFacts;
   /** What is special about the day, such as a holiday, one line each. */
   readonly occasions?: readonly string[];
   /** Whether the coach coached this squad before, was fired and is back, and speaks for the first time since. */
@@ -140,7 +146,11 @@ export function taskOf({
   /** On a reply's wake, whether the coach can look at the check-in's photos this time. */
   readonly canSeePhotos?: boolean;
   /** On a check-in's wake, the challenge the coach set its author today and their answer. */
-  readonly challenge?: { readonly challenge: Challenge; readonly answer?: ChallengeAnswer };
+  readonly challenge?: {
+    readonly challenge: Challenge;
+    readonly answer?: ChallengeAnswer;
+    readonly completion?: ChallengeCompletion;
+  };
   /** On a daily wake, the gift pool and who may get one this week. */
   readonly gifting?: GiftOptions;
 }): string | undefined {
@@ -155,9 +165,7 @@ export function taskOf({
         : `你最近点过的表情（新的在前）：${recentEmoji.join(' ')}`;
     return [
       `有人打卡：${checkInLine(checkIn, rosterOf(week))}`,
-      ...(challenge === undefined
-        ? []
-        : [challengeLine({ challenge: challenge.challenge, answer: challenge.answer })]),
+      ...(challenge === undefined ? [] : [challengeLine(challenge)]),
       ...occasion,
       emoji,
       writeIn(languageOf(week, checkIn.member)),
@@ -199,7 +207,11 @@ export function taskOf({
   const roster = rosterOf(week);
   if (reason.kind === 'dream') {
     // Nothing new to learn from: the memory stays as it is, and the night costs nothing.
-    if (talks.length === 0 && (yesterday === undefined || yesterday.checkIns.length === 0)) {
+    if (
+      talks.length === 0 &&
+      (yesterday === undefined ||
+        (yesterday.checkIns.length === 0 && (yesterday.challenges ?? []).length === 0))
+    ) {
       return undefined;
     }
     return [
@@ -269,13 +281,44 @@ function occasionBlock(occasions: readonly string[]): string[] {
   return occasions.length === 0 ? [] : [`今天：${occasions.join('、')}`];
 }
 
-/** The squad's posts of the day before, for the morning notes to pick up on. */
+/** What the squad did the day before: the morning notes and the dream pick up on it. */
+export interface YesterdayFacts {
+  readonly day: string;
+  readonly checkIns: readonly WeekCheckIn[];
+  /** The challenges the coach set that day and what each member said to them. */
+  readonly challenges?: readonly {
+    readonly member: string;
+    readonly challenge: Challenge;
+    readonly answer: ChallengeAnswer | undefined;
+    readonly reason: string | undefined;
+    readonly completion: ChallengeCompletion | undefined;
+  }[];
+}
+
+/** The squad's posts of the day before, and how that day's challenges went. */
 function yesterdayBlock(
-  { day, checkIns }: { readonly day: string; readonly checkIns: readonly WeekCheckIn[] },
+  { day, checkIns, challenges = [] }: YesterdayFacts,
   roster: ReadonlyMap<string, string>,
 ): string {
-  if (checkIns.length === 0) return `昨天（${weekdayOf(day)}）小队没人发动态。`;
-  return `昨天（${weekdayOf(day)}）小队的动态：\n${checkIns.map((each) => `- ${checkInLine(each, roster)}`).join('\n')}`;
+  const posts =
+    checkIns.length === 0
+      ? `昨天（${weekdayOf(day)}）小队没人发动态。`
+      : `昨天（${weekdayOf(day)}）小队的动态：\n${checkIns.map((each) => `- ${checkInLine(each, roster)}`).join('\n')}`;
+  if (challenges.length === 0) return posts;
+  const lines = challenges.map(({ member, challenge, answer, reason, completion }) => {
+    const how =
+      completion !== undefined
+        ? '完成了'
+        : answer === 'accepted'
+          ? '接了，没记完成'
+          : answer === 'declined'
+            ? reason === undefined
+              ? '没接'
+              : `没接，因为「${reason}」`
+            : '没回应';
+    return `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」：${how}`;
+  });
+  return `${posts}\n\n昨天的挑战：\n${lines.join('\n')}`;
 }
 
 /** The last day's talk, for the daily wake to remember from. */

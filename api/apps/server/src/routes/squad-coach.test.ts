@@ -490,6 +490,119 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     await call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
   });
 
+  it('gives the caller today’s challenge and lets them mark it done once, on its day', async () => {
+    const [captain, mate, third] = [await signUp(), await signUp(), await signUp()];
+    const squad = await squadOf(captain, mate, third);
+    await call({
+      method: 'PUT',
+      path: `/squads/${squad}/coach`,
+      token: captain.token,
+      body: { version: 1, coach: 'xiaohun' },
+    });
+    // Today and yesterday on the squad's clock.
+    const squadDay = (daysAgo: number) =>
+      sql<{ day: string }>`
+      select to_char((now() at time zone coalesce((select time_zone from public.squad_time_zones
+        where squad_id = ${squad} order by week_start desc, id desc limit 1), 'America/New_York'))::date
+        - ${daysAgo}::int, 'YYYY-MM-DD') as day`.execute(db);
+    const today = (await squadDay(0)).rows[0]?.day ?? '';
+    const yesterday = (await squadDay(1)).rows[0]?.day ?? '';
+    const note = async (
+      member: string,
+      {
+        day,
+        challenge,
+      }: { day: string; challenge?: { title: string; amount?: number; unit?: string } },
+    ) => {
+      const written = await sql<{ id: string }>`
+        insert into public.coach_member_notes
+          (squad_id, member_id, coach_id, day, text, challenge_title, challenge_amount, challenge_unit)
+        values (${squad}, ${member}, 'xiaohun', ${day}::date, '今天多喝水',
+          ${challenge?.title ?? null}, ${challenge?.amount ?? null}::int, ${challenge?.unit ?? null})
+        returning id`.execute(db);
+      const id = Number(written.rows[0]?.id);
+      await sql`insert into public.coach_member_note_deliveries (note_id) values (${id})`.execute(
+        db,
+      );
+      return id;
+    };
+    const path = `/squads/${squad}/coach/challenge`;
+    const todays = async (token: string) => (await call({ method: 'GET', path, token })).body;
+    const complete = (token: string, id: number) =>
+      call({
+        method: 'PUT',
+        path: `/squads/${squad}/coach/notes/${String(id)}/challenge/completion`,
+        token,
+        body: { version: 1 },
+      });
+    expect(await todays(mate.token)).toStrictEqual({ version: 1, today: null });
+
+    const old = await note(mate.userId, { day: yesterday, challenge: { title: '拉伸' } });
+    const water = await note(mate.userId, {
+      day: today,
+      challenge: { title: '喝水', amount: 8, unit: '杯' },
+    });
+    expect(await todays(mate.token)).toStrictEqual({
+      version: 1,
+      today: { noteId: water, day: today, challenge: { title: '喝水', amount: 8, unit: '杯' } },
+    });
+    // Only on its own day.
+    const late = await complete(mate.token, old);
+    expect([late.status, reason(late)]).toStrictEqual([400, 'COACH_CHALLENGE_DAY_OVER']);
+
+    const done = await complete(mate.token, water);
+    expect(done).toMatchObject({
+      status: 200,
+      body: { version: 1, noteId: water, completedBy: 'member' },
+    });
+    const DoneBody = z.object({ completedAt: z.iso.datetime() }).loose();
+    const at = DoneBody.parse(done.body).completedAt;
+    // The first one stands.
+    expect((await complete(mate.token, water)).body).toMatchObject({ completedAt: at });
+    expect(await todays(mate.token)).toMatchObject({
+      today: { noteId: water, challenge: { completedAt: at, completedBy: 'member' } },
+    });
+    // Only the member it was written to; a note without a challenge has nothing to do.
+    expect((await complete(captain.token, water)).status).toBe(404);
+    const plain = await note(captain.userId, { day: today });
+    const none = await complete(captain.token, plain);
+    expect([none.status, reason(none)]).toStrictEqual([400, 'COACH_NOTE_NO_CHALLENGE']);
+    expect(await todays(captain.token)).toStrictEqual({ version: 1, today: null });
+
+    // One let go (算了) can't be marked done.
+    const stretch = await note(third.userId, { day: today, challenge: { title: '拉伸' } });
+    const decline = (body: object) =>
+      call({
+        method: 'PUT',
+        path: `/squads/${squad}/coach/notes/${String(stretch)}/challenge`,
+        token: third.token,
+        body: { version: 1, ...body },
+      });
+    // Why they let it go comes only with 算了, one line of at most 60 characters.
+    expect((await decline({ answer: 'accepted', reason: '腿疼' })).status).toBe(400);
+    expect((await decline({ answer: 'declined', reason: '疼'.repeat(61) })).status).toBe(400);
+    expect((await decline({ answer: 'declined', reason: '   ' })).status).toBe(400);
+    expect(await decline({ answer: 'declined', reason: ' 我腿疼 ' })).toMatchObject({
+      status: 200,
+      body: { version: 1, noteId: stretch, answer: 'declined', reason: '我腿疼' },
+    });
+    const declined = await complete(third.token, stretch);
+    expect([declined.status, reason(declined)]).toStrictEqual([400, 'COACH_CHALLENGE_DECLINED']);
+    expect(await todays(third.token)).toMatchObject({
+      today: { noteId: stretch, challenge: { answer: 'declined', reason: '我腿疼' } },
+    });
+
+    // With the coach switch off, it doesn't show.
+    await call({
+      method: 'PUT',
+      path: '/me/push-settings',
+      token: mate.token,
+      body: { version: 1, settings: { dailyProgress: true, coach: false } },
+    });
+    expect(await todays(mate.token)).toStrictEqual({ version: 1, today: null });
+    await call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
+  });
+
   it('refuses anyone outside the squad, and check-in ids that aren’t', async () => {
     const [captain, stranger] = [await signUp(), await signUp()];
     const squad = await squadOf(captain);
@@ -639,6 +752,42 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(
       ids(CardsBody.parse((await call({ method: 'GET', path, token: captain.token })).body).stack),
     ).toHaveLength(2);
+  });
+
+  it('shows the coach marking a challenge done as its own card', async () => {
+    const mate = await signUp();
+    const squad = await squadOf(mate);
+    const path = `/squads/${squad}/coach/cards`;
+    const written = await sql<{ id: string }>`
+      insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, challenge_title)
+      values (${squad}, ${mate.userId}, 'xiaohun', current_date, '早点睡', '早睡')
+      returning id`.execute(db);
+    const note = String(written.rows[0]?.id);
+    await sql`insert into public.coach_member_note_deliveries (note_id) values (${note})`.execute(
+      db,
+    );
+    await sql`insert into public.coach_challenge_completions (note_id, by)
+      values (${note}, 'coach')`.execute(db);
+    const cards = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect(ids(cards.stack)).toStrictEqual([
+      `note:${note}`,
+      `challenge:${note}`,
+      `challengeDone:${note}`,
+    ]);
+    expect(cards.stack[1]).toMatchObject({ challenge: { title: '早睡', completedBy: 'coach' } });
+    expect(cards.stack[2]).toMatchObject({
+      kind: 'challengeDone',
+      coach: speaker,
+      challenge: { title: '早睡' },
+    });
+    const seen = await call({
+      method: 'PUT',
+      path: `${path}/challengeDone/${note}/seen`,
+      token: mate.token,
+    });
+    expect(seen.status).toBe(200);
+    const after = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect(ids(after.earlier)).toStrictEqual([`challengeDone:${note}`]);
   });
 
   it('refuses anyone outside the squad and a kind it doesn’t know', async () => {

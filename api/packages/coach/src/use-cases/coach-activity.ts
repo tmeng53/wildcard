@@ -2,9 +2,21 @@ import { isCardId, type CoachCardKind, type CoachOwnCard } from '../domain/cards
 import type { CoachLetter } from '../domain/letter.js';
 import type { CoachAnswer, CoachReply } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
-import type { ChallengeAnswer } from '../domain/challenge.js';
-import { CoachCardIdError, CoachNoteNoChallengeError, CoachNoteNotFoundError } from '../errors.js';
-import type { CoachActivityStore, CoachMemberNoteShown, CoachNoteShown } from '../ports.js';
+import type { ChallengeAnswer, ChallengeCompletion } from '../domain/challenge.js';
+import {
+  CoachCardIdError,
+  CoachChallengeDayOverError,
+  CoachChallengeDeclinedError,
+  CoachNoteNoChallengeError,
+  CoachNoteNotFoundError,
+} from '../errors.js';
+import type {
+  ChallengeAnswered,
+  CoachActivityStore,
+  CoachMemberNoteShown,
+  CoachNoteShown,
+  DayChallenge,
+} from '../ports.js';
 
 /** The most check-ins one read asks about: a page of 动态. */
 export const MAX_CHECK_INS = 100;
@@ -56,8 +68,8 @@ export interface CoachActivity {
     readonly note: number;
   }): Promise<void>;
   /**
-   * The reader's answer to their morning note's challenge (接受挑战 or 算了), answered with the
-   * one that stands: the first. Throws `CoachNoteNotFoundError` when the note isn't theirs in
+   * The reader's answer to their morning note's challenge (接受挑战 or 算了, with why if they
+   * say), answered with the one that stands: the first. Throws `CoachNoteNotFoundError` when the note isn't theirs in
    * this squad, `CoachNoteNoChallengeError` when it sets none.
    */
   answerChallenge(input: {
@@ -65,7 +77,31 @@ export interface CoachActivity {
     readonly member: string;
     readonly note: number;
     readonly answer: ChallengeAnswer;
-  }): Promise<ChallengeAnswer>;
+    /** Why they let it go, with `declined` only; the caller checks that. */
+    readonly reason?: string;
+  }): Promise<ChallengeAnswered>;
+  /**
+   * The reader's challenge today (`today`, the squad's day), once their note reached them: what
+   * it is, what they said to it and whether it is done. The caller checks they are in the squad.
+   */
+  challenge(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly today: string;
+  }): Promise<DayChallenge | undefined>;
+  /**
+   * The reader did their note's challenge (我完成了), on its own day (`today`, the squad's):
+   * answered with the completion that stands, the first, theirs or the coach's. Throws
+   * `CoachNoteNotFoundError` when the note isn't theirs in this squad, `CoachNoteNoChallengeError`
+   * when it sets none, `CoachChallengeDeclinedError` when they let it go and
+   * `CoachChallengeDayOverError` when it was another day's.
+   */
+  completeChallenge(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly note: number;
+    readonly today: string;
+  }): Promise<ChallengeCompletion>;
   /**
    * The coach's own cards for the member in the squad since `since`, oldest first, and the keys
    * (`cardKey`) of every card they have seen there, the gifts' too. The caller checks they are in
@@ -121,6 +157,15 @@ export function createCoachActivity(deps: { readonly store: CoachActivityStore }
       if (kept === 'noNote') throw new CoachNoteNotFoundError();
       if (kept === 'noChallenge') throw new CoachNoteNoChallengeError();
       return kept;
+    },
+    challenge: ({ squad, member, today }) => deps.store.challengeOf({ squad, member, day: today }),
+    completeChallenge: async (input) => {
+      const done = await deps.store.completeChallenge(input);
+      if (done === 'noNote') throw new CoachNoteNotFoundError();
+      if (done === 'noChallenge') throw new CoachNoteNoChallengeError();
+      if (done === 'declined') throw new CoachChallengeDeclinedError();
+      if (done === 'dayOver') throw new CoachChallengeDayOverError();
+      return done;
     },
     cards: async (input) => {
       const [cards, seen] = await Promise.all([

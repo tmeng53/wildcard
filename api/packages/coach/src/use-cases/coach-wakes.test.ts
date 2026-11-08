@@ -1366,7 +1366,15 @@ describe('the coach', () => {
                   challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干，别等口渴' },
                 },
               },
-              { tool: 'note_to', input: { member: '队员2', text: '今天走走' } },
+              // A rest day's blank challenge, as the model sends it, is none.
+              {
+                tool: 'note_to',
+                input: {
+                  member: '队员2',
+                  text: '今天走走',
+                  challenge: { title: ' ', amount: 0, unit: '', line: '' },
+                },
+              },
               { tool: 'give_gift', input: { member: '队员2', piece: 'gift-scarf', line: '冷' } },
               { tool: 'give_gift', input: { member: '队员1', piece: 'gift-cap', line: '戴上' } },
               { tool: 'give_gift', input: { member: '队员1', piece: 'gift-hat', line: '戴上' } },
@@ -1375,7 +1383,9 @@ describe('the coach', () => {
                 input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' },
               },
             ]
-          : [],
+          : task.includes('你今天给他的挑战')
+            ? [{ tool: 'complete_challenge', input: {} }]
+            : [],
       );
       await wakes(fixture, { agent, gifting }).run();
       const daily = runs.find(({ task }) => task.includes('新的一天'));
@@ -1432,8 +1442,12 @@ describe('the coach', () => {
         member: string,
         { note, said }: { note: number | undefined; said: 'accepted' | 'declined' },
       ) => activity.answerChallenge({ squad, member, note: note ?? 0, answer: said });
-      expect(await answer(mia, { note: mine, said: 'accepted' })).toBe('accepted');
-      expect(await answer(mia, { note: mine, said: 'declined' })).toBe('accepted');
+      expect(await answer(mia, { note: mine, said: 'accepted' })).toStrictEqual({
+        answer: 'accepted',
+      });
+      expect(await answer(mia, { note: mine, said: 'declined' })).toStrictEqual({
+        answer: 'accepted',
+      });
       await expect(answer(leo, { note: mine, said: 'accepted' })).rejects.toThrow(
         CoachNoteNotFoundError,
       );
@@ -1462,6 +1476,42 @@ describe('the coach', () => {
       };
       await wakes({ ...fixture, week }, { agent }).checkedIn({ checkIn: later, squads: [squad] });
       expect(runs.at(-1)?.task).toContain('你今天给他的挑战：「喝水 8 杯」，他接受了。');
+      // The coach saw it done in the check-in and marked it, once.
+      expect(runs.at(-1)?.tools).toContain('complete_challenge');
+      expect(runs.at(-1)?.answers).toStrictEqual(['已记他完成。']);
+      const done = await sql<{ note_id: string; by: string }>`
+        select note_id, by from public.coach_challenge_completions
+        where note_id in (${String(mine)}, ${String(theirs)})`.execute(trx);
+      expect(done.rows).toStrictEqual([{ note_id: String(mine), by: 'coach' }]);
+      // The next check-in's wake knows, with nothing left to mark.
+      const again = randomUUID();
+      await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+        values (${again}, ${mia}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(
+        trx,
+      );
+      await wakes(
+        {
+          ...fixture,
+          week: {
+            ...week,
+            checkIns: [
+              ...week.checkIns,
+              {
+                id: again,
+                member: mia,
+                day: '2026-11-01',
+                createdAt: now,
+                kind: 'healthyMeal',
+                reactions: 0,
+                comments: [],
+              },
+            ],
+          },
+        },
+        { agent },
+      ).checkedIn({ checkIn: again, squads: [squad] });
+      expect(runs.at(-1)?.task).toContain('你今天给他的挑战：「喝水 8 杯」，你已经记他完成了。');
+      expect(runs.at(-1)?.tools).not.toContain('complete_challenge');
     });
   });
 
@@ -1675,6 +1725,38 @@ describe('the coach', () => {
         { reason: 'dream', state: 'done' },
         { reason: 'daily', state: 'done' },
       ]);
+    });
+  });
+
+  it('tells the night how yesterday’s challenges went, and why one was let go', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia, leo } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      const noted = await sql<{ id: string; member_id: string }>`
+        insert into public.coach_member_notes
+          (squad_id, member_id, coach_id, day, text, challenge_title, challenge_amount, challenge_unit)
+        values (${squad}, ${mia}, 'xiaohun', '2026-11-01', '多喝水', '喝水', 8, '杯'),
+          (${squad}, ${leo}, 'xiaohun', '2026-11-01', '早餐加个蛋', '吃鸡蛋', null, null)
+        returning id, member_id`.execute(trx);
+      const noteOf = (member: string) =>
+        noted.rows.find((row) => row.member_id === member)?.id ?? '';
+      await sql`insert into public.coach_member_note_deliveries (note_id)
+        select id from public.coach_member_notes where squad_id = ${squad}`.execute(trx);
+      const activity = createCoachActivity({ store: createPostgresCoachActivity(trx) });
+      await activity.answerChallenge({
+        squad,
+        member: leo,
+        note: Number(noteOf(leo)),
+        answer: 'declined',
+        reason: '我鸡蛋过敏',
+      });
+      await sql`insert into public.coach_challenge_completions (note_id, by)
+        values (${noteOf(mia)}, 'member')`.execute(trx);
+      await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
+      const dream = runs.find(({ task }) => task.startsWith('夜里'));
+      expect(dream?.task).toContain(
+        '昨天的挑战：\n- 队员1「喝水 8 杯」：完成了\n- 队员2「吃鸡蛋」：没接，因为「我鸡蛋过敏」',
+      );
     });
   });
 

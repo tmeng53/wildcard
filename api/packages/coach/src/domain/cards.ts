@@ -1,16 +1,27 @@
 import { z } from 'zod';
 
-import type { Challenge, ChallengeAnswer } from './challenge.js';
+import type { Challenge, ChallengeAnswer, ChallengeCompletion } from './challenge.js';
 import type { CoachReply } from './reply.js';
 
 // The coach page (Tracy, 2026-11-08): everything the squad's coach said to a member, one card per
 // thing, stacked in the order it came. Swiping a card away marks it seen, and it goes to 以前.
 
-/** The kinds of card; the gift is the unlocks module's, the rest the coach's own. */
-export const CoachCardKind = z.enum(['board', 'note', 'challenge', 'gift', 'reply', 'answer']);
+/**
+ * The kinds of card; the gift is the unlocks module's, the rest the coach's own. `challengeDone`
+ * is the coach marking the member's challenge done, from their check-ins.
+ */
+export const CoachCardKind = z.enum([
+  'board',
+  'note',
+  'challenge',
+  'challengeDone',
+  'gift',
+  'reply',
+  'answer',
+]);
 export type CoachCardKind = z.infer<typeof CoachCardKind>;
 
-/** A card's id within its kind: a 战术板 line's day, a note's or a reply's id, a gift's piece. */
+/** A card's id within its kind: a 战术板 line's day, a note's (its challenge's) or a reply's id, a gift's piece. */
 export const CoachCardId = z
   .string()
   .regex(/^[A-Za-z0-9_.:-]{1,64}$/)
@@ -29,6 +40,7 @@ export function isCardId(kind: CoachCardKind, id: string): boolean {
       return /^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$/u.test(id) && id.length <= 48;
     case 'note':
     case 'challenge':
+    case 'challengeDone':
     case 'reply':
     case 'answer':
       return /^[1-9]\d{0,17}$/u.test(id);
@@ -56,6 +68,13 @@ export type CoachOwnCard =
       readonly day: string;
       readonly challenge: Challenge;
       readonly answer: ChallengeAnswer | undefined;
+      readonly reason: string | undefined;
+      readonly completion: ChallengeCompletion | undefined;
+    })
+  | (CardBase & {
+      readonly kind: 'challengeDone';
+      readonly day: string;
+      readonly challenge: Challenge;
     })
   | (CardBase & { readonly kind: 'reply'; readonly checkIn: string; readonly text: string })
   | (CardBase & {

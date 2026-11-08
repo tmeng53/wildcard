@@ -19,7 +19,12 @@ import type { CoachNames } from '../flows/coach-names.js';
 import type { VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
-import { CoachChallengeBody, CoachSpeakerBody, speakerIn } from './coach-activity.js';
+import {
+  CoachChallengeBody,
+  CoachSpeakerBody,
+  speakerIn,
+  wireChallenge,
+} from './coach-activity.js';
 
 // The coach page (Tracy, 2026-11-08): what the squad's coach said to the caller, a card a thing,
 // stacked in the order it came; a card swiped away is seen and goes to 以前. The cards span
@@ -30,27 +35,34 @@ const CoachCardBody = z
   .strictObject({
     kind: z.string().meta({
       description:
-        '`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `gift`, ' +
-        '`reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More ' +
+        '`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), ' +
+        '`challengeDone` (the coach marked that challenge done from the caller’s check-ins), ' +
+        '`gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s ' +
+        'reply). More ' +
         'kinds may come: an app skips a kind it doesn’t know.',
       example: 'challenge',
     }),
     id: z.string().meta({
       description:
         'The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a ' +
-        'note’s id (its challenge’s too), a gift’s piece, a reply’s or answer’s id.',
+        'note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece, a reply’s or ' +
+        'answer’s id.',
       example: '42',
     }),
     coach: CoachSpeakerBody,
-    at: z.iso.datetime().meta({ description: 'When it came: a note when it was delivered.' }),
+    at: z.iso.datetime().meta({
+      description: 'When it came: a note when it was delivered, a `challengeDone` when marked.',
+    }),
     day: z.iso.date().optional().meta({
-      description: 'The squad’s day a `board`, `note` or `challenge` is for.',
+      description: 'The squad’s day a `board`, `note`, `challenge` or `challengeDone` is for.',
     }),
     text: z.string().optional().meta({
       description: 'What the coach said, on a `board`, `note`, `reply` or `answer`.',
       example: '配速比上周快了，不错。',
     }),
-    challenge: CoachChallengeBody.optional().meta({ description: 'A `challenge`’s challenge.' }),
+    challenge: CoachChallengeBody.optional().meta({
+      description: 'A `challenge`’s or `challengeDone`’s challenge.',
+    }),
     checkInId: z.uuid().optional().meta({
       description: 'The caller’s check-in a `reply` is on, or an `answer`’s post.',
     }),
@@ -84,7 +96,14 @@ const CoachCardsBody = z
   .openapi('CoachCards');
 
 const CoachCardSeen = z
-  .strictObject({ version: bodyVersion(1), kind: CoachCardKind, id: CoachCardId })
+  .strictObject({
+    version: bodyVersion(1),
+    kind: z.string().meta({
+      description: 'The card’s kind, as asked; more kinds may come.',
+      example: 'challenge',
+    }),
+    id: CoachCardId,
+  })
   .openapi('CoachCardSeen');
 
 type Speaker = ReturnType<typeof speakerIn>;
@@ -102,14 +121,9 @@ function wireCard(card: CoachOwnCard, speaker: Speaker): z.infer<typeof CoachCar
     case 'note':
       return { ...base, day: card.day, text: card.text };
     case 'challenge':
-      return {
-        ...base,
-        day: card.day,
-        challenge: {
-          ...card.challenge,
-          ...(card.answer === undefined ? {} : { answer: card.answer }),
-        },
-      };
+      return { ...base, day: card.day, challenge: wireChallenge(card) };
+    case 'challengeDone':
+      return { ...base, day: card.day, challenge: card.challenge };
     case 'reply':
       return { ...base, checkInId: card.checkIn, text: card.text };
     case 'answer':
@@ -225,7 +239,10 @@ export function coachCards(deps: {
       ]);
       const cards = notesOn
         ? all
-        : all.filter((card) => card.kind !== 'note' && card.kind !== 'challenge');
+        : all.filter(
+            (card) =>
+              card.kind !== 'note' && card.kind !== 'challenge' && card.kind !== 'challengeDone',
+          );
       const gifts = allGifts.filter((gift) => gift.squad === squadId && gift.givenAt >= since);
       const named = await deps.coachNames(
         [...cards.map((card) => card.coach.id), ...gifts.map((gift) => gift.coach)].map(

@@ -1,7 +1,7 @@
 -- The coach's morning note to each member: one a member a squad a day, never changed, gone with
 -- the member or the squad; delivered once.
 begin;
-select plan(24);
+select plan(30);
 
 insert into auth.users (id, email) values
   ('11111111-1111-4111-8111-111111111111', 'mia@example.com'),
@@ -49,6 +49,20 @@ select throws_ok($$update public.coach_challenge_answers set answer = 'declined'
   '42501', null, 'an answer stands');
 select throws_ok($$insert into public.coach_challenge_answers (note_id, answer) values (1, 'maybe')$$,
   '23514', null, 'an answer is accepted or declined');
+insert into public.coach_challenge_completions (note_id, by) values (3, 'coach');
+select throws_ok($$insert into public.coach_challenge_completions (note_id, by) values (3, 'member')$$,
+  '23505', null, 'a challenge is done once');
+select throws_ok($$update public.coach_challenge_completions set by = 'member' where note_id = 3$$,
+  '42501', null, 'who marked it done stands');
+select throws_ok($$insert into public.coach_challenge_completions (note_id, by) values (1, 'squad')$$,
+  '23514', null, 'the member or the coach marks it done');
+select throws_ok($$insert into public.coach_challenge_answers (note_id, answer, reason) values (1, 'accepted', '鸡蛋过敏')$$,
+  '23514', null, 'a reason only comes with letting it go');
+insert into public.coach_member_notes (id, squad_id, member_id, coach_id, day, text, challenge_title)
+  overriding system value values
+  (4, '33333333-3333-4333-8333-333333333333', '22222222-2222-4222-8222-222222222222', 'xiaohun', '2026-11-06', '早餐加个蛋', '吃鸡蛋');
+insert into public.coach_challenge_answers (note_id, answer, reason) values (4, 'declined', '我鸡蛋过敏');
+select is((select reason from public.coach_challenge_answers where note_id = 4), '我鸡蛋过敏', 'why they let it go is kept');
 
 -- The line under a challenge's title is short, and only with a challenge.
 select throws_ok($$insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, challenge_line)
@@ -68,16 +82,19 @@ select throws_ok($$insert into public.coach_card_seen (member_id, squad_id, kind
 select throws_ok($$insert into public.coach_card_seen (member_id, squad_id, kind, card_id)
   values ('11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-333333333333', 'poster', '1')$$,
   '23514', null, 'a card is one of the kinds');
+insert into public.coach_card_seen (member_id, squad_id, kind, card_id) values
+  ('11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-333333333333', 'challengeDone', '3');
 select throws_ok($$delete from public.coach_card_seen where card_id = '1'$$,
   '42501', null, 'a seen card stays seen');
 
 delete from auth.users where id = '22222222-2222-4222-8222-222222222222';
-select is((select count(*)::int from public.coach_card_seen), 1, 'a deleted account takes what it saw');
+select is((select count(*)::int from public.coach_card_seen), 2, 'a deleted account takes what it saw');
 select is((select count(*)::int from public.coach_member_notes), 2, 'a deleted account takes its notes');
 delete from public.squads where id = '33333333-3333-4333-8333-333333333333';
 select is((select count(*)::int from public.coach_member_notes), 0, 'an ended squad takes its notes');
 select is((select count(*)::int from public.coach_member_note_deliveries), 0, 'and their deliveries');
 select is((select count(*)::int from public.coach_member_note_reads), 0, 'and when they were put away');
+select is((select count(*)::int from public.coach_challenge_completions), 0, 'and their challenges done');
 select is((select count(*)::int from public.coach_challenge_answers), 0, 'and the answers to their challenges');
 select is((select count(*)::int from public.coach_card_seen), 0, 'and the cards its members saw');
 
