@@ -705,7 +705,10 @@ describe('GET /me/records', () => {
       .toISOString()
       .slice(0, 10);
     const madeAt = new Date(Date.now() - 60_000);
-    const put = async (who: { readonly token: string }, { day, ...fields }: { day: string }) => {
+    const put = async (
+      who: { readonly token: string },
+      { day, ...fields }: { readonly day: string } & Readonly<Record<string, unknown>>,
+    ) => {
       const id = randomUUID();
       const body = {
         version: 1,
