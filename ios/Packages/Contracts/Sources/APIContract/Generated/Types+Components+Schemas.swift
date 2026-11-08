@@ -739,6 +739,10 @@ extension Components {
                 public var id: Swift.String
                 /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/names`.
                 public var names: Components.Schemas.CatalogNames
+                /// The colour its sports’ 成绩条, post blocks, routes and charts wear, with white on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before colours still reads (its sports then wear the gym’s steel).
+                ///
+                /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/color`.
+                public var color: Swift.String?
                 /// - Remark: Generated from `#/components/schemas/SportsCatalog/CategoriesPayload/SportsPayload`.
                 public struct SportsPayloadPayload: Codable, Hashable, Sendable {
                     /// What a 训练 or a planned day sends as `sport`. Never changes, and a sport is never removed.
@@ -856,22 +860,26 @@ extension Components {
                 /// - Parameters:
                 ///   - id:
                 ///   - names:
+                ///   - color: The colour its sports’ 成绩条, post blocks, routes and charts wear, with white on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before colours still reads (its sports then wear the gym’s steel).
                 ///   - sports:
                 ///   - additionalProperties: A container of undocumented properties.
                 public init(
                     id: Swift.String,
                     names: Components.Schemas.CatalogNames,
+                    color: Swift.String? = nil,
                     sports: Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload,
                     additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
                 ) {
                     self.id = id
                     self.names = names
+                    self.color = color
                     self.sports = sports
                     self.additionalProperties = additionalProperties
                 }
                 public enum CodingKeys: String, CodingKey {
                     case id
                     case names
+                    case color
                     case sports
                 }
                 public init(from decoder: any Swift.Decoder) throws {
@@ -884,6 +892,10 @@ extension Components {
                         Components.Schemas.CatalogNames.self,
                         forKey: .names
                     )
+                    self.color = try container.decodeIfPresent(
+                        Swift.String.self,
+                        forKey: .color
+                    )
                     self.sports = try container.decode(
                         Components.Schemas.SportsCatalog.CategoriesPayloadPayload.SportsPayload.self,
                         forKey: .sports
@@ -891,6 +903,7 @@ extension Components {
                     additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
                         "id",
                         "names",
+                        "color",
                         "sports"
                     ])
                 }
@@ -903,6 +916,10 @@ extension Components {
                     try container.encode(
                         self.names,
                         forKey: .names
+                    )
+                    try container.encodeIfPresent(
+                        self.color,
+                        forKey: .color
                     )
                     try container.encode(
                         self.sports,
@@ -2750,7 +2767,7 @@ extension Components {
                 case endedAt
             }
         }
-        /// The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim).
+        /// The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike).
         ///
         /// - Remark: Generated from `#/components/schemas/WorkoutSummary`.
         public struct WorkoutSummary: Codable, Hashable, Sendable {
@@ -2772,6 +2789,16 @@ extension Components {
             public var laps: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/WorkoutSummary/poolLengthM`.
             public var poolLengthM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/runs`.
+            public var runs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/descentM`.
+            public var descentM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/topSpeedKmh`.
+            public var topSpeedKmh: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/elevationGainM`.
+            public var elevationGainM: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/paceSecPer100m`.
+            public var paceSecPer100m: Swift.Double?
             /// Creates a new `WorkoutSummary`.
             ///
             /// - Parameters:
@@ -2784,6 +2811,11 @@ extension Components {
             ///   - effort:
             ///   - laps:
             ///   - poolLengthM:
+            ///   - runs:
+            ///   - descentM:
+            ///   - topSpeedKmh:
+            ///   - elevationGainM:
+            ///   - paceSecPer100m:
             public init(
                 durationSec: Swift.Int? = nil,
                 distanceM: Swift.Double? = nil,
@@ -2793,7 +2825,12 @@ extension Components {
                 maxHr: Swift.Int? = nil,
                 effort: Swift.Double? = nil,
                 laps: Swift.Int? = nil,
-                poolLengthM: Swift.Double? = nil
+                poolLengthM: Swift.Double? = nil,
+                runs: Swift.Int? = nil,
+                descentM: Swift.Double? = nil,
+                topSpeedKmh: Swift.Double? = nil,
+                elevationGainM: Swift.Double? = nil,
+                paceSecPer100m: Swift.Double? = nil
             ) {
                 self.durationSec = durationSec
                 self.distanceM = distanceM
@@ -2804,6 +2841,11 @@ extension Components {
                 self.effort = effort
                 self.laps = laps
                 self.poolLengthM = poolLengthM
+                self.runs = runs
+                self.descentM = descentM
+                self.topSpeedKmh = topSpeedKmh
+                self.elevationGainM = elevationGainM
+                self.paceSecPer100m = paceSecPer100m
             }
             public enum CodingKeys: String, CodingKey {
                 case durationSec
@@ -2815,6 +2857,11 @@ extension Components {
                 case effort
                 case laps
                 case poolLengthM
+                case runs
+                case descentM
+                case topSpeedKmh
+                case elevationGainM
+                case paceSecPer100m
             }
         }
         /// Sent only when the chart tile was kept.
@@ -6336,7 +6383,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/timeZone`.
             public var timeZone: Swift.String
-            /// Next week’s zone: a change counts from the next week, so it differs from `timeZone` only after the captain changed it this week.
+            /// Next week’s zone, the same as `timeZone`: a change counts at once. Kept for builds that show a change waiting for next week.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/nextTimeZone`.
             public var nextTimeZone: Swift.String
@@ -6349,7 +6396,7 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - timeZone: This week’s zone.
-            ///   - nextTimeZone: Next week’s zone: a change counts from the next week, so it differs from `timeZone` only after the captain changed it this week.
+            ///   - nextTimeZone: Next week’s zone, the same as `timeZone`: a change counts at once. Kept for builds that show a change waiting for next week.
             ///   - canChange: True for the captain, the only one who sets it.
             public init(
                 version: Components.Schemas.SquadTimeZone.VersionPayload,
@@ -8207,6 +8254,56 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case goals
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks`.
+        public struct WeekStoryWeeks: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/version`.
+            public var version: Components.Schemas.WeekStoryWeeks.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/WeeksPayload`.
+            public struct WeeksPayloadPayload: Codable, Hashable, Sendable {
+                /// The week’s Monday.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/WeeksPayload/weekStart`.
+                public var weekStart: Swift.String
+                /// Creates a new `WeeksPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - weekStart: The week’s Monday.
+                public init(weekStart: Swift.String) {
+                    self.weekStart = weekStart
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case weekStart
+                }
+            }
+            /// Every week the squad has a 战报 for, the latest first; each one opens with `GET /squads/{squadId}/weeks/{weekStart}/story`. A week nobody checked in has none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/weeks`.
+            public typealias WeeksPayload = [Components.Schemas.WeekStoryWeeks.WeeksPayloadPayload]
+            /// Every week the squad has a 战报 for, the latest first; each one opens with `GET /squads/{squadId}/weeks/{weekStart}/story`. A week nobody checked in has none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeekStoryWeeks/weeks`.
+            public var weeks: Components.Schemas.WeekStoryWeeks.WeeksPayload
+            /// Creates a new `WeekStoryWeeks`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - weeks: Every week the squad has a 战报 for, the latest first; each one opens with `GET /squads/{squadId}/weeks/{weekStart}/story`. A week nobody checked in has none.
+            public init(
+                version: Components.Schemas.WeekStoryWeeks.VersionPayload,
+                weeks: Components.Schemas.WeekStoryWeeks.WeeksPayload
+            ) {
+                self.version = version
+                self.weeks = weeks
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case weeks
             }
         }
         /// - Remark: Generated from `#/components/schemas/WeekStory`.

@@ -422,6 +422,11 @@
                 "names": {
                   "$ref": "#/components/schemas/CatalogNames"
                 },
+                "color": {
+                  "type": "string",
+                  "description": "The colour its sports’ 成绩条, post blocks, routes and charts wear, with white on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before colours still reads (its sports then wear the gym’s steel).",
+                  "example": "#E65345"
+                },
                 "sports": {
                   "type": "array",
                   "items": {
@@ -1377,10 +1382,35 @@
             "type": "number",
             "exclusiveMinimum": 0,
             "maximum": 100
+          },
+          "runs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "descentM": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "topSpeedKmh": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 300
+          },
+          "elevationGainM": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "paceSecPer100m": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 86400
           }
         },
         "additionalProperties": false,
-        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim)."
+        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike)."
       },
       "WorkoutSeries": {
         "type": "object",
@@ -3980,7 +4010,7 @@
             "type": "string",
             "maxLength": 64,
             "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
-            "description": "Next week’s zone: a change counts from the next week, so it differs from `timeZone` only after the captain changed it this week.",
+            "description": "Next week’s zone, the same as `timeZone`: a change counts at once. Kept for builds that show a change waiting for next week.",
             "example": "Asia/Taipei"
           },
           "canChange": {
@@ -5213,6 +5243,40 @@
         "required": [
           "version",
           "goals"
+        ],
+        "additionalProperties": false
+      },
+      "WeekStoryWeeks": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "weeks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "weekStart": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "The week’s Monday."
+                }
+              },
+              "required": [
+                "weekStart"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Every week the squad has a 战报 for, the latest first; each one opens with `GET /squads/{squadId}/weeks/{weekStart}/story`. A week nobody checked in has none."
+          }
+        },
+        "required": [
+          "version",
+          "weeks"
         ],
         "additionalProperties": false
       },
@@ -10196,7 +10260,7 @@
       "put": {
         "operationId": "setSquadTimeZone",
         "summary": "Set the squad’s time zone",
-        "description": "For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.",
+        "description": "For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.",
         "security": [
           {
             "bearer": []
@@ -10225,7 +10289,7 @@
         },
         "responses": {
           "200": {
-            "description": "The zone, with next week’s changed",
+            "description": "The zone, changed",
             "content": {
               "application/json": {
                 "schema": {
@@ -11610,6 +11674,71 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/stories": {
+      "get": {
+        "operationId": "listSquadWeekStories",
+        "summary": "The weeks a squad has a 战报 for (往期战报)",
+        "description": "For the squad’s page: every week whose 战报 came out, the latest first, including the one that came out last Sunday at 8pm Eastern. Only for members of the squad now.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The weeks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeekStoryWeeks"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad",
             "content": {
               "application/problem+json": {
                 "schema": {

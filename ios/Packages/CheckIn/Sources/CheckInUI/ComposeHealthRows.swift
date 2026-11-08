@@ -15,7 +15,7 @@ struct HealthChips: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SectionLabel(Text("今天 Apple 健康里的运动", bundle: .module))
+            SectionLabel(Text("检测到的运动", bundle: .module))
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xs) {
                     ForEach(model.healthWorkouts) { today in
@@ -82,42 +82,69 @@ struct HealthChips: View {
     private static let heart: Double = 11
 }
 
-/// A workout's numbers in place of the minutes: 「成绩 · ♥ Apple 健康」 over the 成绩条, where a
-/// tap strikes a number out of the post and another brings it back.
+/// A workout's numbers in place of the minutes, a cell each: a tap strikes one out of the post
+/// (dashed and crossed through) and another brings it back.
 struct ScoreRow: View {
     @Environment(\.sceneTheme) private var theme
     let model: ComposeModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            HStack(spacing: Space.xs) {
-                SectionLabel(Text("成绩", bundle: .module))
-                HStack(spacing: Space.xxs / 2) {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: Self.heart))
-                        .foregroundStyle(Color(role: .fgDanger, in: theme))
-                    Text("Apple 健康", bundle: .module)
+            SectionLabel(Text("成绩", bundle: .module))
+            ScrollView(.horizontal) {
+                HStack(spacing: Space.xs) {
+                    ForEach(model.scoreCells) { cell in
+                        scoreCell(cell)
+                    }
                 }
-                .typeStyle(TypeRamp.label)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                .padding(.horizontal, Space.xs)
                 .padding(.vertical, Space.xxs / 4)
-                .background(Color(role: .bgSubtle, in: theme), in: Capsule())
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(Text("Apple 健康", bundle: .module))
-                Spacer(minLength: 0)
-                Text("点一格可以不发", bundle: .module)
-                    .typeStyle(TypeRamp.label)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
             }
-            ScoreStrip(cells: model.scoreCells, activity: model.currentActivity, struck: model.struck) { cell in
-                model.toggle(cell)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            .scrollIndicators(.hidden)
+            .horizontalScrollFade()
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("compose.score")
     }
 
-    private static let heart: Double = 10
+    private func scoreCell(_ cell: ScoreCell) -> some View {
+        let isStruck = model.struck.contains(cell.cell)
+        let shape = RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous)
+        return Button {
+            model.toggle(cell.cell)
+        } label: {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
+                    Text(verbatim: cell.value)
+                        .typeStyle(TypeRamp.scoreInline)
+                        .strikethrough(isStruck)
+                    if let unit = cell.unit {
+                        unit.text.typeStyle(TypeRamp.label)
+                    }
+                }
+                .foregroundStyle(Color(role: isStruck ? .fgSubtle : .fgDefault, in: theme))
+                cell.label.text
+                    .typeStyle(TypeRamp.caption)
+                    .foregroundStyle(Color(role: isStruck ? .fgSubtle : .fgMuted, in: theme))
+            }
+            .lineLimit(1)
+            .padding(.horizontal, Space.s)
+            .frame(height: Self.height)
+            .background(Color(role: .bgCanvas, in: theme), in: shape)
+            .overlay {
+                shape.strokeBorder(
+                    Color(role: .borderDefault, in: theme),
+                    style: StrokeStyle(lineWidth: 1, dash: isStruck ? [4, 3] : []))
+            }
+            .contentShape(shape)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .haptic(.pick, trigger: isStruck)
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(isStruck ? Text("不发", bundle: .module) : Text("发", bundle: .module))
+        .accessibilityHint(isStruck ? Text("点一下恢复", bundle: .module) : Text("点一下划掉", bundle: .module))
+        .accessibilityIdentifier("strip.\(cell.cell.rawValue)")
+    }
+
+    private static let height: Double = 56
 }
 #endif

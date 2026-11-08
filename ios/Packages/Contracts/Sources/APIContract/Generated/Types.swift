@@ -329,7 +329,7 @@ public protocol APIProtocol: Sendable {
     func getSquadTimeZone(_ input: Operations.GetSquadTimeZone.Input) async throws -> Operations.GetSquadTimeZone.Output
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
@@ -446,6 +446,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}/fuel-goals`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/fuel-goals/put(saveMyFuelGoals)`.
     func saveMyFuelGoals(_ input: Operations.SaveMyFuelGoals.Input) async throws -> Operations.SaveMyFuelGoals.Output
+    /// The weeks a squad has a 战报 for (往期战报)
+    ///
+    /// For the squad’s page: every week whose 战报 came out, the latest first, including the one that came out last Sunday at 8pm Eastern. Only for members of the squad now.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/stories`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/stories/get(listSquadWeekStories)`.
+    func listSquadWeekStories(_ input: Operations.ListSquadWeekStories.Input) async throws -> Operations.ListSquadWeekStories.Output
     /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
     ///
     /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
@@ -1180,7 +1187,7 @@ extension APIProtocol {
     }
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
@@ -1433,6 +1440,21 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// The weeks a squad has a 战报 for (往期战报)
+    ///
+    /// For the squad’s page: every week whose 战报 came out, the latest first, including the one that came out last Sunday at 8pm Eastern. Only for members of the squad now.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/stories`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/stories/get(listSquadWeekStories)`.
+    public func listSquadWeekStories(
+        path: Operations.ListSquadWeekStories.Input.Path,
+        headers: Operations.ListSquadWeekStories.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadWeekStories.Output {
+        try await listSquadWeekStories(Operations.ListSquadWeekStories.Input(
+            path: path,
+            headers: headers
         ))
     }
     /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)

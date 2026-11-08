@@ -61,7 +61,7 @@ extension SportCatalog {
         self.init(
             categories: wire.categories.map { category in
                 Category(
-                    id: category.id, names: CatalogNames(category.names),
+                    id: category.id, names: CatalogNames(category.names), color: category.color,
                     entries: category.sports.compactMap { sport in
                         Sport(rawValue: sport.id).map {
                             Entry(

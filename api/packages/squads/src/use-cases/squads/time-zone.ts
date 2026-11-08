@@ -10,7 +10,7 @@ import { findSquad } from './find-squad.js';
 /** A squad's time zone (小队时区) this week and next, as its members see it. */
 export interface SquadTimeZone {
   readonly timeZone: TimeZone;
-  /** Next week's: a captain's change counts from the next week. */
+  /** Next week's: the same as this week's since a captain's change counts at once (Tracy, 2026-11-08). */
   readonly nextTimeZone: TimeZone;
 }
 
@@ -37,9 +37,9 @@ async function settingsOf(deps: Deps, squad: SquadId) {
 }
 
 /**
- * Sets the squad's time zone, for its captain. It counts from the week after the squad's week at
- * `moment` on its own clock, so a week's 战报 never moves while the squad plays it. Saving the zone next week has
- * already changes nothing.
+ * Sets the squad's time zone, for its captain. It counts at once, from the squad's week at
+ * `moment` on its own clock (Tracy, 2026-11-08), so this week's 战报 freezes Sunday 8pm on the new
+ * clock. Saving the zone the squad already keeps changes nothing.
  */
 export async function setSquadTimeZone(
   deps: Deps,
@@ -57,7 +57,7 @@ export async function setSquadTimeZone(
     squad: input.squad,
     actor: input.member,
     timeZone: input.timeZone,
-    week: weekAfter(week),
+    week,
   });
   if (outcome === 'notCaptain') throw new NotSquadCaptainError();
   return squadTimeZone(deps, { squad: input.squad, viewer: input.member, moment: input.moment });

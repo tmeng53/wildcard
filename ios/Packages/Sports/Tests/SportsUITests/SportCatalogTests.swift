@@ -43,6 +43,7 @@ struct SportCatalogTests {
                 SportCatalog.Category(
                     id: "racket",
                     names: CatalogNames(simplifiedChinese: "球拍", english: "Racket", traditionalChinese: "球拍"),
+                    color: "#4F6B22",
                     entries: [
                         SportCatalog.Entry(
                             sport: "padel",

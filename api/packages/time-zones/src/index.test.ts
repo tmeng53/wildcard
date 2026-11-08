@@ -5,9 +5,18 @@ import { TimeZone, isKnownTimeZone, mondayOf, momentAt, wallClockAt } from './in
 describe('time zones', () => {
   it('reads a moment on a zone’s wall clock', () => {
     const moment = new Date('2026-11-08T01:30:00Z');
-    expect(wallClockAt(moment, 'America/New_York')).toEqual({ day: '2026-11-07', hour: 20 });
-    expect(wallClockAt(moment, 'Asia/Taipei')).toEqual({ day: '2026-11-08', hour: 9 });
-    expect(wallClockAt(moment, 'America/Los_Angeles')).toEqual({ day: '2026-11-07', hour: 17 });
+    expect(wallClockAt(moment, 'America/New_York')).toEqual({
+      day: '2026-11-07',
+      hour: 20,
+      minute: 30,
+    });
+    expect(wallClockAt(moment, 'Asia/Taipei')).toEqual({ day: '2026-11-08', hour: 9, minute: 30 });
+    expect(wallClockAt(moment, 'America/Los_Angeles')).toEqual({
+      day: '2026-11-07',
+      hour: 17,
+      minute: 30,
+    });
+    expect(wallClockAt(moment, 'Asia/Kolkata')).toEqual({ day: '2026-11-08', hour: 7, minute: 0 });
   });
 
   it('finds the moment a wall clock shows an hour, daylight saving or not', () => {
