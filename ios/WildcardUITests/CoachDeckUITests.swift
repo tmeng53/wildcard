@@ -104,7 +104,7 @@ final class CoachDeckUITests: XCTestCase {
 
     }
 
-    /// 今日挑战: 接受挑战 answers it, and its buttons go.
+    /// 今日挑战: 接受挑战 answers it, stamps the button, and the card goes on its own.
     private func accept(in app: XCUIApplication) {
         let challenge = card("challenge", in: app)
         XCTAssertTrue(challenge.waitForExistence(timeout: Self.wait), "the challenge isn't next")
@@ -113,8 +113,7 @@ final class CoachDeckUITests: XCTestCase {
         XCTAssertTrue(app.buttons["coachDeck.decline"].isHittable, "算了 is covered")
         keepScreenshot(named: "111-coach-deck-challenge")
         accept.tap()
-        waitFor(accept, "exists == false", "接受挑战 stayed after it was accepted")
-        putAway(challenge, in: app)
+        waitFor(challenge, "exists == false", "the challenge stayed after it was accepted")
 
     }
 
